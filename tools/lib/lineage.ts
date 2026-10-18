@@ -465,7 +465,7 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
       if (k.partial || k.unchecked) gaps.push(`picks.jsonl: ${k.partial} boundary(ies) checked only on the rows ponds.tsv holds, ${k.unchecked} with no rows in this bundle`);
       if (k.unlogged) gaps.push(`ponds.tsv has ${k.unlogged} boundary(ies) the pick log lacks (a picked run logs every boundary): their donors are not cross-checked`);
     }
-    gaps.push("pond occupancy at a census (lineages.tsv is world-wide), spread across ponds and anything between boundaries are not recorded; the HTML panel does not draw pond routes yet");
+    gaps.push("pond occupancy at a census (lineages.tsv is world-wide), spread across ponds and anything between boundaries are not recorded");
   }
 
   // Offspring and siblings from the parent map; clade membership for the census pass.

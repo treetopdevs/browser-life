@@ -164,7 +164,7 @@ real-device half stays with the live host.
   against the tokens and the result written down.
 - **The lab route.** `apps/lab/lab/index.html`, `apps/lab/src/style.css` and `apps/lab/src/main.ts` are held by an
   open pull request (#31, Pond keeper v2). A serious or critical finding in lab-only markup is excluded with that
-  reason and listed as a follow-up, not fixed here.
+  reason and listed as a follow-up, not fixed here. *(Withdrawn by the slice 23 amendment below, once #31 landed.)*
 - **Keyboard,** with real Tab presses in Chrome so `:focus-visible` applies, on every route at both widths:
   - the first Tab focuses the skip link, wholly inside the viewport; Enter on it, then Tab, lands on an element at
     or after the start of `<main>`, never in the header; after the jump the first heading in `<main>` is not under
@@ -209,7 +209,8 @@ real-device half stays with the live host.
 
 - **The first Tab and the skip-link jump.** Criterion 5 said the first Tab focuses the skip link and that Enter on
   it, then Tab, lands in `<main>`. On `/lab/` the first Tab from a fresh page lands on the view buttons
-  ("Lineages"): the lab moves the focus starting point while it plants. That is lab code held by PR #31, so it is an
+  ("Lineages"): the lab moves the focus starting point while it plants. *(Fixed in slice 23: see "5, continued"
+  under Results.)* That is lab code held by PR #31, so it is an
   explicit exclusion and a follow-up. To keep the rest of the lab checked, the walk starts from the skip link,
   focused directly when the first Tab went elsewhere, and the jump is made from the skip link focused again after
   both walks. On every other route the first Tab is the skip link, and the test still checks that.
@@ -406,6 +407,59 @@ a criterion of its own, written before any code changes (slice 19, branch `claud
   and scanners that run scripts will show up in the counter's top pages. Counting the page as a fixed `/404` needs a
   change to `apps/lab/src/analytics.ts`, shared by every page and outside this slice, so it is a follow-up, as is a
   sentence on `/privacy/` saying a mistyped address is recorded as the page.)
+
+### 18 October 2026, slice 23: the lab-route rule lifted, stated before fixing
+
+PR #31 (Pond keeper v2) has landed on main, so the lab-route rule of criterion 5 ("a serious or critical finding in
+lab-only markup is excluded with that reason and listed as a follow-up") is withdrawn. Written before any product
+change (branch `claude/slice23-lab-a11y`, from f862bc2), after a read-only probe of main as it stands.
+
+- **Every `LAB_HELD` entry goes.** Each lab exclusion in `tests/e2e/public-a11y.spec.ts` is either fixed in the lab
+  and deleted (the spec already fails on an exclusion that no longer matches anything), or kept only as reviewed by
+  hand with a reason that names what was checked and the contrast read from the tokens, as the home page's arrow is.
+  The constant `LAB_HELD` is deleted; nothing may cite PR #31 any more.
+- **What the probe found, and the fix stated for each:**
+  - the first Tab on a fresh `/lab/` lands on "Lineages": `setMode()` in `main.ts` calls `scrollIntoView` on the lit
+    view button at start-up, and in Chrome that moves the sequential focus starting point to it (with
+    `scrollIntoView` stubbed out, the first Tab is the skip link). Fix: keep the lit view in sight by setting
+    `#views`' own `scrollLeft`, which moves no focus point and never scrolls the page;
+  - `#pools`, an `aria-label` on a plain `div` (a violation with no GPU, undecided with a world): `role="img"`, with
+    the label rebuilt from the same numbers as the bars' tooltips at each stats message ("What the matter is right
+    now: nutrient 41.2%, biomass …") and the plain label while there is no world;
+  - `aria-valid-attr-value` undecided on `#btn-worlds` and `#btn-card`: axe cannot decide `aria-controls` beside
+    `aria-haspopup` by rule. `aria-controls` is removed from those two (each opens a modal dialog that takes focus,
+    so the reference adds nothing); `aria-haspopup="dialog"` stays. Other `aria-controls` (on toggles with
+    `aria-expanded`) stay;
+  - `.worlds-nav button small` at 4.14:1 by day (`opacity: .78` over `--muted`): the opacity goes; at rest the line
+    takes `--soft` (held at 4.5:1 on `--surface` by DESIGN.md), pressed it inherits the sun ink, hovered it inherits
+    `--text`. The open dialog is also scanned in night colours;
+  - the header at 375 reaches Day/Night after the nav that is drawn below it (also true from 501 to 760 px, where
+    the header status sits beside the name): `main.ts` places `.header-status` before `.site-nav` at 760 px and
+    below and after it above, keeping focus, as `theme.ts` does on the public pages. The grid already places both
+    explicitly at those widths, so nothing moves on screen. A lab twin of the "every width and across a resize"
+    test walks the header at 1280, 1000, 760, 600 and 375;
+  - the full-screen exit fade ignores reduced motion: `.fs-exit` joins the lab's `prefers-reduced-motion` block;
+  - at 375 axe cannot decide the colours of the three view buttons the picker's sideways scroll clips. The picker
+    keeps its scroll (DESIGN.md: view modes stay horizontally reachable without page overflow). These stay as
+    reviewed by hand: the same `.seg button` colours as the five buttons beside them, which axe passes at the same
+    width, read from the tokens for both colours.
+- **Pond keeper v2 is scanned too.** Two lab states are added, each scanned in day and night colours: the breeder
+  (`/lab/?world=breeder&seed=1`) stepped by hundreds to t=500, with the family tree, its log, Next up, the log of
+  firsts and every `<details>` open, at 1280 and 375, axe and the full keyboard walk; and the Session card open
+  over it, axe at 1280 and 375 and a modal walk like the Browse all worlds one (focus stays in it, every control
+  reached both ways with a ring of 3:1, Close and a backdrop click hand focus back to Session card). The probe found
+  in the card: `scrollable-region-focusable` on `#card-body` (a scrolling body with nothing focusable in it), fixed
+  with `tabindex="0"`, `role="region"` and the card's heading as its name, and a ring for it in `style.css`; and
+  undecided contrast on the card's hint lines (axe cannot see the backdrop under a modal dialog), fixed if a plain
+  background on the line's box settles it, otherwise reviewed by hand against the tokens. Rows that a short history
+  does not reach (an extinct or gone-to-film family, Show extinct, Show all in the tree's log) are read, not run.
+- **Scans settle first.** Six night-colour contrast failures in the probe were the 160 ms colour fade caught half
+  way (a scan with no settle); the spec's own `toNight()` settles, and every new scan goes through it.
+- **Fixes** go only in `apps/lab/lab/index.html`, `apps/lab/src/main.ts`, `apps/lab/src/style.css`, the lab's
+  panel modules and `worlds-ui.ts` (markup, ARIA and focus only). `tokens.css`, `theme.ts`, `site.css`, the worker,
+  `execution.ts`, `protocol.ts` and every package stay untouched; nothing changes the simulation or a golden pin.
+  The lab specs `lab-worlds`, `lab-fullscreen`, `lab-pond-keeper` (v0), `lab-pond-keeper-v1`, `lab-pond-keeper-v2`
+  and `lab-execution` stay green. Screenshots of what looks different go in the pull request body.
 
 ## Results
 
@@ -621,7 +675,8 @@ either width, against about 3 minutes before).
   serious or critical violation, or a serious or critical result axe cannot decide, fails unless it is listed with
   its reason. Public pages: no violations of any impact. One undecided result, reviewed by hand and listed: the
   arrow inside Open the lab on the home page (`color-contrast`), `aria-hidden` decoration in the same ink on the same
-  sun fill as the button's label, which axe passes. Lab, listed with the reason "PR #31" and left to its follow-up:
+  sun fill as the button's label, which axe passes. *(The lab findings below were fixed or reviewed by hand in
+  slice 23: see "5, continued".)* Lab, listed with the reason "PR #31" and left to its follow-up:
   `aria-prohibited-attr` on `#pools` (a violation with no GPU, undecided with a world); `aria-valid-attr-value` on
   `#btn-worlds` and `#btn-card` (undecided); at 375 `color-contrast` on three view buttons (undecided); and one real
   violation found by scanning the open dialog, the family list's small lines (`.worlds-nav button small`, muted at
@@ -660,13 +715,13 @@ either width, against about 3 minutes before).
     (`html:has(:focus-visible)`), and links followed with a pointer still scroll smoothly;
   - at 1000px and below the Day/Night button was reached after the nav but drawn before it: `theme.ts` now places
     it before the nav at those widths (no visual change). Its border is now `--control-line`.
-  Lab-only, exclusions and follow-ups for PR #31: the first Tab lands on "Lineages"; at 375 the lab header draws its
+  Lab-only, exclusions and follow-ups for PR #31 *(both fixed in slice 23)*: the first Tab lands on "Lineages"; at 375 the lab header draws its
   Day/Night button ahead of tabs it follows in the markup.
 - **Reduced motion:** **Done.** On every route and the island page, with `prefers-reduced-motion: reduce`, `html`
   scrolls without animation, no element or pseudo-element has an animation or a transition longer than 0 s, and
   `document.getAnimations()` reports nothing running; without the setting the public pages scroll smoothly and the
   lab has transitions, so the check bites. The public pages have no animations (two pages update text on a timer,
-  which is not motion). Lab-only, an exclusion and a follow-up for PR #31: the full-screen exit button's fade
+  which is not motion). Lab-only, an exclusion and a follow-up for PR #31 *(fixed in slice 23)*: the full-screen exit button's fade
   (`.fs-exit`) is not in the lab's reduced-motion block.
 - **Without WebGPU:** **Done**, two ways. Chrome started with `--disable-gpu` (the test first checks that
   `requestAdapter()` answers `null`, and skips with its reason when the switch does something else): the lab shows
@@ -902,6 +957,199 @@ No test timed out. `deploy/Caddyfile` did not change in this round.
 
 - **Not claimed:** the live host and production's Caddy 2.10 itself; engines other than Chrome; that the page
   reads well to a screen reader (axe and the keyboard walk pass, nothing more).
+
+### 5, continued. Slice 23: the lab
+
+Run on 18 October 2026 in the slice worktree (branch `claude/slice23-lab-a11y`, from f862bc2), Chrome only, on the
+dev server through a copy of `playwright.config.ts` on port 5237 (other worktrees' runs use 5174). Nothing was
+committed, deployed or pushed. The rules are the ones stated before fixing (the slice 23 amendment above). This
+supersedes the lab-only exclusions and follow-ups listed under criterion 5: none is left that cites PR #31.
+
+| Gate | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| `pnpm typecheck` | exit 0 (and again after the Codex fix) | 46.99 / 43.44 / 42.25 before, 45.63 / 43.22 / 42.18 after |
+| `pnpm vitest run apps/lab/test` | 11 files, 266 passed, 220 s | 45.63 / 43.22 / 42.18 before, 94.04 / 53.17 / 45.56 after |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome --workers=2`, after the Codex fix | 78 passed, 1 skipped (the 404 `test.fixme`), 1.9 min | 109.27 / 86.12 / 64.59 before, 89.47 / 87.86 / 68.10 after |
+| `npx playwright test tests/e2e/lab-worlds.spec.ts tests/e2e/lab-fullscreen.spec.ts tests/e2e/lab-pond-keeper.spec.ts tests/e2e/lab-pond-keeper-v1.spec.ts tests/e2e/lab-pond-keeper-v2.spec.ts tests/e2e/lab-execution.spec.ts --project=chrome --workers=1` | 11 passed, 60 s | 88.22 / 73.61 / 55.46 before, 59.06 / 67.72 / 54.56 after |
+| The lab's tests in that spec (`-g "/lab/\|lab header\|lab's"`), after two last edits (the header status moved only when it must; the Pond keeper state waits for the log of firsts), with `pnpm typecheck` exit 0 | 13 passed, 30 s | 62.33 / 78.10 / 67.35 before, 99.95 / 85.75 / 70.56 after |
+| Every fix undone at once from a scratch script, the guarding tests run, the files restored (diff checksum identical after) | 9 of 9 fail, each on its own fix: `#pools` `aria-prohibited-attr` (undecided with a world, a violation with no GPU); `aria-valid-attr-value` on `#btn-worlds`; the first Tab on "Lineages" (`/lab/` at both widths and the Pond keeper); the Day/Night button drawn before "Journal" (`/lab/` at 375; the header test at 760); the family list's small lines at 4.14:1; "transition on button#btn-fs-exit.fs-exit"; `#card-body` missing from the Session card's controls; the Keep buttons "never reached" and "not counted" | 102.45 / 80.22 / 61.39 before, 119.10 / 87.19 / 64.71 after |
+| Codex (Sol 6.1, high, read-only) on the diff, first pass | one P2: the Session card's keyboard walk ran only at 1280 by day; fixed (it now runs at both widths in both colours, with axe at each), no other findings | not recorded |
+| Codex (Sol 6.1, **xhigh**, read-only) on the diff, the review stage | four P2s, no P0 or P1, verdict "fix first": the modal walk accepted focus stops that are not drawn; the lab header check could pass with the nav unreachable; the family log and its two toggles were never scanned; the review row above records high, not xhigh. All four fixed below. Final message in this session's scratchpad (`codex-review-1-final.txt`, prompt `codex-review-1-prompt.md`) | not recorded |
+
+No test timed out. Scans: 15 axe passes over the lab now (`/lab/` and the Pond keeper at both widths in both colours,
+Browse all worlds open at 1280 in both colours, the Session card open at both widths in both colours, the lab with
+no GPU), against six before.
+
+- **Fixed in the lab** (`apps/lab/lab/index.html`, `apps/lab/src/main.ts`, `apps/lab/src/style.css`):
+  - the first Tab on a fresh lab is the skip link: `setMode()` keeps the lit view in sight with `#views`' own
+    `scrollLeft` instead of `scrollIntoView`, which had made the view button Chrome's starting point for Tab;
+  - `#pools` is `role="img"`, named "What the matter is right now: nutrient 41.2%, biomass …" from the same numbers
+    as the bars' tooltips at each stats message, and "What the matter is right now: not counted yet" until one
+    has come (on load, and again whenever a world is replaced);
+  - `aria-controls` is gone from Browse all worlds and Session card (each keeps `aria-haspopup="dialog"`, and each
+    dialog takes focus as it opens);
+  - the family list's small lines are `--soft` at rest (5.5:1 by day, 5.3:1 at night on `--surface`), the name's
+    ink when pressed or hovered, with no opacity;
+  - at 760 px and below the nav is placed after the header status (and its Day/Night button) in the markup, before
+    it above, keeping focus across the change; nothing moves on screen. The nav is what moves, not the status: the
+    status line is a live region, and a moved live region may be read out again (review finding);
+  - the full-screen exit button's fade is off under reduced motion;
+  - the Session card's scrolling body takes focus (`tabindex="0"`, `role="region"`), with a ring drawn inside its
+    edge. It is named "Session card contents", not by the card's heading as stated before fixing: named by the
+    heading, a screen reader says "Session card" twice, for the dialog and then the region (review finding);
+  - found by the new Pond keeper walk, not by the probe: a paused world is counted for display every 600 ms, and
+    each count rebuilt Biggest lineages, so a Keep button with keyboard focus was replaced, and focused again, every
+    600 ms. The rows are now rebuilt only when what they show changes (whether they offer Keep, and each lineage's
+    key, share and colour); the signature is cleared with the rest of the evidence when a world is replaced. A
+    comment beside it says that anything a row comes to show must join the signature.
+- **Reviewed by hand, kept as listed exclusions with their reasons:**
+  - at 375, the three view buttons the picker's sideways scroll clips (Signal, Pull, Light), on `/lab/` and on the
+    Pond keeper: axe cannot see behind them; they wear the `.seg button` colours of the five beside them, which axe
+    passes (`--muted` on `--bg`, 6.3:1 by day, 7.4:1 at night);
+  - the Session card's wrapping hint lines (`#card-file-note` at both widths, the head's hint at 375): axe's model of
+    what is stacked under each line runs on into the inert page behind the modal card, and differs line by line
+    (seen with `axe.commons.dom.getTextElementStack`), so it cannot decide. Each line sits on the card bar's opaque
+    `--surface`: `--muted` on `--surface`, 7.1:1 by day and 7.0:1 at night. An opaque background on the line itself
+    was tried and did not settle it, so it was taken out again.
+- **Pond keeper and the Session card:** the breeder (seed 1) stepped by hundreds to t=500 (steps clicked by event so
+  no button takes focus), with the family tree (16 families), Next up (3 rungs) and the log of firsts (6 entries)
+  shown, every `<details>` open: axe and the full keyboard walk at 1280 and 375 in both colours, with nothing else
+  found. The tree's own log ("What the tree has seen") is still empty and hidden at t=500, so it is not scanned. The Session card is modal; opened from
+  the keyboard its heading takes focus; two rounds of Tab and of Shift+Tab never leave it and reach every control,
+  its body included, each with a ring of 3:1, in both colours at both widths; Close (and at 1280 a backdrop click)
+  hands focus back to Session card. An extinct or gone-to-film family, Show extinct, Show all and the tree's log,
+  which a history this short does not reach, were read only at first; the review stage below scans and walks them.
+- **Screenshots** (this session's scratchpad, `slice23-shots/`, not in the repository): Browse all worlds at 1280 by
+  day and at night, before and after (the small lines); the lab header at 375 and 600, before and after (375
+  identical to the pixel; at 600 only the status dot's colour differs, the world's state when shot); the Session card
+  at 1280 and 375 with its body focused (the new ring).
+
+#### Slice 23, after review (18 October 2026)
+
+Three review lenses and Codex (Sol 6.1, xhigh) read the uncommitted diff. No P0 or P1. What was found, and what
+was done:
+
+- **Fixed, P2:**
+  - *The final tree had not been through every gate* (the last two `main.ts` edits were checked with a subset). The
+    gates below are on the final tree.
+  - *The modal walk accepted focus stops that are not drawn* (Codex). Each stop inside a dialog must now be what is
+    drawn at its centre, on screen, within 2 s, as on the page. Broken on purpose (Download session file moved
+    3,000 px off screen): fails on that button, both ways, both colours.
+  - *The lab header check could pass with the nav unreachable* (Codex). At each width the header's Tab stops must
+    equal every control the header shows, in the order drawn (rows top to bottom, along a row left to right), read
+    from the page; widths 800 and 761 are added beside 760, so the breakpoint `main.ts` shares with `style.css` is
+    tried on both sides. Broken on purpose (`tabindex="-1"` on Worlds): fails at 1280.
+  - *The family log and its toggles were never scanned* (Codex and the coverage lens). A fixture tree in the
+    worker's own message shape (FamiliesMsg) is posted from inside the lab's worker once the breeder stands at
+    t=500 (a paused world posts no tree of its own until it steps): nine families, nested to depth 2, three living,
+    one gone to film, five extinct (one more than the panel shows unfolded), and eleven log events (three more than
+    it shows at first), so Show extinct and Show all both appear. The Pond keeper axe tests scan it with both
+    toggles opened from the keyboard, in both colours at both widths; the Pond keeper keyboard walk runs over it
+    folded, then checks that the opened toggles reach each other by Tab and Shift+Tab, drawn and ringed. Broken on
+    purpose (`tabindex="-1"` on Show all): "never reached" both ways. The first scan found the log's heading and
+    first row undecided at 1280: focus on Show all had scrolled the evidence column and cut them at its edge, so the
+    scan now starts with every scroller back at the top, as the page's first scan does.
+  - *`#pools` and the Keep buttons had no direct assertion.* The Pond keeper axe tests assert the pools' name carries
+    four shares once counted, and the no-`navigator.gpu` test that it says "not counted yet". They also hold the
+    first Keep button and require the same node, connected, after three more counts have reached the page; and the
+    Pond keeper's set-up waits for the count for t=500 itself, since on a loaded machine it lands seconds after the
+    step and rebuilds the rows once (which is what had failed the first rerun, at load 296), then requires Biggest
+    lineages to stay unrebuilt through three more counts. The counts are heard by a listener the test adds to the
+    page's `Worker` before the lab's script runs, so a check cannot pass on time alone with no count delivered (the
+    second Codex pass, below: the first version waited 2 s and 4 s of quiet, which a slow worker could satisfy with no
+    count at all). Broken on purpose: without the `onStats` label, the pools assertion fails; without the dedupe, the
+    set-up fails on "is not rebuilt by counts of a paused world".
+  - *The view picker's new scroll code had no test.* At 375, keys 8, 7, 1 and 8 must each leave the lit view inside
+    `#views`' box without scrolling the page; the picker is checked to overflow first. Broken on purpose (the scroll
+    code off): fails on Light and Pull.
+  - *The review row recorded high, not xhigh* (Codex): the table above records both reviews.
+- **Fixed, P3:** the reviewed contrast exclusions now measure themselves: for each node axe leaves undecided and the
+  list lets through, `scan()` reads the text colour against the layers drawn under it and fails under 4.5:1
+  (broken on purpose, Light at `--line`: 1.44:1 by day, 1.69:1 at night, fails); the clipped view buttons'
+  exclusion covers the fixture state too. Reduced motion is also checked on the Pond keeper with the full tree
+  shown and with the Session card open, `::backdrop` included. `#pools` names an empty picture as such; the card
+  body's name; the live region no longer moves; the comment on the row signature; the older criterion 5 passages
+  that cite PR #31 are marked as fixed or withdrawn in slice 23.
+- **Not changed, with the reason:**
+  - lab coverage skips without a GPU adapter, so a host with none passes with the lab unchecked. Every lab spec in
+    the repository skips the same way, the two no-GPU tests cover that host, and the run's skipped count shows it;
+  - `aria-controls` stays off Browse all worlds and Session card (stated before fixing: each opens a modal dialog
+    that takes focus);
+  - the card body is a Tab stop even when it does not scroll: a stop that comes and goes with the content's height,
+    and with the window's, is harder to predict than one that is always there;
+  - whether a screen reader re-announces anything as the header reorders is not verified (no screen reader here);
+    the status line, the live region, no longer moves.
+
+| Gate, on the final tree | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| `pnpm typecheck` | exit 0 | 46.67 / 150.50 / 146.33 before, 44.61 / 148.35 / 145.60 after |
+| `pnpm vitest run apps/lab/test` | 11 files, 266 passed, 209 s | 44.61 / 148.35 / 145.60 before, 19.63 / 84.11 / 118.49 after |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome --workers=2` | 79 passed, 1 skipped (the 404 `test.fixme`), 2.9 min | 19.63 / 84.11 / 118.49 before, 213.12 / 133.85 / 131.52 after |
+| `npx playwright test` over `lab-worlds`, `lab-fullscreen`, `lab-pond-keeper`, `lab-pond-keeper-v1`, `lab-pond-keeper-v2`, `lab-execution` (`--project=chrome --workers=1`) | 11 passed, 47 s | 213.12 / 133.85 / 131.52 before, 106.07 / 116.90 / 125.38 after |
+| The seven guards above broken on purpose from a scratch copy, run, and the files restored (diff checksum identical after) | each fails on its own break, as listed above | 274.49 / 241.40 / 167.77 to 51.20 / 154.89 / 147.81 across the four runs |
+
+No test timed out or was retried. Before the final gates, the Pond keeper tests failed once at load 296 on the
+count that lands after t=500 (the set-up now waits for it, above); the reruns after that fix passed.
+
+#### Slice 23, second Codex pass (18 October 2026)
+
+Codex (Sol 6.1, xhigh, read-only) read the diff and the fix log above, aimed at what the first pass would miss. No
+P0 or P1, and no defect in the product fixes; it computed the family list's small lines at 5.51:1 by day and 5.33:1
+at night at rest, over 9:1 hovered or pressed, and found no scope violation. Two findings, both in the spec, both
+fixed:
+
+- **P2, the Keep check could pass with no count delivered.** The 4 s of quiet in the set-up and the 2 s wait in the
+  axe test needed no census to arrive, so on a slow worker both could pass before the count for t=500, which could
+  then rebuild the rows during the keyboard walk. The test now hears every census the worker posts (a listener added
+  to the page's `Worker` before the lab's script runs, test side only), waits for the one for t=500, and requires
+  three more, each of t=500, both for the rows to stay unrebuilt in the set-up and for the first Keep button to stay
+  the same node. Broken on purpose (the dedupe off): the set-up fails with 3 rebuilds in each Pond keeper and Session
+  card test.
+- **P3, the reviewed contrast measurement ignored opacity.** `__textContrast` now mixes the text toward its backdrop
+  by the product of the opacities on the element and its ancestors. Broken on purpose (`opacity: .5` on the Light
+  view button): at 375 the reviewed exclusion now fails at 2.21:1 by day and 2.7:1 at night (it measured 6.34:1
+  before); at 1280 axe itself fails it.
+
+| Gate, after the second Codex pass | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| Codex (Sol 6.1, xhigh, read-only), second pass | one P2, one P3, both fixed as above (final message `s23-codex-review-2-final.txt`, prompt `s23-codex-review-2-prompt.md`, full run `codex-review-2.txt`, all in this session's scratchpad) | 142.40 / 119.56 / 125.19 before, 38.40 / 99.92 / 117.78 after |
+| `pnpm typecheck` | exit 0 | 65.01 / 97.34 / 108.18 |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome --workers=2` | 79 passed, 1 skipped (the 404 `test.fixme`), 2.2 min. A first run failed the six Pond keeper and Session card tests on a wrong selector in the new set-up (`#top-lin li`; the rows are `div`s), fixed before this run | 112.37 / 112.56 / 114.41 before, 100.24 / 108.01 / 112.37 after |
+| Both guards broken on purpose at once (`-g "axe: /lab/ "`), the files restored (diff checksum identical after) | 6 of 6 fail, as listed above | 82.60 / 103.73 / 110.76 before, 72.40 / 99.82 / 109.17 after |
+
+The lab specs and `vitest run apps/lab/test` were not run again: since their final-tree runs above, only
+`tests/e2e/public-a11y.spec.ts` and this document have changed.
+
+#### Slice 23, third Codex pass (18 October 2026)
+
+Codex (Sol 6.1, xhigh, read-only) checked the second pass's two fixes and what they might have brought in: the
+census listener on the page's `Worker`, the waits for counts, the observer on Biggest lineages, the opacity in the
+contrast measurement, and this document. No P0, P1 or P2, and no scope violation. One finding:
+
+- **P3, opacity still faded only the text.** The second pass's measurement mixed the text toward the backgrounds
+  under it but left those backgrounds as they were, so a faded element's own background, or a faded ancestor's, was
+  measured at full strength. White text on black inside `opacity: .5` over white measured about 5.3:1; drawn, it is
+  white on grey, about 4.0:1. Fixed: `__textContrast` now draws one pixel of the element twice, with its text and
+  without, the way the browser does: each element from the page down is a layer of its own (its background, then
+  what is inside it) laid on what is behind it at its own opacity. On a scratch page that case now measures 4.06:1;
+  white on black, white text at `opacity: .5` on black, and `#767676` on white measure 21, 5.32 and 4.54:1, as
+  they should. Broken on purpose again (`opacity: .5` on the Light view button): 375 fails at 2.22:1 by day and
+  2.7:1 at night (2.21:1 by day before: the button's own background, `--raised`, is close to what is behind it, so fading it
+  moves the result only within rounding), and
+  1280 fails on axe itself.
+- **Not changed, with the reason:** the focus-ring contrast check (`__ring`) still reads the backgrounds behind a
+  ring without opacity. Codex did not raise it; a ring is drawn on its parent's backdrop rather than on the
+  element's, so it needs its own compositing path, not a one-line change.
+
+| Gate, after the third Codex pass | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| Codex (Sol 6.1, xhigh, read-only), third pass | one P3, fixed as above (final message `s23-codex-review-3-final.txt`, prompt `s23-codex-review-3-prompt.md`, full run `s23-codex-review-3.txt`, all in this session's scratchpad) | 35.03 / 79.29 / 100.14 before, 16.66 / 49.99 / 83.37 after |
+| `pnpm typecheck` | exit 0 | 25.72 / 43.44 / 77.09 |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome --workers=2` | 79 passed, 1 skipped (the 404 `test.fixme`), 1.8 min | 27.73 / 43.08 / 76.38 before, 36.83 / 42.16 / 72.03 after |
+| The opacity guard broken on purpose (`-g "axe: /lab/ at"`), `style.css` restored (diff checksum identical after) | 2 of 2 fail, as listed above | 54.67 / 45.79 / 72.63 before, 100.73 / 57.89 / 75.94 after |
+
+Only `tests/e2e/public-a11y.spec.ts` and this document changed in this pass, so the lab specs and
+`vitest run apps/lab/test` stand on their final-tree runs above.
 
 ### Known gaps left open by this slice
 

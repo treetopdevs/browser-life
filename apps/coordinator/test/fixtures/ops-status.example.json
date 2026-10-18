@@ -224,6 +224,12 @@
       "last_seen": 1792799998000,
       "runs": 9,
       "verifies": 4,
+      "capabilities": [
+        "breed-v1",
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2"
+      ],
       "stale": false
     },
     {
@@ -235,6 +241,11 @@
       "last_seen": 1792799996000,
       "runs": 14,
       "verifies": 6,
+      "capabilities": [
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2"
+      ],
       "stale": false,
       "garden": true
     },
@@ -247,6 +258,13 @@
       "last_seen": 1792792800000,
       "runs": 3,
       "verifies": 1,
+      "capabilities": [
+        "breed-v1",
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2",
+        "zz-preview"
+      ],
       "stale": true,
       "garden": true
     },
@@ -354,6 +372,40 @@
       "treatment": [
         "interventions-v1"
       ]
+    }
+  },
+  "islandCapabilities": {
+    "byCapability": {
+      "breed-v1": {
+        "islands": 2,
+        "live": 1,
+        "known": true
+      },
+      "interventions-v1": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "ponds-v1": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "ponds-v2": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "zz-preview": {
+        "islands": 1,
+        "live": 0,
+        "known": false
+      }
+    },
+    "omittedNames": 0,
+    "none": {
+      "islands": 1,
+      "live": 1
     }
   }
 }

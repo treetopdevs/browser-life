@@ -120,7 +120,28 @@ defmodule CoordinatorWeb.ApiController do
     end
   end
 
+  # The garden island token belongs in the JSON body, where the runner sends it
+  # (`IslandOptions.gardenToken`): a URL can land in proxy and access logs, so a
+  # `gardenToken` query parameter (any value, empty included, with or without
+  # one in the body) is refused, without its value, and nothing joins. With the
+  # query key refused, `params` (query and body merged; this route has no path
+  # params) can carry `gardenToken` only from the body, and that body is JSON:
+  # `CoordinatorWeb.IslandBodyLimit` answers a form-encoded or multipart join
+  # 415 before its body is read. Charged to the join budget like any other
+  # answered join (the plugs run first).
   def join(conn, params) do
+    if Map.has_key?(fetch_query_params(conn).query_params, "gardenToken") do
+      conn
+      |> put_status(400)
+      |> json(%{
+        error: "gardenToken belongs in the JSON body of POST /api/islands, never in the URL"
+      })
+    else
+      join_island(conn, params)
+    end
+  end
+
+  defp join_island(conn, params) do
     case Queue.join(params) do
       {:ok, cred} ->
         json(conn, cred)
@@ -157,7 +178,8 @@ defmodule CoordinatorWeb.ApiController do
   # moduledoc) gate pond work for this request only. A well-formed JSON body
   # whose `capabilities` is anything but a short list of short strings counts
   # as none, so it never unlocks gated work (a body that is not JSON at all is
-  # still refused by the parser, as on every other route).
+  # still refused by the parser, as on every other route). The Queue records a
+  # cleaned copy on the island for the operator page; that copy never gates.
   def next(conn, params) do
     {:ok, task} = Queue.next_task(conn.assigns.island, capabilities(params["capabilities"]))
     json(conn, task)

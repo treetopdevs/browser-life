@@ -414,6 +414,8 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .card-head h2 { margin: 0 0 4px; font-size: var(--t-title); line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
 .card-head h2:focus { outline: none; }
 .card-body { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 22px 18px; scrollbar-color: var(--line) transparent; }
+/* The body scrolls, so it takes focus (index.html) for the keys that scroll it; its ring is drawn inside its own edge. */
+.card-body:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
 .card-section { padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
 .card-section h3 { margin: 0 0 10px; font-size: var(--t-body); line-height: 1.3; font-weight: 700; letter-spacing: -.01em; }
 .card-section .kv + .hint, .card-section .card-table-wrap + .hint { margin-top: 10px; }
@@ -444,7 +446,9 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .worlds-nav button:hover { background: var(--hover); border-color: transparent; color: var(--text); }
 .worlds-nav button[aria-pressed="true"] { background: var(--sun); border-color: var(--sun); color: var(--accent-ink); font-weight: 700; }
 .worlds-nav button[aria-pressed="true"]:hover { background: color-mix(in oklch, var(--sun) 90%, var(--text)); }
-.worlds-nav button small { display: block; color: inherit; opacity: .78; font-size: var(--t-micro); font-weight: 500; line-height: 1.35; }
+/* The small line sits a step lighter than the name at rest (--soft holds 4.5:1 on every surface); lit or hovered it takes the name's ink. */
+.worlds-nav button small { display: block; color: var(--soft); font-size: var(--t-micro); font-weight: 500; line-height: 1.35; }
+.worlds-nav button:hover small, .worlds-nav button[aria-pressed="true"] small { color: inherit; }
 .worlds-main { min-height: 0; overflow-y: auto; padding: 20px 22px 28px; scrollbar-color: var(--line) transparent; }
 .worlds .world-card button { min-height: 32px; padding: 5px 12px; font-size: var(--t-small); }
 
@@ -553,5 +557,6 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .site-nav a { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  button, .button, .toast, .status-dot { transition: none; }
+  /* .fs-exit is listed by name: its own fade outranks the button rule. */
+  button, .button, .toast, .status-dot, .fs-exit { transition: none; }
 }

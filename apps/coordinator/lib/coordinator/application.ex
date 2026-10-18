@@ -7,6 +7,10 @@ defmodule Coordinator.Application do
 
   @impl true
   def start(_type, _args) do
+    # A limit, window, cap or cache setting of the wrong shape stops the boot
+    # here, by name, before anything starts (Coordinator.ConfigCheck).
+    Coordinator.ConfigCheck.check!()
+
     children = [
       CoordinatorWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:coordinator, :dns_cluster_query) || :ignore},
