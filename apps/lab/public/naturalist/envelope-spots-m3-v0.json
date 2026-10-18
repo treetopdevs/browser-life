@@ -1,0 +1,157 @@
+{
+  "kind": "naturalist-envelope",
+  "version": 0,
+  "preset": "spots-m3",
+  "rule": "bell-v0-calibrated",
+  "presetIdentity": "a9f93070127a0c05",
+  "ruleVersion": 1,
+  "cadence": 100,
+  "burnIn": 10000,
+  "horizon": 300000,
+  "censuses": 3000,
+  "rateLag": 10,
+  "W": 50,
+  "threshold": {
+    "Z": 11.4665,
+    "strict": true
+  },
+  "signals": [
+    {
+      "name": "livingCells",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "individuals",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "meanMass",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "lineages",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "lineageShannon",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "patternEntropy",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "bioticRecycling",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "maxGeneration",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "dominantShare",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "lineages"
+    },
+    {
+      "name": "fissions",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "fusions",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "buddings",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "mutations",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    }
+  ],
+  "envelope": {
+    "id": "bell-v0 all-neutral spots-m3 (the 30 spots-m3 neutral runs of the bell corpus)",
+    "runs": [
+      "replay-calib/spots-m3/neutral/seed-1001",
+      "replay-calib/spots-m3/neutral/seed-1002",
+      "replay-calib/spots-m3/neutral/seed-1003",
+      "replay-calib/spots-m3/neutral/seed-1004",
+      "replay-calib/spots-m3/neutral/seed-1005",
+      "replay-calib/spots-m3/neutral/seed-1006",
+      "replay-calib/spots-m3/neutral/seed-1007",
+      "replay-calib/spots-m3/neutral/seed-1008",
+      "replay-calib/spots-m3/neutral/seed-1009",
+      "replay-calib/spots-m3/neutral/seed-1010",
+      "replay-calib/spots-m3/neutral/seed-1011",
+      "replay-calib/spots-m3/neutral/seed-1012",
+      "replay-calib/spots-m3/neutral/seed-1013",
+      "replay-calib/spots-m3/neutral/seed-1014",
+      "replay-calib/spots-m3/neutral/seed-1015",
+      "replay-calib/spots-m3/neutral/seed-1016",
+      "replay-calib/spots-m3/neutral/seed-1017",
+      "replay-calib/spots-m3/neutral/seed-1018",
+      "replay-calib/spots-m3/neutral/seed-1019",
+      "replay-calib/spots-m3/neutral/seed-1020",
+      "replay-m4/spots-m3/neutral/seed-1",
+      "replay-m4/spots-m3/neutral/seed-2",
+      "replay-m4/spots-m3/neutral/seed-3",
+      "replay-m4/spots-m3/neutral/seed-4",
+      "replay-m4/spots-m3/neutral/seed-5",
+      "replay-m4/spots-m3/neutral/seed-6",
+      "replay-m4/spots-m3/neutral/seed-7",
+      "replay-m4/spots-m3/neutral/seed-8",
+      "replay-m4/spots-m3/neutral/seed-9",
+      "replay-m4/spots-m3/neutral/seed-10"
+    ]
+  },
+  "bin": {
+    "file": "envelope-spots-m3-v0.bin",
+    "bytes": 624000,
+    "sha256": "8678878c3a495f3211d257c4d78a0257d7ca29e6dc8837974519cbcb9c136f4c",
+    "layout": "float64 little-endian, [census][signal][median, spread], census i at step (i + 1) * cadence; undefined (a rate before rateLag censuses) is NaN 0x7ff8000000000000"
+  },
+  "records": [
+    {
+      "path": "experiments/naturalist/bell-v0.json",
+      "sha256": "5f90e11f986165bb14b4f1a7d28aed5f58a9575313d8200cb317c4d693fb220c"
+    }
+  ],
+  "numbers": {
+    "nullCheck": {
+      "what": "held-out",
+      "k": 0,
+      "of": 10,
+      "upper95": 0.2588655508930523
+    },
+    "arms": null,
+    "twins": null,
+    "calibRuns": 20,
+    "calibSecond": 4.047
+  }
+}
