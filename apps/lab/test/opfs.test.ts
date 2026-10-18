@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RECORDS_WAIT_MS, StorageError, forgetCheckpoint, listCheckpoints, pruneCheckpoints, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "../src/opfs.ts";
+import { RECORDS_WAIT_MS, StorageError, dropRewind, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readManifest, readRewind, recordCheckpoint, storageProblem, storeFull, writeFile, writeManifest, writeRewind } from "../src/opfs.ts";
 import type { CheckpointMeta, RunManifest } from "../src/protocol.ts";
+import type { RewindRecord } from "../src/session-file.ts";
 
 /** What WebKit's ephemeral sessions (Safari Private Browsing among them) answer to getDirectory. */
 const refused = () => Promise.reject(new DOMException("The operation failed for an unknown transient reason (e.g. out of memory).", "UnknownError"));
@@ -11,12 +12,14 @@ function browser(getDirectory: () => Promise<unknown>) {
   vi.stubGlobal("navigator", { storage: { getDirectory } });
 }
 
-type Faults = { open?: string; remove?: string; write?: string; flush?: string };
+type Faults = { open?: string; remove?: string; write?: string; flush?: string; room?: number };
 
 /**
  * An in-memory checkpoints directory. Each fault names a file and applies once: `open`, the store will not open it;
  * `remove`, will not remove it; `write`, the next write to it runs out of room halfway; `flush`, the next flush of it
  * fails and what was written is lost. A write or flush fault comes after the truncate, so the file is left torn.
+ * `room`, unlike the others, holds for every file: the bytes the whole directory may hold, past which a write lands what
+ * fits and then runs out of room, as a store at its quota does.
  */
 function store(faults: Faults) {
   const files = new Map<string, Uint8Array>();
@@ -38,6 +41,14 @@ function store(faults: Faults) {
               if (once("write", name)) {
                 files.set(name, buf.slice(0, buf.byteLength >> 1));
                 throw new DOMException("The operation failed because it would cause the application to exceed its storage quota.", "QuotaExceededError");
+              }
+              if (faults.room !== undefined) {
+                let others = 0;
+                for (const [n, b] of files) if (n !== name) others += b.byteLength;
+                if (others + buf.byteLength > faults.room) {
+                  files.set(name, buf.slice(0, Math.max(0, faults.room - others)));
+                  throw new DOMException("The operation failed because it would cause the application to exceed its storage quota.", "QuotaExceededError");
+                }
               }
               files.set(name, buf.slice());
               return buf.byteLength;
@@ -251,6 +262,7 @@ describe("lab checkpoint storage", () => {
     const m = { runId: "pruned", interventions: [], checkpoints: ["a.blck", "b.blck"].map((file) => ({ file, step: 1, hash: "h", interventions: 0 })) } as unknown as RunManifest;
     for (const file of ["a.blck", "b.blck"]) {
       await writeFile(file, new Uint8Array([1]));
+      await writeRewind(file, record());
       await recordCheckpoint({ ...meta(file), runId: m.runId });
     }
     await writeManifest(m);
@@ -265,6 +277,8 @@ describe("lab checkpoint storage", () => {
     await pruneCheckpoints(m, ["a.blck", "b.blck"]);
     expect((await readManifest(m.runId))!.checkpoints).toEqual([]);
     expect(await shelf()).toEqual([]);
+    // An automatic copy pruned takes its log's sidecar with it.
+    expect([...files.keys()].filter((f) => f.startsWith("a.blck") || f.startsWith("b.blck"))).toEqual([]);
   });
 
   it("compares legacy histories and refuses writes without cross-tab serialization", async () => {
@@ -317,16 +331,161 @@ describe("lab checkpoint storage", () => {
 
   it("forgets a checkpoint only once its file is gone, and shrugs at files already gone", async () => {
     const faults: { remove?: string } = {};
-    store(faults);
+    const files = store(faults);
     for (const f of ["a.blck", "a.blck.edges", "b.blck"]) await writeFile(f, new Uint8Array(4));
+    await writeRewind("a.blck", record());
     for (const f of ["a.blck", "b.blck"]) await recordCheckpoint(meta(f));
     faults.remove = "a.blck";
     await expect(forgetCheckpoint("a.blck")).rejects.toBeInstanceOf(StorageError);
     expect(await shelf()).toEqual(["a.blck", "b.blck"]);
+    // A log sidecar the store will not let go keeps the checkpoint's index entry for a retry, as its edges do (the shelf
+    // no longer shows it, its file being gone).
+    faults.remove = "a.blck.rewind";
+    await expect(forgetCheckpoint("a.blck")).rejects.toBeInstanceOf(StorageError);
+    expect(await shelf()).toEqual(["b.blck"]);
+    expect(files.has("a.blck.rewind")).toBe(true);
     delete faults.remove;
     await forgetCheckpoint("a.blck");
-    // b has no edges sidecar: a file already gone is no failure.
+    expect([...files.keys()].filter((f) => f.startsWith("a.blck"))).toEqual([]);
+    // b has no edges or log sidecar: a file already gone is no failure.
     await forgetCheckpoint("b.blck");
     expect(await shelf()).toEqual([]);
+  });
+});
+
+/** A checkpoint's log as the worker keeps it; the store reads only its envelope (`openFirstsLog` judges the snapshots). */
+const record = (hash = "h-100"): RewindRecord =>
+  ({
+    firsts: { version: 1, lastStep: 100, watchedFrom: 100, entries: [{ id: "first-body", step: 100 }] },
+    picks: [[0, true]],
+    hash,
+    families: { tree: { version: 1, lastStep: 100, families: [] }, genealogy: { edgesFrom: 0, edges: 7, dropped: 0 } },
+  }) as unknown as RewindRecord;
+
+describe("the log kept beside a checkpoint", () => {
+  it("keeps a checkpoint's log beside it and reads it back whole", async () => {
+    const files = store({});
+    const kept = record();
+    await writeRewind("r-t100-x.blck", kept);
+    expect(files.has("r-t100-x.blck.rewind")).toBe(true);
+    expect(await readRewind("r-t100-x.blck")).toEqual(kept);
+    // A log whose tree had stopped has no families, and reads back so.
+    const alone: RewindRecord = { ...record("h-200"), families: undefined };
+    await writeRewind("r-t200-y.blck", alone);
+    expect(await readRewind("r-t200-y.blck")).toEqual(alone);
+    // Only the log: the shelf is untouched.
+    expect(await shelf()).toEqual([]);
+  });
+
+  it("a checkpoint saved before the log was kept has none", async () => {
+    store({});
+    await writeFile("old.blck", new Uint8Array(4));
+    await expect(readRewind("old.blck")).resolves.toBeNull();
+  });
+
+  for (const fault of ["write", "flush"] as const) {
+    it(`a sidecar cut short by a ${fault} is removed at once, so it holds no room the records need`, async () => {
+      const faults: Faults = {};
+      const files = store(faults);
+      faults[fault] = "x.blck.rewind";
+      const err = await writeRewind("x.blck", record()).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(StorageError);
+      // Only a write that ran out of room says the store is full.
+      expect(storeFull(err)).toBe(fault === "write");
+      expect(files.has("x.blck.rewind")).toBe(false);
+      await expect(readRewind("x.blck")).resolves.toBeNull();
+    });
+
+    it(`a sidecar cut short by a ${fault} that the store will not remove either reads as none, and goes with its checkpoint`, async () => {
+      const faults: Faults = {};
+      const files = store(faults);
+      await writeFile("x.blck", new Uint8Array(4));
+      faults[fault] = "x.blck.rewind";
+      faults.remove = "x.blck.rewind";
+      // The write's own refusal (a full store, for a write), not the removal's.
+      const err = await writeRewind("x.blck", record()).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(StorageError);
+      expect(storeFull(err)).toBe(fault === "write");
+      expect(files.has("x.blck.rewind")).toBe(true);
+      expect(() => JSON.parse(new TextDecoder().decode(files.get("x.blck.rewind")))).toThrow();
+      await expect(readRewind("x.blck")).resolves.toBeNull();
+      delete faults.remove;
+      await forgetCheckpoint("x.blck");
+      expect(files.has("x.blck.rewind")).toBe(false);
+    });
+  }
+
+  it("a store whose last room the sidecar took lists the checkpoint once the sidecar is given up", async () => {
+    // saveCheckpoint's order (sim.worker.ts): the checkpoint, the sidecar, then the run's manifest that lists the checkpoint.
+    const faults: Faults = {};
+    const files = store(faults);
+    const run = { runId: "full", interventions: [], checkpoints: [] } as unknown as RunManifest;
+    await writeManifest(run);
+    await writeFile("full-t100.blck", new Uint8Array(64));
+    const used = () => [...files.values()].reduce((n, b) => n + b.byteLength, 0);
+    const interventions = Array.from({ length: 40 }, (_, i) => ({ step: i, kind: "feed" }));
+    const listed = { ...run, interventions, checkpoints: [{ step: 100, file: "full-t100.blck", hash: "h", interventions: 40 }], storageRevision: (await readManifest("full"))!.storageRevision } as unknown as RunManifest;
+    // Room for the manifest's update (its `.prev` copy, then the update itself) and no more: the update fits without the sidecar,
+    // and the sidecar fits without the update.
+    const before = files.get("full.run.json")!.byteLength;
+    const update = JSON.stringify(listed).length;
+    const sidecar = JSON.stringify({ format: "cadence-garden.rewind", version: 1, checkpoint: "full-t100.blck", record: record() }).length;
+    expect(sidecar + before).toBeLessThan(update);
+    faults.room = used() + update;
+    await writeRewind("full-t100.blck", record());
+    expect(await readRewind("full-t100.blck")).toEqual(record());
+    const err = await writeManifest(listed).catch((e: unknown) => e);
+    expect(storeFull(err)).toBe(true);
+    // Not listed yet: what a restore reads is the run as it was. Written again with the sidecar still there, it fails again.
+    expect((await readManifest("full"))!.checkpoints).toEqual([]);
+    expect(storeFull(await writeManifest(listed).catch((e: unknown) => e))).toBe(true);
+    expect((await readManifest("full"))!.checkpoints).toEqual([]);
+    await dropRewind("full-t100.blck");
+    await writeManifest(listed);
+    expect((await readManifest("full"))!.checkpoints.map((c) => c.file)).toEqual(["full-t100.blck"]);
+    expect(files.has("full-t100.blck.rewind")).toBe(false);
+  });
+
+  it("dropRewind removes a whole sidecar, is content when there is none, and refuses when the store will not remove it", async () => {
+    const faults: Faults = {};
+    const files = store(faults);
+    await writeRewind("x.blck", record());
+    faults.remove = "x.blck.rewind";
+    await expect(dropRewind("x.blck")).rejects.toBeInstanceOf(StorageError);
+    expect(files.has("x.blck.rewind")).toBe(true);
+    delete faults.remove;
+    await dropRewind("x.blck");
+    expect(files.has("x.blck.rewind")).toBe(false);
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    await expect(dropRewind("x.blck")).resolves.toBeUndefined();
+  });
+
+  it("a sidecar that parses but is not a record, or names another checkpoint, reads as none", async () => {
+    const files = store({});
+    const put = (v: unknown) => files.set("x.blck.rewind", new TextEncoder().encode(JSON.stringify(v)));
+    put({});
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    put({ format: "cadence-garden.rewind", version: 1, checkpoint: "x.blck", record: { ...record(), picks: [[0, "yes"]] } });
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    put({ format: "cadence-garden.rewind", version: 1, checkpoint: "x.blck", record: { ...record(), families: { tree: {}, genealogy: { edgesFrom: 0 } } } });
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    put({ format: "cadence-garden.rewind", version: 2, checkpoint: "x.blck", record: record() });
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    put({ format: "cadence-garden.rewind", version: 1, checkpoint: "other.blck", record: record() });
+    await expect(readRewind("x.blck")).resolves.toBeNull();
+    put({ format: "cadence-garden.rewind", version: 1, checkpoint: "x.blck", record: record() });
+    await expect(readRewind("x.blck")).resolves.toEqual(record());
+  });
+
+  it("a store that will not open the sidecar refuses rather than forgets", async () => {
+    const faults: Faults = {};
+    store(faults);
+    await writeRewind("x.blck", record());
+    faults.open = "x.blck.rewind";
+    const e = await readRewind("x.blck").then(() => null, (err: unknown) => err);
+    expect(e).toBeInstanceOf(StorageError);
+    expect(missingFile(e)).toBe(false);
+    // The fault applied once: the sidecar is still there, whole.
+    await expect(readRewind("x.blck")).resolves.toEqual(record());
   });
 });

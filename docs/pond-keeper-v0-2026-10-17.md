@@ -76,7 +76,8 @@ The log belongs to the history on screen.
   stood at that checkpoint; the replay forward re-derives the later firsts from the same censuses.
 - A checkpoint saved on an earlier visit, or a file opened, has no log kept with it (storing it
   in the checkpoint would change the observer digest, which this slice does not touch): the log
-  starts afresh with "watching since t = …".
+  starts afresh with "watching since t = …". *(Amended 2026-10-18: a checkpoint saved to this browser's storage
+  now keeps its log beside it; see the amendment at the end of this note.)*
 - The replay twin (Does it replay the same?) never feeds the log.
 
 ## The session card
@@ -128,3 +129,40 @@ are settled here, in words, rather than left to the code; neither changes a thre
   earlier, then the smaller lineage key.
 - **A session file needs a census.** A world that has not yet reached its first census has no history
   to replay (the runner refuses `--steps 0`), so no file is offered until then.
+
+## Amendment (2026-10-18): the log is kept beside a saved checkpoint
+
+Written with the code that implements it (backlog slice 36). It replaces the third bullet of "Following the world
+on screen" ("A checkpoint saved on an earlier visit … has no log kept with it"); the rules of the log, the baseline and
+the family tree's own condition (v2 section 4) are unchanged.
+
+- **A sidecar per checkpoint.** Each checkpoint the lab saves to this browser's storage gets a small file beside it,
+  `<checkpoint>.rewind`, holding what the page kept in memory until now: the log of firsts as it stood at that census,
+  the notes on who chose each pick up to it, the checkpoint's state hash and, when the tree had not stopped, the family
+  tree with the genealogy it was read against. The checkpoint file itself (`.blck`) is not touched: its bytes and its
+  observer digest are what they were, and a downloaded checkpoint carries no log, as before.
+- **Written once, before the checkpoint is listed.** The sidecar is written after the checkpoint and its `.edges` and
+  before the run's manifest and the shelf name the checkpoint, under the lock the lab's records already take, and never
+  rewritten. A log that had stopped writes no sidecar, so a restore of that checkpoint starts afresh, as on the same
+  page today.
+- **A sidecar the store will not write does not refuse the save.** Unlike `.edges`, which a replay needs, the log is
+  not needed to continue the world, and refusing would cost the checkpoint itself (every automatic copy, on a store
+  near its quota). The checkpoint is kept and listed without its log, a notice says so, and whatever part of the
+  sidecar the store did write is removed at once, so it holds no room the records need; a restore on another page
+  starts afresh, while this page still holds the log in memory. If the store will not remove it either, it reads as
+  torn and goes with its checkpoint when that is deleted or pruned. Likewise, when the sidecar was written but the
+  store then has no room for the run's manifest or the shelf's index, the sidecar is given up and that record written
+  once more, so a full store costs the log rather than the checkpoint.
+- **Restored only for its own state.** A restore uses the sidecar on the same terms as the page's memory: its log only
+  when it has seen the census at the restored step and its hash is the restored state's; its tree only when, in
+  addition, the restored world's genealogy is the one it was read against. A sidecar can outlive the build that wrote
+  it, so its log is used only when it reads the world as this build does (the same tiles, census cadence, pond cycle
+  and gene bits). Otherwise the log (or the tree) starts afresh with "watching since t = …". The notes on who chose
+  each pick come back only from a record of this very state (its hash), even when its log is not used; a record of
+  another state brings back nothing, so its picks count as ones this page never saw chosen.
+- **Missing or torn reads as absent.** A checkpoint saved before this change has no sidecar, and one whose sidecar does
+  not parse or does not hold a record (a write cut short) has none to use: the log starts afresh with "watching since
+  t = …", and nothing else about the restore changes. A store that will not open the sidecar at all says nothing about
+  it, so the restore is refused and the world on screen stays, as for an `.edges` file the store will not read.
+- **Removed with its checkpoint.** Deleting or pruning a checkpoint removes its sidecar with its `.edges`.
+- **Still fresh:** a file opened (Open a file) and a world planted here, as before.

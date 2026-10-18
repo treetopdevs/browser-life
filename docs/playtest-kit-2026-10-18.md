@@ -738,3 +738,19 @@ drawer read "Census at t = 150,300. Ancestry replayed exactly from the mutation 
 ## Amendments
 
 None yet. A change to section 6 after the first session goes here, dated, with its reason.
+
+### 2026-10-18: amendment to how section 6 reads its alert exception (Feed and Drain become a notice)
+
+Reason: backlog slice 36 fixes the lab so that a Feed or Drain refused on a pond world is no longer shown as a
+failure of the world. Section 6's text is not edited (its hash stands); this changes how its one alert exception
+applies on a build that carries the fix. Before any session counts under it, it is dated here, as the Amendments
+section asks.
+
+From the lab build that carries slice 36 on, Feed and Drain on a pond world are refused as a short notice at the top
+right of the field ("feeding is not defined for pond worlds: the pond cycle fixes each pond's matter"), and the world
+keeps running: no "This world has stopped" alert, no pause, no Dismiss and Play. Where sections 2 and 3 describe that
+alert for Feed or Drain, read the notice instead; the observation codes **feed-refused** and **drain-refused** stay as
+they are, logged when the notice shows. Section 6 excepts that one alert because it was play, not a failure; on such a
+build it no longer arises, so the exception has nothing to cover and any "This world has stopped" alert there is a
+failure of the lab, as section 6 counts every other alert. A session run at a pinned commit from before slice 36
+follows the kit as first written, exception included.
