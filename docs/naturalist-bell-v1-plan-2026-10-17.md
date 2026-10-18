@@ -1,6 +1,6 @@
 # The anomaly bell, v1: plan (2026-10-17)
 
-Status: **a plan, nothing of v1 has run.** The bell's v0 readout is in
+Status: **parts A and B have run; their readouts are under "Readout" below (2026-10-18). Part C has not run.** The bell's v0 readout is in
 `docs/naturalist-bell-v0-2026-10-17.md`: at its pre-stated setting it rang on 30 of 70 neutral runs ("rings
 on drift"). Its hits on treatment were arm-level, not events: treatment worlds are smaller than neutral ones
 from step 10,000. v1 has three parts, each with rules fixed below before any of it runs:
@@ -303,6 +303,79 @@ $22 if every call were retried. The yes asked for covers the maximum.
 - Spots-m3 and the no-mutation arm.
 - An envelope of the arm's own runs (a within-treatment bell).
 - Twins forked in the lab at the moment an experimenter acts. B is the headless version of that.
+
+## Readout (2026-10-18, after the runs)
+
+**The runs.** All 120 jobs finished between 18:06 on 17 October and 00:47 on 18 October, three at a time on
+the local Mac, every one with exit 0: 70 nulls and 50 twins. They used 4.4 GB under `runs/bell-v1-*` in the
+main checkout. The launcher and the scorers were reviewed by Codex Sol before any output was read; see
+`tools/bell-v1-launch.ts`, `tools/bell1.ts` and the PR. The commands:
+
+```
+deno run -A tools/bell1.ts null  --runs <main>/runs --base <main>/runs --launch-log <main>/runs/bell-v1-launch/jobs.jsonl
+deno run -A tools/bell1.ts twins --runs <main>/runs --base <main>/runs --launch-log <main>/runs/bell-v1-launch/jobs.jsonl
+```
+
+The records are `experiments/naturalist/bell-v1-null.json` and `bell-v1-twins.json`.
+
+### A: quiet on fresh drift (exploratory)
+
+**A1 is met.** None of the 70 fresh runs ring under the v1 rule (upper 95% bound 0.042; the bar is at most 2).
+All 70 loaded and none failed the census checks. The largest 11-signal D among them is 3.3, against Z = 4.
+
+Reported beside it:
+
+| | Result |
+| --- | --- |
+| v1 rule on v0's 70 at the horizon (leave-one-out, seen data) | 1 of 70 (gradient 0 of 40, spots 1 of 30) |
+| v0's 13-signal rule on the fresh 70 | **19 of 70** ring, every first ring on `maxGeneration` or `dominantShare` high |
+| treatment against the 40 under the v1 rule | 10 of 10 ring (13-signal rule 10 of 10); effect 1.00 |
+| calibrated Z* (13 signals) = 7.19, applied to the fresh 70 | 1 of 70 above; treatment 10 of 10 |
+
+So the change chosen from v0 held on runs it had never seen. Leaving out the two heavy-tailed signals took the
+fresh false alarms from 19 of 70 to 0 of 70, and the bell still sees the treatment arm. That is arm-level
+sight, as in v0; part A says nothing about events.
+
+### B: did not meet the exploratory bar
+
+All 50 twins were valid. Every one equals its base through step 200,000 and first differs at 200,100.
+
+- **The threshold.** Z*_pair = **5.70**, set by the nudge of seed 5 on `dominantShare` high. The nudges'
+  median D is 1.04; the 10 nudge doses were −5 to +10 living cells at S + 100.
+
+| Arm | Above Z*_pair | Median D | P(D > D_nudge) | Dose at S + 100 (living cells) |
+| --- | --- | --- | --- | --- |
+| nudge2 (held out) | 0 of 10 (**B3 met**; upper bound 0.26) | 1.04 | 0.51 | −4 to +1 |
+| L64 | 0 of 10 | 2.81 | 0.80 | −6,100 to −11,200 |
+| L96 | **4 of 10** (B2 missed) | 4.55 | 0.89 | −15,000 to −25,700 |
+| F | **4 of 10** (B2 missed) | 4.47 | 0.88 | 0 to +1,700 cells; +205,376 matter in each |
+
+- **Hits.** L96 seeds 3, 5, 8 and 10, first windows above Z* starting at 203,100, 200,100, 204,800 and
+  203,000, all on `dominantShare`. F seeds 1, 6, 8 and 9, starting at 202,800 to 204,600.
+- **Reading, by the rule fixed above.** B2 missed for both primary arms with B3 met, so it **did not meet
+  the exploratory bar**. The pair bell orders the arms (nudge < L64 < L96, F), but at the frozen threshold it
+  hears a lesion that removes over a third of the world's living cells, or a feed, on only 4 of 10 seeds.
+
+What the numbers show, which does not change the reading:
+
+1. **The same two signals again.** Z*_pair comes from `dominantShare`: a five-site nudge changed which lineage
+   dominates in seeds 5 and 9 (D 5.7 and 4.1), and nothing else moved. Scoring the pairs after the fact on A's
+   eleven signals gives Z* = 2.58 from the nudges. Against that, L96 would be above on 10 of 10, F on 8 of 10,
+   L64 on 5 of 10 and nudge2 on 1 of 10. That is a post-hoc look at seen data, not a pass. It is a hypothesis a
+   v2 could fix in advance and test on new twins.
+2. **The unit drowns the event.** A lesion that removes 15,000 to 26,000 living cells scores a `livingCells`
+   z of only 0.9 to 5.2. The spread is taken across the 10 treatment worlds, whose living cells differ by tens
+   of thousands. A between-world unit is wide for a within-world event. A v2 could take its unit from the
+   nudge pairs' own differences instead.
+3. **Chaos is slow here.** Every nudge differs from its base at the first census after S, but its D stays near
+   1 on most signals. In these worlds a nudge stays a nudge for at least 5,000 steps, so a well-chosen unit
+   has room to work.
+
+### What this means for part C
+
+Part C needs B's twin runs, not its readout; the twins exist and all are valid. The model could still be
+tested on them as planned, with the code baselines beside it. Its T1 comparator would be B's pair score at
+Z* = 5.70, which hears 8 of the 20 primary items. That waits for the yes on paid calls.
 
 ## Review
 
