@@ -95,7 +95,10 @@ test("public status skips polling while a request is pending", async ({ page }) 
   await expect.poll(() => requests).toBe(2);
 });
 
-test("operations details clear after authentication and network failures", async ({ page }) => {
+// The operator page's contract (docs/ops-dashboard-2026-10-18.md, Polling): a 401 clears every operator detail,
+// while a failed poll (a dropped connection, a 5xx) keeps the last good view, dimmed, because the token is still
+// held. Losing authentication must clear the page from either state.
+test("operations details clear after an authentication failure, also from a dimmed view", async ({ page }) => {
   await page.route("**/operations-test", (route) => route.fulfill({ contentType: "text/html", path: "apps/coordinator/priv/static/index.html" }));
   let mode: "ok" | "unauthorized" | "network" = "unauthorized";
   await page.route("**/api/status", (route) => {
@@ -105,30 +108,57 @@ test("operations details clear after authentication and network failures", async
       contentType: "application/json",
       body: JSON.stringify({
         counts: { pending: 1 }, runs: [{ run: "demo", segments: 1, done: 0, verified: 0, diverged: 0 }],
-        islands: [], divergences: [], observationMismatches: [], devices: [],
+        islands: [{ id: "island-1", adapter: "demo-gpu", user_agent: "demo", last_seen: Date.now(), stale: false, runs: 1, verifies: 0 }],
+        islandCapabilities: { byCapability: { "shader-f16": { islands: 1, live: 1, known: true } }, none: { islands: 0, live: 0 } },
+        divergences: [], observationMismatches: [], devices: [],
       }),
     });
   });
+  // Every container the page fills (each id in #data other than the static sec-* sections and h-* headings), so a
+  // new section that clearData() forgets fails here without this list being updated.
+  const filled = '#data [id]:not([id^="sec-"]):not([id^="h-"])';
+  const expectShown = async () => {
+    await expect(page.locator("#data")).toBeVisible();
+    await expect(page.locator("#runs")).toContainText("demo");
+    await expect(page.locator("#totals .card")).not.toHaveCount(0);
+    await expect(page.locator("#island-totals .card")).not.toHaveCount(0);
+    await expect(page.locator("#islands")).toContainText("island-1");
+    await expect(page.locator("#islands-by-capability")).toContainText("shader-f16");
+  };
+  const expectCleared = async () => {
+    await expect(page.locator("#data")).toBeHidden();
+    expect(await page.locator(filled).count()).toBeGreaterThan(10);
+    await expect(page.locator(`${filled}:not(:empty)`)).toHaveCount(0);
+    await expect(page.locator("#data tr")).toHaveCount(0);
+    await expect(page.locator("#totals .card")).toHaveCount(0);
+  };
+  const connect = async (token: string) => {
+    await page.locator("#admin-token").fill(token);
+    await page.locator("#connect").click();
+  };
   await page.goto("/operations-test");
   mode = "ok";
-  await page.locator("#admin-token").fill("valid");
-  await page.locator("#connect").click();
-  await expect(page.locator("#runs")).toContainText("demo");
+  await connect("valid");
+  await expectShown();
 
   mode = "unauthorized";
-  await page.locator("#admin-token").fill("invalid");
-  await page.locator("#connect").click();
+  await connect("invalid");
   await expect(page.locator("#connection")).toContainText("administrator token");
-  await expect(page.locator("#runs tr")).toHaveCount(0);
-  await expect(page.locator("#counts .card")).toHaveCount(0);
+  await expectCleared();
 
   mode = "ok";
-  await page.locator("#admin-token").fill("valid");
-  await page.locator("#connect").click();
-  await expect(page.locator("#runs")).toContainText("demo");
+  await connect("valid");
+  await expectShown();
+  // A dropped connection is not a lost token: the next poll keeps the last view, dimmed, and says so.
   mode = "network";
-  await page.locator("#connect").click();
-  await expect(page.locator("#connection")).toContainText("unavailable");
-  await expect(page.locator("#runs tr")).toHaveCount(0);
-  await expect(page.locator("#counts .card")).toHaveCount(0);
+  await expect(page.locator("#connection")).toContainText("Coordinator unavailable. Showing the view from", { timeout: 15_000 });
+  await expect(page.locator("#data")).toHaveClass(/stale/);
+  await expectShown();
+
+  // A 401 from the dimmed view clears it all.
+  mode = "unauthorized";
+  await connect("invalid");
+  await expect(page.locator("#connection")).toContainText("administrator token");
+  await expectCleared();
+  await expect(page.locator("#data")).not.toHaveClass(/stale/);
 });

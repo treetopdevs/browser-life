@@ -99,7 +99,7 @@ function recount(rec: Rec) {
 }
 
 let root = "", base = "", recordPath = "", subject = "";
-const run = (args: string[]) => spawnSync("deno", ["run", "-A", "tools/notebook.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
+const run = (args: string[]) => spawnSync("deno", ["run", "--no-lock", "-A", "tools/notebook.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
 const common = () => ["--base", base, "--record", recordPath, "--date", "2026-10-17"];
 
 describe.skipIf(!HAS_DENO)("tools/notebook.ts end to end", () => {

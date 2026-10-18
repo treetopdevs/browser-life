@@ -325,9 +325,11 @@ const B: Island = { name: "B", gardenToken: TOKEN, log: [] };
 
 /** Has `island` complete `n` tasks, asking again (after a short sleep) whenever it is told idle: an idle answer is
  * waiting for the next dawn, not a failure. Returns the tasks it took, as "run #d" / "verify #d". */
-// runIsland checks its signal between tasks and while idle, but its requests and GPU work do not take it
-// (packages/runner is outside this test), so a call still running ISLAND_GRACE_MS past the deadline fails the run: the
-// throw reaches the cleanup, which stops the coordinator and exits the process, and with it the stuck call.
+// The deadline is runIsland's signal, which since docs/island-cancel-2026-10-18.md also cancels its requests and stops a
+// task in hand at its next census chunk (nothing uploaded or completed, the lease left to lapse): a day past the
+// deadline is abandoned, not finished and counted, so the checks see it as not done. A complete, reject or fail already
+// sent is not aborted, so a call still running ISLAND_GRACE_MS past the deadline (a coordinator that never answers one)
+// fails the run: the throw reaches the cleanup, which stops the coordinator and exits the process, and with it the call.
 const ISLAND_GRACE_MS = 30_000;
 // A day takes about a second here; BL_E2E_WORK_MS raises the per-step budget (default 120 s) on a machine slow enough
 // to need it, so a healthy slow island is not failed as a stuck one.
@@ -643,7 +645,7 @@ try {
   );
   // The export is the verified prefix: day 0 only, with L1 and without L2, which landed in the unverified day 1.
   const prefixOut = `${workDir}/prefix`;
-  const prefix = await runTool(["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", prefixOut]);
+  const prefix = await runTool(["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", prefixOut]);
   const prefixMan = JSON.parse((await readOr(`${prefixOut}/${NAME}/spots/treatment/seed-1/manifest.json`)) ?? "{}");
   check(
     "4. tools/stitch.ts mid-run exports only the verified prefix: steps D, the founding plus L1 at D, 2 applied",
@@ -783,7 +785,7 @@ try {
 
   // ---- 7. export the verified prefix; compare with one unsegmented run ----
   const outDir = `${workDir}/stitched`;
-  const stitch = await runTool(["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", outDir]);
+  const stitch = await runTool(["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", outDir]);
   const stitchOut = stitch.stdout;
   const stitchErr = stitch.stderr;
   check("7. tools/stitch.ts exports the garden's verified prefix (exit 0, 1 written)", stitch.success && stitchOut.includes("1 written"), `${stitchOut.slice(-400)} ${stitchErr.slice(0, 600)}`);
@@ -824,7 +826,7 @@ try {
   await Deno.writeTextFile(scheduleFile, JSON.stringify(stitchedMan.spec?.interventions ?? []));
   const singleOut = `${workDir}/single`;
   const single = await runTool([
-    "run", "-A", "tools/run.ts", "--experiment", NAME, "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+    "run", "--no-lock", "-A", "tools/run.ts", "--experiment", NAME, "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
     "--steps", String(3 * D), "--census", String(CENSUS), "--deep", "10", "--checkpoint", "0", "--interventions", scheduleFile, "--out", singleOut,
   ]);
   check("7. tools/run.ts runs the stitched schedule unsegmented over 3D steps", single.success, single.stderr.slice(0, 600));

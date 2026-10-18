@@ -251,7 +251,7 @@ try {
     const call = async (cycle: number, picks: number[], maxCalls = 3) => {
       await Deno.writeTextFile(`${tmp}/reply.json`, reply(picks));
       const child = new Deno.Command(Deno.execPath(), {
-        args: ["run", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", callLog, "--max-calls", String(maxCalls)],
+        args: ["run", "--no-lock", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", callLog, "--max-calls", String(maxCalls)],
         cwd: dir, stdin: "piped", stdout: "piped", stderr: "piped", env: { CLAUDE_BIN: stub, STUB_ARGS: `${tmp}/args.txt`, STUB_REPLY: `${tmp}/reply.json` },
       }).spawn();
       const w = child.stdin.getWriter();
@@ -286,7 +286,7 @@ try {
     for (const flag of [["--max-calls", "abc"], ["--max-calls", "2.5"], ["--timeout", "Infinity"], ["--max-budget", "1e309"], ["--max-budget", "0"]]) {
       const before = await Deno.readTextFile(callLog);
       const out = await new Deno.Command(Deno.execPath(), {
-        args: ["run", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", callLog, ...flag],
+        args: ["run", "--no-lock", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", callLog, ...flag],
         cwd: dir, stdin: "null", stdout: "piped", stderr: "piped", env: { CLAUDE_BIN: stub, STUB_ARGS: `${tmp}/args.txt`, STUB_REPLY: `${tmp}/reply.json` },
       }).output();
       const err = new TextDecoder().decode(out.stderr);
@@ -303,7 +303,7 @@ try {
       const rdir = `${tmp}/race-${n}`;
       await Deno.mkdir(rdir, { recursive: true });
       const child = new Deno.Command(Deno.execPath(), {
-        args: ["run", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", race, "--max-calls", "3"],
+        args: ["run", "--no-lock", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", race, "--max-calls", "3"],
         cwd: rdir, stdin: "piped", stdout: "piped", stderr: "piped", env: { CLAUDE_BIN: slow, STUB_REPLY: `${tmp}/reply.json` },
       }).spawn();
       const w = child.stdin.getWriter();
@@ -426,12 +426,12 @@ try {
     `);
     const runTool = async (extra: string[], exp = "rec", outDir = out) => {
       const o = await new Deno.Command(Deno.execPath(), {
-        args: ["run", "-A", new URL("../../tools/run.ts", import.meta.url).pathname, "--experiment", exp, "--preset", "ponds-small", "--conditions", "treatment", "--seeds", "1", "--steps", "12000", "--census", "1000", "--deep", "10", "--out", outDir, ...extra],
+        args: ["run", "--no-lock", "-A", new URL("../../tools/run.ts", import.meta.url).pathname, "--experiment", exp, "--preset", "ponds-small", "--conditions", "treatment", "--seeds", "1", "--steps", "12000", "--census", "1000", "--deep", "10", "--out", outDir, ...extra],
         stdout: "piped", stderr: "piped",
       }).output();
       return { code: o.code, text: new TextDecoder().decode(o.stdout) + new TextDecoder().decode(o.stderr) };
     };
-    const cmd = JSON.stringify([Deno.execPath(), "run", "-A", answerer]);
+    const cmd = JSON.stringify([Deno.execPath(), "run", "--no-lock", "-A", answerer]);
     const bundle = `${out}/rec/ponds-small/treatment-by-model/seed-1`;
     await Deno.writeTextFile(`${tmp}/limit`, "10");
     const first = await runTool(["--picker", "command", "--pick-label", "model", "--pick-cmd", cmd]);
@@ -617,7 +617,7 @@ try {
     const shortFile = `${tmp}/short.jsonl`;
     await Deno.writeTextFile(shortFile, short.map((e) => JSON.stringify({ ...e, kind: "pick" })).join("\n") + "\n");
     const o = await new Deno.Command(Deno.execPath(), {
-      args: ["run", "-A", new URL("../../tools/run.ts", import.meta.url).pathname, "--experiment", "short", "--preset", "breeder", "--conditions", "treatment", "--seeds", "1", "--steps", String(CYCLES * 5000), "--out", `${tmp}/never`, "--picks-from", shortFile],
+      args: ["run", "--no-lock", "-A", new URL("../../tools/run.ts", import.meta.url).pathname, "--experiment", "short", "--preset", "breeder", "--conditions", "treatment", "--seeds", "1", "--steps", String(CYCLES * 5000), "--out", `${tmp}/never`, "--picks-from", shortFile],
       stdout: "piped", stderr: "piped",
     }).output();
     check("9. ...tools/run.ts exits 2 before any GPU work and writes no bundle", o.code === 2 && (await Deno.stat(`${tmp}/never`).catch(() => null)) === null, new TextDecoder().decode(o.stderr).slice(-200));
