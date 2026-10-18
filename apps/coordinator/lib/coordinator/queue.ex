@@ -165,7 +165,8 @@ defmodule Coordinator.Queue do
   visitor can run, replay, fail or reject a day. Three things bound that. With
   `:garden_island_token` set, `join/1` marks an island `garden: true` only when
   its join body carries `"gardenToken"` equal to it (the token itself is never
-  stored), and `pick_task/4` then offers a garden's days, to run or to replay,
+  stored, and `join/1` checks it in its caller, so it never reaches this
+  process's mailbox or crash reports), and `pick_task/4` then offers a garden's days, to run or to replay,
   only to such islands, which also closes the "second island id replays a forged
   day" path. A failed or diverged day is recoverable: `requeue_garden_day/2`
   (keeper only) sends it and the days it blocked back to the queue. And the
@@ -251,7 +252,15 @@ defmodule Coordinator.Queue do
   def start_link(opts),
     do: GenServer.start_link(__MODULE__, opts, name: Keyword.get(opts, :name, __MODULE__))
 
-  def join(info), do: GenServer.call(__MODULE__, {:join, info})
+  # The garden token is checked here, in the caller, and taken out of `info`
+  # before the call: the Queue's mailbox, its crash reports (which print the
+  # last message) and its state never see it, only whether it matched.
+  def join(info) do
+    garden = garden_token_ok?(info)
+    info = if is_map(info), do: Map.delete(info, "gardenToken"), else: info
+    GenServer.call(__MODULE__, {:join, info, garden})
+  end
+
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
 
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
@@ -432,9 +441,9 @@ defmodule Coordinator.Queue do
   end
 
   @impl true
-  def handle_call({:join, info}, _from, s) do
+  def handle_call({:join, info, garden}, _from, s) do
     case make_room(s) do
-      {:ok, s} -> join_island(info, s)
+      {:ok, s} -> join_island(info, garden, s)
       :full -> {:reply, {:error, :full}, s}
     end
   end
@@ -1225,7 +1234,8 @@ defmodule Coordinator.Queue do
     end
   end
 
-  # Whether the join body carries the configured garden token (constant-time).
+  # Whether the join body carries the configured garden token (constant-time);
+  # run in the caller of `join/1`, never in this process.
   defp garden_token_ok?(info) do
     configured = Application.get_env(:coordinator, :garden_island_token)
     given = is_map(info) && info["gardenToken"]
@@ -1248,6 +1258,17 @@ defmodule Coordinator.Queue do
   end
 
   # When a garden's day completes (a run) or is verified, stamp it.
+  #
+  # A day becoming verified may advance the verified prefix, and so the fork
+  # the public view names and the checkpoints the public route serves: the
+  # garden's cache (`Coordinator.LetterLimiter`) is invalidated here, before
+  # this call replies, so no view naming the new fork can be followed by a
+  # cached 404 for its checkpoint (docs/garden-hardening-2026-10-18.md, item
+  # 2). `invalidate/1` is ETS work only and never calls back into this
+  # process. The servable set only ever grows on this transition: a verified
+  # day cannot be rejected, divergence and failure stop the prefix without
+  # shrinking it, and a requeue, a letter and a drop invalidate from the
+  # controller.
   defp record_garden_day(s, seg, kind) do
     case s.gardens[seg.experiment] do
       nil ->
@@ -1256,9 +1277,15 @@ defmodule Coordinator.Queue do
       g ->
         g =
           case {kind, seg.status} do
-            {"run", "done"} -> Garden.record_done(g, seg.index, now())
-            {"verify", "verified"} -> Garden.record_verified(g, seg.index, now())
-            _ -> g
+            {"run", "done"} ->
+              Garden.record_done(g, seg.index, now())
+
+            {"verify", "verified"} ->
+              Coordinator.LetterLimiter.invalidate(seg.experiment)
+              Garden.record_verified(g, seg.index, now())
+
+            _ ->
+              g
           end
 
         put_in(s, [:gardens, seg.experiment], g)
@@ -2032,7 +2059,7 @@ defmodule Coordinator.Queue do
 
   # ---- joining, and the bound on the island table ----
 
-  defp join_island(info, s) do
+  defp join_island(info, garden, s) do
     id = "isl-" <> rand(9)
     token = rand(32)
     now = now()
@@ -2055,7 +2082,7 @@ defmodule Coordinator.Queue do
     # only on an island that showed the configured token (the token itself is
     # not kept), so every other island record, and `/api/status`, keeps its
     # shape from before gardens.
-    island = if garden_token_ok?(info), do: Map.put(island, :garden, true), else: island
+    island = if garden == true, do: Map.put(island, :garden, true), else: island
 
     s = put_in(s, [:islands, id], island)
     {:reply, {:ok, %{id: id, token: token}}, persist(s)}
