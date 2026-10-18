@@ -3,7 +3,7 @@
 // the CLI that runs the twins on the GPU through `runExperiment` and hands each census to the functions here.
 //
 // Section numbers (§n) below are the rules note's.
-import { CELL_CHANNELS, CH, G } from "@bl/schema";
+import { CELL_CHANNELS, CH, G, MOT_ZERO } from "@bl/schema";
 import { validateInterventions } from "@bl/runner";
 
 /** MurmurHash3's 32-bit finaliser. */
@@ -158,12 +158,15 @@ export function ratio(c: { diff: number; union: number }, places = 4): number {
 
 /**
  * §5's comparison `near <= far` of the primary measure, exactly: `diff_near * union_far <= diff_far * union_near`, an empty
- * union counting as 0. The products stay under 2^37 on a 512^2 jar, exact in a double.
+ * union counting as 0. The products stay under 2^37 on a 512^2 jar, exact in a double; counts whose products could pass
+ * 2^53 (no jar holds them, but a record could) are compared as BigInts, so the comparison is exact for any safe integers.
  */
 export function nearNotAboveFar(near: { diff: number; union: number }, far: { diff: number; union: number }): boolean {
   if (near.union === 0 || near.diff === 0) return true; // near = 0
   if (far.union === 0) return false; // far = 0 < near
-  return near.diff * far.union <= far.diff * near.union;
+  const a = near.diff * far.union, b = far.diff * near.union;
+  if (a <= Number.MAX_SAFE_INTEGER && b <= Number.MAX_SAFE_INTEGER) return a <= b;
+  return BigInt(near.diff) * BigInt(far.union) <= BigInt(far.diff) * BigInt(near.union);
 }
 
 /** A census of a stone pair, as the horizon rule reads it. */
@@ -268,6 +271,8 @@ export const groupFits = (remainingSeconds: number, worstSeconds: number): boole
 export interface TwinPlan {
   name: string;
   stone?: { step: number; x: number; y: number; r: number };
+  /** Slice 34: a lesion of any radius, 0 included (N0 and the kick); used when `stone` is absent. */
+  entry?: { step: number; kind: "lesion"; x: number; y: number; r: number };
 }
 
 export interface SegmentResult<C> {
@@ -288,9 +293,10 @@ export interface GroupIo<C> {
   /**
    * Runs `twin` for censuses firstK .. firstK + censuses - 1 from `from` (null: the group's checkpoint), calling `onCensus`
    * at each census in order; when it returns true the twin stops there (through `RunOptions.signal`) and the result's
-   * `next` is null.
+   * `next` is null. `hash`, when the io gives it, is the census's `stateHash`, computed only when called (slice 34; `runGroup`
+   * never calls it).
    */
-  runSegment(twin: TwinPlan, from: C | null, firstK: number, censuses: number, onCensus: (k: number, sig: Signature) => boolean): Promise<SegmentResult<C>>;
+  runSegment(twin: TwinPlan, from: C | null, firstK: number, censuses: number, onCensus: (k: number, sig: Signature, hash?: () => string) => boolean): Promise<SegmentResult<C>>;
   /** Seconds on a monotonic clock, and the cap's deadline on it. */
   now(): number;
   deadline: number;
@@ -805,4 +811,1023 @@ export function sideReadings(groups: readonly { seed: number; N: number; status:
     horizons: h,
     pairs,
   };
+}
+
+// ==== Slice 34: the null stone, the kick and the finer cadence (the note's "Amendment, slice 34", parts N1 to N8)
+
+/** N1: `applyLesion` writes nothing to cell i: `B = P = E = 0`, `MOT` at rest and both lineage words 0. */
+export function isLesionNull(cells: Uint32Array, genome: Uint32Array, n: number, i: number): boolean {
+  return cells[CH.B * n + i] === 0 && cells[CH.P * n + i] === 0 && cells[CH.E * n + i] === 0 && cells[CH.MOT * n + i] === MOT_ZERO &&
+    genome[G.LIN_HI * n + i] === 0 && genome[G.LIN_LO * n + i] === 0;
+}
+
+/** N1: a stale cell: `B = 0` with a lineage word that is not 0 (§3 reads it EMPTY; the physics reads its genome). */
+export function isStale(cells: Uint32Array, genome: Uint32Array, n: number, i: number): boolean {
+  return cells[CH.B * n + i] === 0 && (genome[G.LIN_HI * n + i] !== 0 || genome[G.LIN_LO * n + i] !== 0);
+}
+
+const cellsOfState = (state: { cells: Uint32Array; genome: Uint32Array }) => {
+  const n = state.cells.length / CELL_CHANNELS;
+  if (!Number.isInteger(n) || n === 0 || state.genome.length % n !== 0) throw new Error("buffer sizes do not describe one world");
+  return n;
+};
+
+/** The 0/1 mask of lesion-null cells of a state, indexed y * W + x. */
+export function lesionNullMask(state: { cells: Uint32Array; genome: Uint32Array }): Uint8Array {
+  const n = cellsOfState(state);
+  const m = new Uint8Array(n);
+  for (let i = 0; i < n; i++) if (isLesionNull(state.cells, state.genome, n, i)) m[i] = 1;
+  return m;
+}
+
+/** Per row dy = -R .. R, the largest w with w^2 + dy^2 <= R^2: the lesion's disc row by row, in exact integers. */
+export function discHalfWidths(R: number): number[] {
+  if (!Number.isInteger(R) || R < 0) throw new Error(`disc radius must be a non-negative integer, got ${R}`);
+  const out: number[] = [];
+  for (let dy = -R; dy <= R; dy++) {
+    let w = Math.floor(Math.sqrt(R * R - dy * dy));
+    while ((w + 1) * (w + 1) + dy * dy <= R * R) w++;
+    while (w * w + dy * dy > R * R) w--;
+    out.push(w);
+  }
+  return out;
+}
+
+/** Cells in the radius-R disc. */
+export const discSize = (R: number) => discHalfWidths(R).reduce((s, w) => s + 2 * w + 1, 0);
+
+/**
+ * For every centre of a W x H torus, the sum of `ind` over its radius-R disc (torusDisc's cells), exactly: row prefix sums on
+ * doubled rows, one difference per disc row. Refuses a disc that meets itself (2R >= min(W, H)).
+ */
+export function discSums(ind: Uint8Array, W: number, H: number, R: number): Int32Array {
+  if (ind.length !== W * H) throw new Error(`discSums: ${ind.length} cells is not ${W} x ${H}`);
+  const half = discHalfWidths(R);
+  if (2 * R >= Math.min(W, H)) throw new Error(`a disc of radius ${R} meets itself on a ${W} x ${H} torus`);
+  const stride = 2 * W + 1;
+  const pre = new Int32Array(H * stride);
+  for (let y = 0; y < H; y++) {
+    const o = y * stride, row = y * W;
+    let s = 0;
+    for (let x = 0; x < 2 * W; x++) {
+      s += ind[row + (x < W ? x : x - W)];
+      pre[o + x + 1] = s;
+    }
+  }
+  const out = new Int32Array(W * H);
+  for (let cy = 0; cy < H; cy++) {
+    const base = cy * W;
+    for (let k = 0; k < half.length; k++) {
+      const y = (((cy + k - R) % H) + H) % H;
+      const o = y * stride, w = half[k], span = 2 * w + 1;
+      for (let cx = 0; cx < W; cx++) {
+        let a = cx - w;
+        if (a < 0) a += W;
+        out[base + cx] += pre[o + a + span] - pre[o + a];
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * N2: the null stone's centre at radius R: the centres whose radius-R torus disc is lesion-null, in index order, and the one
+ * at position `centreDraw(seed, N + 1) mod count`. Null when no such disc exists.
+ */
+export function nullDiscCentre(
+  state: { cells: Uint32Array; genome: Uint32Array },
+  W: number,
+  R: number,
+  seed: number,
+  N: number,
+  mask: Uint8Array = lesionNullMask(state),
+): { x: number; y: number; index: number; count: number } | null {
+  const n = mask.length, H = n / W;
+  const sums = discSums(mask, W, H, R), size = discSize(R);
+  let count = 0;
+  for (let i = 0; i < n; i++) if (sums[i] === size) count++;
+  if (count === 0) return null;
+  let want = centreDraw(seed, N + 1) % count;
+  for (let i = 0; i < n; i++) {
+    if (sums[i] !== size) continue;
+    if (want-- === 0) return { x: i % W, y: Math.floor(i / W), index: i, count };
+  }
+  throw new Error("unreachable: the null disc count changed under the scan");
+}
+
+/**
+ * N2's r0: the largest radius R <= maxR at which some disc is lesion-null; -1 when no cell is. Found by bisection, which
+ * gives the scan's answer because the property is monotone (a null disc of radius R holds the null disc of radius R - 1
+ * around the same centre).
+ */
+export function largestNullRadius(state: { cells: Uint32Array; genome: Uint32Array }, W: number, maxR: number, mask: Uint8Array = lesionNullMask(state)): number {
+  const H = mask.length / W;
+  if (!mask.some((v) => v === 1)) return -1;
+  const has = (R: number) => {
+    const s = discSums(mask, W, H, R), size = discSize(R);
+    return s.some((v) => v === size);
+  };
+  let lo = 0, hi = maxR;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (has(mid)) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+export interface KickCell {
+  x: number;
+  y: number;
+  index: number;
+  P: number;
+  E: number;
+  MOT: number;
+  motOff: boolean;
+  linHi: number;
+  linLo: number;
+  /** Stale cells tied at the minimum key. */
+  ties: number;
+  /** Stale cells in the state. */
+  stale: number;
+}
+
+/**
+ * N3: the kick's cell: the stale cells ranked by `P`, then `E`, then whether `MOT` is off rest, all ascending; among those tied
+ * at the minimum, in index order, the one at position `centreDraw(seed, N + 2) mod ties`. Null when no cell is stale.
+ */
+export function kickCell(state: { cells: Uint32Array; genome: Uint32Array }, W: number, seed: number, N: number): KickCell | null {
+  const n = cellsOfState(state);
+  const { cells, genome } = state;
+  let bp = Infinity, be = Infinity, bm = Infinity, stale = 0;
+  let ties: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (!isStale(cells, genome, n, i)) continue;
+    stale++;
+    const P = cells[CH.P * n + i], E = cells[CH.E * n + i], m = cells[CH.MOT * n + i] !== MOT_ZERO ? 1 : 0;
+    const less = P < bp || (P === bp && (E < be || (E === be && m < bm)));
+    if (less) {
+      bp = P, be = E, bm = m;
+      ties = [i];
+    } else if (P === bp && E === be && m === bm) ties.push(i);
+  }
+  if (ties.length === 0) return null;
+  const i = ties[centreDraw(seed, N + 2) % ties.length];
+  const MOT = cells[CH.MOT * n + i];
+  return { x: i % W, y: Math.floor(i / W), index: i, P: cells[CH.P * n + i], E: cells[CH.E * n + i], MOT, motOff: MOT !== MOT_ZERO, linHi: genome[G.LIN_HI * n + i], linLo: genome[G.LIN_LO * n + i], ties: ties.length, stale };
+}
+
+// ---- The arms driver (N2 to N4)
+
+/** An N0 twin differs from U0 (N2): a fault in the intervention machinery. The group is void and the run stops. */
+export class NullFault extends Error {
+  constructor(message: string, readonly detail: unknown) {
+    super(message);
+    this.name = "NullFault";
+  }
+}
+
+/** U0 does not reproduce the slice-26 record (N4). The run stops. */
+export class DeterminismFault extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DeterminismFault";
+  }
+}
+
+/** What #55's record says U0 did: its living cells per census, the census it ended on and that chunk's final hash, and chunk 1's. */
+export interface U0Reference {
+  living: number[];
+  reached: number;
+  finalHash: string | null;
+  chunk1Hash: string | null;
+}
+
+export interface ArmsPlan {
+  /** N0 twins: a lesion of radius R on a lesion-null disc. */
+  nulls: { R: number; x: number; y: number }[];
+  /** The kick's cell (a radius-0 lesion). */
+  kick: { x: number; y: number };
+  /** K's pairs: label (K|8 ...), the stone radius R they are read against, and the near region (radius 2R around the kick). */
+  pairs: { label: string; R: number; mask: Uint8Array }[];
+  /** The split U1's and the N0 twins' whole-jar comparison uses (only the sums are read). */
+  controlMask: Uint8Array;
+  chunk: number;
+  horizon: HorizonOptions;
+  /** N + 1. */
+  entryStep: number;
+  u0Reference?: U0Reference;
+}
+
+export interface NullTwinResult {
+  name: string;
+  R: number;
+  x: number;
+  y: number;
+  effectiveR: number | null;
+  censuses: number;
+  /** stateHash and the whole-jar comparison equal U0's at every census. */
+  identical: boolean;
+  finalStateHash: string | null;
+  u0FinalStateHash: string | null;
+}
+
+export interface KPairResult {
+  label: string;
+  R: number;
+  outcome: StoneOutcome;
+  series: SeriesPoint[];
+}
+
+export interface ArmsResult {
+  control: GroupResult["control"];
+  u0: {
+    reached: number;
+    finalHash: string | null;
+    chunk1Hash: string | null;
+    hashAt1: string | null;
+    /** U0's living cells at every census it ran. */
+    living: number[];
+    reference: { livingChecked: number; chunk1HashChecked: boolean; finalHashChecked: boolean } | null;
+  };
+  nulls: NullTwinResult[];
+  kick: { effectiveR: number | null; reached: number; finalHash: string | null; stopStateHash: string | null; hashAt1: string | null; sameAsU0At1: boolean | null; living: number[] };
+  pairs: KPairResult[];
+  stoppedByCap: boolean;
+  seconds: number;
+}
+
+/**
+ * Runs one group of slice 34 (N2 to N4, N7): in chunks of `chunk` censuses, U0 first (its censuses held, its living cells
+ * checked against #55's record), then in the first chunk U1 (the control, as §6) and each N0 twin (its stateHash and
+ * whole-jar comparison equal to U0's at every census, else NullFault), then K, compared with U0 under each of its pairs'
+ * near regions and stopped once every pair is decided. U0 runs a chunk only while some pair is undecided; past the
+ * deadline after a chunk, undecided pairs are `stopped-cap`.
+ */
+export async function runArms<C>(io: GroupIo<C>, plan: ArmsPlan): Promise<ArmsResult> {
+  const t0 = io.now();
+  const kEnd = lastCensus(plan.horizon);
+  const ref = plan.u0Reference;
+  const pairs = plan.pairs.map((p) => ({ mask: p.mask, res: { label: p.label, R: p.R, outcome: { kind: "pending" }, series: [] } as KPairResult }));
+  const pending = () => pairs.filter((p) => p.res.outcome.kind === "pending");
+  const control: GroupResult["control"] = { censuses: 0, diff: 0, bpDiff: 0, hashU0: null, hashU1: null, ok: false };
+  const u0: ArmsResult["u0"] = { reached: 0, finalHash: null, chunk1Hash: null, hashAt1: null, living: [], reference: ref ? { livingChecked: 0, chunk1HashChecked: false, finalHashChecked: false } : null };
+  const nulls: NullTwinResult[] = [];
+  const kick: ArmsResult["kick"] = { effectiveR: null, reached: 0, finalHash: null, stopStateHash: null, hashAt1: null, sameAsU0At1: null, living: [] };
+  const kickPlan: TwinPlan = { name: "K", entry: { step: plan.entryStep, kind: "lesion", x: plan.kick.x, y: plan.kick.y, r: 0 } };
+  let u0cont: C | null = null, kcont: C | null = null;
+  let stoppedByCap = false;
+  const need = (hash: (() => string) | undefined, who: string) => {
+    if (!hash) throw new Error(`${who}: runArms needs the io's census hash`);
+    return hash();
+  };
+
+  for (let first = 1; first <= kEnd && pending().length > 0; first += plan.chunk) {
+    const n = Math.min(plan.chunk, kEnd - first + 1);
+    const held: { k: number; sig: Signature }[] = [];
+    const hashes = new Map<number, string>();
+    const r0 = await io.runSegment({ name: "U0" }, u0cont, first, n, (k, sig, hash) => {
+      held.push({ k, sig });
+      u0.living.push(sig.living);
+      if (ref && k - 1 < ref.living.length) {
+        if (sig.living !== ref.living[k - 1]) throw new DeterminismFault(`U0 has ${sig.living} living cells at census ${k}; #55's record has ${ref.living[k - 1]}`);
+        u0.reference!.livingChecked++;
+      }
+      if (first === 1 && (k === 1 || plan.nulls.length > 0)) hashes.set(k, need(hash, "U0"));
+      return false;
+    });
+    if (r0.next === null || held.length !== n) throw new Error(`U0 did not complete censuses ${first}..${first + n - 1}`);
+    u0cont = r0.next;
+    u0.reached = r0.reached;
+    u0.finalHash = r0.finalHash;
+    if (first === 1) {
+      u0.chunk1Hash = r0.finalHash;
+      u0.hashAt1 = hashes.get(1) ?? null;
+      if (ref && ref.chunk1Hash !== null) {
+        if (r0.finalHash !== ref.chunk1Hash) throw new DeterminismFault(`U0's chunk 1 ends at ${r0.finalHash}; #55's U0 ended it at ${ref.chunk1Hash}`);
+        u0.reference!.chunk1HashChecked = true;
+      }
+    }
+    if (ref && ref.finalHash !== null && r0.reached === ref.reached) {
+      if (r0.finalHash !== ref.finalHash) throw new DeterminismFault(`U0 at census ${r0.reached} hashes ${r0.finalHash}; #55's U0 there ${ref.finalHash}`);
+      u0.reference!.finalHashChecked = true;
+    }
+    const u0At = (k: number) => {
+      const h = held[k - first];
+      if (!h || h.k !== k) throw new Error(`U0's census ${k} is not held (chunk from ${first})`);
+      return h.sig;
+    };
+
+    if (first === 1) {
+      const r1 = await io.runSegment({ name: "U1" }, null, 1, n, (k, sig) => {
+        const c = compareRegions(sig, u0At(k), plan.controlMask);
+        control.censuses++;
+        control.diff += c.near.diff + c.far.diff;
+        control.bpDiff += c.near.bpDiff + c.far.bpDiff;
+        return false;
+      });
+      control.hashU0 = r0.finalHash;
+      control.hashU1 = r1.finalHash;
+      control.ok = control.censuses === n && control.diff === 0 && control.bpDiff === 0 && r0.finalHash !== null && r0.finalHash === r1.finalHash;
+      if (!control.ok) throw new ControlFault(`control U1 differs from U0: ${control.censuses} censuses, diff ${control.diff}, light-cone ${control.bpDiff}, hashes ${r0.finalHash} vs ${r1.finalHash}`, control);
+
+      for (const z of plan.nulls) {
+        const res: NullTwinResult = { name: `N0-${z.R}`, R: z.R, x: z.x, y: z.y, effectiveR: null, censuses: 0, identical: true, finalStateHash: null, u0FinalStateHash: hashes.get(n) ?? null };
+        const r = await io.runSegment({ name: res.name, entry: { step: plan.entryStep, kind: "lesion", x: z.x, y: z.y, r: z.R } }, null, 1, n, (k, sig, hash) => {
+          const c = compareRegions(sig, u0At(k), plan.controlMask);
+          const h = need(hash, res.name);
+          res.censuses++;
+          res.finalStateHash = h;
+          if (c.near.diff + c.far.diff + c.near.bpDiff + c.far.bpDiff !== 0 || h !== hashes.get(k)) res.identical = false;
+          return false;
+        });
+        for (const a of r.applied) if (a.step === plan.entryStep) res.effectiveR = a.r;
+        nulls.push(res);
+        if (res.effectiveR !== z.R) throw new Error(`${res.name}: the lesion at step ${plan.entryStep} applied with radius ${res.effectiveR}, not ${z.R}`);
+        if (!res.identical || res.censuses !== n || r.next === null || res.finalStateHash === null || res.finalStateHash !== res.u0FinalStateHash)
+          throw new NullFault(`${res.name} is not U0: ${res.censuses} of ${n} censuses, identical ${res.identical}, final stateHash ${res.finalStateHash} vs U0 ${res.u0FinalStateHash}`, res);
+      }
+    }
+
+    const r = await io.runSegment(kickPlan, kcont, first, n, (k, sig, hash) => {
+      const u = u0At(k);
+      kick.living.push(sig.living);
+      kick.reached = k;
+      if (k === 1) {
+        kick.hashAt1 = need(hash, "K");
+        kick.sameAsU0At1 = kick.hashAt1 === u0.hashAt1;
+      }
+      for (const p of pending()) {
+        const c = compareRegions(sig, u, p.mask);
+        p.res.series.push({ k, near: c.near, far: c.far, livingStone: sig.living, livingU0: u.living });
+        p.res.outcome = horizonOf(
+          p.res.series.map((q) => ({ k: q.k, near: q.near, far: q.far, extinct: q.livingStone === 0 || q.livingU0 === 0 })),
+          plan.horizon,
+        );
+      }
+      return pending().length === 0;
+    });
+    for (const a of r.applied) if (a.step === plan.entryStep) kick.effectiveR = a.r;
+    if (first === 1 && kick.effectiveR !== 0) throw new Error(`K: the lesion at step ${plan.entryStep} applied with radius ${kick.effectiveR}, not 0`);
+    kcont = r.next;
+    kick.finalHash = r.finalHash;
+    kick.stopStateHash = r.stopStateHash;
+    if (pending().length > 0 && r.next === null) throw new Error(`K stopped without deciding every pair at census ${r.reached}`);
+
+    if (io.now() >= io.deadline && pending().length > 0) {
+      stoppedByCap = true;
+      for (const p of pending()) p.res.outcome = { kind: "stopped-cap", reached: kick.reached };
+      break;
+    }
+  }
+  return { control, u0, nulls, kick, pairs: pairs.map((p) => p.res), stoppedByCap, seconds: io.now() - t0 };
+}
+
+// ---- The fine pilot's readings (N5)
+
+export interface FinePoint {
+  j: number;
+  near: { diff: number; union: number };
+  far: { diff: number; union: number };
+}
+
+export interface FineOptions {
+  /** Steps per reading (64). */
+  every: number;
+  /** Readings in a row near must not exceed far (16: 1,024 steps). */
+  Kf: number;
+  /** The last reading a fine horizon may start at (113 in a 128-reading window, 49 in 64). */
+  jMax: number;
+}
+
+export type FineHorizon = { kind: "horizon"; j: number; steps: number } | { kind: "censored"; window: number };
+
+export interface FineReading {
+  far50: number | null;
+  far90: number | null;
+  cross: number | null;
+  /** Sum over the readings of max(0, near - far) * every, in steps (a double from the integer counts). */
+  gapArea: number;
+  fineHorizon: FineHorizon;
+}
+
+/** max(0, m(near) - m(far)), an empty union reading 0; 0 exactly whenever `nearNotAboveFar`. */
+export function gapOf(near: { diff: number; union: number }, far: { diff: number; union: number }): number {
+  if (nearNotAboveFar(near, far)) return 0;
+  if (far.union === 0) return near.diff / near.union;
+  const a = near.diff * far.union, b = far.diff * near.union;
+  // The numerator exactly (BigInt past 2^53, see nearNotAboveFar), so a gap the comparison sees is never rounded to 0.
+  if (a <= Number.MAX_SAFE_INTEGER && b <= Number.MAX_SAFE_INTEGER) return (a - b) / (near.union * far.union);
+  return Number(BigInt(near.diff) * BigInt(far.union) - BigInt(far.diff) * BigInt(near.union)) / near.union / far.union;
+}
+
+/** N5's readings of one pair's fine series (j = 1 .. jMax + Kf - 1 at least, in order). */
+export function fineReadings(points: readonly FinePoint[], o: FineOptions): FineReading {
+  points.forEach((p, i) => {
+    if (p.j !== i + 1) throw new Error(`fineReadings: reading ${i + 1} is labelled j = ${p.j}`);
+  });
+  if (points.length < o.jMax + o.Kf - 1) throw new Error(`fineReadings: ${points.length} readings, the rule needs ${o.jMax + o.Kf - 1}`);
+  let far50: number | null = null, far90: number | null = null, cross: number | null = null, gap = 0, run = 0;
+  let fine: FineHorizon | null = null;
+  for (const p of points) {
+    if (far50 === null && atLeast(p.far, 1, 2)) far50 = p.j;
+    if (far90 === null && atLeast(p.far, 9, 10)) far90 = p.j;
+    const ok = nearNotAboveFar(p.near, p.far);
+    if (cross === null && ok) cross = p.j;
+    gap += gapOf(p.near, p.far) * o.every;
+    run = ok ? run + 1 : 0;
+    if (fine === null && run >= o.Kf) {
+      const j = p.j - o.Kf + 1;
+      if (j <= o.jMax) fine = { kind: "horizon", j, steps: j * o.every - 1 };
+    }
+  }
+  return { far50, far90, cross, gapArea: gap, fineHorizon: fine ?? { kind: "censored", window: o.jMax * o.every - 1 } };
+}
+
+export type FineVerdict = "material" | "like a kick" | "mixed" | "no reading";
+
+/** N5's fine verdict per radius: material if G(S) > 2 G(K) in every group, like a kick if G(S) <= 2 G(K) in every group, else mixed. */
+export function fineVerdict(rows: readonly { gS: number; gK: number }[]): FineVerdict {
+  if (rows.length === 0) return "no reading";
+  const above = rows.filter((r) => r.gS > 2 * r.gK).length;
+  return above === rows.length ? "material" : above === 0 ? "like a kick" : "mixed";
+}
+
+export interface FinePairRecord {
+  label: string;
+  R: number;
+  kind: "S" | "K";
+  nearDiff: number[];
+  nearUnion: number[];
+  farDiff: number[];
+  farUnion: number[];
+  readings: FineReading;
+}
+
+export const finePointsOf = (p: Pick<FinePairRecord, "nearDiff" | "nearUnion" | "farDiff" | "farUnion">): FinePoint[] =>
+  p.nearDiff.map((_, i) => ({ j: i + 1, near: { diff: p.nearDiff[i], union: p.nearUnion[i] }, far: { diff: p.farDiff[i], union: p.farUnion[i] } }));
+
+export interface FineRadius {
+  R: number;
+  verdict: FineVerdict;
+  rows: { seed: number; N: number; gS: number; gK: number }[];
+  sHorizons: { seed: number; N: number; fineHorizon: FineHorizon }[];
+}
+
+/**
+ * A pair's integer counts as the record must hold them: four arrays of `n` entries (exactly, when `n` is given), each a
+ * non-negative safe integer, with `diff <= union` in both regions. An empty union is allowed (a near disc can empty out).
+ * The first problem as a sentence; null when the counts are well formed.
+ */
+export function countsError(p: { nearDiff?: unknown; nearUnion?: unknown; farDiff?: unknown; farUnion?: unknown }, n?: number): string | null {
+  const keys = ["nearDiff", "nearUnion", "farDiff", "farUnion"] as const;
+  for (const k of keys) {
+    const a = p[k];
+    if (!Array.isArray(a)) return `${k} is not an array`;
+    if (a.length !== (n ?? (p.nearDiff as unknown[]).length)) return `${k} has ${a.length} entries, not ${n ?? (p.nearDiff as unknown[]).length}`;
+    const bad = a.findIndex((x) => !Number.isSafeInteger(x) || x < 0);
+    if (bad >= 0) return `${k}[${bad}] is ${JSON.stringify(a[bad])}, not a non-negative integer`;
+  }
+  const nd = p.nearDiff as number[], nu = p.nearUnion as number[], fd = p.farDiff as number[], fu = p.farUnion as number[];
+  for (let i = 0; i < nd.length; i++) {
+    if (nd[i] > nu[i]) return `near diff ${nd[i]} exceeds its union ${nu[i]} at reading ${i + 1}`;
+    if (fd[i] > fu[i]) return `far diff ${fd[i]} exceeds its union ${fu[i]} at reading ${i + 1}`;
+  }
+  return null;
+}
+
+/**
+ * The fine readings recomputed from the counts (throws when a stored reading differs or a count is malformed), and the
+ * verdict per radius. Every done group must carry exactly one S and one K pair at every radius, each with jMax + Kf - 1
+ * readings; with `expect`, the groups must be exactly those (N5: the three day-1 groups), all done, so a verdict "in all
+ * three groups" is never read off fewer.
+ */
+export function recomputeFine(groups: readonly { seed: number; N: number; status: string; pairs?: FinePairRecord[] }[], radii: readonly number[], o: FineOptions, expect?: readonly { seed: number; N: number }[]): FineRadius[] {
+  const J = o.jMax + o.Kf - 1;
+  if (expect) {
+    const key = (g: { seed: number; N: number }) => `${g.seed}/${g.N}`;
+    const want = expect.map(key).sort(), got = groups.map(key).sort();
+    if (JSON.stringify(want) !== JSON.stringify(got)) throw new Error(`fine: the groups are ${got.join(", ") || "none"}, N5 wants ${want.join(", ")}`);
+    const notDone = groups.find((g) => g.status !== "done");
+    if (notDone) throw new Error(`fine seed ${notDone.seed} N ${notDone.N}: ${notDone.status} in a done fine pilot`);
+  }
+  for (const g of groups) {
+    if (g.status !== "done") continue;
+    for (const p of g.pairs ?? []) {
+      const bad = countsError(p, J);
+      if (bad) throw new Error(`fine seed ${g.seed} N ${g.N} ${p.label}: ${bad}`);
+      const got = fineReadings(finePointsOf(p), o);
+      if (JSON.stringify(got) !== JSON.stringify(p.readings)) throw new Error(`fine seed ${g.seed} N ${g.N} ${p.label}: the counts give ${JSON.stringify(got)}, the record says ${JSON.stringify(p.readings)}`);
+    }
+    for (const R of radii)
+      for (const kind of ["S", "K"] as const) {
+        const n = (g.pairs ?? []).filter((p) => p.kind === kind && p.R === R).length;
+        if (n !== 1) throw new Error(`fine seed ${g.seed} N ${g.N}: ${n} ${kind} pairs at R ${R}, not 1`);
+      }
+  }
+  return radii.map((R) => {
+    const rows: FineRadius["rows"] = [], sHorizons: FineRadius["sHorizons"] = [];
+    for (const g of groups) {
+      if (g.status !== "done") continue;
+      const s = g.pairs!.find((p) => p.kind === "S" && p.R === R)!, k = g.pairs!.find((p) => p.kind === "K" && p.R === R)!;
+      rows.push({ seed: g.seed, N: g.N, gS: s.readings.gapArea, gK: k.readings.gapArea });
+      sHorizons.push({ seed: g.seed, N: g.N, fineHorizon: s.readings.fineHorizon });
+    }
+    return { R, verdict: fineVerdict(rows), rows, sHorizons };
+  });
+}
+
+/** What a fine group file must agree with (N5): the plan's window and cadence, the prep's checkpoint, stone centre and kick. */
+export interface FineBinding {
+  seed: number;
+  N: number;
+  checkpointHash: string;
+  stoneCentre: { x: number; y: number };
+  kick: { x: number; y: number };
+  window: number;
+  every: number;
+  Kf: number;
+  jMax: number;
+}
+
+/**
+ * A fine group file checked against what the plan and prep say it must be. Always: seed, N, window, every, Kf, jMax, and every
+ * twin's lesion (S-R at the stone centre with radius R, K at the kick with radius 0, U0 none). When the file carries its own
+ * `binding` (files written after it was added), every field of it as well, the checkpoint hash included. The first problem as
+ * a sentence; null when it agrees.
+ */
+export function fineFileError(
+  f: {
+    seed?: unknown; N?: unknown; status?: unknown; window?: unknown; every?: unknown; Kf?: unknown; jMax?: unknown; binding?: FineBinding;
+    u0?: { referenceChecked?: unknown };
+    twins?: { name: string; lesion?: { x: number; y: number; r: number } | null; effectiveR?: unknown; finalStateHash?: unknown; runnerStateHash?: unknown; gateOk?: unknown }[];
+  },
+  want: FineBinding,
+  radii: readonly number[],
+  gate?: { u0Censuses: number },
+): string | null {
+  for (const k of ["seed", "N", "window", "every", "Kf", "jMax"] as const) if (f[k] !== want[k]) return `${k} is ${JSON.stringify(f[k])}, the plan and prep say ${want[k]}`;
+  if (f.binding) {
+    const why = fieldsDiffer(f.binding, want);
+    if (why) return `binding: ${why}`;
+  }
+  const names = ["U0", ...radii.map((R) => `S${R}`), "K"];
+  const got = (f.twins ?? []).map((t) => t.name);
+  if (JSON.stringify(got) !== JSON.stringify(names)) return `twins are ${got.join(", ")}, not ${names.join(", ")}`;
+  for (const t of f.twins!) {
+    const l = t.lesion ?? null;
+    const w = t.name === "U0" ? null : t.name === "K" ? { x: want.kick.x, y: want.kick.y, r: 0 } : { x: want.stoneCentre.x, y: want.stoneCentre.y, r: Number(t.name.slice(1)) };
+    if (JSON.stringify(l) !== JSON.stringify(w)) return `${t.name}'s lesion is ${JSON.stringify(l)}, not ${JSON.stringify(w)}`;
+  }
+  return gate ? fineGateError(f, gate.u0Censuses) : null;
+}
+
+/**
+ * The gate evidence of a done fine group (N5), in a group file or in the record (the same check at build and at read): status
+ * done, U0 checked against #55 at every census the window reaches, every twin's lesion applied at its radius, and every
+ * twin's final state equal to the same twin through runExperiment. The first problem as a sentence; null when it holds.
+ */
+export function fineGateError(
+  f: { status?: unknown; u0?: { referenceChecked?: unknown }; twins?: { name: string; lesion?: { x: number; y: number; r: number } | null; effectiveR?: unknown; finalStateHash?: unknown; runnerStateHash?: unknown; gateOk?: unknown }[] },
+  u0Censuses: number,
+): string | null {
+  if (f.status !== "done") return `status is ${JSON.stringify(f.status)}, not "done"`;
+  if (f.u0?.referenceChecked !== u0Censuses) return `U0 was checked against #55 at ${JSON.stringify(f.u0?.referenceChecked)} censuses, not ${u0Censuses}`;
+  if (!Array.isArray(f.twins) || !f.twins.length) return "no twins";
+  for (const t of f.twins) {
+    if (typeof t.finalStateHash !== "string" || !t.finalStateHash) return `${t.name} has no final state hash`;
+    if (t.gateOk !== true || t.runnerStateHash !== t.finalStateHash) return `${t.name}'s gate: fine path ${t.finalStateHash}, runExperiment ${JSON.stringify(t.runnerStateHash)}, gateOk ${JSON.stringify(t.gateOk)}`;
+    if (t.name !== "U0" && (!t.lesion || t.effectiveR !== t.lesion.r)) return `${t.name}'s lesion was applied with radius ${JSON.stringify(t.effectiveR)}, not ${JSON.stringify(t.lesion?.r)}`;
+  }
+  return null;
+}
+
+/** A done fine pilot's top file (N5): no failures, and every anchor of `want` (seed, N, R, steps, hash) reproduced. */
+export function fineTopError(top: { status?: unknown; failures?: unknown; anchors?: unknown }, want: readonly { seed: number; N: number; R: number; steps: number; want: string }[]): string | null {
+  if (top.status !== "done") return null;
+  if (!Array.isArray(top.failures) || top.failures.length) return `a done fine pilot lists failures ${JSON.stringify(top.failures)}`;
+  const got = Array.isArray(top.anchors) ? (top.anchors as { seed: number; N: number; R: number; steps: number; want: string; hash?: string; ok?: boolean }[]) : [];
+  if (got.length !== want.length) return `${got.length} anchors, not ${want.length}`;
+  for (const w of want) {
+    const x = got.find((y) => y.seed === w.seed && y.N === w.N && y.R === w.R && y.steps === w.steps);
+    if (!x) return `anchor seed ${w.seed} N ${w.N} S${w.R} +${w.steps} is missing`;
+    if (x.ok !== true || x.hash !== w.want || x.want !== w.want) return `anchor seed ${w.seed} N ${w.N} S${w.R} +${w.steps}: hash ${JSON.stringify(x.hash)}, want ${w.want}`;
+  }
+  return null;
+}
+
+/** A grid of (seed, N) groups that must equal another exactly (N2: slice 34's groups are #55's). The first problem, or null. */
+export function gridError(got: readonly { seed: number; N: number }[], want: readonly { seed: number; N: number }[], what: string): string | null {
+  const key = (g: { seed: number; N: number }) => `${g.seed}/${g.N}`;
+  const a = got.map(key).sort(), b = want.map(key).sort();
+  return JSON.stringify(a) === JSON.stringify(b) ? null : `${what}: the groups are ${a.join(", ") || "none"}, #55's are ${b.join(", ")}`;
+}
+
+// ---- The readings (N6)
+
+/** N6's order for K pairs: no mark below every horizon, censored above (this reading only). Null for an excluded outcome. */
+export function kValue(o: { kind: string; steps?: number }): number | null {
+  if (o.kind === "no-mark") return -1;
+  if (o.kind === "horizon") return o.steps!;
+  if (o.kind === "censored") return Infinity;
+  return null;
+}
+
+/** K at least half S on N6's order (a censored S needs a censored K; no mark is never at least half a horizon). */
+const atLeastHalf = (k: number, s: number) => (s === Infinity ? k === Infinity : 2 * k >= s);
+
+export interface NullRadiusReading {
+  R: number;
+  label: string;
+  /** `valid`: the matched groups (K|R a horizon, censored or no mark, and S-R a horizon or censored), sorted on N6's order. */
+  k: { valid: { seed: number; N: number; value: number }[]; excluded: { seed: number; N: number; kind: string }[]; noMark: number; horizons: number; censored: number; median: number | null };
+  /** #55's S-R median by §8's rule over the same matched groups (Infinity: censored); null when none is matched. */
+  sMedian: number | null;
+  verdict: "divergence clock" | "stone effect" | "no reading";
+  paired: { atLeastHalf: number; of: number };
+  text: string;
+}
+
+export interface NullReadoutOptions {
+  kMax: number;
+  censusEvery: number;
+  wander: number;
+  /** The fine pilot's verdicts and fine horizons, per radius (absent when it did not run). */
+  fine?: readonly FineRadius[];
+  fineWindow?: number;
+}
+
+const fmtValue = (v: number | null, window: number) => (v === null ? "none" : v === -1 ? "no mark" : v === Infinity ? `censored (> ${fmt(window)})` : `${fmt(v)} steps`);
+const sValue = (p: PairRecord) => (p.outcome.kind === "horizon" ? p.outcome.steps : p.outcome.kind === "censored" ? Infinity : null);
+const byValue = (a: number, b: number) => (a === b ? 0 : a < b ? -1 : 1);
+const medianOf = (v: readonly number[]) => (v.length ? v[Math.floor((v.length - 1) / 2)] : null);
+
+/**
+ * N6's matching: per (seed, N) at radius R, the K|R value on N6's order and #55's S-R value. A group is matched when both are
+ * valid ("over the groups where both ran"); the others are excluded with the reason. Both medians are taken over the matched
+ * groups only, so a group whose K never ran (a cap skip) or whose K is extinct cannot move the stone's median.
+ */
+export function matchedPairs(kPairs: readonly PairRecord[], sPairs: readonly PairRecord[], R: number) {
+  const matched: { seed: number; N: number; value: number; s: number }[] = [];
+  const excluded: { seed: number; N: number; kind: string }[] = [];
+  for (const p of kPairs.filter((x) => x.R === R)) {
+    const v = kValue(p.outcome as { kind: string; steps?: number });
+    if (v === null) {
+      excluded.push({ seed: p.seed, N: p.N, kind: p.outcome.kind });
+      continue;
+    }
+    const s = sPairs.find((x) => x.R === R && x.seed === p.seed && x.N === p.N);
+    const sv = s ? sValue(s) : null;
+    if (sv === null) {
+      excluded.push({ seed: p.seed, N: p.N, kind: `stone ${s ? s.outcome.kind : "missing"}` });
+      continue;
+    }
+    matched.push({ seed: p.seed, N: p.N, value: v, s: sv });
+  }
+  matched.sort((a, b) => byValue(a.value, b.value) || a.N - b.N || a.seed - b.seed);
+  const kMedian = medianOf(matched.map((m) => m.value));
+  const sMedian = medianOf(matched.map((m) => m.s).sort(byValue));
+  const half = matched.filter((m) => atLeastHalf(m.value, m.s)).length;
+  return { matched, excluded, kMedian, sMedian, paired: { atLeastHalf: half, of: matched.length } };
+}
+
+/** N6's coarse readings per radius from the K pairs and #55's stone pairs, and the pace line on R = 32. */
+export function nullReadout(kPairs: readonly PairRecord[], sPairs: readonly PairRecord[], o: NullReadoutOptions): { radii: NullRadiusReading[]; pace: string } {
+  const window = o.kMax * o.censusEvery - 1;
+  const radii = [...new Set(kPairs.map((p) => p.R))].sort((a, b) => a - b);
+  const out = radii.map((R): NullRadiusReading => {
+    const label = `K|${R}`;
+    const m = matchedPairs(kPairs, sPairs, R);
+    const valid = m.matched.map(({ seed, N, value }) => ({ seed, N, value }));
+    const median = m.kMedian, sMedian = m.sMedian, paired = m.paired;
+    const k = { valid, excluded: m.excluded, noMark: valid.filter((v) => v.value === -1).length, horizons: valid.filter((v) => Number.isFinite(v.value) && v.value >= 0).length, censored: valid.filter((v) => v.value === Infinity).length, median };
+    if (median === null || sMedian === null) {
+      const why = kPairs.some((p) => p.R === R && kValue(p.outcome as { kind: string }) !== null) ? "no group with a valid stone pair as well" : "no valid K pair";
+      return { R, label, k, sMedian, verdict: "no reading", paired, text: `${label}: no reading (${why})` };
+    }
+    const clock = atLeastHalf(median, sMedian);
+    const verdict = clock ? "divergence clock" : "stone effect";
+    const text = `${label}: ${valid.length} valid (no mark ${k.noMark}, horizons ${k.horizons}, censored ${k.censored}); median ${fmtValue(median, window)} against the S-${R} median ${fmtValue(sMedian, window)}: ${verdict} at R = ${R} (the K median is ${clock ? "at least" : "under"} half the stone's); paired: ${paired.atLeastHalf} of ${paired.of} groups with K|${R} at least half S-${R}`;
+    return { R, label, k, sMedian, verdict, paired, text };
+  });
+  const r32 = out.find((r) => r.R === 32);
+  const f32 = o.fine?.find((f) => f.R === 32);
+  // How firm the R = 32 verdict is: its paired count and what the neighbouring radii read (they decide nothing).
+  const others = out.filter((r) => r.R !== 32).map((r) => `R = ${r.R} ${r.verdict}`).join(", ");
+  const firmness = r32 && r32.verdict !== "no reading" ? ` (paired ${r32.paired.atLeastHalf} of ${r32.paired.of}${others ? `; ${others}` : ""})` : "";
+  const fineGroups = f32 ? f32.sHorizons.map((r) => r.N).filter((N, i, a) => a.indexOf(N) === i).map((N) => fmt(N)).join(", ") : "";
+  let pace: string;
+  if (!r32 || r32.verdict === "no reading") pace = "Pace: no reading (no valid K|32 or S-32 reading).";
+  else if (r32.verdict === "stone effect")
+    pace = `Pace: a stone effect at R = 32${firmness}: #55's R = 32 reading stands (median ${fmtValue(r32.sMedian, window)}), with its saturation caveat; the day stays one wander, and no garden setting changes.`;
+  else {
+    let fine: string;
+    const fw = o.fineWindow ?? 0;
+    if (!f32 || f32.verdict === "no reading") fine = "the fine pilot gives no reading at R = 32, so nothing here says how legible a stone is in its first censuses";
+    else if (f32.verdict === "material") {
+      const hs = f32.sHorizons.map((h) => (h.fineHorizon.kind === "horizon" ? `${fmt(h.fineHorizon.steps)}` : `> ${fmt(h.fineHorizon.window)}`)).join(", ");
+      fine = `the fine verdict at R = 32 is material (on the fine pilot's groups only, N = ${fineGroups}): a stone is a mark legible for about its fine horizon (S-32: ${hs} steps)`;
+    } else if (f32.verdict === "like a kick") fine = `the fine verdict at R = 32 is like a kick (on the fine pilot's groups only, N = ${fineGroups}): no measure here separates a stone from any perturbation at either grain`;
+    else fine = `the fine verdict at R = 32 is mixed (on the fine pilot's groups only, N = ${fineGroups}): the groups disagree on whether a stone's early mark exceeds a kick's`;
+    pace = `Pace: a divergence clock at R = 32${firmness}: #55's R = 32 horizons time divergence, and the pace reading rests on the first censuses: ${fine}. The day stays one wander (the legibility seen here is at most the fine window, ${fmt(fw)} steps${fw ? "" : ", not run"}), and no garden setting changes.`;
+  }
+  return { radii: out, pace };
+}
+
+/**
+ * A side reading (not in N6; it decides nothing): N6's coarse comparison split by day (checkpoint N), on the same matched
+ * groups and the same median rule, so a reader can see which days a radius's verdict comes from.
+ */
+export function nullByDay(kPairs: readonly PairRecord[], sPairs: readonly PairRecord[], radii: readonly number[]) {
+  const days = [...new Set(kPairs.map((p) => p.N))].sort((a, b) => a - b);
+  return radii.map((R) => ({
+    R,
+    days: days.map((N) => {
+      const m = matchedPairs(kPairs.filter((p) => p.N === N), sPairs, R);
+      return { N, k: m.matched.map((x) => ({ seed: x.seed, value: x.value, s: x.s })), kMedian: m.kMedian, sMedian: m.sMedian, paired: m.paired, verdict: m.kMedian === null || m.sMedian === null ? "no reading" : atLeastHalf(m.kMedian, m.sMedian) ? "K at least half S" : "K under half S" };
+    }),
+  }));
+}
+
+/**
+ * A side reading of one fine pair (not in N5; it decides nothing): the first reading at which either region differs at all,
+ * and how many readings have an empty near union. A fine horizon that starts before the first difference is vacuous: near
+ * <= far held because nothing had happened yet, which N5 (unlike §5's no mark) has no class for.
+ */
+export function fineQuiet(p: Pick<FinePairRecord, "nearDiff" | "nearUnion" | "farDiff" | "farUnion" | "readings">) {
+  const i = p.nearDiff.findIndex((d, j) => d > 0 || p.farDiff[j] > 0);
+  const firstDiff = i < 0 ? null : i + 1;
+  const emptyNear = p.nearUnion.filter((u) => u === 0).length;
+  const fh = p.readings.fineHorizon;
+  const vacuous = fh.kind === "horizon" && (firstDiff === null || fh.j < firstDiff);
+  return { firstDiff, emptyNear, vacuous };
+}
+
+/** N7's worst cases (seconds at `rate`, the pilot's twin rate times the factor): a group, and the fine pilot. */
+export function nullGroupWorst(o: { n0: number; kMax: number; K: number; chunk: number; censusEvery: number; rate: number }): number {
+  return ((2 * lastCensus({ K: o.K, kMax: o.kMax }) + o.chunk + o.chunk * o.n0) * o.censusEvery) / o.rate;
+}
+
+/** Five twins on two paths per day-1 group, 30% for the readings, plus the S64 anchor (and the S8 anchor when the window stops short of it). */
+export function fineWorstSeconds(o: { window: number; rate: number; groups: number; anchors: readonly { N: number; steps: number }[]; day1: number }): number {
+  let s = o.groups * 5 * 2 * o.window * 1.3;
+  for (const x of o.anchors) if (x.N !== o.day1 || x.steps > o.window) s += x.steps * 1.3;
+  return s / o.rate;
+}
+
+/**
+ * N7's scale-down, fixed before the run: the full fine window (8,192) and K window (128) if elapsed + the day-1 groups' worst
+ * cases + the fine pilot's worst case fit the cap; else the fine window drops to 4,096; if that still does not fit, the K
+ * window drops to 64 censuses as well.
+ */
+export function nullScaleDown(o: { capSeconds: number; elapsed: number; day1Worst: (kMax: number) => number; fineWorst: (window: number) => number }) {
+  const budget = (window: number, kMax: number) => o.elapsed + o.day1Worst(kMax) + o.fineWorst(window);
+  if (budget(8192, 128) <= o.capSeconds) return { window: 8192, kMax: 128, scaleDown: "none", budget: budget(8192, 128) };
+  if (budget(4096, 128) <= o.capSeconds) return { window: 4096, kMax: 128, scaleDown: "the fine window drops to 4,096 steps (N7)", budget: budget(4096, 128) };
+  return { window: 4096, kMax: 64, scaleDown: "the fine window drops to 4,096 steps and the K pairs' window to 64 censuses (N7)", budget: budget(4096, 64) };
+}
+
+// ---- Group files of slice 34 and their binding
+
+/** The first field where `stored` differs from `want`, as a sentence; null when they agree. */
+export function fieldsDiffer<T extends object>(stored: T, want: T): string | null {
+  for (const k of Object.keys(want) as (keyof T)[]) {
+    const a = JSON.stringify(stored[k]), b = JSON.stringify(want[k]);
+    if (a !== b) return `${String(k)} is ${a} in the group file, ${b} in this run`;
+  }
+  return null;
+}
+
+export interface NullBinding {
+  seed: number;
+  N: number;
+  checkpointHash: string;
+  stoneCentre: { x: number; y: number };
+  nulls: { R: number; x: number; y: number }[];
+  noNull: number[];
+  r0: number;
+  kick: { x: number; y: number };
+  K: number;
+  kMax: number;
+  censusEvery: number;
+  chunk: number;
+  entryStep: number;
+}
+
+export function nullBindingError(stored: NullBinding | undefined, want: NullBinding): string | null {
+  if (!stored) return "the group file carries no binding";
+  return fieldsDiffer(stored, want);
+}
+
+export interface NullPrep {
+  stoneCentre: { x: number; y: number };
+  r0: number;
+  stale: number;
+  nulls: ({ R: number; x: number; y: number; count: number } | { R: number; none: true })[];
+  kick: KickCell;
+}
+
+export interface NullGroupFile {
+  seed: number;
+  N: number;
+  /** "not run (stopped)": the run ended (a fault elsewhere) before this group started. */
+  status: "done" | "not run (cap)" | "not run (stopped)" | "void";
+  binding?: NullBinding;
+  prep?: NullPrep;
+  result?: ArmsResult;
+  fault?: string;
+  uptime?: string;
+  ps?: string;
+  startedAt?: string;
+}
+
+/** A slice-34 group as the record carries it (N8): per K pair the outcome and the integer counts per census, the living cells of K and U0. */
+export function compactNullGroup(g: NullGroupFile) {
+  const head = { seed: g.seed, N: g.N, status: g.status, ...(g.prep ? { prep: g.prep } : {}), ...(g.fault ? { fault: g.fault } : {}) };
+  if (!g.result) return head;
+  const r = g.result;
+  const { living: kLiving, ...kick } = r.kick;
+  const { living: u0Living, ...u0 } = r.u0;
+  return {
+    ...head,
+    stoppedByCap: r.stoppedByCap,
+    seconds: Math.round(r.seconds),
+    control: r.control,
+    u0: { ...u0, living: u0Living },
+    nulls: r.nulls,
+    kick: { ...kick, living: kLiving },
+    pairs: r.pairs.map((p) => ({
+      label: p.label,
+      R: p.R,
+      outcome: p.outcome,
+      nearDiff: p.series.map((q) => q.near.diff),
+      nearUnion: p.series.map((q) => q.near.union),
+      farDiff: p.series.map((q) => q.far.diff),
+      farUnion: p.series.map((q) => q.far.union),
+    })),
+  };
+}
+
+export type CompactNullGroup = {
+  seed: number;
+  N: number;
+  status: string;
+  u0?: { living: number[] };
+  kick?: { living: number[] };
+  pairs?: { label: string; R: number; outcome: StoneOutcome; nearDiff: number[]; nearUnion: number[]; farDiff: number[]; farUnion: number[] }[];
+};
+
+/** The K pairs of a slice-34 record, each outcome recomputed from the integer counts and checked against the stored one. */
+export function recomputeNullPairs(groups: readonly CompactNullGroup[], radii: readonly number[], o: HorizonOptions): PairRecord[] {
+  const pairs: PairRecord[] = [];
+  for (const g of groups)
+    for (const R of radii) {
+      if (g.status !== "done") {
+        const kind = g.status === "not run (cap)" ? "not-run-cap" : g.status === "not run (stopped)" ? "not-run-stopped" : "void";
+        pairs.push({ seed: g.seed, N: g.N, R, outcome: { kind } as unknown as PairRecord["outcome"] });
+        continue;
+      }
+      const all = g.pairs?.filter((x) => x.R === R) ?? [];
+      const p = all[0];
+      if (all.length !== 1 || !g.u0 || !g.kick) throw new Error(`group seed ${g.seed} N ${g.N}: ${all.length} K pairs at R ${R}${g.u0 && g.kick ? "" : ", or no U0 or kick"}`);
+      const bad = countsError(p) ?? (p.nearDiff.length === 0 ? "no census" : g.kick.living.length < p.nearDiff.length || g.u0.living.length < p.nearDiff.length ? "fewer living counts than censuses" : null);
+      if (bad) throw new Error(`group seed ${g.seed} N ${g.N} ${p.label}: ${bad}`);
+      const got = horizonOf(pointsOf({ ...p, living: g.kick.living.slice(0, p.nearDiff.length) }, g.u0.living), o);
+      const ok = p.outcome.kind === "stopped-cap" ? got.kind === "pending" : JSON.stringify(got) === JSON.stringify(p.outcome);
+      if (!ok) throw new Error(`group seed ${g.seed} N ${g.N} ${p.label}: the record's counts give ${JSON.stringify(got)}, its outcome says ${JSON.stringify(p.outcome)}`);
+      pairs.push({ seed: g.seed, N: g.N, R, outcome: p.outcome });
+    }
+  return pairs;
+}
+
+/** #55's stone pairs recomputed from its own record's counts (§5), restricted to the given groups: what N6 reads K against. */
+export function sPairsFrom55(rec55: { groups: Parameters<typeof recomputePairs>[0]; cap: { kMax: number } }, groups: readonly { seed: number; N: number }[], radii: readonly number[], o: { K: number; censusEvery: number }): PairRecord[] {
+  return recomputePairs(rec55.groups, radii, { K: o.K, kMax: rec55.cap.kMax, censusEvery: o.censusEvery }).filter((p) => groups.some((g) => g.seed === p.seed && g.N === p.N));
+}
+
+export interface NullRecordView {
+  kMax: number;
+  groups: readonly CompactNullGroup[];
+  sPairs: PairRecord[];
+  fine: {
+    status: string; window?: number; jMax?: number; anchors?: unknown; failures?: unknown;
+    groups?: { seed: number; N: number; status: string; pairs?: FinePairRecord[]; u0?: { referenceChecked?: unknown }; twins?: Parameters<typeof fineGateError>[0]["twins"] }[];
+  };
+}
+
+/**
+ * Slice 34's readings from a record (N6, N8): the K pairs and the fine readings recomputed from the integer counts (throwing on
+ * any disagreement or malformed count), then N6's readout, or "nothing reads" when a group is void. The side readings (by day,
+ * and the fine pairs' first difference) are carried beside it and decide nothing.
+ */
+export function nullReadings(
+  rec: NullRecordView,
+  c: {
+    radii: readonly number[]; K: number; censusEvery: number; every: number; Kf: number; wander: number; day1: number;
+    grid?: readonly { seed: number; N: number }[];
+    /** N5's gate evidence a done fine pilot must carry: the anchors to reproduce and, per group, the U0 censuses checked. */
+    fineGate?: { anchors: readonly { seed: number; N: number; R: number; steps: number; want: string }[]; u0Censuses: (g: { seed: number; N: number }) => number };
+  },
+) {
+  // With `grid` (#55's groups, from its own record), the record must hold exactly those groups, and stone pairs for exactly
+  // those groups at every radius, so the day-1 grid the fine readings are checked against is not taken from the record being
+  // checked.
+  if (c.grid) {
+    const gridBad = gridError(rec.groups, c.grid, "record") ?? c.radii.reduce<string | null>((e, R) => e ?? gridError(rec.sPairs.filter((p) => p.R === R), c.grid!, `sPairs at R ${R}`), null);
+    if (gridBad) throw new Error(gridBad);
+    if (rec.sPairs.length !== c.grid.length * c.radii.length) throw new Error(`sPairs: ${rec.sPairs.length} pairs, not ${c.grid.length} groups x ${c.radii.length} radii`);
+  }
+  // With `fineGate`, a done fine pilot reads only with its gate evidence intact (no failures, anchors reproduced, every
+  // group's gates passed), the same checks nullrecord made when it built the record.
+  if (c.fineGate && rec.fine.status === "done") {
+    const top = fineTopError(rec.fine, c.fineGate.anchors);
+    if (top) throw new Error(`fine: ${top}`);
+    for (const g of rec.fine.groups ?? []) {
+      const why = fineGateError(g, c.fineGate.u0Censuses(g));
+      if (why) throw new Error(`fine seed ${g.seed} N ${g.N}: ${why}`);
+    }
+  }
+  const kPairs = recomputeNullPairs(rec.groups, c.radii, { K: c.K, kMax: rec.kMax, censusEvery: c.censusEvery });
+  const day1 = rec.groups.filter((g) => g.N === c.day1).map((g) => ({ seed: g.seed, N: g.N }));
+  const fineRadii: FineRadius[] | undefined = rec.fine.status === "done" ? recomputeFine(rec.fine.groups ?? [], c.radii, { every: c.every, Kf: c.Kf, jMax: rec.fine.jMax! }, day1) : undefined;
+  if (fineRadii && rec.fine.window !== (rec.fine.jMax! + c.Kf - 1) * c.every) throw new Error(`fine: window ${rec.fine.window} is not (jMax ${rec.fine.jMax} + ${c.Kf - 1}) * ${c.every}`);
+  const voidGroups = rec.groups.filter((g) => g.status === "void");
+  if (voidGroups.length) return { fault: `a fault voided ${voidGroups.map((g) => `seed ${g.seed} N ${g.N} (${(g as { fault?: string }).fault ?? "no message"})`).join(", ")}: nothing reads (N6)`, kPairs, fine: fineRadii ?? null, radii: [], pace: "Pace: nothing reads (N6).", side: null };
+  const ro = nullReadout(kPairs, rec.sPairs, { kMax: rec.kMax, censusEvery: c.censusEvery, wander: c.wander, fine: fineRadii, fineWindow: rec.fine.status === "done" ? rec.fine.window : 0 });
+  const side = {
+    byDay: nullByDay(kPairs, rec.sPairs, c.radii),
+    fineQuiet: fineRadii ? (rec.fine.groups ?? []).flatMap((g) => (g.pairs ?? []).map((p) => ({ seed: g.seed, N: g.N, label: p.label, ...fineQuiet(p) }))) : [],
+  };
+  return { fault: null, kPairs, fine: fineRadii ?? null, ...ro, side };
+}
+
+/**
+ * N8: the note as it was before its slice-34 readout was appended: everything up to and including the newline that ends the
+ * line before the blank line above the readout heading (the readout is appended as "\n" + heading + "\n" ...). The whole
+ * note while the heading is absent.
+ */
+export function notePrefix(note: Uint8Array, heading: string): Uint8Array {
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(note);
+  const at = text.indexOf(`\n\n${heading}\n`);
+  if (at < 0) return note;
+  return new TextEncoder().encode(text.slice(0, at + 1));
+}
+
+// ---- The run's receipts and the cap inside the fine pilot (N7, N8)
+
+/**
+ * The run script's status file (N7, N8): per stage its start, `uptime`, the `ps` lines and exit code, and the note's SHA-256
+ * taken before the pilot. Lines it does not know are kept under `other`.
+ */
+export function parseRunStatus(text: string) {
+  const stages: { stage: string; at: string; uptime?: string; ps: string[]; exit?: number }[] = [];
+  const other: string[] = [];
+  const out: { started?: string; noteSha256BeforePilot?: string; noteSha256AtEnd?: string; done?: string } = {};
+  let cur: (typeof stages)[number] | null = null;
+  for (const line of text.split("\n")) {
+    let m: RegExpMatchArray | null;
+    if ((m = line.match(/^== (\S+) (\S+)$/))) stages.push((cur = { stage: m[1], at: m[2], ps: [] }));
+    else if ((m = line.match(/^exit (\S+) (\d+)$/)) && cur && cur.stage === m[1]) cur.exit = Number(m[2]);
+    else if ((m = line.match(/^started (\S+)$/))) out.started = m[1];
+    else if ((m = line.match(/^note-sha256-before-pilot ([0-9a-f]{64})$/))) out.noteSha256BeforePilot = m[1];
+    else if ((m = line.match(/^note-sha256-at-end ([0-9a-f]{64})$/))) out.noteSha256AtEnd = m[1];
+    else if ((m = line.match(/^DONE (\S+)$/))) out.done = m[1];
+    else if (cur && cur.exit === undefined && cur.uptime === undefined && /load averages?:/.test(line)) cur.uptime = line;
+    else if (cur && cur.exit === undefined && /^\s*\d+\s/.test(line)) cur.ps.push(line);
+    else if (line.trim() && !(cur && cur.exit !== undefined && /^( M|\?\?|A |D ) /.test(line))) other.push(line);
+  }
+  return { ...out, stages, ...(other.length ? { other } : {}) };
+}
+
+/**
+ * N8's guard on the status file when one is given: exactly one `note-sha256-before-pilot` line, a 64-digit lowercase hex
+ * hash, equal to the plan's rules digest. A missing, malformed, repeated or different declaration is an error (the sentence),
+ * never a pass; null when it holds.
+ */
+export function runStatusError(text: string, rulesDigest: string): string | null {
+  const lines = text.split("\n").filter((l) => /^note-sha256-before-pilot\b/.test(l));
+  if (lines.length === 0) return "no note-sha256-before-pilot line";
+  if (lines.length > 1) return `${lines.length} note-sha256-before-pilot lines, not 1`;
+  const m = lines[0].match(/^note-sha256-before-pilot ([0-9a-f]{64})$/);
+  if (!m) return `a malformed note-sha256-before-pilot line: ${JSON.stringify(lines[0])}`;
+  if (m[1] !== rulesDigest) return `the note hashed ${m[1]} before the pilot, the plan's rules digest is ${rulesDigest}`;
+  return null;
+}
+
+/** The fine pilot's cap overtaking it (N7): the pilot stops where it is and is recorded "stopped (cap)". */
+export class FineCap extends Error {
+  override name = "FineCap";
+}
+
+/**
+ * A segment run under N7's deadline: `run` gets a per-census callback that returns true (stop now) once `now()` has passed
+ * `deadline`; if it ever did, the segment's result is discarded and FineCap is thrown, so a gate the cap overtakes mid-way
+ * never reads as a gate that ran (or failed).
+ */
+export async function cappedRun<T>(run: (stop: () => boolean) => Promise<T>, now: () => number, deadline: number, where: string): Promise<T> {
+  let hit = false;
+  const r = await run(() => (hit = hit || now() > deadline));
+  // Also past the deadline after the last census (the final readback and hash run after the callback): discarded too.
+  if (hit || now() > deadline) throw new FineCap(`the cap's deadline passed during ${where}`);
+  return r;
 }
