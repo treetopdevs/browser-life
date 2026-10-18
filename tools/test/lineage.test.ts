@@ -282,7 +282,8 @@ describe("pond-cycle bundles", () => {
     expect(d.provenance.files).toContain("ponds.tsv");
     expect(d.pond).toMatchObject({ arm: "scaf", period: 100, ponds: 4, exact: 2, notRecorded: 0, anchor: { ponds: [0], cycle: 3, source: "subject birth" } });
     expect(d.pond!.edges.map((e) => e.crossings.map((c) => [c.boundary, c.from, c.to, c.carried]))).toEqual([[[1, 1, 2, "named"]], [[2, 2, 0, "named"]]]);
-    expect(d.gaps.join("\n")).toMatch(/HTML panel does not draw pond routes yet/);
+    expect(d.gaps.join("\n")).not.toMatch(/HTML panel does not draw/);
+    expect(d.gaps.join("\n")).toMatch(/pond occupancy at a census \(lineages.tsv is world-wide\), spread across ponds and anything between boundaries are not recorded/);
     // The same bundle with a donor edited so that A's packet comes from pond 3: refused, not reported.
     const edited = pondsLines([{ ...cycles[0], donors: [1, 3, 3, 3] }, cycles[1], cycles[2]]);
     await expect(buildDossier(scaf({ ponds: edited }), { kind: "key", key: B })).rejects.toThrow(/hand: 0:2 -> 150:\d+: the walk through ponds.tsv lands on pond 3 at cycle 0, but 0:2 was born in pond 1 \(refusing to report\)/);

@@ -29,6 +29,8 @@ import {
   type SourceRef,
 } from "./page.ts";
 import { axis, linearScale, niceTicks, num, type Scale } from "./svg.ts";
+import { EXPRESSIONS, endStep, int, marker, maxOf, pct, svgOpen, text, ticksAndDomain } from "./lineage-shared.ts";
+import { routeFigure, routeKeyNumbers, routeLead, routeSectionEvidence, validatePondRoute } from "./lineage-route.ts";
 
 /** Matches tools/report-html.ts's `RenderMeta` structurally (see individuality.ts for why it is not imported). */
 export interface RenderMeta {
@@ -41,7 +43,6 @@ export type LineageInput = GenotypeInput | PondDossier | PondTwin;
 
 /** The controller's outputs in genome order; mirrors OUTPUTS in tools/lib/lineage.ts (checked by the tests). */
 export const OUTPUT_NAMES = ["photo", "resp", "decomp", "grow", "build", "emit", "moveX", "moveY"] as const;
-const EXPRESSIONS = ["controller", "physics", "probe-silent", "clamped"] as const;
 
 // ---- validation -----------------------------------------------------------------------------------------
 
@@ -180,6 +181,8 @@ function validateGenotype(d: Record<string, unknown>): void {
     });
   }
   strings(d.gaps, "gaps");
+  // Pond-cycle runs (PR #29): absent in older dossiers, null outside pond runs.
+  if (d.pond !== undefined && d.pond !== null) validatePondRoute(d.pond, chain.map((c) => (c as Record<string, unknown>).key as string));
   if (d.twin !== undefined && d.twin !== null) {
     const t = rec(d.twin, "twin");
     for (const k of ["runId", "subject"]) strAt(t[k], `twin.${k}`);
@@ -265,20 +268,12 @@ export function validate(data: unknown): asserts data is LineageInput {
 
 // ---- formatting ------------------------------------------------------------------------------------------
 
-/** Extremes by loop: series can hold more entries than a spread call accepts as arguments. */
-function maxOf(vals: Iterable<number>, floor: number): number {
-  let m = floor;
-  for (const v of vals) if (v > m) m = v;
-  return m;
-}
 function minOf(vals: Iterable<number>, ceil: number): number {
   let m = ceil;
   for (const v of vals) if (v < m) m = v;
   return m;
 }
 
-const int = (v: number): string => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-const pct = (v: number): string => `${(100 * v).toFixed(1)}%`;
 const orNone = (v: number | null, f: (x: number) => string = int): string => (v === null ? "none" : f(v));
 const fixed = (v: number, d: number): string => v.toFixed(d);
 
@@ -291,10 +286,13 @@ ${body}
 const para = (t: string): string => `<p>${escapeHtml(t)}</p>`;
 const list = (items: string[]): string => `<ul>${items.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
 const tableBlock = (headers: string[], rows: (string | number)[][]): string => `<div class="table-wrap">\n${numbersTable(headers, rows)}\n</div>`;
-const svgOpen = (w: number, h: number, label: string): string =>
-  `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(label)}">`;
-const text = (x: number, y: number, s: string, extra = ""): string =>
-  `<text x="${num(x)}" y="${num(y)}" fill="var(--muted)" font-size="10"${extra}>${escapeHtml(s)}</text>`;
+
+/**
+ * Dossiers written by PR #29 end their pond gap with this clause; the panel draws the route now, so it is dropped
+ * when the dossier has a route (the rest of the gap is printed verbatim).
+ */
+const LEGACY_ROUTE_GAP = "; the HTML panel does not draw pond routes yet";
+const dropLegacyRouteGap = (g: string): string => (g.endsWith(LEGACY_ROUTE_GAP) ? g.slice(0, -LEGACY_ROUTE_GAP.length) : g);
 
 /** A dashed vertical marker; its label flips to the left of the line near the right edge so it stays inside. */
 function vline(x: number, y0: number, y1: number, label: string, right: number): string {
@@ -307,12 +305,6 @@ function endLabels(items: { x: number; y: number; label: string }[], gap = 11): 
   const sorted = [...items].sort((a, b) => a.y - b.y || (a.label < b.label ? -1 : 1));
   for (let i = 1; i < sorted.length; i++) if (sorted[i].y < sorted[i - 1].y + gap) sorted[i] = { ...sorted[i], y: sorted[i - 1].y + gap };
   return sorted.map((it) => text(it.x, it.y + 3.5, it.label)).join("");
-}
-
-/** Ticks spanning `domain` and the domain widened to them, so the axis ends on a tick. */
-function ticksAndDomain(lo: number, hi: number, count: number): { ticks: number[]; domain: [number, number] } {
-  const ticks = niceTicks([lo, hi > lo ? hi : lo + 1], count);
-  return { ticks, domain: [ticks[0], ticks[ticks.length - 1]] };
 }
 
 /**
@@ -345,28 +337,6 @@ function trace(xs: number[], ys: number[], x: Scale, y: Scale, px: [number, numb
 
 type Mut = GenotypeInput["mutations"][number];
 type Node = GenotypeInput["chain"][number];
-
-/** The step axis runs to the run's final census. */
-function endStep(d: GenotypeInput): number {
-  const last = d.population.steps[d.population.steps.length - 1];
-  return maxOf(d.chain.map((c) => c.lastSeen ?? c.minted ?? 0), Math.max(1, d.provenance.finalCensus ?? last));
-}
-
-/** Expression-class marker at (x, y): shape and fill differ, so the class never rests on colour alone. */
-function marker(kind: (typeof EXPRESSIONS)[number] | "root", x: number, y: number): string {
-  switch (kind) {
-    case "root":
-      return `<polygon points="${num(x)},${num(y - 4.5)} ${num(x + 4.5)},${num(y)} ${num(x)},${num(y + 4.5)} ${num(x - 4.5)},${num(y)}" fill="var(--ink)" />`;
-    case "controller":
-      return `<circle cx="${num(x)}" cy="${num(y)}" r="3.5" fill="var(--accent2)" />`;
-    case "physics":
-      return `<rect x="${num(x - 3.2)}" y="${num(y - 3.2)}" width="6.4" height="6.4" fill="var(--pass)" />`;
-    case "probe-silent":
-      return `<circle cx="${num(x)}" cy="${num(y)}" r="3.2" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.3" />`;
-    case "clamped":
-      return `<g><line x1="${num(x - 3)}" x2="${num(x + 3)}" y1="${num(y - 3)}" y2="${num(y + 3)}" stroke="var(--muted)" stroke-width="1.4" /><line x1="${num(x - 3)}" x2="${num(x + 3)}" y1="${num(y + 3)}" y2="${num(y - 3)}" stroke="var(--muted)" stroke-width="1.4" /></g>`;
-  }
-}
 
 /** The mechanical effect template of one mutation on the probe grid. */
 export function effectText(m: Mut): string {
@@ -749,6 +719,7 @@ function renderGenotype(d: GenotypeInput, meta: RenderMeta): string {
     sections.push(section(heading, ev, lead + f));
   };
   fig("Ancestry and mutations", "exact", ancestryFigure(d, next()), unexpressed);
+  if (d.pond) fig("Pond route", routeSectionEvidence(d.pond), routeFigure(d, next()), para(routeLead(d)));
   fig("Population", "exact", populationFigure(d, next()));
   fig("Strategy: response to light", "exact", strategyFigure(d, next()), unexpressed);
   fig("Strategy: mean outputs along the ancestry", "exact", meanOutputFigure(d, next()), unexpressed);
@@ -763,7 +734,7 @@ function renderGenotype(d: GenotypeInput, meta: RenderMeta): string {
       ),
     );
   sections.push(offspringSection(d), trackerSection(d), twinSection(d));
-  sections.push(section("Not recorded", "not recorded", list(d.gaps)));
+  sections.push(section("Not recorded", "not recorded", list(d.pond ? d.gaps.map(dropLegacyRouteGap) : d.gaps)));
   sections.push(provenanceSection(d));
   const body = [
     header({
@@ -772,7 +743,7 @@ function renderGenotype(d: GenotypeInput, meta: RenderMeta): string {
       status: meta.status,
       statusNote: `${d.provenance.runId}, one lineage chosen by rule ${ruleText(d.rule)}`,
       sources: meta.sources,
-      keyNumbers: keyNumbersList(genotypeKeyNumbers(d)),
+      keyNumbers: keyNumbersList([...genotypeKeyNumbers(d), ...(d.pond ? routeKeyNumbers(d.pond) : [])]),
     }),
     ...sections,
     caveatsSection("Caveats", [
