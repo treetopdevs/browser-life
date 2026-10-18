@@ -146,6 +146,61 @@ test("worker: a wound, and a jump that replays it, are said to the naturalist at
   }
 });
 
+test("worker: a hand edit named for a replaced world is refused and changes nothing", async ({ page }) => {
+  test.setTimeout(600_000);
+  await page.route("**/lab-naturalist-test", (route) => route.fulfill({ contentType: "text/html", body: "<html><body></body></html>" }));
+  await page.goto("/lab-naturalist-test");
+  const got = await page.evaluate(async () => {
+    const WorkerConstructor = (await import(/* @vite-ignore */ "/src/sim.worker.ts?worker")).default;
+    const worker: Worker = new WorkerConstructor();
+    const messages: FromWorker[] = [];
+    worker.onmessage = (ev: MessageEvent<FromWorker>) => { messages.push(ev.data); };
+    const send = (m: ToWorker, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
+    const wait = async <T,>(find: () => T | undefined, what: string): Promise<T> => {
+      const deadline = performance.now() + 500_000;
+      while (performance.now() < deadline) {
+        const error = messages.find((m) => m.type === "error");
+        if (error?.type === "error") throw new Error(error.message);
+        const x = find();
+        if (x !== undefined) return x;
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      throw new Error(`timed out waiting for ${what}`);
+    };
+    const loaded = () => messages.filter((m): m is Extract<FromWorker, { type: "loaded" }> => m.type === "loaded");
+    const refused = () => messages.filter((m): m is Extract<FromWorker, { type: "refused" }> => m.type === "refused");
+    const touched = () => messages.filter((m): m is Extract<FromWorker, { type: "naturalistTouched" }> => m.type === "naturalistTouched");
+    try {
+      const canvas = document.createElement("canvas").transferControlToOffscreen();
+      send({ type: "init", canvas, width: 64, height: 64 }, [canvas]);
+      await wait(() => messages.find((m) => m.type === "ready"), "ready");
+      send({ type: "load", presetId: "gradient-m3", seed: 1 });
+      const first = await wait(() => loaded()[0], "loaded");
+      // A replant queued before a Try for the first world: the Try's edits reach the worker after the replacement.
+      send({ type: "load", presetId: "gradient-m3", seed: 1 });
+      send({ type: "feed", x: 128, y: 128, r: 127, amount: 32, world: first.world });
+      send({ type: "lesion", x: 128, y: 128, r: 127, world: first.world });
+      const second = await wait(() => loaded()[1], "the replant's loaded");
+      const no = await wait(() => (refused().length >= 2 ? refused() : undefined), "two refusals");
+      const before = touched().length;
+      // Named for the world on screen, the same edit is applied and logged.
+      send({ type: "feed", x: 10, y: 10, r: 4, amount: 4, world: second.world });
+      const yes = await wait(() => touched()[0], "naturalistTouched");
+      return { first: first.world, second: second.world, no: no.map((m) => ({ request: m.request, message: m.message })), before, yes, order: messages.indexOf(second) < messages.indexOf(no[0]) };
+    } finally {
+      worker.terminate();
+    }
+  });
+  expect(got.second).not.toBe(got.first);
+  expect(got.order).toBe(true);
+  expect(got.no).toEqual([
+    { request: "feed", message: "That suggestion was made for a world that has since been replaced, so nothing was applied" },
+    { request: "lesion", message: "That suggestion was made for a world that has since been replaced, so nothing was applied" },
+  ]);
+  expect(got.before).toBe(0);
+  expect(got.yes.world).toBe(got.second);
+});
+
 test("page: gradient-m3 seed 1 rings on living cells with the bell's receipt", async ({ page }) => {
   test.setTimeout(900_000);
   const fetched = watchBaselines(page);
@@ -172,10 +227,27 @@ test("page: gradient-m3 seed 1 rings on living cells with the bell's receipt", a
     `Fewer living cells: ${n(seed1.value)} at step ${n(seed1.startStep)}, against a neutral median there of ${n(seed1.median)}. At least four spreads below it for 50 censuses in a row, from step ${n(seed1.startStep)} to step ${n(seed1.endStep)}; the weakest of them was ${seed1.minAbsZ.toFixed(2)} spreads below the median.`,
   );
   await expect(note.locator(".naturalist-receipt")).toContainText(`livingCells low · steps ${n(seed1.startStep)} to ${n(seed1.endStep)} · value ${n(seed1.value)} against median ${n(seed1.median)}`);
-  await expect(note.locator(".badge")).toHaveText(["Measured", "Unclear"]);
+  await expect(note.locator(".naturalist-note-head .badge")).toHaveText(["Measured", "Unclear"]);
   await expect(page.locator("#naturalist-standing")).toContainText("9 of them first on living cells low in the first window it counts, from step 10,000 to step 14,900");
   await expect(panel).not.toContainText(/\bevents?\b|discover/i);
-  // The panel with a note in it, in both colour schemes: no axe violations (public-a11y.spec.ts checks the empty panel).
+
+  // The proposer's suggestion beside the note (docs/naturalist-lab-suggestions-v0-2026-10-18.md): words and commands, and a
+  // Try it here button that nothing presses but a person.
+  const suggestion = note.locator(".naturalist-suggestion");
+  await expect(suggestion).toHaveAttribute("data-action", "feed", { timeout: 60_000 });
+  await expect(suggestion.locator(".naturalist-suggestion-facts")).toHaveText("Feed at step 14,900, the receipt's last census: 32 quanta of nutrient added to every cell of a disc centred at (128, 128), radius 127, about 77% of the world's cells.");
+  await expect(suggestion.locator(".naturalist-prediction")).toContainText("Not yet measured");
+  await expect(suggestion.locator(".naturalist-prediction")).toContainText("over steps 30,000 to 34,900 the fork's Living cells stays at least one spread");
+  await expect(suggestion).toContainText("that is the bench's question (docs/naturalist-bench-v0-2026-10-18.md), and the bench has not run. This suggestion carries no score.");
+  await expect(suggestion).toContainText("The naturalist stops reading at the next census, so it will not say here whether the prediction held.");
+  await suggestion.locator("summary", { hasText: "Run it offline" }).click();
+  await expect(suggestion.locator(".naturalist-command").first()).toContainText("--feed 14900:128,128,127,32 --out naturalist-lab/gradient-m3-treatment-seed-1-t14900/fork-feed");
+  const tryIt = note.getByRole("button", { name: "Try it here: feed 32 quanta per cell, radius 127, at (128, 128)" });
+  await expect(tryIt).toBeVisible();
+  await expect(page.locator("#k-fed")).toHaveText("none");
+  await expect(page.locator("#run-hand-item")).toBeHidden();
+
+  // The panel with a note and its suggestion in it, in both colour schemes: no axe violations (public-a11y.spec.ts checks the empty panel).
   await panel.locator("summary", { hasText: "What this cannot tell you" }).click();
   const theme = page.locator("html");
   for (const night of [false, true]) {
@@ -188,6 +260,22 @@ test("page: gradient-m3 seed 1 rings on living cells with the bell's receipt", a
   }
   expect(fetched.filter((p) => p.endsWith("envelope-gradient-m3-v1.json"))).toHaveLength(1);
   expect(fetched.filter((p) => p.endsWith("envelope-gradient-m3-v1.bin"))).toHaveLength(1);
+  // Nothing was applied while the panel was read and drawn.
+  await expect(page.locator("#k-fed")).toHaveText("none");
+
+  // One click: exactly one feed, logged as a change by hand; reading stops and the panel says so.
+  await tryIt.click();
+  // The button is replaced by what happened; focus moves to the offer (a live region), not to the page's body.
+  await expect(note.locator(".naturalist-offer")).toBeFocused();
+  await expect(note.locator(".naturalist-offer")).toHaveAttribute("role", "status");
+  await expect(page.locator("#k-fed")).toHaveText(/^\+[\d,]+ in 1 feed$/, { timeout: 60_000 });
+  await expect(page.locator("#run-hand")).toHaveText("1 change, unsaved");
+  await expect(panel).toHaveAttribute("data-state", "touched");
+  await expect(page.locator("#naturalist-status")).toHaveText(/^Stopped reading: the world was changed by hand at step [\d,]+\.$/);
+  await expect(page.locator("#naturalist-notes button[data-try]")).toHaveCount(0);
+  await expect(note.locator(".naturalist-offer")).toContainText(/^Tried here at step [\d,]+(, not step 14,900)?: one feed logged as a change by hand\. The naturalist stopped reading/);
+  await expect(note).toContainText("Filed before the world was changed by hand at step");
+  await expect(page.locator("#k-fed")).toHaveText(/ in 1 feed$/);
 
   // Replanting clears the notes: Even light (searched founders) has its own baseline, fetched once, and nothing of the old world.
   await page.locator("#preset").selectOption("spots-m3");

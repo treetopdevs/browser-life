@@ -1016,7 +1016,18 @@ async function verify(steps: number) {
   post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}`, from, steps, live: a, twin: b });
 }
 
-async function lesion(x: number, y: number, r: number) {
+/**
+ * True, with a refusal of `request`, when a hand edit names a world (`ToWorker` lesion/feed `world`) that is no longer the one on
+ * screen: Field notes' Try it here was made for that world, and a replacement queued before it must not take its edit.
+ */
+function staleHand(request: "lesion" | "feed", gen: number | undefined): boolean {
+  if (gen === undefined || world?.gen === gen) return false;
+  post({ type: "refused", request, message: "That suggestion was made for a world that has since been replaced, so nothing was applied" });
+  return true;
+}
+
+async function lesion(x: number, y: number, r: number, gen?: number) {
+  if (staleHand("lesion", gen)) return;
   const w = world;
   if (!w) return;
   const W = worldW(w.sim.cfg);
@@ -1057,7 +1068,8 @@ function bookFeed(w: World, matter: number, energy: bigint) {
  * energy by its chemical energy), so the conservation check stays exact between feeds while the panel
  * shows how much this run was fed.
  */
-async function feed(x: number, y: number, r: number, amount: number) {
+async function feed(x: number, y: number, r: number, amount: number, gen?: number) {
+  if (staleHand("feed", gen)) return;
   const w = world;
   if (!w) return;
   const W = worldW(w.sim.cfg);
@@ -1229,9 +1241,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "load":
         return load(m.presetId, m.seed, m.overrides, m.keep);
       case "lesion":
-        return lesion(m.x, m.y, m.r);
+        return lesion(m.x, m.y, m.r, m.world);
       case "feed":
-        return feed(m.x, m.y, m.r, m.amount);
+        return feed(m.x, m.y, m.r, m.amount, m.world);
       case "probe":
         return probe(m.x, m.y);
       case "breeder":
