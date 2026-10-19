@@ -439,7 +439,7 @@ D₁₁ = 0. A fork is its base's history.
 ### Primary, at Z*₂: **Negative — the post-hoc rule did not replicate**
 
 - **Z*₂ = 6.036**, set by the nudge of seed 3907 on `individuals`, high side. The ten nudge D₁₁ values, by seed
-  3901–3910: 0.52, 0.60, 0.53, 0.32, 0.40, 1.34, 6.04, 1.73, 1.41, 2.07 (median 0.97).
+  3901–3910: 0.52, 0.60, 0.53, 0.32, 0.39, 1.34, 6.04, 1.73, 1.41, 2.07 (median 0.97).
 
 | Criterion | Bar | Result | |
 | --- | --- | --- | --- |
@@ -469,7 +469,7 @@ Per arm (reported):
   rise above Z*₂ in the windows starting at 204,600 and 201,400; their D₁₁ comes from `fusions` high and
   `individuals` low.
 - **L64**, D₁₁ by seed: 2.13, 3.92, 2.70, 2.21, 2.15, 2.86, 4.08, 4.39, 2.92, 5.62; none above Z*₂.
-- **nudge2**, D₁₁ by seed: 0.60, 2.70, 0.51, 0.49, 0.82, 0.65, 3.96, 2.84, 1.18, 1.07.
+- **nudge2**, D₁₁ by seed: 0.60, 2.70, 0.51, 0.49, 0.82, 0.65, 3.96, 2.84, 1.18, 1.06.
 
 The note named this failure in advance: "an F miss, or a higher Z*₂, is the likelier way for v2 to fail". Both
 happened. Z*₂ came out at 6.04 against v1's 2.58, and F was heard on 2 of 10.
@@ -481,7 +481,7 @@ happened. Z*₂ came out at 6.04 against v1's 2.58, and F was heard on 2 of 10.
   post-hoc threshold: **its threshold does not hold out** (B3 missed for nudge2), with L96 the one arm at its bar.
 - **v1's own rule on the v2 twins** (all thirteen signals, Z*₁₃ from the fresh nudges): Z*₁₃ = 6.036, the same nudge
   (seed 3907, `individuals` high). L96 4 of 10, F 2 of 10, L64 0 of 10, nudge2 0 of 10: v1's frozen rule **misses
-  again** ("did not meet the exploratory bar"). Adding `maxGeneration` and `dominantShare` raised three nudge and
+  again** ("did not meet the exploratory bar"). Adding `maxGeneration` and `dominantShare` raised four nudge and
   nudge2 scores (nudge 3901 to 1.95 and 3905 to 0.42; nudge2 3901 to 0.73 and 3906 to 2.64) and changed no lesion or
   feed score.
 - **Run facts:** in "Pilot facts" and "Run log". 1.39 h of the 5 h cap, no scale-down, one rerun (base-3902, after a
