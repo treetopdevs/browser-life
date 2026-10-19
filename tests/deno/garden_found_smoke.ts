@@ -248,6 +248,8 @@ const viewOf = (b: Record<string, unknown>, change: Record<string, unknown> = {}
   clock: { daysTotal: b.days, step: 0 },
   letters: { queueMax: b.queueMax, perDay: b.lettersPerDay },
   food: { enabled: b.food },
+  meteor: { enabled: b.meteor },
+  sun: { enabled: b.sun },
   ...change,
 });
 
@@ -364,6 +366,18 @@ await reset([{ status: 200, body: viewOf(want) }], [{ status: 200, raw: JSON.str
 {
   const r = await run(applyArgs(), { BL_ADMIN_TOKEN: TOKEN });
   check("A3 a spec whose censusEvery and deepEvery repeat the token: exit 3, the values described, not shown", r.code === 3 && r.out.includes("censusEvery (spec.censusEvery): the commons has a different string") && r.out.includes("deepEvery (spec.deepEvery): the commons has a different list") && !r.out.includes(TOKEN), `exit ${r.code}\n${r.out.replaceAll(TOKEN, "<TOKEN>")}`);
+}
+
+// A3: the switches this checklist sends are read back too (slice 41): a sun or meteor switch that differs, and a view
+// from a coordinator without the sun switch, each stop the script.
+for (const [label, change, said] of [
+  ["sun.enabled false", { sun: { enabled: false } }, /sun \(sun\.enabled\): the commons has false/],
+  ["meteor.enabled true", { meteor: { enabled: true } }, /meteor \(meteor\.enabled\): the commons has true/],
+  ["a sun block with no enabled", { sun: { span: 131072 } }, /sun \(sun\.enabled\): the commons has nothing/],
+] as [string, Record<string, unknown>, RegExp][]) {
+  await reset([{ status: 200, body: viewOf(want, change) }]);
+  const r = await run(applyArgs(), { BL_ADMIN_TOKEN: TOKEN });
+  check(`A3 exists with ${label}: exit 3, names it, no POST`, r.code === 3 && said.test(r.out) && !/seed \(/.test(r.out) && !posted(), `exit ${r.code}\n${r.out}`);
 }
 
 // A4: a race, and other refusals of the founding.
@@ -641,6 +655,7 @@ try {
         [v.name, want.name], [v.presetId, want.presetId], [v.seed, want.seed], [canon(v.founding), canon(want.founding)],
         [v.pace?.stepsPerDay, want.stepsPerDay], [v.pace?.dawnPeriodMs, want.dawnPeriodMs], [v.pace?.dawnOffsetMs, want.dawnOffsetMs],
         [v.clock?.daysTotal, want.days], [v.letters?.perDay, want.lettersPerDay], [v.letters?.queueMax, want.queueMax], [v.food?.enabled, want.food],
+        [v.meteor?.enabled, want.meteor], [v.sun?.enabled, want.sun],
       ];
       echoed = pairs.every(([a, b]) => JSON.stringify(a) === JSON.stringify(b));
       detail = JSON.stringify(pairs);

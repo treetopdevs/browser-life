@@ -158,6 +158,32 @@ defmodule Coordinator.GardenQueueTest do
       assert v.letters.perDay == 8 and v.letters.queueMax == 64
     end
 
+    test "founding takes sun true or false and refuses anything else" do
+      for not_bool <- ["no", 0, nil, "false"] do
+        assert {:error, "sun must be true or false"} =
+                 Queue.create_garden(params(%{"sun" => not_bool}))
+      end
+
+      assert Queue.garden_view("g1") == nil
+      assert Queue.experiment("g1") == nil
+
+      assert {:ok, 5} = Queue.create_garden(params(%{"sun" => false}))
+      assert %{enabled: false, percents: [], nextLanding: nil} = view().sun
+
+      assert {:error, {:invalid, "this garden takes no sun letters"}} =
+               Queue.post_letter("g1", %{kind: "sun", percent: 50})
+
+      assert live_list() == @founding
+      assert view().letters.waiting == []
+      # A stone still lands.
+      assert {:ok, _} = Queue.post_letter("g1", letter(1))
+
+      assert {:ok, 5} = Queue.create_garden(params(%{"name" => "g2", "sun" => true}))
+      assert %{enabled: true, percents: [50, 75, 125]} = Queue.garden_view("g2").sun
+      assert {:ok, 5} = Queue.create_garden(params(%{"name" => "g3"}))
+      assert %{enabled: true} = Queue.garden_view("g3").sun
+    end
+
     test "refuses what it cannot run, and leaves nothing behind" do
       bad = fn over -> Queue.create_garden(params(over)) end
 
@@ -1723,6 +1749,42 @@ defmodule Coordinator.GardenQueueTest do
 
       {:ok, 5} = Queue.create_garden(params())
       assert %{"g1" => %{name: "g1"}} = read.().gardens
+    end
+
+    test "a state.bin whose garden has no sun key loads and takes a sun", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(params())
+      :ok = stop_supervised(Queue)
+
+      path = Path.join(dir, "state.bin")
+      state = path |> File.read!() |> :erlang.binary_to_term()
+      assert %{"g1" => %{sun: true}} = state.gardens
+      legacy = update_in(state, [:gardens, "g1"], &Map.delete(&1, :sun))
+      refute Map.has_key?(legacy.gardens["g1"], :sun)
+      File.write!(path, :erlang.term_to_binary(legacy))
+
+      start_supervised!({Queue, data_dir: dir})
+      assert %{enabled: true, percents: [50, 75, 125]} = view().sun
+      assert {:ok, %{kind: "sun"}} = Queue.post_letter("g1", %{kind: "sun", percent: 50})
+      assert [%{"kind" => "sun", "percent" => 50}] = live_list() -- @founding
+    end
+
+    test "a garden founded with sun false stays without suns across a restart", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(params(%{"sun" => false}))
+      :ok = stop_supervised(Queue)
+
+      assert %{"g1" => %{sun: false}} =
+               Path.join(dir, "state.bin")
+               |> File.read!()
+               |> :erlang.binary_to_term()
+               |> Map.fetch!(:gardens)
+
+      start_supervised!({Queue, data_dir: dir})
+      assert %{enabled: false, percents: [], nextLanding: nil} = view().sun
+
+      assert {:error, {:invalid, "this garden takes no sun letters"}} =
+               Queue.post_letter("g1", %{kind: "sun", percent: 50})
+
+      assert live_list() == @founding
     end
 
     test "a state.bin from before gardens loads, and a garden can then be founded", %{dir: dir} do

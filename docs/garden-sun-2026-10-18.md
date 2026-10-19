@@ -305,3 +305,67 @@ A second Codex pass read the fixes above. What changed:
    the preflight and the runner's throw ended the island with no `/reject`, so the lease expired and the next island met the
    same failure. `continuationError` itself is unchanged, since tools/run.ts calls it before it puts an inherited sun first in a
    fork's schedule.
+
+## Amendment, 2026-10-18 (the founding switch, slice 41)
+
+Written before the code. Merging draft PR #60 found that every garden whose world's light takes a sun took sun letters
+(the big storm takes 50 and 75), with no switch, although section 7 calls whether the commons takes them the user's
+decision; and that the page's letters copy ("a place and a size") is not true of a sun. Nothing here changes a kernel, a
+config, a schedule that exists today or a pin.
+
+1. **A founding key `sun`.** `POST /api/gardens` takes `sun`, `true` or `false`, default `true`. Anything else is a 422,
+   "sun must be true or false". The default keeps what #62 shipped: a garden founded without the key takes suns as
+   before. The keeper's choice is stored on the garden record as `sun`. A record without the key (any garden founded
+   before this change) reads as `true`: one accessor, `Garden.sun?/1`, is the rule for both. There is no route that
+   changes it after founding; turning suns off (or on) later means a new garden, as for food and meteor. No config key
+   is added: the default is a literal, as food's `false` is.
+2. **With `sun: false`, a sun letter is refused.** After the body's shape check (exactly `kind` and `percent`, a percent
+   of 50, 75, 125, 150; unchanged, and with no knowledge of the garden), the Queue refuses it with **422**
+   `{"error": "this garden takes no sun letters"}`, checked before the light's percents and before the landing, so a
+   garden with suns off says that and nothing else. Nothing is stored or scheduled: the record's letters and
+   `next_letter`, and the experiment's `interventions`, are as they were. The refusal is charged to the address like
+   any refused letter. Stones are unaffected. **Why 422 and not 409:** the README's split is that 409 means the garden
+   takes no letters *now* (stopped, finished, full, no day with room), while 422 means a letter this garden does not
+   take; a founding switch is the second kind, the same as "this garden's light takes no sun".
+3. **The view (contract `garden-v1`, additive).** The `sun` block gains `enabled`, a boolean: whether the garden takes
+   sun letters. It is named as the food and meteor blocks' `enabled` are, rather than `on`. With `enabled: false`,
+   `percents` is `[]` and `nextLanding` is `null` (every sun letter would be refused, which is what both already say),
+   and `span` is still one day. With `enabled: true` the block is as before. The contract fixture shows
+   `enabled: true`.
+4. **The page.** The sun form is shown only when the view has a `sun` block, its `enabled` is not `false`, and its
+   `percents` is not empty. A `sun` block without `enabled` (a coordinator from #62 or #64) reads as enabled, the
+   coordinator's own rule for a record without the key. The letters paragraph says what each kind carries, true for
+   stones, suns, foods and meteors: a stone its place and size, a sun its brightness, a food or a meteor only what the
+   garden's rule sets; none names who sent it.
+5. **The commons.** `bin/garden-found` sends every key, so its body gains `"sun":true`, and `"meteor":false`, which #64
+   left out although the checklist sends every key so that a later change to a coordinator default cannot change the
+   commons. docs/garden-opening-2026-10-18.md gains both rows in its founding table: `sun` on (your decision; #62) and
+   `meteor` off (#64, meteor note section 0). The smoke test compares both against the public view's `sun.enabled` and
+   `meteor.enabled`.
+6. **Tests.** Pure (`Garden`): sun off refuses and changes nothing; the default takes suns; a record without the key
+   takes suns; the view's `enabled`, `percents` and `nextLanding` on and off. Queue: founding with `sun: false` and with
+   a non-boolean; a `state.bin` whose garden record has no `sun` key loads after a restart and takes a sun. HTTP: the
+   key passes through founding; the 422 and its words; the contract fixture and its drift tests. Page: the form's
+   condition (vitest) and the form hidden for `enabled: false` (Playwright, mocked contract). `tests/deno/garden_e2e.ts`
+   founds without the key and must still pass unchanged.
+
+**Review fixes to this amendment, 2026-10-18 (written before their code).** Three review lenses and a Codex pass found
+no fault in the rule above; these are the smaller corrections they led to.
+
+- **What `enabled` means.** It is the keeper's founding switch and nothing else. A garden founded with suns on whose
+  light takes no sun reads `enabled: true`, `percents: []`, and refuses every sun ("this garden's light takes no sun").
+  A client that wants to know whether a sun can be sent reads both, as the page does. The README says so.
+- **The record.** `Garden.sun?/1` reads a missing key or a `nil` as on, and only `false` as off, so the view's
+  `enabled` is always a boolean.
+- **The letters paragraph.** Item 4's sentence named a food and a meteor even in a garden with neither, and said they
+  carry "what the garden's rule sets", which cannot be checked. The paragraph now names only the kinds this garden
+  takes: a stone carries only its place and size; a sun, when the garden takes suns or holds one, only its brightness;
+  a hand for food or a meteor, when the garden has either, carries nothing (its body is exactly `{}`). None of them
+  names who sent it. This is the garden page's copy only. The privacy page (`apps/lab/privacy/index.html`) still says
+  a letter "carries only a place and a size", which a sun letter does not; that page belongs to draft PR #60 and is
+  left to it.
+- **Tests added.** The refusal is charged to the address (two refusals spend a refusal budget of two, then a stone is
+  a 429); a garden founded with `sun: false` stays off across a restart; the page hides a shown sun form when a live
+  refresh brings `enabled: false`; and the founding smoke test now fails a commons whose view has `sun.enabled` false,
+  `meteor.enabled` true, or no `sun.enabled` at all. `bin/garden-found`'s printed summary now reads its `meteor` and
+  `sun` lines from the values it sends.

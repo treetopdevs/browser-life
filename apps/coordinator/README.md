@@ -385,7 +385,7 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `meteor.hands`, `meteor.expiresAt`, `meteor.sharedAddress`, `meteor.open`, `meteor.closed`, `meteor.opensAtDay`, `meteor.landing` | As the food block's (the same codes; a food never closes the meteor ask, nor a meteor the food's). |
 | `meteor.meteors` | The newest 32 meteors, newest first, live and dropped. |
 | meteor | `id` (`"meteor-<n>"`), `x`, `y` (its place, stored when it was called), `r`, `calledAt`, `noticeUntil` (as a food's: its day is not run before this), `hands`, `landsAtStep`, `day`, `status` (the letter statuses), `landedIn`, `droppedAt`. |
-| `sun` | `{percents, span, nextLanding}`: the percents a sun letter may take in this garden (those its preset's light takes, `[]` for none), its span (one day, `pace.stepsPerDay`), and `{day, step}` where a sun posted now would land, or `null` when none can (no day with room, or `percents` is `[]`) (always present; docs/garden-sun-2026-10-18.md). Added 2026-10-18 in the contract's additive way, so still `garden-v1`: every letter gained `percent` and `span`, and a letter's `x`, `y`, `r` are `null` only for a sun, a kind added with it. A stone reads as before; a page from before the sun that requires numbers there fails on a garden holding a sun letter (the page and the coordinator ship together). |
+| `sun` | `{enabled, percents, span, nextLanding}`: the keeper's founding switch for sun letters (`false` when the garden was founded with `sun: false`, which then refuses every sun; `true` otherwise, including a garden founded before the switch; `enabled` was added 2026-10-18, additively). It is the switch only: a garden whose light takes no sun has `enabled: true` and `percents: []` and refuses every sun too, so a client asking whether a sun can be sent reads both. The other three: the percents a sun letter may take in this garden (those its preset's light takes, `[]` for none, and `[]` when `enabled` is `false`), its span (one day, `pace.stepsPerDay`), and `{day, step}` where a sun posted now would land, or `null` when none can (no day with room, `percents` is `[]`, or `enabled` is `false`) (always present; docs/garden-sun-2026-10-18.md). Added 2026-10-18 in the contract's additive way, so still `garden-v1`: every letter gained `percent` and `span`, and a letter's `x`, `y`, `r` are `null` only for a sun, a kind added with it. A stone reads as before; a page from before the sun that requires numbers there fails on a garden holding a sun letter (the page and the coordinator ship together). |
 | `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters, food hands and meteor hands together), `logMax` (founding plus live letters, stones and suns, plus live foods plus live meteors, at most). |
 
 ### Who held the field (`days[].leaders`)
@@ -438,7 +438,7 @@ foods and before its meteors; its day's segments go only to islands that adverti
 also says when no day before the last has room for a sun.
 
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
-* `422 {"error": ...}`: not a stone or a sun as above, its centre is outside the world, or a percent this garden's light does not take.
+* `422 {"error": ...}`: not a stone or a sun as above, its centre is outside the world, a percent this garden's light does not take, or a sun letter to a garden founded with `sun: false` (`this garden takes no sun letters`, checked before the percent; nothing is stored or scheduled).
 * `413`: a body over 1 KB (a letter is about 40 bytes; the body is not parsed past that).
   For a chunked request (no `Content-Length`) the limit is under 1 KB: a body of
   exactly 1,024 bytes may also be refused.
@@ -559,7 +559,9 @@ Same admin authentication as `POST /api/experiments`.
   `:garden_meteor_radius` (64, allowed 33..255), copied into the garden with K and N.
   A meteor needs no matter bound (a lesion conserves matter), but founding refuses
   (422, naming the numbers) a radius past `⌊(min(width, height) − 1) / 2⌋`, the
-  largest lesion a one-tile world takes, and a pond preset. A garden with food is founded only if its worst case
+  largest lesion a one-tile world takes, and a pond preset. `sun` (`true`; `false` founds the garden
+  without sun letters, which it then refuses with 422; anything but a boolean is a 422, `sun must be true
+  or false`); stored on the garden, a garden founded before the key takes suns. A garden with food is founded only if its worst case
   fits the runner's `MATTER_MAX` (2^26 quanta): `cells · 128 + Σ founding feeds
   amount · (2r+1)² + ⌈days / N⌉ · amount · (2r+1)²` (each square capped at the
   world's cells); otherwise 422 with the numbers. `200 {"garden": name, "days":

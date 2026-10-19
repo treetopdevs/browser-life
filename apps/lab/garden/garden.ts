@@ -24,8 +24,11 @@ export interface Letter {
   /** A sun's brightness (percent of the world's own light) and how many steps it shines; null for a stone. Added with the sun. */
   percent?: number | null; span?: number | null;
 }
-/** The sun letter's terms (README "The garden", `sun`): the percents this garden's light takes, the span, where the next lands. */
-export interface SunBlock { percents: number[]; span: number; nextLanding: { day: number; step: number } | null }
+/**
+ * The sun letter's terms (README "The garden", `sun`): the keeper's founding switch, the percents this garden's light takes, the
+ * span, where the next lands. `enabled` (added 2026-10-18) is absent from a coordinator from before the switch: absent means on.
+ */
+export interface SunBlock { enabled?: boolean; percents: number[]; span: number; nextLanding: { day: number; step: number } | null }
 export interface Day {
   day: number; startStep: number; endStep: number; status: string; releasedAt: number; doneAt: number | null;
   verifiedAt: number | null; digest: string | null; verification: string | null; letters: string[]; census: Census | null;
@@ -166,7 +169,7 @@ const letterKeys = shape({
 /** A letter: a stone has its place (x, y, r numbers); only a letter of another kind, a sun, may have them null. */
 const stonePlace = shape({ x: num, y: num, r: num });
 const letterShape: Check = (v, p) => letterKeys(v, p) ?? (isObject(v) && v.kind === "stone" ? stonePlace(v, p) : null);
-const sunBlockShape = shape({ percents: list(num), span: pos, nextLanding: orNull(shape({ day: num, step: num })) });
+const sunBlockShape = shape({ percents: list(num), span: pos, nextLanding: orNull(shape({ day: num, step: num })) }, { enabled: bool });
 const foodShape = shape({
   id: str, x: num, y: num, r: num, amount: num, calledAt: time, hands: num, landsAtStep: num, day: num,
   status: str, landedIn: orNull(str), droppedAt: orNull(time),
@@ -584,10 +587,34 @@ export type SunCheck = { ok: true; body: SunBody } | { ok: false; words: string 
 /** What a sun of `percent` would do, in words: "Half the light", and so on. */
 export const SUN_WORDS: Readonly<Record<number, string>> = { 50: "Half the light", 75: "Three quarters of the light", 125: "A quarter more light", 150: "Half again more light" };
 
+/**
+ * Whether the garden takes sun letters: it has a sun block, its keeper did not found it with suns off (`enabled` false; absent
+ * means on, the coordinator's rule for a garden founded before the switch), and its light takes some percent.
+ */
+export function sunOffered(view: GardenView): boolean {
+  return !!view.sun && view.sun.enabled !== false && view.sun.percents.length > 0;
+}
+
+/**
+ * What each thing a visitor sends carries, in words, naming only the kinds this garden takes: a stone its place and size; a sun
+ * (when the garden takes suns or holds one) its brightness; a hand for food or a meteor (when it has either) nothing, its body
+ * being exactly `{}`. None of them names who sent it (the sun note's amendment of 2026-10-18 and its review fixes).
+ */
+export function carriesWords(view: GardenView): string {
+  const suns = sunOffered(view) || [...view.letters.waiting, ...view.letters.recent].some((l) => l.kind === "sun");
+  const food = !!view.food?.enabled;
+  const meteor = !!view.meteor?.enabled;
+  const parts = ["A stone carries only its place and size"];
+  if (suns) parts.push("a sun only its brightness");
+  if (food || meteor) parts.push(`a hand for ${food && meteor ? "food or a meteor" : food ? "food" : "a meteor"} carries nothing`);
+  const said = parts.length === 1 ? parts[0] : parts.length === 2 ? `${parts[0]}, and ${parts[1]}` : `${parts[0]}, ${parts[1]}, and ${parts[2]}`;
+  return `${said}. ${parts.length === 1 ? "Nothing in it names" : "None of them names"} who sent it.`;
+}
+
 /** What the server checks of a sun, checked before sending: the garden takes suns, and this percent. */
 export function sunBody(view: GardenView, percent: number | null): SunCheck {
   const sun = view.sun;
-  if (!sun || sun.percents.length === 0) return { ok: false, words: "This garden takes no sun letters." };
+  if (!sun || !sunOffered(view)) return { ok: false, words: "This garden takes no sun letters." };
   if (percent === null || !sun.percents.includes(percent)) return { ok: false, words: `Choose how bright: ${sun.percents.map((p) => `${p}%`).join(", ")}.` };
   return { ok: true, body: { kind: "sun", percent } };
 }
@@ -595,7 +622,7 @@ export function sunBody(view: GardenView, percent: number | null): SunCheck {
 /** Where a sun posted now would land and shine, in words, or why none can. */
 export function sunLandingWords(view: GardenView): string {
   const sun = view.sun;
-  if (!sun || sun.percents.length === 0) return "This garden takes no sun letters.";
+  if (!sun || !sunOffered(view)) return "This garden takes no sun letters.";
   if (!sun.nextLanding) {
     // The garden's own reason first (stopped, finished, the queue or log full): the sun's rule is only why when letters are open.
     const letters = landingPreview(view);
@@ -1566,7 +1593,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   const sunSend = $("sun-send") as HTMLButtonElement;
   const sunWhy = $("sun-why");
   const sunAnswer = $("sun-answer");
-  let sunOffered = "";
+  let sunPercentsShown = "";
   const handWhy = $("food-why");
   const handSaid = $("food-answer");
   const handShared = $("food-shared");
@@ -1719,7 +1746,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
       h("p", {}, `${plural(v.letters.queued, "letter")} waiting, of at most ${v.letters.queueMax}; one day carries ${plural(v.letters.perDay, "letter")}.`),
       h("h3", {}, "Waiting"), v.letters.waiting.length ? waiting : h("p", { class: "fine" }, "No letter is waiting."),
       h("h3", {}, "Recently"), v.letters.recent.length ? recent : h("p", { class: "fine" }, "No letter has landed or been set aside yet."),
-      h("p", { class: "fine" }, "Letters carry a place and a size and nothing else, so no author is named. “Yours” comes from this device’s own list."));
+      h("p", { class: "fine" }, `${carriesWords(v)} “Yours” comes from this device’s own list.`));
 
     // Food, in a garden founded with it.
     renderFood(v);
@@ -2064,11 +2091,11 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   function updateSun(): void {
     if (!view) return;
     const sun = view.sun;
-    sunRow.hidden = !sun || sun.percents.length === 0;
+    sunRow.hidden = !sunOffered(view);
     if (!sun) return;
     // The choices are rebuilt only when the garden's percents change, so a choice (and its focus) survives a refresh.
     const offered = sun.percents.join(",");
-    if (offered !== sunOffered) {
+    if (offered !== sunPercentsShown) {
       const keep = sunChosen();
       const legend = sunChoices.querySelector("legend");
       const choices = sun.percents.map((p) => {
@@ -2078,7 +2105,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
         return h("label", { class: "garden-sun-choice" }, input, ` ${SUN_WORDS[p] ?? `${p}%`} (${p}%)`);
       });
       sunChoices.replaceChildren(...(legend ? [legend] : []), ...choices);
-      sunOffered = offered;
+      sunPercentsShown = offered;
     }
     const check = sunBody(view, sunChosen());
     sunPreview.textContent = sunLandingWords(view);

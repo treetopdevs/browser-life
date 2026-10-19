@@ -44,7 +44,7 @@ the repo. Nothing here was checked on the host: confirm it there (`BL_IMAGE_TAG`
 | 1 | The proxy fix | Caddy trusts Traefik and forwards `{client_ip}`; `BL_TRUST_FORWARDED_FOR=1`; `BL_ISLAND_JOINS_PER_ADDRESS=20` | Not done; Needs the live host |
 | 2 | Deploy main to cadence.garden | A full build of both images, after a volume backup | Not done; Your decision (`deploy <sha>`) |
 | 2a | Check the physics before founding | `RULE_VERSION` 1, and the physics unchanged since `ba2741e` | Not done (a git check on the deployed commit) |
-| 3 | Founding parameters | Section 3: `wild-storm-large`, seed 1, one wander a day, food off | Your decision |
+| 3 | Founding parameters | Section 3: `wild-storm-large`, seed 1, one wander a day, food off, meteor off, sun letters on | Your decision |
 | 4 | The garden island token | Set `BL_GARDEN_ISLAND_TOKEN` at opening | Not done; Your decision |
 | 5 | Who tends it first | The user's Mac: two headless keeper islands | Your decision |
 | 6 | Linking `/garden/` from the site | After the founding and a verified day 2, in one lab slice | Not done; Your decision |
@@ -307,6 +307,8 @@ There is no pause, stop or delete route. The router has `show`, `post_letter`, `
 | `lettersPerDay`, `queueMax` | 8 and 64 | The coordinator defaults. Not measured. |
 | Stone radius | 1 to 32 | Not a founding key. It is fixed in code (`@radius_max` in `garden.ex`), and changing it is a coordinator change. #55: R = 32 is a mark with no lasting effect. |
 | `food` | `false` | Decision 6 (no food after founding). #41 made it off by default, and it is impossible until row 1 is done. |
+| `meteor` | `false` | #64, off by default; the meteor note's section 0 makes turning it on the user's call. Like food, it cannot be reached behind a shared address until row 1 is done. |
+| `sun` | `true` | Your decision (the sun note's section 7). #62 built sun letters; on the big storm they can only dim (50 and 75 percent, the sun note's first amendment), and `false` founds the commons without them (the sun note's slice 41 amendment). `true` here is the default carried forward, not a choice made: to found without suns, set `sun=false` in `bin/garden-found` and in the exact body below, together. Not measured: what a dimmed day does to the commons. |
 | When | Shortly after 00:00 UTC | Day 0 is released at the founding. Day 1 can be released once day 0 is done and a dawn has passed since day 0 was released (`Garden.maybe_release`), at the next request from an island. If day 0 is done before the next dawn, day 1 waits for that dawn; if it finishes later, day 1 can be released straight away. Founding just after a dawn gives day 0 the whole first period. |
 
 **If food is turned on later**, that means a new garden, because a garden's food rule is copied in at founding. Use
@@ -317,6 +319,9 @@ passes:
 
 That is under MATTER_MAX, 2²⁶ = 67,108,864.
 
+**The same holds for meteor and sun.** A garden's meteor rule and its sun switch are copied in at founding, and no
+route changes either afterwards, so turning meteors on or sun letters off later means a new garden.
+
 ### The exact body
 
 `bin/garden-found` sends exactly this body, every key explicit, in this order, so a later change to a coordinator
@@ -325,7 +330,7 @@ byte-equal to the line between the markers.
 
 <!-- garden-found:body -->
 ```json
-{"name":"commons","presetId":"wild-storm-large","seed":1,"founding":[{"step":0,"kind":"feed","x":256,"y":256,"r":255,"amount":16}],"days":365,"stepsPerDay":131072,"censusEvery":1024,"deepEvery":10,"lettersPerDay":8,"queueMax":64,"dawnPeriodMs":86400000,"dawnOffsetMs":0,"food":false}
+{"name":"commons","presetId":"wild-storm-large","seed":1,"founding":[{"step":0,"kind":"feed","x":256,"y":256,"r":255,"amount":16}],"days":365,"stepsPerDay":131072,"censusEvery":1024,"deepEvery":10,"lettersPerDay":8,"queueMax":64,"dawnPeriodMs":86400000,"dawnOffsetMs":0,"food":false,"meteor":false,"sun":true}
 ```
 <!-- /garden-found:body -->
 
@@ -370,7 +375,7 @@ again, then needs either the typed line `found commons on <host>` or `--yes`. It
 5. Start the two keeper islands (row 5). Watch day 0 go from growing to done to verified
    (`verification.bySameDeviceType` 1).
 6. Check the public view: `state`, `census.individuals > 0`, `food.enabled: false`, `food.sharedAddress: false`,
-   `tending.deviceTypesEver` 1.
+   `meteor.enabled: false`, `sun.enabled: true`, `tending.deviceTypesEver` 1.
 7. Post one stone from a phone on another network. Check it is public as waiting on the next frontier day, and lands
    and verifies with that day. With it, row 1's other live-host checks: separate letter budgets for the two
    networks, and a client-written `X-Forwarded-For` not changing the address.
@@ -441,5 +446,18 @@ runs are superseded.
   scratch build path would compile everything on every run, on a machine this loaded.
 - `git status`: only this note, `bin/garden-found`, the smoke test, `deploy/README.md` and
   `apps/coordinator/README.md` changed. `deno.lock` is untouched.
+
+**Rerun, 2026-10-18 (slice 41, the sun switch).** On origin/main 8a9a9cec plus slice 41's uncommitted files, after
+the body gained `"meteor":false,"sun":true` and the comparisons gained `meteor.enabled` and `sun.enabled` (in
+`bin/garden-found` and in the smoke test's stub view and C7 read-back), and after the review fixes: three A3 cases
+(a commons whose view has `sun.enabled` false, `meteor.enabled` true, or a sun block with no `enabled`, as a
+coordinator from before the switch serves) each expect exit 3, the key named and no POST, and the printed summary's
+`meteor` and `sun` lines now come from the values sent.
+`deno run -A --no-lock tests/deno/garden_found_smoke.ts < /dev/null` passed all 87 checks, one skipped (the same
+`BASH_XTRACEFD=1` check, bash 3.2 here); C7 read back `sun.enabled: true` and `meteor.enabled: false` from a real dev
+coordinator. One mutation, run alone through the whole test and then restored byte for byte: reading `sun.on` in
+place of `sun.enabled` failed both new sun cases (and every case that expects a match). `sh -n`, `dash -n` and
+`shellcheck -s sh` on the script, and `deno check --no-lock` on the test: clean. `uptime` load averages 393.06, 341.75
+and 311.94 at the start, 384.77, 343.26 and 313.18 at the end.
 
 Not checked here: anything on the live host (rows 1, 2 and 7), and a founding over https.

@@ -173,4 +173,79 @@ defmodule Coordinator.GardenSunTest do
     assert %{x: nil, y: nil, r: nil, percent: 50, span: @d, kind: "sun", status: "waiting"} = sv
     assert %{x: 1, y: 2, r: 3, percent: nil, span: nil} = tv
   end
+
+  # The founding switch (the sun note's amendment of 2026-10-18, slice 41).
+  @env %{lease_ms: 600_000, stale_ms: 120_000, letters_per_address: 3}
+
+  test "a garden founded with sun off refuses every sun letter and schedules nothing" do
+    g = garden(sun: false)
+    segs = fresh(g)
+    assert g.sun == false
+    refute Garden.sun?(g)
+
+    assert {:error, {:invalid, "this garden takes no sun letters"}} =
+             Garden.post_letter(g, %{kind: "sun", percent: 50}, segs, @t0)
+
+    # The switch is checked before the percent: 150 is not a percent this light takes, but the answer is the switch.
+    assert {:error, {:invalid, "this garden takes no sun letters"}} =
+             Garden.post_letter(g, %{kind: "sun", percent: 150}, segs, @t0)
+
+    # Checked before the landing too: in a one-day garden no day before the last has room for a sun (a 409 with suns
+    # on), but with suns off the answer is still the switch.
+    one = garden(days_total: 1)
+
+    assert {:error, {:refused, _}} =
+             Garden.post_letter(one, %{kind: "sun", percent: 50}, fresh(one), @t0)
+
+    one_off = garden(days_total: 1, sun: false)
+
+    assert {:error, {:invalid, "this garden takes no sun letters"}} =
+             Garden.post_letter(one_off, %{kind: "sun", percent: 50}, fresh(one_off), @t0)
+
+    assert g.letters == []
+    assert g.next_letter == 1
+    assert Garden.schedule(g) == g.founding
+    assert Garden.next_sun_landing(g, segs) == nil
+
+    # Stones are unaffected.
+    assert {:ok, g, %{kind: "stone", day: 0}} =
+             Garden.post_letter(g, %{x: 1, y: 2, r: 3}, segs, @t0)
+
+    assert [%{"kind" => "lesion"}] = Garden.schedule(g) -- g.founding
+  end
+
+  test "sun is on by default" do
+    g = garden()
+    assert g.sun == true
+    assert Garden.sun?(g)
+
+    assert {:ok, _g, %{kind: "sun"}} =
+             Garden.post_letter(g, %{kind: "sun", percent: 50}, fresh(g), @t0)
+  end
+
+  test "a record from before the switch (no sun key) takes suns" do
+    g = Map.delete(garden(), :sun)
+    refute Map.has_key?(g, :sun)
+    assert Garden.sun?(g)
+
+    assert {:ok, g2, %{kind: "sun", day: 0}} =
+             Garden.post_letter(g, %{kind: "sun", percent: 75}, fresh(g), @t0)
+
+    assert [%{"kind" => "sun"}] = Garden.schedule(g2) -- g2.founding
+
+    assert %{enabled: true, percents: [50, 75, 125]} =
+             Garden.view(g, fresh(g), %{}, @t0 + 1_000, @env).sun
+  end
+
+  test "the view's sun block says whether the garden takes suns" do
+    on = garden()
+
+    assert %{enabled: true, percents: [50, 75, 125], span: @d, nextLanding: %{day: 0, step: @d}} =
+             Garden.view(on, fresh(on), %{}, @t0 + 1_000, @env).sun
+
+    off = garden(sun: false)
+
+    assert Garden.view(off, fresh(off), %{}, @t0 + 1_000, @env).sun ==
+             %{enabled: false, percents: [], span: @d, nextLanding: nil}
+  end
 end

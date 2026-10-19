@@ -78,7 +78,9 @@ queue_max=64
 dawn_period_ms=86400000
 dawn_offset_ms=0
 food=false
-body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"founding\":$founding,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census_every,\"deepEvery\":$deep_every,\"lettersPerDay\":$letters_per_day,\"queueMax\":$queue_max,\"dawnPeriodMs\":$dawn_period_ms,\"dawnOffsetMs\":$dawn_offset_ms,\"food\":$food}"
+meteor=false
+sun=true
+body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"founding\":$founding,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census_every,\"deepEvery\":$deep_every,\"lettersPerDay\":$letters_per_day,\"queueMax\":$queue_max,\"dawnPeriodMs\":$dawn_period_ms,\"dawnOffsetMs\":$dawn_offset_ms,\"food\":$food,\"meteor\":$meteor,\"sun\":$sun}"
 
 usage() {
   cat <<'EOF'
@@ -210,6 +212,10 @@ spec_url="$coordinator/api/experiments/$name"
 post_url="$coordinator/api/gardens"
 
 describe() {
+  meteor_words=off
+  [ "$meteor" = true ] && meteor_words=on
+  sun_words="letters off"
+  [ "$sun" = true ] && sun_words="letters on (this world's light takes 50% and 75%)"
   cat <<EOF
 The commons, as docs/garden-opening-2026-10-18.md section 3 sets it:
   name            $name (the page's default garden)
@@ -222,6 +228,8 @@ The commons, as docs/garden-opening-2026-10-18.md section 3 sets it:
   dawn            every $dawn_period_ms ms from offset $dawn_offset_ms (midnight UTC)
   letters         $letters_per_day a day, at most $queue_max waiting; stones radius 1 to 32 (fixed in the coordinator)
   food            off
+  meteor          $meteor_words
+  sun             $sun_words
 EOF
 }
 
@@ -355,6 +363,8 @@ const pairs = [
   ["lettersPerDay", "letters.perDay", want.lettersPerDay],
   ["queueMax", "letters.queueMax", want.queueMax],
   ["food", "food.enabled", want.food],
+  ["meteor", "meteor.enabled", want.meteor],
+  ["sun", "sun.enabled", want.sun],
 ];
 // Key order is not part of a value: objects are compared key by key.
 const canon = (x) => Array.isArray(x) ? x.map(canon) : isObject(x)
