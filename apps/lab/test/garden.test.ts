@@ -964,14 +964,17 @@ describe("the page is public and linked", () => {
       "../about/index.html": [/so does a first <a href="\/garden\/">shared garden<\/a>/],
       "../participate/index.html": [/<a href="\/garden\/">The shared garden<\/a> is open too/],
       "../status/index.html": [/the islands and days of <a href="\/garden\/">the shared garden<\/a>/],
-      "../privacy/index.html": [/The shared garden is open at <a href="\/garden\/">/, /What a letter carries/],
+      "../privacy/index.html": [/The shared garden is open at <a href="\/garden\/">/, /What a letter carries/, /a stone carries a place and a size, a sun only how bright the light should be\./],
     };
     for (const [p, lines] of Object.entries(say)) for (const line of lines) expect(pages[p], p).toMatch(line);
     // A stone's mark: how long it lasts is not known yet (#55), and the page says so rather than promising.
     expect(gardenHtml).toMatch(/It is a small nudge to one patch of the garden, and we do not know yet how long its mark lasts\./);
     // The storm note says what the commons was founded with (docs/garden-opening-2026-10-18.md §3): seed 1, food at
-    // the start, stones only. Re-read it if the founding changes.
-    expect(WORLD_NOTES["wild-storm-large"].seen.text).toMatch(/the commons, planted at seed 1 with food added at the start, grown one sun wander a day, with stones \([^)]*\) and asking for food switched off\./);
+    // the start, stones and suns (a sun is not a founding key: every garden on the storm takes 50 and 75, Queue.sun_percents),
+    // no food or meteor. Re-read it if the founding changes.
+    expect(WORLD_NOTES["wild-storm-large"].seen.text).toMatch(/the commons, planted at seed 1 with food added at the start, grown one sun wander a day, with stones \([^)]*\) and suns \(a day at half or three quarters of its own light\) open to visitors, and asking for food or a meteor switched off\./);
+    // Sun letters are on wherever the light takes one, so no page may still say every letter is a stone.
+    for (const p of SITE) expect(pages[p], p).not.toMatch(/every letter is a stone/i);
   });
 
   it("no current page still speaks of the garden as closed or to come", () => {
