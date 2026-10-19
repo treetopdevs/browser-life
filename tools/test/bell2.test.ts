@@ -79,6 +79,8 @@ import {
   unfinishedAttempts,
   voidReasons2,
   type LaunchEvent,
+  reducedCommand,
+  scrubLaunchEvent,
   type Arm2,
   type NudgeCentres2,
 } from "../lib/bell2.ts";
@@ -948,5 +950,24 @@ describe("constants", () => {
     expect(C < S).toBe(true);
     expect(S + 5000 + 900).toBeLessThanOrEqual(BASE_STEPS);
     expect(Z1).toBe(2.580695652173913);
+  });
+});
+
+describe("records carry no ps argv or home paths", () => {
+  it("reducedCommand keeps the program and script basename only", () => {
+    expect(reducedCommand("deno run -A --no-lock /Users/x/repo/tests/deno/garden_e2e.ts --out /private/tmp/y")).toBe("deno garden_e2e.ts");
+    expect(reducedCommand("/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --enable-unsafe-webgpu")).not.toMatch(/\/|--/);
+    expect(reducedCommand("")).toBe("unknown");
+  });
+  it("scrubLaunchEvent reduces gpu-wait users and redacts paths outside the root, keeping the root's", () => {
+    const root = "/Users/x/out/runs";
+    const w = scrubLaunchEvent({ event: "gpu-wait", users: [{ pid: 7, command: "deno run -A /Users/x/repo/tools/run.ts --out /Users/x/out" }] } as LaunchEvent, root);
+    expect(w).toEqual({ event: "gpu-wait", users: [{ pid: 7, command: "deno run.ts" }] });
+    const m = scrubLaunchEvent({ event: "moved-aside", id: "a", to: `${root}/bell-v2-launch/aside/a`, why: "read /private/tmp/z failed" } as LaunchEvent, root);
+    expect(m).toEqual({ event: "moved-aside", id: "a", to: `${root}/bell-v2-launch/aside/a`, why: "read [redacted] failed" });
+    expect(scrubLaunchEvent(m, root)).toEqual(m);
+    expect(scrubLaunchEvent({ event: "x", why: "/Users/x/out/runsX" } as LaunchEvent, root)).toEqual({ event: "x", why: "[redacted]" });
+    // A root path inside free text (an error message) is redacted too; only a field that is one root path is kept.
+    expect(scrubLaunchEvent({ event: "error", message: `No space: mkdir '${root}/bell-v2-launch/aside/b'` } as LaunchEvent, root)).toEqual({ event: "error", message: "No space: mkdir '[redacted]'" });
   });
 });

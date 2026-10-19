@@ -58,6 +58,7 @@ import {
   lineageRowsCheck,
   parseLaunchEvents,
   runLaunches,
+  scrubLaunchEvent,
   parseNudgeFile2,
   pickSeeds,
   ReplacementsExhausted,
@@ -221,10 +222,11 @@ const pilotSha = pilotText === null ? null : Array.from(new Uint8Array(await cry
 const runFactsOf = () => ({
   pilot: pilotFacts === null ? null : { ...pilotFacts, sha256: pilotSha },
   // Every main-run launch: its id, the cumulative budget it reached (seconds, the pilot's included) and how it closed.
-  launches: runLaunches(launchEvents).map((l) => ({ launch: l.launch, budgetSeconds: l.maxElapsed, close: l.close })),
+  launches: runLaunches(launchEvents).map((l) => ({ launch: l.launch, budgetSeconds: l.maxElapsed, close: l.close && scrubLaunchEvent(l.close, runsRoot) })),
   budgetSeconds: budgetUsed(launchEvents, pilotFacts?.wallSeconds ?? 0),
   // The launch events (start, plan, waits, attempts, asides, replacements, drops, stops), heartbeats left out.
-  events: launchEvents.filter((e) => e.event !== "heartbeat"),
+  // Scrubbed for the committed record: gpu-wait commands reduced to program and script, paths outside the root redacted.
+  events: launchEvents.filter((e) => e.event !== "heartbeat").map((e) => scrubLaunchEvent(e, runsRoot)),
   closingEvents: CLOSING_EVENTS,
   jobs: launchLines,
 });

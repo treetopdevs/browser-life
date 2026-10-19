@@ -28,6 +28,7 @@ import {
 import { BIG_CENTRE, NUDGE_TARGETS, interventionsMatch, type Arm, type Job } from "./bell-v1-jobs.ts";
 import { binomialLowerBound } from "@bl/metrics";
 import { binomialUpperBound } from "./bell.ts";
+import { reducePsLine } from "./horizon.ts";
 
 export const BELL2_VERSION = 2;
 export const NOTE2_PATH = "docs/naturalist-bell-v2-2026-10-18.md";
@@ -1052,6 +1053,35 @@ export function gpuUsers(psText: string, ignore: readonly number[] = []): { pid:
     if (denoGpu || chrome || cards) out.push({ pid, command: cmd.slice(0, 200) });
   }
   return out;
+}
+/**
+ * A ps command line reduced to its program and script basename (tools/lib/horizon.ts reducePsLine, the slice-34 scrub): no
+ * argument and no path, so a launch event can go into a committed record. "unknown" when it is not one.
+ */
+export function reducedCommand(command: string): string {
+  return reducePsLine(`0 0 0 ${command}`)?.replace(/^0 0 0 /, "") ?? "unknown";
+}
+/**
+ * A launch event as a committed record carries it: a gpu-wait's users with their commands reduced (reducedCommand), and in every
+ * string field any /Users/... or /private/... path replaced by "[redacted]", except a field that is itself one path under `root`
+ * (the output root, which the tools read back, such as a moved-aside directory). Idempotent; the launch log is left as written.
+ */
+export function scrubLaunchEvent(e: LaunchEvent, root: string): LaunchEvent {
+  const redact = (v: unknown): unknown =>
+    typeof v === "string"
+      ? root !== "" && (v === root || v.startsWith(`${root}/`)) && !/\s/.test(v)
+        ? v
+        : v.replace(/\/(?:Users|private)\/[^\s"',)]*/g, "[redacted]")
+      : Array.isArray(v)
+        ? v.map(redact)
+        : v !== null && typeof v === "object"
+          ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, redact(x)]))
+          : v;
+  // The commands are reduced first (the reduction reads the script's path), then every string is redacted.
+  const reduced: LaunchEvent = e.event === "gpu-wait" && Array.isArray(e.users)
+    ? { ...e, users: (e.users as { pid?: unknown; command?: unknown }[]).map((u) => ({ pid: u.pid, command: typeof u.command === "string" ? reducedCommand(u.command) : "unknown" })) }
+    : e;
+  return redact(reduced) as LaunchEvent;
 }
 /** Other bell v2 launchers in ps output: deno processes running tools/bell2-launch.ts (not a dry run), other than `self`. */
 export function otherLaunchers(psText: string, self: number): number[] {

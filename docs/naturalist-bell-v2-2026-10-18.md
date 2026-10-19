@@ -1,7 +1,8 @@
 # The anomaly bell, v2: the eleven-signal twin bell on fresh twins (2026-10-18)
 
-Status: **rules fixed, nothing run.** No v2 base, twin, pilot or score exists yet. A dated "Pilot facts" section and the
-"Readout" are added below later; neither changes a rule in "Fixed before running". The rules were amended once on review,
+Status: **run and scored, 2026-10-18. Negative: the post-hoc rule did not replicate** (see "Readout"). The rules in
+"Fixed before running" were committed before the pilot; the dated "Pilot facts", "Run log" and "Readout" sections below
+were added after, and none changes a rule. The rules were amended once on review,
 before any run (listed at the end of "Fixed before running"); no bar, arm, S, radius, amount or seed count changed.
 
 ## Why v2
@@ -379,8 +380,118 @@ followed. None touches a bar, an arm, S, a radius, an amount, a seed or the pair
 
 ## Pilot facts
 
-(Added after the pilot. Changes no rule.)
+(Added after the pilot, 2026-10-18. Changes no rule.)
+
+`deno run -A --no-lock tools/bell2-launch.ts pilot --root ~/browser-life-bell-v2/pilot`, one launch, 22:04 to 22:05
+(load average 696 before, 332 after). Record: `experiments/naturalist/bell-v2-pilot.json`.
+
+- **Wall time 104 s**, of which 61 s was the launcher waiting for another session's Playwright Chrome (one `gpu-wait`,
+  counted, as the rules say). Well inside the pilot's 1 h.
+- **Jobs.** All five exited 0 on the first attempt: the base (16,000 steps) in 16 s, the sham, L96 and F forks
+  (6,000 steps) in 6 s each and the nudge fork in 7 s.
+- **Rates.** r_base = 1,046 steps/s; r_fork = 993 steps/s (mean of the four forks, 975 to 1,020); fixed cost per fork
+  o = 0.21 s (the base's own overhead was 0.71 s).
+- **Mechanics: passed, 23 of 23 checks.** The sham's checkpoint at 15,000 decodes to its step with the listed hash;
+  every manifest and interventions file has the expected shape; the sham equals the base over (10,000, 16,000] in
+  series and lineage rows; L96, F and the nudge each equal it over (10,000, 15,000] and differ after 15,000 (the
+  nudge's difference was reported, not required, and it did show). The nudge centre read from the sham's checkpoint
+  was (128, 128).
+- **Projection.** T = 1.25 × (10 × 206,000 / r_base + 60 × (16,000 / r_fork + o)) = 1.02 h, plus the 0.03 h already
+  used: **1.05 h against the 5 h cap** (1.00 h without L64). **Scale-down: none (mode "full")**; all six arms run.
+
+## Run log
+
+(Added during the main run, 2026-10-18, before any twin ran or anything was scored. Changes no rule.)
+
+- **Launch 1** (`run --root ~/browser-life-bell-v2/runs`) opened at 22:06 with 13 GB free, at 104 s of budget, mode
+  "full". base-3901 exited 0 in 282 s. base-3902's first attempt exited 1 after 89 s at 22:12, while the host's free
+  space fell from 13 GB to about 0.3 GB (swap was at 26 GB, load average about 790, from other sessions; the output
+  root held about 52 MB). The launcher then failed on `mkdir` of the aside directory (no space left on device) and
+  closed with an `error` event at 476 s of budget, so launch 1 is not a final stop.
+- **That attempt counts.** Under "A job that exits nonzero may be rerun once", base-3902 has used its one rerun's first
+  half: a second nonzero exit makes it a void base. Nothing in its bundle was read. Its directory and logs were moved
+  by hand to `bell-v2-launch/aside/base-3902-<ms>/` (the launcher's own naming), as the launcher's header asks for a
+  destination it did not finish, and nothing was deleted.
+- **The resume** waits until the host has several GB free for several minutes, then continues with `--resume` on the
+  same budget and the same scale-down. Time between launches is not on any launch's clock.
+- **Launch 2** (`run --root ~/browser-life-bell-v2/runs --resume`) opened at 22:24 with 12 GB free, at 476 s of
+  budget, and kept mode "full". base-3902's second attempt (its one rerun) exited 0; every other job exited 0 on its
+  first attempt. It closed at 23:40 with a final stop, "finished", at **5,002 s of budget (1.39 h of the 5 h cap)**,
+  with no job failed, no replacement seed used and no arm dropped. All 70 jobs finished: the 10 bases took 275 to
+  420 s, the 60 forks 19 to 25 s each, and the launcher waited 230 s in all for other GPU users (three `gpu-wait`
+  events, other sessions' Playwright Chrome). Load average ran from 285 to 792. The output root ended at 630 MB.
 
 ## Readout
 
-(Added after the run.)
+(Added 2026-10-18 after the run, against "Fixed before running". Changes no rule.)
+
+`deno run -A --no-lock tools/bell2.ts twins --runs ~/browser-life-bell-v2/runs --launch-log
+~/browser-life-bell-v2/runs/bell-v2-launch/jobs.jsonl`. Records: `experiments/naturalist/bell-v2-twins.json` (the
+scores and run facts), `bell-v2-nudges.json` (centres) and `bell-v2-pilot.json`. The run finished (final stop
+"finished"), so every criterion could be called.
+
+**Validity.** All 10 bases and all 60 twins are valid; none is void or missing. Every non-sham twin first differs from
+its base at 200,100, the census right after S.
+
+**R is met.** All 10 shams equal their bases at every census in (C, 206,000], series and lineage rows, and each has
+D₁₁ = 0. A fork is its base's history.
+
+### Primary, at Z*₂: **Negative — the post-hoc rule did not replicate**
+
+- **Z*₂ = 6.036**, set by the nudge of seed 3907 on `individuals`, high side. The ten nudge D₁₁ values, by seed
+  3901–3910: 0.52, 0.60, 0.53, 0.32, 0.40, 1.34, 6.04, 1.73, 1.41, 2.07 (median 0.97).
+
+| Criterion | Bar | Result | |
+| --- | --- | --- | --- |
+| R (replay) | 10 of 10 shams equal | 10 of 10 | met |
+| B2 (L96) | D₁₁ > Z*₂ on ≥ 8 of 10 | **4 of 10** (lower 95% bound 0.15) | missed |
+| B2 (F) | D₁₁ > Z*₂ on ≥ 8 of 10 | **2 of 10** (lower 95% bound 0.04) | missed |
+| B3 (nudge2) | D₁₁ > Z*₂ on ≤ 2 of 10 | **0 of 10** (upper 95% bound 0.26) | met |
+
+R met, B3 met, B2 missed for both: by the reading table, **the post-hoc rule did not replicate**. In DESIGN.md's
+vocabulary this is **Negative** (the pre-stated bar was missed).
+
+Per arm (reported):
+
+| Arm | Above Z*₂ | Median D₁₁ | P(D_arm > D_nudge) | Dose at S + 100 (living cells) |
+| --- | --- | --- | --- | --- |
+| nudge | 0 of 10 (sets Z*₂) | 0.97 | 0.50 | −8 to +11 |
+| nudge2 | 0 of 10 | 0.94 | 0.56 | −7 to +2 |
+| L64 | 0 of 10 | 2.89 | 0.90 | −11,848 to −6,592 |
+| L96 | 4 of 10 | 5.68 | 0.94 | −26,822 to −14,570 |
+| F | 2 of 10 | 3.91 | 0.91 | 0 to +1,312 (matter +205,376 each) |
+
+- **L96**, D₁₁ by seed 3901–3910: 4.16, 5.50, 6.17, 6.68, 4.62, 4.59, 5.61, 9.68, 10.06, 5.76. The four hits (3903,
+  3904, 3908, 3909) first rise above Z*₂ in the windows starting at 201,300, 201,200, 200,100 and 201,300; their D₁₁
+  comes from `fissions` high, `fissions` high, `individuals` low and `fissions` high. The smallest L96 D₁₁, 4.16, is below Z*₂
+  and above Z₁.
+- **F**, D₁₁ by seed: 4.16, 3.66, 2.54, 2.59, 1.90, 4.53, 8.20, 7.55, 2.27, 5.40. The two hits (3907, 3908) first
+  rise above Z*₂ in the windows starting at 204,600 and 201,400; their D₁₁ comes from `fusions` high and
+  `individuals` low.
+- **L64**, D₁₁ by seed: 2.13, 3.92, 2.70, 2.21, 2.15, 2.86, 4.08, 4.39, 2.92, 5.62; none above Z*₂.
+- **nudge2**, D₁₁ by seed: 0.60, 2.70, 0.51, 0.49, 0.82, 0.65, 3.96, 2.84, 1.18, 1.07.
+
+The note named this failure in advance: "an F miss, or a higher Z*₂, is the likelier way for v2 to fail". Both
+happened. Z*₂ came out at 6.04 against v1's 2.58, and F was heard on 2 of 10.
+
+### Reported, not deciding
+
+- **At v1's post-hoc threshold Z₁ = 2.5807:** L96 above on **10 of 10** (met), F on **7 of 10** (missed), L64 on 7
+  of 10, nudge on 1 of 10 (met, at most 2) and nudge2 on **3 of 10** (missed). Read with the same table, at v1's
+  post-hoc threshold: **its threshold does not hold out** (B3 missed for nudge2), with L96 the one arm at its bar.
+- **v1's own rule on the v2 twins** (all thirteen signals, Z*₁₃ from the fresh nudges): Z*₁₃ = 6.036, the same nudge
+  (seed 3907, `individuals` high). L96 4 of 10, F 2 of 10, L64 0 of 10, nudge2 0 of 10: v1's frozen rule **misses
+  again** ("did not meet the exploratory bar"). Adding `maxGeneration` and `dominantShare` raised three nudge and
+  nudge2 scores (nudge 3901 to 1.95 and 3905 to 0.42; nudge2 3901 to 0.73 and 3906 to 2.64) and changed no lesion or
+  feed score.
+- **Run facts:** in "Pilot facts" and "Run log". 1.39 h of the 5 h cap, no scale-down, one rerun (base-3902, after a
+  host disk-full failure), no replacement.
+- v1 and v2 are not pooled.
+
+### What it means, as the note fixed it
+
+**Did not replicate.** v1's post-hoc reading was selection on seen data. On ten fresh worlds, the eleven-signal pair
+rule with a nudge-set null did not hear the large lesion or the feed at its bar. The lesion and feed arms do score
+above the nudges on most seeds (P(D_arm > D_nudge) 0.94 and 0.91), and that is reported, not a pass. The next idea,
+fixed in advance, is v1's readout item 2: a unit from the nudge pairs' own differences, or the first census after S
+scored alone. Either belongs to a v3 with fresh twins, not to this one. Part C still waits on a yes for paid calls.

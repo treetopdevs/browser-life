@@ -68,6 +68,7 @@ import {
   forkArgs,
   forkManifestProblem,
   gpuUsers,
+  reducedCommand,
   interventionProblem2,
   jobOfId,
   orphanAttempt,
@@ -382,7 +383,7 @@ async function waitForGpu(kind: "base" | "fork", rates: PilotRates | null): Prom
     if (!users.length) return (performance.now() - w0) / 1000;
     if (!fits(rates, kind, elapsed() + 60)) return null;
     console.log(`  waiting for another GPU user: ${users.map((u) => `${u.pid} ${u.command.slice(0, 120)}`).join(" | ")}`);
-    await event({ event: "gpu-wait", users: users.map((u) => ({ pid: u.pid, command: u.command.slice(0, 160) })) });
+    await event({ event: "gpu-wait", users: users.map((u) => ({ pid: u.pid, command: reducedCommand(u.command) })) });
     await sleep(60_000);
   }
 }
