@@ -20,6 +20,9 @@ defmodule CoordinatorWeb.GardenContractTest do
   the food ask's `closed` codes and a food's `status`) are checked against the
   README's lists. The garden is founded with food (docs/garden-food-2026-10-18.md):
   a food called by two hands lands on day 1, and one more hand is on the open ask.
+  It is founded with meteor too (docs/garden-meteor-2026-10-18.md): a meteor
+  called by the same two networks lands on day 1 beside the food, and its ask
+  is open for day 2.
   """
   use CoordinatorWeb.ConnCase, async: false
   import CoordinatorWeb.GardenHelpers
@@ -73,13 +76,23 @@ defmodule CoordinatorWeb.GardenContractTest do
         "queueMax" => 10,
         "food" => true,
         "foodAsks" => 2,
-        "foodEveryDays" => 1
+        "foodEveryDays" => 1,
+        "meteor" => true,
+        "meteorAsks" => 2,
+        "meteorEveryDays" => 1
       })
 
     hand = fn ip ->
       %{conn | remote_ip: ip}
       |> put_req_header("content-type", "application/json")
       |> post("/api/public/garden/food/hands", "{}")
+      |> json_response(201)
+    end
+
+    meteor_hand = fn ip ->
+      %{conn | remote_ip: ip}
+      |> put_req_header("content-type", "application/json")
+      |> post("/api/public/garden/meteor/hands", "{}")
       |> json_response(201)
     end
 
@@ -105,6 +118,11 @@ defmodule CoordinatorWeb.GardenContractTest do
     # Two networks call a food onto the frontier day, day 1, before it is assigned.
     assert %{"called" => nil} = hand.({10, 0, 0, 1})
     assert %{"called" => %{"id" => "food-1", "day" => 1}} = hand.({10, 0, 0, 2})
+    # The same two networks call a meteor onto the same day: the asks are apart.
+    assert %{"called" => nil, "meteor" => %{"hands" => 1}} = meteor_hand.({10, 0, 0, 1})
+
+    assert %{"called" => %{"id" => "meteor-1", "day" => 1, "r" => 64}} =
+             meteor_hand.({10, 0, 0, 2})
 
     TestClock.advance(day_ms())
     t1 = next(a)
@@ -148,7 +166,11 @@ defmodule CoordinatorWeb.GardenContractTest do
           {"food", got["food"]},
           {"food.landing", got["food"]["landing"]},
           {"food.place", got["food"]["place"]},
-          {"food.foods[0].landedIn", hd(got["food"]["foods"])["landedIn"]}
+          {"food.foods[0].landedIn", hd(got["food"]["foods"])["landedIn"]},
+          {"meteor", got["meteor"]},
+          {"meteor.landing", got["meteor"]["landing"]},
+          {"meteor.place", got["meteor"]["place"]},
+          {"meteor.meteors[0].landedIn", hd(got["meteor"]["meteors"])["landedIn"]}
         ] do
       refute is_nil(value), "#{label} should be present in the driven state"
     end
@@ -219,11 +241,71 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     assert food["landedIn"] == dg(1)
     assert Enum.map(got["days"], & &1["food"]) == ["food-1", nil]
+    # The meteor: landed on day 1 beside the food, at the rule's place, its ask
+    # open for day 2 (N 1), the next meteor's place shown.
+    <<x1::unsigned-big-32, y1::unsigned-big-32, _::binary>> =
+      :crypto.hash(:sha256, "commons/seed-1/meteor-1")
+
+    <<x2::unsigned-big-32, y2::unsigned-big-32, _::binary>> =
+      :crypto.hash(:sha256, "commons/seed-1/meteor-2")
+
+    assert %{
+             "enabled" => true,
+             "asks" => 2,
+             "everyDays" => 1,
+             "r" => 64,
+             "hands" => 0,
+             "open" => true,
+             "closed" => nil,
+             "opensAtDay" => nil,
+             "landing" => %{"day" => 2, "step" => 60},
+             "meteors" => [meteor]
+           } = got["meteor"]
+
+    assert got["meteor"]["place"] == %{"x" => rem(x2, 256), "y" => rem(y2, 256)}
+    assert got["meteor"]["expiresAt"] == got["pace"]["nextDawnAt"]
+    assert got["meteor"]["sharedAddress"] == false
+
+    assert %{"id" => "meteor-1", "day" => 1, "status" => "landed", "hands" => 2, "r" => 64} =
+             meteor
+
+    assert {meteor["x"], meteor["y"]} == {rem(x1, 256), rem(y1, 256)}
+    assert meteor["landsAtStep"] == 2 * @d and meteor["landedIn"] == dg(1)
+    assert meteor["noticeUntil"] == meteor["calledAt"] + day_ms()
+    assert Enum.map(got["days"], & &1["meteor"]) == ["meteor-1", nil]
+
     letters = got["letters"]["waiting"] ++ got["letters"]["recent"]
     assert Enum.all?(letters, &String.starts_with?(&1["id"], "ltr-"))
 
     # Nothing about who tends the garden is in it.
     refute body =~ "Contract-GPU"
+  end
+
+  test "the fixture's meteor places are the rule's for its garden" do
+    f = @fixture |> File.read!() |> Jason.decode!()
+
+    g = %{
+      name: f["name"],
+      seed: f["seed"],
+      width: f["world"]["width"],
+      height: f["world"]["height"]
+    }
+
+    for m <- f["meteor"]["meteors"] do
+      "meteor-" <> n = m["id"]
+
+      assert Coordinator.Garden.meteor_place(g, String.to_integer(n)) == %{x: m["x"], y: m["y"]},
+             m["id"]
+    end
+
+    # The next place is the one after the highest number shown.
+    next =
+      (f["meteor"]["meteors"]
+       |> Enum.map(&String.to_integer(String.trim_leading(&1["id"], "meteor-")))
+       |> Enum.max()) + 1
+
+    %{x: x, y: y} = Coordinator.Garden.meteor_place(g, next)
+    assert f["meteor"]["place"] == %{"x" => x, "y" => y}
   end
 
   test "the leaders block has the fixture's shape", %{conn: conn, dir: dir} do
@@ -284,12 +366,25 @@ defmodule CoordinatorWeb.GardenContractTest do
     assert is_float(hd(by_day[1]["census"]["top"])["share"])
   end
 
-  test "the fixture's foods keep a timeline the scheduler can produce" do
+  test "the fixture's foods and meteors keep a timeline the scheduler can produce" do
     fixture = @fixture |> File.read!() |> Jason.decode!()
     period = fixture["pace"]["dawnPeriodMs"]
     days = Map.new(fixture["days"], &{&1["day"], &1})
 
-    for f <- fixture["food"]["foods"] do
+    assert fixture["meteor"]["meteors"] != []
+
+    # A meteor is called onto the frontier day: one with an attempt before it (its
+    # predecessor released) and, as for a food, no island before its notice ends.
+    for m <- fixture["meteor"]["meteors"] do
+      prev = days[m["day"] - 1]
+      assert prev == nil or m["calledAt"] >= prev["releasedAt"], m["id"]
+      assert m["landsAtStep"] == (m["day"] + 1) * fixture["pace"]["stepsPerDay"]
+      assert days[m["day"]]["meteor"] == m["id"]
+      # The cooldown the fixture shows is the rule's: N days past the live meteor.
+      assert fixture["meteor"]["opensAtDay"] == m["day"] + fixture["meteor"]["everyDays"]
+    end
+
+    for f <- fixture["food"]["foods"] ++ fixture["meteor"]["meteors"] do
       assert f["noticeUntil"] == f["calledAt"] + period, f["id"]
 
       # A day carrying a food is not given to an island before its notice ends.
@@ -393,7 +488,7 @@ defmodule CoordinatorWeb.GardenContractTest do
     # Key sets of every object (the values that depend on state are null here).
     assert Enum.sort(Map.keys(got)) == Enum.sort(Map.keys(fixture))
 
-    for k <- ~w(pace clock tending verification limits letters food sun) do
+    for k <- ~w(pace clock tending verification limits letters food meteor sun) do
       assert Enum.sort(Map.keys(got[k])) == Enum.sort(Map.keys(fixture[k])), "$.#{k}"
     end
 
@@ -404,6 +499,20 @@ defmodule CoordinatorWeb.GardenContractTest do
     # A garden founded without food: the block is there, off.
     assert %{"enabled" => false, "closed" => "off", "open" => false, "hands" => 0, "foods" => []} =
              got["food"]
+
+    # And without meteor: the meteor block is there, off, with the fixture's keys.
+    assert Enum.sort(Map.keys(got["meteor"])) == Enum.sort(Map.keys(fixture["meteor"]))
+
+    assert %{
+             "enabled" => false,
+             "closed" => "off",
+             "open" => false,
+             "hands" => 0,
+             "place" => nil,
+             "meteors" => []
+           } = got["meteor"]
+
+    assert hd(got["days"])["meteor"] == nil
 
     assert [%{"day" => 0, "status" => "waiting"}] = got["days"]
     assert Enum.sort(Map.keys(hd(got["days"]))) == Enum.sort(Map.keys(hd(fixture["days"])))
@@ -461,6 +570,23 @@ defmodule CoordinatorWeb.GardenContractTest do
       assert f["status"] in @letter_statuses, "food status #{inspect(f["status"])}"
       assert String.starts_with?(f["id"], "food-")
     end
+
+    meteor = got["meteor"]
+
+    assert is_boolean(meteor["enabled"]) and is_boolean(meteor["open"]) and
+             is_boolean(meteor["sharedAddress"])
+
+    assert meteor["closed"] in [nil | @closed], "meteor.closed #{inspect(meteor["closed"])}"
+    assert meteor["open"] == (meteor["closed"] == nil)
+    assert meteor["closed"] == "cooldown" == is_integer(meteor["opensAtDay"])
+
+    for m <- meteor["meteors"] do
+      assert m["status"] in @letter_statuses, "meteor status #{inspect(m["status"])}"
+      assert String.starts_with?(m["id"], "meteor-")
+    end
+
+    for day <- got["days"],
+        do: assert(day["meteor"] == nil or String.starts_with?(day["meteor"], "meteor-"))
 
     :ok
   end
@@ -530,6 +656,16 @@ defmodule CoordinatorWeb.GardenContractTest do
     "$.food.landing",
     "$.food.foods[].landedIn",
     "$.food.foods[].droppedAt",
+    "$.days[].meteor",
+    "$.meteor.asks",
+    "$.meteor.everyDays",
+    "$.meteor.r",
+    "$.meteor.place",
+    "$.meteor.closed",
+    "$.meteor.opensAtDay",
+    "$.meteor.landing",
+    "$.meteor.meteors[].landedIn",
+    "$.meteor.meteors[].droppedAt",
     "$.days[].leaders",
     "$.days[].leaders.census",
     "$.days[].leaders.lines",

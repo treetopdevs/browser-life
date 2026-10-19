@@ -89,7 +89,8 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   hands call timeout must be positive
   whole numbers (a window of `0`, once clamped to 1 ms, is refused); the four food keys must sit
   in their ranges (asks 2..1000, every 1..365 days, amount 1..64, radius 1..32,
-  `ConfigCheck.food_range/1`), refused at boot by name; the budgets (`island_joins_per_address`,
+  `ConfigCheck.food_range/1`), and so must the three meteor keys (asks 2..1000, every 1..365 days,
+  radius 33..255, `ConfigCheck.range/1`), refused at boot by name; the budgets (`island_joins_per_address`,
   `island_next_per_island`, `island_segment_requests_per_island`,
   `island_requests_per_address`) and `island_max_pending` are `nil` (off) or positive
   (a config `0` is refused: switch a budget off with `nil`); `island_prune_after_ms`,
@@ -243,8 +244,10 @@ are public before they land, and are replayed by a second island before they
 count. A garden founded with food also takes **hands**: food is rare and
 collective (docs/garden-food-2026-10-18.md), a modest feed at the world's centre
 that lands only when enough networks ask within one dawn period, at most once
-every few days. A garden is never a registered experiment or a source of
-registered evidence.
+every few days. A garden founded with meteor takes meteor hands the same way
+(docs/garden-meteor-2026-10-18.md): a meteor is a stone of a large fixed radius
+(64 by default) at a place fixed by rule before anyone asks, rarer still. A
+garden is never a registered experiment or a source of registered evidence.
 
 Underneath, a garden is an ordinary experiment (one run: condition `treatment`,
 one seed, `segmentSteps` = one day, `verifyFraction` 1, every day replayed by a
@@ -257,7 +260,9 @@ that view, served by a dev coordinator at `/garden-contract.example.json` so a
 front end can mock against it. It shows a garden that has slept 38 hours with
 its next day due, a day done and not yet verified, two verified days, letters
 waiting (one day's budget already full), a landed letter, a verified one and a
-dropped one, a verified food on day 1 and two hands on the open food ask. Every key in it is always present in a real response (a value may
+dropped one, a verified food on day 1 and two hands on the open food ask, and a
+meteor landed on day 2 (done, not yet verified) with the meteor ask closed for its
+cooldown. Every key in it is always present in a real response (a value may
 be `null` where the fixture says so below); `test/coordinator_web/garden_contract_test.exs`
 fails if a real response's keys and the fixture's differ.
 
@@ -279,6 +284,13 @@ fails if a real response's keys and the fixture's differ.
   runner's ownership rule: an intervention at step *s* belongs to the segment
   that stepped *to* *s*). The day's end checkpoint, and every later day, carries
   it.
+* **The order at one step.** The experiment's `interventions` are the founding
+  schedule, then every live letter, food and meteor by step; at one step the
+  stone letters come first (by their sequence number), then the foods (by
+  theirs), then the sun letters, then the meteors. Each kind added later sorts
+  after the earlier ones, so a garden without suns or meteors has exactly the
+  schedule it had before they existed (docs/garden-meteor-2026-10-18.md,
+  amendment "the merged order").
 * **The frontier.** A letter may only be carried by a day that holds no
   attempt (no island is running or verifying it, and none has). A posted letter
   goes to the first such day whose budget (`letters.perDay`) is not yet full. A
@@ -336,12 +348,13 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `census` | The newest done day's end-of-day numbers, or `null`: `day`, `step`, `individuals`, `lineages`, `maxGeneration`, `mutations`, `extinct`, `conservationOk` (each a number or boolean, or `null` when the island did not report it), `verified` (that day is verified), `source` (`"producer"`: reported by the island that ran the day; the digest, not these numbers, is what the replay checks). |
 | `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. `verified` is that day's own replay (`days[].status`, `census.verified` likewise); `clock.verifiedStep` and `fork` are the prefix. |
 | `fork` | The end checkpoint of the newest day of the verified prefix (`clock.verifiedStep`: every day from 0 verified), or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). A day verified while an earlier day is not is not offered: it was replayed from a checkpoint nobody has checked. |
-| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`, `leaders`. |
+| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `meteor`, `census`, `leaders`. |
 | `days[].status` | `"waiting"` (released, no island holds it), `"growing"`, `"done"`, `"verified"`, `"diverged"`, `"failed"`, `"blocked"` (after a diverged or failed day). |
 | `days[].doneAt`, `verifiedAt`, `digest` | `null` until done / verified. |
 | `days[].verification` | `"different-device-type"`, `"same-device-type"`, or `null` when not verified. |
 | `days[].letters` | Ids of the live (not dropped) letters the day carries. |
 | `days[].food` | The id of the live food the day carries (`"food-<n>"`), or `null`. A day carries at most one. |
+| `days[].meteor` | The id of the live meteor the day carries (`"meteor-<n>"`), or `null`. A day carries at most one; it may carry a food too. |
 | `days[].census` | As `census` without `day`, `step`, `verified`, `source`; `null` until done. |
 | `days[].leaders` | Who held the field at the day's end, counted from the day's verified files (below); `null` unless the day is verified. Added in the contract's additive way, so still `garden-v1`. |
 | `letters.perDay`, `letters.queueMax` | The garden's budget: letters one day carries; letters waiting at once. |
@@ -364,8 +377,16 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `food.foods` | The newest 32 foods, newest first, live and dropped. |
 | food | `id` (`"food-<n>"`), `x`, `y`, `r`, `amount`, `calledAt` (when the K-th hand called it), `noticeUntil` (`calledAt` plus one dawn period: its day is not given to an island to run before this, so the keeper's veto always has that long; a reset that reopens the day does not restart it), `hands` (K), `landsAtStep`, `day`, `status` (the letter statuses, with the same meanings), `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless the keeper dropped it). |
 | `leadersRule` | `{name: "lines-v1", top: 3, clearLeaderPercent: 10}`: the rule `days[].leaders` follows (always present). |
+| `meteor` | The meteor ask (always present; added in the contract's additive way, so still `garden-v1`), shaped as `food` without `amount`. A meteor is a lesion (`{step, kind: "lesion", x, y, r}` in the experiment's schedule, after that step's stones, foods and suns), never a letter: it is in no `letters` list and in no `days[].letters`. Its ask is independent of food's: its own hands, spacing and records. |
+| `meteor.enabled` | The garden was founded with meteor. `false` otherwise (then `closed` is `"off"` and the rule's numbers are `null`). |
+| `meteor.asks`, `meteor.everyDays` | K and N, as for food: a meteor lands at most once every N garden days, counting meteors only. `null` when off. |
+| `meteor.r` | Every meteor's radius (config `:garden_meteor_radius`, 64), fixed when the garden was founded. `null` when off. |
+| `meteor.place` | `{x, y}` where the *next* meteor would land: the *n*-th meteor lands at `x = u32be(H[0..3]) mod width`, `y = u32be(H[4..7]) mod height`, `H = SHA-256("<name>/seed-<seed>/meteor-<n>")`. Fixed before anyone asks; no visitor chooses it; a dropped meteor keeps its number, so the next is at the next place. `null` when off. |
+| `meteor.hands`, `meteor.expiresAt`, `meteor.sharedAddress`, `meteor.open`, `meteor.closed`, `meteor.opensAtDay`, `meteor.landing` | As the food block's (the same codes; a food never closes the meteor ask, nor a meteor the food's). |
+| `meteor.meteors` | The newest 32 meteors, newest first, live and dropped. |
+| meteor | `id` (`"meteor-<n>"`), `x`, `y` (its place, stored when it was called), `r`, `calledAt`, `noticeUntil` (as a food's: its day is not run before this), `hands`, `landsAtStep`, `day`, `status` (the letter statuses), `landedIn`, `droppedAt`. |
 | `sun` | `{percents, span, nextLanding}`: the percents a sun letter may take in this garden (those its preset's light takes, `[]` for none), its span (one day, `pace.stepsPerDay`), and `{day, step}` where a sun posted now would land, or `null` when none can (no day with room, or `percents` is `[]`) (always present; docs/garden-sun-2026-10-18.md). Added 2026-10-18 in the contract's additive way, so still `garden-v1`: every letter gained `percent` and `span`, and a letter's `x`, `y`, `r` are `null` only for a sun, a kind added with it. A stone reads as before; a page from before the sun that requires numbers there fails on a garden holding a sun letter (the page and the coordinator ship together). |
-| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters and hands together), `logMax` (founding plus live letters plus live foods, at most). |
+| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters, food hands and meteor hands together), `logMax` (founding plus live letters, stones and suns, plus live foods plus live meteors, at most). |
 
 ### Who held the field (`days[].leaders`)
 
@@ -413,7 +434,7 @@ floored) until `(d+2)·D`, then the world's own returns. It takes one of its
 day's letter places and the same per-address budget as a stone, at most one sun
 lands on a day, and never on the last day. In the schedule it is
 `{"step", "kind": "sun", "percent", "span"}`, after that step's stones and
-foods; its day's segments go only to islands that advertise `sun-v1`. A 409
+foods and before its meteors; its day's segments go only to islands that advertise `sun-v1`. A 409
 also says when no day before the last has room for a sun.
 
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
@@ -489,6 +510,21 @@ the garden's record and survives. A period's hands are forgotten within a minute
 of its dawn whether or not anyone asks again, and no status or crash report of
 the queue process shows them.
 
+### `POST /api/public/garden/meteor/hands` and `POST /api/public/gardens/:name/meteor/hands`
+
+No authentication. A visitor's hand on the meteor ask, exactly as a food hand
+(above): the body `{}` sent as JSON, one hand per network (IPv4 address, IPv6
+/48) per dawn period, the same answers with the `meteor` block in place of the
+food block (`201 {"counted": true, "called": null | <meteor>, "meteor": ...}`,
+`200 {"counted": false, "called": null, "meteor": ...}`, `409 {"error",
+"closed", "opensAtDay"}`, 422, 413, 415, 404, 429, and both 503s). A meteor hand
+costs a letter of the same hourly budget that stones and food hands share. The
+meteor hands are kept apart from the food hands: one network may give one of
+each in a period, and each costs a letter. The K-th hand calls the meteor at once
+onto `meteor.landing`'s day, at `meteor.place`, with radius `meteor.r`; its day is
+not run before `noticeUntil`. Off unless the garden was founded with
+`"meteor": true`.
+
 ### `GET /api/public/gardens/:name/checkpoints/:digest`
 
 The end checkpoint (`.blck` bytes, `application/octet-stream`) of a **verified**
@@ -516,7 +552,14 @@ Same admin authentication as `POST /api/experiments`.
   config `:garden_food_asks`, 5) and `foodEveryDays` (N, 1 to 365, default
   `:garden_food_every_days`, 7). Each food is `:garden_food_amount` (16) quanta
   per cell over radius `:garden_food_radius` (32); all four are copied into the
-  garden when it is founded. A garden with food is founded only if its worst case
+  garden when it is founded. `meteor` (`false`; `true` founds the garden with a
+  meteor ask, independently of food), and only with `meteor: true`, `meteorAsks`
+  (K, 2 to 1,000, default `:garden_meteor_asks`, 5) and `meteorEveryDays` (N, 1 to
+  365, default `:garden_meteor_every_days`, 7); every meteor's radius is
+  `:garden_meteor_radius` (64, allowed 33..255), copied into the garden with K and N.
+  A meteor needs no matter bound (a lesion conserves matter), but founding refuses
+  (422, naming the numbers) a radius past `⌊(min(width, height) − 1) / 2⌋`, the
+  largest lesion a one-tile world takes, and a pond preset. A garden with food is founded only if its worst case
   fits the runner's `MATTER_MAX` (2^26 quanta): `cells · 128 + Σ founding feeds
   amount · (2r+1)² + ⌈days / N⌉ · amount · (2r+1)²` (each square capped at the
   world's cells); otherwise 422 with the numbers. `200 {"garden": name, "days":
@@ -531,10 +574,12 @@ Same admin authentication as `POST /api/experiments`.
   explicitly) with the parameters and opening steps in `docs/garden-opening-2026-10-18.md`.
 
 * `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto, for a letter
-  (`ltr-<n>`) or a food (`food-<n>`). `200 {"letter": <letter>}` or `200
-  {"food": <food>}` (status `"dropped"`; dropping a dropped one is the same
-  200); 409 once its day has been assigned; 404 for an unknown garden, letter or
-  food. A dropped food counts toward nothing, so the ask can open again. A garden keeps only its newest 256 dropped letters (by id
+  (`ltr-<n>`), a food (`food-<n>`) or a meteor (`meteor-<n>`). `200 {"letter":
+  <letter>}`, `200 {"food": <food>}` or `200 {"meteor": <meteor>}` (status
+  `"dropped"`; dropping a dropped one is the same 200); 409 once its day has been
+  assigned; 404 for an unknown garden, letter, food or meteor. A dropped food or
+  meteor counts toward nothing, so its ask can open again (a meteor's at the next
+  place). A garden keeps only its newest 256 dropped letters (by id
   number): an older dropped letter is forgotten, and dropping it again is a 404.
   Ids are never reused.
 * `POST /api/gardens/:name/days/:index/requeue`: puts a **failed** or
