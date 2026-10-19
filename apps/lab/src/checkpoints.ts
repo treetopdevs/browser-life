@@ -23,7 +23,10 @@ export function jumpTarget(checkpoints: readonly Checkpoint[], onDisk: ReadonlyS
 /**
  * What a jump to `step` replays after restoring a checkpoint that had seen the first `seen` entries of `history`
  * (the run's log, followed by whatever a jump still replaying had queued): the entries before `step`, and a pick
- * at `step` itself, since a pond cycle is part of arriving at its boundary. `dropped` counts the later entries,
+ * at `step` itself, since a pond cycle is part of arriving at its boundary, and (given `period`, the pond period, or
+ * undefined for a world without ponds) a
+ * pressure for that boundary's own cycle, which governs the donors its pick names or the rule would. A pressure set
+ * after the boundary (for the next cycle) is dropped like a lesion at `step`. `dropped` counts the later entries,
  * which stay with the saved present: the world at `step` starts a new branch.
  *
  * `until` is the horizon for `LabExecution.queueReplay`: pond boundaries before it take a logged pick or the
@@ -32,8 +35,8 @@ export function jumpTarget(checkpoints: readonly Checkpoint[], onDisk: ReadonlyS
  * the log beyond its destination, so a second jump further forward enters steps this history has no record of,
  * and a boundary there is a new choice, not a remembered one.
  */
-export function replayPlan(history: readonly Intervention[], seen: number, step: number, known: number): { missed: Intervention[]; dropped: number; until: number } {
+export function replayPlan(history: readonly Intervention[], seen: number, step: number, known: number, period: number | undefined): { missed: Intervention[]; dropped: number; until: number } {
   const later = history.slice(seen);
-  const missed = later.filter((iv) => iv.step < step || (iv.kind === "pick" && iv.step === step));
+  const missed = later.filter((iv) => iv.step < step || (iv.step === step && (iv.kind === "pick" || (iv.kind === "pressure" && period !== undefined && iv.cycle * period === step))));
   return { missed, dropped: later.length - missed.length, until: Math.min(step, known) + 1 };
 }

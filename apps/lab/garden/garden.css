@@ -1,0 +1,87 @@
+/* The shared garden's page. Existing tokens and site.css classes only; nothing shared is changed here. */
+.garden-section { padding-block: 40px 0; }
+.garden-source { margin: -8px 0 20px; padding: 10px 14px; max-width: 72ch; border-left: 3px solid var(--sun); background: var(--surface); color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
+.garden-row { display: grid; grid-template-columns: minmax(145px, 220px) minmax(0, 1fr); gap: 48px; padding-block: 36px; border-top: 1px solid var(--line); }
+/* A row the page hides (the food ask in a garden without food): `display: grid` above would otherwise show it. */
+.garden-row[hidden] { display: none; }
+.garden-panel { min-width: 0; max-width: 900px; }
+.garden-panel h2 { margin: 0 0 14px; font-size: 1.625rem; line-height: 1.15; }
+.garden-panel h3 { margin: 22px 0 8px; font-size: 1.0625rem; letter-spacing: -.01em; }
+.garden-panel p { margin: 0 0 12px; max-width: 66ch; color: var(--muted); }
+.garden-panel p strong { color: var(--text); }
+.garden-panel .status-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: 18px 0 14px; }
+.garden-panel .status-value { font-size: 1.75rem; overflow-wrap: anywhere; }
+.garden-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.garden-headline { color: var(--text) !important; font-size: 1.125rem; font-weight: 500; }
+.garden-headline .state { margin-right: 4px; vertical-align: 2px; }
+.mono { font-family: var(--mono); font-size: .875em; }
+.garden-digest, .garden-letter-id { overflow-wrap: anywhere; }
+
+/* A neutral chip: a true statement that is not a clean pass (DESIGN.md, .badge.note in the lab). */
+.state.note { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--control-line); }
+.state { text-align: start; }
+.garden-mine { margin-left: 6px; }
+
+.garden-days, .garden-letters { margin: 0; padding: 0; list-style: none; }
+.garden-days li, .garden-letters li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.garden-days li:last-child, .garden-letters li:last-child { border-bottom: 1px solid var(--line); }
+.garden-day-name { color: var(--text); font-weight: 700; }
+.garden-day-body, .garden-letter-body { min-width: 0; color: var(--muted); font-size: .9375rem; }
+.garden-letter-body > span:not(.state) { display: inline; }
+.garden-letter-body .fine { display: block; margin-top: 4px; }
+.garden-day-body .fine { font-size: .875rem; }
+.garden-letter-id { padding-top: 2px; color: var(--text); font-weight: 600; }
+
+.garden-write { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 320px); gap: 32px; align-items: start; margin-top: 18px; }
+.garden-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.garden-fields label { display: grid; gap: 6px; color: var(--text); font-size: .875rem; font-weight: 600; }
+.garden-fields input { width: 100%; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font: 500 1rem var(--mono); }
+.garden-fields input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.garden-fields input[aria-invalid="true"] { border-color: var(--error); }
+.garden-preview { margin: 16px 0 0 !important; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--line); color: var(--text) !important; }
+.garden-send { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0 0; }
+.garden-send .button:disabled { opacity: .45; cursor: default; }
+.garden-answer { min-height: 1.5em; margin: 14px 0 8px !important; font-weight: 500; }
+.garden-answer[data-tone="negative"] { color: var(--error) !important; }
+.garden-answer[data-tone="note"], .garden-answer[data-tone="pending"] { color: var(--text) !important; }
+
+/* The food ask: a stone's preview box for where it lands; the button row is the stones'. */
+#g-food .garden-preview { margin: 4px 0 0 !important; }
+#g-food-list { margin-bottom: 14px; }
+
+/* Dawn predictions: one choice per line, each a full-width tap target. */
+.garden-choices { display: grid; gap: 8px; margin: 16px 0 0; padding: 0; border: 0; min-width: 0; }
+.garden-choices[hidden] { display: none; }
+.garden-choices legend { padding: 0; margin-bottom: 4px; }
+.garden-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font-weight: 500; overflow-wrap: anywhere; cursor: pointer; }
+.garden-choice input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--sun); }
+.garden-choice:has(input:focus-visible) { outline: 2px solid var(--text); outline-offset: 2px; }
+#g-field .garden-letter-id, #g-receipts .garden-letter-id { overflow-wrap: anywhere; }
+#g-predict-window .garden-preview { margin: 4px 0 0 !important; }
+
+.garden-map { margin: 0; }
+.garden-map svg { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-lg); cursor: crosshair; }
+.garden-map figcaption { margin-top: 8px; }
+.garden-map .map-world { fill: var(--field); }
+.garden-map .map-waiting { fill: none; stroke: var(--field-ink); stroke-opacity: .6; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.garden-map .map-mine { fill: none; stroke: var(--sun); stroke-width: 3; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.garden-map .map-stone { fill: var(--sun); fill-opacity: .35; stroke: var(--sun); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.garden-map .map-centre { fill: var(--sun); }
+
+@media (max-width: 1000px) {
+  .garden-write { grid-template-columns: 1fr; }
+  .garden-map { max-width: 360px; }
+}
+@media (max-width: 700px) {
+  .garden-row { grid-template-columns: 1fr; gap: 10px; padding-block: 28px; }
+  .garden-panel .status-value { font-size: 1.375rem; }
+  .garden-days li, .garden-letters li { grid-template-columns: 1fr; gap: 6px; }
+  .garden-fields { gap: 8px; }
+  .garden-map { max-width: none; }
+}
+/* The sun letter (docs/garden-sun-2026-10-18.md). */
+.garden-sun { margin-top: 24px; }
+.garden-sun h3 { margin: 0 0 8px; }
+.garden-sun-choices { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.garden-sun-choices legend { font-size: .875rem; font-weight: 600; padding: 0; margin-bottom: 6px; width: 100%; }
+.garden-sun-choice { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: .9375rem; }

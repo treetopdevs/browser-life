@@ -28,6 +28,21 @@
 - Audit what the public status response exposes, and verify the detailed status endpoint rejects unauthenticated requests from the public network.
 - Check every public route, metadata, mobile/keyboard access, missing-GPU behavior, 404s, and the live status API. Confirm the canonical URLs and sitemap resolve at the live domain.
 
+### Release checks progress — 17 October 2026
+
+Worked through locally without deploying; each check and how it was verified is in
+`docs/release-checks-2026-10-18.md`, and the proxy and CORS notes are in `deploy/README.md`.
+`[x]` is done; `[~]` is done locally with a part that **needs the live host**; `[ ]` is open.
+
+- [~] Site at `/`, `/api/*` to Phoenix: already so in `deploy/Caddyfile` (read, not changed). HTTPS and the island runner over HTTPS: **needs the live host**.
+- [x] Production secrets: `BL_ADMIN_TOKEN` and `SECRET_KEY_BASE` required at boot (each tested by reading `runtime.exs` as a release does). Durable storage: named volumes, unchanged.
+- [x] Narrow CORS: production allows no cross-origin caller by default and refuses anything but whole https origins (tested). Same-origin in production, so `BL_CORS_ORIGINS` stays unset.
+- [ ] Trusted proxy: **needs the live host and a Caddy change**. Through Traefik → Caddy every visitor is expected to count as one address; the fix is written up in `deploy/README.md`, and the join budget per address stays off in production until it lands.
+- [~] `/index.html` is not an unauthenticated dashboard: the coordinator's operations page holds no data and asks for the admin token; Caddy does not forward it. Confirming `https://cadence.garden/index.html` is the homepage: **needs the live host**.
+- [~] Join load limits and abuse controls, locally (tested): per-island budgets on `next` and the segment routes, at most 4 pending assignments per island, 16 KB JSON-only join/next bodies, a bounded island table that forgets idle islands first, a coalesced public status cache. The join budget per address is built and tested but off in production until the trusted-proxy row. Against the chosen host: **needs the live host**.
+- [~] Public status audit: only `counts`, `activeIslands`, `deviceTypes`, `updatedAt`, with no island id, adapter, user agent or experiment name; the detailed status, experiment and discovery status routes answer 401 without the admin token, including from loopback (tested; the gating already existed, the slice adds the test). From the public network: **needs the live host**.
+- [~] Public routes, canonical links, `og:url`, robots.txt and sitemap: checked against the dev server and a fresh production build (`tests/e2e/public-routes.spec.ts`). Keyboard access, 375 px layout and missing-GPU behaviour are checked locally in Chrome (`tests/e2e/public-a11y.spec.ts`, PR #36). An unknown path answers 404 with the site's own page (`apps/lab/404.html` and a `handle_errors` block in `deploy/Caddyfile`), checked on the dev server, under `vite preview` and against a local Caddy (v2.11.7, not production's 2.10) running a copy of the real Caddyfile with only its listen address, upstream and root changed (`tests/e2e/public-not-found.spec.ts`, slice 19; not deployed). Caddy 2.10 itself is unchecked. The live 404, the live status API, the canonical URLs and sitemap at the live domain, and real phones and tablets: **need the live host** (refreshed 18 October 2026).
+
 ## Creative direction refresh — 4 October 2026
 
 The public site now leads with an open artificial-life playground: surprising bodies and behaviors,

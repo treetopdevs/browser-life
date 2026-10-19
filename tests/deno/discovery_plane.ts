@@ -17,6 +17,8 @@
 // Two host labels on one Mac exercise the plumbing only; they are not the
 // two-physical-host proof the PRD requires.
 
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
+
 const REPO = new URL("../..", import.meta.url).pathname.replace(/\/$/, "");
 const keep = Deno.args.includes("--keep");
 const browser = !Deno.args.includes("--no-browser");
@@ -37,11 +39,11 @@ function sh(cmd: string, args: string[], env: Record<string, string> = {}): { co
   const p = new Deno.Command(cmd, { args, cwd: REPO, env: { ...Deno.env.toObject(), ...env }, stdout: "piped", stderr: "piped" }).outputSync();
   return { code: p.code, out: dec.decode(p.stdout) + dec.decode(p.stderr) };
 }
-const tool = (...args: string[]) => sh("deno", ["run", "-A", `${REPO}/tools/discovery.ts`, ...args], { BL_ADMIN_TOKEN: ADMIN });
+const tool = (...args: string[]) => sh("deno", ["run", "--no-lock", "-A", `${REPO}/tools/discovery.ts`, ...args], { BL_ADMIN_TOKEN: ADMIN });
 
 function worker(host: string, extra: string[] = []) {
   return new Deno.Command("deno", {
-    args: ["run", "-A", `${REPO}/tools/discovery-worker.ts`, "--coordinator", base, "--host", host, "--token", JOIN, "--max-minutes", "10", ...extra],
+    args: ["run", "--no-lock", "-A", `${REPO}/tools/discovery-worker.ts`, "--coordinator", base, "--host", host, "--token", JOIN, "--max-minutes", "10", ...extra],
     cwd: REPO,
     stdout: "piped",
     stderr: "piped",
@@ -53,12 +55,17 @@ async function finish(p: Deno.ChildProcess): Promise<{ code: number; out: string
 }
 
 let server: Deno.ChildProcess | null = null;
+// The coordinator's discovery validator is `deno run -A tools/discovery.ts check-attempt` (config/runtime.exs), found on
+// PATH: first there is a shim adding --no-lock, so the plane never rewrites deno.lock.
+let denoBin = "";
 function startServer() {
+  if (!denoBin) throw new Error("no deno shim yet");
   server = new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: `${REPO}/apps/coordinator`,
     env: {
       ...Deno.env.toObject(),
+      PATH: `${denoBin}:${Deno.env.get("PATH") ?? ""}`,
       MIX_ENV: "dev",
       PORT: String(port),
       BL_DATA_DIR: `${tmp}/queue-data`,
@@ -93,6 +100,7 @@ async function waitReady(ms: number) {
 const admin = async (path: string) => (await fetch(`${base}${path}`, { headers: { authorization: `Bearer ${ADMIN}` } })).json();
 
 try {
+  denoBin = await noLockDenoBin(`${tmp}/bin`);
   // ---- 1. The shard reference.
   const REF = `${tmp}/shard`;
   tool("freeze", "--protocol", `${REPO}/experiments/discovery/engineering-v1/protocol.json`, "--out", REF);

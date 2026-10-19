@@ -2,14 +2,17 @@
 // packages/schema) keeps hand-written copies of a few preset facts in
 // config.exs: each preset's world size (`:world_size`, which refuses a
 // scheduled lesion or feed centred outside the world at experiment creation),
-// the pond presets and their periods (`:pond_presets`, `:pond_period`) and the
-// migration periods (`:migration_period`), each used to refuse at creation
-// what the runner would otherwise throw on, on every island. This fails as
+// the pond presets and their periods (`:pond_presets`, `:pond_period`), the
+// presets whose every run is a breed world (`:breed_presets`, gated to islands
+// with "breed-v1") and the migration periods (`:migration_period`), each used
+// to refuse at creation what the runner would otherwise throw on, or to hand
+// work only to islands that can run it. This fails as
 // soon as any copy disagrees with packages/schema's PRESETS.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { PRESETS, defaultConfig, worldH, worldW } from "@bl/schema";
+import { CONDITIONS } from "@bl/runner";
 
 const CONFIG_EXS = "../../../apps/coordinator/config/config.exs";
 const source = readFileSync(fileURLToPath(new URL(CONFIG_EXS, import.meta.url)), "utf8");
@@ -68,6 +71,46 @@ describe("coordinator preset facts", () => {
     const periods = map("pond_period", int);
     expect(Object.keys(periods).sort()).toEqual(withPonds);
     for (const id of withPonds) expect([id, periods[id]]).toEqual([id, cfgOf(id).pondPeriod]);
+  });
+
+  it(":breed_presets is exactly the accepted presets whose config sets pondScore", () => {
+    const scored = presets.filter((id) => cfgOf(id).pondScore !== undefined).sort();
+    expect(scored).toContain("breeder");
+    expect([...words("breed_presets")].sort()).toEqual(scored);
+  });
+
+  it(":world_light is each accepted preset's lightBase, lightAmp, seasonAmp, and names no other preset", () => {
+    const triple = (raw: string): [number, number, number] => {
+      const m = raw.match(/^\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}$/);
+      if (!m) throw new Error(`not a {base, amp, season} tuple: ${raw}`);
+      return [Number(m[1]), Number(m[2]), Number(m[3])];
+    };
+    const lights = map("world_light", triple);
+    expect(Object.keys(lights).sort()).toEqual([...presets].sort());
+    for (const [id, l] of Object.entries(lights)) {
+      const cfg = cfgOf(id);
+      expect([id, ...l]).toEqual([id, cfg.lightBase, cfg.lightAmp, cfg.seasonAmp]);
+    }
+  });
+
+  it(":light_conditions is exactly the accepted conditions that change some accepted preset's light", () => {
+    const accepted = words("conditions");
+    const changes = accepted.filter((id) => {
+      const cond = CONDITIONS.find((c) => c.id === id);
+      if (!cond) return false;
+      return presets.some((p) => {
+        const cfg = cfgOf(p);
+        let out: Partial<typeof cfg>;
+        try {
+          out = cond.apply(cfg);
+        } catch {
+          return false;
+        }
+        const after = { ...cfg, ...out };
+        return after.lightBase !== cfg.lightBase || after.lightAmp !== cfg.lightAmp || after.seasonAmp !== cfg.seasonAmp;
+      });
+    });
+    expect([...words("light_conditions")].sort()).toEqual(changes.sort());
   });
 
   it(":migration_period is exactly the accepted presets with tile migration, at their migrationPeriod", () => {

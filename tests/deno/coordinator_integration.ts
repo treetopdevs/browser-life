@@ -22,18 +22,34 @@
 // checks that a real island reports the segment failed (POST
 // /api/segments/:id/fail), that the run stops there in the status and the
 // listing, that no island is offered the segment again, and that the failure
-// survives a restart.
+// survives a restart. After that, two bred experiments (the breeder's conditions
+// pond-breed-drive+seed+body and pond-mass-drive on ponds-small, and the
+// breeder preset itself, whose tenfold mutation makes ponds score;
+// docs/archipelago-breed-2026-10-18.md) check the "breed-v1" gate over the
+// wire for run and verify tasks, that a real island runs and another verifies
+// their segments (ponds.tsv with the score's columns among the compared files,
+// no picks.jsonl), that the breeder's verified donors were chosen by a score
+// above 0, that tools/stitch.ts rebuilds the bundles a single tools/run.ts run
+// writes, and that creation refuses what the runner would and stores no
+// picked, pressures or branch key it was sent.
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
-import { METRICS_VERSION, PRESETS, cellCount, defaultConfig, lowbias32, worldW } from "@bl/schema";
-import { BUNDLE_FILES, INTERVENTIONS_FILE, OBSERVATION_FILES, observationDigests, parseInterventionLog, PONDS_FILE, runExperiment, runIsland, VERIFIED_FILES, type RunSpec, type ScheduledIntervention, type Sink, type Task } from "@bl/runner";
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
+import { METRICS_VERSION, PRESETS, breedPondColumns, cellCount, defaultConfig, lowbias32, worldW } from "@bl/schema";
+import { BUNDLE_FILES, INTERVENTIONS_FILE, OBSERVATION_FILES, observationDigests, parseInterventionLog, PICKS_FILE, PONDS_FILE, runExperiment, runIsland, specConfig, VERIFIED_FILES, type RunSpec, type ScheduledIntervention, type Sink, type Task } from "@bl/runner";
 
 const root = Deno.cwd();
 const coordinatorDir = `${root}/apps/coordinator`;
 const port = 41099;
 const base = `http://127.0.0.1:${port}`;
-const dataDir = await Deno.makeTempDir({ prefix: "bl-coordinator-it-" });
+// One scratch directory holds the data dir and the deno shim, so the shim adds nothing a run could leave behind.
+const scratch = await Deno.makeTempDir({ prefix: "bl-coordinator-it-" });
+const dataDir = `${scratch}/data`;
+await Deno.mkdir(dataDir);
+// A deno the coordinator finds on PATH (its discovery validator, config/runtime.exs) runs with --no-lock, so this test
+// never rewrites deno.lock (tests/deno/lib/no_lock_deno.ts). Beside the data dir, not in it.
+const denoBin = await noLockDenoBin(`${scratch}/bin`);
 const host = { host: "test", adapter: "test" };
 
 let ok = true;
@@ -42,11 +58,16 @@ const check = (name: string, cond: boolean, detail = "") => {
   if (!cond) ok = false;
 };
 
+const withoutValidator = (env: Record<string, string>) => Object.fromEntries(Object.entries(env).filter(([k]) => k !== "BL_DISCOVERY_VALIDATOR"));
+
 function spawnServer() {
   return new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: coordinatorDir,
-    env: { ...Deno.env.toObject(), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir },
+    // BL_DISCOVERY_VALIDATOR is dropped (clearEnv, or the child inherits it anyway): a validator command from the
+    // caller's environment would bypass the shim.
+    env: { ...withoutValidator(Deno.env.toObject()), PATH: `${denoBin}:${Deno.env.get("PATH") ?? ""}`, MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir },
+    clearEnv: true,
     stdin: "null",
     stdout: "inherit",
     stderr: "inherit",
@@ -250,7 +271,7 @@ try {
   const outDir = `${dataDir}/stitched`;
   const stitchCli = (experiment: string) =>
     new Deno.Command(Deno.execPath(), {
-      args: ["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
+      args: ["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
       stdin: "null",
     }).output();
   const stitch = await stitchCli("it-final-only");
@@ -474,7 +495,7 @@ try {
   const singleOut = `${dataDir}/single`;
   const single = await new Deno.Command(Deno.execPath(), {
     args: [
-      "run", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
+      "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
       "--seeds", "1", "--steps", String(pondSpec.steps), "--census", String(pondSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
     ],
     stdin: "null",
@@ -603,7 +624,7 @@ try {
     const flags = schedule.flatMap((e) => (e.kind === "lesion" ? ["--lesion", `${e.step}:${e.x},${e.y},${e.r}`] : ["--feed", `${e.step}:${e.x},${e.y},${e.r},${e.amount}`]));
     const singleSched = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
         "--steps", String(spec.steps), "--census", String(spec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut, ...flags,
       ],
       stdin: "null",
@@ -634,6 +655,29 @@ try {
     // Not vacuous: the wounded history is not the clean one (the "it-final-only" run above is the same spec without the schedule).
     const cleanMan = JSON.parse((await readOr(`${outDir}/it-final-only/spots/treatment/seed-1/manifest.json`)) ?? "{}") as { summary?: { finalHash?: string } };
     check("...and it is not the clean run of the same spec", stitchedMan.summary?.finalHash !== undefined && stitchedMan.summary.finalHash !== cleanMan.summary?.finalHash, `${stitchedMan.summary?.finalHash} vs clean ${cleanMan.summary?.finalHash}`);
+  }
+
+  // A scheduled sun (docs/garden-sun-2026-10-18.md): a schedule holding one goes only to an island that advertises "sun-v1",
+  // never to one with "interventions-v1" alone. The sun at step 5 shines for 10 steps, across segments #1 and #2, so segment
+  // #2 inherits it from #1's checkpoint and checks it against the schedule; a second island verifies every segment.
+  {
+    const sunnedSpec = { ...spec, experiment: "it-sunned", interventions: [{ step: 5, kind: "sun", percent: 50, span: 10 }] };
+    const r150 = await fetch(`${base}/api/experiments`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...sunnedSpec, experiment: "it-bright", interventions: [{ step: 5, kind: "sun", percent: 150, span: 10 }] }) });
+    const t150 = await r150.text();
+    check("a sun the preset's light cannot take is refused at creation with 422", r150.status === 422 && /cannot take a sun of 150%/.test(t150), `${r150.status} ${t150.slice(0, 200)}`);
+    const created = await call<{ segments: number }>("/api/experiments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sunnedSpec) });
+    check("creates the sunned experiment (4 segments)", created.segments === 4, JSON.stringify(created));
+    const idleOld = await noCapNext({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"] });
+    check("an island with interventions-v1 but not sun-v1 is idle while sunned run tasks wait", idleOld.kind === "idle", JSON.stringify(idleOld.segment ?? idleOld));
+    const ran = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+    check("a sun-v1 island (real runIsland) runs all 4 sunned segments", ran === 4, String(ran));
+    const idleOldVerify = await noCapNext({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"] });
+    check("...and the old island is idle while their verify tasks wait", idleOldVerify.kind === "idle", JSON.stringify(idleOldVerify.segment ?? idleOldVerify));
+    const verified = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+    check("a second sun-v1 island verifies all 4", verified === 4, String(verified));
+    const st = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+    const run = st.runs.find((r) => r.run.startsWith("it-sunned/"));
+    check("the sunned run is fully verified across the span's segment boundaries, with no divergence", run?.segments === 4 && run?.verified === 4 && run?.diverged === 0 && run?.blocked === 0, JSON.stringify(run));
   }
 
   // A schedule no creation check can refuse and no island can apply (Coordinator.Queue's
@@ -705,6 +749,152 @@ try {
       JSON.stringify({ restartedFailRun, restartedFailure, island: afterRestartIsland.log }),
     );
   }
+
+  // The breeder on the archipelago (Coordinator.Queue's moduledoc; docs/archipelago-breed-2026-10-18.md): the breed
+  // arm and its mass control on ponds-small, and the breeder preset (its treatment is the breed arm), rule-picked donors
+  // only. Their segments, run or verify, go only to an island that advertises "breed-v1" as well as "ponds-v1". With no
+  // overrides ponds-small likely never scores within 2,000 steps (transport, gating, verification and stitching only,
+  // the note's caveat); the breeder's mutation x 10 makes ponds score within its first 5,000-step cycle, so its second
+  // segment starts from donors chosen by a score and its verifier replays that choice.
+  // Created last, so no earlier runIsland call picks up their work.
+  {
+    const breedSpec = {
+      experiment: "it-breed",
+      presetId: "ponds-small",
+      conditions: ["pond-breed-drive+seed+body", "pond-mass-drive"],
+      seeds: [1],
+      steps: 2000,
+      segmentSteps: 1000,
+      censusEvery: 100,
+      verifyFraction: 1.0,
+    };
+    // Sent with the keys of a picked, pressured and branch run, which the coordinator must drop (checked below).
+    const createdBreed = await call<{ segments: number }>("/api/experiments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...breedSpec, picked: true, pressures: [{ cycle: 1, pond: 0 }], branch: { from: "x", arm: "nat" } }),
+    });
+    check("creates the bred experiment (2 runs of 2 segments)", createdBreed.segments === 4, JSON.stringify(createdBreed));
+    const breederSpec = { experiment: "it-breeder", presetId: "breeder", conditions: ["treatment"], seeds: [1], steps: 10_000, segmentSteps: 5_000, censusEvery: 100, verifyFraction: 1.0 };
+    const createdBreeder = await call<{ segments: number }>("/api/experiments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(breederSpec),
+    });
+    check("creates the breeder experiment (1 run of 2 segments)", createdBreeder.segments === 2, JSON.stringify(createdBreeder));
+
+    // What the runner refuses, the coordinator refuses at creation (422).
+    const refusedBreed = async (what: string, body: unknown, re: RegExp) => {
+      const r = await fetch(`${base}/api/experiments`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const text = await r.text();
+      check(`${what} is refused at creation with 422 saying ${re}`, r.status === 422 && re.test(text), `${r.status} ${text.slice(0, 200)}`);
+    };
+    await refusedBreed("a breeder condition on a preset without the pond cycle", { ...breedSpec, experiment: "it-breed-spots", presetId: "spots", conditions: ["pond-breed-drive"] }, /condition pond-breed-drive does not apply to preset spots/);
+    await refusedBreed("pond-cont on the breeder preset", { ...breedSpec, experiment: "it-breed-cont", presetId: "breeder", conditions: ["pond-cont"], steps: 5000, segmentSteps: 5000 }, /condition pond-cont does not apply to preset breeder/);
+    await refusedBreed("the breeder preset cut off its cycle", { ...breedSpec, experiment: "it-breeder-cadence", presetId: "breeder", conditions: ["treatment"], steps: 5000, segmentSteps: 1000 }, /segmentSteps must be a multiple of pondPeriod 5000/);
+
+    // A fresh island with every capability but breed-v1 (joined here, not reused across the restarts above).
+    const noBreed = await call<{ id: string; token: string }>("/api/islands", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ adapter: "no-breed-capability", metricsVersion: METRICS_VERSION }),
+    });
+    const noBreedNext = () =>
+      call<Task>(`/api/next?island=${encodeURIComponent(noBreed.id)}`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${noBreed.token}` },
+        body: JSON.stringify({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1"] }),
+      });
+    const idleForBreedRuns = await noBreedNext();
+    check("an island without breed-v1 is idle while bred run tasks are waiting", idleForBreedRuns.kind === "idle", JSON.stringify(idleForBreedRuns.segment ?? idleForBreedRuns));
+    const logB: string[] = [];
+    const producedBreed = await runIsland(device, { coordinator: base, host, maxTasks: 6, idleMs: 200, log: (m) => logB.push(m) });
+    check("a capable island (real runIsland) runs all 6 bred segments", producedBreed === 6, `${producedBreed}: ${logB.filter((m) => /^run /.test(m)).join(" | ")}`);
+    const idleForBreedVerifies = await noBreedNext();
+    check("an island without breed-v1 is idle while bred verify tasks are waiting", idleForBreedVerifies.kind === "idle", JSON.stringify(idleForBreedVerifies.segment ?? idleForBreedVerifies));
+    const verifiedBreed = await runIsland(device, { coordinator: base, host, maxTasks: 6, idleMs: 200 });
+    check("a second capable island verifies all 6 bred segments", verifiedBreed === 6, String(verifiedBreed));
+
+    const breedStatus = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+    const breedRuns = breedStatus.runs.filter((r) => r.run.startsWith("it-breed/") || r.run.startsWith("it-breeder/"));
+    check(
+      "all three bred runs are fully verified, with no divergence or blocking",
+      breedRuns.length === 3 && breedRuns.every((r) => r.segments === 2 && r.verified === 2 && r.diverged === 0 && r.blocked === 0),
+      JSON.stringify(breedRuns),
+    );
+    type BreedSeg = { id: string; run: string; condition: string; index: number; files: Record<string, string> | null; observationsVerified: boolean | null };
+    const expBreed = await call<{ spec: Record<string, unknown>; segments: BreedSeg[] }>("/api/experiments/it-breed");
+    // Each segment's own ponds.tsv starts with its score's header (pond-mass-drive's score is drive).
+    const headers: string[] = [];
+    for (const seg of expBreed.segments) {
+      const text = typeof seg.files?.[PONDS_FILE] === "string" ? await (await fetch(`${base}/api/segments/${seg.id}/files/${PONDS_FILE}`)).text() : "";
+      const score = specConfig({ experiment: "it-breed", presetId: "ponds-small", condition: seg.condition, seed: 1, steps: 0, censusEvery: 100, deepEvery: 10, checkpointEvery: 0 }).pondScore;
+      headers.push(score !== undefined && text.startsWith(breedPondColumns(score).join("\t") + "\n") ? "ok" : `${seg.run} #${seg.index}: ${text.split("\n", 1)[0]}`);
+    }
+    check(
+      "every bred segment uploaded ponds.tsv with its score's header and no picks.jsonl, and its verifier's observation digests matched",
+      expBreed.segments.length === 4 && headers.every((h) => h === "ok") && expBreed.segments.every((s) => s.files?.[PICKS_FILE] === undefined && s.observationsVerified === true),
+      `${headers.join(" | ")}; ${JSON.stringify(expBreed.segments.map((s) => ({ run: s.run, index: s.index, files: Object.keys(s.files ?? {}), observationsVerified: s.observationsVerified })))}`,
+    );
+    check("the stored spec carries none of the picked, pressures and branch keys the creation request sent", ["picked", "pressures", "branch"].every((k) => !(k in expBreed.spec)), JSON.stringify(expBreed.spec));
+    const expBreeder = await call<{ segments: BreedSeg[] }>("/api/experiments/it-breeder");
+    check(
+      "both breeder segments' observation digests (ponds.tsv with its donor and score columns among them) matched their verifier's",
+      expBreeder.segments.length === 2 && expBreeder.segments.every((s) => typeof s.files?.[PONDS_FILE] === "string" && s.observationsVerified === true),
+      JSON.stringify(expBreeder.segments.map((s) => ({ index: s.index, files: Object.keys(s.files ?? {}), observationsVerified: s.observationsVerified }))),
+    );
+
+    // Stitched, each bundle equals a single unsegmented tools/run.ts run of the same spec.
+    const breedStitch = await stitchCli("it-breed");
+    check("stitch.ts exports both bred runs", breedStitch.success && stdout(breedStitch).includes("2 written"), `${stdout(breedStitch).slice(-200)} ${new TextDecoder().decode(breedStitch.stderr).slice(0, 300)}`);
+    const singleBreed = await new Deno.Command(Deno.execPath(), {
+      args: [
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breed", "--preset", "ponds-small", "--conditions", breedSpec.conditions.join(","),
+        "--seeds", "1", "--steps", String(breedSpec.steps), "--census", String(breedSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
+      ],
+      stdin: "null",
+    }).output();
+    check("tools/run.ts runs both bred conditions unsegmented", singleBreed.success, new TextDecoder().decode(singleBreed.stderr).slice(0, 300));
+    const breederStitch = await stitchCli("it-breeder");
+    check("stitch.ts exports the breeder run", breederStitch.success && stdout(breederStitch).includes("1 written"), `${stdout(breederStitch).slice(-200)} ${new TextDecoder().decode(breederStitch.stderr).slice(0, 300)}`);
+    const singleBreeder = await new Deno.Command(Deno.execPath(), {
+      args: [
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breeder", "--preset", "breeder", "--conditions", "treatment",
+        "--seeds", "1", "--steps", String(breederSpec.steps), "--census", String(breederSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
+      ],
+      stdin: "null",
+    }).output();
+    check("tools/run.ts runs the breeder unsegmented", singleBreeder.success, new TextDecoder().decode(singleBreeder.stderr).slice(0, 300));
+    const legs = [
+      ...breedSpec.conditions.map((condition) => ({ experiment: "it-breed", preset: "ponds-small", condition, rows: 8, scored: false })),
+      { experiment: "it-breeder", preset: "breeder", condition: "treatment", rows: 32, scored: true },
+    ];
+    for (const { experiment, preset, condition, rows, scored } of legs) {
+      const stitchedDir = `${outDir}/${experiment}/${preset}/${condition}/seed-1`;
+      const singleDir = `${singleOut}/${experiment}/${preset}/${condition}/seed-1`;
+      const differing: string[] = [];
+      const missing: string[] = [];
+      for (const f of VERIFIED_FILES) {
+        const text = await readOr(`${stitchedDir}/${f}`);
+        if (text !== (await readOr(`${singleDir}/${f}`))) differing.push(f);
+        if (text === undefined && (f === PONDS_FILE || (OBSERVATION_FILES as readonly string[]).includes(f))) missing.push(f);
+      }
+      const pondLines = ((await readOr(`${stitchedDir}/${PONDS_FILE}`)) ?? "").split("\n").filter(Boolean);
+      const pondRows = pondLines.length - 1;
+      // The verified file's donor rows: on the breeder, some donor was chosen by a score above 0 (donorScore > 0).
+      const donorScoreCol = (pondLines[0] ?? "").split("\t").indexOf("donorScore");
+      const scoredDonors = donorScoreCol < 0 ? -1 : pondLines.slice(1).filter((l) => Number(l.split("\t")[donorScoreCol]) > 0).length;
+      const picks = await readOr(`${stitchedDir}/${PICKS_FILE}`);
+      const finalHash = async (dir: string) => JSON.parse((await readOr(`${dir}/manifest.json`)) ?? "{}").summary?.finalHash as string | undefined;
+      const [stitchedHash, singleHash] = [await finalHash(stitchedDir), await finalHash(singleDir)];
+      check(
+        `the stitched ${preset}/${condition} bundle equals the single tools/run.ts run's: finalHash and every verified file, ponds.tsv (${rows} rows) included, no picks.jsonl`,
+        differing.length === 0 && missing.length === 0 && pondRows === rows && picks === undefined && stitchedHash !== undefined && stitchedHash === singleHash,
+        `differing [${differing.join(", ")}], missing [${missing.join(", ")}], ${pondRows} ponds.tsv rows, picks ${picks === undefined ? "absent" : "present"}, finalHash ${stitchedHash} vs ${singleHash}`,
+      );
+      if (scored) check(`the stitched ${preset}/${condition} ponds.tsv has rows whose donor was chosen by a score above 0 (${scoredDonors})`, scoredDonors > 0);
+    }
+  }
 } finally {
   try {
     server.kill("SIGTERM");
@@ -712,7 +902,7 @@ try {
     // already exited
   }
   await server.status;
-  await Deno.remove(dataDir, { recursive: true }).catch(() => {});
+  await Deno.remove(scratch, { recursive: true }).catch(() => {});
 }
 
 Deno.exit(ok ? 0 : 1);

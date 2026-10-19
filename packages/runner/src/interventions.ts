@@ -16,9 +16,14 @@
 //   - A feed changes the world's total matter, so the host moves its conservation baselines by what it moved
 //     (feed.ts in @bl/schema); a lesion only converts matter in place and books its heat through the ledger.
 //
+//   - A sun (@bl/schema's sun.ts; docs/garden-sun-2026-10-18.md) sets the world's light for `span` steps and moves no
+//     matter. It is logged once, when it starts; its end, at step + span, is restored by the host at the start of that
+//     step's interventions slot (before the entries there), and is never logged. Suns do not overlap. While one is active
+//     the observer carries it (`ObserverState.sun`), so a checkpoint alone says which sun governs its next step.
+//
 // Nothing here touches a simulation except through `InterventionSim`, so the pieces test without a GPU.
-import { FEED_MAX, FeedRefusedError, cellCount, feedError, worldW, type FeedResult, type WorldConfig } from "@bl/schema";
-import { picksFromManifest, type PickEntry } from "./picks.ts";
+import { FEED_MAX, FeedRefusedError, MAX_STEP, SUN_PERCENTS, SUN_SPAN_MAX, cellCount, clampLesionRadius, feedError, sunError, sunLight, worldW, type FeedResult, type LightParams, type WorldConfig } from "@bl/schema";
+import { picksFromManifest, pressureEntriesError, pressureLogError, type PickEntry, type PressureEntry } from "./picks.ts";
 
 /**
  * The log of a run with `RunSpec.interventions`, beside manifest.json: one line per applied entry, in order. Not in
@@ -35,7 +40,16 @@ export const INTERVENTIONS_FILE = "interventions.jsonl";
  */
 export type ScheduledIntervention =
   | { step: number; kind: "lesion"; x: number; y: number; r: number }
-  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter?: number };
+  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter?: number }
+  | SunEntry;
+
+/** A sun: the world's light is `sunLight(cfg, percent)` for the physics steps that start at step .. step + span - 1. */
+export interface SunEntry {
+  step: number;
+  kind: "sun";
+  percent: number;
+  span: number;
+}
 
 /**
  * What a run logged for one applied intervention: `r` is the effective (clamped) radius, a feed's `matter` is what it
@@ -43,7 +57,8 @@ export type ScheduledIntervention =
  */
 export type InterventionLogEntry =
   | { step: number; kind: "lesion"; x: number; y: number; r: number }
-  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number };
+  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number }
+  | SunEntry;
 
 /**
  * A scheduled intervention that cannot be applied as scheduled (a feed the world refuses, or one that does not move the
@@ -64,19 +79,25 @@ const isPlain = (v: unknown): v is Record<string, unknown> => typeof v === "obje
 const nonNegInt = (v: unknown): boolean => Number.isSafeInteger(v) && (v as number) >= 0;
 
 const LESION_KEYS = ["step", "kind", "x", "y", "r"];
+const PRESSURE_KEYS = ["step", "kind", "cycle", "score"];
 const FEED_KEYS = [...LESION_KEYS, "amount"];
+const SUN_KEYS = ["step", "kind", "percent", "span"];
 
 /**
  * Shape checks on a schedule, needing no config: a non-empty array; every entry a plain object with exactly the keys
  * of its kind (`matter` optional on feeds); `step` a non-negative safe integer; steps non-decreasing (several at one
  * step are applied in list order); `x`, `y` and `r` non-negative integers; a feed's `amount` a non-zero integer
- * within ±`FEED_MAX`; `matter`, when present, a safe integer. The world-dependent checks are `interventionsError`'s.
+ * within ±`FEED_MAX`; `matter`, when present, a safe integer; a sun's `percent` one of `SUN_PERCENTS` and its `span` an
+ * integer in 1..`SUN_SPAN_MAX` with `step + span` at most `MAX_STEP`, starting no earlier than the previous sun's end (suns
+ * do not overlap; one may start at the step another ends). The world-dependent checks are `interventionsError`'s.
  * An indexed loop, not every/some, which skip the holes of a sparse array.
  */
 export function validateInterventions(list: unknown): string[] {
-  if (!Array.isArray(list) || list.length === 0) return ["interventions must be a non-empty array of lesions and feeds"];
+  if (!Array.isArray(list) || list.length === 0) return ["interventions must be a non-empty array of lesions, feeds and suns"];
   const errs: string[] = [];
   let last = 0;
+  // The end of the latest sun so far (its step + span), and where it stands in the list.
+  let sunEnd = 0, sunAtIndex = -1;
   for (let i = 0; i < list.length; i++) {
     const e: unknown = list[i];
     const where = `interventions[${i}]`;
@@ -85,12 +106,16 @@ export function validateInterventions(list: unknown): string[] {
       continue;
     }
     const kind = e.kind;
-    if (kind !== "lesion" && kind !== "feed") {
-      errs.push(`${where}: kind must be "lesion" or "feed", got ${JSON.stringify(kind)}`);
+    if (kind === "pressure") {
+      errs.push(`${where}: a pressure is not a scheduled intervention: it is carried as RunSpec.pressures by a picked run, which is never segmented or sent to an island`);
       continue;
     }
-    const required = kind === "feed" ? FEED_KEYS : LESION_KEYS;
-    const allowed = kind === "feed" ? [...FEED_KEYS, "matter"] : LESION_KEYS;
+    if (kind !== "lesion" && kind !== "feed" && kind !== "sun") {
+      errs.push(`${where}: kind must be "lesion", "feed" or "sun", got ${JSON.stringify(kind)}`);
+      continue;
+    }
+    const required = kind === "feed" ? FEED_KEYS : kind === "sun" ? SUN_KEYS : LESION_KEYS;
+    const allowed = kind === "feed" ? [...FEED_KEYS, "matter"] : required;
     const extra = Object.keys(e).find((k) => !allowed.includes(k));
     if (extra !== undefined) {
       errs.push(`${where}: a ${kind} has no key ${JSON.stringify(extra)} (its keys are ${allowed.join(", ")})`);
@@ -107,6 +132,21 @@ export function validateInterventions(list: unknown): string[] {
       if ((e.step as number) < last) errs.push(`${where}: step ${e.step} follows step ${last} (steps must not decrease)`);
       last = Math.max(last, e.step as number);
     }
+    if (kind === "sun") {
+      if (!SUN_PERCENTS.includes(e.percent as number)) errs.push(`${where}: a sun's percent must be one of ${SUN_PERCENTS.join(", ")}`);
+      const span = e.span;
+      if (!Number.isSafeInteger(span) || (span as number) < 1 || (span as number) > SUN_SPAN_MAX) errs.push(`${where}: a sun's span must be an integer in 1..${SUN_SPAN_MAX}`);
+      else if (nonNegInt(e.step)) {
+        const step = e.step as number, end = step + (span as number);
+        if (end > MAX_STEP) errs.push(`${where}: a sun at t=${step} with span ${span} would end past the step limit ${MAX_STEP}`);
+        if (step < sunEnd) errs.push(`${where}: a sun at t=${step} starts before the sun at interventions[${sunAtIndex}] ends (t=${sunEnd}); suns do not overlap`);
+        if (end > sunEnd) {
+          sunEnd = end;
+          sunAtIndex = i;
+        }
+      }
+      continue;
+    }
     for (const k of ["x", "y", "r"] as const) if (!nonNegInt(e[k])) errs.push(`${where}: ${k} must be a non-negative integer`);
     if (kind === "feed") {
       const a = e.amount;
@@ -119,7 +159,7 @@ export function validateInterventions(list: unknown): string[] {
 
 /**
  * Why `spec.interventions` cannot be applied to a world of config `cfg`, or null when they can (or the field is
- * absent): a centre outside the world, and a feed that `feedError` refuses (a pond config, where each pond's matter is
+ * absent): a centre outside the world, a sun the world's light cannot take (`sunError`), and a feed that `feedError` refuses (a pond config, where each pond's matter is
  * fixed by its cycle; a lesion in a pond world is fine, it conserves matter). Needs no GPU, so runExperiment checks it
  * before touching one and tools/run.ts can check its specs before it requests a device. Shapes are `validateInterventions`'s.
  * Step ranges are not checked: an entry outside a call's window belongs to another segment of the same spec.
@@ -134,6 +174,11 @@ export function interventionsError(spec: { interventions?: readonly ScheduledInt
     // A malformed entry (a hole, a non-object) is `validateInterventions`'s to report, not this function's to trip over.
     if (typeof e !== "object" || e === null) continue;
     const where = `interventions[${i}] (${e.kind} at t=${e.step})`;
+    if (e.kind === "sun") {
+      const bad = sunError(cfg, e.percent);
+      if (bad) return `${where}: ${bad}`;
+      continue;
+    }
     if (e.x >= W) return `${where}: x ${e.x} is outside the world (${W} wide)`;
     if (e.y >= H) return `${where}: y ${e.y} is outside the world (${H} high)`;
     if (e.kind === "feed") {
@@ -153,18 +198,69 @@ export function ownedInterventions(list: readonly ScheduledIntervention[] | unde
   return list.filter((e) => (e.step > startStep && e.step <= startStep + steps) || (startStep === 0 && e.step === 0));
 }
 
+/**
+ * The sun of `list` active at step `t`: the one with `step <= t < step + span`, or null (there is at most one: suns do not
+ * overlap). A function of the schedule alone; the observer of a history at `t` carries the same (`ObserverState.sun`).
+ */
+export function sunAt(list: readonly ScheduledIntervention[] | undefined, t: number): SunEntry | null {
+  if (!list) return null;
+  for (const e of list) if (e && e.kind === "sun" && e.step <= t && t < e.step + e.span) return { step: e.step, kind: "sun", percent: e.percent, span: e.span };
+  return null;
+}
+
+/** Whether two suns are the same (null is no sun, equal only to null). */
+export function sameSun(a: { step: number; percent: number; span: number } | null | undefined, b: { step: number; percent: number; span: number } | null | undefined): boolean {
+  if (!a || !b) return !a && !b;
+  return a.step === b.step && a.percent === b.percent && a.span === b.span;
+}
+
+/** The light a sun sets in a world of config `cfg` (`sunLight`; the caller has checked `sunError`). */
+export function lightOfSun(cfg: WorldConfig, sun: { percent: number }): LightParams {
+  return sunLight(cfg, sun.percent);
+}
+
+/**
+ * Whether a logged line `e` is the scheduled entry `o` in a world of config `cfg`: by kind, the step and centre equal and the
+ * logged radius the effective one (`clampLesionRadius` of the scheduled); a feed's amount equal and its matter equal to any the
+ * schedule names; a sun's percent and span equal. stitch.ts's `checkInterventionLog` compares by this.
+ */
+export function loggedIs(e: InterventionLogEntry, o: ScheduledIntervention, cfg: WorldConfig): boolean {
+  if (e.step !== o.step || e.kind !== o.kind) return false;
+  if (e.kind === "sun" || o.kind === "sun") return e.kind === "sun" && o.kind === "sun" && e.percent === o.percent && e.span === o.span;
+  if (e.x !== o.x || e.y !== o.y || e.r !== clampLesionRadius(cfg, o.r)) return false;
+  return e.kind !== "feed" || o.kind !== "feed" || (e.amount === o.amount && (o.matter === undefined || e.matter === o.matter));
+}
+
+/**
+ * Whether two schedule entries are the same entry: equal `step`, `kind`, `x`, `y` and `r`, and for feeds equal `amount`
+ * and `matter`, an absent `matter` equal only to an absent one. Key order never matters (a coordinator's JSON and a
+ * manifest's need not share it). Compares scheduled entries with each other, not a log line with its entry: a log
+ * carries the effective radius (`checkInterventionLog` in stitch.ts compares those).
+ */
+export function sameIntervention(a: ScheduledIntervention | InterventionLogEntry, b: ScheduledIntervention | InterventionLogEntry): boolean {
+  if (a.kind === "sun" || b.kind === "sun") return a.kind === "sun" && b.kind === "sun" && a.step === b.step && a.percent === b.percent && a.span === b.span;
+  if (a.step !== b.step || a.kind !== b.kind || a.x !== b.x || a.y !== b.y || a.r !== b.r) return false;
+  if (a.kind !== "feed" || b.kind !== "feed") return true;
+  const am = Object.hasOwn(a, "matter") ? a.matter : undefined, bm = Object.hasOwn(b, "matter") ? b.matter : undefined;
+  return a.amount === b.amount && am === bm;
+}
+
 /** The part of a simulation a scheduled intervention acts on: `GpuSim`, or a CPU stand-in. */
 export interface InterventionSim {
   /** Destroys bound structure in a disc; returns the effective (clamped) radius. */
   lesion(x: number, y: number, r: number): number;
   /** Feeds or drains nutrient in a disc (feed.ts); throws on `feedError` and on a feed past MATTER_MAX. */
   feed(x: number, y: number, r: number, amount: number): Promise<FeedResult>;
+  /** Sets the light the following steps use, a sun's (or null: the world's own); `GpuSim.setLight`. */
+  setLight(light: LightParams | null): Promise<void>;
+  /** The world's own config (never a sun's). */
+  readonly cfg: WorldConfig;
 }
 
 /** What applying one intervention did: its log entry, and what the host books (a lesion moves no matter). */
 export interface AppliedIntervention {
   entry: InterventionLogEntry;
-  /** Net quanta of nutrient the world gained (negative when drained); 0 for a lesion. */
+  /** Net quanta of nutrient the world gained (negative when drained); 0 for a lesion and a sun. */
   matter: number;
   /** `matter * eA`: what the energy baseline moves by; 0n for a lesion. */
   energy: bigint;
@@ -180,6 +276,12 @@ export interface AppliedIntervention {
  * baselines by the result.
  */
 export async function applyScheduled(sim: InterventionSim, e: ScheduledIntervention): Promise<AppliedIntervention> {
+  if (e.kind === "sun") {
+    const bad = sunError(sim.cfg, e.percent);
+    if (bad) throw new InterventionError(`the sun at t=${e.step} failed: ${bad}`, { step: e.step });
+    await sim.setLight(lightOfSun(sim.cfg, e));
+    return { entry: { step: e.step, kind: "sun", percent: e.percent, span: e.span }, matter: 0, energy: 0n };
+  }
   if (e.kind === "lesion") {
     const r = sim.lesion(e.x, e.y, e.r);
     return { entry: { step: e.step, kind: "lesion", x: e.x, y: e.y, r }, matter: 0, energy: 0n };
@@ -202,7 +304,9 @@ export function formatInterventionLine(e: InterventionLogEntry): string {
     JSON.stringify(
       e.kind === "lesion"
         ? { step: e.step, kind: "lesion", x: e.x, y: e.y, r: e.r }
-        : { step: e.step, kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, matter: e.matter },
+        : e.kind === "sun"
+          ? { step: e.step, kind: "sun", percent: e.percent, span: e.span }
+          : { step: e.step, kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, matter: e.matter },
     ) + "\n"
   );
 }
@@ -227,21 +331,24 @@ export function parseInterventionLog(text: string): InterventionLogEntry[] {
 }
 
 /**
- * A lab run manifest (`<runId>.run.json`, apps/lab/src/protocol.ts `RunManifest`) split into the two things a headless
+ * A lab run manifest (`<runId>.run.json`, apps/lab/src/protocol.ts `RunManifest`) split into the things a headless
  * run replays: its `picks` (the pond boundaries' donors, as `picksFromManifest` reads them, which still refuses a
- * manifest holding a lesion or a feed) and its `scheduled` lesions and feeds, in log order, each feed carrying the
- * `matter` the lab logged as the value the replay must reproduce. Refuses a manifest that is not one, one observed
- * only from step `edgesFrom` > 0 (as `picksFromManifest` does), an intervention of any other kind, a feed without
- * the `matter` it moved (the lab logs it on every feed, and its own replay stops on a feed that does not reproduce it,
- * so a log without it would run without that check), a lesion or feed that `validateInterventions` rejects, and a
- * log that is not in one step order across all kinds or that has a lesion or feed ahead of a pick of its own step
- * (the lab logs a boundary's pick first, and the headless boundary comes before the interventions of its step, so
- * that history would be silently reordered). A pick's error names its place in the manifest's own list.
+ * manifest holding a lesion or a feed), its `scheduled` lesions and feeds, in log order, each feed carrying the
+ * `matter` the lab logged as the value the replay must reproduce, and its `pressures` (the pond keeper's dial, `[]`
+ * when none). Refuses a manifest that is not one, one observed only from step `edgesFrom` > 0 (as `picksFromManifest`
+ * does), an intervention of any other kind, a feed without the `matter` it moved (the lab logs it on every feed, and its
+ * own replay stops on a feed that does not reproduce it, so a log without it would run without that check), a lesion or
+ * feed that `validateInterventions` rejects, a log that is not in one step order across all kinds or that has a lesion,
+ * feed or later pressure ahead of a pick of its own step, or a pressure for a boundary's own cycle after that boundary's
+ * pick or with no pick of that boundary after it (`pressureLogError`; the lab logs a boundary's pick first, and the headless boundary comes before the
+ * interventions of its step, so that history would be silently reordered). Pressures need the manifest's `cfg` (a pond
+ * config of arm breed) and must be the observed history there (`pressureEntriesError`). A pick's error names its place
+ * in the manifest's own list.
  */
-export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: ScheduledIntervention[] } {
-  const m = manifest as { interventions?: unknown; edgesFrom?: unknown } | null;
+export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: ScheduledIntervention[]; pressures: PressureEntry[] } {
+  const m = manifest as { interventions?: unknown; edgesFrom?: unknown; cfg?: unknown } | null;
   if (!m || typeof m !== "object" || !Array.isArray(m.interventions)) throw new Error("not a lab run manifest: no interventions array");
-  const pickIvs: unknown[] = [], pickAt: number[] = [], scheduled: ScheduledIntervention[] = [];
+  const pickIvs: unknown[] = [], pickAt: number[] = [], scheduled: ScheduledIntervention[] = [], pressures: PressureEntry[] = [];
   m.interventions.forEach((iv: unknown, i: number) => {
     const o = iv as Record<string, unknown> | null;
     const kind = o?.kind;
@@ -249,11 +356,24 @@ export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: 
       pickIvs.push(iv);
       pickAt.push(i);
     } else if (kind === "lesion") scheduled.push({ step: o!.step, kind, x: o!.x, y: o!.y, r: o!.r } as ScheduledIntervention);
+    else if (kind === "sun") {
+      // Exactly the sun's keys, checked on the logged object itself: a key the lab never writes (a later format's) is refused,
+      // never dropped, so a history is not replayed under other semantics than it was observed with.
+      const extra = Object.keys(o!).find((k) => !SUN_KEYS.includes(k));
+      if (extra !== undefined) throw new Error(`interventions[${i}]: a sun has no key ${JSON.stringify(extra)} (its keys are ${SUN_KEYS.join(", ")})`);
+      scheduled.push({ step: o!.step, kind, percent: o!.percent, span: o!.span } as ScheduledIntervention);
+    }
     else if (kind === "feed") {
       // The schema's Intervention requires it and the lab's reapply throws without it: never an unchecked feed.
       if (o!.matter === undefined) throw new Error(`interventions[${i}]: a logged feed needs the matter it moved`);
       scheduled.push({ step: o!.step, kind, x: o!.x, y: o!.y, r: o!.r, amount: o!.amount, matter: o!.matter } as ScheduledIntervention);
-    } else throw new Error(`interventions[${i}] is a ${JSON.stringify(kind)}: not a pick, a lesion or a feed`);
+    } else if (kind === "pressure") {
+      const extra = Object.keys(o!).find((k) => !PRESSURE_KEYS.includes(k));
+      if (extra !== undefined) throw new Error(`interventions[${i}]: a pressure has no key ${JSON.stringify(extra)} (its keys are ${PRESSURE_KEYS.join(", ")})`);
+      const missing = PRESSURE_KEYS.find((k) => !Object.hasOwn(o!, k));
+      if (missing !== undefined) throw new Error(`interventions[${i}]: a pressure needs the key ${JSON.stringify(missing)}`);
+      pressures.push({ step: o!.step, cycle: o!.cycle, score: o!.score } as PressureEntry);
+    } else throw new Error(`interventions[${i}] is a ${JSON.stringify(kind)}: not a pick, a lesion, a feed, a sun or a pressure`);
   });
   let picks: PickEntry[];
   try {
@@ -264,17 +384,25 @@ export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: 
   }
   if (scheduled.length) {
     const errs = validateInterventions(scheduled);
-    if (errs.length) throw new Error(`the lab manifest's lesions and feeds (counted apart from its picks): ${errs[0]}`);
+    if (errs.length) throw new Error(`the lab manifest's lesions, feeds and suns (counted apart from its picks): ${errs[0]}`);
+  }
+  let period = Infinity;
+  if (pressures.length) {
+    const cfg = m.cfg as { pondPeriod?: unknown; pondArm?: unknown } | null | undefined;
+    if (!isPlain(cfg)) throw new Error("the manifest holds pressures but no cfg to check them against: a pressure is a pond config's breeder dial");
+    const bad = pressureEntriesError(pressures, cfg as Pick<WorldConfig, "pondPeriod" | "pondArm">);
+    if (bad) throw new Error(`the lab manifest's pressures: ${bad}`);
+    period = cfg.pondPeriod as number;
   }
   // Across the kinds, which the checks above (the picks' own, then the lesions' and feeds') do not see: the lab's queueReplay
   // wants one non-decreasing step order, and a pick is applied by the boundary, ahead of every intervention at its step.
-  let last = 0, hand = -1;
+  let last = 0;
   for (let i = 0; i < m.interventions.length; i++) {
     const { step, kind } = m.interventions[i] as { step: number; kind: string };
-    if (step < last) throw new Error(`interventions[${i}] (${kind} at t=${step}) follows an entry at t=${last}: a lab log is in one step order across its picks, lesions and feeds`);
+    if (step < last) throw new Error(`interventions[${i}] (${kind} at t=${step}) follows an entry at t=${last}: a lab log is in one step order across its picks, lesions, feeds, suns and pressures`);
     last = step;
-    if (kind === "pick" && hand === step) throw new Error(`interventions[${i}] (pick at t=${step}) follows a lesion or feed at the same step: the lab logs a boundary's pick first, and a headless run applies the boundary before the interventions of its step`);
-    if (kind !== "pick") hand = step;
   }
-  return { picks, scheduled };
+  const order = pressureLogError(m.interventions as { step: number; kind: string; cycle?: number }[], period);
+  if (order) throw new Error(order);
+  return { picks, scheduled, pressures };
 }

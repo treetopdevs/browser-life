@@ -27,7 +27,7 @@ const CLI = "tools/report-html.ts";
 
 function run(args: string[]): { status: number; stdout: string; stderr: string } {
   try {
-    const stdout = execFileSync("deno", ["run", "-A", CLI, ...args], { cwd: REPO_ROOT, encoding: "utf8" });
+    const stdout = execFileSync("deno", ["run", "--no-lock", "-A", CLI, ...args], { cwd: REPO_ROOT, encoding: "utf8" });
     return { status: 0, stdout, stderr: "" };
   } catch (e) {
     const err = e as { status: number | null; stdout: Buffer | string; stderr: Buffer | string };

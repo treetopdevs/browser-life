@@ -1,4 +1,4 @@
-import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, geneMasks, maxPackableRaw, packLineageLo, validateConfig, worldW, type WorldConfig } from "./config.ts";
+import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, geneMasks, maxPackableRaw, packLineageLo, validateConfig, worldW, type PondScore, type WorldConfig } from "./config.ts";
 import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENE_SHIFT, GENOME_CHANNELS } from "./layout.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
 import { founderGenome, M3_FOUNDERS } from "./founders.ts";
@@ -22,12 +22,24 @@ export interface WorldState {
  * that many when negative; `matter` is the net quanta it added to the world, which is no longer closed
  * in matter across it. A pick (the lab's breeder) names the donor ponds of the pond cycle at boundary
  * `cycle` (`step` = `cycle` * pondPeriod), in order, in place of the arm's own (`applyPondCycle`'s
- * `picks`); unlike the others it is part of that step's boundary, not something done after it.
+ * `picks`); unlike the others it is part of that step's boundary, not something done after it. A pressure (the
+ * lab's pond keeper, breeder worlds only) changes no physics: it replaces the score the rule ranks donors by.
  */
 export type Intervention =
   | { step: number; kind: "lesion"; x: number; y: number; r: number }
   | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number }
-  | { step: number; kind: "pick"; cycle: number; donors: number[] };
+  | { step: number; kind: "pick"; cycle: number; donors: number[] }
+  /**
+   * A pressure replaces the world's `pondScore` for the donors the RULE chooses, from pond cycle `cycle` on, until a later
+   * pressure. `cycle` is the first cycle not yet applied when it was set: the waiting cycle (then `step` is its boundary and
+   * `cycle` = step / pondPeriod), else the next boundary after `step`. A cycle with a pick takes the pick's donors as ever.
+   */
+  | { step: number; kind: "pressure"; cycle: number; score: PondScore }
+  /**
+   * A sun (sun.ts): from `step` the world's light is `sunLight(cfg, percent)` for the `span` physics steps that start at
+   * step, step + 1, ..., step + span - 1; at step + span the world's own light returns. Logged once, when it starts.
+   */
+  | { step: number; kind: "sun"; percent: number; span: number };
 
 export interface Founder {
   x: number;

@@ -1,0 +1,8628 @@
+{
+ "rule": "anomaly-bell-v2-twins",
+ "version": 2,
+ "note": "docs/naturalist-bell-v2-2026-10-18.md",
+ "complete": true,
+ "called": true,
+ "missing": [],
+ "launch": {
+  "finished": true,
+  "stop": {
+   "at": "2026-10-19T03:40:11.505Z",
+   "elapsed": 5002,
+   "mode": "run",
+   "launch": "63747-1792376685585",
+   "event": "stop",
+   "reason": "finished",
+   "final": true,
+   "failed": [],
+   "freeBytes": 71233396736,
+   "uptime": "23:40  up 17 days,  1:03, 14 users, load averages: 408.42 446.14 520.98"
+  },
+  "dropped": {}
+ },
+ "parameters": {
+  "signals": [
+   {
+    "name": "livingCells",
+    "kind": "level",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "individuals",
+    "kind": "level",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "meanMass",
+    "kind": "level",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "lineages",
+    "kind": "level",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "lineageShannon",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "patternEntropy",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "bioticRecycling",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "maxGeneration",
+    "kind": "level",
+    "floor": 1,
+    "source": "series",
+    "inRule": false
+   },
+   {
+    "name": "dominantShare",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "lineages",
+    "inRule": false
+   },
+   {
+    "name": "fissions",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "fusions",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "buddings",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   },
+   {
+    "name": "mutations",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series",
+    "inRule": true
+   }
+  ],
+  "S": 200000,
+  "C": 190000,
+  "censuses": 2060,
+  "W_pair": 10,
+  "firstCensus": [
+   200100,
+   205000
+  ],
+  "lastCensusRead": 205900,
+  "earlyWindowFirstCensus": [
+   200100,
+   205000
+  ],
+  "Z1": 2.580695652173913,
+  "dose": "at S + 100: livingCells, and matter = A+B+C+P of the series pools, twin and base and twin - base; interventionMatter is the intervention log's own matter field",
+  "rule": "z = (twin - base) / spread over the valid v2 bases at t; D11 = max over the eleven signals and both sides of the counted windows' minimum side*z, floored at 0; hit iff D11 > Z*2 (strict); Z*2 = the largest D11 among the 10 nudge twins",
+  "input": "a twin's census at steps <= 190000 is its base's (the fork starts there); from 190100 on, the fork's",
+  "launchLog": {
+   "path": "/Users/nicholas/browser-life-bell-v2/runs/bell-v2-launch/jobs.jsonl",
+   "entries": 70,
+   "expected": 70,
+   "listed": 70,
+   "exit0": 70,
+   "reruns": [
+    "base-3902"
+   ]
+  }
+ },
+ "corpus": {
+  "seeds": [
+   3901,
+   3902,
+   3903,
+   3904,
+   3905,
+   3906,
+   3907,
+   3908,
+   3909,
+   3910
+  ],
+  "replacements": [],
+  "nudgeFailed": [],
+  "bases": [
+   {
+    "id": "base-3901",
+    "seed": 3901,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3902",
+    "seed": 3902,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3903",
+    "seed": 3903,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3904",
+    "seed": 3904,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3905",
+    "seed": 3905,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3906",
+    "seed": 3906,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3907",
+    "seed": 3907,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3908",
+    "seed": 3908,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3909",
+    "seed": 3909,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   },
+   {
+    "id": "base-3910",
+    "seed": 3910,
+    "presetIdentity": "e1c93a9384b5d921",
+    "valid": true
+   }
+  ],
+  "spreadBases": 10,
+  "expectedBases": 10
+ },
+ "posthocV1": {
+  "record": "experiments/naturalist/bell-v1-twins.json",
+  "zStar": 2.580695652173913,
+  "zStarSeed": 9,
+  "zStarSignal": "fusions",
+  "hits": {
+   "nudge": 0,
+   "nudge2": 1,
+   "l64": 5,
+   "l96": 10,
+   "f": 8
+  },
+  "of": {
+   "nudge": 10,
+   "nudge2": 10,
+   "l64": 10,
+   "l96": 10,
+   "f": 10
+  },
+  "record13": {
+   "zStar": 5.702557876989047,
+   "l96": 4,
+   "f": 4,
+   "l64": 0,
+   "nudge2": 0
+  }
+ },
+ "runFacts": {
+  "pilot": {
+   "path": "experiments/naturalist/bell-v2-pilot.json",
+   "rates": {
+    "rBase": 1046.3415546533847,
+    "rFork": 993.3265790079341,
+    "o": 0.2080100519999999
+   },
+   "projection": {
+    "mode": "full",
+    "drop": [],
+    "hours": {
+     "full": 1.05239393220742,
+     "dropL64": 0.99574288315274,
+     "used": 0.028888888888888888
+    },
+    "capHours": 5
+   },
+   "wallSeconds": 104,
+   "mechanicsOk": true,
+   "checks": 23,
+   "at": "2026-10-19T02:05:46.109Z",
+   "sha256": "565b8831e0783127adaca9060847009020ed36632b44732cb8e429774d845462"
+  },
+  "launches": [
+   {
+    "launch": "14575-1792375567591",
+    "budgetSeconds": 476,
+    "close": {
+     "at": "2026-10-19T02:12:19.707Z",
+     "elapsed": 476,
+     "mode": "run",
+     "launch": "14575-1792375567591",
+     "event": "error",
+     "message": "No space left on device (os error 28): mkdir '[redacted]'"
+    }
+   },
+   {
+    "launch": "63747-1792376685585",
+    "budgetSeconds": 5002,
+    "close": {
+     "at": "2026-10-19T03:40:11.505Z",
+     "elapsed": 5002,
+     "mode": "run",
+     "launch": "63747-1792376685585",
+     "event": "stop",
+     "reason": "finished",
+     "final": true,
+     "failed": [],
+     "freeBytes": 71233396736,
+     "uptime": "23:40  up 17 days,  1:03, 14 users, load averages: 408.42 446.14 520.98"
+    }
+   }
+  ],
+  "budgetSeconds": 5002,
+  "events": [
+   {
+    "at": "2026-10-19T02:06:07.613Z",
+    "elapsed": 104,
+    "mode": "run",
+    "launch": "14575-1792375567591",
+    "event": "start",
+    "pid": 14575,
+    "freeBytes": 13757612032,
+    "uptime": "22:06  up 16 days, 23:29, 14 users, load averages: 284.77 482.97 461.82",
+    "capHours": 5,
+    "usedAtStart": 104
+   },
+   {
+    "at": "2026-10-19T02:06:07.623Z",
+    "elapsed": 104,
+    "mode": "run",
+    "launch": "14575-1792375567591",
+    "event": "plan",
+    "scale": {
+     "mode": "full",
+     "drop": [],
+     "hours": {
+      "full": 1.05239393220742,
+      "dropL64": 0.99574288315274,
+      "used": 0.028888888888888888
+     },
+     "capHours": 5
+    }
+   },
+   {
+    "at": "2026-10-19T02:06:07.772Z",
+    "elapsed": 104,
+    "mode": "run",
+    "launch": "14575-1792375567591",
+    "event": "attempt-start",
+    "id": "base-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 17986
+   },
+   {
+    "at": "2026-10-19T02:10:50.765Z",
+    "elapsed": 387,
+    "mode": "run",
+    "launch": "14575-1792375567591",
+    "event": "attempt-start",
+    "id": "base-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 17703
+   },
+   {
+    "at": "2026-10-19T02:12:19.707Z",
+    "elapsed": 476,
+    "mode": "run",
+    "launch": "14575-1792375567591",
+    "event": "error",
+    "message": "No space left on device (os error 28): mkdir '[redacted]'"
+   },
+   {
+    "at": "2026-10-19T02:24:45.655Z",
+    "elapsed": 476,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "start",
+    "pid": 63747,
+    "freeBytes": 12110086144,
+    "uptime": "22:24  up 16 days, 23:47, 14 users, load averages: 585.82 582.63 560.64",
+    "capHours": 5,
+    "usedAtStart": 476
+   },
+   {
+    "at": "2026-10-19T02:24:45.658Z",
+    "elapsed": 476,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "plan",
+    "scale": {
+     "mode": "full",
+     "drop": [],
+     "hours": {
+      "full": 1.05239393220742,
+      "dropL64": 0.99574288315274,
+      "used": 0.028888888888888888
+     },
+     "capHours": 5
+    },
+    "keptFrom": "14575-1792375567591"
+   },
+   {
+    "at": "2026-10-19T02:24:45.815Z",
+    "elapsed": 476,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3902",
+    "attempt": 2,
+    "rerun": true,
+    "alarmSeconds": 17614
+   },
+   {
+    "at": "2026-10-19T02:30:39.859Z",
+    "elapsed": 830,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 17260
+   },
+   {
+    "at": "2026-10-19T02:37:40.150Z",
+    "elapsed": 1251,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "gpu-wait",
+    "users": [
+     {
+      "pid": 539,
+      "command": "Google"
+     },
+     {
+      "pid": 543,
+      "command": "Google"
+     }
+    ]
+   },
+   {
+    "at": "2026-10-19T02:38:40.625Z",
+    "elapsed": 1311,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 16779
+   },
+   {
+    "at": "2026-10-19T02:44:33.271Z",
+    "elapsed": 1664,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 16427
+   },
+   {
+    "at": "2026-10-19T02:50:06.326Z",
+    "elapsed": 1997,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 16094
+   },
+   {
+    "at": "2026-10-19T02:55:28.108Z",
+    "elapsed": 2318,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 15772
+   },
+   {
+    "at": "2026-10-19T03:02:08.265Z",
+    "elapsed": 2719,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 15372
+   },
+   {
+    "at": "2026-10-19T03:07:32.771Z",
+    "elapsed": 3043,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 15047
+   },
+   {
+    "at": "2026-10-19T03:12:08.258Z",
+    "elapsed": 3319,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "base-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14772
+   },
+   {
+    "at": "2026-10-19T03:16:49.202Z",
+    "elapsed": 3600,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14491
+   },
+   {
+    "at": "2026-10-19T03:17:11.449Z",
+    "elapsed": 3622,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14469
+   },
+   {
+    "at": "2026-10-19T03:17:33.038Z",
+    "elapsed": 3643,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14447
+   },
+   {
+    "at": "2026-10-19T03:17:56.219Z",
+    "elapsed": 3667,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14424
+   },
+   {
+    "at": "2026-10-19T03:18:17.938Z",
+    "elapsed": 3688,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14402
+   },
+   {
+    "at": "2026-10-19T03:18:40.187Z",
+    "elapsed": 3711,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14380
+   },
+   {
+    "at": "2026-10-19T03:19:02.721Z",
+    "elapsed": 3733,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14357
+   },
+   {
+    "at": "2026-10-19T03:19:25.472Z",
+    "elapsed": 3756,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14335
+   },
+   {
+    "at": "2026-10-19T03:19:47.998Z",
+    "elapsed": 3778,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14312
+   },
+   {
+    "at": "2026-10-19T03:20:10.692Z",
+    "elapsed": 3801,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-sham-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14289
+   },
+   {
+    "at": "2026-10-19T03:20:33.302Z",
+    "elapsed": 3824,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14267
+   },
+   {
+    "at": "2026-10-19T03:20:54.723Z",
+    "elapsed": 3845,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14245
+   },
+   {
+    "at": "2026-10-19T03:21:17.414Z",
+    "elapsed": 3868,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "gpu-wait",
+    "users": [
+     {
+      "pid": 82558,
+      "command": "Google"
+     },
+     {
+      "pid": 82559,
+      "command": "Google"
+     }
+    ]
+   },
+   {
+    "at": "2026-10-19T03:22:17.650Z",
+    "elapsed": 3928,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14162
+   },
+   {
+    "at": "2026-10-19T03:22:37.898Z",
+    "elapsed": 3948,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14142
+   },
+   {
+    "at": "2026-10-19T03:22:59.054Z",
+    "elapsed": 3969,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14121
+   },
+   {
+    "at": "2026-10-19T03:23:19.911Z",
+    "elapsed": 3990,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14100
+   },
+   {
+    "at": "2026-10-19T03:23:41.006Z",
+    "elapsed": 4011,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14079
+   },
+   {
+    "at": "2026-10-19T03:24:03.348Z",
+    "elapsed": 4034,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14057
+   },
+   {
+    "at": "2026-10-19T03:24:24.714Z",
+    "elapsed": 4055,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14035
+   },
+   {
+    "at": "2026-10-19T03:24:45.023Z",
+    "elapsed": 4075,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l96-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 14015
+   },
+   {
+    "at": "2026-10-19T03:25:08.453Z",
+    "elapsed": 4099,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13992
+   },
+   {
+    "at": "2026-10-19T03:25:33.381Z",
+    "elapsed": 4124,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13967
+   },
+   {
+    "at": "2026-10-19T03:25:54.688Z",
+    "elapsed": 4145,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13945
+   },
+   {
+    "at": "2026-10-19T03:26:15.867Z",
+    "elapsed": 4166,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13924
+   },
+   {
+    "at": "2026-10-19T03:26:36.624Z",
+    "elapsed": 4187,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13903
+   },
+   {
+    "at": "2026-10-19T03:26:57.138Z",
+    "elapsed": 4208,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13883
+   },
+   {
+    "at": "2026-10-19T03:27:18.113Z",
+    "elapsed": 4228,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13862
+   },
+   {
+    "at": "2026-10-19T03:27:39.996Z",
+    "elapsed": 4250,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13840
+   },
+   {
+    "at": "2026-10-19T03:28:01.794Z",
+    "elapsed": 4272,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13818
+   },
+   {
+    "at": "2026-10-19T03:28:21.978Z",
+    "elapsed": 4292,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-f-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13798
+   },
+   {
+    "at": "2026-10-19T03:28:42.995Z",
+    "elapsed": 4313,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13777
+   },
+   {
+    "at": "2026-10-19T03:29:06.151Z",
+    "elapsed": 4337,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13754
+   },
+   {
+    "at": "2026-10-19T03:29:26.332Z",
+    "elapsed": 4357,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13734
+   },
+   {
+    "at": "2026-10-19T03:29:45.275Z",
+    "elapsed": 4376,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13715
+   },
+   {
+    "at": "2026-10-19T03:30:09.478Z",
+    "elapsed": 4400,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "gpu-wait",
+    "users": [
+     {
+      "pid": 96667,
+      "command": "Google"
+     },
+     {
+      "pid": 96670,
+      "command": "Google"
+     },
+     {
+      "pid": 96671,
+      "command": "Google"
+     }
+    ]
+   },
+   {
+    "at": "2026-10-19T03:31:09.611Z",
+    "elapsed": 4460,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13631
+   },
+   {
+    "at": "2026-10-19T03:31:29.816Z",
+    "elapsed": 4480,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13610
+   },
+   {
+    "at": "2026-10-19T03:31:50.243Z",
+    "elapsed": 4501,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13590
+   },
+   {
+    "at": "2026-10-19T03:32:11.087Z",
+    "elapsed": 4521,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13569
+   },
+   {
+    "at": "2026-10-19T03:32:31.720Z",
+    "elapsed": 4542,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13548
+   },
+   {
+    "at": "2026-10-19T03:32:51.456Z",
+    "elapsed": 4562,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13529
+   },
+   {
+    "at": "2026-10-19T03:33:12.197Z",
+    "elapsed": 4583,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13508
+   },
+   {
+    "at": "2026-10-19T03:33:32.391Z",
+    "elapsed": 4603,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13488
+   },
+   {
+    "at": "2026-10-19T03:33:51.729Z",
+    "elapsed": 4622,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13468
+   },
+   {
+    "at": "2026-10-19T03:34:11.780Z",
+    "elapsed": 4642,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13448
+   },
+   {
+    "at": "2026-10-19T03:34:30.971Z",
+    "elapsed": 4661,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13429
+   },
+   {
+    "at": "2026-10-19T03:34:49.833Z",
+    "elapsed": 4680,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13410
+   },
+   {
+    "at": "2026-10-19T03:35:12.242Z",
+    "elapsed": 4703,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13388
+   },
+   {
+    "at": "2026-10-19T03:35:35.721Z",
+    "elapsed": 4726,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13364
+   },
+   {
+    "at": "2026-10-19T03:35:58.999Z",
+    "elapsed": 4749,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13341
+   },
+   {
+    "at": "2026-10-19T03:36:21.757Z",
+    "elapsed": 4772,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-nudge2-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13318
+   },
+   {
+    "at": "2026-10-19T03:36:44.835Z",
+    "elapsed": 4795,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3901",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13295
+   },
+   {
+    "at": "2026-10-19T03:37:07.154Z",
+    "elapsed": 4818,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3902",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13273
+   },
+   {
+    "at": "2026-10-19T03:37:28.893Z",
+    "elapsed": 4839,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3903",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13251
+   },
+   {
+    "at": "2026-10-19T03:37:49.269Z",
+    "elapsed": 4860,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3904",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13231
+   },
+   {
+    "at": "2026-10-19T03:38:09.437Z",
+    "elapsed": 4880,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3905",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13211
+   },
+   {
+    "at": "2026-10-19T03:38:29.314Z",
+    "elapsed": 4900,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3906",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13191
+   },
+   {
+    "at": "2026-10-19T03:38:49.668Z",
+    "elapsed": 4920,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3907",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13170
+   },
+   {
+    "at": "2026-10-19T03:39:11.218Z",
+    "elapsed": 4942,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3908",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13149
+   },
+   {
+    "at": "2026-10-19T03:39:32.311Z",
+    "elapsed": 4963,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3909",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13128
+   },
+   {
+    "at": "2026-10-19T03:39:51.677Z",
+    "elapsed": 4982,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "attempt-start",
+    "id": "twin-l64-3910",
+    "attempt": 1,
+    "rerun": false,
+    "alarmSeconds": 13108
+   },
+   {
+    "at": "2026-10-19T03:40:11.505Z",
+    "elapsed": 5002,
+    "mode": "run",
+    "launch": "63747-1792376685585",
+    "event": "stop",
+    "reason": "finished",
+    "final": true,
+    "failed": [],
+    "freeBytes": 71233396736,
+    "uptime": "23:40  up 17 days,  1:03, 14 users, load averages: 408.42 446.14 520.98"
+   }
+  ],
+  "closingEvents": [
+   "stop",
+   "error",
+   "interrupted"
+  ],
+  "jobs": [
+   {
+    "id": "base-3901",
+    "launch": "14575-1792375567591",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 282,
+    "load1": 284.77,
+    "uptime": "22:06  up 16 days, 23:29, 14 users, load averages: 284.77 482.97 461.82",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:06:07.756Z"
+   },
+   {
+    "id": "base-3902",
+    "launch": "14575-1792375567591",
+    "attempt": 1,
+    "exit": 1,
+    "seconds": 89,
+    "load1": 792.43,
+    "uptime": "22:10  up 16 days, 23:33, 14 users, load averages: 792.43 585.14 506.73",
+    "waitedSeconds": 1,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:10:50.613Z"
+   },
+   {
+    "id": "base-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 2,
+    "exit": 0,
+    "seconds": 354,
+    "load1": 585.82,
+    "uptime": "22:24  up 16 days, 23:47, 14 users, load averages: 585.82 582.63 560.64",
+    "waitedSeconds": 0,
+    "rerun": true,
+    "startedAt": "2026-10-19T02:24:45.801Z"
+   },
+   {
+    "id": "base-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 420,
+    "load1": 627.48,
+    "uptime": "22:30  up 16 days, 23:53, 14 users, load averages: 627.48 559.79 549.90",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:30:39.625Z"
+   },
+   {
+    "id": "base-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 352,
+    "load1": 659.51,
+    "uptime": "22:38  up 17 days, 1 min, 14 users, load averages: 659.51 612.10 578.11",
+    "waitedSeconds": 61,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:38:40.404Z"
+   },
+   {
+    "id": "base-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 333,
+    "load1": 739.24,
+    "uptime": "22:44  up 17 days, 7 mins, 14 users, load averages: 739.24 697.16 629.74",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:44:33.233Z"
+   },
+   {
+    "id": "base-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 322,
+    "load1": 710,
+    "uptime": "22:50  up 17 days, 13 mins, 14 users, load averages: 710.00 733.09 669.65",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:50:06.292Z"
+   },
+   {
+    "id": "base-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 400,
+    "load1": 527.79,
+    "uptime": "22:55  up 17 days, 18 mins, 14 users, load averages: 527.79 613.89 634.91",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T02:55:28.088Z"
+   },
+   {
+    "id": "base-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 278,
+    "load1": 611.7,
+    "uptime": "23:02  up 17 days, 25 mins, 14 users, load averages: 611.70 591.18 613.49",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:02:08.155Z"
+   },
+   {
+    "id": "base-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 275,
+    "load1": 602.02,
+    "uptime": "23:07  up 17 days, 30 mins, 14 users, load averages: 602.02 599.78 610.98",
+    "waitedSeconds": 46,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:07:32.741Z"
+   },
+   {
+    "id": "base-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 278,
+    "load1": 701.26,
+    "uptime": "23:12  up 17 days, 35 mins, 14 users, load averages: 701.26 642.32 625.25",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:12:08.218Z"
+   },
+   {
+    "id": "twin-sham-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 721.7,
+    "uptime": "23:16  up 17 days, 39 mins, 14 users, load averages: 721.70 692.56 653.79",
+    "waitedSeconds": 2,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:16:49.176Z"
+   },
+   {
+    "id": "twin-sham-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 711.13,
+    "uptime": "23:17  up 17 days, 40 mins, 14 users, load averages: 711.13 692.43 654.87",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:17:11.373Z"
+   },
+   {
+    "id": "twin-sham-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 704.37,
+    "uptime": "23:17  up 17 days, 40 mins, 14 users, load averages: 704.37 692.14 655.64",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:17:33.024Z"
+   },
+   {
+    "id": "twin-sham-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 692.05,
+    "uptime": "23:17  up 17 days, 40 mins, 14 users, load averages: 692.05 690.32 656.04",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:17:56.209Z"
+   },
+   {
+    "id": "twin-sham-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 688.14,
+    "uptime": "23:18  up 17 days, 41 mins, 14 users, load averages: 688.14 689.53 656.55",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:18:17.883Z"
+   },
+   {
+    "id": "twin-sham-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 683.83,
+    "uptime": "23:18  up 17 days, 41 mins, 14 users, load averages: 683.83 688.48 656.95",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:18:40.110Z"
+   },
+   {
+    "id": "twin-sham-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 684.36,
+    "uptime": "23:19  up 17 days, 42 mins, 14 users, load averages: 684.36 688.22 657.76",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:19:02.700Z"
+   },
+   {
+    "id": "twin-sham-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 686.12,
+    "uptime": "23:19  up 17 days, 42 mins, 14 users, load averages: 686.12 688.34 658.69",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:19:25.457Z"
+   },
+   {
+    "id": "twin-sham-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 676.3,
+    "uptime": "23:19  up 17 days, 42 mins, 14 users, load averages: 676.30 685.96 658.52",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:19:47.973Z"
+   },
+   {
+    "id": "twin-sham-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 659.11,
+    "uptime": "23:20  up 17 days, 43 mins, 14 users, load averages: 659.11 681.16 657.59",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:20:10.666Z"
+   },
+   {
+    "id": "twin-l96-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 660.91,
+    "uptime": "23:20  up 17 days, 43 mins, 14 users, load averages: 660.91 679.98 657.70",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:20:33.287Z"
+   },
+   {
+    "id": "twin-l96-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 657.74,
+    "uptime": "23:20  up 17 days, 43 mins, 14 users, load averages: 657.74 678.10 657.55",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:20:54.709Z"
+   },
+   {
+    "id": "twin-l96-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 648.72,
+    "uptime": "23:22  up 17 days, 45 mins, 14 users, load averages: 648.72 671.00 656.83",
+    "waitedSeconds": 60,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:22:17.585Z"
+   },
+   {
+    "id": "twin-l96-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 643.6,
+    "uptime": "23:22  up 17 days, 45 mins, 14 users, load averages: 643.60 668.34 656.20",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:22:37.887Z"
+   },
+   {
+    "id": "twin-l96-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 645.17,
+    "uptime": "23:22  up 17 days, 46 mins, 14 users, load averages: 645.17 667.15 656.06",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:22:59.018Z"
+   },
+   {
+    "id": "twin-l96-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 649.35,
+    "uptime": "23:23  up 17 days, 46 mins, 14 users, load averages: 649.35 666.75 656.17",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:23:19.898Z"
+   },
+   {
+    "id": "twin-l96-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 636.44,
+    "uptime": "23:23  up 17 days, 46 mins, 14 users, load averages: 636.44 662.44 654.93",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:23:40.983Z"
+   },
+   {
+    "id": "twin-l96-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 631.17,
+    "uptime": "23:24  up 17 days, 47 mins, 14 users, load averages: 631.17 659.50 654.05",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:24:03.256Z"
+   },
+   {
+    "id": "twin-l96-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 621.39,
+    "uptime": "23:24  up 17 days, 47 mins, 14 users, load averages: 621.39 655.46 652.73",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:24:24.699Z"
+   },
+   {
+    "id": "twin-l96-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 611.73,
+    "uptime": "23:24  up 17 days, 47 mins, 14 users, load averages: 611.73 651.03 651.20",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:24:45.013Z"
+   },
+   {
+    "id": "twin-f-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 25,
+    "load1": 612.88,
+    "uptime": "23:25  up 17 days, 48 mins, 14 users, load averages: 612.88 648.07 650.12",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:25:08.427Z"
+   },
+   {
+    "id": "twin-f-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 613.5,
+    "uptime": "23:25  up 17 days, 48 mins, 14 users, load averages: 613.50 645.47 649.13",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:25:33.343Z"
+   },
+   {
+    "id": "twin-f-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 603.32,
+    "uptime": "23:25  up 17 days, 48 mins, 14 users, load averages: 603.32 641.16 647.50",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:25:54.673Z"
+   },
+   {
+    "id": "twin-f-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 589.52,
+    "uptime": "23:26  up 17 days, 49 mins, 14 users, load averages: 589.52 634.83 645.03",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:26:15.841Z"
+   },
+   {
+    "id": "twin-f-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 575.98,
+    "uptime": "23:26  up 17 days, 49 mins, 14 users, load averages: 575.98 628.84 642.65",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:26:36.613Z"
+   },
+   {
+    "id": "twin-f-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 564.67,
+    "uptime": "23:26  up 17 days, 50 mins, 14 users, load averages: 564.67 622.88 640.19",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:26:57.123Z"
+   },
+   {
+    "id": "twin-f-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 553.19,
+    "uptime": "23:27  up 17 days, 50 mins, 14 users, load averages: 553.19 616.49 637.50",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:27:18.097Z"
+   },
+   {
+    "id": "twin-f-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 550.1,
+    "uptime": "23:27  up 17 days, 50 mins, 14 users, load averages: 550.10 611.63 635.26",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:27:39.987Z"
+   },
+   {
+    "id": "twin-f-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 541.05,
+    "uptime": "23:28  up 17 days, 51 mins, 14 users, load averages: 541.05 604.61 632.05",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:28:01.777Z"
+   },
+   {
+    "id": "twin-f-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 527.88,
+    "uptime": "23:28  up 17 days, 51 mins, 14 users, load averages: 527.88 597.50 628.86",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:28:21.966Z"
+   },
+   {
+    "id": "twin-nudge-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 521.35,
+    "uptime": "23:28  up 17 days, 51 mins, 14 users, load averages: 521.35 591.42 625.95",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:28:42.966Z"
+   },
+   {
+    "id": "twin-nudge-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 510.15,
+    "uptime": "23:29  up 17 days, 52 mins, 14 users, load averages: 510.15 583.23 622.00",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:29:06.123Z"
+   },
+   {
+    "id": "twin-nudge-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 19,
+    "load1": 505.04,
+    "uptime": "23:29  up 17 days, 52 mins, 14 users, load averages: 505.04 577.42 619.02",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:29:26.321Z"
+   },
+   {
+    "id": "twin-nudge-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 24,
+    "load1": 493.58,
+    "uptime": "23:29  up 17 days, 52 mins, 14 users, load averages: 493.58 571.37 616.13",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:29:45.267Z"
+   },
+   {
+    "id": "twin-nudge-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 494.73,
+    "uptime": "23:31  up 17 days, 54 mins, 14 users, load averages: 494.73 553.97 605.27",
+    "waitedSeconds": 60,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:31:09.601Z"
+   },
+   {
+    "id": "twin-nudge-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 479.3,
+    "uptime": "23:31  up 17 days, 54 mins, 14 users, load averages: 479.30 546.65 601.45",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:31:29.801Z"
+   },
+   {
+    "id": "twin-nudge-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 464.62,
+    "uptime": "23:31  up 17 days, 54 mins, 14 users, load averages: 464.62 539.01 597.44",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:31:50.233Z"
+   },
+   {
+    "id": "twin-nudge-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 445.92,
+    "uptime": "23:32  up 17 days, 55 mins, 14 users, load averages: 445.92 528.70 592.03",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:32:11.062Z"
+   },
+   {
+    "id": "twin-nudge-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 436.2,
+    "uptime": "23:32  up 17 days, 55 mins, 14 users, load averages: 436.20 521.05 587.82",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:32:31.709Z"
+   },
+   {
+    "id": "twin-nudge-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 430.33,
+    "uptime": "23:32  up 17 days, 55 mins, 14 users, load averages: 430.33 514.20 583.81",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:32:51.443Z"
+   },
+   {
+    "id": "twin-nudge2-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 428.52,
+    "uptime": "23:33  up 17 days, 56 mins, 14 users, load averages: 428.52 508.31 580.07",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:33:12.184Z"
+   },
+   {
+    "id": "twin-nudge2-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 19,
+    "load1": 428.79,
+    "uptime": "23:33  up 17 days, 56 mins, 14 users, load averages: 428.79 503.28 576.61",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:33:32.320Z"
+   },
+   {
+    "id": "twin-nudge2-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 414.18,
+    "uptime": "23:33  up 17 days, 56 mins, 14 users, load averages: 414.18 495.21 572.01",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:33:51.720Z"
+   },
+   {
+    "id": "twin-nudge2-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 19,
+    "load1": 416.46,
+    "uptime": "23:34  up 17 days, 57 mins, 14 users, load averages: 416.46 490.29 568.45",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:34:11.773Z"
+   },
+   {
+    "id": "twin-nudge2-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 19,
+    "load1": 417.49,
+    "uptime": "23:34  up 17 days, 57 mins, 14 users, load averages: 417.49 485.76 565.01",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:34:30.962Z"
+   },
+   {
+    "id": "twin-nudge2-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 421.12,
+    "uptime": "23:34  up 17 days, 57 mins, 14 users, load averages: 421.12 483.30 562.75",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:34:49.821Z"
+   },
+   {
+    "id": "twin-nudge2-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 421.38,
+    "uptime": "23:35  up 17 days, 58 mins, 14 users, load averages: 421.38 478.16 558.59",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:35:12.229Z"
+   },
+   {
+    "id": "twin-nudge2-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 435.66,
+    "uptime": "23:35  up 17 days, 58 mins, 14 users, load averages: 435.66 476.79 555.75",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:35:35.707Z"
+   },
+   {
+    "id": "twin-nudge2-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 443.95,
+    "uptime": "23:35  up 17 days, 59 mins, 14 users, load averages: 443.95 475.96 553.62",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:35:58.945Z"
+   },
+   {
+    "id": "twin-nudge2-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 23,
+    "load1": 449.85,
+    "uptime": "23:36  up 17 days, 59 mins, 14 users, load averages: 449.85 474.73 550.92",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:36:21.740Z"
+   },
+   {
+    "id": "twin-l64-3901",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 456.54,
+    "uptime": "23:36  up 17 days, 59 mins, 14 users, load averages: 456.54 474.58 549.09",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:36:44.824Z"
+   },
+   {
+    "id": "twin-l64-3902",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 22,
+    "load1": 457.07,
+    "uptime": "23:37  up 17 days, 1 hr, 14 users, load averages: 457.07 473.35 546.49",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:37:07.141Z"
+   },
+   {
+    "id": "twin-l64-3903",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 455.95,
+    "uptime": "23:37  up 17 days, 1 hr, 14 users, load averages: 455.95 472.04 544.33",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:37:28.852Z"
+   },
+   {
+    "id": "twin-l64-3904",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 443.84,
+    "uptime": "23:37  up 17 days, 1 hr, 14 users, load averages: 443.84 468.29 541.30",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:37:49.259Z"
+   },
+   {
+    "id": "twin-l64-3905",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 432.31,
+    "uptime": "23:38  up 17 days,  1:01, 14 users, load averages: 432.31 464.13 538.12",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:38:09.419Z"
+   },
+   {
+    "id": "twin-l64-3906",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 436.18,
+    "uptime": "23:38  up 17 days,  1:01, 14 users, load averages: 436.18 462.98 535.99",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:38:29.303Z"
+   },
+   {
+    "id": "twin-l64-3907",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 431.46,
+    "uptime": "23:38  up 17 days,  1:01, 14 users, load averages: 431.46 460.28 533.33",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:38:49.656Z"
+   },
+   {
+    "id": "twin-l64-3908",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 21,
+    "load1": 420.71,
+    "uptime": "23:39  up 17 days,  1:02, 14 users, load averages: 420.71 455.46 529.48",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:39:11.209Z"
+   },
+   {
+    "id": "twin-l64-3909",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 19,
+    "load1": 420.67,
+    "uptime": "23:39  up 17 days,  1:02, 14 users, load averages: 420.67 453.20 526.94",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:39:32.302Z"
+   },
+   {
+    "id": "twin-l64-3910",
+    "launch": "63747-1792376685585",
+    "attempt": 1,
+    "exit": 0,
+    "seconds": 20,
+    "load1": 415.98,
+    "uptime": "23:39  up 17 days,  1:02, 14 users, load averages: 415.98 450.05 524.10",
+    "waitedSeconds": 0,
+    "rerun": false,
+    "startedAt": "2026-10-19T03:39:51.664Z"
+   }
+  ],
+  "diskBytes": 592909746,
+  "bundleBytes": {
+   "base-3901": 23072377,
+   "base-3902": 38617723,
+   "base-3903": 38005255,
+   "base-3904": 39255545,
+   "base-3905": 39803115,
+   "base-3906": 35041115,
+   "base-3907": 24628240,
+   "base-3908": 25813210,
+   "base-3909": 39124131,
+   "base-3910": 38235004,
+   "twin-sham-3901": 14525832,
+   "twin-sham-3902": 16161904,
+   "twin-sham-3903": 16328800,
+   "twin-sham-3904": 16408606,
+   "twin-sham-3905": 16480321,
+   "twin-sham-3906": 15905620,
+   "twin-sham-3907": 14927214,
+   "twin-sham-3908": 15191271,
+   "twin-sham-3909": 16095615,
+   "twin-sham-3910": 16348148,
+   "twin-l64-3901": 735404,
+   "twin-l96-3901": 694006,
+   "twin-f-3901": 744747,
+   "twin-l64-3902": 2088983,
+   "twin-l96-3902": 1985838,
+   "twin-f-3902": 2217810,
+   "twin-l64-3903": 2229505,
+   "twin-l96-3903": 2037178,
+   "twin-f-3903": 2394488,
+   "twin-l64-3904": 2330787,
+   "twin-l96-3904": 2195726,
+   "twin-f-3904": 2453855,
+   "twin-l64-3905": 2407685,
+   "twin-l96-3905": 2248742,
+   "twin-f-3905": 2534211,
+   "twin-l64-3906": 1915324,
+   "twin-l96-3906": 1870280,
+   "twin-f-3906": 2014959,
+   "twin-l64-3907": 1069012,
+   "twin-l96-3907": 1021883,
+   "twin-f-3907": 1082912,
+   "twin-l64-3908": 1289912,
+   "twin-l96-3908": 1246379,
+   "twin-f-3908": 1259099,
+   "twin-l64-3909": 2009563,
+   "twin-l96-3909": 1885951,
+   "twin-f-3909": 2139004,
+   "twin-l64-3910": 2274922,
+   "twin-l96-3910": 2090647,
+   "twin-f-3910": 2406939,
+   "twin-nudge-3901": 740744,
+   "twin-nudge2-3901": 752416,
+   "twin-nudge-3902": 2217908,
+   "twin-nudge2-3902": 2197923,
+   "twin-nudge-3903": 2356517,
+   "twin-nudge2-3903": 2350166,
+   "twin-nudge-3904": 2426380,
+   "twin-nudge2-3904": 2418351,
+   "twin-nudge-3905": 2506760,
+   "twin-nudge2-3905": 2481198,
+   "twin-nudge-3906": 1961834,
+   "twin-nudge2-3906": 1940580,
+   "twin-nudge-3907": 1077727,
+   "twin-nudge2-3907": 1056996,
+   "twin-nudge-3908": 1285116,
+   "twin-nudge2-3908": 1286635,
+   "twin-nudge-3909": 2134440,
+   "twin-nudge2-3909": 2132585,
+   "twin-nudge-3910": 2371202,
+   "twin-nudge2-3910": 2369471
+  }
+ },
+ "summary": {
+  "complete": true,
+  "R": {
+   "called": true,
+   "met": true,
+   "n": 10,
+   "differ": []
+  },
+  "primary": {
+   "complete": true,
+   "zStarPair": {
+    "value": 6.036203389830509,
+    "provisional": null,
+    "n": 10,
+    "called": true
+   },
+   "nudge": {
+    "medianD": 0.9684125603864733,
+    "firstDiffSteps": [
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100
+    ]
+   },
+   "arms": {
+    "nudge": {
+     "arm": "nudge",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.5,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 0.9684125603864733
+    },
+    "nudge2": {
+     "arm": "nudge2",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.555,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 0.9430652173913043
+    },
+    "l64": {
+     "arm": "l64",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.9,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 2.89325
+    },
+    "l96": {
+     "arm": "l96",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 4,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.94,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 5.682567231638418
+    },
+    "f": {
+     "arm": "f",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 2,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.91,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 3.9115046518874896
+    }
+   },
+   "B2": {
+    "l96": {
+     "called": true,
+     "met": false,
+     "k": 4,
+     "n": 10,
+     "bound95": 0.15002824080667998
+    },
+    "f": {
+     "called": true,
+     "met": false,
+     "k": 2,
+     "n": 10,
+     "bound95": 0.03677143788746507
+    }
+   },
+   "B2_l64": {
+    "called": true,
+    "met": false,
+    "k": 0,
+    "n": 10,
+    "bound95": 0
+   },
+   "B3": {
+    "called": true,
+    "met": true,
+    "k": 0,
+    "n": 10,
+    "bound95": 0.2588655508930523
+   },
+   "armsMet": [],
+   "reading": "the post-hoc rule did not replicate",
+   "v1Reading": "did not meet the exploratory bar"
+  },
+  "atZ1": {
+   "value": 2.580695652173913,
+   "B2": {
+    "l96": {
+     "called": true,
+     "met": true,
+     "k": 10,
+     "n": 10,
+     "bound95": 0.7411344491069477
+    },
+    "f": {
+     "called": true,
+     "met": false,
+     "k": 7,
+     "n": 10,
+     "bound95": 0.39337578389458655
+    }
+   },
+   "B2_l64": {
+    "called": true,
+    "met": false,
+    "k": 7,
+    "n": 10,
+    "bound95": 0.39337578389458655
+   },
+   "B3": {
+    "nudge": {
+     "called": true,
+     "met": true,
+     "k": 1,
+     "n": 10,
+     "bound95": 0.3941633024365049
+    },
+    "nudge2": {
+     "called": true,
+     "met": false,
+     "k": 3,
+     "n": 10,
+     "bound95": 0.6066242161054134
+    }
+   },
+   "reading": "its threshold does not hold out",
+   "armsMet": [
+    "L96"
+   ]
+  },
+  "v1Rule13": {
+   "complete": true,
+   "zStarPair": {
+    "value": 6.036203389830509,
+    "provisional": null,
+    "n": 10,
+    "called": true
+   },
+   "nudge": {
+    "medianD": 1.3724608695652174,
+    "firstDiffSteps": [
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100,
+     200100
+    ]
+   },
+   "arms": {
+    "nudge": {
+     "arm": "nudge",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.5,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 1.3724608695652174
+    },
+    "nudge2": {
+     "arm": "nudge2",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.56,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 1.1211545454545453
+    },
+    "l64": {
+     "arm": "l64",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 0,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.9,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 2.89325
+    },
+    "l96": {
+     "arm": "l96",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 4,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.94,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 5.682567231638418
+    },
+    "f": {
+     "arm": "f",
+     "valid": 10,
+     "voidSeeds": [],
+     "hits": {
+      "k": 2,
+      "of": 10
+     },
+     "effectVsNudge": {
+      "effect": 0.9,
+      "nArm": 10,
+      "nNudge": 10
+     },
+     "medianD": 3.9115046518874896
+    }
+   },
+   "B2": {
+    "l96": {
+     "called": true,
+     "met": false,
+     "k": 4,
+     "n": 10,
+     "bound95": 0.15002824080667998
+    },
+    "f": {
+     "called": true,
+     "met": false,
+     "k": 2,
+     "n": 10,
+     "bound95": 0.03677143788746507
+    }
+   },
+   "B2_l64": {
+    "called": true,
+    "met": false,
+    "k": 0,
+    "n": 10,
+    "bound95": 0
+   },
+   "B3": {
+    "called": true,
+    "met": true,
+    "k": 0,
+    "n": 10,
+    "bound95": 0.2588655508930523
+   },
+   "reading": "did not meet the exploratory bar",
+   "armsMet": [],
+   "gated": null
+  }
+ },
+ "twins": [
+  {
+   "id": "twin-sham-3901",
+   "arm": "sham",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 58914,
+     "base": 58914,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2439858,
+     "base": 2439858,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3902",
+   "arm": "sham",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 44051,
+     "base": 44051,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2431408,
+     "base": 2431408,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3903",
+   "arm": "sham",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 39427,
+     "base": 39427,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2431055,
+     "base": 2431055,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3904",
+   "arm": "sham",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37016,
+     "base": 37016,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2430462,
+     "base": 2430462,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3905",
+   "arm": "sham",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35141,
+     "base": 35141,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2438391,
+     "base": 2438391,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3906",
+   "arm": "sham",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 45076,
+     "base": 45076,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2428016,
+     "base": 2428016,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3907",
+   "arm": "sham",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 55281,
+     "base": 55281,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2435501,
+     "base": 2435501,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3908",
+   "arm": "sham",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 43643,
+     "base": 43643,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2440008,
+     "base": 2440008,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3909",
+   "arm": "sham",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35556,
+     "base": 35556,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2434549,
+     "base": 2434549,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-sham-3910",
+   "arm": "sham",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0,
+   "signal": null,
+   "side": null,
+   "hit": null,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": null,
+   "firstSignalDiffStep": null,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37475,
+     "base": 37475,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2432340,
+     "base": 2432340,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [],
+   "D13": 0,
+   "signal13": null,
+   "side13": null,
+   "hitZ1": null
+  },
+  {
+   "id": "twin-l64-3901",
+   "arm": "l64",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.1334750485573433,
+   "signal": "bioticRecycling",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 47496,
+     "base": 58914,
+     "delta": -11418
+    },
+    "matter": {
+     "twin": 2439858,
+     "base": 2439858,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 2.1334750485573433
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.7490524885853365
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6833984168865436
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.64752
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.6274418604651163
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.44449789779101007
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.39970370370370367
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.37398580453666797
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.3161906561681949
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.2957995371001435
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.22137435897435898
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.11747460087082728
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.06298832684824902
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.058127098050945986
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.045838253938649924
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.032480757206151116
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.028824786324786324
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.008685332467672998
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.0034307897059501625
+    }
+   ],
+   "D13": 2.1334750485573433,
+   "signal13": "bioticRecycling",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l96-3901",
+   "arm": "l96",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.164267431288901,
+   "signal": "livingCells",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 32092,
+     "base": 58914,
+     "delta": -26822
+    },
+    "matter": {
+     "twin": 2439858,
+     "base": 2439858,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 4.164267431288901
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 3.7097499999999997
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 3.1969450813273874
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 2.088848386454362
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.3777021276595744
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.9028326848249026
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.8993333333333332
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.8846957461838828
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.7397741935483871
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.25844412191582
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.21306598410840238
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.10648391083242206
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.08845901639344263
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.016205372941631293
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.014124291186949122
+    }
+   ],
+   "D13": 4.164267431288901,
+   "signal13": "livingCells",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3901",
+   "arm": "f",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.16143787520355,
+   "signal": "patternEntropy",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 58914,
+     "base": 58914,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2645234,
+     "base": 2439858,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 4.16143787520355
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 3.6790909090909087
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.9055384615384616
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 2.5967710921319758
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 2.168922078301959
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 1.951744680851064
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 1.4665224876203733
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.3794989010989011
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.11012244897959184
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.09119792491467577
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.08741678939617084
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.06256570525792818
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.03997037037037037
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.0264267719436721
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.022137435897435897
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.020304797742238947
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.010394076421809041
+    }
+   ],
+   "D13": 4.16143787520355,
+   "signal13": "patternEntropy",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3902",
+   "arm": "l64",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 3.924363636363636,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 32203,
+     "base": 44051,
+     "delta": -11848
+    },
+    "matter": {
+     "twin": 2431408,
+     "base": 2431408,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 3.924363636363636
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 3.079073446327684
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.365866368408183
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.2373658536585364
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.0530738966318236
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.511086739780658
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.48459535781662655
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.41918079096045197
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.39281734658823814
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.3790982564570847
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.34132837209302325
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.25851643552904485
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.027385440411740514
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.01835374149659864
+    }
+   ],
+   "D13": 3.924363636363636,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3902",
+   "arm": "l96",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 5.497789320578241,
+   "signal": "patternEntropy",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 21199,
+     "base": 44051,
+     "delta": -22852
+    },
+    "matter": {
+     "twin": 2431408,
+     "base": 2431408,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 5.497789320578241
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 5.203285714285714
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 4.188999999999999
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.877866666666667
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 2.4788902980730936
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 1.3617600358518613
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.9911020408163265
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.9726695278969958
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.9022542772934136
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.8747369467926405
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.8164254143312742
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.1873455651502393
+    }
+   ],
+   "D13": 5.497789320578241,
+   "signal13": "patternEntropy",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3902",
+   "arm": "f",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 3.661571428571429,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 44092,
+     "base": 44051,
+     "delta": 41
+    },
+    "matter": {
+     "twin": 2636784,
+     "base": 2431408,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 3.661571428571429
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.1584
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 1.257109715486978
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.1789579831932773
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 1.032278260869565
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 1.0271573604060915
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.6807010550996483
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.501921487135565
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.42437440819508393
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.2864387020123749
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.20797083333333333
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.1490754810064134
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.1392668416447944
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.08702462258161361
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.023460753960160872
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.009153581615693258
+    }
+   ],
+   "D13": 3.661571428571429,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3903",
+   "arm": "l64",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.698,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 29506,
+     "base": 39427,
+     "delta": -9921
+    },
+    "matter": {
+     "twin": 2431055,
+     "base": 2431055,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.698
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.491248080119523
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.2137435897435895
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.5619999999999998
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.778521027216059
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.7529302325581395
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.6661728395061728
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6125189189189189
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.5766717557251909
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.4713747126436782
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.3154030339454075
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.31468883225406874
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.2521364742525483
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.08711776533559916
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.04557343214710201
+    }
+   ],
+   "D13": 2.698,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3903",
+   "arm": "l96",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 6.166857142857143,
+   "signal": "fissions",
+   "side": "high",
+   "hit": true,
+   "firstWindowAboveZ": 201300,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 20928,
+     "base": 39427,
+     "delta": -18499
+    },
+    "matter": {
+     "twin": 2431055,
+     "base": 2431055,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 6.166857142857143
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 3.8542857142857145
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 3.7346159734877116
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 2.7926666666666664
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.4945337911776915
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 1.2769989929506544
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 1.0285553942912433
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.9661713484977781
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.8396836734693877
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.783917753727019
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.6423809523809524
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.5807347031073877
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.216147603245077
+    }
+   ],
+   "D13": 6.166857142857143,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3903",
+   "arm": "f",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.5392941176470587,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 39580,
+     "base": 39427,
+     "delta": 153
+    },
+    "matter": {
+     "twin": 2636431,
+     "base": 2431055,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.5392941176470587
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.1584
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 1.384191304347826
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.7557422969187675
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.7173906794425088
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.5413292628216412
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.2509767441860465
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.2384834229610027
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.11356937394868527
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.1116028955532575
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.10813470575878602
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.052099310344827586
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.032579461157837226
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.02860070671378092
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.019549368108070935
+    }
+   ],
+   "D13": 2.5392941176470587,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l64-3904",
+   "arm": "l64",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.2137435897435895,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 28569,
+     "base": 37016,
+     "delta": -8447
+    },
+    "matter": {
+     "twin": 2430462,
+     "base": 2430462,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.2137435897435895
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.72672
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 1.2621419954736017
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.6999750731285159
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.6244629080118694
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.4749805527123848
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.40643387451378316
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.3560812182741117
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.30852176699455325
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.23226026026026025
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.1752645469571364
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.1276588585932792
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.09674602209262237
+    }
+   ],
+   "D13": 2.2137435897435895,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l96-3904",
+   "arm": "l96",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 6.680761904761905,
+   "signal": "fissions",
+   "side": "high",
+   "hit": true,
+   "firstWindowAboveZ": 201200,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 19698,
+     "base": 37016,
+     "delta": -17318
+    },
+    "matter": {
+     "twin": 2430462,
+     "base": 2430462,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 6.680761904761905
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 3.9883478260869567
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.8050234785915564
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 2.2798537979283364
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.6903132530120482
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 1.081362725450902
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.0038220869271097
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.9594164707146811
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.7783533225283631
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.6304604810996564
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.48719338067312007
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.38098763861892515
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.23828711367333083
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.02973556292033615
+    }
+   ],
+   "D13": 6.680761904761905,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3904",
+   "arm": "f",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.5912994350282488,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37554,
+     "base": 37016,
+     "delta": 538
+    },
+    "matter": {
+     "twin": 2635838,
+     "base": 2430462,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 2.5912994350282488
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.4389333333333334
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.349
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 1.0173209556313993
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.8661472855840004
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6745
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.6234908934835072
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.2636920011767433
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.21392997779681333
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.14430563514804204
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.08110220440881764
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.05449005173801391
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.029689133425034386
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.010958828995783782
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.007385036496350365
+    }
+   ],
+   "D13": 2.5912994350282488,
+   "signal13": "individuals",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3905",
+   "arm": "l64",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.1509051253562697,
+   "signal": "patternEntropy",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 28549,
+     "base": 35141,
+     "delta": -6592
+    },
+    "matter": {
+     "twin": 2438391,
+     "base": 2438391,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.1509051253562697
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.4583783783783784
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.2069999999999999
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.981090909090909
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.4886555458126026
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.36257707509881426
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.35191304347826086
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.31958688203622126
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.2866999272833577
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.19899622737484635
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.19528902418400135
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.1731976587184924
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.12286907020872866
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.08236447570487773
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.06482913981533953
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.05380626780626781
+    }
+   ],
+   "D13": 2.1509051253562697,
+   "signal13": "patternEntropy",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l96-3905",
+   "arm": "l96",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.616877027097324,
+   "signal": "patternEntropy",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 20571,
+     "base": 35141,
+     "delta": -14570
+    },
+    "matter": {
+     "twin": 2438391,
+     "base": 2438391,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 4.616877027097324
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 2.485
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 1.2141
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 1.0434870734229575
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.0208648648648648
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.981090909090909
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.8051091392196729
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.7056926902038787
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.6494044478268222
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.49445154603591607
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.4423865888695259
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.39883478260869565
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.21475497019928505
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.0862149910625188
+    }
+   ],
+   "D13": 4.616877027097324,
+   "signal13": "patternEntropy",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3905",
+   "arm": "f",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.895891891891892,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35809,
+     "base": 35141,
+     "delta": 668
+    },
+    "matter": {
+     "twin": 2643767,
+     "base": 2438391,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.895891891891892
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 1.5852655367231638
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 1.199111111111111
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 1.0445575215050003
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.9635714285714286
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.47964444444444443
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.47353740993524
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.426012213053466
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.37646511627906976
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.32251954022988505
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.18606896551724136
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.10376923076923077
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.09951639344262296
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.08725959898101725
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.07319600875056541
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.029718520589454765
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.024324027326880247
+    }
+   ],
+   "D13": 1.895891891891892,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l64-3906",
+   "arm": "l64",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.8636666666666666,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 34896,
+     "base": 45076,
+     "delta": -10180
+    },
+    "matter": {
+     "twin": 2428016,
+     "base": 2428016,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 2.8636666666666666
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 2.479243243243243
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.0482147303808174
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 1.6032565733788395
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.7038260869565217
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.5534358974358974
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.5356877545868672
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.5103054615624519
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.46645186640471514
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.29977777777777775
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.24527272727272725
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.23293235244376795
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.18810756972111553
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.18353741496598638
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.17750420649112708
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.16777678274327062
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.14833127317676142
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.029773688833973817
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.0035793941709278865
+    }
+   ],
+   "D13": 2.8636666666666666,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3906",
+   "arm": "l96",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.592141402389819,
+   "signal": "patternEntropy",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 24366,
+     "base": 45076,
+     "delta": -20710
+    },
+    "matter": {
+     "twin": 2428016,
+     "base": 2428016,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 4.592141402389819
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 4.524157205240175
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 2.506608695652174
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 1.4951568591818485
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.21439658379841
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 1.1826875607561023
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 1.088387416645848
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.9022142220190777
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.7933695871097683
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.7038260869565217
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.40469999999999995
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.39970370370370367
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.33112420225822287
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.22533861945593847
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.16149999999999998
+    }
+   ],
+   "D13": 4.592141402389819,
+   "signal13": "patternEntropy",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3906",
+   "arm": "f",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.527375609756097,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 45399,
+     "base": 45076,
+     "delta": 323
+    },
+    "matter": {
+     "twin": 2633392,
+     "base": 2428016,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 4.527375609756097
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 3.0114468259385667
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 2.992739495798319
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.3156000173363718
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.248333333333333
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.1584
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 1.2760581710983552
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.5915696721311475
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.5281202664378961
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.3933840298157901
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.1868361109381806
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.15417142857142857
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.014699753125710091
+    }
+   ],
+   "D13": 4.527375609756097,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3907",
+   "arm": "l64",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.082191304347826,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 46335,
+     "base": 55281,
+     "delta": -8946
+    },
+    "matter": {
+     "twin": 2435501,
+     "base": 2435501,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 4.082191304347826
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.053280699555107
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.3925161290322579
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 1.0429211230566915
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.9151084854485981
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.8750270270270271
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.5865217391304348
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.5686960784313726
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.4442137721723882
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.32376
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.2664425847669407
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.18500571428571427
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.1463514617233119
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.14304464738711312
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.12156519232433156
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.06911837455830389
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.05406813627254509
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.04405955811719501
+    }
+   ],
+   "D13": 4.082191304347826,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3907",
+   "arm": "l96",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 5.609401129943503,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 33698,
+     "base": 55281,
+     "delta": -21583
+    },
+    "matter": {
+     "twin": 2435501,
+     "base": 2435501,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 5.609401129943503
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 4.18679586386648
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 3.467180800486486
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 2.845750095267164
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 2.1287504678478997
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 1.3777021276595744
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.2333714285714286
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.5918300944065756
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.34296610169491526
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.25224204192343075
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.24527272727272725
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.23805882352941177
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.22711756168359942
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.1742298195631529
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.1349
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.05065031400868735
+    }
+   ],
+   "D13": 5.609401129943503,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3907",
+   "arm": "f",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 8.20192,
+   "signal": "fusions",
+   "side": "high",
+   "hit": true,
+   "firstWindowAboveZ": 204600,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 56593,
+     "base": 55281,
+     "delta": 1312
+    },
+    "matter": {
+     "twin": 2640877,
+     "base": 2435501,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 8.20192
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 4.111238095238096
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 2.304523695953459
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.2371317073170731
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.6631032383690354
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.5783732419152202
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.4138851810669301
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.347725261669024
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.31053427270964523
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.20721966205837172
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.17986666666666667
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.15128971962616822
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.12548837209302324
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.08394814174589454
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.06266661144425299
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.00794698085419735
+    }
+   ],
+   "D13": 8.20192,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3908",
+   "arm": "l64",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 4.389966101694915,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 36449,
+     "base": 43643,
+     "delta": -7194
+    },
+    "matter": {
+     "twin": 2440008,
+     "base": 2440008,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 4.389966101694915
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 3.059364306814311
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 2.2757043478260868
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 1.7206632653061222
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 1.5274930650713545
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 1.2217568915097863
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 1.1293953488372093
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.9974922384375263
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.46756481078863865
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.3088079910588636
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.2403428555970351
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.14926188028176612
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.14066736183524506
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.10164234123172725
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.09548158775705404
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.06650795583410812
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.049360633642036696
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.0490121107266436
+    }
+   ],
+   "D13": 4.389966101694915,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3908",
+   "arm": "l96",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 9.679666666666666,
+   "signal": "individuals",
+   "side": "low",
+   "hit": true,
+   "firstWindowAboveZ": 200100,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 26242,
+     "base": 43643,
+     "delta": -17401
+    },
+    "matter": {
+     "twin": 2440008,
+     "base": 2440008,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 9.679666666666666
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 8.160117323532553
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 2.722929493533548
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 1.5475837563451778
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.8784186046511627
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.579180835200978
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.5264390243902439
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.46220899575671853
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.3908593856120074
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.370422131147541
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.36790909090909085
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.3558583666169094
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.35506820365033626
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.29624140664413295
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.19525021453112146
+    }
+   ],
+   "D13": 9.679666666666666,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3908",
+   "arm": "f",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 7.545254237288136,
+   "signal": "individuals",
+   "side": "low",
+   "hit": true,
+   "firstWindowAboveZ": 201400,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 44290,
+     "base": 43643,
+     "delta": 647
+    },
+    "matter": {
+     "twin": 2645384,
+     "base": 2440008,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 7.545254237288136
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 3.1239999999999997
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 3.043292677809637
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.0235
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 1.863423096134897
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 1.2166998605698112
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.8396521739130435
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.6928033808670154
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.501953488372093
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.47995836097786904
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.4569193548387097
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.4562220933144236
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.22897490582494967
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.20753846153846153
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.0858637493784187
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.04146781940441883
+    }
+   ],
+   "D13": 7.545254237288136,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l64-3909",
+   "arm": "l64",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.922833333333333,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 26976,
+     "base": 35556,
+     "delta": -8580
+    },
+    "matter": {
+     "twin": 2434549,
+     "base": 2434549,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 2.922833333333333
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 2.72966391373369
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.3770207715133531
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 1.027809523809524
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.5865217391304348
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.563737358362929
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.5246111111111111
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.4837174792584888
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.4321271044566435
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.4173836763998212
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.38542857142857145
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.348821481849826
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.06994814814814815
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.04094179311384157
+    }
+   ],
+   "D13": 2.922833333333333,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3909",
+   "arm": "l96",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 10.056181818181818,
+   "signal": "fissions",
+   "side": "high",
+   "hit": true,
+   "firstWindowAboveZ": 201300,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 19954,
+     "base": 35556,
+     "delta": -15602
+    },
+    "matter": {
+     "twin": 2434549,
+     "base": 2434549,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 10.056181818181818
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 4.773601174045073
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 2.272
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 1.2559097592148276
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.19046412708366
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 1.0895055849598199
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 1.0618634538152611
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.8807938256212262
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.5992569721115538
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.4692173913043478
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.35191304347826086
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.24611704132259263
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.20013694721825964
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.1284761904761905
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.12548837209302324
+    }
+   ],
+   "D13": 10.056181818181818,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3909",
+   "arm": "f",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.272,
+   "signal": "fusions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 36271,
+     "base": 35556,
+     "delta": 715
+    },
+    "matter": {
+     "twin": 2639925,
+     "base": 2434549,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 2.272
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.704
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.4283529411764706
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 1.14
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 1.0974915254237287
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.7024744846416382
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.45209729729729725
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.27255990517387285
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.2509767441860465
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.22310156866547173
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.19564135227829496
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.1643754083984412
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.14761094224924012
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.08144538354911827
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.05165923770158684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.033789542927124605
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.00873656787250627
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.004796444444444444
+    }
+   ],
+   "D13": 2.272,
+   "signal13": "fusions",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-l64-3910",
+   "arm": "l64",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 5.620833333333333,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 28785,
+     "base": 37475,
+     "delta": -8690
+    },
+    "matter": {
+     "twin": 2432340,
+     "base": 2432340,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 5.620833333333333
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 5.096222222222222
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.9618956521739129
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.9091184803277899
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.7994074074074073
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.5140011920792953
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.48460544904137237
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.48292968036529677
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.46063414634146344
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.42104312114989734
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.4062388042554418
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.37646511627906976
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.27985973343529086
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.27438245288687463
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.25973512481399913
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.18910824408973295
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.10838450502152079
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.07896585365853658
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.06219499701557
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.0002189579613699075
+    }
+   ],
+   "D13": 5.620833333333333,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-l96-3910",
+   "arm": "l96",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 5.755733333333334,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 20328,
+     "base": 37475,
+     "delta": -17147
+    },
+    "matter": {
+     "twin": 2432340,
+     "base": 2432340,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 5.755733333333334
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 3.925472557812603
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 3.261988700564972
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.6979999999999995
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 1.6741977760682565
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 1.1679690910823737
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 1.1046059365404297
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.9585175655616031
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.9254668621221706
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.7132643678160919
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.5350457843654969
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.4931253062274328
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.256952380952381
+    }
+   ],
+   "D13": 5.755733333333334,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-f-3910",
+   "arm": "f",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 5.395999999999999,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37951,
+     "base": 37475,
+     "delta": 476
+    },
+    "matter": {
+     "twin": 2637716,
+     "base": 2432340,
+     "delta": 205376
+    },
+    "interventionMatter": 205376
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 5.395999999999999
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 4.882095238095238
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 2.078614785992218
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 1.0208648648648648
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.9437494393758096
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.7087836685408098
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.292431126310926
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.256952380952381
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.2434285714285714
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.22127233155953355
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.14044383561643836
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.13517034068136274
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.12760309426522162
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.12404597701149424
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.12363541423184637
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.026654822394601305
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.025744274809160306
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.011577262006228465
+    }
+   ],
+   "D13": 5.395999999999999,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-nudge-3901",
+   "arm": "nudge",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.5182598870056497,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 58914,
+     "base": 58914,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2439858,
+     "base": 2439858,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 1.951744680851064
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.9490941778142404
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.5182598870056497
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.3780538360834547
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.3101149425287356
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.29231563948582584
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.22483333333333333
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.20503194651723838
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.19838235294117648
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.1423120879120879
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.10922362829930127
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.05789893000455752
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.030025791324736224
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.02216016427104723
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.021605605605605604
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.002480919540229885
+    }
+   ],
+   "D13": 1.951744680851064,
+   "signal13": "maxGeneration",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3901",
+   "arm": "nudge2",
+   "seed": 3901,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.5995555555555555,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 58912,
+     "base": 58914,
+     "delta": -2
+    },
+    "matter": {
+     "twin": 2439858,
+     "base": 2439858,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.7301242299046886
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.6348235294117647
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.5995555555555555
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.48291050583657585
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.44966666666666666
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.3420061776845718
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.3274617414248021
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.24536403255085315
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.23979258258085764
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.2014991550738867
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.11667027027027026
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.0947203708506224
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.03604198473282443
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.024786403307303626
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.01854295532646048
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.01797928337114038
+    }
+   ],
+   "D13": 0.7301242299046886,
+   "signal13": "dominantShare",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3902",
+   "arm": "nudge",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.5995555555555555,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 44061,
+     "base": 44051,
+     "delta": 10
+    },
+    "matter": {
+     "twin": 2431408,
+     "base": 2431408,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.5995555555555555
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.4496666666666666
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.24695652173913044
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.1635151515151515
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.14213358419567262
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.1284761904761905
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.10725324010456189
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.08987851580677832
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.08053731343283581
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.07994074074074074
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.04534453781512605
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.03922975954738331
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.030254638413211236
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.025310773066316388
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.017504725662060575
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.01668730726341061
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.016291295521801554
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.013485794554578488
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.011664606892022802
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.0077787498827785505
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.0024616788321167884
+    }
+   ],
+   "D13": 0.5995555555555555,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3902",
+   "arm": "nudge2",
+   "seed": 3902,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.698,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 44045,
+     "base": 44051,
+     "delta": -6
+    },
+    "matter": {
+     "twin": 2431408,
+     "base": 2431408,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 2.698
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 1.6603076923076925
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.5221935483870968
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.501953488372093
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.3048587570621469
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.2021817035852752
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.1889518180189862
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.14432095096582465
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.08259183673469388
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.06859973602572494
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.061730546614075656
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.06117254103450108
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.055250573882265626
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.03841449252939417
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.02557345971563981
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.0227572633552015
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.011936162011525576
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.0007899554908065708
+    }
+   ],
+   "D13": 2.698,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-nudge-3903",
+   "arm": "nudge",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.5264390243902439,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 39425,
+     "base": 39427,
+     "delta": -2
+    },
+    "matter": {
+     "twin": 2431055,
+     "base": 2431055,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.5264390243902439
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.3695890410958904
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.2698
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.1904470588235294
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.1298556914627622
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.09527023050514959
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.05736698587891576
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.049054545454545455
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.03393710691823899
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.026546877580187565
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.017243827275076836
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.015624270812678611
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.014246230574382051
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.011534843950406156
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.003134280676278394
+    }
+   ],
+   "D13": 0.5264390243902439,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3903",
+   "arm": "nudge2",
+   "seed": 3903,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.513904761904762,
+   "signal": "fissions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 39423,
+     "base": 39427,
+     "delta": -4
+    },
+    "matter": {
+     "twin": 2431055,
+     "base": 2431055,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.513904761904762
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.4905454545454545
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.07286543947584759
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.07050701350675338
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.06131818181818182
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.05939574007383964
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.05511107466873872
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.05146787148594378
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.0391419689119171
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.03020329571914741
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.024223987679459758
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.023196932998713234
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.01453270665388071
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.0033259018453199343
+    }
+   ],
+   "D13": 0.513904761904762,
+   "signal13": "fissions",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3904",
+   "arm": "nudge",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.31741176470588234,
+   "signal": "fissions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37015,
+     "base": 37016,
+     "delta": -1
+    },
+    "matter": {
+     "twin": 2430462,
+     "base": 2430462,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.31741176470588234
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.29977777777777775
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.24527272727272725
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.13378512396694214
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.12696470588235292
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.10846231155778895
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.08049841739272805
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.0733765690376569
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.062209523809523805
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.04445803343366526
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.015532120894936543
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.009541068020145179
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.008341492590945975
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.005297987236131565
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.0024971707880221644
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.0013317793182188772
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.0008224850251013975
+    }
+   ],
+   "D13": 0.31741176470588234,
+   "signal13": "fissions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3904",
+   "arm": "nudge2",
+   "seed": 3904,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.4905454545454545,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37016,
+     "base": 37016,
+     "delta": 0
+    },
+    "matter": {
+     "twin": 2430462,
+     "base": 2430462,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.4905454545454545
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.37999999999999995
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.17986666666666667
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.12982008368200837
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.12417542680868987
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.08750270270270269
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.04591191191191191
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.04534453781512605
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.0357984831896323
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.03285620608899297
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.02762828965668429
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.024171721473996505
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.021327579314758063
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.021217464695035146
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.010973512400467993
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.008691789241659956
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.006761011117581449
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.004231356761394428
+    }
+   ],
+   "D13": 0.4905454545454545,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3905",
+   "arm": "nudge",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.39482926829268294,
+   "signal": "fissions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35152,
+     "base": 35141,
+     "delta": 11
+    },
+    "matter": {
+     "twin": 2438391,
+     "base": 2438391,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.4161483740953802
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.39482926829268294
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.35191304347826086
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.23982222222222221
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.12194350282485876
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.09191583166332666
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.081626554001554
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.06274418604651162
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.05574380165289256
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.053468231006258325
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.04834300341296928
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.0430347153846276
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.031317971439386354
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.012854304250369939
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.007970457902511078
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.004950336908515588
+    }
+   ],
+   "D13": 0.4161483740953802,
+   "signal13": "dominantShare",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3905",
+   "arm": "nudge2",
+   "seed": 3905,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.8211304347826087,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35140,
+     "base": 35141,
+     "delta": -1
+    },
+    "matter": {
+     "twin": 2438391,
+     "base": 2438391,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.8211304347826087
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.6166857142857143
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.5264390243902439
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.33825636064943676
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.11730434782608695
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.11432203389830509
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.08629539040451553
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.08187590948993231
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.05833513513513513
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.03913481228668942
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.03621476510067114
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.024488727657262035
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.022114754098360657
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.008009896091044038
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.006905148906340538
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.001404352817235472
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.0009822703228308989
+    }
+   ],
+   "D13": 0.8211304347826087,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3906",
+   "arm": "nudge",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.3372695652173912,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 45068,
+     "base": 45076,
+     "delta": -8
+    },
+    "matter": {
+     "twin": 2428016,
+     "base": 2428016,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 1.3372695652173912
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.6871790342008249
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6591387163561077
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.6362096069868995
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.5995555555555555
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.5995555555555555
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.5803637385212267
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.5466568582091854
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.31548073797164017
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.27882811567290783
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.25912994350282487
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.2346086956521739
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.2215205778139032
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.15128971962616822
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.1249828801611279
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.09757304087523276
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.07194666666666666
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.07030011576749849
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.06768859635592041
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.06327498950098795
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.03247528428018337
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.010885149508174189
+    }
+   ],
+   "D13": 1.3372695652173912,
+   "signal13": "individuals",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3906",
+   "arm": "nudge2",
+   "seed": 3906,
+   "valid": true,
+   "voidReasons": [],
+   "D": 0.6499383753501401,
+   "signal": "buddings",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 45069,
+     "base": 45076,
+     "delta": -7
+    },
+    "matter": {
+     "twin": 2428016,
+     "base": 2428016,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 2.6352558139534885
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6499383753501401
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.6253853326663332
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.5084478237490593
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.3426031746031746
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.29977777777777775
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.27120637858178337
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.20427220005831243
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.19985185185185184
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.19612180746561886
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.17500540540540538
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.1503778996401011
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.1127527337107197
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.10633730522456462
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.04786985865720808
+    }
+   ],
+   "D13": 2.6352558139534885,
+   "signal13": "maxGeneration",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3907",
+   "arm": "nudge",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 6.036203389830509,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 55279,
+     "base": 55281,
+     "delta": -2
+    },
+    "matter": {
+     "twin": 2435501,
+     "base": 2435501,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 6.036203389830509
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 1.9585321873209989
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.8513837228239072
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.7205551015315512
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.6691609498680738
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.4454238492729147
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.3721379310344827
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.35973333333333335
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.21584
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.2027398843930636
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.19898356415214283
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.1876786941653972
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.15637689009526418
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.1537170923379175
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.10330134298394252
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.10248812915479583
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.056799999999999996
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.036595493805528644
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.02712914909929142
+    }
+   ],
+   "D13": 6.036203389830509,
+   "signal13": "individuals",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-nudge2-3907",
+   "arm": "nudge2",
+   "seed": 3907,
+   "valid": true,
+   "voidReasons": [],
+   "D": 3.9648869565217386,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 55277,
+     "base": 55281,
+     "delta": -4
+    },
+    "matter": {
+     "twin": 2435501,
+     "base": 2435501,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 3.9648869565217386
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 2.10921123017628
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 1.7233312444436242
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 1.003906976744186
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.8993333333333333
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.7255126050420168
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.6348235294117647
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.3279990261321214
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.27392064092207763
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.17101847545883478
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.13160975609756098
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.10489096562056864
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.09518205574912893
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.05711084335066914
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.05657472892525945
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.050666666666666665
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.030685914260717408
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.005467071935157042
+    }
+   ],
+   "D13": 3.9648869565217386,
+   "signal13": "individuals",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-nudge-3908",
+   "arm": "nudge",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.7326605504587156,
+   "signal": "individuals",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 43641,
+     "base": 43643,
+     "delta": -2
+    },
+    "matter": {
+     "twin": 2440008,
+     "base": 2440008,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 1.7326605504587156
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.8784186046511627
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.64752
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.38542857142857145
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.3692000203062479
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.2425255798034983
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.10064275466284074
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.09640843758317806
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.07846181016915955
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.06773099605042472
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.06745
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.051253678951249985
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.044049751923297006
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.031155084802558
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.028300699300699297
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.02131753086419753
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.018530031870167336
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.0007455733518930052
+    }
+   ],
+   "D13": 1.7326605504587156,
+   "signal13": "individuals",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3908",
+   "arm": "nudge2",
+   "seed": 3908,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.838765217391304,
+   "signal": "individuals",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 43638,
+     "base": 43643,
+     "delta": -5
+    },
+    "matter": {
+     "twin": 2440008,
+     "base": 2440008,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 2.838765217391304
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 1.4280629949045207
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.8175757575757575
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.6274418604651163
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.38390629226857115
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.2907061900845114
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.28000108420088776
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.19271428571428573
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.1787494824016563
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.1515340093466102
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.12548837209302324
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.08017216554850963
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.06773221757322175
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.06459512612227447
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.06235253874409668
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.04592217901362881
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.04509574633839945
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.02226685006877579
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.005366484336151169
+    }
+   ],
+   "D13": 2.838765217391304,
+   "signal13": "individuals",
+   "side13": "high",
+   "hitZ1": true
+  },
+  {
+   "id": "twin-nudge-3909",
+   "arm": "nudge",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.4076521739130434,
+   "signal": "fusions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35554,
+     "base": 35556,
+     "delta": -2
+    },
+    "matter": {
+     "twin": 2434549,
+     "base": 2434549,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 1.4076521739130434
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.40469999999999995
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.20753846153846156
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.19985185185185184
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.09250285714285714
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.06968293126939966
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.062209523809523805
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.0500277489626556
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.04176309074957342
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.030717267552182164
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.024464908249854485
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.018400219257826193
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.005954297141251992
+    }
+   ],
+   "D13": 1.4076521739130434,
+   "signal13": "fusions",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3909",
+   "arm": "nudge2",
+   "seed": 3909,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.1773090909090909,
+   "signal": "fusions",
+   "side": "high",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 35555,
+     "base": 35556,
+     "delta": -1
+    },
+    "matter": {
+     "twin": 2434549,
+     "base": 2434549,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 1.1773090909090909
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.4692173913043478
+    },
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 0.426
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "D": 0.12548837209302324
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.11241666666666665
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.10181132075471698
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.1004499076795797
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.0935576382380506
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.0928888888888889
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.0652192262602579
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.05663740458015267
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.051901055589365724
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.037033512627617456
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.02864041213190982
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.028217919074310798
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.027407611763164592
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "D": 0.008992977439848525
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.0026412139011257954
+    }
+   ],
+   "D13": 1.1773090909090909,
+   "signal13": "fusions",
+   "side13": "high",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge-3910",
+   "arm": "nudge",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 2.0651358024691358,
+   "signal": "fusions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37469,
+     "base": 37475,
+     "delta": -6
+    },
+    "matter": {
+     "twin": 2432340,
+     "base": 2432340,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 2.0651358024691358
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 1.349
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.9036363636363636
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.46444444444444444
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.33242156867857353
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.29977777777777775
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.2238841839914564
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.20728719949266866
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.15396921356656312
+    },
+    {
+     "signal": "dominantShare",
+     "side": "low",
+     "D": 0.1457557280975715
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.12548837209302324
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "D": 0.12388775510204081
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.12010618743030019
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.10638341371756237
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.10376923076923077
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.08845901639344263
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.08551914342538848
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.07313855421686748
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "D": 0.07140264650283554
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.0566509186351706
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.035496568931160905
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.01511246916188972
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.013356435643564356
+    }
+   ],
+   "D13": 2.0651358024691358,
+   "signal13": "fusions",
+   "side13": "low",
+   "hitZ1": false
+  },
+  {
+   "id": "twin-nudge2-3910",
+   "arm": "nudge2",
+   "seed": 3910,
+   "valid": true,
+   "voidReasons": [],
+   "D": 1.065,
+   "signal": "fusions",
+   "side": "low",
+   "hit": false,
+   "firstWindowAboveZ": null,
+   "firstDiffStep": 200100,
+   "firstSignalDiffStep": 200100,
+   "dose": {
+    "step": 200100,
+    "livingCells": {
+     "twin": 37477,
+     "base": 37475,
+     "delta": 2
+    },
+    "matter": {
+     "twin": 2432340,
+     "base": 2432340,
+     "delta": 0
+    },
+    "interventionMatter": null
+   },
+   "dBySignal": [
+    {
+     "signal": "fusions",
+     "side": "low",
+     "D": 1.065
+    },
+    {
+     "signal": "fissions",
+     "side": "low",
+     "D": 0.7820289855072464
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "D": 0.7633365853658536
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "D": 0.4047
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "low",
+     "D": 0.3761297056936944
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "D": 0.29977777777777775
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "D": 0.2731947193989929
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "D": 0.26076322014826375
+    },
+    {
+     "signal": "individuals",
+     "side": "low",
+     "D": 0.2346086956521739
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "D": 0.217859605813259
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "D": 0.15870588235294117
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "D": 0.14049711626571265
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "low",
+     "D": 0.12548837209302324
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "D": 0.07500821592544027
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "D": 0.06957593123209169
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "D": 0.06773099605042472
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "D": 0.05977442094662638
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "D": 0.04804311152764761
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "D": 0.037988639314382996
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "D": 0.03117199641875537
+    },
+    {
+     "signal": "meanMass",
+     "side": "low",
+     "D": 0.010480853802981431
+    }
+   ],
+   "D13": 1.065,
+   "signal13": "fusions",
+   "side13": "low",
+   "hitZ1": false
+  }
+ ]
+}

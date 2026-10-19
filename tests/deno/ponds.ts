@@ -251,7 +251,7 @@ function standalone(name: string, args: string[]): Promise<string> {
       name,
       (async () => {
         const out = `${tmp}/${name}`;
-        const argv = ["run", "-A", "--config", `${ROOT}deno.json`, `${ROOT}tools/scaffold.ts`, "evolve", "--init", "clone", "--side", "2", "--seed", "1", "--allow-any-seed", ...args, "--out", out];
+        const argv = ["run", "--no-lock", "-A", "--config", `${ROOT}deno.json`, `${ROOT}tools/scaffold.ts`, "evolve", "--init", "clone", "--side", "2", "--seed", "1", "--allow-any-seed", ...args, "--out", out];
         const { code, stderr } = await new Deno.Command(Deno.execPath(), { args: argv, cwd: ROOT, stdout: "null", stderr: "piped" }).output();
         if (code !== 0) throw new Error(`tools/scaffold.ts ${name} failed: ${new TextDecoder().decode(stderr)}`);
         return out;

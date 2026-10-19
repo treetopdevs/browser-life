@@ -893,7 +893,8 @@ defmodule Coordinator.QueueTest do
       assert p.kind == "run" and String.starts_with?(p.segment.run, "a-pond/ponds-small/")
       assert p.spec.presetId == "ponds-small"
 
-      # Never persisted: nothing about the request sticks to the island.
+      # The Queue records a cleaned copy for the operator (`status/0`), but the
+      # island's own view (`island_info/1`) never shows it.
       refute Map.has_key?(Queue.island_info(new), :capabilities)
     end
 
@@ -1045,6 +1046,262 @@ defmodule Coordinator.QueueTest do
       {:ok, v} = Queue.next_task(v2, ["ponds-v1", "ponds-v2"])
       assert v.kind == "verify" and v.segment.id == t.segment.id
       assert {:ok, "verified"} = Queue.complete(v.segment.id, v2, v.lease, "verify", "p0", %{})
+    end
+  end
+
+  # The breeder (WorldConfig.pondScore; docs/archipelago-breed-2026-10-18.md): its 21 conditions
+  # (pond-breed-<score>, pond-mass-<score>, pond-drift-<score>) apply on any pond preset, and the
+  # `breeder` preset (config's `:breed_presets`) is a breed world under every condition. Such work,
+  # run or verify, goes only to an island that advertises "breed-v1" as well as "ponds-v1".
+  describe "ponds, the breeder" do
+    @breed_spec %{
+      "experiment" => "b-breed",
+      "presetId" => "ponds-small",
+      "conditions" => ["pond-breed-drive+seed+body"],
+      "seeds" => [1],
+      "steps" => 1000,
+      "segmentSteps" => 1000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    @breeder_spec %{
+      "experiment" => "b-breeder",
+      "presetId" => "breeder",
+      "conditions" => ["treatment", "pond-rand"],
+      "seeds" => [1],
+      "steps" => 5000,
+      "segmentSteps" => 5000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    @breed_caps ["ponds-v1", "breed-v1"]
+
+    test "breeder conditions are accepted on a pond preset and refused on any other" do
+      assert {:ok, 3} =
+               Queue.create_experiment(%{
+                 @breed_spec
+                 | "conditions" => [
+                     "pond-breed-drive+seed+body",
+                     "pond-mass-drive",
+                     "pond-drift-seed"
+                   ]
+               })
+
+      # Every preset without the pond cycle, not only spots: the prefix rule in incompatible/3.
+      for preset <- ~w(spots gradient large),
+          c <- ~w(pond-breed-drive pond-mass-drive+seed pond-drift-body) do
+        assert {:error, "condition #{c} does not apply to preset #{preset}"} ==
+                 Queue.create_experiment(%{
+                   @spec_ok
+                   | "experiment" => "b-#{preset}",
+                     "presetId" => preset,
+                     "conditions" => [c]
+                 })
+      end
+    end
+
+    test "the hunt's pond-nat and pond-shuf stay out of the coordinator's conditions, on the breeder too" do
+      for c <- ~w(pond-nat pond-shuf), preset <- ~w(breeder ponds-small) do
+        assert {:error, "conditions must be" <> _} =
+                 Queue.create_experiment(%{
+                   @breeder_spec
+                   | "experiment" => "b-hunt",
+                     "presetId" => preset,
+                     "segmentSteps" => if(preset == "breeder", do: 5000, else: 1000),
+                     "conditions" => [c]
+                 })
+      end
+    end
+
+    test "the breeder preset takes its own and the v1 conditions, its cadence and no metapopulation" do
+      assert {:ok, 2} = Queue.create_experiment(@breeder_spec)
+
+      assert {:ok, 1} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-breeder-2",
+                   "conditions" => ["pond-breed-drive"]
+               })
+
+      assert {:error, "condition pond-cont does not apply to preset breeder"} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-cont",
+                   "conditions" => ["pond-cont"]
+               })
+
+      assert {:error, "segmentSteps must be a multiple of pondPeriod 5000 (condition treatment)"} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-cadence",
+                   "segmentSteps" => 1000
+               })
+
+      assert {:error, "preset breeder cannot have a metapopulation" <> _} =
+               Queue.create_experiment(
+                 %{@breeder_spec | "experiment" => "b-metapop", "seeds" => [1, 2]}
+                 |> Map.put("metapopulation", %{"topology" => "ring", "migrantCount" => 4})
+               )
+    end
+
+    test "a breed run is idle for every list without both ponds-v1 and breed-v1" do
+      assert {:ok, 1} = Queue.create_experiment(@breed_spec)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      for caps <- [[], ["ponds-v1"], ["ponds-v1", "ponds-v2", "interventions-v1"], ["breed-v1"]] do
+        assert {:ok, %{kind: "idle"}} = Queue.next_task(old, caps)
+      end
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+
+      {:ok, t} = Queue.next_task(new, @breed_caps)
+      assert t.kind == "run" and t.spec.condition == "pond-breed-drive+seed+body"
+      assert t.segment.run == "b-breed/ponds-small/pond-breed-drive+seed+body/seed-1"
+      refute Map.has_key?(Queue.island_info(new), :capabilities)
+    end
+
+    test "the gate is per condition: an experiment's v1 runs still go to a ponds-v1 island" do
+      assert {:ok, 3} =
+               Queue.create_experiment(%{
+                 @breed_spec
+                 | "conditions" => ["treatment", "pond-breed-drive", "pond-rand"]
+               })
+
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "b"})
+
+      # The breed run is skipped, whatever order the runs are offered in.
+      taken =
+        for _ <- 1..2 do
+          {:ok, t} = Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+          assert t.kind == "run"
+          t.spec.condition
+        end
+
+      assert Enum.sort(taken) == ["pond-rand", "treatment"]
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, breed} = Queue.next_task(b, @breed_caps)
+      assert breed.kind == "run" and breed.spec.condition == "pond-breed-drive"
+    end
+
+    test "every segment of a breeder experiment needs breed-v1, treatment included" do
+      assert {:ok, 2} = Queue.create_experiment(@breeder_spec)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      # Every capability but breed-v1: the per-experiment gate, not the per-condition one.
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(old, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, ["breed-v1"])
+
+      {:ok, a} = Queue.next_task(new, @breed_caps)
+      {:ok, b} = Queue.next_task(new, @breed_caps)
+
+      assert Enum.sort([a.spec.condition, b.spec.condition]) == ["pond-rand", "treatment"]
+      assert a.spec.presetId == "breeder" and a.kind == "run" and b.kind == "run"
+    end
+
+    test "a breed run's verify goes only to a different island with breed-v1", %{dir: dir} do
+      {:ok, 1} = Queue.create_experiment(@breed_spec)
+
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "b"})
+
+      {:ok, t} = Queue.next_task(producer, @breed_caps)
+      upload(dir, t, producer, "p0")
+      {:ok, "done"} = done(t, producer, "p0")
+
+      # Not its producer, and not an island without breed-v1.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(producer, @breed_caps)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, v} = Queue.next_task(b, @breed_caps)
+      assert v.kind == "verify" and v.segment.id == t.segment.id
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, b, v.lease, "verify", "p0", %{})
+    end
+
+    test "a breed segment whose verifier regenerates a different ponds.tsv is verified, and listed as an observation mismatch",
+         %{dir: dir} do
+      {:ok, 1} = Queue.create_experiment(@breed_spec)
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: verifier}} = Queue.join(%{"adapter" => "verifier"})
+
+      {:ok, t} = Queue.next_task(producer, @breed_caps)
+      upload(dir, t, producer, "p0")
+
+      # The producer's donor record, tampered (donor 3, score 999, donorScore 777) after an honest run.
+      files =
+        @observation_files
+        |> Map.new(&{&1, publish_file(dir, t, producer, &1, &1)})
+        |> Map.put(
+          "ponds.tsv",
+          publish_file(dir, t, producer, "ponds.tsv", "donor 3, score 999, donorScore 777\n")
+        )
+
+      {:ok, "done"} = done(t, producer, "p0")
+
+      {:ok, v} = Queue.next_task(verifier, @breed_caps)
+      honest = Map.put(files, "ponds.tsv", String.duplicate("a", 64))
+
+      # The physics digest matches (the donors' cells are in the checkpoint); the donor record does not, and says so.
+      assert {:ok, "verified"} =
+               Queue.complete(v.segment.id, verifier, v.lease, "verify", "p0", %{}, honest)
+
+      [seg] = Queue.experiment("b-breed").segments
+      assert %{status: "verified", observationsVerified: false} = seg
+      assert Map.has_key?(seg.files, "ponds.tsv")
+
+      assert [%{segment: id, producer: "producer", verifier: "verifier"}] =
+               Queue.status().observationMismatches
+
+      assert id == seg.id
+    end
+
+    test "a scheduled breed run needs breed-v1 and interventions-v1 both" do
+      assert {:ok, 1} =
+               Queue.create_experiment(
+                 Map.put(@breed_spec, "interventions", [
+                   %{"step" => 500, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4}
+                 ])
+               )
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "i"})
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(island, @breed_caps)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(island, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, t} = Queue.next_task(island, ["ponds-v1", "breed-v1", "interventions-v1"])
+      assert t.kind == "run" and t.spec.condition == "pond-breed-drive+seed+body"
+      assert [%{"kind" => "lesion"}] = t.spec.interventions
+    end
+
+    test "picked, pressures and branch sent at creation are neither stored nor tasked" do
+      spec =
+        @breed_spec
+        |> Map.put("picked", true)
+        |> Map.put("pressures", [%{"cycle" => 1, "pond" => 0}])
+        |> Map.put("branch", %{"from" => "x", "arm" => "nat"})
+
+      assert {:ok, 1} = Queue.create_experiment(spec)
+
+      stored = Queue.experiment("b-breed").spec
+      for k <- ~w(picked pressures branch), do: refute(Map.has_key?(stored, k))
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "i"})
+      {:ok, t} = Queue.next_task(island, @breed_caps)
+      for k <- [:picked, :pressures, :branch], do: refute(Map.has_key?(t.spec, k))
     end
   end
 
@@ -1378,10 +1635,11 @@ defmodule Coordinator.QueueTest do
       assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, %{})
       assert {:error, "interventions[0] must be an object"} = bad_schedule(%{}, [7])
 
-      assert {:error, "interventions[1]: kind must be \"lesion\" or \"feed\", got \"pick\""} =
+      assert {:error,
+              "interventions[1]: kind must be \"lesion\", \"feed\" or \"sun\", got \"pick\""} =
                bad_schedule(%{}, [@lesion, %{@lesion | "kind" => "pick"}])
 
-      assert {:error, "interventions[0]: kind must be \"lesion\" or \"feed\", got null"} =
+      assert {:error, "interventions[0]: kind must be \"lesion\", \"feed\" or \"sun\", got null"} =
                bad_schedule(%{}, [Map.delete(@lesion, "kind")])
 
       assert {:error, "interventions[0]: a lesion has no key \"amount\"" <> _} =
@@ -1556,7 +1814,8 @@ defmodule Coordinator.QueueTest do
       assert v.spec.interventions == @scheduled["interventions"]
       assert {:ok, "verified"} = Queue.complete(v.segment.id, other, v.lease, "verify", "w0", %{})
 
-      # Never persisted: nothing about the request sticks to the island.
+      # The Queue records a cleaned copy for the operator (`status/0`), but the
+      # island's own view (`island_info/1`) never shows it.
       refute Map.has_key?(Queue.island_info(new), :capabilities)
     end
 
@@ -1854,5 +2113,425 @@ defmodule Coordinator.QueueTest do
       {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
       assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
     end
+  end
+
+  describe "max islands" do
+    @day 86_400_000
+
+    setup %{dir: dir} do
+      saved =
+        for k <- [
+              :max_islands,
+              :island_prune_after_ms,
+              :island_prune_grace_ms,
+              :lease_ms,
+              :island_max_pending
+            ],
+            do: {k, Application.fetch_env(:coordinator, k)}
+
+      Coordinator.TestClock.install(100 * @day)
+      Application.put_env(:coordinator, :island_prune_after_ms, @day)
+
+      on_exit(fn ->
+        Coordinator.TestClock.uninstall()
+
+        for {k, v} <- saved do
+          case v do
+            {:ok, val} -> Application.put_env(:coordinator, k, val)
+            :error -> Application.delete_env(:coordinator, k)
+          end
+        end
+      end)
+
+      %{state: Path.join(dir, "state.bin")}
+    end
+
+    defp ids, do: Queue.status().islands |> Enum.map(& &1.id) |> MapSet.new()
+
+    test "at the cap a stale zero-work island is forgotten" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, %{id: a, token: a_token}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+
+      assert ids() == MapSet.new([c])
+      refute Queue.authenticate(a, a_token)
+      refute b in ids()
+    end
+
+    test "a stale island that did work is kept, and so is one holding a current lease", %{
+      dir: dir
+    } do
+      # A lease longer than the wait, so the holder's attempt is still current.
+      Application.put_env(:coordinator, :lease_ms, 3 * @day)
+      Application.put_env(:coordinator, :max_islands, 3)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+
+      {:ok, %{id: worker}} = Queue.join(%{"adapter" => "W"})
+      {:ok, t} = Queue.next_task(worker)
+      upload(dir, t, worker, "1111111111111111")
+      assert {:ok, _} = done(t, worker, "1111111111111111")
+
+      {:ok, %{id: holder}} = Queue.join(%{"adapter" => "H"})
+      assert {:ok, %{kind: kind}} = Queue.next_task(holder)
+      assert kind in ["run", "verify"]
+
+      {:ok, %{id: idle}} = Queue.join(%{"adapter" => "I"})
+
+      Coordinator.TestClock.advance(2 * @day)
+      {:ok, %{id: fresh}} = Queue.join(%{"adapter" => "F"})
+
+      assert ids() == MapSet.new([worker, holder, fresh])
+      refute idle in ids()
+    end
+
+    test "an island forgotten after it authenticated is idle, not a crash" do
+      Application.put_env(:coordinator, :max_islands, 1)
+      {:ok, %{id: old, token: token}} = Queue.join(%{"adapter" => "O"})
+      assert Queue.authenticate(old, token)
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, _} = Queue.join(%{"adapter" => "N"})
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+      refute Queue.authenticate(old, token)
+    end
+
+    test "a holder whose lease expired is reclaimed at the bound, so a replacement can join" do
+      Application.put_env(:coordinator, :max_islands, 1)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, %{id: holder}} = Queue.join(%{"adapter" => "H"})
+      assert {:ok, %{kind: "run", segment: %{id: seg}}} = Queue.next_task(holder)
+
+      # Gone for three days with its credentials lost: nobody asks for work, so
+      # only the join itself can reclaim the attempt.
+      Coordinator.TestClock.advance(3 * @day)
+      assert {:ok, %{id: fresh}} = Queue.join(%{"adapter" => "F"})
+      assert ids() == MapSet.new([fresh])
+      assert Queue.segment(seg).status == "pending"
+    end
+
+    test "a fresh zero-work island is kept while a staler one can go" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "O"})
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, %{id: recent}} = Queue.join(%{"adapter" => "R"})
+
+      {:ok, %{id: newest}} = Queue.join(%{"adapter" => "N"})
+      assert ids() == MapSet.new([recent, newest])
+      refute old in ids()
+    end
+
+    test "with none older than a day, the least recently seen zero-work island past the grace is forgotten; an island asking for work stays" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      Application.put_env(:coordinator, :island_prune_grace_ms, 1_500)
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      Coordinator.TestClock.advance(1_000)
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      Coordinator.TestClock.advance(1_000)
+      # A waits for work (no experiment, so idle): it is now the most recently seen.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a)
+      Coordinator.TestClock.advance(1_000)
+
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      assert ids() == MapSet.new([a, c])
+      refute b in ids()
+    end
+
+    test "an island seen within the grace is never evicted by another join: the join is refused instead",
+         %{state: state} do
+      Application.put_env(:coordinator, :max_islands, 2)
+      Application.put_env(:coordinator, :island_prune_grace_ms, 600_000)
+      {:ok, %{id: a, token: a_token}} = Queue.join(%{"adapter" => "A"})
+      Coordinator.TestClock.advance(60_000)
+      {:ok, %{id: b, token: b_token}} = Queue.join(%{"adapter" => "B"})
+
+      # A joined a minute ago and has not asked for work yet; B just joined.
+      before = File.read!(state)
+      Coordinator.TestClock.advance(1_000)
+      assert {:error, :full} = Queue.join(%{"adapter" => "C"})
+      assert File.read!(state) == before
+      assert ids() == MapSet.new([a, b])
+      assert Queue.authenticate(a, a_token)
+      assert Queue.authenticate(b, b_token)
+
+      # Past the grace, the least recently seen may go.
+      Coordinator.TestClock.advance(600_000 - 60_000)
+      assert {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      assert ids() == MapSet.new([b, c])
+    end
+
+    test "when every island did work or holds an attempt the join is refused and state.bin is unchanged",
+         %{state: state} do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(a)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(b)
+
+      before = File.read!(state)
+      Coordinator.TestClock.advance(1_000)
+      assert {:error, :full} = Queue.join(%{"adapter" => "C"})
+      assert File.read!(state) == before
+      assert MapSet.size(ids()) == 2
+    end
+  end
+
+  describe "pending cap" do
+    setup do
+      saved = Application.fetch_env(:coordinator, :island_max_pending)
+
+      on_exit(fn ->
+        case saved do
+          {:ok, v} -> Application.put_env(:coordinator, :island_max_pending, v)
+          :error -> Application.delete_env(:coordinator, :island_max_pending)
+        end
+      end)
+    end
+
+    test "an island at the cap is idle until it gives work back; another island still gets work" do
+      Application.put_env(:coordinator, :island_max_pending, 1)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t3"})
+      {:ok, %{id: squat}} = Queue.join(%{"adapter" => "S"})
+      {:ok, %{id: other}} = Queue.join(%{"adapter" => "O"})
+
+      assert {:ok, %{kind: "run"} = held} = Queue.next_task(squat)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(squat)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(other)
+
+      assert :ok = Queue.fail(held.segment.id, squat, held.lease, "giving it back")
+      assert {:ok, %{kind: "run"}} = Queue.next_task(squat)
+    end
+
+    test "nil is no cap" do
+      Application.put_env(:coordinator, :island_max_pending, nil)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "I"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i)
+    end
+  end
+
+  # docs/coordinator-hardening-2026-10-18.md, item 3: each island's most recent
+  # capabilities are recorded for the operator page, bounded, and never gate.
+  describe "recorded capabilities" do
+    @known ~w(breed-v1 interventions-v1 ponds-v1 ponds-v2)
+    @pond_only %{
+      "experiment" => "pond-only",
+      "presetId" => "ponds-small",
+      "conditions" => ["treatment"],
+      "seeds" => [1],
+      "steps" => 1000,
+      "segmentSteps" => 1000,
+      "censusEvery" => 100
+    }
+
+    defp recorded(island), do: Enum.find(Queue.status().islands, &(&1.id == island))
+
+    test "next records the cleaned list on the island" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      refute Map.has_key?(recorded(i), :capabilities)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(i, ["ponds-v1", "Bad!", "zz-v1", "ponds-v1", "-x", "a--b", "9a"])
+
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v1"]
+    end
+
+    test "unknown names are capped at four, in sorted order; known names are always kept" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      unknown = ~w(u-f u-a u-c u-b u-e u-d)
+      {:ok, _} = Queue.next_task(i, unknown ++ Enum.reverse(@known))
+      assert recorded(i).capabilities == Enum.sort(@known ++ ~w(u-a u-b u-c u-d))
+      assert length(recorded(i).capabilities) == 8
+    end
+
+    test "names of 33 to 64 bytes are gated as today but never stored" do
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      long = "p" <> String.duplicate("a", 32)
+      assert byte_size(long) == 33
+      at_limit = String.duplicate("q", 32)
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, [long])
+      refute Map.has_key?(recorded(i), :capabilities)
+
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, [long, at_limit, "ponds-v1"])
+      assert recorded(i).capabilities == [at_limit, "ponds-v1"] |> Enum.sort()
+    end
+
+    test "an empty list removes the record" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1"])
+      assert recorded(i).capabilities == ["ponds-v1"]
+      {:ok, _} = Queue.next_task(i, [])
+      refute Map.has_key?(recorded(i), :capabilities)
+      {:ok, _} = Queue.next_task(i, ["NOPE"])
+      refute Map.has_key?(recorded(i), :capabilities)
+    end
+
+    test "the record is updated at the pending cap too" do
+      saved = Application.fetch_env(:coordinator, :island_max_pending)
+      on_exit(fn -> restore(:island_max_pending, saved) end)
+      Application.put_env(:coordinator, :island_max_pending, 1)
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, ["ponds-v1"])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, ["ponds-v1", "zz-v2"])
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v2"]
+    end
+
+    test "a stored capability never grants a task" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      # Recorded while there is no work at all.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, ["ponds-v1"])
+      assert recorded(i).capabilities == ["ponds-v1"]
+
+      # Only pond work waits: asked without the capability, the island is idle.
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, [])
+      refute Map.has_key?(recorded(i), :capabilities)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i)
+
+      # Asked with it, the same island gets the run.
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, ["ponds-v1"])
+    end
+
+    test "the record survives a Queue restart on the same data dir", %{dir: dir} do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1", "zz-v1"])
+      :ok = stop_supervised(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v1"]
+    end
+
+    test "a state.bin from before loads, serves, and keeps its island records' shape", %{dir: dir} do
+      :ok = stop_supervised(Queue)
+      token = "legacy-token"
+
+      island = %{
+        id: "isl-legacy",
+        token_hash: :crypto.hash(:sha256, token),
+        adapter: "Old GPU",
+        user_agent: "old",
+        metrics_version: 1,
+        joined_at: 0,
+        last_seen: 0,
+        runs: 0,
+        verifies: 0
+      }
+
+      legacy = %{
+        version: 3,
+        experiments: %{},
+        segments: %{},
+        islands: %{"isl-legacy" => island},
+        next_seg: 1
+      }
+
+      state = Path.join(dir, "state.bin")
+      File.write!(state, :erlang.term_to_binary(legacy))
+      start_supervised!({Queue, data_dir: dir})
+
+      assert [listed] = Queue.status().islands
+      refute Map.has_key?(listed, :capabilities)
+      assert Queue.authenticate("isl-legacy", token)
+
+      # An ask that advertises nothing storable keeps the record's keys as they were.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task("isl-legacy", ["NOT-STORED"])
+      persisted = state |> File.read!() |> :erlang.binary_to_term()
+
+      assert Map.keys(persisted.islands["isl-legacy"]) |> Enum.sort() ==
+               Map.keys(island) |> Enum.sort()
+    end
+
+    test "a name is matched whole: no trailing newline, empty string or non-ASCII letter is stored" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+
+      {:ok, _} =
+        Queue.next_task(i, [
+          "zz-v1\n",
+          "",
+          "pond\u00e9-v1",
+          "zz-v1 ",
+          " zz-v1",
+          "ZZ-v1",
+          "zz_v1",
+          "zz-v2"
+        ])
+
+      assert recorded(i).capabilities == ["zz-v2"]
+    end
+
+    test "known_capabilities/0 is every capability constant the Queue gates on" do
+      gated =
+        for [_, name] <-
+              Regex.scan(
+                ~r/^\s*@\w+_capability "([^"]+)"/m,
+                File.read!("lib/coordinator/queue.ex")
+              ),
+            do: name
+
+      assert length(gated) >= 4
+      assert Enum.sort(Queue.known_capabilities()) == Enum.sort(gated)
+    end
+
+    test "a malformed recorded list in state.bin is cleaned on load, never breaking the status",
+         %{dir: dir} do
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      {:ok, %{id: d}} = Queue.join(%{"adapter" => "D"})
+      {:ok, _} = Queue.next_task(a, ["ponds-v1"])
+      :ok = stop_supervised(Queue)
+
+      state = Path.join(dir, "state.bin")
+      s = state |> File.read!() |> :erlang.binary_to_term()
+      oversized = for n <- 1..1000, do: "zz-#{n}"
+
+      s =
+        s
+        |> put_in([:islands, a, :capabilities], [%{}, "ponds-v1", 7])
+        |> put_in([:islands, b, :capabilities], ["ponds-v1" | "bad"])
+        |> put_in([:islands, c, :capabilities], ["breed-v1" | oversized])
+        |> put_in([:islands, d, :capabilities], "ponds-v1")
+
+      File.write!(state, :erlang.term_to_binary(s))
+      start_supervised!({Queue, data_dir: dir})
+
+      assert recorded(a).capabilities == ["ponds-v1"]
+      refute Map.has_key?(recorded(b), :capabilities)
+      assert recorded(c).capabilities == ["breed-v1" | Enum.take(Enum.sort(oversized), 4)]
+      refute Map.has_key?(recorded(d), :capabilities)
+
+      # The admin status still encodes.
+      assert %{} =
+               Queue.status()
+               |> CoordinatorWeb.OpsStatus.extend()
+               |> Jason.encode!()
+               |> Jason.decode!()
+    end
+
+    test "the public status keys are unchanged" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1"])
+
+      assert Queue.public_status() |> Map.keys() |> Enum.sort() == [
+               :activeIslands,
+               :counts,
+               :deviceTypes
+             ]
+
+      refute inspect(Queue.public_status()) =~ "ponds-v1"
+    end
+
+    defp restore(key, {:ok, v}), do: Application.put_env(:coordinator, key, v)
+    defp restore(key, :error), do: Application.delete_env(:coordinator, key)
   end
 end

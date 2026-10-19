@@ -1,0 +1,411 @@
+{
+  "experiments": {
+    "m5-spots": {
+      "experiment": "m5-spots",
+      "presetId": "spots",
+      "conditions": [
+        "treatment",
+        "neutral"
+      ],
+      "seeds": [
+        1,
+        2
+      ],
+      "steps": 200000,
+      "segmentSteps": 50000,
+      "censusEvery": 1000,
+      "deepEvery": 10,
+      "verifyFraction": 0.1,
+      "metricsVersion": 2
+    },
+    "breed-trial": {
+      "experiment": "breed-trial",
+      "presetId": "breeder",
+      "conditions": [
+        "treatment"
+      ],
+      "seeds": [
+        1,
+        2
+      ],
+      "steps": 50000,
+      "segmentSteps": 10000,
+      "censusEvery": 1000,
+      "deepEvery": 10,
+      "verifyFraction": 0.1,
+      "metricsVersion": 2
+    },
+    "pond-mix": {
+      "experiment": "pond-mix",
+      "presetId": "ponds-small",
+      "conditions": [
+        "pond-rand",
+        "pond-breed-mass"
+      ],
+      "seeds": [
+        7
+      ],
+      "steps": 20000,
+      "segmentSteps": 5000,
+      "censusEvery": 1000,
+      "deepEvery": 10,
+      "verifyFraction": 0.1,
+      "metricsVersion": 2
+    },
+    "wound-feed": {
+      "experiment": "wound-feed",
+      "presetId": "spots",
+      "conditions": [
+        "treatment"
+      ],
+      "seeds": [
+        3
+      ],
+      "steps": 40000,
+      "segmentSteps": 10000,
+      "censusEvery": 1000,
+      "deepEvery": 10,
+      "verifyFraction": 0.1,
+      "metricsVersion": 2,
+      "interventions": [
+        {
+          "step": 10000,
+          "kind": "lesion",
+          "x": 128,
+          "y": 128,
+          "r": 12
+        },
+        {
+          "step": 20000,
+          "kind": "feed",
+          "x": 64,
+          "y": 64,
+          "r": 16,
+          "amount": 4096
+        }
+      ]
+    },
+    "commons": {
+      "experiment": "commons",
+      "presetId": "wild-storm-large",
+      "conditions": [
+        "treatment"
+      ],
+      "seeds": [
+        1
+      ],
+      "steps": 47841280,
+      "segmentSteps": 131072,
+      "censusEvery": 1024,
+      "deepEvery": 10,
+      "verifyFraction": 1.0,
+      "metricsVersion": 2,
+      "interventions": [
+        {
+          "step": 0,
+          "kind": "feed",
+          "x": 256,
+          "y": 256,
+          "r": 255,
+          "amount": 16
+        }
+      ],
+      "garden": true
+    }
+  },
+  "counts": {
+    "done": 12,
+    "verified": 8,
+    "diverged": 1,
+    "failed": 1,
+    "blocked": 4,
+    "assigned": 3,
+    "pending": 374
+  },
+  "runs": [
+    {
+      "run": "breed-trial/breeder/treatment/seed-1",
+      "segments": 5,
+      "done": 2,
+      "verified": 1,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "breed-trial/breeder/treatment/seed-2",
+      "segments": 5,
+      "done": 0,
+      "verified": 0,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "commons/wild-storm-large/treatment/seed-1",
+      "segments": 365,
+      "done": 3,
+      "verified": 2,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "m5-spots/spots/neutral/seed-1",
+      "segments": 4,
+      "done": 4,
+      "verified": 1,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "m5-spots/spots/neutral/seed-2",
+      "segments": 4,
+      "done": 3,
+      "verified": 1,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "m5-spots/spots/treatment/seed-1",
+      "segments": 4,
+      "done": 1,
+      "verified": 0,
+      "diverged": 1,
+      "failed": 0,
+      "blocked": 2
+    },
+    {
+      "run": "m5-spots/spots/treatment/seed-2",
+      "segments": 4,
+      "done": 4,
+      "verified": 2,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "pond-mix/ponds-small/pond-breed-mass/seed-7",
+      "segments": 4,
+      "done": 0,
+      "verified": 0,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "pond-mix/ponds-small/pond-rand/seed-7",
+      "segments": 4,
+      "done": 2,
+      "verified": 1,
+      "diverged": 0,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "run": "wound-feed/spots/treatment/seed-3",
+      "segments": 4,
+      "done": 1,
+      "verified": 0,
+      "diverged": 0,
+      "failed": 1,
+      "blocked": 2
+    }
+  ],
+  "islands": [
+    {
+      "id": "isl-Ab3dE9fGh1Jk",
+      "adapter": "apple metal-3 Apple M2",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "metrics_version": 2,
+      "joined_at": 1792794600000,
+      "last_seen": 1792799998000,
+      "runs": 9,
+      "verifies": 4,
+      "capabilities": [
+        "breed-v1",
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2"
+      ],
+      "stale": false
+    },
+    {
+      "id": "isl-Qw8eRt5yUi2O",
+      "adapter": "wgpu Apple M1 Pro",
+      "user_agent": "deno 2.5.4 (aarch64-apple-darwin)",
+      "metrics_version": 2,
+      "joined_at": 1792713600000,
+      "last_seen": 1792799996000,
+      "runs": 14,
+      "verifies": 6,
+      "capabilities": [
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2"
+      ],
+      "stale": false,
+      "garden": true
+    },
+    {
+      "id": "isl-Zx7cVb4nMl0K",
+      "adapter": "wgpu Apple M1 Pro",
+      "user_agent": "deno 2.5.4 (aarch64-apple-darwin)",
+      "metrics_version": 2,
+      "joined_at": 1792710000000,
+      "last_seen": 1792792800000,
+      "runs": 3,
+      "verifies": 1,
+      "capabilities": [
+        "breed-v1",
+        "interventions-v1",
+        "ponds-v1",
+        "ponds-v2",
+        "zz-preview"
+      ],
+      "stale": true,
+      "garden": true
+    },
+    {
+      "id": "isl-Pp1oO2iI3uU4",
+      "adapter": "nvidia ampere NVIDIA GeForce RTX 3070",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0",
+      "metrics_version": 2,
+      "joined_at": 1792796400000,
+      "last_seen": 1792799999000,
+      "runs": 2,
+      "verifies": 0,
+      "stale": false
+    }
+  ],
+  "divergences": [
+    {
+      "segment": "seg-118",
+      "run": "m5-spots/spots/treatment/seed-1",
+      "index": 1,
+      "a": "apple metal-3 Apple M2",
+      "b": "wgpu Apple M1 Pro",
+      "hash_a": "3f9a0c71d2e4b856",
+      "hash_b": "3f9a0c71d2e4b857"
+    }
+  ],
+  "failures": [
+    {
+      "segment": "seg-141",
+      "run": "wound-feed/spots/treatment/seed-3",
+      "index": 1,
+      "kind": "run",
+      "island": "isl-Qw8eRt5yUi2O",
+      "by": "wgpu Apple M1 Pro",
+      "failedAt": 1792799400000,
+      "reason": "the feed at t=20000 failed: feed refused: 128614400 quanta would take the world past MATTER_MAX (67108864); it holds 2621440"
+    }
+  ],
+  "observationMismatches": [
+    {
+      "segment": "seg-131",
+      "run": "breed-trial/breeder/treatment/seed-1",
+      "index": 0,
+      "producer": "apple metal-3 Apple M2",
+      "verifier": "wgpu Apple M1 Pro"
+    }
+  ],
+  "devices": [
+    "apple metal-3 Apple M2",
+    "wgpu Apple M1 Pro",
+    "nvidia ampere NVIDIA GeForce RTX 3070"
+  ],
+  "limits": {
+    "islands": 4,
+    "maxIslands": 20000,
+    "islandMaxPending": 4,
+    "islandPruneAfterMs": 86400000,
+    "islandPruneGraceMs": 600000,
+    "budgets": {
+      "join": {
+        "limit": null,
+        "windowMs": 3600000
+      },
+      "next": {
+        "limit": 120,
+        "windowMs": 60000
+      },
+      "segment": {
+        "limit": 600,
+        "windowMs": 60000
+      },
+      "requests": {
+        "limit": null,
+        "windowMs": 60000
+      }
+    },
+    "gardenIslandToken": true
+  },
+  "capabilityNeeds": {
+    "m5-spots": {
+      "treatment": [],
+      "neutral": []
+    },
+    "breed-trial": {
+      "treatment": [
+        "breed-v1",
+        "ponds-v1"
+      ]
+    },
+    "pond-mix": {
+      "pond-rand": [
+        "ponds-v1"
+      ],
+      "pond-breed-mass": [
+        "breed-v1",
+        "ponds-v1"
+      ]
+    },
+    "wound-feed": {
+      "treatment": [
+        "interventions-v1"
+      ]
+    },
+    "commons": {
+      "treatment": [
+        "interventions-v1"
+      ]
+    }
+  },
+  "islandCapabilities": {
+    "byCapability": {
+      "breed-v1": {
+        "islands": 2,
+        "live": 1,
+        "known": true
+      },
+      "interventions-v1": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "ponds-v1": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "ponds-v2": {
+        "islands": 3,
+        "live": 2,
+        "known": true
+      },
+      "zz-preview": {
+        "islands": 1,
+        "live": 0,
+        "known": false
+      }
+    },
+    "omittedNames": 0,
+    "none": {
+      "islands": 1,
+      "live": 1
+    }
+  }
+}

@@ -64,15 +64,14 @@ test("lab worker feeds and drains exactly, logs it, keeps the ledger exact, and 
       await wait("loaded");
       const restored = await stats(2);
 
-      // Refused: an amount out of range. The world stays usable and nothing is logged.
+      // Refused: an amount out of range. A refusal, not a failure: the world stays usable and nothing is logged.
       send({ type: "feed", x: 10, y: 10, r: 4, amount: 100_000 });
-      const deadline = performance.now() + 10_000;
-      while (!errors.length && performance.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 10));
-      const refusal = errors.join(" | ");
+      const refusal = (await wait("refused", (m) => m.request === "feed")).message;
+      const refusalErrors = errors;
       errors = [];
       send({ type: "step", count: 100 });
       const afterRefusal = await wait("stats", (m) => m.step === 200);
-      return { before, afterFeed, afterDrain, s0, s1, s2, s3, later, replay, restored, refusal, afterRefusal, saved: saved.view.checkpoints.map((c) => c.step) };
+      return { before, afterFeed, afterDrain, s0, s1, s2, s3, later, replay, restored, refusal, refusalErrors, afterRefusal, saved: saved.view.checkpoints.map((c) => c.step) };
     } finally {
       worker.terminate();
     }
@@ -102,6 +101,7 @@ test("lab worker feeds and drains exactly, logs it, keeps the ledger exact, and 
   expect([result.restored.fed, result.restored.feeds, result.restored.matterDelta, result.restored.residual]).toEqual([String(fed.matter + drained.matter), 2, "0", "0"]);
   // A refused feed says why, logs nothing, and the world steps on, exact.
   expect(result.refusal).toMatch(/feed amount must be a non-zero integer/);
+  expect(result.refusalErrors).toEqual([]);
   expect([result.afterRefusal.feeds, result.afterRefusal.matterDelta, result.afterRefusal.residual]).toEqual([2, "0", "0"]);
 });
 
@@ -144,9 +144,9 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   await expect(page.locator("#k-resid")).toHaveText("0");
   await page.screenshot({ path: "test-results/lab-feed.png", fullPage: false });
   const pressed = () => page.locator("#tools button:not([hidden])").evaluateAll((bs) => bs.map((b) => `${b.textContent}:${b.getAttribute("aria-pressed")}`).join(" "));
-  expect(await pressed()).toBe("Look:false Wound:false Feed:true Drain:false Move:false");
+  expect(await pressed()).toBe("Look:false Wound:false Feed:true Drain:false Sun:false Move:false");
   await page.getByRole("button", { name: "Look", exact: true }).click();
-  expect(await pressed()).toBe("Look:true Wound:false Feed:false Drain:false Move:false");
+  expect(await pressed()).toBe("Look:true Wound:false Feed:false Drain:false Sun:false Move:false");
   await expect(page.locator("#feed-hint")).toBeHidden();
   await expect(page.locator("#amount")).toBeDisabled();
   await expect(page.locator("#radius")).toBeDisabled();
@@ -217,6 +217,7 @@ test("a jump back re-applies the logged feeds and lesions, and an exported fed w
       await wait("loaded");
       await wait("loaded");
       const again = await wait("stats", (m) => m.step === 300);
+      const refusal = (await wait("refused", (m) => m.request === "feed")).message;
       const againBytes = await exported();
 
       // The exported fed world, imported as a file with no manifest: it still carries what it was fed.
@@ -232,15 +233,16 @@ test("a jump back re-applies the logged feeds and lesions, and an exported fed w
         imported: [imported.fed, imported.feeds, imported.matterDelta, imported.residual],
         liveBytes: Array.from(new Uint8Array(liveBytes)),
         jumpedBytes: Array.from(new Uint8Array(jumpedBytes)),
+        refusal,
         errors,
       };
     } finally {
       worker.terminate();
     }
   });
-  // The only error is the refused manual feed.
-  expect(result.errors.length).toBe(1);
-  expect(result.errors[0]).toMatch(/feed amount must be a non-zero integer/);
+  // The manual feed is refused, as a refusal rather than an error; there is no error at all.
+  expect(result.refusal).toMatch(/feed amount must be a non-zero integer/);
+  expect(result.errors).toEqual([]);
   const live = decodeArtifact(new Uint8Array(result.liveBytes)), jumped = decodeArtifact(new Uint8Array(result.jumpedBytes));
   const again = decodeArtifact(new Uint8Array(result.againBytes));
   expect(stateHash(again.state)).toBe(stateHash(live.state));

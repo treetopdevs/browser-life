@@ -3,8 +3,11 @@
 // the draws keyed on (seed, birth step, birth cell). Every genome in a run therefore follows from its
 // roots (the initial world, or genomes.tsv), mutations.tsv and the config, without replay.
 // Tracker births are attribution, not copying, and are reported apart from genotype descent.
+// Pond-cycle runs (cfg.pondPeriod): descent is still exactly mutations.tsv (a packet copies every genome
+// word and the cycle mints no id); the dossier adds each edge's pond route from ponds.tsv and leaves out
+// tracker births that link across a cycle's grind (docs/lineage-inspector.md section 8, tools/lib/pond-descent.ts).
 // Pure: bundle files arrive as line iterables, so vitest can exercise it directly.
-import { G, PRESETS, RULE_VERSION, genomeFromHex, initWorld, lowbias32, m3World, stateHash, type WorldConfig, type WorldState } from "@bl/schema";
+import { G, PRESETS, RULE_VERSION, cellCount, genomeFromHex, initWorld, lowbias32, m3World, stateHash, worldW, type WorldConfig, type WorldState } from "@bl/schema";
 import {
   ancestry,
   applyMutation,
@@ -22,6 +25,8 @@ import {
   type Mutation,
   type Probe,
 } from "@bl/lineage";
+
+import { birthAcrossCycle, loadRouteRows, pondIndex, pondRoute, readPickLogStream, readPondIndex, routeKeys, type PondRoute } from "./pond-descent.ts";
 
 // The genotype core moved to @bl/lineage (shared with the lab); re-exported so existing callers keep working.
 export * from "@bl/lineage";
@@ -74,6 +79,37 @@ export async function readMutationLog(lines: AsyncIterable<string>): Promise<Mut
  * when the run did not start at step 0 or its start state cannot be rebuilt here.
  */
 export function initialGenomes(manifest: any): Map<Key, Uint32Array> | null {
+  const s = initialWorld(manifest);
+  return s ? genomesOf(s, s.cfg) : null;
+}
+
+/** Each lineage of the initial world (accepted as for `initialGenomes`) and the tiles that hold it; null when it cannot be rebuilt. */
+export function initialTiles(manifest: any): Map<Key, number[]> | null {
+  const s = initialWorld(manifest);
+  if (!s) return null;
+  const cfg = s.cfg, n = cellCount(cfg), W = worldW(cfg);
+  const tiles = new Map<Key, Set<number>>();
+  for (let i = 0; i < n; i++) {
+    const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
+    if ((hi | lo) === 0) continue;
+    const t = Math.floor(Math.floor(i / W) / cfg.tileH) * cfg.tilesX + Math.floor((i % W) / cfg.tileW);
+    const k = `${hi}:${lo}`;
+    (tiles.get(k) ?? tiles.set(k, new Set()).get(k)!).add(t);
+  }
+  return new Map([...tiles].map(([k, v]) => [k, [...v].sort((a, b) => a - b)]));
+}
+
+const initialWorlds = new WeakMap<object, WorldState | null>();
+
+/** The initial world rebuilt as the runner builds it, or null (not a step-0 bundle, or not at the manifest's initHash). Built once per manifest object. */
+export function initialWorld(manifest: any): WorldState | null {
+  if (manifest && typeof manifest === "object" && initialWorlds.has(manifest)) return initialWorlds.get(manifest)!;
+  const s = buildInitialWorld(manifest);
+  if (manifest && typeof manifest === "object") initialWorlds.set(manifest, s);
+  return s;
+}
+
+function buildInitialWorld(manifest: any): WorldState | null {
   const cfg = manifest.cfg as WorldConfig, spec = manifest.spec ?? {};
   if ((manifest.startStep ?? 0) !== 0 || !manifest.initHash || !manifest.init) return null;
   const preset = PRESETS.find((p) => p.id === spec.presetId);
@@ -86,7 +122,7 @@ export function initialGenomes(manifest: any): Map<Key, Uint32Array> | null {
   } catch {
     return null;
   }
-  return stateHash(s) === manifest.initHash ? genomesOf(s, cfg) : null;
+  return stateHash(s) === manifest.initHash ? s : null;
 }
 
 
@@ -230,8 +266,14 @@ export interface Dossier {
   offspring: { children: { key: Key; minted: number; peakCells: number; firstSeen: number | null }[]; childCount: number; childrenCensused: number; descendants: number };
   /** Per census: living cells, cells of the ancestry line (any chain member), cells of the subject's clade. */
   population: { steps: number[]; living: number[]; line: number[]; clade: number[] };
-  /** Tracker births touching the subject: attribution, not copying (reset, 2026-09-29). */
-  trackerBirths: { fission: number; budding: number; asParent: number; asChild: number; rows: Record<string, string>[] } | null;
+  /**
+   * Tracker births touching the subject: attribution, not copying (reset, 2026-09-29). In a pond-cycle run the rows at
+   * the first census after a transforming boundary link across the grind; they are left out and counted in
+   * `excludedAcrossCycle` (0 elsewhere).
+   */
+  trackerBirths: { fission: number; budding: number; asParent: number; asChild: number; excludedAcrossCycle: number; rows: Record<string, string>[] } | null;
+  /** Pond-cycle runs only (cfg.pondPeriod): each chain edge's route through ponds.tsv (docs/lineage-inspector.md section 8). null otherwise. */
+  pond: PondRoute | null;
   gaps: string[];
 }
 
@@ -243,6 +285,11 @@ export interface DossierOptions {
   step?: number;
   /** Most tracker-birth rows to keep. */
   birthRows?: number;
+  /**
+   * Pond-cycle runs only: a node (pond, cycle) the subject must be present in, such as the donor node of a packet
+   * whose dominant lineage the subject is; the pond route then also walks from there back to the subject's birth.
+   */
+  pondAnchor?: { pond: number; cycle: number };
 }
 
 const need = (src: BundleSource, file: string): AsyncIterable<string> => {
@@ -252,10 +299,11 @@ const need = (src: BundleSource, file: string): AsyncIterable<string> => {
 };
 
 /** Every census in series.jsonl, empty ones included, with its lineage count (null if unrecorded); null when the file is absent. */
-async function seriesCensuses(src: BundleSource): Promise<{ steps: number[]; lineages: (number | null)[] } | null> {
+async function seriesCensuses(src: BundleSource): Promise<{ steps: number[]; lineages: (number | null)[]; afterCycle: Set<number> } | null> {
   const l = src.open("series.jsonl");
   if (!l) return null;
   const steps: number[] = [], lineages: (number | null)[] = [];
+  const afterCycle = new Set<number>();
   for await (const line of l) {
     if (!line) continue;
     const r = JSON.parse(line);
@@ -263,8 +311,9 @@ async function seriesCensuses(src: BundleSource): Promise<{ steps: number[]; lin
     if (!Number.isSafeInteger(r.step) || r.step <= prev) throw new Error(`${src.dir}: series.jsonl census step ${r.step} does not follow ${prev}`);
     steps.push(r.step);
     lineages.push(Number.isSafeInteger(r.lineages) ? r.lineages : null);
+    if (r.afterCycle === true) afterCycle.add(r.step);
   }
-  return { steps, lineages };
+  return { steps, lineages, afterCycle };
 }
 
 export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: DossierOptions = {}): Promise<Dossier> {
@@ -276,6 +325,8 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
   if (opts.step !== undefined && !(Number.isSafeInteger(opts.step) && opts.step >= 0)) throw new Error(`census step must be a non-negative integer, got ${opts.step}`);
   if (ruleStep !== undefined && opts.step !== undefined && ruleStep !== opts.step) throw new Error(`the rule's census step ${ruleStep} and options.step ${opts.step} disagree`);
   const want = ruleStep ?? opts.step;
+  const pondRun = cfg.pondPeriod !== undefined;
+  if (opts.pondAnchor && !pondRun) throw new Error(`${src.dir}: a pond anchor needs a pond-cycle run (cfg.pondPeriod)`);
   const gaps: string[] = [];
   const files = ["manifest.json", "mutations.tsv", "lineages.tsv"];
 
@@ -376,6 +427,47 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
     checked++;
   }
 
+  // Pond-cycle runs: where each edge's genome travelled, from the run's own pond records. A contradiction refuses
+  // the dossier (as a genomes.tsv mismatch does); a missing record marks only the edges that need it. ponds.tsv is
+  // streamed twice: donors only for the walk, then the full rows of the boundaries the walks pass.
+  let pond: PondRoute | null = null;
+  if (pondRun) {
+    const arm = cfg.pondArm;
+    const pl = src.open("ponds.tsv");
+    if (pl) files.push("ponds.tsv");
+    const index = pl ? await readPondIndex(pl, cfg, { startStep }) : pondIndex(null, cfg, { startStep });
+    if (!pl) gaps.push(arm === "cont" ? "ponds.tsv absent: arm cont moves nothing between ponds, so no route needs it" : "ponds.tsv absent: edges that cross a pond boundary have no recorded route");
+    if (index.torn !== null) gaps.push(`ponds.tsv line ${index.torn} is a torn last append (cut short) and was not read`);
+    if (index.incomplete.length) gaps.push(`ponds.tsv cycle(s) ${index.incomplete.join(", ")} lack rows for some ponds (a torn append): routes through those rows are not recorded`);
+    const kl = src.open("picks.jsonl");
+    let picks: { lines: Awaited<ReturnType<typeof readPickLogStream>>["picks"]; torn: boolean } | undefined;
+    if (kl) {
+      files.push("picks.jsonl");
+      const r = await readPickLogStream(kl);
+      picks = { lines: r.picks, torn: r.torn };
+      if (r.torn) gaps.push("picks.jsonl ends in a torn line, which was not read");
+    } else if (m.picks) gaps.push("picks.jsonl absent from a picked run: the donors in ponds.tsv are not cross-checked and crossings carry no picker");
+    const routeOpts = { anchor: opts.pondAnchor, initialTiles: rootHi === 0 ? initialTiles(m) : null };
+    try {
+      if (pl) await loadRouteRows(index, src.open("ponds.tsv")!, routeKeys(chain, cfg, index, routeOpts));
+      pond = pondRoute(chain, cfg, index, { ...routeOpts, picks });
+    } catch (e) {
+      throw new Error(`${src.dir}: ${(e as Error).message} (refusing to report)`);
+    }
+    for (const e of pond.edges) if (e.status === "not recorded") gaps.push(`pond route of ${e.parent} -> ${e.child ?? `anchor (pond ${e.start.pond}, cycle ${e.start.cycle})`} not recorded: ${e.reason}`);
+    const cx = pond.crossings;
+    if (cx.notExcluded || cx.notRecorded)
+      gaps.push(
+        `of ${cx.named + cx.notExcluded + cx.notRecorded} packet crossing(s) on the routes, ${cx.named} name the parent as the packet's dominant lineage; ${cx.notExcluded} held two or more lineages with another dominant (the record does not exclude the parent, nor show it)${cx.notRecorded ? `, and ${cx.notRecorded} have no packet columns in ponds.tsv (the parent's presence was not checked)` : ""}`,
+      );
+    if (pond.picks) {
+      const k = pond.picks;
+      if (k.partial || k.unchecked) gaps.push(`picks.jsonl: ${k.partial} boundary(ies) checked only on the rows ponds.tsv holds, ${k.unchecked} with no rows in this bundle`);
+      if (k.unlogged) gaps.push(`ponds.tsv has ${k.unlogged} boundary(ies) the pick log lacks (a picked run logs every boundary): their donors are not cross-checked`);
+    }
+    gaps.push("pond occupancy at a census (lineages.tsv is world-wide), spread across ponds and anything between boundaries are not recorded");
+  }
+
   // Offspring and siblings from the parent map; clade membership for the census pass.
   const desc = descendants(subject, log.parent);
   const kids: Key[] = [];
@@ -468,16 +560,27 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
   const bl = src.open("births.tsv");
   if (bl) {
     files.push("births.tsv");
-    trackerBirths = { fission: 0, budding: 0, asParent: 0, asChild: 0, rows: [] };
-    for await (const r of tsvRows("births.tsv", bl, ["kind", "parentLineage", "childLineage"])) {
+    trackerBirths = { fission: 0, budding: 0, asParent: 0, asChild: 0, excludedAcrossCycle: 0, rows: [] };
+    const across = pondRun && pond ? (step: number) => birthAcrossCycle(step, pond!.arm, pond!.period, m.spec?.censusEvery, startStep, grid?.afterCycle ?? null) : () => false;
+    if (pond && pond.arm !== "cont" && !grid && !(Number.isSafeInteger(m.spec?.censusEvery) && m.spec.censusEvery > 0))
+      throw new Error(`${src.dir}: a pond run without series.jsonl or spec.censusEvery: tracker births across a cycle cannot be told apart`);
+    for await (const r of tsvRows("births.tsv", bl, pondRun ? ["step", "kind", "parentLineage", "childLineage"] : ["kind", "parentLineage", "childLineage"])) {
       const asParent = r.parentLineage === subject, asChild = r.childLineage === subject;
       if (!asParent && !asChild) continue;
+      if (across(Number(r.step))) {
+        trackerBirths.excludedAcrossCycle++;
+        continue;
+      }
       if (r.kind === "fission") trackerBirths.fission++;
       else if (r.kind === "budding") trackerBirths.budding++;
       if (asParent) trackerBirths.asParent++;
       if (asChild) trackerBirths.asChild++;
       if (trackerBirths.rows.length < (opts.birthRows ?? 50)) trackerBirths.rows.push(r);
     }
+    if (pond && pond.arm !== "cont")
+      gaps.push(
+        `tracker births at the first census after each pond boundary link across the cycle's grind and are left out (${trackerBirths.excludedAcrossCycle} touching the subject)${pond.arm === "nat" || pond.arm === "shuf" ? "; in arm " + pond.arm + " this is conservative, since surviving ponds were copied, not ground" : ""}`,
+      );
   } else gaps.push("births.tsv absent: no tracker-attributed births");
 
   // Probe the chain in order, keeping only summaries: each probe's grid outputs are ~400 KB.
@@ -516,6 +619,10 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
 
   const total = atRows.reduce((s, r) => s + r[1], 0);
   const cellsAtStep = atRows.find((r) => r[0] === subject)?.[1] ?? 0;
+  // The census at a boundary reads the same pre-cycle state as that boundary's ponds.tsv rows, and lineages.tsv lists
+  // every lineage id held by any cell (no mass floor), so a packet's dominant lineage must be in it there.
+  if (opts.pondAnchor && cellsAtStep === 0 && atStep === opts.pondAnchor.cycle * cfg.pondPeriod!)
+    throw new Error(`${src.dir}: ${subject} has no row in lineages.tsv at step ${atStep}, yet the pond anchor (pond ${opts.pondAnchor.pond}, cycle ${opts.pondAnchor.cycle}) names it as a packet's dominant lineage measured in that same state: the records contradict each other (refusing to report)`);
   const subjNode = nodes[nodes.length - 1];
   return {
     kind: "genotype",
@@ -556,6 +663,7 @@ export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: D
     },
     population: pop,
     trackerBirths,
+    pond,
     gaps,
   };
 }

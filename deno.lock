@@ -18,6 +18,7 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:@axe-core/playwright@4.13.0",
         "npm:@playwright/test@^1.63.0",
         "npm:@types/node@22",
         "npm:@webgpu/types@~0.1.74",

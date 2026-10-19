@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype status</title>
+<meta name="description" content="HTML twin of docs/prototypes-2026-10-18.md: what each app in browser-life does on main at 5e7bda5c, how to try it locally, what is not built and what waits on the user.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --field: oklch(12% 0.01 160);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; overflow-wrap: anywhere; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; margin: 10px 0; }
+pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; font-size: 13px; }
+.wrap { max-width: 920px; margin: 0 auto; }
+header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+header.top > div { min-width: 0; flex: 1 1 320px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 1px solid var(--control-line); border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+nav.toc { margin: 18px 0 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); }
+nav.toc h2 { font-size: 13px; margin: 0 0 6px; color: var(--soft); letter-spacing: .06em; text-transform: uppercase; }
+nav.toc ul { margin: 0; padding-left: 0; list-style: none; columns: 2 220px; column-gap: 24px; }
+nav.toc li { font-size: 14px; }
+section { margin: 36px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 8px; scroll-margin-top: 12px; }
+p, li { max-width: 76ch; }
+li + li { margin-top: 4px; }
+ol, ul { padding-left: 22px; }
+strong { font-weight: 700; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); margin: 10px 0; }
+table { border-collapse: collapse; font-size: 13px; min-width: 760px; width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td code { overflow-wrap: anywhere; }
+th { font-weight: 600; color: var(--muted); }
+th:nth-child(1), td:nth-child(1) { width: 44%; }
+th:nth-child(2), td:nth-child(2) { width: 16%; }
+tr:last-child td { border-bottom: 0; }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (max-width: 640px) { body { font-size: 14px; } .lede { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Status · 18 October 2026</p>
+    <h1>Prototype status</h1>
+    <p class="lede">What each app does on <code>origin/main</code> at <code>5e7bda5c</code> (PR <a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>), how to try it on your own machine, what is not built and <strong>what waits on you</strong>. HTML twin of <a href="prototypes-2026-10-18.md">prototypes-2026-10-18.md</a>, beside this page in the repo's <code>docs/</code>.</p>
+    <ul class="chips"><li class="chip note">Nothing here is deployed</li><li class="chip">Claims cite a merged PR, a doc on main or a D-number</li><li class="chip">Every command checked: Ran, Read or Needs data</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme">Night</button>
+</header>
+
+<nav class="toc" aria-label="On this page">
+<h2>On this page</h2>
+<ul><li><a href="#what-waits-on-you">What waits on you</a></li><li><a href="#before-anything-else">Before anything else</a></li><li><a href="#lab">1. Lab</a></li><li><a href="#public-site">2. Public site</a></li><li><a href="#archipelago">3. Archipelago</a></li><li><a href="#shared-garden">4. Shared garden</a></li><li><a href="#ai-naturalist">5. AI naturalist</a></li><li><a href="#evolution-game">6. Evolution game</a></li><li><a href="#research-instruments">7. Research instruments</a></li><li><a href="#how-this-page-was-written-rules-fixed-before-writing-2026-10-18">How this page was written (rules fixed before writing, 2026-10-18)</a></li><li><a href="#how-each-command-was-checked">How each command was checked</a></li></ul>
+</nav>
+
+<main>
+<section>
+<h2 id="what-waits-on-you">What waits on you</h2>
+<ol type="1">
+<li><strong>Deploy.</strong> Nothing merged in this run is deployed (D-04, D-18). The last recorded deploy is <code>b9b7bc36</code> (16 Oct), which has no garden code; the coordinator image on the host may be older, so confirm there (<code>docs/garden-opening-2026-10-18.md</code>, section 1 and row 2).</li>
+<li><strong>The proxy fix (D-17).</strong> Apply the Caddy <code>trusted_proxies</code> change and set <code>BL_TRUST_FORWARDED_FOR=1</code> on the live host (<code>deploy/README.md</code>, "Client addresses, abuse limits and CORS"). Until then every visitor reaches the coordinator as one address, so the per-address join budget stays off in production and the garden's letter and food budgets are shared by the whole site (<a href="https://github.com/treetopdevs/browser-life/pull/28">#28</a> decision 1, <a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a>).</li>
+<li><strong>Opening the commons.</strong> The founding parameters, the island token, who tends it first and when to link <code>/garden/</code> are all "Your decision" rows in the opening checklist (<code>docs/garden-opening-2026-10-18.md</code>, rows 3 to 6, with recommended defaults). The script founds with food off (<code>food=false</code>, no flag for it): turning food on means editing the checklist's section 3 and the script's constants together, only after item 2, and a garden's food rule is fixed at founding (<a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a> decision 1, D-24; checklist section 3). With <code>BL_ADMIN_TOKEN</code> exported in that shell only, <code>bin/garden-found --coordinator URL --apply --confirm-coordinator URL</code> founds it after you type <code>found commons on &lt;host&gt;</code> (checklist section 4, "Opening-day runbook"). <a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>'s one open call: exit 3 when a different commons already exists.</li>
+<li><strong>Paid calls.</strong> Bell v1 part C, where a model reads the twins, has not run: $7 to $11, up to $14 to $22 with retries, to be confirmed against the price sheet (<a href="https://github.com/treetopdevs/browser-life/pull/22">#22</a>, <a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a>); D-08 earlier put the same model calls at about $10 to $15. D-08's "Not taken" list also holds transition-hunt Stage 1 on AWS (about $38, $48 cap), the upper-bound <code>RULE_VERSION</code> 1 world (about $2 to $3) and the opportunity reset (about $1).</li>
+<li><strong>The proposer bench.</strong> Planned, never approved or run. It needs a person's <code>deno run -A --no-lock tools/bench.ts approve experiments/naturalist/bench-v0-plan.json --by "&lt;your name&gt;"</code>, then <code>run</code> (<a href="https://github.com/treetopdevs/browser-life/pull/49">#49</a>, D-26). It runs on this Mac's GPU, about 21 to 43 minutes, with a 240-minute cap.</li>
+<li><strong>The gene line.</strong> The gene v2 peer session is stalled with uncommitted kernel edits; what happens to them is yours (D-03, D-28). So is the next gene version: (a) genes that do or (b) genes that permit, plus a <code>kGene</code> 0 null (<code>docs/evolution-game-brainstorm-2026-10-16.md</code>, Gene v1 readout). Its section 9 lists five decisions for you; D-08 took reversible defaults (a sibling of the lab, nothing declared beyond Stage 0 and the gene line, pressures and donor picks, the solo jar first). The garden's sun letter waits for gene v2 (D-08, D-28).</li>
+</ol>
+<p>Smaller items are listed under each app.</p>
+</section>
+<section>
+<h2 id="before-anything-else">Before anything else</h2>
+<p>From a fresh clone:</p>
+<pre class="bash" tabindex="0"><code>pnpm install</code></pre>
+<pre class="bash" tabindex="0"><code>(cd apps/coordinator &amp;&amp; mix deps.get)</code></pre>
+<p>Run <code>pnpm install</code> before any <code>deno run</code>: otherwise Deno 2.9 writes <code>workspaces</code> into <code>package.json</code> (<code>CLAUDE.md</code>). The second line is what <code>bin/dev</code> asks for when the coordinator's dependencies are missing; it needs Elixir. GPU commands need Chrome with WebGPU or Deno's native WebGPU. Commands marked "this Mac" read <code>runs/</code>, which is gitignored and exists only in the main checkout; set <code>RUNS</code> to it first. Every printed <code>deno run</code> carries <code>--no-lock</code>, so it leaves <code>deno.lock</code> alone (<code>CLAUDE.md</code>). The Playwright commands use the installed Google Chrome (<code>channel: "chrome"</code>) and start their own Vite on port 5174, which must be free (<code>BL_E2E_PORT</code> picks another; <code>playwright.config.ts</code>). Run every command from the repository root, in each new terminal too.</p>
+<pre class="bash" tabindex="0"><code>RUNS=&quot;$HOME/develop/browser-life/runs&quot;</code></pre>
+</section>
+<section>
+<h2 id="lab">1. Lab</h2>
+<p><strong>What it is now.</strong> The lab (<code>/lab/</code>) runs a world in the browser on WebGPU. Pond keeper is built on the breeder: a log of firsts with rules stated in advance, a session card and a session file that <code>tools/run.ts</code> replays to the same final hash (<a href="https://github.com/treetopdevs/browser-life/pull/20">#20</a>); a pressure dial, auto-breed, Keep a lineage and a "What's next?" ladder (<a href="https://github.com/treetopdevs/browser-life/pull/25">#25</a>); a family tree and pond firsts (<a href="https://github.com/treetopdevs/browser-life/pull/31">#31</a>). A Field notes panel scores gradient-m3 and spots-m3 worlds against a neutral baseline and files notes only at the rule fixed for each world beforehand (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>). A ring says the world differs in kind from neutral runs, not that something arose inside it, and the spots-m3 threshold is set by one run (held-out bound 25.9%) (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>). Each note offers the rule proposer's follow-up, applied only when you click (<a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a>). Lab accessibility fixes cleared the lab exclusions the public accessibility spec held (<code>LAB_HELD</code>); two hand-reviewed exclusions remain, each measured by the spec (<a href="https://github.com/treetopdevs/browser-life/pull/46">#46</a>). Each PR's own gates (vitest, Playwright in Chrome) verified it. Not deployed.</p>
+<p><strong>Try it locally.</strong></p>
+<pre class="bash" tabindex="0"><code>pnpm dev</code></pre>
+<ul>
+<li><a href="http://localhost:5173/lab/?world=breeder&amp;seed=1">http://localhost:5173/lab/?world=breeder&amp;seed=1</a>: Pond keeper on the playtest kit's world.</li>
+<li><a href="http://localhost:5173/lab/?world=gradient-m3&amp;seed=1">http://localhost:5173/lab/?world=gradient-m3&amp;seed=1</a>: Field notes. <a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>'s page test sees it ring on living cells low in steps 10,000 to 14,900.</li>
+<li><a href="http://localhost:5173/selftest.html">http://localhost:5173/selftest.html</a>: the CPU reference against this browser's GPU, bit for bit.</li>
+</ul>
+<p>The Field notes browser tests (they need a GPU):</p>
+<pre class="bash" tabindex="0"><code>npx playwright test tests/e2e/lab-naturalist.spec.ts --project=chrome</code></pre>
+<p><strong>Not built.</strong></p>
+<ul>
+<li>The spots-m3 full-rules comparison: Not yet measured (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>).</li>
+<li>Notes stop at the first wound or feed (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>); there is no page-level wound or drain click test and no 375 px check with a suggestion open (<a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a>). DESIGN.md has no entry for the panel yet (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>).</li>
+<li>The firsts rewind log lives in memory per page; keeping it beside the checkpoint is a follow-up (<a href="https://github.com/treetopdevs/browser-life/pull/20">#20</a>). <em>(Later on 2026-10-18: backlog slice 36 keeps it in a <code>.rewind</code> sidecar beside each saved checkpoint.)</em></li>
+<li>A refused Feed or Drain on a pond world shows "World stopped" although nothing is wrong (<a href="https://github.com/treetopdevs/browser-life/pull/38">#38</a>). No fix is on main: the feed path in <code>apps/lab/src/sim.worker.ts</code> still reaches the generic error message. <em>(Later on 2026-10-18: backlog slice 36 makes it a notice, and the world keeps running.)</em></li>
+<li>When gene v2 bumps <code>RULE_VERSION</code>, Field notes will say it has no baseline until the envelopes are rebuilt with <code>tools/naturalist-envelope.ts</code> (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>).</li>
+</ul>
+<p><strong>Waits on you.</strong> <a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a>'s worker-side world check (an optional <code>world</code> on lesion and feed messages, in <code>protocol.ts</code> and <code>sim.worker.ts</code>, outside its allowed area) asked for your accept or veto; it merged without one and the coordinator accepted it after the fact (D-31). To veto, revert that hunk and accept the race it closes.</p>
+</section>
+<section>
+<h2 id="public-site">2. Public site</h2>
+<p><strong>What it is now.</strong> The public pages (home, <code>/how-it-works/</code>, <code>/research/</code>, <code>/about/</code>, <code>/privacy/</code>, <code>/participate/</code>, <code>/status/</code>) are static, served by Vite in development and by Caddy in production (<code>README.md</code>); the Worlds catalogue is at <code>/worlds/</code> (<code>apps/lab/worlds/</code>). The journal at <code>/research/</code> covers 17 and 18 Oct (<a href="https://github.com/treetopdevs/browser-life/pull/32">#32</a>, <a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a>) and says none of it is deployed. An accessibility pass checks every public route with axe at 1280 and 375 px by day and night, plus keyboard, reduced motion and no-GPU paths (<a href="https://github.com/treetopdevs/browser-life/pull/36">#36</a>). There is a real 404 page, served by Caddy and the dev server (<a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a>). The local half of the release checks is done: status exposure, join abuse limits, canonical URLs and the sitemap (<a href="https://github.com/treetopdevs/browser-life/pull/28">#28</a>). The Worlds notes carry the 17 and 18 Oct results (<a href="https://github.com/treetopdevs/browser-life/pull/53">#53</a>). Not deployed: the journal goes live only when you deploy (D-18).</p>
+<p><strong>Try it locally.</strong> With <code>pnpm dev</code> running, open <a href="http://localhost:5173/">http://localhost:5173/</a>, <a href="http://localhost:5173/research/">http://localhost:5173/research/</a> and <a href="http://localhost:5173/worlds/">http://localhost:5173/worlds/</a>; <a href="http://localhost:5173/no-such-page/">http://localhost:5173/no-such-page/</a> answers 404 with the site's own page. The production build and its release check (<a href="https://github.com/treetopdevs/browser-life/pull/28">#28</a>, <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a>); the spec starts its own server and reads <code>apps/lab/dist</code>, so nothing else needs to run:</p>
+<pre class="bash" tabindex="0"><code>pnpm build</code></pre>
+<pre class="bash" tabindex="0"><code>BL_REQUIRE_BUILD_CHECK=1 npx playwright test tests/e2e/public-routes.spec.ts --project=chrome</code></pre>
+<p>To look at the build yourself, in a terminal of its own (it keeps running until Ctrl-C):</p>
+<pre class="bash" tabindex="0"><code>pnpm --filter @bl/lab preview</code></pre>
+<p><strong>Not built.</strong></p>
+<ul>
+<li>Everything in <code>docs/release-checks-2026-10-18.md</code>, "Still needs the live host": HTTPS, the <code>www</code> redirect, <code>/healthz</code>, 404s over HTTP, canonical URLs and the sitemap at the live domain, real phones, screen readers and other engines.</li>
+<li>The journal has an 18 Oct line for the lab's Field notes (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>, in <a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a>) but none yet for the stone horizon (<a href="https://github.com/treetopdevs/browser-life/pull/55">#55</a>), the notes' suggestions in the lab (<a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a>) or the opening kit (<a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>). The sitemap's <code>lastmod</code> for <code>/research/</code> is still 2026-10-07 (<a href="https://github.com/treetopdevs/browser-life/pull/32">#32</a>, <a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a>).</li>
+<li>The visit counter counts a 404's path as given; counting it as a fixed <code>/404</code> is a follow-up (<a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a> decision 5).</li>
+</ul>
+<p><strong>Waits on you.</strong> The 1 Oct journal card "Measures that need work" still says Measured, while the new clade card says Negative for the same kind of result; relabelling a past card is your call (<a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a> decision 9). <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a> kept <code>appType: "mpa"</code> and a not-found plugin in <code>apps/lab/vite.config.ts</code>, beyond its "add the input only" area; the coordinator ran the lab specs on it before merge (D-27). If you wanted input only, drop both and accept that dev then differs from Caddy (<a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a> decision 10).</p>
+</section>
+<section>
+<h2 id="archipelago">3. Archipelago</h2>
+<p><strong>What it is now.</strong> The Phoenix coordinator (<code>apps/coordinator</code>) cuts runs into segments, hands them to islands (the browser's <code>/island.html</code> or the headless <code>tools/island.ts</code>), has a fraction replayed by a second island and compares state hashes; <code>tools/stitch.ts</code> turns segments into run bundles (<code>README.md</code>). Bred pond worlds now travel too: the <code>breeder</code> preset and the 21 <code>pond-breed-</code>, <code>pond-mass-</code> and <code>pond-drift-</code> conditions run, verify and stitch on islands that advertise <code>breed-v1</code> (<a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a>). Islands stop cleanly on Ctrl-C or Stop (<a href="https://github.com/treetopdevs/browser-life/pull/43">#43</a>). The coordinator checks its limiter settings at boot, refuses a garden token in a query string and keeps each island's capabilities for operators (<a href="https://github.com/treetopdevs/browser-life/pull/45">#45</a>). The operator page shows gardens, bred runs, limits and failures behind the admin token (<a href="https://github.com/treetopdevs/browser-life/pull/39">#39</a>). Verified by <code>(cd apps/coordinator &amp;&amp; mix precommit)</code> and <code>tests/deno/coordinator_integration.ts</code> (86 PASS in <a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a> and <a href="https://github.com/treetopdevs/browser-life/pull/45">#45</a>). Not deployed.</p>
+<p><strong>Try it locally.</strong> The lab and the coordinator together (stop a <code>pnpm dev</code> from the sections above first, or use the coordinator-only command below: <code>bin/dev</code> asks for port 5173, which Vite will not share, <code>apps/lab/vite.config.ts</code>):</p>
+<pre class="bash" tabindex="0"><code>bin/dev</code></pre>
+<p>or the coordinator alone:</p>
+<pre class="bash" tabindex="0"><code>(cd apps/coordinator &amp;&amp; mix phx.server)</code></pre>
+<p>Create an experiment, then run two islands, each in a terminal of its own (or one plus <a href="http://localhost:5173/island.html">http://localhost:5173/island.html</a> in a WebGPU browser). A run's final segment is always replayed by a different island, and <code>tools/stitch.ts</code> stitches a run only once that replay is done; with one island it lists every run and skips it (<code>--allow-unverified</code> stitches anyway):</p>
+<pre class="bash" tabindex="0"><code>curl -X POST localhost:4000/api/experiments -H &#39;content-type: application/json&#39; -d &#39;{&quot;experiment&quot;:&quot;a1&quot;,&quot;presetId&quot;:&quot;gradient&quot;,&quot;conditions&quot;:[&quot;treatment&quot;,&quot;neutral&quot;],&quot;seeds&quot;:[1,2,3],&quot;steps&quot;:100000,&quot;segmentSteps&quot;:5000,&quot;censusEvery&quot;:100,&quot;verifyFraction&quot;:0.1}&#39;</code></pre>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/island.ts --coordinator http://localhost:4000</code></pre>
+<p>The operator page is <a href="http://localhost:4000/index.html">http://localhost:4000/index.html</a>. When runs finish:</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/stitch.ts --experiment a1 --out /tmp/stitched</code></pre>
+<p>Without <code>--out</code> it writes to <code>runs/a1/</code> in the checkout you run it from.</p>
+<p><code>tools/island.ts</code> takes <code>--coordinator</code>, <code>--tasks</code> and <code>--garden-token=&lt;t&gt;</code> (its header); it has no <code>--help</code>.</p>
+<p><strong>Not built.</strong></p>
+<ul>
+<li>A route to give a stopped island's segment back at once, and a <code>BL_LEASE_MS</code> setting (<a href="https://github.com/treetopdevs/browser-life/pull/43">#43</a> follow-ups).</li>
+<li>Counters for refusals (429, 503) and pruning on the operator page (<a href="https://github.com/treetopdevs/browser-life/pull/39">#39</a>).</li>
+<li>Distributed branch runs, model pickers and hand picks: bred runs travel only with the rule's own picks (<a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a>).</li>
+</ul>
+<p><strong>Waits on you.</strong></p>
+<ul>
+<li>An export whose manifest predates the breed arm is now moved aside; none of the 983 stitched manifests under <code>runs/</code> is affected (<a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a>, "Decision for the owner").</li>
+<li><code>docs/ops-dashboard-2026-10-18.md</code> still says the coordinator records no island's capabilities; a dated pointer needs your OK (<a href="https://github.com/treetopdevs/browser-life/pull/45">#45</a> follow-ups).</li>
+</ul>
+</section>
+<section>
+<h2 id="shared-garden">4. Shared garden</h2>
+<p><strong>What it is now.</strong> One shared world on <code>wild-storm-large</code>, run by the coordinator as a paced one-run experiment: one day of 131,072 steps is released per dawn, and only when someone tends it; visitors send stones (wounds of radius 1 to 32); a public view says how it is kept; verified checkpoints can be read to fork (<a href="https://github.com/treetopdevs/browser-life/pull/21">#21</a>). Its days stitch into one bundle (<a href="https://github.com/treetopdevs/browser-life/pull/26">#26</a>). The page <code>/garden/</code> is unlinked and <code>noindex</code> (<a href="https://github.com/treetopdevs/browser-life/pull/27">#27</a>). <code>bin/garden-dev</code> runs a garden on one machine, and <code>tests/deno/garden_e2e.ts</code> checks it from founding to stitched bundle (<a href="https://github.com/treetopdevs/browser-life/pull/30">#30</a>). Islands can carry the garden token, fresh fork checkpoints never 404, and production refuses dev presets (<a href="https://github.com/treetopdevs/browser-life/pull/35">#35</a>). Collective food is off by default (and off in the founding script): with <code>food: true</code> at founding, a feed lands when 5 networks ask within one dawn, at most once in 7 garden days (<a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a>). Visitors can predict which line holds the field after the next day, with receipts kept only on their device (<a href="https://github.com/treetopdevs/browser-life/pull/51">#51</a>). The stone horizon test ran by rules fixed first: median 97,279 steps at radius 8 (9 valid pairs, 4 censored), so the prediction (under about 13,000) failed; 26,623 at 32; 35,839 at 64. The whole jar drifts from its unstoned twin: the far region is already 16 to 58 percent different at the first census and about 0.9 by census 5 to 20 (1,024 steps each), so what this says about finding a stone is unclear (<a href="https://github.com/treetopdevs/browser-life/pull/55">#55</a>, <a href="https://github.com/treetopdevs/browser-life/pull/53">#53</a>). The opening kit is a checklist and a founding script that makes a dry run by default (<a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>). No garden is founded anywhere but in scratch directories, and nothing is deployed (<a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>).</p>
+<p><strong>Try it locally.</strong> A whole garden on this machine (needs <code>mix</code>, Deno with a GPU and <code>lsof</code>), then <a href="http://localhost:5173/garden/">http://localhost:5173/garden/</a>. Stop any <code>pnpm dev</code>, <code>bin/dev</code> or coordinator from the sections above first: it starts both on ports 5173 and 4000 and refuses a port in use (<code>LAB_PORT</code> and <code>PORT</code> move them; <code>bin/garden-dev</code>).</p>
+<pre class="bash" tabindex="0"><code>bin/garden-dev</code></pre>
+<p>Without a coordinator, <code>pnpm dev</code> and <a href="http://localhost:5173/garden/?mock=1">http://localhost:5173/garden/?mock=1</a> show the contract's example garden (dev only, <a href="https://github.com/treetopdevs/browser-life/pull/27">#27</a>). A stone, as a visitor would send it, to a garden <code>bin/garden-dev</code> started:</p>
+<pre class="bash" tabindex="0"><code>curl -sS -X POST -H &#39;content-type: application/json&#39; -d &#39;{&quot;kind&quot;:&quot;stone&quot;,&quot;x&quot;:128,&quot;y&quot;:128,&quot;r&quot;:8}&#39; http://127.0.0.1:4000/api/public/gardens/commons/letters</code></pre>
+<p>The end-to-end check (GPU and <code>mix</code>):</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tests/deno/garden_e2e.ts &lt; /dev/null</code></pre>
+<p>The founding script's dry run (sends nothing) and the stone horizon readout recomputed from its committed record (CPU):</p>
+<pre class="bash" tabindex="0"><code>bin/garden-found --coordinator http://127.0.0.1:4000</code></pre>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/horizon.ts readout --record experiments/garden/stone-horizon-2026-10-18.json</code></pre>
+<p><strong>Not built.</strong></p>
+<ul>
+<li>The null-stone control (a wound on dead ground) is still owed (<a href="https://github.com/treetopdevs/browser-life/pull/55">#55</a>); it has no merged PR.</li>
+<li><code>bin/garden-dev</code> has no setting for collective food, so its gardens have none.</li>
+<li>From the opening checklist (<a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>): the Caddyfile change, the compose <code>environment:</code> additions, reaching the operator page on the host, and the <code>/garden/</code> link and copy changes.</li>
+<li>The sun letter: the garden takes stones only, and the sun needs a fourth intervention kind (<a href="https://github.com/treetopdevs/browser-life/pull/21">#21</a>).</li>
+</ul>
+<p><strong>Waits on you.</strong> The top items 1 to 3. Also: <a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a>'s edits to <code>apps/coordinator/config/prod.exs</code> and <code>apps/coordinator/config/runtime.exs</code> (<code>sharedAddress</code> true in production until <code>BL_TRUST_FORWARDED_FOR=1</code>) need your review (<a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a> decision 13).</p>
+</section>
+<section>
+<h2 id="ai-naturalist">5. AI naturalist</h2>
+<p><strong>What it is now.</strong> Code only, no model calls. The anomaly bell v0 rings on drift: 30 of 70 neutral runs rang where the bar allowed 2 (<a href="https://github.com/treetopdevs/browser-life/pull/19">#19</a>; the journal's chip: Negative). Bell v1 (<a href="https://github.com/treetopdevs/browser-life/pull/22">#22</a> plan, <a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a>): part A, exploratory, rang on 0 of 70 fresh neutral runs (the journal's chip: Measured); part B's twins heard a big wound and a feed on 4 of 10 seeds each, short of the bar (Negative). A ring says a world differs in kind from neutral runs, not that something arose inside it (<a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a>, <a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>). The field notebook turns a run into one HTML page of notes with receipts (<a href="https://github.com/treetopdevs/browser-life/pull/24">#24</a>). The proposer turns each note into a fork spec that runs only after a person approves it (<a href="https://github.com/treetopdevs/browser-life/pull/34">#34</a>). The proposer bench is planned, 70 forks, and unapproved, so it has no result (<a href="https://github.com/treetopdevs/browser-life/pull/49">#49</a>). In the lab, Field notes and their proposals (<a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a>, <a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a>).</p>
+<p><strong>Try it locally.</strong> Open the committed example page, <a href="examples/field-notebook-2026-10-17-gradient-m3-neutral-seed-15.html">field-notebook-2026-10-17-gradient-m3-neutral-seed-15.html</a>, or the lab's Field notes above. On this Mac, with <code>RUNS</code> set as above (CPU; writes only to <code>/tmp</code>):</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/notebook.ts &quot;$RUNS/replay-m4/gradient-m3/neutral/seed-15&quot; --base &quot;$RUNS&quot; --out /tmp/notebook</code></pre>
+<p>A second run into the same <code>--out</code> is refused; choose a fresh one or pass <code>--force</code> (<code>tools/notebook.ts</code> header). The proposer leaves an existing proposal alone (<code>tools/propose.ts</code>).</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/propose.ts propose &quot;$RUNS/replay-m4/gradient-m3/neutral/seed-15&quot; --notes docs/examples/field-notebook-2026-10-17-gradient-m3-neutral-seed-15.notes.json --out /tmp/proposals</code></pre>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/bench.ts dry-run experiments/naturalist/bench-v0-plan.json</code></pre>
+<p>The bench's dry run checks every spec and prints all 70 commands and runs nothing. Its manifest names this Mac's paths, so it works here only.</p>
+<p><strong>Not built.</strong></p>
+<ul>
+<li>Bell v1 part C, the model reading the twins (<a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a>).</li>
+<li>A v2 bell: the after-the-fact threshold of 2.58 is a hypothesis for fresh twins, not a pass (<a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a>).</li>
+<li>The bench's readout (<a href="https://github.com/treetopdevs/browser-life/pull/49">#49</a>).</li>
+</ul>
+<p><strong>Waits on you.</strong> The top items 4 and 5.</p>
+</section>
+<section>
+<h2 id="evolution-game">6. Evolution game</h2>
+<p><strong>What it is now.</strong> Pond keeper, in the lab (section 1), is the game's Stage 0b (<a href="https://github.com/treetopdevs/browser-life/pull/20">#20</a>, <a href="https://github.com/treetopdevs/browser-life/pull/25">#25</a>, <a href="https://github.com/treetopdevs/browser-life/pull/31">#31</a>). The playtest kit is a fixed protocol, script, questionnaire and readout template for three people, with its pass rules frozen by hash; no session has been held (<a href="https://github.com/treetopdevs/browser-life/pull/38">#38</a>). The gene line's readouts are on main (gene v0 PASS, gene v1 CONFOUNDED, in <code>docs/evolution-game-brainstorm-2026-10-16.md</code>); gene v2 sits with a stalled peer session (D-03, D-28).</p>
+<p><strong>Try it locally.</strong> The kit's world is <a href="http://localhost:5173/lab/?world=breeder&amp;seed=1">http://localhost:5173/lab/?world=breeder&amp;seed=1</a>; the kit itself runs from a pinned commit, <code>c16b5a6</code> (<code>docs/playtest-kit-2026-10-18.md</code>, section 1). Its frozen section 6 can be checked against the hash in its header:</p>
+<pre class="bash" tabindex="0"><code>sed -n &#39;/^## 6\. /,/^## 7\. /p&#39; docs/playtest-kit-2026-10-18.md | sed &#39;$d&#39; | shasum -a 256</code></pre>
+<p><strong>Not built.</strong> Gene v2. On the breeder at seed 1 the firsts log fills before the player acts, so the kit's question about the log mostly tests a log already written (<a href="https://github.com/treetopdevs/browser-life/pull/38">#38</a>).</p>
+<p><strong>Waits on you.</strong> Running the three sessions, and whether to host the screenshots and add a printable HTML twin (<a href="https://github.com/treetopdevs/browser-life/pull/38">#38</a>, "Open"). The gene decisions are top item 6.</p>
+</section>
+<section>
+<h2 id="research-instruments">7. Research instruments</h2>
+<p><strong>What it is now.</strong> Clade measures from the mutation tree (TMRCA95, mutant sweeps, gross clade replacement) on 130 runs: none is eligible under the rules fixed beforehand (<a href="https://github.com/treetopdevs/browser-life/pull/37">#37</a>; the journal's chip: Negative). <code>tools/lineage.ts</code> opens pond-cycle runner bundles and checks each edge's route through <code>ponds.tsv</code> (<a href="https://github.com/treetopdevs/browser-life/pull/29">#29</a>), and the HTML report draws that route (<a href="https://github.com/treetopdevs/browser-life/pull/44">#44</a>).</p>
+<p><strong>Try it locally.</strong> From a fresh clone, CPU only, on the committed fixtures:</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/lineage.ts --dir tools/test/fixtures/pond-runner/scaf-picked --rule top --out /tmp/scaf-dossier.json</code></pre>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/report-html.ts lineage /tmp/scaf-dossier.json --out /tmp/scaf-dossier.html</code></pre>
+<p><code>report-html.ts</code> refuses an existing <code>--out</code> unless <code>--force</code> is given. The clade pilot, on this Mac:</p>
+<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/clade.ts pilot --base &quot;$RUNS&quot;</code></pre>
+<p>Its <code>--base</code> defaults to <code>runs</code> in the current directory (changed from a home-directory path within <a href="https://github.com/treetopdevs/browser-life/pull/37">#37</a>, commit <code>db0d2743</code>), so from any other checkout pass the main checkout's, as above.</p>
+<p><strong>Not built.</strong> Genotype-keyed activity, and a null matched on population size and lineage structure, which <a href="https://github.com/treetopdevs/browser-life/pull/37">#37</a>'s note says is needed.</p>
+<p><strong>Waits on you.</strong> Nothing beyond the items at the top.</p>
+</section>
+<section>
+<h2 id="how-this-page-was-written-rules-fixed-before-writing-2026-10-18">How this page was written (rules fixed before writing, 2026-10-18)</h2>
+<p>These rules were written before any of the status on this page, against <code>origin/main</code> at <code>34621dc2</code> (PR <a href="https://github.com/treetopdevs/browser-life/pull/53">#53</a>). The final <code>origin/main</code> commit the page describes is <code>5e7bda5c</code> (PR <a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a>), checked again with <code>git fetch</code> at ship time (18 Oct, 15:44).</p>
+<ol type="1">
+<li><strong>Sources.</strong> Every claim comes from a merged PR's body or a dated doc on <code>origin/main</code>, and names its PR or file. Nothing comes from memory or from a session's notes. The backlog run's decisions log (PR <a href="https://github.com/treetopdevs/browser-life/pull/40">#40</a>, not on main) is cited by its D-number only for what waits on the user.</li>
+<li><strong>Built, verified, deployed.</strong> "Built" means merged to main. "Verified" means a merged PR's own gates ran it, and the page says which PR. "Deployed" is said only where a deploy record says so; nothing merged in this run was deployed (D-04), and the page says so once per app instead of implying anything is live.</li>
+<li><strong>Open work.</strong> An open PR or a slice without a merged PR is named in one clause, never described as built. PRs that merge before the ship-time fetch are included; the rest are not.</li>
+<li><strong>Results.</strong> A result is labelled with DESIGN.md's vocabulary (Measured, Negative, Not yet measured, Unclear) as its PR labelled it, never upgraded.</li>
+<li><strong>Commands.</strong> Every command on the page appears in the table at the end with one of three checks: <strong>Ran</strong> (run here on this checkout, with its exit code and <code>uptime</code>), <strong>Read</strong> (its flags checked against the code or script that defines it, with the file named), or <strong>Needs data</strong> (it reads run bundles under <code>runs/</code> or a GPU that a fresh clone lacks; the page says which). A command that cannot be checked one of these ways is left out. No <code>--help</code> is claimed for a tool that has none.</li>
+<li><strong>Waits on the user.</strong> An item is listed only when a merged PR or a D-number says it needs the user's yes or decision. Each says what the default is, if one was taken, and where it is written down.</li>
+<li><strong>Plain and short.</strong> One paragraph per app, then try it, not built, waits on you.</li>
+</ol>
+<p>Clarification (2026-10-18, after writing): PR <a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a> merged before the status was written, so the page describes <code>5e7bda5c</code>. DESIGN.md's vocabulary also has Confirmed and Seen; the page uses neither. Where a PR body gives a reading but no chip, the page uses the chip the public journal gave it (<a href="https://github.com/treetopdevs/browser-life/pull/32">#32</a>, <a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a>) and says so. The gene readouts are quoted in their own rule's words (PASS, CONFOUNDED).</p>
+</section>
+<section>
+<h2 id="how-each-command-was-checked">How each command was checked</h2>
+<p>Ran: run on this checkout at <code>5e7bda5c</code> in the printed form, except that outputs shown under <code>/tmp</code> went to the session scratchpad and <code>RUNS</code> was the main checkout's <code>runs/</code>, read only. URLs were fetched from <code>pnpm dev --port 5291 --strictPort</code> with <code>Accept: text/html</code>; for that server and those URLs the result is the startup or the HTTP status instead of an exit code. A 200 says the page is served, not that a world was watched (no GPU was used). <code>git status</code> after every run showed only this slice's files. Read: flags checked in the file named, not run (this checkout has no <code>apps/coordinator/deps</code>, so no <code>mix</code> command ran). Needs data: needs <code>runs/</code>, a GPU or both.</p>
+<p>The page itself: the HTML twin was rendered over <code>file://</code> at 1280 and 375 px in light and dark (by the system setting and by the Day/Night button) with no horizontal scroll, no console error, no request leaving the file and no serious axe finding; every link in both twins and in the README line resolves, and every PR link was checked with <code>gh</code> (merged, except <a href="https://github.com/treetopdevs/browser-life/pull/40">#40</a>, open).</p>
+<div class="tablewrap" role="region" tabindex="0" aria-label="Commands and how each was checked"><table>
+<thead>
+<tr>
+<th scope="col">Command</th>
+<th scope="col">Check</th>
+<th scope="col">Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pnpm install</code></td>
+<td>Read</td>
+<td><code>README.md</code>, "Run it"; <code>node_modules</code> was already present</td>
+</tr>
+<tr>
+<td><code>(cd apps/coordinator &amp;&amp; mix deps.get)</code></td>
+<td>Read</td>
+<td><code>bin/dev</code>'s own error text</td>
+</tr>
+<tr>
+<td><code>RUNS="$HOME/develop/browser-life/runs"</code></td>
+<td>Ran</td>
+<td><code>ls -d "$RUNS/replay-m4/gradient-m3/neutral/seed-15"</code>: exit 0, present on this Mac; the "this Mac" rows read it; load 413.77</td>
+</tr>
+<tr>
+<td><code>pnpm dev</code></td>
+<td>Ran</td>
+<td>a server, so no exit code: ready on port 5291 within 1 s, then stopped by the check; load 126.83</td>
+</tr>
+<tr>
+<td><code>/lab/?world=breeder&amp;seed=1</code>, <code>/lab/?world=gradient-m3&amp;seed=1</code>, <code>/selftest.html</code></td>
+<td>Ran</td>
+<td>200 each; load 126.83 to 131.00</td>
+</tr>
+<tr>
+<td><code>/</code>, <code>/research/</code>, <code>/worlds/</code></td>
+<td>Ran</td>
+<td>200 each; load 126.83 to 131.00</td>
+</tr>
+<tr>
+<td><code>/no-such-page/</code></td>
+<td>Ran</td>
+<td>404 with "Page not found · Cadence Garden"; load 131.00</td>
+</tr>
+<tr>
+<td><code>/island.html</code>, <code>/garden/</code>, <code>/garden/?mock=1</code></td>
+<td>Ran</td>
+<td>200 each; load 126.83 to 131.00</td>
+</tr>
+<tr>
+<td><code>npx playwright test tests/e2e/lab-naturalist.spec.ts --project=chrome</code></td>
+<td>Needs data (GPU)</td>
+<td><code>--list</code> Ran: 5 tests, exit 0, load 126.83; <a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a> ran 4 of 4, <a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a> ran them in 95 passing Chrome tests</td>
+</tr>
+<tr>
+<td><code>pnpm build</code>, <code>pnpm --filter @bl/lab preview</code></td>
+<td>Read</td>
+<td><code>package.json</code>, <code>apps/lab/package.json</code> scripts; <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a> ran the build</td>
+</tr>
+<tr>
+<td><code>BL_REQUIRE_BUILD_CHECK=1 npx playwright test tests/e2e/public-routes.spec.ts --project=chrome</code></td>
+<td>Read</td>
+<td><code>tests/e2e/public-routes.spec.ts</code> header (reads <code>apps/lab/dist</code>) and <code>playwright.config.ts</code> (<code>webServer</code>); <a href="https://github.com/treetopdevs/browser-life/pull/28">#28</a> and <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a> ran it</td>
+</tr>
+<tr>
+<td><code>bin/dev</code></td>
+<td>Read</td>
+<td><code>bin/dev</code></td>
+</tr>
+<tr>
+<td><code>(cd apps/coordinator &amp;&amp; mix phx.server)</code></td>
+<td>Read</td>
+<td><code>README.md</code>, "Archipelago"</td>
+</tr>
+<tr>
+<td><code>(cd apps/coordinator &amp;&amp; mix precommit)</code></td>
+<td>Read</td>
+<td><code>CLAUDE.md</code>; <a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a> 358 tests and <a href="https://github.com/treetopdevs/browser-life/pull/45">#45</a> 412 tests, 0 failures</td>
+</tr>
+<tr>
+<td><code>curl -X POST localhost:4000/api/experiments ...</code></td>
+<td>Read</td>
+<td><code>README.md</code>, "Archipelago"; needs the coordinator</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/island.ts --coordinator http://localhost:4000</code></td>
+<td>Read</td>
+<td><code>tools/island.ts</code> header and its <code>parseArgs</code></td>
+</tr>
+<tr>
+<td><code>http://localhost:4000/index.html</code></td>
+<td>Read</td>
+<td><code>apps/coordinator/README.md</code>, "Operator page"; needs the coordinator</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/stitch.ts --experiment a1 --out /tmp/stitched</code></td>
+<td>Read</td>
+<td><code>tools/stitch.ts</code> header and <code>parseArgs</code> (<code>--out</code> default <code>runs</code>; final segment verified unless <code>--allow-unverified</code>); <code>apps/coordinator/lib/coordinator/queue.ex</code>, <code>pick_task</code> and <code>maybe_verify?</code> (a final segment is always verified, never by the island that ran it)</td>
+</tr>
+<tr>
+<td><code>bin/garden-dev</code></td>
+<td>Read</td>
+<td><code>bin/garden-dev</code> header; needs <code>mix</code>, a GPU and <code>lsof</code></td>
+</tr>
+<tr>
+<td><code>curl -sS -X POST ... http://127.0.0.1:4000/api/public/gardens/commons/letters</code></td>
+<td>Read</td>
+<td><code>apps/coordinator/README.md</code>, "Run a garden locally"</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tests/deno/garden_e2e.ts &lt; /dev/null</code></td>
+<td>Needs data (GPU, <code>mix</code>)</td>
+<td><a href="https://github.com/treetopdevs/browser-life/pull/30">#30</a> 36/36, <a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a> 45/45, <a href="https://github.com/treetopdevs/browser-life/pull/51">#51</a> 50/50</td>
+</tr>
+<tr>
+<td><code>bin/garden-found --coordinator URL --apply --confirm-coordinator URL</code></td>
+<td>Read</td>
+<td><code>bin/garden-found</code> header: needs <code>BL_ADMIN_TOKEN</code>, matching URLs and the typed line or <code>--yes</code>; bare <code>--apply</code> is a usage error (Ran: exit 2, sent nothing, load 107.45); <code>food=false</code> is a constant; your step</td>
+</tr>
+<tr>
+<td><code>bin/garden-found --coordinator http://127.0.0.1:4000</code></td>
+<td>Ran</td>
+<td>dry run, exit 0, sent nothing; load 126.83</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/horizon.ts readout --record experiments/garden/stone-horizon-2026-10-18.json</code></td>
+<td>Ran</td>
+<td>exit 0, medians 97,279 / 26,623 / 35,839 with 4 censored at radius 8, as in <a href="https://github.com/treetopdevs/browser-life/pull/55">#55</a>; load 126.83</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/notebook.ts "$RUNS/..." --base "$RUNS" --out /tmp/notebook</code></td>
+<td>Needs data (<code>runs/</code>); Ran on this Mac</td>
+<td><code>--force</code> Read in its header; exit 0 in 22 s, D 7.1946666666666665 equals the record, 1 ring; load 131.00 to 131.59</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/propose.ts propose "$RUNS/..." --notes ... --out /tmp/proposals</code></td>
+<td>Needs data (<code>runs/</code>); Ran on this Mac</td>
+<td>exit 0, 1 proposal (<code>108c86168adeb56f</code>), not approved; load 131.59</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/bench.ts dry-run experiments/naturalist/bench-v0-plan.json</code></td>
+<td>Needs data (<code>runs/</code>, <code>~/browser-life-bench</code>); Ran on this Mac</td>
+<td>exit 0 in 7 s: 70 forks, 2,683,100 steps, nothing written; load 128.15 to 123.96</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/bench.ts approve ... --by "&lt;your name&gt;"</code>, then <code>run</code></td>
+<td>Read</td>
+<td><code>tools/bench.ts</code> header; a person's step, never run by an agent</td>
+</tr>
+<tr>
+<td><code>sed -n '/^## 6\. /,/^## 7\. /p' docs/playtest-kit-2026-10-18.md | sed '$d' | shasum -a 256</code></td>
+<td>Ran</td>
+<td>exit 0, <code>343c7f03...c596</code>, equals the kit's header; load 126.83</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/lineage.ts --dir tools/test/fixtures/pond-runner/scaf-picked --rule top --out /tmp/scaf-dossier.json</code></td>
+<td>Ran</td>
+<td>exit 0, 3 of 3 walks exact, 3 crossings name the parent; load 126.83</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/report-html.ts lineage /tmp/scaf-dossier.json --out /tmp/scaf-dossier.html</code></td>
+<td>Ran</td>
+<td>exit 0, 80,220 bytes; load 126.83</td>
+</tr>
+<tr>
+<td><code>deno run -A --no-lock tools/clade.ts pilot --base "$RUNS"</code></td>
+<td>Needs data (<code>runs/</code>); Ran on this Mac</td>
+<td>exit 0 in 15 s, cadence rule gives 1; load 131.59 to 128.15</td>
+</tr>
+</tbody>
+</table></div>
+</section>
+
+</main>
+
+<footer>
+  Written from the merged PR bodies (#19 to #57), the dated docs on main, the code each command runs and, for what waits on you, the D-numbers of the backlog run's decisions log (PR <a href="https://github.com/treetopdevs/browser-life/pull/40">#40</a>), which is not on main. The markdown twin is the source. This page is built from it by a scratch script that is not in the repo, so an edit to one must be made to both.
+</footer>
+
+</div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const apply = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    btn.textContent = dark ? "Day" : "Night";
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch {}
+  apply(saved === "dark" || saved === "light" ? saved : null);
+  btn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("bl-theme", next); } catch {}
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) apply(null); });
+})();
+</script>
+</body>
+</html>

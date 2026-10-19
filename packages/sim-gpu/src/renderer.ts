@@ -1,6 +1,6 @@
 // Renders simulation state straight from the GPU buffers (no readback).
 
-import { worldH, worldW } from "@bl/schema";
+import { sameLight, withLight, worldH, worldW, type LightParams } from "@bl/schema";
 import { prelude } from "./shaders.ts";
 import type { GpuSim } from "./gpu-sim.ts";
 
@@ -103,8 +103,11 @@ fn fs(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 `;
 
 export class Renderer {
-  private readonly pipeline: GPURenderPipeline;
+  private pipeline: GPURenderPipeline;
+  private readonly format: GPUTextureFormat;
   private readonly uniform: GPUBuffer;
+  /** The light the pipeline was compiled with: a sun's, or null for the world's own. */
+  private light: LightParams | null = null;
   private groups: GPUBindGroup[] = [];
   private boundTo?: GpuSim;
   private readonly ctx: GPUCanvasContext;
@@ -118,14 +121,32 @@ export class Renderer {
   ) {
     this.device = device;
     this.ctx = ctx;
-    const module = device.createShaderModule({ code: shader(prelude(sim.cfg)), label: "render" });
-    this.pipeline = device.createRenderPipeline({
+    this.format = format;
+    this.pipeline = this.build(null);
+    this.uniform = device.createBuffer({ size: 56, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  }
+
+  private build(light: LightParams | null): GPURenderPipeline {
+    const cfg = light ? withLight(this.sim.cfg, light) : this.sim.cfg;
+    const module = this.device.createShaderModule({ code: shader(prelude(cfg)), label: "render" });
+    return this.device.createRenderPipeline({
       layout: "auto",
       vertex: { module, entryPoint: "vs" },
-      fragment: { module, entryPoint: "fs", targets: [{ format }] },
+      fragment: { module, entryPoint: "fs", targets: [{ format: this.format }] },
       primitive: { topology: "triangle-list" },
     });
-    this.uniform = device.createBuffer({ size: 56, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  }
+
+  /**
+   * The light the Light view draws: a sun's (`GpuSim.setLight`), or the world's own (null). The view bakes light into its
+   * shader as the physics does, so it is recompiled, and shows the light the physics is using. Setting the light it already draws is a no-op.
+   */
+  setLight(light: LightParams | null): void {
+    // The light it already draws (the world's own on a load without a sun): nothing to compile.
+    if (sameLight(light, this.light)) return;
+    this.pipeline = this.build(light);
+    this.light = light === null ? null : { ...light };
+    this.boundTo = undefined;
   }
 
   private bind(): void {

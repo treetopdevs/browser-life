@@ -175,10 +175,13 @@ test("a store that fails now and then refuses the one request and loses no saved
       const afterDelete = await shelf();
 
       // The index's write runs out of room halfway, leaving it torn: the save is refused, the shelf is the one
-      // before it, and the next save adds to that shelf instead of starting a new one.
-      fault("^index\\.json$", 1, ["write"]);
+      // before it, and the next save adds to that shelf instead of starting a new one. Twice, since a save that kept
+      // the log's sidecar gives it up for the room and writes the index once more (sim.worker.ts `saveCheckpoint`);
+      // whatever of the fault is left is then cleared.
+      fault("^index\\.json$", 2, ["write"]);
       send({ type: "save" });
       const tornIndex = await wait("refused", (m) => m.request === "save");
+      fault(null);
       const afterTornIndex = await shelf();
       for (let i = messages.length - 1; i >= 0; i--) if (messages[i].type === "notice") messages.splice(i, 1);
       send({ type: "save" });

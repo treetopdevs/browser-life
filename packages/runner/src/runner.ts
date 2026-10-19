@@ -37,6 +37,10 @@ import {
   presetIdentity,
   totalsOf,
   validateConfig,
+  MAX_STEP,
+  SUN_PERCENTS,
+  SUN_SPAN_MAX,
+  sunError,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
@@ -81,8 +85,8 @@ function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
 }
 import { conditionById } from "./conditions.ts";
 import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
-import { INTERVENTIONS_FILE, applyScheduled, formatInterventionLine, interventionsError, ownedInterventions, validateInterventions, type InterventionLogEntry, type InterventionSim, type ScheduledIntervention } from "./interventions.ts";
-import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, type PickEntry, type PickNote, type Picker } from "./picks.ts";
+import { INTERVENTIONS_FILE, InterventionError, applyScheduled, formatInterventionLine, interventionsError, lightOfSun, ownedInterventions, sameSun, sunAt, validateInterventions, type InterventionLogEntry, type InterventionSim, type ScheduledIntervention } from "./interventions.ts";
+import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, pressureEntriesError, type PickEntry, type PickNote, type Picker, type PressureEntry } from "./picks.ts";
 
 export interface RunSpec {
   experiment: string;
@@ -204,7 +208,7 @@ export interface RunSpec {
    */
   picked?: true;
   /**
-   * Scheduled interventions (interventions.ts): lesions and feeds applied at their absolute steps as the lab's
+   * Scheduled interventions (interventions.ts): lesions, feeds and suns applied at their absolute steps as the lab's
    * traversal applies them, so a wounded or fed history, such as a lab manifest's (`labHistory`), runs and replays
    * headless bit for bit. An entry at step s belongs to the segment that stepped to s (`ownedInterventions`: steps in
    * (start, start + steps], plus step 0 of a fresh run); the others are not applied and not an error. Applied after the
@@ -213,7 +217,10 @@ export interface RunSpec {
    * Every applied entry is a line of `interventions.jsonl` (the manifest's `interventions` block says how many). A feed
    * moves the conservation baselines by what it moved and is booked in the observer's `fed`; a feed that carries the
    * `matter` a log says it moved must move exactly that (`InterventionError`). A feed in a pond config is refused
-   * (`interventionsError`). Part of `manifest.spec`, so a wounded run and a clean one are never the same run
+   * (`interventionsError`). A sun (kind "sun", @bl/schema's sun.ts) sets the light for its span and is restored at its end,
+   * which is a split point of its chunk and comes first in the interventions slot of its step; while one is active the
+   * observer carries it (`ObserverState.sun`), and a continuation's start observer must carry the schedule's (`sunAt`). A
+   * schedule holding a sun is distributed only to islands that advertise `sun-v1`. Part of `manifest.spec`, so a wounded run and a clean one are never the same run
    * (`sameCompletedRun`). Exclusive with nothing: a picked run or a branch may carry lesions. Distributed: the
    * coordinator carries the whole schedule in every segment's task spec and hands such segments only to islands that
    * advertise `interventions-v1` (island.ts), each segment logs the entries it owns, and `stitchRun` joins the logs
@@ -221,6 +228,16 @@ export interface RunSpec {
    * output byte-identical to before this field existed.
    */
   interventions?: ScheduledIntervention[];
+  /**
+   * The lab's pressures (picks.ts `PressureEntry`; a lab manifest's `pressure` interventions, `labHistory`), replayed: at
+   * boundary b the rule's donors are those of the score the latest pressure with cycle <= b names (`activePondScore`), in
+   * place of `cfg.pondScore`, for every boundary no recorded pick or picker answers. Needs `picked: true` (a pressured run is
+   * a picked run) and a pond config of arm breed (`pressuresConfigError`). Part of `manifest.spec`, so a pressured run and an
+   * unpressured one are never the same run (`sameCompletedRun`). Never segmented or distributed: `interventions` refuses the
+   * kind, an island refuses the field and `stitchRun` throws. Optional and absent from every default, so a run without it
+   * keeps its spec, manifest and every output byte-identical to before this field existed.
+   */
+  pressures?: PressureEntry[];
 }
 
 /** `RunSpec.branch`: where a branch run's pre-cycle source came from, and which boundary's transform it applies first. */
@@ -300,6 +317,13 @@ export interface ObserverState {
    * artifact, so a fed world exported and imported elsewhere still says that it was fed.
    */
   fed?: { matter: number; feeds: number };
+  /**
+   * While a sun is active only (`RunSpec.interventions`' kind "sun"; @bl/schema's sun.ts): the sun that governs the
+   * steps from this observer's own on, `step <= observer.step < step + span`. Absent otherwise, so every other observer
+   * state and its digest are unchanged. A checkpoint taken during a sun, and the final observer of a call that ends
+   * during one, say which light their continuation runs under; `runExperiment` checks it against the schedule.
+   */
+  sun?: { step: number; percent: number; span: number };
 }
 
 export interface RunOptions {
@@ -337,6 +361,21 @@ export interface RunOptions {
   picks?: readonly PickEntry[];
   /** `picks` came from a lab manifest, which is sparse: a boundary with no entry and no picker takes the rule's donors. */
   implicitRule?: boolean;
+  /**
+   * Stops the run when it aborts (docs/island-cancel-2026-10-18.md): checked once before anything is built, before each
+   * census chunk's GPU work and after it (before that chunk's readbacks), and before the final readback. An aborted run
+   * rejects with the signal's reason (whatever it is; an `AbortError` only where engines lack `reason`) at the next of those points and destroys its
+   * simulation (the `finally` below); latency is at most one census chunk. Never consulted otherwise: a run without a
+   * signal, or whose signal never aborts, writes the same files, manifest and digests as before.
+   */
+  signal?: AbortSignal;
+}
+
+/** Throws the signal's reason (any value, `null` included; an `AbortError` only on an engine without
+ * `AbortSignal.reason`) once `signal` has aborted. By hand rather than `throwIfAborted`, which some engines with
+ * WebGPU lack (see `timeoutSignal` in island.ts on such gaps). */
+function stopIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw "reason" in signal ? signal.reason : new DOMException("the run was aborted", "AbortError");
 }
 
 export interface RunResult {
@@ -346,6 +385,38 @@ export interface RunResult {
 }
 
 const posInt = (v: unknown) => typeof v === "number" && Number.isInteger(v) && v > 0;
+
+const PRESSURE_SPEC_KEYS = "cycle,score,step";
+
+/** Shape checks on `RunSpec.pressures`, needing no config (`pressuresConfigError` is the world-dependent half). */
+function validatePressures(list: unknown, picked: boolean): string[] {
+  if (!picked) return ["a pressured run is a picked run: pressures need picked: true"];
+  if (!Array.isArray(list) || list.length === 0) return ["pressures must be a non-empty array of { step, cycle, score }"];
+  const errs: string[] = [];
+  let last = 0;
+  // An indexed loop, not every/some, which skip the holes of a sparse array.
+  for (let i = 0; i < list.length; i++) {
+    const e: unknown = list[i];
+    const where = `pressures[${i}]`;
+    if (typeof e !== "object" || e === null || Array.isArray(e)) {
+      errs.push(`${where} must be an object`);
+      continue;
+    }
+    if (Object.keys(e).sort().join() !== PRESSURE_SPEC_KEYS) {
+      errs.push(`${where} must have exactly the keys step, cycle and score`);
+      continue;
+    }
+    const { step, cycle, score } = e as Record<string, unknown>;
+    if (!Number.isSafeInteger(step) || (step as number) < 0) errs.push(`${where}: step must be a non-negative integer`);
+    else {
+      if ((step as number) < last) errs.push(`${where}: step ${step} follows step ${last} (steps must not decrease)`);
+      last = Math.max(last, step as number);
+    }
+    if (!Number.isSafeInteger(cycle) || (cycle as number) < 1) errs.push(`${where}: cycle must be a positive integer`);
+    if (typeof score !== "string") errs.push(`${where}: score must be a string`);
+  }
+  return errs;
+}
 
 /** Rejects run specs that would loop forever, skip checkpoints or read out of range. */
 export function validateSpec(spec: RunSpec): string[] {
@@ -404,6 +475,7 @@ export function validateSpec(spec: RunSpec): string[] {
     if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
   }
   if (spec.interventions !== undefined) errs.push(...validateInterventions(spec.interventions));
+  if (spec.pressures !== undefined) errs.push(...validatePressures(spec.pressures, spec.picked === true));
   // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
   // need the config and the start step: `preCycleError`, which runExperiment applies.
   if (spec.preCycleCheckpoints !== undefined) {
@@ -508,6 +580,20 @@ export function pickedConfigError(spec: RunSpec, cfg: WorldConfig): string | nul
   if (!spec.picked) return null;
   if (cfg.pondPeriod === undefined) return "a picked run needs a pond config (a pond preset)";
   if (cfg.pondArm !== "scaf" && cfg.pondArm !== "rand" && cfg.pondArm !== "breed") return `a picked run needs pond arm scaf, rand or breed, got ${JSON.stringify(cfg.pondArm)}: only those arms choose donors`;
+  return null;
+}
+
+/**
+ * Why `spec.pressures` cannot drive a run of `cfg`, or null (also null for a spec without them): the config must be a pond config
+ * of arm breed and the entries the observed history there (`pressureEntriesError`), and none may lie after the run's last step.
+ * Needs no GPU, so tools/run.ts checks it first.
+ */
+export function pressuresConfigError(spec: Pick<RunSpec, "pressures" | "steps">, cfg: WorldConfig): string | null {
+  if (spec.pressures === undefined) return null;
+  const bad = pressureEntriesError(spec.pressures, cfg);
+  if (bad) return bad;
+  const late = spec.pressures.findIndex((e) => e.step > spec.steps);
+  if (late >= 0) return `a pressure at t=${spec.pressures[late].step} is after the run's last step (${spec.steps}), so the run never reaches it`;
   return null;
 }
 
@@ -658,6 +744,27 @@ export function continuationError(spec: RunSpec, start: WorldState, observer: Ob
 }
 
 /**
+ * Why the start observer's sun (`ObserverState.sun`) cannot start a call of `spec` (config `cfg`) at `startStep`, or null.
+ * With a schedule, the sun it has active at the start must be the observer's: a continuation's always, a step-0 start's
+ * when its observer carries a sun (one without a sun is a world before its step-0 entries, which the run applies). With
+ * no schedule, the observer's sun governs until its end, so it must be one this world's light takes (`sunError`).
+ * `runExperiment` throws it; an island's predecessor preflight (island.ts) rejects the predecessor with it instead, like
+ * the rest of `continuationError`. Kept apart from that, which tools/run.ts calls before it puts an inherited sun first
+ * in a fork's schedule.
+ */
+export function sunContinuationError(spec: RunSpec, cfg: WorldConfig, startStep: number, observer: ObserverState | undefined): string | null {
+  const startSun = observer?.sun ?? null;
+  if (spec.interventions !== undefined) {
+    if (startStep === 0 && !startSun) return null;
+    const scheduledSun = sunAt(spec.interventions, startStep);
+    if (sameSun(startSun, scheduledSun)) return null;
+    return `the start checkpoint was taken under another sun than this schedule's: its observer says ${startSun ? `${startSun.percent}% from t=${startSun.step} for ${startSun.span} steps` : "no sun"}, the schedule ${scheduledSun ? `${scheduledSun.percent}% from t=${scheduledSun.step} for ${scheduledSun.span} steps` : "no sun"} at t=${startStep}`;
+  }
+  const bad = startSun ? sunError(cfg, startSun.percent) : null;
+  return bad ? `the start checkpoint's sun: ${bad}` : null;
+}
+
+/**
  * Why `observer` cannot continue a history of config `cfg` at `step` as far
  * as the pond cycle is concerned, or null when it can. The `ponds` field
  * must be present exactly in pond runs (`cfg.pondPeriod` set) past step 0 --
@@ -726,6 +833,13 @@ function validateObserverShape(raw: unknown): ObserverState {
   if (o.fed !== undefined) {
     const f = o.fed as { matter?: unknown; feeds?: unknown } | null;
     if (!f || typeof f !== "object" || !Number.isSafeInteger(f.matter) || !posInt(f.feeds)) throw new Error("checkpoint: observer fed is malformed");
+  }
+  if (o.sun !== undefined) {
+    const u = o.sun as { step?: unknown; percent?: unknown; span?: unknown } | null;
+    const ok = !!u && typeof u === "object" && Object.keys(u).sort().join() === "percent,span,step" && safeIntGe0(u.step) && SUN_PERCENTS.includes(u.percent as number) &&
+      posInt(u.span) && (u.span as number) <= SUN_SPAN_MAX && (u.step as number) <= (o.step as number) && (o.step as number) < (u.step as number) + (u.span as number) &&
+      (u.step as number) + (u.span as number) <= MAX_STEP;
+    if (!ok) throw new Error("checkpoint: observer sun is malformed (a sun active at the observer's step: step <= t < step + span <= MAX_STEP)");
   }
   return o as ObserverState;
 }
@@ -816,6 +930,9 @@ function profileRows(cfg: WorldConfig, c: Census, profiles: ReturnType<typeof li
 function cpuInterventions(state: WorldState): InterventionSim {
   const ref = new RefSim(state);
   return {
+    cfg: state.cfg,
+    // A step-0 sun changes no state: the runner installs it on the simulation once that exists.
+    setLight: async () => {},
     lesion: (x, y, r) => {
       applyLesion(ref, x, y, r);
       return clampLesionRadius(state.cfg, r);
@@ -836,6 +953,7 @@ export async function runExperiment(
   onProgress: (msg: string) => void = () => {},
   opts: RunOptions = {},
 ): Promise<RunResult> {
+  stopIfAborted(opts.signal);
   const errs = validateSpec(spec);
   if (errs.length) throw new Error(`invalid run spec: ${errs.join("; ")}`);
   const preset = PRESETS.find((p) => p.id === spec.presetId)!;
@@ -849,7 +967,7 @@ export async function runExperiment(
   if (picked) {
     if (opts.start || opts.observer) throw new Error("a picked run cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
     if (opts.immigrant) throw new Error("a picked run cannot import an immigrant state");
-    const pickedBad = pickedConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
+    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
     if (pickedBad) throw new Error(pickedBad);
   }
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
@@ -896,7 +1014,21 @@ export async function runExperiment(
   // built or the GPU touched, like the pre-cycle guard. `owned` is what this call applies; the rest are other segments'.
   const interventionsBad = interventionsError(spec, cfg, startStep);
   if (interventionsBad) throw new Error(interventionsBad);
+  // A run from step 0 owns its step-0 entries and applies and logs them, with or without a start checkpoint, as before suns
+  // existed (`ownedInterventions`; stitchRun counts them as the first segment's). A step-0 checkpoint taken under a sun (a lab
+  // world saved before its first step) carries a step-0 sun: a schedule must hold that same sun at step 0, and installing it
+  // again changes nothing, since a sun changes no state.
   const owned = ownedInterventions(spec.interventions, startStep, spec.steps);
+  const startSun = opts.observer?.sun ?? null;
+  if (startStep === 0 && startSun && opts.start === undefined) throw new Error("an observer at step 0 without its start state cannot carry a sun: a fresh run's suns are its own step-0 entries");
+  const scheduledSun = spec.interventions !== undefined ? sunAt(spec.interventions, startStep) : null;
+  // The sun this call inherits at its start (one a previous segment, or the checkpoint's history, started and has not ended): from
+  // the schedule when the spec has one, else from the observer alone, which then governs until its end. At step 0 a schedule's
+  // sun is this call's own step-0 entry, applied below, not an inheritance. Checked before any state is built.
+  const inherited = spec.interventions !== undefined ? (startStep > 0 ? scheduledSun : null) : startSun;
+  if (opts.branchFrom && inherited) throw new Error("a branch cannot start under a sun: its schedule has a sun active at the branch's start");
+  const sunBad = sunContinuationError(spec, cfg, startStep, opts.observer);
+  if (sunBad) throw new Error(sunBad);
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a
   // migration-disabled continuation from any step -- aligned or not -- keeps
@@ -954,6 +1086,7 @@ export async function runExperiment(
   const atZero = owned.filter((e) => e.step === 0);
   const zeroLog: InterventionLogEntry[] = [];
   const zeroFed = { matter: 0, feeds: 0 };
+  let zeroSun: { step: number; percent: number; span: number } | null = null;
   if (atZero.length) {
     actualInit = cloneState(actualInit);
     const cpu = cpuInterventions(actualInit);
@@ -964,6 +1097,7 @@ export async function runExperiment(
         zeroFed.matter += done.matter;
         zeroFed.feeds++;
       }
+      if (e.kind === "sun") zeroSun = { step: e.step, percent: e.percent, span: e.span };
     }
   }
   const t0tot = totalsOf(cfg, actualInit.cells);
@@ -983,6 +1117,13 @@ export async function runExperiment(
   const sim = await GpuSim.create(device, actualInit);
   const obs = restoreObservers(opts.observer, settings, cfg);
   if (zeroFed.feeds) obs.fed = { matter: (obs.fed?.matter ?? 0) + zeroFed.matter, feeds: (obs.fed?.feeds ?? 0) + zeroFed.feeds };
+  // The sun that governs the first step: a step-0 sun of this run, else the one it inherits. Installed before any step;
+  // the simulation was built with the world's own config, which `cfg` stays.
+  const firstSun = zeroSun ?? inherited;
+  if (firstSun) {
+    await sim.setLight(lightOfSun(cfg, firstSun));
+    obs.sun = { step: firstSun.step, percent: firstSun.percent, span: firstSun.span };
+  } else delete obs.sun;
   // Observers start fresh on a branch's post-transform state, which has had its boundary's cycle.
   if (branched) obs.ponds = { lastCycle: branched.ponds.b };
   const { tracker, activity } = obs;
@@ -1082,7 +1223,7 @@ export async function runExperiment(
     for (const entry of zeroLog) await sink.appendText(INTERVENTIONS_FILE, formatInterventionLine(entry));
   }
   const hook = picked
-    ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note })
+    ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note, pressures: spec.pressures })
     : undefined;
   // A branch's own transform, at its source's boundary: its rows come before the first census, as they would in a run that reached it.
   if (branched) {
@@ -1129,11 +1270,21 @@ export async function runExperiment(
   // entry is logged. Returns how many it applied.
   const due = owned.filter((e) => e.step > startStep);
   let dueAt = 0;
+  // A sun's end comes first at its step, before the entries there (so a sun may start where another ends) and before any
+  // checkpoint, which then carries no sun: the world's own light returns with the simulation idle.
+  const sunEnd = () => (obs.sun ? obs.sun.step + obs.sun.span : Infinity);
   const applyDueAt = async (step: number): Promise<number> => {
     let applied = 0;
+    if (sunEnd() === step) {
+      await sim.setLight(null);
+      delete obs.sun;
+    }
     while (dueAt < due.length && due[dueAt].step === step) {
-      const done = await applyScheduled(sim, due[dueAt]);
+      const e = due[dueAt];
+      if (e.kind === "sun" && obs.sun) throw new InterventionError(`the sun at t=${e.step} starts while the sun from t=${obs.sun.step} is still active (until t=${sunEnd()}): suns do not overlap`, { step: e.step });
+      const done = await applyScheduled(sim, e);
       dueAt++;
+      if (e.kind === "sun") obs.sun = { step: e.step, percent: e.percent, span: e.span };
       if (done.entry.kind === "feed") {
         startMatter += BigInt(done.matter);
         baseline += done.energy;
@@ -1147,6 +1298,8 @@ export async function runExperiment(
 
   try {
     for (let s = 0; s < spec.steps; ) {
+      // RunOptions.signal: between chunks only, so the observers never see half a census.
+      stopIfAborted(opts.signal);
       const chunk = Math.min(spec.censusEvery, spec.steps - s);
       const deep = obs.censusIdx % spec.deepEvery === 0;
       // The census chunk, in batches of at most 64 steps, split at every scheduled step strictly inside it: run to the
@@ -1158,8 +1311,10 @@ export async function runExperiment(
         for (let k = target - reached; k > 0; k -= 64) sim.run(Math.min(64, k));
         reached = target;
       };
-      while (dueAt < due.length && due[dueAt].step < chunkEnd) {
-        const at = due[dueAt].step;
+      // A sun's end inside the chunk is a split point too: the world's own light returns there, with the simulation idle.
+      const nextSplit = () => Math.min(dueAt < due.length ? due[dueAt].step : Infinity, sunEnd());
+      while (nextSplit() < chunkEnd) {
+        const at = nextSplit();
         runTo(at);
         await device.queue.onSubmittedWorkDone();
         await applyDueAt(at);
@@ -1167,6 +1322,7 @@ export async function runExperiment(
       runTo(chunkEnd);
       s += chunk;
       await device.queue.onSubmittedWorkDone();
+      stopIfAborted(opts.signal);
 
       const ledger = await sim.drainLedger();
       if (ledger.dropped > 0) throw new Error(`event buffer overflow (${ledger.dropped} dropped); lower censusEvery`);
@@ -1348,6 +1504,7 @@ export async function runExperiment(
         onProgress(`t=${c.step} ind=${ind.length} lin=${c.lineages.length} fis=${tracker.fissions} bud=${obs.buddings} mut=${obs.mutations} act.sig=${act.significant} ${((sim.step - startStep) / el).toFixed(0)} st/s`);
       }
     }
+    stopIfAborted(opts.signal);
     const final = await sim.readState();
     const wall = (performance.now() - t0) / 1000;
     const observer = serializeObservers(obs, final.step, settings);

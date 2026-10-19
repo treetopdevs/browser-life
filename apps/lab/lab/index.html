@@ -140,7 +140,7 @@
         <section class="rail-section" aria-labelledby="setup-heading">
           <h2 id="setup-heading">Plant a world</h2>
           <label class="field"><span>Starting world</span><select id="preset"></select></label>
-          <button id="btn-worlds" class="full" type="button" aria-haspopup="dialog" aria-controls="worlds">Browse all worlds</button>
+          <button id="btn-worlds" class="full" type="button" aria-haspopup="dialog">Browse all worlds</button>
           <div class="preset-about" id="preset-desc"></div>
           <label class="field"><span>Seed number</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
           <p class="hint">A fresh seed number every visit, unless the link names one. Same starting world and seed number: the same history, every time. Anything you do by hand is extra, and logged.</p>
@@ -150,8 +150,38 @@
         </section>
         <section class="rail-section breeder" id="breeder" aria-labelledby="breeder-heading" hidden>
           <h2 id="breeder-heading">Breed by hand</h2>
+          <div class="pressure" id="pressure">
+            <label class="field"><span>The rule breeds for</span><select id="pressure-dial" aria-describedby="pressure-says" disabled></select></label>
+            <p class="hint pressure-says" id="pressure-says"></p>
+            <div class="row"><button id="pressure-set" type="button" disabled>Set</button></div>
+            <p class="hint" id="pressure-hint">What the rule picks donors by when you don’t: it applies to cycles you let run and to “The rule’s choice”. It is not the ranking you see below.</p>
+            <p class="pressure-state hint" id="pressure-state" role="status" aria-live="polite"></p>
+          </div>
           <label class="check"><input id="breeder-on" type="checkbox" /><span>Stop at each pond cycle and let me choose the donor ponds</span></label>
           <p class="hint" id="breeder-hint">At each pond cycle every pond is cleared and reseeded from a few donor ponds. Left alone, the world’s own rule chooses them.</p>
+          <div class="play-verb" id="auto-breed" role="group" aria-labelledby="auto-heading">
+            <h3 class="subheading" id="auto-heading">Breed on its own</h3>
+            <div class="row" id="auto-row">
+              <button id="auto-1" type="button" data-cycles="1">1 cycle</button>
+              <button id="auto-5" type="button" data-cycles="5">5 cycles</button>
+              <button id="auto-20" type="button" data-cycles="20">20 cycles</button>
+              <button id="auto-inf" type="button" data-cycles="inf">Until I stop it</button>
+              <button id="auto-stop" type="button" disabled>Stop</button>
+            </div>
+            <p class="hint" id="auto-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="play-verb" id="keep" role="group" aria-labelledby="keep-heading">
+            <h3 class="subheading" id="keep-heading">Keep a lineage</h3>
+            <div class="keep-state" id="keep-state" role="status" aria-live="polite">
+              <p class="hint" id="keep-none">None kept. Choose Keep on a lineage in Biggest lineages, on a cell you looked at, or in a lineage’s drawer.</p>
+              <div class="keep-chip" id="keep-chip" hidden>
+                <i id="keep-swatch" aria-hidden="true"></i><span class="mono" id="keep-key"></span>
+                <button id="keep-clear" class="quiet" type="button">Clear</button>
+              </div>
+              <p class="keep-where" id="keep-where" hidden></p>
+            </div>
+            <p class="hint">When the rule or auto-breed answers a cycle, the pond holding most of this lineage seeds it too; a hand pick is never changed. A cycle adjusted this way counts as yours on the card.</p>
+          </div>
           <div id="breeder-pick" hidden>
             <p class="breeder-call" id="breeder-call" role="status" aria-live="polite"></p>
             <label class="field"><span>Rank the ponds by</span><select id="breeder-term"></select></label>
@@ -162,11 +192,17 @@
         </section>
         <section class="rail-section" aria-labelledby="tools-heading">
           <h2 id="tools-heading">In your hand</h2>
-          <div class="seg tool-group" id="tools" role="group" aria-label="Tool"><button data-tool="inspect" class="on" type="button">Look</button><button data-tool="lesion" type="button">Wound</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="pan" type="button">Move</button><button data-tool="pick" type="button" hidden>Pick</button></div>
+          <div class="seg tool-group" id="tools" role="group" aria-label="Tool"><button data-tool="inspect" class="on" type="button">Look</button><button data-tool="lesion" type="button">Wound</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="sun" type="button">Sun</button><button data-tool="pan" type="button">Move</button><button data-tool="pick" type="button" hidden>Pick</button></div>
           <p class="tool-says" id="tool-says"></p>
           <label class="field range-field" id="radius-field"><span>Brush size <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
           <label class="field range-field" id="amount-field"><span>Nutrient per cell <b class="mono" id="amount-val">16</b></span><input id="amount" type="range" min="1" max="128" step="1" value="16" /></label>
           <p class="hint" id="feed-hint" hidden>Feeding and draining open the jar. Each use is logged, and the jar check counts what you added.</p>
+          <div class="sun-panel" id="sun-panel" hidden>
+            <fieldset class="sun-choices" id="sun-choices"><legend>How bright</legend></fieldset>
+            <label class="field"><span>For how many steps</span><input id="sun-span" type="number" min="1" max="16777216" step="1" value="2000" inputmode="numeric" /></label>
+            <div class="row"><button id="btn-sun" type="button">Set the sun</button></div>
+            <p class="hint" id="sun-status" aria-live="polite"></p>
+          </div>
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h2 id="checkpoint-heading">Keep a copy</h2><p class="hint">Save keeps a copy in this browser. Download gives you a file to keep or share. Both wait for the next census, so the copy is complete.</p>
@@ -191,7 +227,7 @@
         <section class="evidence-section" aria-labelledby="ledger-heading">
           <div class="section-heading"><h2 id="ledger-heading">Is the jar still sealed?</h2><span class="badge" id="ledger-badge">waiting</span></div>
           <dl class="kv mono"><dt>Matter in or out</dt><dd id="k-matter"></dd><dt>Fed by hand</dt><dd id="k-fed"></dd><dt>Energy unaccounted</dt><dd id="k-resid"></dd><dt>Light taken in</dt><dd id="k-light"></dd><dt>Heat let out</dt><dd id="k-heat"></dd></dl>
-          <div class="bars" id="pools" aria-label="What the matter is right now"></div>
+          <div class="bars" id="pools" role="img" aria-label="What the matter is right now: not counted yet"></div>
           <div class="pool-legend"><span><i class="key key-a"></i>Nutrient</span><span><i class="key key-b"></i>Biomass</span><span><i class="key key-p"></i>Membrane</span><span><i class="key key-c"></i>Waste</span></div>
         </section>
         <section class="evidence-section verification" id="verification" aria-labelledby="verification-heading">
@@ -204,12 +240,91 @@
         </section>
         <section class="evidence-section" id="probe-card" aria-labelledby="probe-heading">
           <h2 id="probe-heading">What’s in this cell?</h2><p class="hint" id="probe-empty">Choose Look, then click a spot on the world.</p>
-          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><p class="hint weights-caption">Its controller’s weights: red negative, blue positive.</p><button id="btn-lineage" class="full lineage-open" type="button" hidden>Open its lineage</button></div>
+          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><p class="hint weights-caption">Its controller’s weights: red negative, blue positive.</p><button id="btn-lineage" class="full lineage-open" type="button" hidden>Open its lineage</button><button id="btn-keep" class="full lineage-open" type="button" aria-pressed="false" hidden>Keep this lineage</button></div>
         </section>
         <section class="evidence-section" aria-labelledby="population-heading">
           <div class="section-heading"><h2 id="population-heading">Who’s living here?</h2><span class="hint">Counted, not declared</span></div>
           <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Average mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations so far</dt><dd id="k-mut"></dd><dt>Splits / merges</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Deepest generation</dt><dd id="k-gen"></dd></dl>
           <h3 class="subheading">Biggest lineages</h3><div class="lineages" id="top-lin"></div>
+        </section>
+        <section class="evidence-section firsts" id="firsts" aria-labelledby="firsts-heading">
+          <h2 id="firsts-heading">What happened first?</h2>
+          <p class="hint firsts-lede">Counted by a detector with rules written in advance. A first is its verdict on a census, not a prize.</p>
+          <p class="firsts-watch" id="firsts-watch" hidden><span class="badge note" id="firsts-watch-badge"></span><span class="hint">Nothing before that is in this log.</span></p>
+          <p class="firsts-watch" id="firsts-stopped" hidden><span class="badge note" id="firsts-stopped-badge"></span><span class="hint">Later firsts aren’t counted in this history.</span></p>
+          <p class="hint" id="firsts-empty">Nothing yet. Firsts show up here as the world grows.</p>
+          <div class="nextup" id="nextup">
+            <h3 class="subheading" id="nextup-heading" hidden>What’s next?</h3>
+            <ol class="nextup-list" id="nextup-list" aria-labelledby="nextup-heading"></ol>
+            <p class="hint" id="nextup-hint" hidden>“Seen so far” is the best yet and only goes up; “now” is the latest census and can fall back.</p>
+            <p class="hint" id="nextup-done" hidden>Every rung on the ladder has been reached in this log.</p>
+          </div>
+          <ol class="firsts-list" id="firsts-list" aria-label="Firsts so far, newest first" hidden></ol>
+          <details class="firsts-rules">
+            <summary>What counts as a first</summary>
+            <div id="firsts-rules-body"></div>
+          </details>
+          <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-describedby="card-hint">Session card</button>
+          <p class="hint" id="card-hint">Sums the session up: what was bred, how far it got, what died, and a file that replays it.</p>
+        </section>
+        <section class="evidence-section families" id="families" aria-labelledby="families-heading">
+          <h2 id="families-heading">Who’s kin to whom?</h2>
+          <p class="hint families-lede">The family tree: lineages grouped by who descends from whom, named by the game. Seen, not measured.</p>
+          <p class="firsts-watch" id="families-watch" hidden><span class="badge note" id="families-watch-badge"></span><span class="hint">Nothing before that is in this tree.</span></p>
+          <p class="firsts-watch" id="families-stopped" hidden><span class="badge note">The tree stopped</span><span class="hint" id="families-stopped-text"></span></p>
+          <p class="hint" id="families-empty">No families yet. The first census names the starting ones.</p>
+          <p class="families-summary mono" id="families-summary" hidden></p>
+          <div id="families-tree-block" hidden>
+            <h3 class="subheading" id="family-tree-heading">Family tree</h3>
+            <ol class="family-tree" id="family-tree" aria-labelledby="family-tree-heading"></ol>
+            <p class="hint" id="families-cut" hidden></p>
+            <button id="families-extinct-toggle" class="quiet" type="button" aria-controls="family-tree" aria-expanded="false" hidden>Show extinct</button>
+          </div>
+          <div id="family-log-block" hidden>
+            <h3 class="subheading" id="family-log-heading">What the tree has seen</h3>
+            <ol class="firsts-list family-log" id="family-log" aria-labelledby="family-log-heading"></ol>
+            <button id="family-log-more" class="quiet" type="button" aria-controls="family-log" aria-expanded="false" hidden>Show all</button>
+          </div>
+          <details class="firsts-rules family-rules">
+            <summary>How families are told apart</summary>
+            <div class="family-rules-body">
+              <p>A family is every lineage that descends from one founding lineage, less the ones that belong to a family founded further down. Families are told apart by <b>descent, not by genome distance</b>. Distance groups shift from one moment to the next and nobody has checked a tolerance on evolved populations, while descent is exact: every new lineage comes with a recorded parent. The price is that two families can be closer in their genes than two lineages inside one family.</p>
+              <p><b>Seen, not measured.</b> The rule was written down before the code (rule set families-v1) and the tree only reports what it sees at each census. It does not measure fitness, and a split does not say which family is better.</p>
+              <dl class="firsts-rules-list">
+                <dt>Where a family starts</dt>
+                <dd>A lineage with no known parent starts one: the planted lineages at the start, and any lineage whose parent the lab cannot know, because it was made before this page began watching. That one is marked “of unknown descent”.</dd>
+                <dt>When a family splits</dt>
+                <dd>At a lineage on the ancestry of a living member, when both sides, that lineage’s descendants and the rest of the family, hold 16 cells or more at every census for 5,000 steps in a row. That lineage then starts a new family whose parent is the old one. A family splits at most once per census, and families never merge.</dd>
+                <dt>A body’s family and purity</dt>
+                <dd>A body belongs to the family holding most of its cells. A family’s purity is the share of its bodies’ cells that are its own, shown as a dash when it has no body.</dd>
+                <dt>Living, gone to film, extinct</dt>
+                <dd>Living means a cell in a body. Gone to film means no cell in any body for five censuses in a row: the family still has cells, outside bodies. It is back from film after five censuses in a body again. Extinct means no living cell is left, and that is final.</dd>
+                <dt>Names</dt>
+                <dd>The game gives each starting family a word from a fixed list. A family that splits off carries its root’s word and an adjective, so its name says where it came from. The same history gives the same names every time.</dd>
+                <dt>If the record overflows</dt>
+                <dd>When the lab’s record of new lineages overflows while it watches, which records survive is not repeatable. The tree stops and says so, the log of firsts carries on, and no session file is offered.</dd>
+              </dl>
+            </div>
+          </details>
+        </section>
+        <section class="evidence-section naturalist" id="naturalist" aria-labelledby="naturalist-heading" data-state="none">
+          <div class="section-heading"><h2 id="naturalist-heading">Field notes</h2><span class="badge" id="naturalist-badge">waiting</span></div>
+          <p class="hint naturalist-lede">Code, not a model. Where it has a baseline, it compares a world, census by census, with neutral runs of its starting world, by rules written down before the code. No model reads this world. Each note carries the experiment proposer’s suggestion, by fixed rules too, and nothing is applied to the world unless you click Try it here.</p>
+          <p class="naturalist-status" id="naturalist-status" role="status" aria-live="polite">Waiting for a world.</p>
+          <p class="hint" id="naturalist-detail" hidden></p>
+          <p class="hint mono" id="naturalist-read" hidden></p>
+          <ul class="naturalist-standing" id="naturalist-standing" aria-label="What the record says about this rule" hidden></ul>
+          <ol class="firsts-list naturalist-notes" id="naturalist-notes" aria-label="Field notes so far, in filing order" hidden></ol>
+          <p class="hint" id="naturalist-filing" hidden></p>
+          <ul class="naturalist-standing" id="naturalist-hedge" aria-label="What no note so far does and does not say" hidden></ul>
+          <details class="firsts-rules naturalist-cannot">
+            <summary>What this cannot tell you</summary>
+            <ul class="naturalist-cannot-list" id="naturalist-cannot"></ul>
+          </details>
+          <details class="firsts-rules naturalist-rules">
+            <summary>How it decides</summary>
+            <div class="naturalist-rule" id="naturalist-rule"></div>
+          </details>
         </section>
       </aside>
 
@@ -230,6 +345,17 @@
       <div class="worlds-body">
         <nav class="worlds-nav" aria-label="Kinds of world"></nav>
         <div class="worlds-main"></div>
+      </div>
+    </dialog>
+    <dialog class="card" id="session-card" aria-labelledby="card-heading">
+      <div class="card-head">
+        <div><h2 id="card-heading" tabindex="-1">Session card</h2><p class="hint">What this session did, as counted. Nothing here is a score.</p></div>
+        <button class="card-close quiet" type="button">Close</button>
+      </div>
+      <div class="card-body" id="card-body" tabindex="0" role="region" aria-label="Session card contents"></div>
+      <div class="card-foot">
+        <button id="btn-session-file" class="primary" type="button" aria-describedby="card-file-note" disabled>Download session file</button>
+        <p class="hint" id="card-file-note" role="status" aria-live="polite">Saves this world’s history from step 0, its firsts and this card as one file, which tools/run.ts replays and checks against this world’s final state.</p>
       </div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>

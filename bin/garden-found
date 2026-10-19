@@ -1,0 +1,520 @@
+#!/bin/sh
+# Tracing off before anything else: `sh -x`, or an xtrace inherited through SHELLOPTS, would otherwise print the
+# admin token in the trace of the lines that test or send it. allexport off too, so no assignment below is exported.
+# Its own trace line goes to /dev/null, so a PS4 that expands the token prints nothing either; stdout as well as
+# stderr, for bash's BASH_XTRACEFD=1. A trace descriptor above 2, a PS4 that runs a command, or a BASH_ENV file is
+# code the caller's environment runs before this line, and is outside what this script can guard.
+{ set +xva; } >/dev/null 2>&1
+# The token moves into a shell variable that is not exported, and leaves the environment before any other command
+# runs, so no child (curl, deno, cat) inherits it. `unset token` first: a `token` that came in through the
+# environment would otherwise stay exported. A variable that cannot be unset (readonly, say from a BASH_ENV file)
+# stops the script here, before any child starts; bash outside POSIX mode would otherwise go on.
+unset token || exit 2
+token=${BL_ADMIN_TOKEN:-}
+unset BL_ADMIN_TOKEN || exit 2
+
+# Founds the commons through the keeper endpoint (POST /api/gardens), with
+# exactly the parameters of docs/garden-opening-2026-10-18.md, section 3. There
+# are no parameter flags: changing the commons means editing that section and
+# the constants below together (tests/deno/garden_found_smoke.ts fails when
+# they differ).
+#
+#   bin/garden-found --coordinator URL
+#       Dry run, the default. Prints the parameters, the exact request and what
+#       --apply would do. Sends nothing: no request, no DNS lookup. Exit 0.
+#
+#   bin/garden-found --coordinator URL --apply --confirm-coordinator URL [--yes]
+#       Founds it. Both URLs must be the same, byte for byte. Unless --yes is
+#       given, stdin must be a terminal and the line typed must be
+#       "found commons on <host>", <host> being the URL's host with its port if
+#       it names one (for example "found commons on cadence.garden"). Then:
+#       The parameters are printed before the question.
+#       1. GET <URL>/api/public/gardens/commons (no token). If the commons
+#          exists, its parameters are compared with the ones below, and nothing
+#          is founded: exit 0 when they match, 3 (each difference listed) when
+#          not. censusEvery and deepEvery are not in the public view: they are
+#          read from GET <URL>/api/experiments/commons (with the admin token).
+#       2. Only on a 404, POST <URL>/api/gardens with the admin token, then read
+#          both back and compare them the same way.
+#
+# URL is an origin only: scheme://host[:port], lowercase, no user, path, query,
+# fragment or trailing slash. https for any host; http only for localhost,
+# 127.0.0.1 and [::1] (not *.localhost: not every resolver pins it to loopback).
+#
+# The admin token is read only from BL_ADMIN_TOKEN (never from an argument),
+# must be visible ASCII with no spaces, and is never printed: it is taken out of
+# the environment before any child starts, it reaches curl as a header read
+# from stdin (printf is a shell builtin, so it never appears in a process's
+# arguments either), and tracing is switched off on the first line. No server
+# answer is printed as text, because one could repeat the token (whole, escaped,
+# encoded or in part): only status codes, and in a comparison only numbers and
+# true/false, are shown. curl runs with -q, so no .curlrc can turn on tracing or
+# redirects. Redirects are not followed.
+#
+# Exit status: 0 dry run, founded, or the commons exists and matches; 1 a
+# request failed or was refused; 2 a usage error or a refusal, always before any
+# request; 3 the commons exists with different parameters.
+#
+# Needs curl and deno for --apply; the dry run needs only sh.
+
+set -eu
+LC_ALL=C
+export LC_ALL
+
+me=bin/garden-found
+
+# The commons (docs/garden-opening-2026-10-18.md, section 3). Every key is sent,
+# so a later change to a coordinator default cannot change the commons.
+name=commons
+preset=wild-storm-large
+seed=1
+founding='[{"step":0,"kind":"feed","x":256,"y":256,"r":255,"amount":16}]'
+days=365
+steps_per_day=131072
+census_every=1024
+deep_every=10
+letters_per_day=8
+queue_max=64
+dawn_period_ms=86400000
+dawn_offset_ms=0
+food=false
+meteor=false
+sun=true
+body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"founding\":$founding,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census_every,\"deepEvery\":$deep_every,\"lettersPerDay\":$letters_per_day,\"queueMax\":$queue_max,\"dawnPeriodMs\":$dawn_period_ms,\"dawnOffsetMs\":$dawn_offset_ms,\"food\":$food,\"meteor\":$meteor,\"sun\":$sun}"
+
+usage() {
+  cat <<'EOF'
+usage: bin/garden-found --coordinator URL
+       bin/garden-found --coordinator URL --apply --confirm-coordinator URL [--yes]
+
+Founds the commons with the parameters of docs/garden-opening-2026-10-18.md, section 3.
+Without --apply it is a dry run and sends nothing. The admin token is read from
+BL_ADMIN_TOKEN only. Exit: 0 ok, 1 request failed, 2 usage or refusal, 3 the commons
+exists with different parameters.
+EOF
+}
+
+refuse() {
+  echo "$me: $*" >&2
+  exit 2
+}
+
+coordinator=""
+confirm=""
+apply=0
+yes=0
+seen=" "
+once() {
+  case $seen in
+    *" $1 "*) refuse "$1 given twice" ;;
+  esac
+  seen="$seen$1 "
+}
+while [ $# -gt 0 ]; do
+  case $1 in
+    --coordinator | --confirm-coordinator)
+      once "$1"
+      if [ $# -lt 2 ]; then refuse "$1 needs a URL"; fi
+      case $2 in
+        '' | -*) refuse "$1 needs a URL" ;;
+      esac
+      if [ "$1" = --coordinator ]; then coordinator=$2; else confirm=$2; fi
+      shift 2
+      ;;
+    --apply)
+      once "$1"
+      apply=1
+      shift
+      ;;
+    --yes)
+      once "$1"
+      yes=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      # The argument is not echoed: it could be a token pasted in the wrong place.
+      usage >&2
+      refuse "unknown argument (see the usage above)"
+      ;;
+  esac
+done
+
+[ -n "$coordinator" ] || {
+  usage >&2
+  refuse "--coordinator is required; there is no default"
+}
+if [ "$apply" = 0 ]; then
+  [ -z "$confirm" ] || refuse "--confirm-coordinator is only for --apply"
+  [ "$yes" = 0 ] || refuse "--yes is only for --apply"
+fi
+
+# The URL: an origin only, checked before anything else.
+case $coordinator in
+  https://*) scheme=https ;;
+  http://*) scheme=http ;;
+  *) refuse "the coordinator URL must start with https:// (or http:// for localhost)" ;;
+esac
+authority=${coordinator#*://}
+case $authority in
+  '') refuse "the coordinator URL names no host" ;;
+  *[!]a-z0-9.:[-]*) refuse "the coordinator URL must be scheme://host[:port] in lowercase, with no user, path, query, fragment or trailing slash" ;;
+esac
+case $authority in
+  \[*)
+    host=${authority%%]*}]
+    rest=${authority#"$host"}
+    case $host in
+      \[*\[* | *\]*\]) refuse "the coordinator URL's host is not a valid bracketed address" ;;
+    esac
+    ;;
+  *\[* | *\]*) refuse "the coordinator URL's host is not a valid name or address" ;;
+  *:*)
+    host=${authority%%:*}
+    rest=:${authority#*:}
+    ;;
+  *)
+    host=$authority
+    rest=""
+    ;;
+esac
+case $rest in
+  '') ;;
+  :*)
+    port=${rest#:}
+    case $port in
+      '' | *[!0-9]* | 0*) refuse "the coordinator URL's port must be a number without leading zeros" ;;
+    esac
+    [ "${#port}" -le 5 ] && [ "$port" -le 65535 ] || refuse "the coordinator URL's port must be at most 65535"
+    ;;
+  *) refuse "the coordinator URL must be scheme://host[:port]" ;;
+esac
+case $host in
+  '' | '[]' | .* | *. | *..*) refuse "the coordinator URL's host is not a valid name or address" ;;
+esac
+local_host=0
+case $host in
+  localhost | 127.0.0.1 | '[::1]') local_host=1 ;;
+esac
+if [ "$scheme" = http ] && [ "$local_host" = 0 ]; then
+  refuse "http:// is only for localhost, 127.0.0.1 and [::1]; use https:// for $host"
+fi
+if [ "$apply" = 1 ]; then
+  [ -n "$confirm" ] || refuse "--apply needs --confirm-coordinator with the same URL again"
+  [ "$confirm" = "$coordinator" ] || refuse "--confirm-coordinator is not the same URL as --coordinator"
+fi
+
+view_url="$coordinator/api/public/gardens/$name"
+spec_url="$coordinator/api/experiments/$name"
+post_url="$coordinator/api/gardens"
+
+describe() {
+  meteor_words=off
+  [ "$meteor" = true ] && meteor_words=on
+  sun_words="letters off"
+  [ "$sun" = true ] && sun_words="letters on (this world's light takes 50% and 75%)"
+  cat <<EOF
+The commons, as docs/garden-opening-2026-10-18.md section 3 sets it:
+  name            $name (the page's default garden)
+  preset          $preset (512 x 512)
+  seed            $seed
+  founding        one feed at step 0: centre 256,256, radius 255, 16 quanta per cell
+  steps per day   $steps_per_day (one sun wander)
+  census          every $census_every steps, a deep census every ${deep_every}th
+  horizon         $days days ($((days * steps_per_day)) steps)
+  dawn            every $dawn_period_ms ms from offset $dawn_offset_ms (midnight UTC)
+  letters         $letters_per_day a day, at most $queue_max waiting; stones radius 1 to 32 (fixed in the coordinator)
+  food            off
+  meteor          $meteor_words
+  sun             $sun_words
+EOF
+}
+
+if [ "$apply" = 0 ]; then
+  token_set=no
+  [ -z "$token" ] || token_set=yes
+  echo "$me: dry run; nothing is sent. Add --apply --confirm-coordinator $coordinator to found it."
+  echo
+  describe
+  cat <<EOF
+
+The request --apply would send:
+  POST $post_url
+  content-type: application/json
+EOF
+  # The token's name, never its value.
+  # shellcheck disable=SC2016
+  printf '  authorization: Bearer %s\n' '$BL_ADMIN_TOKEN'
+  printf '  %s\n' "$body"
+  cat <<EOF
+
+What --apply would do:
+  1. GET $view_url (no token).
+     If the commons exists, GET $spec_url (with the token) for
+     censusEvery and deepEvery, compare both with the parameters above and stop:
+     exit 0 if they match, 3 if not. Nothing is founded.
+  2. Only if the view is a 404: send the request above, then read both back
+     and compare them the same way.
+  It asks you to type "found commons on $authority" first, unless --yes is given.
+BL_ADMIN_TOKEN set in this shell: $token_set
+EOF
+  exit 0
+fi
+
+# --apply: every refusal below comes before any request.
+[ -n "$token" ] || refuse "BL_ADMIN_TOKEN is not set (the admin token is read from it only)"
+case $token in
+  *[!!-~]*) refuse "BL_ADMIN_TOKEN holds a space, a control character (such as a line break) or a non-ASCII byte; it is not sent" ;;
+esac
+for command in curl deno; do
+  command -v "$command" >/dev/null 2>&1 || refuse "required command not found: $command"
+done
+if [ "$yes" = 0 ]; then
+  [ -t 0 ] || refuse "stdin is not a terminal, so the typed confirmation cannot be asked; add --yes to found without it"
+fi
+describe
+printf '  body            %s\n\n' "$body"
+if [ "$yes" = 0 ]; then
+  printf 'This founds the commons above on %s, once and for good (a garden cannot be deleted).\nType "found commons on %s" to go on: ' "$coordinator" "$authority" >&2
+  answer=""
+  IFS= read -r answer || true
+  [ "$answer" = "found commons on $authority" ] || refuse "not confirmed; nothing was sent"
+fi
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/bl-garden-found.XXXXXX")
+trap 'rm -rf "$tmp"' 0
+trap 'exit 129' 1
+trap 'exit 130' 2
+trap 'exit 143' 15
+
+# curl as this script uses it: -q first (no .curlrc, so no trace, verbose or
+# location from one), no redirects (curl follows none without -L), only the
+# URL's own scheme, a bounded time, the body to a file, the status printed. A
+# proxy is never used for a loopback host.
+noproxy=""
+[ "$local_host" = 0 ] || noproxy='*'
+http() {
+  out=$1
+  shift
+  if [ -n "$noproxy" ]; then
+    curl -q -sS --max-time 30 --proto "=$scheme" --noproxy "$noproxy" -o "$out" -w '%{http_code}' "$@"
+  else
+    curl -q -sS --max-time 30 --proto "=$scheme" -o "$out" -w '%{http_code}' "$@"
+  fi
+}
+# The same, with the admin token as a header read from stdin.
+authed() {
+  printf 'authorization: Bearer %s\n' "$token" | http "$@" -H @-
+}
+
+# GET $1 into the file $2, with the admin token when $3 is "authed"; prints the
+# status (000: no answer). A 503 (busy) is retried up to five times, a second
+# apart.
+get() {
+  tries=0
+  while :; do
+    if [ "${3:-}" = authed ]; then
+      code=$(authed "$2" "$1") || code=000
+    else
+      code=$(http "$2" "$1") || code=000
+    fi
+    if [ "$code" != 503 ] || [ "$tries" -ge 5 ]; then
+      echo "$code"
+      return 0
+    fi
+    tries=$((tries + 1))
+    sleep 1
+  done
+}
+
+# Compares $tmp/view.json (the public view) and $tmp/spec.json (the admin spec,
+# fetched with status $1) with the parameters above. 0 matches, 3 differs (each
+# difference printed), 1 something could not be read or compared.
+# shellcheck disable=SC2016 # JavaScript, not shell
+compare() {
+  GF_VIEW="$tmp/view.json" GF_SPEC="$tmp/spec.json" GF_SPEC_STATUS="$1" GF_BODY="$body" deno eval --no-lock --no-config '
+const want = JSON.parse(Deno.env.get("GF_BODY"));
+const read = (p) => {
+  try {
+    return JSON.parse(Deno.readTextFileSync(p));
+  } catch {
+    return undefined;
+  }
+};
+const isObject = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+const v = read(Deno.env.get("GF_VIEW"));
+if (!isObject(v)) {
+  console.log(v === undefined ? "  the public view is not JSON" : "  the public view is not a JSON object");
+  Deno.exit(1);
+}
+const at = (o, path) => path.split(".").reduce((x, k) => (isObject(x) ? x[k] : undefined), o);
+const pairs = [
+  ["name", "name", want.name],
+  ["presetId", "presetId", want.presetId],
+  ["seed", "seed", want.seed],
+  ["founding", "founding", want.founding],
+  ["stepsPerDay", "pace.stepsPerDay", want.stepsPerDay],
+  ["dawnPeriodMs", "pace.dawnPeriodMs", want.dawnPeriodMs],
+  ["dawnOffsetMs", "pace.dawnOffsetMs", want.dawnOffsetMs],
+  ["days", "clock.daysTotal", want.days],
+  ["lettersPerDay", "letters.perDay", want.lettersPerDay],
+  ["queueMax", "letters.queueMax", want.queueMax],
+  ["food", "food.enabled", want.food],
+  ["meteor", "meteor.enabled", want.meteor],
+  ["sun", "sun.enabled", want.sun],
+];
+// Key order is not part of a value: objects are compared key by key.
+const canon = (x) => Array.isArray(x) ? x.map(canon) : isObject(x)
+  ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, canon(x[k])])) : x;
+const same = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+let differs = 0;
+let unread = 0;
+// A value from the server is shown only when it is a number, true, false or null. A string, list or object could
+// repeat the admin token, so only its kind is named (the public view itself can be read in a browser).
+const shown = (x) => typeof x === "number" || typeof x === "boolean" || x === null
+  ? JSON.stringify(x)
+  : x === undefined ? "nothing" : typeof x === "string" ? `a different string (${x.length} characters, not shown)`
+  : Array.isArray(x) ? `a different list (${x.length} entries, not shown)` : "a different object (not shown)";
+const differ = (key, path, has, w) => {
+  differs++;
+  console.log(`  ${key} (${path}): the commons has ${shown(has)}, the checklist says ${JSON.stringify(w)}`);
+};
+for (const [key, path, w] of pairs) {
+  const has = at(v, path);
+  if (!same(has, w)) differ(key, path, has, w);
+}
+// censusEvery and deepEvery are not in the public view: the admin spec has them.
+const status = Deno.env.get("GF_SPEC_STATUS");
+const doc = status === "200" ? read(Deno.env.get("GF_SPEC")) : undefined;
+const spec = isObject(doc) && isObject(doc.spec) ? doc.spec : undefined;
+if (spec === undefined) {
+  unread++;
+  const why = status === "200" ? "an answer with no spec" : status === "000" ? "no answer" : `HTTP ${status}`;
+  console.log(`  censusEvery, deepEvery: not compared (GET /api/experiments/${want.name} gave ${why})`);
+} else {
+  for (const key of ["censusEvery", "deepEvery"]) {
+    if (!same(spec[key], want[key])) differ(key, `spec.${key}`, spec[key], want[key]);
+  }
+}
+Deno.exit(differs > 0 ? 3 : unread > 0 ? 1 : 0);
+'
+}
+
+# Reads the admin spec, then compares; sets $compared (the comparison's exit status) and $result.
+compare_all() {
+  spec_code=$(get "$spec_url" "$tmp/spec.json" authed)
+  compared=0
+  result=$(compare "$spec_code") || compared=$?
+  # Only numbers and true/false from the server reach $result; this is the last guard.
+  case $result in
+    *"$token"*) result="  (the comparison repeats the admin token, so it is not shown)" ;;
+  esac
+}
+
+# Reports an existing commons and exits: 0 it matches, 3 it differs, 1 it could
+# not be compared.
+report_existing() {
+  compare_all
+  case $compared in
+    0)
+      echo "$me: the commons already exists on $coordinator and matches the checklist; nothing was founded."
+      echo "$result"
+      exit 0
+      ;;
+    3)
+      echo "$me: the commons already exists on $coordinator with different parameters; nothing was founded:" >&2
+      echo "$result" >&2
+      exit 3
+      ;;
+    *)
+      echo "$me: the commons exists on $coordinator but could not be compared with the checklist; nothing was founded:" >&2
+      echo "$result" >&2
+      exit 1
+      ;;
+  esac
+}
+
+# Said whenever a founding request may have been acted on without an answer.
+maybe_founded="The commons may have been founded anyway (the coordinator creates all its days in one call). Run the same command again: it reads the view first and reports an existing commons instead of founding twice."
+
+echo "$me: reading $view_url ..."
+code=$(get "$view_url" "$tmp/view.json")
+case $code in
+  200) report_existing ;;
+  404) ;;
+  000)
+    echo "$me: no answer from $coordinator (see curl's message above); nothing was sent" >&2
+    exit 1
+    ;;
+  *)
+    echo "$me: reading the view failed (HTTP $code); nothing was sent" >&2
+    exit 1
+    ;;
+esac
+
+echo "$me: no commons yet; founding it with POST $post_url ..."
+# The answer's body is not shown (it could repeat the token); the status says enough, and the view is read again.
+code=$(authed "$tmp/found.json" -X POST -H 'content-type: application/json' --data-binary "$body" "$post_url") || code=000
+case $code in
+  200)
+    echo "$me: founded (HTTP 200)."
+    code=$(get "$view_url" "$tmp/view.json")
+    [ "$code" = 200 ] || {
+      echo "$me: founded, but reading the view back failed (HTTP $code); check $view_url" >&2
+      exit 1
+    }
+    compare_all
+    case $compared in
+      0)
+        echo "$me: the public view and the spec match the checklist."
+        echo "$result"
+        echo "Public view: $view_url"
+        exit 0
+        ;;
+      3)
+        echo "$me: founded, but the commons differs from the checklist (the public view: $view_url):" >&2
+        echo "$result" >&2
+        exit 3
+        ;;
+      *)
+        echo "$me: founded, but it could not be compared with the checklist:" >&2
+        echo "$result" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  422)
+    # "garden exists" (founded since the first read) or a refused parameter: the view tells them apart, so the
+    # answer's text is not needed.
+    code=$(get "$view_url" "$tmp/view.json")
+    case $code in
+      200)
+        echo "$me: the coordinator answered 422 and the commons now exists (it was founded since the first read)."
+        report_existing
+        ;;
+      404)
+        echo "$me: the coordinator refused the founding (422) and no commons exists. Its reason is not shown (an answer could repeat the token). The body above is accepted by a dev coordinator at this checkout in tests/deno/garden_found_smoke.ts, so this coordinator validates differently: check its commit (docs/garden-opening-2026-10-18.md, row 2a)." >&2
+        exit 1
+        ;;
+      *)
+        echo "$me: the coordinator answered the founding 422, and reading the view after it failed (HTTP $code); check $view_url" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  401)
+    echo "$me: the coordinator refused the admin token (401); nothing was founded." >&2
+    exit 1
+    ;;
+  000)
+    echo "$me: no answer to the founding request (see curl's message above). $maybe_founded" >&2
+    exit 1
+    ;;
+  *)
+    echo "$me: founding failed (HTTP $code). $maybe_founded" >&2
+    exit 1
+    ;;
+esac

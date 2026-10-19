@@ -21,7 +21,7 @@ const check = (name: string, cond: boolean, detail = "") => {
 
 const root = await Deno.makeTempDir({ prefix: "bl-bootstrap-resume-" });
 const run = async (out: string, ...args: string[]) => {
-  const r = await new Deno.Command(Deno.execPath(), { args: ["run", "-A", "tools/bootstrap.ts", "--out", out, ...args], stdout: "piped", stderr: "piped" }).output();
+  const r = await new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/bootstrap.ts", "--out", out, ...args], stdout: "piped", stderr: "piped" }).output();
   const text = new TextDecoder().decode(r.stdout) + new TextDecoder().decode(r.stderr);
   if (!r.success) throw new Error(`bootstrap ${args.join(" ")} failed:\n${text}`);
   return text;

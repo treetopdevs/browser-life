@@ -7,10 +7,20 @@ defmodule Coordinator.Application do
 
   @impl true
   def start(_type, _args) do
+    # A limit, window, cap or cache setting of the wrong shape stops the boot
+    # here, by name, before anything starts (Coordinator.ConfigCheck).
+    Coordinator.ConfigCheck.check!()
+
     children = [
       CoordinatorWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:coordinator, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Coordinator.PubSub},
+      # The garden's letter budget and view cache (ETS, outside the queue
+      # process); unconditional, so it also runs where start_queue is false.
+      Coordinator.LetterLimiter,
+      # The island routes' join/next budgets and the public status cache
+      # (ETS, outside the queue process); unconditional, like the above.
+      Coordinator.IslandLimiter,
       Application.get_env(:coordinator, :start_queue, true) &&
         {Coordinator.Queue, data_dir: Application.get_env(:coordinator, :data_dir, "data")},
       Application.get_env(:coordinator, :start_discovery, true) &&

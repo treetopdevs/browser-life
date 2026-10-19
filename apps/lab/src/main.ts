@@ -1,8 +1,14 @@
-import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, pondScoreTerms, sunError, sunLight, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
+import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, PressureMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
+import { donorsWithKeep, type KeptPond } from "./pond-play.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
+import { createFirstsPanel } from "./firsts-panel.ts";
+import { createFamilyPanel } from "./family-panel.ts";
+import { createNaturalistPanel } from "./naturalist-panel.ts";
+import type { HandEntry } from "./naturalist.ts";
+import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
 import "./theme.ts";
@@ -12,24 +18,67 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const fmt = (v: number) =>
   Math.abs(v) >= 1e9 ? `${(v / 1e9).toFixed(2)}G` : Math.abs(v) >= 1e6 ? `${(v / 1e6).toFixed(2)}M` : Math.abs(v) >= 1e4 ? `${(v / 1e3).toFixed(1)}k` : `${Math.round(v)}`;
 
+/** The pool bars' name; each stats message adds the shares to it, and until one has come it says so. */
+const POOLS_LABEL = "What the matter is right now";
+const POOLS_UNCOUNTED = `${POOLS_LABEL}: not counted yet`;
+
+/** What the Biggest lineages rows show now (whether they offer Keep, and each lineage's key, share and colour). */
+let topLinShown = "";
+
+// ---------- header order ----------
+// Tab order follows what is drawn, as theme.ts does on the public pages. Wide, the status and the Day/Night button end
+// the row after the nav; at 760px and below the nav takes a row of its own under them (style.css), so the nav comes
+// after the status in the markup there. The grid places both explicitly at those widths: nothing moves on screen. The
+// nav is what moves, never the status: the status line is a live region, and a moved one may be read out again.
+{
+  const header = document.querySelector<HTMLElement>("header.top");
+  const nav = header?.querySelector<HTMLElement>(".site-nav");
+  const status = header?.querySelector<HTMLElement>(".header-status");
+  if (header && nav && status) {
+    const narrow = matchMedia("(max-width: 760px)");
+    const place = () => {
+      const focused = document.activeElement instanceof HTMLElement && nav.contains(document.activeElement) ? document.activeElement : null;
+      if (narrow.matches) { if (status.nextElementSibling !== nav) status.after(nav); }
+      else if (nav.nextElementSibling !== status) status.before(nav);
+      focused?.focus();
+    };
+    place();
+    narrow.addEventListener("change", place);
+  }
+}
+
 const canvas = $<HTMLCanvasElement>("world");
 const wrap = $("canvas-wrap");
 const worker = new Worker(new URL("./sim.worker.ts", import.meta.url), { type: "module" });
 const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
 // A jump replays a world and answers "loaded" like a replacement does, but nobody planted, restored or opened anything:
 // it clears whatever replacement intent a cancelled or refused question left behind.
-const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); }, () => storageOff);
+const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); }, () => storageOff, () => takesDonors(cfg), (key) => sendKeep(key));
+const firstsPanel = createFirstsPanel(send);
+// A family's swatch is the lab's own colour for its founding lineage, when the census has drawn that lineage among its biggest (the map is filled in onCensus).
+const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
+// Field notes' Try it here (docs/naturalist-lab-suggestions-v0-2026-10-18.md): a person's click applies a suggestion's entries as
+// ordinary hand edits, the same lesion and feed messages Wound and Feed/Drain send, from the suggestion alone (never the brush's
+// radius, amount or tool), each naming the world the suggestion was made for, so the worker refuses it for a world replaced since
+// (a restore, open or jump queued before the click). `loadingWorld` is read when the button is drawn and again on the click.
+const naturalistPanel = createNaturalistPanel({ apply: (entries, world) => tryHand(entries, world), loading: () => loadingWorld });
+// An error the worker did not catch (its own frame and message handlers post theirs): Field notes stops vouching for the censuses.
+worker.addEventListener("error", () => naturalistPanel.onFailed("worker"));
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
 let cfgBeforeLoad: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let mode: GpuViewMode = "composite";
-type Tool = "inspect" | "lesion" | "feed" | "drain" | "pan" | "pick";
+type Tool = "inspect" | "lesion" | "feed" | "drain" | "sun" | "pan" | "pick";
 let tool: Tool = "inspect";
 let playing = false;
 let lastStep = 0;
 let worldReady = false;
+/** The world on screen has failed (an `error` with `failed`): it cannot go on until another is loaded. */
+let worldFailed = false;
+/** The breeder's controls exist (their section below has run): until then the world controls leave them alone. */
+let breederPainted = false;
 let verifying = false;
 let loadingWorld = false;
 /** The worker has a GPU device: a failure after that is about a world, not about the browser. */
@@ -64,10 +113,16 @@ function setStatus(message: string, state: "ready" | "running" | "error" | "load
   $("simulation-dot").className = `status-dot ${state}`;
 }
 
+/** Whether the Sun panel has been painted once (setWorldControls first runs before its elements are looked up). */
+let sunPainted = false;
 function setWorldControls(enabled: boolean) {
   worldReady = enabled;
   for (const id of ["btn-play", "btn-step", "btn-step100", "btn-save", "btn-export", "btn-verify"])
     $<HTMLButtonElement>(id).disabled = !enabled || (id === "btn-save" && storageOff);
+  // The dial, auto-breed and Keep wait with the rest while a world loads, and say why beside them.
+  if (breederPainted) syncBreederControls();
+  // So does the Sun: its choices describe the world on screen, not the one loading.
+  if (sunPainted) paintSun();
 }
 setWorldControls(false);
 
@@ -101,8 +156,15 @@ function setMode(m: GpuViewMode) {
     const selected = b.dataset.mode === m;
     b.classList.toggle("on", selected);
     b.setAttribute("aria-pressed", String(selected));
-    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key.
-    if (selected) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key. The picker's own
+    // scrollLeft moves, not the page: scrollIntoView at start-up would make this button Chrome's starting point for
+    // sequential focus, and the first Tab on a fresh lab would land after it instead of on the skip link.
+    if (selected) {
+      const box = views.getBoundingClientRect();
+      const r = b.getBoundingClientRect();
+      if (r.left < box.left) views.scrollLeft -= box.left - r.left;
+      else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
+    }
   }
   const name = document.createElement("b");
   name.textContent = VIEW_LABELS[m][0];
@@ -312,6 +374,7 @@ function syncPlayLabel() {
   const b = $("btn-play");
   b.textContent = awaiting ? "Run after breed" : playing ? "Pause" : "Play";
   b.title = awaiting ? (playing ? "On: the world runs on once you breed" : "Off: the world stays paused once you breed") : "";
+  firstsPanel.setGrowing(playing && !awaiting);
 }
 /** The header status: a waiting pond cycle is the news until it is resolved, whatever Play says. */
 function showRunStatus() {
@@ -324,26 +387,99 @@ const stepBy = (count: number) => { if (awaiting) return; send({ type: "step", c
 function togglePlay() {
   setPlaying(!playing);
   track(playing ? "World played" : "World paused", loadedPresetId ?? undefined);
+  // Pausing is the player's word to stop: the page pausing itself after a load or an error says its own reason.
+  if (!playing && auto) stopAuto("you paused");
 }
 $("btn-play").onclick = togglePlay;
 $("btn-step").onclick = () => stepBy(1);
 $("btn-step100").onclick = () => stepBy(100);
 
+// ---------- the sun (docs/garden-sun-2026-10-18.md) ----------
+/** The sun the world on screen runs under (the worker's "sun"), or null for its own light. */
+let sunNow: { step: number; percent: number; span: number } | null = null;
+/** A sun was sent and not yet answered (a "sun" message or a refusal). */
+let sunAsked = false;
+/** The world on screen (the worker's generation from "loaded"), which a sun request names so a replacement never takes it. */
+let sunWorld: number | undefined;
+const SUN_WORDS: Record<number, string> = { 50: "Half the light", 75: "Three quarters", 125: "A quarter more", 150: "Half again more" };
+const sunChoices = $("sun-choices");
+const sunSpan = $<HTMLInputElement>("sun-span");
+const sunButton = $<HTMLButtonElement>("btn-sun");
+/** The percent chosen, or null when none is (or the chosen one is refused). */
+function sunChosen(): number | null {
+  const on = sunChoices.querySelector<HTMLInputElement>("input:checked:not(:disabled)");
+  return on ? Number(on.value) : null;
+}
+/**
+ * The Sun tool's panel: one choice per percent, each saying what it makes of this world's light (from its config: base, the
+ * swing on top, and the season's), refused ones disabled with the reason; and what shines now.
+ */
+function paintSun() {
+  const keep = sunChosen();
+  const legend = sunChoices.querySelector("legend")!;
+  sunChoices.replaceChildren(legend);
+  if (cfg) {
+    const c = cfg;
+    const own = document.createElement("p");
+    own.className = "hint";
+    own.textContent = `This world's own light: base ${c.lightBase}, swing ${c.lightAmp}${c.seasonAmp ? `, season ${c.seasonAmp}` : ""}.`;
+    sunChoices.append(own);
+    for (const p of SUN_PERCENTS) {
+      const bad = sunError(c, p);
+      const l = sunLight(c, p);
+      const label = document.createElement("label");
+      label.className = "sun-choice";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "sun-percent";
+      input.value = String(p);
+      input.disabled = bad !== null;
+      input.checked = !bad && (keep === p || (keep === null && p === 75));
+      const words = document.createElement("span");
+      words.textContent = `${SUN_WORDS[p] ?? `${p}%`} (${p}%): ${bad ? "too bright for this world" : `base ${l.lightBase}, swing ${l.lightAmp}${c.seasonAmp ? `, season ${l.seasonAmp}` : ""}`}`;
+      if (bad) label.title = bad;
+      label.append(input, words);
+      sunChoices.append(label);
+    }
+  }
+  const span = Number(sunSpan.value);
+  const spanOk = Number.isSafeInteger(span) && span >= 1 && span <= SUN_SPAN_MAX;
+  const status = $("sun-status");
+  if (!cfg) status.textContent = "Plant a world first.";
+  else if (sunNow) status.textContent = `A sun of ${sunNow.percent}% shines from step ${sunNow.step.toLocaleString()}; the world's own light returns at step ${(sunNow.step + sunNow.span).toLocaleString()}.`;
+  else if (!SUN_PERCENTS.some((p) => sunError(cfg!, p) === null)) status.textContent = "This world's light cannot be dialled: every choice would leave the range the physics allows.";
+  else if (!spanOk) status.textContent = `A sun lasts from 1 to ${SUN_SPAN_MAX.toLocaleString()} steps.`;
+  else status.textContent = "Each sun is logged, and replays with the history. One at a time.";
+  sunButton.disabled = !worldReady || !cfg || sunNow !== null || sunAsked || sunChosen() === null || !spanOk;
+  sunPainted = true;
+}
+sunChoices.onchange = () => paintSun();
+sunSpan.oninput = () => paintSun();
+sunButton.onclick = () => {
+  const p = sunChosen();
+  // The button is disabled while a world loads; a click that races the repaint is not sent either.
+  if (p === null || !worldReady || !cfg || sunNow !== null || sunAsked) return;
+  sunAsked = true;
+  send({ type: "sun", percent: p, span: Number(sunSpan.value), world: sunWorld });
+  paintSun();
+};
+
 // ---------- tools ----------
 const tools = $("tools");
 /** The tool's name as on its button, and what it does, said under the hand that holds it. */
-const TOOL_NAMES: Record<Tool, string> = { inspect: "Look", lesion: "Wound", feed: "Feed", drain: "Drain", pan: "Move", pick: "Pick" };
+const TOOL_NAMES: Record<Tool, string> = { inspect: "Look", lesion: "Wound", feed: "Feed", drain: "Drain", sun: "Sun", pan: "Move", pick: "Pick" };
 const TOOL_SAYS: Record<Tool, string> = {
   inspect: "Click a spot on the world to see what is in that cell.",
   lesion: "Click or drag to clear a patch. Bodies there turn to waste and their stored energy to heat; no matter leaves the jar.",
   feed: "Click or drag to add nutrient where you point.",
   drain: "Click or drag to take nutrient out where you point.",
+  sun: "Dim the whole sky for a while (on some worlds you can brighten it instead), then the world's own light returns. Light is energy, so no matter enters or leaves the jar.",
   pan: "Drag to move around. Scroll to zoom, double-click to fit the whole world.",
   pick: "Click ponds on the field to choose the donors of the next round.",
 };
 /** The verb for the hover line on the field: what a click there would do with this tool. */
 const TOOL_VERB: Record<Tool, string> = {
-  inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", pan: "drag to move", pick: "click to pick",
+  inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", sun: "set the sun in its panel", pan: "drag to move", pick: "click to pick",
 };
 function setTool(t: Tool) {
   tool = t;
@@ -371,6 +507,8 @@ function syncBrush() {
   radius.disabled = !brush();
   amount.disabled = !feeding();
   $("feed-hint").hidden = !feeding();
+  $("sun-panel").hidden = tool !== "sun";
+  paintSun();
 }
 syncBrush();
 /** One application of the current brush at world position (x, y). */
@@ -399,6 +537,14 @@ function settleStroke() {
   }
   strokeSent = 0;
   strokeToastDue = false;
+}
+/** Field notes' Try it here: the suggestion's entries, sent as hand edits for world `world` and counted like a brush stroke's patches (no stroke toast). */
+function tryHand(entries: HandEntry[], world: number) {
+  for (const e of entries) {
+    pendingHands++;
+    if (e.kind === "lesion") send({ type: "lesion", x: e.x, y: e.y, r: e.r, world });
+    else send({ type: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, world });
+  }
 }
 function noteBrushRefused() {
   pendingHands = Math.max(0, pendingHands - 1);
@@ -630,7 +776,7 @@ window.addEventListener("keydown", (e) => {
   const onExit = e.target === $("btn-fs-exit");
   if (e.target !== document.body && e.target !== canvas && !onExit) return;
   if (onExit && e.key !== "f" && e.key !== "F") return;
-  if ($<HTMLDialogElement>("worlds").open) return;
+  if ($<HTMLDialogElement>("worlds").open || $<HTMLDialogElement>("session-card").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();
@@ -731,7 +877,9 @@ function resetEvidence() {
   $("probe-empty").hidden = false;
   $("probe").hidden = true;
   $("top-lin").replaceChildren();
+  topLinShown = "";
   $("pools").replaceChildren();
+  $("pools").setAttribute("aria-label", POOLS_UNCOUNTED);
   spInd.clear(); spBio.clear(); spLin.clear();
   verifying = false;
 }
@@ -761,15 +909,18 @@ function onStats(s: StatsMsg) {
     ["C waste", s.C, "var(--waste)"],
   ];
   const bars = $("pools");
+  const share = (v: number) => ((100 * v) / Math.max(1, s.matter)).toFixed(1);
   bars.replaceChildren(
     ...pools.map(([name, v, c]) => {
       const e = document.createElement("span");
       e.style.width = `${(100 * v) / Math.max(1, s.matter)}%`;
       e.style.background = c;
-      e.title = `${name}: ${fmt(v)} (${((100 * v) / Math.max(1, s.matter)).toFixed(1)}%)`;
+      e.title = `${name}: ${fmt(v)} (${share(v)}%)`;
       return e;
     }),
   );
+  // The bars are one picture (role="img" in index.html); its name carries the same numbers as their tooltips.
+  bars.setAttribute("aria-label", `${POOLS_LABEL}: ${pools.map(([name, v]) => `${name.split(" ")[1]} ${share(v)}%`).join(", ")}`);
   spBio.push(s.B + s.P);
 }
 
@@ -783,11 +934,20 @@ function onCensus(c: CensusMsg) {
   $("k-gen").textContent = String(c.maxGen);
   spInd.push(c.individuals);
   spLin.push(c.lineageCount);
+  // A paused world is counted again every 600 ms with the same answer: the rows stay as they are, so a keyboard or
+  // screen-reader user on a Keep button is not handed a new button (and told about it again) each time. Anything a
+  // row comes to show beyond these goes into the signature too, or the rows would keep showing its old value.
+  const shown = `${takesDonors(cfg)}|${c.top.map((l) => `${l.key} ${l.share} ${l.color.join(",")}`).join("|")}`;
+  if (shown === topLinShown) { syncKeep(); return; }
+  topLinShown = shown;
+  // Otherwise the rows are rebuilt: a keyboard user on a row's Keep button stays on that lineage's button.
+  const heldKey = document.activeElement instanceof HTMLElement && $("top-lin").contains(document.activeElement) ? document.activeElement.dataset.key : undefined;
   $("top-lin").replaceChildren(
     ...c.top.map((l) => {
       const row = document.createElement("div");
       const [r, g, b] = l.color.map((v) => Math.round(Math.min(1, v) * 255));
       const col = `rgb(${r} ${g} ${b})`;
+      lineageColors.set(l.key, col);
       const sw = document.createElement("i");
       sw.style.background = col;
       const bar = document.createElement("span");
@@ -800,11 +960,14 @@ function onCensus(c: CensusMsg) {
       pct.className = "mono";
       pct.textContent = `${(l.share * 100).toFixed(1)}%`;
       row.append(sw, bar, pct);
+      if (takesDonors(cfg)) row.append(keepButton(l.key));
       row.title = `lineage ${l.key}`;
       return row;
     }),
   );
   if (c.top.length === 0) $("top-lin").textContent = "No lineages counted at this census.";
+  syncKeep();
+  if (heldKey) $("top-lin").querySelector<HTMLElement>(`button[data-key="${heldKey}"]`)?.focus();
 }
 
 /** What each cell channel holds, beside its letter in the rules. */
@@ -866,6 +1029,10 @@ function onProbe(p: ProbeMsg) {
   inspect.hidden = !p.lineage;
   inspect.dataset.key = p.lineage;
   inspect.onclick = () => inspect.dataset.key && lineagePanel.open(inspect.dataset.key);
+  const keep = $<HTMLButtonElement>("btn-keep");
+  keep.dataset.key = p.lineage;
+  keep.onclick = () => keep.dataset.key && toggleKeep(keep.dataset.key);
+  syncKeep();
 }
 
 // ---------- pond cycle ----------
@@ -885,6 +1052,7 @@ function onPonds(m: PondsMsg) {
   line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donor ponds ${m.donors.length ? m.donors.join(", ") : "none"}${m.hand && pickedBy ? ` · picked by hand, viewing ranks by ${pickedBy}` : ""}`;
   // A cycle clears every pond: the histories mark where, so the drop that follows reads as the cycle, not a collapse.
   spInd.mark(); spBio.mark(); spLin.mark();
+  autoApplied(m.step);
   // The cycle that was waiting has been applied.
   if (awaiting && awaiting.step === m.step) {
     // Breed and the bar it lived in are gone: the focus goes to Play, the next thing to do, rather than to the page.
@@ -902,19 +1070,6 @@ function onPonds(m: PondsMsg) {
 }
 
 // ---------- breeder: choosing the donors of a pond cycle by hand ----------
-/** What a pond is ranked by while picking: a term, or the world's own score ("score") when it has one. */
-type RankKey = PondTerm | "speed" | "score";
-const RANK_LABELS: Record<RankKey, string> = {
-  score: "This world’s score",
-  speed: "Speed",
-  drive: "Moving mass",
-  seed: "Seed packet",
-  body: "Body size",
-  mass: "Bound mass",
-  reach: "Reach to the edge",
-};
-/** The world's own score, in the measures' names: "drive+seed+body" reads as "Moving mass, seed packet, body size". */
-const scoreLabel = (score: string) => `This world’s score: ${pondScoreTerms(score).map((k, i) => (i ? RANK_LABELS[k].toLowerCase() : RANK_LABELS[k])).join(", ")}`;
 let awaiting: PondAwaitMsg | null = null;
 /** The ranking on screen when Breed was pressed: shown with the cycle it applies to. Display only; the log holds the donors. */
 let pickedBy: string | null = null;
@@ -938,7 +1093,8 @@ const takesDonors = (c: WorldConfig | null) => !!c && c.pondPeriod !== undefined
 
 /** Each pond's value of `key` at the waiting boundary. Speed is the motility term per unit of bound mass, in cells per 1,000 steps. */
 function rankValues(a: PondAwaitMsg, key: RankKey): number[] {
-  if (key === "score") return a.score === null ? a.terms.mass : (() => { const t = pondScoreTerms(a.score).map((term) => a.terms[term]); return t.length === 1 ? t[0] : worstRanks(t); })();
+  const score = a.ruleScore ?? a.score;
+  if (key === "score") return score === null ? a.terms.mass : (() => { const t = pondScoreTerms(score).map((term) => a.terms[term]); return t.length === 1 ? t[0] : worstRanks(t); })();
   if (key === "speed") return a.terms.drive.map((d, p) => (a.terms.mass[p] > 0 ? ((d / a.terms.mass[p]) * 1000) / 64 : 0));
   return a.terms[key];
 }
@@ -959,13 +1115,60 @@ function pondReadout(pond: number): string {
 function resetBreeder() {
   $("breeder").hidden = !takesDonors(cfg);
   endAwait();
+  // The dial belongs to the world: the worker posts its state right after "loaded". Keep is the lab's, and arrives the same way.
+  pressureMsg = null;
+  pressureSent = false;
+  paintDial();
+  keptSeen = null;
+  keepWorld = null;
+  autoStep = -1;
+  // Why auto-breed last ended was about the world just replaced.
+  autoNote = null;
+  syncKeep();
+  paintAuto();
 }
 function onPondAwait(m: PondAwaitMsg) {
+  const prev = awaiting;
+  // The dial or Keep changed while this cycle waits: the worker posts it again with the same step. A refresh, not a new cycle:
+  // the player's picks, ranking and view stay (picks that were the rule's choice follow the new one).
+  const refresh = prev !== null && prev.world === m.world && prev.step === m.step;
   awaiting = m;
-  picks = m.suggested.slice();
-  const keys: RankKey[] = [...(m.score === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
+  keptSeen = m.kept ? { cycle: m.cycle, kept: m.kept } : keptSeen;
+  if (refresh) {
+    // Picks that were the rule's choice (as Keep adjusts it) follow the new one; a Breed question about the old ones closes.
+    if (picks.join() === donorsWithKeep(prev.suggested, prev.kept).join()) {
+      const next = donorsWithKeep(m.suggested, m.kept);
+      if (next.join() !== picks.join()) closeBreedQuestion();
+      picks = next;
+    }
+    syncRankOptions(m);
+    syncKeep();
+    syncPicks();
+    return;
+  }
+  // Auto-breed answers at once with the rule's choice, under the dial and Keep, and never opens the pick UI.
+  if (auto && breederOn.checked && breeding === null && autoStep !== m.step) {
+    picks = donorsWithKeep(m.suggested, m.kept);
+    syncKeep();
+    return autoAnswer(m);
+  }
+  // The bar opens on the rule's choice as Keep adjusts it: Breed on it as it stands applies Keep, as the rule would.
+  picks = donorsWithKeep(m.suggested, m.kept);
+  syncKeep();
+  openPick(m);
+}
+/** What the ponds can be ranked by while cycle `a` waits: the rule's score first, when it ranks by one. */
+const rankKeys = (a: PondAwaitMsg): RankKey[] => [...((a.ruleScore ?? a.score) === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
+const rankOption = (a: PondAwaitMsg, k: RankKey) => (k === "score" ? scoreLabel(a.ruleScore ?? a.score!) : RANK_LABELS[k]);
+/** A refreshed survey may rank by another score (the dial moved): the menu's "rule's score" names the new one. */
+function syncRankOptions(a: PondAwaitMsg) {
+  for (const o of termSel.options) if (o.value === "score") o.textContent = rankOption(a, "score");
+}
+/** The pick UI of a waiting cycle: the bar under the field, the Pick tool, the whole world in view. */
+function openPick(m: PondAwaitMsg) {
+  const keys = rankKeys(m);
   if (rankKey === null || !keys.includes(rankKey)) rankKey = keys[0];
-  termSel.replaceChildren(...keys.map((k) => new Option(k === "score" ? scoreLabel(m.score!) : RANK_LABELS[k], k, false, k === rankKey)));
+  termSel.replaceChildren(...keys.map((k) => new Option(rankOption(m, k), k, false, k === rankKey)));
   $("breeder-pick").hidden = false;
   $("breeder-hint").hidden = true;
   $("breed-bar").hidden = false;
@@ -992,6 +1195,7 @@ function onPondAwait(m: PondAwaitMsg) {
  */
 function syncWaitingControls() {
   const waiting = awaiting !== null;
+  firstsPanel.setWaiting(waiting);
   for (const id of ["btn-save", "btn-export", "btn-verify", "btn-step", "btn-step100"]) {
     const b = $<HTMLButtonElement>(id);
     b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying) || (id === "btn-save" && storageOff);
@@ -1051,7 +1255,8 @@ function syncPicks() {
   if (!a) return;
   const occupied = a.terms.mass.filter((m) => m > 0).length;
   const key = rankKey ?? "speed";
-  $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.`;
+  const ruled = scoreWords(a.ruleScore ?? undefined);
+  $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.${ruled ? ` The rule’s choice ranks them by ${ruled.toLowerCase()}.` : ""}`;
   // Say what Breed will do before it is pressed: it cannot be undone. While it is in flight, say that instead.
   $("breed-bar-call").textContent = breeding !== null
     ? breedSlow ? `Still applying cycle ${a.cycle}. The lab is waiting for the GPU; a failure will show on the field.` : `Applying cycle ${a.cycle}.`
@@ -1065,7 +1270,7 @@ function syncPicks() {
   }
   // The pick controls are locked while Breed is in flight, and say so by being disabled rather than ignoring a press.
   for (const id of ["breeder-top", "breeder-rule", "breeder-clear"]) $<HTMLButtonElement>(id).disabled = breeding !== null;
-  $("breeder-top").textContent = `Top ${topCount(a)} by ${key === "score" ? "score" : RANK_LABELS[key].toLowerCase()}`;
+  $("breeder-top").textContent = `Top ${topCount(a)} by ${RANK_LABELS[key].toLowerCase()}`;
   // Pond number first, as on the field and in the run strip; then its rank and value by the measure on screen.
   const rank = new Map(rankOrder(a, key).map((p, j) => [p, j + 1]));
   const values = rankValues(a, key);
@@ -1094,7 +1299,8 @@ function endBreeding() {
   $("breed-bar").removeAttribute("aria-busy");
   syncPicks();
 }
-$("breeder-rule").onclick = () => { if (awaiting && breeding === null) { picks = awaiting.suggested.slice(); syncPicks(); } };
+// The rule's choice under the dial, adjusted by Keep: the worker takes explicit donors (null would be the raw rule, with no Keep).
+$("breeder-rule").onclick = () => { if (awaiting && breeding === null) { picks = donorsWithKeep(awaiting.suggested, awaiting.kept); syncPicks(); } };
 $("breeder-clear").onclick = () => { if (breeding === null) { picks = []; syncPicks(); } };
 /** Picks changed while Breed's question was open: the question no longer describes them. */
 const closeBreedQuestion = () => { if (!$("guard-breed").hidden) closeQuestion?.(); };
@@ -1109,10 +1315,25 @@ $("breeder-go").onclick = () => {
 };
 function breed(donors: number[]) {
   if (!awaiting || breeding !== null || donors.join() !== picks.join()) return;
-  send({ type: "pick", world: awaiting.world, step: awaiting.step, donors });
-  pickedBy = (rankKey ?? "speed") === "score" ? "this world’s score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
-  // One message per cycle: the panel closes when the worker reports the cycle applied, or comes back if it refuses.
-  breeding = awaiting.step;
+  pickedBy = RANK_LABELS[rankKey ?? "speed"].toLowerCase();
+  sendPick(awaiting, donors);
+}
+/**
+ * Sends the donors for the waiting cycle `a`, naming the survey they were chosen from: the worker refuses them if the dial
+ * or Keep has re-surveyed the cycle since. One message per cycle: the panel closes when the worker reports the cycle
+ * applied, or comes back if it refuses.
+ */
+function sendPick(a: PondAwaitMsg, donors: number[]) {
+  send({ type: "pick", world: a.world, step: a.step, donors, revision: a.revision });
+  markBreeding(a);
+}
+/** Auto-breed's answer: the rule's choice as Keep adjusts it, worked out by the worker from the survey that waits when it arrives. */
+function sendAutoPick(a: PondAwaitMsg) {
+  send({ type: "pick", world: a.world, step: a.step, donors: null, withKeep: true });
+  markBreeding(a);
+}
+function markBreeding(a: PondAwaitMsg) {
+  breeding = a.step;
   const go = $<HTMLButtonElement>("breeder-go");
   go.disabled = true;
   go.textContent = "Breeding…";
@@ -1126,7 +1347,252 @@ function breed(donors: number[]) {
     $("keyboard-position").textContent = $("breed-bar-call").textContent ?? "";
   }, 5000);
 }
-breederOn.onchange = () => send({ type: "breeder", on: breederOn.checked });
+
+// ---------- the pressure dial: what the rule breeds for ----------
+/** The dial of the world on screen, as the worker last said (null until a world is adopted). */
+let pressureMsg: PressureMsg | null = null;
+/** Set was pressed and the worker has not answered yet (with the dial's state, a refusal or an error): a second press waits. */
+let pressureSent = false;
+/** The step from which the world on screen holds its history, or null when it holds it from step 0 (an opened file or a fork of one). */
+let historyFrom: number | null = null;
+const dial = $<HTMLSelectElement>("pressure-dial");
+const pressureSet = $<HTMLButtonElement>("pressure-set");
+/** The world on screen can take a setting now: loaded, and not failed. */
+const worldLive = () => worldReady && !worldFailed;
+/** Why the breeder's controls wait, said beside them, or null when they don't. */
+const waitReason = () => (worldFailed ? "This world has stopped: plant one or restore a copy to go on." : !worldReady ? "Waiting for the world to load." : null);
+function paintDial() {
+  const m = pressureMsg;
+  const state = $("pressure-state");
+  if (!m) {
+    dial.replaceChildren();
+    delete dial.dataset.options;
+    dial.disabled = true;
+    pressureSet.disabled = true;
+    $("pressure-says").textContent = "";
+    state.replaceChildren(waitReason() ?? "");
+    return;
+  }
+  const options = pressureOptions({ pondScore: m.base ?? undefined }, m.current);
+  // A world whose rule the dial cannot move shows only what it is planted with.
+  const shown = m.unavailable !== null ? options.slice(0, 1) : options;
+  // The options are rebuilt only when they change, so a keyboard user arrowing through them keeps their place; a choice not yet
+  // set stays chosen while the dial has the focus, and otherwise the dial shows what governs.
+  const key = shown.map((o) => o.value).join(" ");
+  const focused = document.activeElement === dial;
+  const chosen = dial.value;
+  if (dial.dataset.options !== key) {
+    dial.replaceChildren(...shown.map((o) => {
+      const option = new Option(o.label, o.value);
+      option.title = pressureDescribes(o.value);
+      return option;
+    }));
+    dial.dataset.options = key;
+    dial.value = focused && shown.some((o) => o.value === chosen) ? chosen : (m.current ?? shown[0]?.value ?? "");
+  } else if (!focused && m.current !== null && m.unavailable === null) dial.value = m.current;
+  const wait = waitReason();
+  dial.disabled = m.unavailable !== null || wait !== null;
+  dial.title = m.unavailable ?? "";
+  syncPressureSet();
+  if (m.unavailable !== null) return state.replaceChildren(m.unavailable);
+  const lead = wait ? `${wait} ` : "";
+  // An opened file, or a fork of one, holds no record of the settings before it: the dial cannot say it was never moved.
+  const gap = historyFrom === null ? "" : ` This copy’s history starts at t=${historyFrom.toLocaleString()}: whatever set the dial before that isn’t in it.`;
+  if (m.changes === 0) {
+    const now = m.current === null
+      ? "this world’s rule has no score of its own; it picks the ponds with the most bound mass"
+      : `the rule breeds for ${pressureNow(m).replace(/^As planted: /, "").toLowerCase()}`;
+    return state.replaceChildren(historyFrom === null ? `${lead}Still as planted: ${now}.` : `${lead}From here ${now}.${gap}`);
+  }
+  const badge = document.createElement("span");
+  badge.className = "badge note";
+  badge.textContent = `Set ${m.changes} time${m.changes === 1 ? "" : "s"}; in force from cycle ${m.fromCycle ?? "?"}`;
+  state.replaceChildren(...(lead ? [lead] : []), badge, ` Next cycle: ${pressureNow(m).toLowerCase()}.${gap}`);
+}
+/** Set commits the dial's choice; it is ready only when that choice differs from what governs, and nothing is on its way. */
+function syncPressureSet() {
+  const m = pressureMsg;
+  const chosen = dial.value as PondScore;
+  const says = $("pressure-says");
+  if (!m || m.unavailable !== null || !chosen) {
+    says.textContent = "";
+    pressureSet.disabled = true;
+    pressureSet.textContent = "Set";
+    return;
+  }
+  says.textContent = pressureDescribes(chosen);
+  const same = chosen === m.current;
+  pressureSet.disabled = same || pressureSent || dial.disabled;
+  pressureSet.textContent = pressureSent ? "Setting…" : same ? "Set (already in force)" : "Set for the next cycle";
+}
+// Choosing an option only says what it would do; Set sends it. The worker answers with the state, and a refusal puts the dial back.
+dial.oninput = dial.onchange = () => syncPressureSet();
+pressureSet.onclick = () => {
+  const m = pressureMsg;
+  if (!m || pressureSet.disabled || !worldLive()) return;
+  pressureSent = true;
+  syncPressureSet();
+  send({ type: "pressure", world: m.world, score: dial.value as PondScore });
+};
+/** The worker answered a Set (with the dial's state, a refusal or an error): the button is free again. */
+function pressureAnswered() {
+  pressureSent = false;
+  syncPressureSet();
+}
+
+// ---------- auto-breed: answer N cycles with the rule's choice ----------
+/** Auto-breed in progress: cycles applied so far, of `total` (Infinity: until stopped). */
+let auto: { done: number; total: number } | null = null;
+/** The step of the cycle auto-breed last answered: a refreshed survey of it is not answered twice, and its `ponds` counts it. */
+let autoStep = -1;
+/** Why auto-breed last ended, said beside its buttons until the next start or another world. */
+let autoNote: string | null = null;
+const AUTO_IDS = ["auto-1", "auto-5", "auto-20", "auto-inf"];
+function paintAuto() {
+  const can = breederOn.checked && worldLive() && takesDonors(cfg);
+  for (const id of AUTO_IDS) $<HTMLButtonElement>(id).disabled = !can || auto !== null;
+  $<HTMLButtonElement>("auto-stop").disabled = auto === null;
+  const wait = waitReason();
+  // Scaf and rand worlds have no dial: the rule's choice there is the most bound mass, or chance.
+  const under = cfg?.pondArm === "breed" ? "under the dial and the lineage you keep" : "with the lineage you keep";
+  $("auto-status").textContent = auto
+    ? auto.done === 0
+      ? "Auto-breeding: the world runs to the next cycle."
+      : `Auto-breeding: cycle ${auto.done}${Number.isFinite(auto.total) ? ` of ${auto.total}` : ", until you stop it"}`
+    : autoNote ?? (wait ?? (can
+      ? `Answers each cycle with the rule’s choice, ${under}. Each answer is logged as a pick. Stop ends it.`
+      : "Turn on “Stop at each pond cycle” first: auto-breed answers the cycles the world stops at."));
+}
+function startAuto(cycles: number) {
+  if (auto || !worldLive() || !breederOn.checked) return;
+  auto = { done: 0, total: cycles };
+  autoNote = null;
+  autoStep = -1;
+  paintAuto();
+  // A paused world runs on; a cycle that already waits is answered now.
+  if (!playing) setPlaying(true);
+  if (awaiting && breeding === null) {
+    picks = donorsWithKeep(awaiting.suggested, awaiting.kept);
+    autoAnswer(awaiting);
+  }
+}
+function stopAuto(why: string) {
+  if (!auto) return;
+  const done = auto.done;
+  auto = null;
+  autoNote = `Stopped: ${why}${done > 0 ? ` after ${done} cycle${done === 1 ? "" : "s"}` : ""}.`;
+  paintAuto();
+}
+/**
+ * Answers the waiting cycle `a` with the rule's choice as Keep adjusts it, once per cycle. The worker works the donors out
+ * from the survey that waits when the answer arrives, so a dial or Keep change sent just before is never answered with an
+ * older survey's donors. The cycle counts when its `ponds` message comes back (`autoApplied`).
+ */
+function autoAnswer(a: PondAwaitMsg) {
+  if (!auto || breeding !== null || autoStep === a.step) return;
+  autoStep = a.step;
+  pickedBy = null;
+  sendAutoPick(a);
+  paintAuto();
+}
+/** The cycle at `step` was applied: counted if auto-breed answered it. */
+function autoApplied(step: number) {
+  if (!auto || step !== autoStep) return;
+  auto.done++;
+  if (auto.done >= auto.total) {
+    const total = auto.total;
+    auto = null;
+    autoNote = `Done: ${total} cycle${total === 1 ? "" : "s"} bred on its own. The world stops at the next one.`;
+  }
+  paintAuto();
+}
+for (const id of AUTO_IDS) $(id).onclick = () => startAuto(id === "auto-inf" ? Infinity : Number($(id).dataset.cycles));
+$("auto-stop").onclick = () => stopAuto("you pressed Stop");
+
+// ---------- keep a lineage ----------
+/** The lineage kept, as the worker last said (a lab setting: it survives a restore or a jump). */
+let keptKey: string | null = null;
+/** The world the worker last posted Keep or the dial for: a Keep asked of it is dropped if that world has been replaced. */
+let keepWorld: number | null = null;
+/** Where it lived at the latest cycle that waited, and which cycle that was. */
+let keptSeen: { cycle: number; kept: KeptPond } | null = null;
+/** The colour the lineage list gave each lineage it has shown, so the kept chip can wear it. */
+const lineageColors = new Map<string, string>();
+/** A row's Keep: one label whatever its state, which aria-pressed carries; its accessible name says which lineage. */
+function keepButton(key: string): HTMLButtonElement {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "keep quiet";
+  b.dataset.key = key;
+  b.textContent = "Keep";
+  b.setAttribute("aria-label", `Keep lineage ${key}`);
+  b.title = "Seed each pond cycle from the pond holding most of this lineage. A hand pick is never changed. Pressed: kept; press again to let go.";
+  b.onclick = () => toggleKeep(key);
+  return b;
+}
+/** Asks the worker to keep `key` (or none) for the world on screen. */
+function sendKeep(key: string | null) {
+  if (keepWorld === null || !worldLive()) return;
+  send({ type: "keep", world: keepWorld, key });
+}
+const toggleKeep = (key: string) => sendKeep(keptKey === key ? null : key);
+$("keep-clear").onclick = () => sendKeep(null);
+/** Every Keep button, the chip and where the lineage lives, from the kept key and the latest waiting cycle's survey. */
+function syncKeep() {
+  const here = takesDonors(cfg);
+  const live = worldLive();
+  for (const b of document.querySelectorAll<HTMLButtonElement>("#top-lin button[data-key]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.key === keptKey));
+    b.disabled = !live;
+  }
+  const probeKeep = $<HTMLButtonElement>("btn-keep");
+  const probeKey = probeKeep.dataset.key ?? "";
+  probeKeep.hidden = !here || !probeKey;
+  probeKeep.disabled = !live;
+  probeKeep.setAttribute("aria-pressed", String(probeKey !== "" && probeKey === keptKey));
+  probeKeep.textContent = probeKey !== "" && probeKey === keptKey ? "Kept for breeding (press to let go)" : "Keep this lineage";
+  $<HTMLButtonElement>("keep-clear").disabled = !live;
+  lineagePanel.onKeep(keptKey);
+
+  $("keep-none").hidden = keptKey !== null;
+  $("keep-chip").hidden = keptKey === null;
+  const where = $("keep-where");
+  where.hidden = keptKey === null;
+  if (keptKey === null) return;
+  const colour = lineageColors.get(keptKey);
+  $("keep-swatch").style.background = colour ?? "transparent";
+  $("keep-key").textContent = keptKey;
+  const seen = keptSeen && keptSeen.kept.key === keptKey ? keptSeen : null;
+  where.replaceChildren();
+  const wait = waitReason();
+  if (wait) where.append(`${wait} `);
+  if (!seen) return void where.append("Waiting for the next cycle to say where it lives.");
+  const k = seen.kept;
+  if (k.living === 0) {
+    const badge = document.createElement("span");
+    badge.className = "badge note";
+    badge.textContent = "Gone from the jar";
+    where.append(badge, ` as of cycle ${seen.cycle}: the rule’s donors stand.`);
+  } else if (k.pond === null) where.append(`Lives only in ponds too thin to donate, as of cycle ${seen.cycle}: the rule’s donors stand.`);
+  else {
+    const a = awaiting;
+    const swaps = a !== null && a.kept?.key === keptKey && !a.suggested.includes(k.pond);
+    where.append(`Lives in pond ${k.pond} (${k.cells.toLocaleString()} cell${k.cells === 1 ? "" : "s"}), as of cycle ${seen.cycle}.${swaps ? ` The rule’s choice swaps pond ${k.pond} in for its last donor.` : ""}`);
+  }
+}
+/** The dial, auto-breed and Keep after the world's readiness changed. */
+function syncBreederControls() {
+  paintDial();
+  paintAuto();
+  syncKeep();
+}
+breederPainted = true;
+syncBreederControls();
+breederOn.onchange = () => {
+  send({ type: "breeder", on: breederOn.checked });
+  if (!breederOn.checked) stopAuto("Breeder mode went off");
+  paintAuto();
+};
 
 /**
  * The pond grid over the field while a cycle waits: each pond's number and its rank by the chosen measure, empty
@@ -1328,7 +1794,11 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "loaded":
       loadingWorld = false;
+      worldFailed = false;
+      stopAuto("the world was replaced");
       cfg = m.manifest.cfg;
+      // An opened file, or a fork of one, holds its history only from the step it was opened at.
+      historyFrom = m.manifest.presetId === "imported" || (m.manifest.edgesFrom ?? 0) > 0 ? m.manifest.edgesFrom ?? m.step : null;
       setWorldControls(true);
       $<HTMLButtonElement>("btn-new").disabled = false;
       runId = m.manifest.runId;
@@ -1356,6 +1826,14 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       resetBreeder();
       fit(true);
       lineagePanel.onLoaded();
+      firstsPanel.onLoaded(m.manifest);
+      familyPanel.onLoaded();
+      naturalistPanel.onLoaded(m.manifest, m.step, m.world);
+      // The new world's sun, if any, follows in its own message.
+      sunNow = null;
+      sunAsked = false;
+      sunWorld = m.world;
+      paintSun();
       break;
     case "stats":
       onStats(m);
@@ -1371,6 +1849,28 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "pondAwait":
       onPondAwait(m);
+      break;
+    case "pressure":
+      pressureMsg = m;
+      keepWorld = m.world;
+      pressureAnswered();
+      paintDial();
+      break;
+    case "sun": {
+      // A replaced world's sun is not the one on screen.
+      if (sunWorld !== undefined && m.world !== sunWorld) break;
+      const was = sunNow;
+      sunNow = m.sun;
+      if (sunAsked && m.sun && (!was || was.step !== m.sun.step)) toast(`The sun is at ${m.sun.percent}% for ${m.sun.span.toLocaleString()} steps, from step ${m.sun.step.toLocaleString()} · logged, unsaved`);
+      else if (was && !m.sun) toast(`The sun of ${was.percent}% has set; the world's own light is back at step ${(was.step + was.span).toLocaleString()}`);
+      sunAsked = false;
+      paintSun();
+      break;
+    }
+    case "keep":
+      keptKey = m.key;
+      keepWorld = m.world;
+      syncKeep();
       break;
     case "lineage":
       lineagePanel.onLineage(m);
@@ -1390,6 +1890,21 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       break;
     }
+    case "firsts":
+      firstsPanel.onFirsts(m);
+      break;
+    case "families":
+      familyPanel.onFamilies(m);
+      break;
+    case "naturalist":
+      naturalistPanel.onCensus(m);
+      break;
+    case "naturalistTouched":
+      naturalistPanel.onTouched(m.world, m.runId, m.step);
+      break;
+    case "sessionFile":
+      firstsPanel.onSessionFile(m);
+      break;
     case "notice":
       toast(m.message);
       break;
@@ -1398,8 +1913,24 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       toast(m.message);
       if (m.request === "load") unblankWorld();
       if (m.request === "load" || m.request === "restore" || m.request === "import") loadIntent = null;
-      if (m.request === "lesion" || m.request === "feed") noteBrushRefused();
-      if (m.request === "pick") endBreeding();
+      if (m.request === "lesion" || m.request === "feed") {
+        noteBrushRefused();
+        naturalistPanel.onApplyRefused(m.message);
+      }
+      if (m.request === "pressure") pressureAnswered();
+      if (m.request === "sun") {
+        sunAsked = false;
+        paintSun();
+      }
+      if (m.request === "pick") {
+        endBreeding();
+        // Auto-breed does not go on past a refusal; the cycle is still waiting, so its pick UI opens for the player.
+        if (auto) {
+          stopAuto("the world refused a cycle");
+          if (awaiting && !document.body.classList.contains("breeding")) openPick(awaiting);
+        }
+      }
+      if (m.request === "sessionExport") firstsPanel.onRefused(m.message, m.id);
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
       if (m.request === "verify" && verifying) {
         verifying = false;
@@ -1436,7 +1967,22 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         $("verify-out").textContent = m.message;
         setStrip("run-replay", "couldn’t check", "bad");
       }
-      endBreeding();
+      pressureAnswered();
+      if (m.failed) {
+        worldFailed = true;
+        naturalistPanel.onFailed();
+      }
+      // A Try still waiting for its edit to be logged may not have been applied (the error names no request; the model ignores this otherwise).
+      naturalistPanel.onApplyRefused(m.message, false);
+      {
+        // The page pauses on any error, so auto-breed ends; it says the world failed only when it did.
+        const wasAuto = auto !== null;
+        stopAuto(m.failed ? "the world failed" : "something went wrong");
+        endBreeding();
+        // A cycle auto-breed was answering still waits, in a world that can go on: its pick UI opens for the player.
+        if (wasAuto && !m.failed && awaiting && !document.body.classList.contains("breeding")) openPick(awaiting);
+      }
+      syncBreederControls();
       pendingHands = 0;
       strokeSent = 0;
       strokeToastDue = false;

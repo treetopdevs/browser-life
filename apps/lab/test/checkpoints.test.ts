@@ -31,25 +31,39 @@ describe("lab checkpoint policies", () => {
     const log = [pick(4, [3, 1]), lesion(4), lesion(6), pick(8, [0]), lesion(8)];
 
     it("is everything before the step that the checkpoint has not seen, and a pick at the step itself", () => {
-      expect(replayPlan(log, 0, 10, 10)).toEqual({ missed: log, dropped: 0, until: 11 });
+      expect(replayPlan(log, 0, 10, 10, undefined)).toEqual({ missed: log, dropped: 0, until: 11 });
       // A checkpoint at t=4 saved after its pick and lesion has seen two entries.
-      expect(replayPlan(log, 2, 10, 10)).toEqual({ missed: log.slice(2), dropped: 0, until: 11 });
+      expect(replayPlan(log, 2, 10, 10, undefined)).toEqual({ missed: log.slice(2), dropped: 0, until: 11 });
       // To a boundary: its cycle is part of arriving there, so its pick is replayed and the lesion made after it is not.
-      expect(replayPlan(log, 0, 8, 10)).toEqual({ missed: log.slice(0, 4), dropped: 1, until: 9 });
-      expect(replayPlan(log, 0, 4, 10)).toEqual({ missed: [log[0]], dropped: 4, until: 5 });
+      expect(replayPlan(log, 0, 8, 10, undefined)).toEqual({ missed: log.slice(0, 4), dropped: 1, until: 9 });
+      expect(replayPlan(log, 0, 4, 10, undefined)).toEqual({ missed: [log[0]], dropped: 4, until: 5 });
       // Between boundaries: the later entries stay with the saved present.
-      expect(replayPlan(log, 0, 6, 10)).toEqual({ missed: log.slice(0, 2), dropped: 3, until: 7 });
-      expect(replayPlan([], 0, 6, 10)).toEqual({ missed: [], dropped: 0, until: 7 });
+      expect(replayPlan(log, 0, 6, 10, undefined)).toEqual({ missed: log.slice(0, 2), dropped: 3, until: 7 });
+      expect(replayPlan([], 0, 6, 10, undefined)).toEqual({ missed: [], dropped: 0, until: 7 });
+    });
+
+    it("replays a pressure for the boundary's own cycle with its pick, and drops one set after it", () => {
+      const dial = (step: number, cycle: number): Intervention => ({ step, kind: "pressure", cycle, score: "body" });
+      // A pressure for cycle 2 set while it waited (t=8), its pick, a lesion, then a pressure for cycle 3 set after the boundary.
+      const pressured = [pick(4, [3]), dial(8, 2), pick(8, [0]), lesion(8), dial(8, 3), dial(10, 3)];
+      // To the boundary: the pressure that governs it comes with its pick (the log holds it first); what was set after it stays behind.
+      expect(replayPlan(pressured, 0, 8, 10, 4)).toEqual({ missed: [pressured[0], pressured[1], pressured[2]], dropped: 3, until: 9 });
+      // Past it, everything before the step is replayed, pressures included.
+      expect(replayPlan(pressured, 0, 10, 10, 4).missed).toEqual(pressured.slice(0, 5));
+      // A checkpoint that had seen the first three entries: only what came after.
+      expect(replayPlan(pressured, 3, 10, 10, 4).missed).toEqual(pressured.slice(3, 5));
+      // Without the period (a world with no pond cycle, as before) a pressure at the step itself is not told apart: it stays behind.
+      expect(replayPlan(pressured, 0, 8, 10, undefined).missed).toEqual([pressured[0], pressured[2]]);
     });
 
     it("never treats steps beyond the known history as replayed", () => {
       // A jump to t=6 kept only the entries before it. A second jump, to t=10, made while that replay stood at t=2
       // (so the history known runs to 6): the pick at t=8 is gone, and the boundary there must wait again.
-      const first = replayPlan(log, 0, 6, 10);
-      const second = replayPlan(first.missed, 0, 10, Math.max(2, first.until - 1));
+      const first = replayPlan(log, 0, 6, 10, undefined);
+      const second = replayPlan(first.missed, 0, 10, Math.max(2, first.until - 1), undefined);
       expect(second).toEqual({ missed: log.slice(0, 2), dropped: 0, until: 7 });
       // A jump forward from the present enters steps nobody has seen: nothing there is replayed.
-      expect(replayPlan(log, 5, 30, 10).until).toBe(11);
+      expect(replayPlan(log, 5, 30, 10, undefined).until).toBe(11);
     });
   });
 });

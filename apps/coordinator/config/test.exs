@@ -31,3 +31,19 @@ config :coordinator, allow_local_admin: true
 # them would suddenly go idle instead of being offered work. Tests that
 # specifically exercise version gating override this with `Application.put_env/3`.
 config :coordinator, metrics_version: 1
+
+# The garden's fast tests run on `spots` (256x256, cheap); the production list
+# is only the big storm. A plain list replaces rather than merges, so both are
+# named. No view cache by default: tests that exercise it set it themselves.
+config :coordinator, garden_presets: ~w(wild-storm-large spots), garden_cache_ms: 0
+
+# Island limits out of the way of every test that does not exercise them (the
+# budget table outlives each test's queue, and every test conn is 127.0.0.1);
+# tests of the limits set small values themselves. No public status cache,
+# like the garden's view cache above.
+config :coordinator,
+  island_joins_per_address: 1_000_000,
+  island_next_per_island: 1_000_000,
+  island_segment_requests_per_island: 1_000_000,
+  island_requests_per_address: nil,
+  public_status_cache_ms: 0

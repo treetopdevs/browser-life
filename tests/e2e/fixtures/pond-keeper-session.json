@@ -1,0 +1,228 @@
+{
+  "format": "cadence-garden.session",
+  "version": 1,
+  "runId": "ponds-small-s1-mvcx2j6i",
+  "presetId": "ponds-small",
+  "seed": 1,
+  "ruleVersion": 1,
+  "cfg": {
+    "ruleVersion": 1,
+    "seed": 1,
+    "tileW": 64,
+    "tileH": 64,
+    "tilesX": 2,
+    "tilesY": 2,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 9,
+    "thetaMass": 512,
+    "dtQ": 51,
+    "spread": 8,
+    "defaultMu": 60,
+    "defaultSigma": 20,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 64,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 66,
+    "kBDecay": 20,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 400,
+    "mutRate": 429497,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 40,
+    "lightAmp": 160,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": true,
+    "pondPeriod": 1000,
+    "pondK": 8,
+    "pondArm": "scaf"
+  },
+  "init": {
+    "kind": "ponds",
+    "founders": 4,
+    "nutrient": 32,
+    "biomass": 64,
+    "start": "clone",
+    "founder": 2
+  },
+  "startHash": "9efb956e1093d4e0",
+  "settings": {
+    "censusEvery": 100,
+    "deepEvery": 5,
+    "activityThreshold": null
+  },
+  "interventions": [
+    {
+      "step": 1000,
+      "kind": "pick",
+      "cycle": 1,
+      "donors": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "step": 1000,
+      "kind": "lesion",
+      "x": 64,
+      "y": 49,
+      "r": 10
+    },
+    {
+      "step": 2000,
+      "kind": "pick",
+      "cycle": 2,
+      "donors": [
+        1
+      ]
+    },
+    {
+      "step": 3000,
+      "kind": "pick",
+      "cycle": 3,
+      "donors": [
+        3
+      ]
+    }
+  ],
+  "edgesFrom": 0,
+  "checkpoints": [
+    {
+      "step": 3200,
+      "file": "session-final",
+      "hash": "8c0706887b7073bf",
+      "interventions": 4
+    }
+  ],
+  "final": {
+    "step": 3200,
+    "stateHash": "8c0706887b7073bf",
+    "interventions": 4
+  },
+  "firsts": {
+    "rules": "firsts-v0",
+    "watchedFrom": 100,
+    "entries": [
+      {
+        "id": "body",
+        "name": "First body",
+        "step": 100,
+        "already": true,
+        "detail": "124 cells, in pond 1"
+      },
+      {
+        "id": "body-40",
+        "name": "First big body",
+        "step": 100,
+        "already": true,
+        "detail": "124 cells, in pond 1"
+      },
+      {
+        "id": "body-100",
+        "name": "First large body",
+        "step": 100,
+        "already": true,
+        "detail": "124 cells, in pond 1"
+      },
+      {
+        "id": "split",
+        "name": "First split",
+        "step": 200,
+        "already": false,
+        "detail": "7 splits counted since t=100"
+      },
+      {
+        "id": "grandchild",
+        "name": "First grandchild",
+        "step": 300,
+        "already": false,
+        "detail": "generation 2, 6 cells, in pond 4"
+      },
+      {
+        "id": "traveller",
+        "name": "First traveller",
+        "step": 500,
+        "already": false,
+        "detail": "moved 23.8 cells, in pond 1"
+      },
+      {
+        "id": "takeover",
+        "name": "First takeover",
+        "step": 3000,
+        "already": false,
+        "detail": "lineage 1961:5607, ahead since t=2,100"
+      }
+    ]
+  },
+  "card": {
+    "summary": {
+      "ruleSet": "firsts-v0",
+      "watchedFrom": 100,
+      "step": 3200,
+      "baseline": {
+        "bodies": 15,
+        "largestBody": 124,
+        "maxGeneration": 0,
+        "lineages": 5
+      },
+      "latest": {
+        "bodies": 3,
+        "largestBody": 24,
+        "maxGeneration": 0,
+        "lineages": 2
+      },
+      "startingLineages": 5,
+      "startingLineagesPresent": 0,
+      "lastBodyStep": 3200,
+      "bodiesLost": 56,
+      "bodiesLostAtCycle": 47,
+      "emptiedAt": null,
+      "censuses": 32
+    },
+    "facts": {
+      "picks": {
+        "total": 3,
+        "byHand": 1,
+        "byRule": 2,
+        "unknown": 0
+      },
+      "wounds": 1,
+      "feeds": 0,
+      "drains": 0,
+      "replay": {
+        "ok": true,
+        "from": 3000,
+        "to": 3200,
+        "live": "8c0706887b7073bf",
+        "twin": "8c0706887b7073bf",
+        "handAtEnd": false
+      },
+      "step": 3200,
+      "cycles": 3,
+      "cyclesBefore": 0
+    }
+  },
+  "createdAt": "2026-10-17T21:36:45.811Z",
+  "adapter": "apple metal-3",
+  "replay": "deno run -A tools/run.ts --experiment pond-keeper-8c0706887b70-cdb5350d --preset ponds-small --conditions treatment --seeds 1 --steps 3200 --census 100 --deep 5 --picks-from ponds-small-s1-mvcx2j6i-t3200.session.json"
+}

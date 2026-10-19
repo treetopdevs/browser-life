@@ -1,0 +1,8651 @@
+{
+ "rule": "anomaly-bell",
+ "version": 0,
+ "note": "docs/naturalist-bell-v0-2026-10-17.md",
+ "complete": true,
+ "preliminaryOnly": false,
+ "missing": [],
+ "parameters": {
+  "primary": {
+   "Z": 4,
+   "W": 50
+  },
+  "grid": {
+   "Z": [
+    3,
+    4,
+    6
+   ],
+   "W": [
+    10,
+    50,
+    200
+   ]
+  },
+  "signals": [
+   {
+    "name": "livingCells",
+    "kind": "level",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "individuals",
+    "kind": "level",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "meanMass",
+    "kind": "level",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "lineages",
+    "kind": "level",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "lineageShannon",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series"
+   },
+   {
+    "name": "patternEntropy",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series"
+   },
+   {
+    "name": "bioticRecycling",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "series"
+   },
+   {
+    "name": "maxGeneration",
+    "kind": "level",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "dominantShare",
+    "kind": "level",
+    "floor": 0.01,
+    "source": "lineages"
+   },
+   {
+    "name": "fissions",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "fusions",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "buddings",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series"
+   },
+   {
+    "name": "mutations",
+    "kind": "rate",
+    "floor": 1,
+    "source": "series"
+   }
+  ]
+ },
+ "corpus": [
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1001",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1002",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1003",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1004",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1005",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1006",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1007",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1008",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1009",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1010",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1011",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1012",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1013",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1014",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1015",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1016",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1017",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1018",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1019",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1020",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-1",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-2",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-3",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-4",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-5",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-6",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-7",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-8",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-9",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-10",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-11",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-12",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-13",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-14",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-15",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-16",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-17",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-18",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-19",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-20",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-1",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-2",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-3",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-4",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-5",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-6",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-7",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-8",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-9",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-10",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-1",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-2",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-3",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-4",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-5",
+   "presetIdentity": "e1c93a9384b5d921",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1001",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1002",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1003",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1004",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1005",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1006",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1007",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1008",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1009",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1010",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1011",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1012",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1013",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1014",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1015",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1016",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1017",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1018",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1019",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1020",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-1",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-2",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-3",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-4",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-5",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-6",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-7",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-8",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-9",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-10",
+   "presetIdentity": "a9f93070127a0c05",
+   "steps": 1000000,
+   "censusEvery": 100
+  }
+ ],
+ "summary": {
+  "version": 0,
+  "primary": {
+   "Z": 4,
+   "W": 50
+  },
+  "complete": true,
+  "criterion1": {
+   "status": "fail",
+   "k": 30,
+   "n": 70,
+   "upper95": 0.533864260525917
+  },
+  "criterion2": {
+   "status": "pass",
+   "effect": 1,
+   "nTreatment": 10,
+   "nNeutral": 40
+  },
+  "reading": "rings on drift",
+  "grid": [
+   {
+    "Z": 3,
+    "W": 10,
+    "falseAlarms": {
+     "k": 65,
+     "of": 70,
+     "upper95": 0.971434809313047
+    },
+    "falseAlarmsPrelim": {
+     "k": 20,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 4,
+    "W": 10,
+    "falseAlarms": {
+     "k": 54,
+     "of": 70,
+     "upper95": 0.8510574266114888
+    },
+    "falseAlarmsPrelim": {
+     "k": 20,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 6,
+    "W": 10,
+    "falseAlarms": {
+     "k": 36,
+     "of": 70,
+     "upper95": 0.6177131466768051
+    },
+    "falseAlarmsPrelim": {
+     "k": 18,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 3,
+    "W": 50,
+    "falseAlarms": {
+     "k": 42,
+     "of": 70,
+     "upper95": 0.6987253215155778
+    },
+    "falseAlarmsPrelim": {
+     "k": 19,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 4,
+    "W": 50,
+    "falseAlarms": {
+     "k": 30,
+     "of": 70,
+     "upper95": 0.533864260525917
+    },
+    "falseAlarmsPrelim": {
+     "k": 16,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 6,
+    "W": 50,
+    "falseAlarms": {
+     "k": 6,
+     "of": 70,
+     "upper95": 0.1621765168083481
+    },
+    "falseAlarmsPrelim": {
+     "k": 4,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 1,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 3,
+    "W": 200,
+    "falseAlarms": {
+     "k": 9,
+     "of": 70,
+     "upper95": 0.21363652131934485
+    },
+    "falseAlarmsPrelim": {
+     "k": 1,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 0.94,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 4,
+    "W": 200,
+    "falseAlarms": {
+     "k": 3,
+     "of": 70,
+     "upper95": 0.10705522530538536
+    },
+    "falseAlarmsPrelim": {
+     "k": 1,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 0.94,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   },
+   {
+    "Z": 6,
+    "W": 200,
+    "falseAlarms": {
+     "k": 0,
+     "of": 70,
+     "upper95": 0.041893344066888605
+    },
+    "falseAlarmsPrelim": {
+     "k": 0,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "treatmentRingsPrelim": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRingsPrelim": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1,
+    "effectTreatmentVsNoMutation": 0.94,
+    "effectTreatmentVsNeutralPrelim": 1,
+    "effectNoMutationVsNeutralPrelim": 1
+   }
+  ],
+  "reported": {
+   "noMutationVsNeutral": {
+    "effect": 1,
+    "rings": {
+     "k": 5,
+     "of": 5
+    }
+   },
+   "treatmentRings": {
+    "k": 10,
+    "of": 10
+   },
+   "treatmentVsNoMutation": {
+    "effect": 1
+   },
+   "preliminary": {
+    "falseAlarms": {
+     "k": 16,
+     "of": 20
+    },
+    "treatmentRings": {
+     "k": 10,
+     "of": 10
+    },
+    "noMutationRings": {
+     "k": 5,
+     "of": 5
+    },
+    "effectTreatmentVsNeutral": 1,
+    "effectNoMutationVsNeutral": 1
+   }
+  },
+  "secondary": {
+   "status": "called",
+   "W": 50,
+   "perPreset": {
+    "gradient-m3": {
+     "calibRuns": 20,
+     "zStar": 7.0429124518134785,
+     "heldOutNeutral": {
+      "k": 1,
+      "of": 20
+     },
+     "expected": 0.9523809523809523
+    },
+    "spots-m3": {
+     "calibRuns": 20,
+     "zStar": 11.4665,
+     "heldOutNeutral": {
+      "k": 0,
+      "of": 10
+     },
+     "expected": 0.47619047619047616
+    }
+   },
+   "heldOutNeutralTotal": {
+    "k": 1,
+    "of": 30,
+    "expected": 1.4285714285714284
+   },
+   "treatment": {
+    "k": 10,
+    "of": 10,
+    "zStar": 7.0429124518134785
+   },
+   "noMutation": {
+    "k": 5,
+    "of": 5,
+    "zStar": 7.0429124518134785
+   }
+  }
+ },
+ "runs": [
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1001",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1001,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.313061315816337,
+    "50": 3.5094581409059447,
+    "200": 1.9582650852206331
+   },
+   "D_primary": 3.5094581409059447,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1002",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1002,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.531959675567108,
+    "50": 5.659652026607916,
+    "200": 3.0850098935777823
+   },
+   "D_primary": 5.659652026607916,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 289100,
+    "endStep": 294000,
+    "minAbsZ": 4.189407960630145,
+    "value": 0.23974711379879055,
+    "median": 0.10904546603386785
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 289100,
+     "endStep": 294000,
+     "minAbsZ": 4.189407960630145,
+     "value": 0.23974711379879055,
+     "median": 0.10904546603386785
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1003",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1003,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8.286714285714286,
+    "50": 6.239125,
+    "200": 1.7426566659752178
+   },
+   "D_primary": 6.239125,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 374100,
+    "endStep": 379000,
+    "minAbsZ": 4.602470588235294,
+    "value": 48,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 374100,
+     "endStep": 379000,
+     "minAbsZ": 4.602470588235294,
+     "value": 48,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1004",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1004,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.644333333333332,
+    "50": 4.196888888888889,
+    "200": 1.1615039225531258
+   },
+   "D_primary": 4.196888888888889,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 87600,
+    "endStep": 92500,
+    "minAbsZ": 4.126352941176471,
+    "value": 42,
+    "median": 17
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 87600,
+     "endStep": 92500,
+     "minAbsZ": 4.126352941176471,
+     "value": 42,
+     "median": 17
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1005",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1005,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.40775,
+    "50": 4.761176470588235,
+    "200": 2.865760791837382
+   },
+   "D_primary": 4.761176470588235,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 532000,
+    "endStep": 536900,
+    "minAbsZ": 4.047,
+    "value": 39,
+    "median": 17
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 532000,
+     "endStep": 536900,
+     "minAbsZ": 4.047,
+     "value": 39,
+     "median": 17
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 642500,
+     "endStep": 647400,
+     "minAbsZ": 4.035238543719084,
+     "value": 0.28400429267218846,
+     "median": 0.12852332591104113
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1006",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1006,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 11.466499999999998,
+    "50": 6.595111111111111,
+    "200": 4.239714285714286
+   },
+   "D_primary": 6.595111111111111,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 351100,
+    "endStep": 356000,
+    "minAbsZ": 4.432428571428572,
+    "value": 42,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 351100,
+     "endStep": 356000,
+     "minAbsZ": 4.432428571428572,
+     "value": 42,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1007",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1007,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8.555980965166476,
+    "50": 7.0429124518134785,
+    "200": 4.6205904986140345
+   },
+   "D_primary": 7.0429124518134785,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 852000,
+    "endStep": 856900,
+    "minAbsZ": 4.079481461902673,
+    "value": 0.24705655278903688,
+    "median": 0.11569484804866788
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 852000,
+     "endStep": 856900,
+     "minAbsZ": 4.079481461902673,
+     "value": 0.24705655278903688,
+     "median": 0.11569484804866788
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1008",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1008,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.271135825347549,
+    "50": 3.393978975688699,
+    "200": 2.6256245801104074
+   },
+   "D_primary": 3.393978975688699,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1009",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1009,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4.565846153846154,
+    "50": 3.016937344866291,
+    "200": 1.8996394651460136
+   },
+   "D_primary": 3.016937344866291,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1010",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1010,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4.9809230769230775,
+    "50": 2.943272727272727,
+    "200": 0.979162404965795
+   },
+   "D_primary": 2.943272727272727,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1011",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1011,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5.603538461538462,
+    "50": 4.3168,
+    "200": 2.3101557686786958
+   },
+   "D_primary": 4.3168,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 652300,
+    "endStep": 657200,
+    "minAbsZ": 4.047,
+    "value": 39,
+    "median": 17
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 652300,
+     "endStep": 657200,
+     "minAbsZ": 4.047,
+     "value": 39,
+     "median": 17
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1012",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1012,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 9.131692307692308,
+    "50": 5.872117647058824,
+    "200": 2.583843515364398
+   },
+   "D_primary": 5.872117647058824,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 62200,
+    "endStep": 67100,
+    "minAbsZ": 4.126352941176471,
+    "value": 44,
+    "median": 18
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 62200,
+     "endStep": 67100,
+     "minAbsZ": 4.126352941176471,
+     "value": 44,
+     "median": 18
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 661500,
+     "endStep": 666400,
+     "minAbsZ": 4.028323051924188,
+     "value": 0.2746976641449003,
+     "median": 0.11854824535708008
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1013",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1013,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.665647058823529,
+    "50": 4.4517,
+    "200": 2.2992517585447514
+   },
+   "D_primary": 4.4517,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 52600,
+    "endStep": 57500,
+    "minAbsZ": 4.196888888888889,
+    "value": 46,
+    "median": 18
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 52600,
+     "endStep": 57500,
+     "minAbsZ": 4.196888888888889,
+     "value": 46,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1014",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1014,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4.047,
+    "50": 2.5259416620302155,
+    "200": 0.7640916039694199
+   },
+   "D_primary": 2.5259416620302155,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1015",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1015,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.9822605200291035,
+    "50": 5.414803075800241,
+    "200": 2.6278350675443036
+   },
+   "D_primary": 5.414803075800241,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 41400,
+    "endStep": 46300,
+    "minAbsZ": 4.059766927105377,
+    "value": 0.32600884466556107,
+    "median": 0.13704880632282246
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41400,
+     "endStep": 46300,
+     "minAbsZ": 4.059766927105377,
+     "value": 0.32600884466556107,
+     "median": 0.13704880632282246
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 62900,
+     "endStep": 67800,
+     "minAbsZ": 4.136933333333333,
+     "value": 38,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1016",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1016,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.167689550451339,
+    "50": 4.325666384908334,
+    "200": 3.440535175228087
+   },
+   "D_primary": 4.325666384908334,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 934500,
+    "endStep": 939400,
+    "minAbsZ": 4.006858556940446,
+    "value": 0.2823975018793732,
+    "median": 0.11665007741650077
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 934500,
+     "endStep": 939400,
+     "minAbsZ": 4.006858556940446,
+     "value": 0.2823975018793732,
+     "median": 0.11665007741650077
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1017",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1017,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8.07281051105369,
+    "50": 5.171433671601671,
+    "200": 2.5533553952059997
+   },
+   "D_primary": 5.171433671601671,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 740800,
+    "endStep": 745700,
+    "minAbsZ": 4.403926493836633,
+    "value": 0.28484286696767636,
+    "median": 0.11276842716192687
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 740800,
+     "endStep": 745700,
+     "minAbsZ": 4.403926493836633,
+     "value": 0.28484286696767636,
+     "median": 0.11276842716192687
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1018",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1018,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.305593778265168,
+    "50": 4.421298173659108,
+    "200": 2.4946231212520895
+   },
+   "D_primary": 4.421298173659108,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 255800,
+    "endStep": 260700,
+    "minAbsZ": 4.1762517660709735,
+    "value": 0.2488890085916669,
+    "median": 0.1148256233927591
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 255800,
+     "endStep": 260700,
+     "minAbsZ": 4.1762517660709735,
+     "value": 0.2488890085916669,
+     "median": 0.1148256233927591
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1019",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1019,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.172053395972726,
+    "50": 4.200548233009404,
+    "200": 2.353063038066169
+   },
+   "D_primary": 4.200548233009404,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 316100,
+    "endStep": 321000,
+    "minAbsZ": 4.166892143771628,
+    "value": 0.22386759581881532,
+    "median": 0.10582159889381156
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 316100,
+     "endStep": 321000,
+     "minAbsZ": 4.166892143771628,
+     "value": 0.22386759581881532,
+     "median": 0.10582159889381156
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/gradient-m3/neutral/seed-1020",
+   "experiment": "replay-calib",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1020,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5.620833333333333,
+    "50": 3.5973333333333333,
+    "200": 1.652321824931715
+   },
+   "D_primary": 3.5973333333333333,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.2430132225828,
+    "50": 4.426728086718995,
+    "200": 2.4928304085165967
+   },
+   "D_primary": 4.426728086718995,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 359200,
+    "endStep": 364100,
+    "minAbsZ": 4.035827110393221,
+    "value": 0.23261144250830126,
+    "median": 0.11374498183903652
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 359200,
+     "endStep": 364100,
+     "minAbsZ": 4.035827110393221,
+     "value": 0.23261144250830126,
+     "median": 0.11374498183903652
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 2,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.5201666666666656,
+    "50": 4.3168,
+    "200": 0.981090909090909
+   },
+   "D_primary": 4.3168,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 858300,
+    "endStep": 863200,
+    "minAbsZ": 4.136933333333333,
+    "value": 42,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 858300,
+     "endStep": 863200,
+     "minAbsZ": 4.136933333333333,
+     "value": 42,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 3,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.5201666666666656,
+    "50": 3.8878300763802924,
+    "200": 2.313972280764116
+   },
+   "D_primary": 3.8878300763802924,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 4,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.869166666666666,
+    "50": 5.2161333333333335,
+    "200": 2.648647728746063
+   },
+   "D_primary": 5.2161333333333335,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 187900,
+    "endStep": 192800,
+    "minAbsZ": 4.367987506859703,
+    "value": 0.2351830052834734,
+    "median": 0.11432351781994257
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 187900,
+     "endStep": 192800,
+     "minAbsZ": 4.367987506859703,
+     "value": 0.2351830052834734,
+     "median": 0.11432351781994257
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 280200,
+     "endStep": 285100,
+     "minAbsZ": 4.047,
+     "value": 42,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 5,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8.488122864775232,
+    "50": 6.65672063697271,
+    "200": 3.2375425219695075
+   },
+   "D_primary": 6.65672063697271,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 355700,
+    "endStep": 360600,
+    "minAbsZ": 4.126243249038793,
+    "value": 0.2521062143750869,
+    "median": 0.12004032145157226
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 355700,
+     "endStep": 360600,
+     "minAbsZ": 4.126243249038793,
+     "value": 0.2521062143750869,
+     "median": 0.12004032145157226
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-6",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 6,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.716920543433902,
+    "50": 5.820506906631467,
+    "200": 3.9471120247240146
+   },
+   "D_primary": 5.820506906631467,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 222400,
+    "endStep": 227300,
+    "minAbsZ": 4.114585897147059,
+    "value": 0.22500772016507117,
+    "median": 0.11661153781465493
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 222400,
+     "endStep": 227300,
+     "minAbsZ": 4.114585897147059,
+     "value": 0.22500772016507117,
+     "median": 0.11661153781465493
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-7",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 7,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8.066726634777517,
+    "50": 5.818930441878932,
+    "200": 3.313237108441232
+   },
+   "D_primary": 5.818930441878932,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 211600,
+    "endStep": 216500,
+    "minAbsZ": 4.358307692307693,
+    "value": 35,
+    "median": 17
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 211600,
+     "endStep": 216500,
+     "minAbsZ": 4.358307692307693,
+     "value": 35,
+     "median": 17
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 624600,
+     "endStep": 629500,
+     "minAbsZ": 4.4280896576536115,
+     "value": 0.2526176858776947,
+     "median": 0.11536671503271552
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-8",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 8,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5.171472042664748,
+    "50": 3.9998621835271844,
+    "200": 1.1587323345591813
+   },
+   "D_primary": 3.9998621835271844,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-9",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 9,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.194666666666666,
+    "50": 4.292272727272727,
+    "200": 1.6979380099246972
+   },
+   "D_primary": 4.292272727272727,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 878300,
+    "endStep": 883200,
+    "minAbsZ": 4.047,
+    "value": 40,
+    "median": 18
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 878300,
+     "endStep": 883200,
+     "minAbsZ": 4.047,
+     "value": 40,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-10",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 10,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.6550666666666665,
+    "50": 4.905454545454545,
+    "200": 2.192125
+   },
+   "D_primary": 4.905454545454545,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 416200,
+    "endStep": 421100,
+    "minAbsZ": 4.402,
+    "value": 46,
+    "median": 20
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 416200,
+     "endStep": 421100,
+     "minAbsZ": 4.402,
+     "value": 46,
+     "median": 20
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-11",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 11,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.131818181818181,
+    "50": 3.3724999999999996,
+    "200": 1.349
+   },
+   "D_primary": 3.3724999999999996,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-12",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 12,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4.602470588235294,
+    "50": 3.049913043478261,
+    "200": 1.3600827172621428
+   },
+   "D_primary": 3.049913043478261,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-13",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 13,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.442225221977473,
+    "50": 5.029105788460626,
+    "200": 2.067673538181788
+   },
+   "D_primary": 5.029105788460626,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 115800,
+    "endStep": 120700,
+    "minAbsZ": 4.181443357782848,
+    "value": 0.25292294306378815,
+    "median": 0.11850466261381454
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 115800,
+     "endStep": 120700,
+     "minAbsZ": 4.181443357782848,
+     "value": 0.25292294306378815,
+     "median": 0.11850466261381454
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-14",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 14,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.205399999999999,
+    "50": 4.8564,
+    "200": 1.0833052885552523
+   },
+   "D_primary": 4.8564,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 783600,
+    "endStep": 788500,
+    "minAbsZ": 4.2718333333333325,
+    "value": 34,
+    "median": 15
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 783600,
+     "endStep": 788500,
+     "minAbsZ": 4.2718333333333325,
+     "value": 34,
+     "median": 15
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-15",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 15,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 9.54676923076923,
+    "50": 7.1946666666666665,
+    "200": 2.3699388272011017
+   },
+   "D_primary": 7.1946666666666665,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 62300,
+    "endStep": 67200,
+    "minAbsZ": 4.196888888888889,
+    "value": 43,
+    "median": 18
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 62300,
+     "endStep": 67200,
+     "minAbsZ": 4.196888888888889,
+     "value": 43,
+     "median": 18
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 476700,
+     "endStep": 481600,
+     "minAbsZ": 4.159520796127306,
+     "value": 0.28978843441466856,
+     "median": 0.1306470965761643
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-16",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 16,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.834933333333334,
+    "50": 4.496666666666667,
+    "200": 1.01175
+   },
+   "D_primary": 4.496666666666667,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 833100,
+    "endStep": 838000,
+    "minAbsZ": 4.136933333333333,
+    "value": 42,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 833100,
+     "endStep": 838000,
+     "minAbsZ": 4.136933333333333,
+     "value": 42,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-17",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 17,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.070499999999999,
+    "50": 3.4976423685237554,
+    "200": 1.6756696559075062
+   },
+   "D_primary": 3.4976423685237554,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-18",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 18,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5.396,
+    "50": 3.4043073539652493,
+    "200": 2.223412268724563
+   },
+   "D_primary": 3.4043073539652493,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-19",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 19,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6.226153846153847,
+    "50": 4.496666666666667,
+    "200": 2.263000885259676
+   },
+   "D_primary": 4.496666666666667,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 326800,
+    "endStep": 331700,
+    "minAbsZ": 4.150769230769231,
+    "value": 39,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 326800,
+     "endStep": 331700,
+     "minAbsZ": 4.150769230769231,
+     "value": 39,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-20",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 20,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 7.869166666666666,
+    "50": 4.761176470588235,
+    "200": 2.0282601993148366
+   },
+   "D_primary": 4.761176470588235,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 32800,
+    "endStep": 37700,
+    "minAbsZ": 4.047,
+    "value": 43,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 32800,
+     "endStep": 37700,
+     "minAbsZ": 4.047,
+     "value": 43,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 1,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 122.90888888888888,
+    "50": 74.195,
+    "200": 51.71166666666666
+   },
+   "D_primary": 74.195,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 5.494653187635131,
+    "value": 21452,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.494653187635131,
+     "value": 21452,
+     "median": 33684
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.617790661803905,
+     "value": 0.550065261980235,
+     "median": 0.2264010671498931
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 17700,
+     "endStep": 22600,
+     "minAbsZ": 4.773384615384615,
+     "value": 125,
+     "median": 80
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 39800,
+     "endStep": 44700,
+     "minAbsZ": 4.213870069996908,
+     "value": 43068,
+     "median": 35573
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43500,
+     "endStep": 48400,
+     "minAbsZ": 4.073450980392157,
+     "value": 358,
+     "median": 248.5
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 51700,
+     "endStep": 56600,
+     "minAbsZ": 4.2508057553956835,
+     "value": 314,
+     "median": 138.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 52000,
+     "endStep": 56900,
+     "minAbsZ": 4.080183973908063,
+     "value": 6.239651456338169,
+     "median": 4.979208364048021
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 55000,
+     "endStep": 59900,
+     "minAbsZ": 4.238879788380013,
+     "value": 0.909868059893615,
+     "median": 0.6947330922587648
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 63200,
+     "endStep": 68100,
+     "minAbsZ": 4.011185840707965,
+     "value": 529,
+     "median": 193
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 80200,
+     "endStep": 85100,
+     "minAbsZ": 4.22257143821764,
+     "value": 1.5048893619155725,
+     "median": 0.676709627021005
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 250100,
+     "endStep": 255000,
+     "minAbsZ": 4.11976748512572,
+     "value": 3222.816199376947,
+     "median": 2052.2026011184807
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 264600,
+     "endStep": 269500,
+     "minAbsZ": 5.395999999999999,
+     "value": 14,
+     "median": 2
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 268300,
+     "endStep": 273200,
+     "minAbsZ": 4.7215,
+     "value": 9,
+     "median": 2
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 2,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 63.403,
+    "50": 43.16799999999999,
+    "200": 31.44207692307692
+   },
+   "D_primary": 43.16799999999999,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.990589055420006,
+    "value": 17087,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.990589055420006,
+     "value": 17087,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11800,
+     "endStep": 16700,
+     "minAbsZ": 4.124085714285714,
+     "value": 138,
+     "median": 74.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11900,
+     "endStep": 16800,
+     "minAbsZ": 4.286338709677419,
+     "value": 353,
+     "median": 254.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 14900,
+     "endStep": 19800,
+     "minAbsZ": 4.194859268590769,
+     "value": 6.1452200693753225,
+     "median": 4.434716945339685
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15700,
+     "endStep": 20600,
+     "minAbsZ": 4.11850165452554,
+     "value": 3349.815181518152,
+     "median": 2133.307186678352
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 31500,
+     "endStep": 36400,
+     "minAbsZ": 4.2708363655537624,
+     "value": 0.9247538546234884,
+     "median": 0.7025074498241634
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 54700,
+     "endStep": 59600,
+     "minAbsZ": 4.10287573964497,
+     "value": 11,
+     "median": 128
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 199900,
+     "endStep": 204800,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 3
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 250400,
+     "endStep": 255300,
+     "minAbsZ": 4.297911525336382,
+     "value": 1.4217084484113862,
+     "median": 0.6459136769460738
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 386300,
+     "endStep": 391200,
+     "minAbsZ": 4.047,
+     "value": 15,
+     "median": 3
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 754500,
+     "endStep": 759400,
+     "minAbsZ": 4.083459459459459,
+     "value": 45,
+     "median": 17
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 781000,
+     "endStep": 785900,
+     "minAbsZ": 4.095759036144578,
+     "value": 493,
+     "median": 205
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 3,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 126.806,
+    "50": 104.32266666666666,
+    "200": 48.11433333333333
+   },
+   "D_primary": 104.32266666666666,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.422604818959069,
+    "value": 15722,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.422604818959069,
+     "value": 15722,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 13700,
+     "endStep": 18600,
+     "minAbsZ": 4.239714285714286,
+     "value": 133,
+     "median": 83
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 14700,
+     "endStep": 19600,
+     "minAbsZ": 4.125202898550724,
+     "value": 336,
+     "median": 233
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 19900,
+     "endStep": 24800,
+     "minAbsZ": 4.28627436138353,
+     "value": 6.275190843490499,
+     "median": 4.588841113172556
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 42800,
+     "endStep": 47700,
+     "minAbsZ": 4.185531090143988,
+     "value": 3203.1540130151843,
+     "median": 2065.5331460674156
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 42900,
+     "endStep": 47800,
+     "minAbsZ": 4.042364100310269,
+     "value": 0.9107851660912245,
+     "median": 0.7042957679859849
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 53200,
+     "endStep": 58100,
+     "minAbsZ": 4.0002132447976395,
+     "value": 1.4642948573505699,
+     "median": 0.6318356372158842
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 88500,
+     "endStep": 93400,
+     "minAbsZ": 4.070381231671554,
+     "value": 43092,
+     "median": 35805
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 92100,
+     "endStep": 97000,
+     "minAbsZ": 4.0498162839248435,
+     "value": 536,
+     "median": 195.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 191200,
+     "endStep": 196100,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 2
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 356600,
+     "endStep": 361500,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 3
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 365600,
+     "endStep": 370500,
+     "minAbsZ": 4.710067796610169,
+     "value": 286,
+     "median": 140.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 508000,
+     "endStep": 512900,
+     "minAbsZ": 4.279586206896552,
+     "value": 42,
+     "median": 18
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 759800,
+     "endStep": 764700,
+     "minAbsZ": 4.150769230769231,
+     "value": 13,
+     "median": 147
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 4,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 72.96863636363636,
+    "50": 51.016727272727266,
+    "200": 45.29042666666667
+   },
+   "D_primary": 51.016727272727266,
+   "flagged": true,
+   "firstRing": {
+    "signal": "mutations",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 21200,
+    "endStep": 26100,
+    "minAbsZ": 4.103208333333333,
+    "value": 343,
+    "median": 251
+   },
+   "rings": [
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21200,
+     "endStep": 26100,
+     "minAbsZ": 4.103208333333333,
+     "value": 343,
+     "median": 251
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 25200,
+     "endStep": 30100,
+     "minAbsZ": 4.199971914057015,
+     "value": 43082,
+     "median": 35605
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 27000,
+     "endStep": 31900,
+     "minAbsZ": 4.124528735632183,
+     "value": 132,
+     "median": 86
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 31700,
+     "endStep": 36600,
+     "minAbsZ": 4.083775306130799,
+     "value": 0.8932153626223454,
+     "median": 0.6964831718674462
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 39400,
+     "endStep": 44300,
+     "minAbsZ": 4.395333333333333,
+     "value": 553,
+     "median": 206
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 40000,
+     "endStep": 44900,
+     "minAbsZ": 4.067413997583357,
+     "value": 5.974606025204953,
+     "median": 4.866763683203265
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43100,
+     "endStep": 48000,
+     "minAbsZ": 4.214416369244296,
+     "value": 1.448177906948053,
+     "median": 0.6611953457071855
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 153400,
+     "endStep": 158300,
+     "minAbsZ": 4.027082111878994,
+     "value": 3226.349131121643,
+     "median": 2042.949777020489
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 247100,
+     "endStep": 252000,
+     "minAbsZ": 4.166733727810651,
+     "value": 8,
+     "median": 138.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 913800,
+     "endStep": 918700,
+     "minAbsZ": 4.047,
+     "value": 8,
+     "median": 2
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 913800,
+     "endStep": 918700,
+     "minAbsZ": 4.496666666666666,
+     "value": 12,
+     "median": 2
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 5,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 44.7868,
+    "50": 31.899882352941177,
+    "200": 27.37570666666667
+   },
+   "D_primary": 31.899882352941177,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 5.02907871028229,
+    "value": 15356,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.02907871028229,
+     "value": 15356,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.230170884250836,
+     "value": 0.32002817930386684,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 30600,
+     "endStep": 35500,
+     "minAbsZ": 4.192837837837838,
+     "value": 149,
+     "median": 91.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 46500,
+     "endStep": 51400,
+     "minAbsZ": 4.277930372298434,
+     "value": 6.261243836068595,
+     "median": 4.945706398029455
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 56600,
+     "endStep": 61500,
+     "minAbsZ": 4.131628524356585,
+     "value": 0.2987114303392247,
+     "median": 0.14217768913425488
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 59700,
+     "endStep": 64600,
+     "minAbsZ": 4.160575011613105,
+     "value": 3.7697575616872316,
+     "median": 4.897538458795282
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60300,
+     "endStep": 65200,
+     "minAbsZ": 4.016667365801138,
+     "value": 42940,
+     "median": 35758.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 69300,
+     "endStep": 74200,
+     "minAbsZ": 4.215625,
+     "value": 44,
+     "median": 18
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 77800,
+     "endStep": 82700,
+     "minAbsZ": 4.18,
+     "value": 40,
+     "median": 90.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 367800,
+     "endStep": 372700,
+     "minAbsZ": 4.160886910822836,
+     "value": 0.8933271099701612,
+     "median": 0.6919564011704689
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 455800,
+     "endStep": 460700,
+     "minAbsZ": 4.0227664670658685,
+     "value": 377,
+     "median": 252.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 527300,
+     "endStep": 532200,
+     "minAbsZ": 4.10542125984252,
+     "value": 526,
+     "median": 196.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 527800,
+     "endStep": 532700,
+     "minAbsZ": 4.395316635790915,
+     "value": 1.5989202187954774,
+     "median": 0.6602536466819753
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 707800,
+     "endStep": 712700,
+     "minAbsZ": 4.413278718842266,
+     "value": 3261.3037974683543,
+     "median": 2030.682839322723
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 938200,
+     "endStep": 943100,
+     "minAbsZ": 4.187060109289617,
+     "value": 17,
+     "median": 144.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-6",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 6,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 160.98066666666665,
+    "50": 39.7955,
+    "200": 23.251303370786516
+   },
+   "D_primary": 39.7955,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.632159869873359,
+    "value": 17123,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.632159869873359,
+     "value": 17123,
+     "median": 33684
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41900,
+     "endStep": 46800,
+     "minAbsZ": 4.131132829479647,
+     "value": 43024,
+     "median": 35658.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 48200,
+     "endStep": 53100,
+     "minAbsZ": 4.277658031088083,
+     "value": 349,
+     "median": 246
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 63500,
+     "endStep": 68400,
+     "minAbsZ": 4.1092802919769325,
+     "value": 0.282277318640955,
+     "median": 0.12034267098810178
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 95900,
+     "endStep": 100800,
+     "minAbsZ": 4.068279512281684,
+     "value": 0.8728674279776485,
+     "median": 0.7065104260614569
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 138200,
+     "endStep": 143100,
+     "minAbsZ": 4.150101088764408,
+     "value": 3.8857836635794247,
+     "median": 5.018475902962096
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 159800,
+     "endStep": 164700,
+     "minAbsZ": 4.150769230769231,
+     "value": 14,
+     "median": 3.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 160600,
+     "endStep": 165500,
+     "minAbsZ": 4.047,
+     "value": 46,
+     "median": 18.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 183500,
+     "endStep": 188400,
+     "minAbsZ": 4.496666666666666,
+     "value": 10,
+     "median": 2
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 265200,
+     "endStep": 270100,
+     "minAbsZ": 4.544,
+     "value": 154,
+     "median": 89.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 266600,
+     "endStep": 271500,
+     "minAbsZ": 4.0346975707224075,
+     "value": 6.113916391454769,
+     "median": 5.036661674613323
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 287900,
+     "endStep": 292800,
+     "minAbsZ": 4.136234383194187,
+     "value": 1.3927765235265563,
+     "median": 0.6307258210322284
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 298200,
+     "endStep": 303100,
+     "minAbsZ": 4.307856353591161,
+     "value": 501,
+     "median": 245
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 400800,
+     "endStep": 405700,
+     "minAbsZ": 4.126148717889783,
+     "value": 3267.0745233968805,
+     "median": 2054.990150381056
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 439100,
+     "endStep": 444000,
+     "minAbsZ": 4.026246153846154,
+     "value": 0,
+     "median": 155
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-7",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 7,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 80.2655,
+    "50": 49.163555555555554,
+    "200": 37.322333333333326
+   },
+   "D_primary": 49.163555555555554,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.348030225221921,
+    "value": 24560,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.348030225221921,
+     "value": 24560,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.353211437019355,
+     "value": 0.4143300431769233,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 16000,
+     "endStep": 20900,
+     "minAbsZ": 4.196888888888889,
+     "value": 124,
+     "median": 82
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21100,
+     "endStep": 26000,
+     "minAbsZ": 4.063614400458182,
+     "value": 5.984017833563959,
+     "median": 4.62049096750142
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 29200,
+     "endStep": 34100,
+     "minAbsZ": 4.31312925170068,
+     "value": 373,
+     "median": 255.5
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 40200,
+     "endStep": 45100,
+     "minAbsZ": 4.025620714930735,
+     "value": 3201.1502242152465,
+     "median": 2055.7682949308755
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43100,
+     "endStep": 48000,
+     "minAbsZ": 4.096039827177448,
+     "value": 0.8768903832619168,
+     "median": 0.7038500443458335
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 46200,
+     "endStep": 51100,
+     "minAbsZ": 4.045141556210456,
+     "value": 43039,
+     "median": 35798.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 71600,
+     "endStep": 76500,
+     "minAbsZ": 4.047,
+     "value": 9,
+     "median": 2
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 101700,
+     "endStep": 106600,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 4
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 120600,
+     "endStep": 125500,
+     "minAbsZ": 4.1436247787443685,
+     "value": 1.5080466335334894,
+     "median": 0.6339834825074044
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 324700,
+     "endStep": 329600,
+     "minAbsZ": 4.069975669099756,
+     "value": 495,
+     "median": 185
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 403000,
+     "endStep": 407900,
+     "minAbsZ": 4.215625,
+     "value": 43,
+     "median": 18
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 708200,
+     "endStep": 713100,
+     "minAbsZ": 4.023333333333333,
+     "value": 16,
+     "median": 134.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-8",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 8,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 55.15911111111111,
+    "50": 38.91660606060606,
+    "200": 30.031309523809526
+   },
+   "D_primary": 38.91660606060606,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.233206218832502,
+    "value": 13429,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.233206218832502,
+     "value": 13429,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.525352975885262,
+     "value": 0.4353875881645002,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 17700,
+     "endStep": 22600,
+     "minAbsZ": 4.254538461538462,
+     "value": 123,
+     "median": 80
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 33800,
+     "endStep": 38700,
+     "minAbsZ": 4.066601265988326,
+     "value": 6.15389831118696,
+     "median": 4.757301408574595
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60400,
+     "endStep": 65300,
+     "minAbsZ": 4.102700210932152,
+     "value": 43136,
+     "median": 35793.5
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60900,
+     "endStep": 65800,
+     "minAbsZ": 4.31618401293489,
+     "value": 0.349320979243312,
+     "median": 0.134718955204222
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 62400,
+     "endStep": 67300,
+     "minAbsZ": 4.025398110255359,
+     "value": 3.9734270532584604,
+     "median": 4.983922504080716
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 90800,
+     "endStep": 95700,
+     "minAbsZ": 4.239714285714286,
+     "value": 39,
+     "median": 17
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 95800,
+     "endStep": 100700,
+     "minAbsZ": 4.137632695993534,
+     "value": 0.8916109990964296,
+     "median": 0.7044841622766795
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 109400,
+     "endStep": 114300,
+     "minAbsZ": 4.050432724025727,
+     "value": 1.495500955263001,
+     "median": 0.6892513476941823
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 148600,
+     "endStep": 153500,
+     "minAbsZ": 4.091668874172185,
+     "value": 358,
+     "median": 243.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 152100,
+     "endStep": 157000,
+     "minAbsZ": 4.040221105527638,
+     "value": 554,
+     "median": 194
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 181300,
+     "endStep": 186200,
+     "minAbsZ": 4.104357587137406,
+     "value": 3326.0955056179773,
+     "median": 2017.8068109102542
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 462200,
+     "endStep": 467100,
+     "minAbsZ": 4.090516129032258,
+     "value": 9,
+     "median": 150
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 651700,
+     "endStep": 656600,
+     "minAbsZ": 4.946333333333333,
+     "value": 8,
+     "median": 2
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-9",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 9,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 71.497,
+    "50": 43.617666666666665,
+    "200": 33.0505
+   },
+   "D_primary": 43.617666666666665,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.791724745066393,
+    "value": 22241,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.791724745066393,
+     "value": 22241,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.535768115942029,
+     "value": 135,
+     "median": 71.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11300,
+     "endStep": 16200,
+     "minAbsZ": 4.162628571428572,
+     "value": 355,
+     "median": 247
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 12100,
+     "endStep": 17000,
+     "minAbsZ": 4.074161665711248,
+     "value": 5.879529992527426,
+     "median": 4.22481030179695
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15600,
+     "endStep": 20500,
+     "minAbsZ": 4.155207083961543,
+     "value": 0.8846423712272854,
+     "median": 0.6890008872305804
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 16900,
+     "endStep": 21800,
+     "minAbsZ": 5.695777777777778,
+     "value": 13,
+     "median": 3.5
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21500,
+     "endStep": 26400,
+     "minAbsZ": 4.2244347006851015,
+     "value": 3335.1026392961876,
+     "median": 2151.2096979725357
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 98000,
+     "endStep": 102900,
+     "minAbsZ": 4.076010752688172,
+     "value": 19,
+     "median": 152.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 132500,
+     "endStep": 137400,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 2
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 161000,
+     "endStep": 165900,
+     "minAbsZ": 4.103639147774052,
+     "value": 1.4239315799237207,
+     "median": 0.6246422492124966
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 183900,
+     "endStep": 188800,
+     "minAbsZ": 4.128008077635048,
+     "value": 43013,
+     "median": 35654
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 326200,
+     "endStep": 331100,
+     "minAbsZ": 4.1462452316076295,
+     "value": 463,
+     "median": 191.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 693100,
+     "endStep": 698000,
+     "minAbsZ": 4.047,
+     "value": 41,
+     "median": 17
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-10",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 10,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 63.035090909090904,
+    "50": 46.1930303030303,
+    "200": 37.01656
+   },
+   "D_primary": 46.1930303030303,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 8.250261415127222,
+    "value": 17933,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 8.250261415127222,
+     "value": 17933,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.951470588235294,
+     "value": 144,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.071328890703222,
+     "value": 5.676305666682325,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.223787234042553,
+     "value": 379,
+     "median": 234.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 23300,
+     "endStep": 28200,
+     "minAbsZ": 4.188865150539055,
+     "value": 0.8933941748733035,
+     "median": 0.7032280143187266
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 23500,
+     "endStep": 28400,
+     "minAbsZ": 4.200891405994638,
+     "value": 3482.8187134502923,
+     "median": 2044.0927974712124
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 137600,
+     "endStep": 142500,
+     "minAbsZ": 4.047,
+     "value": 10,
+     "median": 2.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 143800,
+     "endStep": 148700,
+     "minAbsZ": 4.196888888888889,
+     "value": 10,
+     "median": 3
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 152300,
+     "endStep": 157200,
+     "minAbsZ": 4.247935207828545,
+     "value": 1.4754775077480116,
+     "median": 0.6669938408924814
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 362100,
+     "endStep": 367000,
+     "minAbsZ": 4.0743908629441625,
+     "value": 489,
+     "median": 204
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 375500,
+     "endStep": 380400,
+     "minAbsZ": 4.103777524148874,
+     "value": 43294,
+     "median": 35923
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 1,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 30.960052936638316,
+    "50": 22.784547710675863,
+    "200": 19.002762933817497
+   },
+   "D_primary": 22.784547710675863,
+   "flagged": true,
+   "firstRing": {
+    "signal": "lineages",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 5.0633698630136985,
+    "value": 4,
+    "median": 71.5
+   },
+   "rings": [
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.0633698630136985,
+     "value": 4,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.442776230814218,
+     "value": 1.328174688998488,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.062736562759691,
+     "value": 0.7440354767184035,
+     "median": 0.2264010671498931
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.980228915662651,
+     "value": 0,
+     "median": 234.5
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15400,
+     "endStep": 20300,
+     "minAbsZ": 4.031821797931583,
+     "value": 27599,
+     "median": 34567.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 32800,
+     "endStep": 37700,
+     "minAbsZ": 4.083459459459459,
+     "value": 47,
+     "median": 19
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 97700,
+     "endStep": 102600,
+     "minAbsZ": 4.118,
+     "value": 1,
+     "median": 148.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 194300,
+     "endStep": 199200,
+     "minAbsZ": 4.023333333333333,
+     "value": 504,
+     "median": 206.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 405700,
+     "endStep": 410600,
+     "minAbsZ": 4.020840781215113,
+     "value": 1.4371214056044568,
+     "median": 0.6017869169176896
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 638800,
+     "endStep": 643700,
+     "minAbsZ": 4.08957480703854,
+     "value": 0.8868142547470662,
+     "median": 0.687959611429015
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 2,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 37.09720331641854,
+    "50": 29.60818499456241,
+    "200": 24.23370010095985
+   },
+   "D_primary": 29.60818499456241,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 6.467165419783873,
+    "value": 22792,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.467165419783873,
+     "value": 22792,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.989452054794521,
+     "value": 5,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.670441020740416,
+     "value": 1.6676165585701905,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.980228915662651,
+     "value": 0,
+     "median": 234.5
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11000,
+     "endStep": 15900,
+     "minAbsZ": 4.014699594158928,
+     "value": 0.4383866750593134,
+     "median": 0.21626170370617265
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 23700,
+     "endStep": 28600,
+     "minAbsZ": 4.065797480362506,
+     "value": 3384.39417989418,
+     "median": 2087.465838509317
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41100,
+     "endStep": 46000,
+     "minAbsZ": 4.318047145407781,
+     "value": 0.9416503272938026,
+     "median": 0.7007334956545643
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 54800,
+     "endStep": 59700,
+     "minAbsZ": 4.007088757396449,
+     "value": 18,
+     "median": 132
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 428500,
+     "endStep": 433400,
+     "minAbsZ": 4.169636363636363,
+     "value": 45,
+     "median": 17
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 832600,
+     "endStep": 837500,
+     "minAbsZ": 4.002795834207031,
+     "value": 42926,
+     "median": 35767.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 3,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 37.05693887163766,
+    "50": 29.57643801013788,
+    "200": 24.207308577859877
+   },
+   "D_primary": 29.57643801013788,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 11.127538297114357,
+    "value": 14943,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 11.127538297114357,
+     "value": 14943,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.841616438356164,
+     "value": 7,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.401876815788963,
+     "value": 2.23837305303883,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.377980313940407,
+     "value": 0.4664304253528805,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.980228915662651,
+     "value": 0,
+     "median": 234.5
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 17800,
+     "endStep": 22700,
+     "minAbsZ": 4.157037090593321,
+     "value": 0.42331639135959337,
+     "median": 0.19346298337664483
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41200,
+     "endStep": 46100,
+     "minAbsZ": 4.033485566484577,
+     "value": 3288.0573065902577,
+     "median": 2012.0865134657377
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60000,
+     "endStep": 64900,
+     "minAbsZ": 4.157420323148923,
+     "value": 0.8783334457988825,
+     "median": 0.7140087258877237
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 457600,
+     "endStep": 462500,
+     "minAbsZ": 4.087878787878788,
+     "value": 41,
+     "median": 16.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 4,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 22.536235294117645,
+    "50": 15.629680687672641,
+    "200": 14.70997974017281
+   },
+   "D_primary": 15.629680687672641,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.702258726899384,
+    "value": 16457,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.702258726899384,
+     "value": 16457,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.915534246575342,
+     "value": 6,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.328851948630392,
+     "value": 1.8424068253327217,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.290794569842593,
+     "value": 0.5600048611533086,
+     "median": 0.2264010671498931
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.980228915662651,
+     "value": 0,
+     "median": 234.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 32800,
+     "endStep": 37700,
+     "minAbsZ": 4.229297297297298,
+     "value": 48,
+     "median": 19
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 211300,
+     "endStep": 216200,
+     "minAbsZ": 4.0924719101123594,
+     "value": 5,
+     "median": 133.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 211400,
+     "endStep": 216300,
+     "minAbsZ": 4.1620310077519385,
+     "value": 499,
+     "median": 186.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 211400,
+     "endStep": 216300,
+     "minAbsZ": 4.025655942921902,
+     "value": 1.4974893595636227,
+     "median": 0.654935338620237
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 741400,
+     "endStep": 746300,
+     "minAbsZ": 4.046859405708518,
+     "value": 3165.2179487179487,
+     "median": 2130.893342345387
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 5,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 36.23045112367728,
+    "50": 29.060901813825073,
+    "200": 23.806548008079993
+   },
+   "D_primary": 29.060901813825073,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 6.063088184036249,
+    "value": 15501,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.063088184036249,
+     "value": 15501,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.989452054794521,
+     "value": 5,
+     "median": 71.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.565521427699413,
+     "value": 1.3118788384107356,
+     "median": 4.06091465760818
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.943063225642463,
+     "value": 0.33907149527435426,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.001938520379235,
+     "value": 0.6440229662602412,
+     "median": 0.2264010671498931
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.980228915662651,
+     "value": 0,
+     "median": 234.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 32100,
+     "endStep": 37000,
+     "minAbsZ": 4.42472,
+     "value": 60,
+     "median": 20
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 97700,
+     "endStep": 102600,
+     "minAbsZ": 4.287632432432432,
+     "value": 0,
+     "median": 148.5
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 744600,
+     "endStep": 749500,
+     "minAbsZ": 4.013940446309146,
+     "value": 3145.5111731843576,
+     "median": 2013.7929914529914
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 1,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 6.894888888888889,
+    "50": 4.059751840943014,
+    "200": 1.4646972727714656
+   },
+   "D_primary": 4.059751840943014,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 363400,
+    "endStep": 368300,
+    "minAbsZ": 4.043823224855676,
+    "value": 0.311061639070544,
+    "median": 0.13010231849352347
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 363400,
+     "endStep": 368300,
+     "minAbsZ": 4.043823224855676,
+     "value": 0.311061639070544,
+     "median": 0.13010231849352347
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 2,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 7.7942222222222215,
+    "50": 4.7215,
+    "200": 1.0046066807050078
+   },
+   "D_primary": 4.7215,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 835600,
+    "endStep": 840500,
+    "minAbsZ": 4.0439557423366495,
+    "value": 0.23698041089345437,
+    "median": 0.1043368781977445
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 835600,
+     "endStep": 840500,
+     "minAbsZ": 4.0439557423366495,
+     "value": 0.23698041089345437,
+     "median": 0.1043368781977445
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 855800,
+     "endStep": 860700,
+     "minAbsZ": 4.047,
+     "value": 39,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 3,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 8.094,
+    "50": 3.56083444384205,
+    "200": 1.8741647739898373
+   },
+   "D_primary": 3.56083444384205,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 4,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 9.848866157617033,
+    "50": 6.362850249299962,
+    "200": 2.5945606092526945
+   },
+   "D_primary": 6.362850249299962,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 186100,
+    "endStep": 191000,
+    "minAbsZ": 4.310458898284092,
+    "value": 0.20547680234325347,
+    "median": 0.10716063035664916
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 186100,
+     "endStep": 191000,
+     "minAbsZ": 4.310458898284092,
+     "value": 0.20547680234325347,
+     "median": 0.10716063035664916
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 284000,
+     "endStep": 288900,
+     "minAbsZ": 4.8564,
+     "value": 45,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 5,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 8.3207076324258,
+    "50": 4.705659614118984,
+    "200": 2.5981126657446065
+   },
+   "D_primary": 4.705659614118984,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 355700,
+    "endStep": 360600,
+    "minAbsZ": 4.411518259827998,
+    "value": 0.2521062143750869,
+    "median": 0.1301224128878941
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 355700,
+     "endStep": 360600,
+     "minAbsZ": 4.411518259827998,
+     "value": 0.2521062143750869,
+     "median": 0.1301224128878941
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-6",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 6,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 10.453378121438778,
+    "50": 6.570185206435315,
+    "200": 4.681315081728522
+   },
+   "D_primary": 6.570185206435315,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 301100,
+    "endStep": 306000,
+    "minAbsZ": 4.109783170246086,
+    "value": 0.23633813299745227,
+    "median": 0.12686820652173914
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 301100,
+     "endStep": 306000,
+     "minAbsZ": 4.109783170246086,
+     "value": 0.23633813299745227,
+     "median": 0.12686820652173914
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 558200,
+     "endStep": 563100,
+     "minAbsZ": 4.169636363636363,
+     "value": 34,
+     "median": 17
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-7",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 7,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 13.310295522968692,
+    "50": 9.086633105289282,
+    "200": 2.8336393530509767
+   },
+   "D_primary": 9.086633105289282,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 348100,
+    "endStep": 353000,
+    "minAbsZ": 4.402,
+    "value": 50,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 348100,
+     "endStep": 353000,
+     "minAbsZ": 4.402,
+     "value": 50,
+     "median": 19
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 624500,
+     "endStep": 629400,
+     "minAbsZ": 4.0194912917912085,
+     "value": 0.246072529731317,
+     "median": 0.11490769572953737
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 632500,
+     "endStep": 637400,
+     "minAbsZ": 4.003404027149496,
+     "value": 4.036050665335317,
+     "median": 5.163854108938657
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-8",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 8,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 6.10191874207323,
+    "50": 3.7596451590660784,
+    "200": 1.2550855429031202
+   },
+   "D_primary": 3.7596451590660784,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-9",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 9,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 10.45475,
+    "50": 5.171166666666666,
+    "200": 1.7426061800582036
+   },
+   "D_primary": 5.171166666666666,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 877700,
+    "endStep": 882600,
+    "minAbsZ": 4.136933333333333,
+    "value": 38,
+    "median": 18
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 877700,
+     "endStep": 882600,
+     "minAbsZ": 4.136933333333333,
+     "value": 38,
+     "median": 18
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-10",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 10,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 7.3581818181818175,
+    "50": 4.602470588235294,
+    "200": 1.6455805712559657
+   },
+   "D_primary": 4.602470588235294,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 423000,
+    "endStep": 427900,
+    "minAbsZ": 4.105652173913043,
+    "value": 55,
+    "median": 21
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 423000,
+     "endStep": 427900,
+     "minAbsZ": 4.105652173913043,
+     "value": 55,
+     "median": 21
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 941600,
+     "endStep": 946500,
+     "minAbsZ": 4.283224696985644,
+     "value": 0.2768018883460504,
+     "median": 0.11234903895220276
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-11",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 11,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 8.094,
+    "50": 3.528153846153846,
+    "200": 2.4527272727272726
+   },
+   "D_primary": 3.528153846153846,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-12",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 12,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 5.564625,
+    "50": 2.90552434042743,
+    "200": 2.04450659842907
+   },
+   "D_primary": 2.90552434042743,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-13",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 13,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 7.7037603045670435,
+    "50": 5.4877151606176415,
+    "200": 2.3647039492543027
+   },
+   "D_primary": 5.4877151606176415,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 115900,
+    "endStep": 120800,
+    "minAbsZ": 4.305509719748485,
+    "value": 0.25828823193451006,
+    "median": 0.11583930895096764
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 115900,
+     "endStep": 120800,
+     "minAbsZ": 4.305509719748485,
+     "value": 0.25828823193451006,
+     "median": 0.11583930895096764
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-14",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 14,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 10.021142857142857,
+    "50": 4.8564,
+    "200": 1.3319400828105623
+   },
+   "D_primary": 4.8564,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 783500,
+    "endStep": 788400,
+    "minAbsZ": 4.414909090909091,
+    "value": 34,
+    "median": 16
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 783500,
+     "endStep": 788400,
+     "minAbsZ": 4.414909090909091,
+     "value": 34,
+     "median": 16
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-15",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 15,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 12.065775501056628,
+    "50": 7.901285714285715,
+    "200": 2.477895998462492
+   },
+   "D_primary": 7.901285714285715,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 66100,
+    "endStep": 71000,
+    "minAbsZ": 4.285058823529412,
+    "value": 46,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 66100,
+     "endStep": 71000,
+     "minAbsZ": 4.285058823529412,
+     "value": 46,
+     "median": 19
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 476200,
+     "endStep": 481100,
+     "minAbsZ": 4.0061705321481975,
+     "value": 0.2545521793558666,
+     "median": 0.13102065816582215
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-16",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 16,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 6.115466666666666,
+    "50": 4.97,
+    "200": 0.9442999999999999
+   },
+   "D_primary": 4.97,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 832000,
+    "endStep": 836900,
+    "minAbsZ": 4.169636363636363,
+    "value": 37,
+    "median": 20
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 832000,
+     "endStep": 836900,
+     "minAbsZ": 4.169636363636363,
+     "value": 37,
+     "median": 20
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-17",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 17,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 9.393038646028614,
+    "50": 4.175553829853425,
+    "200": 1.8256682667038522
+   },
+   "D_primary": 4.175553829853425,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 45400,
+    "endStep": 50300,
+    "minAbsZ": 4.160973334773126,
+    "value": 0.22998310350466017,
+    "median": 0.11732779028812287
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 45400,
+     "endStep": 50300,
+     "minAbsZ": 4.160973334773126,
+     "value": 0.22998310350466017,
+     "median": 0.11732779028812287
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-18",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 18,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 5.621534043697094,
+    "50": 4.460508672008414,
+    "200": 2.121617170682693
+   },
+   "D_primary": 4.460508672008414,
+   "flagged": true,
+   "firstRing": {
+    "signal": "dominantShare",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 565100,
+    "endStep": 570000,
+    "minAbsZ": 4.460508672008414,
+    "value": 0.2521865889212828,
+    "median": 0.11952666001551934
+   },
+   "rings": [
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 565100,
+     "endStep": 570000,
+     "minAbsZ": 4.460508672008414,
+     "value": 0.2521865889212828,
+     "median": 0.11952666001551934
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-19",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 19,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 6.622363636363636,
+    "50": 4.285058823529412,
+    "200": 2.7904885880953683
+   },
+   "D_primary": 4.285058823529412,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 327100,
+    "endStep": 332000,
+    "minAbsZ": 4.285058823529412,
+    "value": 41,
+    "median": 19
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 327100,
+     "endStep": 332000,
+     "minAbsZ": 4.285058823529412,
+     "value": 41,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/neutral/seed-20",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "neutral",
+   "seed": 20,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 9.892666666666667,
+    "50": 5.254,
+    "200": 1.700279144588559
+   },
+   "D_primary": 5.254,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 33700,
+    "endStep": 38600,
+    "minAbsZ": 4.602470588235294,
+    "value": 45,
+    "median": 17
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 33700,
+     "endStep": 38600,
+     "minAbsZ": 4.602470588235294,
+     "value": 45,
+     "median": 17
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 1,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 125.457,
+    "50": 74.195,
+    "200": 46.87775
+   },
+   "D_primary": 74.195,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 5.533810938319063,
+    "value": 21452,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.533810938319063,
+     "value": 21452,
+     "median": 33684
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.6412888214295425,
+     "value": 0.550065261980235,
+     "median": 0.20952422875603627
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 26600,
+     "endStep": 31500,
+     "minAbsZ": 4.323301204819277,
+     "value": 134,
+     "median": 86.5
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 39800,
+     "endStep": 44700,
+     "minAbsZ": 4.136182136602452,
+     "value": 43068,
+     "median": 35687.5
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43400,
+     "endStep": 48300,
+     "minAbsZ": 4.047,
+     "value": 271,
+     "median": 137.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 46200,
+     "endStep": 51100,
+     "minAbsZ": 4.81025,
+     "value": 379,
+     "median": 252
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 51400,
+     "endStep": 56300,
+     "minAbsZ": 4.075123851871225,
+     "value": 6.133565347760803,
+     "median": 5.024070893961745
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 54700,
+     "endStep": 59600,
+     "minAbsZ": 4.18348705882353,
+     "value": 509,
+     "median": 179.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 55200,
+     "endStep": 60100,
+     "minAbsZ": 4.150977198423047,
+     "value": 0.9079719088666809,
+     "median": 0.7090017575535001
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 89000,
+     "endStep": 93900,
+     "minAbsZ": 4.36151500094208,
+     "value": 1.4246654673915584,
+     "median": 0.7792141579890907
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 248600,
+     "endStep": 253500,
+     "minAbsZ": 4.017304747246173,
+     "value": 3112.608231707317,
+     "median": 2090.201648351648
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 264600,
+     "endStep": 269500,
+     "minAbsZ": 4.565846153846154,
+     "value": 14,
+     "median": 3
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 268300,
+     "endStep": 273200,
+     "minAbsZ": 4.196888888888889,
+     "value": 9,
+     "median": 2
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 2,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 64.41475,
+    "50": 43.82977358490566,
+    "200": 30.43344
+   },
+   "D_primary": 43.82977358490566,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.888037730874577,
+    "value": 17087,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.888037730874577,
+     "value": 17087,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11600,
+     "endStep": 16500,
+     "minAbsZ": 4.2999374999999995,
+     "value": 123,
+     "median": 74.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11800,
+     "endStep": 16700,
+     "minAbsZ": 5.420752293577982,
+     "value": 345,
+     "median": 247
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 13800,
+     "endStep": 18700,
+     "minAbsZ": 4.013868291323018,
+     "value": 5.899692445175482,
+     "median": 4.540939460850479
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21400,
+     "endStep": 26300,
+     "minAbsZ": 4.175132251176358,
+     "value": 3475.988130563798,
+     "median": 2186.487719298246
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 31700,
+     "endStep": 36600,
+     "minAbsZ": 4.144331707819382,
+     "value": 0.9261269677909283,
+     "median": 0.7006564433581067
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 137500,
+     "endStep": 142400,
+     "minAbsZ": 4.005191273883246,
+     "value": 1.3263865807607083,
+     "median": 0.7008638327347342
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 195600,
+     "endStep": 200500,
+     "minAbsZ": 4.047,
+     "value": 9,
+     "median": 1.5
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 255500,
+     "endStep": 260400,
+     "minAbsZ": 4.496666666666666,
+     "value": 15,
+     "median": 3
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 500100,
+     "endStep": 505000,
+     "minAbsZ": 4.0612,
+     "value": 2,
+     "median": 134.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 558400,
+     "endStep": 563300,
+     "minAbsZ": 4.061583783783783,
+     "value": 461,
+     "median": 212
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 712000,
+     "endStep": 716900,
+     "minAbsZ": 4.3168,
+     "value": 45,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 3,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 117.51288888888888,
+    "50": 77.5675,
+    "200": 43.50525
+   },
+   "D_primary": 77.5675,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.417123217249533,
+    "value": 15722,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.417123217249533,
+     "value": 15722,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 13900,
+     "endStep": 18800,
+     "minAbsZ": 4.527152542372881,
+     "value": 137,
+     "median": 87.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 14800,
+     "endStep": 19700,
+     "minAbsZ": 4.17547619047619,
+     "value": 349,
+     "median": 237
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 19000,
+     "endStep": 23900,
+     "minAbsZ": 4.394987996091883,
+     "value": 6.080982917141189,
+     "median": 4.642848426983662
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43700,
+     "endStep": 48600,
+     "minAbsZ": 4.2898636558063625,
+     "value": 0.9157885918023151,
+     "median": 0.7122146201294369
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 44400,
+     "endStep": 49300,
+     "minAbsZ": 4.146916977471171,
+     "value": 1.3281152954719024,
+     "median": 0.670533533487587
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 58200,
+     "endStep": 63100,
+     "minAbsZ": 4.084072395674053,
+     "value": 43314,
+     "median": 35969
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 63300,
+     "endStep": 68200,
+     "minAbsZ": 4.241631840796019,
+     "value": 504,
+     "median": 179
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 78900,
+     "endStep": 83800,
+     "minAbsZ": 4.003105898782462,
+     "value": 3396.6514285714284,
+     "median": 2157.3442616436178
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 356400,
+     "endStep": 361300,
+     "minAbsZ": 4,
+     "value": 10,
+     "median": 3.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 356600,
+     "endStep": 361500,
+     "minAbsZ": 4.5866,
+     "value": 11,
+     "median": 2.5
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 365300,
+     "endStep": 370200,
+     "minAbsZ": 4.1253290322580645,
+     "value": 258,
+     "median": 139.5
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 409600,
+     "endStep": 414500,
+     "minAbsZ": 4.068875675675676,
+     "value": 8,
+     "median": 147.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 508900,
+     "endStep": 513800,
+     "minAbsZ": 4.406733333333333,
+     "value": 44,
+     "median": 19.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 4,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 74.29876923076922,
+    "50": 60.30823529411765,
+    "200": 37.41226666666667
+   },
+   "D_primary": 60.30823529411765,
+   "flagged": true,
+   "firstRing": {
+    "signal": "lineages",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 11500,
+    "endStep": 16400,
+    "minAbsZ": 4.282539682539682,
+    "value": 136,
+    "median": 74.5
+   },
+   "rings": [
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11500,
+     "endStep": 16400,
+     "minAbsZ": 4.282539682539682,
+     "value": 136,
+     "median": 74.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21100,
+     "endStep": 26000,
+     "minAbsZ": 4.268477611940298,
+     "value": 346,
+     "median": 240
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 25200,
+     "endStep": 30100,
+     "minAbsZ": 4.114634351123674,
+     "value": 43082,
+     "median": 35731
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 28400,
+     "endStep": 33300,
+     "minAbsZ": 4.099388349514563,
+     "value": 309,
+     "median": 152.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 31800,
+     "endStep": 36700,
+     "minAbsZ": 4.0996851515043495,
+     "value": 0.8989266203142935,
+     "median": 0.7033483766690929
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 40000,
+     "endStep": 44900,
+     "minAbsZ": 4.201441212760079,
+     "value": 5.974606025204953,
+     "median": 4.937396886971239
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 43700,
+     "endStep": 48600,
+     "minAbsZ": 4.112274193548386,
+     "value": 586,
+     "median": 193.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 44300,
+     "endStep": 49200,
+     "minAbsZ": 4.563166107501939,
+     "value": 1.524776344153334,
+     "median": 0.6535994213879304
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 163200,
+     "endStep": 168100,
+     "minAbsZ": 4.010868297810242,
+     "value": 3280.9670710571922,
+     "median": 2048.9244918578393
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 360100,
+     "endStep": 365000,
+     "minAbsZ": 4.0696089385474865,
+     "value": 8,
+     "median": 150
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 913800,
+     "endStep": 918700,
+     "minAbsZ": 4.047,
+     "value": 8,
+     "median": 2
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 913800,
+     "endStep": 918700,
+     "minAbsZ": 4.047,
+     "value": 12,
+     "median": 3
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 5,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 46.601818181818174,
+    "50": 31.172276923076925,
+    "200": 23.659384615384614
+   },
+   "D_primary": 31.172276923076925,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.9817204774699375,
+    "value": 15356,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.9817204774699375,
+     "value": 15356,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.128822706236849,
+     "value": 0.32002817930386684,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 14000,
+     "endStep": 18900,
+     "minAbsZ": 4.658944100385371,
+     "value": 0.36956175932553886,
+     "median": 0.18012197841048988
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 30100,
+     "endStep": 35000,
+     "minAbsZ": 4.271833333333333,
+     "value": 137,
+     "median": 88.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 45400,
+     "endStep": 50300,
+     "minAbsZ": 4.0450487114812175,
+     "value": 6.123097513843592,
+     "median": 5.010167551614201
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 59200,
+     "endStep": 64100,
+     "minAbsZ": 4.131583677077372,
+     "value": 4.016270803327378,
+     "median": 5.061968027049678
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60300,
+     "endStep": 65200,
+     "minAbsZ": 4.055685494600915,
+     "value": 42940,
+     "median": 35700.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 117200,
+     "endStep": 122100,
+     "minAbsZ": 4.047,
+     "value": 43,
+     "median": 18.5
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 139900,
+     "endStep": 144800,
+     "minAbsZ": 4.013275,
+     "value": 44,
+     "median": 89
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 364300,
+     "endStep": 369200,
+     "minAbsZ": 4.044620551907291,
+     "value": 0.8979204012264049,
+     "median": 0.6989369601991888
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 481600,
+     "endStep": 486500,
+     "minAbsZ": 4.470059171597633,
+     "value": 395,
+     "median": 238
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 527400,
+     "endStep": 532300,
+     "minAbsZ": 4.063451219512195,
+     "value": 557,
+     "median": 186.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 527600,
+     "endStep": 532500,
+     "minAbsZ": 4.044656784381758,
+     "value": 1.4993792675471709,
+     "median": 0.6402223845011541
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 744500,
+     "endStep": 749400,
+     "minAbsZ": 4.04867151137831,
+     "value": 3191.264475743349,
+     "median": 2041.9368141097425
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 938400,
+     "endStep": 943300,
+     "minAbsZ": 4.307048192771084,
+     "value": 11,
+     "median": 141
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-6",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 6,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 219,
+    "50": 35.373777777777775,
+    "200": 23.044094117647056
+   },
+   "D_primary": 35.373777777777775,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.526547830035299,
+    "value": 17123,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.526547830035299,
+     "value": 17123,
+     "median": 33684
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 22600,
+     "endStep": 27500,
+     "minAbsZ": 4.04064085870122,
+     "value": 0.3077022989998701,
+     "median": 0.14560318950907658
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41900,
+     "endStep": 46800,
+     "minAbsZ": 4.066004754579779,
+     "value": 43024,
+     "median": 35755
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 71500,
+     "endStep": 76400,
+     "minAbsZ": 4.58231746031746,
+     "value": 387,
+     "median": 252.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 107800,
+     "endStep": 112700,
+     "minAbsZ": 4.014585048313029,
+     "value": 0.9279160238462564,
+     "median": 0.7158192794997814
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 138400,
+     "endStep": 143300,
+     "minAbsZ": 4.1909923084529765,
+     "value": 3.8628758398135172,
+     "median": 4.953365420479923
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 157200,
+     "endStep": 162100,
+     "minAbsZ": 4.496666666666666,
+     "value": 37,
+     "median": 18.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 175600,
+     "endStep": 180500,
+     "minAbsZ": 4.047,
+     "value": 11,
+     "median": 3
+    },
+    {
+     "signal": "buddings",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 219200,
+     "endStep": 224100,
+     "minAbsZ": 4.012410256410257,
+     "value": 309,
+     "median": 145
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 265200,
+     "endStep": 270100,
+     "minAbsZ": 4.06451948051948,
+     "value": 154,
+     "median": 89
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 267800,
+     "endStep": 272700,
+     "minAbsZ": 5.396,
+     "value": 14,
+     "median": 4
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 287900,
+     "endStep": 292800,
+     "minAbsZ": 4.1178648369150945,
+     "value": 1.3927765235265563,
+     "median": 0.6960544192142205
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 288000,
+     "endStep": 292900,
+     "minAbsZ": 4.025587301587302,
+     "value": 469,
+     "median": 208.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 291200,
+     "endStep": 296100,
+     "minAbsZ": 4.0168633996259775,
+     "value": 6.066192213177472,
+     "median": 5.041106278116647
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 400800,
+     "endStep": 405700,
+     "minAbsZ": 4.359358817825289,
+     "value": 3267.0745233968805,
+     "median": 2039.157861420017
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 403100,
+     "endStep": 408000,
+     "minAbsZ": 4.025587301587302,
+     "value": 6,
+     "median": 144.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-7",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 7,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 85,
+    "50": 56.95777777777778,
+    "200": 36.66105882352941
+   },
+   "D_primary": 56.95777777777778,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.348030225221921,
+    "value": 24560,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.348030225221921,
+     "value": 24560,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.762437816266432,
+     "value": 0.4143300431769233,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 16100,
+     "endStep": 21000,
+     "minAbsZ": 4.346777777777778,
+     "value": 129,
+     "median": 83.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21000,
+     "endStep": 25900,
+     "minAbsZ": 4.020776042454011,
+     "value": 5.888804489228187,
+     "median": 4.762020134845127
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 32100,
+     "endStep": 37000,
+     "minAbsZ": 4.725226519337017,
+     "value": 401,
+     "median": 242.5
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 40300,
+     "endStep": 45200,
+     "minAbsZ": 4.544806253421246,
+     "value": 3256.7511415525114,
+     "median": 1996.4969389636733
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 44000,
+     "endStep": 48900,
+     "minAbsZ": 4.104545375545143,
+     "value": 0.8831078469269424,
+     "median": 0.7073159503261208
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 46200,
+     "endStep": 51100,
+     "minAbsZ": 4.016964049050655,
+     "value": 43039,
+     "median": 35840.5
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 102200,
+     "endStep": 107100,
+     "minAbsZ": 5.603538461538462,
+     "value": 16,
+     "median": 2.5
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 102200,
+     "endStep": 107100,
+     "minAbsZ": 5.396,
+     "value": 13,
+     "median": 3
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 108400,
+     "endStep": 113300,
+     "minAbsZ": 4.2246412477733575,
+     "value": 1.4421273291855212,
+     "median": 0.7150564967436164
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 130600,
+     "endStep": 135500,
+     "minAbsZ": 4.051075528700906,
+     "value": 436,
+     "median": 202
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 396600,
+     "endStep": 401500,
+     "minAbsZ": 4.186551724137931,
+     "value": 39,
+     "median": 16.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-8",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 8,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 64.042,
+    "50": 39.35653968253968,
+    "200": 29.113302325581394
+   },
+   "D_primary": 39.35653968253968,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 7.249289543843201,
+    "value": 13429,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.249289543843201,
+     "value": 13429,
+     "median": 33684
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15400,
+     "endStep": 20300,
+     "minAbsZ": 4.224065107563876,
+     "value": 0.4760046670874696,
+     "median": 0.6761176592532421
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 20800,
+     "endStep": 25700,
+     "minAbsZ": 4.454837209302325,
+     "value": 161,
+     "median": 84.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 26700,
+     "endStep": 31600,
+     "minAbsZ": 4.16140439608384,
+     "value": 6.36369984204175,
+     "median": 4.86474875437674
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 57900,
+     "endStep": 62800,
+     "minAbsZ": 4.027919661167321,
+     "value": 0.280902262611276,
+     "median": 0.11928530392945155
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 60400,
+     "endStep": 65300,
+     "minAbsZ": 4.1485773467131315,
+     "value": 43136,
+     "median": 35725.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 61900,
+     "endStep": 66800,
+     "minAbsZ": 4.052887971479478,
+     "value": 4.07087459239246,
+     "median": 5.105469360360582
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 92500,
+     "endStep": 97400,
+     "minAbsZ": 4.186551724137931,
+     "value": 40,
+     "median": 17.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 107900,
+     "endStep": 112800,
+     "minAbsZ": 4.328260957249048,
+     "value": 0.911538245933371,
+     "median": 0.7121524825923021
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 108500,
+     "endStep": 113400,
+     "minAbsZ": 4.1411162790697675,
+     "value": 450,
+     "median": 219
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 108700,
+     "endStep": 113600,
+     "minAbsZ": 4.331883901709164,
+     "value": 1.347310829109861,
+     "median": 0.7108130509945352
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 169300,
+     "endStep": 174200,
+     "minAbsZ": 4.009177570093458,
+     "value": 353,
+     "median": 246
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 181100,
+     "endStep": 186000,
+     "minAbsZ": 4.03446033535632,
+     "value": 3291.5706319702604,
+     "median": 2097.7426561397315
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 285300,
+     "endStep": 290200,
+     "minAbsZ": 4.114826815642458,
+     "value": 2,
+     "median": 134
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 651700,
+     "endStep": 656600,
+     "minAbsZ": 4.946333333333333,
+     "value": 8,
+     "median": 2
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-9",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 9,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 70.8225,
+    "50": 43.617666666666665,
+    "200": 31.027
+   },
+   "D_primary": 43.617666666666665,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.791724745066393,
+    "value": 22241,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.791724745066393,
+     "value": 22241,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10700,
+     "endStep": 15600,
+     "minAbsZ": 4.0148809523809526,
+     "value": 134,
+     "median": 75.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 11400,
+     "endStep": 16300,
+     "minAbsZ": 4.848579710144928,
+     "value": 371,
+     "median": 247
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 12300,
+     "endStep": 17200,
+     "minAbsZ": 4.386525791579377,
+     "value": 3441.159183673469,
+     "median": 2241.576768681809
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 12500,
+     "endStep": 17400,
+     "minAbsZ": 4.0788505195541305,
+     "value": 5.980265283435868,
+     "median": 4.401888941412929
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15100,
+     "endStep": 20000,
+     "minAbsZ": 4.196888888888889,
+     "value": 10,
+     "median": 3
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15400,
+     "endStep": 20300,
+     "minAbsZ": 4.106261934701222,
+     "value": 0.8811346232271511,
+     "median": 0.6761176592532421
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 16900,
+     "endStep": 21800,
+     "minAbsZ": 4.38425,
+     "value": 13,
+     "median": 4
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 100200,
+     "endStep": 105100,
+     "minAbsZ": 4.142735483870967,
+     "value": 7,
+     "median": 148.5
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 108400,
+     "endStep": 113300,
+     "minAbsZ": 4.083239774554522,
+     "value": 1.4309734526830082,
+     "median": 0.7150564967436164
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 184400,
+     "endStep": 189300,
+     "minAbsZ": 4.025755956758857,
+     "value": 43283,
+     "median": 36030.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 247700,
+     "endStep": 252600,
+     "minAbsZ": 4.064703412073491,
+     "value": 465,
+     "median": 200.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 698300,
+     "endStep": 703200,
+     "minAbsZ": 4.302216216216216,
+     "value": 45,
+     "median": 19
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/treatment/seed-10",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "treatment",
+   "seed": 10,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 82.73866666666666,
+    "50": 54.793927272727274,
+    "200": 34.887931034482754
+   },
+   "D_primary": 54.793927272727274,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 8.14992749696073,
+    "value": 17933,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 8.14992749696073,
+     "value": 17933,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.602470588235294,
+     "value": 144,
+     "median": 72.5
+    },
+    {
+     "signal": "mutations",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.5506624203821655,
+     "value": 379,
+     "median": 235.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 12200,
+     "endStep": 17100,
+     "minAbsZ": 4.266558525475596,
+     "value": 6.1962134913547215,
+     "median": 4.363621519358768
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 21800,
+     "endStep": 26700,
+     "minAbsZ": 4.164768012446203,
+     "value": 3048.9352112676056,
+     "median": 2139.9392105800653
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 22400,
+     "endStep": 27300,
+     "minAbsZ": 4.019821901599271,
+     "value": 0.8660862486830888,
+     "median": 0.7088169364301281
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 137500,
+     "endStep": 142400,
+     "minAbsZ": 4.447850122363852,
+     "value": 1.3955201527689034,
+     "median": 0.7008638327347342
+    },
+    {
+     "signal": "fusions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 139200,
+     "endStep": 144100,
+     "minAbsZ": 4.047,
+     "value": 12,
+     "median": 3
+    },
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 143800,
+     "endStep": 148700,
+     "minAbsZ": 5.995555555555556,
+     "value": 10,
+     "median": 3
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 365500,
+     "endStep": 370400,
+     "minAbsZ": 4.1297386666666664,
+     "value": 493,
+     "median": 202.5
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 375500,
+     "endStep": 380400,
+     "minAbsZ": 4.050218037385773,
+     "value": 43294,
+     "median": 36003
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-1",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 1,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 39.81716701533864,
+    "50": 25.44870383931699,
+    "200": 19.50386420541384
+   },
+   "D_primary": 25.44870383931699,
+   "flagged": true,
+   "firstRing": {
+    "signal": "lineages",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.26660465116279,
+    "value": 4,
+    "median": 72.5
+   },
+   "rings": [
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.26660465116279,
+     "value": 4,
+     "median": 72.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.171095749502154,
+     "value": 1.328174688998488,
+     "median": 4.069669351982077
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 8.396098878955916,
+     "value": 0.7440354767184035,
+     "median": 0.20952422875603627
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.860839506172839,
+     "value": 0,
+     "median": 235.5
+    },
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15500,
+     "endStep": 20400,
+     "minAbsZ": 4.073374225994941,
+     "value": 27393,
+     "median": 34399
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 38800,
+     "endStep": 43700,
+     "minAbsZ": 4.375135135135135,
+     "value": 50,
+     "median": 21.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 137300,
+     "endStep": 142200,
+     "minAbsZ": 4.1473388429752065,
+     "value": 495,
+     "median": 227
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 490600,
+     "endStep": 495500,
+     "minAbsZ": 4.037264439519842,
+     "value": 1.4778892575515297,
+     "median": 0.6850291157001984
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 507300,
+     "endStep": 512200,
+     "minAbsZ": 4.001731543624161,
+     "value": 28,
+     "median": 138.5
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 694600,
+     "endStep": 699500,
+     "minAbsZ": 4.055463472691294,
+     "value": 0.9099052594352792,
+     "median": 0.7203101651838897
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-2",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 2,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 52.55576352354212,
+    "50": 32.222288977405405,
+    "200": 23.755179555720936
+   },
+   "D_primary": 32.222288977405405,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 6.467165419783873,
+    "value": 22792,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.467165419783873,
+     "value": 22792,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.2038604651162785,
+     "value": 5,
+     "median": 72.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.5434775593204915,
+     "value": 1.6676165585701905,
+     "median": 4.069669351982077
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.860839506172839,
+     "value": 0,
+     "median": 235.5
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10900,
+     "endStep": 15800,
+     "minAbsZ": 4.000463802587758,
+     "value": 0.4275225812684152,
+     "median": 0.20125677382927415
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 27000,
+     "endStep": 31900,
+     "minAbsZ": 4.269138920383981,
+     "value": 3511.024456521739,
+     "median": 2092.19944646861
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 33900,
+     "endStep": 38800,
+     "minAbsZ": 4.29412565488661,
+     "value": 0.9066291376455572,
+     "median": 0.6761530806985223
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 388800,
+     "endStep": 393700,
+     "minAbsZ": 4.09351724137931,
+     "value": 39,
+     "median": 17
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 858400,
+     "endStep": 863300,
+     "minAbsZ": 4.000337628720949,
+     "value": 42653,
+     "median": 35479.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-3",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 3,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 52.49579223431878,
+    "50": 32.186680203431344,
+    "200": 23.730848770283806
+   },
+   "D_primary": 32.186680203431344,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 11.127538297114357,
+    "value": 14943,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 11.127538297114357,
+     "value": 14943,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.078372093023256,
+     "value": 7,
+     "median": 72.5
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.860839506172839,
+     "value": 0,
+     "median": 235.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10900,
+     "endStep": 15800,
+     "minAbsZ": 4.159547234113074,
+     "value": 2.2231198650814212,
+     "median": 4.282990959408881
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 13700,
+     "endStep": 18600,
+     "minAbsZ": 4.072271857457838,
+     "value": 0.39500506243671957,
+     "median": 0.18291367126432578
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 15400,
+     "endStep": 20300,
+     "minAbsZ": 4.213434667841414,
+     "value": 0.46876856765064484,
+     "median": 0.6761176592532421
+    },
+    {
+     "signal": "meanMass",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 55500,
+     "endStep": 60400,
+     "minAbsZ": 4.105980389130883,
+     "value": 3412.0985221674878,
+     "median": 2052.15983201581
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 62800,
+     "endStep": 67700,
+     "minAbsZ": 4.111392132671518,
+     "value": 0.9008944990893452,
+     "median": 0.6919684882214958
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 150600,
+     "endStep": 155500,
+     "minAbsZ": 4.047,
+     "value": 37,
+     "median": 18
+    },
+    {
+     "signal": "livingCells",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 504100,
+     "endStep": 509000,
+     "minAbsZ": 4.000783479769433,
+     "value": 42887,
+     "median": 35738
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-4",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 4,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 26.787285714285716,
+    "50": 16.543691902220555,
+    "200": 13.731211024731044
+   },
+   "D_primary": 16.543691902220555,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 4.72153048369613,
+    "value": 16457,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.72153048369613,
+     "value": 16457,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.1411162790697675,
+     "value": 6,
+     "median": 72.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.229150339312342,
+     "value": 1.8424068253327217,
+     "median": 4.069669351982077
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.078831428983995,
+     "value": 0.5600048611533086,
+     "median": 0.20952422875603627
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.860839506172839,
+     "value": 0,
+     "median": 235.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 34100,
+     "endStep": 39000,
+     "minAbsZ": 4.162628571428572,
+     "value": 48,
+     "median": 18
+    },
+    {
+     "signal": "patternEntropy",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 108600,
+     "endStep": 113500,
+     "minAbsZ": 4.029163697068096,
+     "value": 1.4007012612709409,
+     "median": 0.7166289147637259
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 111400,
+     "endStep": 116300,
+     "minAbsZ": 4.061988888888889,
+     "value": 10,
+     "median": 142.5
+    },
+    {
+     "signal": "individuals",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 130500,
+     "endStep": 135400,
+     "minAbsZ": 4.066,
+     "value": 469,
+     "median": 201.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-m4/gradient-m3/no-mutation/seed-5",
+   "experiment": "replay-m4",
+   "preset": "gradient-m3",
+   "condition": "no-mutation",
+   "seed": 5,
+   "envelope": "m4-neutral",
+   "D": {
+    "10": 51.62482937398456,
+    "50": 31.632825891112596,
+    "200": 23.34827047195492
+   },
+   "D_primary": 31.632825891112596,
+   "flagged": true,
+   "firstRing": {
+    "signal": "livingCells",
+    "side": "low",
+    "Z": 4,
+    "W": 50,
+    "startStep": 10000,
+    "endStep": 14900,
+    "minAbsZ": 5.944077453751849,
+    "value": 15501,
+    "median": 33684
+   },
+   "rings": [
+    {
+     "signal": "livingCells",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.944077453751849,
+     "value": 15501,
+     "median": 33684
+    },
+    {
+     "signal": "lineages",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 4.2038604651162785,
+     "value": 5,
+     "median": 72.5
+    },
+    {
+     "signal": "lineageShannon",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.213597282926301,
+     "value": 1.3118788384107356,
+     "median": 4.069669351982077
+    },
+    {
+     "signal": "bioticRecycling",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 5.028388602349515,
+     "value": 0.33907149527435426,
+     "median": 0.7134309400763645
+    },
+    {
+     "signal": "dominantShare",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 6.369537506064661,
+     "value": 0.6440229662602412,
+     "median": 0.20952422875603627
+    },
+    {
+     "signal": "mutations",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 10000,
+     "endStep": 14900,
+     "minAbsZ": 7.860839506172839,
+     "value": 0,
+     "median": 235.5
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 33700,
+     "endStep": 38600,
+     "minAbsZ": 6.166857142857143,
+     "value": 64,
+     "median": 17
+    },
+    {
+     "signal": "buddings",
+     "side": "low",
+     "Z": 4,
+     "W": 50,
+     "startStep": 100200,
+     "endStep": 105100,
+     "minAbsZ": 4.631826589595375,
+     "value": 0,
+     "median": 148.5
+    }
+   ],
+   "presetIdentity": "e1c93a9384b5d921"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1001",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1001,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4.7215,
+    "50": 1.6187999999999998,
+    "200": 1.1296602516828453
+   },
+   "D_primary": 1.6187999999999998,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1002",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1002,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 16.188,
+    "50": 11.4665,
+    "200": 5.396
+   },
+   "D_primary": 11.4665,
+   "flagged": true,
+   "firstRing": {
+    "signal": "maxGeneration",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 713000,
+    "endStep": 717900,
+    "minAbsZ": 4.047,
+    "value": 21,
+    "median": 15
+   },
+   "rings": [
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 713000,
+     "endStep": 717900,
+     "minAbsZ": 4.047,
+     "value": 21,
+     "median": 15
+    }
+   ],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1003",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1003,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 2.0235,
+    "200": 2.0235
+   },
+   "D_primary": 2.0235,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1004",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1004,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 10,
+    "50": 4.047,
+    "200": 2.0258994289198906
+   },
+   "D_primary": 4.047,
+   "flagged": true,
+   "firstRing": {
+    "signal": "fissions",
+    "side": "high",
+    "Z": 4,
+    "W": 50,
+    "startStep": 26900,
+    "endStep": 31800,
+    "minAbsZ": 4.047,
+    "value": 11,
+    "median": 2
+   },
+   "rings": [
+    {
+     "signal": "fissions",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 26900,
+     "endStep": 31800,
+     "minAbsZ": 4.047,
+     "value": 11,
+     "median": 2
+    },
+    {
+     "signal": "maxGeneration",
+     "side": "high",
+     "Z": 4,
+     "W": 50,
+     "startStep": 41300,
+     "endStep": 46200,
+     "minAbsZ": 4.047,
+     "value": 21,
+     "median": 15
+    }
+   ],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1005",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1005,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3.597333333333333,
+    "50": 2.0235,
+    "200": 2.0235
+   },
+   "D_primary": 2.0235,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1006",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1006,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 6,
+    "50": 2.698,
+    "200": 2.698
+   },
+   "D_primary": 2.698,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1007",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1007,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 1.3108582998214573,
+    "200": 0.33088679245283015
+   },
+   "D_primary": 1.3108582998214573,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1008",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1008,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 1.1550763968721973,
+    "200": 0.7580174927113702
+   },
+   "D_primary": 1.1550763968721973,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1009",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1009,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3.3725,
+    "50": 1.9067289302541792,
+    "200": 1.858559301084533
+   },
+   "D_primary": 1.9067289302541792,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1010",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1010,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 2.2288261515601784,
+    "200": 2.2287826086956524
+   },
+   "D_primary": 2.2288261515601784,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1011",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1011,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 2.1584,
+    "50": 1.564593101505575,
+    "200": 1.349
+   },
+   "D_primary": 1.564593101505575,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1012",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1012,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 0.9263460347641311,
+    "200": 0.882417441393495
+   },
+   "D_primary": 0.9263460347641311,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1013",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1013,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 2.698,
+    "200": 2.698
+   },
+   "D_primary": 2.698,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1014",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1014,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 2.3007353167926685,
+    "50": 1.4355252875620057,
+    "200": 1.349
+   },
+   "D_primary": 1.4355252875620057,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1015",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1015,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 2.698,
+    "50": 2.0528260869565216,
+    "200": 2.0505200594353643
+   },
+   "D_primary": 2.0528260869565216,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1016",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1016,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 2.698,
+    "200": 2.698
+   },
+   "D_primary": 2.698,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1017",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1017,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 0.7577106610559361,
+    "200": 0.6895931448096563
+   },
+   "D_primary": 0.7577106610559361,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1018",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1018,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 1.9544508583547082,
+    "200": 1.32202
+   },
+   "D_primary": 1.9544508583547082,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1019",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1019,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3.3725,
+    "50": 1.0054777889332438,
+    "200": 0.953603448275862
+   },
+   "D_primary": 1.0054777889332438,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-calib/spots-m3/neutral/seed-1020",
+   "experiment": "replay-calib",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1020,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 2.376237623762376,
+    "50": 1.906195652173913,
+    "200": 1.9019316493313523
+   },
+   "D_primary": 1.906195652173913,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-1",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 1,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 2,
+    "200": 1.349
+   },
+   "D_primary": 2,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-2",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 2,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5,
+    "50": 1,
+    "200": 0.6745
+   },
+   "D_primary": 1,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-3",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 3,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 1.0866956691452274,
+    "200": 0.8243888888888888
+   },
+   "D_primary": 1.0866956691452274,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-4",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 4,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 8,
+    "50": 3,
+    "200": 1.13316
+   },
+   "D_primary": 3,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-5",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 5,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 2,
+    "50": 1.518065380307573,
+    "200": 0.6745
+   },
+   "D_primary": 1.518065380307573,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-6",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 6,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 3,
+    "50": 2.0235,
+    "200": 2.0235
+   },
+   "D_primary": 2.0235,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-7",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 7,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5,
+    "50": 2,
+    "200": 0.8090188434903934
+   },
+   "D_primary": 2,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-8",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 8,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 0.6745,
+    "200": 0.6745
+   },
+   "D_primary": 0.6745,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-9",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 9,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 4,
+    "50": 1.0309278350515463,
+    "200": 0.7913669064748201
+   },
+   "D_primary": 1.0309278350515463,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  },
+  {
+   "id": "replay-m4/spots-m3/neutral/seed-10",
+   "experiment": "replay-m4",
+   "preset": "spots-m3",
+   "condition": "neutral",
+   "seed": 10,
+   "envelope": "all-neutral",
+   "D": {
+    "10": 5,
+    "50": 3.3725,
+    "200": 3.3725
+   },
+   "D_primary": 3.3725,
+   "flagged": false,
+   "firstRing": null,
+   "rings": [],
+   "presetIdentity": "a9f93070127a0c05"
+  }
+ ],
+ "detail": {
+  "dir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-slice1-anomaly-bell-abb20e/692d716f-eee2-4c34-bffd-5b8c6da8e6cb/scratchpad/bell/detail",
+  "files": 120
+ }
+}

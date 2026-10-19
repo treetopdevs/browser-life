@@ -9,9 +9,21 @@
 // this island cannot run as given (a scheduled feed the world refuses, see
 // the catch in `runIsland`) is reported failed under its lease, which stops
 // the run there instead of offering the segment to the next island.
+//
+// Cancellation (IslandOptions.signal, docs/island-cancel-2026-10-18.md): the
+// coordinator offers no way to give a task back, so an aborted island gives it
+// back by saying nothing. The join, `/next`, downloads, heartbeats and uploads
+// are aborted with the signal, the run stops at its next census-chunk boundary
+// (RunOptions.signal), and no PUT, reject, fail, complete or heartbeat leaves
+// after the abort; the lease lapses and the coordinator offers the segment
+// again. Each such request is checked against the signal immediately before it
+// is sent, after any log callback (which may itself stop the island). A
+// complete, reject or fail already sent is waited for, never aborted:
+// the coordinator applies each atomically, so nothing is ever torn. runIsland
+// then resolves with the tasks completed; an abort never makes it reject.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
-import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { continuationError, decodeArtifact, immigrantError, runExperiment, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { InterventionError } from "./interventions.ts";
 import { observationDigests } from "./stitch.ts";
 
@@ -30,15 +42,26 @@ import { observationDigests } from "./stitch.ts";
  * hands such a segment, run or verify, only to an island that lists this.
  * Older code knows no such field: it would run the segment clean and report
  * a digest that disagrees with every capable island's, a divergence with no
- * real disagreement in it. */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1"];
+ * real disagreement in it. `"breed-v1"` is the breeder (WorldConfig.pondScore,
+ * docs/sandbox-wild.md): the conditions pond-breed-<score>, pond-mass-<score>
+ * and pond-drift-<score>, and every run of the `breeder` preset, whose
+ * `treatment` is the breed arm. The coordinator asks for it in addition to
+ * `"ponds-v1"`, never instead of it. Older code has none of those condition
+ * ids nor the score columns, so it throws on them, and on a continuation would
+ * report a valid predecessor as invalid; the controls are gated as well as the
+ * arm for that reason. Only the rule's own donors are distributed: a picked or
+ * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md).
+ * `"sun-v1"` is a schedule holding a sun (kind "sun", docs/garden-sun-2026-10-18.md), asked for in addition to
+ * `"interventions-v1"`: code without it refuses the kind, or (older still) would run the segment under the world's own light. */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way. A run with scheduled interventions
+ * carries, so it is refused the same way, and so is a pressured run
+ * (RunSpec.pressures, the lab's pond keeper: a picked run too). A run with scheduled interventions
  * (RunSpec.interventions) is not refused: the coordinator carries the
  * schedule (capability `"interventions-v1"` above), `runExperiment` applies
  * only the entries this segment owns, and its interventions.jsonl is a
@@ -46,6 +69,7 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
   if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  if ((spec as { pressures?: unknown }).pressures !== undefined) return "the spec carries pressures (spec.pressures); a pressured run is not distributed, so an island does not run it";
   return null;
 }
 
@@ -69,6 +93,8 @@ export interface IslandOptions {
   maxTasks?: number;
   idleMs?: number;
   heartbeatMs?: number;
+  /** Stops the island (see the header comment): resolves with the tasks
+   * completed so far, leaving any task in hand to lapse with its lease. */
   signal?: AbortSignal;
   /** Reuse an already-joined island (id + bearer token) instead of calling
    * `/api/islands` again. The caller is responsible for having confirmed the
@@ -79,6 +105,98 @@ export interface IslandOptions {
    * or from `identity` above -- lets the caller remember them for a rejoin
    * after e.g. a page reload. */
   onJoined?: (identity: { id: string; token: string }) => void;
+  /** The coordinator's garden island token (its `BL_GARDEN_ISLAND_TOKEN`),
+   * when it has one: a coordinator with that token set offers a garden's days
+   * only to islands that showed it at join (Coordinator.Queue's moduledoc).
+   * Sent as `gardenToken` in the `POST /api/islands` body and nowhere else
+   * (never in a URL, a header, `/api/next` or a log line); an empty string is
+   * no token. A resumed `identity` makes no join and needs none: the
+   * coordinator remembers on the island's record that it showed the token.
+   * A fresh join (the coordinator forgot the island, or the metrics version
+   * changed) needs it again. A join that carries it follows no redirect, and
+   * its error never repeats the response body (`joinFailure`, `joinAnswer`).
+   * See `gardenTokenFrom`, `gardenTokenFromHash` and `gardenTokenFor` for how
+   * the CLI and the browser page obtain it (docs/garden-hardening-2026-10-18.md). */
+  gardenToken?: string;
+}
+
+/** The headless island's garden token: the `--garden-token` flag, else the
+ * `BL_ISLAND_GARDEN_TOKEN` environment variable; an empty value is no token.
+ * The variable is deliberately not the coordinator's `BL_GARDEN_ISLAND_TOKEN`,
+ * so a shell that runs a coordinator does not hand its token to whatever
+ * coordinator an island started there is pointed at. */
+export function gardenTokenFrom(flag?: string | null, env?: string | null): string | undefined {
+  if (typeof flag === "string" && flag !== "") return flag;
+  if (typeof flag !== "string" && typeof env === "string" && env !== "") return env;
+  return undefined;
+}
+
+/** Reads `garden-token=<t>` from a URL fragment (`location.hash`, with or
+ * without its `#`) and returns it with the fragment that remains once it is
+ * removed (every other `&`-separated part kept byte for byte, in order; `""`
+ * when nothing remains), and `found` when any part's key, percent-decoded, is
+ * `garden-token` (even an empty one, or one spelt `%67arden-token`): the page
+ * strips the fragment whenever `found`, not by looking for the literal name.
+ * A fragment never reaches a server or a `Referer`, so the token never lands
+ * in a request log. The value is percent-decoded and nothing else: a `+` stays
+ * a `+` (a token is not form data), and a value that does not decode is taken
+ * as written. The last non-empty `garden-token` wins; an empty one is no token. */
+export function gardenTokenFromHash(hash: string): { token?: string; rest: string; found: boolean } {
+  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (raw === "") return { rest: "", found: false };
+  const decode = (v: string) => {
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  };
+  let token: string | undefined;
+  let found = false;
+  const kept: string[] = [];
+  for (const part of raw.split("&")) {
+    const eq = part.indexOf("=");
+    const key = decode(eq < 0 ? part : part.slice(0, eq));
+    if (key !== "garden-token") {
+      kept.push(part);
+      continue;
+    }
+    found = true;
+    const value = eq < 0 ? "" : decode(part.slice(eq + 1));
+    if (value !== "") token = value;
+  }
+  if (!found) return { rest: `#${raw}`, found };
+  const rest = kept.filter((p) => p !== "").join("&");
+  return { token, rest: rest ? `#${rest}` : "", found };
+}
+
+/** The headless island's garden token for `coordinator`: the token only over
+ * https or to a loopback host (`localhost`, `*.localhost`, `127.*`, `[::1]`),
+ * so it never crosses a network in clear text. */
+export function gardenTokenForCoordinator(coordinator: string, token?: string): string | undefined {
+  if (!token) return undefined;
+  try {
+    const u = new URL(coordinator);
+    if (u.protocol === "https:") return token;
+    const h = u.hostname;
+    const loopback = h === "localhost" || h.endsWith(".localhost") || /^127(\.\d{1,3}){3}$/.test(h) || h === "[::1]";
+    return u.protocol === "http:" && loopback ? token : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The garden token to send to `coordinator` from a page served at
+ * `pageOrigin`: the token only when the coordinator is the page's own origin
+ * (the deployed site and Vite's proxy both serve `/api` there), so a token
+ * given to this page is never sent to a coordinator typed in by hand. */
+export function gardenTokenFor(coordinator: string, pageOrigin: string, token?: string): string | undefined {
+  if (!token) return undefined;
+  try {
+    return new URL(coordinator).origin === new URL(pageOrigin).origin ? token : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Combines `signal` with a `timeoutMs` bound, using `AbortSignal.any`/
@@ -255,181 +373,314 @@ class HttpError extends Error {
   }
 }
 
+/** The error for a refused join. With a garden token in the body, nothing of
+ * the response body is repeated (a development coordinator's error page lists
+ * the request's parameters, the token among them, and an echo can carry it
+ * escaped or encoded, past any substring check): only the status, with a fixed
+ * description of the two refusals a join meets in normal running, and a
+ * redirect is named as one. */
+async function joinFailure(res: Response, gardenToken?: string): Promise<string> {
+  if (!gardenToken) return `join: ${res.status} ${await res.text()}`;
+  await res.body?.cancel().catch(() => {});
+  if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+    return `join: the coordinator answered with a redirect (${res.status}); a join that carries a garden token follows none`;
+  }
+  const known: Record<number, string> = {
+    429: "too many joins or requests from this address; try later",
+    503: "the coordinator has no room for new islands, or is unavailable",
+  };
+  return `join: ${res.status} ${known[res.status] ?? "(response withheld: the join carried a garden token)"}`;
+}
+
+/** Coordinator.Queue's island credentials: `"isl-"` and 9 random bytes, and
+ * 32 random bytes, both base64url without padding. */
+const ISLAND_ID = /^isl-[A-Za-z0-9_-]{12}$/;
+const ISLAND_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+/** The id and token of an accepted join. With a garden token in the body, an
+ * answer that is not JSON naming both, in the coordinator's own formats and
+ * neither holding the garden token, is refused with a fixed message: the
+ * parser's own error quotes the start of the body, and a reflected id would
+ * be logged, remembered and put in every URL (and a token with a newline
+ * makes a header error that quotes it). */
+async function joinAnswer(res: Response, gardenToken?: string): Promise<{ id: string; token: string }> {
+  if (!gardenToken) return (await res.json()) as { id: string; token: string };
+  // Read outside the parse: a body that fails to arrive (the island was stopped,
+  // the connection dropped) rethrows its own error, which quotes nothing of the
+  // body, so a stop is still recognised as one (`stopped` in runIsland).
+  const text = await res.text();
+  let answer: unknown;
+  try {
+    answer = JSON.parse(text);
+  } catch {
+    answer = undefined;
+  }
+  const { id, token } = (answer ?? {}) as { id?: unknown; token?: unknown };
+  // Neither may hold the garden token. A random 12- or 43-character value
+  // holds a given 4-character string about once in 10^6 joins, so containment
+  // is checked from 4 characters up; a shorter token (no secret anyway) is
+  // checked for equality only, so a real join is not refused by chance.
+  const holds = (v: string) => (gardenToken.length >= 4 ? v.includes(gardenToken) : v === gardenToken || v.slice(4) === gardenToken);
+  const ok = typeof id === "string" && typeof token === "string" && ISLAND_ID.test(id) && ISLAND_TOKEN.test(token) && !holds(id) && !holds(token);
+  if (!ok) {
+    throw new Error(`join: ${res.status} answer is not an island id and token (response withheld: the join carried a garden token)`);
+  }
+  return { id: id as string, token: token as string };
+}
+
+/** What the island page and tools/island.ts say when Stop or a signal lands. Phase-neutral: Stop may land while idle
+ * (no task in hand) or while a complete is in flight (that task then counts as completed); runIsland's own log line
+ * says which happened. */
+export const STOP_MESSAGE = "stopping: a task in hand stops at its next census chunk and is offered again once its lease lapses; a result already being sent finishes";
+
 export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<number> {
   const log = opt.log ?? (() => {});
   const base = opt.coordinator.replace(/\/$/, "");
-  let id: string, token: string;
-  if (opt.identity) {
-    ({ id, token } = opt.identity);
-  } else {
-    const joined = await fetch(`${base}/api/islands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      // The coordinator only offers a segment to an island whose declared
-      // metrics version matches the segment's experiment (and checks the
-      // uploaded manifest's version again at completion -- see
-      // Coordinator.Queue's moduledoc).
-      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host, metricsVersion: METRICS_VERSION }),
-    });
-    if (!joined.ok) throw new Error(`join: ${joined.status} ${await joined.text()}`);
-    ({ id, token } = (await joined.json()) as { id: string; token: string });
-  }
-  opt.onJoined?.({ id, token });
-  const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;
-  const call = async <T>(path: string, init: RequestInit = {}, raw = false): Promise<T> => {
-    const res = await fetch(`${base}${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new HttpError(res.status, `${init.method ?? "GET"} ${path.split("?")[0]}: ${res.status} ${await res.text()}`);
-    const ct = res.headers.get("content-type") ?? "";
-    return (ct.includes("json") && !raw ? res.json() : res.arrayBuffer()) as Promise<T>;
+  const signal = opt.signal;
+  // An engine without `AbortSignal.reason` (none that has WebGPU) carries no reason to match by identity.
+  const noReason = !!signal && !("reason" in signal);
+  // A fetch or body read aborted by `signal` rethrows as the signal's own reason (not every engine does), so
+  // `stopped` matches by identity alone: an unrelated `AbortError` (a GPU readback failing as Stop lands) is
+  // still a failure, not a stop.
+  const asStop = (e: unknown) => (signal?.aborted && !noReason && (e as { name?: unknown } | null)?.name === "AbortError" ? signal.reason : e);
+  // An abort this island asked for: the signal's own reason. One seen while the signal is not aborted came from
+  // elsewhere and is not ours to swallow. `Object.is`, not `===`: a reason of NaN is still the reason.
+  const stopped = (e: unknown) => !!signal?.aborted && (Object.is(e, signal.reason) || (noReason && (e as { name?: unknown } | null)?.name === "AbortError"));
+  // Before a request that changes the coordinator's record: none leaves after the abort.
+  const stopIfAborted = () => {
+    if (signal?.aborted) throw noReason ? new DOMException("the island was stopped", "AbortError") : signal.reason;
   };
-  const postJson = <T>(path: string, body: unknown) => call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-
-  log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
+  if (signal?.aborted) return 0;
   let done = 0;
-  let waiting = false;
-  while (!opt.signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
-    const task = await postJson<Task>(`/api/next?${q()}`, { capabilities: ISLAND_CAPABILITIES });
-    if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
-      if (opt.maxTasks) break;
-      if (!opt.signal?.aborted && !waiting) {
-        log("connected; waiting for work. No experiment segment is available right now; checking again shortly");
-        waiting = true;
-      }
-      // Stop may have aborted while `/next` was in flight; don't run a full
-      // idle wait just to discover that on the next loop check.
-      if (!opt.signal?.aborted)
-        await new Promise<void>((r) => {
-          const t = setTimeout(wake, opt.idleMs ?? 10_000);
-          function wake() {
-            clearTimeout(t);
-            opt.signal?.removeEventListener("abort", wake);
-            r();
-          }
-          opt.signal?.addEventListener("abort", wake);
+  try {
+    let id: string, token: string;
+    if (opt.identity) {
+      ({ id, token } = opt.identity);
+    } else {
+      try {
+        const joined = await fetch(`${base}/api/islands`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          // The coordinator only offers a segment to an island whose declared
+          // metrics version matches the segment's experiment (and checks the
+          // uploaded manifest's version again at completion -- see
+          // Coordinator.Queue's moduledoc).
+          // A garden token (see IslandOptions.gardenToken) is shown here only.
+          body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host, metricsVersion: METRICS_VERSION, ...(opt.gardenToken ? { gardenToken: opt.gardenToken } : {}) }),
+          // A redirect would carry that body (a 307/308 keeps it) to wherever it
+          // points, past every origin rule: a join with a token follows none.
+          ...(opt.gardenToken ? { redirect: "manual" as const } : {}),
+          signal,
         });
-      continue;
+        if (!joined.ok) throw new Error(await joinFailure(joined, opt.gardenToken));
+        ({ id, token } = await joinAnswer(joined, opt.gardenToken));
+      } catch (e) {
+        throw asStop(e);
+      }
     }
-    waiting = false;
-    const seg = task.segment;
-    const lease = task.lease;
-    const refusal = specRefusal(task.spec);
-    if (refusal) throw new Error(`refusing ${seg.run} #${seg.index}: ${refusal}`);
-    log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);
-    const beat = setInterval(() => {
-      postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }).catch((e) => log(`  heartbeat: ${e.message}`));
-    }, opt.heartbeatMs ?? 60_000);
-    try {
-      let start: WorldState | undefined;
-      let observer: ObserverState | undefined;
-      if (task.startFrom) {
-        // Every defect of the predecessor's artifact (undecodable or invalid
-        // state, wrong step or digest, malformed or mismatched observer)
-        // rejects the predecessor for recomputation instead of failing this
-        // island; only transport errors propagate. One artifact, one fetch:
-        // the checkpoint and observer sections decode together.
-        const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.startFrom}/start?${q()}`));
-        let bad: string | null = null;
-        try {
-          const decoded = decodeArtifact(bytes);
-          const digest = stateHash(decoded.state);
-          if (decoded.state.step !== seg.startStep || (task.startHash && digest !== task.startHash))
-            bad = `start checkpoint t=${decoded.state.step} digest ${digest}, expected t=${seg.startStep} digest ${task.startHash}`;
-          else {
-            bad = continuationError(task.spec, decoded.state, decoded.observer);
-            if (!bad) {
-              start = decoded.state;
-              observer = decoded.observer;
+    // A join answered as the abort landed is not reported: the caller asked to stop.
+    stopIfAborted();
+    opt.onJoined?.({ id, token });
+    const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;
+    const call = async <T>(path: string, init: RequestInit = {}, raw = false): Promise<T> => {
+      try {
+        const res = await fetch(`${base}${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new HttpError(res.status, `${init.method ?? "GET"} ${path.split("?")[0]}: ${res.status} ${await res.text()}`);
+        const ct = res.headers.get("content-type") ?? "";
+        return (await (ct.includes("json") && !raw ? res.json() : res.arrayBuffer())) as T;
+      } catch (e) {
+        // Only a request that carries the signal: a complete, reject or fail is sent without it, and an `AbortError`
+        // from one (say, the page unloading) is not the stop (whether the coordinator applied it is unknown).
+        throw init.signal ? asStop(e) : e;
+      }
+    };
+    // `abortable`: `/next` and heartbeats only. A complete, reject or fail, once
+    // sent, is waited for: the island cannot know whether the coordinator applied it.
+    const postJson = <T>(path: string, body: unknown, abortable = false) =>
+      call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), ...(abortable ? { signal } : {}) });
+
+    log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
+    let waiting = false;
+    while (!signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
+      const task = await postJson<Task>(`/api/next?${q()}`, { capabilities: ISLAND_CAPABILITIES }, true);
+      if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
+        if (opt.maxTasks) break;
+        if (!signal?.aborted && !waiting) {
+          log("connected; waiting for work. No experiment segment is available right now; checking again shortly");
+          waiting = true;
+        }
+        // Stop may have aborted while `/next` was in flight; don't run a full
+        // idle wait just to discover that on the next loop check.
+        if (!signal?.aborted)
+          await new Promise<void>((r) => {
+            const t = setTimeout(wake, opt.idleMs ?? 10_000);
+            function wake() {
+              clearTimeout(t);
+              signal?.removeEventListener("abort", wake);
+              r();
             }
+            signal?.addEventListener("abort", wake);
+          });
+        continue;
+      }
+      waiting = false;
+      const seg = task.segment;
+      const lease = task.lease;
+      const refusal = specRefusal(task.spec);
+      if (refusal) throw new Error(`refusing ${seg.run} #${seg.index}: ${refusal}`);
+      log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);
+      const beat = setInterval(() => {
+        if (signal?.aborted) return;
+        postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }, true).catch((e) => {
+          if (!stopped(e)) log(`  heartbeat: ${e.message}`);
+        });
+      }, opt.heartbeatMs ?? 60_000);
+      try {
+        let start: WorldState | undefined;
+        let observer: ObserverState | undefined;
+        if (task.startFrom) {
+          // Every defect of the predecessor's artifact (undecodable or invalid
+          // state, wrong step or digest, malformed or mismatched observer)
+          // rejects the predecessor for recomputation instead of failing this
+          // island; only transport errors propagate. One artifact, one fetch:
+          // the checkpoint and observer sections decode together.
+          const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.startFrom}/start?${q()}`, { signal }));
+          let bad: string | null = null;
+          try {
+            const decoded = decodeArtifact(bytes);
+            const digest = stateHash(decoded.state);
+            if (decoded.state.step !== seg.startStep || (task.startHash && digest !== task.startHash))
+              bad = `start checkpoint t=${decoded.state.step} digest ${digest}, expected t=${seg.startStep} digest ${task.startHash}`;
+            else {
+              // The sun check too (`sunContinuationError`, which runExperiment would otherwise throw): a predecessor taken
+              // under another sun than the schedule's is rejected for recomputation, not a failure of this island.
+              bad = continuationError(task.spec, decoded.state, decoded.observer) ?? sunContinuationError(task.spec, decoded.state.cfg, decoded.state.step, decoded.observer);
+              if (!bad) {
+                start = decoded.state;
+                observer = decoded.observer;
+              }
+            }
+          } catch (e) {
+            bad = `invalid predecessor artifact: ${(e as Error).message}`;
           }
-        } catch (e) {
-          bad = `invalid predecessor artifact: ${(e as Error).message}`;
-        }
-        if (bad) {
-          log(`  rejecting: ${bad}`);
-          await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "own" });
-          continue;
-        }
-      }
-      let immigrant: WorldState | undefined;
-      if (task.importFrom) {
-        // Same shape as the startFrom block above, but for a metapopulation's
-        // cross-run exchange (see RunSpec.metapopulation): every defect
-        // rejects the *ring-predecessor's* segment (a different run) for
-        // recomputation, disambiguated from a bad own-predecessor rejection
-        // by `predecessor: "import"` (see Coordinator.Queue.reject/5).
-        const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.importFrom}/start?${q()}`));
-        let bad: string | null = null;
-        try {
-          const decoded = decodeArtifact(bytes);
-          const digest = stateHash(decoded.state);
-          if (task.importHash && digest !== task.importHash) bad = `import checkpoint t=${decoded.state.step} digest ${digest}, expected digest ${task.importHash}`;
-          else {
-            bad = immigrantError(task.spec, seg.startStep, decoded.state);
-            if (!bad) immigrant = decoded.state;
+          if (bad) {
+            // Not sent after an abort: the next island meets the same defect.
+            // Checked again after the log, which may itself stop the island.
+            stopIfAborted();
+            log(`  rejecting: ${bad}`);
+            stopIfAborted();
+            await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "own" });
+            continue;
           }
-        } catch (e) {
-          bad = `invalid import predecessor artifact: ${(e as Error).message}`;
         }
-        if (bad) {
-          log(`  rejecting import: ${bad}`);
-          await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "import" });
-          continue;
+        let immigrant: WorldState | undefined;
+        if (task.importFrom) {
+          // Same shape as the startFrom block above, but for a metapopulation's
+          // cross-run exchange (see RunSpec.metapopulation): every defect
+          // rejects the *ring-predecessor's* segment (a different run) for
+          // recomputation, disambiguated from a bad own-predecessor rejection
+          // by `predecessor: "import"` (see Coordinator.Queue.reject/5).
+          const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.importFrom}/start?${q()}`, { signal }));
+          let bad: string | null = null;
+          try {
+            const decoded = decodeArtifact(bytes);
+            const digest = stateHash(decoded.state);
+            if (task.importHash && digest !== task.importHash) bad = `import checkpoint t=${decoded.state.step} digest ${digest}, expected digest ${task.importHash}`;
+            else {
+              bad = immigrantError(task.spec, seg.startStep, decoded.state);
+              if (!bad) immigrant = decoded.state;
+            }
+          } catch (e) {
+            bad = `invalid import predecessor artifact: ${(e as Error).message}`;
+          }
+          if (bad) {
+            stopIfAborted();
+            log(`  rejecting import: ${bad}`);
+            stopIfAborted();
+            await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "import" });
+            continue;
+          }
         }
+        const sink = new MemorySink();
+        const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, keepFinal: task.kind === "run", signal });
+        const lq = q(`&lease=${encodeURIComponent(lease)}`);
+        if (task.kind === "run") {
+          // Encode once, PUT once: the checkpoint and observer state travel as
+          // one artifact. Verify attempts upload nothing — they replay locally
+          // and report the digest they computed for the coordinator to compare.
+          // Uploads belong to this attempt and are aborted with it: nothing
+          // uploaded is a result until the complete below is accepted.
+          const octet = { "content-type": "application/octet-stream" };
+          stopIfAborted();
+          await call(`/api/segments/${seg.id}/checkpoint?${lq}`, { method: "PUT", headers: octet, body: encodeCheckpoint(out.final!, out.observer) as BodyInit, signal });
+          for (const [name, text] of sink.files) {
+            const safe = name.replace(/[^a-z0-9_.-]/gi, "-").toLowerCase();
+            stopIfAborted();
+            await call(`/api/segments/${seg.id}/files/${safe}?${lq}`, { method: "PUT", headers: octet, body: text, signal });
+          }
+        }
+        const body = {
+          kind: task.kind,
+          lease,
+          // Physics and observer together (see `artifactDigest`), replacing the
+          // old separate endHash/observerHash pair with one end-to-end digest.
+          endHash: out.summary.finalHash,
+          summary: out.summary,
+          // Only a verify attempt's regenerated files are worth reporting: a
+          // run attempt's uploads are already digested server-side from the
+          // bytes it PUT, so there is nothing this would add for them (see
+          // `Coordinator.Segment.complete_verify/5`).
+          ...(task.kind === "verify" ? { observationDigests: await observationDigests(sink.files) } : {}),
+        };
+        // The last point at which an abort leaves the task; once sent, the complete stands.
+        stopIfAborted();
+        const r = await postJson<{ status: string }>(`/api/segments/${seg.id}/complete?${q()}`, body);
+        log(`  ${task.kind} complete: ${out.summary.finalHash} → ${r.status}`);
+        done++;
+      } catch (e) {
+        if (stopped(e)) {
+          log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+          break;
+        }
+        // A lost lease (reassigned after a long stall, or the run was blocked) is not fatal.
+        if (e instanceof HttpError && e.status === 409) log(`  task abandoned: ${e.message}`);
+        // Nor is a scheduled feed the world refuses (past MATTER_MAX at that step, which no
+        // creation-time check can see; see Coordinator.Queue's moduledoc): a property of the
+        // spec against its world, the same on every island, so crashing here would only take
+        // this island down and the next one after it, and leaving the task would only have the
+        // next island fail it again once the lease lapsed. Reported instead: the coordinator
+        // marks the segment failed with this reason under this lease, blocks the run's later
+        // segments and never offers it again, so the experiment stops there, visibly. Only a
+        // lost lease (409: reclaimed meanwhile, or the segment was blocked) is not fatal here
+        // either; a coordinator that cannot be reached still throws.
+        else if (e instanceof InterventionError) {
+          // Unless the island was stopped meanwhile: then it reports nothing, and the
+          // next island meets the same refusal once the lease lapses. Checked
+          // again after the log line, whose callback may itself stop the island.
+          if (!signal?.aborted) log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
+          if (signal?.aborted) {
+            log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+            break;
+          }
+          try {
+            await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
+            log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
+          } catch (f) {
+            if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
+            else throw f;
+          }
+        } else throw e;
+      } finally {
+        clearInterval(beat);
       }
-      const sink = new MemorySink();
-      const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, keepFinal: task.kind === "run" });
-      const lq = q(`&lease=${encodeURIComponent(lease)}`);
-      if (task.kind === "run") {
-        // Encode once, PUT once: the checkpoint and observer state travel as
-        // one artifact. Verify attempts upload nothing — they replay locally
-        // and report the digest they computed for the coordinator to compare.
-        const octet = { "content-type": "application/octet-stream" };
-        await call(`/api/segments/${seg.id}/checkpoint?${lq}`, { method: "PUT", headers: octet, body: encodeCheckpoint(out.final!, out.observer) as BodyInit });
-        for (const [name, text] of sink.files) {
-          const safe = name.replace(/[^a-z0-9_.-]/gi, "-").toLowerCase();
-          await call(`/api/segments/${seg.id}/files/${safe}?${lq}`, { method: "PUT", headers: octet, body: text });
-        }
-      }
-      const r = await postJson<{ status: string }>(`/api/segments/${seg.id}/complete?${q()}`, {
-        kind: task.kind,
-        lease,
-        // Physics and observer together (see `artifactDigest`), replacing the
-        // old separate endHash/observerHash pair with one end-to-end digest.
-        endHash: out.summary.finalHash,
-        summary: out.summary,
-        // Only a verify attempt's regenerated files are worth reporting: a
-        // run attempt's uploads are already digested server-side from the
-        // bytes it PUT, so there is nothing this would add for them (see
-        // `Coordinator.Segment.complete_verify/5`).
-        ...(task.kind === "verify" ? { observationDigests: await observationDigests(sink.files) } : {}),
-      });
-      log(`  ${task.kind} complete: ${out.summary.finalHash} → ${r.status}`);
-      done++;
-    } catch (e) {
-      // A lost lease (reassigned after a long stall, or the run was blocked) is not fatal.
-      if (e instanceof HttpError && e.status === 409) log(`  task abandoned: ${e.message}`);
-      // Nor is a scheduled feed the world refuses (past MATTER_MAX at that step, which no
-      // creation-time check can see; see Coordinator.Queue's moduledoc): a property of the
-      // spec against its world, the same on every island, so crashing here would only take
-      // this island down and the next one after it, and leaving the task would only have the
-      // next island fail it again once the lease lapsed. Reported instead: the coordinator
-      // marks the segment failed with this reason under this lease, blocks the run's later
-      // segments and never offers it again, so the experiment stops there, visibly. Only a
-      // lost lease (409: reclaimed meanwhile, or the segment was blocked) is not fatal here
-      // either; a coordinator that cannot be reached still throws.
-      else if (e instanceof InterventionError) {
-        log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
-        try {
-          await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
-          log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
-        } catch (f) {
-          if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
-          else throw f;
-        }
-      } else throw e;
-    } finally {
-      clearInterval(beat);
     }
+  } catch (e) {
+    // The join or `/next` aborted (a task's own abort breaks out above).
+    if (stopped(e)) {
+      log("stopped");
+      return done;
+    }
+    throw e;
   }
   return done;
 }

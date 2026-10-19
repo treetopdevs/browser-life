@@ -1,0 +1,359 @@
+{
+  "contract": "garden-v1",
+  "name": "commons",
+  "presetId": "wild-storm-large",
+  "seed": 1,
+  "world": { "width": 512, "height": 512 },
+  "founding": [
+    { "step": 0, "kind": "feed", "x": 256, "y": 256, "r": 255, "amount": 16 }
+  ],
+  "createdAt": 1792454700000,
+  "now": 1792789740000,
+  "state": "waiting-for-island",
+  "asleep": true,
+  "pace": {
+    "stepsPerDay": 131072,
+    "dawnPeriodMs": 86400000,
+    "dawnOffsetMs": 0,
+    "nextReleaseAt": 1792713600000,
+    "releaseDue": true,
+    "nextDawnAt": 1792800000000
+  },
+  "clock": {
+    "step": 393216,
+    "verifiedStep": 262144,
+    "releasedStep": 393216,
+    "horizonStep": 47841280,
+    "daysDone": 3,
+    "daysTotal": 365,
+    "lastMovedAt": 1792652940000,
+    "sleptMs": 136800000
+  },
+  "tending": {
+    "windowMs": 86400000,
+    "islandsToday": 0,
+    "deviceTypesToday": 0,
+    "deviceTypesEver": 1,
+    "activeNow": 0
+  },
+  "verification": {
+    "daysDone": 3,
+    "daysVerified": 2,
+    "byDifferentDeviceType": 0,
+    "bySameDeviceType": 2,
+    "diverged": 0,
+    "failed": 0,
+    "share": 0.6667
+  },
+  "census": {
+    "day": 2,
+    "step": 393216,
+    "individuals": 2412,
+    "lineages": 1873,
+    "maxGeneration": 211,
+    "mutations": 48120,
+    "extinct": false,
+    "conservationOk": true,
+    "verified": false,
+    "source": "producer"
+  },
+  "tip": { "day": 2, "step": 393216, "digest": "9c41e07d2b5a8f13", "verified": false },
+  "fork": {
+    "day": 1,
+    "step": 262144,
+    "digest": "4e0b7a19c3d2f856",
+    "checkpoint": "/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856"
+  },
+  "days": [
+    {
+      "day": 2,
+      "startStep": 262144,
+      "endStep": 393216,
+      "status": "done",
+      "releasedAt": 1792652400000,
+      "doneAt": 1792652940000,
+      "verifiedAt": null,
+      "digest": "9c41e07d2b5a8f13",
+      "verification": null,
+      "letters": ["ltr-2"],
+      "food": null,
+      "meteor": "meteor-1",
+      "census": {
+        "individuals": 2412,
+        "lineages": 1873,
+        "maxGeneration": 211,
+        "mutations": 48120,
+        "extinct": false,
+        "conservationOk": true
+      },
+      "leaders": null
+    },
+    {
+      "day": 1,
+      "startStep": 131072,
+      "endStep": 262144,
+      "status": "verified",
+      "releasedAt": 1792563000000,
+      "doneAt": 1792563540000,
+      "verifiedAt": 1792564260000,
+      "digest": "4e0b7a19c3d2f856",
+      "verification": "same-device-type",
+      "letters": ["ltr-1"],
+      "food": "food-1",
+      "meteor": null,
+      "census": {
+        "individuals": 2950,
+        "lineages": 2204,
+        "maxGeneration": 142,
+        "mutations": 31877,
+        "extinct": false,
+        "conservationOk": true
+      },
+      "leaders": {
+        "status": "ok",
+        "census": {
+          "step": 262144,
+          "livingCells": 58410,
+          "lineages": 2204,
+          "top": [
+            { "key": "160340:201733", "label": "born step 160339 at 5,394", "cells": 4377, "share": 0.0749 },
+            { "key": "0:14", "label": "founder 14", "cells": 3990, "share": 0.0683 },
+            { "key": "131999:77012", "label": "born step 131998 at 212,150", "cells": 3311, "share": 0.0567 }
+          ],
+          "clearLeader": null
+        },
+        "lines": {
+          "fromDay": 0,
+          "groups": [
+            { "key": "0:14", "label": "founder 14", "cells": 30480, "share": 0.5218 },
+            { "key": "0:3", "label": "founder 3", "cells": 6022, "share": 0.1031 },
+            { "key": "48211:90377", "label": "born step 48210 at 265,176", "cells": 1450, "share": 0.0248 }
+          ],
+          "rest": { "cells": 20458, "share": 0.3502 },
+          "winner": "0:14"
+        }
+      }
+    },
+    {
+      "day": 0,
+      "startStep": 0,
+      "endStep": 131072,
+      "status": "verified",
+      "releasedAt": 1792454700000,
+      "doneAt": 1792455240000,
+      "verifiedAt": 1792455900000,
+      "digest": "d17f5c3a08be2e94",
+      "verification": "same-device-type",
+      "letters": [],
+      "food": null,
+      "meteor": null,
+      "census": {
+        "individuals": 3318,
+        "lineages": 2671,
+        "maxGeneration": 71,
+        "mutations": 15240,
+        "extinct": false,
+        "conservationOk": true
+      },
+      "leaders": {
+        "status": "ok",
+        "census": {
+          "step": 131072,
+          "livingCells": 61240,
+          "lineages": 2671,
+          "top": [
+            { "key": "0:14", "label": "founder 14", "cells": 9820, "share": 0.1604 },
+            { "key": "0:3", "label": "founder 3", "cells": 7311, "share": 0.1194 },
+            { "key": "48211:90377", "label": "born step 48210 at 265,176", "cells": 5102, "share": 0.0833 }
+          ],
+          "clearLeader": "0:14"
+        },
+        "lines": null
+      }
+    }
+  ],
+  "letters": {
+    "perDay": 3,
+    "queueMax": 64,
+    "queued": 4,
+    "nextLanding": { "day": 4, "step": 655360, "open": 2 },
+    "waiting": [
+      {
+        "id": "ltr-4",
+        "kind": "stone",
+        "x": 301,
+        "y": 77,
+        "r": 8,
+        "postedAt": 1792681920000,
+        "landsAtStep": 524288,
+        "day": 3,
+        "status": "waiting",
+        "landedIn": null,
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      },
+      {
+        "id": "ltr-5",
+        "kind": "stone",
+        "x": 64,
+        "y": 410,
+        "r": 3,
+        "postedAt": 1792745100000,
+        "landsAtStep": 524288,
+        "day": 3,
+        "status": "waiting",
+        "landedIn": null,
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      },
+      {
+        "id": "ltr-6",
+        "kind": "stone",
+        "x": 488,
+        "y": 12,
+        "r": 32,
+        "postedAt": 1792785480000,
+        "landsAtStep": 524288,
+        "day": 3,
+        "status": "waiting",
+        "landedIn": null,
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      },
+      {
+        "id": "ltr-7",
+        "kind": "stone",
+        "x": 250,
+        "y": 260,
+        "r": 16,
+        "postedAt": 1792787400000,
+        "landsAtStep": 655360,
+        "day": 4,
+        "status": "waiting",
+        "landedIn": null,
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      }
+    ],
+    "recent": [
+      {
+        "id": "ltr-3",
+        "kind": "stone",
+        "x": 10,
+        "y": 10,
+        "r": 32,
+        "postedAt": 1792661400000,
+        "landsAtStep": 524288,
+        "day": 3,
+        "status": "dropped",
+        "landedIn": null,
+        "droppedAt": 1792681920000,
+        "percent": null,
+        "span": null
+      },
+      {
+        "id": "ltr-2",
+        "kind": "stone",
+        "x": 140,
+        "y": 388,
+        "r": 8,
+        "postedAt": 1792586400000,
+        "landsAtStep": 393216,
+        "day": 2,
+        "status": "landed",
+        "landedIn": "9c41e07d2b5a8f13",
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      },
+      {
+        "id": "ltr-1",
+        "kind": "stone",
+        "x": 256,
+        "y": 256,
+        "r": 8,
+        "postedAt": 1792519320000,
+        "landsAtStep": 262144,
+        "day": 1,
+        "status": "verified",
+        "landedIn": "4e0b7a19c3d2f856",
+        "droppedAt": null,
+        "percent": null,
+        "span": null
+      }
+    ]
+  },
+  "food": {
+    "enabled": true,
+    "asks": 5,
+    "everyDays": 2,
+    "amount": 16,
+    "r": 32,
+    "place": { "x": 256, "y": 256 },
+    "hands": 2,
+    "expiresAt": 1792800000000,
+    "sharedAddress": false,
+    "open": true,
+    "closed": null,
+    "opensAtDay": null,
+    "landing": { "day": 3, "step": 524288 },
+    "foods": [
+      {
+        "id": "food-1",
+        "x": 256,
+        "y": 256,
+        "r": 32,
+        "amount": 16,
+        "calledAt": 1792476000000,
+        "noticeUntil": 1792562400000,
+        "hands": 5,
+        "landsAtStep": 262144,
+        "day": 1,
+        "status": "verified",
+        "landedIn": "4e0b7a19c3d2f856",
+        "droppedAt": null
+      }
+    ]
+  },
+  "meteor": {
+    "enabled": true,
+    "asks": 5,
+    "everyDays": 7,
+    "r": 64,
+    "place": { "x": 337, "y": 440 },
+    "hands": 0,
+    "expiresAt": 1792800000000,
+    "sharedAddress": false,
+    "open": false,
+    "closed": "cooldown",
+    "opensAtDay": 9,
+    "landing": null,
+    "meteors": [
+      {
+        "id": "meteor-1",
+        "x": 497,
+        "y": 403,
+        "r": 64,
+        "calledAt": 1792564800000,
+        "noticeUntil": 1792651200000,
+        "hands": 5,
+        "landsAtStep": 393216,
+        "day": 2,
+        "status": "landed",
+        "landedIn": "9c41e07d2b5a8f13",
+        "droppedAt": null
+      }
+    ]
+  },
+  "sun": { "enabled": true, "percents": [50, 75], "span": 131072, "nextLanding": { "day": 4, "step": 655360 } },
+  "leadersRule": { "name": "lines-v1", "top": 3, "clearLeaderPercent": 10 },
+  "limits": {
+    "stoneRadius": { "min": 1, "max": 32 },
+    "lettersPerAddressPerHour": 3,
+    "logMax": 10000
+  }
+}
