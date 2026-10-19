@@ -892,7 +892,7 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert conn |> from({10, 0, 0, 1}) |> mhand() |> json_response(201)
       assert conn |> from({10, 0, 0, 2}) |> mhand() |> json_response(201)
       assert {"cooldown", 1, words} = closed.(mhands_path())
-      assert words =~ "a meteor lands at most once every 1 days"
+      assert words =~ "a meteor lands at most once every 1 day;"
 
       meteor!(%{"name" => "short", "days" => 1, "seed" => 3})
       a = join("A")

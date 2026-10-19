@@ -1664,7 +1664,7 @@ defmodule Coordinator.Queue do
 
   defp closed_words("cooldown", opens, g, :meteor),
     do:
-      "a meteor lands at most once every #{g.meteor.every_days} days; the next can land on day #{opens} at the earliest"
+      "a meteor lands at most once every #{days_words(g.meteor.every_days)}; the next can land on day #{opens} at the earliest"
 
   defp closed_words(code, opens, g, :meteor), do: closed_words(code, opens, g)
 
@@ -1679,7 +1679,11 @@ defmodule Coordinator.Queue do
 
   defp closed_words("cooldown", opens, g),
     do:
-      "a food lands at most once every #{g.food.every_days} days; the next can land on day #{opens} at the earliest"
+      "a food lands at most once every #{days_words(g.food.every_days)}; the next can land on day #{opens} at the earliest"
+
+  # "1 day", "7 days": the cooldown's spacing in words.
+  defp days_words(1), do: "1 day"
+  defp days_words(n), do: "#{n} days"
 
   # The release rule for every garden (`Garden.maybe_release/3`), at most one
   # day each: it needs only the newest released day's segment status.

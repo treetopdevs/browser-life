@@ -1052,6 +1052,7 @@ defmodule Coordinator.GardenQueueTest do
       for k <- [key1, key2], do: assert(:binary.match(bin.(), elem(k, 1)) == :nomatch)
 
       assert {:error, {:closed, "cooldown", 1, words}} = hand(3)
+      assert words =~ "a food lands at most once every 1 day;"
       assert words =~ "day 1 at the earliest"
       assert [%{day: 0, food: "food-1"}] = view().days
     end
@@ -1446,7 +1447,7 @@ defmodule Coordinator.GardenQueueTest do
       end
 
       assert {:error, {:closed, "cooldown", 1, words}} = mhand(3)
-      assert words =~ "a meteor lands at most once every 1 days"
+      assert words =~ "a meteor lands at most once every 1 day;"
       assert words =~ "day 1 at the earliest"
       assert [%{day: 0, meteor: "meteor-1", food: nil}] = view().days
 
