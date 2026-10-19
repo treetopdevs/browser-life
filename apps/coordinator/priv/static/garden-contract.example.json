@@ -77,6 +77,7 @@
       "verification": null,
       "letters": ["ltr-2"],
       "food": null,
+      "meteor": "meteor-1",
       "census": {
         "individuals": 2412,
         "lineages": 1873,
@@ -99,6 +100,7 @@
       "verification": "same-device-type",
       "letters": ["ltr-1"],
       "food": "food-1",
+      "meteor": null,
       "census": {
         "individuals": 2950,
         "lineages": 2204,
@@ -144,6 +146,7 @@
       "verification": "same-device-type",
       "letters": [],
       "food": null,
+      "meteor": null,
       "census": {
         "individuals": 3318,
         "lineages": 2671,
@@ -298,6 +301,36 @@
         "day": 1,
         "status": "verified",
         "landedIn": "4e0b7a19c3d2f856",
+        "droppedAt": null
+      }
+    ]
+  },
+  "meteor": {
+    "enabled": true,
+    "asks": 5,
+    "everyDays": 7,
+    "r": 64,
+    "place": { "x": 337, "y": 440 },
+    "hands": 0,
+    "expiresAt": 1792800000000,
+    "sharedAddress": false,
+    "open": false,
+    "closed": "cooldown",
+    "opensAtDay": 9,
+    "landing": null,
+    "meteors": [
+      {
+        "id": "meteor-1",
+        "x": 497,
+        "y": 403,
+        "r": 64,
+        "calledAt": 1792564800000,
+        "noticeUntil": 1792651200000,
+        "hands": 5,
+        "landsAtStep": 393216,
+        "day": 2,
+        "status": "landed",
+        "landedIn": "9c41e07d2b5a8f13",
         "droppedAt": null
       }
     ]

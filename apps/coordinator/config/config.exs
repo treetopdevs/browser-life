@@ -172,6 +172,15 @@ config :coordinator,
 # addresses, D-17; runtime.exs clears it with BL_TRUST_FORWARDED_FOR=1) puts
 # `sharedAddress` on the food block, so the page says every visitor counts as
 # one network. `garden_call_timeout_ms` bounds the hands route's Queue call.
+#
+# Meteor (docs/garden-meteor-2026-10-18.md), for a garden founded with
+# "meteor": true only, independently of food: `garden_meteor_asks` distinct
+# networks (K, 2..1000) in one dawn period call a meteor, a lesion of radius
+# `garden_meteor_radius` (33..255, and at most the world's largest lesion, else
+# founding is refused) at a place fixed by rule, at most one every
+# `garden_meteor_every_days` garden days (N, 1..365); a keeper may set K and N
+# per garden at founding (meteorAsks, meteorEveryDays). All three are copied
+# into the garden's record when it is founded.
 config :coordinator,
   garden_shared_address: false,
   garden_call_timeout_ms: 5_000,
@@ -179,6 +188,9 @@ config :coordinator,
   garden_food_every_days: 7,
   garden_food_amount: 16,
   garden_food_radius: 32,
+  garden_meteor_asks: 5,
+  garden_meteor_every_days: 7,
+  garden_meteor_radius: 64,
   garden_hands_sweep_ms: 60_000,
   garden_presets: ~w(wild-storm-large),
   public_garden: "commons",

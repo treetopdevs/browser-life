@@ -35,6 +35,14 @@ defmodule Coordinator.Garden do
                 notice_until, hands, dropped_at: nil | ms}],
       next_food: N
 
+  and a garden founded with meteor (`"meteor": true`,
+  docs/garden-meteor-2026-10-18.md), independently of food, also holds:
+
+      meteor: %{asks: K, every_days: N, r},
+      meteors: [%{id: "meteor-N", seq: N, x, y, r, step, day, called_at,
+                  notice_until, hands, dropped_at: nil | ms}],
+      next_meteor: N
+
   A day's entry may also carry `leaders` (docs/garden-predictions-2026-10-18.md):
   `%{status, ref, for, census, lines}`, the day's block of who held the field,
   put once the day is verified (`pending_leaders/4`, `accept_leaders/6`,
@@ -118,6 +126,20 @@ defmodule Coordinator.Garden do
   (checked by the Queue at founding) and the limits are pre-stated in
   docs/garden-food-2026-10-18.md.
 
+  ## Meteor
+
+  A meteor is the existing `lesion` intervention, a stone of the garden's
+  fixed large radius (64 by default), called by hands exactly as a food is
+  (`add_hand/6` with `:meteor`; the Queue keeps these hands apart from the food
+  hands, in memory only): the K-th hand of a dawn period calls it onto the
+  frontier day at its end step, at most one per N days (`meteor_landing/2`),
+  held from islands for one dawn period (`hold?/3`). It lands at a place fixed
+  by rule, not chosen: the *n*-th meteor's place is `meteor_place/2`, a
+  SHA-256 of the garden's name, seed and `n`, public before anyone asks. Food
+  and meteor asks are independent: each has its own hands, spacing and
+  records. In the schedule a meteor follows that step's stones and foods. The
+  rules are pre-stated in docs/garden-meteor-2026-10-18.md.
+
   ## The view
 
   `view/5` is the public JSON map, exactly the README's table, every key always
@@ -154,6 +176,7 @@ defmodule Coordinator.Garden do
           required(:letters_per_address) => integer,
           optional(:food_hands) => hands_summary | nil,
           optional(:food_epoch) => term,
+          optional(:meteor_hands) => hands_summary | nil,
           optional(:shared_address) => boolean
         }
   @typedoc "A garden's hands this dawn period, as the Queue keeps them (in memory only)."
@@ -165,6 +188,8 @@ defmodule Coordinator.Garden do
 
   # Foods shown in the view (the newest, live and dropped).
   @foods_shown 32
+  # Meteors shown in the view (the newest, live and dropped).
+  @meteors_shown 32
 
   # ---- construction and the dawn grid ----
 
@@ -174,7 +199,9 @@ defmodule Coordinator.Garden do
   `queue_max`, `dawn_period_ms`, `dawn_offset_ms`, `founding`, `width` and
   `height` (atom keys; the Queue has validated them), and optionally `food`:
   `nil` (no food) or `%{asks, every_days, amount, r}`, which puts the food keys
-  on the record (the place is the world's centre).
+  on the record (the place is the world's centre), and optionally `meteor`:
+  `nil` (no meteor) or `%{asks, every_days, r}`, which puts the meteor keys on
+  the record (each meteor's place is `meteor_place/2`'s).
   """
   @spec new(map, integer) :: t
   def new(params, now) do
@@ -197,6 +224,7 @@ defmodule Coordinator.Garden do
       days: %{0 => day_entry(now)}
     }
     |> put_food(Map.get(params, :food))
+    |> put_meteor(Map.get(params, :meteor))
   end
 
   # Food keys only when the keeper founded the garden with food, so a garden
@@ -216,6 +244,14 @@ defmodule Coordinator.Garden do
       foods: [],
       next_food: 1
     })
+  end
+
+  # Meteor keys only when the keeper founded the garden with meteor, so a
+  # garden without it has the record (and the schedule) it always had.
+  defp put_meteor(g, nil), do: g
+
+  defp put_meteor(g, %{asks: asks, every_days: every, r: r}) do
+    Map.merge(g, %{meteor: %{asks: asks, every_days: every, r: r}, meteors: [], next_meteor: 1})
   end
 
   defp day_entry(released_at), do: %{released_at: released_at, done_at: nil, verified_at: nil}
@@ -466,6 +502,15 @@ defmodule Coordinator.Garden do
     end
   end
 
+  def drop_letter(g, "meteor-" <> _ = id, segs, now) do
+    # A meteor is vetoed exactly as a food is (docs/garden-meteor-2026-10-18.md,
+    # section 4); a garden without meteor has no meteor to find.
+    case drop_in(Map.get(g, :meteors, []), id, segs, g, now, "meteor") do
+      {:ok, meteors, record} -> {:ok, %{g | meteors: meteors}, record}
+      error -> error
+    end
+  end
+
   def drop_letter(g, id, segs, now) do
     case drop_in(g.letters, id, segs, g, now, "letter") do
       {:ok, letters, record} -> {:ok, %{g | letters: letters}, record}
@@ -511,8 +556,13 @@ defmodule Coordinator.Garden do
 
   defp live_foods(g), do: g |> Map.get(:foods, []) |> Enum.reject(&is_integer(&1.dropped_at))
 
-  # Founding, live letters and live foods: what the experiment's schedule holds.
-  defp log_count(g), do: length(g.founding) + length(live(g)) + length(live_foods(g))
+  defp live_meteors(g),
+    do: g |> Map.get(:meteors, []) |> Enum.reject(&is_integer(&1.dropped_at))
+
+  # Founding, live letters, live foods and live meteors: what the experiment's
+  # schedule holds.
+  defp log_count(g),
+    do: length(g.founding) + length(live(g)) + length(live_foods(g)) + length(live_meteors(g))
 
   defp waiting_count(g, segs),
     do: Enum.count(live(g), &(letter_status(g, &1, segs) == "waiting"))
@@ -563,18 +613,22 @@ defmodule Coordinator.Garden do
 
   @doc """
   The experiment's whole `interventions` list: the founding schedule exactly as
-  the keeper gave it, then the live letters as lesions and the live foods as
-  feeds, by step (at one step, stones by `seq`, then foods by `seq`). The Queue
-  stores it as the spec's `interventions` after every add or drop.
+  the keeper gave it, then the live letters as lesions, the live foods as
+  feeds and the live meteors as lesions, by step (at one step, stones by `seq`,
+  then foods by `seq`, then meteors by `seq`). The Queue stores it as the
+  spec's `interventions` after every add or drop.
   """
   @spec schedule(t) :: [map]
   def schedule(g) do
     stones = for l <- live(g), do: {{l.step, 0, l.seq}, lesion_entry(l)}
     foods = for f <- live_foods(g), do: {{f.step, 1, f.seq}, feed_entry(f)}
+    # Meteors come last at their step (after any other kind's tag), so every
+    # schedule without meteors is exactly what it was.
+    meteors = for m <- live_meteors(g), do: {{m.step, 3, m.seq}, lesion_entry(m)}
 
     # At one step the stones come first (by seq), then the foods (by seq). A
     # garden without food has no foods, so its schedule is what it always was.
-    entries = (stones ++ foods) |> Enum.sort_by(&elem(&1, 0)) |> Enum.map(&elem(&1, 1))
+    entries = (stones ++ foods ++ meteors) |> Enum.sort_by(&elem(&1, 0)) |> Enum.map(&elem(&1, 1))
     g.founding ++ entries
   end
 
@@ -655,9 +709,16 @@ defmodule Coordinator.Garden do
   lets a second food wait beside it either.
   """
   @spec food_landing(t, segs) :: {:ok, non_neg_integer} | {:error, closed}
-  def food_landing(g, segs) do
+  def food_landing(g, segs), do: ask_landing(g, segs, :food)
+
+  # The landing rule of a collective ask (food or meteor), each kind against
+  # its own rule and its own live records only, so one kind never opens or
+  # closes the other's ask.
+  defp ask_landing(g, segs, kind) do
+    {rule, _records, _next} = kind_keys(kind)
+
     cond do
-      not food?(g) ->
+      not Map.has_key?(g, rule) ->
         {:error, {"off", nil}}
 
       stopped?(segs) ->
@@ -671,11 +732,11 @@ defmodule Coordinator.Garden do
 
       true ->
         d = frontier_day(g, segs)
-        n = g.food.every_days
-        days = g |> live_foods() |> Enum.map(& &1.day)
-        # A food at or beyond the frontier is waiting: nothing is called until
+        n = Map.fetch!(g, rule).every_days
+        days = g |> live_of(kind) |> Enum.map(& &1.day)
+        # A record at or beyond the frontier is waiting: nothing is called until
         # the frontier is N past it, even after a retreat left room before it,
-        # so at most one food is ever waiting.
+        # so at most one of a kind is ever waiting.
         start = Enum.max([d | for(f <- days, f >= d, do: f + n)])
         free = first_free_day(start, days, n)
 
@@ -686,6 +747,14 @@ defmodule Coordinator.Garden do
         end
     end
   end
+
+  # The record keys of a collective ask's kind: its rule, its records and the
+  # next record's number.
+  defp kind_keys(:food), do: {:food, :foods, :next_food}
+  defp kind_keys(:meteor), do: {:meteor, :meteors, :next_meteor}
+
+  defp live_of(g, :food), do: live_foods(g)
+  defp live_of(g, :meteor), do: live_meteors(g)
 
   # The first day at or after `d` at least `n` days from every day in `days`.
   # Each pass moves past at least one food's day, so it takes at most
@@ -718,8 +787,23 @@ defmodule Coordinator.Garden do
           | {:repeat, hands}
           | {:counted, hands}
           | {:called, t, hands, map}
-  def add_hand(g, hands, {epoch, hash}, segs, now) do
+  def add_hand(g, hands, key, segs, now), do: add_hand(g, :food, hands, key, segs, now)
+
+  @doc """
+  A visitor's hand on the `kind` ask (`:food` or `:meteor`), as `add_hand/5`
+  is for food: `hands` is this garden's hands record *of that kind* (the Queue
+  keeps one per kind), and the K-th hand calls a food (`food_landing/2`) or a
+  meteor (`meteor_landing/2`, at `meteor_place/2`'s place, with the garden's
+  meteor radius).
+  """
+  @spec add_hand(t, :food | :meteor, hands | nil, {term, binary}, segs, integer) ::
+          {:error, {:refused, closed}}
+          | {:repeat, hands}
+          | {:counted, hands}
+          | {:called, t, hands, map}
+  def add_hand(g, kind, hands, {epoch, hash}, segs, now) when kind in [:food, :meteor] do
     hands = current_hands(g, hands, epoch, now)
+    {rule, _records, _next} = kind_keys(kind)
 
     # A repeat is answered before the ask's state: a network whose hand is in
     # learns so even after the K-th hand closed the ask (amendment 2026-10-18,
@@ -727,16 +811,19 @@ defmodule Coordinator.Garden do
     if MapSet.member?(hands.seen, hash) do
       {:repeat, hands}
     else
-      with {:ok, day} <- refused_food(food_landing(g, segs)) do
-        if hands.count + 1 >= g.food.asks do
-          {g, food} = call_food(g, day, hands.count + 1, now)
-          {:called, g, %{hands | seen: MapSet.put(hands.seen, hash), count: 0}, food}
+      with {:ok, day} <- refused_food(ask_landing(g, segs, kind)) do
+        if hands.count + 1 >= Map.fetch!(g, rule).asks do
+          {g, record} = call(g, kind, day, hands.count + 1, now)
+          {:called, g, %{hands | seen: MapSet.put(hands.seen, hash), count: 0}, record}
         else
           {:counted, %{hands | seen: MapSet.put(hands.seen, hash), count: hands.count + 1}}
         end
       end
     end
   end
+
+  defp call(g, :food, day, hands, now), do: call_food(g, day, hands, now)
+  defp call(g, :meteor, day, hands, now), do: call_meteor(g, day, hands, now)
 
   defp refused_food({:ok, _} = ok), do: ok
   defp refused_food({:error, closed}), do: {:error, {:refused, closed}}
@@ -826,9 +913,13 @@ defmodule Coordinator.Garden do
     }
   end
 
-  @doc "A letter or a food (by its id) as the public sees it."
+  @doc "A letter, a food or a meteor (by its id) as the public sees it."
   @spec record_view(t, map, segs) :: map
   def record_view(g, %{id: "food-" <> _} = food, segs), do: food_record_view(g, food, segs)
+
+  def record_view(g, %{id: "meteor-" <> _} = meteor, segs),
+    do: meteor_record_view(g, meteor, segs)
+
   def record_view(g, letter, segs), do: letter_view(g, letter, segs)
 
   @doc """
@@ -897,6 +988,155 @@ defmodule Coordinator.Garden do
     case Enum.find(live_foods(g), &(&1.day == day)) do
       nil -> nil
       f -> f.id
+    end
+  end
+
+  # ---- meteor (docs/garden-meteor-2026-10-18.md) ----
+
+  @doc "Whether the garden was founded with meteor."
+  @spec meteor?(t) :: boolean
+  def meteor?(g), do: Map.has_key?(g, :meteor)
+
+  @doc """
+  The day a meteor called now would land on, or why none can: food's rule
+  (`food_landing/2`, the same codes) applied to the garden's meteor rule and
+  its live meteors only. A food never blocks a meteor's day, nor a meteor a
+  food's.
+  """
+  @spec meteor_landing(t, segs) :: {:ok, non_neg_integer} | {:error, closed}
+  def meteor_landing(g, segs), do: ask_landing(g, segs, :meteor)
+
+  @doc """
+  Where the `n`-th meteor of this garden lands (`meteor-<n>`): `x =
+  u32be(H[0..3]) mod width`, `y = u32be(H[4..7]) mod height`, `H =
+  SHA-256("<name>/seed-<seed>/meteor-<n>")`. Fixed in advance and public
+  before anyone asks; no visitor can move it. A called meteor stores its
+  place, so this is read only when one is called and for the view's next place.
+  """
+  @spec meteor_place(t, pos_integer) :: %{x: non_neg_integer, y: non_neg_integer}
+  def meteor_place(g, n) when is_integer(n) and n >= 1 do
+    <<x::unsigned-big-32, y::unsigned-big-32, _::binary>> =
+      :crypto.hash(:sha256, "#{g.name}/seed-#{g.seed}/meteor-#{n}")
+
+    %{x: rem(x, g.width), y: rem(y, g.height)}
+  end
+
+  defp call_meteor(g, day, hands, now) do
+    n = g.next_meteor
+    %{x: x, y: y} = meteor_place(g, n)
+
+    record = %{
+      id: "meteor-#{n}",
+      seq: n,
+      x: x,
+      y: y,
+      r: g.meteor.r,
+      step: (day + 1) * g.steps_per_day,
+      day: day,
+      called_at: now,
+      # The keeper's veto window, as a food's (`hold?/3`).
+      notice_until: now + g.dawn_period_ms,
+      hands: hands,
+      dropped_at: nil
+    }
+
+    {%{g | meteors: g.meteors ++ [record], next_meteor: n + 1}, record}
+  end
+
+  @doc """
+  Whether `day` may not be handed to an island to run at `now`: a live food
+  or a live meteor on it was called less than one dawn period ago
+  (`food_hold?/3`'s rule, for both kinds).
+  """
+  @spec hold?(t, non_neg_integer, integer) :: boolean
+  def hold?(g, day, now) do
+    food_hold?(g, day, now) or
+      g |> live_meteors() |> Enum.any?(&(&1.day == day and notice_until(g, &1) > now))
+  end
+
+  @doc "A meteor as the public sees it."
+  @spec meteor_record_view(t, map, segs) :: map
+  def meteor_record_view(g, meteor, segs) do
+    status = letter_status(g, meteor, segs)
+
+    %{
+      id: meteor.id,
+      x: meteor.x,
+      y: meteor.y,
+      r: meteor.r,
+      calledAt: meteor.called_at,
+      noticeUntil: notice_until(g, meteor),
+      hands: meteor.hands,
+      landsAtStep: meteor.step,
+      day: meteor.day,
+      status: status,
+      landedIn:
+        if(status in ["landed", "verified"], do: accepted_digest(Map.get(segs, meteor.day))),
+      droppedAt: meteor.dropped_at
+    }
+  end
+
+  @doc """
+  The view's `meteor` block (always present), shaped as `food_view/5`'s
+  without `amount`: `place` is where the *next* meteor would land
+  (`meteor_place/2` of `next_meteor`), and `meteors` the newest
+  #{@meteors_shown}, newest first.
+  """
+  @spec meteor_view(t, segs, non_neg_integer, integer, boolean) :: map
+  def meteor_view(g, segs, count, now, shared_address \\ false) do
+    expires_at = dawn_at(g, dawn_index(g, now) + 1)
+
+    if meteor?(g) do
+      m = g.meteor
+
+      {open, closed, opens, landing} =
+        case meteor_landing(g, segs) do
+          {:ok, day} -> {true, nil, nil, %{day: day, step: (day + 1) * g.steps_per_day}}
+          {:error, {code, opens}} -> {false, code, opens, nil}
+        end
+
+      %{
+        enabled: true,
+        asks: m.asks,
+        everyDays: m.every_days,
+        r: m.r,
+        place: meteor_place(g, g.next_meteor),
+        hands: count,
+        expiresAt: expires_at,
+        sharedAddress: shared_address,
+        open: open,
+        closed: closed,
+        opensAtDay: opens,
+        landing: landing,
+        meteors:
+          g.meteors
+          |> Enum.sort_by(& &1.seq, :desc)
+          |> Enum.take(@meteors_shown)
+          |> Enum.map(&meteor_record_view(g, &1, segs))
+      }
+    else
+      %{
+        enabled: false,
+        asks: nil,
+        everyDays: nil,
+        r: nil,
+        place: nil,
+        hands: 0,
+        expiresAt: expires_at,
+        sharedAddress: shared_address,
+        open: false,
+        closed: "off",
+        opensAtDay: nil,
+        landing: nil,
+        meteors: []
+      }
+    end
+  end
+
+  defp day_meteor(g, day) do
+    case Enum.find(live_meteors(g), &(&1.day == day)) do
+      nil -> nil
+      m -> m.id
     end
   end
 
@@ -1144,8 +1384,10 @@ defmodule Coordinator.Garden do
   `food_hands` (this garden's hands record, or its summary without the hashes)
   and `food_epoch` (the limiter's incarnation now): the `food` block's count is
   that record's, unless it is of another dawn period or incarnation (then 0).
-  Without them the count is 0. `shared_address` (default false) is the food
-  block's `sharedAddress`.
+  Without them the count is 0. `meteor_hands` is the same for the `meteor`
+  block (counted against the same `food_epoch`, the limiter's incarnation,
+  which both kinds of hand share). `shared_address` (default false) is the
+  food and meteor blocks' `sharedAddress`.
   """
   @spec view(t, segs, map, integer, env) :: map
   def view(g, segs, islands, now, env) do
@@ -1212,6 +1454,14 @@ defmodule Coordinator.Garden do
           g,
           segs,
           hands_count(g, Map.get(env, :food_hands), Map.get(env, :food_epoch), now),
+          now,
+          Map.get(env, :shared_address, false)
+        ),
+      meteor:
+        meteor_view(
+          g,
+          segs,
+          hands_count(g, Map.get(env, :meteor_hands), Map.get(env, :food_epoch), now),
           now,
           Map.get(env, :shared_address, false)
         ),
@@ -1374,6 +1624,7 @@ defmodule Coordinator.Garden do
         verification: seg && verification_kind(seg, islands),
         letters: for(l <- live(g), l.day == day, do: l.id),
         food: day_food(g, day),
+        meteor: day_meteor(g, day),
         census: if(accepted, do: day_census(seg)),
         leaders: leaders_view(g, segs, day, seg, status)
       }

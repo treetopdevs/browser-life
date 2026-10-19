@@ -170,6 +170,12 @@ defmodule Coordinator.Queue do
       the view shows only their count, so a restart forgets them (toward no
       food) while a food already called survives in the garden's record. A hand
       that only counts is not persisted at all; a call is.
+    * Meteor (only in a garden founded with `"meteor": true`,
+      docs/garden-meteor-2026-10-18.md), exactly as food: `ask_meteor/3` adds a
+      hand (`Garden.add_hand/6` with `:meteor`), the K-th hand of a dawn period
+      calls a meteor (a large lesion at `Garden.meteor_place/2`'s place), and
+      the hands live apart from the food hands in `s.meteor_hands`, in memory
+      only, dropped, redacted and swept as the food hands are.
 
   A garden is public, and islands join without credentials, so by default any
   visitor can run, replay, fail or reject a day. Three things bound that. With
@@ -333,6 +339,14 @@ defmodule Coordinator.Queue do
   """
   def ask_food(name, key, timeout \\ 5_000),
     do: GenServer.call(__MODULE__, {:ask_food, name, key}, timeout)
+
+  @doc """
+  A visitor's hand on garden `name`'s meteor ask, as `ask_food/3` is for food
+  (the same answers, with the meteor's view and the meteor block in place of
+  the food's). The meteor hands are kept apart from the food hands.
+  """
+  def ask_meteor(name, key, timeout \\ 5_000),
+    do: GenServer.call(__MODULE__, {:ask_meteor, name, key}, timeout)
 
   @doc "The keeper's veto: drops letter or food `id` of garden `name` if its day was never assigned. `{:ok, view}` (a letter's or a food's), `{:error, :not_found}` or `{:error, {:refused, msg}}`."
   def drop_letter(name, id), do: GenServer.call(__MODULE__, {:drop_letter, name, id})
@@ -499,6 +513,7 @@ defmodule Coordinator.Queue do
      state
      |> Map.put(:dir, dir)
      |> Map.put(:food_hands, %{})
+     |> Map.put(:meteor_hands, %{})
      |> Map.put(:leaders_tasks, %{})
      |> Map.put(:leaders_waiting, wait_new())
      |> reindex()
@@ -513,13 +528,22 @@ defmodule Coordinator.Queue do
     status
     |> redact_status(:state, fn
       %{food_hands: hands} = s ->
-        %{s | food_hands: Map.new(hands, fn {n, h} -> {n, hands_summary(h)} end)}
+        s = %{s | food_hands: Map.new(hands, fn {n, h} -> {n, hands_summary(h)} end)}
+
+        case s do
+          %{meteor_hands: m} ->
+            %{s | meteor_hands: Map.new(m, fn {n, h} -> {n, hands_summary(h)} end)}
+
+          _ ->
+            s
+        end
 
       other ->
         other
     end)
     |> redact_status(:message, fn
       {:ask_food, name, _key} -> {:ask_food, name, :redacted}
+      {:ask_meteor, name, _key} -> {:ask_meteor, name, :redacted}
       other -> other
     end)
     |> redact_status(:log, fn _log -> [] end)
@@ -553,14 +577,15 @@ defmodule Coordinator.Queue do
     now = now()
     epoch = Coordinator.LetterLimiter.hand_epoch()
 
-    hands =
-      for {name, h} <- s.food_hands,
+    keep = fn all ->
+      for {name, h} <- all,
           g = s.gardens[name],
           g != nil and h.epoch == epoch and h.dawn == Garden.dawn_index(g, now),
           into: %{},
           do: {name, h}
+    end
 
-    {:noreply, %{s | food_hands: hands}}
+    {:noreply, %{s | food_hands: keep.(s.food_hands), meteor_hands: keep.(s.meteor_hands)}}
   end
 
   # A leaders task ended (`start_leaders/4`): its slot is free, and the next
@@ -590,7 +615,8 @@ defmodule Coordinator.Queue do
 
   # As GenServer's default does, an unexpected message is worth a warning (a
   # late reply, a stray monitor). No hand key travels in a message to this
-  # process except inside `{:ask_food, ...}` calls, which never land here.
+  # process except inside `{:ask_food, ...}` and `{:ask_meteor, ...}` calls,
+  # which never land here.
   def handle_info(other, s) do
     Logger.warning("queue: ignoring an unexpected message #{inspect(other, limit: 5)}")
     {:noreply, s}
@@ -689,13 +715,28 @@ defmodule Coordinator.Queue do
       # could add a network twice, so the caller is told to retry.
       g ->
         if epoch == Coordinator.LetterLimiter.hand_epoch(),
-          do: ask_food(s, g, name, key),
+          do: ask_act(s, g, name, key, :food),
           else: {:reply, {:error, :stale}, s}
     end
   end
 
   # A direct caller's malformed key is no hand at all.
   def handle_call({:ask_food, _name, _key}, _from, s), do: {:reply, {:error, :not_found}, s}
+
+  # A meteor hand, as a food hand (above).
+  def handle_call({:ask_meteor, name, {epoch, hash} = key}, _from, s) when is_binary(hash) do
+    case s.gardens[name] do
+      nil ->
+        {:reply, {:error, :not_found}, s}
+
+      g ->
+        if epoch == Coordinator.LetterLimiter.hand_epoch(),
+          do: ask_act(s, g, name, key, :meteor),
+          else: {:reply, {:error, :stale}, s}
+    end
+  end
+
+  def handle_call({:ask_meteor, _name, _key}, _from, s), do: {:reply, {:error, :not_found}, s}
 
   def handle_call({:garden_view, name}, _from, s) do
     view =
@@ -710,6 +751,7 @@ defmodule Coordinator.Queue do
             letters_per_address:
               Application.get_env(:coordinator, :garden_letters_per_address, 3),
             food_hands: s.food_hands |> Map.get(name) |> hands_summary(),
+            meteor_hands: s.meteor_hands |> Map.get(name) |> hands_summary(),
             food_epoch: Coordinator.LetterLimiter.hand_epoch(),
             shared_address: shared_address?()
           }
@@ -1197,7 +1239,7 @@ defmodule Coordinator.Queue do
 
   # The keys `POST /api/gardens` takes. An unknown one is refused rather than
   # ignored: a keeper's typo ("dawnPeriod") should not found a daily garden.
-  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays)
+  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays meteor meteorAsks meteorEveryDays)
   # packages/schema's MATTER_MAX (2^26 quanta of world matter), and the start
   # matter allowed per cell for a garden preset (the real figure is about 35;
   # apps/lab/test/garden.test.ts checks every garden preset against both).
@@ -1247,6 +1289,23 @@ defmodule Coordinator.Queue do
     every_r = Coordinator.ConfigCheck.food_range(:garden_food_every_days)
     amount_r = Coordinator.ConfigCheck.food_range(:garden_food_amount)
     radius_r = Coordinator.ConfigCheck.food_range(:garden_food_radius)
+    meteor = Map.get(params, "meteor", false)
+
+    meteor_asks =
+      Map.get(params, "meteorAsks", Application.get_env(:coordinator, :garden_meteor_asks, 5))
+
+    meteor_every =
+      Map.get(
+        params,
+        "meteorEveryDays",
+        Application.get_env(:coordinator, :garden_meteor_every_days, 7)
+      )
+
+    meteor_r = Application.get_env(:coordinator, :garden_meteor_radius, 64)
+    # The meteor ranges are ConfigCheck's too (docs/garden-meteor-2026-10-18.md).
+    m_asks_r = Coordinator.ConfigCheck.range(:garden_meteor_asks)
+    m_every_r = Coordinator.ConfigCheck.range(:garden_meteor_every_days)
+    m_radius_r = Coordinator.ConfigCheck.range(:garden_meteor_radius)
 
     error =
       cond do
@@ -1315,6 +1374,30 @@ defmodule Coordinator.Queue do
         food and pond_preset?(preset) ->
           "food is not defined for pond worlds: the pond cycle fixes each pond's matter"
 
+        not is_boolean(meteor) ->
+          "meteor must be true or false"
+
+        meteor != true and
+            (Map.has_key?(params, "meteorAsks") or Map.has_key?(params, "meteorEveryDays")) ->
+          "meteorAsks and meteorEveryDays are for a garden founded with meteor: true"
+
+        meteor and not int_in?.(meteor_asks, m_asks_r.first, m_asks_r.last) ->
+          "meteorAsks must be an integer in #{inspect(m_asks_r)} (one person is not a collective)"
+
+        meteor and not int_in?.(meteor_every, m_every_r.first, m_every_r.last) ->
+          "meteorEveryDays must be an integer in #{inspect(m_every_r)}"
+
+        meteor and not int_in?.(meteor_r, m_radius_r.first, m_radius_r.last) ->
+          "the coordinator's garden_meteor_radius must be an integer in #{inspect(m_radius_r)}"
+
+        meteor and pond_preset?(preset) ->
+          "meteor is not defined for pond worlds: a pond world is many tiles, and a lesion's disc is bounded by one"
+
+        meteor and meteor_r > max_world_radius(world) ->
+          "meteor: the coordinator's garden_meteor_radius #{meteor_r} is past the largest lesion this " <>
+            "#{elem(world, 0)} x #{elem(world, 1)} world takes without its disc wrapping onto itself, " <>
+            "#{max_world_radius(world)}"
+
         true ->
           nil
       end
@@ -1361,7 +1444,8 @@ defmodule Coordinator.Queue do
         food:
           if(food,
             do: %{asks: food_asks, every_days: food_every, amount: food_amount, r: food_r}
-          )
+          ),
+        meteor: if(meteor, do: %{asks: meteor_asks, every_days: meteor_every, r: meteor_r})
       }
 
       {:ok, Map.put(spec, "garden", true), gparams}
@@ -1372,6 +1456,11 @@ defmodule Coordinator.Queue do
   end
 
   defp garden_spec(_), do: {:error, "a garden must be an object"}
+
+  # The largest lesion radius a one-tile world of this size takes without its
+  # disc wrapping onto itself (packages/schema's `maxLesionRadius`, for a world
+  # of one tile; apps/lab/test/garden.test.ts pins every garden preset as one).
+  defp max_world_radius({w, h}), do: div(min(w, h) - 1, 2)
 
   # The runner refuses a feed that would take the world past MATTER_MAX, and a
   # refused scheduled feed fails its day for good (the day's slice is frozen),
@@ -1484,45 +1573,68 @@ defmodule Coordinator.Queue do
     |> put_in([:experiments, g.name, :spec, "interventions"], Garden.schedule(g))
   end
 
-  # A hand on garden `g` (the `{:ask_food, ...}` call's work).
-  defp ask_food(s, g, name, key) do
+  # A hand on garden `g` (the `{:ask_food, ...}` or `{:ask_meteor, ...}` call's
+  # work), each kind against its own hands.
+  defp ask_act(s, g, name, key, kind) do
     now = now()
     segs = garden_segs(s, g)
-    block = fn g, hands -> Garden.food_view(g, segs, hands.count, now, shared_address?()) end
+    field = hands_field(kind)
 
-    case Garden.add_hand(g, Map.get(s.food_hands, name), key, segs, now) do
+    block = fn g, hands ->
+      case kind do
+        :food -> Garden.food_view(g, segs, hands.count, now, shared_address?())
+        :meteor -> Garden.meteor_view(g, segs, hands.count, now, shared_address?())
+      end
+    end
+
+    case Garden.add_hand(g, kind, s |> Map.fetch!(field) |> Map.get(name), key, segs, now) do
       {:error, {:refused, {code, opens}}} ->
-        {:reply, {:error, {:closed, code, opens, closed_words(code, opens, g)}}, s}
+        {:reply, {:error, {:closed, code, opens, closed_words(code, opens, g, kind)}}, s}
 
       {:repeat, hands} ->
-        {:reply, {:ok, :repeat, block.(g, hands)}, put_hands(s, name, hands)}
+        {:reply, {:ok, :repeat, block.(g, hands)}, put_hands(s, field, name, hands)}
 
       {:counted, hands} ->
         # Only a count changed, and counts are never persisted.
-        {:reply, {:ok, :counted, nil, block.(g, hands)}, put_hands(s, name, hands)}
+        {:reply, {:ok, :counted, nil, block.(g, hands)}, put_hands(s, field, name, hands)}
 
-      {:called, g, hands, food} ->
-        Logger.info("garden #{name}: #{food.id} called onto day #{food.day}")
-        s = s |> store_garden(g) |> put_hands(name, hands)
+      {:called, g, hands, record} ->
+        Logger.info("garden #{name}: #{record.id} called onto day #{record.day}")
+        s = s |> store_garden(g) |> put_hands(field, name, hands)
 
-        {:reply, {:ok, :counted, Garden.food_record_view(g, food, segs), block.(g, hands)},
+        {:reply, {:ok, :counted, Garden.record_view(g, record, segs), block.(g, hands)},
          persist(s)}
     end
   end
+
+  defp hands_field(:food), do: :food_hands
+  defp hands_field(:meteor), do: :meteor_hands
 
   # Every visitor reaches this coordinator as one address (production until the
   # proxy passes client addresses, D-17): the food block says so.
   defp shared_address?,
     do: Application.get_env(:coordinator, :garden_shared_address, false) == true
 
-  # A garden's food hands, in memory only (never persisted, never in a view).
-  defp put_hands(s, name, hands), do: put_in(s, [:food_hands, name], hands)
+  # A garden's food or meteor hands, in memory only (never persisted, never in a view).
+  defp put_hands(s, field, name, hands), do: put_in(s, [field, name], hands)
 
   # What the view needs of the hands: the count and whose period it is, not the hashes.
   defp hands_summary(nil), do: nil
   defp hands_summary(hands), do: Map.take(hands, [:dawn, :epoch, :count])
 
-  # A closed food ask in words (the 409's `error`).
+  # A closed food or meteor ask in words (the 409's `error`).
+  defp closed_words(code, opens, g, :food), do: closed_words(code, opens, g)
+  defp closed_words("off", _opens, _g, :meteor), do: "this garden takes no meteor"
+
+  defp closed_words("horizon", _opens, _g, :meteor),
+    do: "no day is left before the horizon for a meteor"
+
+  defp closed_words("cooldown", opens, g, :meteor),
+    do:
+      "a meteor lands at most once every #{g.meteor.every_days} days; the next can land on day #{opens} at the earliest"
+
+  defp closed_words(code, opens, g, :meteor), do: closed_words(code, opens, g)
+
   defp closed_words("off", _opens, _g), do: "this garden takes no food"
 
   defp closed_words("stopped", _opens, _g),
@@ -1593,12 +1705,12 @@ defmodule Coordinator.Queue do
     end
   end
 
-  # A garden's day carrying a food called less than a dawn period ago is not
-  # run yet: the keeper's veto has that long (`Garden.food_hold?/3`).
+  # A garden's day carrying a food or a meteor called less than a dawn period
+  # ago is not run yet: the keeper's veto has that long (`Garden.hold?/3`).
   defp food_hold?(s, seg, now) do
     case s.gardens[seg.experiment] do
       nil -> false
-      g -> Garden.food_hold?(g, seg.index, now)
+      g -> Garden.hold?(g, seg.index, now)
     end
   end
 
@@ -2707,12 +2819,13 @@ defmodule Coordinator.Queue do
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
   defp clip(_), do: "?"
 
-  # Never `:dir`, `:index` or `:food_hands` (the food hands live in memory
-  # only); `:gardens` only while empty (see `@state_version`).
+  # Never `:dir`, `:index`, `:food_hands` or `:meteor_hands` (the hands live in
+  # memory only); `:gardens` only while empty (see `@state_version`).
   defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
-    do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting, :gardens]
+    do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting, :gardens]
 
-  defp persist_drops(_s), do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting]
+  defp persist_drops(_s),
+    do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")

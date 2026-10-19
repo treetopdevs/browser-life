@@ -1271,6 +1271,403 @@ defmodule Coordinator.GardenQueueTest do
     end
   end
 
+  describe "meteor" do
+    defp metp(over \\ %{}),
+      do: params(Map.merge(%{"meteor" => true, "meteorAsks" => 2, "meteorEveryDays" => 1}, over))
+
+    defp mhand(i, name \\ "g1") do
+      {:ok, key} = Coordinator.LetterLimiter.hand_key({10, 0, 0, i})
+      Queue.ask_meteor(name, key)
+    end
+
+    # The rule's place, from the note's words (docs/garden-meteor-2026-10-18.md, section 2).
+    defp mplace(name, n) do
+      <<x::unsigned-big-32, y::unsigned-big-32, _::binary>> =
+        :crypto.hash(:sha256, "#{name}/seed-1/meteor-#{n}")
+
+      {rem(x, 256), rem(y, 256)}
+    end
+
+    defp with_env(pairs, fun) do
+      saved = for {k, _} <- pairs, do: {k, Application.get_env(:coordinator, k)}
+      for {k, v} <- pairs, do: Application.put_env(:coordinator, k, v)
+
+      try do
+        fun.()
+      after
+        for {k, v} <- saved,
+            do:
+              if(v == nil,
+                do: Application.delete_env(:coordinator, k),
+                else: Application.put_env(:coordinator, k, v)
+              )
+      end
+    end
+
+    test "meteor founding keys and ranges are 422s" do
+      bad = fn over -> Queue.create_garden(params(over)) end
+
+      assert {:error, "meteor must be true or false"} = bad.(%{"meteor" => "yes"})
+
+      assert {:error, "meteorAsks must be an integer in 2..1000" <> _} =
+               bad.(%{"meteor" => true, "meteorAsks" => 1})
+
+      assert {:error, "meteorAsks must be" <> _} =
+               bad.(%{"meteor" => true, "meteorAsks" => 1001})
+
+      assert {:error, "meteorEveryDays must be an integer in 1..365"} =
+               bad.(%{"meteor" => true, "meteorEveryDays" => 0})
+
+      assert {:error, "meteorEveryDays must be" <> _} =
+               bad.(%{"meteor" => true, "meteorEveryDays" => 366})
+
+      assert {:error, "meteorAsks and meteorEveryDays are for" <> _} =
+               bad.(%{"meteorAsks" => 5})
+
+      assert {:error, "meteorAsks and meteorEveryDays are for" <> _} =
+               bad.(%{"meteor" => false, "meteorEveryDays" => 5})
+
+      # Food's keys say nothing about the meteor, nor the meteor's about food.
+      assert {:error, "foodAsks and foodEveryDays are for" <> _} =
+               bad.(%{"meteor" => true, "foodAsks" => 5})
+
+      assert Queue.garden_view("g1") == nil
+
+      # The ranges are ConfigCheck.range/1's, at both ends.
+      for {key, param} <- [
+            {:garden_meteor_asks, "meteorAsks"},
+            {:garden_meteor_every_days, "meteorEveryDays"}
+          ] do
+        r = Coordinator.ConfigCheck.range(key)
+
+        for v <- [r.first - 1, r.last + 1] do
+          assert {:error, msg} = Queue.create_garden(metp(%{param => v}))
+          assert String.starts_with?(msg, "#{param} must be an integer in #{inspect(r)}"), msg
+        end
+
+        for v <- [r.first, r.last],
+            do:
+              assert({:ok, 5} = Queue.create_garden(metp(%{"name" => "m#{key}#{v}", param => v})))
+      end
+
+      # The coordinator's own radius, 33..255.
+      for r <- [32, 256, 1.5] do
+        with_env([garden_meteor_radius: r], fn ->
+          assert {:error, "the coordinator's garden_meteor_radius must be an integer in 33..255"} =
+                   Queue.create_garden(metp())
+        end)
+      end
+
+      # The defaults come from config and are copied into the record.
+      with_env([garden_meteor_asks: 4, garden_meteor_every_days: 3], fn ->
+        assert {:ok, 5} = Queue.create_garden(params(%{"meteor" => true}))
+        assert record().meteor == %{asks: 4, every_days: 3, r: 64}
+        assert record().meteors == [] and record().next_meteor == 1
+
+        {x, y} = mplace("g1", 1)
+
+        assert %{enabled: true, asks: 4, everyDays: 3, r: 64, place: %{x: ^x, y: ^y}} =
+                 view().meteor
+      end)
+
+      # Without meteor the record has no meteor keys at all, food or not.
+      assert {:ok, 5} = Queue.create_garden(params(%{"name" => "plain", "food" => true}))
+      refute Map.has_key?(record("plain"), :meteor) or Map.has_key?(record("plain"), :meteors)
+      assert Queue.garden_view("plain").meteor.closed == "off"
+    end
+
+    test "a meteor radius past the world is a 422 naming the numbers (spots, radius 128); the commons passes at 64" do
+      with_env([garden_meteor_radius: 128], fn ->
+        assert {:error, why} = Queue.create_garden(metp())
+        assert why =~ "garden_meteor_radius 128"
+        assert why =~ "256 x 256"
+        assert why =~ ~r/127$/
+        assert Queue.garden_view("g1") == nil
+        # Without meteor the radius is never looked at.
+        assert {:ok, 5} = Queue.create_garden(params(%{"name" => "plain"}))
+      end)
+
+      with_env([garden_meteor_radius: 127], fn ->
+        assert {:ok, 5} = Queue.create_garden(metp(%{"name" => "edge"}))
+        assert record("edge").meteor.r == 127
+      end)
+
+      # The commons' founding (the big storm, 512 x 512) at the default radius.
+      commons = [
+        %{"step" => 0, "kind" => "feed", "x" => 256, "y" => 256, "r" => 255, "amount" => 16}
+      ]
+
+      assert {:ok, 365} =
+               Queue.create_garden(%{
+                 "name" => "commons",
+                 "seed" => 1,
+                 "founding" => commons,
+                 "food" => true,
+                 "meteor" => true
+               })
+
+      assert record("commons").meteor == %{asks: 5, every_days: 7, r: 64}
+
+      # A pond world is many tiles: no meteor there.
+      with_env([pond_presets: ["spots"]], fn ->
+        assert {:error, "meteor is not defined for pond worlds" <> _} =
+                 Queue.create_garden(metp(%{"name" => "pond"}))
+      end)
+    end
+
+    test "state.bin never holds meteor hands", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(metp())
+      read = fn -> dir |> Path.join("state.bin") |> File.read!() |> :erlang.binary_to_term() end
+      bin = fn -> dir |> Path.join("state.bin") |> File.read!() end
+
+      assert {:ok, :counted, nil, %{hands: 1, open: true}} = mhand(1)
+      assert view().meteor.hands == 1 and view().food.hands == 0
+      assert {:ok, :repeat, %{hands: 1}} = mhand(1)
+      refute Map.has_key?(read.(), :meteor_hands)
+
+      {x, y} = mplace("g1", 1)
+
+      assert {:ok, :counted,
+              %{id: "meteor-1", day: 0, landsAtStep: @d, status: "waiting", r: 64} = m,
+              %{hands: 0, open: false, closed: "cooldown", opensAtDay: 1}} = mhand(2)
+
+      assert {m.x, m.y} == {x, y}
+
+      assert live_list() ==
+               @founding ++ [%{"step" => @d, "kind" => "lesion", "x" => x, "y" => y, "r" => 64}]
+
+      state = read.()
+      refute Map.has_key?(state, :meteor_hands) or Map.has_key?(state, :food_hands)
+      assert [%{id: "meteor-1"}] = state.gardens["g1"].meteors
+
+      for i <- [1, 2] do
+        {:ok, {_e, hash}} = Coordinator.LetterLimiter.hand_key({10, 0, 0, i})
+        assert :binary.match(bin.(), hash) == :nomatch
+      end
+
+      assert {:error, {:closed, "cooldown", 1, words}} = mhand(3)
+      assert words =~ "a meteor lands at most once every 1 days"
+      assert words =~ "day 1 at the earliest"
+      assert [%{day: 0, meteor: "meteor-1", food: nil}] = view().days
+
+      # Unknown garden, a malformed key, a garden without meteor.
+      assert {:error, :not_found} = mhand(1, "nope")
+      assert {:error, :not_found} = Queue.ask_meteor("g1", :nonsense)
+      {:ok, 5} = Queue.create_garden(params(%{"name" => "plain"}))
+      assert {:error, {:closed, "off", nil, "this garden takes no meteor"}} = mhand(1, "plain")
+    end
+
+    test "a stale limiter key is not counted for a meteor" do
+      {:ok, 5} = Queue.create_garden(metp(%{"meteorAsks" => 3}))
+      {:ok, old} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 1})
+      Coordinator.LetterLimiter.reset()
+      assert {:error, :stale} = Queue.ask_meteor("g1", old)
+      assert view().meteor.hands == 0
+      assert {:ok, :counted, nil, %{hands: 1}} = mhand(1)
+    end
+
+    test "a restart zeroes the meteor count and keeps a called meteor", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(metp(%{"meteorAsks" => 3}))
+      {:ok, :counted, nil, _} = mhand(1)
+      {:ok, :counted, nil, _} = mhand(2)
+      {:ok, :counted, %{id: "meteor-1"}, _} = mhand(3)
+      a = join("A")
+      TestClock.advance(@day)
+      t0 = next(a)
+      assert t0.segment.index == 0
+      {:ok, :counted, nil, %{hands: 1}} = mhand(4)
+      assert view().meteor.hands == 1
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+
+      assert %{hands: 0, open: true, meteors: [%{id: "meteor-1", status: "sealed"}]} =
+               view().meteor
+
+      assert live_list() |> Enum.count(&(&1["r"] == 64)) == 1
+      assert :sys.get_state(Queue).meteor_hands == %{}
+      {:ok, :counted, nil, %{hands: 1}} = mhand(4)
+    end
+
+    test "a restart before a called meteor's day is assigned keeps it waiting, then lands it once",
+         %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(metp())
+      {:ok, :counted, nil, _} = mhand(1)
+
+      {:ok, :counted, %{id: "meteor-1", day: 0, noticeUntil: until, calledAt: called}, _} =
+        mhand(2)
+
+      before = record()
+      before_list = live_list()
+      {x, y} = mplace("g1", 1)
+      lesion = %{"step" => @d, "kind" => "lesion", "x" => x, "y" => y, "r" => 64}
+      assert List.last(before_list) == lesion
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+
+      # The record, the schedule and the counter survive; the hands do not.
+      assert record().meteors == before.meteors
+      assert record().next_meteor == 2
+      assert live_list() == before_list
+      assert :sys.get_state(Queue).meteor_hands == %{}
+
+      assert [%{id: "meteor-1", status: "waiting", noticeUntil: ^until, calledAt: ^called}] =
+               view().meteor.meteors
+
+      # Forgotten hands cannot call a second meteor inside the spacing.
+      assert {:error, {:closed, "cooldown", 1, _}} = mhand(1)
+      assert {:error, {:closed, "cooldown", 1, _}} = mhand(3)
+
+      a = join("A")
+      TestClock.advance(@day - 1)
+      assert %{kind: "idle"} = next(a)
+      TestClock.advance(1)
+      t0 = next(a)
+      assert t0.segment.index == 0
+      assert List.last(t0.spec.interventions) == lesion
+      assert Enum.count(t0.spec.interventions, &(&1 == lesion)) == 1
+    end
+
+    test "a meteor called before a restart can still be set aside after it", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(metp())
+      {:ok, :counted, nil, _} = mhand(1)
+      {:ok, :counted, %{id: "meteor-1"}, _} = mhand(2)
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+
+      assert {:ok, %{id: "meteor-1", status: "dropped"}} = Queue.drop_letter("g1", "meteor-1")
+      assert live_list() == @founding
+      assert record().next_meteor == 2
+    end
+
+    test "a meteor's day is idle until noticeUntil, then assigned with the lesion in interventions" do
+      {:ok, 5} = Queue.create_garden(metp())
+      a = join("A")
+      {:ok, :counted, nil, _} = mhand(1)
+
+      {:ok, :counted, %{id: "meteor-1", day: 0, noticeUntil: until, calledAt: called}, _} =
+        mhand(2)
+
+      assert until == called + @day
+      assert %{kind: "idle"} = next(a)
+      TestClock.advance(@day - 1)
+      assert %{kind: "idle"} = next(a)
+      assert [%{status: "waiting"}] = view().meteor.meteors
+      TestClock.advance(1)
+      t0 = next(a)
+      assert t0.segment.index == 0
+      {x, y} = mplace("g1", 1)
+
+      assert List.last(t0.spec.interventions) ==
+               %{"step" => @d, "kind" => "lesion", "x" => x, "y" => y, "r" => 64}
+
+      assert {:error, {:refused, "the meteor's day has been assigned"}} =
+               Queue.drop_letter("g1", "meteor-1")
+    end
+
+    test "a called meteor keeps the radius copied at founding, whatever config says later" do
+      with_env([garden_meteor_radius: 100], fn ->
+        assert {:ok, 5} = Queue.create_garden(metp())
+      end)
+
+      assert record().meteor.r == 100
+
+      with_env([garden_meteor_radius: 80], fn ->
+        a = join("A")
+        {:ok, :counted, nil, _} = mhand(1)
+        {:ok, :counted, %{id: "meteor-1", r: 100}, %{r: 100}} = mhand(2)
+        assert %{r: 100, meteors: [%{r: 100}]} = view().meteor
+        TestClock.advance(@day)
+        t0 = next(a)
+        assert %{"kind" => "lesion", "r" => 100} = List.last(t0.spec.interventions)
+      end)
+    end
+
+    test "a reject that reopens a meteor's day: waiting, scheduled, droppable", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(metp())
+      a = join("A")
+      b = join("B")
+
+      t0 = next(a)
+      finish(dir, a, t0)
+      {:ok, "verified"} = verify(next(b), b)
+      TestClock.advance(@day)
+      t1 = next(a)
+      assert t1.segment.index == 1
+
+      {:ok, :counted, nil, _} = mhand(1)
+      {:ok, :counted, %{id: "meteor-1", day: 2}, _} = mhand(2)
+      {x, y} = mplace("g1", 1)
+      lesion = %{"step" => 3 * @d, "kind" => "lesion", "x" => x, "y" => y, "r" => 64}
+
+      finish(dir, a, t1)
+      TestClock.advance(@day)
+      t2 = next(a)
+      assert t2.segment.index == 2
+      assert List.last(t2.spec.interventions) == lesion
+      assert [%{status: "sealed"}] = view().meteor.meteors
+
+      assert :ok = Queue.reject(t2.segment.id, a, t2.lease, "does not match", "own")
+
+      assert %{
+               closed: "cooldown",
+               opensAtDay: 3,
+               meteors: [%{id: "meteor-1", status: "waiting", day: 2}]
+             } = view().meteor
+
+      assert List.last(live_list()) == lesion
+      assert {:error, {:closed, "cooldown", 3, _}} = mhand(3)
+      assert {:ok, %{id: "meteor-1", status: "dropped"}} = Queue.drop_letter("g1", "meteor-1")
+      refute Enum.any?(live_list(), &(&1["r"] == 64))
+      # The next meteor is meteor-2, at its own place.
+      {x2, y2} = mplace("g1", 2)
+      assert %{open: true, place: %{x: ^x2, y: ^y2}} = view().meteor
+    end
+
+    test "format_status redacts meteor hands and {:ask_meteor, …}" do
+      {:ok, 5} = Queue.create_garden(metp(%{"meteorAsks" => 3}))
+      {:ok, :counted, nil, _} = mhand(1)
+      {:ok, {_e, hash} = key} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 1})
+
+      holds? = fn holds?, term ->
+        cond do
+          term == hash -> true
+          is_map(term) and not is_struct(term) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_struct(term, MapSet) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_list(term) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_tuple(term) -> term |> Tuple.to_list() |> Enum.any?(&holds?.(holds?, &1))
+          true -> false
+        end
+      end
+
+      assert holds?.(holds?, :sys.get_state(Queue).meteor_hands)
+      refute holds?.(holds?, :sys.get_status(Queue))
+
+      redacted =
+        Queue.format_status(%{
+          state: :sys.get_state(Queue),
+          message: {:ask_meteor, "g1", key},
+          log: [{:in, {:ask_meteor, "g1", key}}]
+        })
+
+      refute holds?.(holds?, redacted)
+      assert redacted.message == {:ask_meteor, "g1", :redacted}
+      assert %{"g1" => %{count: 1}} = redacted.state.meteor_hands
+    end
+
+    test "the sweep forgets a past period's meteor hands" do
+      {:ok, 5} = Queue.create_garden(metp(%{"meteorAsks" => 3}))
+      {:ok, :counted, nil, _} = mhand(1)
+      send(Queue, :expire_hands)
+      assert map_size(:sys.get_state(Queue).meteor_hands) == 1
+      TestClock.advance(@day)
+      send(Queue, :expire_hands)
+      assert :sys.get_state(Queue).meteor_hands == %{}
+    end
+  end
+
   # ---- persistence ----
 
   describe "persistence" do
