@@ -52,5 +52,8 @@ defmodule CoordinatorWeb.LetterBodyLimit do
   # A food hand (`{}`) is held to the same limits.
   defp letter_route?(["api", "public", "garden", "food", "hands"]), do: true
   defp letter_route?(["api", "public", "gardens", _name, "food", "hands"]), do: true
+  # So is a meteor hand.
+  defp letter_route?(["api", "public", "garden", "meteor", "hands"]), do: true
+  defp letter_route?(["api", "public", "gardens", _name, "meteor", "hands"]), do: true
   defp letter_route?(_), do: false
 end

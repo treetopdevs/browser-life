@@ -1635,10 +1635,11 @@ defmodule Coordinator.QueueTest do
       assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, %{})
       assert {:error, "interventions[0] must be an object"} = bad_schedule(%{}, [7])
 
-      assert {:error, "interventions[1]: kind must be \"lesion\" or \"feed\", got \"pick\""} =
+      assert {:error,
+              "interventions[1]: kind must be \"lesion\", \"feed\" or \"sun\", got \"pick\""} =
                bad_schedule(%{}, [@lesion, %{@lesion | "kind" => "pick"}])
 
-      assert {:error, "interventions[0]: kind must be \"lesion\" or \"feed\", got null"} =
+      assert {:error, "interventions[0]: kind must be \"lesion\", \"feed\" or \"sun\", got null"} =
                bad_schedule(%{}, [Map.delete(@lesion, "kind")])
 
       assert {:error, "interventions[0]: a lesion has no key \"amount\"" <> _} =

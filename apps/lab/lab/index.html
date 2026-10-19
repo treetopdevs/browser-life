@@ -192,11 +192,17 @@
         </section>
         <section class="rail-section" aria-labelledby="tools-heading">
           <h2 id="tools-heading">In your hand</h2>
-          <div class="seg tool-group" id="tools" role="group" aria-label="Tool"><button data-tool="inspect" class="on" type="button">Look</button><button data-tool="lesion" type="button">Wound</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="pan" type="button">Move</button><button data-tool="pick" type="button" hidden>Pick</button></div>
+          <div class="seg tool-group" id="tools" role="group" aria-label="Tool"><button data-tool="inspect" class="on" type="button">Look</button><button data-tool="lesion" type="button">Wound</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="sun" type="button">Sun</button><button data-tool="pan" type="button">Move</button><button data-tool="pick" type="button" hidden>Pick</button></div>
           <p class="tool-says" id="tool-says"></p>
           <label class="field range-field" id="radius-field"><span>Brush size <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
           <label class="field range-field" id="amount-field"><span>Nutrient per cell <b class="mono" id="amount-val">16</b></span><input id="amount" type="range" min="1" max="128" step="1" value="16" /></label>
           <p class="hint" id="feed-hint" hidden>Feeding and draining open the jar. Each use is logged, and the jar check counts what you added.</p>
+          <div class="sun-panel" id="sun-panel" hidden>
+            <fieldset class="sun-choices" id="sun-choices"><legend>How bright</legend></fieldset>
+            <label class="field"><span>For how many steps</span><input id="sun-span" type="number" min="1" max="16777216" step="1" value="2000" inputmode="numeric" /></label>
+            <div class="row"><button id="btn-sun" type="button">Set the sun</button></div>
+            <p class="hint" id="sun-status" aria-live="polite"></p>
+          </div>
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h2 id="checkpoint-heading">Keep a copy</h2><p class="hint">Save keeps a copy in this browser. Download gives you a file to keep or share. Both wait for the next census, so the copy is complete.</p>

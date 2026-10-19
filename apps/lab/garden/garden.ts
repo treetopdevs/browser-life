@@ -1,7 +1,7 @@
 // The shared garden's public page (/garden/): reads the frozen garden-v1 contract (apps/coordinator/README.md,
-// "The garden") and posts the one letter kind that exists, a stone, and (in a garden founded with food) a hand on the
-// food ask. The words and rules are written down first in docs/garden-page-v0-2026-10-17.md and, for food,
-// docs/garden-food-2026-10-18.md; this file implements them. Everything above `mount` is pure and safe to
+// "The garden") and posts the one letter kind that exists, a stone, and (in a garden founded with food or meteor) a hand
+// on the food or meteor ask. The words and rules are written down first in docs/garden-page-v0-2026-10-17.md and, for
+// food, docs/garden-food-2026-10-18.md, for the meteor, docs/garden-meteor-2026-10-18.md; this file implements them. Everything above `mount` is pure and safe to
 // import without a DOM (apps/lab/test/garden.test.ts); `mount` touches the document only when it is called.
 
 export const CONTRACT = "garden-v1";
@@ -18,14 +18,21 @@ export interface Census {
 }
 export interface TipCensus extends Census { day: number; step: number; verified: boolean; source: string }
 export interface Letter {
-  id: string; kind: string; x: number; y: number; r: number; postedAt: number; landsAtStep: number; day: number;
+  /** A sun (docs/garden-sun-2026-10-18.md) has no place: its `x`, `y` and `r` are null. */
+  id: string; kind: string; x: number | null; y: number | null; r: number | null; postedAt: number; landsAtStep: number; day: number;
   status: string; landedIn: string | null; droppedAt: number | null;
+  /** A sun's brightness (percent of the world's own light) and how many steps it shines; null for a stone. Added with the sun. */
+  percent?: number | null; span?: number | null;
 }
+/** The sun letter's terms (README "The garden", `sun`): the percents this garden's light takes, the span, where the next lands. */
+export interface SunBlock { percents: number[]; span: number; nextLanding: { day: number; step: number } | null }
 export interface Day {
   day: number; startStep: number; endStep: number; status: string; releasedAt: number; doneAt: number | null;
   verifiedAt: number | null; digest: string | null; verification: string | null; letters: string[]; census: Census | null;
   /** The live food the day carries (added to garden-v1 with food; absent from a coordinator from before). */
   food?: string | null;
+  /** The live meteor the day carries (added to garden-v1 with the meteor; absent from a coordinator from before). */
+  meteor?: string | null;
   /** Who held the field at the day's end (added with dawn predictions); null unless the day is verified. */
   leaders?: Leaders | null;
 }
@@ -51,6 +58,21 @@ export interface FoodBlock {
   sharedAddress: boolean;
   open: boolean; closed: string | null;
   opensAtDay: number | null; landing: { day: number; step: number } | null; foods: Food[];
+}
+/** A meteor: a stone of the garden's large radius, called by hands, at a place fixed by rule. Its statuses are a letter's. */
+export interface Meteor {
+  id: string; x: number; y: number; r: number; calledAt: number;
+  /** The meteor's day is not run before this (one dawn period after the call): the keeper's veto window. */
+  noticeUntil: number;
+  hands: number; landsAtStep: number; day: number; status: string; landedIn: string | null; droppedAt: number | null;
+}
+/** The meteor ask (README "The garden", `meteor`): food's block without `amount`. A view without it has the meteor off. */
+export interface MeteorBlock {
+  enabled: boolean; asks: number | null; everyDays: number | null; r: number | null;
+  /** Where the next meteor would land (a rule of the garden's name, seed and number), or null when off. */
+  place: { x: number; y: number } | null; hands: number; expiresAt: number; sharedAddress: boolean;
+  open: boolean; closed: string | null;
+  opensAtDay: number | null; landing: { day: number; step: number } | null; meteors: Meteor[];
 }
 export interface Founding { step: number; kind: string; x: number; y: number; r: number; amount?: number }
 export interface GardenView {
@@ -84,8 +106,12 @@ export interface GardenView {
   limits: { stoneRadius: { min: number; max: number }; lettersPerAddressPerHour: number; logMax: number };
   /** Added to garden-v1 with food (docs/garden-food-2026-10-18.md); absent from a coordinator from before. */
   food?: FoodBlock;
+  /** Added to garden-v1 with the meteor (docs/garden-meteor-2026-10-18.md); absent from a coordinator from before. */
+  meteor?: MeteorBlock;
   /** Added with dawn predictions (docs/garden-predictions-2026-10-18.md); absent from a coordinator from before. */
   leadersRule?: LeadersRule;
+  /** Added with the sun letter (docs/garden-sun-2026-10-18.md); absent from a coordinator from before. */
+  sun?: SunBlock;
 }
 
 // A check returns null when the value fits, or the first thing wrong with it, named by its path.
@@ -133,10 +159,14 @@ const censusKeys = {
   individuals: orNull(num), lineages: orNull(num), maxGeneration: orNull(num), mutations: orNull(num),
   extinct: orNull(bool), conservationOk: orNull(bool),
 };
-const letterShape = shape({
-  id: str, kind: str, x: num, y: num, r: num, postedAt: time, landsAtStep: num, day: num, status: str,
+const letterKeys = shape({
+  id: str, kind: str, x: orNull(num), y: orNull(num), r: orNull(num), postedAt: time, landsAtStep: num, day: num, status: str,
   landedIn: orNull(str), droppedAt: orNull(time),
-});
+}, { percent: orNull(num), span: orNull(num) });
+/** A letter: a stone has its place (x, y, r numbers); only a letter of another kind, a sun, may have them null. */
+const stonePlace = shape({ x: num, y: num, r: num });
+const letterShape: Check = (v, p) => letterKeys(v, p) ?? (isObject(v) && v.kind === "stone" ? stonePlace(v, p) : null);
+const sunBlockShape = shape({ percents: list(num), span: pos, nextLanding: orNull(shape({ day: num, step: num })) });
 const foodShape = shape({
   id: str, x: num, y: num, r: num, amount: num, calledAt: time, hands: num, landsAtStep: num, day: num,
   status: str, landedIn: orNull(str), droppedAt: orNull(time),
@@ -146,6 +176,15 @@ const foodBlockShape = shape({
   place: orNull(shape({ x: num, y: num })), hands: num, expiresAt: time, open: bool, closed: orNull(str),
   opensAtDay: orNull(num), landing: orNull(shape({ day: num, step: num })), foods: list(foodShape),
 }, { sharedAddress: bool });
+const meteorShape = shape({
+  id: str, x: num, y: num, r: num, calledAt: time, noticeUntil: time, hands: num, landsAtStep: num, day: num,
+  status: str, landedIn: orNull(str), droppedAt: orNull(time),
+});
+const meteorBlockShape = shape({
+  enabled: bool, asks: orNull(pos), everyDays: orNull(pos), r: orNull(num),
+  place: orNull(shape({ x: num, y: num })), hands: num, expiresAt: time, sharedAddress: bool, open: bool, closed: orNull(str),
+  opensAtDay: orNull(num), landing: orNull(shape({ day: num, step: num })), meteors: list(meteorShape),
+});
 /** A lineage key as the census writes it: birth step plus one, then the birth cell. */
 export const LINEAGE_KEY = /^\d{1,10}:\d{1,10}$/;
 const lineageKey: Check = (v, p) => (typeof v === "string" && LINEAGE_KEY.test(v) ? null : `${p}: expected a lineage key`);
@@ -180,14 +219,14 @@ const viewShape = shape({
   days: list(shape({
     day: num, startStep: num, endStep: num, status: str, releasedAt: time, doneAt: orNull(time), verifiedAt: orNull(time),
     digest: orNull(str), verification: orNull(str), letters: list(str), census: orNull(shape(censusKeys)),
-  }, { food: orNull(str), leaders: orNull(leadersShape) })),
+  }, { food: orNull(str), meteor: orNull(str), leaders: orNull(leadersShape) })),
   letters: shape({
     perDay: num, queueMax: num, queued: num,
     nextLanding: orNull(shape({ day: num, step: num, open: num })),
     waiting: list(letterShape), recent: list(letterShape),
   }),
   limits: shape({ stoneRadius: shape({ min: num, max: num }), lettersPerAddressPerHour: num, logMax: num }),
-}, { food: foodBlockShape, leadersRule: leadersRuleShape });
+}, { food: foodBlockShape, meteor: meteorBlockShape, leadersRule: leadersRuleShape, sun: sunBlockShape });
 
 const clip = (text: string, n = 160) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
@@ -301,8 +340,17 @@ export function stateWords(view: GardenView, fmt: Fmt = {}): StateWords {
       // A day carrying a food called less than a dawn period ago is held from islands (the keeper's veto window):
       // it is not asleep, it is waiting on purpose.
       const held = d === undefined ? undefined : view.food?.foods.find((f) => f.day === d && f.status === "waiting" && f.droppedAt === null && f.noticeUntil > view.now);
+      // A meteor holds its day the same way, and a food and a meteor may share one: the day is held to the later notice.
+      const struck = d === undefined ? undefined : view.meteor?.meteors.find((m) => m.day === d && m.status === "waiting" && m.droppedAt === null && m.noticeUntil > view.now);
+      if (held && struck) {
+        const until = Math.max(held.noticeUntil, struck.noticeUntil);
+        return { tone: "pending", label: "Holding for the food and the meteor", sentence: `Holding: day ${d} carries the food ${clip(held.id, 24)} and the meteor ${clip(struck.id, 24)}, so no island is given it before ${fmtTime(until, fmt.locale, fmt.timeZone)}, in ${fmtDuration(until - view.now)}; until then the keeper can still set either aside.`, known: true };
+      }
       if (held) {
         return { tone: "pending", label: "Holding for the food", sentence: `Holding: day ${d} carries the food ${clip(held.id, 24)}, so no island is given it before ${fmtTime(held.noticeUntil, fmt.locale, fmt.timeZone)}, in ${fmtDuration(held.noticeUntil - view.now)}; until then the keeper can still set the food aside.`, known: true };
+      }
+      if (struck) {
+        return { tone: "pending", label: "Holding for the meteor", sentence: `Holding: day ${d} carries the meteor ${clip(struck.id, 24)}, so no island is given it before ${fmtTime(struck.noticeUntil, fmt.locale, fmt.timeZone)}, in ${fmtDuration(struck.noticeUntil - view.now)}; until then the keeper can still set the meteor aside.`, known: true };
       }
       return view.asleep
         ? { tone: "pending", label: "Asleep", sentence: `Asleep: ${which} is ready and no island has come for it. ${slept}`, known: true }
@@ -528,6 +576,46 @@ export function mergeMine(stored: VisitRecord | null, createdAt: number, mine: r
 // ---------- the letter form ----------
 
 export interface StoneBody { kind: "stone"; x: number; y: number; r: number }
+/** A sun letter's body: exactly its kind and percent (the span is one garden day, the coordinator's to set). */
+export interface SunBody { kind: "sun"; percent: number }
+export type LetterBody = StoneBody | SunBody;
+export type SunCheck = { ok: true; body: SunBody } | { ok: false; words: string };
+
+/** What a sun of `percent` would do, in words: "Half the light", and so on. */
+export const SUN_WORDS: Readonly<Record<number, string>> = { 50: "Half the light", 75: "Three quarters of the light", 125: "A quarter more light", 150: "Half again more light" };
+
+/** What the server checks of a sun, checked before sending: the garden takes suns, and this percent. */
+export function sunBody(view: GardenView, percent: number | null): SunCheck {
+  const sun = view.sun;
+  if (!sun || sun.percents.length === 0) return { ok: false, words: "This garden takes no sun letters." };
+  if (percent === null || !sun.percents.includes(percent)) return { ok: false, words: `Choose how bright: ${sun.percents.map((p) => `${p}%`).join(", ")}.` };
+  return { ok: true, body: { kind: "sun", percent } };
+}
+
+/** Where a sun posted now would land and shine, in words, or why none can. */
+export function sunLandingWords(view: GardenView): string {
+  const sun = view.sun;
+  if (!sun || sun.percents.length === 0) return "This garden takes no sun letters.";
+  if (!sun.nextLanding) {
+    // The garden's own reason first (stopped, finished, the queue or log full): the sun's rule is only why when letters are open.
+    const letters = landingPreview(view);
+    if (!letters.open) return letters.reason;
+    return "No day before the last has room for a sun just now: one sun a day, and never on the last day.";
+  }
+  const { day, step } = sun.nextLanding;
+  return `Your sun would land at step ${fmtSteps(step)}, the end of day ${day}, and shine on day ${day + 1}, all ${fmtSteps(sun.span)} steps of it; then the world’s own light returns.`;
+}
+
+/** A letter's body as the page lists it: a stone's place and size, a sun's brightness and the day it shines. */
+export function letterBodyWords(l: Pick<Letter, "kind" | "x" | "y" | "r" | "percent" | "span" | "landsAtStep" | "day">): string {
+  const lands = `landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day})`;
+  if (l.kind === "stone") return `A stone of radius ${l.r} at (${l.x}, ${l.y}), ${lands}. `;
+  if (l.kind === "sun" && typeof l.percent === "number") {
+    const span = typeof l.span === "number" ? `, ${fmtSteps(l.span)} steps` : "";
+    return `A sun of ${l.percent}% (${(SUN_WORDS[l.percent] ?? "a dial").toLowerCase()}), ${lands}; it shines on day ${l.day + 1}${span}. `;
+  }
+  return `A letter of a kind ${NEW_WORD} (“${clip(l.kind, 24)}”), ${lands}. `;
+}
 export type StoneCheck = { ok: true; body: StoneBody } | { ok: false; field: "x" | "y" | "r"; words: string };
 
 const whole = (v: unknown): number | null => {
@@ -666,9 +754,11 @@ export function foodWords(view: GardenView, fmt: Fmt = {}): FoodWords | null {
   const place = food.place ? `at the centre (${food.place.x}, ${food.place.y})` : "at the centre";
   const size = food.amount !== null && food.r !== null ? `: ${food.amount} quanta of nutrient per cell over a disc of radius ${food.r}` : "";
   const open = food.open && food.landing !== null;
+  // A closed ask always says why; a view that says neither why nor where (open without a landing) says it is closed.
+  const shut = foodClosedWords(food) || "The food ask is closed just now.";
   const landing = open
     ? `A food called now would land at step ${fmtSteps(food.landing!.step)}, the end of day ${food.landing!.day}, ${place}${size}.`
-    : foodClosedWords(food);
+    : shut;
   const every = food.everyDays === null ? "" : `, at most once every ${plural(food.everyDays, "day")}`;
   const more = Math.max(food.asks - food.hands, 1);
   const need = food.hands === 0 ? plural(food.asks, "network") : `${plural(more, "more network", "more networks")}`;
@@ -685,7 +775,7 @@ export function foodWords(view: GardenView, fmt: Fmt = {}): FoodWords | null {
     hands: food.hands, asks: food.asks,
     timeLeft: !open ? "" : left > 0 ? `${hands} expire at the next dawn, in ${fmtDuration(left)} (${at}), unless ${need} ask before then.` : `${hands} expire at the next dawn, now.`,
     landing,
-    closed: open ? null : foodClosedWords(food),
+    closed: open ? null : shut,
     open,
     shared: food.sharedAddress === true ? SHARED_WORDS : null,
     why: `Food is the one thing that adds matter to this closed world, so it is kept rare on purpose. The keeper’s guess is that a garden fed at will grows fat and dull and that hunger is what makes it build; nobody has tested that yet. So food comes only when ${plural(food.asks, "network")} ask within one dawn${every}, as one modest feed ${place}, and a called food waits a whole dawn period before its day is run, so the keeper can still set it aside. Hands are counted per network, not per person: people behind one connection are one hand, and one person with several connections can be several. A hand carries nothing about you, and a restart of the garden’s server forgets ${today}’s hands.`,
@@ -710,14 +800,140 @@ export interface HandLatch { name: string; since: number; until: number; afterRe
  * A counted hand keeps the count at 1 or more until its dawn unless a food was called since (which shows in `foods`,
  * dropped or not); a count of 0 with no such food means the garden's server forgot the hand (a restart).
  */
-export function latchHolds(latch: HandLatch | null, view: GardenView | null, fresh = true): boolean {
+export function latchHolds(latch: HandLatch | null, view: GardenView | null, fresh = true, kind: HandKind = "food"): boolean {
   if (!latch || !view || view.name !== latch.name || view.now >= latch.until) return false;
-  const food = view.food;
-  if (!food || !food.enabled) return false;
+  const ask = kind === "food" ? view.food : view.meteor;
+  if (!ask || !ask.enabled) return false;
   // A view read before the hand was answered (the one the hand was sent from, or a poll already on its way) may show
   // the count without it; only a later read can say the server forgot it.
   if (!fresh) return true;
-  return food.hands > 0 || food.foods.some((f) => f.calledAt >= latch.since);
+  const called: { calledAt: number }[] = kind === "food" ? view.food?.foods ?? [] : view.meteor?.meteors ?? [];
+  return ask.hands > 0 || called.some((f) => f.calledAt >= latch.since);
+}
+
+// ---------- meteor (docs/garden-meteor-2026-10-18.md) ----------
+
+/** Which collective ask a hand is for. */
+export type HandKind = "food" | "meteor";
+
+/** The cells a lesion of radius `r` clears: `dx² + dy² <= r²` (`applyLesion`); 12,853 at r 64. */
+export function discCells(r: number): number {
+  const R = Math.max(0, Math.floor(r));
+  let n = 0;
+  for (let dy = -R; dy <= R; dy++) n += 2 * Math.floor(Math.sqrt(R * R - dy * dy)) + 1;
+  return n;
+}
+
+export interface MeteorWords {
+  /** "1 of 5 networks have asked today.", or, while the ask is closed, what it is waiting on. */
+  headline: string;
+  hands: number;
+  asks: number;
+  timeLeft: string;
+  /** Where and when a meteor called now would land, or why none can. */
+  landing: string;
+  closed: string | null;
+  open: boolean;
+  shared: string | null;
+  /** What a meteor is, with this garden's numbers and the next place. */
+  what: string;
+  /** What a stone this size did, as far as anyone has looked (the stone-horizon readings), or that nobody has. */
+  reading: string;
+  /** Why it is rare. */
+  why: string;
+}
+
+/** A closed meteor ask in words (README: `meteor.closed`); an unknown code is said as given. */
+export function meteorClosedWords(meteor: MeteorBlock): string {
+  switch (meteor.closed) {
+    case "off": return "This garden takes no meteor.";
+    case "stopped": return "The garden has stopped, so it takes no meteor until the keeper looks.";
+    case "finished": return "Every day to the horizon is done, so there is no day left for a meteor.";
+    case "horizon": return "No day is left before the horizon that a meteor could land on.";
+    case "log-full": return "The garden’s log is full.";
+    case "cooldown": {
+      const every = meteor.everyDays === null ? "" : ` once every ${plural(meteor.everyDays, "day")}`;
+      return meteor.opensAtDay === null
+        ? `A meteor lands at most${every}, and one landed or is waiting too recently.`
+        : `A meteor lands at most${every}: the next can land on day ${meteor.opensAtDay} at the earliest.`;
+    }
+    case null: return "";
+    default: return `The garden says “${clip(meteor.closed, 40)}”, a reason ${NEW_WORD}.`;
+  }
+}
+
+const METEOR_SHARED_WORDS = "Right now every visitor reaches this garden through one shared address (the site’s proxy does not pass on visitors’ own yet), so all of you count as one network: the ask can hold one hand, a meteor cannot be called, an “already in” answer may be someone else’s hand, and a counted hand spends a letter from the budget that stones share. This changes once the proxy passes on visitors’ own addresses.";
+
+/** The one preset and radius the stone-horizon runs measured (docs/garden-stone-horizon-2026-10-18.md, #55 and #59). */
+export const METEOR_READ = {
+  presetId: "wild-storm-large", r: 64, medianSteps: 35_839,
+  /** The founding those runs used: the commons' own feed (stone-horizon note, section 1). */
+  founding: { step: 0, kind: "feed", x: 256, y: 256, r: 255, amount: 16 },
+} as const;
+
+/** A share of a day in words: "about 27% of a day", "under 1% of a day", or "about 2 days". */
+function dayShare(steps: number, stepsPerDay: number): string {
+  const days = steps / stepsPerDay;
+  if (days >= 1.5) return `about ${plural(Math.round(days), "day")}`;
+  if (days >= 0.95) return "about a day";
+  const pct = Math.round(days * 100);
+  return pct < 1 ? "under 1% of a day" : `about ${pct}% of a day`;
+}
+
+/**
+ * What a radius-64 stone did on the big storm, as recorded by the stone-horizon rules (#55, #59), or that nobody has
+ * measured this size here. Shown only for the preset and radius those runs used.
+ */
+export function meteorReadingWords(view: GardenView): string {
+  const m = view.meteor;
+  if (!m || m.r !== METEOR_READ.r || view.presetId !== METEOR_READ.presetId) return "Nobody has yet measured what a stone of this size does in this world.";
+  const share = dayShare(METEOR_READ.medianSteps, view.pace.stepsPerDay);
+  const f = METEOR_READ.founding;
+  const same = view.founding.length === 1 && view.founding[0].step === f.step && view.founding[0].kind === f.kind &&
+    view.founding[0].x === f.x && view.founding[0].y === f.y && view.founding[0].r === f.r && view.founding[0].amount === f.amount;
+  const founded = same ? "as this garden was too" : "not as this garden was";
+  return `What a stone this size did, as far as anyone has looked: in twin worlds of this big storm founded as the commons was (one feed at the centre at step 0, radius 255, 16 quanta per cell; ${founded}), forked early, at steps 131,072 to 393,216, a radius-64 stone’s neighbourhood stayed more different from its undisturbed twin than the rest of the jar for a median of about 35,800 steps (from about 2,000 to about 68,600, over nine pairs), ${share} here. By the rule written before that run, that is a mark with no lasting effect, not a lasting change. Those stones were each aimed at a living cell; a meteor’s place is not, so it may clear less. A one-cell nudge in the same checkpoint worlds, at a separately chosen cell, stayed distinguishable for a median of about 9,200 steps, so by that rule the stone read as a stone effect: its mark outlasted a one-cell change’s, which the size of the change alone could explain. Pair by pair, the nudge lasted at least half as long as the stone in five of nine, and in the worlds forked at step 262,144 it outlasted the stone in all three histories. In the first 8,192 steps after the stones in the worlds forked at step 131,072, the stone’s summed excess of difference near it over the rest of the jar was more than twice the nudge’s in two of three histories, not all three. Three histories, one of them a carpet; one founding; the measure saturates; and no null stone of this size could be placed. These are what rules written before the runs said, not settled facts about this garden.`;
+}
+
+/** The meteor ask in words, or null when the garden takes no meteor (no section is shown then). */
+export function meteorWords(view: GardenView, fmt: Fmt = {}): MeteorWords | null {
+  const m = view.meteor;
+  if (!m || !m.enabled || m.asks === null) return null;
+  const today = periodWords(view);
+  const left = m.expiresAt - view.now;
+  const at = fmtTime(m.expiresAt, fmt.locale, fmt.timeZone);
+  const place = m.place ? `at (${m.place.x}, ${m.place.y})` : "at its fixed place";
+  const size = m.r === null ? "" : `, a stone of radius ${m.r}`;
+  const open = m.open && m.landing !== null;
+  const shut = meteorClosedWords(m) || "The meteor ask is closed just now.";
+  const landing = open
+    ? `A meteor called now would land at step ${fmtSteps(m.landing!.step)}, the end of day ${m.landing!.day}, ${place}${size}.`
+    : shut;
+  const every = m.everyDays === null ? "" : `, at most once every ${plural(m.everyDays, "day")}`;
+  const more = Math.max(m.asks - m.hands, 1);
+  const need = m.hands === 0 ? plural(m.asks, "network") : `${plural(more, "more network", "more networks")}`;
+  const hands = today === "today" ? "Today’s hands" : "This dawn period’s hands";
+  const waiting = m.meteors.find((x) => x.status === "waiting" && x.droppedAt === null);
+  const headline = open
+    ? `${fmtSteps(m.hands)} of ${plural(m.asks, "network")} ${m.hands === 1 ? "has" : "have"} asked ${today}.`
+    : waiting
+      ? `A meteor is waiting: ${clip(waiting.id, 24)} lands at (${waiting.x}, ${waiting.y}) at step ${fmtSteps(waiting.landsAtStep)}, the end of day ${waiting.day}. Hands count again once the ask reopens.`
+      : "The meteor ask is closed just now.";
+  const cells = view.world.width * view.world.height;
+  const disc = m.r === null ? null : discCells(m.r);
+  const pct = disc === null ? "" : ` (${(Math.round((1000 * disc) / cells) / 10).toLocaleString("en-GB")}% of this world)`;
+  return {
+    headline,
+    hands: m.hands, asks: m.asks,
+    timeLeft: !open ? "" : left > 0 ? `${hands} expire at the next dawn, in ${fmtDuration(left)} (${at}), unless ${need} ask before then.` : `${hands} expire at the next dawn, now.`,
+    landing,
+    closed: open ? null : shut,
+    open,
+    shared: m.sharedAddress === true ? METEOR_SHARED_WORDS : null,
+    what: `A meteor is a stone${m.r === null ? "" : ` of radius ${m.r}`}: where it lands, every body in a disc of ${disc === null ? "its" : fmtSteps(disc)} cells${pct} turns to waste and its stored energy to heat. It lands at a place fixed before anyone asks, ${m.place ? `(${m.place.x}, ${m.place.y})` : "its own"} for the next one, never one a visitor picks, and chosen without looking at what lives there, so its disc may hold many bodies, few or none. “Meteor” is only this letter’s name for a large stone; it promises no lasting change.`,
+    reading: meteorReadingWords(view),
+    why: `A meteor is the one large act a visitor can ask for, so it is kept rare: it comes only when ${plural(m.asks, "network")} ask within one dawn${every}, and a called meteor waits a whole dawn period before its day is run, so the keeper can still set it aside (the next one then lands at the next place). Hands are counted per network, not per person: people behind one connection are one hand, and one person with several connections can be several. A hand carries nothing about you, and a restart of the garden’s server forgets ${today}’s hands.`,
+  };
 }
 
 // ---------- who holds the field, and dawn predictions (docs/garden-predictions-2026-10-18.md) ----------
@@ -1073,25 +1289,26 @@ export function retryAfterMs(header: string | null | undefined): number | null {
 }
 
 /** Said when a letter's fate is unknown: the server keeps a letter before it answers, so it may be in the queue. */
-const UNSURE = "so this page cannot tell whether your stone arrived. The queue below is read again: look for it there before sending another.";
+const unsure = (kind: "stone" | "sun") => `so this page cannot tell whether your ${kind} arrived. The queue below is read again: look for it there before sending another.`;
 
 /**
  * A POST to the letters route, in words (the note's answer table). Status 0 is no answer at all (no connection, or
- * none within the deadline); like an unexpected code, it leaves the stone's fate unknown, and the page says so.
+ * none within the deadline); like an unexpected code, it leaves the letter's fate unknown, and the page says so.
  */
-export function postAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null): Answer {
+export function postAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null, kind: "stone" | "sun" = "stone"): Answer {
   switch (status) {
     case 201: {
       const l = isObject(body) && isObject(body.letter) ? body.letter : null;
       if (l && typeof l.id === "string" && typeof l.landsAtStep === "number" && typeof l.day === "number") {
+        const shines = kind === "sun" ? `, shines on day ${l.day + 1}` : "";
         return {
           tone: "note", refresh: true, letter: { id: l.id, landsAtStep: l.landsAtStep, day: l.day },
-          words: `Posted as ${clip(l.id, 24)}. It is public now, lands at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}), and counts once a second island replays that day.`,
+          words: `Posted as ${clip(l.id, 24)}. It is public now, lands at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day})${shines}, and counts once a second island replays that day.`,
         };
       }
       return { tone: "note", refresh: true, words: "Posted. It is public now; the queue below shows where it lands." };
     }
-    case 422: return { tone: "negative", refresh: false, words: `The garden refused the stone: ${serverWords(body) ?? "it is not a stone the garden takes."}` };
+    case 422: return { tone: "negative", refresh: false, words: `The garden refused the ${kind}: ${serverWords(body) ?? `it is not a ${kind} the garden takes.`}` };
     case 409: return { tone: "negative", refresh: true, words: `The garden takes no letters now: ${serverWords(body) ?? "try again after the next dawn."}` };
     case 429: {
       // The limiter also answers 429 after too many refused letters, or for a new network while its table is full,
@@ -1107,8 +1324,8 @@ export function postAnswer(status: number, body: unknown, headers: { get(name: s
     case 415: return { tone: "negative", refresh: false, words: "The page sent something the garden could not read. Reload the page and try again." };
     case 404: return { tone: "negative", refresh: false, words: "There is no garden by that name here." };
     case 503: return { tone: "negative", refresh: false, words: "The garden is busy; try again in a moment." };
-    case 0: return { tone: "negative", refresh: true, words: `No answer came back, ${UNSURE}` };
-    default: return { tone: "negative", refresh: true, words: `The garden answered ${status}, ${UNSURE}` };
+    case 0: return { tone: "negative", refresh: true, words: `No answer came back, ${unsure(kind)}` };
+    default: return { tone: "negative", refresh: true, words: `The garden answered ${status}, ${unsure(kind)}` };
   }
 }
 
@@ -1117,13 +1334,15 @@ const HAND_UNSURE = "so this page cannot tell whether your hand was counted. The
 
 export interface HandAnswer {
   tone: Tone; words: string; refresh: boolean; in: boolean; food?: { id: string; landsAtStep: number; day: number };
+  /** The meteor this hand called, for a hand on the meteor ask. */
+  meteor?: { id: string; landsAtStep: number; day: number };
   /** When the hand's own period ends (the answer's `food.expiresAt`): the hand may have crossed a dawn on its way. */
   expiresAt?: number;
 }
 
-/** A POST to the food hands route, in words: the same table as a stone's, with a hand's own 201 and 200. */
-export function handAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null): HandAnswer {
-  const block = isObject(body) && isObject(body.food) ? body.food : null;
+/** A POST to the food (or meteor) hands route, in words: the same table as a stone's, with a hand's own 201 and 200. */
+export function handAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null, kind: HandKind = "food"): HandAnswer {
+  const block = isObject(body) && isObject(body[kind]) ? body[kind] as Record<string, unknown> : null;
   const today = view ? periodWords(view) : "today";
   const count = block && typeof block.hands === "number" && typeof block.asks === "number" && block.open === true ? `${fmtSteps(block.hands)} of ${plural(block.asks, "network")} ${block.hands === 1 ? "has" : "have"} asked ${today}.` : null;
   const until = block && isTime(block.expiresAt) ? { expiresAt: block.expiresAt } : {};
@@ -1131,9 +1350,11 @@ export function handAnswer(status: number, body: unknown, headers: { get(name: s
     case 201: {
       const c = isObject(body) && isObject(body.called) ? body.called : null;
       if (c && typeof c.id === "string" && typeof c.landsAtStep === "number" && typeof c.day === "number") {
+        const where = kind === "meteor" && typeof c.x === "number" && typeof c.y === "number" ? ` at (${c.x}, ${c.y})` : "";
+        const record = { id: c.id, landsAtStep: c.landsAtStep, day: c.day };
         return {
-          ...until, tone: "note", refresh: true, in: true, food: { id: c.id, landsAtStep: c.landsAtStep, day: c.day },
-          words: `Yours was the hand that called the food: ${clip(c.id, 24)} is public now, lands at step ${fmtSteps(c.landsAtStep)} (end of day ${c.day}), and counts once a second island replays that day.`,
+          ...until, tone: "note", refresh: true, in: true, ...(kind === "food" ? { food: record } : { meteor: record }),
+          words: `Yours was the hand that called the ${kind}: ${clip(c.id, 24)} is public now, lands${where} at step ${fmtSteps(c.landsAtStep)} (end of day ${c.day}), and counts once a second island replays that day.`,
         };
       }
       return { ...until, tone: "note", refresh: true, in: true, words: `Your hand is in.${count ? ` ${count}` : ""}` };
@@ -1142,7 +1363,7 @@ export function handAnswer(status: number, body: unknown, headers: { get(name: s
       const shared = isObject(block) && block.sharedAddress === true ? " Every visitor shares one address just now, so it may be someone else’s." : "";
       return { ...until, tone: "note", refresh: true, in: true, words: `A hand from your network was already in for ${today}: one hand per network per dawn.${shared}${count ? ` ${count}` : ""}` };
     }
-    case 409: return { tone: "negative", refresh: true, in: false, words: `The food ask is closed: ${serverWords(body) ?? "try again after the next dawn."}` };
+    case 409: return { tone: "negative", refresh: true, in: false, words: `The ${kind} ask is closed: ${serverWords(body) ?? "try again after the next dawn."}` };
     case 422: return { tone: "negative", refresh: false, in: false, words: `The garden refused the hand: ${serverWords(body) ?? "it is not a hand the garden takes."}` };
     case 429: {
       const fromBody = isObject(body) && typeof body.retryAfterMs === "number" && Number.isFinite(body.retryAfterMs) ? body.retryAfterMs : null;
@@ -1189,6 +1410,8 @@ export interface Source {
   viewUrl: string;
   lettersUrl: string;
   handsUrl: string;
+  /** The meteor ask's hands route, beside the food one. */
+  meteorHandsUrl: string;
 }
 
 const GARDEN_NAME = /^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -1219,6 +1442,7 @@ export function resolveSource(search: string, origin: string, dev: boolean): Sou
   return {
     base, coordinator: mock ? "mock" : base || origin, garden, mock, notes,
     viewUrl: `${base}${path}`, lettersUrl: `${base}${path}/letters`, handsUrl: `${base}${path}/food/hands`,
+    meteorHandsUrl: `${base}${path}/meteor/hands`,
   };
 }
 
@@ -1334,9 +1558,23 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   const map = $("stone-map") as unknown as SVGSVGElement;
   const foodRow = $("g-food-row");
   const handSend = $("food-send") as HTMLButtonElement;
+  // The sun letter (docs/garden-sun-2026-10-18.md): a choice of brightness, shown only when the garden takes suns.
+  const sunRow = $("g-sun");
+  const sunForm = $("sun-form") as HTMLFormElement;
+  const sunChoices = $("sun-choices");
+  const sunPreview = $("sun-preview");
+  const sunSend = $("sun-send") as HTMLButtonElement;
+  const sunWhy = $("sun-why");
+  const sunAnswer = $("sun-answer");
+  let sunOffered = "";
   const handWhy = $("food-why");
   const handSaid = $("food-answer");
   const handShared = $("food-shared");
+  const meteorRow = $("g-meteor-row");
+  const meteorSend = $("meteor-send") as HTMLButtonElement;
+  const meteorWhy = $("meteor-why");
+  const meteorSaid = $("meteor-answer");
+  const meteorShared = $("meteor-shared");
   const fieldRow = $("g-field-row");
   const predictRow = $("g-predict-row");
   const predictForm = $("predict-form") as HTMLFormElement;
@@ -1364,6 +1602,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   let handing = false;
   /** This tab's hand (`latchHolds`): in memory only, never in the device's record. */
   let latch: HandLatch | null = null;
+  /** The same for this tab's meteor hand, kept apart: the two asks are independent. */
+  let meteorLatch: HandLatch | null = null;
+  let meteorHanding = false;
   /** View reads started so far, and which one `view` came from (`HandLatch.afterRead`). */
   let reads = 0;
   let viewRead = 0;
@@ -1456,7 +1697,8 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
           chip(c2), " ",
           h("span", { class: "fine" }, `steps ${fmtSteps(d.startStep)} to ${fmtSteps(d.endStep)}; ${when}`),
           d.letters.length ? h("span", { class: "fine" }, `; carries ${d.letters.join(", ")}`) : null,
-          d.food ? h("span", { class: "fine" }, `; carries the food ${d.food}`) : null)));
+          d.food ? h("span", { class: "fine" }, `; carries the food ${d.food}`) : null,
+          d.meteor ? h("span", { class: "fine" }, `; carries the meteor ${d.meteor}`) : null)));
     }
     fill("g-days", v.days.length ? dayList : h("p", {}, "No day is released yet."),
       h("p", { class: "fine" }, v.days.length === 1 ? "The newest day." : `The newest ${v.days.length} days, newest first.`));
@@ -1468,9 +1710,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
         h("span", { class: "garden-letter-id mono" }, l.id),
         h("span", { class: "garden-letter-body" },
           chip(w), w.mine ? h("span", { class: "state measured garden-mine" }, "Yours") : null, " ",
-          h("span", {}, l.kind === "stone"
-            ? `A stone of radius ${l.r} at (${l.x}, ${l.y}), landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}). `
-            : `A letter of a kind ${NEW_WORD} (“${clip(l.kind, 24)}”), landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}). `),
+          h("span", {}, letterBodyWords(l)),
           h("span", { class: "fine" }, w.words)));
     };
     const waiting = h("ul", { class: "garden-letters", id: "g-waiting" }, ...v.letters.waiting.map(letterItem));
@@ -1483,6 +1723,8 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
 
     // Food, in a garden founded with it.
     renderFood(v);
+    // The meteor, likewise.
+    renderMeteor(v);
 
     // Fork and limits.
     const href = checkpointHref(source, v);
@@ -1714,6 +1956,67 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     if (a.refresh) await refresh();
   }
 
+  function renderMeteor(v: GardenView): void {
+    const mw = meteorWords(v, fmt);
+    meteorRow.hidden = mw === null;
+    if (!mw || !v.meteor) return;
+    const meteors = h("ul", { class: "garden-letters", id: "g-meteors" }, ...v.meteor.meteors.map((m) => {
+      const w = letterWords(m, new Set(), v.days);
+      const notice = foodNoticeWords(m, v.now, fmt);
+      return h("li", { "data-meteor": m.id },
+        h("span", { class: "garden-letter-id mono" }, m.id),
+        h("span", { class: "garden-letter-body" }, chip(w), " ",
+          h("span", {}, `A stone of radius ${m.r} at (${m.x}, ${m.y}), called by ${plural(m.hands, "network")}, landing at step ${fmtSteps(m.landsAtStep)} (end of day ${m.day}). `),
+          h("span", { class: "fine" }, w.words),
+          notice ? h("span", { class: "fine" }, ` ${notice}`) : null));
+    }));
+    fill("g-meteor",
+      h("p", { id: "g-meteor-what" }, mw.what),
+      h("p", { class: "garden-headline", id: "g-meteor-count" }, mw.headline),
+      h("p", { id: "g-meteor-time" }, mw.timeLeft),
+      h("p", { class: "garden-preview", id: "g-meteor-landing" }, mw.landing));
+    fill("g-meteor-list",
+      h("h3", {}, "Meteors so far"),
+      v.meteor.meteors.length ? meteors : h("p", { class: "fine" }, "No meteor has been called yet."));
+    fill("g-meteor-why",
+      h("p", { class: "fine", id: "g-meteor-reading" }, mw.reading),
+      h("p", { class: "fine" }, mw.why));
+    updateMeteorHand();
+  }
+
+  function updateMeteorHand(): void {
+    const mw = view ? meteorWords(view, fmt) : null;
+    if (meteorLatch && !latchHolds(meteorLatch, view, viewRead > (meteorLatch.afterRead ?? 0), "meteor")) meteorLatch = null;
+    const mineIn = meteorLatch !== null;
+    meteorSend.disabled = !mw || !mw.open || meteorHanding || mineIn;
+    meteorWhy.textContent = !mw ? "" : !mw.open ? mw.closed ?? "" : meteorHanding ? "Sending…" : mineIn ? `Your hand is in for ${view ? periodWords(view) : "today"}.` : "";
+    meteorShared.textContent = mw?.shared ?? "";
+    meteorShared.hidden = !mw?.shared;
+  }
+
+  async function addMeteorHand(target: GardenView): Promise<void> {
+    if (source.mock) {
+      say(meteorSaid, "This is the example garden from the contract, so nothing was sent.", "pending");
+      return;
+    }
+    meteorHanding = true;
+    updateMeteorHand();
+    let got: Reply;
+    try {
+      got = await requestJson(deps.fetch, source.meteorHandsUrl, {
+        method: "POST", cache: "no-store", headers: { "content-type": "application/json", accept: "application/json" },
+        body: "{}",
+      }, deps.timeoutMs);
+    } finally {
+      meteorHanding = false;
+    }
+    const a = handAnswer(got.status, got.json, got.headers, target, "meteor");
+    if (a.in) meteorLatch = { name: target.name, since: target.now, until: a.expiresAt ?? target.meteor?.expiresAt ?? target.pace.nextDawnAt, afterRead: reads };
+    say(meteorSaid, a.words, a.tone);
+    updateMeteorHand();
+    if (a.refresh) await refresh();
+  }
+
   const SVG = "http://www.w3.org/2000/svg";
   const svg = (tag: string, attrs: Record<string, string | number>) => {
     const el = doc.createElementNS(SVG, tag);
@@ -1728,7 +2031,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     map.style.aspectRatio = `${v.world.width} / ${v.world.height}`;
     const parts: Element[] = [svg("rect", { x: 0, y: 0, width: v.world.width, height: v.world.height, class: "map-world" })];
     for (const l of v.letters.waiting) {
-      if (l.kind !== "stone") continue;
+      if (l.kind !== "stone" || l.x === null || l.y === null || l.r === null) continue;
       parts.push(svg("circle", { cx: l.x + 0.5, cy: l.y + 0.5, r: Math.max(l.r, 2), class: mineSet.has(l.id) ? "map-mine" : "map-waiting" }));
     }
     if (stone) {
@@ -1749,6 +2052,39 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     send.disabled = !landing.open || !check.ok || sending;
     sendWhy.textContent = why;
     drawMap(view, check.ok ? check.body : null);
+    updateSun();
+  }
+
+  /** The chosen sun's percent, or null. */
+  function sunChosen(): number | null {
+    const on = sunChoices.querySelector<HTMLInputElement>("input:checked");
+    return on ? Number(on.value) : null;
+  }
+
+  function updateSun(): void {
+    if (!view) return;
+    const sun = view.sun;
+    sunRow.hidden = !sun || sun.percents.length === 0;
+    if (!sun) return;
+    // The choices are rebuilt only when the garden's percents change, so a choice (and its focus) survives a refresh.
+    const offered = sun.percents.join(",");
+    if (offered !== sunOffered) {
+      const keep = sunChosen();
+      const legend = sunChoices.querySelector("legend");
+      const choices = sun.percents.map((p) => {
+        const input = h("input", { type: "radio", name: "sun-percent", value: String(p) }) as HTMLInputElement;
+        input.checked = keep === p;
+        input.addEventListener("change", updateSun);
+        return h("label", { class: "garden-sun-choice" }, input, ` ${SUN_WORDS[p] ?? `${p}%`} (${p}%)`);
+      });
+      sunChoices.replaceChildren(...(legend ? [legend] : []), ...choices);
+      sunOffered = offered;
+    }
+    const check = sunBody(view, sunChosen());
+    sunPreview.textContent = sunLandingWords(view);
+    const open = sun.nextLanding !== null;
+    sunSend.disabled = !open || !check.ok || sending;
+    sunWhy.textContent = !open ? "" : !check.ok ? check.words : sending ? "Sending…" : "";
   }
 
   function say(el: HTMLElement, words: string, tone: Tone | null = null): void {
@@ -1818,6 +2154,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
       reading = false;
       updateForm();
       updateHand();
+      updateMeteorHand();
     }
     if (readAgain) { readAgain = false; await refresh(); }
   }
@@ -1837,9 +2174,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     keeps = writeVisit(store, key(target), { ...base, mine });
   }
 
-  async function post(stone: StoneBody, target: GardenView): Promise<void> {
+  async function post(stone: LetterBody, target: GardenView, out: HTMLElement = answer): Promise<void> {
     if (source.mock) {
-      say(answer, "This is the example garden from the contract, so nothing was sent.", "pending");
+      say(out, "This is the example garden from the contract, so nothing was sent.", "pending");
       return;
     }
     sending = true;
@@ -1853,9 +2190,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     } finally {
       sending = false;
     }
-    const a = postAnswer(got.status, got.json, got.headers, target);
+    const a = postAnswer(got.status, got.json, got.headers, target, stone.kind);
     if (a.letter) remember(a.letter.id, target);
-    say(answer, a.words, a.tone);
+    say(out, a.words, a.tone);
     updateForm();
     if (a.refresh) await refresh();
   }
@@ -1868,9 +2205,20 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     if (!check.ok) { updateForm(); return; }
     void post(check.body, view);
   });
+  sunForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!view || sending) return;
+    const check = sunBody(view, sunChosen());
+    if (!check.ok || !view.sun?.nextLanding) { updateSun(); return; }
+    void post(check.body, view, sunAnswer);
+  });
   handSend.addEventListener("click", () => {
     if (!view || handing) return;
     void addHand(view);
+  });
+  meteorSend.addEventListener("click", () => {
+    if (!view || meteorHanding) return;
+    void addMeteorHand(view);
   });
   predictForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1889,6 +2237,6 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   });
 
   void refresh();
-  setInterval(() => { if (!doc.hidden && !reading && !sending && !handing) void refresh(); }, deps.pollMs);
+  setInterval(() => { if (!doc.hidden && !reading && !sending && !handing && !meteorHanding) void refresh(); }, deps.pollMs);
   return { refresh };
 }

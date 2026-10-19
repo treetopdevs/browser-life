@@ -225,6 +225,11 @@ export interface SessionFacts {
   /** Feeds that added nutrient / drains that took it out. */
   feeds: number;
   drains: number;
+  /**
+   * Suns set in the log (kind "sun"), present only when there is one: no session file holds a sun yet (`exportRefusal`), so a
+   * file's facts never carry the key, and the Session card shows the count.
+   */
+  suns?: number;
   /** The latest Replay twin check, as the session view holds it. */
   replay: ReplayReading | null;
   /** The world's step when these facts were taken: a replay check that ends before it covers an earlier stretch. */
@@ -311,6 +316,12 @@ export type ToWorker =
   | { type: "lesion"; x: number; y: number; r: number; world?: number }
   /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. `world` as for "lesion". */
   | { type: "feed"; x: number; y: number; r: number; amount: number; world?: number }
+  /**
+   * A sun (@bl/schema's sun.ts, docs/garden-sun-2026-10-18.md): from the world's step its light is `percent` of its own (base,
+   * amplitude and season) for `span` steps, then its own returns. A logged intervention. Refused (`refused` with request "sun")
+   * when the world's light cannot take it or a sun already shines. `world` as for "lesion".
+   */
+  | { type: "sun"; percent: number; span: number; world?: number }
   | { type: "probe"; x: number; y: number }
   /** Breeder mode on or off: stop at each pond boundary and wait for "pick". Turning it off lets the rule choose for a cycle that is waiting. */
   | { type: "breeder"; on: boolean }
@@ -385,6 +396,8 @@ export type FromWorker =
   | PondsMsg
   | PondAwaitMsg
   | PressureMsg
+  /** The sun the world `world` runs under (null: its own light), posted when a world is adopted and whenever its light changes. */
+  | { type: "sun"; world: number; sun: { step: number; percent: number; span: number } | null }
   /** The kept lineage of the lab (`ToWorker` "keep"), posted when a world is adopted and when it changes; `world` is the one it is posted for. */
   | { type: "keep"; world: number; key: string | null }
   | LineageMsg

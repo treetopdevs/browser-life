@@ -17,6 +17,11 @@ import {
   FLUX_COUNT,
   ROLE_WORDS,
   cellCount,
+  sameLight,
+  validateConfig,
+  withLight,
+  worldLight,
+  type LightParams,
   worldH,
   worldW,
   type WorldConfig,
@@ -124,6 +129,11 @@ export class GpuSim {
   };
   private readonly lesionParams: GPUBuffer;
   private readonly statsBuf: GPUBuffer;
+  /** The react pipeline of the world's own light, and those compiled for suns, by light (`setLight`). */
+  private readonly ownReact: GPUComputePipeline;
+  private readonly sunReacts = new Map<string, { pipe: GPUComputePipeline; groups: GPUBindGroup[] }>();
+  private readonly ownReactGroups: GPUBindGroup[];
+  private sun: LightParams | null = null;
   private readonly wgX: number;
   private readonly affX: number;
   private readonly affY: number;
@@ -163,11 +173,72 @@ export class GpuSim {
       affinity: [0, 1].map((p) => bg(pipes.affinity, [c0, g[p], this.U])),
       flow: [0, 1].map((p) => bg(pipes.flow, [c0, g[p], this.U, this.disp])),
       transport: [0, 1].map((p) => bg(pipes.transport, [c0, g[p], this.disp, c1, g[1 - p], this.ledger])),
-      react: [0, 1].map((p) => bg(pipes.react, [c1, g[1 - p], this.U, c0, this.ledger, this.events, this.roles])),
+      react: this.reactGroups(pipes.react),
       tick: bg(pipes.tick, [this.ledger]),
       lesion: [0, 1].map((p) => bg(pipes.lesion, [c0, g[p], this.ledger, this.lesionParams])),
       stats: [0, 1].map((p) => bg(pipes.stats, [c0, g[p], this.statsBuf])),
     };
+    this.ownReact = pipes.react;
+    this.ownReactGroups = this.groups.react;
+  }
+
+  /** The react pass's two bind groups (by genome parity) for `pipe`: its layout is "auto", so they belong to that pipeline. */
+  private reactGroups(pipe: GPUComputePipeline): GPUBindGroup[] {
+    const [c0, c1] = this.cells;
+    const g = this.genome;
+    return [0, 1].map((p) =>
+      this.device.createBindGroup({
+        layout: pipe.getBindGroupLayout(0),
+        entries: [c1, g[1 - p], this.U, c0, this.ledger, this.events, this.roles].map((buffer, binding) => ({ binding, resource: { buffer } })),
+      }),
+    );
+  }
+
+  /** The sun's light while one is set (`setLight`), else null: the world's own light, `cfg`'s. */
+  get activeLight(): LightParams | null {
+    return this.sun ? { ...this.sun } : null;
+  }
+
+  /**
+   * Sets the light the steps encoded after this settles use: a sun's (`sunLight` of @bl/schema's sun.ts), or the world's
+   * own (null). Only the react pass reads light, so only its pipeline changes: one compiled from `cfg` with `light` (the
+   * shaders bake light into constants; shaders.ts builds a shader from any config), cached by light, under a validation
+   * error scope as `create` compiles. `cfg`, `readState().cfg` and every buffer are untouched, so a sun never reaches a
+   * state or a checkpoint. A light that is not a valid config's is refused. The caller has the simulation idle.
+   */
+  async setLight(light: LightParams | null): Promise<void> {
+    if (this.destroyed) throw new Error("GpuSim destroyed");
+    if (light === null || sameLight(light, worldLight(this.cfg))) {
+      this.pipes.react = this.ownReact;
+      this.groups.react = this.ownReactGroups;
+      this.sun = light === null ? null : { ...light };
+      return;
+    }
+    const key = `${light.lightBase},${light.lightAmp},${light.seasonAmp}`;
+    let got = this.sunReacts.get(key);
+    if (!got) {
+      const sunCfg = withLight(this.cfg, light);
+      const errs = validateConfig(sunCfg);
+      if (errs.length) throw new Error(`a sun's light must make a valid config: ${errs.join("; ")}`);
+      this.device.pushErrorScope("validation");
+      let pipe: GPUComputePipeline;
+      try {
+        const module = this.device.createShaderModule({ code: reactShader(sunCfg), label: `react sun ${key}` });
+        const info = await module.getCompilationInfo?.();
+        const cerrs = info?.messages.filter((m) => m.type === "error") ?? [];
+        if (cerrs.length) throw new Error(`react sun ${key}: ${cerrs.map((e) => `${e.lineNum}:${e.linePos} ${e.message}`).join("\n")}`);
+        pipe = await this.device.createComputePipelineAsync({ layout: "auto", compute: { module, entryPoint: "main" }, label: `react sun ${key}` });
+      } finally {
+        const err = await this.device.popErrorScope();
+        if (err) throw new Error(`WebGPU validation: ${err.message}`);
+      }
+      if (this.destroyed) throw new Error("GpuSim destroyed");
+      got = { pipe, groups: this.reactGroups(pipe) };
+      this.sunReacts.set(key, got);
+    }
+    this.pipes.react = got.pipe;
+    this.groups.react = got.groups;
+    this.sun = { ...light };
   }
 
   static async create(device: GPUDevice, state: WorldState): Promise<GpuSim> {

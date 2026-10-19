@@ -79,6 +79,9 @@ import {
   fineGateError,
   gridError,
   parseRunStatus,
+  psNoteOf,
+  reducePsLine,
+  scrubRecordPs,
   runStatusError,
   type ArmsPlan,
   type FineBinding,
@@ -1408,5 +1411,100 @@ describe("slice 34 review pass 3 (Codex)", () => {
     expect(fineGateError({ ...f, twins: twins.map((t) => (t.name === "K" ? { ...t, lesion: null } : t)) }, 8)).toMatch(/K's lesion/);
     expect(fineGateError({ ...f, twins: [] }, 8)).toBe("no twins");
     expect(fineGateError({ ...f, u0: undefined }, 8)).toMatch(/at undefined censuses/);
+  });
+});
+
+describe("ps notes keep pid, %cpu, elapsed and the program only (security review)", () => {
+  const ROW = /^\s*\d+\s+\d+(?:[.,]\d+)?\s+[\d:-]+\s+[\w.+-]+(?: [\w.+-]+)?$/;
+  const listing = [
+    "  PID  %CPU ELAPSED COMMAND",
+    "86223  89.5       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/scratch/prep.json",
+    " 4100   1.0       00:05 /usr/bin/env BL_ADMIN_TOKEN=x deno run -A https://host.example/x.ts?k=v",
+    " 4101   2.0       00:05 deno run -A --allow-net=https://host.example BL_ADMIN_TOKEN=x https://host.example/mod.ts",
+    " 6693   0.0    19:52:03 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js --port 5173",
+    " 5189   0.0  3-00:00:36 /opt/homebrew/bin/zsh -lc PATH=/opt/homebrew/opt/node/bin:$PATH BL_ADMIN_TOKEN=x pnpm vitest run > /tmp/out",
+    "  812  12.5    01:02:03 /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Helpers/Google Chrome Helper (GPU).app/Contents/MacOS/Google Chrome Helper (GPU) --type=gpu-process --user-data-dir=/Users/nicholas/x",
+    " 7000   0.0       00:01 BL_ADMIN_TOKEN=x vite --open https://localhost:5173/?token=x",
+  ].join("\n");
+  const leaks = (out: string) => {
+    for (const bad of ["/", "=", "://", "TOKEN", "BL_ADMIN", "Users", "private", "tmp", "host.example", "?"]) expect(out, `${bad} survived in ${JSON.stringify(out)}`).not.toContain(bad);
+  };
+  it("reducePsLine drops paths, KEY=value pairs and URLs", () => {
+    expect(reducePsLine("86223  89.5       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/p.json")).toBe("86223  89.5       00:00 deno horizon.ts");
+    expect(reducePsLine(" 6693   0.0    19:52:03 node /Users/nicholas/x/node_modules/.bin/../vite/bin/vite.js")).toBe(" 6693   0.0    19:52:03 node vite.js");
+    expect(reducePsLine(" 4100   1.0       00:05 /usr/bin/env BL_ADMIN_TOKEN=x deno run -A https://host.example/x.ts")).toBe(" 4100   1.0       00:05 env");
+    expect(reducePsLine(" 4101   2.0       00:05 deno run -A https://host.example/mod.ts")).toBe(" 4101   2.0       00:05 deno");
+    expect(reducePsLine("  812  12.5    01:02:03 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome Helper (GPU) --type=gpu-process")).toBe("  812  12.5    01:02:03 gpu-helper");
+    expect(reducePsLine(" 7000   0.0       00:01 BL_ADMIN_TOKEN=x vite")).toBe(" 7000   0.0       00:01 unknown");
+    expect(reducePsLine("  PID  %CPU ELAPSED COMMAND")).toBeNull();
+    expect(reducePsLine("")).toBeNull();
+  });
+  it("psNoteOf: the whole listing filtered and reduced, nothing sensitive survives", () => {
+    const out = psNoteOf(listing);
+    leaks(out);
+    const rows = out.split("\n");
+    expect(rows).toHaveLength(7);
+    for (const r of rows) expect(r).toMatch(ROW);
+    expect(rows[0]).toBe("86223  89.5       00:00 deno horizon.ts");
+  });
+  it("parseRunStatus reduces a stage's ps lines the same way", () => {
+    const text = `started 2026-10-18T17:58:34Z\n== pilot 2026-10-18T17:58:34Z\n${listing}\n13:58  up 16 days, load averages: 1.0 2.0 3.0\nexit pilot 0\n`;
+    const st = parseRunStatus(text);
+    expect(st.stages).toHaveLength(1);
+    expect(st.stages[0].ps).toHaveLength(7);
+    for (const r of st.stages[0].ps) expect(r).toMatch(ROW);
+    leaks(st.stages[0].ps.join("\n"));
+    expect(JSON.stringify(st.other ?? [])).not.toMatch(/TOKEN|Users|:\/\//);
+  });
+  it("only the entrypoint is named, and reducing twice changes nothing (Codex review)", () => {
+    expect(reducePsLine("1 0.0 00:01 deno run https://host/app.ts --token SECRET.ts")).toBe("1 0.0 00:01 deno");
+    expect(reducePsLine("1 0.0 00:01 deno run -A tools/x.ts --token SECRET.ts")).toBe("1 0.0 00:01 deno x.ts");
+    expect(reducePsLine("1 0.0 00:01 node --require /Users/nicholas/s BL_ADMIN_TOKEN=x.js")).toBe("1 0.0 00:01 node");
+    expect(reducePsLine("1 0.0 00:01 node --eval=setInterval(()=>{},1000) -- --token SECRET-vite.js")).toBe("1 0.0 00:01 node");
+    expect(reducePsLine("1 0.0 00:01 node -e 0 SECRET-vite.js")).toBe("1 0.0 00:01 node");
+    expect(reducePsLine("1 0.0 00:01 node - --token SECRET-vite.js")).toBe("1 0.0 00:01 node");
+    expect(reducePsLine("1 0.0 00:01 node ./-vite.js")).toBe("1 0.0 00:01 node");
+    expect(reducePsLine("1 0.0 00:01 node --enable-source-maps tools/vite.js")).toBe("1 0.0 00:01 node vite.js");
+    for (const l of psNoteOf(listing).split("\n")) expect(reducePsLine(l)).toBe(l);
+  });
+  it("parseRunStatus: process rows outside a stage, or saying load averages, never survive whole (Codex review)", () => {
+    const d = "c".repeat(64);
+    const text = [
+      `note-sha256-before-pilot ${d}`,
+      "9 0.0 00:01 deno run /private/app.ts KEY=secret",
+      "== pilot 2026-10-18T17:58:34Z",
+      "10 0.0 00:01 deno run app.ts --label load averages: --token SECRET",
+      "13:58  up 16 days, load averages: 1.0 2.0 3.0",
+      "exit pilot 0",
+      "11 0.0 00:01 node /Users/nicholas/x/vite.js BL_ADMIN_TOKEN=x",
+      "something odd /Users/nicholas/secret BL_ADMIN_TOKEN=x https://host.example/?k=v plain",
+    ].join("\n");
+    const st = parseRunStatus(text);
+    expect(st.stages[0].ps).toEqual(["10 0.0 00:01 deno app.ts"]);
+    expect(st.stages[0].uptime).toBe("13:58  up 16 days, load averages: 1.0 2.0 3.0");
+    expect(st.other).toEqual(["9 0.0 00:01 deno app.ts", "11 0.0 00:01 node vite.js", "something odd [redacted] [redacted] [redacted] plain"]);
+    expect(JSON.stringify(st)).not.toMatch(/SECRET|secret|TOKEN|Users|private|:\/\//);
+  });
+  it("scrubRecordPs reduces both ps shapes of a record, and only them", () => {
+    const rec = {
+      host: "h",
+      stages: [{ stage: "g", uptime: "u", ps: " 1 0.0 00:01 deno run -A /Users/nicholas/t/horizon.ts --prep /private/tmp/p\n 2 0.0 00:01 /bin/zsh -lc BL_ADMIN_TOKEN=x pnpm" }],
+      runStatus: { file: "f", stages: [{ stage: "pilot", ps: [" 3 1.0 00:02 node /Users/nicholas/vite.js https://x/?t=1"] }], other: ["a /Users/x b"] },
+    };
+    expect(scrubRecordPs(structuredClone(rec))).toEqual({
+      host: "h",
+      stages: [{ stage: "g", uptime: "u", ps: " 1 0.0 00:01 deno horizon.ts\n 2 0.0 00:01 zsh" }],
+      runStatus: { file: "f", stages: [{ stage: "pilot", ps: [" 3 1.0 00:02 node vite.js"] }], other: ["a [redacted] b"] },
+    });
+  });
+  it("the committed slice-34 record carries only reduced ps lines", () => {
+    const rec = JSON.parse(readFileSync(new URL("../../experiments/garden/stone-null-2026-10-18.json", import.meta.url), "utf8"));
+    const lines = [
+      ...(rec.stages as { ps?: string }[]).flatMap((s) => (s.ps ? s.ps.split("\n") : [])),
+      ...(rec.runStatus.stages as { ps: string[] }[]).flatMap((s) => s.ps),
+    ];
+    expect(lines.length).toBeGreaterThan(0);
+    for (const l of lines) expect(l).toMatch(ROW);
+    expect(JSON.stringify(scrubRecordPs(structuredClone(rec)))).toBe(JSON.stringify(rec));
   });
 });

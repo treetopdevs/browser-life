@@ -511,7 +511,7 @@ describe("the island: ponds-v2 and no branches", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("advertises ponds-v1 and ponds-v2 (and, since scheduled interventions and the breeder were distributed, interventions-v1 and breed-v1)", () => {
-    expect([...ISLAND_CAPABILITIES]).toEqual(["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"]);
+    expect([...ISLAND_CAPABILITIES]).toEqual(["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"]);
   });
 
   it("specRefusal: null for an ordinary spec (hunt arms included), a message for a branch spec", () => {

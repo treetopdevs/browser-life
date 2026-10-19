@@ -657,6 +657,29 @@ try {
     check("...and it is not the clean run of the same spec", stitchedMan.summary?.finalHash !== undefined && stitchedMan.summary.finalHash !== cleanMan.summary?.finalHash, `${stitchedMan.summary?.finalHash} vs clean ${cleanMan.summary?.finalHash}`);
   }
 
+  // A scheduled sun (docs/garden-sun-2026-10-18.md): a schedule holding one goes only to an island that advertises "sun-v1",
+  // never to one with "interventions-v1" alone. The sun at step 5 shines for 10 steps, across segments #1 and #2, so segment
+  // #2 inherits it from #1's checkpoint and checks it against the schedule; a second island verifies every segment.
+  {
+    const sunnedSpec = { ...spec, experiment: "it-sunned", interventions: [{ step: 5, kind: "sun", percent: 50, span: 10 }] };
+    const r150 = await fetch(`${base}/api/experiments`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...sunnedSpec, experiment: "it-bright", interventions: [{ step: 5, kind: "sun", percent: 150, span: 10 }] }) });
+    const t150 = await r150.text();
+    check("a sun the preset's light cannot take is refused at creation with 422", r150.status === 422 && /cannot take a sun of 150%/.test(t150), `${r150.status} ${t150.slice(0, 200)}`);
+    const created = await call<{ segments: number }>("/api/experiments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sunnedSpec) });
+    check("creates the sunned experiment (4 segments)", created.segments === 4, JSON.stringify(created));
+    const idleOld = await noCapNext({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"] });
+    check("an island with interventions-v1 but not sun-v1 is idle while sunned run tasks wait", idleOld.kind === "idle", JSON.stringify(idleOld.segment ?? idleOld));
+    const ran = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+    check("a sun-v1 island (real runIsland) runs all 4 sunned segments", ran === 4, String(ran));
+    const idleOldVerify = await noCapNext({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"] });
+    check("...and the old island is idle while their verify tasks wait", idleOldVerify.kind === "idle", JSON.stringify(idleOldVerify.segment ?? idleOldVerify));
+    const verified = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+    check("a second sun-v1 island verifies all 4", verified === 4, String(verified));
+    const st = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+    const run = st.runs.find((r) => r.run.startsWith("it-sunned/"));
+    check("the sunned run is fully verified across the span's segment boundaries, with no divergence", run?.segments === 4 && run?.verified === 4 && run?.diverged === 0 && run?.blocked === 0, JSON.stringify(run));
+  }
+
   // A schedule no creation check can refuse and no island can apply (Coordinator.Queue's
   // moduledoc): a step-0 feed of 4096 per cell over r=100 (about 31,400 cells of spots) would
   // move about 1.3e8 quanta, past MATTER_MAX (2^26), and is applied on the CPU before any GPU

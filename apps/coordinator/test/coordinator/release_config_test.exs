@@ -86,6 +86,17 @@ defmodule Coordinator.ReleaseConfigTest do
     refute File.read!("config/runtime.exs") =~ "garden_food"
   end
 
+  # Slice 40 (docs/garden-meteor-2026-10-18.md, section 4): the meteor defaults
+  # a garden founded with meteor copies into its record, and nothing at runtime
+  # overrides them.
+  test "prod meteor defaults: 5 networks, one per 7 days, radius 64" do
+    coordinator = prod_config()[:coordinator]
+    assert coordinator[:garden_meteor_asks] == 5
+    assert coordinator[:garden_meteor_every_days] == 7
+    assert coordinator[:garden_meteor_radius] == 64
+    refute File.read!("config/runtime.exs") =~ "garden_meteor"
+  end
+
   # D-17 and D-24: until the proxy passes client addresses every visitor is one
   # address, and the food block says so; BL_TRUST_FORWARDED_FOR=1 (set with the
   # Caddy fix) clears it.

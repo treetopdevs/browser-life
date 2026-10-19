@@ -35,6 +35,11 @@ defmodule Coordinator.ConfigCheck do
   founded with food. `Coordinator.Queue`'s `garden_spec` reads the same
   ranges from `food_range/1` for each garden founded with food, where a
   keeper's own `foodAsks` and `foodEveryDays` replace the first two.
+
+  The garden meteor keys (docs/garden-meteor-2026-10-18.md) are ranged the
+  same way (`range/1`: `garden_meteor_asks` 2..1000, `garden_meteor_every_days`
+  1..365, `garden_meteor_radius` 33..255), and `garden_spec` reads them from
+  `range/1` for each garden founded with meteor.
   """
 
   # The one table of the garden food ranges (see `food_range/1`).
@@ -44,7 +49,15 @@ defmodule Coordinator.ConfigCheck do
     garden_food_amount: 1..64,
     garden_food_radius: 1..32
   }
-  @ranged Map.keys(@food_ranges)
+  # The garden meteor ranges (see `range/1`).
+  @meteor_ranges %{
+    garden_meteor_asks: 2..1000,
+    garden_meteor_every_days: 1..365,
+    garden_meteor_radius: 33..255
+  }
+  @ranges Map.merge(@food_ranges, @meteor_ranges)
+  @food_ranged Map.keys(@food_ranges)
+  @ranged Map.keys(@ranges)
 
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
@@ -67,7 +80,15 @@ defmodule Coordinator.ConfigCheck do
   `foodAsks`, `foodEveryDays`, amount and radius against it too.
   """
   @spec food_range(atom) :: Range.t()
-  def food_range(key) when key in @ranged, do: Map.fetch!(@food_ranges, key)
+  def food_range(key) when key in @food_ranged, do: range(key)
+
+  @doc """
+  The allowed range of a ranged garden key, food's (`food_range/1`) or the
+  meteor's (`garden_meteor_asks`, `garden_meteor_every_days`,
+  `garden_meteor_radius`), as checked at boot and by `garden_spec`.
+  """
+  @spec range(atom) :: Range.t()
+  def range(key) when key in @ranged, do: Map.fetch!(@ranges, key)
 
   @doc """
   The errors in `env` (a keyword list or map of `:coordinator` config), one
@@ -104,7 +125,7 @@ defmodule Coordinator.ConfigCheck do
   defp shape(key) when key in @budget, do: :budget
   defp shape(key) when key in @non_negative, do: :non_negative
   defp shape(key) when key in @any_integer, do: :any_integer
-  defp shape(key) when key in @ranged, do: {:range, food_range(key)}
+  defp shape(key) when key in @ranged, do: {:range, range(key)}
 
   # `is_integer/1` is false for booleans, floats, strings and everything else.
   defp allowed?(:positive, v), do: is_integer(v) and v > 0

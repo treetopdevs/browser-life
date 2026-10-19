@@ -1,7 +1,7 @@
 // Cadence and observer integrity for one lab world. Callers serialize operations;
 // the worker's generation predicate invalidates outstanding work on replacement.
 import {
-  cloneState, MAX_STEP, POND_TERMS, pondDonors, pondPickError, pondScoreTerms, pondTermValues, stateHash,
+  cloneState, MAX_STEP, POND_TERMS, SUN_SPAN_MAX, sunError, sunLight, type LightParams, pondDonors, pondPickError, pondScoreTerms, pondTermValues, stateHash,
   type FeedResult, type Intervention, type PondScore, type PondTerm, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
@@ -39,7 +39,21 @@ export interface CensusFamilies {
 }
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
-export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy" | "lesion" | "feed">;
+export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy" | "lesion" | "feed"> &
+  /** Sets the light (a sun's, or null for the world's own; `GpuSim.setLight`). A simulation without it takes no sun. */
+  Partial<Pick<GpuSim, "setLight">>;
+
+/** A sun as the observer carries it (`ObserverState.sun`): the light is the sun's for the steps step .. step + span - 1. */
+export type SunSpan = { step: number; percent: number; span: number };
+
+/** Where a traversal keeps the sun of the simulation it walks: the live world's is its observer's, a twin's its own. */
+interface SunHold {
+  get(): SunSpan | null;
+  set(sun: SunSpan | null): void;
+}
+
+/** Raised when a sun cannot be set: a world that cannot take it, one already under a sun, a bad span. A refusal: nothing changed. */
+export class SunRefusedError extends Error {}
 interface ExecutionOptions {
   observer?: ObserverState;
   /** The state the simulation was built from; required for a pond world, whose cycles check against it. */
@@ -81,6 +95,8 @@ interface ExecutionOptions {
    * (its log, and for a feed its conservation baselines, by `result`). A lesion or a pick has no result.
    */
   onReplayed?: (iv: Intervention, result: FeedResult | null) => void;
+  /** Display only: the live world's light changed (a sun began in a replay, or one ended), to `light` (null: the world's own). */
+  onLight?: (light: LightParams | null) => void;
 }
 
 /**
@@ -178,6 +194,17 @@ export class LabExecution {
   /** The flux counters and step of the last census observed (the start state's before the first): the series record's rates. Null without a start state. */
   private prevFlux: bigint[] | null;
   private prevStep: number;
+  /** Whether the live simulation runs under the observer's sun yet (`installSun`; the traversal installs it if the host did not). */
+  private sunInstalled: boolean;
+  /** The live world's sun: its observer's. */
+  private readonly liveSun: SunHold = {
+    get: () => this.obs.sun ?? null,
+    set: (sun) => {
+      if (sun) this.obs.sun = { ...sun };
+      else delete this.obs.sun;
+      this.display(() => this.options.onLight?.(sun ? sunLight(this.sim.cfg, sun.percent) : null));
+    },
+  };
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
     const huntError = huntArmError(sim.cfg);
@@ -206,6 +233,15 @@ export class LabExecution {
     this.ponds = options.start ? pondContext(options.start) : null;
     if (pondPeriod !== undefined && !this.ponds) throw new Error("a pond world needs its start state for the pond cycle's conservation checks");
     this.obs = restoreObservers(options.observer, settings, sim.cfg);
+    // A checkpoint taken during a sun: its light governs the steps from here to the sun's end (installed before the first).
+    const sun = this.obs.sun;
+    if (sun) {
+      if (!(sun.step <= sim.step && sim.step < sun.step + sun.span)) throw new Error(`the observer's sun (from t=${sun.step} for ${sun.span} steps) is not active at t=${sim.step}`);
+      const bad = sunError(sim.cfg, sun.percent);
+      if (bad) throw new Error(`the observer's sun: ${bad}`);
+      if (!sim.setLight) throw new Error("this world was saved during a sun, and this simulation cannot change its light");
+    }
+    this.sunInstalled = !sun;
     this.cursor = { observed: sim.step };
     this.edges = options.lineage?.edges ?? new MutationEdges();
     this.droppedEvents = options.lineage?.dropped ?? 0;
@@ -225,6 +261,64 @@ export class LabExecution {
 
   /** Net nutrient this history's logged feeds have added and their number (ObserverState.fed; zeros when never fed). */
   get fed(): { matter: number; feeds: number } { return this.obs.fed ?? { matter: 0, feeds: 0 }; }
+
+  /** The sun the live world runs under, or null (the world's own light). */
+  get sun(): SunSpan | null {
+    const s = this.obs.sun;
+    return s ? { ...s } : null;
+  }
+
+  /** The light the live world uses now, or null for the world's own: the Light view draws it. */
+  get light(): LightParams | null {
+    const s = this.obs.sun;
+    return s ? sunLight(this.sim.cfg, s.percent) : null;
+  }
+
+  /** Puts the live simulation under the observer's sun, if it has one (a world loaded mid-span). Idempotent. */
+  async installSun() {
+    this.check();
+    if (this.sunInstalled) return;
+    const sun = this.obs.sun;
+    if (sun) await this.sim.setLight!(sunLight(this.sim.cfg, sun.percent));
+    this.check();
+    this.sunInstalled = true;
+  }
+
+  /**
+   * Why a sun of `percent` for `span` steps cannot be set on the live world now, or null: a simulation that cannot change its
+   * light, a world whose light cannot take it (`sunError`), one already under a sun, a span outside 1..2^24 or past the step limit.
+   */
+  sunRefusal(percent: number, span: number): string | null {
+    if (!this.sim.setLight) return "This simulation cannot change its light.";
+    const bad = sunError(this.sim.cfg, percent);
+    if (bad) return `This world’s light cannot take that sun: ${bad.replace(/^this world's light cannot take a sun of \d+%: /, "")}.`;
+    const cur = this.obs.sun;
+    if (cur) return `A sun is already shining (${cur.percent}% from t=${cur.step}); the world’s own light returns at step ${cur.step + cur.span}.`;
+    if (!Number.isSafeInteger(span) || span < 1 || span > SUN_SPAN_MAX) return `A sun lasts from 1 to ${SUN_SPAN_MAX} steps.`;
+    if (this.sim.step + span > MAX_STEP) return `A sun of ${span} steps would end past the step limit.`;
+    return null;
+  }
+
+  /**
+   * Sets a sun on the live world from its step: `percent` of the world's light for `span` steps (@bl/schema's sun.ts). Throws
+   * `SunRefusedError` (`sunRefusal`, or a cycle waiting for donors) with nothing changed but a sun that ends at this step
+   * setting first. Returns the entry the host logs; the
+   * observer carries the sun until its end, where the traversal restores the world's own light.
+   */
+  async applySun(percent: number, span: number): Promise<Extract<Intervention, { kind: "sun" }>> {
+    this.check();
+    if (this.awaitingPond) throw new SunRefusedError(this.waitingMessage("set a sun"));
+    // A sun that ends at this very step has gone: a new one may start here (back to back), as in the runner.
+    await this.installSun();
+    await this.sundown(this.sim, this.liveSun);
+    const why = this.sunRefusal(percent, span);
+    if (why) throw new SunRefusedError(why);
+    const step = this.sim.step;
+    await this.sim.setLight!(sunLight(this.sim.cfg, percent));
+    this.check();
+    this.liveSun.set({ step, percent, span });
+    return { step, kind: "sun", percent, span };
+  }
 
   /** Books one feed of `matter` net quanta into the observer state, which the next checkpoint carries. */
   recordFeed(matter: number) {
@@ -389,6 +483,8 @@ export class LabExecution {
       const ponds = await this.settle(waiting.step, donors);
       this.awaitingPond = null;
       if (ponds) this.display(() => this.options.onPondCycle?.(ponds, waiting.step));
+      // The walk stopped at this boundary before a sun ending here could set: it sets now, after the cycle, as it would have.
+      await this.sundown(this.sim, this.liveSun);
     } catch (e) {
       this.fail(e);
       throw e;
@@ -450,15 +546,22 @@ export class LabExecution {
     const twinReplay = this.replay.slice();
     // And is governed by the same pressures: its own copy, since consuming the queue's pressures must not touch the live list.
     const twinPressures = this.pressures.slice();
+    // And under the same sun, its own copy.
+    let twinSunNow = this.sun;
+    const twinSun: SunHold = { get: () => twinSunNow, set: (sun) => { twinSunNow = sun; } };
     const twin = await createTwin(cloneState(start));
     try {
       this.check();
+      if (twinSunNow) {
+        if (!twin.setLight) throw new Error("the replay twin cannot change its light, and this world is under a sun");
+        await twin.setLight(sunLight(twin.cfg, twinSunNow.percent));
+      }
       await this.advanceLive(start.step + steps);
       await this.walk(twin, twinCursor, start.step + steps, async (step, picks) => {
         await this.boundaryAt(twin, step, picks, twinPressures);
         this.check();
         return false;
-      }, twinReplay, undefined, twinPressures);
+      }, twinReplay, undefined, twinPressures, twinSun);
       const [a, b] = await Promise.all([this.sim.readState(), twin.readState()]);
       this.check();
       return { from: start.step, steps, liveHash: stateHash(a), twinHash: stateHash(b) };
@@ -539,6 +642,7 @@ export class LabExecution {
   private async advanceLive(target: number) {
     this.check();
     try {
+      await this.installSun();
       await this.walk(this.sim, this.cursor, target, async (step, picks) => {
         const ledger = await this.sim.drainLedger();
         this.check();
@@ -622,8 +726,33 @@ export class LabExecution {
     return { ...boundary, state: cells.state ?? boundary.state, births: cells.births };
   }
 
-  /** One logged lesion or feed re-applied to `sim`; a feed must move exactly what the log says it moved. */
-  private async reapply(sim: LabSimulation, iv: Exclude<Intervention, { kind: "pick" | "pressure" }>): Promise<FeedResult | null> {
+  /**
+   * The end of the sun `sun` holds, when `sim` stands at it: the world's own light returns. Called by the walk after its step's
+   * census and boundary, and after a pond cycle that waited for donors there (`resolvePond`), whose walk stopped before it.
+   * Returns whether a sun ended.
+   */
+  private async sundown(sim: LabSimulation, sun: SunHold): Promise<boolean> {
+    const lit = sun.get();
+    if (!lit || lit.step + lit.span !== sim.step) return false;
+    await sim.setLight!(null);
+    this.check();
+    sun.set(null);
+    return true;
+  }
+
+  /** One logged lesion, feed or sun re-applied to `sim`; a feed must move exactly what the log says it moved. */
+  private async reapply(sim: LabSimulation, iv: Exclude<Intervention, { kind: "pick" | "pressure" }>, sun: SunHold): Promise<FeedResult | null> {
+    if (iv.kind === "sun") {
+      const cur = sun.get();
+      if (cur) throw new Error(`replayed sun at t=${iv.step} starts while the sun from t=${cur.step} still shines (until t=${cur.step + cur.span}): this is not the observed history`);
+      const bad = sunError(sim.cfg, iv.percent);
+      if (bad) throw new Error(`replayed sun at t=${iv.step}: ${bad}`);
+      if (!sim.setLight) throw new Error(`replayed sun at t=${iv.step}: this simulation cannot change its light`);
+      await sim.setLight(sunLight(sim.cfg, iv.percent));
+      this.check();
+      sun.set({ step: iv.step, percent: iv.percent, span: iv.span });
+      return null;
+    }
     if (iv.kind === "lesion") {
       sim.lesion(iv.x, iv.y, iv.r);
       return null;
@@ -648,6 +777,7 @@ export class LabExecution {
   private async walk(
     sim: LabSimulation, cursor: { observed: number }, target: number, observe: (step: number, picks?: readonly number[]) => Promise<boolean>,
     replay: Intervention[] = [], applied?: (iv: Intervention, result: FeedResult | null) => void, pressures: PressureEntry[] = this.pressures,
+    sun: SunHold = this.liveSun,
   ) {
     const period = sim.cfg.pondPeriod;
     const take = (iv: Extract<Intervention, { kind: "pressure" }>) => {
@@ -672,6 +802,11 @@ export class LabExecution {
         if (stop) return;
         continue;
       }
+      // A sun's end: after its step's census and boundary, before anything logged at that step (as the runner orders it), so a
+      // checkpoint there carries no sun and a sun logged there starts after this one has gone.
+      if (await this.sundown(sim, sun)) continue;
+      const lit = sun.get();
+      if (lit && lit.step + lit.span < sim.step) throw new Error(`the sun from t=${lit.step} should have ended at t=${lit.step + lit.span}, and the world is at t=${sim.step}`);
       const due = replay[0];
       if (due && due.step <= sim.step) {
         if (due.step < sim.step) throw new Error(`replay passed a logged ${due.kind} at t=${due.step}: this is not the observed history`);
@@ -681,14 +816,15 @@ export class LabExecution {
           take(due);
           continue;
         }
-        const result = await this.reapply(sim, due);
+        const result = await this.reapply(sim, due, sun);
         // Removed only once applied: a failure leaves it queued and the world marked as failed.
         replay.shift();
         applied?.(due, result);
         continue;
       }
       if (sim.step >= target) return;
-      let n = Math.min(target, boundary, due ? due.step : Infinity) - sim.step;
+      const lit2 = sun.get();
+      let n = Math.min(target, boundary, due ? due.step : Infinity, lit2 ? lit2.step + lit2.span : Infinity) - sim.step;
       if (n <= 0) throw new Error("simulation passed an unobserved census");
       if (sim.step + n > MAX_STEP) throw new StepLimitError(`step limit ${MAX_STEP} reached`);
       while (n > 0) {
