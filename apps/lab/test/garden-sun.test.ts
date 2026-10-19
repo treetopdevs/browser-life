@@ -18,7 +18,7 @@ const sunLetter = (v: Record<string, any>) => ({ ...v.letters.waiting[3], id: "l
 describe("the sun letter on the garden page", () => {
   it("reads a view holding a sun letter (x, y, r null) and its sun block, and an older view without either", () => {
     const v = view((w) => w.letters.waiting.push(sunLetter(w)));
-    expect(v.sun).toEqual({ percents: [50, 75], span: 131072, nextLanding: { day: 4, step: 655360 } });
+    expect(v.sun).toEqual({ enabled: true, percents: [50, 75], span: 131072, nextLanding: { day: 4, step: 655360 } });
     expect(v.letters.waiting.at(-1)).toMatchObject({ kind: "sun", x: null, percent: 75 });
     expect(view((w) => { delete w.sun; for (const l of [...w.letters.waiting, ...w.letters.recent]) { delete l.percent; delete l.span; } }).sun).toBeUndefined();
     const bad = copy();

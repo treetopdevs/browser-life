@@ -1762,10 +1762,11 @@ defmodule Coordinator.GardenTest do
       refute Map.has_key?(g, :food) or Map.has_key?(g, :foods) or Map.has_key?(g, :next_food)
       refute Garden.food?(g)
 
+      # `sun` is the founding sun switch (the sun note's amendment of 2026-10-18, slice 41), written on every record.
       assert Enum.sort(Map.keys(g)) ==
                Enum.sort(
                  ~w(name created_at preset_id seed steps_per_day days_total letters_per_day
-                 queue_max dawn_period_ms dawn_offset_ms width height founding letters next_letter days)a
+                 queue_max dawn_period_ms dawn_offset_ms width height sun founding letters next_letter days)a
                )
 
       segs = fresh(g)
