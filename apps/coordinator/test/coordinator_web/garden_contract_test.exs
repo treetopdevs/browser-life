@@ -438,10 +438,13 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     # Even light (40 + 160) takes a half, three quarters and a quarter more; the second day is the next a sun can land on.
     assert %{
+             "enabled" => true,
              "percents" => [50, 75, 125],
              "span" => @d,
              "nextLanding" => %{"day" => 1, "step" => 40}
            } = got["sun"]
+
+    assert fixture["sun"]["enabled"] == true
 
     compare("$.letters", got["letters"], fixture["letters"])
     check_enums(got)
@@ -465,6 +468,33 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     assert get(conn, "/api/public/garden") |> json_response(200) |> get_in(["sun", "nextLanding"]) ==
              nil
+  end
+
+  test "a garden founded with sun off: the sun block has the fixture's keys, off", %{conn: conn} do
+    {:ok, _} =
+      Queue.create_garden(%{
+        "name" => "commons",
+        "presetId" => "spots",
+        "seed" => 1,
+        "founding" => [%{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 1, "r" => 2}],
+        "stepsPerDay" => @d,
+        "censusEvery" => 10,
+        "days" => 4,
+        "sun" => false
+      })
+
+    got = conn |> get("/api/public/garden") |> json_response(200)
+    fixture = @fixture |> File.read!() |> Jason.decode!()
+    assert Enum.sort(Map.keys(got["sun"])) == Enum.sort(Map.keys(fixture["sun"]))
+
+    assert got["sun"] == %{
+             "enabled" => false,
+             "percents" => [],
+             "span" => @d,
+             "nextLanding" => nil
+           }
+
+    check_enums(got)
   end
 
   test "the same shape on a garden nothing has happened to", %{conn: conn} do
@@ -513,6 +543,9 @@ defmodule CoordinatorWeb.GardenContractTest do
            } = got["meteor"]
 
     assert hd(got["days"])["meteor"] == nil
+
+    # Founded with sun letters by default: the sun block on.
+    assert %{"enabled" => true} = got["sun"]
 
     assert [%{"day" => 0, "status" => "waiting"}] = got["days"]
     assert Enum.sort(Map.keys(hd(got["days"]))) == Enum.sort(Map.keys(hd(fixture["days"])))

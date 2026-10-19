@@ -1037,6 +1037,9 @@ test("sun form: posts {kind: \"sun\", percent} and the letter says the day it sh
   await expect(letter).toContainText("Yours");
   // The map draws stones only: a sun has no place.
   await expect(page.locator("#stone-map circle.map-mine")).toHaveCount(0);
+  // The letters paragraph is true of a sun too (no longer "a place and a size" for every letter).
+  await expect(page.locator("#g-letters")).toContainText("A stone carries only its place and size, a sun only its brightness, and a hand for food or a meteor carries nothing. None of them names who sent it.");
+  await expect(page.locator("#g-letters")).not.toContainText("a place and a size");
 });
 
 test("sun form: hidden for a garden that takes no sun, or a coordinator from before the sun", async ({ page }) => {
@@ -1049,4 +1052,30 @@ test("sun form: hidden for a garden that takes no sun, or a coordinator from bef
   await page.reload();
   await expect(page.locator("#stone-send")).toBeEnabled();
   await expect(page.locator("#g-sun")).toBeHidden();
+  // A garden founded with suns off (the sun note's amendment of 2026-10-18): hidden whether or not percents are emptied.
+  for (const percents of [[50, 75], []]) {
+    body = fixture((v) => { v.sun.enabled = false; v.sun.percents = percents; v.sun.nextLanding = percents.length ? v.sun.nextLanding : null; });
+    await page.reload();
+    await expect(page.locator("#stone-send")).toBeEnabled();
+    await expect(page.locator("#g-sun")).toBeHidden();
+  }
+  // A coordinator from before the switch has no enabled key: the form is offered, as before.
+  body = fixture((v) => { delete v.sun.enabled; });
+  await page.reload();
+  await expect(page.locator("#g-sun")).toBeVisible();
+});
+
+test("sun form: a live refresh that brings enabled false hides the form, and the letters paragraph drops the sun", async ({ page }) => {
+  await page.clock.install({ time: FIXTURE.now });
+  let body = fixture();
+  const counter = await serve(page, () => body);
+  await page.goto("/garden/");
+  await expect(page.locator("#g-sun")).toBeVisible();
+  body = fixture((v) => { v.sun.enabled = false; v.sun.percents = []; v.sun.nextLanding = null; v.food.enabled = false; v.now += 60_000; });
+  const before = counter.gets;
+  await page.clock.runFor(60_000);
+  await expect.poll(() => counter.gets).toBeGreaterThan(before);
+  await expect(page.locator("#g-sun")).toBeHidden();
+  await expect(page.locator("#stone-send")).toBeEnabled();
+  await expect(page.locator("#g-letters")).toContainText("A stone carries only its place and size, and a hand for a meteor carries nothing. None of them names who sent it.");
 });

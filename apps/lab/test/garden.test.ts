@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MATTER_MAX, PRESETS, cellCount, defaultConfig, initWorld, maxLesionRadius, totalsOf, worldH, worldW } from "@bl/schema";
 import { METEOR_READ, discCells, meteorClosedWords, meteorReadingWords, meteorWords } from "../garden/garden.ts";
+import { carriesWords, sunBody, sunLandingWords, sunOffered } from "../garden/garden.ts";
 import gardenHtml from "../garden/index.html?raw";
 import sitemap from "../public/sitemap.xml?raw";
 
@@ -1187,5 +1188,48 @@ describe("dawn predictions (docs/garden-predictions-2026-10-18.md)", () => {
     expect(fieldTally(v)).toEqual({ days: 1, rest: 0, top: 1, none: 0 });
     expect(tallyWords(v)).toBe("Of the 1 listed day with lines counted, the rest held the field on 0, one of the day before’s three biggest lines on 1.");
     expect(tallyWords(view((x) => { for (const d of x.days) d.leaders = null; }))).toBe("No listed day has its lines counted yet, so there is no tally.");
+  });
+});
+
+describe("the sun switch (the sun note's amendment of 2026-10-18, slice 41)", () => {
+  it("offers the sun form only when the garden takes suns", () => {
+    expect(view().sun?.enabled).toBe(true);
+    expect(sunOffered(view())).toBe(true);
+    // Founded with suns off: the coordinator empties percents, but the page does not rely on it.
+    expect(sunOffered(view((v) => { v.sun.enabled = false; v.sun.percents = []; v.sun.nextLanding = null; }))).toBe(false);
+    expect(sunOffered(view((v) => { v.sun.enabled = false; }))).toBe(false);
+    // A light that takes no sun, and a coordinator from before the sun.
+    expect(sunOffered(view((v) => { v.sun.percents = []; }))).toBe(false);
+    expect(sunOffered(view((v) => { delete v.sun; }))).toBe(false);
+    // A coordinator from before the switch has no enabled: absent means on.
+    expect(sunOffered(view((v) => { delete v.sun.enabled; }))).toBe(true);
+  });
+
+  it("checks enabled as a boolean when it is there", () => {
+    const bad = copy();
+    bad.sun.enabled = "yes";
+    expect(parseGarden(bad)).toEqual({ ok: false, reason: "sun.enabled: expected true or false" });
+  });
+
+  it("says the garden takes no sun letters when suns are off", () => {
+    const off = view((v) => { v.sun.enabled = false; });
+    expect(sunBody(off, 50)).toEqual({ ok: false, words: "This garden takes no sun letters." });
+    expect(sunLandingWords(off)).toBe("This garden takes no sun letters.");
+  });
+});
+
+describe("what a letter carries, in words (the sun note's amendment of 2026-10-18, review fixes)", () => {
+  const sun = (v: Record<string, any>) => ({ ...v.letters.waiting[0], id: "ltr-99", kind: "sun", x: null, y: null, r: null, percent: 50, span: v.pace.stepsPerDay });
+  const off = (v: Record<string, any>) => { v.sun.enabled = false; v.sun.percents = []; v.sun.nextLanding = null; };
+  it("names only the kinds this garden takes", () => {
+    expect(carriesWords(view())).toBe("A stone carries only its place and size, a sun only its brightness, and a hand for food or a meteor carries nothing. None of them names who sent it.");
+    expect(carriesWords(view((v) => { off(v); v.food.enabled = false; v.meteor.enabled = false; }))).toBe("A stone carries only its place and size. Nothing in it names who sent it.");
+    expect(carriesWords(view((v) => { v.food.enabled = false; v.meteor.enabled = false; }))).toBe("A stone carries only its place and size, and a sun only its brightness. None of them names who sent it.");
+    expect(carriesWords(view((v) => { off(v); v.meteor.enabled = false; }))).toBe("A stone carries only its place and size, and a hand for food carries nothing. None of them names who sent it.");
+    expect(carriesWords(view((v) => { delete v.food; delete v.meteor; delete v.sun; }))).toBe("A stone carries only its place and size. Nothing in it names who sent it.");
+  });
+  it("names the sun while the garden holds one, even when its light no longer offers it", () => {
+    expect(carriesWords(view((v) => { v.sun.percents = []; v.sun.nextLanding = null; v.food.enabled = false; v.meteor.enabled = false; v.letters.recent.push(sun(v)); })))
+      .toBe("A stone carries only its place and size, and a sun only its brightness. None of them names who sent it.");
   });
 });
