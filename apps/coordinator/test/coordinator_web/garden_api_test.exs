@@ -355,6 +355,59 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert conn |> post_json(letters_path(), stone()) |> json_response(201)
     end
 
+    test "a sun letter to a garden without suns is a 422 and changes nothing", %{conn: conn} do
+      garden!(%{"sun" => false})
+      spec_before = Queue.experiment("commons").spec["interventions"]
+
+      waiting = fn ->
+        conn
+        |> get("/api/public/gardens/commons")
+        |> json_response(200)
+        |> get_in(["letters", "waiting"])
+      end
+
+      before = waiting.()
+
+      for p <- [50, 150] do
+        assert %{"error" => "this garden takes no sun letters"} =
+                 conn
+                 |> post_json(letters_path(), %{"kind" => "sun", "percent" => p})
+                 |> json_response(422)
+      end
+
+      assert waiting.() == before
+      assert Queue.experiment("commons").spec["interventions"] == spec_before
+      # A stone still posts.
+      assert %{"letter" => %{"kind" => "stone"}} =
+               conn |> post_json(letters_path(), stone()) |> json_response(201)
+
+      # The default takes suns.
+      garden!(%{"name" => "lit"})
+
+      assert %{"letter" => %{"kind" => "sun", "percent" => 50}} =
+               conn
+               |> post_json(letters_path("lit"), %{"kind" => "sun", "percent" => 50})
+               |> json_response(201)
+    end
+
+    test "a refused sun letter is charged to the address as a refusal", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      Application.put_env(:coordinator, :garden_refusals_per_address, 2)
+      garden!(%{"sun" => false})
+      sun = %{"kind" => "sun", "percent" => 50}
+
+      # Each refusal gives its letter back (a budget of one letter is not spent)...
+      for _ <- 1..2 do
+        assert conn |> post_json(letters_path(), sun) |> json_response(422)
+      end
+
+      # ...but two refusals spend the refusal budget: the next sun, and a stone, are 429s.
+      assert conn |> post_json(letters_path(), sun) |> json_response(429)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(429)
+      # Another network is not charged.
+      assert from(conn, {10, 0, 0, 9}) |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
     @tag :capture_log
     test "409 for a stopped garden", %{conn: conn} do
       garden!()
@@ -1386,6 +1439,19 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert %{"error" => "meteorAsks must be an integer in 2..1000" <> _} =
                conn
                |> post_json("/api/gardens", %{body | "name" => "lit2", "meteorAsks" => 1})
+               |> json_response(422)
+    end
+
+    test "founding over HTTP passes the sun key through", %{conn: conn} do
+      body = params(%{"name" => "dim", "sun" => false})
+      assert %{"garden" => "dim"} = conn |> post_json("/api/gardens", body) |> json_response(200)
+
+      assert %{"enabled" => false, "percents" => [], "nextLanding" => nil, "span" => @d} =
+               conn |> get("/api/public/gardens/dim") |> json_response(200) |> Map.fetch!("sun")
+
+      assert %{"error" => "sun must be true or false"} =
+               conn
+               |> post_json("/api/gardens", %{body | "name" => "dim2", "sun" => "off"})
                |> json_response(422)
     end
 

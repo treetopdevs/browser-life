@@ -188,6 +188,10 @@ defmodule Coordinator.Queue do
       calls a meteor (a large lesion at `Garden.meteor_place/2`'s place), and
       the hands live apart from the food hands in `s.meteor_hands`, in memory
       only, dropped, redacted and swept as the food hands are.
+    * Sun. A garden takes sun letters unless it was founded with
+      `"sun": false` (`Garden.sun?/1`; a record from before the switch has no
+      key and takes them). With suns off, `post_letter/2` refuses a sun letter
+      as invalid (422) before anything is stored or scheduled.
 
   A garden is public, and islands join without credentials, so by default any
   visitor can run, replay, fail or reject a day. Three things bound that. With
@@ -1251,7 +1255,7 @@ defmodule Coordinator.Queue do
 
   # The keys `POST /api/gardens` takes. An unknown one is refused rather than
   # ignored: a keeper's typo ("dawnPeriod") should not found a daily garden.
-  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays meteor meteorAsks meteorEveryDays)
+  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays meteor meteorAsks meteorEveryDays sun)
   # packages/schema's MATTER_MAX (2^26 quanta of world matter), and the start
   # matter allowed per cell for a garden preset (the real figure is about 35;
   # apps/lab/test/garden.test.ts checks every garden preset against both).
@@ -1302,6 +1306,7 @@ defmodule Coordinator.Queue do
     amount_r = Coordinator.ConfigCheck.food_range(:garden_food_amount)
     radius_r = Coordinator.ConfigCheck.food_range(:garden_food_radius)
     meteor = Map.get(params, "meteor", false)
+    sun = Map.get(params, "sun", true)
 
     meteor_asks =
       Map.get(params, "meteorAsks", Application.get_env(:coordinator, :garden_meteor_asks, 5))
@@ -1410,6 +1415,9 @@ defmodule Coordinator.Queue do
             "#{elem(world, 0)} x #{elem(world, 1)} world takes without its disc wrapping onto itself, " <>
             "#{max_world_radius(world)}"
 
+        not is_boolean(sun) ->
+          "sun must be true or false"
+
         true ->
           nil
       end
@@ -1458,7 +1466,8 @@ defmodule Coordinator.Queue do
           if(food,
             do: %{asks: food_asks, every_days: food_every, amount: food_amount, r: food_r}
           ),
-        meteor: if(meteor, do: %{asks: meteor_asks, every_days: meteor_every, r: meteor_r})
+        meteor: if(meteor, do: %{asks: meteor_asks, every_days: meteor_every, r: meteor_r}),
+        sun: sun
       }
 
       {:ok, Map.put(spec, "garden", true), gparams}

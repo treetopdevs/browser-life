@@ -21,12 +21,17 @@ defmodule Coordinator.Garden do
 
       %{name, created_at, preset_id, seed, steps_per_day, days_total,
         letters_per_day, queue_max, dawn_period_ms, dawn_offset_ms,
-        width, height, founding: [intervention maps as the keeper gave them],
+        width, height, sun: boolean,
+        founding: [intervention maps as the keeper gave them],
         letters: [%{id: "ltr-N", seq: N, kind: "stone", x, y, r, step, day,
                     posted_at, dropped_at: nil | ms} |
                   %{id: "ltr-N", seq: N, kind: "sun", percent, span, step, day,
                     posted_at, dropped_at: nil | ms}],
         next_letter: N, days: %{index => %{released_at, done_at, verified_at}}}
+
+  `sun` is the keeper's founding switch for sun letters (`"sun"`, default
+  `true`); a record without it (a garden founded before the switch), or with
+  `nil` there, reads as `true`, through `sun?/1` only.
 
   A garden founded with food (`"food": true`, docs/garden-food-2026-10-18.md)
   also holds, and only then (a garden without food has exactly the keys above,
@@ -157,7 +162,10 @@ defmodule Coordinator.Garden do
   observer: both days are beyond the frontier when it is posted or dropped,
   so no attempted day's history changes. Its record has `percent` and `span`
   in place of `x`, `y`, `r`. Every letter's view has all five keys: a sun's
-  `x`, `y` and `r` are null, a stone's `percent` and `span` are.
+  `x`, `y` and `r` are null, a stone's `percent` and `span` are. A garden
+  founded with `"sun": false` takes no sun letters at all (`sun?/1`; the
+  amendment of 2026-10-18 in the sun note): the post is refused before its
+  percent or landing is looked at, and nothing is stored or scheduled.
 
   ## The view
 
@@ -222,7 +230,8 @@ defmodule Coordinator.Garden do
   `nil` (no food) or `%{asks, every_days, amount, r}`, which puts the food keys
   on the record (the place is the world's centre), and optionally `meteor`:
   `nil` (no meteor) or `%{asks, every_days, r}`, which puts the meteor keys on
-  the record (each meteor's place is `meteor_place/2`'s).
+  the record (each meteor's place is `meteor_place/2`'s), and optionally
+  `sun`: whether the garden takes sun letters (default `true`).
   """
   @spec new(map, integer) :: t
   def new(params, now) do
@@ -239,6 +248,7 @@ defmodule Coordinator.Garden do
       dawn_offset_ms: params.dawn_offset_ms,
       width: params.width,
       height: params.height,
+      sun: Map.get(params, :sun, true),
       founding: params.founding,
       letters: [],
       next_letter: 1,
@@ -491,7 +501,8 @@ defmodule Coordinator.Garden do
   @spec post_letter(t, map, segs, integer) ::
           {:ok, t, map} | {:error, {:invalid | :refused, String.t()}}
   def post_letter(g, %{kind: "sun", percent: p}, segs, now) do
-    with :ok <- invalid(sun_percent(g, p)),
+    with :ok <- invalid(sun_on(g)),
+         :ok <- invalid(sun_percent(g, p)),
          {:ok, day} <- refused(sun_landing(g, segs)) do
       n = g.next_letter
 
@@ -533,6 +544,16 @@ defmodule Coordinator.Garden do
     end
   end
 
+  @doc """
+  Whether the garden takes sun letters: the keeper's founding `sun`, and `true`
+  for a record without the key (a garden founded before the switch) or with
+  `nil` there; only `false` turns suns off.
+  """
+  @spec sun?(t) :: boolean
+  def sun?(g), do: Map.get(g, :sun, true) != false
+
+  defp sun_on(g), do: if(sun?(g), do: :ok, else: {:error, "this garden takes no sun letters"})
+
   @doc "The percents a sun letter may take in this garden: those its preset's light takes (`Coordinator.Queue.sun_percents/1`)."
   @spec sun_percents(t) :: [integer]
   def sun_percents(g), do: Coordinator.Queue.sun_percents(g.preset_id)
@@ -573,11 +594,12 @@ defmodule Coordinator.Garden do
 
   @doc """
   Where a sun posted now would go: `%{day, step}` (it shines from `step` for one day), or `nil`: no day has room for
-  one, or the garden's light takes no sun (`sun_percents/1` is `[]`), so every sun letter would be refused.
+  one, the garden was founded without suns (`sun?/1`), or its light takes no sun (`sun_percents/1` is `[]`), so every
+  sun letter would be refused.
   """
   @spec next_sun_landing(t, segs) :: %{day: integer, step: integer} | nil
   def next_sun_landing(g, segs) do
-    case sun_percents(g) != [] and sun_landing(g, segs) do
+    case sun?(g) and sun_percents(g) != [] and sun_landing(g, segs) do
       false -> nil
       {:ok, day} -> %{day: day, step: (day + 1) * g.steps_per_day}
       {:error, _} -> nil
@@ -1590,7 +1612,8 @@ defmodule Coordinator.Garden do
           Map.get(env, :shared_address, false)
         ),
       sun: %{
-        percents: sun_percents(g),
+        enabled: sun?(g),
+        percents: if(sun?(g), do: sun_percents(g), else: []),
         span: d,
         nextLanding: next_sun_landing(g, segs)
       },
