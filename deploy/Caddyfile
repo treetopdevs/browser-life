@@ -1,6 +1,10 @@
 :80 {
   encode zstd gzip
 
+  # Keep the shared garden private, including named gardens and keeper APIs.
+  @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
+  respond @private_garden 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https

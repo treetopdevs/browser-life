@@ -456,6 +456,9 @@ defmodule Coordinator.Queue do
   @doc "An experiment's spec and every segment in run order, with its accepted digest and producing/verifying hosts (`nil` if unknown)."
   def experiment(name), do: GenServer.call(__MODULE__, {:experiment, name})
   def segment(seg_id), do: GenServer.call(__MODULE__, {:segment, seg_id})
+
+  # Generic island downloads must not expose a held-private garden.
+  def download_segment(seg_id), do: GenServer.call(__MODULE__, {:download_segment, seg_id})
   def data_dir, do: GenServer.call(__MODULE__, :data_dir)
 
   @doc "Directory for a segment's bundle files (server-generated id only; not content-addressed)."
@@ -1249,6 +1252,18 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:segment, id}, _from, s), do: {:reply, s.segments[id], s}
+
+  def handle_call({:download_segment, id}, _from, s) do
+    seg = s.segments[id]
+
+    visible =
+      seg != nil and
+        (s.gardens[seg.experiment] == nil or
+           Application.get_env(:coordinator, :garden_scheduling, true))
+
+    {:reply, if(visible, do: seg), s}
+  end
+
   def handle_call(:data_dir, _from, s), do: {:reply, s.dir, s}
 
   # ---- gardens (see the moduledoc) ----
@@ -1699,6 +1714,12 @@ defmodule Coordinator.Queue do
   defp release_gardens(%{gardens: gardens} = s, _now) when map_size(gardens) == 0, do: s
 
   defp release_gardens(s, now) do
+    if Application.get_env(:coordinator, :garden_scheduling, true),
+      do: release_enabled_gardens(s, now),
+      else: s
+  end
+
+  defp release_enabled_gardens(s, now) do
     gardens =
       Map.new(s.gardens, fn {name, g} ->
         newest = Garden.newest_released(g)
@@ -1721,10 +1742,12 @@ defmodule Coordinator.Queue do
   # With `:garden_island_token` configured, a garden's days (to run or to
   # replay) go only to islands that joined showing it; anything else is open.
   defp garden_island?(s, seg, island) do
-    case {s.gardens[seg.experiment], Application.get_env(:coordinator, :garden_island_token)} do
-      {nil, _} -> true
-      {_g, token} when not is_binary(token) or token == "" -> true
-      {_g, _token} -> get_in(s, [:islands, island, :garden]) == true
+    case {s.gardens[seg.experiment], Application.get_env(:coordinator, :garden_scheduling, true),
+          Application.get_env(:coordinator, :garden_island_token)} do
+      {nil, _, _} -> true
+      {_g, false, _} -> false
+      {_g, _, token} when not is_binary(token) or token == "" -> true
+      {_g, _, _token} -> get_in(s, [:islands, island, :garden]) == true
     end
   end
 

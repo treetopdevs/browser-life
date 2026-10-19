@@ -122,6 +122,34 @@ defmodule Coordinator.GardenQueueTest do
 
   # ---- creation ----
 
+  test "disabled scheduling withholds existing garden work and resumes when enabled", %{dir: dir} do
+    saved = Application.fetch_env(:coordinator, :garden_scheduling)
+
+    on_exit(fn ->
+      case saved do
+        {:ok, value} -> Application.put_env(:coordinator, :garden_scheduling, value)
+        :error -> Application.delete_env(:coordinator, :garden_scheduling)
+      end
+    end)
+
+    assert {:ok, 5} = Queue.create_garden(params())
+    island = join("scheduler-switch")
+    Application.put_env(:coordinator, :garden_scheduling, false)
+    assert %{kind: "idle"} = next(island)
+    Application.put_env(:coordinator, :garden_scheduling, true)
+    task = next(island)
+    assert task.kind == "run"
+    finish(dir, island, task)
+    verifier = join("scheduler-verifier")
+    Application.put_env(:coordinator, :garden_scheduling, false)
+    TestClock.advance(@day)
+    assert %{kind: "idle"} = next(verifier)
+    assert Queue.garden_view("g1").clock.releasedStep == @d
+    Application.put_env(:coordinator, :garden_scheduling, true)
+    assert %{kind: "verify"} = next(verifier)
+    assert Queue.garden_view("g1").clock.releasedStep == 2 * @d
+  end
+
   describe "create_garden/1" do
     test "builds the experiment underneath and the garden record; the founding is the schedule" do
       assert {:ok, 5} = Queue.create_garden(params())

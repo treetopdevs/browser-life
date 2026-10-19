@@ -356,7 +356,7 @@ defmodule CoordinatorWeb.ApiController do
   # Start state of a segment = the accepted end artifact of its predecessor,
   # fetched from the content-addressed store by that artifact's own digest.
   def get_checkpoint(conn, %{"id" => id}) do
-    with seg when not is_nil(seg) <- Queue.segment(safe_id!(id)),
+    with seg when not is_nil(seg) <- Queue.download_segment(safe_id!(id)),
          digest when not is_nil(digest) <- Segment.accepted_digest(seg) do
       path = Store.path(Queue.data_dir(), digest)
 
@@ -370,7 +370,7 @@ defmodule CoordinatorWeb.ApiController do
 
   # Only the accepted run attempt's own uploads are served (see `Coordinator.Store`).
   def get_file(conn, %{"id" => id, "name" => name}) do
-    with seg when not is_nil(seg) <- Queue.segment(safe_id!(id)),
+    with seg when not is_nil(seg) <- Queue.download_segment(safe_id!(id)),
          sha when is_binary(sha) <- (Segment.accepted_files(seg) || %{})[name],
          path = Store.blob_path(Queue.data_dir(), sha),
          true <- File.exists?(path) do

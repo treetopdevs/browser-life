@@ -25,7 +25,8 @@ defmodule CoordinatorWeb.GardenApiTest do
     :cors_origins,
     :garden_island_token,
     :garden_call_timeout_ms,
-    :garden_shared_address
+    :garden_shared_address,
+    :garden_scheduling
   ]
 
   setup do
@@ -82,6 +83,28 @@ defmodule CoordinatorWeb.GardenApiTest do
 
   defp from(conn, ip), do: %{conn | remote_ip: ip}
   defp letters_path(name \\ "commons"), do: "/api/public/gardens/#{name}/letters"
+
+  test "held-private gardens cannot be read through generic island downloads", %{dir: dir} do
+    garden!()
+    producer = join("producer")
+    task = next(producer)
+    finish_with_files(dir, producer, task, %{})
+    {:ok, %{id: reader, token: token}} = Queue.join(%{"adapter" => "reader"})
+
+    paths = [
+      "/api/segments/#{task.segment.id}/start?island=#{reader}",
+      "/api/segments/#{task.segment.id}/files/series.jsonl?island=#{reader}"
+    ]
+
+    for enabled <- [true, false, true] do
+      Application.put_env(:coordinator, :garden_scheduling, enabled)
+
+      for path <- paths do
+        conn = build_conn() |> put_req_header("authorization", "Bearer " <> token) |> get(path)
+        assert conn.status == if(enabled, do: 200, else: 404)
+      end
+    end
+  end
 
   # ---- the public view ----
 

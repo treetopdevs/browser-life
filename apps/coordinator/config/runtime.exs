@@ -86,6 +86,14 @@ with {:ok, n} <- env_count.("BL_ISLAND_JOINS_PER_ADDRESS", true),
 # The bound on the island table (Coordinator.Queue; default 20,000).
 with {:ok, n} <- env_count.("BL_MAX_ISLANDS", false), do: config(:coordinator, max_islands: n)
 
+# Release switch: stop both dawn release and assignment of existing garden days.
+case System.get_env("BL_GARDEN_SCHEDULING") do
+  nil -> :ok
+  "on" -> config :coordinator, garden_scheduling: true
+  "off" -> config :coordinator, garden_scheduling: false
+  _ -> raise "BL_GARDEN_SCHEDULING must be on or off"
+end
+
 # Restricts the garden's days to islands that joined with this token in the join
 # body's "gardenToken" (unset: any island may tend a garden).
 if token = System.get_env("BL_GARDEN_ISLAND_TOKEN"),

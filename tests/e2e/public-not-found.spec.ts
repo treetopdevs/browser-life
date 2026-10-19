@@ -214,13 +214,33 @@ test.describe("Caddy", () => {
     }
   });
 
+  test("Caddy: the garden page and every garden API stay private", async () => {
+    const paths = [
+      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html",
+      "/garden%2findex.html", "//garden/", "/x/../garden/",
+      "/api/public/garden", "/api/public/garden/letters",
+      "/api/public/garden/food/hands", "/api/public/garden/meteor/hands",
+      "/api/public/gardens/commons", "/api/public/gardens/commons/letters",
+      "/api/public/gardens/commons/checkpoints/abc",
+      "/api/gardens", "/api/gardens/commons/days/0/requeue",
+      "/api/gardens/commons/letters/1/drop", "/api/public/garden%2fletters",
+      "/api/public/x/../gardens/commons", "/API/PUBLIC/GARDEN",
+    ];
+    for (const path of paths) {
+      for (const method of ["GET", "HEAD", "POST"]) {
+        const res = await raw(base, path, { method });
+        expect(res.status, `${method} ${path}`).toBe(404);
+      }
+    }
+  });
+
   test("Caddy: real pages, world copies, assets, robots and sitemap answer 200", async ({ request }) => {
     const sitemap = readFileSync(join(DIST, "sitemap.xml"), "utf8");
     const routes = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
     expect(routes.length).toBeGreaterThanOrEqual(9);
     const asset = /\/assets\/[^"]+\.js/.exec(readFileSync(join(DIST, "index.html"), "utf8"))?.[0];
     expect(asset, "an /assets/ script in dist/index.html").toBeTruthy();
-    for (const path of [...routes, "/garden/", "/island.html", "/selftest.html", "/robots.txt", "/sitemap.xml", "/site.webmanifest", "/favicon.svg", asset!]) {
+    for (const path of [...routes, "/island.html", "/selftest.html", "/robots.txt", "/sitemap.xml", "/site.webmanifest", "/favicon.svg", asset!]) {
       const res = await get(request, path);
       expect(res.status(), path).toBe(200);
       if (path.endsWith("/")) expect(await res.text(), path).not.toContain(TITLE);
