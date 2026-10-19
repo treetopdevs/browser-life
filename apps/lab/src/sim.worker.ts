@@ -9,6 +9,7 @@
 
 import {
   CH,
+  FeedRefusedError,
   G,
   PRESETS,
   RULE_VERSION,
@@ -27,7 +28,7 @@ import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from
 import { census, firstsContext, firstsRules, individuals, lineageRGB, nextUp } from "@bl/metrics";
 import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState, type PressureEntry } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
-import { LabExecution, PondWaitingError, PressureRefusedError, huntArmError } from "./execution.ts";
+import { LabExecution, PondWaitingError, PressureRefusedError, SunRefusedError, huntArmError } from "./execution.ts";
 import { isLineageKey } from "./pond-play.ts";
 import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
@@ -36,7 +37,7 @@ import type { CensusMsg, CheckpointMeta, FamiliesMsg, FirstsMsg, FromWorker, Kee
 import { RewindStore, buildSessionFile, exportRefusal, interventionFacts, sessionFileName, type RewindRecord } from "./session-file.ts";
 import { feedCensus, logRefusal, openFirstsLog, rewindRecord, type FirstsLog } from "./firsts-log.ts";
 import { NATURALIST_PRESETS, firstIntervention, naturalistReads } from "./naturalist-series.ts";
-import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
+import { StorageError, dropRewind, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, readRewind, recordCheckpoint, storageProblem, storeFull, writeFile, writeManifest, writeRewind } from "./opfs.ts";
 
 /**
  * The interactive lab's observation settings (fixed; there is no per-run
@@ -114,7 +115,10 @@ let ctx: GPUCanvasContext | null = null;
 let format: GPUTextureFormat = "bgra8unorm";
 let world: World | null = null;
 let generation = 0;
-/** What each checkpoint file this page saved held of the log of firsts, so a restore or a jump can bring it back. */
+/**
+ * What each checkpoint file this page saved held of the log of firsts, so a restore or a jump can bring it back: a cache of the
+ * `.rewind` sidecars beside them, which a restore on another page (a reload, another tab) reads instead.
+ */
 const rewind = new RewindStore();
 
 let playing = false;
@@ -201,8 +205,9 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
  * Builds the replacement first; the current world survives if that fails.
  * `observer` rehydrates the tracker/activity/counters from a restored or
  * imported checkpoint; omitted for a fresh `load()`, which starts clean.
- * `record`: what this page's world held of the log of firsts when that checkpoint was saved; without one
- * (a plant, an import, a file saved on an earlier visit) the log starts afresh at the first census it sees.
+ * `record`: what the world held of the log of firsts when that checkpoint was saved (this page's memory or the checkpoint's
+ * `.rewind` sidecar); without one (a plant, an import, a checkpoint saved before sidecars were kept or whose sidecar is torn)
+ * the log starts afresh at the first census it sees.
  * `carryNotes`: a jump's notes on picks the replay will log again.
  * `keep`: the lineage kept for the new world (a plant or an import keeps none; a restore or jump keeps the lab's),
  * committed to the lab setting only once the world is adopted, so a replacement that fails leaves Keep as it was.
@@ -272,6 +277,13 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (naturalistReads(rec.step, touched)) post({ type: "naturalist", world: w.gen, runId: w.manifest.runId, step: rec.step, rec, rows, touched, dropped });
       },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
+      // A sun began in a replay, or one ended: the Light view draws the light the physics uses, and the page shows the sun.
+      onLight: (light) => {
+        const w = world;
+        if (!w || w.sim !== sim) return;
+        w.renderer.setLight(light);
+        postSun(w);
+      },
       // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
       // the baselines exactly as it did when it was first made.
       onReplayed: (iv, result) => {
@@ -309,6 +321,10 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   keepKey = keep;
   old?.renderer.destroy();
   old?.sim.destroy();
+  // A checkpoint saved during a sun: the simulation and the view run under it from the first step (the execution installs
+  // it only once it is the current world's; its traversal would install it before stepping anyway).
+  renderer.setLight(execution.light);
+  await execution.installSun();
   execution.setHandPicks(breeder);
   // Steps requested for the previous world do not carry over.
   pendingSteps = 0;
@@ -319,6 +335,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
   post({ type: "loaded", manifest, step: sim.step, world: world.gen });
   postPressure(world);
+  postSun(world);
   post({ type: "keep", world: world.gen, key: keepKey });
   postFirsts(world);
   // The world is adopted whatever storage says: a shelf it would not list stays empty until a later listing.
@@ -680,26 +697,69 @@ function needStorage() {
   if (storageOff) throw new StorageError("This browser isn't letting the lab keep copies here (private browsing?). Download still gives you a file.", storageOff);
 }
 
-/** Writes a checkpoint of the settled world, the run's mutation edges and its manifest. */
-async function saveCheckpoint(w: World, auto: boolean) {
+/**
+ * Writes a checkpoint of the settled world, the run's mutation edges, the log's sidecar and its manifest. Every file beside the
+ * checkpoint is written before the manifest and the shelf list it, so a listed checkpoint has its sidecar whole or none
+ * (docs/pond-keeper-v0-2026-10-17.md, amendment of 2026-10-18). A write of the checkpoint, its edges or the records the store
+ * refuses refuses the save; one of the sidecar alone does not, since the log is not needed to replay, nor does a store too full
+ * for those records once the sidecar is in (the sidecar is given up for them): the checkpoint is kept without it, and `unkept`
+ * says why (posted as a notice here unless `quiet`, for a caller that says it itself).
+ */
+async function saveCheckpoint(w: World, auto: boolean, quiet = false) {
   needStorage();
   const { state, observer, advanced, edges, dropped } = await w.execution.checkpoint();
   const m = w.manifest;
   const bytes = encodeCheckpoint(state, observer);
+  const hash = stateHash(state);
   // Unique even after a restore trims the manifest's checkpoint list.
   const file = `${m.runId}-t${state.step}-${crypto.randomUUID()}.blck`;
   await writeFile(file, bytes);
   await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
-  m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
-  await writeManifest(m);
   // Taken right after `checkpoint()`, which fed the log the census at this step: a restore of this file brings it back as it stood,
   // the family tree with the genealogy (edges' start, count and dropped records) it was read against. A stopped log may be
   // half-updated, so it is not kept: a restore of this file then starts the log afresh. A stopped tree alone is left out of the record.
-  const record = rewindRecord(w.log, { edgesFrom: w.lineage.edgesFrom, edges, dropped }, m.checkpoints[m.checkpoints.length - 1].hash, state.step);
+  // The record goes in the `.rewind` sidecar (the checkpoint's bytes and observer digest stay as they are) and in this page's memory.
+  // A sidecar the store would not write is removed by `writeRewind` (left torn, it reads as none and goes with its checkpoint when
+  // that is deleted or pruned): a restore from another page then watches from the next census.
+  const record = rewindRecord(w.log, { edgesFrom: w.lineage.edgesFrom, edges, dropped }, hash, state.step);
+  const side = { kept: false, unkept: null as string | null };
+  const unkeep = (e: StorageError) => {
+    side.kept = false;
+    side.unkept = `Its log of firsts couldn't be kept beside it (${e.detail}): restored on another page, the log watches from the next census.`;
+  };
+  if (record) {
+    try {
+      await writeRewind(file, record);
+      side.kept = true;
+    } catch (e) {
+      if (!(e instanceof StorageError)) throw e;
+      unkeep(e);
+    }
+  }
+  // The sidecar is the one file here the checkpoint can do without: when the store has no room left for a record that lists the
+  // checkpoint, the sidecar goes and that record is written once more (a record write that fails keeps its last intact version).
+  const listing = async (write: () => Promise<void>) => {
+    try {
+      await write();
+    } catch (e) {
+      if (!side.kept || !storeFull(e)) throw e;
+      try {
+        await dropRewind(file);
+      } catch {
+        throw e;
+      }
+      unkeep(e as StorageError);
+      await write();
+    }
+  };
+  m.checkpoints.push({ step: state.step, file, hash, interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
+  await listing(() => writeManifest(m));
   if (record) rewind.set(file, record);
-  await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) });
+  await listing(() => recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) }));
   w.lastCheckpoint = state.step;
-  return { file, step: state.step, bytes: bytes.byteLength, advanced };
+  const { unkept } = side;
+  if (unkept && !quiet) post({ type: "notice", message: `Saved a copy at t=${state.step.toLocaleString()}. ${unkept}` });
+  return { file, step: state.step, bytes: bytes.byteLength, advanced, unkept };
 }
 
 /**
@@ -752,9 +812,9 @@ async function gateReplace(command: "plant" | "restore" | "import", keep?: Keep)
 async function save() {
   const w = world;
   if (!w || waitingForDonors(w, "save", "save")) return;
-  const saved = await saveCheckpoint(w, false);
+  const saved = await saveCheckpoint(w, false, true);
   const settled = saved.advanced ? `The world advanced ${saved.advanced} steps to its census at t=${saved.step} first. ` : "";
-  post({ type: "notice", message: `${settled}Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  post({ type: "notice", message: `${settled}Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)${saved.unkept ? `. ${saved.unkept}` : ""}` });
   await accountManual(w, saved.file);
 }
 
@@ -822,7 +882,11 @@ async function restore(file: string, keep?: Keep, carryNotes?: Iterable<[number,
     m = importedManifest(state, forkRunId(meta.runId), observer.settings);
     lineage = freshLineage(state, "restored state");
   }
-  await adopt(state, m, observer, lineage, rewind.get(file), carryNotes);
+  // The log kept with this checkpoint: this page's memory, else its sidecar (a reload, another tab). None, or a torn one, is a
+  // fresh log ("watching since"); `openFirstsLog` takes a record only for this very state. A store that would not open the
+  // sidecar says nothing about it: refuse, and keep the world on screen, as for the genealogy above.
+  const record = rewind.get(file) ?? (await readRewind(file)) ?? undefined;
+  await adopt(state, m, observer, lineage, record, carryNotes);
   post({ type: "notice", message: `Restored ${file} at step ${state.step}` });
 }
 
@@ -1020,9 +1084,9 @@ async function verify(steps: number) {
  * True, with a refusal of `request`, when a hand edit names a world (`ToWorker` lesion/feed `world`) that is no longer the one on
  * screen: Field notes' Try it here was made for that world, and a replacement queued before it must not take its edit.
  */
-function staleHand(request: "lesion" | "feed", gen: number | undefined): boolean {
+function staleHand(request: "lesion" | "feed" | "sun", gen: number | undefined): boolean {
   if (gen === undefined || world?.gen === gen) return false;
-  post({ type: "refused", request, message: "That suggestion was made for a world that has since been replaced, so nothing was applied" });
+  post({ type: "refused", request, message: request === "sun" ? "That sun was chosen for a world that has since been replaced, so nothing was applied" : "That suggestion was made for a world that has since been replaced, so nothing was applied" });
   return true;
 }
 
@@ -1044,6 +1108,39 @@ async function lesion(x: number, y: number, r: number, gen?: number) {
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
   postTouched(w, step);
   session.noteHand(step);
+  publishSession();
+  forkReplay(w);
+  postFirsts(w);
+}
+
+/** Tells the page which sun the world runs under (null: its own light). */
+function postSun(w: World) {
+  post({ type: "sun", world: w.gen, sun: w.execution.sun });
+}
+
+/**
+ * Sets a sun on the world from its step (`LabExecution.applySun`): logged like a lesion, at the world's step, and drawn by the
+ * Light view. A sun the world refuses (its light cannot take it, or one already shines) changes nothing and is answered as a
+ * refusal, with the reason.
+ */
+async function setSun(percent: number, span: number, gen?: number) {
+  if (staleHand("sun", gen)) return;
+  const w = world;
+  if (!w) return;
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  if (waitingForDonors(w, "sun", "set a sun")) return;
+  let entry;
+  try {
+    // The values as sent: applySun refuses a fraction or a string rather than rounding it into another sun.
+    entry = await w.execution.applySun(percent, span);
+  } catch (e) {
+    if (e instanceof SunRefusedError) return post({ type: "refused", request: "sun", message: e.message });
+    throw e;
+  }
+  if (!current(w)) return;
+  w.manifest.interventions.push(entry);
+  postTouched(w, entry.step);
+  session.noteHand(entry.step);
   publishSession();
   forkReplay(w);
   postFirsts(w);
@@ -1185,9 +1282,13 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const m = ev.data;
   const fail = (e: unknown) => {
     // A request refused because a pond cycle waits for donors (for instance a save that settled onto the boundary),
-    // or because the browser would not keep or read a checkpoint, is no failure.
+    // or because the browser would not keep or read a checkpoint, is no failure. Nor is a Feed or Drain the world refuses
+    // (`feedError`'s reasons, a pond world among them, or MATTER_MAX): `sim.feed` throws it before it writes anything, and
+    // `feed()` logs and books only after `sim.feed` returns, so the world goes on as it was. Only the feed request's own: a
+    // logged feed that a replay refuses is a history that does not replay, which stays a failure.
     if (world) session.noteStep(world.sim.step);
-    if ((e instanceof PondWaitingError || e instanceof StorageError) && !world?.execution.failure) {
+    const refusedFeed = e instanceof FeedRefusedError && m.type === "feed";
+    if ((e instanceof PondWaitingError || e instanceof StorageError || refusedFeed) && !world?.execution.failure) {
       const command = sessionCommand(m.type);
       if (command) session.noteRefusal(command, e.message);
       if (m.type === "verify") session.cancelCheck();
@@ -1244,6 +1345,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         return lesion(m.x, m.y, m.r, m.world);
       case "feed":
         return feed(m.x, m.y, m.r, m.amount, m.world);
+      case "sun":
+        return setSun(m.percent, m.span, m.world);
       case "probe":
         return probe(m.x, m.y);
       case "breeder":

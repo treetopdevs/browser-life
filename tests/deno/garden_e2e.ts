@@ -14,6 +14,12 @@
 // waits one dawn period (a second here) after the call before an island gets it (the keeper's veto window). The ask's
 // count after the restart is 0 trivially here (the call itself zeroed it); ExUnit holds the restart rule with a hand
 // left counted.
+// Meteor (amended 2026-10-18, docs/garden-meteor-2026-10-18.md section 8): the garden is founded with meteor too (K 2,
+// N 1). After A runs day 1 (and the keeper drops L3, emptying day 2), two fresh networks call meteor-1 onto day 2 (the
+// frontier) at 3D, at the place the script computes itself (SHA-256 of "e2e/seed-1/meteor-1"), with r 64; a third hand
+// is a 409 cooldown. Day 2 waits out the meteor's notice (a second), is run, replayed and verified; its log holds the
+// meteor's lesion at 3D (r 64, no matter) and its census keeps conservation exact; the meteor survives the restart and
+// is in the stitched schedule, which still equals the unsegmented run byte for byte.
 // Who held the field (amended 2026-10-18, docs/garden-predictions-2026-10-18.md section 9): once day 0 is verified its
 // leaders block is ok and its census equals the script's own reading of day 0's lineages.tsv at step D; once days 1 and 2
 // are, day 1's lines equal the script's own walk over days 0 and 1's mutations.tsv; all three survive the restart.
@@ -70,6 +76,16 @@ const FOUNDING: ScheduledIntervention[] = [{ step: 0, kind: "feed", x: 128, y: 1
 // disc on spots is 3,209 cells, so it adds 51,344 quanta.
 const FOOD = { kind: "feed", x: 128, y: 128, r: 32, amount: 16 };
 const FOOD_MATTER = 51_344;
+// The meteor (docs/garden-meteor-2026-10-18.md): the coordinator's default radius, at the n-th meteor's place by the
+// note's rule, computed here from its words: x = u32be(H[0..3]) mod width, y = u32be(H[4..7]) mod height,
+// H = SHA-256("<name>/seed-<seed>/meteor-<n>").
+const METEOR_R = 64;
+async function meteorPlace(n: number, width = 256, height = 256): Promise<{ x: number; y: number }> {
+  const h = new DataView(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${NAME}/seed-1/meteor-${n}`)));
+  return { x: h.getUint32(0) % width, y: h.getUint32(4) % height };
+}
+const METEOR1 = await meteorPlace(1);
+const METEOR2 = await meteorPlace(2);
 // The coordinator's garden island token (amended 2026-10-18, docs/garden-hardening-2026-10-18.md): set after the BL_*
 // scrub below, so this coordinator offers the garden's days only to islands that join showing it. A and B do; a third
 // island C does not, and is told idle while day 0 waits unassigned.
@@ -386,6 +402,8 @@ const letterBody = (x: number, y: number, r: number) => ({ kind: "stone", x, y, 
 const postLetter = (l: { x: number; y: number; r: number }) => postJson(`/api/public/gardens/${NAME}/letters`, letterBody(l.x, l.y, l.r));
 /** A food hand from network `ip` (the coordinator trusts X-Forwarded-For here). */
 const hand = (ip: string) => request(`/api/public/gardens/${NAME}/food/hands`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: "{}" });
+/** A meteor hand from network `ip`. */
+const meteorHand = (ip: string) => request(`/api/public/gardens/${NAME}/meteor/hands`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: "{}" });
 
 // Stones on the founders' cells (world.ts's generalist init: lowbias32(seed * 31 + i)), so the letters hit biomass.
 const spotsCfg = { ...defaultConfig(), ...PRESETS.find((p) => p.id === "spots")!.cfg, seed: 1 };
@@ -543,6 +561,9 @@ try {
     food: true,
     foodAsks: 2,
     foodEveryDays: 1,
+    meteor: true,
+    meteorAsks: 2,
+    meteorEveryDays: 1,
   });
   check("1. the keeper founds a 4-day spots garden in dev (spots is a dev garden preset)", founded.status === 200 && founded.body?.garden === NAME && founded.body?.days === DAYS, JSON.stringify(founded));
 
@@ -561,6 +582,13 @@ try {
     v.food?.enabled === true && v.food.asks === 2 && v.food.everyDays === 1 && v.food.hands === 0 && v.food.open === true && v.food.closed === null &&
       canon(v.food.landing) === canon({ day: 0, step: D }) && canon(v.food.place) === canon({ x: 128, y: 128 }) && v.food.r === 32 && v.food.amount === 16 && v.food.foods.length === 0,
     JSON.stringify(v.food),
+  );
+  check(
+    "1. the meteor ask is open: enabled, K 2, N 1, r 64, no hands, a meteor would land on day 0 at D, at the script's own SHA-256 place for e2e/seed-1/meteor-1",
+    v.meteor?.enabled === true && v.meteor.asks === 2 && v.meteor.everyDays === 1 && v.meteor.r === METEOR_R && v.meteor.hands === 0 && v.meteor.open === true &&
+      v.meteor.closed === null && canon(v.meteor.landing) === canon({ day: 0, step: D }) && canon(v.meteor.place) === canon(METEOR1) && v.meteor.meteors.length === 0 &&
+      canon(METEOR1) !== canon(METEOR2),
+    `${JSON.stringify(v.meteor)} vs ${JSON.stringify(METEOR1)}`,
   );
 
   const toEdge = LETTER_WINDOW_MS - (Date.now() % LETTER_WINDOW_MS);
@@ -758,6 +786,41 @@ try {
     `${prefix.stdout.slice(-300)} ${prefix.stderr.slice(0, 400)} ${JSON.stringify({ steps: prefixMan.spec?.steps, spec: prefixMan.spec?.interventions, block: prefixMan.interventions })}`,
   );
 
+  // ---- 4b. meteor: two fresh networks call meteor-1 onto day 2 (the frontier: day 1 holds an attempt) ----
+  // Each try starts just past a one-second dawn with two fresh networks; a dawn between them leaves no meteor (each hand
+  // counted alone in its period), and the next try uses two more networks (at most three tries).
+  let meteor: any = null;
+  const meteorLog: string[] = [];
+  const saidM = (r: { status: number; body: any }) => `${r.status} ${JSON.stringify({ counted: r.body?.counted, called: r.body?.called?.id ?? null, hands: r.body?.meteor?.hands })}`;
+  for (let attempt = 0; attempt < 3 && !meteor; attempt++) {
+    await sleep(PERIOD - (Date.now() % PERIOD) + 30);
+    for (const ip of [`10.0.20.${2 * attempt + 1}`, `10.0.20.${2 * attempt + 2}`]) {
+      const r = await meteorHand(ip);
+      meteorLog.push(`try ${attempt} ${ip}: ${saidM(r)}`);
+      if (r.status === 201 && r.body?.called) meteor = r.body.called;
+    }
+  }
+  check(
+    "4b. two networks call a meteor: meteor-1 waiting on day 2 at 3D, at the script's place, r 64, called by 2 hands, its day held a dawn period",
+    meteor !== null && meteor.id === "meteor-1" && meteor.day === 2 && meteor.landsAtStep === 3 * D && meteor.x === METEOR1.x && meteor.y === METEOR1.y &&
+      meteor.r === METEOR_R && meteor.hands === 2 && meteor.status === "waiting" && meteor.noticeUntil === meteor.calledAt + PERIOD,
+    `${JSON.stringify(meteor)} | ${meteorLog.join(" || ")}`,
+  );
+  const thirdMeteor = await meteorHand("10.0.21.1");
+  check(
+    "4b. a third hand is refused 409 cooldown: the next meteor can land on day 3 at the earliest (N 1)",
+    thirdMeteor.status === 409 && thirdMeteor.body?.closed === "cooldown" && thirdMeteor.body?.opensAtDay === 3,
+    `${thirdMeteor.status} ${JSON.stringify(thirdMeteor.body)}`,
+  );
+  v = await viewWhen("the meteor in the view", (x) => x.meteor?.meteors?.length === 1);
+  check(
+    "4b. the view shows meteor-1 waiting, the next meteor's place, the ask closed for cooldown, day 2 carrying no letter, and the food ask untouched",
+    v.meteor.meteors[0].id === "meteor-1" && v.meteor.meteors[0].status === "waiting" && canon(v.meteor.place) === canon(METEOR2) && v.meteor.closed === "cooldown" &&
+      v.meteor.opensAtDay === 3 && ![...v.letters.waiting, ...v.letters.recent].some((l: { id: string; status: string; day: number }) => l.id === "meteor-1" || (l.day === 2 && l.status !== "dropped")) &&
+      v.food.foods.length === 1 && dayOf(v, 1)?.meteor === null,
+    JSON.stringify({ meteor: v.meteor, letters: v.letters, food: v.food }),
+  );
+
   // ---- 5. B replays day 1, A runs day 2, B replays day 2 ----
   const b1 = await work(B, 1);
   const a2 = await work(A, 1);
@@ -819,6 +882,27 @@ try {
       dayOf(v, 1)?.food === foodId && dayOf(v, 0)?.food === null && dayOf(v, 2)?.food === null && dayOf(v, 1)?.census?.conservationOk === true,
     JSON.stringify({ food: v.food, days: v.days }),
   );
+  const seg2 = (listing.body?.segments ?? []).find((s: { index: number }) => s.index === 2);
+  const seg2Log = seg2 ? await request(`/api/segments/${seg2.id}/files/${INTERVENTIONS_FILE}`) : { status: 0, body: "", headers: new Headers() };
+  const day2Log = (() => {
+    try {
+      return parseInterventionLog(typeof seg2Log.body === "string" ? seg2Log.body : `${JSON.stringify(seg2Log.body)}\n`);
+    } catch {
+      return [];
+    }
+  })();
+  const meteorEntry = { step: 3 * D, kind: "lesion", x: METEOR1.x, y: METEOR1.y, r: METEOR_R };
+  check(
+    "5. day 2's interventions.jsonl holds exactly the meteor's lesion at 3D, r 64 (unclamped), with no matter",
+    seg2Log.status === 200 && day2Log.length === 1 && canon(day2Log[0]) === canon(meteorEntry) && !("matter" in (day2Log[0] as object)),
+    `${seg2Log.status} ${JSON.stringify(day2Log)}`,
+  );
+  check(
+    "5. meteor-1 is verified, landed in day 2's digest, days 0 to 2 carry [none, none, meteor-1], and day 2's matter adds up",
+    v.meteor.meteors[0]?.id === "meteor-1" && v.meteor.meteors[0]?.status === "verified" && v.meteor.meteors[0]?.landedIn === dayOf(v, 2)?.digest &&
+      canon([0, 1, 2].map((d) => dayOf(v, d)?.meteor)) === canon([null, null, "meteor-1"]) && dayOf(v, 2)?.census?.conservationOk === true,
+    JSON.stringify({ meteor: v.meteor, days: v.days }),
+  );
 
   // Island C joined and asked too, but tending counts attempts, not joins: still two.
   check("5. tending: two islands today (C, which never took a day, is not counted), one device type ever", v.tending.islandsToday === 2 && v.tending.deviceTypesEver === 1, JSON.stringify(v.tending));
@@ -872,6 +956,7 @@ try {
       fork: x.fork,
       letters: [...x.letters.waiting, ...x.letters.recent].map((l: { id: string; status: string; landedIn: string | null }) => [l.id, l.status, l.landedIn]).sort(),
       foods: (x.food?.foods ?? []).map((f: { id: string; status: string; landedIn: string | null; day: number }) => [f.id, f.status, f.landedIn, f.day]),
+      meteors: (x.meteor?.meteors ?? []).map((m: { id: string; status: string; landedIn: string | null; day: number; x: number; y: number; r: number }) => [m.id, m.status, m.landedIn, m.day, m.x, m.y, m.r]),
       days: x.days.map((d: { day: number; status: string; releasedAt: number; doneAt: number | null; verifiedAt: number | null; digest: string | null }) => [d.day, d.status, d.releasedAt, d.doneAt, d.verifiedAt, d.digest]),
     });
   await stopServer(server);
@@ -879,7 +964,7 @@ try {
   server = await spawnServer();
   await waitReady(server, 180_000);
   const after = await view();
-  check("6. after a restart in a fresh OS process: the clock, verification, fork, letters, foods and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
+  check("6. after a restart in a fresh OS process: the clock, verification, fork, letters, foods, meteors and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
   const leadersOfView = (x: View) => canon({ rule: x.leadersRule, days: [0, 1, 2].map((d) => dayOf(x, d)?.leaders) });
   check(
     "6. ...and the leaders blocks of days 0 to 2 (decoded from state.bin by a fresh process) are unchanged",
@@ -890,6 +975,11 @@ try {
     "6. ...the food is still there, verified, and the ask's count is 0 (trivially here, the call zeroed it; ExUnit holds the restart rule)",
     after.food?.foods?.[0]?.id === foodId && after.food.foods[0].status === "verified" && after.food.hands === 0,
     JSON.stringify(after.food),
+  );
+  check(
+    "6. ...meteor-1 is still there, verified, and the meteor ask's count is 0",
+    after.meteor?.meteors?.[0]?.id === "meteor-1" && after.meteor.meteors[0].status === "verified" && after.meteor.hands === 0 && canon(after.meteor.place) === canon(METEOR2),
+    JSON.stringify(after.meteor),
   );
   // The fork is still downloadable (the letter limiter re-registers the garden's world on boot; the route needs it), on
   // the first read (amended 2026-10-18: no polling).
@@ -925,14 +1015,18 @@ try {
       return [];
     }
   })();
-  const expectedSchedule = [...FOUNDING, { step: D, kind: "lesion", ...L1 }, { step: 2 * D, kind: "lesion", ...L2 }, { step: 2 * D, ...FOOD }];
+  const expectedSchedule = [
+    ...FOUNDING, { step: D, kind: "lesion", ...L1 }, { step: 2 * D, kind: "lesion", ...L2 }, { step: 2 * D, ...FOOD },
+    { step: 3 * D, kind: "lesion", x: METEOR1.x, y: METEOR1.y, r: METEOR_R },
+  ];
   check(
-    "7. the stitched schedule is the founding plus L1 at D, L2 at 2D and the food after it, without the dropped L3; its log holds 4 lines at 0, D, 2D, 2D (the food's with its matter), and the manifest counts 4 applied",
-    canon(stitchedMan.spec?.interventions) === canon(expectedSchedule) && logged.map((e) => e.step).join() === `0,${D},${2 * D},${2 * D}` &&
-      logged[3]?.kind === "feed" && (logged[3] as { matter?: number }).matter === FOOD_MATTER && stitchedMan.interventions?.applied === 4 && stitchedMan.spec?.steps === 3 * D,
+    "7. the stitched schedule is the founding plus L1 at D, L2 at 2D, the food after it and the meteor at 3D, without the dropped L3; its log holds 5 lines at 0, D, 2D, 2D, 3D (the food's with its matter, the meteor's r 64), and the manifest counts 5 applied",
+    canon(stitchedMan.spec?.interventions) === canon(expectedSchedule) && logged.map((e) => e.step).join() === `0,${D},${2 * D},${2 * D},${3 * D}` &&
+      logged[3]?.kind === "feed" && (logged[3] as { matter?: number }).matter === FOOD_MATTER && logged[4]?.kind === "lesion" && (logged[4] as { r?: number }).r === METEOR_R &&
+      stitchedMan.interventions?.applied === 5 && stitchedMan.spec?.steps === 3 * D,
     JSON.stringify({ spec: stitchedMan.spec?.interventions, steps: stitchedMan.spec?.steps, log: logged.map((e) => e.step), block: stitchedMan.interventions }),
   );
-  // At one step the stones come first, then the foods, each by number (README: food.landing).
+  // At one step the stones come first, then the foods, then the meteors, each by number (README: food.landing, meteor).
   type Entry = { at: [number, number, number]; e: Record<string, unknown> };
   const seq = (id: string) => Number(id.slice(id.indexOf("-") + 1));
   const stonesFromView: Entry[] = [...after.letters.waiting, ...after.letters.recent]
@@ -941,11 +1035,14 @@ try {
   const foodsFromView: Entry[] = (after.food?.foods ?? [])
     .filter((f: { status: string }) => f.status === "verified")
     .map((f: { id: string; landsAtStep: number; x: number; y: number; r: number; amount: number }) => ({ at: [f.landsAtStep, 1, seq(f.id)], e: { step: f.landsAtStep, kind: "feed", x: f.x, y: f.y, r: f.r, amount: f.amount } }));
+  const meteorsFromView: Entry[] = (after.meteor?.meteors ?? [])
+    .filter((m: { status: string }) => m.status === "verified")
+    .map((m: { id: string; landsAtStep: number; x: number; y: number; r: number }) => ({ at: [m.landsAtStep, 2, seq(m.id)], e: { step: m.landsAtStep, kind: "lesion", x: m.x, y: m.y, r: m.r } }));
   const fromView = [
     ...after.founding,
-    ...[...stonesFromView, ...foodsFromView].sort((a, b) => a.at[0] - b.at[0] || a.at[1] - b.at[1] || a.at[2] - b.at[2]).map((x) => x.e),
+    ...[...stonesFromView, ...foodsFromView, ...meteorsFromView].sort((a, b) => a.at[0] - b.at[0] || a.at[1] - b.at[1] || a.at[2] - b.at[2]).map((x) => x.e),
   ];
-  check("7. ...and it equals the public view's founding plus its verified letters and foods", canon(stitchedMan.spec?.interventions) === canon(fromView), `${canon(stitchedMan.spec?.interventions)} vs ${canon(fromView)}`);
+  check("7. ...and it equals the public view's founding plus its verified letters, foods and meteors", canon(stitchedMan.spec?.interventions) === canon(fromView), `${canon(stitchedMan.spec?.interventions)} vs ${canon(fromView)}`);
 
   const scheduleFile = `${workDir}/schedule.json`;
   await Deno.writeTextFile(scheduleFile, JSON.stringify(stitchedMan.spec?.interventions ?? []));

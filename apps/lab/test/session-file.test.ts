@@ -463,6 +463,10 @@ describe("interventionFacts", () => {
     // The pick at t=12 was made before this page's notes began (a world restored from an earlier visit): unknown, not guessed.
     const facts = interventionFacts(log, new Map([[4, true], [8, false]]), null);
     expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
+    // A sun is no pick, wound or feed: counted apart, and only when there is one (no session file holds one, so a file's facts never carry the key).
+    const sunned = interventionFacts([...log, { step: 15, kind: "sun", percent: 50, span: 10 }, { step: 30, kind: "sun", percent: 75, span: 5 }], new Map([[4, true], [8, false]]), null);
+    expect(sunned).toEqual({ ...facts, suns: 2 });
+    expect(Object.hasOwn(facts, "suns")).toBe(false);
     const replayed = { ok: true, from: 0, to: 100, live: "a", twin: "a", handAtEnd: false };
     expect(interventionFacts([], new Map(), replayed).replay).toBe(replayed);
     expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
@@ -529,6 +533,14 @@ describe("exportRefusal", () => {
     ["a world opened from a file", { presetId: "imported" }, /opened from a file/],
   ])("refuses a world with %s, in words", (_name, change, message) => {
     expect(exportRefusal({ ...planted, ...change })).toMatch(message);
+  });
+
+  it("refuses a history that holds a sun, which no session file version holds, and buildSessionFile will not write one", () => {
+    const sun = { step: 40, kind: "sun" as const, percent: 50, span: 100 };
+    expect(exportRefusal({ ...planted, interventions: [{ step: 3, kind: "lesion", x: 1, y: 1, r: 2 }] })).toBeNull();
+    expect(exportRefusal({ ...planted, interventions: [{ step: 3, kind: "lesion", x: 1, y: 1, r: 2 }, sun] })).toMatch(/^This world ran under a sun from t=40, and a session file can’t hold a sun yet\. Its checkpoint download still works/);
+    expect(() => buildSessionFile({ manifest: { startHash: "0123456789abcdef", interventions: [sun] } as unknown as RunManifest, stateHash: "x", step: 300, firsts: { watchedFrom: null, entries: [] }, families: null as never, card: null as never, adapter: "test", createdAt: "" }))
+      .toThrow(/cannot hold a sun/);
   });
 });
 
@@ -674,6 +686,28 @@ describe("the family tree in the log of firsts", () => {
       await later.advanceTo(300);
       const stale = openFirstsLog(mid.state, 100, g, { ...rec, families: { tree: later.tree.snapshot(), genealogy: g } });
       expect([stale.detector.lastStep, stale.tree.lastStep]).toEqual([200, null]);
+    }, 120_000);
+
+    // A record kept in a `.rewind` sidecar can come from another state's file or an older build (docs/pond-keeper-v0-2026-10-17.md,
+    // amendment of 2026-10-18): only a record of this very state speaks for its picks, and only a detector read as this build reads
+    // this world comes back.
+    it("takes pick notes only from a record of this state, and a detector only with this build's context", async () => {
+      const { mid, record: rec } = await record();
+      const g = { edgesFrom: 0, edges: 7, dropped: 0 };
+      const withPick: RewindRecord = { ...rec, picks: [[100, true]] };
+      const own = openFirstsLog(mid.state, 100, g, withPick);
+      expect([own.detector.lastStep, [...own.notes]]).toEqual([200, [[100, true]]]);
+      // Another state's record: no log, no tree and no notes, so the pick reads as one this page never saw chosen.
+      const elsewhere = openFirstsLog(mid.state, 100, g, { ...withPick, hash: "0".repeat(16) });
+      expect([elsewhere.detector.lastStep, elsewhere.tree.lastStep, elsewhere.notes.size]).toEqual([null, null, 0]);
+      const facts = interventionFacts([{ step: 100, kind: "pick", cycle: 1, donors: [0] }], elsewhere.notes, null);
+      expect([facts.picks.byHand, facts.picks.unknown]).toEqual([0, 1]);
+      // This state, read under another context (as a later build might, with other gene bits or another cadence): the detector and
+      // the tree start afresh, the notes on this state's picks stay.
+      for (const ctx of [{ ...rec.firsts.ctx, censusEvery: 50 }, { ...rec.firsts.ctx, geneBits: [0] }, { ...rec.firsts.ctx, tiles: 1, tilesX: 1 }]) {
+        const reread = openFirstsLog(mid.state, 100, g, { ...withPick, firsts: { ...rec.firsts, ctx } });
+        expect([reread.detector.lastStep, reread.tree.lastStep, [...reread.notes]], JSON.stringify(ctx)).toEqual([null, null, [[100, true]]]);
+      }
     }, 120_000);
   });
 });

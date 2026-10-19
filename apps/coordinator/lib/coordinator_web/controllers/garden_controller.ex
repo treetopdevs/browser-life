@@ -4,6 +4,7 @@ defmodule CoordinatorWeb.GardenController do
 
   Public, unauthenticated: the view (`show`), posting a letter (`post_letter`),
   adding a hand to the food ask (`add_hand`, docs/garden-food-2026-10-18.md)
+  or to the meteor ask (`add_meteor_hand`, docs/garden-meteor-2026-10-18.md)
   and a verified day's end checkpoint (`checkpoint`). Keeper (admin): founding
   a garden (`create`), the veto (`drop`) and requeueing a failed or diverged
   day (`requeue`).
@@ -33,7 +34,7 @@ defmodule CoordinatorWeb.GardenController do
   plug :require_admin when action in [:create, :drop, :requeue]
 
   @name_re ~r/^[a-z0-9][a-z0-9_-]{0,63}$/
-  @letter_re ~r/^(ltr|food)-[0-9]{1,9}$/
+  @letter_re ~r/^(ltr|food|meteor)-[0-9]{1,9}$/
   @digest_re ~r/^[0-9a-f]{16}$/
   @day_re ~r/^[0-9]{1,9}$/
 
@@ -107,21 +108,28 @@ defmodule CoordinatorWeb.GardenController do
   # hand costs one letter of the shared hourly budget), the hand's key (503 while
   # the limiter has no salt), then the Queue. A repeat (200) or a closed ask
   # (409) is given back and charged as a refusal, as a refused stone is.
-  def add_hand(conn, _params) do
+  def add_hand(conn, _params), do: hand(conn, :food)
+
+  # `POST /api/public/garden/meteor/hands` and
+  # `POST /api/public/gardens/:name/meteor/hands`: a visitor's hand on the
+  # meteor ask, exactly as a food hand (above), answered with the `meteor` block.
+  def add_meteor_hand(conn, _params), do: hand(conn, :meteor)
+
+  defp hand(conn, kind) do
     with {:ok, name} <- garden_name(conn),
          :ok <- json_request(conn),
          :ok <- empty_body(conn),
          {:ok, _world} <- world(name),
          {:ok, token} <- take(conn),
          {:ok, key} <- hand_key(conn, token) do
-      case ask_queue(name, key) do
+      case ask_queue(name, key, kind) do
         {:ok, :counted, called, block} ->
           LetterLimiter.invalidate(name)
-          conn |> put_status(201) |> json(%{counted: true, called: called, food: block})
+          conn |> put_status(201) |> json(%{:counted => true, :called => called, kind => block})
 
         {:ok, :repeat, block} ->
           LetterLimiter.refuse(token)
-          json(conn, %{counted: false, called: nil, food: block})
+          json(conn, %{:counted => false, :called => nil, kind => block})
 
         {:error, {:closed, code, opens, why}} ->
           LetterLimiter.refuse(token)
@@ -203,13 +211,21 @@ defmodule CoordinatorWeb.GardenController do
   end
 
   # `POST /api/gardens/:name/letters/:id/drop`: a letter (`ltr-N`, answered
-  # `{"letter": ...}`) or a food (`food-N`, answered `{"food": ...}`).
+  # `{"letter": ...}`), a food (`food-N`, answered `{"food": ...}`) or a
+  # meteor (`meteor-N`, answered `{"meteor": ...}`).
   def drop(conn, %{"name" => name, "id" => id}) do
     with true <- name?(name),
          true <- is_binary(id) and Regex.match?(@letter_re, id),
          {:ok, view} <- drop_letter(name, id) do
       LetterLimiter.invalidate(name)
-      key = if String.starts_with?(id, "food-"), do: :food, else: :letter
+
+      key =
+        cond do
+          String.starts_with?(id, "food-") -> :food
+          String.starts_with?(id, "meteor-") -> :meteor
+          true -> :letter
+        end
+
       json(conn, %{key => view})
     else
       {:error, {:refused, why}} -> error(conn, 409, why)
@@ -319,18 +335,23 @@ defmodule CoordinatorWeb.GardenController do
   # The Queue call, with its exit caught here: an uncaught exit would carry the
   # whole call, hand key included, into the request's crash log and telemetry.
   # Logged without the key.
-  defp ask_queue(name, key) do
-    Queue.ask_food(name, key, Application.get_env(:coordinator, :garden_call_timeout_ms, 5_000))
+  defp ask_queue(name, key, kind) do
+    timeout = Application.get_env(:coordinator, :garden_call_timeout_ms, 5_000)
+
+    case kind do
+      :food -> Queue.ask_food(name, key, timeout)
+      :meteor -> Queue.ask_meteor(name, key, timeout)
+    end
   catch
     :exit, reason ->
-      kind =
+      why =
         case reason do
           {:timeout, _} -> "timed out"
           {:noproc, _} -> "is not running"
           _ -> "exited"
         end
 
-      Logger.warning("garden #{name}: a food hand's queue call #{kind}")
+      Logger.warning("garden #{name}: a #{kind} hand's queue call #{why}")
       {:error, :no_answer}
   end
 

@@ -36,6 +36,8 @@ defmodule CoordinatorWeb.Router do
     post "/public/gardens/:name/letters", GardenController, :post_letter
     post "/public/garden/food/hands", GardenController, :add_hand
     post "/public/gardens/:name/food/hands", GardenController, :add_hand
+    post "/public/garden/meteor/hands", GardenController, :add_meteor_hand
+    post "/public/gardens/:name/meteor/hands", GardenController, :add_meteor_hand
     post "/gardens", GardenController, :create
     post "/gardens/:name/letters/:id/drop", GardenController, :drop
     post "/gardens/:name/days/:index/requeue", GardenController, :requeue

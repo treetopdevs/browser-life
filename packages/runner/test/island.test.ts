@@ -25,7 +25,7 @@ const good: ObserverState = {
 const labels = (n: number) => b64(new Uint8Array(new Int32Array(n).fill(-1).buffer));
 
 /** Runs one island task against a fake coordinator; returns the reject reasons posted. */
-async function attempt(startBytes: Uint8Array): Promise<string[]> {
+async function attempt(startBytes: Uint8Array, taskSpec: RunSpec = spec): Promise<string[]> {
   const rejects: string[] = [];
   let served = false;
   vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
@@ -35,7 +35,7 @@ async function attempt(startBytes: Uint8Array): Promise<string[]> {
     if (path === "/api/next") {
       if (served) return json({ kind: "idle" });
       served = true;
-      return json({ kind: "run", lease: "L", segment: { id: "seg-1", run: "r", index: 1, startStep: 500, steps: 500 }, spec, startFrom: "seg-0", startHash: stateHash(start) });
+      return json({ kind: "run", lease: "L", segment: { id: "seg-1", run: "r", index: 1, startStep: 500, steps: 500 }, spec: taskSpec, startFrom: "seg-0", startHash: stateHash(start) });
     }
     if (path === "/api/segments/seg-0/start") return new Response(startBytes.slice(), { headers: { "content-type": "application/octet-stream" } });
     if (path === "/api/segments/seg-1/reject") {
@@ -185,6 +185,21 @@ describe("island rejects bad predecessor artifacts", () => {
       const r = await attempt(bytes);
       expect(r).toHaveLength(1);
     });
+
+  // Codex pass 3: the runner's sun check (`sunContinuationError`) is part of the preflight, so a predecessor taken under
+  // another sun than the schedule's (or under none while the schedule has one active) is rejected for recomputation
+  // instead of throwing out of runExperiment, which left the lease to expire and the next island to fail the same way.
+  const sunny: RunSpec = { ...spec, interventions: [{ step: 200, kind: "sun", percent: 50, span: 400 }] };
+  it("a predecessor taken under another sun than the schedule's", async () => {
+    const r = await attempt(withObserver({ ...good, sun: { step: 200, percent: 75, span: 400 } }), sunny);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatch(/^the start checkpoint was taken under another sun than this schedule's: its observer says 75% from t=200/);
+  });
+  it("a predecessor with no sun where the schedule has one active", async () => {
+    const r = await attempt(goodBytes, sunny);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatch(/its observer says no sun, the schedule 50% from t=200 for 400 steps at t=500/);
+  });
 });
 
 // Coverage gap the review flagged: a defect in the *import* predecessor
@@ -325,7 +340,7 @@ describe("island idle wait", () => {
       throw new Error(`unexpected ${path}`);
     });
     await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
-    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"];
+    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
     expect(ISLAND_CAPABILITIES).toEqual(caps);
     expect(bodies).toEqual([{ capabilities: caps }, { capabilities: caps }]);
   });

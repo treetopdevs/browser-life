@@ -1871,6 +1871,519 @@ defmodule Coordinator.GardenTest do
     end
   end
 
+  describe "meteor" do
+    @meteor %{asks: 3, every_days: 2, r: 64}
+
+    defp met(opts \\ []), do: garden(Keyword.merge([meteor: @meteor], opts))
+
+    # Adds meteor hands from networks `ids` in turn, as `hands!/6` does for food.
+    defp mhands!(g, hands, epoch, ids, segs, now \\ @t0) do
+      Enum.reduce(ids, {g, hands, []}, fn i, {g, hands, tags} ->
+        case Garden.add_hand(g, :meteor, hands, hkey(epoch, i), segs, now) do
+          {:called, g, hands, _meteor} -> {g, hands, tags ++ [:called]}
+          {tag, hands} -> {g, hands, tags ++ [tag]}
+        end
+      end)
+    end
+
+    # The rule's place, computed here from the note's words, not from the module.
+    defp place(name, seed, n, w \\ 256, h \\ 256) do
+      <<x::unsigned-big-32, y::unsigned-big-32, _::binary>> =
+        :crypto.hash(:sha256, "#{name}/seed-#{seed}/meteor-#{n}")
+
+      %{x: rem(x, w), y: rem(y, h)}
+    end
+
+    defp meteor_rec(day, seq, opts \\ []) do
+      %{x: x, y: y} = place("commons", 1, seq)
+
+      %{
+        id: "meteor-#{seq}",
+        seq: seq,
+        x: x,
+        y: y,
+        r: 64,
+        step: (day + 1) * @d,
+        day: day,
+        called_at: @t0,
+        notice_until: @t0 + @period,
+        hands: 3,
+        dropped_at: opts[:dropped_at]
+      }
+    end
+
+    defp with_meteors(g, meteors),
+      do: %{g | meteors: meteors, next_meteor: length(meteors) + 1}
+
+    test "K distinct hands call a meteor on the frontier day at (d+1)*D at the rule's place with the record's r" do
+      g = met()
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      assert Garden.frontier_day(g, segs) == 1
+      assert g.meteor == %{asks: 3, every_days: 2, r: 64}
+      assert g.meteors == [] and g.next_meteor == 1
+
+      {g, hands, tags} = mhands!(g, nil, e, [1, 2], segs)
+      assert tags == [:counted, :counted] and hands.count == 2 and g.meteors == []
+
+      assert {:called, g, hands, meteor} =
+               Garden.add_hand(g, :meteor, hands, hkey(e, 3), segs, @t0 + 5)
+
+      %{x: x, y: y} = place("commons", 1, 1)
+
+      assert meteor == %{
+               id: "meteor-1",
+               seq: 1,
+               x: x,
+               y: y,
+               r: 64,
+               step: 2 * @d,
+               day: 1,
+               called_at: @t0 + 5,
+               notice_until: @t0 + 5 + @period,
+               hands: 3,
+               dropped_at: nil
+             }
+
+      assert hands.count == 0 and MapSet.size(hands.seen) == 3
+      assert g.meteors == [meteor] and g.next_meteor == 2
+      assert Garden.letter_status(g, meteor, segs) == "waiting"
+
+      assert %{status: "waiting", hands: 3, landsAtStep: 200, r: 64, noticeUntil: notice} =
+               Garden.meteor_record_view(g, meteor, segs)
+
+      assert notice == @t0 + 5 + @period
+      assert Garden.record_view(g, meteor, segs) == Garden.meteor_record_view(g, meteor, segs)
+      # A meteor is no food and no letter.
+      assert g.letters == [] and not Garden.food?(g)
+    end
+
+    test "meteor_place/2 is SHA-256 of name/seed-S/meteor-n" do
+      g = met()
+      p1 = Garden.meteor_place(g, 1)
+      p2 = Garden.meteor_place(g, 2)
+      assert p1 == place("commons", 1, 1) and p2 == place("commons", 1, 2)
+      assert p1 != p2
+      assert p1.x in 0..255 and p1.y in 0..255
+
+      # The name, the seed and the world size all enter it.
+      assert Garden.meteor_place(met(name: "other"), 1) == place("other", 1, 1)
+      assert Garden.meteor_place(met(seed: 7), 1) == place("commons", 7, 1)
+
+      assert Garden.meteor_place(met(width: 512, height: 512), 1) ==
+               place("commons", 1, 1, 512, 512)
+
+      # Width takes x and height takes y: a world that is not square tells them apart.
+      wide = Garden.meteor_place(met(width: 256, height: 128), 1)
+      assert wide == place("commons", 1, 1, 256, 128)
+      refute wide == place("commons", 1, 1, 128, 256)
+
+      # A dropped meteor keeps its number: the next one called is n + 1, at n + 1's place.
+      g = met(meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      assert [%{id: "meteor-1", x: x1, y: y1}] = g.meteors
+      assert %{x: x1, y: y1} == p1
+      assert Garden.meteor_view(g, segs, 0, @t0).place == p2
+
+      {:ok, g, _} = Garden.drop_letter(g, "meteor-1", segs, @t0 + 1)
+      assert Garden.meteor_view(g, segs, 0, @t0 + 1).place == p2
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, make_ref(), [3, 4], segs, @t0 + 2)
+      assert [%{id: "meteor-1"}, %{id: "meteor-2", x: x2, y: y2}] = g.meteors
+      assert %{x: x2, y: y2} == p2
+    end
+
+    test "a repeat hand is not counted, also after the call" do
+      g = met()
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      {g, hands, [:counted]} = mhands!(g, nil, e, [1], segs)
+      assert {:repeat, again} = Garden.add_hand(g, :meteor, hands, hkey(e, 1), segs, @t0 + 1)
+      assert again.count == 1
+
+      {g, hands, [:counted, :called]} = mhands!(g, hands, e, [2, 3], segs)
+      assert {:error, {"cooldown", _}} = Garden.meteor_landing(g, segs)
+      {_g, hands, tags} = mhands!(g, hands, e, [1, 2, 3], segs)
+      assert tags == [:repeat, :repeat, :repeat] and hands.count == 0
+
+      assert {:error, {:refused, {"cooldown", _}}} =
+               Garden.add_hand(g, :meteor, hands, hkey(e, 4), segs, @t0)
+    end
+
+    test "meteor hands expire at the dawn on an offset grid" do
+      offset = div(@period, 3)
+      g = met(dawn_offset_ms: offset)
+      e = make_ref()
+      segs = fresh(g)
+      dawn = Garden.dawn_at(g, Garden.dawn_index(g, @t0) + 1)
+      assert rem(dawn - offset, @period) == 0
+      {g, hands, [:counted, :counted]} = mhands!(g, nil, e, [1, 2], segs, dawn - 1)
+      assert Garden.hands_count(g, hands, e, dawn - 1) == 2
+      assert Garden.hands_count(g, hands, e, dawn) == 0
+      assert Garden.meteor_view(g, segs, 2, dawn - 1).expiresAt == dawn
+
+      assert {:counted, h} = Garden.add_hand(g, :meteor, hands, hkey(e, 3), segs, dawn)
+      assert h.count == 1 and g.meteors == []
+      assert {:counted, _} = Garden.add_hand(g, :meteor, h, hkey(e, 1), segs, dawn + 1)
+    end
+
+    test "a new limiter incarnation resets the meteor count" do
+      g = met()
+      segs = fresh(g)
+      {e1, e2} = {make_ref(), make_ref()}
+      {g, hands, _} = mhands!(g, nil, e1, [1, 2], segs)
+      assert {:counted, h} = Garden.add_hand(g, :meteor, hands, hkey(e2, 3), segs, @t0)
+      assert h.count == 1 and h.epoch == e2
+      assert Garden.hands_count(g, hands, e2, @t0) == 0
+    end
+
+    test "one meteor per N days: cooldown opensAtDay m+N; horizon past the end; a waiting meteor closes the ask after a big retreat" do
+      g = met(meteor: %{@meteor | asks: 2, every_days: 2})
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      assert [%{day: 1}] = g.meteors
+      assert {:error, {"cooldown", 3}} = Garden.meteor_landing(g, segs)
+
+      assert %{open: false, closed: "cooldown", opensAtDay: 3, landing: nil} =
+               Garden.meteor_view(g, segs, 0, @t0)
+
+      segs = segs |> done(1, "a", @t0) |> assigned(2, "a", @t0)
+      assert {:ok, 3} = Garden.meteor_landing(g, segs)
+
+      assert %{open: true, closed: nil, landing: %{day: 3, step: 400}} =
+               Garden.meteor_view(g, segs, 0, @t0)
+
+      # A meteor waiting far ahead after a big retreat (N 7, its day 10, the
+      # frontier back at 1): the ask opens when the frontier is N past it.
+      g4 =
+        with_meteors(met(days_total: 30, meteor: %{@meteor | every_days: 7}), [meteor_rec(10, 1)])
+
+      back = fresh(g4) |> done(0, "a", @t0)
+      assert {:error, {"cooldown", 17}} = Garden.meteor_landing(g4, back)
+
+      # A cooldown that opens past the horizon is the horizon.
+      g3 = with_meteors(met(days_total: 3), [meteor_rec(1, 1)])
+
+      assert {:error, {"horizon", nil}} =
+               Garden.meteor_landing(g3, fresh(g3) |> done(0, "a", @t0))
+    end
+
+    test "meteor ask closed off/stopped/finished/log-full" do
+      off = garden()
+      assert {:error, {"off", nil}} = Garden.meteor_landing(off, fresh(off))
+      # Food on, meteor off: still off.
+      fed_only = fed()
+      assert {:error, {"off", nil}} = Garden.meteor_landing(fed_only, fresh(fed_only))
+
+      g = met(days_total: 2)
+      stopped = fresh(g) |> put_seg(1, &%{&1 | status: "failed"})
+      finished = fresh(g) |> done(0, "a", @t0) |> done(1, "a", @t0)
+      horizon = fresh(g) |> done(0, "a", @t0) |> assigned(1, "a", @t0)
+
+      founding =
+        for i <- 1..10_000,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      full = met(founding: founding)
+
+      for {code, g, segs} <- [
+            {"off", off, fresh(off)},
+            {"stopped", g, stopped},
+            {"finished", g, finished},
+            {"horizon", g, horizon},
+            {"log-full", full, fresh(full)}
+          ] do
+        assert {:error, {^code, nil}} = Garden.meteor_landing(g, segs)
+
+        assert %{open: false, closed: ^code, landing: nil, opensAtDay: nil} =
+                 Garden.meteor_view(g, segs, 0, @t0)
+
+        assert {:error, {:refused, {^code, nil}}} =
+                 Garden.add_hand(g, :meteor, nil, hkey(make_ref(), 1), segs, @t0)
+      end
+    end
+
+    test "the schedule's meteor entry is exactly a lesion; order at one step is stones, foods, meteors" do
+      g = garden(food: %{@food | asks: 2}, meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      {g, _} = post!(g, segs, 5, 6, 7)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      {g, _} = post!(g, segs, 8, 9, 3)
+      %{x: mx, y: my} = place("commons", 1, 1)
+
+      assert Garden.schedule(g) ==
+               g.founding ++
+                 [
+                   %{"step" => @d, "kind" => "lesion", "x" => 5, "y" => 6, "r" => 7},
+                   %{"step" => @d, "kind" => "lesion", "x" => 8, "y" => 9, "r" => 3},
+                   %{
+                     "step" => @d,
+                     "kind" => "feed",
+                     "x" => 128,
+                     "y" => 128,
+                     "r" => 32,
+                     "amount" => 16
+                   },
+                   %{"step" => @d, "kind" => "lesion", "x" => mx, "y" => my, "r" => 64}
+                 ]
+
+      # A stone on a later day comes after the meteor.
+      g = with_letters(g, g.letters ++ [letter(1, 3)])
+
+      assert [_, _, _, %{"kind" => "feed"}, %{"r" => 64}, %{"step" => 200, "kind" => "lesion"}] =
+               Garden.schedule(g)
+
+      # A dropped meteor leaves the schedule.
+      {:ok, g, _} = Garden.drop_letter(g, "meteor-1", segs, @t0)
+      refute Enum.any?(Garden.schedule(g), &(&1["r"] == 64))
+    end
+
+    test "the merged order at one step is stones, foods, suns, meteors, whatever the posting order" do
+      g = garden(letters_per_day: 3, food: %{@food | asks: 2}, meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      # Posted in the reverse of the schedule's order: meteor, sun, food, stone.
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      {:ok, g, sun} = Garden.post_letter(g, %{kind: "sun", percent: 50}, segs, @t0)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      {g, _} = post!(g, segs, 5, 6, 7)
+      assert sun.step == @d
+
+      at_d = for x <- Garden.schedule(g), x["step"] == @d, do: x
+      assert Enum.map(at_d, & &1["kind"]) == ["lesion", "feed", "sun", "lesion"]
+      assert [%{"r" => 7}, _, %{"percent" => 50}, %{"r" => 64}] = at_d
+    end
+
+    test "food and meteor asks are independent" do
+      g = garden(days_total: 8, food: %{@food | asks: 2}, meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+
+      # Separate counts: one network gives a hand to each; neither is a repeat of the other.
+      {g, fh, [:counted]} = hands!(g, nil, e, [1], segs)
+      {g, mh, [:counted]} = mhands!(g, nil, e, [1], segs)
+      assert fh.count == 1 and mh.count == 1
+
+      # A waiting food does not close the meteor ask.
+      {g, _fh, [:called]} = hands!(g, fh, e, [2], segs)
+      assert [%{day: 0}] = g.foods
+      assert {:error, {"cooldown", 2}} = Garden.food_landing(g, segs)
+      assert {:ok, 0} = Garden.meteor_landing(g, segs)
+
+      # Both on one day.
+      {g, _mh, [:called]} = mhands!(g, mh, e, [2], segs)
+      assert [%{day: 0, id: "meteor-1"}] = g.meteors
+      assert {:error, {"cooldown", 2}} = Garden.meteor_landing(g, segs)
+
+      v = Garden.view(g, segs, %{}, @t0, @env)
+      assert [%{day: 0, food: "food-1", meteor: "meteor-1"}] = v.days
+
+      # A dropped food never opens or closes the meteor ask.
+      {:ok, g, _} = Garden.drop_letter(g, "food-1", segs, @t0)
+      assert {:ok, 0} = Garden.food_landing(g, segs)
+      assert {:error, {"cooldown", 2}} = Garden.meteor_landing(g, segs)
+      # And the view counts the two kinds of hands apart.
+      env = Map.merge(@env, %{food_hands: %{fh | count: 1}, meteor_hands: nil, food_epoch: e})
+      v = Garden.view(g, segs, %{}, @t0, env)
+      assert v.food.hands == 1 and v.meteor.hands == 0
+    end
+
+    test "a dropped meteor reopens the ask; a seen network is still a repeat; an assigned day's meteor is not droppable" do
+      g = met(meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      assert {:error, {"cooldown", 2}} = Garden.meteor_landing(g, segs)
+
+      sealed = assigned(segs, 0, "b", @t0)
+
+      assert {:error, {:refused, "the meteor's day has been assigned"}} =
+               Garden.drop_letter(g, "meteor-1", sealed, @t0)
+
+      {:ok, g, dropped} = Garden.drop_letter(g, "meteor-1", segs, @t0 + 9)
+      assert dropped.dropped_at == @t0 + 9
+      assert {:ok, ^g, ^dropped} = Garden.drop_letter(g, "meteor-1", segs, @t0 + 10)
+      assert Garden.letter_status(g, dropped, segs) == "dropped"
+      assert {:ok, 0} = Garden.meteor_landing(g, segs)
+      assert Garden.schedule(g) == g.founding
+
+      {g, _hands, tags} = mhands!(g, hands, e, [1, 2, 3, 4], segs)
+      assert tags == [:repeat, :repeat, :counted, :called]
+      assert [%{id: "meteor-1", dropped_at: at}, %{id: "meteor-2", hands: 2, day: 0}] = g.meteors
+      assert is_integer(at)
+
+      assert {:error, :not_found} = Garden.drop_letter(g, "meteor-9", segs, @t0)
+      # A garden without meteor has none to drop.
+      assert {:error, :not_found} =
+               Garden.drop_letter(garden(), "meteor-1", fresh(garden()), @t0)
+    end
+
+    test "hold?/3 holds a meteor's day until noticeUntil, its own day only, nothing once dropped" do
+      g = met(meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs, @t0 + 7)
+      assert [%{day: 0, called_at: called, notice_until: until}] = g.meteors
+      assert until == called + @period
+
+      assert Garden.hold?(g, 0, called)
+      assert Garden.hold?(g, 0, until - 1)
+      refute Garden.hold?(g, 0, until)
+      refute Garden.hold?(g, 1, called)
+      # `food_hold?/3` is the food's alone.
+      refute Garden.food_hold?(g, 0, called)
+      refute Garden.hold?(garden(), 0, called)
+
+      {:ok, dropped, _} = Garden.drop_letter(g, "meteor-1", segs, called + 1)
+      refute Garden.hold?(dropped, 0, called + 1)
+
+      # A food's day is held by hold?/3 too.
+      f = fed(food: %{@food | asks: 2})
+      {f, _hands, [:counted, :called]} = hands!(f, nil, e, [1, 2], segs, @t0 + 7)
+      assert Garden.hold?(f, 0, @t0 + 8) and Garden.food_hold?(f, 0, @t0 + 8)
+    end
+
+    test "live meteors count toward logMax" do
+      founding =
+        for i <- 1..9_998,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      g = met(founding: founding, letters_per_day: 64, queue_max: 1000)
+      g = with_meteors(g, [meteor_rec(0, 1)])
+      segs = fresh(g)
+      {g, _} = post!(g, segs, 1, 1, 1)
+      # 9,998 founding + 1 letter + 1 meteor = 10,000.
+      assert {:error, {:refused, "the garden's log is full"}} =
+               Garden.post_letter(g, %{x: 2, y: 2, r: 2}, segs, @t0)
+
+      assert {:error, {"log-full", nil}} = Garden.meteor_landing(g, segs)
+
+      # A dropped meteor counts toward nothing.
+      {:ok, g, _} = Garden.drop_letter(g, "meteor-1", segs, @t0)
+      assert {:ok, _, _} = Garden.post_letter(g, %{x: 2, y: 2, r: 2}, segs, @t0)
+    end
+
+    test "a garden founded without meteor has no meteor keys and an unchanged schedule" do
+      for g <- [garden(), fed()] do
+        refute Map.has_key?(g, :meteor) or Map.has_key?(g, :meteors) or
+                 Map.has_key?(g, :next_meteor)
+
+        refute Garden.meteor?(g)
+        segs = fresh(g)
+        {g, _} = post!(g, segs, 5, 6, 7)
+
+        assert Enum.filter(Garden.schedule(g), &(&1["kind"] == "lesion")) ==
+                 [%{"step" => @d, "kind" => "lesion", "x" => 5, "y" => 6, "r" => 7}]
+
+        v = Garden.view(g, segs, %{}, @t0, @env)
+
+        assert v.meteor == %{
+                 enabled: false,
+                 asks: nil,
+                 everyDays: nil,
+                 r: nil,
+                 place: nil,
+                 hands: 0,
+                 expiresAt: v.pace.nextDawnAt,
+                 sharedAddress: false,
+                 open: false,
+                 closed: "off",
+                 opensAtDay: nil,
+                 landing: nil,
+                 meteors: []
+               }
+
+        assert Enum.all?(v.days, &(&1.meteor == nil))
+      end
+
+      # The fed garden's record has exactly the food keys added.
+      assert Enum.sort(Map.keys(fed()) -- Map.keys(garden())) == [:food, :foods, :next_food]
+
+      assert Enum.sort(Map.keys(met()) -- Map.keys(garden())) ==
+               [:meteor, :meteors, :next_meteor]
+    end
+
+    test "the view's meteor block in each state, and days[].meteor" do
+      g = met(days_total: 8)
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted]} = mhands!(g, nil, e, [1], segs)
+      env = Map.merge(@env, %{meteor_hands: Map.delete(hands, :seen), food_epoch: e})
+      v = Garden.view(g, segs, %{}, @t0, env)
+
+      assert v.meteor == %{
+               enabled: true,
+               asks: 3,
+               everyDays: 2,
+               r: 64,
+               place: place("commons", 1, 1),
+               hands: 1,
+               expiresAt: v.pace.nextDawnAt,
+               sharedAddress: false,
+               open: true,
+               closed: nil,
+               opensAtDay: nil,
+               landing: %{day: 0, step: @d},
+               meteors: []
+             }
+
+      # The food block is off and does not see the meteor hands.
+      assert v.food.closed == "off" and v.food.hands == 0
+
+      assert Garden.view(g, segs, %{}, @t0, Map.put(env, :shared_address, true)).meteor.sharedAddress
+
+      assert Garden.view(g, segs, %{}, @t0, %{env | food_epoch: make_ref()}).meteor.hands == 0
+
+      {g, hands, [:counted, :called]} = mhands!(g, hands, e, [2, 3], segs)
+      env = %{env | meteor_hands: Map.delete(hands, :seen)}
+      v = Garden.view(g, segs, %{}, @t0, env)
+
+      assert %{hands: 0, open: false, closed: "cooldown", opensAtDay: 2, place: next} =
+               v.meteor
+
+      assert next == place("commons", 1, 2)
+
+      assert [%{id: "meteor-1", status: "waiting", day: 0, landedIn: nil, droppedAt: nil}] =
+               v.meteor.meteors
+
+      assert [%{day: 0, meteor: "meteor-1", food: nil}] = v.days
+
+      sealed = assigned(segs, 0, "a", @t0)
+      assert [%{status: "sealed"}] = Garden.view(g, sealed, %{}, @t0, env).meteor.meteors
+
+      landed = done(segs, 0, "a", @t0)
+
+      assert [%{status: "landed", landedIn: dg}] =
+               Garden.view(g, landed, %{}, @t0, env).meteor.meteors
+
+      assert dg == digest(0)
+
+      v = Garden.view(g, verified(landed, 0, "b", @t0), %{}, @t0, env)
+      assert [%{status: "verified", landedIn: ^dg}] = v.meteor.meteors
+      assert v.letters.waiting == [] and v.letters.recent == []
+      assert [%{letters: [], meteor: "meteor-1"}] = v.days
+
+      # Dropped, it is still listed, and the day carries none.
+      {:ok, g, _} = Garden.drop_letter(g, "meteor-1", segs, @t0 + 1)
+      v = Garden.view(g, segs, %{}, @t0 + 1, env)
+      assert [%{status: "dropped", droppedAt: at}] = v.meteor.meteors
+      assert at == @t0 + 1
+      assert [%{meteor: nil}] = v.days
+
+      # The newest 32, newest first.
+      many =
+        for i <- 1..40, do: meteor_rec(0, i, dropped_at: if(i < 40, do: @t0 + i))
+
+      shown = Garden.meteor_view(with_meteors(met(), many), fresh(g), 0, @t0).meteors
+      assert length(shown) == 32
+      assert Enum.map(shown, & &1.id) == for(i <- 40..9//-1, do: "meteor-#{i}")
+    end
+  end
+
   describe "contract fixture" do
     # Objects: equal key sets, recursively. Arrays of objects: every element against the fixture's first.
     # Scalars: same JSON type unless either side is null (siblings differ: a landed letter has a landedIn, a

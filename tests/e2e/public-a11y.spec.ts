@@ -522,7 +522,9 @@ async function installHelpers(page: Page): Promise<void> {
     const w = window as any;
     w.__describe = (el: Element) => {
       const text = (el.getAttribute("aria-label") ?? el.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 32);
-      return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${[...el.classList].map((c) => `.${c}`).join("")}${text ? ` "${text}"` : ""}`;
+      // A radio has no text of its own, so it is named by its group and value.
+      const radio = el instanceof HTMLInputElement && el.type === "radio" ? `[name=${el.name}][value=${el.value}]` : "";
+      return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${[...el.classList].map((c) => `.${c}`).join("")}${radio}${text ? ` "${text}"` : ""}`;
     };
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1;
@@ -610,16 +612,27 @@ async function installHelpers(page: Page): Promise<void> {
 }
 
 /**
+ * A group of radios sharing a name (and form): one Tab stop, the checked radio or else the first, and the arrow keys
+ * move within it. `i` is its tag (every radio in it carries it), `desc` the radio Tab should enter it at, `name` its
+ * accessible name from a fieldset's legend or an `aria-labelledby` on a fieldset or `role="radiogroup"` (or `group`)
+ * that holds the whole group ("" if none).
+ */
+type RadioGroup = { i: number; group: string; desc: string; size: number; name: string };
+
+/**
  * Tags every control a keyboard should reach with `data-a11y-i`, in document order; returns their descriptions and
  * those that wear a ring while unfocused. A native control counts whatever its tabindex, so `tabindex="-1"` on a
- * button shows up as missed; other elements count when their tabindex is 0 or more. `keys` names each control
- * without its text (which may change with the colours, as the Day/Night button's does), with its tabindex.
+ * button shows up as missed; other elements count when their tabindex is 0 or more. A radio group counts once, at
+ * the radio Tab enters it by (the checked one, else the first), and all its radios share that tag, so the last one
+ * a Shift+Tab lands on when none is checked counts as reaching it; `radios` lists the groups. `keys` names each
+ * control without its text (which may change with the colours, as the Day/Night button's does), with its tabindex.
  */
-async function tagControls(page: Page): Promise<{ controls: string[]; atRest: string[]; keys: string[] }> {
+async function tagControls(page: Page): Promise<{ controls: string[]; atRest: string[]; keys: string[]; radios: RadioGroup[] }> {
   await installHelpers(page);
   return page.evaluate(() => {
     const w = window as any;
     for (const el of document.querySelectorAll("[data-a11y-i]")) el.removeAttribute("data-a11y-i");
+    for (const el of document.querySelectorAll("[data-a11y-rep]")) el.removeAttribute("data-a11y-rep");
     const native = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary';
     const controls = [
       ...document.querySelectorAll<HTMLElement>(native),
@@ -634,19 +647,56 @@ async function tagControls(page: Page): Promise<{ controls: string[]; atRest: st
     const order = controls
       .filter((el) => el.checkVisibility({ visibilityProperty: true }) && !el.closest("[inert]"))
       .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    // Radios by group: same name, same form owner (null for none).
+    const owners = new Map<HTMLFormElement | null, number>();
+    const groupKey = (el: HTMLElement) => {
+      if (!(el instanceof HTMLInputElement) || el.type !== "radio" || !el.name) return null;
+      if (!owners.has(el.form)) owners.set(el.form, owners.size);
+      return `${owners.get(el.form)}|${el.name}`;
+    };
+    const groups = new Map<string, HTMLInputElement[]>();
+    for (const el of new Set(order)) {
+      const key = groupKey(el);
+      if (key) groups.set(key, [...(groups.get(key) ?? []), el as HTMLInputElement]);
+    }
+    const entry = (members: HTMLInputElement[]) => members.find((m) => m.checked) ?? members[0];
+    const groupName = (members: HTMLInputElement[]) => {
+      const text = (e: Element | null | undefined) => (e?.textContent ?? "").replace(/\s+/g, " ").trim();
+      const holds = (box: Element | null): box is Element => !!box && members.every((m) => box.contains(m));
+      const fieldset = members[0].closest("fieldset");
+      const legend = holds(fieldset) ? [...fieldset.children].find((c) => c.tagName === "LEGEND") : undefined;
+      if (text(legend)) return text(legend);
+      for (let box = members[0].parentElement; box; box = box.parentElement) {
+        // Only a box that is itself a group names the radios: a section labelled by its heading does not.
+        const isGroup = box.tagName === "FIELDSET" || ["radiogroup", "group"].includes(box.getAttribute("role") ?? "");
+        if (!isGroup || !holds(box) || !box.hasAttribute("aria-labelledby")) continue;
+        const named = box.getAttribute("aria-labelledby")!.split(/\s+/).map((id) => text(document.getElementById(id))).join(" ").trim();
+        if (named) return named;
+      }
+      return "";
+    };
     const seen = new Set<HTMLElement>();
     const out: string[] = [];
     const atRest: string[] = [];
     const keys: string[] = [];
+    const radios: { i: number; group: string; desc: string; size: number; name: string }[] = [];
     for (const el of order) {
       if (seen.has(el)) continue;
       seen.add(el);
-      el.setAttribute("data-a11y-i", String(out.length));
+      const key = groupKey(el);
+      const members = key ? groups.get(key)! : [el];
+      if (key && el !== entry(members as HTMLInputElement[])) continue;
+      const i = out.length;
+      for (const m of members) m.setAttribute("data-a11y-i", String(i));
       out.push(w.__describe(el));
       keys.push(`${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${[...el.classList].map((c) => `.${c}`).join("")} tabindex ${el.tabIndex}`);
-      if (el !== document.activeElement && w.__ringed(el)) atRest.push(w.__describe(el));
+      for (const m of members) if (m !== document.activeElement && w.__ringed(m)) atRest.push(w.__describe(m));
+      if (key) {
+        el.setAttribute("data-a11y-rep", String(i));
+        radios.push({ i, group: (el as HTMLInputElement).name, desc: w.__describe(el), size: members.length, name: groupName(members as HTMLInputElement[]) });
+      }
     }
-    return { controls: out, atRest, keys };
+    return { controls: out, atRest, keys, radios };
   });
 }
 
@@ -787,12 +837,12 @@ for (const size of WIDTHS) {
 
 /**
  * The keyboard pass over a page loaded fresh in the state worth checking: the first Tab is the skip link, Tab and
- * Shift+Tab reach every control with a ring that contrasts, the header in drawn order, the same in night colours,
- * then the skip link's jump.
+ * Shift+Tab reach every control with a ring that contrasts, the header in drawn order, each radio group as one named
+ * stop that the arrow keys move within, the same in night colours, then the skip link's jump.
  */
 async function keyboardWalk(page: Page, route: string, size: { width: number; height: number }): Promise<void> {
   const skipLink = skipFor(route);
-  const { controls, atRest, keys } = await tagControls(page);
+  const { controls, atRest, keys, radios } = await tagControls(page);
   const excused = (check: KeyCheck, desc: string) =>
     KEY_EXCLUSIONS.find((e) => e.route === route && e.check === check && e.target === desc && (!e.widths || e.widths.includes(size.width)));
   const used = new Set<KeyExclusion>();
@@ -836,6 +886,15 @@ async function keyboardWalk(page: Page, route: string, size: { width: number; he
     }
   }
   for (const words of orderProblems(forward)) note("order", "header", words);
+  // Each radio group is one stop, entered by Tab at its checked radio (else its first), and has a name. These go
+  // straight to problems: no exclusion lets a radio group through.
+  for (const g of radios) {
+    const at = forward.find((s) => s.i === g.i);
+    if (!at) problems.push(`radio: the ${g.group} group is never reached by Tab`);
+    else if (at.desc !== g.desc) problems.push(`radio: Tab enters the ${g.group} group at ${at.desc}, not ${g.desc}`);
+    if (!backward.some((s) => s.i === g.i)) problems.push(`radio: the ${g.group} group is never reached by Shift+Tab`);
+    if (!g.name) problems.push(`radio: the ${g.group} group has no accessible name (a fieldset with a legend, or aria-labelledby)`);
+  }
 
   // Night colours. The controls are counted again (a page with no Day/Night button is reloaded into them, which
   // drops the day tags) and must be the same controls as by day, in the same order, with the same tabindex, and
@@ -887,6 +946,28 @@ async function keyboardWalk(page: Page, route: string, size: { width: number; he
     }
     if (!s.visible) note("ring", s.desc, "does not match :focus-visible in night colours");
     for (const p of ringProblems(s.ring)) note(p.check, s.desc, `${p.words} in night colours`);
+  }
+  // Within each radio group, ArrowRight then ArrowDown each move the focus and the choice to the next radio (round
+  // from the last to the first), ringed and drawn. Last, as a choice can change the page (a Send button enabled).
+  for (const g of nightTags.radios) {
+    if (g.size < 2) continue;
+    await page.locator(`[data-a11y-rep="${g.i}"]`).focus();
+    for (const key of ["ArrowRight", "ArrowDown"]) {
+      const want = await page.evaluate((i) => {
+        const members = [...document.querySelectorAll<HTMLInputElement>(`[data-a11y-i="${i}"]`)];
+        const now = members.indexOf(document.activeElement as HTMLInputElement);
+        return now < 0 ? null : (window as any).__describe(members[(now + 1) % members.length]) as string;
+      }, g.i);
+      if (!want) { problems.push(`radio: focus is outside the ${g.group} group before ${key}`); break; }
+      await page.keyboard.press(key);
+      const stop = await focusStop(page, 2000);
+      const checked = await page.evaluate(() => (document.activeElement as HTMLInputElement | null)?.checked === true);
+      if (stop.body || stop.desc !== want) { problems.push(`radio: ${key} in the ${g.group} group focused ${stop.body ? "nothing" : stop.desc}, not ${want}`); break; }
+      if (!checked) problems.push(`radio: ${key} in the ${g.group} group moved focus to ${want} but did not choose it`);
+      if (!stop.visible) problems.push(`radio: ${want} does not match :focus-visible after ${key}`);
+      if (!stop.drawn) problems.push(`radio: ${want} is not what is drawn at its centre after ${key}`);
+      for (const p of ringProblems(stop.ring)) problems.push(`radio: ${want} ${p.words} after ${key}`);
+    }
   }
 
   expect([...new Set(problems)], `keyboard problems on ${route} at ${size.width}`).toEqual([]);

@@ -136,6 +136,18 @@ defmodule Coordinator.Queue do
   digest that disagrees with every capable island's, a divergence with no
   real disagreement in it.
 
+  A sun (`"kind": "sun"`, `{step, kind, percent, span}`: packages/schema's
+  sun.ts, docs/garden-sun-2026-10-18.md) is a scheduled entry too: the light
+  is `percent` of the world's own (one of 50, 75, 125, 150) for `span` steps
+  (1..2^24), suns do not overlap, and a sun must end by the run's last step.
+  The world rule is `sunError`'s, from the preset's light (`:world_light` in
+  config.exs, held to packages/schema's presets by the same test as
+  `:world_size`): a percent whose scaled base, amplitude or season would
+  exceed 255, or whose sum would, is refused, and a preset missing from the
+  map takes no sun. An experiment whose schedule holds a sun goes only to an
+  island that also advertises `"sun-v1"`: an island without it would refuse
+  the kind, or (older still) run the segment under the world's own light.
+
   Gardens (`Coordinator.Garden`, README "The garden"): a garden is an ordinary
   one-run experiment (`treatment`, one seed, `segmentSteps` = one day,
   `verifyFraction` 1, `"garden" => true` on its stored spec) plus a record in
@@ -170,6 +182,12 @@ defmodule Coordinator.Queue do
       the view shows only their count, so a restart forgets them (toward no
       food) while a food already called survives in the garden's record. A hand
       that only counts is not persisted at all; a call is.
+    * Meteor (only in a garden founded with `"meteor": true`,
+      docs/garden-meteor-2026-10-18.md), exactly as food: `ask_meteor/3` adds a
+      hand (`Garden.add_hand/6` with `:meteor`), the K-th hand of a dawn period
+      calls a meteor (a large lesion at `Garden.meteor_place/2`'s place), and
+      the hands live apart from the food hands in `s.meteor_hands`, in memory
+      only, dropped, redacted and swept as the food hands are.
 
   A garden is public, and islands join without credentials, so by default any
   visitor can run, replay, fail or reject a day. Three things bound that. With
@@ -333,6 +351,14 @@ defmodule Coordinator.Queue do
   """
   def ask_food(name, key, timeout \\ 5_000),
     do: GenServer.call(__MODULE__, {:ask_food, name, key}, timeout)
+
+  @doc """
+  A visitor's hand on garden `name`'s meteor ask, as `ask_food/3` is for food
+  (the same answers, with the meteor's view and the meteor block in place of
+  the food's). The meteor hands are kept apart from the food hands.
+  """
+  def ask_meteor(name, key, timeout \\ 5_000),
+    do: GenServer.call(__MODULE__, {:ask_meteor, name, key}, timeout)
 
   @doc "The keeper's veto: drops letter or food `id` of garden `name` if its day was never assigned. `{:ok, view}` (a letter's or a food's), `{:error, :not_found}` or `{:error, {:refused, msg}}`."
   def drop_letter(name, id), do: GenServer.call(__MODULE__, {:drop_letter, name, id})
@@ -499,6 +525,7 @@ defmodule Coordinator.Queue do
      state
      |> Map.put(:dir, dir)
      |> Map.put(:food_hands, %{})
+     |> Map.put(:meteor_hands, %{})
      |> Map.put(:leaders_tasks, %{})
      |> Map.put(:leaders_waiting, wait_new())
      |> reindex()
@@ -513,13 +540,22 @@ defmodule Coordinator.Queue do
     status
     |> redact_status(:state, fn
       %{food_hands: hands} = s ->
-        %{s | food_hands: Map.new(hands, fn {n, h} -> {n, hands_summary(h)} end)}
+        s = %{s | food_hands: Map.new(hands, fn {n, h} -> {n, hands_summary(h)} end)}
+
+        case s do
+          %{meteor_hands: m} ->
+            %{s | meteor_hands: Map.new(m, fn {n, h} -> {n, hands_summary(h)} end)}
+
+          _ ->
+            s
+        end
 
       other ->
         other
     end)
     |> redact_status(:message, fn
       {:ask_food, name, _key} -> {:ask_food, name, :redacted}
+      {:ask_meteor, name, _key} -> {:ask_meteor, name, :redacted}
       other -> other
     end)
     |> redact_status(:log, fn _log -> [] end)
@@ -553,14 +589,15 @@ defmodule Coordinator.Queue do
     now = now()
     epoch = Coordinator.LetterLimiter.hand_epoch()
 
-    hands =
-      for {name, h} <- s.food_hands,
+    keep = fn all ->
+      for {name, h} <- all,
           g = s.gardens[name],
           g != nil and h.epoch == epoch and h.dawn == Garden.dawn_index(g, now),
           into: %{},
           do: {name, h}
+    end
 
-    {:noreply, %{s | food_hands: hands}}
+    {:noreply, %{s | food_hands: keep.(s.food_hands), meteor_hands: keep.(s.meteor_hands)}}
   end
 
   # A leaders task ended (`start_leaders/4`): its slot is free, and the next
@@ -590,7 +627,8 @@ defmodule Coordinator.Queue do
 
   # As GenServer's default does, an unexpected message is worth a warning (a
   # late reply, a stray monitor). No hand key travels in a message to this
-  # process except inside `{:ask_food, ...}` calls, which never land here.
+  # process except inside `{:ask_food, ...}` and `{:ask_meteor, ...}` calls,
+  # which never land here.
   def handle_info(other, s) do
     Logger.warning("queue: ignoring an unexpected message #{inspect(other, limit: 5)}")
     {:noreply, s}
@@ -689,13 +727,28 @@ defmodule Coordinator.Queue do
       # could add a network twice, so the caller is told to retry.
       g ->
         if epoch == Coordinator.LetterLimiter.hand_epoch(),
-          do: ask_food(s, g, name, key),
+          do: ask_act(s, g, name, key, :food),
           else: {:reply, {:error, :stale}, s}
     end
   end
 
   # A direct caller's malformed key is no hand at all.
   def handle_call({:ask_food, _name, _key}, _from, s), do: {:reply, {:error, :not_found}, s}
+
+  # A meteor hand, as a food hand (above).
+  def handle_call({:ask_meteor, name, {epoch, hash} = key}, _from, s) when is_binary(hash) do
+    case s.gardens[name] do
+      nil ->
+        {:reply, {:error, :not_found}, s}
+
+      g ->
+        if epoch == Coordinator.LetterLimiter.hand_epoch(),
+          do: ask_act(s, g, name, key, :meteor),
+          else: {:reply, {:error, :stale}, s}
+    end
+  end
+
+  def handle_call({:ask_meteor, _name, _key}, _from, s), do: {:reply, {:error, :not_found}, s}
 
   def handle_call({:garden_view, name}, _from, s) do
     view =
@@ -710,6 +763,7 @@ defmodule Coordinator.Queue do
             letters_per_address:
               Application.get_env(:coordinator, :garden_letters_per_address, 3),
             food_hands: s.food_hands |> Map.get(name) |> hands_summary(),
+            meteor_hands: s.meteor_hands |> Map.get(name) |> hands_summary(),
             food_epoch: Coordinator.LetterLimiter.hand_epoch(),
             shared_address: shared_address?()
           }
@@ -1197,7 +1251,7 @@ defmodule Coordinator.Queue do
 
   # The keys `POST /api/gardens` takes. An unknown one is refused rather than
   # ignored: a keeper's typo ("dawnPeriod") should not found a daily garden.
-  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays)
+  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays meteor meteorAsks meteorEveryDays)
   # packages/schema's MATTER_MAX (2^26 quanta of world matter), and the start
   # matter allowed per cell for a garden preset (the real figure is about 35;
   # apps/lab/test/garden.test.ts checks every garden preset against both).
@@ -1247,6 +1301,23 @@ defmodule Coordinator.Queue do
     every_r = Coordinator.ConfigCheck.food_range(:garden_food_every_days)
     amount_r = Coordinator.ConfigCheck.food_range(:garden_food_amount)
     radius_r = Coordinator.ConfigCheck.food_range(:garden_food_radius)
+    meteor = Map.get(params, "meteor", false)
+
+    meteor_asks =
+      Map.get(params, "meteorAsks", Application.get_env(:coordinator, :garden_meteor_asks, 5))
+
+    meteor_every =
+      Map.get(
+        params,
+        "meteorEveryDays",
+        Application.get_env(:coordinator, :garden_meteor_every_days, 7)
+      )
+
+    meteor_r = Application.get_env(:coordinator, :garden_meteor_radius, 64)
+    # The meteor ranges are ConfigCheck's too (docs/garden-meteor-2026-10-18.md).
+    m_asks_r = Coordinator.ConfigCheck.range(:garden_meteor_asks)
+    m_every_r = Coordinator.ConfigCheck.range(:garden_meteor_every_days)
+    m_radius_r = Coordinator.ConfigCheck.range(:garden_meteor_radius)
 
     error =
       cond do
@@ -1315,6 +1386,30 @@ defmodule Coordinator.Queue do
         food and pond_preset?(preset) ->
           "food is not defined for pond worlds: the pond cycle fixes each pond's matter"
 
+        not is_boolean(meteor) ->
+          "meteor must be true or false"
+
+        meteor != true and
+            (Map.has_key?(params, "meteorAsks") or Map.has_key?(params, "meteorEveryDays")) ->
+          "meteorAsks and meteorEveryDays are for a garden founded with meteor: true"
+
+        meteor and not int_in?.(meteor_asks, m_asks_r.first, m_asks_r.last) ->
+          "meteorAsks must be an integer in #{inspect(m_asks_r)} (one person is not a collective)"
+
+        meteor and not int_in?.(meteor_every, m_every_r.first, m_every_r.last) ->
+          "meteorEveryDays must be an integer in #{inspect(m_every_r)}"
+
+        meteor and not int_in?.(meteor_r, m_radius_r.first, m_radius_r.last) ->
+          "the coordinator's garden_meteor_radius must be an integer in #{inspect(m_radius_r)}"
+
+        meteor and pond_preset?(preset) ->
+          "meteor is not defined for pond worlds: a pond world is many tiles, and a lesion's disc is bounded by one"
+
+        meteor and meteor_r > max_world_radius(world) ->
+          "meteor: the coordinator's garden_meteor_radius #{meteor_r} is past the largest lesion this " <>
+            "#{elem(world, 0)} x #{elem(world, 1)} world takes without its disc wrapping onto itself, " <>
+            "#{max_world_radius(world)}"
+
         true ->
           nil
       end
@@ -1335,6 +1430,7 @@ defmodule Coordinator.Queue do
            })
            |> founding_error(),
          :ok <- founding_at_step_zero(spec["interventions"]),
+         :ok <- founding_without_sun(spec["interventions"]),
          :ok <-
            food_matter_bound(
              food,
@@ -1361,7 +1457,8 @@ defmodule Coordinator.Queue do
         food:
           if(food,
             do: %{asks: food_asks, every_days: food_every, amount: food_amount, r: food_r}
-          )
+          ),
+        meteor: if(meteor, do: %{asks: meteor_asks, every_days: meteor_every, r: meteor_r})
       }
 
       {:ok, Map.put(spec, "garden", true), gparams}
@@ -1372,6 +1469,11 @@ defmodule Coordinator.Queue do
   end
 
   defp garden_spec(_), do: {:error, "a garden must be an object"}
+
+  # The largest lesion radius a one-tile world of this size takes without its
+  # disc wrapping onto itself (packages/schema's `maxLesionRadius`, for a world
+  # of one tile; apps/lab/test/garden.test.ts pins every garden preset as one).
+  defp max_world_radius({w, h}), do: div(min(w, h) - 1, 2)
 
   # The runner refuses a feed that would take the world past MATTER_MAX, and a
   # refused scheduled feed fails its day for good (the day's slice is frozen),
@@ -1432,6 +1534,19 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # A garden's suns are its letters (Coordinator.Garden): one founded with one
+  # could overlap the first sun letter, which every island would then refuse.
+  defp founding_without_sun(entries) do
+    case Enum.find_index(entries, &(&1["kind"] == "sun")) do
+      nil ->
+        :ok
+
+      i ->
+        {:error,
+         "founding[#{i}]: a sun is not a founding entry (a garden's suns are its letters)"}
+    end
+  end
+
   defp garden_name_free(s, name) do
     cond do
       Map.has_key?(s.gardens, name) -> {:error, "garden exists"}
@@ -1474,6 +1589,13 @@ defmodule Coordinator.Queue do
     end
   end
 
+  defp garden_letter(%{kind: "sun", percent: p}) do
+    case Garden.parse_letter(%{"kind" => "sun", "percent" => p}) do
+      {:ok, letter} -> {:ok, letter}
+      {:error, msg} -> {:error, {:invalid, msg}}
+    end
+  end
+
   defp garden_letter(_), do: {:error, {:invalid, "a letter needs integer x, y and r"}}
 
   # Keeps the experiment's spec in step with the garden's letters: the whole
@@ -1484,45 +1606,68 @@ defmodule Coordinator.Queue do
     |> put_in([:experiments, g.name, :spec, "interventions"], Garden.schedule(g))
   end
 
-  # A hand on garden `g` (the `{:ask_food, ...}` call's work).
-  defp ask_food(s, g, name, key) do
+  # A hand on garden `g` (the `{:ask_food, ...}` or `{:ask_meteor, ...}` call's
+  # work), each kind against its own hands.
+  defp ask_act(s, g, name, key, kind) do
     now = now()
     segs = garden_segs(s, g)
-    block = fn g, hands -> Garden.food_view(g, segs, hands.count, now, shared_address?()) end
+    field = hands_field(kind)
 
-    case Garden.add_hand(g, Map.get(s.food_hands, name), key, segs, now) do
+    block = fn g, hands ->
+      case kind do
+        :food -> Garden.food_view(g, segs, hands.count, now, shared_address?())
+        :meteor -> Garden.meteor_view(g, segs, hands.count, now, shared_address?())
+      end
+    end
+
+    case Garden.add_hand(g, kind, s |> Map.fetch!(field) |> Map.get(name), key, segs, now) do
       {:error, {:refused, {code, opens}}} ->
-        {:reply, {:error, {:closed, code, opens, closed_words(code, opens, g)}}, s}
+        {:reply, {:error, {:closed, code, opens, closed_words(code, opens, g, kind)}}, s}
 
       {:repeat, hands} ->
-        {:reply, {:ok, :repeat, block.(g, hands)}, put_hands(s, name, hands)}
+        {:reply, {:ok, :repeat, block.(g, hands)}, put_hands(s, field, name, hands)}
 
       {:counted, hands} ->
         # Only a count changed, and counts are never persisted.
-        {:reply, {:ok, :counted, nil, block.(g, hands)}, put_hands(s, name, hands)}
+        {:reply, {:ok, :counted, nil, block.(g, hands)}, put_hands(s, field, name, hands)}
 
-      {:called, g, hands, food} ->
-        Logger.info("garden #{name}: #{food.id} called onto day #{food.day}")
-        s = s |> store_garden(g) |> put_hands(name, hands)
+      {:called, g, hands, record} ->
+        Logger.info("garden #{name}: #{record.id} called onto day #{record.day}")
+        s = s |> store_garden(g) |> put_hands(field, name, hands)
 
-        {:reply, {:ok, :counted, Garden.food_record_view(g, food, segs), block.(g, hands)},
+        {:reply, {:ok, :counted, Garden.record_view(g, record, segs), block.(g, hands)},
          persist(s)}
     end
   end
+
+  defp hands_field(:food), do: :food_hands
+  defp hands_field(:meteor), do: :meteor_hands
 
   # Every visitor reaches this coordinator as one address (production until the
   # proxy passes client addresses, D-17): the food block says so.
   defp shared_address?,
     do: Application.get_env(:coordinator, :garden_shared_address, false) == true
 
-  # A garden's food hands, in memory only (never persisted, never in a view).
-  defp put_hands(s, name, hands), do: put_in(s, [:food_hands, name], hands)
+  # A garden's food or meteor hands, in memory only (never persisted, never in a view).
+  defp put_hands(s, field, name, hands), do: put_in(s, [field, name], hands)
 
   # What the view needs of the hands: the count and whose period it is, not the hashes.
   defp hands_summary(nil), do: nil
   defp hands_summary(hands), do: Map.take(hands, [:dawn, :epoch, :count])
 
-  # A closed food ask in words (the 409's `error`).
+  # A closed food or meteor ask in words (the 409's `error`).
+  defp closed_words(code, opens, g, :food), do: closed_words(code, opens, g)
+  defp closed_words("off", _opens, _g, :meteor), do: "this garden takes no meteor"
+
+  defp closed_words("horizon", _opens, _g, :meteor),
+    do: "no day is left before the horizon for a meteor"
+
+  defp closed_words("cooldown", opens, g, :meteor),
+    do:
+      "a meteor lands at most once every #{days_words(g.meteor.every_days)}; the next can land on day #{opens} at the earliest"
+
+  defp closed_words(code, opens, g, :meteor), do: closed_words(code, opens, g)
+
   defp closed_words("off", _opens, _g), do: "this garden takes no food"
 
   defp closed_words("stopped", _opens, _g),
@@ -1534,7 +1679,11 @@ defmodule Coordinator.Queue do
 
   defp closed_words("cooldown", opens, g),
     do:
-      "a food lands at most once every #{g.food.every_days} days; the next can land on day #{opens} at the earliest"
+      "a food lands at most once every #{days_words(g.food.every_days)}; the next can land on day #{opens} at the earliest"
+
+  # "1 day", "7 days": the cooldown's spacing in words.
+  defp days_words(1), do: "1 day"
+  defp days_words(n), do: "#{n} days"
 
   # The release rule for every garden (`Garden.maybe_release/3`), at most one
   # day each: it needs only the newest released day's segment status.
@@ -1593,12 +1742,12 @@ defmodule Coordinator.Queue do
     end
   end
 
-  # A garden's day carrying a food called less than a dawn period ago is not
-  # run yet: the keeper's veto has that long (`Garden.food_hold?/3`).
+  # A garden's day carrying a food or a meteor called less than a dawn period
+  # ago is not run yet: the keeper's veto has that long (`Garden.hold?/3`).
   defp food_hold?(s, seg, now) do
     case s.gardens[seg.experiment] do
       nil -> false
-      g -> Garden.food_hold?(g, seg.index, now)
+      g -> Garden.hold?(g, seg.index, now)
     end
   end
 
@@ -2021,6 +2170,10 @@ defmodule Coordinator.Queue do
   @max_safe_int 9_007_199_254_740_991
   @lesion_keys ~w(step kind x y r)
   @feed_keys ~w(step kind x y r amount)
+  @sun_keys ~w(step kind percent span)
+  # packages/schema/src/sun.ts's SUN_PERCENTS and SUN_SPAN_MAX.
+  @sun_percents [50, 75, 125, 150]
+  @sun_span_max 16_777_216
 
   # Why `spec["interventions"]` cannot be scheduled, or nil (absent, or nil,
   # is no schedule at all). The shape rules are packages/runner/src/interventions.ts's
@@ -2034,21 +2187,36 @@ defmodule Coordinator.Queue do
   defp invalid_interventions(%{"interventions" => list} = spec) when is_list(list) do
     cond do
       list == [] ->
-        "interventions must be a non-empty array of lesions and feeds"
+        "interventions must be a non-empty array of lesions, feeds and suns"
 
       length(list) > @max_interventions ->
         "interventions must hold at most #{@max_interventions} entries"
 
       true ->
         world = Map.get(Application.get_env(:coordinator, :world_size, %{}), spec["presetId"])
+        # The preset's own light, which a condition in `:light_conditions` changes: then no sun.
+        light =
+          if Enum.any?(
+               spec["conditions"] || [],
+               &(&1 in Application.get_env(:coordinator, :light_conditions, []))
+             ),
+             do: :changed,
+             else: Map.get(Application.get_env(:coordinator, :world_light, %{}), spec["presetId"])
+
         pond? = pond_preset?(spec["presetId"])
 
         list
         |> Enum.with_index()
-        |> Enum.reduce_while({0, nil}, fn {e, i}, {last, nil} ->
+        |> Enum.reduce_while({{0, 0}, nil}, fn {e, i}, {{last, sun_end}, nil} ->
           case invalid_intervention(e, i, last, spec["steps"], world, pond?) do
-            {:ok, step} -> {:cont, {step, nil}}
-            {:error, why} -> {:halt, {last, why}}
+            {:ok, step} ->
+              case invalid_sun(e, i, sun_end, spec["steps"], light) do
+                {:ok, sun_end} -> {:cont, {{step, sun_end}, nil}}
+                {:error, why} -> {:halt, {{last, sun_end}, why}}
+              end
+
+            {:error, why} ->
+              {:halt, {{last, sun_end}, why}}
           end
         end)
         |> elem(1)
@@ -2056,7 +2224,7 @@ defmodule Coordinator.Queue do
   end
 
   defp invalid_interventions(%{"interventions" => _}),
-    do: "interventions must be a non-empty array of lesions and feeds"
+    do: "interventions must be a non-empty array of lesions, feeds and suns"
 
   defp invalid_interventions(_spec), do: nil
 
@@ -2070,7 +2238,12 @@ defmodule Coordinator.Queue do
     where = "interventions[#{i}]"
     kind = is_map(e) and e["kind"]
 
-    allowed = if kind == "feed", do: @feed_keys, else: @lesion_keys
+    allowed =
+      case kind do
+        "feed" -> @feed_keys
+        "sun" -> @sun_keys
+        _ -> @lesion_keys
+      end
 
     # Erlang integers only: an integer-valued float (`2.0`, which JSON clients
     # never send for a cell) is refused although the runner would take it, so
@@ -2081,8 +2254,9 @@ defmodule Coordinator.Queue do
       not is_map(e) ->
         {:error, "#{where} must be an object"}
 
-      kind not in ["lesion", "feed"] ->
-        {:error, "#{where}: kind must be \"lesion\" or \"feed\", got #{Jason.encode!(kind)}"}
+      kind not in ["lesion", "feed", "sun"] ->
+        {:error,
+         "#{where}: kind must be \"lesion\", \"feed\" or \"sun\", got #{Jason.encode!(kind)}"}
 
       # See the moduledoc: a replay assertion the archipelago cannot honour.
       kind == "feed" and Map.has_key?(e, "matter") ->
@@ -2107,6 +2281,10 @@ defmodule Coordinator.Queue do
         {:error,
          "#{where}: step #{e["step"]} is after the run's last step (steps #{steps}), so no segment would apply it"}
 
+      # A sun's own rules are `invalid_sun/5`'s.
+      kind == "sun" ->
+        {:ok, e["step"]}
+
       (bad = Enum.find(~w(x y r), &(not nonneg?.(&1)))) != nil ->
         {:error, "#{where}: #{bad} must be a non-negative integer"}
 
@@ -2127,6 +2305,71 @@ defmodule Coordinator.Queue do
 
       true ->
         {:ok, e["step"]}
+    end
+  end
+
+  # A sun's own rules, after `invalid_intervention/6` has checked its keys and
+  # step: `{:ok, sun_end}` (the end of the latest sun so far, for the overlap
+  # rule) or `{:error, why}`, in the runner's words (`validateInterventions`,
+  # `sunError`, tools/run.ts for the last step). `light` is the preset's
+  # `{lightBase, lightAmp, seasonAmp}` from config.exs, or nil: then no sun.
+  defp invalid_sun(%{"kind" => "sun"} = e, i, sun_end, steps, light) do
+    where = "interventions[#{i}]"
+    step = e["step"]
+    span = e["span"]
+
+    cond do
+      e["percent"] not in @sun_percents or not is_integer(e["percent"]) ->
+        {:error, "#{where}: a sun's percent must be one of #{Enum.join(@sun_percents, ", ")}"}
+
+      not (is_integer(span) and span >= 1 and span <= @sun_span_max) ->
+        {:error, "#{where}: a sun's span must be an integer in 1..#{@sun_span_max}"}
+
+      step < sun_end ->
+        {:error,
+         "#{where}: a sun at t=#{step} starts before the previous sun ends (t=#{sun_end}); suns do not overlap"}
+
+      step + span > steps ->
+        {:error,
+         "#{where}: a sun at t=#{step} for #{span} steps ends at t=#{step + span}, after the run's last step (steps #{steps}): a sun sets inside its run"}
+
+      light == nil ->
+        {:error, "#{where}: this preset's light is not known here, so it takes no sun"}
+
+      light == :changed ->
+        {:error,
+         "#{where}: a sun is checked against the preset's own light, and one of this experiment's conditions changes it"}
+
+      (why = sun_light_error(light, e["percent"])) != nil ->
+        {:error, "#{where}: #{why}"}
+
+      true ->
+        {:ok, step + span}
+    end
+  end
+
+  defp invalid_sun(_e, _i, sun_end, _steps, _light), do: {:ok, sun_end}
+
+  @doc """
+  Why a world of light `{lightBase, lightAmp, seasonAmp}` cannot take a sun of
+  `percent`, or nil: packages/schema's `sunError` (each value floored at
+  `percent`/100 must stay within 255, and so must their sum).
+  """
+  @spec sun_light_error({integer, integer, integer}, integer) :: String.t() | nil
+  def sun_light_error({base, amp, season}, percent) do
+    [b, a, s] = for v <- [base, amp, season], do: div(v * percent, 100)
+
+    if b > 255 or a > 255 or s > 255 or b + a + s > 255,
+      do: "this world's light cannot take a sun of #{percent}%: it would be #{b} + #{a} + #{s}",
+      else: nil
+  end
+
+  @doc "The percents a preset's light (`:world_light`) takes, or [] for a preset without one."
+  @spec sun_percents(String.t()) :: [integer]
+  def sun_percents(preset_id) do
+    case Map.get(Application.get_env(:coordinator, :world_light, %{}), preset_id) do
+      nil -> []
+      light -> Enum.filter(@sun_percents, &(sun_light_error(light, &1) == nil))
     end
   end
 
@@ -2383,6 +2626,10 @@ defmodule Coordinator.Queue do
   # island that cannot apply them would run the segment clean.
   @interventions_capability "interventions-v1"
 
+  # A schedule holding a sun (see the moduledoc): asked for besides
+  # `@interventions_capability`.
+  @sun_capability "sun-v1"
+
   # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
   # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
   # pond-mass-<score> and pond-drift-<score>, held to it by
@@ -2400,7 +2647,8 @@ defmodule Coordinator.Queue do
     @pond_capability,
     @current_capability,
     @interventions_capability,
-    @breed_capability
+    @breed_capability,
+    @sun_capability
   ]
   @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
   @stored_capability_bytes 32
@@ -2469,25 +2717,33 @@ defmodule Coordinator.Queue do
   # offered: every pond experiment, unless it advertises `@pond_capability`;
   # every experiment on a breed preset, unless it advertises
   # `@breed_capability`; and every experiment with scheduled interventions,
-  # unless it advertises `@interventions_capability`. Computed once per
+  # unless it advertises `@interventions_capability`, and every one whose
+  # schedule holds a sun, unless it advertises `@sun_capability`. Computed once per
   # `pick_task/4` call rather than per segment, so a large queue costs one
   # pass over the experiments, not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
     ponds? = @pond_capability in capabilities
     breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
+    sun? = @sun_capability in capabilities
 
-    if ponds? and breed? and scheduled? do
+    if ponds? and breed? and scheduled? and sun? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
             (not breed? and breed_preset?(exp.spec["presetId"])) or
-            (not scheduled? and exp.spec["interventions"] != nil),
+            (not scheduled? and exp.spec["interventions"] != nil) or
+            (not sun? and sun_schedule?(exp.spec["interventions"])),
           into: MapSet.new(),
           do: name
     end
   end
+
+  defp sun_schedule?(list) when is_list(list),
+    do: Enum.any?(list, &(is_map(&1) and &1["kind"] == "sun"))
+
+  defp sun_schedule?(_), do: false
 
   # Whether `seg` is withheld from an island with `capabilities`: its experiment
   # is in `gated` (above), or its condition runs one of the hunt's arms and the
@@ -2707,12 +2963,13 @@ defmodule Coordinator.Queue do
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
   defp clip(_), do: "?"
 
-  # Never `:dir`, `:index` or `:food_hands` (the food hands live in memory
-  # only); `:gardens` only while empty (see `@state_version`).
+  # Never `:dir`, `:index`, `:food_hands` or `:meteor_hands` (the hands live in
+  # memory only); `:gardens` only while empty (see `@state_version`).
   defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
-    do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting, :gardens]
+    do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting, :gardens]
 
-  defp persist_drops(_s), do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting]
+  defp persist_drops(_s),
+    do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")

@@ -95,9 +95,11 @@ npx playwright test tests/e2e/lab-naturalist.spec.ts --project=chrome
 - The spots-m3 full-rules comparison: Not yet measured ([#52]).
 - Notes stop at the first wound or feed ([#52]); there is no page-level wound or drain click test and no 375 px check
   with a suggestion open ([#56]). DESIGN.md has no entry for the panel yet ([#52]).
-- The firsts rewind log lives in memory per page; keeping it beside the checkpoint is a follow-up ([#20]).
+- The firsts rewind log lives in memory per page; keeping it beside the checkpoint is a follow-up ([#20]). *(Later on
+  2026-10-18: backlog slice 36 keeps it in a `.rewind` sidecar beside each saved checkpoint.)*
 - A refused Feed or Drain on a pond world shows "World stopped" although nothing is wrong ([#38]). No fix is on main: the
-  feed path in `apps/lab/src/sim.worker.ts` still reaches the generic error message.
+  feed path in `apps/lab/src/sim.worker.ts` still reaches the generic error message. *(Later on 2026-10-18: backlog
+  slice 36 makes it a notice, and the world keeps running.)*
 - When gene v2 bumps `RULE_VERSION`, Field notes will say it has no baseline until the envelopes are rebuilt with
   `tools/naturalist-envelope.ts` ([#52]).
 

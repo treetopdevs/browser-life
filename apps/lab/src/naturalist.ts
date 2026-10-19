@@ -521,7 +521,7 @@ export class NaturalistModel {
     const offer = this.offerFor(sug);
     if (offer.state !== "offered") return refuse(offer.lines[offer.lines.length - 1]);
     this.tried = { gen: sug.gen, runId: sug.runId, key, state: "sent", step: null, reason: null };
-    const entries: HandEntry[] = sug.entries.map((e) => (e.kind === "lesion" ? { kind: "lesion", x: e.x, y: e.y, r: e.r } : { kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount }));
+    const entries: HandEntry[] = sug.entries.flatMap((e): HandEntry[] => (e.kind === "lesion" ? [{ kind: "lesion", x: e.x, y: e.y, r: e.r }] : e.kind === "feed" ? [{ kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount }] : []));
     this.deps.apply?.(entries, sug.gen);
     return { ok: true, entries };
   }

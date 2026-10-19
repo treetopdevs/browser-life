@@ -21,6 +21,8 @@ export interface Observers {
   ponds?: { lastCycle: number };
   /** Fed histories only: see `ObserverState.fed`. */
   fed?: { matter: number; feeds: number };
+  /** While a sun is active only: see `ObserverState.sun`. */
+  sun?: { step: number; percent: number; span: number };
 }
 
 /**
@@ -39,6 +41,7 @@ export function restoreObservers(o: ObserverState | undefined, settings: Observe
     prevSym: o?.prevSym ? unb64(o.prevSym) : null,
     ...(o?.ponds ? { ponds: { lastCycle: o.ponds.lastCycle } } : cfg?.pondPeriod !== undefined ? { ponds: { lastCycle: 0 } } : {}),
     ...(o?.fed ? { fed: { matter: o.fed.matter, feeds: o.fed.feeds } } : {}),
+    ...(o?.sun ? { sun: { step: o.sun.step, percent: o.sun.percent, span: o.sun.span } } : {}),
   };
 }
 
@@ -57,6 +60,8 @@ export function serializeObservers(obs: Observers, step: number, settings: Obser
     ...(obs.ponds ? { ponds: { lastCycle: obs.ponds.lastCycle } } : {}),
     // Only in fed histories, for the same reason.
     ...(obs.fed ? { fed: { matter: obs.fed.matter, feeds: obs.fed.feeds } } : {}),
+    // Only while a sun is active (its step <= step < its end), for the same reason.
+    ...(obs.sun && obs.sun.step <= step && step < obs.sun.step + obs.sun.span ? { sun: { step: obs.sun.step, percent: obs.sun.percent, span: obs.sun.span } } : {}),
   };
 }
 

@@ -792,10 +792,339 @@ defmodule CoordinatorWeb.GardenApiTest do
     end
   end
 
-  # `{status, food.hands}` of a hand's answer (201 or 200).
-  defp json_response_any(conn) do
+  describe "POST a meteor hand" do
+    defp meteor!(over \\ %{}),
+      do: garden!(Map.merge(%{"meteor" => true, "meteorAsks" => 2, "meteorEveryDays" => 1}, over))
+
+    defp mhands_path(name \\ "commons"), do: "/api/public/gardens/#{name}/meteor/hands"
+    defp mhand(conn, path \\ mhands_path()), do: post_json(conn, path, %{})
+
+    defp meteor_of(conn),
+      do: conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("meteor")
+
+    defp mplace(n) do
+      <<x::unsigned-big-32, y::unsigned-big-32, _::binary>> =
+        :crypto.hash(:sha256, "commons/seed-1/meteor-#{n}")
+
+      {rem(x, 256), rem(y, 256)}
+    end
+
+    test "meteor hands route codes: 201 counted and calling, 200 repeat; the view after a hand shows the new count",
+         %{conn: conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      meteor!(%{"meteorAsks" => 3})
+      {x1, y1} = mplace(1)
+
+      assert %{"hands" => 0, "open" => true, "asks" => 3, "r" => 64, "place" => place} =
+               meteor_of(conn)
+
+      assert place == %{"x" => x1, "y" => y1}
+
+      assert %{"counted" => true, "called" => nil, "meteor" => %{"hands" => 1}} =
+               conn |> from({10, 0, 0, 1}) |> mhand() |> json_response(201)
+
+      # The cached view was invalidated by the hand; the food block never sees it.
+      assert %{"hands" => 1} = meteor_of(conn)
+
+      assert %{"hands" => 0, "closed" => "off"} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+
+      assert %{"counted" => false, "called" => nil, "meteor" => %{"hands" => 1}} =
+               conn |> from({10, 0, 0, 1}) |> mhand() |> json_response(200)
+
+      assert %{"counted" => true, "called" => nil} =
+               conn
+               |> from({10, 0, 0, 2})
+               |> mhand("/api/public/garden/meteor/hands")
+               |> json_response(201)
+
+      assert %{"counted" => true, "called" => called, "meteor" => block} =
+               conn |> from({10, 0, 0, 3}) |> mhand() |> json_response(201)
+
+      refute Map.has_key?(block, "amount")
+
+      assert %{
+               "id" => "meteor-1",
+               "day" => 0,
+               "landsAtStep" => @d,
+               "status" => "waiting",
+               "hands" => 3,
+               "x" => ^x1,
+               "y" => ^y1,
+               "r" => 64
+             } = called
+
+      {x2, y2} = mplace(2)
+
+      assert %{
+               "hands" => 0,
+               "open" => false,
+               "closed" => "cooldown",
+               "opensAtDay" => 1,
+               "place" => %{"x" => ^x2, "y" => ^y2}
+             } = block
+
+      assert %{"meteors" => [%{"id" => "meteor-1"}]} = meteor_of(conn)
+
+      view = conn |> get("/api/public/garden") |> json_response(200)
+      assert [%{"day" => 0, "meteor" => "meteor-1", "food" => nil}] = view["days"]
+      assert %{"queued" => 0, "waiting" => [], "recent" => []} = view["letters"]
+
+      assert List.last(Queue.experiment("commons").spec["interventions"]) ==
+               %{"step" => @d, "kind" => "lesion", "x" => x1, "y" => y1, "r" => 64}
+    end
+
+    @tag :capture_log
+    test "409 per closed code", %{conn: conn, dir: dir} do
+      closed = fn path ->
+        assert %{"error" => why, "closed" => code, "opensAtDay" => opens} =
+                 conn |> from({10, 9, 9, 9}) |> mhand(path) |> json_response(409)
+
+        assert is_binary(why)
+        {code, opens, why}
+      end
+
+      # A garden with food but no meteor takes no meteor.
+      garden!(%{"name" => "plain", "food" => true})
+      assert closed.(mhands_path("plain")) == {"off", nil, "this garden takes no meteor"}
+
+      meteor!()
+      assert conn |> from({10, 0, 0, 1}) |> mhand() |> json_response(201)
+      assert conn |> from({10, 0, 0, 2}) |> mhand() |> json_response(201)
+      assert {"cooldown", 1, words} = closed.(mhands_path())
+      assert words =~ "a meteor lands at most once every 1 day;"
+
+      meteor!(%{"name" => "short", "days" => 1, "seed" => 3})
+      a = join("A")
+      short = Stream.repeatedly(fn -> next(a) end) |> Enum.find(&(&1.spec.experiment == "short"))
+      assert {"horizon", nil, _} = closed.(mhands_path("short"))
+      finish(dir, a, short)
+      assert {"finished", nil, _} = closed.(mhands_path("short"))
+
+      meteor!(%{"name" => "broken", "seed" => 4})
+      b = join("B")
+
+      bt =
+        Stream.repeatedly(fn -> next(b) end)
+        |> Enum.find(&(&1.spec.experiment == "broken"))
+
+      assert :ok = Queue.fail(bt.segment.id, b, bt.lease, "cannot run")
+      assert {"stopped", nil, _} = closed.(mhands_path("broken"))
+
+      founding =
+        for i <- 1..10_000,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      meteor!(%{"name" => "full", "seed" => 5, "founding" => founding})
+      assert {"log-full", nil, _} = closed.(mhands_path("full"))
+    end
+
+    test "415 without JSON; 422 for any body but {} and for zero bytes; 413 past 1 KB; 404", %{
+      conn: conn
+    } do
+      meteor!()
+
+      for body <- [%{"x" => 1}, %{"x" => 1, "y" => 2}, %{"kind" => "meteor"}, "[]", "[{}]"] do
+        assert %{"error" => "a hand is exactly {}" <> _} =
+                 conn |> post_json(mhands_path(), body) |> json_response(422)
+      end
+
+      assert %{"error" => "a hand is the JSON body {}"} =
+               conn |> post(mhands_path()) |> json_response(415)
+
+      assert %{"error" => "a hand is exactly {}" <> _} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> put_req_header("content-length", "0")
+               |> post(mhands_path(), "")
+               |> json_response(422)
+
+      for path <- [
+            mhands_path(),
+            "/api/public/garden/meteor/hands",
+            "/api/public/gard%65n/meteor/%68ands",
+            "/api/public/gardens/%63ommons/meteor/hands"
+          ] do
+        assert_error_sent 415, fn ->
+          conn
+          |> put_req_header("content-type", "application/x-www-form-urlencoded")
+          |> post(path, "a=1")
+        end
+
+        assert_error_sent 415, fn ->
+          conn |> put_req_header("content-type", "text/plain") |> post(path, "{}")
+        end
+
+        assert_error_sent 413, fn ->
+          post_json(conn, path, %{"pad" => String.duplicate("a", 2_000)})
+        end
+      end
+
+      assert %{"error" => "not found"} = conn |> mhand(mhands_path("nope")) |> json_response(404)
+
+      assert %{"error" => "not found"} =
+               conn |> mhand(mhands_path("Bad_Name")) |> json_response(404)
+
+      # None of that cost a letter.
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      assert conn |> mhand() |> json_response(201)
+      assert %{"retryAfterMs" => _} = conn |> mhand() |> json_response(429)
+    end
+
+    test "stones, food hands and meteor hands share one budget", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 3)
+      Application.put_env(:coordinator, :garden_refusals_per_address, 2)
+
+      meteor!(%{
+        "meteorAsks" => 5,
+        "food" => true,
+        "foodAsks" => 5,
+        "foodEveryDays" => 1
+      })
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> hand() |> json_response(201)
+      assert conn |> mhand() |> json_response(201)
+
+      assert %{"retryAfterMs" => ms, "error" => "too many letters and hands from this address"} =
+               conn |> mhand() |> json_response(429)
+
+      assert ms == 3_600_000 - 1_234
+      assert conn |> hand() |> json_response(429)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(429)
+
+      # A repeat is given back but charged as a refusal, as for food.
+      other = from(conn, {10, 0, 0, 2})
+      assert other |> mhand() |> json_response(201)
+      assert other |> mhand() |> json_response(200)
+      assert other |> mhand() |> json_response(200)
+      assert other |> mhand() |> json_response(429)
+    end
+
+    test "meteor hands key on the /48", %{conn: conn} do
+      meteor!(%{"meteorAsks" => 10})
+      count = fn c -> c |> mhand() |> json_response_any("meteor") end
+
+      assert {201, 1} = count.(from(conn, {0x2001, 0xDB8, 1, 2, 0, 0, 0, 1}))
+      assert {200, 1} = count.(from(conn, {0x2001, 0xDB8, 1, 3, 0, 0, 0, 1}))
+      assert {201, 2} = count.(from(conn, {0x2001, 0xDB8, 2, 3, 0, 0, 0, 1}))
+      assert {201, 3} = count.(from(conn, {10, 0, 0, 3}))
+      assert {200, 3} = count.(from(conn, {0, 0, 0, 0, 0, 0xFFFF, 0x0A00, 0x0003}))
+    end
+
+    @tag :capture_log
+    test "503 with counted false while the limiter restarts, and counted null when the Queue does not answer",
+         %{conn: conn} do
+      meteor!(%{"meteorAsks" => 3})
+      :ok = Supervisor.terminate_child(Coordinator.Supervisor, LetterLimiter)
+
+      try do
+        assert %{"error" => _, "counted" => false} = conn |> mhand() |> json_response(503)
+      after
+        {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, LetterLimiter)
+      end
+
+      assert %{"hands" => 0} = meteor_of(conn)
+
+      Application.put_env(:coordinator, :garden_call_timeout_ms, 50)
+      {:ok, {_e, hash}} = LetterLimiter.hand_key({10, 0, 0, 7})
+      :ok = :sys.suspend(Queue)
+
+      log =
+        try do
+          ExUnit.CaptureLog.capture_log(fn ->
+            assert %{"counted" => nil, "error" => _} =
+                     conn |> from({10, 0, 0, 7}) |> mhand() |> json_response(503)
+          end)
+        after
+          :sys.resume(Queue)
+        end
+
+      assert log =~ "a meteor hand's queue call timed out"
+      refute log =~ "ask_meteor"
+      refute log =~ inspect(hash)
+      refute log =~ Base.encode16(hash, case: :lower)
+      assert %{"hands" => 1} = meteor_of(conn)
+    end
+
+    test "CORS preflight on the meteor route", %{conn: conn} do
+      Application.put_env(:coordinator, :cors_origins, ["http://localhost:5173"])
+      meteor!()
+
+      preflight = fn origin, path ->
+        conn
+        |> put_req_header("origin", origin)
+        |> put_req_header("access-control-request-method", "POST")
+        |> put_req_header("access-control-request-headers", "content-type")
+        |> options(path)
+      end
+
+      for path <- [mhands_path(), "/api/public/garden/meteor/hands"] do
+        ok = preflight.("http://localhost:5173", path)
+        assert get_resp_header(ok, "access-control-allow-origin") == ["http://localhost:5173"]
+        evil = preflight.("http://evil.example", path)
+        assert get_resp_header(evil, "access-control-allow-origin") == []
+      end
+
+      assert %{"hands" => 0} = meteor_of(conn)
+    end
+
+    test "meteor sharedAddress", %{conn: conn} do
+      meteor!()
+      assert %{"sharedAddress" => false} = meteor_of(conn)
+      Application.put_env(:coordinator, :garden_shared_address, true)
+      LetterLimiter.invalidate("commons")
+      assert %{"sharedAddress" => true} = meteor_of(conn)
+      assert %{"meteor" => %{"sharedAddress" => true}} = conn |> mhand() |> json_response(201)
+    end
+
+    test "the keeper drops meteor-n: {meteor: …}, 409 once assigned", %{conn: conn} do
+      Application.put_env(:coordinator, :allow_local_admin, false)
+      Application.put_env(:coordinator, :admin_token, "keeper")
+      authed = put_req_header(conn, "authorization", "Bearer keeper")
+      meteor!()
+
+      assert from(conn, {10, 0, 0, 1}) |> mhand() |> json_response(201)
+      assert from(conn, {10, 0, 0, 2}) |> mhand() |> json_response(201)
+      assert conn |> post("/api/gardens/commons/letters/meteor-1/drop") |> json_response(401)
+
+      assert %{"meteor" => %{"id" => "meteor-1", "status" => "dropped", "droppedAt" => at}} =
+               authed |> post("/api/gardens/commons/letters/meteor-1/drop") |> json_response(200)
+
+      assert is_integer(at)
+
+      assert %{"meteor" => %{"status" => "dropped"}} =
+               authed |> post("/api/gardens/commons/letters/meteor-1/drop") |> json_response(200)
+
+      assert authed |> post("/api/gardens/commons/letters/meteor-9/drop") |> json_response(404)
+
+      assert authed
+             |> post("/api/gardens/commons/letters/meteor-x/drop")
+             |> json_response(404)
+
+      # The ask is open again, at the next place; meteor-2 on an assigned day cannot be dropped.
+      {x2, y2} = mplace(2)
+      assert %{"open" => true, "place" => %{"x" => ^x2, "y" => ^y2}} = meteor_of(conn)
+      assert from(conn, {10, 0, 0, 3}) |> mhand() |> json_response(201)
+
+      assert %{"called" => %{"id" => "meteor-2", "x" => ^x2, "y" => ^y2}} =
+               from(conn, {10, 0, 0, 4}) |> mhand() |> json_response(201)
+
+      a = join("A")
+      assert %{kind: "idle"} = next(a)
+      TestClock.advance(day_ms())
+      assert %{kind: "run"} = next(a)
+
+      assert %{"error" => "the meteor's day has been assigned"} =
+               authed |> post("/api/gardens/commons/letters/meteor-2/drop") |> json_response(409)
+    end
+  end
+
+  # `{status, <block>.hands}` of a hand's answer (201 or 200): the food block's
+  # by default, or the meteor block's.
+  defp json_response_any(conn, block \\ "food") do
     body = Jason.decode!(conn.resp_body)
-    {conn.status, body["food"]["hands"]}
+    {conn.status, body[block]["hands"]}
   end
 
   # ---- the checkpoint ----
@@ -1040,6 +1369,24 @@ defmodule CoordinatorWeb.GardenApiTest do
 
       assert %{"error" => _} = conn |> post_json("/api/gardens", "[1]") |> json_response(422)
       assert %{"error" => _} = conn |> post_json("/api/gardens", %{}) |> json_response(422)
+    end
+
+    test "founding over HTTP passes the meteor keys through", %{conn: conn} do
+      body =
+        params(%{"name" => "lit", "meteor" => true, "meteorAsks" => 3, "meteorEveryDays" => 4})
+
+      assert %{"garden" => "lit"} = conn |> post_json("/api/gardens", body) |> json_response(200)
+
+      assert %{"enabled" => true, "asks" => 3, "everyDays" => 4, "r" => 64} =
+               conn
+               |> get("/api/public/gardens/lit")
+               |> json_response(200)
+               |> Map.fetch!("meteor")
+
+      assert %{"error" => "meteorAsks must be an integer in 2..1000" <> _} =
+               conn
+               |> post_json("/api/gardens", %{body | "name" => "lit2", "meteorAsks" => 1})
+               |> json_response(422)
     end
 
     test "a cached 'not found' never hides a garden just founded", %{conn: conn} do

@@ -510,6 +510,11 @@ export function interventionLogProblem(scheduled: readonly ScheduledIntervention
   if (applied.length !== scheduled.length) return `interventions.jsonl holds ${applied.length} entries, ${scheduled.length} were scheduled`;
   for (let i = 0; i < scheduled.length; i++) {
     const a = applied[i], e = scheduled[i];
+    // A sun has no centre (a bench forks with lesions and feeds; tools/lib/propose.ts refuses a sun): equal by step, percent and span.
+    if (a.kind === "sun" || e.kind === "sun") {
+      if (!(a.kind === "sun" && e.kind === "sun" && a.step === e.step && a.percent === e.percent && a.span === e.span)) return `interventions.jsonl entry ${i} is not the scheduled one`;
+      continue;
+    }
     if (a.step !== e.step || a.kind !== e.kind || a.x !== e.x || a.y !== e.y || a.r !== e.r || (e.kind === "feed" && (a.kind !== "feed" || a.amount !== e.amount))) return `interventions.jsonl entry ${i} is not the scheduled one`;
   }
   return null;
@@ -716,7 +721,7 @@ export async function scoreBench(m: BenchManifest, o: { out: string; pairs?: num
     await Promise.allSettled(srcReads.map((r) => r.close()));
   }
 
-  const kindsOf = (e: BenchEntry) => (e.spec.interventions ?? []).map((x) => (x.kind === "lesion" ? "lesion" : x.amount > 0 ? "feed" : "drain"));
+  const kindsOf = (e: BenchEntry) => (e.spec.interventions ?? []).map((x) => (x.kind === "lesion" ? "lesion" : x.kind === "sun" ? "sun" : x.amount > 0 ? "feed" : "drain"));
   const scores: ForkScore[] = forks.map((f, j) => {
     const r = f.scorer.results()[0];
     const reasons = benchVoidReasons(r, f.e.anchor, pre[j].length ? pre[j].join("; ") : null);

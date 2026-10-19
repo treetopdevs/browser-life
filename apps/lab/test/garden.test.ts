@@ -14,7 +14,8 @@ import { pageMeta } from "../src/social-meta.ts";
 import { WORLD_NOTES } from "../src/worlds.ts";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { MATTER_MAX, PRESETS, cellCount, defaultConfig, initWorld, maxLesionRadius, totalsOf } from "@bl/schema";
+import { MATTER_MAX, PRESETS, cellCount, defaultConfig, initWorld, maxLesionRadius, totalsOf, worldH, worldW } from "@bl/schema";
+import { METEOR_READ, discCells, meteorClosedWords, meteorReadingWords, meteorWords } from "../garden/garden.ts";
 import gardenHtml from "../garden/index.html?raw";
 import sitemap from "../public/sitemap.xml?raw";
 
@@ -691,6 +692,225 @@ describe("food (docs/garden-food-2026-10-18.md)", () => {
       expect(matter <= BigInt(cellCount(cfg) * perCell), `${id}: ${matter} quanta at the start`).toBe(true);
       expect(maxLesionRadius(cfg), id).toBeGreaterThanOrEqual(Math.max(32, radius));
     }
+  });
+});
+
+describe("meteor (docs/garden-meteor-2026-10-18.md)", () => {
+  const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
+  /** The fixture with the meteor ask open for day 9, two hands in. */
+  const openAsk = (v: Record<string, any>) => {
+    Object.assign(v.meteor, { open: true, closed: null, opensAtDay: null, landing: { day: 9, step: 1310720 }, hands: 2 });
+  };
+
+  it("the fixture parses with meteor", () => {
+    const v = view();
+    expect(v.meteor).toMatchObject({ enabled: true, asks: 5, everyDays: 7, r: 64, place: { x: 337, y: 440 }, closed: "cooldown", opensAtDay: 9 });
+    expect(v.meteor!.meteors.map((m) => [m.id, m.day, m.status, m.x, m.y])).toEqual([["meteor-1", 2, "landed", 497, 403]]);
+    expect(v.days.map((d) => d.meteor)).toEqual(["meteor-1", null, null]);
+  });
+
+  it("a view without meteor parses as off", () => {
+    const old = copy();
+    delete old.meteor;
+    for (const d of old.days) delete d.meteor;
+    const parsed = parseGarden(old);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.view.meteor).toBeUndefined();
+      expect(meteorWords(parsed.view, fmt)).toBeNull();
+      expect(latchHolds({ name: parsed.view.name, since: 0, until: parsed.view.now + 1 }, parsed.view, true, "meteor")).toBe(false);
+    }
+    // Off as the coordinator sends it: no section either.
+    expect(meteorWords(view((v) => { v.meteor = { ...v.meteor, enabled: false, asks: null, everyDays: null, r: null, place: null, hands: 0, open: false, closed: "off", opensAtDay: null, landing: null, meteors: [] }; }), fmt)).toBeNull();
+  });
+
+  it("a malformed meteor block is refused with its path", () => {
+    const reason = (mutate: (v: Record<string, any>) => void) => {
+      const v = copy();
+      mutate(v);
+      const parsed = parseGarden(v);
+      return parsed.ok ? "parsed" : parsed.reason;
+    };
+    expect(reason((x) => { x.meteor.hands = "two"; })).toMatch(/^meteor\.hands: expected a number/);
+    expect(reason((x) => { x.meteor.meteors[0].calledAt = 1.5; })).toMatch(/^meteor\.meteors\[0\]\.calledAt: expected a time/);
+    expect(reason((x) => { delete x.meteor.meteors[0].noticeUntil; })).toMatch(/^meteor\.meteors\[0\]\.noticeUntil: missing/);
+    expect(reason((x) => { delete x.meteor.sharedAddress; })).toMatch(/^meteor\.sharedAddress: missing/);
+    expect(reason((x) => { x.meteor.place = { x: 1 }; })).toMatch(/^meteor\.place\.y: missing/);
+    expect(reason((x) => { x.days[0].meteor = 7; })).toMatch(/^days\[0\]\.meteor: expected a string/);
+    expect(reason((x) => { x.meteor = null; })).toMatch(/^meteor: expected an object/);
+    // Added keys are ignored, as anywhere in the contract.
+    expect(reason((x) => { x.meteor.later = 1; x.meteor.meteors[0].later = 1; })).toBe("parsed");
+  });
+
+  it("discCells(64) is 12,853", () => {
+    expect(discCells(64)).toBe(12_853);
+    expect(discCells(0)).toBe(1);
+    expect(discCells(1)).toBe(5);
+    expect(discCells(32)).toBe(3_209);
+    // The same rule as applyLesion: dx^2 + dy^2 <= r^2, counted the slow way.
+    let slow = 0;
+    for (let dy = -40; dy <= 40; dy++) for (let dx = -40; dx <= 40; dx++) if (dx * dx + dy * dy <= 40 * 40) slow++;
+    expect(discCells(40)).toBe(slow);
+  });
+
+  it("meteor words in each state, with and without the readings", () => {
+    const open = meteorWords(view(openAsk), fmt)!;
+    expect(open.open).toBe(true);
+    expect(open.headline).toBe("2 of 5 networks have asked today.");
+    expect(open.landing).toBe("A meteor called now would land at step 1,310,720, the end of day 9, at (337, 440), a stone of radius 64.");
+    expect(open.timeLeft).toMatch(/^Today’s hands expire at the next dawn, in 2 hours and 51 minutes \(.+\), unless 3 more networks ask before then\.$/);
+    expect(open.closed).toBeNull();
+    expect(open.what).toBe("A meteor is a stone of radius 64: where it lands, every body in a disc of 12,853 cells (4.9% of this world) turns to waste and its stored energy to heat. It lands at a place fixed before anyone asks, (337, 440) for the next one, never one a visitor picks, and chosen without looking at what lives there, so its disc may hold many bodies, few or none. “Meteor” is only this letter’s name for a large stone; it promises no lasting change.");
+    expect(open.why).toMatch(/^A meteor is the one large act a visitor can ask for, so it is kept rare: it comes only when 5 networks ask within one dawn, at most once every 7 days, and a called meteor waits a whole dawn period/);
+    expect(open.why).toMatch(/Hands are counted per network, not per person/);
+    expect(open.shared).toBeNull();
+    expect(meteorWords(view((v) => { openAsk(v); v.meteor.sharedAddress = true; }), fmt)!.shared).toMatch(/^Right now every visitor reaches this garden through one shared address/);
+    expect(meteorWords(view((v) => { openAsk(v); v.meteor.hands = 1; }), fmt)!.headline).toBe("1 of 5 networks has asked today.");
+
+    // The fixture: closed for its cooldown.
+    const cooldown = meteorWords(view(), fmt)!;
+    expect(cooldown).toMatchObject({ open: false, timeLeft: "", headline: "The meteor ask is closed just now.", closed: "A meteor lands at most once every 7 days: the next can land on day 9 at the earliest." });
+    expect(cooldown.landing).toBe(cooldown.closed);
+    const waiting = meteorWords(view((v) => {
+      v.meteor.meteors.unshift({ ...v.meteor.meteors[0], id: "meteor-2", day: 3, x: 337, y: 440, landsAtStep: 524288, status: "waiting", landedIn: null });
+    }), fmt)!;
+    expect(waiting.headline).toBe("A meteor is waiting: meteor-2 lands at (337, 440) at step 524,288, the end of day 3. Hands count again once the ask reopens.");
+    for (const [code, words] of [
+      ["stopped", /^The garden has stopped, so it takes no meteor/],
+      ["finished", /no day left for a meteor\.$/],
+      ["horizon", /^No day is left before the horizon that a meteor could land on\.$/],
+      ["log-full", /^The garden’s log is full\.$/],
+      ["later", /^The garden says “later”, a reason new to this page\.$/],
+    ] as const) {
+      expect(meteorWords(view((v) => { Object.assign(v.meteor, { open: false, closed: code, opensAtDay: null, landing: null }); }), fmt)!.closed, code).toMatch(words);
+    }
+    expect(meteorClosedWords({ ...view().meteor!, closed: "off" })).toBe("This garden takes no meteor.");
+
+    // The readings: only on the big storm at radius 64.
+    const reading = open.reading;
+    expect(reading).toMatch(/^What a stone this size did, as far as anyone has looked: in twin worlds of this big storm founded as the commons was \(one feed at the centre at step 0, radius 255, 16 quanta per cell; as this garden was too\), forked early, at steps 131,072 to 393,216, a radius-64 stone’s neighbourhood stayed more different from its undisturbed twin than the rest of the jar for a median of about 35,800 steps \(from about 2,000 to about 68,600, over nine pairs\), about 27% of a day here\./);
+    expect(reading).toMatch(/that is a mark with no lasting effect, not a lasting change\. Those stones were each aimed at a living cell; a meteor’s place is not, so it may clear less\./);
+    expect(reading).toMatch(/A one-cell nudge in the same checkpoint worlds, at a separately chosen cell, stayed distinguishable for a median of about 9,200 steps, so by that rule the stone read as a stone effect: its mark outlasted a one-cell change’s, which the size of the change alone could explain\./);
+    expect(reading).toMatch(/Pair by pair, the nudge lasted at least half as long as the stone in five of nine, and in the worlds forked at step 262,144 it outlasted the stone in all three histories\./);
+    expect(reading).toMatch(/In the first 8,192 steps after the stones in the worlds forked at step 131,072, the stone’s summed excess of difference near it over the rest of the jar was more than twice the nudge’s in two of three histories, not all three\./);
+    expect(reading).not.toMatch(/drift|same places|founded as this one was/);
+    // A big-storm garden founded otherwise still gets the readings, saying they were not taken in a world founded like it.
+    for (const other of [
+      (v: Record<string, any>) => { v.founding = [{ step: 0, kind: "lesion", x: 0, y: 0, r: 1 }]; },
+      (v: Record<string, any>) => { v.founding[0].amount = 32; },
+      (v: Record<string, any>) => { v.founding.push({ step: 0, kind: "feed", x: 10, y: 10, r: 4, amount: 16 }); },
+    ]) {
+      expect(meteorReadingWords(view(other))).toMatch(/radius 255, 16 quanta per cell; not as this garden was\), forked early/);
+    }
+    expect(reading).toMatch(/Three histories, one of them a carpet; one founding; the measure saturates; and no null stone of this size could be placed\./);
+    expect(reading).toMatch(/These are what rules written before the runs said, not settled facts about this garden\.$/);
+    expect(METEOR_READ).toEqual({ presetId: "wild-storm-large", r: 64, medianSteps: 35_839, founding: { step: 0, kind: "feed", x: 256, y: 256, r: 255, amount: 16 } });
+    const nobody = "Nobody has yet measured what a stone of this size does in this world.";
+    expect(meteorWords(view((v) => { openAsk(v); v.presetId = "spots"; }), fmt)!.reading).toBe(nobody);
+    expect(meteorWords(view((v) => { openAsk(v); v.meteor.r = 96; }), fmt)!.reading).toBe(nobody);
+    expect(meteorReadingWords(view((v) => { delete v.meteor; }))).toBe(nobody);
+    // A short test day says the median in days.
+    expect(meteorReadingWords(view((v) => { v.pace.stepsPerDay = 20; }))).toMatch(/about 1,792 days here\./);
+    expect(meteorReadingWords(view((v) => { v.pace.stepsPerDay = 36_000; }))).toMatch(/about a day here\./);
+    // Under half a percent is not rounded up to 1% (35,839 of 10,000,000 is 0.36%).
+    expect(meteorReadingWords(view((v) => { v.pace.stepsPerDay = 10_000_000; }))).toMatch(/\), under 1% of a day here\./);
+    expect(meteorReadingWords(view((v) => { v.pace.stepsPerDay = 2_000_000; }))).toMatch(/\), about 2% of a day here\./);
+    // A view that says open without a landing is said as closed, never as an empty line.
+    const odd = meteorWords(view((v) => { Object.assign(v.meteor, { open: true, closed: null, landing: null }); }), fmt)!;
+    expect(odd).toMatchObject({ open: false, closed: "The meteor ask is closed just now.", landing: "The meteor ask is closed just now." });
+    const oddFood = foodWords(view((v) => { Object.assign(v.food, { open: true, closed: null, landing: null }); }), fmt)!;
+    expect(oddFood).toMatchObject({ open: false, closed: "The food ask is closed just now.", landing: "The food ask is closed just now." });
+  });
+
+  it("a meteor hand's answer per status", () => {
+    const v = view(openAsk);
+    const block = { ...v.meteor, hands: 3 };
+    expect(handAnswer(201, { counted: true, called: null, meteor: block }, null, v, "meteor")).toEqual({ tone: "note", refresh: true, in: true, expiresAt: 1792800000000, words: "Your hand is in. 3 of 5 networks have asked today." });
+    // The food block of the answer is not read for a meteor hand.
+    expect(handAnswer(201, { counted: true, called: null, food: block }, null, v, "meteor").words).toBe("Your hand is in.");
+    const called = handAnswer(201, { counted: true, called: { ...v.meteor!.meteors[0], id: "meteor-2", day: 9, landsAtStep: 1310720, x: 337, y: 440 }, meteor: { ...block, hands: 0 } }, null, v, "meteor");
+    expect(called).toMatchObject({ refresh: true, in: true, meteor: { id: "meteor-2", day: 9, landsAtStep: 1310720 } });
+    expect(called.food).toBeUndefined();
+    expect(called.words).toBe("Yours was the hand that called the meteor: meteor-2 is public now, lands at (337, 440) at step 1,310,720 (end of day 9), and counts once a second island replays that day.");
+    expect(handAnswer(200, { counted: false, called: null, meteor: block }, null, v, "meteor")).toMatchObject({ in: true, words: "A hand from your network was already in for today: one hand per network per dawn. 3 of 5 networks have asked today." });
+    expect(handAnswer(409, { error: "a meteor lands at most once every 7 days; the next can land on day 9 at the earliest", closed: "cooldown", opensAtDay: 9 }, null, v, "meteor"))
+      .toMatchObject({ in: false, refresh: true, words: "The meteor ask is closed: a meteor lands at most once every 7 days; the next can land on day 9 at the earliest." });
+    expect(handAnswer(422, { error: "a hand is exactly {}: it carries nothing" }, null, v, "meteor").words).toBe("The garden refused the hand: a hand is exactly {}: it carries nothing.");
+    expect(handAnswer(429, { retryAfterMs: 120_000 }, null, v, "meteor").words).toMatch(/^The garden is not taking hands from this network just now: .* Try again in 2 minutes\.$/);
+    for (const code of [413, 415]) expect(handAnswer(code, null, null, v, "meteor").words).toMatch(/Reload the page and try again\./);
+    expect(handAnswer(404, null, null, v, "meteor").words).toBe("There is no garden by that name here.");
+    expect(handAnswer(503, { counted: false }, null, v, "meteor").words).toMatch(/Your hand was not counted\.$/);
+    expect(handAnswer(503, { counted: null }, null, v, "meteor")).toMatchObject({ refresh: true, in: false, words: expect.stringMatching(/^The garden was too busy to answer/) });
+    expect(handAnswer(0, null, null, v, "meteor").words).toMatch(/^No answer came back, so this page cannot tell whether your hand was counted\./);
+  });
+
+  it("the meteor latch: kept apart from the food one", () => {
+    const v = view(openAsk);
+    const latch = { name: v.name, since: v.now - 1000, until: v.now + 60_000 };
+    expect(latchHolds(latch, v, true, "meteor")).toBe(true);
+    // A meteor count of zero with no meteor called since: forgotten, whatever the food block says.
+    const zero = view((x) => { openAsk(x); x.meteor.hands = 0; });
+    expect(latchHolds(latch, zero, true, "meteor")).toBe(false);
+    expect(latchHolds(latch, zero, true, "food")).toBe(true);
+    const called = view((x) => { openAsk(x); x.meteor.hands = 0; x.meteor.meteors[0].calledAt = x.now; });
+    expect(latchHolds(latch, called, true, "meteor")).toBe(true);
+    expect(latchHolds(latch, zero, false, "meteor")).toBe(true);
+  });
+
+  it("a day held for a meteor's notice is said as held", () => {
+    const held = view((v) => {
+      v.meteor.meteors.unshift({ ...v.meteor.meteors[0], id: "meteor-2", day: 3, status: "waiting", landedIn: null, noticeUntil: v.now + 7_200_000 });
+    });
+    const w = stateWords(held, fmt);
+    expect(w.label).toBe("Holding for the meteor");
+    expect(w.sentence).toBe(`Holding: day 3 carries the meteor meteor-2, so no island is given it before ${fmtTime(held.now + 7_200_000, fmt.locale, fmt.timeZone)}, in 2 hours; until then the keeper can still set the meteor aside.`);
+  });
+
+  it("a day held for both a food and a meteor names both and the later notice", () => {
+    for (const [food, meteor] of [[3_600_000, 7_200_000], [7_200_000, 3_600_000]]) {
+      const both = view((v) => {
+        v.meteor.meteors.unshift({ ...v.meteor.meteors[0], id: "meteor-2", day: 3, status: "waiting", landedIn: null, noticeUntil: v.now + meteor });
+        v.food.foods.unshift({ ...v.food.foods[0], id: "food-9", day: 3, status: "waiting", droppedAt: null, noticeUntil: v.now + food });
+      });
+      const w = stateWords(both, fmt);
+      expect(w.label).toBe("Holding for the food and the meteor");
+      expect(w.sentence).toBe(`Holding: day 3 carries the food food-9 and the meteor meteor-2, so no island is given it before ${fmtTime(both.now + 7_200_000, fmt.locale, fmt.timeZone)}, in 2 hours; until then the keeper can still set either aside.`);
+    }
+  });
+
+  it("the meteor hands route sits beside the food one", () => {
+    expect(resolveSource("", "http://x", false).meteorHandsUrl).toBe("/api/public/garden/meteor/hands");
+    expect(resolveSource("?garden=pond-2&coordinator=http://localhost:4100", "http://x", false).meteorHandsUrl).toBe("http://localhost:4100/api/public/gardens/pond-2/meteor/hands");
+    expect(gardenHtml).toMatch(/<section class="garden-row" id="g-meteor-row" aria-labelledby="h-meteor" hidden>/);
+    expect(gardenHtml).toMatch(/<h2 id="h-meteor">Ask for a meteor \(a large stone\)<\/h2>/);
+    expect(gardenHtml).toMatch(/<button id="meteor-send" class="button primary" type="button"/);
+    // The meteor row follows the food row.
+    expect(gardenHtml.indexOf('id="g-meteor-row"')).toBeGreaterThan(gardenHtml.indexOf('id="g-food-row"'));
+  });
+
+  // The coordinator bounds a meteor's radius by the world's size, which equals the runner's maxLesionRadius only for
+  // a world of one tile; and tools/stitch.ts compares a logged lesion with the clamped scheduled one, so a clamped
+  // meteor would make the view's r a lie. Every garden preset is held to both here.
+  it("every garden preset is one tile with maxLesionRadius at least garden_meteor_radius, and above 32", () => {
+    const config = read("../../coordinator/config/config.exs");
+    const m = config.match(/garden_meteor_radius: ([\d_]+)/);
+    expect(m).not.toBeNull();
+    const radius = Number(m![1].replace(/_/g, ""));
+    expect(radius).toBe(64);
+    expect(radius).toBeGreaterThan(32);
+    const presetsIn = (src: string) => { const x = src.match(/garden_presets: ~w\(([^)]*)\)/); if (!x) throw new Error("no garden_presets"); return x[1].split(/\s+/).filter(Boolean); };
+    const ids = new Set([...presetsIn(config), ...presetsIn(read("../../coordinator/config/dev.exs")), ...presetsIn(read("../../coordinator/config/test.exs"))]);
+    expect(ids.size).toBeGreaterThan(0);
+    for (const id of ids) {
+      const preset = PRESETS.find((p) => p.id === id)!;
+      const cfg = { ...defaultConfig(), ...preset.cfg, seed: 1 };
+      expect(worldW(cfg), `${id}: one tile across`).toBe(cfg.tileW);
+      expect(worldH(cfg), `${id}: one tile down`).toBe(cfg.tileH);
+      expect(maxLesionRadius(cfg), id).toBeGreaterThanOrEqual(radius);
+      // The coordinator's own bound for this world (queue.ex `max_world_radius`) is the runner's.
+      expect(Math.floor((Math.min(worldW(cfg), worldH(cfg)) - 1) / 2), id).toBe(maxLesionRadius(cfg));
+    }
+    expect(read("../../coordinator/lib/coordinator/queue.ex")).toMatch(/defp max_world_radius\(\{w, h\}\), do: div\(min\(w, h\) - 1, 2\)/);
   });
 });
 

@@ -27,7 +27,9 @@ export async function branchSource(dir: string, boundary: number, io: BranchSour
   const manifest = JSON.parse(await io.readText(`${dir}/manifest.json`));
   const entry = (manifest.preCycleCheckpoints ?? []).find((e: { boundary: number }) => e.boundary === boundary);
   if (!entry) throw new Error(`${dir}/manifest.json lists no pre-cycle checkpoint for boundary ${boundary} (a complete bundle run with --pre-cycle ${boundary} does)`);
-  const { state } = decodeArtifact(await io.readBytes(`${dir}/${entry.file}`));
+  const { state, observer } = decodeArtifact(await io.readBytes(`${dir}/${entry.file}`));
+  // A sun active at the source would carry silently into a branch, whose spec has no schedule (docs/garden-sun-2026-10-18.md).
+  if (observer.sun) throw new Error(`${dir}/${entry.file} was taken under a sun (${observer.sun.percent}% from t=${observer.sun.step} for ${observer.sun.span} steps): a branch cannot start under a sun`);
   if (stateHash(state) !== entry.hash) throw new Error(`${dir}/${entry.file} has state hash ${stateHash(state)}, not the manifest's ${entry.hash}`);
   return { branch: { source: dir.replace(/\/+$/, ""), sourceHash: entry.hash, boundary }, state };
 }

@@ -176,6 +176,15 @@ defmodule CoordinatorWeb.OpsStatusTest do
        "censusEvery" => 10,
        "interventions" => [%{"step" => 50, "kind" => "lesion", "x" => 10, "y" => 10, "r" => 3}]
      }, ["interventions-v1"]},
+    {"spots with a sun",
+     %{
+       "presetId" => "spots",
+       "conditions" => ["treatment"],
+       "steps" => 100,
+       "segmentSteps" => 100,
+       "censusEvery" => 10,
+       "interventions" => [%{"step" => 50, "kind" => "sun", "percent" => 50, "span" => 50}]
+     }, ["interventions-v1", "sun-v1"]},
     {"ponds-small treatment",
      %{
        "presetId" => "ponds-small",

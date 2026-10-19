@@ -47,6 +47,7 @@ defmodule CoordinatorWeb.OpsStatus do
   @current_conditions ~w(pond-nat pond-shuf)
   @interventions_capability "interventions-v1"
   @breed_capability "breed-v1"
+  @sun_capability "sun-v1"
   @breed_condition_prefixes ~w(pond-breed- pond-mass- pond-drift-)
 
   # The most names `islandCapabilities.byCapability` lists that the Queue does
@@ -174,6 +175,7 @@ defmodule CoordinatorWeb.OpsStatus do
       {preset in env_list(:pond_presets), @pond_capability},
       {preset in env_list(:breed_presets), @breed_capability},
       {spec["interventions"] != nil, @interventions_capability},
+      {sun_schedule?(spec["interventions"]), @sun_capability},
       {condition in @current_conditions, @current_capability},
       {breed_condition?(condition), @breed_capability}
     ]
@@ -181,6 +183,11 @@ defmodule CoordinatorWeb.OpsStatus do
     |> Enum.uniq()
     |> Enum.sort()
   end
+
+  defp sun_schedule?(list) when is_list(list),
+    do: Enum.any?(list, &(is_map(&1) and &1["kind"] == "sun"))
+
+  defp sun_schedule?(_), do: false
 
   defp breed_condition?(condition),
     do: is_binary(condition) and String.starts_with?(condition, @breed_condition_prefixes)

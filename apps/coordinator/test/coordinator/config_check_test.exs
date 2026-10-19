@@ -21,14 +21,19 @@ defmodule Coordinator.ConfigCheckTest do
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms
                    garden_cache_wait_ms garden_letters_per_address garden_refusals_per_address)a
   @any_integer ~w(public_status_cache_ms garden_cache_ms)a
-  # The garden food keys and their ranges, written out by hand: a moved bound
-  # fails here.
-  @ranged %{
+  # The garden food and meteor keys and their ranges, written out by hand: a
+  # moved bound fails here.
+  @food_ranged %{
     garden_food_asks: {2, 1000},
     garden_food_every_days: {1, 365},
     garden_food_amount: {1, 64},
     garden_food_radius: {1, 32}
   }
+  @ranged Map.merge(@food_ranged, %{
+            garden_meteor_asks: {2, 1000},
+            garden_meteor_every_days: {1, 365},
+            garden_meteor_radius: {33, 255}
+          })
 
   @values [nil, 0, -1, 1.5, "120", true, false, [limit: 120], %{}, 1]
 
@@ -95,9 +100,9 @@ defmodule Coordinator.ConfigCheckTest do
                  data_dir discovery_cloud_envelope discovery_data_dir discovery_join_token
                  discovery_validator dns_cluster_query garden_island_token garden_presets
                  garden_shared_address
-                 incompatible metrics_version migration_period pond_period pond_presets
-                 presets public_garden rule_version start_discovery start_queue
-                 trust_forwarded_for world_size)a
+                 incompatible light_conditions metrics_version migration_period pond_period
+                 pond_presets presets public_garden rule_version start_discovery start_queue
+                 trust_forwarded_for world_light world_size)a
 
   # Files that read `:coordinator` config by a variable key, each reviewed, with
   # the number of such reads in it. A new variable-key read (a new helper, say)
@@ -235,9 +240,9 @@ defmodule Coordinator.ConfigCheckTest do
     end
   end
 
-  test "each garden food key refuses a value just outside its range, by name, at boot" do
+  test "each garden food and meteor key refuses a value just outside its range, by name, at boot" do
     for {key, {lo, hi}} <- @ranged do
-      assert ConfigCheck.food_range(key) == lo..hi
+      assert ConfigCheck.range(key) == lo..hi
 
       for v <- [lo, div(lo + hi, 2), hi],
           do: assert(ConfigCheck.errors([{key, v}]) == [], "#{key}: #{v} should pass")
@@ -258,6 +263,28 @@ defmodule Coordinator.ConfigCheckTest do
            ]
 
     assert_raise FunctionClauseError, fn -> ConfigCheck.food_range(:garden_hands_sweep_ms) end
+
+    assert ConfigCheck.errors(garden_meteor_radius: 32) == [
+             "config :coordinator, garden_meteor_radius: 32 is not a whole number in 33..255"
+           ]
+
+    assert ConfigCheck.errors(garden_meteor_radius: 256) == [
+             "config :coordinator, garden_meteor_radius: 256 is not a whole number in 33..255"
+           ]
+
+    assert_raise FunctionClauseError, fn -> ConfigCheck.range(:garden_hands_sweep_ms) end
+  end
+
+  test "range/1 equals food_range/1 for the food keys; food_range/1 takes no meteor key" do
+    for {key, {lo, hi}} <- @food_ranged,
+        do:
+          assert(
+            ConfigCheck.food_range(key) == ConfigCheck.range(key) and
+              lo..hi == ConfigCheck.range(key)
+          )
+
+    for key <- Map.keys(@ranged) -- Map.keys(@food_ranged),
+        do: assert_raise(FunctionClauseError, fn -> ConfigCheck.food_range(key) end)
   end
 
   # garden_spec (lib/coordinator/queue.ex) reads these ranges from

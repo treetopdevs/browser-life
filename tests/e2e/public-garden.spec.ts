@@ -1,6 +1,7 @@
 // The shared garden's page (/garden/) against the garden-v1 fixture, served by route interception: the honesty
 // numbers, each state, each answer to a letter, the food ask and each answer to a hand (docs/garden-food-2026-10-18.md),
-// "since your last visit" with and without storage, and mock mode.
+// the meteor ask and its answers (docs/garden-meteor-2026-10-18.md), "since your last visit" with and without storage,
+// and mock mode.
 import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
@@ -10,6 +11,9 @@ const FIXTURE = contractFixture as Record<string, any>;
 const VIEW = "**/api/public/garden";
 const LETTERS = "**/api/public/garden/letters";
 const HANDS = "**/api/public/garden/food/hands";
+const METEOR_HANDS = "**/api/public/garden/meteor/hands";
+/** The fixture's meteor ask opened for day 9, two hands in (the fixture itself shows it closed for its cooldown). */
+const openMeteor = (v: Json) => { Object.assign(v.meteor, { open: true, closed: null, opensAtDay: null, landing: { day: 9, step: 1310720 }, hands: 2 }); };
 // The page under test is served at the configured baseURL (BL_E2E_PORT in playwright.config.ts): its origin names the
 // record the page keeps, so it is read from the test, never written down.
 const originOf = (info: TestInfo) => new URL(info.project.use.baseURL!).origin;
@@ -448,6 +452,175 @@ test("a view without food shows no ask", async ({ page }) => {
     await expect(page.locator("#g-step"), name).toHaveText("393,216");
   }
 });
+for (const width of [1280, 375]) test(`meteor ask: count, threshold, time left, landing and place at ${width}`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await serve(page, fixture(openMeteor));
+  await page.goto("/garden/");
+  await expect(page.locator("#g-meteor-row")).toBeVisible();
+  await expect(page.locator("#h-meteor")).toHaveText("Ask for a meteor (a large stone)");
+  await expect(page.locator("#g-meteor-what")).toHaveText("A meteor is a stone of radius 64: where it lands, every body in a disc of 12,853 cells (4.9% of this world) turns to waste and its stored energy to heat. It lands at a place fixed before anyone asks, (337, 440) for the next one, never one a visitor picks, and chosen without looking at what lives there, so its disc may hold many bodies, few or none. “Meteor” is only this letter’s name for a large stone; it promises no lasting change.");
+  await expect(page.locator("#g-meteor-count")).toHaveText("2 of 5 networks have asked today.");
+  await expect(page.locator("#g-meteor-time")).toHaveText(/^Today’s hands expire at the next dawn, in 2 hours and 51 minutes \(.+\), unless 3 more networks ask before then\.$/);
+  await expect(page.locator("#g-meteor-landing")).toHaveText("A meteor called now would land at step 1,310,720, the end of day 9, at (337, 440), a stone of radius 64.");
+  await expect(page.locator("#g-meteor-why")).toContainText("A meteor is the one large act a visitor can ask for, so it is kept rare");
+  await expect(page.locator("#g-meteor-why")).toContainText("at most once every 7 days");
+  await expect(page.locator("#meteor-shared")).toBeHidden();
+  await expect(page.locator("#meteor-send")).toBeEnabled();
+  await expect(page.locator("#meteor-send")).toHaveText("Add my hand");
+  await expect(page.locator('#g-meteors [data-meteor="meteor-1"]')).toContainText("A stone of radius 64 at (497, 403), called by 5 networks, landing at step 393,216 (end of day 2).");
+  await expect(page.locator('#g-meteors [data-meteor="meteor-1"]')).toContainText("Landed");
+  await expect(page.locator("#g-day-list li").nth(0)).toContainText("carries the meteor meteor-1");
+  // A meteor is never listed as a letter, nor as a food.
+  await expect(page.locator('[data-letter="meteor-1"]')).toHaveCount(0);
+  await expect(page.locator('[data-food="meteor-1"]')).toHaveCount(0);
+  // The two asks are apart: the food ask keeps its own count.
+  await expect(page.locator("#g-food-count")).toHaveText("2 of 5 networks have asked today.");
+  await noOverflow(page);
+});
+
+test("meteor answers in words", async ({ page }) => {
+  let hands = 2;
+  const counter = await serve(page, () => fixture((v) => { openMeteor(v); v.meteor.hands = hands; }));
+  const bodies: { body: string | null; type: string | undefined }[] = [];
+  let answer: (route: Route) => Promise<void> = (route) => json(route, { error: "nope" }, 409);
+  let foodPosts = 0;
+  await page.route(HANDS, (route) => { foodPosts++; return json(route, { error: "not this one" }, 500); });
+  await page.route(METEOR_HANDS, async (route) => {
+    const request = route.request();
+    expect(request.method()).toBe("POST");
+    bodies.push({ body: request.postData(), type: request.headers()["content-type"] });
+    await answer(route);
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#meteor-send")).toBeEnabled();
+  const block = () => fixture(openMeteor).meteor;
+
+  const cases: [string, (route: Route) => Promise<void>, string][] = [
+    ["409", (route) => json(route, { error: "a meteor lands at most once every 7 days; the next can land on day 9 at the earliest", closed: "cooldown", opensAtDay: 9 }, 409), "The meteor ask is closed: a meteor lands at most once every 7 days; the next can land on day 9 at the earliest."],
+    ["422", (route) => json(route, { error: "a hand is exactly {}: it carries nothing" }, 422), "The garden refused the hand: a hand is exactly {}: it carries nothing."],
+    ["429", (route) => json(route, { error: "too many letters and hands from this address", retryAfterMs: 1_500_000 }, 429, { "retry-after": "1500" }), "The garden is not taking hands from this network just now: it takes at most 3 letters and hands an hour from one network, together, and fewer when many are refused. Try again in 25 minutes."],
+    ["413", (route) => route.fulfill({ status: 413, body: "" }), "The page sent something the garden could not read. Reload the page and try again."],
+    ["415", (route) => route.fulfill({ status: 415, contentType: "text/html", body: "<h1>Unsupported</h1>" }), "The page sent something the garden could not read. Reload the page and try again."],
+    ["404", (route) => json(route, { error: "not found" }, 404), "There is no garden by that name here."],
+    ["503", (route) => json(route, { error: "the garden is busy; retry shortly", counted: false }, 503, { "retry-after": "1" }), "The garden is busy; try again in a moment. Your hand was not counted."],
+    ["503 unsure", (route) => json(route, { error: "the garden is busy; retry shortly", counted: null }, 503, { "retry-after": "1" }), "The garden was too busy to answer, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice."],
+    ["no answer", (route) => route.abort(), "No answer came back, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice."],
+  ];
+  for (const [name, handler, words] of cases) {
+    answer = handler;
+    const gets = counter.gets;
+    await page.locator("#meteor-send").click();
+    await expect(page.locator("#meteor-answer"), name).toHaveText(words);
+    await expect(page.locator("#meteor-send"), name).toBeEnabled();
+    if (name === "no answer" || name === "409" || name === "503 unsure") await expect.poll(() => counter.gets, name).toBeGreaterThan(gets);
+    await noOverflow(page);
+  }
+
+  // Counted: this tab's meteor hand is in until the dawn; the food ask's button is untouched.
+  answer = (route) => { hands = 3; return json(route, { counted: true, called: null, meteor: { ...block(), hands: 3 } }, 201); };
+  await page.locator("#meteor-send").click();
+  await expect(page.locator("#meteor-answer")).toHaveText("Your hand is in. 3 of 5 networks have asked today.");
+  await expect(page.locator("#g-meteor-count")).toHaveText("3 of 5 networks have asked today.");
+  await expect(page.locator("#meteor-send")).toBeDisabled();
+  await expect(page.locator("#meteor-why")).toHaveText("Your hand is in for today.");
+  await expect(page.locator("#food-send")).toBeEnabled();
+  await expect(page.locator("#food-why")).toHaveText("");
+  expect(bodies.every((b) => b.body === "{}" && b.type === "application/json")).toBe(true);
+  expect(bodies).toHaveLength(cases.length + 1);
+  expect(foodPosts).toBe(0);
+
+  // A new tab: a repeat, then a hand that calls the meteor names its place.
+  await page.reload();
+  await expect(page.locator("#meteor-send")).toBeEnabled();
+  answer = (route) => json(route, { counted: false, called: null, meteor: { ...block(), hands: 3 } }, 200);
+  await page.locator("#meteor-send").click();
+  await expect(page.locator("#meteor-answer")).toHaveText("A hand from your network was already in for today: one hand per network per dawn. 3 of 5 networks have asked today.");
+  await page.reload();
+  answer = (route) => json(route, { counted: true, called: { ...FIXTURE.meteor.meteors[0], id: "meteor-2", day: 9, x: 337, y: 440, landsAtStep: 1310720, status: "waiting", landedIn: null }, meteor: { ...block(), hands: 0 } }, 201);
+  await page.locator("#meteor-send").click();
+  await expect(page.locator("#meteor-answer")).toHaveText("Yours was the hand that called the meteor: meteor-2 is public now, lands at (337, 440) at step 1,310,720 (end of day 9), and counts once a second island replays that day.");
+});
+
+test("closed meteor ask shows its reason and a disabled button", async ({ page }) => {
+  const variants: [string, (v: Json) => void, string][] = [
+    ["cooldown (the fixture)", () => {}, "A meteor lands at most once every 7 days: the next can land on day 9 at the earliest."],
+    ["stopped", (v) => Object.assign(v.meteor, { open: false, closed: "stopped", opensAtDay: null, landing: null }), "The garden has stopped, so it takes no meteor until the keeper looks."],
+    ["horizon", (v) => Object.assign(v.meteor, { open: false, closed: "horizon", opensAtDay: null, landing: null }), "No day is left before the horizon that a meteor could land on."],
+    ["log-full", (v) => Object.assign(v.meteor, { open: false, closed: "log-full", opensAtDay: null, landing: null }), "The garden’s log is full."],
+  ];
+  let current = fixture();
+  await serve(page, () => current);
+  for (const [name, mutate, words] of variants) {
+    current = fixture(mutate);
+    await page.goto("/garden/");
+    await expect(page.locator("#g-meteor-row"), name).toBeVisible();
+    await expect(page.locator("#meteor-send"), name).toBeDisabled();
+    await expect(page.locator("#meteor-why"), name).toHaveText(words);
+    await expect(page.locator("#g-meteor-landing"), name).toHaveText(words);
+    await expect(page.locator("#g-meteor-count"), name).toHaveText("The meteor ask is closed just now.");
+    await expect(page.locator("#g-meteor-time"), name).toHaveText("");
+  }
+  // A meteor waiting on its notice: named in the headline with its place, its veto window in words, its day held.
+  current = fixture((v) => {
+    Object.assign(v.meteor, { open: false, closed: "cooldown", opensAtDay: 10, landing: null, hands: 0 });
+    v.meteor.meteors.unshift({ ...v.meteor.meteors[0], id: "meteor-2", day: 3, x: 337, y: 440, landsAtStep: 524288, status: "waiting", landedIn: null, calledAt: v.now - 3_600_000, noticeUntil: v.now + 3_600_000 });
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#g-meteor-count")).toHaveText("A meteor is waiting: meteor-2 lands at (337, 440) at step 524,288, the end of day 3. Hands count again once the ask reopens.");
+  await expect(page.locator('#g-meteors [data-meteor="meteor-2"]')).toContainText("in 1 hour, so the keeper can still set it aside.");
+  await expect(page.locator("#g-state")).toContainText("Holding: day 3 carries the meteor meteor-2");
+  // A shared address is said beside the button.
+  current = fixture((v) => { openMeteor(v); v.meteor.sharedAddress = true; });
+  await page.goto("/garden/");
+  await expect(page.locator("#meteor-shared")).toBeVisible();
+  await expect(page.locator("#meteor-shared")).toContainText("a meteor cannot be called");
+});
+
+test("readings paragraph on the big storm at r 64; 'nobody has measured' otherwise", async ({ page }) => {
+  let current = fixture();
+  await serve(page, () => current);
+  await page.goto("/garden/");
+  const reading = page.locator("#g-meteor-reading");
+  await expect(reading).toContainText("What a stone this size did, as far as anyone has looked");
+  await expect(reading).toContainText("for a median of about 35,800 steps (from about 2,000 to about 68,600, over nine pairs), about 27% of a day here.");
+  await expect(reading).toContainText("that is a mark with no lasting effect, not a lasting change.");
+  await expect(reading).toContainText("founded as the commons was (one feed at the centre at step 0, radius 255, 16 quanta per cell; as this garden was too)");
+  await expect(reading).toContainText("Those stones were each aimed at a living cell; a meteor’s place is not, so it may clear less.");
+  await expect(reading).toContainText("so by that rule the stone read as a stone effect: its mark outlasted a one-cell change’s, which the size of the change alone could explain.");
+  await expect(reading).not.toContainText("drift");
+  await expect(reading).toContainText("Three histories, one of them a carpet; one founding; the measure saturates; and no null stone of this size could be placed.");
+  await expect(reading).toContainText("These are what rules written before the runs said, not settled facts about this garden.");
+  for (const [name, mutate] of [
+    ["another preset", (v: Json) => { v.presetId = "spots"; }],
+    ["another radius", (v: Json) => { v.meteor.r = 96; for (const m of v.meteor.meteors) m.r = 96; }],
+  ] as const) {
+    current = fixture(mutate);
+    await page.goto("/garden/");
+    await expect(reading, name).toHaveText("Nobody has yet measured what a stone of this size does in this world.");
+  }
+  // The big storm founded otherwise keeps the readings and says they were not taken in a world founded like it.
+  current = fixture((v) => { v.founding = [{ step: 0, kind: "lesion", x: 0, y: 0, r: 1 }]; });
+  await page.goto("/garden/");
+  await expect(reading).toContainText("radius 255, 16 quanta per cell; not as this garden was)");
+});
+
+test("a view without meteor shows no meteor section", async ({ page }) => {
+  const variants: [string, (v: Json) => void][] = [
+    ["a coordinator from before the meteor", (v) => { delete v.meteor; for (const d of v.days) delete d.meteor; }],
+    ["a garden founded without meteor", (v) => { v.meteor = { ...v.meteor, enabled: false, asks: null, everyDays: null, r: null, place: null, hands: 0, open: false, closed: "off", opensAtDay: null, landing: null, meteors: [] }; for (const d of v.days) d.meteor = null; }],
+  ];
+  let current = fixture();
+  await serve(page, () => current);
+  for (const [name, mutate] of variants) {
+    current = fixture(mutate);
+    await page.goto("/garden/");
+    await expect(page.locator("#garden-message"), name).toHaveText("The garden answered.");
+    await expect(page.locator("#g-meteor-row"), name).toBeHidden();
+    await expect(page.locator("#g-food-row"), name).toBeVisible();
+    await expect(page.locator("#g-step"), name).toHaveText("393,216");
+  }
+});
+
 
 // ---------- who holds the field, and dawn predictions (docs/garden-predictions-2026-10-18.md) ----------
 
@@ -829,4 +1002,51 @@ test("screenshots", async ({ browser }, testInfo) => {
       await context.close();
     }
   }
+});
+
+// The sun letter (docs/garden-sun-2026-10-18.md): the page offers the garden's percents, posts exactly {kind, percent}, and lists
+// the sun with the day it shines.
+test("sun form: posts {kind: \"sun\", percent} and the letter says the day it shines", async ({ page }) => {
+  let posted = false;
+  await serve(page, () => fixture((v) => {
+    if (posted) {
+      v.letters.queued = 5;
+      v.letters.waiting.push({ ...v.letters.waiting[3], id: "ltr-8", kind: "sun", x: null, y: null, r: null, percent: 75, span: v.pace.stepsPerDay, postedAt: v.now });
+      v.sun.nextLanding = { day: 5, step: 786432 };
+    }
+  }));
+  const bodies: unknown[] = [];
+  await page.route(LETTERS, async (route) => {
+    bodies.push(route.request().postDataJSON());
+    await json(route, { letter: { ...FIXTURE.letters.waiting[3], id: "ltr-8", kind: "sun", x: null, y: null, r: null, percent: 75, span: FIXTURE.pace.stepsPerDay } }, 201);
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#g-sun")).toBeVisible();
+  await expect(page.locator("#sun-choices input")).toHaveCount(2);
+  await expect(page.locator("#sun-preview")).toHaveText("Your sun would land at step 655,360, the end of day 4, and shine on day 5, all 131,072 steps of it; then the world’s own light returns.");
+  await expect(page.locator("#sun-send")).toBeDisabled();
+  await expect(page.locator("#sun-why")).toHaveText("Choose how bright: 50%, 75%.");
+  await page.locator('#sun-choices input[value="75"]').check();
+  await expect(page.locator("#sun-send")).toBeEnabled();
+  posted = true;
+  await page.locator("#sun-send").click();
+  await expect(page.locator("#sun-answer")).toHaveText("Posted as ltr-8. It is public now, lands at step 655,360 (end of day 4), shines on day 5, and counts once a second island replays that day.");
+  expect(bodies).toEqual([{ kind: "sun", percent: 75 }]);
+  const letter = page.locator('#g-waiting [data-letter="ltr-8"]');
+  await expect(letter).toContainText("A sun of 75% (three quarters of the light), landing at step 655,360 (end of day 4); it shines on day 5");
+  await expect(letter).toContainText("Yours");
+  // The map draws stones only: a sun has no place.
+  await expect(page.locator("#stone-map circle.map-mine")).toHaveCount(0);
+});
+
+test("sun form: hidden for a garden that takes no sun, or a coordinator from before the sun", async ({ page }) => {
+  let body = fixture((v) => { v.sun.percents = []; });
+  await serve(page, () => body);
+  await page.goto("/garden/");
+  await expect(page.locator("#stone-send")).toBeEnabled();
+  await expect(page.locator("#g-sun")).toBeHidden();
+  body = fixture((v) => { delete v.sun; });
+  await page.reload();
+  await expect(page.locator("#stone-send")).toBeEnabled();
+  await expect(page.locator("#g-sun")).toBeHidden();
 });

@@ -91,7 +91,7 @@ export interface SessionFile {
  * Why this world's history cannot be rebuilt from step 0 (so no session file), in plain words, or null when it
  * can: planted here from a preset as it is, with the record of its start and every edge from step 0.
  */
-export function exportRefusal(m: Pick<RunManifest, "presetId" | "seed" | "cfg" | "startHash" | "edgesFrom">): string | null {
+export function exportRefusal(m: Pick<RunManifest, "presetId" | "seed" | "cfg" | "startHash" | "edgesFrom"> & { interventions?: readonly Intervention[] }): string | null {
   const preset = PRESETS.find((p) => p.id === m.presetId);
   if (m.presetId === "imported") return "This world was opened from a file, so its history before that file isn’t here and a replay can’t rebuild it from step 0. Its checkpoint download still works.";
   if (!preset) return `“${m.presetId}” isn’t one of the lab’s worlds, so a replay can’t rebuild it from step 0.`;
@@ -99,6 +99,9 @@ export function exportRefusal(m: Pick<RunManifest, "presetId" | "seed" | "cfg" |
   if (!m.startHash) return "This world has no record of the start it was planted from, so a replay can’t check it began the same way.";
   if (m.cfg.pondArm === "nat" || m.cfg.pondArm === "shuf") return `This world uses pond arm “${m.cfg.pondArm}”, one the lab doesn’t run; a session file only describes lab worlds.`;
   if (!sameConfig(m.cfg, presetConfig(preset, m.seed))) return "This world was planted with settings changed from its preset, which tools/run.ts can’t be told about, so a replay would build another world.";
+  // No session file version holds a sun yet (docs/garden-sun-2026-10-18.md); its checkpoint and run manifest still carry it.
+  const sun = (m.interventions ?? []).find((iv) => iv.kind === "sun");
+  if (sun) return `This world ran under a sun from t=${sun.step}, and a session file can’t hold a sun yet. Its checkpoint download still works, and its run manifest replays the sun with tools/run.ts --picks-from.`;
   return null;
 }
 
@@ -144,6 +147,7 @@ export function buildSessionFile(a: {
 }): SessionFile {
   const m = a.manifest;
   if (!m.startHash) throw new Error("a session file needs the hash of the world the run started from");
+  if (m.interventions.some((iv) => iv.kind === "sun")) throw new Error("a session file cannot hold a sun yet (exportRefusal refuses such a world)");
   const interventions = structuredClone(m.interventions.filter((iv) => iv.step <= a.step));
   const file: Omit<SessionFile, "replay"> = {
     format: SESSION_FORMAT,
@@ -205,6 +209,8 @@ export function sessionFileError(file: unknown): string | null {
   let last = 0;
   for (let i = 0; i < f.interventions.length; i++) {
     const iv: unknown = f.interventions[i];
+    // A sun (docs/garden-sun-2026-10-18.md) came after every version of the file: no version holds one yet.
+    if (isObj(iv) && iv.kind === "sun") return `interventions[${i}] is a sun, which no session file version holds yet`;
     if (!isObj(iv) || !isStep(iv.step) || (iv.kind !== "lesion" && iv.kind !== "feed" && iv.kind !== "pick" && iv.kind !== "pressure")) return `interventions[${i}] is not a pick, a lesion, a feed or a pressure`;
     if (iv.kind === "pressure" && f.version === 1) return `interventions[${i}] is a pressure, which a version 1 file cannot hold: pressures came with version 2`;
     if (iv.step < last) return `interventions[${i}] (at t=${iv.step}) comes after one at t=${last}: the log must run in step order`;
@@ -305,7 +311,8 @@ export function interventionFacts(interventions: readonly Intervention[], pickNo
     if (iv.kind === "pressure") {
       facts.pressures.changes++;
       facts.pressures.latest = iv.score;
-    } else if (iv.kind === "lesion") facts.wounds++;
+    } else if (iv.kind === "sun") facts.suns = (facts.suns ?? 0) + 1; // a sun is no pick, wound or feed (and no session file holds one yet)
+    else if (iv.kind === "lesion") facts.wounds++;
     else if (iv.kind === "feed") {
       if (iv.amount > 0) facts.feeds++;
       else if (iv.amount < 0) facts.drains++;
@@ -323,7 +330,8 @@ export function interventionFacts(interventions: readonly Intervention[], pickNo
 /**
  * What the world on screen held when a checkpoint file was saved: the log of firsts and the notes on who chose
  * each pick. The checkpoint itself carries neither (that would change its observer digest), so the worker keeps
- * them beside it for as long as this page lives; a file saved on an earlier visit has none.
+ * them beside it: in this page's memory and in the checkpoint's `.rewind` sidecar (opfs.ts `writeRewind`). A file saved
+ * before sidecars were kept, a downloaded or opened file, or one whose sidecar is torn has none.
  */
 export interface RewindRecord {
   firsts: FirstsSnapshot;
@@ -352,7 +360,8 @@ export interface FamilyRecord {
 
 /**
  * Rewind records by checkpoint file name, one for every checkpoint this page saved and still keeps: the worker
- * forgets a record when its file is deleted or pruned, so a kept checkpoint never loses its log.
+ * forgets a record when its file is deleted or pruned, so a kept checkpoint never loses its log. A cache of the
+ * `.rewind` sidecars this page wrote: a restore after a reload reads the sidecar instead.
  */
 export class RewindStore {
   private readonly records = new Map<string, RewindRecord>();

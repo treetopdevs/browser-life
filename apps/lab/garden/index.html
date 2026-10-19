@@ -134,6 +134,19 @@
                   <figcaption class="fine">Geometry only: the world’s outline, the stones waiting (grey), yours (ringed) and this one (sun). Click to choose the place. It is not a picture of the world.</figcaption>
                 </figure>
               </div>
+              <div class="garden-sun" id="g-sun" hidden>
+                <h3 id="h-sun">Or send a sun</h3>
+                <p>A sun dims the whole sky for one day (on some worlds it can brighten it instead). From the end of the day it lands on, the world’s light is the share of its own you choose, then its own light returns. Light is energy, so no matter enters or leaves the jar. One sun a day, and it takes one of the day’s letter places.</p>
+                <form id="sun-form" class="garden-form" novalidate>
+                  <fieldset class="garden-sun-choices" id="sun-choices"><legend>How bright</legend></fieldset>
+                  <p id="sun-preview" class="garden-preview" aria-live="polite"></p>
+                  <div class="garden-send">
+                    <button id="sun-send" class="button primary" type="submit" aria-describedby="sun-why">Send the sun</button>
+                    <span id="sun-why" class="fine"></span>
+                  </div>
+                  <p id="sun-answer" class="garden-answer" role="status" aria-live="polite"></p>
+                </form>
+              </div>
             </div>
           </section>
           <section class="garden-row" id="g-food-row" aria-labelledby="h-food" hidden>
@@ -149,6 +162,21 @@
               <p id="food-answer" class="garden-answer" role="status" aria-live="polite"></p>
               <div id="g-food-list"></div>
               <p id="g-food-why" class="fine"></p>
+            </div>
+          </section>
+          <section class="garden-row" id="g-meteor-row" aria-labelledby="h-meteor" hidden>
+            <div class="aside-label">Meteor</div>
+            <div class="garden-panel">
+              <h2 id="h-meteor">Ask for a meteor (a large stone)</h2>
+              <div id="g-meteor"></div>
+              <div class="garden-send">
+                <button id="meteor-send" class="button primary" type="button" aria-describedby="meteor-why">Add my hand</button>
+                <span id="meteor-why" class="fine"></span>
+              </div>
+              <p id="meteor-shared" class="fine" hidden></p>
+              <p id="meteor-answer" class="garden-answer" role="status" aria-live="polite"></p>
+              <div id="g-meteor-list"></div>
+              <div id="g-meteor-why"></div>
             </div>
           </section>
           <section class="garden-row" aria-labelledby="h-fork">

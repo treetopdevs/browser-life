@@ -317,7 +317,7 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
 
     // By hand.
     const hand = section("By hand");
-    hand.append(kv([["Wounds", n(f.wounds)], ["Feeds", n(f.feeds)], ["Drains", n(f.drains)]]));
+    hand.append(kv([["Wounds", n(f.wounds)], ["Feeds", n(f.feeds)], ["Drains", n(f.drains)], ["Suns", n(f.suns ?? 0)]]));
     sections.push(hand);
 
     // The latest replay check.

@@ -9,7 +9,7 @@
 import { stateHash, type Intervention, type WorldConfig, type WorldState } from "@bl/schema";
 import {
   FamilyTree, FirstsDetector, firstsContext,
-  type Census, type FirstsExtras, type FirstsInput, type FirstsWound,
+  type Census, type FirstsContext, type FirstsExtras, type FirstsInput, type FirstsWound,
 } from "@bl/metrics";
 import type { CensusFamilies } from "./execution.ts";
 import type { FamilyRecord, Genealogy, RewindRecord } from "./session-file.ts";
@@ -44,6 +44,15 @@ export function logRefusal(log: Pick<FirstsLog, "stopped" | "treeStopped">): str
 export const sameGenealogy = (a: Genealogy, b: Genealogy): boolean => a.edgesFrom === b.edgesFrom && a.edges === b.edges && a.dropped === b.dropped;
 
 /**
+ * Whether a restored detector reads the world as this build would: its context (tiles, cadence, pond cycle, gene bits) is the one
+ * `firstsContext` gives the adopted world. A record kept in a sidecar can outlive the build that wrote it.
+ */
+export const sameContext = (a: FirstsContext, b: FirstsContext): boolean =>
+  a.tileW === b.tileW && a.tileH === b.tileH && a.tilesX === b.tilesX && a.tiles === b.tiles && a.censusEvery === b.censusEvery &&
+  a.pondPeriod === b.pondPeriod && a.pondReseeds === b.pondReseeds &&
+  a.geneBits.length === b.geneBits.length && a.geneBits.every((bit, i) => bit === b.geneBits[i]);
+
+/**
  * The log for a world being adopted: restored from `record` when it describes exactly this state (its detector has seen the
  * census at the state's step, from the same physics), else fresh. The tree comes back only with the detector and only when
  * `genealogy` (the adopted world's edges: where they begin, how many were read back, how many ledger records were dropped) is the
@@ -53,25 +62,28 @@ export const sameGenealogy = (a: Genealogy, b: Genealogy): boolean => a.edgesFro
 export function openFirstsLog(state: WorldState, censusEvery: number, genealogy: Genealogy, record?: RewindRecord, carryNotes?: Iterable<[number, boolean]>): FirstsLog {
   let detector: FirstsDetector | null = null;
   let tree: FamilyTree | null = null;
-  if (record) {
+  const ctx = firstsContext(state.cfg, censusEvery);
+  // A record of another state (its hash is not this one's) says nothing about this world: neither its log nor its notes are used.
+  const own = record !== undefined && record.hash === stateHash(state) ? record : undefined;
+  if (own) {
     try {
-      const restored = FirstsDetector.restore(record.firsts);
-      // The snapshot is of exactly this state: the census at its step, taken from the same physics.
-      if (restored.lastStep === state.step && record.hash === stateHash(state)) detector = restored;
+      const restored = FirstsDetector.restore(own.firsts);
+      // The snapshot is of exactly this state (the census at its step), read as this build reads this world.
+      if (restored.lastStep === state.step && sameContext(own.firsts.ctx, ctx)) detector = restored;
     } catch { /* not a snapshot this build reads: start afresh */ }
-    if (detector && record.families) {
+    if (detector && own.families) {
       try {
-        const restored = FamilyTree.restore(record.families.tree);
-        if (restored.lastStep === state.step && sameGenealogy(record.families.genealogy, genealogy)) tree = restored;
+        const restored = FamilyTree.restore(own.families.tree);
+        if (restored.lastStep === state.step && sameGenealogy(own.families.genealogy, genealogy)) tree = restored;
       } catch { /* not a snapshot this build reads: a fresh tree */ }
     }
   }
-  // The notes on who chose each pick are the checkpoint's whether or not its snapshot of the log holds up.
-  // A jump's target is an ancestor of the present, so every note the present holds is still true of its picks. The
-  // record holds notes only up to its own step, which the present shares, so it never overrides a later one.
+  // The notes on who chose each pick are the checkpoint's whether or not its snapshot of the log holds up, as long as the
+  // record is of this very state. A jump's target is an ancestor of the present, so every note the present holds is still
+  // true of its picks. The record holds notes only up to its own step, which the present shares, so it never overrides a later one.
   const notes = new Map<number, boolean>(carryNotes ?? []);
-  for (const [step, hand] of record?.picks ?? []) if (step <= state.step) notes.set(step, hand);
-  return { detector: detector ?? new FirstsDetector(firstsContext(state.cfg, censusEvery)), tree: tree ?? new FamilyTree(), stopped: null, treeStopped: null, notes, postedStep: -1 };
+  for (const [step, hand] of own?.picks ?? []) if (step <= state.step) notes.set(step, hand);
+  return { detector: detector ?? new FirstsDetector(ctx), tree: tree ?? new FamilyTree(), stopped: null, treeStopped: null, notes, postedStep: -1 };
 }
 
 /**

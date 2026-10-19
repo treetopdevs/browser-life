@@ -550,8 +550,12 @@ export function validateProposalSpec(spec: RunSpec, C: number, m?: SourceManifes
   if (!Number.isSafeInteger(C) || C < 0 || C % spec.censusEvery !== 0) return `the fork step ${C} is not a census step`;
   if (spec.steps % spec.censusEvery !== 0) return `the fork's ${spec.steps} steps are not a whole number of censuses at cadence ${spec.censusEvery}`;
   const R = maxLesionRadius(cfg);
-  const wide = (spec.interventions ?? []).findIndex((e) => !(Number.isSafeInteger(e.r) && e.r >= 1 && e.r <= R));
-  if (wide >= 0) return `interventions[${wide}] has radius ${spec.interventions![wide].r}, not in 1..${R} (the runner would clamp it, so the run would not be the stated one)`;
+  const wide = (spec.interventions ?? []).findIndex((e) => e.kind === "sun" || !(Number.isSafeInteger(e.r) && e.r >= 1 && e.r <= R));
+  if (wide >= 0) {
+    const w = spec.interventions![wide];
+    if (w.kind === "sun") return `interventions[${wide}] is a sun: a proposal forks with a lesion or a feed`;
+    return `interventions[${wide}] has radius ${w.r}, not in 1..${R} (the runner would clamp it, so the run would not be the stated one)`;
+  }
   // Drains only lower the total, so the source's matter plus every positive feed bounds the world's matter at every step.
   let added = 0n;
   for (const e of spec.interventions ?? []) if (e.kind === "feed" && e.amount > 0) added += BigInt(e.amount) * BigInt(discCells(e.r));
