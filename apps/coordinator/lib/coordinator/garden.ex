@@ -23,6 +23,8 @@ defmodule Coordinator.Garden do
         letters_per_day, queue_max, dawn_period_ms, dawn_offset_ms,
         width, height, founding: [intervention maps as the keeper gave them],
         letters: [%{id: "ltr-N", seq: N, kind: "stone", x, y, r, step, day,
+                    posted_at, dropped_at: nil | ms} |
+                  %{id: "ltr-N", seq: N, kind: "sun", percent, span, step, day,
                     posted_at, dropped_at: nil | ms}],
         next_letter: N, days: %{index => %{released_at, done_at, verified_at}}}
 
@@ -137,8 +139,25 @@ defmodule Coordinator.Garden do
   by rule, not chosen: the *n*-th meteor's place is `meteor_place/2`, a
   SHA-256 of the garden's name, seed and `n`, public before anyone asks. Food
   and meteor asks are independent: each has its own hands, spacing and
-  records. In the schedule a meteor follows that step's stones and foods. The
+  records. In the schedule a meteor follows that step's stones, foods and suns. The
   rules are pre-stated in docs/garden-meteor-2026-10-18.md.
+
+  ## The sun
+
+  A sun letter (docs/garden-sun-2026-10-18.md) is the body
+  `{"kind": "sun", "percent": p}`: from the end of its landing day the world's
+  light is `p` percent of its own (base, amplitude and season, floored) for
+  one garden day, then its own returns. `p` is one the preset's light takes
+  (`Coordinator.Queue.sun_percents/1`, from `:world_light`). A sun takes one of
+  its day's letter places and the same per-address budget as a stone, at most
+  one sun lands on a day, and never on the last day (it would shine past the
+  horizon). In the schedule it is `{step, "sun", percent, span}` after that
+  step's stones and foods and before its meteors. A sun on day `d` lands at `(d + 1) * D`, owned by
+  day `d`, and governs day `d + 1`, which inherits it from day `d`'s final
+  observer: both days are beyond the frontier when it is posted or dropped,
+  so no attempted day's history changes. Its record has `percent` and `span`
+  in place of `x`, `y`, `r`. Every letter's view has all five keys: a sun's
+  `x`, `y` and `r` are null, a stone's `percent` and `span` are.
 
   ## The view
 
@@ -158,6 +177,8 @@ defmodule Coordinator.Garden do
   @dropped_max 256
   @radius_min 1
   @radius_max 32
+  # packages/schema/src/sun.ts's SUN_PERCENTS.
+  @sun_percents [50, 75, 125, 150]
   @days_shown 14
   @recent_max 32
   @int_max 9_007_199_254_740_991
@@ -398,14 +419,29 @@ defmodule Coordinator.Garden do
   limits. The world bounds are `check_bounds/2`'s, which needs the garden.
   Error strings never echo the body.
   """
-  @spec parse_letter(term) :: {:ok, %{x: integer, y: integer, r: integer}} | {:error, String.t()}
+  @spec parse_letter(term) ::
+          {:ok, %{x: integer, y: integer, r: integer} | %{kind: String.t(), percent: integer}}
+          | {:error, String.t()}
+  def parse_letter(%{"kind" => "sun"} = body) do
+    cond do
+      Enum.sort(Map.keys(body)) != ["kind", "percent"] ->
+        {:error, "a sun letter has exactly the keys kind and percent"}
+
+      not is_integer(body["percent"]) or body["percent"] not in @sun_percents ->
+        {:error, "percent must be one of #{Enum.join(@sun_percents, ", ")}"}
+
+      true ->
+        {:ok, %{kind: "sun", percent: body["percent"]}}
+    end
+  end
+
   def parse_letter(%{} = body) do
     cond do
       Enum.sort(Map.keys(body)) != ["kind", "r", "x", "y"] ->
         {:error, "a letter has exactly the keys kind, x, y and r"}
 
       body["kind"] != "stone" ->
-        {:error, ~s(kind must be "stone")}
+        {:error, ~s(kind must be "stone" or "sun")}
 
       not is_integer(body["x"]) ->
         {:error, "x must be an integer"}
@@ -433,7 +469,9 @@ defmodule Coordinator.Garden do
   def parse_letter(_body), do: {:error, "a letter is an object with the keys kind, x, y and r"}
 
   @doc "Checks a parsed letter's centre lies inside this garden's world."
-  @spec check_bounds(t, %{x: integer, y: integer}) :: :ok | {:error, String.t()}
+  @spec check_bounds(t | map, map) :: :ok | {:error, String.t()}
+  def check_bounds(_g, %{kind: "sun"}), do: :ok
+
   def check_bounds(g, %{x: x, y: y}) do
     cond do
       x < 0 or x >= g.width -> {:error, "x must be in 0..#{g.width - 1}"}
@@ -450,8 +488,29 @@ defmodule Coordinator.Garden do
   finished, `queue_max` letters waiting, the log full, or no day left before
   the horizon). Returns the stored letter record; `letter_view/3` renders it.
   """
-  @spec post_letter(t, %{x: integer, y: integer, r: integer}, segs, integer) ::
+  @spec post_letter(t, map, segs, integer) ::
           {:ok, t, map} | {:error, {:invalid | :refused, String.t()}}
+  def post_letter(g, %{kind: "sun", percent: p}, segs, now) do
+    with :ok <- invalid(sun_percent(g, p)),
+         {:ok, day} <- refused(sun_landing(g, segs)) do
+      n = g.next_letter
+
+      record = %{
+        id: "ltr-#{n}",
+        seq: n,
+        kind: "sun",
+        percent: p,
+        span: g.steps_per_day,
+        step: (day + 1) * g.steps_per_day,
+        day: day,
+        posted_at: now,
+        dropped_at: nil
+      }
+
+      {:ok, %{g | letters: g.letters ++ [record], next_letter: n + 1}, record}
+    end
+  end
+
   def post_letter(g, %{x: _, y: _, r: _} = letter, segs, now) do
     with :ok <- invalid(check_bounds(g, letter)),
          {:ok, day} <- refused(landing(g, segs)) do
@@ -471,6 +530,57 @@ defmodule Coordinator.Garden do
       }
 
       {:ok, %{g | letters: g.letters ++ [record], next_letter: n + 1}, record}
+    end
+  end
+
+  @doc "The percents a sun letter may take in this garden: those its preset's light takes (`Coordinator.Queue.sun_percents/1`)."
+  @spec sun_percents(t) :: [integer]
+  def sun_percents(g), do: Coordinator.Queue.sun_percents(g.preset_id)
+
+  defp sun_percent(g, p) do
+    case sun_percents(g) do
+      [] ->
+        {:error, "this garden's light takes no sun"}
+
+      ok ->
+        if p in ok,
+          do: :ok,
+          else: {:error, "this garden's light takes a sun of #{Enum.join(ok, " or ")} percent"}
+    end
+  end
+
+  # Where a sun posted now would go: the first day at or beyond the frontier
+  # with a letter place, no live sun and a day after it before the horizon.
+  defp sun_landing(g, segs) do
+    case landing(g, segs) do
+      {:ok, _} ->
+        counts = g |> live() |> Enum.frequencies_by(& &1.day)
+        sunned = for %{kind: "sun", day: d} <- live(g), into: MapSet.new(), do: d
+        from = frontier_day(g, segs)
+
+        case Enum.find(
+               from..(g.days_total - 2)//1,
+               &(Map.get(counts, &1, 0) < g.letters_per_day and not MapSet.member?(sunned, &1))
+             ) do
+          nil -> {:error, "no day before the last has room for a sun"}
+          day -> {:ok, day}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Where a sun posted now would go: `%{day, step}` (it shines from `step` for one day), or `nil`: no day has room for
+  one, or the garden's light takes no sun (`sun_percents/1` is `[]`), so every sun letter would be refused.
+  """
+  @spec next_sun_landing(t, segs) :: %{day: integer, step: integer} | nil
+  def next_sun_landing(g, segs) do
+    case sun_percents(g) != [] and sun_landing(g, segs) do
+      false -> nil
+      {:ok, day} -> %{day: day, step: (day + 1) * g.steps_per_day}
+      {:error, _} -> nil
     end
   end
 
@@ -613,24 +723,34 @@ defmodule Coordinator.Garden do
 
   @doc """
   The experiment's whole `interventions` list: the founding schedule exactly as
-  the keeper gave it, then the live letters as lesions, the live foods as
-  feeds and the live meteors as lesions, by step (at one step, stones by `seq`,
-  then foods by `seq`, then meteors by `seq`). The Queue stores it as the
+  the keeper gave it, then the live stone letters as lesions, the live foods
+  as feeds, the live sun letters as suns and the live meteors as lesions, by
+  step (at one step, stones by `seq`, then foods by `seq`, then suns by `seq`,
+  then meteors by `seq`). The Queue stores it as the
   spec's `interventions` after every add or drop.
   """
   @spec schedule(t) :: [map]
   def schedule(g) do
-    stones = for l <- live(g), do: {{l.step, 0, l.seq}, lesion_entry(l)}
+    stones = for l <- live(g), l.kind != "sun", do: {{l.step, 0, l.seq}, lesion_entry(l)}
     foods = for f <- live_foods(g), do: {{f.step, 1, f.seq}, feed_entry(f)}
+    suns = for l <- live(g), l.kind == "sun", do: {{l.step, 2, l.seq}, sun_entry(l)}
     # Meteors come last at their step (after any other kind's tag), so every
     # schedule without meteors is exactly what it was.
     meteors = for m <- live_meteors(g), do: {{m.step, 3, m.seq}, lesion_entry(m)}
 
-    # At one step the stones come first (by seq), then the foods (by seq). A
-    # garden without food has no foods, so its schedule is what it always was.
-    entries = (stones ++ foods ++ meteors) |> Enum.sort_by(&elem(&1, 0)) |> Enum.map(&elem(&1, 1))
+    # At one step the stones come first (by seq), then the foods (by seq), then
+    # the suns, then the meteors. A garden without food, suns or meteors has
+    # none, so its schedule is what it always was.
+    entries =
+      (stones ++ foods ++ suns ++ meteors)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map(&elem(&1, 1))
+
     g.founding ++ entries
   end
+
+  defp sun_entry(l),
+    do: %{"step" => l.step, "kind" => "sun", "percent" => l.percent, "span" => l.span}
 
   defp lesion_entry(l),
     do: %{"step" => l.step, "kind" => "lesion", "x" => l.x, "y" => l.y, "r" => l.r}
@@ -676,15 +796,19 @@ defmodule Coordinator.Garden do
     %{
       id: letter.id,
       kind: letter.kind,
-      x: letter.x,
-      y: letter.y,
-      r: letter.r,
+      x: Map.get(letter, :x),
+      y: Map.get(letter, :y),
+      r: Map.get(letter, :r),
       postedAt: letter.posted_at,
       landsAtStep: letter.step,
       day: letter.day,
       status: status,
       landedIn: landed_in,
-      droppedAt: letter.dropped_at
+      droppedAt: letter.dropped_at,
+      # Every letter has every key: a sun's `x`, `y` and `r` are null (it has no
+      # place), a stone's `percent` and `span` are.
+      percent: Map.get(letter, :percent),
+      span: Map.get(letter, :span)
     }
   end
 
@@ -1465,6 +1589,11 @@ defmodule Coordinator.Garden do
           now,
           Map.get(env, :shared_address, false)
         ),
+      sun: %{
+        percents: sun_percents(g),
+        span: d,
+        nextLanding: next_sun_landing(g, segs)
+      },
       leadersRule: GardenLeaders.rule(),
       limits: %{
         stoneRadius: %{min: @radius_min, max: @radius_max},

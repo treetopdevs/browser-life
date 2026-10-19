@@ -2142,6 +2142,22 @@ defmodule Coordinator.GardenTest do
       refute Enum.any?(Garden.schedule(g), &(&1["r"] == 64))
     end
 
+    test "the merged order at one step is stones, foods, suns, meteors, whatever the posting order" do
+      g = garden(letters_per_day: 3, food: %{@food | asks: 2}, meteor: %{@meteor | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      # Posted in the reverse of the schedule's order: meteor, sun, food, stone.
+      {g, _hands, [:counted, :called]} = mhands!(g, nil, e, [1, 2], segs)
+      {:ok, g, sun} = Garden.post_letter(g, %{kind: "sun", percent: 50}, segs, @t0)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      {g, _} = post!(g, segs, 5, 6, 7)
+      assert sun.step == @d
+
+      at_d = for x <- Garden.schedule(g), x["step"] == @d, do: x
+      assert Enum.map(at_d, & &1["kind"]) == ["lesion", "feed", "sun", "lesion"]
+      assert [%{"r" => 7}, _, %{"percent" => 50}, %{"r" => 64}] = at_d
+    end
+
     test "food and meteor asks are independent" do
       g = garden(days_total: 8, food: %{@food | asks: 2}, meteor: %{@meteor | asks: 2})
       e = make_ref()

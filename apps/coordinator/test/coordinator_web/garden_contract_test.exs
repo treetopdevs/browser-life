@@ -394,6 +394,79 @@ defmodule CoordinatorWeb.GardenContractTest do
     end
   end
 
+  test "a sun letter's view: the stone's keys with x, y and r null, its percent and span; the top-level sun block",
+       %{conn: conn} do
+    {:ok, _} =
+      Queue.create_garden(%{
+        "name" => "commons",
+        "presetId" => "spots",
+        "seed" => 1,
+        "founding" => [%{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 1, "r" => 2}],
+        "stepsPerDay" => @d,
+        "censusEvery" => 10,
+        "days" => 4
+      })
+
+    post_body = fn body ->
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post("/api/public/garden/letters", Jason.encode!(body))
+    end
+
+    stone = post_body.(%{"kind" => "stone", "x" => 5, "y" => 7, "r" => 3}) |> json_response(201)
+    sun = post_body.(%{"kind" => "sun", "percent" => 75}) |> json_response(201)
+
+    assert %{
+             "letter" => %{
+               "kind" => "sun",
+               "x" => nil,
+               "y" => nil,
+               "r" => nil,
+               "percent" => 75,
+               "span" => @d,
+               "day" => 0,
+               "landsAtStep" => @d
+             }
+           } = sun
+
+    assert %{"letter" => %{"kind" => "stone", "percent" => nil, "span" => nil}} = stone
+    assert Enum.sort(Map.keys(sun["letter"])) == Enum.sort(Map.keys(stone["letter"]))
+
+    got = conn |> get("/api/public/garden") |> json_response(200)
+    fixture = @fixture |> File.read!() |> Jason.decode!()
+    compare("$", got["sun"], fixture["sun"])
+
+    # Even light (40 + 160) takes a half, three quarters and a quarter more; the second day is the next a sun can land on.
+    assert %{
+             "percents" => [50, 75, 125],
+             "span" => @d,
+             "nextLanding" => %{"day" => 1, "step" => 40}
+           } = got["sun"]
+
+    compare("$.letters", got["letters"], fixture["letters"])
+    check_enums(got)
+
+    # 150 is too bright for this world, a second sun lands on the next day, and the shape is the sun's own.
+    assert %{"error" => "this garden's light takes a sun of 50 or 75 or 125 percent"} =
+             post_body.(%{"kind" => "sun", "percent" => 150}) |> json_response(422)
+
+    assert %{"letter" => %{"day" => 1}} =
+             post_body.(%{"kind" => "sun", "percent" => 50}) |> json_response(201)
+
+    assert %{"error" => "a sun letter has exactly the keys kind and percent"} =
+             post_body.(%{"kind" => "sun", "percent" => 50, "x" => 1}) |> json_response(422)
+
+    # Day 2 would take a sun, day 3 is the last: a third and a fourth sun land on day 2, then none.
+    assert %{"letter" => %{"day" => 2}} =
+             post_body.(%{"kind" => "sun", "percent" => 50}) |> json_response(201)
+
+    assert %{"error" => "no day before the last has room for a sun"} =
+             post_body.(%{"kind" => "sun", "percent" => 50}) |> json_response(409)
+
+    assert get(conn, "/api/public/garden") |> json_response(200) |> get_in(["sun", "nextLanding"]) ==
+             nil
+  end
+
   test "the same shape on a garden nothing has happened to", %{conn: conn} do
     {:ok, _} =
       Queue.create_garden(%{
@@ -415,7 +488,7 @@ defmodule CoordinatorWeb.GardenContractTest do
     # Key sets of every object (the values that depend on state are null here).
     assert Enum.sort(Map.keys(got)) == Enum.sort(Map.keys(fixture))
 
-    for k <- ~w(pace clock tending verification limits letters food meteor) do
+    for k <- ~w(pace clock tending verification limits letters food meteor sun) do
       assert Enum.sort(Map.keys(got[k])) == Enum.sort(Map.keys(fixture[k])), "$.#{k}"
     end
 
@@ -468,7 +541,16 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     for letter <- got["letters"]["waiting"] ++ got["letters"]["recent"] do
       assert letter["status"] in @letter_statuses, "letter status #{inspect(letter["status"])}"
-      assert letter["kind"] == "stone"
+      assert letter["kind"] in ["stone", "sun"]
+
+      if letter["kind"] == "sun" do
+        assert letter["x"] == nil and letter["y"] == nil and letter["r"] == nil
+
+        assert letter["percent"] in got["sun"]["percents"] and
+                 letter["span"] == got["sun"]["span"]
+      else
+        assert is_integer(letter["x"]) and letter["percent"] == nil and letter["span"] == nil
+      end
     end
 
     assert Enum.all?(got["letters"]["waiting"], &(&1["status"] == "waiting"))
@@ -551,6 +633,18 @@ defmodule CoordinatorWeb.GardenContractTest do
     "$.letters.waiting[].landedIn",
     "$.letters.recent[].droppedAt",
     "$.letters.recent[].landedIn",
+    # A sun has no place, a stone no brightness (docs/garden-sun-2026-10-18.md).
+    "$.letters.waiting[].x",
+    "$.letters.waiting[].y",
+    "$.letters.waiting[].r",
+    "$.letters.waiting[].percent",
+    "$.letters.waiting[].span",
+    "$.letters.recent[].x",
+    "$.letters.recent[].y",
+    "$.letters.recent[].r",
+    "$.letters.recent[].percent",
+    "$.letters.recent[].span",
+    "$.sun.nextLanding",
     "$.days[].food",
     "$.food.asks",
     "$.food.everyDays",

@@ -284,6 +284,13 @@ fails if a real response's keys and the fixture's differ.
   runner's ownership rule: an intervention at step *s* belongs to the segment
   that stepped *to* *s*). The day's end checkpoint, and every later day, carries
   it.
+* **The order at one step.** The experiment's `interventions` are the founding
+  schedule, then every live letter, food and meteor by step; at one step the
+  stone letters come first (by their sequence number), then the foods (by
+  theirs), then the sun letters, then the meteors. Each kind added later sorts
+  after the earlier ones, so a garden without suns or meteors has exactly the
+  schedule it had before they existed (docs/garden-meteor-2026-10-18.md,
+  amendment "the merged order").
 * **The frontier.** A letter may only be carried by a day that holds no
   attempt (no island is running or verifying it, and none has). A posted letter
   goes to the first such day whose budget (`letters.perDay`) is not yet full. A
@@ -355,7 +362,7 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `letters.nextLanding` | Where a letter posted now would go: `{day, step, open}` (`open` = slots left on that day), or `null` when the garden takes no letters (queue full, log full, stopped or finished). |
 | `letters.waiting` | Every waiting letter, oldest first. |
 | `letters.recent` | The newest 32 letters that are not waiting, newest first. |
-| letter | `id` (`"ltr-<n>"`), `kind` (`"stone"`), `x`, `y`, `r`, `postedAt`, `landsAtStep`, `day` (the day that carries it), `status`, `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless dropped). |
+| letter | `id` (`"ltr-<n>"`), `kind` (`"stone"` or `"sun"`), `x`, `y`, `r` (`null` for a sun), `percent`, `span` (a sun's brightness and its steps; `null` for a stone), `postedAt`, `landsAtStep`, `day` (the day that carries it), `status`, `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless dropped). |
 | letter `status` | `"waiting"` (its day has never been assigned; the keeper may drop it), `"sealed"` (its day is assigned: fixed), `"landed"` (its day is done), `"verified"` (its day is verified), `"dropped"` (the keeper's veto, before its day was assigned), `"stalled"` (its day diverged, failed or is blocked). |
 | `food` | The food ask (always present; added in the contract's additive way, so still `garden-v1`). A food is a feed (`{step, kind: "feed", x, y, r, amount}` in the experiment's schedule), never a letter: it is in no `letters` list and in no `days[].letters`. |
 | `food.enabled` | The garden was founded with food. `false` for every garden founded without it (then `closed` is `"off"` and the rule's numbers are `null`). |
@@ -370,7 +377,7 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `food.foods` | The newest 32 foods, newest first, live and dropped. |
 | food | `id` (`"food-<n>"`), `x`, `y`, `r`, `amount`, `calledAt` (when the K-th hand called it), `noticeUntil` (`calledAt` plus one dawn period: its day is not given to an island to run before this, so the keeper's veto always has that long; a reset that reopens the day does not restart it), `hands` (K), `landsAtStep`, `day`, `status` (the letter statuses, with the same meanings), `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless the keeper dropped it). |
 | `leadersRule` | `{name: "lines-v1", top: 3, clearLeaderPercent: 10}`: the rule `days[].leaders` follows (always present). |
-| `meteor` | The meteor ask (always present; added in the contract's additive way, so still `garden-v1`), shaped as `food` without `amount`. A meteor is a lesion (`{step, kind: "lesion", x, y, r}` in the experiment's schedule, after that step's stones and foods), never a letter: it is in no `letters` list and in no `days[].letters`. Its ask is independent of food's: its own hands, spacing and records. |
+| `meteor` | The meteor ask (always present; added in the contract's additive way, so still `garden-v1`), shaped as `food` without `amount`. A meteor is a lesion (`{step, kind: "lesion", x, y, r}` in the experiment's schedule, after that step's stones, foods and suns), never a letter: it is in no `letters` list and in no `days[].letters`. Its ask is independent of food's: its own hands, spacing and records. |
 | `meteor.enabled` | The garden was founded with meteor. `false` otherwise (then `closed` is `"off"` and the rule's numbers are `null`). |
 | `meteor.asks`, `meteor.everyDays` | K and N, as for food: a meteor lands at most once every N garden days, counting meteors only. `null` when off. |
 | `meteor.r` | Every meteor's radius (config `:garden_meteor_radius`, 64), fixed when the garden was founded. `null` when off. |
@@ -378,7 +385,8 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `meteor.hands`, `meteor.expiresAt`, `meteor.sharedAddress`, `meteor.open`, `meteor.closed`, `meteor.opensAtDay`, `meteor.landing` | As the food block's (the same codes; a food never closes the meteor ask, nor a meteor the food's). |
 | `meteor.meteors` | The newest 32 meteors, newest first, live and dropped. |
 | meteor | `id` (`"meteor-<n>"`), `x`, `y` (its place, stored when it was called), `r`, `calledAt`, `noticeUntil` (as a food's: its day is not run before this), `hands`, `landsAtStep`, `day`, `status` (the letter statuses), `landedIn`, `droppedAt`. |
-| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters, food hands and meteor hands together), `logMax` (founding plus live letters plus live foods plus live meteors, at most). |
+| `sun` | `{percents, span, nextLanding}`: the percents a sun letter may take in this garden (those its preset's light takes, `[]` for none), its span (one day, `pace.stepsPerDay`), and `{day, step}` where a sun posted now would land, or `null` when none can (no day with room, or `percents` is `[]`) (always present; docs/garden-sun-2026-10-18.md). Added 2026-10-18 in the contract's additive way, so still `garden-v1`: every letter gained `percent` and `span`, and a letter's `x`, `y`, `r` are `null` only for a sun, a kind added with it. A stone reads as before; a page from before the sun that requires numbers there fails on a garden holding a sun letter (the page and the coordinator ship together). |
+| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters, food hands and meteor hands together), `logMax` (founding plus live letters, stones and suns, plus live foods plus live meteors, at most). |
 
 ### Who held the field (`days[].leaders`)
 
@@ -416,11 +424,21 @@ the visitor's own device and check it against these blocks once the next day is 
 
 No authentication. The body is exactly `{"kind": "stone", "x": <int>, "y":
 <int>, "r": <int>}`: `x` and `y` cells inside the world, `r` within
-`limits.stoneRadius` (1 to 32). No other key, no free text, no name: letters are
-public and carry nothing about who wrote them.
+`limits.stoneRadius` (1 to 32); or exactly `{"kind": "sun", "percent": <int>}`,
+`percent` one of `sun.percents` (docs/garden-sun-2026-10-18.md). No other key,
+no free text, no name: letters are public and carry nothing about who wrote them.
+
+A sun dims (or, on worlds whose light leaves room, brightens) the world's light for one day: from its landing step,
+`(d+1)·D`, the light is `percent` of the world's own (base, amplitude and season,
+floored) until `(d+2)·D`, then the world's own returns. It takes one of its
+day's letter places and the same per-address budget as a stone, at most one sun
+lands on a day, and never on the last day. In the schedule it is
+`{"step", "kind": "sun", "percent", "span"}`, after that step's stones and
+foods and before its meteors; its day's segments go only to islands that advertise `sun-v1`. A 409
+also says when no day before the last has room for a sun.
 
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
-* `422 {"error": ...}`: not a stone as above, or its centre is outside the world.
+* `422 {"error": ...}`: not a stone or a sun as above, its centre is outside the world, or a percent this garden's light does not take.
 * `413`: a body over 1 KB (a letter is about 40 bytes; the body is not parsed past that).
   For a chunked request (no `Content-Length`) the limit is under 1 KB: a body of
   exactly 1,024 bytes may also be refused.

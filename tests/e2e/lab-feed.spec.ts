@@ -144,9 +144,9 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   await expect(page.locator("#k-resid")).toHaveText("0");
   await page.screenshot({ path: "test-results/lab-feed.png", fullPage: false });
   const pressed = () => page.locator("#tools button:not([hidden])").evaluateAll((bs) => bs.map((b) => `${b.textContent}:${b.getAttribute("aria-pressed")}`).join(" "));
-  expect(await pressed()).toBe("Look:false Wound:false Feed:true Drain:false Move:false");
+  expect(await pressed()).toBe("Look:false Wound:false Feed:true Drain:false Sun:false Move:false");
   await page.getByRole("button", { name: "Look", exact: true }).click();
-  expect(await pressed()).toBe("Look:true Wound:false Feed:false Drain:false Move:false");
+  expect(await pressed()).toBe("Look:true Wound:false Feed:false Drain:false Sun:false Move:false");
   await expect(page.locator("#feed-hint")).toBeHidden();
   await expect(page.locator("#amount")).toBeDisabled();
   await expect(page.locator("#radius")).toBeDisabled();

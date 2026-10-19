@@ -297,3 +297,24 @@ Four read-only reviews (three lenses and Codex Sol 6.1) checked the page's words
 - **Tests added**: a called meteor keeps the radius copied at founding when config changes later (Queue); the place on a
   256 x 128 world (width takes x); the fixture's meteor places are the rule's (contract); founding with meteor keys over
   HTTP; the vitest's preset list reads `test.exs` too and refuses an empty list.
+
+## Amendment 2026-10-18 (merge): the merged order
+
+Written when this slice was merged with the sun letter (PR #62, docs/garden-sun-2026-10-18.md), which also adds a kind
+to `Garden.schedule/1`. Neither feature is on a real garden yet, so no garden's schedule changes.
+
+- **The merged order at one step** is stones (sort tag 0), then foods (1), then suns (2), then meteors (3), each by its
+  own sequence number; the founding schedule comes first, as before. Steps sort before tags, so a meteor on a later step
+  still comes after everything at earlier steps.
+- **Both notes' orders hold.** The sun note's "stones, then foods, then suns" and this note's "stones, foods, meteors"
+  are both subsequences of the merged order, and the tags were already chosen for this (the sun's 2, the meteor's 3),
+  so neither side's code needed a new tag. A schedule without suns is the one this slice produced; a schedule without
+  meteors is the one #62 produced; a schedule with neither is the one before both. Every existing schedule, and so
+  every hash a test or fixture holds, is unchanged.
+- **Why meteors last, after suns.** A sun sets the light from that step on and moves no matter; a meteor converts
+  matter in place and books its heat, as any lesion does. Neither entry's effect depends on the other's; the order
+  fixes only the log's line order, which the stitch check compares. Putting meteors last is the additive choice the
+  section above already made.
+- **Where it is said.** `Garden.schedule/1`'s doc, the coordinator README ("The order at one step" under the garden
+  rules, and the `meteor` row of the view table), and a Garden test that posts the four kinds in reverse order at one
+  step and reads `lesion, feed, sun, lesion (r 64)`.

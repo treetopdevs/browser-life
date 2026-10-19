@@ -35,8 +35,15 @@
 //   --interventions FILE         a JSON array of the same entries, {"step":137,"kind":"lesion","x":20,"y":20,"r":4} and
 //                                {"step":200,"kind":"feed","x":30,"y":30,"r":3,"amount":16} (a feed may add "matter": the net quanta the
 //                                feed must move, else the run stops); or an interventions.jsonl a run wrote, which replays as a schedule
-// --lesion and --feed repeat; all three may be combined. They are merged (the file's entries, then the lesions, then the feeds, each in
-// the order given), stable-sorted by step, and become RunSpec.interventions of every (condition, seed) of the invocation, so several at
+//   --sun STEP:PERCENT,SPAN      from STEP the world's light is its own times PERCENT/100 (base, amplitude and season, floored;
+//                                PERCENT one of 50, 75, 125, 150) for SPAN steps, then its own light returns (@bl/schema sun.ts,
+//                                docs/garden-sun-2026-10-18.md); suns do not overlap, and a sun must end by the run's last step; a
+//                                world whose scaled light would leave 0..255 (each value, and their sum) refuses that percent. A lab
+//                                history may end under its sun; a fork (--start-from) from a checkpoint taken under a sun inherits it
+//                                (its schedule, if any, starts with that sun, which is not applied or logged again; a fork
+//                                from step 0 owns its step 0, so there it installs and logs that sun as its own step-0 entry)
+// --lesion, --feed and --sun repeat; all may be combined. They are merged (the file's entries, then the lesions, then the feeds, then
+// the suns, each in the order given), stable-sorted by step, and become RunSpec.interventions of every (condition, seed) of the invocation, so several at
 // one step apply in that order (parseArgs does not keep the interleaving of --lesion and --feed; a file does). Step 0 is allowed and is
 // the starting world itself; an entry after --steps is refused. Each is applied after that step's census and boundary transforms, before
 // any checkpoint, so a checkpoint carries the post-intervention world. Besides the usual files the bundle then has interventions.jsonl (one
@@ -151,6 +158,7 @@ import {
   sameCompletedRun,
   sameConfig,
   specConfig,
+  validateInterventions,
   validateSpec,
   type BranchSpec,
   type ObserverState,
@@ -165,8 +173,8 @@ import { branchFlagsError, branchSource } from "./lib/branch-source.ts";
 import { claimPickDir, commandAnswerer, denoIo, denoRun, dirPicker, fileAnswerer, pickDirTaken, randomPicker, rulePicker } from "./lib/pickers.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["experiment", "preset", "conditions", "seeds", "out", "steps", "census", "deep", "checkpoint", "threshold", "solo-founder", "solo-genome", "founder-set", "pre-cycle", "override", "branch-from", "branch-boundary", "picker", "pick-seed", "pick-dir", "pick-cmd", "pick-timeout", "pick-label", "picks-from", "verify-against", "lesion", "feed", "interventions", "start-from", "start-step"],
-  collect: ["lesion", "feed"],
+  string: ["experiment", "preset", "conditions", "seeds", "out", "steps", "census", "deep", "checkpoint", "threshold", "solo-founder", "solo-genome", "founder-set", "pre-cycle", "override", "branch-from", "branch-boundary", "picker", "pick-seed", "pick-dir", "pick-cmd", "pick-timeout", "pick-label", "picks-from", "verify-against", "lesion", "feed", "sun", "interventions", "start-from", "start-step"],
+  collect: ["lesion", "feed", "sun"],
   boolean: ["lineage-obs"],
   default: { experiment: "pilot", preset: "spots", conditions: "treatment", seeds: "1", out: "runs", steps: "20000", census: "100", deep: "10", checkpoint: "0" },
 });
@@ -202,12 +210,13 @@ function inKeyOrder(e: unknown): unknown {
   // No prototype, and own keys only: on a plain {} a key such as "constructor" or "toString" counts as already there (`in` walks the
   // prototype chain) and an own "__proto__" would set the prototype instead of a key, so validateSpec would never see either.
   const out: Record<string, unknown> = Object.create(null);
-  for (const k of ["step", "kind", "x", "y", "r", "amount", "matter"]) if (Object.hasOwn(o, k)) out[k] = o[k];
+  for (const k of ["step", "kind", "x", "y", "r", "amount", "matter", "percent", "span"]) if (Object.hasOwn(o, k)) out[k] = o[k];
   for (const k of Object.keys(o)) if (!Object.hasOwn(out, k)) out[k] = o[k];
   return out;
 }
 const LESION_FLAG = /^(\d+):(\d+),(\d+),(\d+)$/;
 const FEED_FLAG = /^(\d+):(\d+),(\d+),(\d+),([+-]?\d+)$/;
+const SUN_FLAG = /^(\d+):(\d+),(\d+)$/;
 
 /**
  * The schedule --interventions, --lesion and --feed name (RunSpec.interventions), merged in that order and stable-sorted by
@@ -225,9 +234,9 @@ async function scheduleFromFlags(): Promise<ScheduledIntervention[]> {
       // A JSON array, or an interventions.jsonl log written by an earlier run (its lines replay as a schedule).
       given = text.trimStart().startsWith("[") ? JSON.parse(text) : parseInterventionLog(text);
     } catch (e) {
-      throw new Error(`${file}: ${(e as Error).message} (expected a JSON array of lesions and feeds, or an ${INTERVENTIONS_FILE})`);
+      throw new Error(`${file}: ${(e as Error).message} (expected a JSON array of lesions, feeds and suns, or an ${INTERVENTIONS_FILE})`);
     }
-    if (!Array.isArray(given) || given.length === 0) throw new Error(`${file}: expected a non-empty JSON array of lesions and feeds`);
+    if (!Array.isArray(given) || given.length === 0) throw new Error(`${file}: expected a non-empty JSON array of lesions, feeds and suns`);
     list.push(...given.map(inKeyOrder));
   }
   for (const v of a.lesion) {
@@ -239,6 +248,11 @@ async function scheduleFromFlags(): Promise<ScheduledIntervention[]> {
     const m = FEED_FLAG.exec(v);
     if (!m) throw new Error(`--feed ${JSON.stringify(v)}: expected STEP:X,Y,R,AMOUNT, AMOUNT a signed integer, negative to drain (for example 200:30,30,3,16)`);
     list.push({ step: Number(m[1]), kind: "feed", x: Number(m[2]), y: Number(m[3]), r: Number(m[4]), amount: Number(m[5]) });
+  }
+  for (const v of a.sun) {
+    const m = SUN_FLAG.exec(v);
+    if (!m) throw new Error(`--sun ${JSON.stringify(v)}: expected STEP:PERCENT,SPAN, non-negative integers, PERCENT one of 50, 75, 125, 150 (for example 4000:50,2000)`);
+    list.push({ step: Number(m[1]), kind: "sun", percent: Number(m[2]), span: Number(m[3]) });
   }
   // Array.prototype.sort is stable; an entry with no numeric step sorts last, where validateSpec reports it.
   const stepOf = (e: unknown) => (typeof (e as { step?: unknown } | null)?.step === "number" ? (e as { step: number }).step : Infinity);
@@ -254,8 +268,8 @@ let overrides: RunSpec["overrides"];
 let source: { branch: BranchSpec; state: WorldState } | undefined;
 let scheduled: ScheduledIntervention[] = [];
 try {
-  if (a["branch-from"] !== undefined && (a.lesion.length > 0 || a.feed.length > 0 || a.interventions !== undefined))
-    throw new Error("--lesion, --feed and --interventions cannot be combined with --branch-from: a branch starts mid-history, and a schedule counts its steps from the start of a world");
+  if (a["branch-from"] !== undefined && (a.lesion.length > 0 || a.feed.length > 0 || a.sun.length > 0 || a.interventions !== undefined))
+    throw new Error("--lesion, --feed, --sun and --interventions cannot be combined with --branch-from: a branch starts mid-history, and a schedule counts its steps from the start of a world");
   // A record is a whole history from step 0 (a picks.jsonl makes a picked run, which validateSpec refuses as a branch; a lab manifest's
   // lesions and feeds would be counted from a start the branch never runs from), so it is refused here, before the source is read.
   if (a["branch-from"] !== undefined && a["picks-from"] !== undefined)
@@ -434,9 +448,21 @@ if (a["start-from"] !== undefined) {
   const spec = specs[0];
   const cannot = continuationError(spec, startFrom!.state, startFrom!.observer);
   if (cannot) die(`--start-from ${dir} at step ${N}: ${cannot}`);
-  const outside = (spec.interventions ?? []).findIndex((e) => !(e.step > N && e.step <= N + spec.steps));
+  // A checkpoint taken under a sun carries it (ObserverState.sun). A fork with a schedule of its own starts with that sun as its
+  // first entry, so the schedule says which sun governs the fork's start (runExperiment checks `sunAt` against the observer) and
+  // a new --sun is checked against its end; before the start, it is neither applied nor logged again (a fork from step 0 owns
+  // step 0, as every run from step 0 does, and installs and logs it as its own step-0 entry: the same light, no state change).
+  const held = startFrom!.observer.sun;
+  const inherited = held && spec.interventions !== undefined ? 1 : 0;
+  if (inherited) {
+    const errs = validateInterventions([{ step: held!.step, kind: "sun", percent: held!.percent, span: held!.span }, ...spec.interventions!]);
+    if (errs.length) die(`invalid spec for ${runId(spec)}: the checkpoint at step ${N} was taken under a sun (${held!.percent}% from t=${held!.step} for ${held!.span} steps), the fork's first entry: ${errs[0]}`);
+    specs[0] = { ...spec, interventions: [{ step: held!.step, kind: "sun", percent: held!.percent, span: held!.span }, ...spec.interventions!] };
+  }
+  const forkSpec = specs[0];
+  const outside = (forkSpec.interventions ?? []).findIndex((e, i) => i >= inherited && !(e.step > N && e.step <= N + forkSpec.steps));
   if (outside >= 0) {
-    const e = spec.interventions![outside];
+    const e = forkSpec.interventions![outside];
     die(`invalid spec for ${runId(spec)}: interventions[${outside}] (${e.kind} at t=${e.step}) is not in the fork's window (${N}, ${N + spec.steps}]: a fork from step ${N} applies only entries after its start, up to its last step`);
   }
   try {
@@ -555,6 +581,16 @@ for (const spec of specs) {
   if (late >= 0) {
     const e = spec.interventions![late];
     console.error(`invalid spec for ${runId(spec)}: interventions[${late}] (${e.kind} at t=${e.step}) is after the run's last step (--steps ${spec.steps}), so the run never reaches it; use --steps ${e.step} or more${lab ? "; a lab history replays whole, so --steps must reach its last intervention" : ""}`);
+    Deno.exit(2);
+  }
+  // A sun must set inside the run: its end, step + span, at most the last step (docs/garden-sun-2026-10-18.md). Not a lab history's
+  // (the lab saved its world while a sun still shone, and the replay ends where the lab's record does, its final observer carrying
+  // the open sun), and not the sun a fork inherits from its checkpoint (it started before the fork; it is the source's).
+  const last = (startFrom?.step ?? 0) + spec.steps;
+  const unset = lab ? -1 : (spec.interventions ?? []).findIndex((e) => e.kind === "sun" && e.step > (startFrom?.step ?? -1) && e.step + e.span > last);
+  if (unset >= 0) {
+    const e = spec.interventions![unset] as { step: number; span: number };
+    console.error(`invalid spec for ${runId(spec)}: interventions[${unset}] (sun at t=${e.step} for ${e.span} steps) ends at t=${e.step + e.span}, after the run's last step (t=${last}): a sun sets inside its run; use --steps ${e.step + e.span - (startFrom?.step ?? 0)} or more, or a shorter span`);
     Deno.exit(2);
   }
   const intervBad = interventionsError(spec, cfg, 0); // a centre off the world, a feed in a pond world

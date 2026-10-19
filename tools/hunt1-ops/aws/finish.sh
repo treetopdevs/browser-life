@@ -19,7 +19,8 @@ die() { log "NOT finished: $*"; exit 1; }
 [ -f "$O/done" ] || die "supervise.sh has not finished (no $O/done)"
 [ -f "$O/collision" ] && die "collision marker present: outputs from two instances share paths"
 for n in 1 2 3; do [ -f "$O/incomplete-$n" ] && log "instance $n ended incomplete (the report's queue check decides)"; done
-if pgrep -f "[d]eno run" >/dev/null; then log "other deno jobs on this Mac (step rates are shared):"; pgrep -fl "[d]eno run" | tee -a "$O/finish.log"; fi
+# Only pid and program name are logged (never the argument list: it carries local paths and other jobs' arguments).
+if pgrep -f "[d]eno run" >/dev/null; then log "other deno jobs on this Mac (step rates are shared):"; for p in $(pgrep -f "[d]eno run"); do c=$(ps -o comm= -p "$p" 2>/dev/null) && echo "$p ${c##*/}"; done | tee -a "$O/finish.log"; fi
 report() { # report ARGS...: hunt1 into $OUT via a temp file; the readout must parse with an outcome
   deno run -A tools/scaffold-report.ts hunt1 "$@" > "$OUT.tmp" 2> "$O/report.err" \
     && python3 -c "import json,sys; sys.exit(0 if 'outcome' in json.load(open('$OUT.tmp')) else 1)" && mv "$OUT.tmp" "$OUT"

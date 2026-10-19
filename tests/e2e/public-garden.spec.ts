@@ -1003,3 +1003,50 @@ test("screenshots", async ({ browser }, testInfo) => {
     }
   }
 });
+
+// The sun letter (docs/garden-sun-2026-10-18.md): the page offers the garden's percents, posts exactly {kind, percent}, and lists
+// the sun with the day it shines.
+test("sun form: posts {kind: \"sun\", percent} and the letter says the day it shines", async ({ page }) => {
+  let posted = false;
+  await serve(page, () => fixture((v) => {
+    if (posted) {
+      v.letters.queued = 5;
+      v.letters.waiting.push({ ...v.letters.waiting[3], id: "ltr-8", kind: "sun", x: null, y: null, r: null, percent: 75, span: v.pace.stepsPerDay, postedAt: v.now });
+      v.sun.nextLanding = { day: 5, step: 786432 };
+    }
+  }));
+  const bodies: unknown[] = [];
+  await page.route(LETTERS, async (route) => {
+    bodies.push(route.request().postDataJSON());
+    await json(route, { letter: { ...FIXTURE.letters.waiting[3], id: "ltr-8", kind: "sun", x: null, y: null, r: null, percent: 75, span: FIXTURE.pace.stepsPerDay } }, 201);
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#g-sun")).toBeVisible();
+  await expect(page.locator("#sun-choices input")).toHaveCount(2);
+  await expect(page.locator("#sun-preview")).toHaveText("Your sun would land at step 655,360, the end of day 4, and shine on day 5, all 131,072 steps of it; then the world’s own light returns.");
+  await expect(page.locator("#sun-send")).toBeDisabled();
+  await expect(page.locator("#sun-why")).toHaveText("Choose how bright: 50%, 75%.");
+  await page.locator('#sun-choices input[value="75"]').check();
+  await expect(page.locator("#sun-send")).toBeEnabled();
+  posted = true;
+  await page.locator("#sun-send").click();
+  await expect(page.locator("#sun-answer")).toHaveText("Posted as ltr-8. It is public now, lands at step 655,360 (end of day 4), shines on day 5, and counts once a second island replays that day.");
+  expect(bodies).toEqual([{ kind: "sun", percent: 75 }]);
+  const letter = page.locator('#g-waiting [data-letter="ltr-8"]');
+  await expect(letter).toContainText("A sun of 75% (three quarters of the light), landing at step 655,360 (end of day 4); it shines on day 5");
+  await expect(letter).toContainText("Yours");
+  // The map draws stones only: a sun has no place.
+  await expect(page.locator("#stone-map circle.map-mine")).toHaveCount(0);
+});
+
+test("sun form: hidden for a garden that takes no sun, or a coordinator from before the sun", async ({ page }) => {
+  let body = fixture((v) => { v.sun.percents = []; });
+  await serve(page, () => body);
+  await page.goto("/garden/");
+  await expect(page.locator("#stone-send")).toBeEnabled();
+  await expect(page.locator("#g-sun")).toBeHidden();
+  body = fixture((v) => { delete v.sun; });
+  await page.reload();
+  await expect(page.locator("#stone-send")).toBeEnabled();
+  await expect(page.locator("#g-sun")).toBeHidden();
+});

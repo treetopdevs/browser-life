@@ -206,7 +206,7 @@ describe("validateSpec: interventions' shape", () => {
     expect(validateInterventions([p]).join()).toMatch(/interventions\[0\]: a pressure is not a scheduled intervention: it is carried as RunSpec.pressures by a picked run, which is never segmented or sent to an island/);
     expect(validateSpec({ ...spotsSmall, interventions: [lesion(5), p as never] }).join()).toMatch(/a pressure is not a scheduled intervention/);
     // any other unknown kind keeps the generic message
-    expect(validateInterventions([{ step: 1, kind: "wound" }]).join()).toMatch(/kind must be "lesion" or "feed", got "wound"/);
+    expect(validateInterventions([{ step: 1, kind: "wound" }]).join()).toMatch(/kind must be "lesion", "feed" or "sun", got "wound"/);
   });
 
   const bad: [string, unknown, RegExp][] = [
@@ -218,7 +218,7 @@ describe("validateSpec: interventions' shape", () => {
     ["an array of holes", new Array(2), /interventions\[\d\] must be an object/],
     ["a null entry", [lesion(1), null], /interventions\[1\] must be an object/],
     ["an array entry", [[]], /interventions\[0\] must be an object/],
-    ["another kind", [{ ...lesion(1), kind: "pick" }], /kind must be "lesion" or "feed", got "pick"/],
+    ["another kind", [{ ...lesion(1), kind: "pick" }], /kind must be "lesion", "feed" or "sun", got "pick"/],
     ["a lesion with an amount", [{ ...lesion(1), amount: 3 }], /a lesion has no key "amount"/],
     ["a feed with an extra key", [{ ...feed(1), extra: 1 }], /a feed has no key "extra"/],
     ["a lesion without its radius", [{ step: 1, kind: "lesion", x: 1, y: 1 }], /a lesion needs the key "r"/],
@@ -367,7 +367,7 @@ describe("labHistory: a lab run manifest as picks and scheduled entries", () => 
     expect(() => labHistory({ ...manifest, edgesFrom: 4000 })).toThrow(/only from step 4000/);
     for (const m of [null, undefined, {}, { interventions: "x" }, 7]) expect(() => labHistory(m)).toThrow(/no interventions array/);
     expect(() => labHistory({ interventions: [{ step: 1, kind: "wound" }] })).toThrow(/interventions\[0\] is a "wound"/);
-    expect(() => labHistory({ interventions: [lesion(1), { ...lesion(2), x: -1 }] })).toThrow(/lesions and feeds.*interventions\[1\]: x must be a non-negative integer/);
+    expect(() => labHistory({ interventions: [lesion(1), { ...lesion(2), x: -1 }] })).toThrow(/lesions, feeds and suns.*interventions\[1\]: x must be a non-negative integer/);
     expect(() => labHistory({ interventions: [lesion(5), lesion(4)] })).toThrow(/step 4 follows step 5/);
     expect(() => labHistory({ interventions: [{ ...feed(3), matter: 1.5 }] })).toThrow(/matter must be an integer/);
   });
