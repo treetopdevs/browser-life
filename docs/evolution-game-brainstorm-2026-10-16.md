@@ -1383,3 +1383,316 @@ mechanisms stated as fact and now marked as readings: the controllers, hitchhiki
 of fixation and the arms' other differences; four P3 figure corrections: the conditional
 shares, the cost window, the growth share and the collapse pools; all eight taken, the tables
 unchanged).
+
+## Gene v2: a gene that does (2026-10-17)
+
+Gene v1's readout closed CONFOUNDED and left the next version's shape as a design decision:
+(a) genes that *do* rather than *permit*, or (b) permissive genes on rungs the founders already
+express. This session (autonomous, 17 October) took choice (a) for the build gene, on the probe
+below, and the user can reverse it; nothing here is landed. As before, the **design and the
+criterion** were written before the first run (08:50); the **readout** at the end was written
+after the runs, against them. The drive check in the design is a calibration run with its own
+pre-stated selection rule, run before the arms.
+
+### The probe (run before anything was built)
+
+The readout named the probe to run first: do the founders' controllers drive the BUILD output?
+`probeGenome` (the lineage inspector's controller probe, a canonical grid of 26,244 sensor
+points, not the inputs a lineage meets) on the 12 M3 founders and on every Gene v1 lineage alive
+at step 200,000, cell-weighted; the scripts and the full tables are beside the bundles
+(`runs/evolution-game/gene-v2/probe-founders.ts`, `probe-carriers.ts`, `probe.md`).
+
+- **Founders**: mixed. Three of the twelve put a mean of 12 to 20 (of 127) on BUILD over the
+  grid and are positive on 69 to 100% of it; four put exactly 0 everywhere; the rest 1 to 6.
+  Their DECOMP means run 0 to 69, the same spread. So "the founders do not drive BUILD" is not
+  true of the founder set.
+- **The survivors**: it is true of the worlds that mattered. In the four film worlds (seeds 1
+  and 2 of both arms) every lineage alive at 200,000, carriers and non-carriers alike (21,298
+  carrier cells in treat seed 2), puts **0 on BUILD on 100% of the grid**, and 0 on GROW too,
+  which is the film. Only the two seed-3 worlds, which grew, hold controllers that push BUILD
+  (means 5 to 12, positive on 91 to 100% of the grid), and those are the two runs with any build
+  flux (2.7 and 15 quanta a step). The v1 reading holds where it was made: a permissive gene
+  arriving in the film arrives in a cell that will never use it, and the arms ran the same
+  experiment.
+
+So the second rung needs a gene whose carrier builds whether or not its weights say so, which is
+choice (a). Choice (b) is not closed, but on this starting set the film's survivors express
+neither BUILD nor GROW, so it would have to pick a different rung or a different world.
+
+### Design
+
+**Kernel: one optional key.** `WorldConfig.geneDrive` (0..127, an integer, set only with
+`genes`, absent from `defaultConfig()` and every preset) is a floor on the BUILD controller
+output of a cell that *carries* the build gene: the building capacity and its term in the
+catalysis work sum use `max(rectified BUILD output, geneDrive)` instead of the output alone. The
+decomposition gene is unchanged (the first rung's founders do drive DECOMP, and keeping it as v1
+left it keeps the descriptive replication readable), non-carriers are unchanged (no reaction, no
+work term), and `geneDrive` absent or 0 is Gene v1 to the bit, so the two v0 pins, the two v1
+pins and the 23 RULE_VERSION 1 pins are the gate on that. No new state, channel or draw purpose;
+the floored output is still at most 127, so every bound in `docs/rules.md` holds as written. Two
+golden cases of its own with pins (`genes-drive`, whose founders include controllers with BUILD
+at 0 over the whole grid so the floor is the branch that runs, and `genes-drive-bounds` at drive
+127 on heavy biomass with every cost term at its maximum). The lineage inspector and the lab need
+nothing: no new gene bit, no change to the gene byte or its decoding.
+
+**What a forced builder pays, by the arithmetic** (gradient-m3's constants: kCatHalf 128,
+kBuild 64/4,096, kPDecay 66/65,536, eB − eA 10, eP − eB 2, eP − eC 10, gateK 64). With K = 128,
+cat(30) = 6 and cat(50) = 15 (the film holds about 30 B per living cell, v0's world about 50).
+The capacity is `mulShr(cat(B), D, 7)` quanta, floored, then × 64/4,096: a floor of D = 16 lets
+a B = 30 cell build nothing (6 × 16/128 < 1) and D must reach 22 before it builds at all, which is
+why the drive ladder below has no rung under 16 and its readout is per B.
+
+| D | q per step, B = 30 / 50 | E on building (2 per quantum) | standing P per cell (q × 65,536/66) | gate factor with that P on both sides |
+|---|---|---|---|---|
+| 32 | 0.016 / 0.047 | 0.03 / 0.09 | 16 / 47 | 67% / 40% |
+| 64 | 0.047 / 0.11 | 0.09 / 0.22 | 47 / 109 | 40% / 23% |
+| 127 | 0.078 / 0.22 | 0.16 / 0.44 | 77 / 218 | 29% / 13% |
+
+The E on building (2 per quantum) is the direct debit. A built quantum is biomass that decays to
+waste at a half-life near 700 steps, releasing eP − eC = 10 as heat, so holding B steady under the
+floor means replacing q quanta a step: by photosynthesis, which takes light and A and no E, or by
+growth at 10 E each (0.16 to 0.47 E a step at D = 32, 0.47 to 1.1 at D = 64, against v1's 0.32 to
+1.05 E a step of income per living cell and a kGene bill of 0.05 to 0.08). The film's survivors
+put 0 on GROW (the probe), so for them the replacement is photosynthesis and the cost is the A and
+light it takes from growth that was not happening anyway, plus the 2 E. A cell that cannot keep
+up shrinks until cat(B) × D/128 floors to a smaller capacity, so the floor is self-limiting rather
+than lethal by the arithmetic alone; whether a film of forced builders lives, and at what B and P,
+is what the drive check is for. (This paragraph was corrected before any arm ran, on the Codex
+review's reading: the pre-run copy in `rule.md` charged every replacement quantum 10 E as growth.) What polymer buys is as v1
+set out: the diffusion gate (A and C leak cut to the factor in the table), the mass term, and
+waste held for a decomposer; every carrier here is also expected to be a decomposer, since
+decomposition sweeps first.
+
+**Drive check** (calibration, before the arms; its rule is here and in `rule.md` before it ran).
+gradient-m3, `genes: "ladder"`, kGene 100, **geneFlip 0** (weights still mutate at the preset's
+rate; the gene byte never changes), every founder carrying **both** genes, seed 1, 50,000 steps,
+census every 5,000, D ∈ {0, 16, 32, 64, 96, 127}; D = 0 is v1's kernel with every founder a
+carrier. Read at step 50,000: living cells, B + P, P/(B + P), build flux, B per living cell.
+*Selection rule*: among D ≥ 16 (D = 0 is the denominator only and cannot be selected; the
+reader `read-drive.ts` was written so from the start, this sentence was added before any arm ran
+on the Codex review's reading), take the largest D whose living cells at 50,000 are ≥ 50% of the
+D = 0 run's and whose P/(B + P) at 50,000 is ≥ 5%; if no D meets both, the largest D that keeps
+≥ 50% of the cells, and the readout says polymer stayed under 5%; if no D ≥ 16 keeps 50% of the
+cells, forced building fails the bar at every drive on this world, the arms are not run, and
+that is the version's readout. One seed, 50,000 steps: a calibration, not a result.
+
+**Arms.** All on gradient-m3 as v1 (256², light 20 + 220, the 12 M3 founders, mutation on at
+the preset's rate), kDecomp 96 in every arm, census every 5,000 with every census deep,
+`lineageObs` on, seeds 1, 2, 3, 200,000 steps, every founder without either gene, D from the
+drive check.
+
+| arm | genes | kGene | geneFlip | kDecomp | kBuild | geneDrive | what it tests |
+|---|---|---|---|---|---|---|---|
+| treat | "ladder" | 100 | 2²⁷ | 96 | 64 | D | a build gene whose carrier builds |
+| cost | "ladder" | 100 | 2²⁷ | 96 | **0** | D | the same gene at the same cost (kGene, and the work term at the floor) making nothing: the cost-matched null |
+| drift | "ladder" | **0** | 2²⁷ | 96 | 0 | 0 | a bit with no maintenance that does nothing: the drift-and-hitchhiking floor on this background (not quite free: a carrier whose controller pushes BUILD still pays work on that output through kCost, as v1's null did; corrected before any arm ran, Codex review) |
+
+treat and cost differ in kBuild alone, so on the same seed they share founders, layout and
+flip draws, and the sign of their difference is the sign of polymer's net effect on its carrier,
+hitchhiking noise aside; drift measures that noise (v1's null reached 50% in two seeds at a cost,
+so the floor at no cost is the figure v1 lacked). kGene 0 in drift makes decomposition free there
+too, so drift's background is not the other arms'; it is read for the build bit only.
+
+**Instruments.** As v1 per bit (gene byte from `genomes.tsv`, cells and mass per census from
+`profiles.tsv`, classified flip births from `mutations.tsv`, fluxes from `series.jsonl`), plus:
+P as a share of bound mass (P/(B + P)) per census; `S̄`, the mean build share of living cells
+over the last ten censuses (steps 155,000 to 200,000), beside the 200,000 snapshot; and a
+collapse watch: a run whose living cells at any census after 100,000 are at most half the
+largest count at an earlier census is flagged, with the census.
+
+### Pre-stated criterion (written before the first run)
+
+Share means the build gene's share of living cells; S_end is the share at 200,000 and S̄ the
+mean over the last ten censuses; "points" are percentage points. Verdicts are tested in the
+order given and the first that holds is the verdict.
+
+- **EXPRESSED** (a gate on the kernel, not a result): in every treatment seed whose mean build
+  carrier share over the last ten censuses is ≥ 1%, the mean build flux over the last ten
+  censuses is > 0 and P at 200,000 is > 0. If it fails the version is **INVALID**: the gene did
+  not do what it was built to do, and nothing below is read.
+- **HAPPENS**: in every treatment seed, at least one classified build flip-on birth by 200,000.
+- **FLOOR** = the largest S̄ among the three drift seeds.
+- **PAYS** = HAPPENS, and treat S̄ ≥ cost S̄ + 5 points in 3 of 3 seed pairs, and treat S̄ >
+  FLOOR in at least 2 of 3 seeds, and treat S_end ≥ 25% in at least 2 of 3 seeds: a gene that
+  builds is kept over the same gene that does not, above what drift gives, and spreads.
+- **COSTS** = HAPPENS, and treat S̄ ≤ cost S̄ in 3 of 3 pairs, and treat S̄ < FLOOR in 3 of 3
+  seeds: forced building at this drive is worse than the same cost without polymer, and the bit
+  is held below the no-maintenance bit's floor. (HAPPENS was added to COSTS before any arm ran,
+  on the Codex review's P1: without it, a treatment that never acquired the gene would read as
+  having rejected it.) The door the ladder asked about exists and is shut at this drive; the
+  known next readings are a lower drive, a dearer polymer loss (slower kPDecay) or a world where
+  retention pays (lower diffA, a wound regime).
+- **CONFOUNDED** = neither of the above and cost S_end ≥ 25% in at least 2 of 3 seeds: the
+  cost-matched null rode again and the pairs do not separate.
+- **UNCLEAR** = anything else.
+- **Descriptive, not part of the verdict**: P/(B + P) and build flux per arm and seed over the
+  last ten censuses; the drift arm's S̄ and S_end per seed (the floor's spread); the
+  decomposition share and its first census ≥ 25% in every run (replication, against v0 and v1);
+  the order of the rungs; the collapse watch over all nine runs, since v1's treat seed 1 was the
+  first film to fail and is not separately investigated here; and the probe's GROW reading
+  (the film's survivors put 0 on GROW), which this version does not act on.
+
+What three seeds cannot show is unchanged. What this version cannot show: anything at a drive
+other than the one chosen (the drive check is one seed at 50,000 steps); whether a controller
+that drives BUILD on its own would be selected (the floor hides that); anything about ages or a
+player. The quiet `pnpm test` owed since v1 is still owed and is reported below as it ran.
+
+### Drive check readout (written after the six runs, 2026-10-17)
+
+Six runs, 09:39 to 09:42 on the Mac (M1 Max, under a load average above 600 from other work;
+1,140 to 2,160 steps a second, 23 to 44 s each), through `@bl/runner` from `runs/evolution-game/gene-v2/gene.ts --arm drive`
+(every disc founded with its M3 founder carrying both genes, through `RunSpec.founderSet`;
+geneFlip 0; `read-drive.ts` prints the table). Conservation exact on every row.
+
+| D | living cells | B + P | P | P/(B + P) | build flux | mean B per living cell | cells, % of D = 0 |
+|---|---|---|---|---|---|---|---|
+| 0 | 32,835 | 1,220,170 | 75,271 | 6.2% | 84.8 | 34.9 | 100% |
+| 16 | 13,640 | 841,824 | 353,021 | 41.9% | 361.3 | 35.8 | 41.5% |
+| 32 | 504 | 7,407 | 4,201 | 56.7% | 4.3 | 6.4 | 1.5% |
+| 64 | 0 | 0 | 0 | – | 0 | – | 0% |
+| 96 | 0 | 0 | 0 | – | 0 | – | 0% |
+| 127 | 0 | 0 | 0 | – | 0 | – | 0% |
+
+**The rule's third branch holds: no D ≥ 16 keeps half the cells, so the arms as designed are
+not run.** What the runs say beyond the bar:
+
+- *D = 16 is not lethal; it fails the bar.* Living cells at 10,000-step marks: 9,340, 15,833,
+  11,662, 12,531, 13,640, a plateau near 12,000 to 16,000 with 42% of bound mass standing as
+  polymer and a build flux of 361 quanta a step (D = 0, where the same carriers build only on
+  their controllers' say, made 85 a step and 6% polymer). Mean B per living cell is the same as
+  D = 0's (35.8 against 34.9): the floor did not shrink the cells, it thinned them. The D = 0
+  denominator was itself still rising and bumpy at 50,000 (14,268, 21,669, 29,870, 20,442,
+  32,835), one seed, so the 41.5% is against a moving number; the bar stands as written.
+- *D = 32 nearly empties the world; D = 64 and above are lethal.* D = 32 fell to about 500 cells
+  by 10,000 and held there to 50,000 (B per cell 6.4, 57% polymer: a few cells holding more
+  polymer than biomass); D = 64, 96 and 127 were down to 7 or 8 cells by 10,000 and extinct by
+  20,000. (Heading corrected 2026-10-21 on the Codex review: it read "D = 32 and above are
+  lethal", though D = 32 kept survivors.)
+- *The instrument is a step, not a dial.* The capacity is `mulShr(cat(B), D, 7)`, floored, so at
+  the film's biomass (B ≈ 35, cat(35) = 8) every D under 16 builds nothing and D = 16 is exactly
+  one capacity unit, which kBuild's 64/4,096 turns into 1/64 of a quantum a step per cell in
+  expectation (corrected 2026-10-21 on the Codex review: it said 1/64 *before* that factor). There is no
+  finer D ladder below 16 for these cells; the dose-response in D on this world is a step from
+  nothing to the 41.5% row. This is the most useful thing the drive check produced, and it was
+  not foreseen in the design's table, which read the capacity at B = 30 and B = 50 as if it were
+  continuous.
+- The two gates stand (every pre-existing pin untouched, the GPU golden check bit-exact on all
+  29 cases); the kernel did what it was built to do, and the world could not afford it at the
+  doses offered.
+
+### Amendment (2026-10-17, after drive check 1 and before any arm ran): drive check 2
+
+The dose knob changes; the bars, the arms' structure and the criterion do not. With D fixed at
+16 (the smallest drive that builds at all at film biomass) the fine dose is `kBuild`, which
+scales the floored capacity by kBuild/4,096 with stochastic rounding and no floor: at D = 16
+and B ≈ 35 a carrier builds kBuild/4,096 quanta a step in expectation, so kBuild 64 is drive
+check 1's D = 16 row (0.0156 a step), 32 is half that, 16 a quarter, 8 an eighth. kBuild is a
+world constant, so in the treat arm it also scales what controller-driven builders make; that
+is stated, not hidden, and the cost arm's kBuild 0 is unchanged.
+
+**Drive check 2**: as drive check 1 (gradient-m3, every founder carrying both genes, kGene 100,
+geneFlip 0, seed 1, 50,000 steps, census every 5,000) at geneDrive 16 and kBuild ∈ {8, 16, 32};
+kBuild 64 is taken from drive check 1 (41.5%, 41.9%) and D = 0 from drive check 1 is the
+denominator. *Selection rule*: the largest kBuild whose living cells at 50,000 are ≥ 50% of the
+D = 0 run's and whose P/(B + P) at 50,000 is ≥ 5%; if none meets both, the largest kBuild that
+keeps ≥ 50% of the cells, and the readout says polymer stayed under 5%; if none keeps 50%, the
+arms are not run and that is the version's readout. If a kBuild is selected, the arms run as
+designed with geneDrive 16 and kBuild = that value in the treat arm (cost 0, drift 0), and the
+criterion above, as corrected, is read unchanged.
+
+### Drive check 2 readout (written after the three runs, 2026-10-17)
+
+Three runs, 09:47 to 09:49 (same machine, same load, 1,840 to 2,080 steps a second), `gene.ts --arm drive2 --kbuild 8|16|32`;
+conservation exact on every row. The kBuild 64 row is drive check 1's D = 16 run.
+
+| kBuild (geneDrive 16) | living cells | B + P | P | P/(B + P) | build flux | mean B per living cell | cells, % of D = 0 |
+|---|---|---|---|---|---|---|---|
+| 8 | 27,829 | 877,456 | 59,111 | 6.7% | 61.7 | 29.4 | 84.8% |
+| 16 | 30,177 | 1,047,713 | 133,035 | 12.7% | 144.8 | 30.3 | 91.9% |
+| 32 | 21,415 | 1,040,537 | 260,231 | 25.0% | 291.4 | 36.4 | 65.2% |
+| 64 | 13,640 | 841,824 | 353,021 | 41.9% | 361.3 | 35.8 | 41.5% |
+
+**Selection: kBuild = 32**, by the amendment's first branch (the largest kBuild keeping ≥ 50% of
+the cells with polymer ≥ 5%). The dose-response in kBuild is a slope, as the amendment expected:
+polymer share 6.7, 12.7, 25.0 and 41.9% and cells kept 85, 92, 65 and 42% as the dose doubles
+(kBuild 8's 85% against 16's 92% is one seed's noise around a flat top). The arms therefore run
+with geneDrive 16 and kBuild 32 in the treat arm, which halves what controller-driven builders
+make too; cost and drift keep kBuild 0.
+
+### Arms readout (written after the nine runs, 2026-10-21)
+
+**How the arms ran.** In two sittings. The treat arm ran on 17 October (09:49 to 16:05) from the
+session's worktree, on main `3f04d790` plus this version's kernel diff. That session stalled
+partway through cost seed 1 (15 of 40 censuses, no summary). On 21 October a new session applied
+the same diff, unchanged, to main `3f44c319`, replayed treat seed 1 for 10,000 steps and found
+every field of both census rows equal to the 17 October bundle's (pools, rates, counts,
+measures), so the kernel and every rule it touches are the same. The partial cost seed 1 was
+moved aside (`cost/seed-1.partial-2026-10-17`, not read) and cost 1 to 3 and drift 1 to 3 ran
+from scratch (17:26 to 17:36, 1,895 to 2,225 steps a second). Conservation exact in all nine
+runs. The tables are `read.ts`'s output, kept beside the bundles as `tables.md`.
+
+| arm | seed | living cells | build share S_end | S̄ build (last 10) | build flux (last 10) | P/(B + P) (last 10) | decomp share | build flip-ons | collapse watch |
+|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 62,440 | 0.2% | 0.6% | 3.33 | 0.2% | 100.0% | 38 | none |
+| treat | 2 | 35,530 | 0.0% | 0.1% | 0.84 | 0.0% | 99.6% | 19 | none |
+| treat | 3 | 50,510 | 0.1% | 0.8% | 1.31 | 0.1% | 99.8% | 22 | none |
+| cost | 1 | 30,841 | 0.0% | 0.3% | 0 | 0 | 95.3% | 32 | none |
+| cost | 2 | 27,043 | 0.3% | 0.6% | 0 | 0 | 1.5% | 20 | at 105,000 (16,953 against 33,955 at 95,000) |
+| cost | 3 | 47,179 | 0.8% | 1.0% | 0 | 0 | 99.7% | 39 | none |
+| drift | 1 | 59,725 | 0.0% | 0.1% | 0 | 0 | 99.5% | 37 | none |
+| drift | 2 | 49,925 | 40.9% | 14.6% | 0 | 0 | 100.0% | 14 | none |
+| drift | 3 | 45,646 | 4.4% | 1.6% | 0 | 0 | 99.9% | 38 | none |
+
+**Verdict by the pre-stated criterion: UNCLEAR.**
+
+- EXPRESSED holds, vacuously: no treat seed's S̄ reached 1% (0.6, 0.1, 0.8%), so the gate had
+  no seed to test. Treat carriers did build where they existed (build flux 0.8 to 3.3 quanta a
+  step, P 111 to 1,301 at 200,000), and only treat builds at all.
+- HAPPENS holds: build flip-on births in 3/3 treat seeds (38, 19, 22; first at 33,284, 9,911,
+  12,221).
+- FLOOR = 14.6% (drift seed 2; seeds 1 and 3 0.1% and 1.6%).
+- PAYS fails: treat S̄ ≥ cost S̄ + 5 points in 0/3 pairs, above FLOOR in 0/3, S_end ≥ 25% in 0/3.
+- COSTS fails by one pair: treat S̄ < FLOOR in 3/3, but treat S̄ ≤ cost S̄ in 2/3 (seed 1
+  treat 0.6% against cost 0.3%; seeds 2 and 3 0.1 against 0.6% and 0.8 against 1.0%).
+- CONFOUNDED fails: cost S_end ≥ 25% in 0/3 (0.0, 0.3, 0.8%). Unlike v1's null, the cost-matched
+  null did not ride.
+
+**What the runs show beyond the verdict (readings, not results).**
+
+- *The paid bit is held near zero whether or not it builds.* Treat and cost differ only in
+  kBuild, and their S̄ sit within a point of each other in every pair, all at or under 1%. The
+  free bit (drift) reached 14.6% S̄ and 40.9% at 200,000 in one seed of three, and 1.6% / 4.4% in
+  another. A reading, not shown: the bit's upkeep (kGene 100, plus the work term at the floor)
+  holds it down, and building at this dose neither rescues it nor visibly sinks it further, so
+  polymer as forced here buys its carrier little or nothing on gradient-m3. Drift differs from
+  the paid arms in more than the bit's upkeep (decomposition is free there and there is no
+  floor), so the drift contrast does not isolate upkeep as the cause, and treat against cost
+  within a point shows no difference these seeds can see, not that there is none.
+- *Drift is wide.* One free-bit seed in three swept to 41% without a payoff, and its build share
+  swung 0 to 34 to 0 to 41% over the run. Hitchhiking on clade turnover inside the decomposer
+  film, as v1's null was read, is the likely mechanism but is not shown here (no lineage-level
+  check was run). Any future build gene has to clear a floor of tens of points
+  on this background, which three seeds cannot pin down.
+- *Replication of the first rung: 8 of 9.* Decomposition swept (≥ 95% of living cells at 200,000)
+  in every run but cost seed 2, where it stayed at or under 2% and the world collapsed once at 105,000
+  and recovered to 27,043 cells. One seed; cause not investigated.
+- *The probe's GROW reading mostly holds in the film:* grow flux over the last ten censuses is 0
+  in six of nine runs; treat 3 grows a little (29.5 quanta a step), and cost 3 and drift 3 grow
+  (1,946 and 2,740), the two runs with the highest decomposition flux.
+
+**What this means for the ladder.** Choice (a), a gene that does, built and ran, and on
+gradient-m3 the second rung is not reached by selection at a drive the world can afford. The
+door is not shown shut (COSTS missed by one pair), but it is not shown open either, and the
+cheapest next readings are the world changes the criterion named for a shut door: a world where
+retention pays (lower diffA, or a wound regime, where held polymer is what survives a cut) or a
+dearer polymer loss (slower kPDecay). For the game, the lesson is the same as v1's in another
+form: a second capability needs a world that rewards it before a gene for it can spread; the
+gene alone does not make the rung.
+
+*Provenance of the arms readout:* one Codex Sol 6.1 High read-only pass on the diff and this
+readout (2026-10-21): no P1 and no kernel, parity, bounds or pin findings; two P2s (the upkeep
+reading and the hitchhiking mechanism were stated as fact; both now marked as readings) and two
+P3s in the 17 October drive-check readout (the D = 32 heading and where kBuild's factor sits;
+both corrected in place, marked). Gates on this tree: the gene and golden-hash tests 52/52 with
+every earlier pin untouched, typecheck clean, the GPU golden check bit-exact on all 29 cases, and the full `pnpm test` owed since v1:
+144 files, 3,624 tests, all passing (2026-10-21, 17:38, about 390 s).

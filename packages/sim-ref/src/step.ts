@@ -497,6 +497,7 @@ export class RefSim {
     const genes = c.genes !== undefined;
     const kGene = c.kGene ?? 0;
     const geneFlip = c.geneFlip ?? 0;
+    const geneDrive = c.geneDrive ?? 0;
     const masks = geneMasks(c);
 
     for (let yy = 0; yy < this.H; yy++) {
@@ -576,6 +577,9 @@ export class RefSim {
           const word = genome[G.PARAM1 * n + i];
           const decomp = masks.decomp === 0 || (word & masks.decomp) !== 0;
           const build = masks.build === 0 || (word & masks.build) !== 0;
+          // Gene v2 (WorldConfig.geneDrive): a carrier of the build gene builds at least at the
+          // floor whatever its weights say; max with 0 is the output itself, so absent is Gene v1.
+          const rBuild = (word & masks.build) !== 0 ? Math.max(r(OUT.BUILD), geneDrive) : r(OUT.BUILD);
           // Decomposition C -> A + energy (gated by the DECOMP gene).
           if (decomp) {
             t = mulShr(cat(B, K), r(OUT.DECOMP), 7);
@@ -594,7 +598,7 @@ export class RefSim {
           // Build polymer B + energy -> P (gated by the BUILD gene).
           if (build) {
             g = c.eP - c.eB;
-            t = mulShr(cat(B, K), r(OUT.BUILD), 7);
+            t = mulShr(cat(B, K), rBuild, 7);
             q = Math.min(B, divu(E, g), mulFrac(t, c.kBuild, 12, draw(base, RND.BUILD)));
             B -= q; P += q; E -= q * g; F[FX.build] = q;
           }
@@ -609,7 +613,7 @@ export class RefSim {
           // Work of catalysis + maintenance (+ each carried gene's maintenance under WorldConfig.genes:
           // one draw, the term times the count, so kGene stays below mulFrac's 2^16; bound: the work
           // term is < 2^29, kMaint's <= B <= 2^26 and the gene term <= 8 * 2^26 = 2^29, so the sum < 2^31).
-          const sumr = r(0) + r(1) + (decomp ? r(2) : 0) + r(3) + (build ? r(OUT.BUILD) : 0) + r(5);
+          const sumr = r(0) + r(1) + (decomp ? r(2) : 0) + r(3) + (build ? rBuild : 0) + r(5);
           t = mulShr(cat(B, K), sumr, 7);
           let cost = mulFrac(t, c.kCost, 16, draw(base, RND.COST)) + mulFrac(B, c.kMaint, 16, draw(base, RND.MAINT));
           if (genes) {

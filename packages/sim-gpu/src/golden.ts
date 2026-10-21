@@ -389,6 +389,40 @@ export function goldenCases(): GoldenCase[] {
       steps: 20,
       every: 5,
     },
+    {
+      // Gene v2 (WorldConfig.geneDrive): as "genes-ladder" with a floor of 32
+      // on build carriers' BUILD output. M3 founders 5, 8, 10 and 11 put 0 on
+      // BUILD over the whole probe grid, so founder 10 (genes 2) builds only
+      // through the floor and the floor's branch runs from step 0.
+      name: "genes-drive",
+      cfg: defaultConfig({ ...base, seed: 103, mutRate: 60_000_000, genes: "ladder", kGene: 100, geneFlip: 2 ** 31, geneDrive: 32 }),
+      init: (c) => m3World(c, 12, 32, 64, M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), ...(k % 4 ? { genes: k % 4 } : {}) }))),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "genes-ladder-bounds" with the floor at its maximum 127: the
+      // building capacity and the work term at the largest rectified output
+      // on heavy biomass, with the three cost terms at their maxima. The floor
+      // turns the biomass to polymer, so there are no births and no flips here;
+      // "genes-ladder-bounds" covers flips at these costs.
+      name: "genes-drive-bounds",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, kernelRadius: 3, seed: 107, eB: 30, eP: 31, eC: 1, kGene: 65535, kMaint: 65535, kCost: 65535, mutRate: 60_000_000, genes: "ladder", geneFlip: 2 ** 32 - 1, geneDrive: 127 }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [{ x: 8, y: 8, radius: 5, genome: { ...founderGenome(M3_FOUNDERS[0]), genes: 3 }, biomass: 64, energy: 128 }] });
+        const n = 256;
+        const per = Math.floor(MATTER_MAX / 128);
+        for (let i = 0; i < n; i++)
+          if (s.cells[CH.B * n + i] > 0) {
+            s.cells[CH.B * n + i] = per;
+            s.cells[CH.C * n + i] = 4096;
+            s.cells[CH.E * n + i] = POOL_MAX;
+          }
+        return s;
+      },
+      steps: 20,
+      every: 5,
+    },
   ];
 }
 

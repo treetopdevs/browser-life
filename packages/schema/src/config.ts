@@ -386,6 +386,15 @@ export interface WorldConfig {
   kGene?: number;
   /** Share of mutation events that flip a gene bit, /2^32 (0..2^32-1), when `genes` is set. */
   geneFlip?: number;
+  /**
+   * Gene v2 (docs/evolution-game-brainstorm-2026-10-16.md "Gene v2"): a floor (0..127) on the
+   * rectified BUILD output of a cell that carries the build gene, in its building capacity and its
+   * catalysis work term, so a carrier builds whether or not its weights say so. Non-carriers and
+   * the decomposition gene are unchanged. Only with `genes`, and only the "ladder" set has the
+   * build gene, so under "decomp" it is accepted and changes nothing; absent or 0 is Gene v1 to
+   * the bit, and the floored output is still <= 127, so no bound changes.
+   */
+  geneDrive?: number;
 }
 
 /**
@@ -736,7 +745,7 @@ export function validateConfig(c: WorldConfig): string[] {
 
 function validateGenes(c: WorldConfig): string[] {
   const keys = [c.genes, c.kGene, c.geneFlip];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) return c.geneDrive === undefined ? [] : ["geneDrive is set only with genes"];
   if (keys.some((k) => k === undefined)) return ["genes, kGene and geneFlip are set together"];
   const errs: string[] = [];
   if (!GENE_SETS.includes(c.genes as GeneSet)) errs.push(`genes must be one of ${GENE_SETS.join(", ")}`);
@@ -744,6 +753,8 @@ function validateGenes(c: WorldConfig): string[] {
   // Bounded like kMaint: mulFrac(B, kGene, 16) is exact for kGene < 2^16 and B <= MATTER_MAX.
   if (!int(c.kGene, 0, 65535)) errs.push("kGene must be an integer in 0..65535");
   if (!int(c.geneFlip, 0, 2 ** 32 - 1)) errs.push("geneFlip must be an integer in 0..2^32-1");
+  // A floor on a rectified output, so it stays inside the outputs' own 0..127.
+  if (c.geneDrive !== undefined && !int(c.geneDrive, 0, 127)) errs.push("geneDrive must be an integer in 0..127");
   if (c.shapeReach !== undefined) errs.push("genes and shapeReach are exclusive (both use PARAM1 byte 3)");
   if (c.neutral) errs.push("genes are not defined with the neutral shadow (the reference genome has none)");
   // Declared cells mutate at a cell's birth through mutateInPlace alone (mutRate 0), so no flip could ever happen.

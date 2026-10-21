@@ -62,6 +62,11 @@ const PINNED: Record<number, Record<string, string>> = {
     // new cases with their own pins; every pin above is untouched.
     "genes-ladder": "c8d0270e732bad02",
     "genes-ladder-bounds": "1cc368ef05021263",
+    // Gene v2 (WorldConfig.geneDrive, a floor on build carriers' BUILD
+    // output; optional, absent elsewhere): two more new cases with their own
+    // pins; every pin above is untouched.
+    "genes-drive": "b6b4127aa58f0771",
+    "genes-drive-bounds": "6b4fe0eb8c8c68a2",
   },
 };
 
