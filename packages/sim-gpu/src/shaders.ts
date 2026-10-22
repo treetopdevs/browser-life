@@ -153,6 +153,8 @@ export function prelude(c: WorldConfig): string {
   consts.INJURY_PERIOD = u(c.injuryPeriod ?? 1);
   consts.INJURY_R = i(c.injuryRadius ?? 0);
   consts.INJURY_PROB = u(c.injuryProb ?? 0);
+  // Polymer shell (WorldConfig.injuryShell): constant-folded away when absent.
+  consts.INJURY_SHELL = u(c.injuryShell ?? 0);
   // Heritable shape (WorldConfig.shapeReach): constant-folded away when absent.
   const sk = c.shapeReach === undefined ? null : buildShapeKernel(c.kernelRadius, c.shapeReach);
   consts.SHAPE_RINGS = u(shapeRings(c));
@@ -908,18 +910,26 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     q = min(C, mul_frac(ta, K_ABIO, 16u, draw(base, RND_ABIO2)));
     C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] = q;
 
+    var shelled = false;
     if (INJURY && (step + 1u) % INJURY_PERIOD == 0u && injured(x, y, step)) {
-      hadd(B * (E_B - E_C));
-      hadd(P * (E_P - E_C));
-      hadd(E);
-      C += B + P;
-      B = 0u;
-      P = 0u;
-      E = 0u;
-      mot = MOT_ZERO;
+      if (INJURY_SHELL > 0u && P >= INJURY_SHELL) {
+        shelled = true;
+        P -= INJURY_SHELL;
+        C += INJURY_SHELL;
+        hadd(INJURY_SHELL * (E_P - E_C));
+      } else {
+        hadd(B * (E_B - E_C));
+        hadd(P * (E_P - E_C));
+        hadd(E);
+        C += B + P;
+        B = 0u;
+        P = 0u;
+        E = 0u;
+        mot = MOT_ZERO;
+      }
     }
 
-    if (living && B == 0u && P == 0u) {
+    if (living && B == 0u && P == 0u && !shelled) {
       genome[G_LIN_HI + i] = 0u;
       genome[G_LIN_LO + i] = 0u;
     }

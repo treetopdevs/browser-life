@@ -255,6 +255,17 @@ export function goldenCases(): GoldenCase[] {
       every: 30,
     },
     {
+      // Polymer shell (WorldConfig.injuryShell): the "injury" world with a
+      // shell of 2 polymer, so wounds both spare shelled cells (P >= shell:
+      // the wound takes exactly the shell, B, E and lineage stay) and lesion
+      // thin ones (P < shell), as test/injury.test.ts checks.
+      name: "injury-shell",
+      cfg: defaultConfig({ ...base, seed: 59, mutRate: 60_000_000, injuryPeriod: 7, injuryRadius: 2, injuryProb: 28_633_115, injuryShell: 2 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
       // As "takeover-lineage" with kin = at most 1 differing genome word, so
       // single mutants stay kin to their parents and founders do not.
       name: "takeover-genome",

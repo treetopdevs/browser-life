@@ -664,16 +664,25 @@ export class RefSim {
 
         // Injury: the cell's bound structure is destroyed as by applyLesion
         // (the lineage is cleared just below, since B and P are now 0).
+        let shelled = false;
         if (injuryStep && this.injured(xx, yy, step)) {
-          heat += B * (c.eB - c.eC) + P * (c.eP - c.eC) + E;
-          C += B + P;
-          B = 0;
-          P = 0;
-          E = 0;
-          mot = MOT_ZERO;
+          const shell = c.injuryShell;
+          if (shell !== undefined && P >= shell) {
+            // Polymer shell: the wound takes exactly `shell` polymer; B, E, motility and lineage survive
+            // (even when the shell was the last polymer: the empty-cell cleanup below skips it).
+            P -= shell; C += shell; heat += shell * (c.eP - c.eC);
+            shelled = true;
+          } else {
+            heat += B * (c.eB - c.eC) + P * (c.eP - c.eC) + E;
+            C += B + P;
+            B = 0;
+            P = 0;
+            E = 0;
+            mot = MOT_ZERO;
+          }
         }
 
-        if (living && B === 0 && P === 0) {
+        if (living && B === 0 && P === 0 && !shelled) {
           genome[G.LIN_HI * n + i] = 0;
           genome[G.LIN_LO * n + i] = 0;
         }

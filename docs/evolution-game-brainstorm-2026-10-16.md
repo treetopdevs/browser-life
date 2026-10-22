@@ -1696,3 +1696,108 @@ P3s in the 17 October drive-check readout (the D = 32 heading and where kBuild's
 both corrected in place, marked). Gates on this tree: the gene and golden-hash tests 52/52 with
 every earlier pin untouched, typecheck clean, the GPU golden check bit-exact on all 29 cases, and the full `pnpm test` owed since v1:
 144 files, 3,624 tests, all passing (2026-10-21, 17:38, about 390 s).
+
+## Polymer world: a world where polymer is worth building (2026-10-22)
+
+Gene v2's readout named world changes, not gene changes, as the next reading: a slow leak, a wound
+regime where held polymer survives a cut, or a dearer polymer loss. This section looks for such a
+world with a cheap competition screen and, if one passes, reruns the gene v2 arms there.
+
+### What polymer does, and the new rule
+
+Polymer does three things in the kernel: it gates diffusion of A and C
+(D_eff = D·gateK/(gateK + P_t + P_n); a lower gateK gates harder), it counts in the Lenia mass
+field, and it pulls flow when `adhesion` is on (off by default). Recurring injury destroyed B and P
+alike, so a held polymer could not survive a cut. The new optional key **`injuryShell`** (integer
+1..65535, valid only with the three injury keys, absent from `defaultConfig()`) changes that:
+a wounded cell whose post-decay polymer is at least `injuryShell` loses exactly that much polymer
+to waste and keeps its biomass, energy, motility and lineage; a cell with less is lesioned as
+before. A thicker shell survives more hits. CPU and WGSL twins, a new golden case `injury-shell`
+(pin `df7319e10feb7d7a`; every earlier pin unchanged), tests in `injury.test.ts`, and a paragraph
+in `docs/rules.md`.
+
+### Pre-stated rule (written 2026-10-22 14:13 EDT, before any code or run)
+
+Copied from `runs/evolution-game/polymer-world/rule.md` (sha256 `299998a0…c5149`, unchanged
+through the runs). **Screen:** gradient-m3, "ladder" genes, kGene 100, geneFlip 0, geneDrive 16;
+every founder carries decomposition and half carry the build gene too (parity even: founders 0,
+2, …, 10; odd: 1, 3, …, 11). Eleven worlds (base; slowdecay kPDecay 16; adhesion at maximum gain;
+membrane gateK 16; leak-lo diffA 100; leak-hi diffA 256; wound = own-injury-heavy's wounds;
+shell4 and shell8 = wound + injuryShell 4 or 8; shell8-coarse = radius-8 wounds + shell 8;
+shell8-slow = shell8 + kPDecay 16) × kBuild 32 and 64 × seeds 1–2 × both parities: 88 runs of
+50,000 steps. kBuild 128 was left out because it would drain builders faster than they grow.
+**Measure:** S̄ = the build gene's share of living cells, mean of the 40,000, 45,000 and 50,000
+censuses (0 if extinct); excess = S̄(world) − S̄(base), paired on seed, parity and kBuild.
+**Pick:** a world × dose passes when all four paired excesses are > 0 and their mean is ≥ 15
+points; the winner (largest mean) gets gene v2's arms with gene v2's criterion unchanged. **If
+nothing passes, stop.**
+
+### Screen readout (written after the 88 runs, 2026-10-22)
+
+All 88 runs completed, conservation exact everywhere. The 56 non-shell runs ran on a snapshot of
+the committed kernel (d942f11f) while the shell rule was being built; the 32 shell runs ran on the
+reviewed shell kernel. Excess over base in points of build share (pairs: even s1, even s2, odd s1,
+odd s2):
+
+| World | kBuild 32 | mean | kBuild 64 | mean |
+|---|---|---|---|---|
+| slowdecay | +29.2, 0, 0, 0 | +7.3 | +2.3, 0, 0, 0 | +0.6 |
+| adhesion | −11.7, 0, 0, +1.2 | −2.6 | −19.2, 0, 0, +0.4 | −4.7 |
+| membrane | +4.7, 0, +1.0, 0 | +1.4 | −19.1, 0, +0.6, 0 | −4.6 |
+| leak-lo | +32.9, 0, +1.3, 0 | +8.6 | −3.7, 0, 0, 0 | −0.9 |
+| leak-hi | −1.1, 0, +0.2, 0 | −0.2 | −6.1, 0, 0, 0 | −1.5 |
+| wound | −11.7, 0, 0, 0 | −2.9 | −19.2, 0, 0, 0 | −4.8 |
+| shell4 | +61.0, 0, 0, 0 | +15.2 | +44.9, 0, 0, 0 | +11.2 |
+| shell8 | +39.5, 0, 0, 0 | +9.9 | +19.9, 0, 0, 0 | +5.0 |
+| shell8-coarse | −5.9, 0, 0, 0 | −1.5 | −11.8, 0, 0, 0 | −3.0 |
+| shell8-slow | +74.4, 0, 0, 0 | +18.6 | −8.7, 0, 0, 0 | −2.2 |
+
+**Pick: nothing passes, so the screen stops and no arms ran.** An independent re-derivation from
+the raw files (a separate Python script, not the reader) matches every excess to four decimals
+and agrees.
+
+**Why the screen could see little (a design weakness, found after the runs).**
+- *Most pairs had no builders left to rescue.* In base the build carriers fall to 0 by 10,000
+  steps in even s2 (38 and 70 cells at 5,000 for kBuild 32 and 64) and in odd s2 (0 by 10,000 at
+  kBuild 32; 1 cell at 10,000 and 0 by 15,000 at kBuild 64). In odd s1 they hang on at tens to
+  hundreds of cells through 35,000 and reach 0 by 40,000, so they are gone from the S̄ window
+  there too. Most worlds left those three pairs at 0 as well; odd s1 moved by at most 1.3 points
+  (membrane and leak-lo). Even s1 is the only pair where the build share stayed large in base, so
+  it carries nearly all of the screen's signal. *Why* the carriers die in the other pairs is
+  not tested: founder genotype, the gene's upkeep and its building are confounded in this design
+  (each founder was seeded either with the gene or without it), so "the founder lottery" is a
+  hypothesis that the matched-founder screen below is built to remove.
+- *One pair dies in every wound world.* Odd s2 goes extinct in all ten wound-family runs: wound,
+  shell4 and shell8 by 10,000 (12–31 living cells at 5,000), shell8-slow by 15,000 (311 and 440
+  at 5,000) and shell8-coarse by 15,000 or 25,000 (388 and 739 at 5,000), against base's 1,356
+  and 1,283 at 5,000. So "all four > 0" could not hold for any wound-family world.
+
+**Reading (essentially one pair, not shown).** In even s1, the pair that carries the signal, the shell is the strongest lever
+screened: at kBuild 32 the build share ends at 86.5% with shell4 and 94.9% with shell8-slow,
+against 0% with the same wounds and no shell and 7% in base, and shell4's build cells grow from
+1,017 at 5,000 steps to 21,964 at 50,000, still rising. Every shell world but the coarse one lifts builders at kBuild 32, plain
+wounds and adhesion push them out, and slow decay and the slow leak (leak-lo) help some at
+kBuild 32. This is one
+seed and one founder assignment; it is where to look next, not a result.
+
+**Next.** A screen that removes the founder confound: each founder seeded both with and without the build
+gene (more discs, or one founder per world), so every pair compares the same genome with and
+without the gene, and the wound pair that dies is replaced rather than counted. Then, if a shell
+world passes, gene v2's arms there. The `injuryShell` rule is worth keeping either way: it makes
+"polymer survives a cut" a real mechanic, and it is a natural Pond keeper lever (a wound the
+pond's builders can weather).
+
+*Provenance:* built and run by one workflow (7 agents): the kernel and the screen runner in
+parallel, then a Codex Sol 6.1 High read-only review and an adversarial audit of the kernel diff,
+then fixes, the shell runs, the pick, and the independent re-derivation. Codex found one P2: a
+shell that took a cell's last polymer (B = 0) let the empty-cell cleanup clear a lineage the rule
+keeps; fixed in both twins (a shelled cell skips the cleanup) with a boundary test, pin unchanged.
+The audit found no defect (conservation, ledger, multi-centre hits and CPU/WGSL equality checked
+by script). A second Sol pass before commit, on the whole diff and this readout, found no kernel
+issue and three readout errors (base extinction timing and the "one informative pair" claim,
+the founder-lottery mechanism stated as fact, the wound-family extinction counts), all corrected
+from the raw files above before commit. Gates on this tree: typecheck clean; GPU golden bit-exact on all 30 cases including
+`injury-shell`; full `pnpm test` 3,630 of 3,631 passing, the one failure a launch-script timing
+test in `tools/test/hunt1-ops.test.ts` under heavy machine load that passes alone,
+161 of 161. Bundles, runner, reader and tables are in this worktree's
+`runs/evolution-game/polymer-world/` (gitignored).

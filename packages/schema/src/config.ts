@@ -327,6 +327,15 @@ export interface WorldConfig {
   injuryRadius?: number;
   /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
   injuryProb?: number;
+  /**
+   * Polymer shell (polymer-world line, optional, valid only with the three injury
+   * keys; integer 1..65535). At an injury step a wounded cell whose polymer, after
+   * the passive decays, is at least `injuryShell` loses exactly that much polymer
+   * to waste C (heat += injuryShell * (eP - eC)) and keeps its B, E, motility and
+   * lineage; a cell with less polymer is lesioned as above. Absent = every wound
+   * is a lesion. Absent from `defaultConfig()` so existing configs hash identically.
+   */
+  injuryShell?: number;
 
   /**
    * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
@@ -793,7 +802,9 @@ export const INJURY_MAX_RADIUS = 16;
 
 function validateInjury(c: WorldConfig): string[] {
   const keys = [c.injuryPeriod, c.injuryRadius, c.injuryProb];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) {
+    return c.injuryShell === undefined ? [] : ["injuryShell needs injuryPeriod, injuryRadius and injuryProb"];
+  }
   if (keys.some((k) => k === undefined)) return ["injuryPeriod, injuryRadius and injuryProb are set together"];
   const errs: string[] = [];
   const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
@@ -801,6 +812,7 @@ function validateInjury(c: WorldConfig): string[] {
   const maxR = Math.min(INJURY_MAX_RADIUS, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
   if (!int(c.injuryRadius, 0, maxR)) errs.push(`injuryRadius must be an integer in 0..${maxR} (a disc must not wrap onto itself)`);
   if (!int(c.injuryProb, 1, 2 ** 32 - 1)) errs.push("injuryProb must be an integer in 1..2^32-1");
+  if (c.injuryShell !== undefined && !int(c.injuryShell, 1, 65535)) errs.push("injuryShell must be an integer in 1..65535");
   return errs;
 }
 

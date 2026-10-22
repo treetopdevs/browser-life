@@ -41,6 +41,8 @@ const PINNED: Record<number, Record<string, string>> = {
     // Recurring injury (WorldConfig.injuryPeriod, optional, ownership sandbox).
     injury: "1fd51d2042631706",
     "injury-extremes": "a007c064a2346ee8",
+    // Polymer shell (WorldConfig.injuryShell, optional, polymer-world line): a new case with its own pin.
+    "injury-shell": "df7319e10feb7d7a",
     // Heritable kernel shape (WorldConfig.shapeReach, optional, cells sandbox).
     "shape-far": "2f9a2c0e000f2330",
     "shape-near": "01fbc54dc408e1e1",
