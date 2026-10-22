@@ -1801,3 +1801,75 @@ from the raw files above before commit. Gates on this tree: typecheck clean; GPU
 test in `tools/test/hunt1-ops.test.ts` under heavy machine load that passes alone,
 161 of 161. Bundles, runner, reader and tables are in this worktree's
 `runs/evolution-game/polymer-world/` (gitignored).
+
+### Screen v2: the same genome with and without the gene (rule written 2026-10-22 15:40 EDT, read after the runs the same day)
+
+**Rule** (`runs/evolution-game/polymer-world/screen2-rule.md`, sha256 `132a7c57…b272`, unchanged
+through the runs). v1's confound was removed by seeding every founder twice in the same run, once
+with the build gene and once without: half A holds founders 0–5 and half B founders 6–11, each on
+two discs, and the parity swaps which disc gets the gene. Seven worlds (base, wound, shell4, shell8,
+shell8-slow, slowdecay, leak-lo) at kBuild 32, seeds 1–3, four layouts: 84 runs of 50,000 steps,
+otherwise as v1. A pair is valid when the world run and its base run both end with ≥ 1,000 living
+cells; a run whose world died is replaced on seed 4, then 5 (at most two per world, two for base).
+A world passes with ≥ 10 valid pairs, excess > 0 in ≥ 75% of them and mean excess ≥ 15 points;
+arms only for a passing shell world.
+
+**Result: nothing passes, so no arms ran.** 103 runs (84 plus 19 replacements), conservation exact,
+36 minutes of summed run time (37.6 minutes from first start to last finish) on the snapshot kernel
+(6fe65016). An independent re-derivation from the raw files
+(a separate Python script) reproduces every pair, count and mean.
+
+| World | Valid pairs | Excess > 0 | Mean excess (points) |
+|---|---|---|---|
+| wound | 10 | 5 | +15.9 |
+| shell4 | 11 | 2 | +2.3 |
+| shell8 | 12 | 5 | +16.4 |
+| shell8-slow | 10 | 4 | +17.6 |
+| slowdecay | 12 | 4 | −18.0 |
+| leak-lo | 12 | 4 | +0.9 |
+
+Every world fails the sign test; none read too lethal. Three clear the 15-point mean, each on a few
+large pairs (+50.9, +90.6, +83.1, +42.3, +39.9) among many exact ties: each world has 4–5 valid
+pairs where the build copy is extinct in both runs (0 against 0), which the rule counts as not
+positive. Counting ties as positive instead would pass wound, shell8 (10 of 12) and shell8-slow
+(9 of 10). That reading is the weaker one for this question, since a 0-against-0 pair is no rescue,
+and it rests on a few pairs: without its single largest pair each of the three falls under 15 points
+(12.0, 9.6 and 10.3), a sensitivity check the rule does not contain. The base-death replacement fired once (layout A odd, seed 2, where
+every world died too); the re-derivation shows no other reading of the replacement rule could reach
+75% for any world.
+
+**What else the runs show (readings, not shown).**
+- *Clade sweeps dominate the share.* Base alone, with the same genomes as every world, ends anywhere
+  from 0% to 100% build share: 0% in 7 of its 15 runs that stayed alive and ≥ 49% in 6 of them. With
+  12 discs and 50,000 steps one or two clades take the world. Whether those sweeps hide a polymer
+  benefit or are partly driven by one is not separated here. Most founders leave no descendants at all: of
+  about 90 founder comparisons per world, only 13–26 had either copy alive in the window.
+- *No consistent within-founder edge.* Where either copy of a founder survived, the build copy's
+  descendants outnumbered the plain copy's in 34.6% of comparisons in base and 19.2% to 43.8% across
+  the other worlds (shell8 the highest).
+- *Shells add nothing visible over wounds alone here.* On the runs the re-derivation could pair with
+  plain wound, shell4 averages −13.4 points, shell8 +4.0 and shell8-slow +1.7, and most are equal. In
+  one layout (B even, seed 2) the four wound-family runs differ early (at 5,000 steps shell4 has 1,972
+  living cells against wound's 2,198) and converge to the same living and individual counts from
+  20,000 on, with the build share at 0 in all four.
+- *Few founders carry builders to the window.* Build copies reach it mostly as copies of three
+  founders (half A founder 3, half B founders 0 and 3); v1's one live pair carried half B founder 0
+  (founder 6). Where build copies survive, shell worlds often lift the share (B even s1: shell8 100%
+  and shell8-slow 92.5% against base 9.4%; A even s3: shell8 46.4% against 4.0%), but not reliably
+  (A odd s3: shell4 0%, shell8 27.4% and shell8-slow 41.6% against base 58.1%).
+
+**What this means.** On gradient-m3 this 50,000-step competition between founder copies did not
+resolve whether any of these worlds makes polymer worth building. Clade sweeps that vary as much in
+base as in any world are the likely reason, a hypothesis this screen does not test. The gene-level question is the one gene v2's arms ask (a gene arising by mutation
+inside an established population, read over 200,000 steps), and this screen gives no world a
+pre-stated claim to them. The shell's ecological effect is a separate question with its own
+evidence: on the breeder pond world without genes, heavy wounds with a shell of 2 kept about two to
+three times as many cells alive as the same wounds without one (2 seeds, `docs/pond-keeper-v3-2026-10-22.md`),
+which is what Pond keeper v3 builds on. Next readings, if wanted: gene v2's arms in shell8 run as an
+exploration (labelled so, not as a pass), or a screen with many more replicates per world and a
+measure that does not depend on one clade's sweep.
+
+*Provenance:* one workflow (6 agents): runner and reader, a rule-conformance review on synthetic
+bundles and a Codex Sol 6.1 High review of both against the rule, fixes, the runs and replacements,
+and the independent re-derivation. Bundles, runner, planner, reader, tables and the re-derivation
+are in this worktree's `runs/evolution-game/polymer-world/` (gitignored).
