@@ -7,9 +7,14 @@ export class Series {
   /** Indices into `values` where a pond cycle was applied: drawn as dashed rules, so the drop after one reads as the cycle. */
   private marks: number[] = [];
 
+  /**
+   * `format` prints the scale's top and the latest value; the default rounds to whole numbers (counts), and a chart of
+   * small shares passes one that keeps a decimal.
+   */
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly cap = 400,
+    private readonly format: (x: number) => string = fmtShort,
   ) {}
 
   push(v: number): void {
@@ -95,10 +100,10 @@ export class Series {
     ctx.stroke();
     // Scale top at the left (muted), latest value at the right.
     ctx.textAlign = "right";
-    ctx.fillText(fmtShort(v[v.length - 1]), w - 3 * dpr, 10 * dpr);
+    ctx.fillText(this.format(v[v.length - 1]), w - 3 * dpr, 10 * dpr);
     ctx.globalAlpha = 0.6;
     ctx.textAlign = "left";
-    ctx.fillText(fmtShort(hi), 3 * dpr, 10 * dpr);
+    ctx.fillText(this.format(hi), 3 * dpr, 10 * dpr);
     ctx.globalAlpha = 1;
   }
 }

@@ -1,6 +1,6 @@
 // What the breeder ranks ponds by, in the measures' own names: the Breed by hand panel's ranking menu and the
 // session card's account of the pressure a world put on its ponds read from the same words.
-import { POND_SCORES, pondScoreTerms, type PondScore, type PondTerm, type WorldConfig } from "@bl/schema";
+import { POND_SCORES, pondScoreTerms, worstRanks, type PondScore, type PondTerm, type WorldConfig } from "@bl/schema";
 
 /** What a pond is ranked by while picking: a term, or the score the rule ranks the waiting cycle by ("score") when there is one. */
 export type RankKey = PondTerm | "speed" | "score";
@@ -76,4 +76,40 @@ export function pressureOptions(cfg: Pick<WorldConfig, "pondScore">, current?: P
 export function pressureNow(m: { base: PondScore | null; current: PondScore | null }): string {
   if (m.current === null) return "No score of its own: the rule picks the ponds with the most bound mass";
   return m.current === m.base ? `As planted: ${dialWords(m.current)}` : dialWords(m.current);
+}
+
+/**
+ * The line the breeder panel adds when a waiting cycle's score cannot tell the ponds apart (docs/pond-keeper-v3-2026-10-22.md,
+ * section 3), or null. Display only, from the waiting cycle's own message: it changes no scoring, donor or log entry.
+ *
+ * A breed cycle is waiting (`arm`), a score is in force (`ruleScore ?? score`) and that score is 0 for every occupied pond (bound
+ * mass above 0): the same values the panel ranks "The rule's score" by (a single measure's own values, several measures'
+ * `worstRanks`). A score that is a worst rank is 0 for a pond that is at the bottom of any one measure, so all zeros says the
+ * ponds are indistinguishable on it, not that every measure is flat; the engine then falls back to bound mass (`armDonors`).
+ *
+ * The line names the measures that cause the tie: those every occupied pond is at the bottom of (nobody below it), which zero the
+ * whole score by themselves. When no one measure does (each pond is last on a different one), it names them all as "at the bottom
+ * of at least one". No occupied pond gives null: nothing is waiting to be told apart. Player words only: the menu's label, not the
+ * dial's id, and no rank talk.
+ */
+export function tiedAtZero(a: { arm: string; score: PondScore | null; ruleScore: PondScore | null; terms: Record<PondTerm, number[]> }): string | null {
+  if (a.arm !== "breed") return null;
+  const score = a.ruleScore ?? a.score;
+  if (score === null) return null;
+  if (scoreWords(score) === null) return null;
+  const terms = pondScoreTerms(score);
+  const columns = terms.map((term) => a.terms[term]);
+  const values = columns.length === 1 ? columns[0] : worstRanks(columns);
+  const occupied = a.terms.mass.map((m, p) => (m > 0 ? p : -1)).filter((p) => p >= 0);
+  if (occupied.length === 0 || occupied.some((p) => values[p] !== 0)) return null;
+  const name = (term: PondTerm) => RANK_LABELS[term].toLowerCase();
+  // A measure on which every occupied pond has nobody below it: all tied at the bottom, so that measure alone makes every score 0.
+  const flat = terms.filter((_, i) => {
+    const ranks = worstRanks([columns[i]]);
+    return occupied.every((p) => ranks[p] === 0);
+  });
+  const why = flat.length > 0
+    ? `The occupied ponds are all tied on ${listed(flat.map(name))}`
+    : `Each occupied pond is at the bottom of at least one of ${listed(terms.map(name))}`;
+  return `${why}, so the rule’s score cannot tell them apart and the rule picks the heaviest ponds instead. Another choice under “The rule breeds for” may separate them.`;
 }

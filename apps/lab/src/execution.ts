@@ -27,6 +27,7 @@ import {
 import { MutationEdges } from "@bl/lineage";
 import type { CellBirth } from "@bl/sim-ref";
 import { donorsWithKeep, isLineageKey, keptPondOf, type KeptPond } from "./pond-play.ts";
+import { shellCount, type ShellCount } from "./shell.ts";
 import { lineageRows, seriesFields, type SeriesFields } from "./naturalist-series.ts";
 
 /**
@@ -76,9 +77,11 @@ interface ExecutionOptions {
    * lineage read of the census's own captured genome words (never a later readback: births a boundary's transforms add
    * count from the next census), and call them synchronously inside this callback, since the tracker they read mutates
    * at the next census. The mutation edges are drained before each census, so `families.parentOf` knows every key minted
-   * before it. `dropped`: the ledger records lost in that drain.
+   * before it. `dropped`: the ledger records lost in that drain. `shell`: display only (docs/pond-keeper-v3-2026-10-22.md, section 3),
+   * the cells of the census's own snapshot that hold at least the world's `injuryShell` of membrane, or null (absent in a
+   * world without a shell); it is in no observer state, checkpoint or digest.
    */
-  onObservation?: (census: Census, dropped: number, firsts?: (extras?: FirstsExtras) => FirstsInput, families?: CensusFamilies) => void;
+  onObservation?: (census: Census, dropped: number, firsts?: (extras?: FirstsExtras) => FirstsInput, families?: CensusFamilies, shell?: ShellCount | null) => void;
   /**
    * Display only, right after `onObservation`: the census's series record as the runner writes it (naturalist-series.ts; its
    * counters and flux rates are read right after the census is observed, before the boundary's transforms, as the runner does),
@@ -664,6 +667,8 @@ export class LabExecution {
         const lineageCells = () => (cells ??= readLineageCells(observed.census, this.obs.tracker, snap.genomeHead, this.firstsCtx));
         const firsts = (extras?: FirstsExtras) => buildFirstsInput(observed.census, this.obs.tracker, snap.genomeHead, observed.events, this.firstsCtx, { ...extras, lineageCells: lineageCells() });
         const families: CensusFamilies = { input: () => buildFamilyInput(observed.census, lineageCells()), parentOf: (key) => this.edges.parentOf(key) };
+        // Display only: the shell's cells of this census's own snapshot, taken before any boundary transform below (null without a shell).
+        const shell = shellCount(this.sim.cfg, snap.cells, snap.genomeHead);
         // Breeder mode: the census is taken, and the cycle waits for a person's donors (`resolvePond`).
         if (picks === undefined && this.pausesAt(step)) {
           const pre = await this.sim.readState();
@@ -673,14 +678,14 @@ export class LabExecution {
           // With no pond occupied there is nothing to choose: the history has ended and its cycle runs as ever.
           if (survey.suggested.length) {
             this.awaitingPond = survey;
-            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
+            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families, shell));
             this.display(() => this.options.onSeries?.(series, ledger.dropped));
             this.display(() => this.options.onPondAwait?.(survey));
             return true;
           }
         }
         const ponds = await this.settle(step, picks);
-        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
+        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families, shell));
         this.display(() => this.options.onSeries?.(series, ledger.dropped));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
         return false;

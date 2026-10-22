@@ -30,6 +30,7 @@ import { decodeArtifact, pondContinuationError, type ObserverSettings, type Obse
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
 import { LabExecution, PondWaitingError, PressureRefusedError, SunRefusedError, huntArmError } from "./execution.ts";
 import { isLineageKey } from "./pond-play.ts";
+import { shellCount, type ShellCount } from "./shell.ts";
 import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
@@ -236,7 +237,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
       keep,
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
-      onObservation: (c, dropped, firsts, families) => {
+      onObservation: (c, dropped, firsts, families, shell) => {
         // Every observed census feeds the log (the family tree, then the detector with the wounds since the last census and the
         // tree's view), before the display throttle below: a first is the census's, not the screen's.
         const fired = feedCensus(log, { census: c, dropped, firsts, families, cfg: sim.cfg, interventions: manifest.interventions }, (message) => post({ type: "notice", message }));
@@ -247,7 +248,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         const now = performance.now();
         if (now - lastCensusAt > 500) {
           lastCensusAt = now;
-          postCensus(world!, c);
+          postCensus(world!, c, shell);
           if (mine && !fired) postFirsts(w);
         } else if (mine && !playing) {
           // Paused (a Step or +100): no later census will carry this one's numbers to an open card, so post them now.
@@ -608,7 +609,7 @@ async function sendStats(w: World) {
   }
 }
 
-function postCensus(w: World, c: ReturnType<typeof census>) {
+function postCensus(w: World, c: ReturnType<typeof census>, shell?: ShellCount | null) {
   const ind = individuals(c);
   const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
   // Totals include events carried over from restored segments.
@@ -623,6 +624,8 @@ function postCensus(w: World, c: ReturnType<typeof census>) {
       return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
     }),
     ...w.execution.counts(),
+    // Display only, and only in a world with a shell: the census's own count, or (a paused world's repeat census) a fresh one.
+    ...(shell ? { shell: { wearing: shell.wearing, living: shell.living } } : {}),
   };
   post(msg);
 }
@@ -633,7 +636,7 @@ async function sendCensus(w: World) {
   try {
     const snap = await w.sim.readSnapshot(false);
     if (!current(w)) return;
-    postCensus(w, census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead }));
+    postCensus(w, census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead }), shellCount(w.sim.cfg, snap.cells, snap.genomeHead));
   } catch (e) {
     if (current(w)) post({ type: "error", message: `census: ${e instanceof Error ? e.message : e}` });
   } finally {

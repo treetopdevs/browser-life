@@ -8,9 +8,10 @@ import { createFirstsPanel } from "./firsts-panel.ts";
 import { createFamilyPanel } from "./family-panel.ts";
 import { createNaturalistPanel } from "./naturalist-panel.ts";
 import type { HandEntry } from "./naturalist.ts";
-import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
-import { FAMILIES, byId, familyOf } from "./worlds.ts";
+import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, tiedAtZero, type RankKey } from "./rank-labels.ts";
+import { FAMILIES, WEATHER, byId, familyOf, weatherDoes, weatherLevel } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
+import { fmtShare } from "./shell.ts";
 import "./theme.ts";
 import { track } from "./analytics.ts";
 
@@ -213,7 +214,48 @@ const servedWorld = byId(new URLSearchParams(location.search).get("world"))?.id 
 const titleFor = (presetId: string | null, name: string) =>
   servedWorld === null || presetId === servedWorld ? servedTitle : `${name} · Cadence Garden`;
 const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
-const showPresetDesc = () => describeWorld(byId(presetSel.value), $("preset-desc"));
+// The Weather control (docs/pond-keeper-v3-2026-10-22.md, section 1): three radios that are a view of the select's preset id, shown
+// only where the chosen world is one of the breeder's weathers. Choosing one sets the select and runs what the catalogue's chooser
+// runs; nothing is planted until Plant is pressed. The select, the catalogue and a link move the radio through `showPresetDesc`.
+const weatherBox = $("weather");
+$("weather-legend").textContent = WEATHER.legend;
+$("weather-lead").textContent = WEATHER.lead;
+{
+  const choices = $("weather-choices");
+  for (const level of WEATHER.levels) {
+    const label = document.createElement("label");
+    label.className = "weather-choice";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "weather";
+    input.value = level.id;
+    input.onchange = () => {
+      if (!input.checked) return;
+      presetSel.value = level.id;
+      showPresetDesc();
+      syncPlant();
+    };
+    const words = document.createElement("span");
+    const word = document.createElement("b");
+    word.textContent = `${level.word}.`;
+    words.append(word, ` ${level.gist}`);
+    label.append(input, words);
+    choices.append(label);
+  }
+}
+/** The radio follows the select; the one detail block says what the chosen weather does (from its config) and why it matters. */
+function paintWeather() {
+  const level = weatherLevel(presetSel.value);
+  weatherBox.hidden = !level;
+  if (!level) return;
+  for (const input of weatherBox.querySelectorAll<HTMLInputElement>('input[name="weather"]')) input.checked = input.value === level.id;
+  $("weather-does").textContent = weatherDoes(byId(level.id)!);
+  $("weather-matters").textContent = level.matters;
+}
+const showPresetDesc = () => {
+  describeWorld(byId(presetSel.value), $("preset-desc"));
+  paintWeather();
+};
 /**
  * Choosing a starting world or a seed changes nothing until Plant is pressed: the button says which it would do,
  * lights up when the choice differs from the world on screen, and the note says what is on screen meanwhile.
@@ -481,6 +523,8 @@ const TOOL_SAYS: Record<Tool, string> = {
 const TOOL_VERB: Record<Tool, string> = {
   inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", sun: "set the sun in its panel", pan: "drag to move", pick: "click to pick",
 };
+/** Said under the Wound tool in a world with a polymer shell: the brush always cuts (injuryShell is read only by the world's own wounds). */
+const WOUND_IS_A_CUT = "This tool is a cut, not weather: it clears whatever it touches, shell or not. Only the world's own wounds can be weathered.";
 function setTool(t: Tool) {
   tool = t;
   for (const o of tools.querySelectorAll<HTMLButtonElement>("button")) {
@@ -491,7 +535,8 @@ function setTool(t: Tool) {
   wrap.dataset.tool = tool;
   const name = document.createElement("b");
   name.textContent = `${TOOL_NAMES[t]}.`;
-  $("tool-says").replaceChildren(name, ` ${TOOL_SAYS[t]}`);
+  // The line depends on the world loaded, so the "loaded" handler runs this again (a click is not the only time it changes).
+  $("tool-says").replaceChildren(name, ` ${TOOL_SAYS[t]}${t === "lesion" && cfg?.injuryShell !== undefined ? ` ${WOUND_IS_A_CUT}` : ""}`);
   syncBrush();
 }
 for (const b of tools.querySelectorAll<HTMLButtonElement>("button")) b.onclick = () => setTool(b.dataset.tool as Tool);
@@ -859,10 +904,32 @@ function showVerification() {
 const spInd = new Series($<HTMLCanvasElement>("sp-ind"));
 const spBio = new Series($<HTMLCanvasElement>("sp-bio"));
 const spLin = new Series($<HTMLCanvasElement>("sp-lin"));
-window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); });
+// The share of living cells wearing a shell, as a percentage: Series scales to the largest value pushed (floor 1), and prints one decimal.
+const spShell = new Series($<HTMLCanvasElement>("sp-shell"), 400, fmtShare);
+window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); spShell.redraw(); });
+
+/** The fourth chart and the "Cells wearing a shell" row exist only in a world with a shell (docs/pond-keeper-v3-2026-10-22.md, section 3). */
+function syncShell() {
+  const has = cfg?.injuryShell !== undefined;
+  $("sp-shell-box").hidden = !has;
+  $("history-lines").classList.toggle("four", has);
+  for (const id of ["k-shell-dt", "k-shell"]) $(id).hidden = !has;
+  $("k-shell").textContent = "";
+  $("k-shell-note").hidden = true;
+}
+/** One census's count: the share first, then the cells; at zero, "none yet" and what that means for a wound. */
+function onShell(shell: { wearing: number; living: number }) {
+  const { wearing, living } = shell;
+  const share = living > 0 ? (100 * wearing) / living : 0;
+  $("k-shell").textContent = wearing === 0 ? "none yet" : `${fmtShare(share)} of living cells (${wearing.toLocaleString()} of ${living.toLocaleString()})`;
+  const note = $("k-shell-note");
+  note.hidden = wearing > 0;
+  note.textContent = wearing > 0 || !cfg || cfg.injuryShell === undefined ? "" : `No living cell holds ${cfg.injuryShell.toLocaleString()} membrane right now, so a wound now would take whatever it hits.`;
+  spShell.push(share);
+}
 
 function resetEvidence() {
-  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
+  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen", "k-shell"])
     $(id).textContent = "";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
@@ -880,7 +947,9 @@ function resetEvidence() {
   topLinShown = "";
   $("pools").replaceChildren();
   $("pools").setAttribute("aria-label", POOLS_UNCOUNTED);
-  spInd.clear(); spBio.clear(); spLin.clear();
+  // The shell widgets are shown (or hidden) first, so the cleared chart is drawn at its real size.
+  syncShell();
+  spInd.clear(); spBio.clear(); spLin.clear(); spShell.clear();
   verifying = false;
 }
 
@@ -934,6 +1003,7 @@ function onCensus(c: CensusMsg) {
   $("k-gen").textContent = String(c.maxGen);
   spInd.push(c.individuals);
   spLin.push(c.lineageCount);
+  if (c.shell) onShell(c.shell);
   // A paused world is counted again every 600 ms with the same answer: the rows stay as they are, so a keyboard or
   // screen-reader user on a Keep button is not handed a new button (and told about it again) each time. Anything a
   // row comes to show beyond these goes into the signature too, or the rows would keep showing its old value.
@@ -1051,7 +1121,7 @@ function onPonds(m: PondsMsg) {
   // The line can clip a long donor list (up to 16 on the 8 × 8 preset); the tooltip always holds it in full.
   line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donor ponds ${m.donors.length ? m.donors.join(", ") : "none"}${m.hand && pickedBy ? ` · picked by hand, viewing ranks by ${pickedBy}` : ""}`;
   // A cycle clears every pond: the histories mark where, so the drop that follows reads as the cycle, not a collapse.
-  spInd.mark(); spBio.mark(); spLin.mark();
+  spInd.mark(); spBio.mark(); spLin.mark(); spShell.mark();
   autoApplied(m.step);
   // The cycle that was waiting has been applied.
   if (awaiting && awaiting.step === m.step) {
@@ -1256,7 +1326,17 @@ function syncPicks() {
   const occupied = a.terms.mass.filter((m) => m > 0).length;
   const key = rankKey ?? "speed";
   const ruled = scoreWords(a.ruleScore ?? undefined);
-  $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.${ruled ? ` The rule’s choice ranks them by ${ruled.toLowerCase()}.` : ""}`;
+  // When the score ties at zero for every occupied pond, the rule's order falls to bound mass: say so (display only; the rank-labels vitest holds the rule).
+  const tied = tiedAtZero(a);
+  const call = $("breeder-call");
+  call.replaceChildren(`Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.${ruled ? ` The rule’s choice ranks them by ${ruled.toLowerCase()}.` : ""}`);
+  // The tie line is an aside to the bold status line, in the body weight.
+  if (tied) {
+    const aside = document.createElement("span");
+    aside.className = "breeder-tied";
+    aside.textContent = ` ${tied}`;
+    call.append(aside);
+  }
   // Say what Breed will do before it is pressed: it cannot be undone. While it is in flight, say that instead.
   $("breed-bar-call").textContent = breeding !== null
     ? breedSlow ? `Still applying cycle ${a.cycle}. The lab is waiting for the GPU; a failure will show on the field.` : `Applying cycle ${a.cycle}.`
@@ -1824,6 +1904,8 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       resetEvidence();
       resetPondStatus();
       resetBreeder();
+      // The Wound tool's line depends on this world (a shell world says its hand wounds are cuts); a click on a tool is not the only time it changes.
+      setTool(tool);
       fit(true);
       lineagePanel.onLoaded();
       firstsPanel.onLoaded(m.manifest);

@@ -599,5 +599,33 @@
     "seed": 42,
     "steps": 3000,
     "image": "/og/worlds/breeder.jpg"
+  },
+  "breeder-wounded": {
+    "id": "breeder-wounded",
+    "name": "The breeder (wounded)",
+    "family": "Storms and the breeder",
+    "asks": "Does breeding still work when the ponds are wounded all the time?",
+    "traits": [
+      "Even light everywhere",
+      "16 ponds of 64 × 64",
+      "One disc of the same searched founder in every pond"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/breeder-wounded.jpg"
+  },
+  "breeder-wounded-shell": {
+    "id": "breeder-wounded-shell",
+    "name": "The breeder (wounded, shells)",
+    "family": "Storms and the breeder",
+    "asks": "Can cells that store a little membrane sit out the wounds that kill everything else?",
+    "traits": [
+      "Even light everywhere",
+      "16 ponds of 64 × 64",
+      "One disc of the same searched founder in every pond"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/breeder-wounded-shell.jpg"
   }
 }

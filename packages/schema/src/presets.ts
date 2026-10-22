@@ -47,8 +47,11 @@ const POND_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, ker
 /** Wounds land every WOUND_PERIOD steps in the injury presets. */
 const WOUND_PERIOD = 13;
 
-/** Recurring-injury keys: radius-`radius` wound discs, each cell hit about once per `every` steps. */
-function wounds(radius: number, every: number): Pick<WorldConfig, "injuryPeriod" | "injuryRadius" | "injuryProb"> {
+/**
+ * Recurring-injury keys: radius-`radius` wound discs, each cell hit about once per `every` steps. Exported so the Pond
+ * keeper's wounded breeder presets (and their tests) build the same three keys as the sandboxes above.
+ */
+export function wounds(radius: number, every: number): Pick<WorldConfig, "injuryPeriod" | "injuryRadius" | "injuryProb"> {
   let disc = 0;
   for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) if (dx * dx + dy * dy <= radius * radius) disc++;
   return { injuryPeriod: WOUND_PERIOD, injuryRadius: radius, injuryProb: Math.round((2 ** 32 * WOUND_PERIOD) / (disc * every)) };
@@ -68,6 +71,9 @@ const STORM: Partial<WorldConfig> = {
   ...wounds(3, 13_000),
 };
 const M3_INIT: InitParams = { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 };
+/** The breeder's physics and planting, shared by the breeder and its two wounded variants so they differ only in their weather. */
+const BREEDER_CFG: Partial<WorldConfig> = { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 4, tilesY: 4, pondPeriod: 5_000, pondK: 8, pondArm: "breed", pondScore: "drive+seed+body", mutRate: 4_294_970 };
+const BREEDER_INIT: InitParams = { kind: "ponds", founders: 16, nutrient: 32, biomass: 64, start: "clone", founder: 2 };
 
 export const PRESETS: Preset[] = [
   {
@@ -320,8 +326,28 @@ export const PRESETS: Preset[] = [
     name: "The breeder",
     description:
       "Sandbox, not registered. Sixteen ponds of 64 × 64, each planted with one disc of M3 founder 2, at ten times the usual mutation rate. Every 5,000 steps each pond is cleared and reseeded from the four ponds that rank best on movement, seed-packet mass and body size together. Turn on the Breeder panel to choose the donors yourself.",
-    cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 4, tilesY: 4, pondPeriod: 5_000, pondK: 8, pondArm: "breed", pondScore: "drive+seed+body", mutRate: 4_294_970 },
-    init: { kind: "ponds", founders: 16, nutrient: 32, biomass: 64, start: "clone", founder: 2 },
+    cfg: { ...BREEDER_CFG },
+    init: { ...BREEDER_INIT },
+  },
+  // Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md): the breeder under wounds, with and without a polymer shell. Each is the
+  // breeder's config plus the injury keys and nothing else, so the lab's Weather control is a view of the preset id and the
+  // three worlds differ only in their weather. Appended after `breeder`: the pinned prefix of PRESETS (FIRST_WORLDS) is untouched.
+  // Radius-3 wounds at the physics survey's heavy dose: each cell hit about once per 3,250 steps.
+  {
+    id: "breeder-wounded",
+    name: "The breeder (wounded)",
+    description:
+      "Sandbox, not registered. The breeder with recurring wounds: every 13 steps a round of radius-3 discs lands at random (each cell is a possible centre), so each cell is hit about once per 3,250 steps. A hit cell is cleared and its body turns to waste. Planted as the breeder is, so the same seed starts the same ponds.",
+    cfg: { ...BREEDER_CFG, ...wounds(3, 3_250) },
+    init: { ...BREEDER_INIT },
+  },
+  {
+    id: "breeder-wounded-shell",
+    name: "The breeder (wounded, shells)",
+    description:
+      "Sandbox, not registered. The wounded breeder with a shell (injuryShell 2): a wounded cell holding at least 2 membrane (the physics calls it polymer) survives the wound and spends 2 of its membrane; any other hit cell is cleared. Planted as the breeder is, so the same seed starts the same ponds.",
+    cfg: { ...BREEDER_CFG, ...wounds(3, 3_250), injuryShell: 2 },
+    init: { ...BREEDER_INIT },
   },
 ];
 
