@@ -11,6 +11,21 @@ import { sessionFileError, type SessionFile } from "../../apps/lab/src/session-f
 const SCRATCH = "test-results";
 /** "1.7% of living cells (372 of 21,769)": the share first, then the cells it is a share of. A share one decimal would print as 0.0 reads "<0.1%". */
 const SHARE = /^(<)?(\d+(?:\.\d)?)% of living cells \(([\d,]+) of ([\d,]+)\)$/;
+/**
+ * The breeder panel's whole tied-at-zero line (rank-labels.ts `tiedAtZero`). The breeder's score is drive+seed+body, so the line names,
+ * in that order, the measures every occupied pond is tied at the bottom of, or all three when no one measure is flat for all of them.
+ * Which measures tie depends on the seed and the hand wound, so every one of those forms is allowed, and nothing else. The aside starts
+ * with the one space that separates it from the status line before it (a pattern is matched as is, not trimmed).
+ */
+const MEASURES = ["moving mass", "seed packet", "body size"];
+const listed = (w: string[]) => (w.length < 2 ? w.join("") : `${w.slice(0, -1).join(", ")} and ${w[w.length - 1]}`);
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const FLAT = [1, 2, 3, 4, 5, 6, 7].map((mask) => listed(MEASURES.filter((_, i) => mask & (1 << i))));
+const TIED_LINE = new RegExp(
+  `^ (The occupied ponds are all tied on (${FLAT.map(esc).join("|")})|Each occupied pond is at the bottom of at least one of ${esc(listed(MEASURES))})` +
+    esc(", so the rule’s score cannot tell them apart and the rule picks the heaviest ponds instead. Another choice under “The rule breeds for” may separate them.") +
+    "$",
+);
 
 test("lab page: weather for the breeder, a shelled pond, the shell readout and the session file", async ({ page }) => {
   // The machine may be busy with other GPU work: every wait below is generous, and so is the whole test.
@@ -153,8 +168,7 @@ test("lab page: weather for the breeder, a shelled pond, the shell readout and t
   console.log(`breeder call at cycle 1 (top pond by the rule's score: ${top}; tied ${tied}): ${await call.textContent()}`);
   if (tied) {
     await expect(aside).toHaveCount(1);
-    await expect(aside).toContainText("so the rule’s score cannot tell them apart and the rule picks the heaviest ponds instead.");
-    await expect(aside).toContainText("Another choice under “The rule breeds for” may separate them.");
+    await expect(aside).toHaveText(TIED_LINE);
     // The aside is in the body weight, not the status line's bold.
     await expect(aside).toHaveCSS("font-weight", "400");
   } else {
