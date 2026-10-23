@@ -457,6 +457,9 @@ UI audit) and by screenshots. These changes were made then; the text above now q
   the census's own snapshot (§5); the preset descriptions describe rounds of discs and say "membrane (the physics
   calls it polymer)"; `breeder`, `breeder-wounded` and `breeder-wounded-shell` share one config literal, with
   `breeder`'s config unchanged (the frozen v1–v3 fixtures still replay).
+- **The browser spec's tie check** (review on PR #71): it reads the tie from the ranks the panel shows (the top pond by the
+  rule's score reads 0) and asserts the panel's line is present exactly then and absent otherwise, instead of gating on the line's
+  own text. It still does not expect the tie to fire at the first cycle either way.
 - **Not taken:** the Weather control showing Calm after a shelled session is restored (the control is a view of the
   select's preset, as §1 says); the new cards' chips (the card keeps the first three traits); the extra
   accessibility attributes and tests the drift check listed as beyond the note, which stay.

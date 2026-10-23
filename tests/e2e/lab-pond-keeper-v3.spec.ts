@@ -4,8 +4,9 @@ import { sessionFileError, type SessionFile } from "../../apps/lab/src/session-f
 // Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md, section 5), page level: the Weather control on the breeder, a world planted with
 // wounds and shells, the fourth chart and the "Cells wearing a shell" row, the Wound tool's line, a wounded pond, the first pond cycle
 // bred on the rule's donors, the replay check and the session file. No fixture is written: nothing here changes the session format.
-// What the page says about the breeder panel's tied-at-zero line at the first cycle is logged and not asserted: it depends on the seed
-// and the hand wound, and the vitest tests carry the rule.
+// Whether the breeder panel's tied-at-zero line fires at the first cycle depends on the seed and the hand wound, so the spec does not
+// expect it either way: it checks the line against the ranks the panel shows (present exactly when every occupied pond scores 0), and
+// the vitest tests carry the rule.
 
 const SCRATCH = "test-results";
 /** "1.7% of living cells (372 of 21,769)": the share first, then the cells it is a share of. A share one decimal would print as 0.0 reads "<0.1%". */
@@ -140,17 +141,26 @@ test("lab page: weather for the breeder, a shelled pond, the shell readout and t
   await expect(page.locator("#breed-bar-call")).toContainText("Cycle 1");
   await play.click();
   await expect(play).toHaveAttribute("aria-pressed", "false");
-  // The panel's own line at this cycle: the tied-at-zero sentence may or may not be in it (logged, not asserted).
-  const call = (await page.locator("#breeder-call").textContent()) ?? "";
-  const tied = call.includes("the rule picks the heaviest ponds instead");
-  console.log(`breeder call at cycle 1 (tied-at-zero sentence ${tied ? "present" : "absent"}): ${call}`);
+  // The panel's own line at this cycle. Whether the rule's score ties at zero depends on the seed and the hand wound, so it is read from
+  // the ranks the panel shows, not from the line under test: rank the ponds by the rule's score and take the top pond, whose value is the
+  // highest any occupied pond has. The tie holds exactly when that value is 0, and the line must be there, or not, to match.
+  await page.locator("#breeder-term").selectOption("score");
+  await page.locator("#breeder-top").click();
+  const top = (await page.locator("#breeder-list li").first().textContent()) ?? "";
+  const tied = top.split(" · ").pop()?.trim() === "0";
+  const call = page.locator("#breeder-call");
+  const aside = call.locator(".breeder-tied");
+  console.log(`breeder call at cycle 1 (top pond by the rule's score: ${top}; tied ${tied}): ${await call.textContent()}`);
   if (tied) {
-    expect(call).toContain("so the rule’s score cannot tell them apart");
-    expect(call).toContain("Another choice under “The rule breeds for” may separate them.");
-    expect(call).not.toMatch(/pressure|scores above 0/);
+    await expect(aside).toHaveCount(1);
+    await expect(aside).toContainText("so the rule’s score cannot tell them apart and the rule picks the heaviest ponds instead.");
+    await expect(aside).toContainText("Another choice under “The rule breeds for” may separate them.");
     // The aside is in the body weight, not the status line's bold.
-    await expect(page.locator("#breeder-call .breeder-tied")).toHaveCSS("font-weight", "400");
+    await expect(aside).toHaveCSS("font-weight", "400");
+  } else {
+    await expect(aside).toHaveCount(0);
   }
+  await expect(call).not.toContainText(/pressure|scores above 0/);
   console.log(`shell row at cycle 1: ${await kShell.textContent()}`);
   await expect(kShell).toHaveText(/^(none yet|(<)?\d+(?:\.\d)?% of living cells \([\d,]+ of [\d,]+\))$/);
 
