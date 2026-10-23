@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { RULE_VERSION, cloneState } from "@bl/schema";
 import { goldenCases } from "@bl/sim-gpu";
-import { RefSim, applyLesion } from "@bl/sim-ref";
+import { RefSim, applyLesion, createSim } from "@bl/sim-ref";
 import { stateHash } from "@bl/schema";
 
 // Digests cover config, step, cells, canonical genome and the full ledger
@@ -62,18 +62,44 @@ const PINNED: Record<number, Record<string, string>> = {
     // new cases with their own pins; every pin above is untouched.
     "genes-ladder": "c8d0270e732bad02",
     "genes-ladder-bounds": "1cc368ef05021263",
+    // The slab (rung 1b, WorldConfig.tileD, RefSim3 / GpuSim3): new cases only, each with its own pin; every
+    // pin above is untouched. Hashes are the GPU and CPU runs, which match bit for bit.
+    "slab-default-32x32x8": "2a30968587fd834c",
+    "slab-neutral-32x32x8": "57413fc0fa8dd2a0",
+    "slab-shaded-column-32x32x8": "976a549cdd9ede48",
+    "slab-motility-signal-32x32x8": "5db7e3fad79fe8cd",
+    "slab-seasons-32x32x8": "0959c4baa0f3e8c3",
+    "slab-default-64x64x8": "8343718f53adddf0",
+    "slab-neutral-64x64x8": "68791d1c000eca7b",
+    "slab-shaded-column-64x64x8": "a711f528cd2dc7fb",
+    "slab-motility-signal-64x64x8": "aafe9e56c79358b7",
+    "slab-seasons-64x64x8": "39951e02ad5a9ca6",
+    // Review of M1+M2: arithmetic-boundary cases (E at 27 * 2^27 after transport with the per-cell heat carry, S past cap24
+    // in all six directions, nested-share rounding at each D1, motility off). New cases only; no pin above changed.
+    "slab-e-saturation-16x16x8": "a63ca8f1d1bb4d68",
+    "slab-signal-limit-16x16x8": "828b2911bcbdfd54",
+    "slab-rounding-spread8-16x16x8": "e3f05bae8a221f40",
+    "slab-rounding-spread0-16x16x8": "fee86a6c0f8a01c5",
+    "slab-rounding-spread32-16x16x8": "ac142dd61f152157",
+    "slab-motility-off-16x16x8": "9c1e01eabbd0195f",
   },
 };
 
+// The 64x64x8 slab cases cost minutes of CPU on a loaded machine and run bit for bit against the GPU in
+// tests/deno/gpu_golden.ts and the Chrome golden anyway: vitest checks their pins only on request
+// (BL_SLAB_BIG=1 pnpm vitest run packages/sim-ref/test/golden-hashes.test.ts). The 32x32x8 and 16x16x8 pins always run.
+const big = process.env.BL_SLAB_BIG === "1";
+const heavy = (name: string) => name.startsWith("slab-") && name.includes("64x64x8");
+
 describe(`rule version ${RULE_VERSION}`, () => {
   for (const gc of goldenCases()) {
-    it(`${gc.name} matches its pinned hash`, () => {
-      const sim = new RefSim(cloneState(gc.init(gc.cfg)));
+    (heavy(gc.name) && !big ? it.skip : it)(`${gc.name} matches its pinned hash`, () => {
+      const sim = createSim(cloneState(gc.init(gc.cfg)));
       for (let s = 0; s < gc.steps; s += gc.every) {
         sim.run(gc.every);
-        if (gc.lesion && s === 0) applyLesion(sim, ...gc.lesion);
+        if (gc.lesion && s === 0 && sim instanceof RefSim) applyLesion(sim, ...gc.lesion);
       }
       expect(stateHash(sim.state)).toBe(PINNED[RULE_VERSION]?.[gc.name]);
-    });
+    }, heavy(gc.name) ? 600_000 : undefined);
   }
 });

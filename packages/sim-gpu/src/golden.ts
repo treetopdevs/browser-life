@@ -3,26 +3,39 @@
 // WebGPU host (Chrome/Dawn, Safari, Firefox/wgpu, Deno/wgpu).
 
 import {
+  B2_OFF3,
   CH,
+  GENOME_CHANNELS3,
   M3_FOUNDERS,
   MATTER_MAX,
+  NN_BYTES3,
   POOL_MAX,
+  POOL_MAX3,
+  allocState3,
   buildWorld,
+  buildWorld3,
+  cellCount,
   cloneState,
   defaultConfig,
+  encodeGenome3,
   founderGenome,
+  generalistGenome3,
   generalistWorld,
   m3World,
+  slabSpotsWorld,
   soupWorld,
   stateHash,
   totalsOf,
   ledgerResidual,
+  lowbias32,
   type Genome,
+  type Genome3,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
-import { RefSim, applyLesion } from "@bl/sim-ref";
+import { RefSim, applyLesion, createSim as createRefSim } from "@bl/sim-ref";
 import { GpuSim } from "./gpu-sim.ts";
+import { createSim as createGpuSim } from "./create.ts";
 
 export interface GoldenCase {
   name: string;
@@ -76,6 +89,192 @@ function irregularPolymerField(c: WorldConfig): WorldState {
 function ringedFounders(): Genome[] {
   const rings: [number, number, number][] = [[0, 0, 0], [20, -30, 0], [-64, 10, 40], [0, 0, 25], [-64, -64, 25], [-64, -64, 0], [10, 0, -20], [-128, -100, 127]];
   return M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), rings: rings[k % rings.length] }));
+}
+
+/** A slab config: gradient light by default (lightK set), kernel radius 3, `extra` overrides. */
+function slabCfg(w: number, h: number, d: number, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
+  return defaultConfig({ tileW: w, tileH: h, tileD: d, lightK: 1024, kernelRadius: 3, seed, mutRate: 60_000_000, lightMode: "gradient", eventCap: 4096, defaultMu: 60, defaultSigma: 20, ...extra });
+}
+
+/**
+ * Slab founders against both walls (z = 0 and z = D - 1, balls clipped by the closed floor and surface) plus a
+ * tall biomass column through every layer at one (x, y): the column shades its own lower layers, and the wall
+ * founders push matter, energy and signal at the z boundaries from step 0.
+ */
+function shadedColumnWorld(c: WorldConfig): WorldState {
+  const D = c.tileD!;
+  const g = generalistGenome3(c.defaultMu, c.defaultSigma);
+  const s = buildWorld3(c, {
+    nutrient: 48,
+    founders: [
+      { x: 6, y: 6, z: 0, radius: 3, genome: g, biomass: 64, energy: 128 },
+      { x: 24 % c.tileW, y: 8, z: D - 1, radius: 3, genome: g, biomass: 64, energy: 128 },
+      { x: 10, y: 22 % c.tileH, z: D >> 1, radius: 3, genome: g, biomass: 64, energy: 128 },
+    ],
+  });
+  const n = cellCount(c);
+  const x = c.tileW >> 1;
+  const y = c.tileH >> 1;
+  const words = Array.from({ length: s.genome.length / n }, (_, k) => s.genome[k * n + (6 * c.tileW + 6)]);
+  for (let z = 0; z < D; z++) {
+    const i = (z * c.tileH + y) * c.tileW + x;
+    s.cells[CH.B * n + i] = 900;
+    s.cells[CH.E * n + i] = 1500;
+    for (let k = 0; k < words.length; k++) s.genome[k * n + i] = words[k];
+  }
+  return s;
+}
+
+/** A genome with every reaction output pinned to +127 through the output biases (and chosen motility biases). */
+function maxGenome3(mot: [number, number, number] = [0, 0, 0], motGain = 255): Genome3 {
+  const g = generalistGenome3(154, 24);
+  g.motGain = motGain;
+  g.weights.fill(0);
+  for (let k = 0; k < 6; k++) g.weights[B2_OFF3 + k] = 127;
+  for (let k = 0; k < 3; k++) g.weights[B2_OFF3 + 6 + k] = mot[k];
+  return g;
+}
+
+function setCellGenome3(s: WorldState, i: number, g: Genome3, lo: number, hi = 0): void {
+  const n = cellCount(s.cfg);
+  const w = encodeGenome3(g, hi, lo);
+  for (let k = 0; k < GENOME_CHANNELS3; k++) s.genome[k * n + i] = w[k];
+}
+
+/** A small deterministic hash stream: the same on every host. */
+function hashStream(seed: number): () => number {
+  let x = lowbias32(seed >>> 0);
+  return () => (x = lowbias32((x + 0x9e3779b9) >>> 0));
+}
+
+/**
+ * Energy at the limit. The 27 cells around `target` are living, aimed (motility bytes at the extremes, gain 255, no
+ * flow term, spread 0) so that all of their E and S lands on the target cell, with E and S at POOL_MAX3 in every
+ * cell: the post-transport E there is 27 * 2^27 (past 2^32 / 2 in a u32 sum), the cap24 sensor inputs are
+ * saturated, and the per-cell cap at 2^27 exports the excess as heat. Removing SGZ's cap24, using the 2D pool cap
+ * or losing the per-cell heat carry changes this hash.
+ */
+function energyStormWorld(c: WorldConfig): WorldState {
+  const s = allocState3(c);
+  const n = cellCount(c);
+  const W = c.tileW, H = c.tileH, D = c.tileD!;
+  s.cells.fill(0x808080, CH.MOT * n, (CH.MOT + 1) * n);
+  const [tx, ty, tz] = [W >> 1, H >> 1, D >> 1]; // (8, 8, 4) on 16 x 16 x 8: the workgroup seam in all three axes
+  const g = maxGenome3();
+  const byte = (o: number) => (o < 0 ? 255 : o > 0 ? 0 : 128); // a source at offset o moves by -o
+  let k = 1;
+  for (let oz = -1; oz <= 1; oz++)
+    for (let oy = -1; oy <= 1; oy++)
+      for (let ox = -1; ox <= 1; ox++) {
+        const i = ((tz + oz) * H + (ty + oy)) * W + (tx + ox);
+        setCellGenome3(s, i, g, k++);
+        s.cells[CH.B * n + i] = 1_000_000;
+        s.cells[CH.P * n + i] = 1_000_000;
+        s.cells[CH.MOT * n + i] = (byte(ox) | (byte(oy) << 8) | (byte(oz) << 16)) >>> 0;
+      }
+  s.cells.fill(POOL_MAX3, CH.E * n, (CH.E + 1) * n);
+  s.cells.fill(POOL_MAX3, CH.S * n, (CH.S + 1) * n);
+  return s;
+}
+
+/**
+ * Signals at the limit: random full-range controllers (every input weight live, SGX / SGY / SGZ included), living
+ * cells on half the slab, and S in {2^27, 0, anything below 2^24, anything up to 2^27} cell by cell so the
+ * neighbour differences straddle cap24 (2^24 - 1) in all six directions, at signalGain 127.
+ */
+function signalLimitWorld(c: WorldConfig): WorldState {
+  const s = allocState3(c);
+  const n = cellCount(c);
+  const r = hashStream(c.seed ^ 0x5151);
+  for (let i = 0; i < n; i++) {
+    const h = r();
+    if (h % 2 === 0 && i < n - 1) {
+      const g = generalistGenome3(60 + (r() % 120), 12 + (r() % 40));
+      g.motGain = r() % 256;
+      for (let b = 0; b < NN_BYTES3; b++) g.weights[b] = (r() % 256) - 128;
+      setCellGenome3(s, i, g, i + 1); // lineage (0, i + 1): one genome per id
+      s.cells[CH.B * n + i] = 200 + (r() % 400);
+      s.cells[CH.P * n + i] = r() % 300;
+      s.cells[CH.E * n + i] = r() % 5000;
+      s.cells[CH.MOT * n + i] = (1 + (r() % 255)) | ((1 + (r() % 255)) << 8) | ((1 + (r() % 255)) << 16);
+    }
+    const kind = r() % 4;
+    s.cells[CH.S * n + i] = kind === 0 ? POOL_MAX3 : kind === 1 ? 0 : kind === 2 ? r() % (1 << 24) : r() % (POOL_MAX3 + 1);
+    s.cells[CH.A * n + i] = r() % 48;
+  }
+  return s;
+}
+
+/**
+ * Rounding boundaries of the nested shares. Half the cells are living, with B, P and E drawn from the values around
+ * multiples of D1 = 2 * (32 + spread) (D1 - 1, D1, D1 + 1, 2 * D1 - 1, 3 * D1 + 1) and around 2^27 (2^27, 2^27 - 1,
+ * 2^27 - D1 + 1), and motility bytes at the extremes with gain 255 and no flow term, so the displacement sits on and
+ * next to +-dmax and the weights run through 0, 1, D1 - 1 and D1.
+ */
+function roundingWorld(c: WorldConfig): WorldState {
+  const s = allocState3(c);
+  const n = cellCount(c);
+  const D1 = 2 * (32 + c.spread);
+  const matter = [1, D1 - 1, D1, D1 + 1, 2 * D1 - 1, 3 * D1 + 1, 4999, 16381];
+  const energy = [POOL_MAX3, POOL_MAX3 - 1, POOL_MAX3 - D1 + 1, POOL_MAX3 - D1, D1 - 1, 1, 12_345_678, 0];
+  const motBytes = [0, 1, 127, 128, 129, 254, 255, 192];
+  const r = hashStream(c.seed ^ 0x7777);
+  for (let i = 0; i < n; i++) {
+    if (r() % 2 !== 0 || i === n - 1) continue; // lineage lo = i + 1 must stay below the cell count
+    const g = maxGenome3();
+    setCellGenome3(s, i, g, i + 1);
+    s.cells[CH.B * n + i] = matter[r() % matter.length];
+    s.cells[CH.P * n + i] = matter[r() % matter.length];
+    s.cells[CH.E * n + i] = energy[r() % energy.length];
+    s.cells[CH.MOT * n + i] = (motBytes[r() % 8] | (motBytes[r() % 8] << 8) | (motBytes[r() % 8] << 16)) >>> 0;
+  }
+  return s;
+}
+
+function slabCases(): GoldenCase[] {
+  const spots = (c: WorldConfig, count = 24) => slabSpotsWorld(c, generalistGenome3(c.defaultMu, c.defaultSigma), count, 48, 64);
+  const out: GoldenCase[] = [];
+  for (const [w, h, steps, every] of [[32, 32, 60, 20], [64, 64, 30, 10]] as const) {
+    const t = `${w}x${h}x8`;
+    const count = w === 32 ? 24 : 80;
+    out.push(
+      { name: `slab-default-${t}`, cfg: slabCfg(w, h, 8, 301), init: (c) => spots(c, count), steps, every },
+      { name: `slab-neutral-${t}`, cfg: slabCfg(w, h, 8, 302, { neutral: true }), init: (c) => spots(c, count), steps, every },
+      { name: `slab-shaded-column-${t}`, cfg: slabCfg(w, h, 8, 303), init: shadedColumnWorld, steps, every },
+      {
+        name: `slab-motility-signal-${t}`,
+        cfg: slabCfg(w, h, 8, 304, { motility: true, signalGain: 127, kSDecay: 13, kEmit: 1024 }),
+        init: (c) => spots(c, count),
+        steps,
+        every,
+      },
+      {
+        name: `slab-seasons-${t}`,
+        cfg: slabCfg(w, h, 8, 305, { lightMode: "uniform", lightBase: 30, lightAmp: 150, seasonPeriod: 37, seasonAmp: 60 }),
+        init: (c) => spots(c, count),
+        steps: Math.max(steps, 40),
+        every,
+      },
+    );
+  }
+  // Arithmetic-boundary and option coverage, kept small (16 x 16 x 8, a few steps) so the CPU pins stay cheap.
+  const cheapEnergy = { eA: 0, eC: 0, eB: 30, eP: 31, kResp: 4096, kDecomp: 4096, kGrow: 4096, kBuild: 4096, kEmit: 4096, kPhoto: 4096 };
+  const aimed = { spread: 0, dtQ: 0, motility: true, lightBase: 55, lightAmp: 200, diffA: 256, diffC: 256, diffS: 256, mutRate: 429_497 };
+  out.push(
+    { name: "slab-e-saturation-16x16x8", cfg: slabCfg(16, 16, 8, 311, { ...aimed, ...cheapEnergy }), init: energyStormWorld, steps: 4, every: 2 },
+    { name: "slab-signal-limit-16x16x8", cfg: slabCfg(16, 16, 8, 312, { signalGain: 127, kSDecay: 13, kEmit: 1024, motility: true }), init: signalLimitWorld, steps: 6, every: 2 },
+    { name: "slab-rounding-spread8-16x16x8", cfg: slabCfg(16, 16, 8, 313, { dtQ: 0, motility: true, kResp: 4096, kPhoto: 4096, eB: 30, eP: 31 }), init: roundingWorld, steps: 6, every: 2 },
+    { name: "slab-rounding-spread0-16x16x8", cfg: slabCfg(16, 16, 8, 314, { spread: 0, dtQ: 0, motility: true, kResp: 4096, kPhoto: 4096, eB: 30, eP: 31 }), init: roundingWorld, steps: 6, every: 2 },
+    { name: "slab-rounding-spread32-16x16x8", cfg: slabCfg(16, 16, 8, 315, { spread: 32, dtQ: 0, motility: true, kResp: 4096, kPhoto: 4096, eB: 30, eP: 31 }), init: roundingWorld, steps: 6, every: 2 },
+    {
+      name: "slab-motility-off-16x16x8",
+      cfg: slabCfg(16, 16, 8, 316, { motility: false, signalGain: 127, kSDecay: 13, kEmit: 1024 }),
+      init: (c) => slabSpotsWorld(c, generalistGenome3(c.defaultMu, c.defaultSigma), 24, 48, 64),
+      steps: 20,
+      every: 10,
+    },
+  );
+  return out;
 }
 
 export function goldenCases(): GoldenCase[] {
@@ -389,6 +588,7 @@ export function goldenCases(): GoldenCase[] {
       steps: 20,
       every: 5,
     },
+    ...slabCases(),
   ];
 }
 
@@ -397,8 +597,8 @@ export async function runGolden(device: GPUDevice, log: (s: string) => void = ()
   for (const gc of goldenCases()) {
     const init = gc.init(gc.cfg);
     const start = totalsOf(gc.cfg, init.cells);
-    const ref = new RefSim(cloneState(init));
-    const gpu = await GpuSim.create(device, cloneState(init));
+    const ref = createRefSim(cloneState(init));
+    const gpu = await createGpuSim(device, cloneState(init));
     let ok = true;
     let detail = "";
     let refEvents: string[] = [];
@@ -443,6 +643,8 @@ export async function runGolden(device: GPUDevice, log: (s: string) => void = ()
         }
         if (ok && gc.lesion && s === 0) {
           const [lx, ly, lr] = gc.lesion;
+          // Lesions are 2D only: a slab has no lesion rule (GpuSim3 has no lesion()).
+          if (!(ref instanceof RefSim) || !(gpu instanceof GpuSim)) throw new Error(`golden case ${gc.name}: lesion on a slab`);
           applyLesion(ref, lx, ly, lr);
           gpu.lesion(lx, ly, lr);
         }
@@ -470,7 +672,7 @@ function sameWords(a: Uint32Array, b: Uint32Array): boolean {
 }
 
 function firstDiff(a: WorldState, b: WorldState): string {
-  const n = a.cells.length / 7;
+  const n = cellCount(a.cfg);
   for (let k = 0; k < a.cells.length; k++)
     if (a.cells[k] !== b.cells[k]) return `cells ch${Math.floor(k / n)} cell ${k % n}: ${a.cells[k]} vs ${b.cells[k]}`;
   for (let k = 0; k < a.genome.length; k++)

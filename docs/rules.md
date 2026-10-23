@@ -49,3 +49,37 @@ The `extremes` golden case runs a world at these limits (total matter at `MATTER
 ## Controls
 
 `neutral` expresses one reference phenotype everywhere while lineages and mutations still propagate. `motility: false` disables active movement. `adhesion: false` (the default) disables the polymer-gradient attraction term in flow, so a disabled world steps bit-identically to a build without the flag. There is no free controller output or genome slot for a dedicated adhesion signal without changing genome layout, so adhesion is derived from the existing "deposition of structural polymer" actuator (BUILD/P, see docs/plan.md decision 4) instead of adding one. Conditions in `packages/runner/src/conditions.ts` map these flags and parameters to the pre-registered controls.
+
+## The slab
+
+The slab (rung 1b, `docs/3d-rung1b-plan-2026-10-23.md`; per-pass arithmetic in `docs/3d-rung1b-step-spec.md`) is a different rule line from RULE_VERSION 1: one `tileW × tileH × tileD` tile (`tileD` set, with `lightK`; `4 ≤ tileD ≤ 32`, a multiple of 4; `kernelRadius` 3, `tilesX = tilesY = 1`, light mode `uniform` or `gradient`). x and y wrap, z is closed: layer 0 is the surface where light enters, layer `D − 1` is the floor. The executable specification is `packages/sim-ref/src/step3d.ts` (`RefSim3`); its WGSL twin is `shaders3d.ts` in `@bl/sim-gpu`. The 2D files are untouched and every RULE_VERSION 1 hash is unchanged. Not defined for a slab (rejected by `validateSlab`): takeover, injury, shape rings, genes, adhesion, wander and day period, cells, migration, ponds, ring namespace.
+
+Same state shape as 2D with `i = z·W·H + y·W + x`, channel-major cells, and a 49-word genome (lineage, `mu | sigma << 16`, motility gain, 45 words of 177 int8 weights; the controller is 11 → 8 → 9, adding the `SGZ` input and the `MZ` output). `MOT` packs three biased bytes. Matter conservation is exact and the energy residual is exactly zero, as in 2D.
+
+One step: **affinity** (92-tap 3D kernel, outside mass 0, divided by the full tap sum, so a wall cell sees what it would beside empty water), **flow** (27-point Sobel `/4` of `U` and mass with replicate padding at the walls; three displacement bytes), **transport**, **light**, **react**, tick.
+
+- **Transport.** Each source spreads `B`, `P`, `E` over the 27 cells covered by a box of half-width `hw = 32 + spread`, by three nested exact shares `share3(q, wx, wy, wz) = mulShareD(mulShareD(mulShareD(q, wx, D1), wy, D1), wz, D1)` with `D1 = 2·hw` (x, then y, then z). A source's stay is `q` minus the shares it sends to real cells; the portion aimed through a z wall stays, so nothing crosses `z = 0` or `z = D − 1`. The genome lottery scans 27 sources in the fixed order `k = (oz+1)·9 + (oy+1)·3 + (ox+1)`; a missing source has lot 0. A, C and S diffuse in six directions (sixth portions rotated by `draw(DIFF_ROT) % 6`); a direction that leaves the slab does not exist.
+- **Light.** `L(x, y, 0)` is the 2D surface light (`lightBase`, mode, season); under mass the next layer sees `L · T(m) >> 8` with `T(m) = ⌊256·lightK / (lightK + m)⌋` and `m` the capped post-transport `B + P` of the cell directly above. Empty water is lossless and `Lbuf` is derived each step, never state.
+- **React.** The 2D reaction order with `POOL_MAX3`; the `SGZ` sensor reads `S(below) − S(above)` and a missing neighbour reads the cell's own `S`. Mutation has 180 slots (177 weights, `mu`, `sigma`, motility gain).
+
+Bounds the slab relies on (`validateState` enforces the state side: matter ≤ `MATTER_MAX`, `E, S ≤ POOL_MAX3 = 2^27`, reserved genome bytes zero):
+
+| quantity | bound | why |
+|---|---|---|
+| affinity `conv` | ≤ 9624 · 16383 < 2^28 | taps ≤ 255, mass ≤ 16383, weights sum to 9624 |
+| Sobel numerators | `\|G\| ≤ 16 · 16383` (mass), `≤ 32 · 256 = 8192` (U, signed in [−256, 256]), `/4` after | 16 is the total smoothing weight per side; the signed U difference spans both sides, so `\|gU\| ≤ 2048` |
+| `(256−α)·gU`, `α·gM`, `dtQ·F` | ≤ 256 · 2048 = 2^19, ≤ 2^24, ≤ 2^28 | i32 safe (the 2D gU bound is 1024, the slab's is 2048) |
+| displacement bytes | `dmax = 64 − spread`, byte ∈ [spread, 128 − spread] (spread ∈ [0, 32]) | so `\|d\| + hw ≤ 96` |
+| transport weights | each `w ≤ D1 ≤ 128`, `Σ_o w(o) = D1` | |
+| `mulShareD` split form | `(q mod D1) · w < 2^14`, `(q / D1) · w ≤ q` | exact `⌊q·w/D1⌋`; the plain `q·w` overflows u32 for `E` near 2^27 |
+| shares sent by a source | Σ ≤ q | each nested floor is ≤ the real product and the real products sum to `q`; stay `= q − Σ` cannot wrap |
+| `inE` | ≤ 27 · 2^27 < 2^32 | `E ≤ 2^27` per source |
+| `inB`, `inP`, lottery `cum` | ≤ 2^26 | matter bound |
+| diffusion | six portions sum to `q`; `De·4 ≤ 1024`; `v ≤ 2^28 + 6` | inflow is six portions of neighbours ≤ 2^27 |
+| light | `L ≤ 255`, `T ≤ 256`, `L·T < 2^16`, `256·lightK ≤ 2^24` | |
+| `SGZ` input | `cap24(S)` difference · `signalGain ≤ 127` < 2^31 | as `SGX` |
+| `E` during react | ≤ 2^27 + 31 · 2^26 < 2^32 before each re-cap | `q ≤ B ≤ 2^26`, gaps ≤ 31 |
+| per-cell heat | 64-bit `(lo, hi)` on the GPU, exact number on the CPU | the entry-cap excess alone can reach 26 · 2^27 |
+| `LIN_LO` | `< N ≤ 2^24` | slab lineage ids are `(step + 1, cell)` with no namespace |
+
+`E` and `S` are re-capped at exactly the 2D sites (cell load, after respiration, after decomposition, after emission), with the excess exported as heat, so the invariant `E, S ≤ 2^27` holds after every step. `packages/sim-ref/test/step3d.test.ts` checks exact conservation over 200 random slabs, the walls, the light column and the neutral arm; `step3d-ops.test.ts` checks the hand examples and the z-mirror symmetry of the deterministic operators.
