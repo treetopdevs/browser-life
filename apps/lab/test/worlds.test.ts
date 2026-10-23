@@ -2,8 +2,8 @@
 // preset has a note and one family, every trait is read off the preset's own config, and no label, detail or note
 // leaks a config key, a file path or a code name into what a visitor reads.
 import { describe, expect, it } from "vitest";
-import { PRESETS, defaultConfig } from "@bl/schema";
-import { FAMILIES, FIRST_WORLDS, REGISTERED, START_HERE, WORLD_NOTES, byId, familyOf, worldDiff, worldStatus, worldTraits, type Lever } from "../src/worlds.ts";
+import { PRESETS, defaultConfig, presetConfig, wounds } from "@bl/schema";
+import { FAMILIES, FIRST_WORLDS, REGISTERED, START_HERE, WEATHER, WORLD_NOTES, byId, familyOf, weatherDoes, weatherLevel, worldDiff, worldStatus, worldTraits, type Lever } from "../src/worlds.ts";
 
 const ids = PRESETS.map((p) => p.id);
 const preset = (id: string) => {
@@ -161,5 +161,104 @@ describe("differences", () => {
 
   it("places every world's base in a family too", () => {
     for (const note of Object.values(WORLD_NOTES)) if (note.base) expect(familyOf(note.base)).toBeDefined();
+  });
+});
+
+// Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md): the breeder's three weathers, one control, one added trait per step.
+describe("the breeder's weather", () => {
+  const INJURY_KEYS = ["injuryPeriod", "injuryRadius", "injuryProb", "injuryShell"] as const;
+  /** A preset's config with the seed and the four injury keys taken out: what must be the same in every weather. */
+  const withoutWeather = (id: string) => {
+    const { seed: _seed, ...rest } = presetConfig(preset(id), 0) as unknown as Record<string, unknown>;
+    for (const k of INJURY_KEYS) delete rest[k];
+    return rest;
+  };
+
+  it("places both wounded worlds in the breeder's family, right after it, each with a note, a name of its own and a one-step base", () => {
+    const wild = FAMILIES.find((f) => f.id === "wild")!;
+    const at = wild.ids.indexOf("breeder");
+    expect(wild.ids.slice(at, at + 3)).toEqual(["breeder", "breeder-wounded", "breeder-wounded-shell"]);
+    expect(wild.why).toContain("cells that store a little membrane can sit out the wounds that kill everything else");
+    for (const id of ["breeder-wounded", "breeder-wounded-shell"]) {
+      expect(familyOf(id)?.id, id).toBe("wild");
+      expect(worldStatus(id)).toBe("sandbox");
+      expect(WORLD_NOTES[id].seen.state).toBe("observed");
+    }
+    expect(WORLD_NOTES["breeder-wounded"].base).toBe("breeder");
+    expect(WORLD_NOTES["breeder-wounded-shell"].base).toBe("breeder-wounded");
+    // They sit after the pinned prefix and are appended after the breeder, so no earlier world moves.
+    expect(ids.indexOf("breeder-wounded")).toBe(ids.indexOf("breeder") + 1);
+    expect(ids.indexOf("breeder-wounded-shell")).toBe(ids.indexOf("breeder") + 2);
+    expect(FIRST_WORLDS.has("breeder-wounded")).toBe(false);
+    expect(new Set(["The breeder", "The breeder (wounded)", "The breeder (wounded, shells)"].map((n) => PRESETS.filter((p) => p.name === n).length))).toEqual(new Set([1]));
+  });
+
+  it("holds every weather to the breeder's config plus only the injury keys: the worlds differ in their weather and nothing else", () => {
+    expect(WEATHER.base).toBe("breeder");
+    expect(WEATHER.levels[0].id).toBe(WEATHER.base);
+    const base = withoutWeather(WEATHER.levels[0].id);
+    for (const level of WEATHER.levels) {
+      expect(ids, level.id).toContain(level.id);
+      expect(withoutWeather(level.id), level.id).toEqual(base);
+      expect(preset(level.id).init, level.id).toEqual(preset(WEATHER.base).init);
+    }
+    // And the injury keys are the survey's heavy dose, with and without the shell: the exported helper builds the same three keys.
+    const cfgOf = (id: string) => presetConfig(preset(id), 0);
+    expect(INJURY_KEYS.filter((k) => cfgOf("breeder")[k] !== undefined)).toEqual([]);
+    expect(cfgOf("breeder-wounded")).toMatchObject(wounds(3, 3250));
+    expect(cfgOf("breeder-wounded").injuryShell).toBeUndefined();
+    expect(cfgOf("breeder-wounded-shell")).toMatchObject({ ...wounds(3, 3250), injuryShell: 2 });
+    // The control is a view of the preset id: it knows these three and no other world.
+    for (const level of WEATHER.levels) expect(weatherLevel(level.id)).toBe(level);
+    for (const id of ids.filter((x) => !WEATHER.levels.some((l) => l.id === x))) expect(weatherLevel(id), id).toBeUndefined();
+    expect(weatherLevel(null)).toBeUndefined();
+  });
+
+  it("adds the shell trait only with a shell in the config, carrying its number, and nothing else changes between steps", () => {
+    const shellTrait = (id: string) => labelsOf("wounds", id).filter((t) => t.label.includes("membrane"));
+    expect(shellTrait("breeder")).toEqual([]);
+    expect(shellTrait("breeder-wounded")).toEqual([]);
+    expect(shellTrait("breeder-wounded-shell")).toEqual([{ lever: "wounds", label: "A wounded cell holding at least 2 membrane survives", detail: "the wound takes the 2 membrane and spares the cell; a cell with less is lost" }]);
+    // No other world carries it: the trait is read off injuryShell, which only the shell world sets.
+    for (const p of PRESETS) expect(worldTraits(p).some((t) => t.label.includes("membrane survives")), p.id).toBe(p.id === "breeder-wounded-shell");
+    // Each step of the chain is exactly one added trait: the wounds, then the shell.
+    const step = (world: string, base: string) => worldDiff(preset(world), preset(base));
+    expect(step("breeder-wounded", "breeder")).toMatchObject({ changed: [], removed: [] });
+    expect(step("breeder-wounded", "breeder").added.map((t) => t.label)).toEqual(["Recurring wounds, each cell hit about once per 3,250 steps"]);
+    expect(step("breeder-wounded-shell", "breeder-wounded")).toMatchObject({ changed: [], removed: [] });
+    expect(step("breeder-wounded-shell", "breeder-wounded").added.map((t) => t.label)).toEqual(["A wounded cell holding at least 2 membrane survives"]);
+    expect(labelsOf("wounds", "breeder-wounded")[0].detail).toBe("discs of radius 3, landing every 13 steps");
+  });
+
+  it("says what each weather does in the config's own numbers, and keeps every figure of a run out of the fixed text", () => {
+    const [calm, wounded, shelled] = WEATHER.levels.map((l) => weatherDoes(preset(l.id)));
+    expect(calm).toBe("No wounds of its own: the only wounds are the ones you make with the Wound tool.");
+    expect(wounded).toContain("discs of radius 3, each cell hit about once per 3,250 steps, which is about 1.5 hits per cell between cycles");
+    expect(wounded).toContain("A hit cell is cleared: its body turns to waste.");
+    expect(shelled).toContain("A cell holding at least 2 membrane survives a hit and spends 2 of its membrane; any other hit cell is cleared.");
+    // The shell level is read on its own (a visitor may meet it first): it says the holes itself, not "the same holes", and shares the wounded level's sentence.
+    expect(shelled).toContain("discs of radius 3, each cell hit about once per 3,250 steps, which is about 1.5 hits per cell between cycles");
+    expect(shelled).not.toMatch(/the same/i);
+    // The numbers come from the config: a different dose or shell would read differently.
+    const dose = presetConfig(preset("breeder-wounded"), 0);
+    expect(wounded).toContain(`radius ${dose.injuryRadius}`);
+    expect(shelled).toContain(`${presetConfig(preset("breeder-wounded-shell"), 0).injuryShell} membrane`);
+    expect(`${calm} ${wounded} ${shelled}`).not.toMatch(jargon);
+    // "Why it matters" is the mechanism only: no digit in it, so no figure from a run goes stale in fixed text (dated figures live in the notes).
+    for (const level of WEATHER.levels) {
+      expect(level.matters, level.id).not.toMatch(/\d/);
+      // Fixed text names things by the words on the page: the menu's label, not "pressure".
+      expect(level.matters, level.id).not.toMatch(/pressure/i);
+      expect(`${level.word} ${level.gist} ${level.matters}`, level.id).not.toMatch(jargon);
+    }
+    expect(`${WEATHER.legend} ${WEATHER.lead}`).not.toMatch(jargon);
+    // The shell level says where to watch: both places carry the readout, under the headings the page has.
+    const shellMatters = WEATHER.levels.find((l) => l.id === "breeder-wounded-shell")!.matters;
+    expect(shellMatters).toContain("Cells wearing a shell");
+    expect(shellMatters).toContain("How it’s going");
+    expect(shellMatters).toContain("Who’s living here?");
+    // Nothing the control or the catalogue says calls the cells builders, or names a storm.
+    const text = [WEATHER.legend, WEATHER.lead, ...WEATHER.levels.flatMap((l) => [l.word, l.gist, l.matters]), calm, wounded, shelled, ...["breeder-wounded", "breeder-wounded-shell"].map((id) => `${preset(id).name} ${WORLD_NOTES[id].asks} ${WORLD_NOTES[id].look} ${WORLD_NOTES[id].seen.text}`)].join(" ");
+    expect(text).not.toMatch(/builder|storm/i);
   });
 });

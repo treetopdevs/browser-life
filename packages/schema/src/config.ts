@@ -327,6 +327,15 @@ export interface WorldConfig {
   injuryRadius?: number;
   /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
   injuryProb?: number;
+  /**
+   * Polymer shell (polymer-world line, optional, valid only with the three injury
+   * keys; integer 1..65535). At an injury step a wounded cell whose polymer, after
+   * the passive decays, is at least `injuryShell` loses exactly that much polymer
+   * to waste C (heat += injuryShell * (eP - eC)) and keeps its B, E, motility and
+   * lineage; a cell with less polymer is lesioned as above. Absent = every wound
+   * is a lesion. Absent from `defaultConfig()` so existing configs hash identically.
+   */
+  injuryShell?: number;
 
   /**
    * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
@@ -386,6 +395,15 @@ export interface WorldConfig {
   kGene?: number;
   /** Share of mutation events that flip a gene bit, /2^32 (0..2^32-1), when `genes` is set. */
   geneFlip?: number;
+  /**
+   * Gene v2 (docs/evolution-game-brainstorm-2026-10-16.md "Gene v2"): a floor (0..127) on the
+   * rectified BUILD output of a cell that carries the build gene, in its building capacity and its
+   * catalysis work term, so a carrier builds whether or not its weights say so. Non-carriers and
+   * the decomposition gene are unchanged. Only with `genes`, and only the "ladder" set has the
+   * build gene, so under "decomp" it is accepted and changes nothing; absent or 0 is Gene v1 to
+   * the bit, and the floored output is still <= 127, so no bound changes.
+   */
+  geneDrive?: number;
 }
 
 /**
@@ -736,7 +754,7 @@ export function validateConfig(c: WorldConfig): string[] {
 
 function validateGenes(c: WorldConfig): string[] {
   const keys = [c.genes, c.kGene, c.geneFlip];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) return c.geneDrive === undefined ? [] : ["geneDrive is set only with genes"];
   if (keys.some((k) => k === undefined)) return ["genes, kGene and geneFlip are set together"];
   const errs: string[] = [];
   if (!GENE_SETS.includes(c.genes as GeneSet)) errs.push(`genes must be one of ${GENE_SETS.join(", ")}`);
@@ -744,6 +762,8 @@ function validateGenes(c: WorldConfig): string[] {
   // Bounded like kMaint: mulFrac(B, kGene, 16) is exact for kGene < 2^16 and B <= MATTER_MAX.
   if (!int(c.kGene, 0, 65535)) errs.push("kGene must be an integer in 0..65535");
   if (!int(c.geneFlip, 0, 2 ** 32 - 1)) errs.push("geneFlip must be an integer in 0..2^32-1");
+  // A floor on a rectified output, so it stays inside the outputs' own 0..127.
+  if (c.geneDrive !== undefined && !int(c.geneDrive, 0, 127)) errs.push("geneDrive must be an integer in 0..127");
   if (c.shapeReach !== undefined) errs.push("genes and shapeReach are exclusive (both use PARAM1 byte 3)");
   if (c.neutral) errs.push("genes are not defined with the neutral shadow (the reference genome has none)");
   // Declared cells mutate at a cell's birth through mutateInPlace alone (mutRate 0), so no flip could ever happen.
@@ -782,7 +802,9 @@ export const INJURY_MAX_RADIUS = 16;
 
 function validateInjury(c: WorldConfig): string[] {
   const keys = [c.injuryPeriod, c.injuryRadius, c.injuryProb];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) {
+    return c.injuryShell === undefined ? [] : ["injuryShell needs injuryPeriod, injuryRadius and injuryProb"];
+  }
   if (keys.some((k) => k === undefined)) return ["injuryPeriod, injuryRadius and injuryProb are set together"];
   const errs: string[] = [];
   const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
@@ -790,6 +812,7 @@ function validateInjury(c: WorldConfig): string[] {
   const maxR = Math.min(INJURY_MAX_RADIUS, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
   if (!int(c.injuryRadius, 0, maxR)) errs.push(`injuryRadius must be an integer in 0..${maxR} (a disc must not wrap onto itself)`);
   if (!int(c.injuryProb, 1, 2 ** 32 - 1)) errs.push("injuryProb must be an integer in 1..2^32-1");
+  if (c.injuryShell !== undefined && !int(c.injuryShell, 1, 65535)) errs.push("injuryShell must be an integer in 1..65535");
   return errs;
 }
 

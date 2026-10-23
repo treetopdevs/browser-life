@@ -17,6 +17,7 @@ import {
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
+import { goldenCases } from "@bl/sim-gpu";
 import { RefSim, applyLesion } from "@bl/sim-ref";
 
 // Recurring injury (WorldConfig.injuryPeriod; docs/sandbox-ownership.md).
@@ -149,5 +150,172 @@ describe("recurring injury", () => {
     // and the world survived them.
     expect(cleared).toBeGreaterThan(100);
     expect(BigInt(totalsOf(cfg, sim.state.cells).B) > 0n).toBe(true);
+  }, 120_000);
+});
+
+// Polymer shell (WorldConfig.injuryShell; runs/evolution-game/polymer-world/rule.md).
+
+const wound = { injuryPeriod: 5, injuryRadius: 3, injuryProb: Math.floor(2 ** 32 / 60) } as const;
+
+/**
+ * Steps `sim` once and checks every cell against what the shell rule says. The pre-injury value of
+ * each cell comes from the same step of a config without injury (a wound only touches its own cell's
+ * output, after the passive decays), so the post-decay P that the threshold reads is exact.
+ */
+function stepChecked(sim: RefSim, cfg: WorldConfig, plain: WorldConfig): { shelled: number; lesioned: number } {
+  const shell = cfg.injuryShell!;
+  const step = sim.state.step;
+  const nInj = new RefSim({ ...cloneState(sim.state), cfg: plain });
+  nInj.step();
+  const pre = nInj.state;
+  const heat0 = sim.state.heatOut;
+  sim.step();
+  const post = sim.state;
+  const injuryStep = (step + 1) % cfg.injuryPeriod! === 0;
+  const Wd = cfg.tileW * (cfg.tilesX ?? 1);
+  const n = post.cells.length / 7;
+  let shelled = 0, lesioned = 0, dHeat = 0n;
+  for (let i = 0; i < n; i++) {
+    const g = (st: WorldState, ch: number) => st.cells[ch * n + i];
+    const hit = injuryStep && sim.injured(i % Wd, Math.floor(i / Wd), step);
+    if (!hit) {
+      for (const ch of [CH.A, CH.B, CH.C, CH.P, CH.E, CH.S]) expect(g(post, ch)).toBe(g(pre, ch));
+      continue;
+    }
+    const P = g(pre, CH.P), B = g(pre, CH.B), E = g(pre, CH.E), C = g(pre, CH.C);
+    if (P >= shell) {
+      shelled++;
+      expect(g(post, CH.P)).toBe(P - shell);
+      expect(g(post, CH.C)).toBe(C + shell);
+      expect(g(post, CH.B)).toBe(B);
+      expect(g(post, CH.E)).toBe(E);
+      expect(g(post, CH.MOT)).toBe(g(pre, CH.MOT));
+      // The lineage is kept unconditionally, including when the shell took the cell's last polymer (B = 0, P = shell).
+      expect(post.genome[G.LIN_HI * n + i]).toBe(pre.genome[G.LIN_HI * n + i]);
+      expect(post.genome[G.LIN_LO * n + i]).toBe(pre.genome[G.LIN_LO * n + i]);
+      dHeat += BigInt(shell * (cfg.eP - cfg.eC));
+    } else {
+      if (B + P > 0) lesioned++;
+      expect(g(post, CH.B) + g(post, CH.P) + g(post, CH.E)).toBe(0);
+      expect(g(post, CH.C)).toBe(C + B + P);
+      expect(post.genome[G.LIN_HI * n + i] | post.genome[G.LIN_LO * n + i]).toBe(0);
+      dHeat += BigInt(B * (cfg.eB - cfg.eC) + P * (cfg.eP - cfg.eC) + E);
+    }
+  }
+  expect(post.heatOut - heat0).toBe(pre.heatOut - heat0 + dHeat);
+  return { shelled, lesioned };
+}
+
+describe("polymer shell config", () => {
+  it("is absent from defaultConfig and validated as part of the injury keys", () => {
+    expect("injuryShell" in defaultConfig()).toBe(false);
+    expect(validateConfig(defaultConfig({ ...wound, injuryShell: 1 }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ ...wound, injuryShell: 65535 }))).toEqual([]);
+    for (const bad of [0, -1, 65536, 1.5, Number.NaN]) expect(validateConfig(defaultConfig({ ...wound, injuryShell: bad })).length).toBeGreaterThan(0);
+    // Only valid with the three injury keys.
+    expect(validateConfig(defaultConfig({ injuryShell: 4 })).length).toBeGreaterThan(0);
+    expect(validateConfig(defaultConfig({ injuryPeriod: 5, injuryShell: 4 })).length).toBeGreaterThan(0);
+    expect(validateConfig(defaultConfig({ injuryPeriod: 5, injuryRadius: 3, injuryShell: 4 })).length).toBeGreaterThan(0);
+  });
+});
+
+describe("polymer shell", () => {
+  it("a shell that is never reached gives exactly plain injury", () => {
+    const a = new RefSim(cloneState(world(defaultConfig({ ...physics, ...wound, injuryShell: 65535 }))));
+    const b = new RefSim(cloneState(world(defaultConfig({ ...physics, ...wound }))));
+    for (let k = 0; k < 300; k++) {
+      a.step();
+      b.step();
+      expect(Array.from(a.state.cells)).toEqual(Array.from(b.state.cells));
+      expect(Array.from(a.state.genome)).toEqual(Array.from(b.state.genome));
+      expect(a.state.heatOut).toBe(b.state.heatOut);
+    }
+    // The run did not hold 65535 polymer anywhere.
+    for (let i = 0; i < N; i++) expect(a.state.cells[CH.P * N + i]).toBeLessThan(65535);
+  }, 120_000);
+
+  it("a wounded cell with P >= s keeps B, E and lineage and loses exactly s polymer to C; with P < s it is lesioned", () => {
+    const cfg = defaultConfig({ ...physics, injuryPeriod: 1, injuryRadius: 0, injuryProb: 2 ** 32 - 1, injuryShell: 3 });
+    const plain = defaultConfig(physics);
+    const st = world(cfg);
+    // Plant polymer on body cells: some above the shell, some below it, some none.
+    let planted = 0;
+    for (let i = 0; i < N; i++)
+      if (st.cells[CH.B * N + i] > 0) {
+        st.cells[CH.P * N + i] = [0, 1, 2, 3, 4, 40][planted++ % 6];
+      }
+    const sim = new RefSim(st);
+    const { shelled, lesioned } = stepChecked(sim, cfg, plain);
+    expect(planted).toBeGreaterThan(20);
+    expect(shelled).toBeGreaterThan(5);
+    expect(lesioned).toBeGreaterThan(5);
+  });
+
+  it("a shell that takes the last polymer of a B = 0 cell keeps the lineage; one polymer short, the cell is lesioned and cleared", () => {
+    const cfg = defaultConfig({ ...physics, kPDecay: 0, injuryPeriod: 1, injuryRadius: 0, injuryProb: 2 ** 32 - 1, injuryShell: 3 });
+    const plain = defaultConfig({ ...physics, kPDecay: 0 });
+    const st = world(cfg);
+    const planted: { i: number; P: number; hi: number; lo: number; E: number }[] = [];
+    for (let i = 0; i < N && planted.length < 12; i++) {
+      if (st.cells[CH.B * N + i] === 0 || (st.genome[G.LIN_HI * N + i] | st.genome[G.LIN_LO * N + i]) === 0) continue;
+      const P = planted.length % 2 === 0 ? 3 : 2; // exactly the shell, then one short
+      st.cells[CH.B * N + i] = 0;
+      st.cells[CH.P * N + i] = P;
+      st.cells[CH.E * N + i] = 7;
+      planted.push({ i, P, hi: st.genome[G.LIN_HI * N + i], lo: st.genome[G.LIN_LO * N + i], E: 7 });
+    }
+    expect(planted.length).toBe(12);
+    const sim = new RefSim(st);
+    stepChecked(sim, cfg, plain);
+    for (const c of planted) {
+      const { cells, genome } = sim.state;
+      if (c.P === 3) {
+        // The step itself may grow B or add E from the cell's own chemistry; stepChecked pins those exactly. Here: P is gone, the body is not cleared.
+        expect(cells[CH.P * N + c.i]).toBe(0);
+        expect(cells[CH.E * N + c.i]).toBeGreaterThan(0);
+        expect(genome[G.LIN_HI * N + c.i]).toBe(c.hi);
+        expect(genome[G.LIN_LO * N + c.i]).toBe(c.lo);
+      } else {
+        expect([cells[CH.B * N + c.i], cells[CH.P * N + c.i], cells[CH.E * N + c.i]]).toEqual([0, 0, 0]);
+        expect(genome[G.LIN_HI * N + c.i] | genome[G.LIN_LO * N + c.i]).toBe(0);
+      }
+    }
+  });
+
+  it("conserves matter and closes the energy ledger over a multi-step run, with both branches occurring", () => {
+    const cfg = defaultConfig({ ...physics, injuryPeriod: 7, injuryRadius: 2, injuryProb: Math.floor(2 ** 32 / 150), injuryShell: 2 });
+    const sim = new RefSim(cloneState(world(cfg)));
+    const t0 = totalsOf(cfg, sim.state.cells);
+    let shelled = 0, lesioned = 0;
+    const plain = defaultConfig(physics);
+    for (let k = 0; k < 400; k++) {
+      // The first 120 steps also check every cell against the rule (both branches occur early, while polymer is still held).
+      if (k < 120) {
+        const r = stepChecked(sim, cfg, plain);
+        shelled += r.shelled;
+        lesioned += r.lesioned;
+      } else sim.step();
+      expect(totalsOf(cfg, sim.state.cells).matter).toBe(t0.matter);
+      expect(ledgerResidual(t0, sim.state)).toBe(0n);
+    }
+    expect(shelled).toBeGreaterThan(0);
+    expect(lesioned).toBeGreaterThan(0);
+  }, 120_000);
+
+  it("both branches occur in the injury-shell golden run, and each cell follows the rule", () => {
+    const gc = goldenCases().find((g) => g.name === "injury-shell")!;
+    expect(gc.cfg.injuryShell).toBeGreaterThan(0);
+    const { injuryPeriod, injuryRadius, injuryProb, injuryShell, ...rest } = gc.cfg;
+    void injuryPeriod; void injuryRadius; void injuryProb; void injuryShell;
+    const plain = rest as WorldConfig;
+    const sim = new RefSim(cloneState(gc.init(gc.cfg)));
+    let shelled = 0, lesioned = 0;
+    for (let k = 0; k < gc.steps; k++) {
+      const r = stepChecked(sim, gc.cfg, plain);
+      shelled += r.shelled;
+      lesioned += r.lesioned;
+    }
+    expect(shelled).toBeGreaterThan(0);
+    expect(lesioned).toBeGreaterThan(0);
   }, 120_000);
 });

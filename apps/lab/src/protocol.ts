@@ -126,6 +126,12 @@ export interface CensusMsg {
   deaths: number;
   maxGen: number;
   mutations: number;
+  /**
+   * Display only, present only in a world with a polymer shell (`WorldConfig.injuryShell`; docs/pond-keeper-v3-2026-10-22.md,
+   * section 3): the living cells at this census, and how many of them hold at least the shell's worth of membrane. A snapshot's
+   * eligibility, not a forecast. Not part of any observer state, checkpoint or digest.
+   */
+  shell?: { wearing: number; living: number };
 }
 
 export interface ProbeMsg {
