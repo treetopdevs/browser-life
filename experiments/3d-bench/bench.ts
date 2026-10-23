@@ -157,6 +157,27 @@ function pickT2(a: number | undefined, b: number): number {
   return a !== undefined && Math.abs(b / a - 1) <= 0.10 ? a : b;
 }
 
+// ---------- slab sweep (--slab-sweep, added 2026-10-23 after the R=3 re-rule): slab 256x256x8 at R=3, tuned shapes ----------
+if (Deno.args.includes("--slab-sweep")) {
+  const shapes: Array<[[number, number, number], number]> = [[[8, 8, 4], 1], [[8, 4, 4], 1], [[4, 4, 4], 1], [[8, 8, 2], 1], [[16, 8, 2], 1], [[8, 8, 8], 1]];
+  const sv: Variant[] = [];
+  for (const [wg, b] of shapes) {
+    const sp = wg[0] * wg[1] * wg[2] >= 512 ? SPLIT : undefined;
+    const label = `R=3 wg${wg.join("x")} b${b}${sp ? " split" : ""}`;
+    await check(`slab 32x32x8 ${label}`, 32, 32, 8, 3, wg, b, sp);
+    sv.push(await makeAff3(device, `slab 256x256x8 ${label}`, { ...o(256, 256, 8, 3, b, wg), split: sp }, fillSlab, env));
+  }
+  sv.push(await makeAff3(device, "64^3 R=3 wg8x8x4 b1 (re-ruled shape)", o(64, 64, 64, 3, 1, [8, 8, 4]), fill64, env));
+  const sres = await runInterleaved(device, [...(v2A ? [v2A, v2B] : [v2B]), ...sv], TRIALS, ITERS, env.timestamps ? "timestamp" : "wall");
+  const sA = v2A ? sres[0].med : undefined, sB = sres[v2A ? 1 : 0].med;
+  const base = pickT2(sA, sB);
+  console.log("slab sweep T2 =", us(base), "us", sA !== undefined ? `(A ${us(sA)}, B ${us(sB)}, using ${base === sA ? "A" : "B"})` : "(B)");
+  console.log("| variant | median us | p90/p10 | ratio vs T2 | predicted bar |");
+  console.log("|---|---|---|---|---|");
+  for (const r of sres.slice(v2A ? 2 : 1)) console.log(`| ${r.name} | ${us(r.med)} | ${r.spread.toFixed(2)} | ${(r.med / base).toFixed(2)} | ${((r.taps * r.cells) / (224 * 65536)).toFixed(2)} |`);
+  Deno.exit(0);
+}
+
 if (Deno.args.includes("--sweep-only") || Deno.args.includes("--sweep")) {
   const cfgs: Array<[number, [number, number, number], number]> = [];
   for (const R of [3, 4]) for (const [wg, b] of [[[4, 4, 4], 1], [[8, 4, 4], 1], [[8, 8, 4], 1], [[8, 8, 2], 1], [[16, 4, 4], 1], [[16, 8, 2], 1], [[16, 16, 1], 1], [[4, 4, 4], 2], [[8, 4, 2], 2], [[8, 8, 8], 1]] as Array<[[number, number, number], number]>) cfgs.push([R, wg, b]);

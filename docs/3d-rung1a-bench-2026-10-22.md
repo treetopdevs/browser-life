@@ -199,3 +199,19 @@ Reading: the plan's primary geometry (the specified shader, and its split twin) 
 ## Amendment 2026-10-23: re-ruled to GO at R=3
 
 After reading the results above, the user re-ruled rung 1a to **go with R=3**, using the plan's ablation-3 shape (workgroup 8x8x4, block 1, one tile declaration). This is a decision made after seeing the data, not an outcome of the pre-stated rule, which still reads STOP for the primary geometry. Grounds: that shape passes its 1.6x bar on the idle M3 Pro in Deno (1.09x, 108 us) and in Chrome on the M1 Max (0.50-0.79x), fails only in Deno on the M1 Max while that machine was at load average ~500 (2.04x, 166 us), and in absolute terms costs about one of today's 2D affinity passes. R=4 stays out. The 3D line carries R=3 and this workgroup shape into rung 1b.
+
+### Slab at R=3 with tuned shapes (M3 Pro, Deno, 2026-10-23)
+
+Run after the re-rule, because rung 1b is the slab. `bench.ts --slab-sweep`; raw log `data/deno-m3pro-slab.log`. Each shape matched the CPU loop exactly at 32x32x8 before timing (a mismatch throws; the run exited 0). T2 = B = 97.9 us (A 112.5 us, more than 10% apart).
+
+| slab 256x256x8, R=3 | median us | ratio vs T2 (bar 3.3) |
+|---|---|---|
+| wg 8x8x4 block 1 (re-ruled shape) | 216.7 | **2.21 PASS** |
+| wg 8x4x4 block 1 | 230.1 | 2.35 PASS |
+| wg 8x8x2 block 1 | 246.1 | 2.51 PASS |
+| wg 4x4x4 block 1 | 278.7 | 2.85 PASS |
+| wg 8x8x8 block 1 split | 343.7 | 3.51 FAIL |
+| wg 16x8x2 block 1 | 2967.7 | 30.3 (cliff) |
+| reference: 64^3 R=3 wg 8x8x4 block 1 | 107.8 | 1.10 (bar 1.6) |
+
+So the slab at R=3 in the re-ruled shape costs about 0.22 ms per affinity pass, about 2.2 of today's, for twice the cells of 64^3.
