@@ -257,9 +257,11 @@ test.describe("Caddy", () => {
     expect(plain.status()).toBe(200);
     expect(ogUrl(await plain.text()), "an unknown world gets the plain lab").toBe(`${ORIGIN}/lab/`);
 
-    const bare = await get(request, "/lab");
-    expect(bare.status()).toBe(308);
-    expect(bare.headers().location).toBe("/lab/");
+    for (const page of ["lab", "garden"]) {
+      const bare = await get(request, `/${page}`);
+      expect(bare.status(), `/${page}`).toBe(308);
+      expect(bare.headers().location, `/${page}`).toBe(`/${page}/`);
+    }
     const copy = await get(request, `/lab/world/${world}/`);
     expect(copy.status()).toBe(308);
     expect(copy.headers().location).toBe(`/lab/?world=${world}`);

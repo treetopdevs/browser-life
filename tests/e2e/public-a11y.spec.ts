@@ -21,11 +21,8 @@ test.skip(({ browserName }) => browserName !== "chromium", "accessibility releas
 
 const FIXTURE = contractFixture as Record<string, any>;
 const SITEMAP = fileURLToPath(new URL("../../apps/lab/public/sitemap.xml", import.meta.url));
-/** Every page the sitemap lists, as paths, plus the shared garden (public but unlisted). */
-const ROUTES = [
-  ...[...readFileSync(SITEMAP, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname),
-  "/garden/",
-];
+/** Every page the sitemap lists, as paths (the shared garden among them). */
+const ROUTES = [...readFileSync(SITEMAP, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
 /** What an unknown path answers: the not-found page, with 404 (criterion 6). */
 const NOT_FOUND = "/no-such-page/";
 /** The island page is where Join in sends people; it is unlisted (noindex) but public. So is the not-found page. */
