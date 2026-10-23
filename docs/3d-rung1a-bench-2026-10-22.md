@@ -195,3 +195,7 @@ Harness changes made for this run (and after the pre-commit Codex Sol review):
 | 27-source transport stub / real 2D transport | - | 0.54 (103.5 vs 193.2 us) | - |
 
 Reading: the plan's primary geometry (the specified shader, and its split twin) STOPs on both machines, and 64^3 R=4 fails everywhere. The plan's own ablation 3, the 256-thread 8x8x4 block-1 shape at R=3, passes on the M3 Pro in Deno (1.09x) and in Chrome on the M1 Max (0.50-0.79x), and fails only in Deno on the loaded M1 Max (2.04x). So: **primary geometry STOP; planned-ablation shape passes on two of three stack/machine pairs.** In absolute terms, 64^3 at R=3 costs about one of today's affinity passes (0.1-0.2 ms) and R=4 costs 0.7-3 ms. Whether to re-rule to "R=3, 8x8x4 block 1, go" is the user's call.
+
+## Amendment 2026-10-23: re-ruled to GO at R=3
+
+After reading the results above, the user re-ruled rung 1a to **go with R=3**, using the plan's ablation-3 shape (workgroup 8x8x4, block 1, one tile declaration). This is a decision made after seeing the data, not an outcome of the pre-stated rule, which still reads STOP for the primary geometry. Grounds: that shape passes its 1.6x bar on the idle M3 Pro in Deno (1.09x, 108 us) and in Chrome on the M1 Max (0.50-0.79x), fails only in Deno on the M1 Max while that machine was at load average ~500 (2.04x, 166 us), and in absolute terms costs about one of today's 2D affinity passes. R=4 stays out. The 3D line carries R=3 and this workgroup shape into rung 1b.
