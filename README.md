@@ -104,6 +104,8 @@ Either dossier renders as a static panel, an HTML fragment ready to publish as a
 deno run -A tools/report-html.ts lineage dossier.json --out dossier.html
 ```
 
+The 3D slab (rung 1b, `docs/3d-rung1b-plan-2026-10-23.md`) is headless only: `--preset slab-spots` runs the 256 x 256 x 8 slab on `GpuSim3` from step 0 and writes a bundle with `layers.tsv` (the role buffer summed per layer) beside the usual files. `deno run -A --no-lock tools/slab-screen.ts --out DIR --mu M --sigma S --light-k K` runs the depth check's twelve histories (skipping finished ones), and `tools/slab-readout.ts --out DIR` applies the fixed readout to them (`docs/3d-rung1b-m5-plan.md`).
+
 ### Archipelago
 
 ```bash
