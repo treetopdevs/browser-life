@@ -26,6 +26,7 @@ import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@
 import { continuationError, decodeArtifact, immigrantError, runExperiment, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { InterventionError } from "./interventions.ts";
 import { observationDigests } from "./stitch.ts";
+import { IslandBackoff, islandDelay } from "./island-backoff.ts";
 
 /** What this island's code can run, sent as the JSON body of every
  * `POST /api/next`. The coordinator offers segments and verify tasks of a
@@ -437,6 +438,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   const log = opt.log ?? (() => {});
   const base = opt.coordinator.replace(/\/$/, "");
   const signal = opt.signal;
+  const backoff = new IslandBackoff();
   // An engine without `AbortSignal.reason` (none that has WebGPU) carries no reason to match by identity.
   const noReason = !!signal && !("reason" in signal);
   // A fetch or body read aborted by `signal` rethrows as the signal's own reason (not every engine does), so
@@ -458,7 +460,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       ({ id, token } = opt.identity);
     } else {
       try {
-        const joined = await fetch(`${base}/api/islands`, {
+        const joinRequest: RequestInit = {
           method: "POST",
           headers: { "content-type": "application/json" },
           // The coordinator only offers a segment to an island whose declared
@@ -471,7 +473,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
           // points, past every origin rule: a join with a token follows none.
           ...(opt.gardenToken ? { redirect: "manual" as const } : {}),
           signal,
-        });
+        };
+        const joined = await backoff.request(() => fetch(`${base}/api/islands`, joinRequest), signal);
         if (!joined.ok) throw new Error(await joinFailure(joined, opt.gardenToken));
         ({ id, token } = await joinAnswer(joined, opt.gardenToken));
       } catch (e) {
@@ -482,9 +485,10 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     stopIfAborted();
     opt.onJoined?.({ id, token });
     const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;
-    const call = async <T>(path: string, init: RequestInit = {}, raw = false): Promise<T> => {
+    const call = async <T>(path: string, init: RequestInit = {}, raw = false, retrySignal = signal): Promise<T> => {
       try {
-        const res = await fetch(`${base}${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } });
+        const request = { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } };
+        const res = await backoff.request(() => fetch(`${base}${path}`, request), retrySignal);
         if (!res.ok) throw new HttpError(res.status, `${init.method ?? "GET"} ${path.split("?")[0]}: ${res.status} ${await res.text()}`);
         const ct = res.headers.get("content-type") ?? "";
         return (await (ct.includes("json") && !raw ? res.json() : res.arrayBuffer())) as T;
@@ -496,8 +500,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     };
     // `abortable`: `/next` and heartbeats only. A complete, reject or fail, once
     // sent, is waited for: the island cannot know whether the coordinator applied it.
-    const postJson = <T>(path: string, body: unknown, abortable = false) =>
-      call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), ...(abortable ? { signal } : {}) });
+    const postJson = <T>(path: string, body: unknown, abortable = false, attemptSignal = signal) =>
+      call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), ...(abortable ? { signal: attemptSignal } : {}) }, false, attemptSignal);
 
     log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
     let waiting = false;
@@ -529,12 +533,23 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       const refusal = specRefusal(task.spec);
       if (refusal) throw new Error(`refusing ${seg.run} #${seg.index}: ${refusal}`);
       log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);
-      const beat = setInterval(() => {
-        if (signal?.aborted) return;
-        postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }, true).catch((e) => {
-          if (!stopped(e)) log(`  heartbeat: ${e.message}`);
-        });
-      }, opt.heartbeatMs ?? 60_000);
+      // One task-scoped heartbeat worker: no overlapping attempts, and no
+      // delayed retry can escape task teardown or ignore the shared cooldown.
+      const heartbeat = new AbortController();
+      const stopHeartbeat = () => heartbeat.abort();
+      if (signal?.aborted) stopHeartbeat();
+      else signal?.addEventListener("abort", stopHeartbeat, { once: true });
+      const beat = (async () => {
+        while (!heartbeat.signal.aborted) {
+          try {
+            await islandDelay(opt.heartbeatMs ?? 60_000, heartbeat.signal);
+            await postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }, true, heartbeat.signal);
+          } catch (e) {
+            if (heartbeat.signal.aborted) break;
+            log(`  heartbeat: ${(e as Error).message}`);
+          }
+        }
+      })();
       try {
         let start: WorldState | undefined;
         let observer: ObserverState | undefined;
@@ -605,7 +620,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, keepFinal: task.kind === "run", signal });
         const lq = q(`&lease=${encodeURIComponent(lease)}`);
         if (task.kind === "run") {
-          // Encode once, PUT once: the checkpoint and observer state travel as
+          // Encode once; explicit-refusal retries reuse those bytes. The checkpoint and observer travel as
           // one artifact. Verify attempts upload nothing — they replay locally
           // and report the digest they computed for the coordinator to compare.
           // Uploads belong to this attempt and are aborted with it: nothing
@@ -671,7 +686,9 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
           }
         } else throw e;
       } finally {
-        clearInterval(beat);
+        stopHeartbeat();
+        signal?.removeEventListener("abort", stopHeartbeat);
+        await beat;
       }
     }
   } catch (e) {

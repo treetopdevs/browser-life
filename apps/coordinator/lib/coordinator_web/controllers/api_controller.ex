@@ -149,6 +149,8 @@ defmodule CoordinatorWeb.ApiController do
       # The island table is at `max_islands` and nothing could be forgotten.
       {:error, :full} ->
         conn
+        |> put_resp_header("x-island-request-applied", "false")
+        |> put_resp_header("retry-after", "1")
         |> put_status(503)
         |> json(%{error: "the coordinator has no room for new islands"})
     end
