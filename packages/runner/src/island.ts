@@ -11,16 +11,16 @@
 // the run there instead of offering the segment to the next island.
 //
 // Cancellation (IslandOptions.signal, docs/island-cancel-2026-10-18.md): the
-// coordinator offers no way to give a task back, so an aborted island gives it
-// back by saying nothing. The join, `/next`, downloads, heartbeats and uploads
+// island stops local work before requesting a bounded best-effort leave.
+// The join, `/next`, downloads, heartbeats and uploads
 // are aborted with the signal, the run stops at its next census-chunk boundary
 // (RunOptions.signal), and no PUT, reject, fail, complete or heartbeat leaves
-// after the abort; the lease lapses and the coordinator offers the segment
-// again. Each such request is checked against the signal immediately before it
+// after the abort. Leave releases unfinished leases; if it fails, they expire
+// normally. Each task request is checked against the signal immediately before it
 // is sent, after any log callback (which may itself stop the island). A
 // complete, reject or fail already sent is waited for, never aborted:
 // the coordinator applies each atomically, so nothing is ever torn. runIsland
-// then resolves with the tasks completed; an abort never makes it reject.
+// then leaves and resolves with the tasks completed; an abort never makes it reject.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
 import { continuationError, decodeArtifact, immigrantError, runExperiment, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
@@ -95,7 +95,7 @@ export interface IslandOptions {
   idleMs?: number;
   heartbeatMs?: number;
   /** Stops the island (see the header comment): resolves with the tasks
-   * completed so far, leaving any task in hand to lapse with its lease. */
+   * completed so far, requesting release of any task still in hand. */
   signal?: AbortSignal;
   /** Reuse an already-joined island (id + bearer token) instead of calling
    * `/api/islands` again. The caller is responsible for having confirmed the
@@ -432,7 +432,46 @@ async function joinAnswer(res: Response, gardenToken?: string): Promise<{ id: st
 /** What the island page and tools/island.ts say when Stop or a signal lands. Phase-neutral: Stop may land while idle
  * (no task in hand) or while a complete is in flight (that task then counts as completed); runIsland's own log line
  * says which happened. */
-export const STOP_MESSAGE = "stopping: a task in hand stops at its next census chunk and is offered again once its lease lapses; a result already being sent finishes";
+export const STOP_MESSAGE = "stopping: a task in hand stops at its next census chunk; a result already being sent finishes, then the island requests immediate release (lease expiry is the fallback)";
+
+/** Cleanup is independent of Stop and cannot replace the run's result or error.
+ * Race the transport as well as aborting it: even a stalled implementation has
+ * a bounded cleanup lifetime. Never read or log a response body or credentials. */
+async function leaveIsland(base: string, identity: { id: string; token: string }, log: (message: string) => void): Promise<void> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let released = false;
+  try {
+    const timeout = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => {
+        resolve(false);
+        controller.abort();
+      }, 2_000);
+    });
+    const id = encodeURIComponent(identity.id);
+    released = await Promise.race([
+      fetch(`${base}/api/islands/${id}?island=${id}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${identity.token}` },
+        redirect: "error",
+        signal: controller.signal,
+      }).then((response) => response.status === 204),
+      timeout,
+    ]);
+  } catch {
+    // Old coordinators, lost connections and authorization failures all fall
+    // back to ordinary lease expiry; cleanup must not hide an earlier error.
+  } finally {
+    clearTimeout(timer);
+  }
+  try {
+    log(released
+      ? "left island: registration removed and unfinished work released"
+      : "leave could not be confirmed; any unfinished work becomes available when its lease expires");
+  } catch {
+    // A caller's logging callback must not turn cleanup into a new failure.
+  }
+}
 
 export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<number> {
   const log = opt.log ?? (() => {});
@@ -454,6 +493,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   };
   if (signal?.aborted) return 0;
   let done = 0;
+  let identity: { id: string; token: string } | undefined;
   try {
     let id: string, token: string;
     if (opt.identity) {
@@ -481,6 +521,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         throw asStop(e);
       }
     }
+    identity = { id, token };
     // A join answered as the abort landed is not reported: the caller asked to stop.
     stopIfAborted();
     opt.onJoined?.({ id, token });
@@ -654,7 +695,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         done++;
       } catch (e) {
         if (stopped(e)) {
-          log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+          log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
           break;
         }
         // A lost lease (reassigned after a long stall, or the run was blocked) is not fatal.
@@ -674,7 +715,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
           // again after the log line, whose callback may itself stop the island.
           if (!signal?.aborted) log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
           if (signal?.aborted) {
-            log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+            log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
             break;
           }
           try {
@@ -698,6 +739,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       return done;
     }
     throw e;
+  } finally {
+    if (identity) await leaveIsland(base, identity, log);
   }
   return done;
 }

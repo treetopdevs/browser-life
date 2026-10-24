@@ -12,7 +12,7 @@ defmodule CoordinatorWeb.CORS do
       if origin && ("*" in allowed or origin in allowed) do
         conn
         |> put_resp_header("access-control-allow-origin", origin)
-        |> put_resp_header("access-control-allow-methods", "GET, POST, PUT, OPTIONS")
+        |> put_resp_header("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS")
         |> put_resp_header("access-control-allow-headers", "content-type, authorization")
         |> put_resp_header(
           "access-control-expose-headers",
