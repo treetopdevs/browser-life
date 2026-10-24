@@ -81,3 +81,12 @@ Keep three states separate:
 3. **Local integration:** `42e7a8b6` combines the listed tips and has the evidence above. Subsequent integration documentation changes add this report and decision D50, without changing tested runtime files. The branch was not pushed.
 
 No scientific trial, production deployment, shared-garden opening, human playtest or live production behavior is established by this result. The broader prototype goal is not declared complete.
+
+
+## Incremental validation: public follow-ups and local food
+
+The same local integration branch additionally combines PR80 at `25f692de0244afd13bdef272fd911c56b543b075` and PR81 at `a2b1f5c84d6443ebf0cdf623bcbba0b106d779bc`. Tested runtime integration commit: `b3070a0`. Only decision-log append conflicts occurred; complete existing entries were preserved and D51/D52 appended. No runtime conflict or repair was needed.
+
+Validation passed: seven analytics/launcher unit tests, typecheck, production build, and all 13 Chrome analytics/not-found checks. The browser checks exercise real local Caddy and Vite preview/dev responses; analytics requests are intercepted. An initial pre-build run skipped nine artifact-dependent checks because its build was stale; the fresh-build rerun passed all 13 with no skips.
+
+Commands: `pnpm exec vitest run apps/lab/test/analytics.test.ts tools/test/garden-dev-food.test.ts`, `pnpm typecheck`, `pnpm build`, and `BL_E2E_PORT=5262 pnpm exec playwright test tests/e2e/public-analytics.spec.ts tests/e2e/public-not-found.spec.ts --project=chrome --workers=1`. These incremental checks do not rerun or expand the previous backend/physics evidence. PR82 and island backoff remain outside this tested tree. No GitHub merge or deployment occurred.
