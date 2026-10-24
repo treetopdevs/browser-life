@@ -2,9 +2,9 @@
 // coordinator (a `fetch` stub that records every call, honours `init.signal` the way a real fetch does, and can hold any
 // request open) and a RefSim-backed stand-in for GpuSim (the mock below, after interventions.test.ts's), so a run is
 // real physics on a small world and an abort can land inside a census chunk's GPU work. What each phase's abort must do:
-// no request after it that changes the coordinator's record (PUT, reject, fail, complete, heartbeat), a complete
+// no task request after it changes the coordinator's record (PUT, reject, fail, complete, heartbeat), a complete
 // already sent stands, the run stops at its next chunk boundary with its simulation destroyed, and runIsland resolves
-// with the tasks completed instead of rejecting.
+// with the tasks completed instead of rejecting, after a bounded leave releases its registration.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type WorldState } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
@@ -144,6 +144,12 @@ function coordinator(opts: { task?: object; start?: Uint8Array; before?: (key: s
       });
     }
     opts.before?.(key);
+    if (key === "DELETE /api/islands/isl") {
+      expect(new URL(url).searchParams.get("island")).toBe("isl");
+      expect(init.headers).toEqual({ authorization: "Bearer tok" });
+      expect(init.redirect).toBe("error");
+      return new Response(null, { status: 204 });
+    }
     if (key === "POST /api/islands") return json({ id: "isl", token: "tok" });
     if (key === "POST /api/next") {
       if (served || !opts.task) return json({ kind: "idle" });
@@ -161,7 +167,8 @@ function coordinator(opts: { task?: object; start?: Uint8Array; before?: (key: s
   return {
     calls,
     completeBodies,
-    keys: () => calls.filter((c) => !c.key.endsWith("/heartbeat")).map((c) => c.key),
+    // Existing phase assertions concern task traffic; lifecycle assertions use calls directly.
+    keys: () => calls.filter((c) => !c.key.endsWith("/heartbeat") && !c.key.startsWith("DELETE ")).map((c) => c.key),
     hold(key: string) {
       const h = { arrived: deferred(), release: deferred() };
       holds.set(key, h);
@@ -208,6 +215,7 @@ describe("runIsland stops when its signal aborts", () => {
     ctrl.abort();
     expect(await run).toBe(0);
     expect(c.keys()).toEqual(["POST /api/islands"]);
+    expect(c.calls.some((call) => call.key.startsWith("DELETE "))).toBe(false);
     expect(c.calls[0].aborted).toBe(true);
     expect(onJoined).not.toHaveBeenCalled();
   });
@@ -237,12 +245,14 @@ describe("runIsland stops when its signal aborts", () => {
     const sim = Sim.last!;
     expect(sim.step).toBe(20);
     expect(sim.destroyed).toBe(true);
+    expect(c.calls.at(-1)?.key).toBe("DELETE /api/islands/isl");
+    expect(logged).toContain("left island: registration removed and unfinished work released");
     // The first chunk's census only: the aborted chunk is never read back, and there is no final readState.
     expect(sim.calls.filter((k) => k === "snapshot")).toHaveLength(1);
     expect(sim.calls).not.toContain("readState");
     expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next"]);
     expect(c.keys().filter((k) => writes.test(k))).toEqual([]);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("during the checkpoint upload: the PUT is aborted, no file PUT and no complete follow, 0", async () => {
@@ -265,9 +275,12 @@ describe("runIsland stops when its signal aborts", () => {
     const { run, logged } = island(ctrl.signal);
     await held.arrived;
     ctrl.abort();
+    await Promise.resolve();
+    expect(c.calls.some((call) => call.key.startsWith("DELETE "))).toBe(false);
     held.release();
     expect(await run).toBe(1);
     const completes = c.calls.filter((k) => k.key === "POST /api/segments/seg-1/complete");
+    expect(c.calls.at(-1)?.key).toBe("DELETE /api/islands/isl");
     expect(completes).toHaveLength(1);
     expect(completes[0].signal).toBeUndefined();
     expect(completes[0].aborted).toBe(false);
@@ -284,7 +297,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await run).toBe(0);
     expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next", "GET /api/segments/seg-0/start"]);
     expect(logged.some((m) => /rejecting/.test(m))).toBe(false);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("during the start download: the download is aborted, no reject, 0", async () => {
@@ -312,7 +325,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await run).toBe(0);
     expect(c.keys().filter((k) => writes.test(k))).toEqual([]);
     expect(logged.some((m) => /cannot apply the schedule/.test(m))).toBe(false);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("no heartbeat leaves after the abort, and an aborted heartbeat is not logged", async () => {
@@ -378,7 +391,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await run).toBe(0);
     expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next"]);
     expect(logged.some((m) => /^run r #1 /.test(m))).toBe(true);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
     // The run never started a simulation's GPU work.
     expect(Sim.last).toBeNull();
   });
@@ -434,7 +447,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await run).toBe(0);
     expect(c.keys().at(-1)).toBe(last);
     expect(c.keys()).not.toContain("POST /api/segments/seg-1/complete");
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("verify, mid-run: stops at the next chunk boundary, reports nothing, 0", async () => {
@@ -460,7 +473,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await run).toBe(0);
     expect(Sim.last!.calls).toContain("readState");
     expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next"]);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("verify, abort while its observation digests are being computed: no complete, 0", async () => {
@@ -479,7 +492,7 @@ describe("runIsland stops when its signal aborts", () => {
       expect(await run).toBe(0);
       expect(hashed).toBeGreaterThan(0);
       expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next"]);
-      expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+      expect(logged).toContain("stopped local work: r #1; requesting release");
     } finally {
       spy.mockRestore();
     }
@@ -512,7 +525,7 @@ describe("runIsland stops when its signal aborts", () => {
     });
     expect(await run).toBe(0);
     expect(c.keys().filter((k) => writes.test(k))).toEqual([]);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("a control for that: the same refused feed, never stopped, is reported failed", async () => {
@@ -539,7 +552,7 @@ describe("runIsland stops when its signal aborts", () => {
     });
     expect(await run).toBe(0);
     expect(c.keys()).toEqual(["POST /api/islands", "POST /api/next", "GET /api/segments/seg-0/start"]);
-    expect(logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(logged).toContain("stopped local work: r #1; requesting release");
   });
 
   it("custom abort reasons: a string reason mid-run, and a TimeoutError reason during /next, both resolve", async () => {
@@ -551,7 +564,7 @@ describe("runIsland stops when its signal aborts", () => {
     const first = island(a.signal);
     expect(await first.run).toBe(0);
     expect(c1.keys().filter((k) => writes.test(k))).toEqual([]);
-    expect(first.logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(first.logged).toContain("stopped local work: r #1; requesting release");
     vi.unstubAllGlobals();
     Sim.onRun = null;
 
@@ -574,7 +587,7 @@ describe("runIsland stops when its signal aborts", () => {
     const first = island(a.signal);
     expect(await first.run).toBe(0);
     expect(c1.keys().filter((k) => writes.test(k))).toEqual([]);
-    expect(first.logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(first.logged).toContain("stopped local work: r #1; requesting release");
     vi.unstubAllGlobals();
     Sim.onRun = null;
 
@@ -598,7 +611,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(await first.run).toBe(0);
     expect(Sim.last!.step).toBe(20);
     expect(c1.keys().filter((k) => writes.test(k))).toEqual([]);
-    expect(first.logged).toContain("stopped: left r #1; the coordinator offers it again once its lease lapses");
+    expect(first.logged).toContain("stopped local work: r #1; requesting release");
     vi.unstubAllGlobals();
     Sim.onRun = null;
 
@@ -660,6 +673,86 @@ describe("runIsland stops when its signal aborts", () => {
     expect(c.keys().filter((k) => writes.test(k))).toEqual([]);
   });
 
+  it("normal idle maxTasks exit unregisters a resumed identity without joining or starting GPU work", async () => {
+    const c = coordinator();
+    const created = Sim.created;
+    const { run } = island(new AbortController().signal, { identity: { id: "isl", token: "tok" }, maxTasks: 1 });
+    expect(await run).toBe(0);
+    expect(c.calls.map((call) => call.key)).toEqual(["POST /api/next", "DELETE /api/islands/isl"]);
+    expect(Sim.created).toBe(created);
+  });
+
+  it("leaves a join whose identity arrives at the moment Stop lands", async () => {
+    const ctrl = new AbortController();
+    const c = coordinator({ before: (key) => key === "POST /api/islands" && ctrl.abort() });
+    const { run, onJoined } = island(ctrl.signal);
+    expect(await run).toBe(0);
+    expect(onJoined).not.toHaveBeenCalled();
+    expect(c.calls.map((call) => call.key)).toEqual(["POST /api/islands", "DELETE /api/islands/isl"]);
+  });
+
+  it.each([404, 405, 500, 200])("leave HTTP %s is an honest fallback and preserves the completed count", async (status) => {
+    coordinator({ task: task() });
+    const original = globalThis.fetch;
+    vi.stubGlobal("fetch", (url: string, init: RequestInit = {}) => init.method === "DELETE" ? Promise.resolve(json({}, status)) : original(url, init));
+    const { run, logged } = island(new AbortController().signal, { maxTasks: 1 });
+    expect(await run).toBe(1);
+    expect(logged.at(-1)).toMatch(/could not be confirmed.*lease expires/);
+  });
+
+  it("a leave transport ignoring its signal is bounded and aborts without further heartbeat", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = coordinator();
+      const original = globalThis.fetch;
+      let leaveSignal: AbortSignal | undefined;
+      const arrived = deferred();
+      vi.stubGlobal("fetch", (url: string, init: RequestInit = {}) => {
+        if (init.method !== "DELETE") return original(url, init);
+        leaveSignal = init.signal!;
+        arrived.resolve();
+        return new Promise<Response>(() => {});
+      });
+      const { run, logged } = island(new AbortController().signal, { maxTasks: 1 });
+      await arrived.promise;
+      expect(leaveSignal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(await run).toBe(0);
+      expect(leaveSignal?.aborted).toBe(true);
+      expect(logged.at(-1)).toMatch(/could not be confirmed.*lease expires/);
+      expect(c.calls.some((call) => call.key.endsWith("heartbeat"))).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leave network and logging failures preserve the original task error", async () => {
+    const originalError = new Error("GPU lost");
+    coordinator({ task: task(), before: (key) => {
+      if (key === "DELETE /api/islands/isl") throw new Error("offline");
+    } });
+    Sim.onRun = () => { throw originalError; };
+    const { run } = island(new AbortController().signal, { log: (message) => {
+      if (message.startsWith("leave")) throw new Error("broken logger");
+    } });
+    await expect(run).rejects.toBe(originalError);
+  });
+
+  it.each(["reject", "fail"])("waits for an already-sent %s before leaving", async (decision) => {
+    const wounded = { ...spec, interventions: [{ step: 0, kind: "feed", x: 10, y: 10, r: 3, amount: 4, matter: 999 }] };
+    const c = coordinator({ task: task(decision === "reject" ? { startFrom: "seg-0", startHash: "x" } : { spec: wounded }) });
+    const held = c.hold(`POST /api/segments/seg-1/${decision}`);
+    const ctrl = new AbortController();
+    const { run } = island(ctrl.signal);
+    await held.arrived;
+    ctrl.abort();
+    await Promise.resolve();
+    expect(c.calls.some((call) => call.key.startsWith("DELETE "))).toBe(false);
+    held.release();
+    expect(await run).toBe(0);
+    expect(c.calls.at(-1)?.key).toBe("DELETE /api/islands/isl");
+  });
+
   it("control: with a signal that never aborts the task uploads and completes, 1", async () => {
     const c = coordinator({ task: task() });
     const ctrl = new AbortController();
@@ -669,6 +762,7 @@ describe("runIsland stops when its signal aborts", () => {
     expect(keys.slice(0, 3)).toEqual(["POST /api/islands", "POST /api/next", "PUT /api/segments/seg-1/checkpoint"]);
     expect(keys.filter((k) => k.startsWith("PUT /api/segments/seg-1/files/")).length).toBeGreaterThan(0);
     expect(keys.at(-1)).toBe("POST /api/segments/seg-1/complete");
+    expect(c.calls.at(-1)?.key).toBe("DELETE /api/islands/isl");
     expect(Sim.last!.destroyed).toBe(true);
   });
 });

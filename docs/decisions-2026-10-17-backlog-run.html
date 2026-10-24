@@ -526,6 +526,17 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 </dl>
 </article>
 
+<article id="d39"><h2><span>D-39</span>Make island Stop release work immediately</h2><dl>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906, separate from recovery feasibility and Pond Keeper. The explicit island-cancel follow-up remains unimplemented on that tip.</dd>
+<dt>Decision</dt><dd>Add authenticated DELETE /api/islands/:id with matching island query identity. Serialize authentication, pending-attempt abandonment and row removal in Queue. An accepted completion remains accepted; a released run returns to pending and a released verification remains done. Missing identities are retry-safe no-ops.</dd>
+<dt>Client</dt><dd>After local work and already-sent decisions settle, make one best-effort leave request with an independent two-second bound. Require 204 to confirm release. Old or unreachable coordinators retain lease-expiry fallback. Normal task-limit exit also unregisters; unknown join identities cannot be released.</dd>
+<dt>History</dt><dd>Removing the active row must not erase producer/verifier or garden device labels. Persist adapter-only history while referenced by retained attempts; retain no credentials and prune discarded history.</dd>
+</dl></article>
+<article id="d43"><h2><span>D-43</span>Fix leave's limiter edge and verify the actual wire path</h2><dl>
+<dt>Finding</dt><dd>Anonymous leave requests for missing identities must not allocate authenticated-island limiter buckets. Missing-id retries bypass that bucket while coarse address limits remain; Queue still rechecks a live identity atomically.</dd>
+<dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
+<dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
+</dl></article>
 <!-- DECISIONS -->
 
 </main>
