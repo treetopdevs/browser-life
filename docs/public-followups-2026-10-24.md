@@ -32,3 +32,7 @@ These are source modification dates, not assertions about when changes reached p
 - Typecheck and production build pass.
 - All 8 Chrome analytics and public route/build checks pass on port 5197 with `BL_REQUIRE_BUILD_CHECK=1`: real tracker payloads for arbitrary missing paths, direct `/404.html` and normal `/worlds/`, plus sitemap/robots/canonical/noindex checks against dev and build artifacts. The direct `/404.html` test initially expected 200; corrected to the existing server contract of 404, without changing the app.
 - `git diff --check` passes. Independent review remains pending; no public deployment.
+
+## Adversarial review
+
+Argon4 High source review found **NO BLOCKERS**. It confirmed the fixed404 event identity, unchanged ordinary-route/referrer behavior, intercepted test traffic and source-date claims. Its nonblocking note reiterates the existing scope: a later navigation from a missing page can retain that path as a same-origin referrer. This change does not alter referrer policy or claim otherwise.
