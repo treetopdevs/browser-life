@@ -26,6 +26,8 @@ A Vitest harness copies the actual launcher into a disposable repository layout 
 - Each retains the exact original founding feed and sends no `foodAsks`/`foodEveryDays` override.
 - Output describes enabled/off state and the unchanged collective threshold.
 - Eight invalid forms fail before any stubbed subprocess runs and before a data directory exists.
-- All five focused tests pass; typecheck, shell syntax and diff checks pass. This proves launcher behavior with stubbed services, not a real collective food landing. Independent review is pending.
+- All five focused tests pass; typecheck, shell syntax and diff checks pass. This proves launcher behavior with stubbed services, not a real collective food landing. Argon4 High source review found no runtime blockers.
 
 The reuse fixture verifies that a requested opt-in is not reported as applied to an existing garden. The harness clears inherited garden/port overrides so developer shell settings cannot alter its default-payload assertions.
+
+Review follow-ups are complete: the reuse case and inherited-environment isolation were already added after the packet; the harness now publishes its PID atomically, waits for a nonempty PID, and has an explicit 15-second test timeout beyond its 10-second shutdown timer. The final five tests, typecheck and diff check pass. No product behavior changed after the reviewed packet.

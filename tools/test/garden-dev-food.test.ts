@@ -12,9 +12,9 @@ function setup(food?: string, existing = false) {
   const script = join(dir, "bin/garden-dev");
   writeFileSync(script, readFileSync(new URL("../../bin/garden-dev", import.meta.url)));
   const stub = (name: string, body: string) => writeFileSync(join(dir, "stubs", name), `#!/bin/sh\nprintf '%s\\n' '${name}' >> "$HARNESS/calls"\n${body}\n`, { mode: 0o755 });
-  stub("mix", 'echo "$$" > "$HARNESS/pid"; exec sleep 30');
+  stub("mix", 'echo "$$" > "$HARNESS/pid.tmp"; mv "$HARNESS/pid.tmp" "$HARNESS/pid"; exec sleep 30');
   stub("deno", 'if [ "$1" = eval ]; then cat >/dev/null; echo "256 256 spots"; else exit 99; fi'); // No island or real GPU can run.
-  stub("lsof", 'if [ -f "$HARNESS/pid" ]; then cat "$HARNESS/pid"; else exit 1; fi');
+  stub("lsof", 'if [ -s "$HARNESS/pid" ]; then cat "$HARNESS/pid"; else exit 1; fi');
   stub("curl", `data=""; out=""
 while [ "$#" -gt 0 ]; do
   case "$1" in --data) data=$2; shift ;; -o) out=$2; shift ;; esac
@@ -28,7 +28,7 @@ if [ -n "$data" ]; then
     printf '%s' '{}' > "$out"; printf '200'
   fi
 else
-  [ -f "$HARNESS/pid" ]
+  [ -s "$HARNESS/pid" ]
 fi`);
   const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GARDEN_") && key !== "PORT" && key !== "LAB_PORT"));
   const env = { ...inherited, HARNESS_EXISTING: existing ? "1" : "0", PATH: `${dir}/stubs:${process.env.PATH}`, HARNESS: dir, GARDEN_LAB: "0", GARDEN_ISLANDS: "0", GARDEN_DATA_DIR: join(dir, "data") };
@@ -63,12 +63,13 @@ for (const [food, existing] of [[undefined, false], ["0", false], ["1", false], 
       if (existing) {
         expect(output).toContain("existing garden's food rule is unchanged");
         expect(output).not.toContain("Collective food: enabled");
+        expect(output).not.toContain("Founded garden");
       } else {
         expect(output).toContain(food === "1" ? "5 distinct networks" : "Collective food: off");
         expect(output).toContain(food === "1" ? "do not bypass" : "GARDEN_FOOD=1");
       }
     } finally { clearTimeout(timer); child.kill("SIGTERM"); }
-  });
+  }, 15_000);
 }
 
 it("rejects invalid values before even directory/environment helper processes run", () => {
