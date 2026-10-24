@@ -89,3 +89,17 @@ export function explorationRefusal(rules: Uint8Array | null, frozen: string | nu
   if (!AMENDMENT_1_HEADING.test(new TextDecoder().decode(rules!))) return "the exploration of Amendment 1 needs experiments/3d-rps/RULES.md to contain its heading (\"## Amendment 1 ...\"), and the frozen RULES.md has none: the exploration exists only by that dated amendment (3.0, 8.3)";
   return null;
 }
+
+/** The heading of RULES.md's Amendment 2 (2026-10-24, after Amendment 1 read EXPLORATION-NO-HORIZON): persistence at 256 x 256 x 4. */
+export const AMENDMENT_2_HEADING = /^## Amendment 2\b/m;
+
+/**
+ * Why the exploration of Amendment 2 (`gate0.ts --exploration-2`, `readout.ts gate0-exploration-2`) may not run or be read, or null: the
+ * frozen RULES.md (its SHA-256 recorded in FROZEN) must contain the Amendment 2 heading. No dry-run exemption, as for Amendment 1.
+ */
+export function exploration2Refusal(rules: Uint8Array | null, frozen: string | null): string | null {
+  const r = freezeRefusal("the exploration of Amendment 2", "it runs only on the frozen rules that contain Amendment 2", rules, frozen);
+  if (r !== null) return r;
+  if (!AMENDMENT_2_HEADING.test(new TextDecoder().decode(rules!))) return "the exploration of Amendment 2 needs experiments/3d-rps/RULES.md to contain its heading (\"## Amendment 2 ...\"), and the frozen RULES.md has none: the exploration exists only by that dated amendment (3.0, 8.3)";
+  return null;
+}

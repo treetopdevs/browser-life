@@ -773,3 +773,39 @@ A1.6 **What follows.** Nothing is licensed automatically. If a rung reads EXPLOR
 kernel run, need a further dated amendment that says how mobility is varied (the cliff test cannot run on four levels as registered) and
 the user's go. If neither rung works, the kernel half stops here (plan 11) unless the user chooses a redesign (a sparse-film substrate,
 an exchange knob, label inertia).
+
+## Amendment 2 (2026-10-24, after Amendment 1 read EXPLORATION-NO-HORIZON): persistence at 256 x 256 x 4
+
+**Status: exploration, not a registered result.** Amendment 1 (`GATE0-EXPLORATION.md`) found that both kill forms made a dynamic,
+coexisting, chiral film at rate 64 in 20,000-step screens at 128 x 128 x 4 (row 2), but the rate-0 controls lost a label too early for a
+horizon (row 3: `T_ctl` 177,000, `T_ctl / 4` below 50,000), so no confirmation ran. Neutral label drift slows as the world grows. The user
+chose to test persistence in the larger shape that rule 3.0 already names for a horizon failure (256 x 256 x 4, its "horizon rung"), for
+both kill forms. Everything here is labelled "EXPLORATION (Amendment 2): the registered pilot ended GATE-0-STOP", never GO; nothing here
+may be cited as passing Gate 0 or as a result of the registered programme, and a label licenses nothing. Written before any Amendment 2
+job runs.
+
+A2.1 **World.** Shape 256 x 256 x 4. Everything else as rule 1.1 with rung S0's substrate (`kernelRadius` 3, uniform light 40 + 200,
+`lightK` 16384, `defaultMu` 50, `defaultSigma` 12, `rpsTypes` 3, `rpsMin` 4, `mutRate` 0, founding `rps-mix` with `K0` 3, `occupied` 75,
+`columns` true, `nutrient` 20, `biomass` 16 per cell), the burn-in of 1.3 (6,000 steps, rate 0) and a census every 1,000 steps. The total
+founded matter is about 36 x 262,144, well inside the matter bound of 2^26. The operating point is carried over from Amendment 1 unchanged
+and is not screened again: `v_cal` = 8 and `kappa_w` = 64 for both kill forms.
+
+A2.2 **Horizon** (G0.4 at this shape): spread 8, rate 0 (the removal build; at rate 0 both builds are the same run, as the V check of
+Amendment 1 showed), seeds 401, 402 and 403, 200,000 run steps after the burn-in. `T_ctl` and `h0` exactly as G0.4 of 3.0: `T_ctl` is the
+median run step of the first sustained loss (the lower middle for an even count; a control that keeps every label counts as infinite),
+and `h0` is the largest of 50,000, 100,000 and 200,000 that is at most `T_ctl / 4`, or none.
+
+A2.3 **Confirmation** (G0.5 at this shape), run only if `h0` is defined: the removal kill at rate 64 and the vacancy kill at rate 64, each
+at spread 8, seeds 401, 402 and 403, `h0` run steps after the burn-in, with the early stop of 1.5. A kill form **persists** iff at least 2
+of its 3 jobs are class DC (section 0, every threshold unchanged: `chi_fw` at least 0.2, the final window of 20 censuses).
+
+A2.4 **Labels**, one per kill form, the first that holds: **EXPLORATION-2-NO-HORIZON** (`h0` is none, so neither form is tested);
+**EXPLORATION-2-NO-CONFIRM** (fewer than 2 of its 3 confirmation jobs are DC); otherwise **EXPLORATION-2-PERSISTS**.
+
+A2.5 **Record.** When both forms have a label, the main session writes `experiments/3d-rps/GATE0-EXPLORATION-2.md` (the readout's table
+verbatim, both labels, every job with its steps per second, the spike SHA-256 of 3.0's recipe at the first Amendment 2 job and the tree
+revision) and appends its SHA-256 to `FROZEN` in a dated line.
+
+A2.6 **What follows.** As A1.6: nothing is licensed automatically. A form that reads EXPLORATION-2-PERSISTS would justify proposing Part B
+for that kill form at 256 x 256 x 4, which needs a further dated amendment (how mobility is varied, the shape, the budgets) and the
+user's go.

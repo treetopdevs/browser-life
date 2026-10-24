@@ -1,4 +1,4 @@
-39f5d7688c54d84e79059169d7553122929d3613fdf3412fa9975daae6ec58e5
+761ea02a49f23e19ef2212487464bc15170cbcff036c1e6c7ebc799006140cc7
 
 SHA-256 of the Gate-0 spike (rule draft 3.0, Code; D16): the SHA-256 of the sorted per-file listing printed by
   (cd experiments/3d-rps/gate0-spike && git ls-files | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)
@@ -10,12 +10,12 @@ of the tree the spike patches (packages/sim-gpu/src/shaders3d.ts) and of package
 reproduces the recipe on the working tree and compares it with the first line here.
 
 The listing that was hashed (sorted with LC_ALL=C; `<sha256 of the file>  <path>`; the first line of this file is the SHA-256 of exactly these lines):
-36d6c188f7ff2f2e67d4e91de002e998202cbf618fcf01934228d1115f950ab5  README.md
+cc08d9cd2609cc965b020844defa181f5b048497942ae7e98fb9ee7f64c337b6  README.md
 d2854ae93646c2f3dce8f893b2c2a76230b71bd78793674e4dda8ad146c24c20  adapter.ts
-aaeb218d343a7bbf363f08ac25ba95e22353db0fa3d62ee05d7421b1792f84b1  cli.ts
+0016e693a83f2604bbcd3e81797e91927a9822bd4012be241ec422a98fda3475  cli.ts
 4c08c46f56e33d3cc1c4e05414a432032cefae5f5edbd0729e973b30f5abf708  driver.ts
-59a0d5aa59f6cc4c64e4025b5dd42ca48547fb7a4ba71c65b6c33de412249894  explore.ts
-503c11afb2dad8b11bb85dc0ed643009ebfa4b04d9db845f6d084cbc6d289f81  gate0.ts
+38adbf1acf090d29f1731aa0e77b4268cbc092c987e887692f426444266c3f2a  explore.ts
+83726995d8922998aaff35c4aef302e2b7cfe707bcaa3515de39e4b921efb5eb  gate0.ts
 71d30c8cc920febb80d999504e0fc0ee934d9d89b8d010e54dc8b36fbf1eda0e  gpu-sim3-rps.ts
 0e6a50ee664e868e016f9fea199e474f2191a8bff9aaee401b6164565b6496ca  jobs.ts
 3b3c0b15304d72af8e409e75def0f915773955e5cb4a4659d5b70dc6a55d051d  lib.ts

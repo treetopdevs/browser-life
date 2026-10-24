@@ -20,6 +20,12 @@
 //                   (explore.ts). Refuses, --dry-run included, unless RULES.md is frozen and contains the Amendment 1 heading. Ends
 //                   with the exploration table (readout.ts gate0-exploration), which starts "EXPLORATION (Amendment 1): ..."
 //                   and never gives a Gate-0 verdict. --machine-share, --reverse, --only, --max-jobs and --dry-run work as with --gate0
+//     --exploration-2 Amendment 2 of RULES.md (after Amendment 1 read EXPLORATION-NO-HORIZON): persistence at 256 x 256 x 4, into its own
+//                   --out (no --registered): the A2.2 horizon (S0, spread 8, rate 0, seeds 401 to 403, 200,000 run steps), then, once
+//                   T_ctl and h0 are known (G0.4's own reading), the A2.3 confirmations of the removal and the vacancy kill at rate 64,
+//                   spread 8, h0 run steps (explore.ts; job ids start with "g2-"). Refuses, --dry-run included, unless RULES.md is frozen
+//                   and contains the Amendment 2 heading. Ends with readout.ts gate0-exploration-2, which starts "EXPLORATION (Amendment
+//                   2): ..." and never gives a Gate-0 verdict. --machine-share, --reverse, --only, --max-jobs and --dry-run as with --gate0
 //   options
 //     --out=<dir>             the job directory (<dir>/<id>/census.tsv, summary.json); safe to rsync between machines (the readout and
 //                             the driver skip the hidden .tmp-* directories a job is assembled in, so a copy that caught one does no
@@ -55,11 +61,12 @@ import { Problems, prepareRows } from "../readout-jobs.ts";
 import { loadJobs, nodeIo, run as readoutRun } from "../readout.ts";
 import { gpuFactory } from "./adapter.ts";
 import { UsageError, parseCommandLine, readSpikeFiles, sidecarText, spikeHash, spikeListing, type Args } from "./cli.ts";
-import { explorationRefusal, gate0Refusal } from "../frozen.ts";
-import { explorationDirsRefusal, explorationDiskIo, explorationHooks } from "./explore.ts";
+import { exploration2Refusal, explorationRefusal, gate0Refusal } from "../frozen.ts";
+import { exploration2DiskIo, exploration2Hooks, explorationDirsRefusal, explorationDiskIo, explorationHooks } from "./explore.ts";
 import { runMeterJob, runSpecOf } from "./jobs.ts";
 import { diskIo, drive, driveWith, type DriverIo, type DriverIoOf } from "./driver.ts";
 import type { ExplorationResult } from "../readout-exploration.ts";
+import type { Exploration2Result } from "../readout-exploration-2.ts";
 import type { JobDef } from "./plan.ts";
 import { plumbingOk, rehearse } from "./rehearsal.ts";
 
@@ -113,10 +120,11 @@ async function makeDeps(): Promise<{ deps: KernelJobDeps; close: () => void }> {
 
 // ---- the driver ----
 
-async function runDef(d: JobDef, deps: KernelJobDeps, out: string, mode: "gate0" | "exploration" = "gate0"): Promise<KernelJobResult> {
+async function runDef(d: JobDef, deps: KernelJobDeps, out: string, mode: "gate0" | "exploration" | "exploration-2" = "gate0"): Promise<KernelJobResult> {
   const loadavg = Deno.loadavg().map((x: number) => Math.round(x * 100) / 100);
   // an exploration job says so in its summary.json (mode "exploration", amendment 1)
-  const extra = mode === "exploration" ? { loadavg, amendment: 1 } : { loadavg };
+  // (runSpecOf records the shape of every job in summary.json)
+  const extra = mode === "exploration" ? { loadavg, amendment: 1 } : mode === "exploration-2" ? { loadavg, amendment: 2 } : { loadavg };
   if (d.kind === "meter") return await runMeterJob(d, deps, out, mode, extra);
   return await executeKernelJob(runSpecOf(d, mode, extra), deps, out);
 }
@@ -207,6 +215,42 @@ async function exploration(a: Args): Promise<number> {
   return r.code === 4 || table.code === 4 ? 4 : 0;
 }
 
+// ---- the exploration of Amendment 2 ----
+
+async function exploration2(a: Args): Promise<number> {
+  // the header (Amendment 2) is already printed: parseCommandLine prints it before anything is parsed; no dry-run exemption
+  const { rules, frozen } = readFrozenFiles();
+  const refusal = exploration2Refusal(rules, frozen);
+  if (refusal !== null) throw new UsageError(refusal);
+  const out = path.resolve(a.out!);
+  if (!a.dryRun) {
+    fs.mkdirSync(out, { recursive: true });
+    cleanStaleTmp(out);
+  }
+  let boot: Awaited<ReturnType<typeof makeDeps>> | null = null;
+  const io: DriverIoOf<Exploration2Result> = {
+    ...exploration2DiskIo(out, ROOT),
+    run: async (d) => {
+      boot ??= await makeDeps();
+      return await runDef(d, boot.deps, out, "exploration-2");
+    },
+    log: say,
+  };
+  let r;
+  try {
+    r = await driveWith(a, io, exploration2Hooks);
+  } finally {
+    (boot as Awaited<ReturnType<typeof makeDeps>> | null)?.close();
+  }
+  if (a.dryRun) return r.code;
+  // the readout's table starts with the header again
+  const table = readoutRun(["gate0-exploration-2", "--jobs", out], nodeIo(ROOT));
+  say("");
+  say(table.out);
+  if (r.code === 3 || table.code === 2 || table.code === 3) return table.code === 2 ? 2 : 3;
+  return r.code === 4 || table.code === 4 ? 4 : 0;
+}
+
 // ---- the rehearsal ----
 
 async function rehearsal(a: Args): Promise<number> {
@@ -286,7 +330,7 @@ if ((import.meta as { main?: boolean }).main === true) {
   let code: number;
   try {
     const a = parseCommandLine(Deno.args, say);
-    code = a.mode === "gate0" ? await gate0(a) : a.mode === "exploration" ? await exploration(a) : a.mode === "rehearsal" ? await rehearsal(a) : a.mode === "table" ? table(a) : await hash(a);
+    code = a.mode === "gate0" ? await gate0(a) : a.mode === "exploration" ? await exploration(a) : a.mode === "exploration-2" ? await exploration2(a) : a.mode === "rehearsal" ? await rehearsal(a) : a.mode === "table" ? table(a) : await hash(a);
   } catch (e) {
     if (e instanceof UsageError) {
       console.error(`gate0: ${e.message}`);

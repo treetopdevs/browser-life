@@ -42,8 +42,8 @@ function apportion(total: number, shares: readonly number[]): number[] {
 }
 
 /** A census row at a job step with consistent counts, `n` and `Y`. */
-export function mkRecord(step: number, spec: RowSpec, K0 = 3): RpsCensusRecord {
-  const living = Math.round(spec.liv * NCELLS);
+export function mkRecord(step: number, spec: RowSpec, K0 = 3, nCells = NCELLS): RpsCensusRecord {
+  const living = Math.round(spec.liv * nCells);
   const shares = spec.shares ?? Array.from({ length: 8 }, (_, x) => (x < K0 ? 1 : 0));
   const cells = apportion(living, [...shares, ...new Array(8).fill(0)].slice(0, 8));
   const masks = spec.modal ?? cycMasks(K0);
@@ -151,6 +151,8 @@ export interface MkJobOpts {
   /** Extra or overriding top-level fields of summary.json. */
   extra?: Record<string, unknown>;
   withFinal?: string;
+  /** The world's shape (default 128 x 128 x 4, from the config's tiles); recorded as `shape` in summary.json and used for the cell counts. */
+  dims?: [number, number, number];
 }
 
 const hashOf = (s: string): string => {
@@ -168,8 +170,8 @@ export function rawJob(o: MkJobOpts): { summary: Record<string, unknown>; census
   const generated = o.rows === undefined && !(typeof o.cls === "object" && o.cls !== null && "custom" in o.cls);
   if (o.rate === 0 && generated && o.neutral !== false) spec.run = spec.run.map((r) => ({ ...r, ndom: r.ndom === null ? null : o.cls === "FC" ? 3 : 150, nanti: r.nanti === null ? null : o.cls === "FC" ? 3 : 150 }));
   const all: RpsCensusRecord[] = [
-    ...spec.burn.map((r, i) => mkRecord(1000 * (i + 1), r, K0)),
-    ...spec.run.map((r, i) => mkRecord(B_IN + 1000 * (i + 1), r, K0)),
+    ...spec.burn.map((r, i) => mkRecord(1000 * (i + 1), r, K0, o.dims ? o.dims[0] * o.dims[1] * o.dims[2] : NCELLS)),
+    ...spec.run.map((r, i) => mkRecord(B_IN + 1000 * (i + 1), r, K0, o.dims ? o.dims[0] * o.dims[1] * o.dims[2] : NCELLS)),
   ];
   const clsKey = typeof o.cls === "object" && o.cls !== null ? Object.keys(o.cls)[0] : null;
   const stop = !o.tail && clsKey === "LOSS" ? "loss" : !o.tail && clsKey === "EXT" ? "ext" : "end";
@@ -200,6 +202,7 @@ export function rawJob(o: MkJobOpts): { summary: Record<string, unknown>; census
     extinctAt: null,
     events: 0,
     final: o.withFinal ?? null,
+    ...(o.dims ? { shape: [...o.dims] } : {}),
     ...o.extra,
   };
   return { summary, census: RPS_CENSUS_HEADER + all.map(formatRpsCensusRow).join(""), rows: all };

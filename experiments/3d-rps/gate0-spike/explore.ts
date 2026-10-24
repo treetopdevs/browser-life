@@ -8,7 +8,9 @@ import { Problems } from "../readout-jobs.ts";
 import { evaluateExploration, type ExplorationResult } from "../readout-exploration.ts";
 import { dirsOverlap, loadJobs, nodeIo, realPathOf } from "../readout.ts";
 import { diskIo, type DriveHooks, type DriverIoOf } from "./driver.ts";
-import { confirmDefs, horizonDefs, tableDefs, vTableDefs, vcheckDefs, type JobDef, type Plan } from "./plan.ts";
+import { confirmDefs, horizonDefs, mkJobDef, tableDefs, vTableDefs, vcheckDefs, type JobDef, type Plan } from "./plan.ts";
+import { A2_FORMS, A2_KAPPA_W, A2_SEEDS, A2_SHAPE, A2_V_CAL, evaluateExploration2, type Exploration2Result } from "../readout-exploration-2.ts";
+import { HORIZON_STEPS } from "../readout-gate0.ts";
 
 /**
  * Why --out and --registered cannot be used together, or null: they must be two directories, neither inside the other, after symlinks
@@ -95,6 +97,67 @@ export function explorationDiskIo(out: string, registered: string, root: string)
       for (const p of regLoaded.list) res.problems.add(p.code, `registered directory: ${p.message}`);
       const started = fs.existsSync(out) && fs.readdirSync(out, { withFileTypes: true }).some((e) => e.isDirectory() && !e.name.startsWith(".") && fs.existsSync(path.join(out, e.name, "summary.json")));
       if (started) for (const p of expLoaded.list) res.problems.add(p.code, p.message);
+      return res;
+    },
+  };
+}
+
+// ---- Amendment 2: persistence at 256 x 256 x 4 ----
+
+/**
+ * The jobs of Amendment 2, with ids of their own ("g2-", never a Gate-0 or Amendment 1 id). A2.2: the horizon, rung S0, the removal build,
+ * spread 8, rate 0, 200,000 run steps (stage g0.horizon-rung, 3.0's 256 x 256 x 4 G0.4). A2.3: the confirmation of a kill form at rate 64,
+ * spread 8, `h0` run steps (stage g0.confirm; the vacancy kill is rung V on S0). The shape, the S0 substrate and founding, the burn-in and
+ * the early stop of 1.5 come with the job (jobs.ts).
+ */
+export function a2HorizonDef(seed: number): JobDef {
+  const d = mkJobDef({ stage: "g0.horizon-rung", rung: "S0", spread: A2_V_CAL, rate: 0, seed, runSteps: HORIZON_STEPS, shape: A2_SHAPE });
+  return { ...d, id: `g2-horizon-S0-sp${A2_V_CAL}-r0-s${seed}` };
+}
+
+export function a2ConfirmDef(rung: "S0" | "V", seed: number, h0: number): JobDef {
+  const d = mkJobDef({ stage: "g0.confirm", rung, substrate: "S0", spread: A2_V_CAL, rate: A2_KAPPA_W, seed, runSteps: h0, shape: A2_SHAPE });
+  return { ...d, id: `g2-confirm-${rung}-sp${A2_V_CAL}-r${A2_KAPPA_W}-s${seed}` };
+}
+
+/**
+ * Amendment 2's jobs that can start now, in queue order: the three horizon jobs; once they are on disk and give an `h0` (G0.4's own
+ * reading), the confirmation of the removal kill and of the vacancy kill (3 + 3 jobs, `h0` run steps). `v_cal` 8 and `kappa_w` 64 are A2.1's.
+ */
+export function planExploration2(r: Exploration2Result, exists: (id: string) => boolean): Plan {
+  const defs: JobDef[] = [];
+  const notes: string[] = [];
+  const push = (ds: readonly JobDef[]) => {
+    for (const d of ds) if (!exists(d.id) && !defs.some((x) => x.id === d.id)) defs.push(d);
+  };
+  push(A2_SEEDS.map(a2HorizonDef));
+  const h0 = r.horizon?.h0 ?? null;
+  if (r.horizon !== null && h0 === null) notes.push("h0 is none: no confirmation is run (A2.3), and both forms read EXPLORATION-2-NO-HORIZON");
+  if (h0 !== null) for (const f of A2_FORMS) push(A2_SEEDS.map((sd) => a2ConfirmDef(f.rung, sd, h0)));
+  return { defs, notes };
+}
+
+/**
+ * The loop's hooks for Amendment 2. It has no V check of its own: at rate 0 both builds are one run (A2.2, shown by Amendment 1's V
+ * check), and the vacancy kill's confirmation is its only V job, so the loop's V gate is always open. Every exit-2 or exit-3 problem stops it.
+ */
+export const exploration2Hooks: DriveHooks<Exploration2Result> = {
+  plan: planExploration2,
+  vcheck: () => ({ state: "identical" }),
+};
+
+/** The disk half of Amendment 2's DriverIo, over its own job directory (it reads no other). */
+export function exploration2DiskIo(out: string, root: string): Pick<DriverIoOf<Exploration2Result>, "jobExists" | "evaluate" | "rawSummaries" | "readCensus"> {
+  const base = diskIo(out, root);
+  return {
+    jobExists: base.jobExists,
+    rawSummaries: base.rawSummaries,
+    readCensus: base.readCensus,
+    evaluate: () => {
+      const loaded = new Problems();
+      const res = evaluateExploration2(loadJobs(nodeIo(root), out, loaded));
+      const started = fs.existsSync(out) && fs.readdirSync(out, { withFileTypes: true }).some((e) => e.isDirectory() && !e.name.startsWith(".") && fs.existsSync(path.join(out, e.name, "summary.json")));
+      if (started) for (const p of loaded.list) res.problems.add(p.code, p.message);
       return res;
     },
   };

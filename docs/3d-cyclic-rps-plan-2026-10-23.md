@@ -1119,3 +1119,10 @@ registered result: it lowers row 1 to `levels < 4` after that bar failed, and no
 `gate0.ts --exploration --out=<dir> --registered=<registered dir>` runs the jobs (the registered directory is read, never written) and
 `readout.ts gate0-exploration --jobs <dir> --registered <registered dir>` reads them; both refuse unless the frozen `RULES.md` contains
 the amendment. Usage in `experiments/3d-rps/gate0-spike/README.md`; the record is `GATE0-EXPLORATION.md` (A1.5), once both rungs have a label.
+
+**2026-10-24, Amendment 2.** Amendment 1 read EXPLORATION-NO-HORIZON for both kills (`GATE0-EXPLORATION.md`): the kills made a cyclic
+film at rate 64, but the 128 x 128 x 4 controls lost a label too early for a horizon. `RULES.md` now ends with **Amendment 2**, which tests
+persistence at 256 x 256 x 4 (the shape of 3.0's horizon rung) with the operating point carried over (`v_cal` 8, `kappa_w` 64): a horizon,
+then both kill forms' confirmation if `h0` is defined, one label of A2.4 per form (EXPLORATION-2-NO-HORIZON, -NO-CONFIRM, -PERSISTS). Also
+an exploration, not a registered result. Tooling: `gate0.ts --exploration-2 --out=<dir>` and `readout.ts gate0-exploration-2 --jobs <dir>`
+(usage in the spike README); the record is `GATE0-EXPLORATION-2.md` (A2.5).

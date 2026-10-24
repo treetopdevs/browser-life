@@ -19,6 +19,13 @@
 //                                                           GATE-0-STOP" and none is a verdict of Gate 0. No --draft: it refuses unless
 //                                                           RULES.md is frozen and contains the "## Amendment 1" heading. Exit codes as
 //                                                           for gate0 (0: both rungs have a label; a failed V check is exit 3, V void)
+//              gate0-exploration-2 --jobs <dir>
+//                                                           Amendment 2 (after Amendment 1 read EXPLORATION-NO-HORIZON): the horizon
+//                                                           at 256 x 256 x 4 (T_ctl, h0 as G0.4) and both kill forms' confirmation at
+//                                                           rate 64, spread 8; one label of A2.4 per form. Every output starts with
+//                                                           "EXPLORATION (Amendment 2): the registered pilot ended GATE-0-STOP"; no
+//                                                           --draft, it refuses unless RULES.md is frozen with the "## Amendment 2"
+//                                                           heading; a job of another shape or settings is exit 3
 //   options    --draft      read runs/rps/rule-draft.md and label every output DRAFT (until the freeze)
 //              --json       print the result as JSON
 //              --root <dir> the repository root (default: two levels above this file)
@@ -84,8 +91,9 @@ import { evaluateGate0, evaluateMeter, type Gate0Result, type MeterPoint, type O
 import { LAT_M, LAT_CONTINGENCY_SIZE, LAT_SIZES, evaluateLattice, parseLatticeCell, type LatticeCell, type LatticeEvaluation, type LatticeResult } from "./readout-lattice.ts";
 import { evaluateCalibration, evaluateCycles, evaluateDeepPrecondition, evaluateSweep, type CalibrationResult, type CyclesResult, type DeepResult, type SweepResult } from "./readout-kernel.ts";
 import { evaluateMutation, type MutationResult } from "./readout-mutation.ts";
-import { checkFrozen, explorationRefusal, parseFrozen, type FrozenEntry, type RulesCheck } from "./frozen.ts";
+import { checkFrozen, exploration2Refusal, explorationRefusal, parseFrozen, type FrozenEntry, type RulesCheck } from "./frozen.ts";
 import { EXPLORATION_HEADER, LEVELS_MIN_EXPLORATION, evaluateExploration, type ExplorationResult, type ExplorationRung } from "./readout-exploration.ts";
+import { A2_KAPPA_W, A2_SHAPE, A2_V_CAL, EXPLORATION_2_HEADER, evaluateExploration2, type Exploration2Result } from "./readout-exploration-2.ts";
 
 // ---- the frozen rules ----
 // (frozen.ts: shared with the registered lattice sweep, which also refuses to start before the freeze)
@@ -536,9 +544,11 @@ export function run(argv: readonly string[], io: Io): RunResult {
   } catch (e) {
     if (!(e instanceof ReadoutError)) throw e;
     if (argv.includes(EXPLORATION_COMMAND)) return finishExploration(2, [EXPLORATION_HEADER, "", `readout: ${e.message}`], [{ code: 2, message: e.message }], null, false);
+    if (argv.includes(EXPLORATION_2_COMMAND)) return finishExploration(2, [EXPLORATION_2_HEADER, "", `readout: ${e.message}`], [{ code: 2, message: e.message }], null, false, EXPLORATION_2_HEADER, EXPLORATION_2_CODE_MEANING);
     return finish(2, [`readout: ${e.message}`], [{ code: 2, message: e.message }], false, null, false);
   }
   if (args.command === EXPLORATION_COMMAND) return runExploration(args, io);
+  if (args.command === EXPLORATION_2_COMMAND) return runExploration2(args, io);
   const root = args.root ?? io.root;
   const draft = args.draft;
   const tag = draft ? " [DRAFT]" : "";
@@ -746,13 +756,79 @@ function runExploration(args: Args, io: Io): RunResult {
   return finishExploration(stage.code, [...lines, ...renderExploration(res)], stage.list, res, args.json);
 }
 
-function finishExploration(code: 0 | 2 | 3 | 4, lines: string[], problems: Problem[], result: unknown, json: boolean): RunResult {
+function finishExploration(code: 0 | 2 | 3 | 4, lines: string[], problems: Problem[], result: unknown, json: boolean, header = EXPLORATION_HEADER, meaning = EXPLORATION_CODE_MEANING): RunResult {
   const tail: string[] = [];
   if (problems.length > 0) tail.push("", "### Problems", "", ...problems.map((p) => `- exit ${p.code}: ${p.message}`));
-  tail.push("", `exit code ${code}: ${EXPLORATION_CODE_MEANING[code]}`);
+  tail.push("", `exit code ${code}: ${meaning[code]}`);
   // JSON keeps the header as its first key (a line before the object would not parse)
-  const out = json ? JSON.stringify({ exploration: EXPLORATION_HEADER, status: "EXPLORATION", code, problems, result: jsonable(result) }, null, 2) : [...lines, ...tail].join("\n");
+  const out = json ? JSON.stringify({ exploration: header, status: "EXPLORATION", code, problems, result: jsonable(result) }, null, 2) : [...lines, ...tail].join("\n");
   return { code, out, problems, draft: false, result };
+}
+
+// ---- Amendment 2: persistence at 256 x 256 x 4 ----
+
+const EXPLORATION_2_COMMAND = "gate0-exploration-2";
+const EXPLORATION_2_CODE_MEANING: Record<number, string> = { 0: "both kill forms have a label of A2.4 (an exploration, not a registered result)", 2: "unusable input", 3: "a situation no label covers, or a bug indicator", 4: "jobs still to run" };
+
+/** Amendment 2: the exploration's table. Its labels are those of A2.4 and nothing here is a verdict of Gate 0 (the header line is run's). */
+function renderExploration2(r: Exploration2Result): string[] {
+  const o: string[] = ["## Persistence at 256 x 256 x 4 (RULES.md Amendment 2)", ""];
+  o.push("Not a registered result: nothing below may be cited as passing Gate 0 or as a result of the registered programme, and a label licenses nothing (A2.6).", "");
+  o.push(`Operating point carried over from Amendment 1 (A2.1): v_cal = ${A2_V_CAL}, kappa_w = ${A2_KAPPA_W}, for both kill forms; shape ${A2_SHAPE.join(" x ")}.`, "");
+  o.push("### Horizon (A2.2: G0.4 at 256 x 256 x 4, spread 8, rate 0, seeds 401, 402, 403)", "");
+  if (r.horizon === null) o.push(`pending: jobs to run (${r.horizonMissing.length}): ${r.horizonMissing.join("; ")}`, "");
+  else {
+    const h = r.horizon;
+    o.push(...md(["seed", "class", "first sustained loss (run step)"], h.classes.map((c, k) => [401 + k, c ?? "-", h.tctl[k] === null ? "-" : fmt(h.tctl[k])])));
+    o.push("", `T_ctl ${fmt(h.Tctl)}; h0 ${h.h0 ?? "none"}${h.h0 === null && h.Tctl !== null ? " (T_ctl / 4 is below 50,000: EXPLORATION-2-NO-HORIZON for both forms)" : ""}`, "");
+  }
+  if (r.listed.length > 0) o.push(`listed: ${r.listed.join("; ")}`, "");
+  const title = (f: Exploration2Result["forms"][number]) => (f.kill === "removal" ? "Removal kill (rung S0)" : "Vacancy kill (rung V on S0)");
+  for (const f of r.forms) {
+    o.push(`### ${title(f)}: ${f.state === "pending" ? "pending" : f.label}`, "");
+    if (f.state === "pending" && f.missing.length > 0) o.push(`jobs to run (${f.missing.length}): ${f.missing.slice(0, 6).join("; ")}${f.missing.length > 6 ? "; ..." : ""}`, "");
+    if (f.confirm) {
+      o.push(`A2.3 confirmation (spread ${f.confirm.spread}, rate ${f.confirm.rate}, ${f.confirm.steps} run steps; seeds 401, 402, 403):`, "");
+      o.push(...md(["classes", "DC", "persists (DC in at least 2 of 3)"], [[f.confirm.classes.map((c) => c ?? "-").join(" "), f.confirm.nDC, f.confirm.nDC >= 2 ? "yes" : "no"]]), "");
+    }
+  }
+  o.push("### Labels (A2.4: one per kill form)", "");
+  for (const f of r.forms) o.push(`- ${title(f)}: **${f.state === "pending" ? `pending (${f.missing.length} job${f.missing.length === 1 ? "" : "s"} to run)` : f.label}**`);
+  if (r.notes.length > 0) o.push("", ...r.notes.map((n) => `note: ${n}`));
+  o.push("", "### Amendment 2 jobs (A2.5)", "");
+  o.push(...md(["id", "rung", "kill", "stage", "shape", "spread", "rate", "seed", "steps", "class", "chi_fw", "turnover", "liv", "steps/s", "host"], r.jobs.map(({ job: j, a }) => [j.s.id, j.s.rung, j.s.kill, j.s.stage, j.s.dims ? `${j.s.dims.W}x${j.s.dims.H}x${j.s.dims.D}` : "-", j.s.spread, j.s.rate, j.s.seed, j.s.steps, j.s.missing ? "MISSING" : (a?.cls ?? "-"), a && a.cls !== "NOSTART" ? fmt(a.chiFw) : "-", a?.turnoverFw != null ? fmt(a.turnoverFw) : "-", a?.livLast != null ? fmt(a.livLast) : "-", fmt(j.s.stepsPerSec, 1), j.s.host])));
+  return o;
+}
+
+/**
+ * `gate0-exploration-2 --jobs <dir>` (RULES.md Amendment 2). The first line of every output is EXPLORATION_2_HEADER. Refuses (exit 2)
+ * unless RULES.md is frozen and contains the Amendment 2 heading, and with --draft, --registered, --op or --lattice. A directory with no
+ * job yet is the start of the run (exit 4, the horizon jobs listed).
+ */
+function runExploration2(args: Args, io: Io): RunResult {
+  const root = args.root ?? io.root;
+  const lines: string[] = [EXPLORATION_2_HEADER, ""];
+  const pr = new Problems();
+  const rulesDir = path.join(root, "experiments", "3d-rps");
+  if (args.draft) pr.add(2, `--draft is not available for ${EXPLORATION_2_COMMAND}: the exploration exists only by Amendment 2 of the frozen RULES.md`);
+  else {
+    const rules = io.readBytes(path.join(rulesDir, "RULES.md"));
+    const frozen = io.readText(path.join(rulesDir, "FROZEN"));
+    const refusal = exploration2Refusal(rules, frozen);
+    if (refusal !== null) pr.add(2, `refusing to apply Amendment 2: ${refusal}`);
+    else lines.push(`rules: ${checkFrozen(rules!, frozen!, "RULES.md").message}, and it contains the Amendment 2 heading`, "");
+  }
+  if (args.jobs === null) pr.add(2, `${EXPLORATION_2_COMMAND} needs --jobs <Amendment 2 job directory>`);
+  if (args.registered !== undefined || args.op !== null || args.lattice !== null) pr.add(2, `${EXPLORATION_2_COMMAND} takes --jobs only`);
+  if (pr.has(2)) return finishExploration(2, lines, pr.list, null, args.json, EXPLORATION_2_HEADER, EXPLORATION_2_CODE_MEANING);
+  const stage = new Problems();
+  const loaded = new Problems();
+  const jobs = loadJobs(io, args.jobs!, loaded);
+  // a directory with no job in it yet is the start of the exploration, not unusable input
+  if (io.walk(args.jobs!).some((f) => path.basename(f) === "summary.json")) for (const p of loaded.list) stage.add(p.code, p.message);
+  const res = evaluateExploration2(jobs);
+  for (const p of res.problems.list) stage.add(p.code, p.message);
+  return finishExploration(stage.code, [...lines, ...renderExploration2(res)], stage.list, res, args.json, EXPLORATION_2_HEADER, EXPLORATION_2_CODE_MEANING);
 }
 
 // ---- command line ----

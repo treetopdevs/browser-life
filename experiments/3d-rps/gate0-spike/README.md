@@ -26,7 +26,7 @@ if its patch anchors have moved, so it runs only against the tree it was written
 | `driver.ts` | the staged loop (plan, run this process's share, plan again), apart from the GPU; it stops, before planning more, when a job on disk shows a conservation failure (also one that did not come back on the rerun) or the readout finds a bug indicator or unusable input |
 | `gate0.ts` | the command line: `--gate0` (refuses before the freeze of `RULES.md`), `--exploration` (Amendment 1), `--rehearsal`, `--table`, `--hash` |
 | `rehearsal.ts` | plumbing rehearsal: both kill builds, the V check, the hand-over, an exact audit of the vacancy rule, the mobility meter |
-| `explore.ts` | the exploration of Amendment 1 (after GATE-0-STOP): its planner, its V check and the disk half of its DriverIo (`--exploration`) |
+| `explore.ts` | the explorations of Amendment 1 (after GATE-0-STOP; `--exploration`) and Amendment 2 (persistence at 256 x 256 x 4; `--exploration-2`): their planners, checks and the disk half of their DriverIo |
 | `cli.ts` | argument parsing, and the SHA-256 recipe and the sidecar file that records it |
 | `lib.ts` | the prototype's helpers (`slabCfg`, `uptime`, ...), `runs/rps/probe/lib.ts` copied so that nothing here imports from `runs/` |
 
@@ -82,6 +82,25 @@ voids V alone (EXPLORATION-V-VOID): its jobs are skipped, S0 runs on to its labe
 `RULES.md` is frozen and contains the "## Amendment 1" heading, and the two directories must be separate, neither inside the other once
 symlinks are resolved; `gate0.ts` prints the header before it parses its arguments, so a refusal starts with it too. Every output of the readout starts with "EXPLORATION (Amendment 1): the registered pilot ended GATE-0-STOP"; its exit codes are
 those of `gate0` (0 when both rungs have a label, 3 on a bug indicator, a failed V check included, 4 while jobs are to run).
+
+## Exploration 2 (Amendment 2)
+
+Amendment 1 read EXPLORATION-NO-HORIZON for both kills (`../GATE0-EXPLORATION.md`). Amendment 2 of `RULES.md` tests persistence at
+256 x 256 x 4 with the operating point carried over (`v_cal` 8, `kappa_w` 64): first the horizon (A2.2: S0, removal build, spread 8,
+rate 0, seeds 401 to 403, 200,000 run steps), then, once `T_ctl` and `h0` are known (G0.4's own reading), the confirmation of the removal
+and the vacancy kill at rate 64 (A2.3: 6 jobs, `h0` run steps). Each kill form ends with one label of A2.4, never a GO. It uses only its
+own job directory; job ids start with `g2-` and each `summary.json` records `mode` "exploration-2", `amendment` 2 and the shape.
+
+```
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration-2 --out=runs/rps/gate0-exp2 --dry-run
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration-2 --out=runs/rps/gate0-exp2
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration-2 --out=runs/rps/gate0-exp2 --machine-share=1/2
+deno run -A --no-lock experiments/3d-rps/readout.ts gate0-exploration-2 --jobs runs/rps/gate0-exp2
+```
+
+Both refuse, `--dry-run` included, unless `RULES.md` is frozen and contains the "## Amendment 2" heading, and every output starts with
+"EXPLORATION (Amendment 2): the registered pilot ended GATE-0-STOP". The readout exits 0 when both forms have a label, 3 on a bug
+indicator (a conservation or invariant failure, a job of another shape or settings), 4 while jobs are to run.
 
 ## The SHA-256
 

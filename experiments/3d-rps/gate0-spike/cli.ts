@@ -5,10 +5,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Rung } from "../readout-jobs.ts";
 import { EXPLORATION_HEADER } from "../readout-exploration.ts";
+import { EXPLORATION_2_HEADER } from "../readout-exploration-2.ts";
 
 export class UsageError extends Error {}
 
-export type Mode = "gate0" | "rehearsal" | "table" | "hash" | "exploration";
+export type Mode = "gate0" | "rehearsal" | "table" | "hash" | "exploration" | "exploration-2";
 
 export interface Args {
   mode: Mode;
@@ -42,7 +43,7 @@ export interface Args {
   registered: string | null;
 }
 
-const MODES: readonly Mode[] = ["gate0", "rehearsal", "table", "hash", "exploration"];
+const MODES: readonly Mode[] = ["gate0", "rehearsal", "table", "hash", "exploration", "exploration-2"];
 const FLAGS = new Set(["reverse", "dense", "dry-run", "write", "plan-all", "draft", ...MODES]);
 const VALUES = new Set(["out", "rung", "machine-share", "only", "max-jobs", "registered"]);
 export const ALL_RUNGS: readonly Rung[] = ["S0", "S1", "S2", "V"];
@@ -88,6 +89,11 @@ export function parseArgs(argv: readonly string[]): Args {
     if (out === null || registered === null) throw new UsageError("--exploration needs --out=<exploration job directory> and --registered=<the registered pilot's job directory>");
     for (const k of ["rung", "plan-all", "dense"]) if (flags.has(k) || vals.has(k)) throw new UsageError(`--${k} is not for --exploration: Amendment 1 runs S0 and V on S0 side by side, both in full, and G0.6 is not run`);
   } else if (registered !== null) throw new UsageError("--registered is for --exploration only");
+  if (mode === "exploration-2") {
+    // Amendment 2 runs its own jobs only (the horizon and both kill forms' confirmation at 256 x 256 x 4): no rung to choose and no dense job
+    if (out === null) throw new UsageError("--exploration-2 needs --out=<Amendment 2 job directory>");
+    for (const k of ["rung", "plan-all", "dense"]) if (flags.has(k) || vals.has(k)) throw new UsageError(`--${k} is not for --exploration-2: Amendment 2 runs the horizon and both kill forms at 256 x 256 x 4, and G0.6 is not run`);
+  }
   return {
     mode,
     out,
@@ -106,11 +112,13 @@ export function parseArgs(argv: readonly string[]): Args {
 }
 
 /**
- * The command line as gate0.ts reads it: an exploration request (`--exploration` anywhere in `argv`) prints its header through `say`
- * before anything is parsed, so that every output of the exploration starts with it, an argument refusal included (Amendment 1).
+ * The command line as gate0.ts reads it: an exploration request (`--exploration` or `--exploration-2` anywhere in `argv`) prints its
+ * header through `say` before anything is parsed, so that every output of the exploration starts with it, an argument refusal included
+ * (Amendments 1 and 2).
  */
 export function parseCommandLine(argv: readonly string[], say: (line: string) => void): Args {
   if (argv.includes("--exploration")) say(EXPLORATION_HEADER);
+  if (argv.includes("--exploration-2")) say(EXPLORATION_2_HEADER);
   return parseArgs(argv);
 }
 
