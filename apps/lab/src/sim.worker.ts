@@ -266,7 +266,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (w && w.execution === execution) {
           session.noteWaiting({ cycle: s.cycle, step: s.step });
           publishSession();
-          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
+          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, shells: s.shells, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
         }
       },
       // The naturalist's census, every one, for the worlds it may hold a baseline for (Field notes).

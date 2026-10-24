@@ -1,3 +1,4 @@
+import { rankOrder } from "../src/pond-ranking.ts";
 import { describe, expect, it } from "vitest";
 import {
   applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, wounds, worldW, CH, G,
@@ -1288,6 +1289,7 @@ describe("lab execution of a wounded world with a shell", () => {
 
   it("replays a history with a hand wound and a hand pick to the same state, and the same counts", async () => {
     const start = pondWorld(0, shelled);
+    start.cfg = { ...start.cfg, pondArm: "breed", pondScore: "body" };
     const first = recording(start);
     const log: Intervention[] = [];
     for (let k = 0; k < 3; k++) await first.execution.advanceFrame(2);
@@ -1295,7 +1297,26 @@ describe("lab execution of a wounded world with a shell", () => {
     log.push({ step: first.sim.step, kind: "lesion", x: 32, y: 32, r: first.sim.lesion(32, 32, 6) });
     while (!first.execution.awaiting) await first.execution.advanceFrame(2);
     expect(first.execution.awaiting.step).toBe(20);
-    const done = await first.execution.resolvePond([1, 0]);
+    const pre = await first.sim.readState();
+    const counts = Array.from({ length: pre.cfg.tilesX * pre.cfg.tilesY }, () => ({ wearing: 0, living: 0 }));
+    const n = cellCount(pre.cfg), width = pre.cfg.tileW * pre.cfg.tilesX;
+    for (let y = 0; y < pre.cfg.tileH * pre.cfg.tilesY; y++) for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (!(pre.genome[G.LIN_HI * n + i] | pre.genome[G.LIN_LO * n + i])) continue;
+      const c = counts[Math.floor(y / pre.cfg.tileH) * pre.cfg.tilesX + Math.floor(x / pre.cfg.tileW)];
+      c.living++;
+      if (pre.cells[CH.P * n + i] >= pre.cfg.injuryShell!) c.wearing++;
+    }
+    expect(first.execution.awaiting.shells).toEqual(counts);
+    const revision = first.execution.awaiting.revision;
+    await first.execution.setPressure("mass");
+    const refreshed = first.execution.awaiting!;
+    expect(refreshed.revision).toBeGreaterThan(revision);
+    expect(refreshed.shells).toEqual(counts);
+    // Return the pressure to its original value before recording picks: the replay below has no pressure entries.
+    await first.execution.setPressure(start.cfg.pondScore!);
+    const picked = rankOrder({ ...first.execution.awaiting!, type: "pondAwait", world: 1, arm: "breed", score: start.cfg.pondScore! }, "shell").slice(0, 2);
+    const done = await first.execution.resolvePond(picked);
     log.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
     while (!first.execution.awaiting) await first.execution.advanceFrame(2);
     expect(first.execution.awaiting.step).toBe(40);
@@ -1308,9 +1329,10 @@ describe("lab execution of a wounded world with a shell", () => {
     again.execution.queueReplay(log, 40);
     while (!again.execution.awaiting) await again.execution.advanceFrame(2);
     expect(again.execution.awaiting.step).toBe(40);
-    expect(again.cycles.map((c) => c.donors)).toEqual([[1, 0]]);
+    expect(again.cycles.map((c) => c.donors)).toEqual([picked]);
     expect(stateHash(await again.sim.readState())).toBe(hash);
     expect(again.seen.map((o) => [o.step, o.shell])).toEqual(first.seen.map((o) => [o.step, o.shell]));
+    expect(again.execution.awaiting.shells).toEqual(first.execution.awaiting.shells);
     // Two executions of 40 steps: about 45 s together.
   }, 240_000);
 });

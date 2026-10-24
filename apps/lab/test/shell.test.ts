@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { CH, G, buildWorld, cellCount, cloneState, defaultConfig, generalistGenome, type WorldConfig, type WorldState } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
-import { fmtShare, shellCount } from "../src/shell.ts";
+import { fmtShare, shellCountsByPond, shellCount } from "../src/shell.ts";
 
 const tile = { tileW: 24, tileH: 24, kernelRadius: 2 } as const;
 /** A wound at every cell on every step (as packages/sim-ref/test/injury.test.ts builds one), with a shell of 2. */
@@ -122,5 +122,26 @@ describe("fmtShare", () => {
     expect(fmtShare(0.0001)).toBe("<0.1%");
     // Zero is zero (the row says "none yet" there, and the chart prints its latest value).
     expect(fmtShare(0)).toBe("0.0%");
+  });
+});
+
+
+describe("shell counts by pond", () => {
+  it("uses tile boundaries in both dimensions, both lineage words, and an inclusive membrane threshold", () => {
+    const cfg = defaultConfig({ tileW: 24, tileH: 24, tilesX: 2, tilesY: 2, ...wounded });
+    const n = cellCount(cfg), cells = new Uint32Array(n * 4), genome = new Uint32Array(n * 4);
+    const put = (x: number, y: number, hi: number, lo: number, membrane: number) => {
+      const i = y * 48 + x;
+      genome[G.LIN_HI * n + i] = hi; genome[G.LIN_LO * n + i] = lo; cells[CH.P * n + i] = membrane;
+    };
+    put(23, 23, 1, 0, 2); put(24, 23, 0, 1, 1); put(23, 24, 1, 1, 9);
+    put(24, 24, 0, 0, 99); // Membrane without a lineage is not a living cell.
+    put(47, 47, 1, 0, 0);
+    const counts = shellCountsByPond(cfg, cells, genome)!;
+    expect(counts).toEqual([{ wearing: 1, living: 1 }, { wearing: 0, living: 1 }, { wearing: 1, living: 1 }, { wearing: 0, living: 1 }]);
+    expect(counts.reduce((sum, c) => ({ wearing: sum.wearing + c.wearing, living: sum.living + c.living }), { wearing: 0, living: 0 })).toEqual(shellCount(cfg, cells, genome));
+    expect(shellCountsByPond({ ...cfg, injuryShell: undefined }, cells, genome)).toBeNull();
+    genome.fill(0);
+    expect(shellCountsByPond(cfg, cells, genome)).toEqual(Array.from({ length: 4 }, () => ({ wearing: 0, living: 0 })));
   });
 });
