@@ -526,6 +526,17 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 </dl>
 </article>
 
+<article id="d45">
+<h2><span>D-45</span>Make membrane visible without presenting it as guaranteed protection</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 explicitly deferred a membrane view. Composite mixes membrane with other material, making the available shell-related trait difficult to inspect.</dd>
+<dt>Decision</dt><dd>Append a ninth Membrane display mode and shortcut 9, preserving the original eight modes. Render membrane quantity alone with a clearly described brightness scale. Explain that wound protection depends on the world's configured shell rule; visible membrane is not a prediction of survival.</dd>
+<dt>Why</dt><dd>A dedicated view lets players inspect the trait already measured in the pond census. This changes display only: no physics, scoring, checkpoint or selection semantics.</dd>
+<dt>Validation</dt><dd>Four Chrome checks pass, including synthetic pixels, unchanged current and next-step state hashes, mode order and world replacement. Typecheck and build pass; desktop, night and mobile screenshots were inspected. Argon adversarial review is pending; publish as draft until assessed.</dd>
+</dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>

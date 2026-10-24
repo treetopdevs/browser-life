@@ -137,6 +137,7 @@ const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
   signal: ["Signal", "secreted signal S, what cells can sense of each other"],
   affinity: ["Pull", "where mass is pulled: red attracts, blue repels (the growth field U)"],
   light: ["Light", "where the sun falls at this step, brighter where there is more of it"],
+  membrane: ["Membrane", "white is membrane P; brighter means more, with low amounts boosted and white saturated at 256"],
 };
 
 // ---------- view modes ----------
@@ -167,10 +168,21 @@ function setMode(m: GpuViewMode) {
       else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
     }
   }
-  const name = document.createElement("b");
-  name.textContent = VIEW_LABELS[m][0];
-  $("legend").replaceChildren("Showing ", name, `: ${VIEW_LABELS[m][1]}`);
+  paintViewLegend();
   pushView();
+}
+/** The legend follows the loaded world's shell setting, including when the chosen view survives a replacement. */
+function paintViewLegend() {
+  const name = document.createElement("b");
+  name.textContent = VIEW_LABELS[mode][0];
+  let detail = VIEW_LABELS[mode][1];
+  if (mode === "membrane") {
+    detail += ". Tile borders and lineage highlighting overlay these colours";
+    detail += cfg?.injuryShell === undefined
+      ? ". Membrane quantity, not a map of shell protection."
+      : `. This world's scheduled wounds require ${cfg.injuryShell.toLocaleString()} membrane in a living cell to weather a hit; the Wound tool still cuts through shells. This shows membrane now, not a survival forecast.`;
+  }
+  $("legend").replaceChildren("Showing ", name, `: ${detail}`);
 }
 
 // ---------- presets ----------
@@ -828,7 +840,7 @@ window.addEventListener("keydown", (e) => {
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
   else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
-  else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
+  else if (/^[1-9]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
 // ---------- checkpoints ----------
@@ -1877,6 +1889,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       worldFailed = false;
       stopAuto("the world was replaced");
       cfg = m.manifest.cfg;
+      paintViewLegend();
       // An opened file, or a fork of one, holds its history only from the step it was opened at.
       historyFrom = m.manifest.presetId === "imported" || (m.manifest.edgesFrom ?? 0) > 0 ? m.manifest.edgesFrom ?? m.step : null;
       setWorldControls(true);
