@@ -506,8 +506,8 @@ export class NaturalistModel {
     if (touched !== null) return none("touched", ...lines, `The world was changed by hand at step ${group(touched)}, so this is not offered here any more: the naturalist reads no world after a change by hand.`);
     if (this.deps.loading?.()) return none("loading", ...lines, "A world is being planted, restored or opened, so nothing is applied now.");
     if (sug.refused) return none("refused-spec", ...lines, `The proposer's validators refuse this run (${sug.refused}), so there is nothing to try.`);
-    if (sug.action === "control" || !sug.tryLabel || !sug.entries.length) return none("control", ...lines, "A replay control has nothing to apply here: it is an offline check that a second run of this world replays the first, with the commands below.");
-    if (sug.entries.length !== 1 || !["lesion", "feed"].includes(sug.entries[0].kind)) return none("refused-spec", ...lines, "Try it here supports exactly one wound, feed or drain. Run this suggestion offline instead.");
+    if (sug.action === "control") return none("control", ...lines, "A replay control has nothing to apply here: it is an offline check that a second run of this world replays the first, with the commands below.");
+    if (!sug.tryLabel || sug.entries.length !== 1 || !["lesion", "feed"].includes(sug.entries[0].kind)) return none("refused-spec", ...lines, "Try it here supports exactly one wound, feed or drain. Run this suggestion offline instead.");
     return { state: "offered", button: sug.tryLabel, lines };
   }
 

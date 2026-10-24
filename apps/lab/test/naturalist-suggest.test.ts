@@ -341,6 +341,25 @@ describe("Try it here", () => {
     expect(readyView(model).sv.offer.lines[0]).toContain("16,003");
   });
 
+  it("does not call an unsupported non-control suggestion a replay control", () => {
+    for (const variant of ["empty", "no-label", "unsupported"] as const) {
+      const { model, apply } = readSeed1();
+      model.setSuggester((r, w, h) => {
+        const s = suggestFor(r, w, h);
+        return {
+          ...s,
+          tryLabel: variant === "no-label" ? null : s.tryLabel,
+          entries: variant === "empty" ? [] : variant === "unsupported" ? [{ step: s.S, kind: "sun", percent: 50, span: 100 }] : s.entries,
+        };
+      });
+      const { note, sv } = readyView(model);
+      expect(sv.offer.state, variant).toBe("refused-spec");
+      expect(sv.offer.lines.join(" ")).not.toContain("replay control");
+      expect(model.tryHere(note.key).ok).toBe(false);
+      expect(apply).not.toHaveBeenCalled();
+    }
+  });
+
   it("refuses multi-entry suggestions instead of claiming a partial receipt completed them", () => {
     const { model, apply } = readSeed1();
     model.setSuggester((r, w, h) => {
