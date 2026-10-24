@@ -78,8 +78,10 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
 
 ### Island limits
 
-Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in config.exs
-("Island abuse controls") and read at call time. Any budget may be `nil` (off).
+Island request budgets are kept outside the Queue process (`Coordinator.IslandLimiter`),
+configured in config.exs ("Island abuse controls") and read at call time. Any budget
+may be `nil` (off). The validation and Queue lease settings below are separate from
+those request budgets; `lease_ms` uses Queue's built-in default unless overridden.
 
 * Every limit, window, cap and cache setting is checked when the application starts, in
   every environment (`Coordinator.ConfigCheck`, called first by

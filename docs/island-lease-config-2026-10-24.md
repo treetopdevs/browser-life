@@ -49,3 +49,10 @@ Validation passed:
 
 These are local configuration and Queue regression checks. No real-GPU
 cancellation/reclaim experiment or production deployment is claimed.
+
+## Adversarial review
+
+Argon 4 High source review found **NO BLOCKERS**. Its housekeeping findings were
+addressed: the linked design note is committed, D48 records completed validation,
+ConfigCheck lists the new variable, and the README separates Queue leases from
+request-budget settings. No runtime behavior changed after the reviewed packet.
