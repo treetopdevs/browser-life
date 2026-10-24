@@ -83,7 +83,7 @@
     <div class="card scroll"><table id="limits"></table></div>
     <div class="card" style="margin-top:10px">
       <h3>Refusals and pruning</h3>
-      <p class="note">Cumulative counts for this counter process, not rates or permanent history. They reset when the counters restart. Rate-limit refusals are HTTP 429 decisions; capacity refusals are joins refused at the island bound, not all HTTP 503 responses. Pruned islands counts rows actually removed to make room.</p>
+      <p class="note">Cumulative counts for this counter process, not rates or permanent history. They reset when the counters restart. Rate-limit refusals are island-budget HTTP 429 decisions; capacity refusals are joins refused at the island bound, not all HTTP 503 responses. Pruned islands counts rows actually removed to make room.</p>
       <p class="note" id="operator-events-since"></p>
       <div class="scroll"><table id="operator-events"></table></div>
     </div>

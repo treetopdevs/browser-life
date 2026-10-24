@@ -58,7 +58,7 @@ defmodule CoordinatorWeb.OpsStatus do
   # the island table there could be tens of thousands.
   @shown_unknown_max 50
 
-  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits`, `capabilityNeeds` and `islandCapabilities` added."
+  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits`, `capabilityNeeds`, `islandCapabilities` and `operatorEvents` added."
   @spec extend(map) :: map
   def extend(%{} = status) do
     islands = Map.get(status, :islands, [])

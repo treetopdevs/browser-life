@@ -7,6 +7,21 @@ defmodule CoordinatorWeb.OperatorEventsTest do
   setup do
     saved = snapshot_env(@env)
     dir = Path.join(System.tmp_dir!(), "bl-events-#{System.unique_integer([:positive])}")
+
+    on_exit(fn ->
+      restore_env(saved)
+
+      for child <- [OperatorEvents, IslandLimiter] do
+        case Supervisor.restart_child(Coordinator.Supervisor, child) do
+          {:ok, _} -> :ok
+          {:error, :running} -> :ok
+        end
+      end
+
+      IslandLimiter.reset()
+      File.rm_rf!(dir)
+    end)
+
     start_supervised!({Queue, data_dir: dir})
     :ok = Supervisor.terminate_child(Coordinator.Supervisor, OperatorEvents)
     {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, OperatorEvents)
@@ -19,12 +34,6 @@ defmodule CoordinatorWeb.OperatorEventsTest do
           :island_requests_per_address
         ],
         do: set(k, nil)
-
-    on_exit(fn ->
-      restore_env(saved)
-      IslandLimiter.reset()
-      File.rm_rf!(dir)
-    end)
 
     :ok
   end
@@ -86,7 +95,54 @@ defmodule CoordinatorWeb.OperatorEventsTest do
     end
 
     assert build_conn() |> post("/api/next?island=#{id}", %{}) |> json_response(401)
+
+    assert build_conn()
+           |> post("/api/segments/missing/heartbeat?island=#{id}", %{})
+           |> json_response(401)
+
     assert OperatorEvents.snapshot().rateRefusals == %{join: 0, next: 1, segment: 1, requests: 0}
+  end
+
+  test "island download refusals count but administrator and unauthorized downloads do not" do
+    %{"id" => id, "token" => token} = join() |> json_response(200)
+    set(:admin_token, "test-admin")
+    set(:allow_local_admin, false)
+    set(:island_segment_requests_per_island, 1)
+    path = "/api/segments/missing/files/series.jsonl?island=#{id}"
+    assert build_conn() |> auth(token) |> get(path) |> json_response(404)
+    assert build_conn() |> auth(token) |> get(path) |> json_response(429)
+    before = OperatorEvents.snapshot()
+    assert before.rateRefusals.segment == 1
+    assert build_conn() |> get(path) |> json_response(401)
+    assert build_conn() |> auth("wrong") |> get(path) |> json_response(401)
+
+    for _ <- 1..3 do
+      assert build_conn() |> auth("test-admin") |> get(path) |> json_response(404)
+    end
+
+    assert OperatorEvents.snapshot() == before
+  end
+
+  test "failed persistence does not count candidate pruning" do
+    set(:max_islands, 1)
+    assert join().status == 200
+
+    :sys.replace_state(Queue, fn s ->
+      %{s | islands: Map.new(s.islands, fn {id, i} -> {id, %{i | last_seen: 0}} end)}
+    end)
+
+    # A directory at the temporary write path forces persist/1 to fail,
+    # even under privileged test users. The last successful state.bin survives.
+    blocked_path = Path.join(:sys.get_state(Queue).dir, "state.bin.tmp")
+    File.mkdir!(blocked_path)
+    before = OperatorEvents.snapshot()
+
+    ExUnit.CaptureLog.capture_log(fn ->
+      assert catch_exit(Queue.join(%{"adapter" => "test"}))
+    end)
+
+    assert OperatorEvents.snapshot() == before
+    File.rmdir!(blocked_path)
   end
 
   test "capacity rejection preserves islands; successful join counts exactly removed islands" do
@@ -124,6 +180,17 @@ defmodule CoordinatorWeb.OperatorEventsTest do
     assert OperatorEvents.snapshot() == nil
     assert OperatorEvents.rate_refusal(:next) == :ok
     assert join().status == 200
+    set(:admin_token, "test-admin")
+    set(:allow_local_admin, false)
+    status = build_conn() |> auth("test-admin") |> get("/api/status") |> json_response(200)
+    assert Map.has_key?(status, "operatorEvents")
+    assert status["operatorEvents"] == nil
+    set(:island_joins_per_address, 1)
+    assert join() |> json_response(200)
+    assert join() |> json_response(429)
+    set(:island_joins_per_address, nil)
+    set(:max_islands, 2)
+    assert join() |> json_response(503)
     {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, OperatorEvents)
     after_restart = OperatorEvents.snapshot()
     refute after_restart.since == before.since

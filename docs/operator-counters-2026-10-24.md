@@ -75,4 +75,28 @@ Browser validation passed: the complete operator dashboard suite passed 30 tests
 the final counter-specific suite passed 11 tests, including invalid calendar dates,
 missing/malformed counts, epoch replacement and hostile values. Desktop (1280 px)
 and mobile (375 px) screenshots were inspected with no clipped large integers or
-horizontal page overflow. Adversarial review is pending.
+horizontal page overflow. Argon 4 High adversarial review completed with no blockers; follow-ups are recorded below.
+
+## Adversarial review follow-up
+
+Argon 4 High reviewed a self-contained source packet in plan/sandbox mode and found no blockers. The packet preceded the test-only and wording follow-ups below. Its backend coverage and hygiene
+suggestions were accepted without changing counter semantics:
+
+- The owner-down test now exercises admin HTTP status serialization as `null`,
+  a real island-budget 429, and a real capacity 503, alongside a successful join.
+- Conditional file download tests verify island refusals increment `segment`,
+  while administrator and unauthorized downloads leave counters unchanged.
+  Unauthorized segment requests are also explicitly checked.
+- A deterministic persistence failure (a directory at `state.bin.tmp`) crashes
+  the joining Queue before persistence returns and proves candidate pruning
+  does not increment the counters. The last successfully persisted state is
+  left intact; the test uses its temporary data directory only.
+- Cleanup is registered before global child mutations and restarts either
+  stopped counter/limiter owner, including after assertion failures.
+- `OpsStatus.extend/1` documentation now lists `operatorEvents`.
+
+The expanded focused suite passes all seven tests. The final `mix precommit`
+also passes: 561 tests, 0 failures, with compilation, dependency check, and
+formatting successful. `git diff --check` passes.
+
+The operator-page explanation now explicitly limits HTTP 429 counts to island budgets, matching the backend contract.
