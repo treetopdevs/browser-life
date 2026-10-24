@@ -1,6 +1,6 @@
 # Prototype workflow evidence audit — 24 October 2026
 
-Status: **not yet closed**. The remaining gate is the live Argon 4 High adversarial review of PR83. This document audits the requested workflow and prototype scope; it does not redefine completion as merged or deployed software.
+Status: **workflow complete in published, unmerged PRs**. Argon reviewed PR83, its four findings were repaired, and an independent read-only check cleared the repairs. This document audits the requested workflow and prototype scope; it does not redefine completion as merged or deployed software.
 
 ## Requirements and evidence
 
@@ -11,10 +11,10 @@ Status: **not yet closed**. The remaining gate is the live Argon 4 High adversar
 | New worktrees from latest tip | All twelve local source branches contain `b3fab90605401c9cf61822ea4e79839950948d45`; fetched origin/main remains that revision; worktree records identify separate checkouts | Latest remote base verified; unrelated local main/checkouts preserved |
 | Implement and validate | Focused source checks plus [exact-head integration report](prototype-integration-2026-10-24.md) | Combined runtime tested; scientific/control fixtures are distinguished from live scientific evidence |
 | Commit and open PRs | GitHub PR72–83 OPEN; local heads equal remote heads at audit time | Published; no GitHub merge performed. PR83 explicitly depends on PR74 |
-| Adversarial Argon4 High or authorized fallback | Per-slice review dispositions; Argon completed72–82, Sonnet fallback also completed72/73; source-only review83 process still live | **Pending83**; no clean verdict inferred from elapsed time or hosted CodeRabbit status |
-| Autofix | Source notes record assessed findings and repairs; PR82 final assertions rerun; PR83 cleanup fixture published in source8d97f03 | Completed findings addressed; await83 review |
+| Adversarial Argon4 High or authorized fallback | Per-slice review dispositions; Argon completed72–82, Sonnet fallback also completed72/73; review83 completed with four findings, all repaired and independently checked | Complete; completion uses assessed findings and repair evidence, not elapsed time or hosted CodeRabbit status |
+| Autofix | Source notes record assessed findings and repairs; PR82 final assertions rerun; PR83 cleanup fixture published in source8d97f03 | Completed findings addressed; 83 findings repaired and validated |
 | Use subagents | Separate client/server implementation, real-wire smoke, UI-review repairs, integration and independent read-only backlog audits | Delegated results checked against committed source and run evidence |
-| Running HTML decision record | [Decision log](decisions-2026-10-17-backlog-run.html), plus integrated D1–D57 exactly once | Source logs preserve their own decisions; integrated history preserves all entries |
+| Running HTML decision record | [Decision log](decisions-2026-10-17-backlog-run.html), plus integrated D1–D57 exactly once; final consolidated log D1–D58 exactly once | Source logs preserve their own decisions; integrated history preserves all entries |
 | Preserve authorization boundaries | All PRs OPEN; origin/main unchanged; no deployments, public founding, paid work or fresh scientific trials in these slices | Maintained |
 
 ## Surfaces and closure evidence
@@ -46,6 +46,10 @@ GitHub heads were compared with local branches, and all share the fetched remote
 |80|`25f692de0244afd13bdef272fd911c56b543b075`|Ready|
 |81|`a2b1f5c84d6443ebf0cdf623bcbba0b106d779bc`|Ready|
 |82|`afa9e24aa82171a39fe13cd3bb0c8706048334a1`|Ready|
-|83|`8d97f038568549d8d6b80577492061b3205ea22a`|Draft pending Argon; base74|
+|83|`5630070dd7ce283a6e358da3dbdec6bd6977c76a`|Ready after Argon repairs; base74|
 
-Local integration is retained at `a89b8a70910cb8287e1dde5fa98bc9d108b87240`, unpushed. Its exact test inputs and incremental scopes are in the report; do not sum test counts into a claim that all suites were rerun on every final documentation commit. The stacked83 runtime and retry assertions match the integrated versions. No remaining prototype implementation slice was identified by the independent source-scope audit, but review closure is still required before claiming this workflow complete.
+Initial complete integration is retained at `a89b8a70910cb8287e1dde5fa98bc9d108b87240`; final review repairs are integrated at `3a8b8729affdbcd056d41941c3bfcc97b99fad98`, with evidence commit `29b4067`, all unpushed. Its exact test inputs and incremental scopes are in the report; do not sum test counts into a claim that all suites were rerun on every final documentation commit. The stacked83 runtime and retry assertions match the integrated versions. No remaining prototype implementation slice was identified by the independent source-scope audit, and review closure is now complete.
+
+## Final closure evidence
+
+PR83 source `5630070dd7ce283a6e358da3dbdec6bd6977c76a` passed 152 client tests, 21 targeted server tests and typecheck. Combined repair integration passed 52 affected client tests, 21 server tests and typecheck. The independent read-only repair review verified all four Argon findings addressed, with no ambiguous-request replay or cleanup semantics weakened. Source and integrated runtime/test files match. PR83 is now ready; all PR72–83 remain open and unmerged. This satisfies the requested plan/implement/review/publish workflow toward the seven working prototypes, not authorization to merge, deploy, open the public garden or run deferred science.

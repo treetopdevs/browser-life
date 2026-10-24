@@ -153,3 +153,12 @@ Finally, local integration `3ae458b0` merges the stacked PR83 publication tip `8
 The source alignment changes only decision/backoff evidence documents in this integration tree. A diff against the pre-alignment HEAD confirms **no changes to runner source/tests, coordinator source or browser specs**. The source task independently reports the same five island suites at 148 passing tests (38.15 seconds) plus typecheck. The existing combined 148-client, 124-coordinator and three wire-check evidence, and the two PR82 action checks, therefore apply to the unchanged runtime/test tree. No physics rerun is necessary for this documentation/ancestry merge.
 
 This retains published source ancestry rather than relying on an unshared integration patch. The final integration merge remains local; no main/PR merge, deployment or new scientific trial occurred here.
+
+
+## Final Argon repair integration
+
+Source PR83 commit `5630070d` addresses all four Argon findings: the interrupted fail-wait path now logs the held task before requesting release; test coverage now proves past-deadline shared-gate behavior, active heartbeat-retry cancellation, and a valid completion that succeeds after the limiter resets. The source branch passed all five client suites (**152 tests**), the targeted HTTP suite (**21 tests**) and typecheck.
+
+Merged into the combined prototype tree at `3a8b8729affdbcd056d41941c3bfcc97b99fad98` without conflicts. On that combined tree, the two directly affected client suites pass **52 tests**, the HTTP limiter suite passes **21 tests**, and typecheck passes. Commands: `pnpm exec vitest run packages/runner/test/island-backoff.test.ts packages/runner/test/island-retry-requests.test.ts`, `pnpm typecheck`, and `(cd apps/coordinator && mix test test/coordinator_web/island_limits_test.exs)`.
+
+Earlier real-wire and Naturalist runs remain evidence at their recorded heads; these final changes neither alter network retry eligibility/CORS nor those UI paths, and they are not relabelled as new wire/browser runs. No hosted merge, deployment or new scientific trial was performed.
