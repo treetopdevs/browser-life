@@ -35,7 +35,7 @@ To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `
 
 To run a small shared garden on this machine, use `bin/garden-dev`. It starts a dev coordinator on a scratch directory, the lab, a garden on `spots` (one day a minute) and two headless islands, and prints the `/garden/` page's address. Ctrl-C stops everything and removes the scratch directory. `apps/coordinator/README.md`, "Run a garden locally", has the settings, letters, export and `tests/deno/garden_e2e.ts`, which runs a garden end to end, usually in under a minute (up to three minutes more near the top of an hour), and `tests/deno/garden_dev_smoke.ts`, which checks the launcher itself.
 
-What each app does today, how to try it locally and what waits on you: [docs/prototypes-2026-10-18.md](docs/prototypes-2026-10-18.md).
+What each app does today, how to try it locally and what waits on you: [docs/prototypes-2026-10-24.md](docs/prototypes-2026-10-24.md).
 
 ## Test
 
