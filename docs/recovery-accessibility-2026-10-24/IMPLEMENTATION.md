@@ -19,4 +19,4 @@ Validation before freezing:
 - Full Vitest suite: 3,626 passed, two timeouts (shape conservation at 120 seconds and breeder replay at 60 seconds). Both files then passed with one worker and unchanged timeouts: 64/64 tests in 341.75 seconds. No assertions or timeouts were changed.
 - `git diff --check` passed.
 
-Actual calibration/scientific disposition follows after execution. No earlier paid-compute approval is reused.
+Execution completed locally: calibration passed, 32 matched pairs plus required replays completed, and the gain gate failed (28/32 versus 28/32). Stopped without extension. The independent reader passed. Full counts, limitations and provenance are in [RESULTS.md](RESULTS.md). No earlier paid-compute approval was reused.
