@@ -526,6 +526,17 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 </dl>
 </article>
 
+<article id="d44">
+<h2><span>D-44</span>Count operator refusals and pruning with an explicit reset epoch</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The operator dashboard deferred refusal and pruning counts. Limits alone cannot explain refused requests or how often capacity removes idle islands.</dd>
+<dt>Decision</dt><dd>Add six fixed aggregate counters to authenticated status and the Limits panel. Count actual island-budget 429 decisions, Queue capacity refusals, and rows pruned by successful joins. A separate supervised owner gives atomic snapshots and increments; display its reset timestamp. Missing or malformed observations display unavailable.</dd>
+<dt>Why</dt><dd>This supplies the missing operational evidence without collecting caller identities or changing scheduling. Counters are volatile observations, not durable audit history. Owner restart resets the epoch; Queue and limiter restarts preserve it. A crash gap may lose an observation.</dd>
+<dt>Validation</dt><dd>Backend precommit: 559 passing tests; final affected suites: 28 passing. Browser suite: 30 passing; final counter-specific suite: 11 passing, including malformed epochs and mobile display. Adversarial review pending.</dd>
+</dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>

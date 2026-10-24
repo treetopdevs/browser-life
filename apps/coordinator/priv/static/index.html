@@ -79,8 +79,14 @@
     <div class="card scroll" style="margin-top:10px"><h3 class="lbl">Islands, most recently seen first</h3><p class="note" id="islands-shown"></p><table id="islands"></table></div>
   </section>
   <section id="sec-limits" aria-labelledby="h-limits"><h2 id="h-limits">Limits</h2>
-    <p class="note">As configured (README "Island limits"). Islands are forgotten only when the table is full and an island joins. The coordinator does not count refusals (429s, the 503 at the island bound) or islands forgotten to make room, so none are shown.</p>
+    <p class="note">As configured (README "Island limits"). Islands are forgotten only when the table is full and an island joins.</p>
     <div class="card scroll"><table id="limits"></table></div>
+    <div class="card" style="margin-top:10px">
+      <h3>Refusals and pruning</h3>
+      <p class="note">Cumulative counts for this counter process, not rates or permanent history. They reset when the counters restart. Rate-limit refusals are HTTP 429 decisions; capacity refusals are joins refused at the island bound, not all HTTP 503 responses. Pruned islands counts rows actually removed to make room.</p>
+      <p class="note" id="operator-events-since"></p>
+      <div class="scroll"><table id="operator-events"></table></div>
+    </div>
   </section>
   <section id="sec-discovery" aria-labelledby="h-discovery"><h2 id="h-discovery">Discovery</h2>
     <p class="note" id="discovery-state"></p>
@@ -150,7 +156,7 @@ const retryMs = () => Math.min(POLL_MS * 2 ** failedPolls, BACKOFF_MAX_MS);
 
 function setConnection(text, warn = false) { $("connection").textContent = text; $("connection").className = warn ? "warn" : ""; }
 function clearData() {
-  for (const id of ["totals", "experiments", "runs", "capabilities", "gardens", "failures", "divergences", "mismatches", "island-totals", "islands-by-device", "islands-by-runner", "islands-capability-state", "islands-by-capability", "islands-shown", "islands", "limits", "discovery-state", "discovery-campaigns", "discovery-workers"]) $(id).replaceChildren();
+  for (const id of ["totals", "experiments", "runs", "capabilities", "gardens", "failures", "divergences", "mismatches", "island-totals", "islands-by-device", "islands-by-runner", "islands-capability-state", "islands-by-capability", "islands-shown", "islands", "limits", "operator-events", "operator-events-since", "discovery-state", "discovery-campaigns", "discovery-workers"]) $(id).replaceChildren();
   $("data").hidden = true;
   $("data").classList.remove("stale");
   drawnAt = 0;
@@ -392,8 +398,29 @@ function render(s, gardenViews, discovery) {
     ["garden island token", limits.gardenIslandToken === true ? "configured: gardens go only to islands that showed it" : "not configured: any island may tend a garden"],
   ].map(([k, v]) => [[k], [v]]));
 
+  renderOperatorEvents(s.operatorEvents);
+
   // 10. Discovery
   renderDiscovery(discovery);
+}
+
+// Keep unknown values distinct from a measured zero. Unsafe JS integers cannot be displayed exactly.
+function renderOperatorEvents(events) {
+  const object = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+  const since = object(events) ? events.since : null;
+  const epoch = typeof since === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$/.test(since) && Number.isFinite(Date.parse(since))
+    && new Date(since).toISOString().slice(0, 19) === since.slice(0, 19);
+  $("operator-events-since").textContent = epoch ? `Since counter restart: ${since}` : "Counter epoch unavailable: this status has no valid counter start time.";
+  const count = (v) => epoch && Number.isSafeInteger(v) && v >= 0 ? String(v) : "unavailable";
+  const rates = object(events) && object(events.rateRefusals) ? events.rateRefusals : {};
+  table("operator-events", ["event", "count since counter restart"], [
+    ["Rate-limit refusals (HTTP 429): joins", count(rates.join)],
+    ["Rate-limit refusals (HTTP 429): task requests (next)", count(rates.next)],
+    ["Rate-limit refusals (HTTP 429): segment requests", count(rates.segment)],
+    ["Rate-limit refusals (HTTP 429): island route requests", count(rates.requests)],
+    ["Capacity-refused joins", count(object(events) ? events.capacityRefusals : undefined)],
+    ["Pruned islands (rows removed)", count(object(events) ? events.prunedIslands : undefined)],
+  ].map(([label, value]) => [[label], [value, "n"]]));
 }
 
 function gardenCard(name, view, records) {

@@ -652,8 +652,14 @@ defmodule Coordinator.Queue do
   @impl true
   def handle_call({:join, info, garden}, _from, s) do
     case make_room(s) do
-      {:ok, s} -> join_island(info, garden, s)
-      :full -> {:reply, {:error, :full}, s}
+      {:ok, room} ->
+        result = join_island(info, garden, room)
+        Coordinator.OperatorEvents.pruned_islands(map_size(s.islands) - map_size(room.islands))
+        result
+
+      :full ->
+        Coordinator.OperatorEvents.capacity_refusal()
+        {:reply, {:error, :full}, s}
     end
   end
 

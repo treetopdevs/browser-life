@@ -409,6 +409,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
   test "public status over HTTP: a cold cache behind a slow Queue answers 503 with Retry-After, not a second Queue call" do
     set(:public_status_cache_ms, 60_000)
     set(:public_status_wait_ms, 50)
+    events_before = Coordinator.OperatorEvents.snapshot()
     IslandLimiter.reset()
     :sys.suspend(Queue)
 
@@ -421,6 +422,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
       assert %{"error" => _} = json_response(c, 503)
       assert get_resp_header(c, "retry-after") == ["1"]
       assert get_resp_header(c, "cache-control") == ["no-store"]
+      assert Coordinator.OperatorEvents.snapshot() == events_before
 
       :sys.resume(Queue)
       assert %{"counts" => _} = owner |> Task.await(30_000) |> json_response(200)
