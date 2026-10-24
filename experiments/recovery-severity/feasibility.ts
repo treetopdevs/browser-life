@@ -84,7 +84,9 @@ try {
  await write("result-digest.json",{sha256:await digest(result)});
  await write("result.json",result); // final atomic publication; readers require digest and no failure.json
  console.log(`${status}: ${admitted}/32; no fresh trials run`);
+ Deno.exitCode=admitted>=30?0:3;
 } catch(e) {
- await write("failure.json",{status:"TECHNICAL-STOP",error:String(e),completedPairs:rows.length,elapsedMs:Date.now()-started,scientificSeedsRun:0});
+ try { await write("failure.json",{status:"TECHNICAL-STOP",error:String(e),completedPairs:rows.length,elapsedMs:Date.now()-started,scientificSeedsRun:0}); }
+ catch(reportError) { console.error("Could not preserve failure marker:",String(reportError)); }
  throw e;
 }

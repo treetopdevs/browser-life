@@ -52,7 +52,7 @@ describe("zero-step severity selector", () => {
   it("rejects collateral above 5% and accepts the exact boundary", () => {
     const { state, target, n } = line();
     const center = target.cells[0];
-    const outside = center - 64;
+    const outside = center - 2 * 64;
     state.cells[CH.P * n + outside] = 50;
     expect(enumerateCandidates(state, target).some(c => c.center === center && c.radius === 3 && c.collateral === 50)).toBe(true);
     state.cells[CH.P * n + outside] = 51;
@@ -62,9 +62,19 @@ describe("zero-step severity selector", () => {
   });
   it("uses toroidal geometry and both bound channels", () => {
     const { state, n } = line(0);
-    const cells = [60, 61, 62, 63, 0, 1, 2, 3, 4, 5].map(x => 20 * 64 + x);
+    const cells = [62, 63, 0, 1, 2, 3, 4, 5, 6, 7].map(x => 20 * 64 + x);
     for (const i of cells) { state.cells[CH.B * n + i] = 40; state.cells[CH.P * n + i] = 60; }
     expect(enumerateCandidates(state, { cells, mass: 1000 }).some(c => c.center === cells[0] && c.radius === 3 && c.damage === 400)).toBe(true);
+  });
+  it("rejects a mass-consistent subset of the original component", () => {
+    const { state, target } = line();
+    expect(() => enumerateCandidates(state, { cells: target.cells.slice(1), mass: 900 })).toThrow(/complete original census component/);
+  });
+  it("rejects target cells combined from distinct original components", () => {
+    const { state, target, n } = line();
+    const remote = 40 * 64 + 40;
+    state.cells[CH.B * n + remote] = 100;
+    expect(() => enumerateCandidates(state, { cells: [...target.cells, remote], mass: 1100 })).toThrow(/complete original census component/);
   });
   it("rejects stale target metadata", () => {
     const { state, target } = line();

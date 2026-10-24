@@ -39,6 +39,13 @@ export function enumerateCandidatesDetailed(state: WorldState, target: SeverityT
   const mass = (s: WorldState, i: number) => s.cells[CH.B * n + i] + s.cells[CH.P * n + i];
   const originalMass = members.reduce((sum, i) => sum + mass(state, i), 0);
   if (!Number.isSafeInteger(originalMass) || originalMass <= 0 || originalMass !== target.mass) throw new Error("target mass does not match original cells");
+  const before = census({ cfg: state.cfg, step: state.step, cells: state.cells, genomeHead: state.genome }, { threshold: 48, minMass: 128 });
+  const originalLabel = before.labels[members[0]];
+  if (originalLabel < 0 || members.some(i => before.labels[i] !== originalLabel)
+    || before.components[originalLabel].cells !== members.length
+    || before.components[originalLabel].mass !== originalMass) {
+    throw new Error("target must be one complete original census component");
+  }
   const original = BigInt(originalMass), mask = new Set(members);
   const counts: CandidateCounts = { enumerated: 0, doseRejected: 0, collateralRejected: 0, noEligibleRemnant: 0, fragmented: 0, eligible: 0 };
   const candidates: SeverityCandidate[] = [];
