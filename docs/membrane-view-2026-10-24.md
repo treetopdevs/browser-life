@@ -64,6 +64,42 @@ Inspected local screenshots `test-results/membrane-view-desktop.png`,
 The selected Membrane button and legend remain readable in day/night and at 390px;
 the small early membrane amounts appear faintly against black at step 100. Pixel
 readback, rather than screenshot brightness, supplies the quantitative render check.
-These images are local evidence, not committed fixtures. Adversarial review is
-still running. The change may be published as a draft PR while it waits; the
-coordinating agent will assess the review before marking it ready.
+These images are local evidence, not committed fixtures. Adversarial review was
+subsequently assessed; the findings and follow-up validation are recorded below.
+
+## Adversarial review disposition
+
+Argon's packet review was assessed against the full checkout on 2026-10-24:
+
+- **Rejected the proposed zero-shell guard.** `injuryShell: 0` is invalid, not a
+  disabled setting. `packages/schema/src/config.ts` `validateInjury` requires a
+  supplied shell to be an integer in 1..65535, and requires all wound parameters.
+  The new browser assertion confirms zero is rejected. Worker planting calls
+  `initWorld`/world construction, whose `allocState` validates config; `GpuSim.create`
+  also validates state. Worker imports call `decodeArtifact` → `decodeCheckpoint`,
+  which validates config before constructing state and then validates state.
+  Thus neither a planted nor imported valid world can reach the legend with zero.
+  Adding disabled-zero semantics here would contradict the existing contract.
+- **Fixed retained-world legend restoration.** Both `unblankWorld` (a held
+  replacement) and the failed-load restoration path repaint after restoring
+  `cfgBeforeLoad`. Planting also repaints after blanking config. A real worker/page
+  regression test queues a wound, plant and Membrane selection in one page task;
+  the worker holds the plant for unsaved work, and the restored shell legend
+  remains correct after Cancel.
+- **Fixed modified numeric shortcuts.** All view keys 1–9 now ignore Meta, Control
+  and Alt, preserving browser/OS shortcuts. Browser assertions exercise each
+  modifier across every numeric key; plain keys 8 and 9 still select their views.
+- **Accepted the documented display scale.** The actual lab draw call in
+  `apps/lab/src/sim.worker.ts` explicitly passes unit 256, so its saturation copy
+  matches its renderer. The renderer's general-purpose unit parameter does not
+  change that lab contract. A threshold above 256 may have cells below it already
+  white; the view deliberately saturates and is not an eligibility map. No physics
+  or threshold adjustment was made.
+- **Added extracellular membrane evidence.** The equal-P pixel pair now includes
+  a cell with no biomass and no lineage. It still renders the same P=4 grayscale
+  as the living cell, confirming that the image shows material, not living-cell
+  shell eligibility.
+
+Post-review validation: typecheck, build and diff check passed; all **five** focused Chrome tests
+passed in **8.4 seconds**, including unchanged Light behavior, quantity/highlight
+pixels, immediate/future state hashes, modifier guards and the held/cancel race.

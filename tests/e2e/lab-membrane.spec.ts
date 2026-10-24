@@ -13,6 +13,12 @@ test("Membrane is view nine, answers key 9 and refreshes its shell context when 
   await expect(page.locator("#legend")).not.toContainText("require 2");
   await page.locator('#views [data-mode="composite"]').click();
   await page.locator("#world").focus();
+  // Browser/OS number shortcuts do not change the view, across every numeric view key.
+  await page.locator("#world").evaluate(el => {
+    for (const modifier of ["metaKey", "ctrlKey", "altKey"]) for (let key = 1; key <= 9; key++)
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: String(key), [modifier]: true, bubbles: true }));
+  });
+  await expect(page.locator('#views [data-mode="composite"]')).toHaveAttribute("aria-pressed", "true");
   await page.keyboard.press("9");
   await expect(membrane).toHaveAttribute("aria-pressed", "true");
   for (const [preset, shell] of [["breeder-wounded-shell", true], ["breeder", false]] as const) {
@@ -50,7 +56,7 @@ test("Membrane pixels show only P quantity and rendering leaves current and futu
   await page.goto("/selftest.html");
   const result = await page.evaluate(async ({ gpuPath, schemaPath }) => {
     const { GpuSim, Renderer, requestDevice, VIEW_MODES } = await import(/* @vite-ignore */ gpuPath);
-    const { allocState, defaultConfig, CH, G, stateHash } = await import(/* @vite-ignore */ schemaPath);
+    const { allocState, defaultConfig, CH, G, stateHash, validateConfig } = await import(/* @vite-ignore */ schemaPath);
     const device: GPUDevice = await requestDevice(navigator.gpu);
     const validation: string[] = [];
     device.addEventListener("uncapturederror", e => validation.push((e as GPUUncapturedErrorEvent).error.message));
@@ -58,6 +64,7 @@ test("Membrane pixels show only P quantity and rendering leaves current and futu
     canvas.width = canvas.height = 64;
     const ctx = canvas.getContext("webgpu")!;
     ctx.configure({ device, format: "rgba8unorm", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+    const invalidShell = validateConfig({ ...defaultConfig(), injuryPeriod: 13, injuryRadius: 3, injuryProb: 100_000, injuryShell: 0 });
     const outputs: { pixels: number[][]; highlighted: number[]; stable: boolean; futureStable: boolean }[] = [];
     for (const injuryShell of [undefined, 2]) {
       const cfg = { ...defaultConfig(), tileW: 64, tileH: 64, kernelRadius: 2, ...(injuryShell === undefined ? {} : { injuryShell, injuryPeriod: 13, injuryRadius: 3, injuryProb: 100_000 }) };
@@ -72,6 +79,7 @@ test("Membrane pixels show only P quantity and rendering leaves current and futu
         state.cells[CH.E * 4096 + i] = 80;
         state.genome[G.LIN_LO * 4096 + i] = i % 2;
       }
+      state.cells[CH.B * 4096 + 4] = 0; // P=4 with neither biomass nor lineage: extracellular membrane still renders.
       state.genome[G.LIN_LO * 4096] = 1; // Selected lineage with zero P: highlight is an explicit overlay.
       const sim = await GpuSim.create(device, state);
       const twin = await GpuSim.create(device, state);
@@ -103,10 +111,11 @@ test("Membrane pixels show only P quantity and rendering leaves current and futu
       renderer.destroy(); sim.destroy(); twin.destroy();
     }
     device.destroy();
-    return { modes: [...VIEW_MODES], outputs, validation };
+    return { modes: [...VIEW_MODES], outputs, validation, invalidShell };
   }, { gpuPath: `/@fs${new URL("../../packages/sim-gpu/src/index.ts", import.meta.url).pathname}`, schemaPath: `/@fs${new URL("../../packages/schema/src/index.ts", import.meta.url).pathname}` });
   expect(result.modes).toEqual(["composite", "lineage", "nutrient", "waste", "energy", "signal", "affinity", "light", "membrane"]);
   expect(result.validation).toEqual([]);
+  expect(result.invalidShell).toContain("injuryShell must be an integer in 1..65535");
   for (const out of result.outputs) {
     expect(out.highlighted[0]).toBeGreaterThan(0);
     expect(out.highlighted[0]).toBeGreaterThan(out.highlighted[1]);
@@ -120,4 +129,27 @@ test("Membrane pixels show only P quantity and rendering leaves current and futu
     });
   }
   expect(result.outputs[0].pixels).toEqual(result.outputs[1].pixels);
+});
+
+
+test("Membrane legend restores the retained shell world after a held plant is cancelled", async ({ page }) => {
+  await page.goto("/lab/?world=breeder-wounded-shell&seed=1");
+  await expect(page.locator("#simulation-status")).toHaveText("Paused", { timeout: 60_000 });
+  await page.locator('#tools [data-tool="lesion"]').click();
+  await page.locator("#preset").selectOption("breeder");
+  // Queue a hand change and a replacement in one page task: the worker knows of unsaved work before the page's account does.
+  const blankLegend = await page.evaluate(() => {
+    document.getElementById("world")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    document.getElementById("btn-new")!.click();
+    document.querySelector<HTMLButtonElement>('#views [data-mode="membrane"]')!.click();
+    return document.getElementById("legend")!.textContent;
+  });
+  expect(blankLegend).not.toContain("require 2");
+  await expect(page.locator("#guard-new")).toBeVisible();
+  await expect(page.locator("#legend")).toContainText("scheduled wounds require 2 membrane");
+  await page.locator("#guard-new").getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page.locator("#guard-new")).toBeHidden();
+  await expect(page.locator("#world-heading")).toHaveText("The breeder (wounded, shells)");
+  await expect(page.locator("#legend")).toContainText("scheduled wounds require 2 membrane");
+  await expect(page.locator('#views [data-mode="membrane"]')).toHaveAttribute("aria-pressed", "true");
 });

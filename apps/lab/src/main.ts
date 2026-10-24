@@ -317,6 +317,7 @@ function sendPlant(keep?: Keep) {
   setWorldControls(false);
   cfgBeforeLoad = cfg;
   cfg = null;
+  paintViewLegend();
   loadingWorld = true;
   setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
   $<HTMLButtonElement>("btn-new").disabled = true;
@@ -341,6 +342,7 @@ function unblankWorld() {
   if (!loadingWorld) return;
   loadingWorld = false;
   cfg = cfgBeforeLoad;
+  paintViewLegend();
   setWorldControls(cfg !== null);
   // A pond cycle may still be waiting for its donors: Save, Download, the check and stepping wait with it.
   syncWaitingControls();
@@ -840,7 +842,7 @@ window.addEventListener("keydown", (e) => {
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
   else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
-  else if (/^[1-9]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
+  else if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
 // ---------- checkpoints ----------
@@ -2050,6 +2052,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         // with whatever that world was waiting for (a pond cycle's donors) still on screen.
         loadingWorld = false;
         cfg = cfgBeforeLoad;
+        paintViewLegend();
         setWorldControls(cfg !== null);
         syncWaitingControls();
         drawPondOverlay();
