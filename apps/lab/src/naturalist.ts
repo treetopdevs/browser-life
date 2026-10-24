@@ -209,6 +209,7 @@ interface Store {
 
 /** A Try sent for the world on screen: its note, and whether the lab has logged it (the step) or refused it (why). */
 interface Tried {
+  id: number;
   gen: number;
   runId: string;
   key: string;
@@ -223,7 +224,7 @@ export interface ModelDeps {
    * Applies a suggestion's entries as ordinary hand edits (main.ts's Wound and Feed/Drain messages) to world `world`, the generation
    * the suggestion was made for: the worker refuses them for any other world. Called only by `tryHere`.
    */
-  apply?: (entries: HandEntry[], world: number) => void;
+  apply?: (entries: HandEntry[], world: number, id: number) => void;
   /** A world is being planted, restored or opened. */
   loading?: () => boolean;
 }
@@ -246,6 +247,7 @@ export class NaturalistModel {
   /** Per note: its suggestion, or why the proposer's rules threw for it. */
   private suggestions = new Map<string, Suggestion | { threw: string }>();
   private tried: Tried | null = null;
+  private nextTryId = 0;
   /** The earliest change by hand the page has heard of on the world on screen (its log, `onTouched`, a census), even after reading stopped. */
   private handAt: number | null = null;
 
@@ -332,12 +334,10 @@ export class NaturalistModel {
   }
 
   /** A change by hand logged while the world is paused (the worker says so at once): notes filed so far are marked before the next census stops the reading. */
-  onTouched(world: number, runId: string, step: number): void {
-    // Only a Try still waiting (or one an unrelated error left unknown) can be what this logged edit was; after a refusal the Try
-    // was not applied, so a later edit is an ordinary change by hand. (The worker's messages carry no request id: a brush edit
-    // logged while a Try waits is still taken for the Try.)
+  onTouched(world: number, runId: string, step: number, id?: number): void {
+    // Every touch stops baseline reading, but only this request's receipt can settle a Try.
     const t = this.tried;
-    if (t && t.gen === world && t.runId === runId && (t.state === "sent" || t.state === "unknown")) {
+    if (t && t.id === id && t.gen === this.gen && t.gen === world && t.runId === runId && (t.state === "sent" || t.state === "unknown")) {
       t.state = "landed";
       t.step = step;
       t.reason = null;
@@ -440,15 +440,19 @@ export class NaturalistModel {
     if (this.bell) this.pushBell(s.vectors.length - 1);
   }
 
-  /**
-   * The lab refused the hand edit a Try sent (`certain`: the worker's `refused` for a lesion or feed), or reported an error while a
-   * Try was waiting (not certain: its messages name no request, so the edit may still be logged). A refusal is said, and Try is
-   * offered again only while the world is still untouched and has not failed; after an error nothing more is offered on this world.
-   */
-  onApplyRefused(reason: string, certain = true): void {
+  /** Only a matching request's definite refusal permits a retry. */
+  onApplyRefused(reason: string, id?: number): void {
+    const t = this.tried;
+    if (!t || t.id !== id || t.gen !== this.gen || t.runId !== this.store?.runId || (t.state !== "sent" && t.state !== "unknown")) return;
+    t.state = "refused";
+    t.reason = reason;
+  }
+
+  /** Unattributed worker errors leave the outcome unknown; a matching receipt may still arrive. */
+  onApplyUncertain(reason: string): void {
     const t = this.tried;
     if (!t || t.gen !== this.gen || t.state !== "sent") return;
-    t.state = certain ? "refused" : "unknown";
+    t.state = "unknown";
     t.reason = reason;
   }
 
@@ -503,6 +507,7 @@ export class NaturalistModel {
     if (this.deps.loading?.()) return none("loading", ...lines, "A world is being planted, restored or opened, so nothing is applied now.");
     if (sug.refused) return none("refused-spec", ...lines, `The proposer's validators refuse this run (${sug.refused}), so there is nothing to try.`);
     if (sug.action === "control" || !sug.tryLabel || !sug.entries.length) return none("control", ...lines, "A replay control has nothing to apply here: it is an offline check that a second run of this world replays the first, with the commands below.");
+    if (sug.entries.length !== 1 || !["lesion", "feed"].includes(sug.entries[0].kind)) return none("refused-spec", ...lines, "Try it here supports exactly one wound, feed or drain. Run this suggestion offline instead.");
     return { state: "offered", button: sug.tryLabel, lines };
   }
 
@@ -520,9 +525,9 @@ export class NaturalistModel {
     if ("threw" in sug) return refuse(`The proposer's rules failed for this note (${sug.threw}), so there is nothing to try.`);
     const offer = this.offerFor(sug);
     if (offer.state !== "offered") return refuse(offer.lines[offer.lines.length - 1]);
-    this.tried = { gen: sug.gen, runId: sug.runId, key, state: "sent", step: null, reason: null };
+    this.tried = { id: ++this.nextTryId, gen: sug.gen, runId: sug.runId, key, state: "sent", step: null, reason: null };
     const entries: HandEntry[] = sug.entries.flatMap((e): HandEntry[] => (e.kind === "lesion" ? [{ kind: "lesion", x: e.x, y: e.y, r: e.r }] : e.kind === "feed" ? [{ kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount }] : []));
-    this.deps.apply?.(entries, sug.gen);
+    this.deps.apply?.(entries, sug.gen, this.tried.id);
     return { ok: true, entries };
   }
 

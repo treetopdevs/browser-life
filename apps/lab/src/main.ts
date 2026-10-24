@@ -62,7 +62,7 @@ const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
 // ordinary hand edits, the same lesion and feed messages Wound and Feed/Drain send, from the suggestion alone (never the brush's
 // radius, amount or tool), each naming the world the suggestion was made for, so the worker refuses it for a world replaced since
 // (a restore, open or jump queued before the click). `loadingWorld` is read when the button is drawn and again on the click.
-const naturalistPanel = createNaturalistPanel({ apply: (entries, world) => tryHand(entries, world), loading: () => loadingWorld });
+const naturalistPanel = createNaturalistPanel({ apply: (entries, world, id) => tryHand(entries, world, id), loading: () => loadingWorld });
 // An error the worker did not catch (its own frame and message handlers post theirs): Field notes stops vouching for the censuses.
 worker.addEventListener("error", () => naturalistPanel.onFailed("worker"));
 
@@ -584,11 +584,11 @@ function settleStroke() {
   strokeToastDue = false;
 }
 /** Field notes' Try it here: the suggestion's entries, sent as hand edits for world `world` and counted like a brush stroke's patches (no stroke toast). */
-function tryHand(entries: HandEntry[], world: number) {
+function tryHand(entries: HandEntry[], world: number, id: number) {
   for (const e of entries) {
     pendingHands++;
-    if (e.kind === "lesion") send({ type: "lesion", x: e.x, y: e.y, r: e.r, world });
-    else send({ type: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, world });
+    if (e.kind === "lesion") send({ type: "lesion", x: e.x, y: e.y, r: e.r, world, id });
+    else send({ type: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, world, id });
   }
 }
 function noteBrushRefused() {
@@ -1982,7 +1982,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       naturalistPanel.onCensus(m);
       break;
     case "naturalistTouched":
-      naturalistPanel.onTouched(m.world, m.runId, m.step);
+      naturalistPanel.onTouched(m.world, m.runId, m.step, m.id);
       break;
     case "sessionFile":
       firstsPanel.onSessionFile(m);
@@ -1997,7 +1997,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       if (m.request === "load" || m.request === "restore" || m.request === "import") loadIntent = null;
       if (m.request === "lesion" || m.request === "feed") {
         noteBrushRefused();
-        naturalistPanel.onApplyRefused(m.message);
+        naturalistPanel.onApplyRefused(m.message, m.id);
       }
       if (m.request === "pressure") pressureAnswered();
       if (m.request === "sun") {
@@ -2055,7 +2055,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         naturalistPanel.onFailed();
       }
       // A Try still waiting for its edit to be logged may not have been applied (the error names no request; the model ignores this otherwise).
-      naturalistPanel.onApplyRefused(m.message, false);
+      naturalistPanel.onApplyUncertain(m.message);
       {
         // The page pauses on any error, so auto-breed ends; it says the world failed only when it did.
         const wasAuto = auto !== null;

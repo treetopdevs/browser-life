@@ -318,10 +318,11 @@ export type ToWorker =
    * A wound in a disc. `world`, when set (Field notes' Try it here names the world its suggestion was made for), is the worker's
    * number for the world (`loaded`'s world): a lesion or feed for a world since replaced is refused (`refused` with its request)
    * and changes nothing. The brush omits it and edits whatever world is on screen when the message is handled.
+   * `id` is a transient receipt correlation token, echoed on success or request-local refusal; never logged for replay.
    */
-  | { type: "lesion"; x: number; y: number; r: number; world?: number }
+  | { type: "lesion"; x: number; y: number; r: number; world?: number; id?: number }
   /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. `world` as for "lesion". */
-  | { type: "feed"; x: number; y: number; r: number; amount: number; world?: number }
+  | { type: "feed"; x: number; y: number; r: number; amount: number; world?: number; id?: number }
   /**
    * A sun (@bl/schema's sun.ts, docs/garden-sun-2026-10-18.md): from the world's step its light is `percent` of its own (base,
    * amplitude and season) for `span` steps, then its own returns. A logged intervention. Refused (`refused` with request "sun")
@@ -395,7 +396,7 @@ export type FromWorker =
   | { type: "loaded"; manifest: RunManifest; step: number; world?: number }
   | NaturalistMsg
   /** A wound, feed or drain was just logged at `step` on that world (the naturalist marks its notes without waiting for a census). */
-  | { type: "naturalistTouched"; world: number; runId: string; step: number }
+  | { type: "naturalistTouched"; world: number; runId: string; step: number; /** Only a live request may carry a receipt id; replay never does. */ id?: number }
   | StatsMsg
   | CensusMsg
   | ProbeMsg
@@ -419,6 +420,6 @@ export type FromWorker =
    * keep or read a Checkpoint. Not a failure: the world is usable, and whoever made the request (the lineage
    * panel's inspection or jump) must stop waiting for it.
    */
-  | { type: "refused"; request: ToWorker["type"]; message: string; /** The page's request id, when the request carried one ("sessionExport"). */ id?: number }
+  | { type: "refused"; request: ToWorker["type"]; message: string; /** The page's request id, when the request carried one (sessionExport or a tagged hand action). */ id?: number }
   /** A replay check of `steps` steps from step `from`, which the live world has now run: its state hash and the twin's. */
   | { type: "verify"; ok: boolean; detail: string; from: number; steps: number; live: string; twin: string };
