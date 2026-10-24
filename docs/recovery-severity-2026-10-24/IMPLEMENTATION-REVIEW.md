@@ -25,3 +25,7 @@ The tool-free source-packet fallback completed with NO BLOCKERS. Argon's source-
 Useful suggestions fixed: the seam test now actually crosses the torus; the selector verifies that the target is exactly one full original census component; subset/mixed-component rejection tests were added; a negative feasibility gate exits 3; failure-record errors cannot mask the original error. Existing publication ordering and source-revision capture already addressed findings against the older packet. Full-component validation required moving synthetic collateral away from the original body so the fixture remains a valid separate component.
 
 All 24 focused tests and Deno check pass. The final zero-step run remains 32/32 feasible with identical selected pairs and pinned inputs. Fixed thresholds stay explicit in this protocol; timing belongs to integrity evidence and is not claimed byte-reproducible. Source HEAD/patch plus new-file hashes cover this slice's inspected imports. The aggregate negative status remains distinct from runtime errors. No changes to wound thresholds, seed policy or fresh-trial gates.
+
+## Argon completion
+
+The previously pending Argon 4 High source-packet review completed with NO BLOCKERS. It verified the exact gates/objective, immutable zero-step CPU intervention and pinned engineering inputs. Its packet preceded the final full-component/test hardening; those later changes implement the Sonnet suggestions and preserve all 32 selected pairs. Both requested adversarial review paths are now complete.
