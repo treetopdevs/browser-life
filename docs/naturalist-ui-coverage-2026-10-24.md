@@ -13,7 +13,12 @@ actual lineages-high wound rule or livingCells-high drain rule, preserving its
 original note identity. Thus the wound/drain suggestions are supplied action
 fixtures, not claimed naturally occurring high-side bells. Their predictions are
 not evaluated. The fixture is named in the test title, source and screenshot names, and an
-explicit test-only label appears inside the captured suggestion.
+explicit test-only label appears inside full-note captures. The label is inserted
+only around screenshots and removed immediately; layout, accessibility and click
+assertions see the unmodified production DOM. Full-note screenshots include the
+receipt and both expanded command blocks. Screenshot-only styling hides the
+unrelated fixed skip-navigation link, which Chromium can otherwise overlay on
+its tall-element capture; no assertion runs with that styling.
 
 The production panel, actual button click, worker, GPU simulation, ledger and
 session export remain real. There is no product test hook or fake worker success.
@@ -42,3 +47,37 @@ The final layout/action run with visible fixture labels passed both tests in
 and drain/day 375px captures: readable, clearly marked as test suggestions, with
 no horizontal overflow. Screenshots under `test-results/` are local evidence only,
 not fixtures committed to the repository.
+
+## Adversarial review disposition
+
+The four source-review findings were checked against the current branch:
+
+1. The unfinished-validation report was stale: the final labelled run was already
+   recorded when review arrived. Fresh validation below supersedes both older runs.
+2. Accepted the narrow-layout assertion gap. Tests now check the panel's own
+   viewport bounds and overflow, containment of suggestions and every command,
+   and multiline command height in addition to document overflow and font size.
+3. Accepted the fixture/screenshot gap. Tests explicitly await Paused, keep fixture
+   labels out of behavioral/layout/accessibility checks, and capture the entire
+   labelled note instead of an accidentally cropped viewport.
+4. Accepted the post-click contract gaps. Tests retain and compare the status
+   region DOM identity, audit the touched state in both settled themes, retain
+   the unmeasured prediction and no-pass-badge assertions, check the filed-before
+   receipt, and match the displayed applied step and removed matter exactly to
+   the validated downloaded session.
+
+No production code or scientific claims changed. The supplied wound/drain rules
+remain UI fixtures; these checks do not establish natural high-side bells or
+prediction success.
+
+Review-closure validation (2026-10-24):
+
+- `BL_E2E_PORT=5207 pnpm exec playwright test tests/e2e/lab-naturalist-actions.spec.ts tests/e2e/lab-naturalist.spec.ts --workers=1`: all 7 tests passed in 1.4 minutes, including the unchanged natural bell/worker regressions.
+- After the final explicit theme assertion and screenshot-only skip-navigation
+  exclusion, reran the complete changed action spec: both tests passed in 58.1
+  seconds. Inspected wound/night and drain/day full-note captures: fixture labels,
+  original receipts and both command blocks are present with no overlay or clipping.
+- `pnpm typecheck` and `git diff --check` pass.
+
+These results close the source-review assertion gaps; they are not a new
+scientific experiment or an independent second review of the follow-up changes.
