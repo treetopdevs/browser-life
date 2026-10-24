@@ -1,0 +1,1877 @@
+{
+  "result": {
+    "status": "FEASIBILITY-PASS-ENGINEERING-PENDING",
+    "admitted": 32,
+    "total": 32,
+    "sourceManifest": "8c68136f8e68f551a8ec5f34a93349c729ef0268ad7e2182c6fd2431877dc1f7",
+    "inputEvidence": [
+      {
+        "id": "science-parent-2026102401",
+        "caseSha256": "5a780c62e39d4d0b52f11dd02076663e37ce1c44c39bcbfee26dd24fa9b21946",
+        "checkpointSha256": "e044fa01502a3ee8e8e8a1acba904a7950043138d45c9d5897a3b62f1754a14c"
+      },
+      {
+        "id": "science-mutant-2026102401",
+        "caseSha256": "8a237312611b905ef4aeca39cdb759f99d22ca3a651505b681acf5e5c3e84df5",
+        "checkpointSha256": "80804b3415455d64cc7773a08519556cdb449f8d9b5fd8ed0bb81df67b26f3aa"
+      },
+      {
+        "id": "science-parent-2026102402",
+        "caseSha256": "e0b0079b607f5e71b5b68d2f9b954df7dbd8739d4c975c56fec73c6baf604d1a",
+        "checkpointSha256": "ec0cd868134ce3491e05807cdf35cfc739c016e24894f071162d0a96ee0c5c13"
+      },
+      {
+        "id": "science-mutant-2026102402",
+        "caseSha256": "4ef861cec66709ff2ce29d3a19c1b054591f08eada1489df368fdf923152ca37",
+        "checkpointSha256": "4a9fedcaa44d663761c026cf862de502e2dfb9ed924d4863f9ce7971ab9126e6"
+      },
+      {
+        "id": "science-parent-2026102403",
+        "caseSha256": "7212b46e34e92b5ec215a441e3e18ef264b13a4f3c9c2905e6ef024199415ba0",
+        "checkpointSha256": "6c06043908a387425cb96f1694dab8a6cf0e12efb5efd83ce76c24787aea711f"
+      },
+      {
+        "id": "science-mutant-2026102403",
+        "caseSha256": "72c9b05d22d34be02a53ff495fcde4b848ec715ee261c1fabcafddce6c1dae02",
+        "checkpointSha256": "a486efc2f6c653b96f59a43a42a48b17654120de1b01def6f4b269c9d45f90ec"
+      },
+      {
+        "id": "science-parent-2026102404",
+        "caseSha256": "bbc3016e97ac25d69cec5d4e39c51aaae45560ed34cf4e722c2eb5a37cfdb1ec",
+        "checkpointSha256": "f026406aa6a51cc7d56d0e15790e19461b2e7aa85a5e36086aa3a51ccb81c539"
+      },
+      {
+        "id": "science-mutant-2026102404",
+        "caseSha256": "cdebcc8218a450ebafb066048470590b01ae3fc460c34be96f10c69f2c32fdca",
+        "checkpointSha256": "d6a6f5a9931a9cb5033f80d9087bec48b2ffbc5824f80902c4648d4fd61e3632"
+      },
+      {
+        "id": "science-parent-2026102405",
+        "caseSha256": "f26dfc2c69030b3e685cd29b5b6c08fa253cbd705cc1bec94ba447016b3a5acb",
+        "checkpointSha256": "0149b6e933b3ea852984daf7f287ee6d748d2e819a8a30298b198ecd339b7542"
+      },
+      {
+        "id": "science-mutant-2026102405",
+        "caseSha256": "f43b9a1755187a3ed4ca6e3f5d574b5ed12b2e9ef61f38819c65595a6977e55c",
+        "checkpointSha256": "bf4fec25666a290e6251b290553b0557701d76d8f1ea3bdcdc47918ff6ae1b1e"
+      },
+      {
+        "id": "science-parent-2026102406",
+        "caseSha256": "5b245ffc857416dfdb61368b1a2a58e32dc1dbb934dede48e438f0ec0f5ea282",
+        "checkpointSha256": "190e3a4212137cb5762fd98433294d804a0ebf387db5feebce7d0a3817513a20"
+      },
+      {
+        "id": "science-mutant-2026102406",
+        "caseSha256": "ad90cb6f765415a703bac882978c537a8e22d035a1be0283a628fa53c5b79046",
+        "checkpointSha256": "ffb1ac64d3f8ffc4c9a8003bdac175c7cb6cff21fcf50ff66083e9411ebfddb2"
+      },
+      {
+        "id": "science-parent-2026102407",
+        "caseSha256": "2de6c791e0c0ffff814b1877dd5d3cd9719b5bbc85395d6b5a5ea52923cef748",
+        "checkpointSha256": "ddd11e85bb427f3a5c09ae54e9e81c3584f783afc04b8dfc7a417a28898cc8b6"
+      },
+      {
+        "id": "science-mutant-2026102407",
+        "caseSha256": "b6ebf16d0841c9861030277058dd5e0e95085ed00f948ec3e20b0e2af835d0d3",
+        "checkpointSha256": "966ba3fdf501a6853c41c61cec8556c0ddd08ee84ceff3c0190656e431164c45"
+      },
+      {
+        "id": "science-parent-2026102408",
+        "caseSha256": "3367cdaabc22cb2569f09cf0a52864a88b8c6c62879b3151040ebfeb54e911ce",
+        "checkpointSha256": "218b980e129fa0a3e26eca9f99a14329ea8dd7e0050293b0f764bcd6c9f6942c"
+      },
+      {
+        "id": "science-mutant-2026102408",
+        "caseSha256": "127029177404f27dfd149655981026dc766e061cbf2dbaa774b4bd68cb0bf9a2",
+        "checkpointSha256": "aec3a08024a0e9f1d79bb01ff520f290cc35f8b44bd2ad4813ae744883b938e4"
+      },
+      {
+        "id": "science-parent-2026102409",
+        "caseSha256": "13ae4feed788fd1056aca50a0815a4fac55f06d45c4e7f558678e98c159e03d1",
+        "checkpointSha256": "2383832e8557cd6f6e93b8445da13f1cd2f336423a45b5b75a385e12a0335594"
+      },
+      {
+        "id": "science-mutant-2026102409",
+        "caseSha256": "e79d5f6ffdaab23e97549f0af5b8868758931293d3e6fea56f83678b18d7e25f",
+        "checkpointSha256": "7dfebc6043c666629e311a1c1b0f6b0b58b296e6d611c116175298d017b0c507"
+      },
+      {
+        "id": "science-parent-2026102410",
+        "caseSha256": "cec86802fe204ab847f7c31e128cf1570068c7adb4c4fa125c25eeeec66b7da2",
+        "checkpointSha256": "dd52d37522278ee6951bd6e7dd39357c42c7fae6923c4143fd8c924b06345722"
+      },
+      {
+        "id": "science-mutant-2026102410",
+        "caseSha256": "6a40dccf3f1b906c9fdb52a2c60dd700400e509c1e312f11a336c52297185a12",
+        "checkpointSha256": "405ca6b019663b4a6ddd8a5fd6650f4fe1d77f06c65670b63b364778826cc1aa"
+      },
+      {
+        "id": "science-parent-2026102411",
+        "caseSha256": "53949e61f6a9ea8d7d33ec61cf299e468c76249cfeb000c765e201b518860e8b",
+        "checkpointSha256": "984494ebe5596ce08a528d7610251bf90f4d756e924df22e5b63a05e7bb35ff6"
+      },
+      {
+        "id": "science-mutant-2026102411",
+        "caseSha256": "6636dc9b3acea5ac5b2affc4d912e366a4e0814b67666a7c16067a4373cd1d0d",
+        "checkpointSha256": "f5d301e213586529bc438f84137dc94e5fc209b96c0d6baa75d79cea238dcd02"
+      },
+      {
+        "id": "science-parent-2026102412",
+        "caseSha256": "575465102edde3ab33da8d5090e91a22115292978a05febd4eb8064980cfaa11",
+        "checkpointSha256": "fb345dbd92376bd84cd303b4ed12dd9f00e7ecdc089a31e52c9f2af417d14f28"
+      },
+      {
+        "id": "science-mutant-2026102412",
+        "caseSha256": "2a32066e93f2c7503450b5c01abe7ebd8e34e0da1aab8123527b0ff106697b2b",
+        "checkpointSha256": "9d2634624ff757b9cac349acc81d7056cfd168d847a8514f9d4a2aacad942934"
+      },
+      {
+        "id": "science-parent-2026102413",
+        "caseSha256": "04d10388cdc0769b27f37f47af6f33f973d9a2431c11163368f2dc9574edc23b",
+        "checkpointSha256": "42548507542a0a678f992e9420f9e1b7eac751379c70ca367b192e546090051b"
+      },
+      {
+        "id": "science-mutant-2026102413",
+        "caseSha256": "08f7d9735843e3648999fe0a8426ed17d986296142574a0ee4059a310466b5c4",
+        "checkpointSha256": "5e296f26f02c5d2c66d00dd70e8f37e86f817cff5861d2dd49d1247182ffdacd"
+      },
+      {
+        "id": "science-parent-2026102414",
+        "caseSha256": "0692cca9e4f8150a9410cc60b3514b1892cabac1635d8aa32f909de940e3ff10",
+        "checkpointSha256": "31be9058c4a087e6ee0fa181ec424a28e2d3369ecddb23f0231f8416611bd65c"
+      },
+      {
+        "id": "science-mutant-2026102414",
+        "caseSha256": "46dd2361e4b07c68082fa154d6854103a246b39fb74e0f194e5d91253c0368dc",
+        "checkpointSha256": "29f63cc3431da0d76b924abd9cccccfbc91c6fe46c03a0e7c0a8546dcab9198a"
+      },
+      {
+        "id": "science-parent-2026102415",
+        "caseSha256": "d2aa30850d6a920b42fdfb9cd10964df2bde3fcb603ce31f3e9d589e48dba679",
+        "checkpointSha256": "1ab48d115ed2ca4ea247e1abf27cfa6378d34f5b190227d21e8a5cf81193a9e7"
+      },
+      {
+        "id": "science-mutant-2026102415",
+        "caseSha256": "bd567ac84888de70f8bae2b19b9ee1c125c1890cd8eb32fb120903de74f37e2b",
+        "checkpointSha256": "a5adf47737b66df42bbd86bcd919c7dd7f3fd0ed184dab3a004fd0ce236c3fd9"
+      },
+      {
+        "id": "science-parent-2026102416",
+        "caseSha256": "89770d46a58a290c8c6597f099e78d8f198ca3eff8970b839d947c97ea2f9d29",
+        "checkpointSha256": "c03a5ff3a20859871c5cbccac5fdf61b100a004259c2376074e05555951777a1"
+      },
+      {
+        "id": "science-mutant-2026102416",
+        "caseSha256": "eccd31414c0680461294796247481d3c57fb967aa3297b3eb7a2203efc54b4f7",
+        "checkpointSha256": "9711de0b44c611ba859d0009314f64300cf68ba458c5b5e2d78ad219dd054efc"
+      },
+      {
+        "id": "science-parent-2026102417",
+        "caseSha256": "c2b56f3525104821f1478d7691989ee20cb65ed3e953c64082cb9c68c0f318b5",
+        "checkpointSha256": "cc14a403f27f0f8f62fff863efc5dde12c753fc1bebd99f681b2584f46a05f8b"
+      },
+      {
+        "id": "science-mutant-2026102417",
+        "caseSha256": "83ba703af047100da8966d4865ee0c9079082c9fcd46f20b20bb1cacc849b8e7",
+        "checkpointSha256": "2a38cbb51b082f2d482e1b8ffaadf308becaebc3f3f7fabaf04e7be6eaad184c"
+      },
+      {
+        "id": "science-parent-2026102418",
+        "caseSha256": "d137de1b0d8dbe7cf10f91df5215e28476cd12335c723ce7cc9fdd0ae11ce22d",
+        "checkpointSha256": "775eee34f91422899d84525ad741ee83f22d5f5fdb6869433c8b3f516b36bbb5"
+      },
+      {
+        "id": "science-mutant-2026102418",
+        "caseSha256": "a362b27758d4097302aa753c1c165f3b49a9139478ae4e36ca0ba20a7e799444",
+        "checkpointSha256": "f9b03bb2a01a2efde963e5f04b7e3a7e4f009bc2e4c6d3569444dc3283334642"
+      },
+      {
+        "id": "science-parent-2026102419",
+        "caseSha256": "e2066a01820ce9dd40005045838100e101e7a3d8c49cd999767ffb6ed01254f6",
+        "checkpointSha256": "c594abbfa89ed0bd4d44d44f359ad666a06bdcd3a4c7b659f846ebd3f69677f5"
+      },
+      {
+        "id": "science-mutant-2026102419",
+        "caseSha256": "d94d70440b6f10364188e5d676c887f106fed17798be2bd9a124a0a3760f8284",
+        "checkpointSha256": "370703da5e9f84fca4d5c10699a42c911d6e1c6fb4e8d939566cd5d8d2a02f9d"
+      },
+      {
+        "id": "science-parent-2026102420",
+        "caseSha256": "a2929418c4f2fe02aa6a5613bde5df78444f1f8be43fa6e0314f08a19f31dd26",
+        "checkpointSha256": "1dad01531e864882ce33ebbd9e73abc593f4e4625642a56616b9ecdc97196ae2"
+      },
+      {
+        "id": "science-mutant-2026102420",
+        "caseSha256": "b99ea4e2cc5af06d762fd065c53dd9ab36e6dca377a729cd8f950704fa071b15",
+        "checkpointSha256": "eee4d9065e8b6648a4848cf78657cbcede25bdc187aeec9424aa2a3fd6c44634"
+      },
+      {
+        "id": "science-parent-2026102421",
+        "caseSha256": "34ed401bb8547c42073f61b3f954d40436f09c3bf9907572b6ed06311bd655d8",
+        "checkpointSha256": "8e472effc5b36828f1abb18cccd5ebc39ec34e9aa261afabfda9b683161ae662"
+      },
+      {
+        "id": "science-mutant-2026102421",
+        "caseSha256": "a80abc9ff30a86de7d75a0b4c0b945e2ab74c8b411e054b690d4c5f1c4ee7693",
+        "checkpointSha256": "b9afa499d0f6d5b607f16135ca49af2a8fe4fa2e1d7dd9a5ffe1caf6ff648562"
+      },
+      {
+        "id": "science-parent-2026102422",
+        "caseSha256": "3c2687cb3ba32aadcd4ce601366c4e3e848e4640d340f0d643fc37e4a142b0ee",
+        "checkpointSha256": "6b6ee822f44e4c53feb6f66c6bf2d42d7b50a32881b9c51e42ad5a72bbd38cc6"
+      },
+      {
+        "id": "science-mutant-2026102422",
+        "caseSha256": "7752753db19dc2947ba9b83a551c22a540f119bc762cb84b56dbe845c31bebb3",
+        "checkpointSha256": "c5e08224ebaf50c77ecbdd19ef7b073dd9e9f1b49f8181cf8a2bb23f8a61f63b"
+      },
+      {
+        "id": "science-parent-2026102423",
+        "caseSha256": "b2e817474c2560210b6ad9763b1e1151aab9e43e7b0a0c2656b9f2ee8cb0d1e6",
+        "checkpointSha256": "182c0b7621a39cb0d69b29a551a141138d470a68815cee1e84c8b4c624177131"
+      },
+      {
+        "id": "science-mutant-2026102423",
+        "caseSha256": "21f1f380a353801da059f753b1401970ce58e5557a75bf8ca72e4c7b9aaead5c",
+        "checkpointSha256": "fec74f63d1e6a358b30b98abe4c9ae8ccc28048b08db63759fe88f11c9b72c64"
+      },
+      {
+        "id": "science-parent-2026102424",
+        "caseSha256": "cad0c524bdaf0bd960cbad071bd062383f6be1bb91ff79e26516c5845e025645",
+        "checkpointSha256": "c894847130db3c438a07ce7c72bddf577eb098c67278ed1d542a470b1889deda"
+      },
+      {
+        "id": "science-mutant-2026102424",
+        "caseSha256": "4278c863ed295e5b1ffa91e1e62f4e1a45605e2b09a4ec755e4809043b3b65fc",
+        "checkpointSha256": "bcd742cd0abd2a300affb4729ebc82877ce1c2d871cb1679102777330b52061e"
+      },
+      {
+        "id": "science-parent-2026102425",
+        "caseSha256": "419a73a3e8d78656c9334f1415fa32ffc1a521e2851578d0f87da22706f4caaa",
+        "checkpointSha256": "379004a3a6d428b04bc0b2f7ea28b249abff02e26af3076915b4549032f71637"
+      },
+      {
+        "id": "science-mutant-2026102425",
+        "caseSha256": "1b14765dc060fa027c99d9cc4bad130d68520ac60ccf4afe20dcab484f4bf01b",
+        "checkpointSha256": "cd875c3cd0e2e12d65627d97a688a48bc99f39d5b56b3ed31313780d679b9d90"
+      },
+      {
+        "id": "science-parent-2026102426",
+        "caseSha256": "130b005508aecad52c265a54e9f1ad649512c285632d2e7f07c3308b5b3b1618",
+        "checkpointSha256": "de427fbabcb47f5907cbe80fbe2afc577ab3e7fadd82b7ac314c5251c45f8fef"
+      },
+      {
+        "id": "science-mutant-2026102426",
+        "caseSha256": "8b8ef738aeee1377c025185bedf8f582753d59c8f49d9a14e3c7c044a644b73b",
+        "checkpointSha256": "8958384ef620ad50971d4e1b5c9ad1ad1c43e3e56d7da182171e5ca6d318292a"
+      },
+      {
+        "id": "science-parent-2026102427",
+        "caseSha256": "68ad7de739f433bae79ed41976904ac61e2420612e4e5a2c1ad0f9ed6562b5f9",
+        "checkpointSha256": "e8bd2141141d63300ebfd37f5c4a27da1e24b05f7b619a107658f240f563b3b1"
+      },
+      {
+        "id": "science-mutant-2026102427",
+        "caseSha256": "a33fd7fd628b1ef6e70fb9d0dab7ddaeab16842200eadfafe6c95be9598a6337",
+        "checkpointSha256": "69ea21c168a586ebc0f553914b170b4b85ea73d34919b579873a983a9230addd"
+      },
+      {
+        "id": "science-parent-2026102428",
+        "caseSha256": "031b99b8a64c48b973e00b743ec4cd568d5a4ad981ee51d4fd9bef8af937aa85",
+        "checkpointSha256": "e2bb3e94529243d9a2f34ccc48723038989498d57abf68450c30f667fbc09346"
+      },
+      {
+        "id": "science-mutant-2026102428",
+        "caseSha256": "67bb0382c6b19cdca20425a7ee68b6671f2c7e5c4b2a9ead2ca49f58e8cbb78e",
+        "checkpointSha256": "fe9d0e7f590bda244cb898e33123427a26a97d5183eee330f8a2c27737a1bd7b"
+      },
+      {
+        "id": "science-parent-2026102429",
+        "caseSha256": "f53f04268d77354b191ca50347726292ff8e8b1eb1a6fd30f747bb59c77f00a8",
+        "checkpointSha256": "2afe225e72ed0f6a59962dfb337541d8a6bf59569610ac18471788fc29efb471"
+      },
+      {
+        "id": "science-mutant-2026102429",
+        "caseSha256": "91bc3a01d14c1f3bf89ca804e411044d06ab900ca71f606d1f66cbf078798b40",
+        "checkpointSha256": "47e05bce594e8c3b082a0deafcc104e7b18ceca4d197336da302fbaa0dd437a2"
+      },
+      {
+        "id": "science-parent-2026102430",
+        "caseSha256": "b621208b266da1160b089241de592fe427bb3fd82c8c300afd77fe2f33e686e3",
+        "checkpointSha256": "df5cd4ffd396b5a6f794c8658dcdd086a0a85b3608f8c7b4c9613e763248003b"
+      },
+      {
+        "id": "science-mutant-2026102430",
+        "caseSha256": "dc5d474574e2ddefca03ab89b62e397d7583e8134dfa4335bd394a1e3994bc62",
+        "checkpointSha256": "e97034f4622ef337ce7f623feb14c440fe8388577cabb18b42c9384eaa5e3727"
+      },
+      {
+        "id": "science-parent-2026102431",
+        "caseSha256": "6888f4ab134563d4e00003438adc5cdc2a977decf31995003f11c16c58a4fbf8",
+        "checkpointSha256": "450587d268b8d3cb843fd588439fd2b19eb00c72275599e987acc9bd02901bd2"
+      },
+      {
+        "id": "science-mutant-2026102431",
+        "caseSha256": "b2feb7118d2738980783722427e4e2c957d1bac3369e36937ee1dcb097ced7b5",
+        "checkpointSha256": "2f78de33d65391ba145f88b512ba68032f1518c62f2f9088f1acdae0e233fed9"
+      },
+      {
+        "id": "science-parent-2026102432",
+        "caseSha256": "396caf33c78c8a980691b10eff8799b49e8774d23ee69acbe7f820193388e1b4",
+        "checkpointSha256": "1563f61cccbbcdbe39a227efb31e664d499b4d7dad79efb9e4e564c203efa457"
+      },
+      {
+        "id": "science-mutant-2026102432",
+        "caseSha256": "14d5c857ccee5c5b7d1040dd8c9121e1f6217fcf9bc855f5f2f2adcd5320461e",
+        "checkpointSha256": "97660a4753fba407c2869ab5f2971ddc9a1726db9168e863fe6e7ef92d6653e4"
+      }
+    ],
+    "pairs": [
+      {
+        "seed": 2026102401,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 589,
+          "doseRejected": 587,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 26,
+            "radius": 2,
+            "damage": 1576,
+            "originalMass": 4063,
+            "collateral": 69,
+            "survivingMass": 2487,
+            "remnantLabel": 3,
+            "remnantMass": 2487,
+            "remnantTargetMass": 2487,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2246,
+            "radius": 2,
+            "damage": 1601,
+            "originalMass": 4015,
+            "collateral": 74,
+            "survivingMass": 2414,
+            "remnantLabel": 2,
+            "remnantMass": 2313,
+            "remnantTargetMass": 2313,
+            "remnantOverlapCells": 11
+          }
+        }
+      },
+      {
+        "seed": 2026102402,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 618,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 1599,
+            "radius": 2,
+            "damage": 1683,
+            "originalMass": 4200,
+            "collateral": 108,
+            "survivingMass": 2517,
+            "remnantLabel": 1,
+            "remnantMass": 2517,
+            "remnantTargetMass": 2517,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 4065,
+            "radius": 1,
+            "damage": 1594,
+            "originalMass": 4174,
+            "collateral": 0,
+            "survivingMass": 2580,
+            "remnantLabel": 0,
+            "remnantMass": 2463,
+            "remnantTargetMass": 2463,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102403,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 618,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 286,
+            "radius": 2,
+            "damage": 1759,
+            "originalMass": 4229,
+            "collateral": 58,
+            "survivingMass": 2470,
+            "remnantLabel": 0,
+            "remnantMass": 2470,
+            "remnantTargetMass": 2470,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 1854,
+            "radius": 1,
+            "damage": 1678,
+            "originalMass": 4114,
+            "collateral": 0,
+            "survivingMass": 2436,
+            "remnantLabel": 1,
+            "remnantMass": 2315,
+            "remnantTargetMass": 2315,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102404,
+        "parent": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 3738,
+            "radius": 2,
+            "damage": 1613,
+            "originalMass": 4013,
+            "collateral": 76,
+            "survivingMass": 2400,
+            "remnantLabel": 3,
+            "remnantMass": 2400,
+            "remnantTargetMass": 2400,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 673,
+            "radius": 2,
+            "damage": 1715,
+            "originalMass": 4242,
+            "collateral": 59,
+            "survivingMass": 2527,
+            "remnantLabel": 1,
+            "remnantMass": 2527,
+            "remnantTargetMass": 2527,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102405,
+        "parent": {
+          "enumerated": 558,
+          "doseRejected": 556,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 2,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 2172,
+            "radius": 1,
+            "damage": 1536,
+            "originalMass": 3842,
+            "collateral": 0,
+            "survivingMass": 2306,
+            "remnantLabel": 2,
+            "remnantMass": 2129,
+            "remnantTargetMass": 2129,
+            "remnantOverlapCells": 11
+          },
+          "mutant": {
+            "center": 3871,
+            "radius": 2,
+            "damage": 1693,
+            "originalMass": 4260,
+            "collateral": 65,
+            "survivingMass": 2567,
+            "remnantLabel": 3,
+            "remnantMass": 2567,
+            "remnantTargetMass": 2567,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102406,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2051,
+            "radius": 2,
+            "damage": 1522,
+            "originalMass": 3840,
+            "collateral": 95,
+            "survivingMass": 2318,
+            "remnantLabel": 2,
+            "remnantMass": 2318,
+            "remnantTargetMass": 2318,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 480,
+            "radius": 2,
+            "damage": 1539,
+            "originalMass": 3896,
+            "collateral": 107,
+            "survivingMass": 2357,
+            "remnantLabel": 0,
+            "remnantMass": 2292,
+            "remnantTargetMass": 2292,
+            "remnantOverlapCells": 11
+          }
+        }
+      },
+      {
+        "seed": 2026102407,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 2043,
+            "radius": 2,
+            "damage": 1536,
+            "originalMass": 3868,
+            "collateral": 101,
+            "survivingMass": 2332,
+            "remnantLabel": 2,
+            "remnantMass": 2332,
+            "remnantTargetMass": 2332,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2118,
+            "radius": 2,
+            "damage": 1717,
+            "originalMass": 4240,
+            "collateral": 77,
+            "survivingMass": 2523,
+            "remnantLabel": 2,
+            "remnantMass": 2523,
+            "remnantTargetMass": 2523,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102408,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 589,
+          "doseRejected": 584,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 5
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 5,
+        "selection": {
+          "parent": {
+            "center": 2245,
+            "radius": 2,
+            "damage": 1627,
+            "originalMass": 4059,
+            "collateral": 97,
+            "survivingMass": 2432,
+            "remnantLabel": 2,
+            "remnantMass": 2432,
+            "remnantTargetMass": 2432,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 1979,
+            "radius": 2,
+            "damage": 1581,
+            "originalMass": 3940,
+            "collateral": 111,
+            "survivingMass": 2359,
+            "remnantLabel": 1,
+            "remnantMass": 2359,
+            "remnantTargetMass": 2359,
+            "remnantOverlapCells": 12
+          }
+        }
+      },
+      {
+        "seed": 2026102409,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 682,
+          "doseRejected": 680,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 3742,
+            "radius": 2,
+            "damage": 1686,
+            "originalMass": 4099,
+            "collateral": 103,
+            "survivingMass": 2413,
+            "remnantLabel": 3,
+            "remnantMass": 2413,
+            "remnantTargetMass": 2413,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 416,
+            "radius": 1,
+            "damage": 1733,
+            "originalMass": 4304,
+            "collateral": 0,
+            "survivingMass": 2571,
+            "remnantLabel": 0,
+            "remnantMass": 2571,
+            "remnantTargetMass": 2571,
+            "remnantOverlapCells": 17
+          }
+        }
+      },
+      {
+        "seed": 2026102410,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 2040,
+            "radius": 1,
+            "damage": 1700,
+            "originalMass": 4244,
+            "collateral": 0,
+            "survivingMass": 2544,
+            "remnantLabel": 4,
+            "remnantMass": 2249,
+            "remnantTargetMass": 2249,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2043,
+            "radius": 2,
+            "damage": 1583,
+            "originalMass": 3912,
+            "collateral": 113,
+            "survivingMass": 2329,
+            "remnantLabel": 1,
+            "remnantMass": 2329,
+            "remnantTargetMass": 2329,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102411,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 558,
+          "doseRejected": 555,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 419,
+            "radius": 2,
+            "damage": 1536,
+            "originalMass": 3967,
+            "collateral": 95,
+            "survivingMass": 2431,
+            "remnantLabel": 0,
+            "remnantMass": 2431,
+            "remnantTargetMass": 2431,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2043,
+            "radius": 1,
+            "damage": 1543,
+            "originalMass": 3928,
+            "collateral": 0,
+            "survivingMass": 2385,
+            "remnantLabel": 2,
+            "remnantMass": 2315,
+            "remnantTargetMass": 2315,
+            "remnantOverlapCells": 12
+          }
+        }
+      },
+      {
+        "seed": 2026102412,
+        "parent": {
+          "enumerated": 558,
+          "doseRejected": 555,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 2045,
+            "radius": 2,
+            "damage": 1556,
+            "originalMass": 3884,
+            "collateral": 83,
+            "survivingMass": 2328,
+            "remnantLabel": 3,
+            "remnantMass": 2205,
+            "remnantTargetMass": 2205,
+            "remnantOverlapCells": 10
+          },
+          "mutant": {
+            "center": 2116,
+            "radius": 2,
+            "damage": 1576,
+            "originalMass": 3925,
+            "collateral": 83,
+            "survivingMass": 2349,
+            "remnantLabel": 1,
+            "remnantMass": 2349,
+            "remnantTargetMass": 2349,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102413,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 3999,
+            "radius": 2,
+            "damage": 1685,
+            "originalMass": 4199,
+            "collateral": 104,
+            "survivingMass": 2514,
+            "remnantLabel": 3,
+            "remnantMass": 2514,
+            "remnantTargetMass": 2514,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2044,
+            "radius": 2,
+            "damage": 1574,
+            "originalMass": 3951,
+            "collateral": 106,
+            "survivingMass": 2377,
+            "remnantLabel": 1,
+            "remnantMass": 2377,
+            "remnantTargetMass": 2377,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102414,
+        "parent": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2234,
+            "radius": 2,
+            "damage": 1681,
+            "originalMass": 4110,
+            "collateral": 114,
+            "survivingMass": 2429,
+            "remnantLabel": 2,
+            "remnantMass": 2429,
+            "remnantTargetMass": 2429,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 480,
+            "radius": 2,
+            "damage": 1669,
+            "originalMass": 4168,
+            "collateral": 110,
+            "survivingMass": 2499,
+            "remnantLabel": 0,
+            "remnantMass": 2499,
+            "remnantTargetMass": 2499,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102415,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2308,
+            "radius": 2,
+            "damage": 1667,
+            "originalMass": 4153,
+            "collateral": 119,
+            "survivingMass": 2486,
+            "remnantLabel": 2,
+            "remnantMass": 2486,
+            "remnantTargetMass": 2486,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 1721,
+            "radius": 2,
+            "damage": 1599,
+            "originalMass": 4058,
+            "collateral": 73,
+            "survivingMass": 2459,
+            "remnantLabel": 1,
+            "remnantMass": 2459,
+            "remnantTargetMass": 2459,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102416,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 347,
+            "radius": 2,
+            "damage": 1566,
+            "originalMass": 4018,
+            "collateral": 66,
+            "survivingMass": 2452,
+            "remnantLabel": 0,
+            "remnantMass": 2452,
+            "remnantTargetMass": 2452,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 3879,
+            "radius": 2,
+            "damage": 1603,
+            "originalMass": 4110,
+            "collateral": 67,
+            "survivingMass": 2507,
+            "remnantLabel": 3,
+            "remnantMass": 2507,
+            "remnantTargetMass": 2507,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102417,
+        "parent": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 558,
+          "doseRejected": 555,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2170,
+            "radius": 2,
+            "damage": 1681,
+            "originalMass": 4162,
+            "collateral": 60,
+            "survivingMass": 2481,
+            "remnantLabel": 2,
+            "remnantMass": 2481,
+            "remnantTargetMass": 2481,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 2114,
+            "radius": 1,
+            "damage": 1546,
+            "originalMass": 3902,
+            "collateral": 0,
+            "survivingMass": 2356,
+            "remnantLabel": 2,
+            "remnantMass": 2283,
+            "remnantTargetMass": 2283,
+            "remnantOverlapCells": 12
+          }
+        }
+      },
+      {
+        "seed": 2026102418,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 527,
+          "doseRejected": 524,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 218,
+            "radius": 2,
+            "damage": 1643,
+            "originalMass": 4185,
+            "collateral": 57,
+            "survivingMass": 2542,
+            "remnantLabel": 1,
+            "remnantMass": 2542,
+            "remnantTargetMass": 2542,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 419,
+            "radius": 2,
+            "damage": 1616,
+            "originalMass": 3898,
+            "collateral": 101,
+            "survivingMass": 2282,
+            "remnantLabel": 0,
+            "remnantMass": 2282,
+            "remnantTargetMass": 2282,
+            "remnantOverlapCells": 10
+          }
+        }
+      },
+      {
+        "seed": 2026102419,
+        "parent": {
+          "enumerated": 682,
+          "doseRejected": 678,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 3615,
+            "radius": 2,
+            "damage": 1720,
+            "originalMass": 4281,
+            "collateral": 62,
+            "survivingMass": 2561,
+            "remnantLabel": 3,
+            "remnantMass": 2561,
+            "remnantTargetMass": 2561,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 33,
+            "radius": 2,
+            "damage": 1680,
+            "originalMass": 4103,
+            "collateral": 110,
+            "survivingMass": 2423,
+            "remnantLabel": 0,
+            "remnantMass": 2335,
+            "remnantTargetMass": 2335,
+            "remnantOverlapCells": 12
+          }
+        }
+      },
+      {
+        "seed": 2026102420,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 646,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 5
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 617,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 5,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 3808,
+            "radius": 1,
+            "damage": 1652,
+            "originalMass": 4189,
+            "collateral": 0,
+            "survivingMass": 2537,
+            "remnantLabel": 3,
+            "remnantMass": 2418,
+            "remnantTargetMass": 2418,
+            "remnantOverlapCells": 15
+          },
+          "mutant": {
+            "center": 1916,
+            "radius": 2,
+            "damage": 1527,
+            "originalMass": 3850,
+            "collateral": 80,
+            "survivingMass": 2323,
+            "remnantLabel": 2,
+            "remnantMass": 2323,
+            "remnantTargetMass": 2323,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102421,
+        "parent": {
+          "enumerated": 620,
+          "doseRejected": 617,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 3740,
+            "radius": 1,
+            "damage": 1590,
+            "originalMass": 4053,
+            "collateral": 0,
+            "survivingMass": 2463,
+            "remnantLabel": 4,
+            "remnantMass": 2356,
+            "remnantTargetMass": 2356,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 1924,
+            "radius": 2,
+            "damage": 1648,
+            "originalMass": 4162,
+            "collateral": 108,
+            "survivingMass": 2514,
+            "remnantLabel": 2,
+            "remnantMass": 2514,
+            "remnantTargetMass": 2514,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102422,
+        "parent": {
+          "enumerated": 620,
+          "doseRejected": 616,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 615,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 5
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 5,
+        "selection": {
+          "parent": {
+            "center": 2104,
+            "radius": 2,
+            "damage": 1524,
+            "originalMass": 3813,
+            "collateral": 93,
+            "survivingMass": 2289,
+            "remnantLabel": 2,
+            "remnantMass": 2289,
+            "remnantTargetMass": 2289,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 350,
+            "radius": 2,
+            "damage": 1576,
+            "originalMass": 3886,
+            "collateral": 103,
+            "survivingMass": 2310,
+            "remnantLabel": 0,
+            "remnantMass": 2310,
+            "remnantTargetMass": 2310,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102423,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 682,
+          "doseRejected": 679,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2501,
+            "radius": 2,
+            "damage": 1654,
+            "originalMass": 4140,
+            "collateral": 118,
+            "survivingMass": 2486,
+            "remnantLabel": 2,
+            "remnantMass": 2486,
+            "remnantTargetMass": 2486,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2038,
+            "radius": 1,
+            "damage": 1761,
+            "originalMass": 4297,
+            "collateral": 0,
+            "survivingMass": 2536,
+            "remnantLabel": 2,
+            "remnantMass": 2536,
+            "remnantTargetMass": 2536,
+            "remnantOverlapCells": 17
+          }
+        }
+      },
+      {
+        "seed": 2026102424,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 618,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 2046,
+            "radius": 2,
+            "damage": 1672,
+            "originalMass": 4096,
+            "collateral": 91,
+            "survivingMass": 2424,
+            "remnantLabel": 2,
+            "remnantMass": 2424,
+            "remnantTargetMass": 2424,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 1926,
+            "radius": 2,
+            "damage": 1680,
+            "originalMass": 4003,
+            "collateral": 111,
+            "survivingMass": 2323,
+            "remnantLabel": 2,
+            "remnantMass": 2323,
+            "remnantTargetMass": 2323,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102425,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 615,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 5
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 5,
+        "selection": {
+          "parent": {
+            "center": 2107,
+            "radius": 2,
+            "damage": 1562,
+            "originalMass": 3863,
+            "collateral": 99,
+            "survivingMass": 2301,
+            "remnantLabel": 2,
+            "remnantMass": 2301,
+            "remnantTargetMass": 2301,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 3742,
+            "radius": 2,
+            "damage": 1562,
+            "originalMass": 3884,
+            "collateral": 95,
+            "survivingMass": 2322,
+            "remnantLabel": 3,
+            "remnantMass": 2322,
+            "remnantTargetMass": 2322,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102426,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 648,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 617,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 479,
+            "radius": 2,
+            "damage": 1713,
+            "originalMass": 4231,
+            "collateral": 57,
+            "survivingMass": 2518,
+            "remnantLabel": 0,
+            "remnantMass": 2518,
+            "remnantTargetMass": 2518,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 158,
+            "radius": 1,
+            "damage": 1670,
+            "originalMass": 4082,
+            "collateral": 0,
+            "survivingMass": 2412,
+            "remnantLabel": 0,
+            "remnantMass": 2081,
+            "remnantTargetMass": 2081,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102427,
+        "parent": {
+          "enumerated": 558,
+          "doseRejected": 555,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 558,
+          "doseRejected": 554,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 2107,
+            "radius": 1,
+            "damage": 1505,
+            "originalMass": 3920,
+            "collateral": 0,
+            "survivingMass": 2415,
+            "remnantLabel": 2,
+            "remnantMass": 2350,
+            "remnantTargetMass": 2350,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 2106,
+            "radius": 1,
+            "damage": 1545,
+            "originalMass": 3820,
+            "collateral": 0,
+            "survivingMass": 2275,
+            "remnantLabel": 2,
+            "remnantMass": 2093,
+            "remnantTargetMass": 2093,
+            "remnantOverlapCells": 11
+          }
+        }
+      },
+      {
+        "seed": 2026102428,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 617,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 3426,
+            "radius": 2,
+            "damage": 1645,
+            "originalMass": 4163,
+            "collateral": 143,
+            "survivingMass": 2518,
+            "remnantLabel": 3,
+            "remnantMass": 2424,
+            "remnantTargetMass": 2424,
+            "remnantOverlapCells": 11
+          },
+          "mutant": {
+            "center": 2181,
+            "radius": 2,
+            "damage": 1563,
+            "originalMass": 3965,
+            "collateral": 102,
+            "survivingMass": 2402,
+            "remnantLabel": 2,
+            "remnantMass": 2402,
+            "remnantTargetMass": 2402,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102429,
+        "parent": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 3615,
+            "radius": 2,
+            "damage": 1708,
+            "originalMass": 4219,
+            "collateral": 123,
+            "survivingMass": 2511,
+            "remnantLabel": 3,
+            "remnantMass": 2511,
+            "remnantTargetMass": 2511,
+            "remnantOverlapCells": 14
+          },
+          "mutant": {
+            "center": 2245,
+            "radius": 1,
+            "damage": 1651,
+            "originalMass": 4062,
+            "collateral": 0,
+            "survivingMass": 2411,
+            "remnantLabel": 3,
+            "remnantMass": 2301,
+            "remnantTargetMass": 2301,
+            "remnantOverlapCells": 13
+          }
+        }
+      },
+      {
+        "seed": 2026102430,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 587,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "mutant": {
+          "enumerated": 620,
+          "doseRejected": 617,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "parentCandidates": 2,
+        "mutantCandidates": 3,
+        "selection": {
+          "parent": {
+            "center": 2042,
+            "radius": 1,
+            "damage": 1546,
+            "originalMass": 3937,
+            "collateral": 0,
+            "survivingMass": 2391,
+            "remnantLabel": 2,
+            "remnantMass": 2325,
+            "remnantTargetMass": 2325,
+            "remnantOverlapCells": 13
+          },
+          "mutant": {
+            "center": 2491,
+            "radius": 1,
+            "damage": 1576,
+            "originalMass": 4064,
+            "collateral": 0,
+            "survivingMass": 2488,
+            "remnantLabel": 2,
+            "remnantMass": 2380,
+            "remnantTargetMass": 2380,
+            "remnantOverlapCells": 14
+          }
+        }
+      },
+      {
+        "seed": 2026102431,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 586,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 3
+        },
+        "mutant": {
+          "enumerated": 558,
+          "doseRejected": 556,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 2
+        },
+        "parentCandidates": 3,
+        "mutantCandidates": 2,
+        "selection": {
+          "parent": {
+            "center": 2051,
+            "radius": 2,
+            "damage": 1635,
+            "originalMass": 3965,
+            "collateral": 101,
+            "survivingMass": 2330,
+            "remnantLabel": 1,
+            "remnantMass": 2330,
+            "remnantTargetMass": 2330,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 3809,
+            "radius": 1,
+            "damage": 1595,
+            "originalMass": 3864,
+            "collateral": 0,
+            "survivingMass": 2269,
+            "remnantLabel": 3,
+            "remnantMass": 2193,
+            "remnantTargetMass": 2193,
+            "remnantOverlapCells": 12
+          }
+        }
+      },
+      {
+        "seed": 2026102432,
+        "parent": {
+          "enumerated": 589,
+          "doseRejected": 585,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "mutant": {
+          "enumerated": 651,
+          "doseRejected": 647,
+          "collateralRejected": 0,
+          "noEligibleRemnant": 0,
+          "fragmented": 0,
+          "eligible": 4
+        },
+        "parentCandidates": 4,
+        "mutantCandidates": 4,
+        "selection": {
+          "parent": {
+            "center": 1979,
+            "radius": 2,
+            "damage": 1570,
+            "originalMass": 3895,
+            "collateral": 83,
+            "survivingMass": 2325,
+            "remnantLabel": 2,
+            "remnantMass": 2325,
+            "remnantTargetMass": 2325,
+            "remnantOverlapCells": 12
+          },
+          "mutant": {
+            "center": 3745,
+            "radius": 2,
+            "damage": 1644,
+            "originalMass": 4124,
+            "collateral": 93,
+            "survivingMass": 2480,
+            "remnantLabel": 3,
+            "remnantMass": 2480,
+            "remnantTargetMass": 2480,
+            "remnantOverlapCells": 14
+          }
+        }
+      }
+    ],
+    "elapsedMs": 745,
+    "scientificSeedsRun": 0,
+    "meaning": "No time integration; no recovery or genotype advantage inferred. GPU engineering validation still required before fresh trials."
+  },
+  "resultDigest": {
+    "sha256": "2edff0d78585940d3193c4e6f981c1e42b08fbdc2033ee238db34a42f8e2f7b3"
+  },
+  "runManifest": {
+    "protocol": "recovery-severity-feasibility-v1",
+    "runtime": {
+      "deno": "2.9.7",
+      "v8": "15.0.245.2-rusty",
+      "typescript": "6.0.3"
+    },
+    "stage": "engineering-only",
+    "sourceManifest": "8c68136f8e68f551a8ec5f34a93349c729ef0268ad7e2182c6fd2431877dc1f7",
+    "revision": {
+      "head": "6b8dfd8672e4408a8556a3d5fcb1ff8c3114f9ba",
+      "patch": "diff --git a/deno.lock b/deno.lock\nindex 9bc9583e..9338dacf 100644\n--- a/deno.lock\n+++ b/deno.lock\n@@ -23,7 +23,7 @@\n         \"npm:@types/node@22\",\n         \"npm:@webgpu/types@~0.1.74\",\n         \"npm:typescript@^7.0.2\",\n-        \"npm:vite@^8.3.1\",\n+        \"npm:vite@^8.3.3\",\n         \"npm:vitest@^5.0.2\"\n       ]\n     }\ndiff --git a/docs/decisions-2026-10-17-backlog-run.html b/docs/decisions-2026-10-17-backlog-run.html\nindex 4fd7b26c..255e91a5 100644\n--- a/docs/decisions-2026-10-17-backlog-run.html\n+++ b/docs/decisions-2026-10-17-backlog-run.html\n@@ -526,6 +526,21 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>\n </dl>\n </article>\n \n+<article id=\"d35\">\n+<h2><span>D-35</span>Resume from current main; validate measured wound severity before new trials</h2>\n+<dl><dt>When</dt><dd>2026-10-24</dd>\n+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906. Bring forward the reviewed recovery assay and its stopped 32-pair result as dependencies; preserve the original checkout and its local bundles.</dd>\n+<dt>Decision</dt><dd>Implement the proposed severity selector and a zero-time feasibility CLI first. The threshold remains at least 30 of 32 saved pairs. A failed threshold ends this protocol before new scientific seeds. Do not soften topology or collateral limits merely to obtain feasible wounds.</dd>\n+<dt>Review</dt><dd>Use available agy Gemini 4 Argon High for adversarial review, plus the repository-required read-only Sol 6.1 High before committing. Subagents own selector/tests and independent backlog inventory; the coordinator owns evidence loading, decision records and publication.</dd>\n+<dt>Scope</dt><dd>This is one research slice, not completion of all app prototypes. It leaves simulation physics and the private shared-garden deployment policy unchanged.</dd>\n+</dl></article>\n+<article id=\"d36\">\n+<h2><span>D-36</span>Use the current backlog, not the frozen October 18 inventory</h2>\n+<dl><dt>Evidence</dt><dd>Inventory checked against b3fab906: plans 001\u2013006 are DONE; Gene v2, injuryShell, Pond keeper v3, bell v2, null-stone and sun work have landed. The old prototypes document is explicitly pinned to 5e7bda5c and is not current status.</dd>\n+<dt>Next slices</dt><dd>After severity feasibility: Pond keeper v3b per-pond shell ranking; explicit island leave/release; operator refusal/pruning counters. Naturalist v3 needs a separate preregistration after the negative v2 result. Shared-garden opening and human playtests remain distinct product/operational decisions and evidence gaps.</dd>\n+<dt>Sources</dt><dd><a href=\"pond-keeper-v3-2026-10-22.md\">Keeper v3 deferred work</a>; <a href=\"island-cancel-2026-10-18.md\">Island cancellation</a>; <a href=\"ops-dashboard-2026-10-18.md\">Operator dashboard</a>; <a href=\"../deploy/README.md\">Deployment safeguards</a>.</dd>\n+</dl></article>\n+\n <!-- DECISIONS -->\n \n </main>\n"
+    },
+    "sources": [
+      {
+        "path": "experiments/recovery-severity/feasibility.ts",
+        "sha256": "51a66c3844515b47d54b7abbd266b905b0123fee5e708d90e807ce890048edc3"
+      },
+      {
+        "path": "experiments/recovery-severity/selector.ts",
+        "sha256": "42f719b61d1637815768020c39ede7646132b97881e68780bd9760c05a06e37d"
+      },
+      {
+        "path": "docs/recovery-severity-2026-10-24/PLAN.md",
+        "sha256": "1324a6c7c5ef7e5e1be3456f11f911d48f6b53bf75a5fa9593274ae87e40e890"
+      },
+      {
+        "path": "docs/recovery-severity-2026-10-24/audit.json",
+        "sha256": "33bc2bdbf149aca1f48352529c47b9eb0f1733b1deddc6eb58db3681852476b0"
+      }
+    ],
+    "maxMs": 1200000,
+    "maxBytes": 536870912,
+    "startedAt": "2026-10-24T22:17:52.293Z"
+  }
+}
