@@ -2,7 +2,7 @@
 // least the shell's worth of membrane. Hand-built states pin the count, and one step of the reference physics under a wound at every
 // cell pins the rule it reads, with margins wide enough that BUILD and decay between cannot flip either cell.
 import { describe, expect, it } from "vitest";
-import { CH, G, buildWorld, cellCount, cloneState, defaultConfig, generalistGenome, type WorldConfig, type WorldState } from "@bl/schema";
+import { CH, G, buildWorld, cellCount, cloneState, defaultConfig, generalistGenome, pondTermValues, type WorldConfig, type WorldState } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
 import { fmtShare, shellCountsByPond, shellCount } from "../src/shell.ts";
 
@@ -127,6 +127,20 @@ describe("fmtShare", () => {
 
 
 describe("shell counts by pond", () => {
+  it("uses the same pond numbering as actual mass terms on a non-square grid", () => {
+    const cfg = defaultConfig({ tileW: 24, tileH: 24, tilesX: 3, tilesY: 2, ...wounded });
+    const state = buildWorld(cfg, { nutrient: 0, founders: [{ x: 30, y: 30, radius: 0, genome: generalistGenome(cfg.defaultMu, cfg.defaultSigma), biomass: 100, energy: 200 }] });
+    const living = livingCells(state);
+    expect(living).toHaveLength(1);
+    setP(state, living[0], 2);
+    const mass = pondTermValues(state, "mass");
+    const counts = shellCountsByPond(cfg, state.cells, state.genome)!;
+    // The real score implementation, not another copy of the tile-index formula, anchors the display index.
+    const occupied = mass.flatMap((value, p) => value > 0 ? [p] : []);
+    expect(occupied).toEqual([4]);
+    expect(counts.flatMap((count, p) => count.living > 0 ? [p] : [])).toEqual(occupied);
+    expect(counts[occupied[0]]).toEqual({ wearing: 1, living: 1 });
+  });
   it("uses tile boundaries in both dimensions, both lineage words, and an inclusive membrane threshold", () => {
     const cfg = defaultConfig({ tileW: 24, tileH: 24, tilesX: 2, tilesY: 2, ...wounded });
     const n = cellCount(cfg), cells = new Uint32Array(n * 4), genome = new Uint32Array(n * 4);

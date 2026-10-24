@@ -10,13 +10,16 @@ in the existing ranking menu. Rank by the percentage of that pond's living cells
 holding at least `injuryShell` membrane, descending. A percentage asks whether the
 trait is common in a pond; an absolute count would largely reward larger populations.
 Show both the percentage and exact numerator/denominator, so a small pond's high
-percentage is visible as such. A cell is living exactly when its two lineage words
+percentage is visible as such. A one-cell pond wearing a shell can rank above a
+large pond where most cells wear one; there is no minimum population filter.
+Sorting uses the full share even when percentages round to the same displayed
+value; the exact counts make that distinction inspectable. A cell is living exactly when its two lineage words
 are not both zero, as in the existing whole-world shell readout. No living cells
 means a zero ranking value and a readout saying “no living cells”.
 
 Keep the picker's existing eligibility (positive bound mass) and equal-value tie
 breaks (bound mass descending, then pond index ascending). Zero-shell worlds still
-have a useful, explicitly tied ranking; worlds with no shell setting have no option.
+rank by the existing mass/index tie breaks; worlds with no shell setting have no option.
 The initial selection stays the rule's score. Changing the menu only changes the
 view. The existing **Top** button selects the ranked donors and **Breed** applies
 them with the existing confirmation. The rule button and Auto-breed remain governed
@@ -45,13 +48,16 @@ not a new selection rule or evidence that shell selection improves the ecology.
 
 - Hand-built tile-grid counts test both horizontal and vertical tile
   boundaries, either lineage word, inclusive threshold, nonliving membrane,
-  no-shell config and empty ponds; their sum equals the whole-world count.
+  no-shell config and empty ponds; their sum equals the whole-world count. A
+  single-cell fixture on a non-square grid ties the occupied display index to
+  the actual `pondTermValues(state, "mass")` index.
 - Ranking tests distinguish percentage from absolute shell count, exclude massless
   ponds, retain equal-share mass/index ties and prove the survey/rule donors are
   unchanged. All-zero shell shares follow bound mass.
 - The execution replay test independently recounts each pond before breeding,
   refreshes the survey under a changed pressure, selects shell-ranked donors and
-  compares the replayed state and shell counts with the original history.
+  compares the replayed state and shell counts with the original history. A
+  separate scaffold-arm case preserves the original replay and donor order.
 - The Chrome page flow plants the wounded shell breeder, chooses shell-ranked
   donors at cycle 1, checks that changing the menu alone preserves picks, captures
   desktop/mobile panels, breeds, replay-checks and exports the unchanged session
@@ -60,11 +66,12 @@ not a new selection rule or evidence that shell selection improves the ecology.
 Checked on 2026-10-24:
 
 - `pnpm typecheck`, `pnpm build` and `git diff --check` passed.
-- Shell, ranking and rank-label suites: 16 tests passed. The ranking fixture also
+- Shell, ranking and rank-label suites: 17 tests passed. The ranking fixture also
   checks null and absent shell display fields: finite zero values with existing ties.
-- The targeted execution replay test passed in 46.74 seconds (57 unrelated tests
-  skipped). Independent pre-cycle recount, pressure refresh, shell-picked donors,
-  replay state hash and final per-pond shell counts all matched.
+- The two targeted execution replay cases passed in 89.99 seconds (57 unrelated
+  tests skipped). The original scaffold replay and breed-arm shell picks both
+  matched; independent pre-cycle recount, pressure refresh, replay state hash
+  and final per-pond shell counts all matched.
 - Chrome page test passed in 23.1 seconds using port 5192. Its shell-ranked donors
   were ponds 3, 11, 6 and 4, with 20.0%, 5.0%, 3.2% and 1.2% shell shares.
   Replay reported Identical, and the exported version 3 session held those donors.
@@ -74,7 +81,9 @@ Checked on 2026-10-24:
   These are local validation artifacts, not committed fixtures.
 - Coordinating-agent Sol 6.1 High read-only review reported no findings; its request
   for a missing-field compatibility fixture was added and passed. Adversarial
-  review is arranged separately before finalizing the slice.
+  reviews from Argon 4 High and the authorized Sonnet fallback both reported
+  NO BLOCKERS; review nits led to the real-mass index fixture, preserved scaffold
+  replay coverage and clearer share-ranking limitations above.
 
 The broader run finished with 73 passed and one failure in 257.46 seconds. It had
 loaded the earlier replay-test fixture whose scaffold arm cannot accept a pressure
@@ -83,4 +92,9 @@ above, which passed. The other 57 execution tests passed in the broad run; this 
 combined evidence, not a claim of one entirely green full-suite invocation. No new
 scientific result or GPU golden run is claimed.
 
-Argon 4 High review is running against a self-contained source packet (headless tool access is unavailable). Publication remains draft until that review is assessed; no Argon verdict is claimed yet.
+The packet review's stale-ranking concern needs no behavior change: `openPick`
+checks `keys.includes(rankKey)` and resets an unavailable key before building the
+menu for a replacement world. Pressure and Keep refreshes cannot remove the shell
+setting of the held world. The overlay, Top action and keyboard rank text all use
+`rankValues`/`rankOrder`. The guarded per-survey scan is accepted for this slice;
+worlds without `injuryShell` return before scanning cells.

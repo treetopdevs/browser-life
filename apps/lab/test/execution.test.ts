@@ -1287,9 +1287,9 @@ describe("lab execution of a wounded world with a shell", () => {
     expect(seen).toEqual([null, null]);
   }, 60_000);
 
-  it("replays a history with a hand wound and a hand pick to the same state, and the same counts", async () => {
+  it.each(["scaf", "breed"] as const)("replays a history with a hand wound and a hand pick under %s to the same state, and the same counts", async (arm) => {
     const start = pondWorld(0, shelled);
-    start.cfg = { ...start.cfg, pondArm: "breed", pondScore: "body" };
+    if (arm === "breed") start.cfg = { ...start.cfg, pondArm: "breed", pondScore: "body" };
     const first = recording(start);
     const log: Intervention[] = [];
     for (let k = 0; k < 3; k++) await first.execution.advanceFrame(2);
@@ -1308,14 +1308,17 @@ describe("lab execution of a wounded world with a shell", () => {
       if (pre.cells[CH.P * n + i] >= pre.cfg.injuryShell!) c.wearing++;
     }
     expect(first.execution.awaiting.shells).toEqual(counts);
-    const revision = first.execution.awaiting.revision;
-    await first.execution.setPressure("mass");
-    const refreshed = first.execution.awaiting!;
-    expect(refreshed.revision).toBeGreaterThan(revision);
-    expect(refreshed.shells).toEqual(counts);
-    // Return the pressure to its original value before recording picks: the replay below has no pressure entries.
-    await first.execution.setPressure(start.cfg.pondScore!);
-    const picked = rankOrder({ ...first.execution.awaiting!, type: "pondAwait", world: 1, arm: "breed", score: start.cfg.pondScore! }, "shell").slice(0, 2);
+    let picked = [1, 0]; // Preserve the original scaffold-arm replay and its explicit donor order.
+    if (arm === "breed") {
+      const revision = first.execution.awaiting.revision;
+      await first.execution.setPressure("mass");
+      const refreshed = first.execution.awaiting!;
+      expect(refreshed.revision).toBeGreaterThan(revision);
+      expect(refreshed.shells).toEqual(counts);
+      // Return the pressure to its original value before recording picks: the replay below has no pressure entries.
+      await first.execution.setPressure(start.cfg.pondScore!);
+      picked = rankOrder({ ...first.execution.awaiting!, type: "pondAwait", world: 1, arm, score: start.cfg.pondScore! }, "shell").slice(0, 2);
+    }
     const done = await first.execution.resolvePond(picked);
     log.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
     while (!first.execution.awaiting) await first.execution.advanceFrame(2);
