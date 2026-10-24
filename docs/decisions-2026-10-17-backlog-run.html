@@ -526,6 +526,11 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 </dl>
 </article>
 
+<article id="d48">
+<h2><span>D-48</span>Expose the existing island lease duration for local development and tests</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The island cancellation plan explicitly deferred BL_LEASE_MS. Queue already reads lease_ms with a ten-minute default, but runtime configuration cannot set it.</dd><dt>Decision</dt><dd>Add the environment setting using the existing positive-integer parser, rejecting zero, off and malformed values. Preserve the default and all reclaim behavior. Document its distinction from the discovery lease.</dd><dt>Why</dt><dd>Graceful leave handles normal stops; crashed or disconnected islands still rely on lease expiry. Development and integration tests need a deliberate way to exercise that fallback.</dd><dt>Validation</dt><dd>134 targeted runtime/configuration/Queue tests and the full 557-test backend precommit pass. No production configuration change is made. Argon adversarial review is pending; publish as draft.</dd></dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>

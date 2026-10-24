@@ -102,9 +102,20 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   with `Application.put_env/3` is not checked again; `GET /api/status`'s
   `limits.invalid` names such a change only for the island limit keys it shows, and
   only when the value is not an integer (or is a `nil` window). The environment variables `BL_ISLAND_JOINS_PER_ADDRESS`,
-  `BL_MAX_ISLANDS` and `BL_DISCOVERY_LEASE_MS` stop the boot by name in
+  `BL_MAX_ISLANDS`, `BL_LEASE_MS` and `BL_DISCOVERY_LEASE_MS` stop the boot by name in
   `config/runtime.exs` on anything but a positive whole number (or `off`, where a budget
   allows it).
+
+* Normal island run/verify attempts use `lease_ms` (10 minutes by default).
+  `BL_LEASE_MS` sets it at coordinator startup in positive whole milliseconds;
+  unset or blank preserves the default, and zero, `off`, negatives and malformed
+  values refuse startup by name. For a scratch development/test coordinator,
+  `BL_LEASE_MS=1000 mix phx.server` uses a one-second lease. This changes the
+  heartbeat-age threshold used by existing reclamation, not an immediate release
+  or a background timer. Use short leases only when intentionally testing expiry:
+  an active island that cannot heartbeat within the lease may lose its attempt.
+  Discovery workers have a separate `BL_DISCOVERY_LEASE_MS` setting (2 minutes
+  by default); changing one does not change the other.
 
 * `POST /api/islands`: at most `island_joins_per_address` (20) joins per client address
   per hour. The address is the garden's: the peer, or the right-most `X-Forwarded-For`

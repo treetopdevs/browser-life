@@ -2,12 +2,13 @@ defmodule Coordinator.ReleaseConfigTest do
   @moduledoc """
   The production configuration, read the way a release reads it
   (`Config.Reader`): who may call the coordinator cross-origin, and what
-  production refuses to start without. Nothing here changes the running
-  application's config; environment variables are restored.
+  production refuses to start without. Config readers leave the running
+  application untouched; the Queue lease-consumption test temporarily changes
+  only :lease_ms. Environment variables and that application setting are restored.
   """
   use ExUnit.Case, async: false
 
-  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN BL_DISCOVERY_LEASE_MS)
+  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN BL_DISCOVERY_LEASE_MS BL_LEASE_MS)
 
   setup do
     saved = for v <- @vars, do: {v, System.get_env(v)}
@@ -247,6 +248,69 @@ defmodule Coordinator.ReleaseConfigTest do
     end
   end
 
+  test "BL_LEASE_MS is optional, positive milliseconds for normal tasks only in every environment" do
+    prod_env()
+
+    for env <- [:dev, :test, :prod] do
+      for unset <- [nil, "", "  "] do
+        if unset, do: System.put_env("BL_LEASE_MS", unset), else: System.delete_env("BL_LEASE_MS")
+        runtime = Config.Reader.read!("config/runtime.exs", env: env)
+        refute Keyword.has_key?(runtime[:coordinator], :lease_ms)
+      end
+
+      for {raw, expected} <- [{"1", 1}, {"1000", 1000}, {" 600000 ", 600_000}] do
+        System.put_env("BL_LEASE_MS", raw)
+        runtime = Config.Reader.read!("config/runtime.exs", env: env)
+        assert runtime[:coordinator][:lease_ms] == expected
+        refute Keyword.has_key?(runtime[:coordinator], :discovery_lease_ms)
+        merged = Config.Reader.merge(Config.Reader.read!("config/config.exs", env: env), runtime)
+        assert Coordinator.ConfigCheck.errors(merged[:coordinator]) == []
+      end
+    end
+
+    System.put_env("BL_DISCOVERY_LEASE_MS", "12345")
+    assert prod_runtime()[:coordinator][:lease_ms] == 600_000
+    assert prod_runtime()[:coordinator][:discovery_lease_ms] == 12_345
+  end
+
+  test "BL_LEASE_MS refuses zero, off, negative and malformed values by name" do
+    prod_env()
+
+    for env <- [:dev, :test, :prod], bad <- ["0", "off", "none", "-1", "junk", "1.5", "1000ms"] do
+      System.put_env("BL_LEASE_MS", bad)
+
+      assert_raise RuntimeError, ~r/BL_LEASE_MS: .* is not a positive whole number/, fn ->
+        Config.Reader.read!("config/runtime.exs", env: env)
+      end
+    end
+  end
+
+  test "the normal task lease keeps its ten-minute default when runtime leaves it unset" do
+    saved = Application.fetch_env(:coordinator, :lease_ms)
+
+    on_exit(fn ->
+      case saved do
+        {:ok, value} -> Application.put_env(:coordinator, :lease_ms, value)
+        :error -> Application.delete_env(:coordinator, :lease_ms)
+      end
+    end)
+
+    Application.delete_env(:coordinator, :lease_ms)
+
+    for env <- [:dev, :test, :prod] do
+      refute Keyword.has_key?(
+               Config.Reader.read!("config/config.exs", env: env)[:coordinator],
+               :lease_ms
+             )
+    end
+
+    assert Coordinator.Queue.lease_ms() == 600_000
+    prod_env()
+    System.put_env("BL_LEASE_MS", "1000")
+    Application.put_env(:coordinator, :lease_ms, prod_runtime()[:coordinator][:lease_ms])
+    assert Coordinator.Queue.lease_ms() == 1000
+  end
+
   # It was `String.to_integer/1`, a bare ArgumentError (docs/coordinator-hardening-2026-10-18.md).
   test "BL_DISCOVERY_LEASE_MS sets the lease, and a bad value stops the boot by name" do
     prod_env()
@@ -271,6 +335,7 @@ defmodule Coordinator.ReleaseConfigTest do
     for {var, v} <- [
           {"BL_ISLAND_JOINS_PER_ADDRESS", "20"},
           {"BL_MAX_ISLANDS", "50000"},
+          {"BL_LEASE_MS", "1000"},
           {"BL_DISCOVERY_LEASE_MS", "60000"}
         ],
         do: System.put_env(var, v)
