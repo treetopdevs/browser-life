@@ -514,3 +514,61 @@ The rule keeps rule text and, where an explanation stays, a one-line bracketed r
 - **R16 item 1 (the first draft's instruction to review the J constants and to clean the file; done on 2026-10-24).** Read the J-basis constants in R1 and change any before the freeze; the ones most worth a second look are `K_MIN`/`THETA_B` (the scale of the kick against the dust; Stage 0 prints the measured dust floor), `TAU_DEC` (30 here, 100 in draft 1), `T0`, the factor-2 width of `D_LO`/`D_HI`, `ORD_R`, `SAT`/`R_AMP`, `SPEED_MIN`, `DUST_CLEAR`/`DUST_LIM`, `DOSE_CAP`, `M_COL_MIN`, `WINDOW`. Remove the pointer to `runs/.edits/rv2/rule-draft-v1.bak` from the status line, and move the draft-history asides ("Draft 1 ...", the pilot figures quoted as reasons) out of the rule into the plan, whose section 13 already holds them: they are explanation and not rule, and the file's hash should cover only the rule.
 - **R16 item 2 (the list of open decisions; all decided on 2026-10-24).** Decide the open points of plan section 13 (OD-tau, OD-ladder, OD-dust, OD-sat, OD-thresholds, OD-axes, OD-seed101, OD-frozen, OD-late, OD-2dtimes) and edit R1, R2.3, R9 accordingly before the freeze.
 - **R16 item 8 (the open points the draft left to the finalizer, with its defaults; all decided on 2026-10-24).** Open points the draft leaves to the finalizer (each with a recommendation in plan section 13): grid size 256 vs 128 (draft: 256), burn-in 20,000 vs 50,000 (draft: 20,000 with the late check), the decider: block net sum, which is blind to rearrangement at constant block density, against block occupancy (at least `OCC_V` = 8 voxels per block at `thetaV`), which sees rearrangement but also the dust cloud (draft 2: all four combinations are tried in Stage 0 and the first that passes is fixed in R1; the finalizer may instead fix one before the freeze, and may change `OCC_V` and `thetaV`), whether the fallback rung P2 stays in the same rule (draft: yes), whether J becomes a deciding column (draft: no), single machine vs two (draft: one), and whether group D (`dtQ`, `spread`) joins the sweep.
+
+## Result 2026-10-24: STAGE0-CLOSED (Stage 0 run 1 failed; the rerun was declined)
+
+**Outcome.** Stage 0 (R9.0) ran once, on the development seeds 9001 to 9003 at commit `05569b25` (18 jobs, both rungs, every twin;
+about an hour on this Mac), and read **STAGE0-FAIL**: none of the four combinations (P1 or P2, net or occ) met the ground-truth
+conditions. On 2026-10-24 the user chose to close the candidate instead of changing judgement constants and rerunning, so candidate 8
+ends **STAGE0-CLOSED** (R9.0, Repetition; development-log items 5 and 6 of R0.2). The rule was never frozen, the held-out gate and the
+96-job sweep never ran, and the regime map page (`docs/3d-regime-meters-map.html`) shows synthetic data only. The readout is
+`experiments/3d-slab/regime-stage0-run1-readout.md`, the per-job damage counts are in `experiments/3d-slab/regime-stage0-run1-damage.tsv`,
+and the rule as it stood at the closure is `experiments/3d-slab/regime-rule-closed.md`. Every number below is a development-pilot number
+on three seeds, read descriptively; none is a registered result. Unless a line says otherwise, the damage counts are those of the P1 kick
+read with the net decider (the block counter `n_blk`).
+
+**Why it failed.** Every combination failed for two reasons that the tested constants did not reach.
+- *The frozen control did not read ordered in the dense worlds* (FROZEN-NOT-ORDERED in all four combinations). The F pair turns off the
+  flow displacement (`dtQ` 0) and motility; the transport blur (`spread`) and the chemistry stay on. It was meant to give a world in
+  which a kick cannot spread. In the carpet (`mu60-s8-k1024`, 100 % living) the frozen copy's damage still reached 825 to 988 of the
+  1,024 blocks by step 1,000, about as far as the moving copy (869 to 967). In the 2D reference worlds it reached 34 to 68 % of the living
+  blocks (the moving copy 86 to 96 %). Only in the sparse slab base did the frozen copy heal (12 to 14 damaged blocks at step 30, 0 to 2
+  at step 1,000).
+- *The alive references had no clean class.* Under P1 with net the trajectory meter read CHAOTIC in all 12 2D reference jobs, but a
+  kick one-eighth the size spread 28 to 57 % as far by step 30 (dust AMBIGUOUS or LIMITED), so no job could vote (REF-UNDEFINED). Under
+  the ball kick P2 the dust was clear in all 15 reference and carpet jobs with net and in 14 of 15 with occ, but the job class was
+  MIXED in 15 of 15 (net) and 14 of 15 (occ): in 12 and 11 of them the trajectory and response meters disagreed, and in the three
+  carpet jobs the trajectory meter had no class (one colony, NA).
+
+The gate's control condition (G7) failed under the constants tried, and the rerun that the rule allowed was declined; whether some other
+J constants would have let it pass was not tested. The frozen control's spread in dense worlds is a property of those worlds under that
+control, which the J constants do not change, and that is why a rerun was not expected to help.
+
+**Findings (descriptive).**
+1. *The slab's base setting is not in an ordered regime.* At `mu30-s8-k256` (12 to 20 % living at step 20,000) a single-voxel kick
+   spread to 93 to 99 % of the living blocks within 1,000 steps (317 of 330, 501 of 508, 448 of 482); the trajectory meter read CHAOTIC
+   on all three seeds, with response ratios s(30) of 2.3 to 2.6. The candidate's hypothesis, that the slab sits deep in the ordered
+   regime so that search is hopeless until the kernel moves, is not supported on these seeds: by this measure the slab's
+   nearest-to-target world spreads a kick about as fully as the project's alive 2D worlds (86 to 96 % of their living blocks).
+2. *With flow and motility off, the sparse slab healed and the dense worlds did not.* The frozen copy of the slab base fell to 0 to 2
+   damaged blocks, while those of the carpet and of the 2D worlds kept spreading. What carries the spread there is not separated by
+   these runs: the frozen control keeps both the transport blur and the chemistry (nutrient, waste and signal diffusing and changing a
+   neighbour's growth). A plausible reading, not tested here, is that in a dense world either channel passes a kick on, and that the
+   density of the world decides whether the remaining channels are enough.
+3. *Which constants moved the spread in one state.* The constant screen of R9.0 (the seed-9001 base state at step 20,000, P1 with net;
+   each constant halved and doubled, with integer rounding and the range caps, so `diffA` and `diffC` rose only from 200
+   to 256 and `diffS` from 150 to 256; 300 steps) changed the damaged blocks at step 30 and the one-cell response at step 100 by these
+   factors: `dtQ` 0.41 and 0.04 (halved), 3.14 and 1.14 (doubled); `spread` 0.45 and 0.07, 1.15 and 0.94; `massUnit` 0.43 and 0.01, 0.61
+   and 0.25; `thetaMass` 0.78 and 1.01 (halved), 0.98 and 0.99 (doubled). In this state over 300 steps `diffA`, `diffC`, `diffS`,
+   `gateK` and `mutRate` had little or no effect (0.99 to 1.05). This is one state and one short window: a pointer, not a measurement.
+
+**What this leaves for the 3D line.** These meters could not separate the worlds here, because in the dense worlds a kick kept spreading
+with flow and motility off. If perturbation spread is still wanted as a dial, `dtQ`, `spread` and `massUnit` are the constants that moved
+it in the one state screened. A future instrument would need an ordered-end control that also stops the transport blur and the chemistry,
+or a measure that reads the spread through each channel separately. The kernel radius was never swept (fixed at 3 for the slab).
+
+*Provenance:* planned, built and reviewed in worktree `3d-regime-meters` (branch `claude/3d-regime-meters`) by phased workflows (plan,
+build, finalize), with Codex Sol 6.1 High reviews at each phase and before each commit; code at `05569b25`. Stage 0 run 1 ran on this
+Mac (M1 Max, shared). A Codex review of the first version of this section corrected the damage counts (they had been read one step
+early), the P2 dust wording and three overstatements (the mechanism, the rerun, the constant screen); a second review corrected the
+description of the MIXED counts and of the screen's capped values.
