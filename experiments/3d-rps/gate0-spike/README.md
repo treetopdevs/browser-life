@@ -24,8 +24,9 @@ if its patch anchors have moved, so it runs only against the tree it was written
 | `jobs.ts` | from a planned job to a `KernelJobSpec` (`lib/kernel-job.ts`), and the mobility-meter job |
 | `adapter.ts` | `GpuSim3` as the harness's `KernelSim` |
 | `driver.ts` | the staged loop (plan, run this process's share, plan again), apart from the GPU; it stops, before planning more, when a job on disk shows a conservation failure (also one that did not come back on the rerun) or the readout finds a bug indicator or unusable input |
-| `gate0.ts` | the command line: `--gate0` (refuses before the freeze of `RULES.md`), `--rehearsal`, `--table`, `--hash` |
+| `gate0.ts` | the command line: `--gate0` (refuses before the freeze of `RULES.md`), `--exploration` (Amendment 1), `--rehearsal`, `--table`, `--hash` |
 | `rehearsal.ts` | plumbing rehearsal: both kill builds, the V check, the hand-over, an exact audit of the vacancy rule, the mobility meter |
+| `explore.ts` | the exploration of Amendment 1 (after GATE-0-STOP): its planner, its V check and the disk half of its DriverIo (`--exploration`) |
 | `cli.ts` | argument parsing, and the SHA-256 recipe and the sidecar file that records it |
 | `lib.ts` | the prototype's helpers (`slabCfg`, `uptime`, ...), `runs/rps/probe/lib.ts` copied so that nothing here imports from `runs/` |
 
@@ -58,6 +59,29 @@ deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --hash            
 rung at a time: S1 after S0 is excluded, V's own rows after S0 and S1 are, nothing after a GO. `--plan-all` plans every handled rung at
 once (S0 and S1 side by side with one command, D2), at the price of the lower rungs' jobs when a higher one gives GO; a process given
 `--rung=S1` alone works on S1 at once. See the header of `gate0.ts` for every option and the exit codes.
+
+## Exploration (Amendment 1)
+
+The registered pilot ended GATE-0-STOP (`../GATE0-RECORD.md`). Amendment 1 of `RULES.md` explores the kill at S0's four mobility levels:
+rung S0 (removal) and rung V on S0 (vacancy kill), side by side and both in full, each ending with one label of A1.4, never a GO.
+`explore.ts` plans it on the same loop (`driver.ts`); the registered pilot's job directory is read (S0's G0.2, and the rate-0 seed-401
+cells of the table, which are its scan jobs) and never written. On the work Mac, where the registered jobs are in `runs/rps/gate0`:
+
+```
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration --out=runs/rps/gate0-exp --registered=runs/rps/gate0 --dry-run
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration --out=runs/rps/gate0-exp --registered=runs/rps/gate0
+deno run -A --no-lock experiments/3d-rps/gate0-spike/gate0.ts --exploration --out=runs/rps/gate0-exp --registered=runs/rps/gate0 --machine-share=1/2
+deno run -A --no-lock experiments/3d-rps/readout.ts gate0-exploration --jobs runs/rps/gate0-exp --registered runs/rps/gate0
+```
+
+The first wave is 79 jobs: the V check's vacancy build (`g0-vcheck-vacancy-S0-sp8-r0-s401`, compared byte for byte with the registered
+`g0-scan-S0-sp8-r0-s401`, which is the removal build of the same job), S0's G0.3 at spreads 6, 8, 16 (42) and V's (36); then G0.4 once
+if either rung passes row 2, and G0.5 per rung that passes rows 1 to 3. V's own jobs run only behind an identical V check; a failed check
+voids V alone (EXPLORATION-V-VOID): its jobs are skipped, S0 runs on to its label and the run ends with exit 3, while every other stage stop
+(a conservation or invariant failure, a bug indicator, unusable input) stops everything. Both commands refuse, `--dry-run` included, unless
+`RULES.md` is frozen and contains the "## Amendment 1" heading, and the two directories must be separate, neither inside the other once
+symlinks are resolved; `gate0.ts` prints the header before it parses its arguments, so a refusal starts with it too. Every output of the readout starts with "EXPLORATION (Amendment 1): the registered pilot ended GATE-0-STOP"; its exit codes are
+those of `gate0` (0 when both rungs have a label, 3 on a bug indicator, a failed V check included, 4 while jobs are to run).
 
 ## The SHA-256
 

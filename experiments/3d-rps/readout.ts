@@ -11,6 +11,14 @@
 //              cycles       --jobs <dir> --op <file>        5: VIABLE jobs and arms (needs the sweep's go row)
 //              deep         --jobs <dir> --op <file>        6.1: the precondition of the deep volume
 //              mutation     --jobs <dir> --op <file>        7: classes, the horizon check, arm verdicts
+//              gate0-exploration --jobs <dir> --registered <dir>
+//                                                           Amendment 1 (after GATE-0-STOP): S0 and V on S0 side by side, one label
+//                                                           of A1.4 per rung; --registered is the registered pilot's job directory,
+//                                                           read only (S0's G0.2 and the table's rate-0 seed-401 cells). Every output
+//                                                           starts with the line "EXPLORATION (Amendment 1): the registered pilot ended
+//                                                           GATE-0-STOP" and none is a verdict of Gate 0. No --draft: it refuses unless
+//                                                           RULES.md is frozen and contains the "## Amendment 1" heading. Exit codes as
+//                                                           for gate0 (0: both rungs have a label; a failed V check is exit 3, V void)
 //   options    --draft      read runs/rps/rule-draft.md and label every output DRAFT (until the freeze)
 //              --json       print the result as JSON
 //              --root <dir> the repository root (default: two levels above this file)
@@ -76,7 +84,8 @@ import { evaluateGate0, evaluateMeter, type Gate0Result, type MeterPoint, type O
 import { LAT_M, LAT_CONTINGENCY_SIZE, LAT_SIZES, evaluateLattice, parseLatticeCell, type LatticeCell, type LatticeEvaluation, type LatticeResult } from "./readout-lattice.ts";
 import { evaluateCalibration, evaluateCycles, evaluateDeepPrecondition, evaluateSweep, type CalibrationResult, type CyclesResult, type DeepResult, type SweepResult } from "./readout-kernel.ts";
 import { evaluateMutation, type MutationResult } from "./readout-mutation.ts";
-import { checkFrozen, parseFrozen, type FrozenEntry, type RulesCheck } from "./frozen.ts";
+import { checkFrozen, explorationRefusal, parseFrozen, type FrozenEntry, type RulesCheck } from "./frozen.ts";
+import { EXPLORATION_HEADER, LEVELS_MIN_EXPLORATION, evaluateExploration, type ExplorationResult, type ExplorationRung } from "./readout-exploration.ts";
 
 // ---- the frozen rules ----
 // (frozen.ts: shared with the registered lattice sweep, which also refuses to start before the freeze)
@@ -277,6 +286,8 @@ export interface Args {
   lattice: string | null;
   op: string | null;
   root: string | null;
+  /** `gate0-exploration` only: the registered pilot's job directory (read only); absent unless given. */
+  registered?: string;
   draft: boolean;
   json: boolean;
 }
@@ -291,7 +302,7 @@ export function parseArgs(argv: readonly string[]): Args {
       const [k, inline] = t.slice(2).split(/=(.*)/s);
       const v = inline ?? argv[++i];
       if (v === undefined) throw new ReadoutError(2, `option ${t} needs a value`);
-      if (k === "jobs" || k === "lattice" || k === "op" || k === "root") a[k] = v;
+      if (k === "jobs" || k === "lattice" || k === "op" || k === "root" || k === "registered") a[k] = v;
       else throw new ReadoutError(2, `unknown option --${k}`);
     } else if (a.command === null) a.command = t;
     else throw new ReadoutError(2, `unexpected argument ${t}`);
@@ -390,6 +401,47 @@ function renderGate0(r: Gate0Result, tag: string): string[] {
   return o;
 }
 
+/** Amendment 1: the exploration's table. Its labels are those of A1.4 and nothing here is a verdict of Gate 0 (the header line is run's). */
+function renderExploration(r: ExplorationResult): string[] {
+  const o: string[] = ["## Exploration of the kill at S0's four mobility levels (RULES.md Amendment 1)", ""];
+  o.push("Not a registered result: nothing below may be cited as passing Gate 0 or as a result of the registered programme, and a label licenses nothing (A1.6).", "");
+  o.push("### Registered G0.2 of S0 (reused, not rerun: A1.1)", "");
+  const g = r.registered;
+  if (g === null) o.push("not usable (see the problems below)", "");
+  else {
+    const mp = new Map(g.meter.map((m) => [m.spread, m]));
+    o.push(...md(["spread", "class", "carpet", "min liv", "B+P/cell", "D_lab", "flags", "in G_spread"], g.scan.map((x) => { const m = mp.get(x.spread); return [x.spread, x.cls ?? (x.missingMarked ? "MISSING" : "-"), x.carpet ? "yes" : "no", fmt(x.livMin), fmt(x.massPerCell, 1), sci(m?.Dlab), m ? [m.anisotropic ? "anisotropic" : "", m.flat ? "flat" : ""].filter(Boolean).join(" ") || "-" : "-", g.gSpread.includes(x.spread) ? "yes" : "no"]; })));
+    o.push("", `B_meter = ${g.bMeter ?? "-"}; G_spread = [${g.gSpread.join(", ")}]; levels = ${g.levels ?? "-"} (row 1 for this exploration: levels < ${LEVELS_MIN_EXPLORATION} fails, A1.1)`, "");
+  }
+  if (r.spreads) o.push(`v_lo, v_mid, v_hi = ${r.spreads.join(", ")} (A1.2)`, "");
+  const rungTitle = (e: ExplorationRung) => (e.rung === "S0" ? "Rung S0 (removal kill)" : "Rung V (vacancy kill on S0)");
+  const status = (e: ExplorationRung) => (e.state === "pending" ? "pending" : `${e.label}${e.row !== null ? ` (row ${e.row})` : ""}`);
+  for (const e of r.rungs) {
+    o.push(`### ${rungTitle(e)}: ${status(e)}`, "");
+    if (e.voided) o.push(`void: the V check is ${r.vcheck.state} (${r.vcheck.detail}), so no V job counts (G0.1, A1.2)`, "");
+    if (e.missing.length > 0 && e.state === "pending") o.push(`jobs to run (${e.missing.length}): ${e.missing.slice(0, 6).join("; ")}${e.missing.length > 6 ? "; ..." : ""}`, "");
+    if (e.listed.length > 0) o.push(`listed: ${e.listed.join("; ")}`, "");
+    if (e.table) {
+      o.push(`G0.3 table (rates ${e.table.rates.join(", ")}; classes of seeds 401, 402, 403; the rate-0 cells are S0's, their seed 401 the registered scan job):`, "");
+      o.push(...md(["spread", "rate", "classes", "DC", "works"], e.table.cells.map((c) => [c.spread, c.rate, c.classes.join(" "), c.nDC, c.rate === 0 ? "(control)" : c.works ? "yes" : "no"])));
+      o.push("", `kappa_w = ${e.kappaW ?? "none"}; v_cal = ${e.vCal ?? "none"}${e.kappaW === null ? " (row 2: no rate works at 2 or more spreads: EXPLORATION-NO-EFFECT)" : ""}`, "");
+    }
+    if (e.horizon) o.push(`G0.4 horizon (shared; spread ${e.horizon.spread}, rate 0, shape ${e.horizon.shape ?? "?"}): classes ${e.horizon.classes.join(" ")}; first sustained loss (run step) ${e.horizon.tctl.map((t) => (t === null ? "-" : fmt(t))).join(", ")}; T_ctl ${fmt(e.horizon.Tctl)}; h0 ${e.horizon.h0 ?? "none"}${e.horizon.h0 === null ? " (row 3: EXPLORATION-NO-HORIZON)" : ""}`, "");
+    if (e.confirm) o.push(`G0.5 confirmation (spread ${e.confirm.spread}, rate ${e.confirm.rate}, ${e.confirm.steps} steps): classes ${e.confirm.classes.join(" ")}; ${e.confirm.nDC} of 3 DC${e.confirm.nDC < 2 ? " (row 4: EXPLORATION-NO-CONFIRM)" : ""}`, "");
+  }
+  if (r.controls.size > 0) {
+    o.push("rate-0 controls of both rungs (informative: >= 2 finished, >= 2 keep every label, median |chi_fw| <= 0.1):", "");
+    o.push(...md(["spread", "finished", "keep labels", "median |chi_fw|", "informative"], [...r.controls].map(([v, c]) => [v, c.finished, c.keeps, fmt(c.medAbsChi), c.informative ? "yes" : "no"])), "");
+  }
+  o.push("### V check (G0.1, A1.2)", "", `${r.vcheck.state}: ${r.vcheck.detail}`, "");
+  o.push("### Labels (A1.4: one per rung, both rungs evaluated in full; no rung is used)", "");
+  for (const e of r.rungs) o.push(`- ${rungTitle(e)}: **${e.state === "pending" ? `pending (${e.missing.length} job${e.missing.length === 1 ? "" : "s"} to run)` : status(e)}**`);
+  if (r.notes.length > 0) o.push("", ...r.notes.map((n) => `note: ${n}`));
+  o.push("", "### Exploration jobs (A1.5; the registered rows are the table's rate-0 seed-401 cells)", "");
+  o.push(...md(["id", "source", "rung", "kill", "stage", "spread", "rate", "seed", "steps", "class", "chi_fw", "turnover", "liv", "steps/s", "host"], r.jobs.map(({ job: j, a, source }) => [j.s.id, source, j.s.rung, j.s.kill, j.s.stage, j.s.spread, j.s.rate, j.s.seed, j.s.steps, j.s.missing ? "MISSING" : (a?.cls ?? "-"), a && a.cls !== "NOSTART" ? fmt(a.chiFw) : "-", a?.turnoverFw != null ? fmt(a.turnoverFw) : "-", a?.livLast != null ? fmt(a.livLast) : "-", fmt(j.s.stepsPerSec, 1), j.s.host])));
+  return o;
+}
+
 function renderCalibration(r: CalibrationResult, tag: string): string[] {
   const o: string[] = [`## Kill-rate calibration (rules 3.2)${tag}`, ""];
   o.push(...md(["rate", "seed", "class", "chi_fw", "turnover", "liv", "control class", "control chi_fw", "qualifies"], r.rows.flatMap((row) => row.jobs.map((j, k) => [row.rate, j.seed, j.cls, fmt(j.chiFw), fmt(j.turnoverFw), fmt(j.livLast), row.controls[k].cls, fmt(row.controls[k].chiFw), k === 0 ? (row.qualifies ? "yes" : `no (${row.why.join("; ")})`) : ""]))));
@@ -453,9 +505,9 @@ function renderMutation(r: MutationResult, tag: string): string[] {
 // ---- JSON ----
 
 /** One line per job for the JSON output: the facts of the Gate-0 job list (8.5) without the census rows. */
-function compactJob(x: { job: Job; a: { cls: string; tcx: unknown; chiFw: number; chiAll: number; turnoverFw: number | null; livLast: number | null } | null }) {
+function compactJob(x: { job: Job; a: { cls: string; tcx: unknown; chiFw: number; chiAll: number; turnoverFw: number | null; livLast: number | null } | null; source?: string }) {
   const s = x.job.s;
-  return { id: s.id, stage: s.stage, rung: s.rung, kill: s.kill, spread: s.spread, rate: s.rate, seed: s.seed, steps: s.steps, missing: s.missing, stepsPerSec: s.stepsPerSec, host: s.host, class: x.a?.cls ?? null, tcx: x.a?.tcx ?? null, chiFw: x.a?.chiFw ?? null, chiAll: x.a?.chiAll ?? null, turnoverFw: x.a?.turnoverFw ?? null, livLast: x.a?.livLast ?? null };
+  return { ...(x.source === undefined ? {} : { source: x.source }), id: s.id, stage: s.stage, rung: s.rung, kill: s.kill, spread: s.spread, rate: s.rate, seed: s.seed, steps: s.steps, missing: s.missing, stepsPerSec: s.stepsPerSec, host: s.host, class: x.a?.cls ?? null, tcx: x.a?.tcx ?? null, chiFw: x.a?.chiFw ?? null, chiAll: x.a?.chiAll ?? null, turnoverFw: x.a?.turnoverFw ?? null, livLast: x.a?.livLast ?? null };
 }
 
 function jsonable(v: unknown): unknown {
@@ -483,8 +535,10 @@ export function run(argv: readonly string[], io: Io): RunResult {
     args = parseArgs(argv);
   } catch (e) {
     if (!(e instanceof ReadoutError)) throw e;
+    if (argv.includes(EXPLORATION_COMMAND)) return finishExploration(2, [EXPLORATION_HEADER, "", `readout: ${e.message}`], [{ code: 2, message: e.message }], null, false);
     return finish(2, [`readout: ${e.message}`], [{ code: 2, message: e.message }], false, null, false);
   }
+  if (args.command === EXPLORATION_COMMAND) return runExploration(args, io);
   const root = args.root ?? io.root;
   const draft = args.draft;
   const tag = draft ? " [DRAFT]" : "";
@@ -526,6 +580,7 @@ export function run(argv: readonly string[], io: Io): RunResult {
   if (args.command === null || !(COMMANDS as readonly string[]).includes(args.command)) {
     pr.add(2, `command must be one of ${COMMANDS.join(", ")}`);
   }
+  if (args.registered !== undefined) pr.add(2, `--registered is for ${EXPLORATION_COMMAND} only`);
   if (pr.has(2)) return finish(2, lines, pr.list, draft, null, args.json);
   const cmd = args.command as (typeof COMMANDS)[number];
   let result: unknown = null;
@@ -616,6 +671,88 @@ function finish(code: 0 | 2 | 3 | 4, lines: string[], problems: Problem[], draft
   tail.push("", `exit code ${code}: ${CODE_MEANING[code]}${draft ? " [DRAFT]" : ""}`);
   const out = json ? JSON.stringify({ draft, status: draft ? "DRAFT" : "FROZEN", code, problems, result: jsonable(result) }, null, 2) : [...lines, ...tail].join("\n");
   return { code, out, problems, draft, result };
+}
+
+// ---- Amendment 1: the exploration ----
+
+const EXPLORATION_COMMAND = "gate0-exploration";
+const EXPLORATION_CODE_MEANING: Record<number, string> = { 0: "both rungs have a label of A1.4 (an exploration, not a registered result)", 2: "unusable input", 3: "a situation no label covers, or a bug indicator", 4: "jobs still to run" };
+
+/**
+ * `a` is `b` or lies inside it (both absolute). A relative path leaves `b` only through a `..` segment: exactly `..` or a prefix of
+ * `..` plus the separator. A child named `..exploration` is inside `b`, so a bare `startsWith("..")` would be wrong.
+ */
+const within = (a: string, b: string): boolean => {
+  const rel = path.relative(b, a);
+  return rel === "" || (rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel));
+};
+
+/**
+ * The real path of `p`: its nearest existing ancestor with every symlink resolved (realpath), and the part that does not exist yet
+ * appended, so that an output directory still to be created is placed where it will really be.
+ */
+export function realPathOf(p: string): string {
+  let cur = path.resolve(p);
+  const rest: string[] = [];
+  for (;;) {
+    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...rest);
+    const up = path.dirname(cur);
+    if (up === cur) return path.join(cur, ...rest);
+    rest.unshift(path.basename(cur));
+    cur = up;
+  }
+}
+
+/** Two directories are one, or one lies inside the other, once symlinks are resolved (the exploration's isolation check; also gate0.ts's). */
+export function dirsOverlap(a: string, b: string): boolean {
+  const x = realPathOf(a);
+  const y = realPathOf(b);
+  return within(x, y) || within(y, x);
+}
+
+/**
+ * `gate0-exploration --jobs <exploration dir> --registered <registered dir>` (RULES.md Amendment 1). The first line of every output is
+ * EXPLORATION_HEADER. Refuses (exit 2) unless RULES.md is frozen and contains the Amendment 1 heading, with --draft, and when the two
+ * directories are one or nest. An exploration directory with no job yet is the start of the run (exit 4, the first jobs listed).
+ */
+function runExploration(args: Args, io: Io): RunResult {
+  const root = args.root ?? io.root;
+  const lines: string[] = [EXPLORATION_HEADER, ""];
+  const pr = new Problems();
+  const rulesDir = path.join(root, "experiments", "3d-rps");
+  if (args.draft) pr.add(2, `--draft is not available for ${EXPLORATION_COMMAND}: the exploration exists only by Amendment 1 of the frozen RULES.md`);
+  else {
+    const rules = io.readBytes(path.join(rulesDir, "RULES.md"));
+    const frozen = io.readText(path.join(rulesDir, "FROZEN"));
+    const refusal = explorationRefusal(rules, frozen);
+    if (refusal !== null) pr.add(2, `refusing to apply Amendment 1: ${refusal}`);
+    else lines.push(`rules: ${checkFrozen(rules!, frozen!, "RULES.md").message}, and it contains the Amendment 1 heading`, "");
+  }
+  if (args.jobs === null || args.registered === undefined) pr.add(2, `${EXPLORATION_COMMAND} needs --jobs <exploration dir> and --registered <registered pilot dir>`);
+  else if (dirsOverlap(args.jobs, args.registered)) {
+    pr.add(2, `--jobs (${args.jobs}) and --registered (${args.registered}) must be two directories, neither inside the other: the registered pilot's jobs are read only and never mixed with the exploration's`);
+  }
+  if (args.op !== null || args.lattice !== null) pr.add(2, `${EXPLORATION_COMMAND} takes --jobs and --registered only`);
+  if (pr.has(2)) return finishExploration(2, lines, pr.list, null, args.json);
+  const stage = new Problems();
+  const registered = loadJobs(io, args.registered!, stage);
+  const loaded = new Problems();
+  const exploration = loadJobs(io, args.jobs!, loaded);
+  // a directory with no job in it yet is the start of the exploration, not unusable input
+  const started = io.walk(args.jobs!).some((f) => path.basename(f) === "summary.json");
+  if (started) for (const p of loaded.list) stage.add(p.code, p.message);
+  const res = evaluateExploration({ registered, exploration, registeredCensus: (j) => (j.dir === null ? null : io.readText(path.join(j.dir, "census.tsv"))) });
+  for (const p of res.problems.list) stage.add(p.code, p.message);
+  return finishExploration(stage.code, [...lines, ...renderExploration(res)], stage.list, res, args.json);
+}
+
+function finishExploration(code: 0 | 2 | 3 | 4, lines: string[], problems: Problem[], result: unknown, json: boolean): RunResult {
+  const tail: string[] = [];
+  if (problems.length > 0) tail.push("", "### Problems", "", ...problems.map((p) => `- exit ${p.code}: ${p.message}`));
+  tail.push("", `exit code ${code}: ${EXPLORATION_CODE_MEANING[code]}`);
+  // JSON keeps the header as its first key (a line before the object would not parse)
+  const out = json ? JSON.stringify({ exploration: EXPLORATION_HEADER, status: "EXPLORATION", code, problems, result: jsonable(result) }, null, 2) : [...lines, ...tail].join("\n");
+  return { code, out, problems, draft: false, result };
 }
 
 // ---- command line ----

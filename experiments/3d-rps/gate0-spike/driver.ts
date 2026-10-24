@@ -5,20 +5,21 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { StageStop, jobExists, type KernelJobResult } from "../lib/kernel-job.ts";
 import { evaluateGate0, type Gate0Result } from "../readout-gate0.ts";
-import { LOST_RACE_PREFIX, Problems } from "../readout-jobs.ts";
+import { LOST_RACE_PREFIX, Problems, type Problem } from "../readout-jobs.ts";
 import { loadJobs, nodeIo } from "../readout.ts";
 import type { Args } from "./cli.ts";
-import { planNext, shareOf, vcheckDefs, type JobDef } from "./plan.ts";
+import { planNext, shareOf, vcheckDefs, type JobDef, type Plan } from "./plan.ts";
 
 export interface RawSummary {
   dir: string;
   s: Record<string, unknown>;
 }
 
-export interface DriverIo {
+/** What the loop needs of the disk and the GPU; `R` is the readout's evaluation (Gate 0's, or the exploration's of Amendment 1). */
+export interface DriverIoOf<R> {
   jobExists(id: string): boolean;
-  /** Loads every job on disk and evaluates Gate 0 (the readout's own code). */
-  evaluate(): Gate0Result;
+  /** Loads every job on disk and evaluates it (the readout's own code). */
+  evaluate(): R;
   /**
    * The summary.json of every job directory on disk, and the hidden `.retried-*.json` files in which the harness keeps the failures of
    * a rerun that passed but lost the publish race (their `dir` is the file name and their `s` carries `lostRace: true` and `retried`).
@@ -30,6 +31,9 @@ export interface DriverIo {
   run(d: JobDef): Promise<KernelJobResult>;
   log(line: string): void;
 }
+
+/** The registered Gate-0 run's DriverIo. */
+export type DriverIo = DriverIoOf<Gate0Result>;
 
 /** The file-system half of DriverIo, over a job directory: `root` is the repository root the readout's loader is given. */
 export function diskIo(out: string, root: string): Pick<DriverIo, "jobExists" | "evaluate" | "rawSummaries" | "readCensus"> {
@@ -127,12 +131,35 @@ export interface DriveResult {
   waiting: number;
 }
 
+/** What differs between the registered Gate-0 loop and the exploration's (Amendment 1): the planner and the V check. */
+export interface DriveHooks<R> {
+  /** The jobs that can start now and have no directory yet, in queue order. */
+  plan(res: R, exists: (id: string) => boolean): Plan;
+  /** The V check as it stands on disk (V's own jobs run only behind an identical one). */
+  vcheck(res: R): VCheck;
+  /** The problems that stop the stage before more jobs are planned (default: every exit-2 and exit-3 problem). */
+  stops?(res: R): Problem[];
+  /**
+   * What a failed V check does to a V job in the queue: `stop` the stage (default; rule 3.0) or `skip` it, so that the other rung runs on
+   * (Amendment 1: V is void and S0 is evaluated in full). With `skip`, the loop ends with exit 3 while the readout has a bug indicator.
+   */
+  onVcheckFailure?: "stop" | "skip";
+}
+
 /**
  * The staged loop. Each pass plans the wave of jobs that can start now (plan.ts: by default the next stage of the first rung of the
  * order S0, S1, S2, V that is not yet excluded, and nothing once a rung gives GO; with `planAll` of every handled rung) and runs this
  * process's share of it in queue order; a pass that runs nothing ends the loop. `--dry-run` prints the wave and runs nothing.
  */
 export async function drive(a: Pick<Args, "rungs" | "planAll" | "share" | "reverse" | "dense" | "dryRun" | "only" | "maxJobs">, io: DriverIo): Promise<DriveResult> {
+  return await driveWith(a, io, {
+    plan: (res, exists) => planNext(res, exists, { rungs: a.rungs, dense: a.dense, planAll: a.planAll }),
+    vcheck: (res) => vcheckState(io, res),
+  });
+}
+
+/** The loop of `drive`, with the planner and the V check given (the exploration of Amendment 1 brings its own: explore.ts). */
+export async function driveWith<R extends { problems: Problems }>(a: Pick<Args, "share" | "reverse" | "dryRun" | "only" | "maxJobs">, io: DriverIoOf<R>, hooks: DriveHooks<R>): Promise<DriveResult> {
   const ran: string[] = [];
   const stops = stageStops(io.rawSummaries());
   if (stops.length > 0) {
@@ -146,14 +173,14 @@ export async function drive(a: Pick<Args, "rungs" | "planAll" | "share" | "rever
     // a bug indicator or unusable input already on disk (a burnHash that differs within a burn-in group, a failed V check, a control
     // with a chirality it cannot have, an unreadable file) stops the stage before more jobs are planned (1.3, 8.4); exit 4, jobs still
     // to run, is the normal state of a staged run
-    const bad = res.problems.list.filter((p) => p.code === 2 || p.code === 3);
+    const bad = hooks.stops ? hooks.stops(res) : res.problems.list.filter((p) => p.code === 2 || p.code === 3);
     if (bad.length > 0) {
       io.log(`STAGE STOPPED (rule draft 1.3, 8.4): the readout finds ${bad.length === 1 ? "a problem" : `${bad.length} problems`} in the jobs on disk:`);
       for (const p of bad) io.log(`  exit ${p.code}: ${p.message}`);
       io.log("Nothing runs until the job directory is dealt with by hand.");
       return { code: 3, ran, waiting };
     }
-    const plan = planNext(res, (id) => io.jobExists(id), { rungs: a.rungs, dense: a.dense, planAll: a.planAll });
+    const plan = hooks.plan(res, (id) => io.jobExists(id));
     for (const n of plan.notes) io.log(`note: ${n}`);
     let mine = a.share ? shareOf(plan.defs, a.share.i, a.share.n) : [...plan.defs];
     if (a.only !== null) mine = mine.filter((d) => d.id.includes(a.only!));
@@ -175,10 +202,12 @@ export async function drive(a: Pick<Args, "rungs" | "planAll" | "share" | "rever
       if (io.jobExists(d.id)) continue;
       if (d.rung === "V" && d.stage !== "g0.vcheck") {
         // a bug in the V switch invalidates every V job: they run only behind an identical V check
-        vc ??= vcheckState(io, io.evaluate());
+        vc ??= hooks.vcheck(io.evaluate());
         if (vc.state === "different") {
           io.log(`V CHECK FAILED: ${vc.detail}: the vacancy build is not the removal build at rate 0, so no V job counts (rule draft G0.1, 8.4)`);
-          return { code: 3, ran, waiting };
+          if (hooks.onVcheckFailure !== "skip") return { code: 3, ran, waiting };
+          io.log(`  skipped ${d.id}: V is void; the other rung runs on`);
+          continue;
         }
         if (vc.state === "incomplete") {
           io.log(`  waiting: ${d.id} needs the V check (both builds) on disk first`);
@@ -219,5 +248,7 @@ export async function drive(a: Pick<Args, "rungs" | "planAll" | "share" | "rever
     }
     if (!progressed) break;
   }
+  // a V voided by its check let the other rung run on; the bug indicator still gives exit 3 at the end
+  if (hooks.onVcheckFailure === "skip" && io.evaluate().problems.list.some((p) => p.code === 2 || p.code === 3)) return { code: 3, ran, waiting };
   return { code: waiting > 0 ? 4 : 0, ran, waiting };
 }

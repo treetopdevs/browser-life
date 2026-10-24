@@ -4,10 +4,11 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Rung } from "../readout-jobs.ts";
+import { EXPLORATION_HEADER } from "../readout-exploration.ts";
 
 export class UsageError extends Error {}
 
-export type Mode = "gate0" | "rehearsal" | "table" | "hash";
+export type Mode = "gate0" | "rehearsal" | "table" | "hash" | "exploration";
 
 export interface Args {
   mode: Mode;
@@ -34,11 +35,16 @@ export interface Args {
    * Gate-0 run starts only after the freeze (rule draft header, F12).
    */
   draft: boolean;
+  /**
+   * `--registered=<dir>` (with `--exploration` only): the registered pilot's job directory, read and never written. Amendment 1 reuses
+   * its S0 G0.2 jobs and the table's rate-0 seed-401 cells.
+   */
+  registered: string | null;
 }
 
-const MODES: readonly Mode[] = ["gate0", "rehearsal", "table", "hash"];
+const MODES: readonly Mode[] = ["gate0", "rehearsal", "table", "hash", "exploration"];
 const FLAGS = new Set(["reverse", "dense", "dry-run", "write", "plan-all", "draft", ...MODES]);
-const VALUES = new Set(["out", "rung", "machine-share", "only", "max-jobs"]);
+const VALUES = new Set(["out", "rung", "machine-share", "only", "max-jobs", "registered"]);
 export const ALL_RUNGS: readonly Rung[] = ["S0", "S1", "S2", "V"];
 
 export function parseArgs(argv: readonly string[]): Args {
@@ -76,6 +82,12 @@ export function parseArgs(argv: readonly string[]): Args {
   const out = vals.get("out") ?? null;
   if ((mode === "gate0" || mode === "table") && out === null) throw new UsageError(`--${mode} needs --out=<job directory> (there is no default: a registered pilot must say where it writes)`);
   if (flags.has("draft") && mode !== "table") throw new UsageError(`--draft is for --table only: a registered Gate-0 run starts after the freeze, and --${mode} reads no rules`);
+  const registered = vals.get("registered") ?? null;
+  if (mode === "exploration") {
+    // Amendment 1 runs S0 and V on S0 side by side, both in full: there is no rung to choose, no order to override and no dense job (A1.1, A1.2)
+    if (out === null || registered === null) throw new UsageError("--exploration needs --out=<exploration job directory> and --registered=<the registered pilot's job directory>");
+    for (const k of ["rung", "plan-all", "dense"]) if (flags.has(k) || vals.has(k)) throw new UsageError(`--${k} is not for --exploration: Amendment 1 runs S0 and V on S0 side by side, both in full, and G0.6 is not run`);
+  } else if (registered !== null) throw new UsageError("--registered is for --exploration only");
   return {
     mode,
     out,
@@ -89,7 +101,17 @@ export function parseArgs(argv: readonly string[]): Args {
     maxJobs: maxText === undefined ? null : Number(maxText),
     write: flags.has("write"),
     draft: flags.has("draft"),
+    registered,
   };
+}
+
+/**
+ * The command line as gate0.ts reads it: an exploration request (`--exploration` anywhere in `argv`) prints its header through `say`
+ * before anything is parsed, so that every output of the exploration starts with it, an argument refusal included (Amendment 1).
+ */
+export function parseCommandLine(argv: readonly string[], say: (line: string) => void): Args {
+  if (argv.includes("--exploration")) say(EXPLORATION_HEADER);
+  return parseArgs(argv);
 }
 
 // ---- the spike's SHA-256 ----

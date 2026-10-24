@@ -1,8 +1,8 @@
-bf9fc20ea93b79cf4ab604b2861c50cde7b0387eee7cfa87e66d3098b6132414
+39f5d7688c54d84e79059169d7553122929d3613fdf3412fa9975daae6ec58e5
 
 SHA-256 of the Gate-0 spike (rule draft 3.0, Code; D16): the SHA-256 of the sorted per-file listing printed by
   (cd experiments/3d-rps/gate0-spike && git ls-files | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)
-This value was taken on the working tree over exactly the 13 files listed below (git ls-files -co --exclude-standard, the files not yet committed),
+This value was taken on the working tree over exactly the 14 files listed below (git ls-files -co --exclude-standard, the files not yet committed),
 BEFORE the files were committed. The spike holds only what Gate 0 uses: no review scratch script, no out/ directory, no snapshot.
 After the commit, rerun the recipe above on the committed files, after the last change to the spike and before the first Gate-0 job:
 if the committed set is the listed one it gives this value, and that value goes in the Gate-0 record (rule draft 8.5) with the revision
@@ -10,11 +10,12 @@ of the tree the spike patches (packages/sim-gpu/src/shaders3d.ts) and of package
 reproduces the recipe on the working tree and compares it with the first line here.
 
 The listing that was hashed (sorted with LC_ALL=C; `<sha256 of the file>  <path>`; the first line of this file is the SHA-256 of exactly these lines):
-b09e412f8556b11ed73c8be61c0ff0f1724db53fe77d746b26e34a96c5a72ca1  README.md
+36d6c188f7ff2f2e67d4e91de002e998202cbf618fcf01934228d1115f950ab5  README.md
 d2854ae93646c2f3dce8f893b2c2a76230b71bd78793674e4dda8ad146c24c20  adapter.ts
-fca3c766ab55d96a44a67c53b3982ee14d42e31f7b7898f031ff79d5e41470f1  cli.ts
-059cf6faf7bb8834e3d5bf46f5520926284ec825a6bbc94b68d07b95f1367e65  driver.ts
-d432bc9be74a6cbca86a76f9154f86986c895a355478f508b2f1f4f1b595ac8e  gate0.ts
+aaeb218d343a7bbf363f08ac25ba95e22353db0fa3d62ee05d7421b1792f84b1  cli.ts
+4c08c46f56e33d3cc1c4e05414a432032cefae5f5edbd0729e973b30f5abf708  driver.ts
+59a0d5aa59f6cc4c64e4025b5dd42ca48547fb7a4ba71c65b6c33de412249894  explore.ts
+503c11afb2dad8b11bb85dc0ed643009ebfa4b04d9db845f6d084cbc6d289f81  gate0.ts
 71d30c8cc920febb80d999504e0fc0ee934d9d89b8d010e54dc8b36fbf1eda0e  gpu-sim3-rps.ts
 0e6a50ee664e868e016f9fea199e474f2191a8bff9aaee401b6164565b6496ca  jobs.ts
 3b3c0b15304d72af8e409e75def0f915773955e5cb4a4659d5b70dc6a55d051d  lib.ts

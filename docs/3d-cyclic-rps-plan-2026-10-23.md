@@ -1108,3 +1108,14 @@ rule sentences to tighten; all four are fixed, each code fix with a regression t
 | FR15 | P3 | rules 1.3 promised the hidden file for any lost race, also after a plain crash, which the code deliberately leaves to the log | Rules 1.3: the hidden file holds a conservation or invariant failure, behind a rerun that passed or a MISSING marker |
 
 Results and amendments are appended below as dated sections.
+
+## 13. 2026-10-24: Amendment 1, an exploration after GATE-0-STOP
+
+The registered pilot ended GATE-0-STOP (`experiments/3d-rps/GATE0-RECORD.md`): every substrate rung ended NO-GO: LEVELS, so no kill
+was tested. `experiments/3d-rps/RULES.md` now ends with **Amendment 1**, which explores both kill forms at the four mobility levels
+S0 has (`G_spread` = [6, 8, 10, 16], reused from the registered G0.2 jobs): rung S0 (removal) and rung V on S0 (vacancy kill), side by
+side, each with one label of A1.4 (EXPLORATION-V-VOID, -NO-EFFECT, -NO-HORIZON, -NO-CONFIRM, -WORKS). It is an exploration, not a
+registered result: it lowers row 1 to `levels < 4` after that bar failed, and nothing in it may be cited as passing Gate 0. Tooling:
+`gate0.ts --exploration --out=<dir> --registered=<registered dir>` runs the jobs (the registered directory is read, never written) and
+`readout.ts gate0-exploration --jobs <dir> --registered <registered dir>` reads them; both refuse unless the frozen `RULES.md` contains
+the amendment. Usage in `experiments/3d-rps/gate0-spike/README.md`; the record is `GATE0-EXPLORATION.md` (A1.5), once both rungs have a label.

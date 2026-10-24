@@ -736,3 +736,40 @@ may be built after Gate 0 gives GO for some rung: plan M0 to M2 for the kill for
 registered runs start only after the completed record's hash is in FROZEN. Then 3.1 and 3.2 (cheap); then 4, whose queue is the jobs of
 4.1. Stages 5 and 7 start only after the readout of 4 has printed its outcome row (they need `spread*`); their jobs join the same
 two-machine queue. Then 6, then the write-up.
+
+## Amendment 1 (2026-10-24, after GATE-0-STOP): an exploration of the kill at S0's four mobility levels
+
+**Status: exploration, not a registered result.** The registered pilot ended GATE-0-STOP (`GATE0-RECORD.md`): every substrate rung
+ended NO-GO: LEVELS, so no kill was tested. The user chose to test both kill forms anyway at the four mobility levels rung S0 has. This
+amendment lowers a frozen bar after it failed. Rule 3.0 permits a dated amendment only because the pilot stopped ("the main session
+decides by dated amendment"), and the exploration is labelled accordingly everywhere: every output of it says "EXPLORATION (Amendment 1):
+the registered pilot ended GATE-0-STOP", never GO, and nothing in it may be cited as passing Gate 0 or as a result of the registered
+programme. Section 4's cliff test needs five levels and is not licensed by anything here. Written before any exploration job runs.
+
+A1.1 **What is run.** Rung S0 (the removal kill) and rung V hosted on S0 (the vacancy kill), on S0's `G_spread` = [6, 8, 10, 16] as the
+registered G0.2 jobs gave it (those jobs are reused, not rerun). For this exploration only, verdict row 1 reads `levels < 4` for S0, so S0
+and V on S0 pass it; S1 (2 levels) and S2 are not continued. The two rungs are run side by side and each rung's rows 2 to 5 are evaluated
+and reported in full: the preference order of D24 does not apply, because no rung is used.
+
+A1.2 **Jobs**, exactly as 3.0 with S0's values: `v_lo` = 6, `v_mid` = 8 (the lower middle of four), `v_hi` = 16.
+- G0.3: removal at rates {0, 8, 16, 32, 64} and the vacancy kill at {64, 256, 1024, 4096} (rate 0 shared, G0.1), at the three spreads,
+  seeds 401 to 403, 20,000 steps after the burn-in. The three rate-0 seed-401 cells are the registered scan jobs.
+- The V check of G0.1 (rate 0 at `v_mid`, seed 401, both builds, byte-identical `census.tsv`) is required; a failing or absent check
+  voids V as G0.1 says.
+- G0.4 (horizon) once, shared by both rungs, if either rung passes row 2; G0.5 for each rung that passes rows 1 to 3. G0.6 is not run.
+
+A1.3 **Readings.** Rows 2 to 5 of 3.0 (works, `kappa_w`, `v_cal`, `T_ctl`, `h0`, the confirmation) with every threshold unchanged: `chi_fw`
+at least 0.2 for DC, informative rate-0 controls, DC in at least 2 of 3 jobs, the 4.2 sense of informative, and the rest of 3.0.
+
+A1.4 **Labels**, one per rung (the first that holds): **EXPLORATION-V-VOID** (V only: its check failed or is absent);
+**EXPLORATION-NO-EFFECT** (row 2); **EXPLORATION-NO-HORIZON** (row 3); **EXPLORATION-NO-CONFIRM** (row 4); otherwise
+**EXPLORATION-WORKS** (the cells that would have given GO). The readout prints the label beside the rung's table, never GO.
+
+A1.5 **Record.** When both rungs have a label, the main session writes `experiments/3d-rps/GATE0-EXPLORATION.md` (the readout's
+exploration table verbatim, both labels, every job with its steps per second, the spike SHA-256 of 3.0's recipe at the exploration's
+first job, and the tree revision) and appends its SHA-256 to `FROZEN` in a dated line.
+
+A1.6 **What follows.** Nothing is licensed automatically. If a rung reads EXPLORATION-WORKS, building Part B for its kill form, and any
+kernel run, need a further dated amendment that says how mobility is varied (the cliff test cannot run on four levels as registered) and
+the user's go. If neither rung works, the kernel half stops here (plan 11) unless the user chooses a redesign (a sparse-film substrate,
+an exchange knob, label inertia).

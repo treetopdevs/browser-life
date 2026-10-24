@@ -74,3 +74,18 @@ export function freezeRefusal(what: string, instead: string, rules: Uint8Array |
  */
 export const gate0Refusal = (rules: Uint8Array | null, frozen: string | null): string | null =>
   freezeRefusal("a registered Gate-0 run", "use --rehearsal for plumbing, --dry-run for the wave, --table --draft for a look at jobs on disk", rules, frozen);
+
+/** The heading of RULES.md's Amendment 1 (2026-10-24, after GATE-0-STOP): the exploration of the kill at S0's four mobility levels. */
+export const AMENDMENT_1_HEADING = /^## Amendment 1\b/m;
+
+/**
+ * Why the exploration of Amendment 1 (`gate0.ts --exploration`, `readout.ts gate0-exploration`) may not run or be read, or null: it
+ * needs the frozen RULES.md (its SHA-256 recorded in FROZEN) and that file must contain the Amendment 1 heading. Unlike the registered
+ * run there is no dry-run exemption: the exploration exists only by the amendment.
+ */
+export function explorationRefusal(rules: Uint8Array | null, frozen: string | null): string | null {
+  const r = freezeRefusal("the exploration of Amendment 1", "it runs only on the frozen rules that contain Amendment 1", rules, frozen);
+  if (r !== null) return r;
+  if (!AMENDMENT_1_HEADING.test(new TextDecoder().decode(rules!))) return "the exploration of Amendment 1 needs experiments/3d-rps/RULES.md to contain its heading (\"## Amendment 1 ...\"), and the frozen RULES.md has none: the exploration exists only by that dated amendment (3.0, 8.3)";
+  return null;
+}

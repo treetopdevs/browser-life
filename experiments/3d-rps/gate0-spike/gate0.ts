@@ -13,6 +13,13 @@
 //                   runs/rps/rule-draft.md with every output labelled DRAFT
 //     --hash        print the spike's SHA-256 (the recipe of rule draft 3.0, on the working tree) and compare it with
 //                   experiments/3d-rps/gate0-spike.sha256; --write records it there, with the listing of the files it covers
+//     --exploration Amendment 1 of RULES.md (after GATE-0-STOP): run, in waves, the jobs A1.2 needs that the registered pilot does not
+//                   hold, into --out, with --registered=<the registered pilot's job directory> (read, never written): the V check
+//                   (the vacancy build; its removal build is the registered scan job at v_mid, seed 401), G0.3 of S0 and of V on S0,
+//                   G0.4 once if either passes row 2, G0.5 per rung that passes rows 1 to 3; S0 and V side by side, both in full
+//                   (explore.ts). Refuses, --dry-run included, unless RULES.md is frozen and contains the Amendment 1 heading. Ends
+//                   with the exploration table (readout.ts gate0-exploration), which starts "EXPLORATION (Amendment 1): ..."
+//                   and never gives a Gate-0 verdict. --machine-share, --reverse, --only, --max-jobs and --dry-run work as with --gate0
 //   options
 //     --out=<dir>             the job directory (<dir>/<id>/census.tsv, summary.json); safe to rsync between machines (the readout and
 //                             the driver skip the hidden .tmp-* directories a job is assembled in, so a copy that caught one does no
@@ -47,10 +54,12 @@ import { cleanStaleTmp, executeKernelJob, type KernelJobDeps, type KernelJobResu
 import { Problems, prepareRows } from "../readout-jobs.ts";
 import { loadJobs, nodeIo, run as readoutRun } from "../readout.ts";
 import { gpuFactory } from "./adapter.ts";
-import { UsageError, parseArgs, readSpikeFiles, sidecarText, spikeHash, spikeListing, type Args } from "./cli.ts";
-import { gate0Refusal } from "../frozen.ts";
+import { UsageError, parseCommandLine, readSpikeFiles, sidecarText, spikeHash, spikeListing, type Args } from "./cli.ts";
+import { explorationRefusal, gate0Refusal } from "../frozen.ts";
+import { explorationDirsRefusal, explorationDiskIo, explorationHooks } from "./explore.ts";
 import { runMeterJob, runSpecOf } from "./jobs.ts";
-import { diskIo, drive, type DriverIo } from "./driver.ts";
+import { diskIo, drive, driveWith, type DriverIo, type DriverIoOf } from "./driver.ts";
+import type { ExplorationResult } from "../readout-exploration.ts";
 import type { JobDef } from "./plan.ts";
 import { plumbingOk, rehearse } from "./rehearsal.ts";
 
@@ -104,10 +113,12 @@ async function makeDeps(): Promise<{ deps: KernelJobDeps; close: () => void }> {
 
 // ---- the driver ----
 
-async function runDef(d: JobDef, deps: KernelJobDeps, out: string): Promise<KernelJobResult> {
+async function runDef(d: JobDef, deps: KernelJobDeps, out: string, mode: "gate0" | "exploration" = "gate0"): Promise<KernelJobResult> {
   const loadavg = Deno.loadavg().map((x: number) => Math.round(x * 100) / 100);
-  if (d.kind === "meter") return await runMeterJob(d, deps, out, "gate0", { loadavg });
-  return await executeKernelJob(runSpecOf(d, "gate0", { loadavg }), deps, out);
+  // an exploration job says so in its summary.json (mode "exploration", amendment 1)
+  const extra = mode === "exploration" ? { loadavg, amendment: 1 } : { loadavg };
+  if (d.kind === "meter") return await runMeterJob(d, deps, out, mode, extra);
+  return await executeKernelJob(runSpecOf(d, mode, extra), deps, out);
 }
 
 /** RULES.md and FROZEN as the registered run sees them (null when absent). */
@@ -149,6 +160,47 @@ async function gate0(a: Args): Promise<number> {
   // the table on the frozen rules (the run started only after the freeze). The Gate-0 table needs RULES.md only: a Gate-0 record that is
   // written but not yet hashed is provisional, completed with the dense rate of this very run (G0.6) and hashed afterwards (rule draft 8.5)
   const table = readoutRun(["gate0", "--jobs", out], nodeIo(ROOT));
+  say("");
+  say(table.out);
+  if (r.code === 3 || table.code === 2 || table.code === 3) return table.code === 2 ? 2 : 3;
+  return r.code === 4 || table.code === 4 ? 4 : 0;
+}
+
+// ---- the exploration (Amendment 1) ----
+
+async function exploration(a: Args): Promise<number> {
+  // the header (Amendment 1) is already printed: parseCommandLine prints it before anything is parsed
+  // the exploration exists only by Amendment 1 of the frozen rules: no dry-run exemption
+  const { rules, frozen } = readFrozenFiles();
+  const refusal = explorationRefusal(rules, frozen);
+  if (refusal !== null) throw new UsageError(refusal);
+  const out = path.resolve(a.out!);
+  const registered = path.resolve(a.registered!);
+  const dirs = explorationDirsRefusal(out, registered);
+  if (dirs !== null) throw new UsageError(dirs);
+  if (!fs.existsSync(registered)) throw new UsageError(`--registered: ${registered} does not exist`);
+  if (!a.dryRun) {
+    fs.mkdirSync(out, { recursive: true });
+    cleanStaleTmp(out);
+  }
+  let boot: Awaited<ReturnType<typeof makeDeps>> | null = null;
+  const io: DriverIoOf<ExplorationResult> = {
+    ...explorationDiskIo(out, registered, ROOT),
+    run: async (d) => {
+      boot ??= await makeDeps();
+      return await runDef(d, boot.deps, out, "exploration");
+    },
+    log: say,
+  };
+  let r;
+  try {
+    r = await driveWith(a, io, explorationHooks);
+  } finally {
+    (boot as Awaited<ReturnType<typeof makeDeps>> | null)?.close();
+  }
+  if (a.dryRun) return r.code;
+  // the readout's table starts with the header again
+  const table = readoutRun(["gate0-exploration", "--jobs", out, "--registered", registered], nodeIo(ROOT));
   say("");
   say(table.out);
   if (r.code === 3 || table.code === 2 || table.code === 3) return table.code === 2 ? 2 : 3;
@@ -233,8 +285,8 @@ async function hash(a: Args): Promise<number> {
 if ((import.meta as { main?: boolean }).main === true) {
   let code: number;
   try {
-    const a = parseArgs(Deno.args);
-    code = a.mode === "gate0" ? await gate0(a) : a.mode === "rehearsal" ? await rehearsal(a) : a.mode === "table" ? table(a) : await hash(a);
+    const a = parseCommandLine(Deno.args, say);
+    code = a.mode === "gate0" ? await gate0(a) : a.mode === "exploration" ? await exploration(a) : a.mode === "rehearsal" ? await rehearsal(a) : a.mode === "table" ? table(a) : await hash(a);
   } catch (e) {
     if (e instanceof UsageError) {
       console.error(`gate0: ${e.message}`);

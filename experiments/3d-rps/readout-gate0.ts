@@ -184,7 +184,8 @@ export function verdictRow(i: { levels: number | null; kappaW: number | null; h0
   return { row: 5, verdict: "GO" };
 }
 
-interface ExpectedJob {
+/** One expected job of a table cell, the horizon or the confirmation: the job found (null while it is to run) and its analysis. */
+export interface ExpectedJob {
   desc: string;
   job: Job | null;
   a: RunAnalysis | null;
@@ -304,6 +305,41 @@ export interface Gate0Result {
   /** Every Gate-0 job with its class (the list of 8.5). */
   jobs: { job: Job; a: RunAnalysis | null }[];
 }
+
+// ---- the per-cell readings of G0.3 and G0.4 (shared with the exploration of Amendment 1, readout-exploration.ts) ----
+
+/** `v_lo`, `v_mid`, `v_hi` of G0.3: the lowest, the median (the lower middle for an even count) and the highest spread of `G_spread`. */
+export const tableSpreads = (g: readonly number[]): [number, number, number] => [g[0], g[(g.length - 1) >> 1], g[g.length - 1]];
+
+/** A cell of G0.3: it works iff `rate > 0`, at least 2 of its 3 jobs are DC and the spread's rate-0 jobs are informative. */
+export const cellOf = (spread: number, rate: number, refs: readonly ExpectedJob[], ctl: ControlInfo): TableCell => {
+  const classes = refs.map((x) => (x.job?.s.missing ? ("MISSING" as const) : (x.a?.cls ?? null)));
+  const nDC = refs.filter((x) => x.a?.cls === "DC").length;
+  return { spread, rate, classes, nDC, works: rate > 0 && nDC >= 2 && ctl.informative };
+};
+
+/** `kappa_w`: the smallest nonzero rate that works at 2 or more of the three spreads, and `v_cal`: the median (lower middle) of the spreads where it works. */
+export const kappaOf = (cells: readonly TableCell[], spreads: readonly number[], rates: readonly number[]): { kappaW: number | null; vCal: number | null } => {
+  for (const rate of rates.filter((q) => q > 0).sort((a, b) => a - b)) {
+    const at = spreads.filter((v) => cells.some((c) => c.spread === v && c.rate === rate && c.works));
+    if (at.length >= 2) return { kappaW: rate, vCal: medianLower(at) };
+  }
+  return { kappaW: null, vCal: null };
+};
+
+/** G0.4 from its three controls: the first sustained loss per job (EXT, LOSS), `T_ctl` (lower middle, a job that keeps every label counting as infinite) and `h0`. */
+export const horizonOfRefs = (spread: number, refs: readonly ExpectedJob[]): HorizonResult => {
+  const tctl = refs.map((x) => {
+    const a = x.a;
+    if (a === null || a.cls === "NOSTART") return null;
+    if (a.cls === "EXT" || a.cls === "LOSS") return a.tcx as number;
+    return Infinity;
+  });
+  const usable = tctl.filter((t): t is number => t !== null);
+  const Tctl = usable.length === 0 ? null : medianLower(usable);
+  const dims = refs.find((x) => x.job?.s.dims)?.job?.s.dims;
+  return { spread, tctl, classes: refs.map((x) => x.a?.cls ?? null), Tctl, h0: Tctl === null ? null : horizonOf(Tctl), shape: dims ? `${dims.W}x${dims.H}x${dims.D}` : null };
+};
 
 const isG0 = (s: JobSummary) => s.stage.startsWith("g0.");
 
@@ -465,23 +501,6 @@ export function evaluateGate0(allJobs: readonly Job[]): Gate0Result {
     return ev;
   };
 
-  const tableSpreads = (g: readonly number[]): [number, number, number] => [g[0], g[(g.length - 1) >> 1], g[g.length - 1]];
-
-  const cellOf = (spread: number, rate: number, refs: ExpectedJob[], ctl: ControlInfo): TableCell => {
-    const classes = refs.map((x) => (x.job?.s.missing ? ("MISSING" as const) : (x.a?.cls ?? null)));
-    const nDC = refs.filter((x) => x.a?.cls === "DC").length;
-    return { spread, rate, classes, nDC, works: rate > 0 && nDC >= 2 && ctl.informative };
-  };
-
-  /** `kappa_w`: the smallest nonzero rate that works at 2 or more of the three spreads, and `v_cal`: the median (lower middle) of the spreads where it works. */
-  const kappaOf = (cells: readonly TableCell[], spreads: readonly number[], rates: readonly number[]): { kappaW: number | null; vCal: number | null } => {
-    for (const rate of rates.filter((q) => q > 0).sort((a, b) => a - b)) {
-      const at = spreads.filter((v) => cells.some((c) => c.spread === v && c.rate === rate && c.works));
-      if (at.length >= 2) return { kappaW: rate, vCal: medianLower(at) };
-    }
-    return { kappaW: null, vCal: null };
-  };
-
   const horizonStage = (r: SubstrateRung, vMid: number, missing: string[], listed: string[]): HorizonResult | null => {
     const refs = TABLE_SEEDS.map((sd) =>
       refOf(
@@ -494,19 +513,6 @@ export function evaluateGate0(allJobs: readonly Job[]): Gate0Result {
     );
     if (refs.some((x) => x.job === null)) return null;
     return horizonOfRefs(vMid, refs);
-  };
-
-  const horizonOfRefs = (spread: number, refs: readonly ExpectedJob[]): HorizonResult => {
-    const tctl = refs.map((x) => {
-      const a = x.a;
-      if (a === null || a.cls === "NOSTART") return null;
-      if (a.cls === "EXT" || a.cls === "LOSS") return a.tcx as number;
-      return Infinity;
-    });
-    const usable = tctl.filter((t): t is number => t !== null);
-    const Tctl = usable.length === 0 ? null : medianLower(usable);
-    const dims = refs.find((x) => x.job?.s.dims)?.job?.s.dims;
-    return { spread, tctl, classes: refs.map((x) => x.a?.cls ?? null), Tctl, h0: Tctl === null ? null : horizonOf(Tctl), shape: dims ? `${dims.W}x${dims.H}x${dims.D}` : null };
   };
 
   const confirmStage = (label: string, own: (s: JobSummary) => boolean, vCal: number, rate: number, h0: number, missing: string[], listed: string[]): ConfirmResult => {
