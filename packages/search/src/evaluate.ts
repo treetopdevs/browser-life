@@ -22,7 +22,14 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
-import { Tracker, census, classify, individuals, type Census, type Role } from "@bl/metrics";
+import { Tracker, census, classify, individuals, type Census, type CensusInput, type Role } from "@bl/metrics";
+
+/** Optional read-only evidence stream; omitted by all historical callers. */
+export type EvalEvidence =
+  | { kind: "state"; phase: "initial" | "grown" | "tile-lesion-end" | "regen-start" | "regen-end" | "dark-end" | "light-end"; state: WorldState }
+  | { kind: "targets"; targets: { tile: number; idx: number; cells: number[]; mass: number; lesion: { center: number; radius: number } | null }[] }
+  | { kind: "regen-census"; input: CensusInput };
+export type EvalObserver = (event: EvalEvidence) => Promise<void>;
 
 export interface EvalConfig {
   /** Tile side (multiple of 16 enables blocked affinity). */
@@ -217,14 +224,16 @@ export function lineageMass(cfg: WorldConfig, cells: Uint32Array, genomeHead: Ui
   return out;
 }
 
-async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number, onCensus?: (c: Census) => void, onRoles?: (done: number, roles: () => Promise<Uint32Array>) => Promise<void>) {
+async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number, onCensus?: (c: Census) => void, onRoles?: (done: number, roles: () => Promise<Uint32Array>) => Promise<void>, onReadback?: (input: CensusInput) => Promise<void>) {
   for (let s = 0; s < steps; s += every) {
     const k = Math.min(every, steps - s);
     for (let j = 0; j < k; j += 64) sim.run(Math.min(64, k - j));
     await device.queue.onSubmittedWorkDone();
-    if (onCensus) {
+    if (onCensus || onReadback) {
       const [cells, genomeHead] = await Promise.all([sim.readCells(), sim.readGenomeChannels(0, 4)]);
-      onCensus(census({ cfg: sim.cfg, step: sim.step, cells, genomeHead }));
+      const input = { cfg: sim.cfg, step: sim.step, cells, genomeHead };
+      onCensus?.(census(input));
+      await onReadback?.(input);
     }
     if (onRoles) await onRoles(s + k, () => sim.readRoles());
   }
@@ -268,7 +277,7 @@ export function addLineageRoles(cfg: WorldConfig, roles: Uint32Array, genomeHead
 }
 
 /** Evaluates up to side²/reps genomes in one batch world. */
-export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL): Promise<Evaluation[]> {
+export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL, observer?: EvalObserver, observationEvery: 25 | 50 = 25): Promise<Evaluation[]> {
   const tiles = ec.side * ec.side;
   const perBatch = Math.floor(tiles / ec.reps);
   if (genomes.length > perBatch) throw new Error(`batch holds ${perBatch} genomes`);
@@ -310,6 +319,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
     }
   });
   const init = buildWorld(cfg, { nutrient: ec.nutrient, waste: ec.medium?.waste, founders });
+  await observer?.({ kind: "state", phase: "initial", state: init });
   const sim = await GpuSim.create(device, init);
   const tracker = new Tracker({ threshold: 48, minMass: 128 });
   const repro = new Float64Array(tiles);
@@ -356,6 +366,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
       }
     }, onRoles);
     grown = await sim.readState();
+    await observer?.({ kind: "state", phase: "grown", state: grown });
   } finally {
     sim.destroy();
   }
@@ -386,6 +397,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
     const r = Math.floor(ec.tile * ec.lesionFrac);
     for (let t = 0; t < tiles; t++) lesioned.lesion((t % ec.side) * ec.tile + ec.tile / 2, Math.floor(t / ec.side) * ec.tile + ec.tile / 2, r);
     await runChunked(device, lesioned, ec.recoverSteps, 500);
+    if (observer) await observer({ kind: "state", phase: "tile-lesion-end", state: await lesioned.readState() });
     afterLesion = bg
       ? massFrom(...(await Promise.all([lesioned.readCells(), lesioned.readGenomeChannels(0, 4)])))
       : tileMass(cfg, await lesioned.readCells());
@@ -435,10 +447,15 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
       if (covered(r) < 0.25 * cells.length) continue; // cannot damage it enough: not counted as regenerated
       plan.set(tile, { cells, mass: comp.mass, center, r });
     }
+    await observer?.({ kind: "targets", targets: [...targetIdx].map(([tile, idx]) => ({
+      tile, idx, cells: members.get(idx) ?? [], mass: c0.components[idx].mass,
+      lesion: plan.has(tile) ? { center: plan.get(tile)!.center, radius: plan.get(tile)!.r } : null,
+    })) });
     const sim2 = await GpuSim.create(device, cloneState(grown));
     try {
       for (const [, p] of plan) sim2.lesion(p.center % W, Math.floor(p.center / W), p.r);
       const trk = new Tracker({ threshold: 48, minMass: 128 });
+      if (observer) await observer({ kind: "state", phase: "regen-start", state: await sim2.readState() });
       const snap0 = await sim2.readSnapshot(false);
       const c1 = census({ cfg, step: snap0.step, cells: snap0.cells, genomeHead: snap0.genomeHead });
       trk.update(c1);
@@ -455,7 +472,10 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         const id = trk.idOf(best);
         if (id !== undefined) watch.set(tile, { id, mass: p.mass });
       }
-      await runChunked(device, sim2, ec.recoverSteps, 50, (c) => trk.update(c));
+      await runChunked(device, sim2, ec.recoverSteps, observer ? observationEvery : 50, (c) => {
+        if (!observer || (c.step - grown.step) % 50 === 0 || c.step - grown.step === ec.recoverSteps) trk.update(c);
+      }, undefined, observer ? (input) => observer({ kind: "regen-census", input }) : undefined);
+      if (observer) await observer({ kind: "state", phase: "regen-end", state: await sim2.readState() });
       for (const [tile, w] of watch) {
         const ind = trk.alive.get(w.id);
         if (ind && ind.mass >= 0.9 * w.mass) regen[tile] = 1;
@@ -467,20 +487,21 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
 
   // Dark arm with a matched illuminated control from the same grown state:
   // light dependence = dies in the dark while staying viable in the light.
-  const runArm = async (armCfg: WorldConfig) => {
+  const runArm = async (armCfg: WorldConfig, phase: "dark-end" | "light-end") => {
     const st = cloneState(grown);
     st.cfg = armCfg;
     const armSim = await GpuSim.create(device, st);
     try {
       await runChunked(device, armSim, ec.darkSteps, 500);
+      if (observer) await observer({ kind: "state", phase, state: await armSim.readState() });
       if (!bg) return tileMass(cfg, await armSim.readCells());
       return massFrom(...(await Promise.all([armSim.readCells(), armSim.readGenomeChannels(0, 4)])));
     } finally {
       armSim.destroy();
     }
   };
-  const afterDark = await runArm({ ...cfg, lightBase: 0, lightAmp: 0, seasonAmp: 0 });
-  const afterLight = await runArm(cfg);
+  const afterDark = await runArm({ ...cfg, lightBase: 0, lightAmp: 0, seasonAmp: 0 }, "dark-end");
+  const afterLight = await runArm(cfg, "light-end");
 
   return genomes.map((_, k) => {
     const ts = [...owner.keys()].filter((t) => owner[t] === k);
