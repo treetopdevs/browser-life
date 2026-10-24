@@ -537,6 +537,11 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
 <dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
 </dl></article>
+<article id="d47">
+<h2><span>D-47</span>Island leave clears adversarial review</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>
