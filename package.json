@@ -6,6 +6,7 @@
     "dev": "pnpm --filter @bl/lab dev",
     "build": "pnpm --filter @bl/lab build",
     "typecheck": "tsc -p tsconfig.json",
+    "typecheck:rps": "tsc -p experiments/3d-rps/tsconfig.json",
     "test": "vitest run",
     "test:gpu": "deno run --allow-read --allow-env tests/deno/gpu_golden.ts",
     "test:e2e": "playwright test",

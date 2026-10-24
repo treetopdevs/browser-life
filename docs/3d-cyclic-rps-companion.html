@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyclic Competition Companion</title>
+<meta name="description" content="Visual companion to docs/3d-cyclic-rps-plan-2026-10-23.md: three kinds that eat each other in a ring, a live lattice you can run in the page, the three questions of this line, and an empty slot for every result. Nothing registered has run.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+  /* The lattice and the trace sit on a dark field in both colour schemes, so the three species colours are the dark-surface slots
+     1 to 3 of the data-viz palette (blue, orange, aqua), validated together on this field (all pairs, normal and colour-blind vision). */
+  --field: #0d1210;
+  --field-line: #26302c;
+  --field-ink: #c8d0cb;
+  --field-muted: #8a948f;
+  --sp1: #3987e5;
+  --sp2: #d95926;
+  --sp3: #199e70;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; overflow-wrap: anywhere; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; color: var(--text); background: var(--raised); padding: .05em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button { font: inherit; }
+button.theme { font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 0; border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+button:focus-visible, [tabindex]:focus-visible, summary:focus-visible, input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+section { margin: 40px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+h2 .idx { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); margin-right: 8px; font-size: 15px; }
+h3.group { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); margin: 22px 0 8px; font-weight: 700; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 16px; overflow-x: auto; }
+figcaption { font-size: 13px; color: var(--soft); margin-top: 10px; max-width: 80ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+.cards > *, .grid2 > * { min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card p + p, .card ul + p, .card p + ul { margin-top: 8px; }
+.card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.card li + li { margin-top: 6px; }
+.card .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/1 var(--mono); margin-right: 8px; vertical-align: -5px; }
+.card.lit { border-color: var(--sun-ink); }
+.card.lit .n { background: var(--sun); color: oklch(23% 0.022 80); }
+.card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sun-ink); margin-bottom: 6px; }
+.card .tag.plain { color: var(--soft); }
+.card .state { margin-top: 10px; padding: 7px 10px; border-radius: var(--radius); background: var(--raised); color: var(--text); font-size: 13px; }
+.card .state b { color: var(--sun-ink); }
+sub, sup { line-height: 0; }
+
+/* ---- the live lattice ---- */
+.live { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (min-width: 900px) { .live { grid-template-columns: minmax(0, 580px) minmax(0, 1fr); gap: 28px; } }
+.stage { display: grid; gap: 10px; min-width: 0; }
+.canvas-wrap { background: var(--field); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 10px; display: grid; place-items: center; min-width: 0; width: fit-content; max-width: 100%; justify-self: start; }
+canvas#lat { display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated; }
+.transport, .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font-weight: 600; min-height: 40px; padding: 8px 14px; border: 1px solid var(--control-line); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
+.btn:hover { background: var(--hover); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--sun); border-color: var(--sun-ink); color: oklch(23% 0.022 80); min-width: 92px; }
+.btn.primary:hover { background: var(--sun); filter: brightness(.96); }
+.btn.preset { font-weight: 500; }
+.status { margin: 0; color: var(--muted); font-size: 14px; min-height: 3em; white-space: pre-line; }
+.status[data-bad="true"] { color: var(--error); font-weight: 600; }
+.panel { display: grid; gap: 18px; min-width: 0; align-content: start; }
+.ctl { display: grid; gap: 6px; min-width: 0; border: 0; padding: 0; margin: 0; }
+.ctl > .lbl, .ctl > legend.lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 600; font-size: 14px; padding: 0; width: 100%; }
+.lbl .val { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); }
+.hint { color: var(--soft); font-size: 13px; margin: 0; max-width: 60ch; }
+#preset-hint { min-height: 3.9em; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--sun); border: 2px solid var(--sun-ink); }
+input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--sun); border: 2px solid var(--sun-ink); }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--text); outline-offset: 2px; }
+input[type=range]:focus-visible::-moz-range-thumb { outline: 2px solid var(--text); outline-offset: 2px; }
+.mscale { position: relative; height: 40px; margin: -2px 10px 0; }
+.mscale .tick { position: absolute; top: 0; width: 1px; height: 7px; background: var(--control-line); }
+.mscale .lab { position: absolute; top: 9px; transform: translateX(-50%); font: 11px/1 var(--mono); color: var(--soft); white-space: nowrap; }
+.mscale .lab.low { top: 23px; color: var(--sun-ink); font-weight: 600; }
+.mscale .lab.end { top: 23px; transform: translateX(-100%); }
+.mscale .mark { position: absolute; top: 0; width: 2px; height: 20px; margin-left: -1px; background: var(--sun-ink); }
+.mscale .band { position: absolute; top: -4px; height: 3px; border-radius: 2px; background: var(--sun-ink); opacity: .45; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; left: 0; top: 0; cursor: pointer; }
+.seg span { display: inline-block; min-width: 42px; padding: 8px 6px; text-align: center; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); font: 13px/1.2 var(--mono); }
+.seg input:checked + span { background: var(--sun); border-color: var(--sun-ink); color: oklch(23% 0.022 80); font-weight: 700; }
+.species { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.species li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 3px 10px; align-items: center; font-size: 14px; }
+.species .sw { width: 14px; height: 14px; border-radius: 3px; background: var(--c); border: 1px solid var(--control-line); }
+.species .share { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
+.species small { color: var(--soft); }
+.species .bar { grid-column: 2 / 4; height: 4px; background: var(--raised); border-radius: 2px; overflow: hidden; }
+.species .bar i { display: block; height: 100%; width: 0; background: var(--c); }
+.tracebox { background: var(--field); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 8px 10px 6px; }
+.tracebox .cap { margin: 0 0 4px; font-size: 12px; color: var(--field-muted); }
+canvas#trace { display: block; width: 100%; height: 132px; touch-action: pan-y; }
+details.run { font-size: 13px; color: var(--muted); }
+details.run summary { cursor: pointer; font-weight: 600; color: var(--text); }
+details.run dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 8px 0 0; }
+details.run dt { color: var(--soft); }
+details.run dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+ol.try { margin: 18px 0 0; padding-left: 20px; color: var(--muted); max-width: 78ch; }
+ol.try li + li { margin-top: 6px; }
+ol.try strong { color: var(--text); }
+.selfcheck { margin: 14px 0 0; font-size: 13px; color: var(--soft); }
+.selfcheck[data-ok="false"] { color: var(--error); font-weight: 600; }
+noscript p { margin: 0; padding: 10px 12px; border-radius: var(--radius); background: var(--sun-soft); color: var(--sun-ink); font-size: 14px; }
+
+/* ---- result slots ---- */
+.banner { margin: 0 0 8px; padding: 10px 14px; border-radius: var(--radius); background: var(--sun-soft); color: var(--sun-ink); font-size: 14px; max-width: 78ch; }
+.banner strong { color: var(--text); }
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+.slot { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.slot header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.slot h4 { margin: 0; font-size: 15px; }
+.slot .where { margin: 2px 0 0; font: 12px/1.3 var(--mono); color: var(--soft); }
+.stat { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--sun-soft); color: var(--sun-ink); white-space: nowrap; }
+.slot[data-state="filled"] .stat { background: var(--life-fill); color: oklch(23% 0.022 80); }
+.slot .frame { border: 1px dashed var(--control-line); border-radius: var(--radius); min-height: 64px; display: grid; place-items: center; color: var(--soft); font-size: 13px; text-align: center; padding: 10px; min-width: 0; }
+.slot .frame pre { margin: 0; text-align: left; font: 12px/1.4 var(--mono); max-height: 220px; overflow: auto; width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+.slot .frame .prov { font: 12px/1.4 var(--mono); margin-bottom: 6px; overflow-wrap: anywhere; }
+.slot dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 5px 12px; margin: 0; font-size: 13px; }
+.slot dt { color: var(--soft); }
+.slot dd { margin: 0; color: var(--muted); }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; max-width: 90ch; }
+footer p { margin: 0 0 8px; }
+@media (max-width: 640px) { body { font-size: 14px; } figure { padding: 12px; } .slot dl, details.run dl { grid-template-columns: minmax(0, 1fr); } .slot dt, details.run dt { margin-top: 4px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Companion · 24 October 2026</p>
+    <h1>Cyclic competition, live</h1>
+    <p class="lede"><strong>Three kinds that eat each other in a ring, and what mixing does to them.</strong> A lattice you can run in this page, the three questions this line asks, and a slot for every result. The slots are empty: nothing registered has run. Visual companion to <a href="3d-cyclic-rps-plan-2026-10-23.md">3d-cyclic-rps-plan-2026-10-23.md</a>.</p>
+    <ul class="chips"><li class="chip note">Nothing here is a result</li><li class="chip">Lattice code built and tested</li><li class="chip">Kernel not built</li><li class="chip">Scratch numbers are labelled</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme" aria-pressed="false">Night</button>
+</header>
+
+<main>
+<section id="ring">
+  <h2><span class="idx">1</span>Three kinds that eat each other</h2>
+  <p class="sub">The same idea twice: in plain words, then with the model's numbers.</p>
+  <div class="grid2">
+    <div class="card lit">
+      <span class="tag plain">In plain words</span>
+      <p>Rock beats scissors, scissors beat paper, paper beats rock. Nobody wins for good: whoever is on top is eaten by the one that beats it.</p>
+      <p>Cover a field with the three kinds. Where two touch, the winner clears the loser's square, and any kind can grow into an empty square beside it. The patches chase each other round and round. If each kind only ever meets its neighbours, the chase bends into spirals that keep turning, and all three survive.</p>
+      <p>Now let the kinds swap places with their neighbours, faster and faster. The spirals blur and the chase becomes a jumble, so chance decides: one kind dips too low and dies out. If scissors go, nothing is left to eat paper, and paper clears the rock. One kind is left. How fast the kinds mix decides whether three can live together.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Technically</span>
+      <ul>
+        <li>The sites of an <i>L</i> × <i>L</i> periodic square lattice are empty or hold species 1, 2 or 3. Species <i>s</i> kills species (<i>s</i> mod 3) + 1: 1 kills 2, 2 kills 3, 3 kills 1. This is the May-Leonard model with dominance removal, as in Reichenbach, Mobilia and Frey (2007).</li>
+        <li>One <b>reaction step</b> picks a site and one of its four neighbours. With probability 1/2 the occupant reproduces into the neighbour if that is empty. Otherwise it kills the neighbour if that is the species it dominates, leaving the site empty. A step that changes nothing still counts. One <b>generation</b> is <i>N</i> = <i>L</i>² reaction steps.</li>
+        <li>Before every reaction step a random number of neighbour <b>swaps</b> happens, with mean ε / 2, where ε = <i>M N</i> / 2. So <i>M</i> = 2ε / <i>N</i> is the mobility.</li>
+        <li>The well-mixed equations orbit a heteroclinic cycle with growing swings. On the lattice, spiral waves hold the three together while <i>M</i> is low. Above a threshold <i>M</i><sub>c</sub> the swings win and two species die out. The paper puts <i>M</i><sub>c</sub> at (4.5 ± 0.5) × 10<sup>−4</sup>. The meaning of "mobility" differs between papers by about a factor of two.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="questions">
+  <h2><span class="idx">2</span>Three questions, in this order</h2>
+  <p class="sub">Each has a plain version and a technical one. Only the first can be tried in this page, and only as a picture.</p>
+  <div class="cards">
+    <div class="card lit">
+      <h3><span class="n">Q1</span>Do we understand the model?</h3>
+      <p><b>Plain.</b> Build the simplest version, a grid of squares, and check that it loses two of the three kinds at about the mixing speed the paper reports. If it does, we have read the model right.</p>
+      <p><b>Technical.</b> Lattice reference at <i>L</i> = 20, 30, 40, 60 (100 as a contingency), 11 values of <i>M</i> from 10<sup>−5</sup> to 2 × 10<sup>−3</sup>, 600 runs each. <i>P</i><sub>ext</sub>(<i>L</i>, <i>M</i>) is the fraction of runs with at most one species left after <i>N</i> generations; where the curves for growing <i>L</i> cross is <i>M</i><sub>c</sub>. Registered bands: 3 × 10<sup>−4</sup> to 6 × 10<sup>−4</sup> passes, 2.25 × 10<sup>−4</sup> to 9 × 10<sup>−4</sup> passes with a caveat. This is the only quantitative comparison with the literature.</p>
+      <p class="state"><b>Where it stands.</b> Code built and tested. The sweep has not run.</p>
+    </div>
+    <div class="card">
+      <h3><span class="n">Q2</span>Does the kernel host it?</h3>
+      <p><b>Plain.</b> Our real simulation is a thin slab of living cells lit from above. It has no swap button, only a <code>spread</code> knob that blurs matter sideways. Add a predation rule and turn that knob: does living together collapse somewhere along it?</p>
+      <p><b>Technical.</b> Slab 128 × 128 × 4, a type and a beats-mask in each lineage, a kill in the react pass. Outcome rows A1 to A11 along <code>spread</code>. The kernel has no exchange rate, so no <i>M</i><sub>c</sub> is measured: the check is qualitative. A pilot (Gate 0) comes first, and the scratch evidence expects the plan's own substrate to fail it.</p>
+      <p class="state"><b>Where it stands.</b> Not built. Waits on Gate 0.</p>
+    </div>
+    <div class="card">
+      <h3><span class="n">Q3</span>Does the cycle grow?</h3>
+      <p><b>Plain.</b> Let who-eats-whom be inherited, and change now and then. Does a ring of three ever become a ring of four or five? The papers give no support. We register the question and expect a null.</p>
+      <p><b>Technical.</b> Six arms of five seeds: Z (no mutation), A (edges), B (labels), C (both), N (C's operators with predation off), W (controller weights). GROWS needs a clean cycle of four or more types at the end in 4 of C's 5 seeds against none of N's, or in all 5 against at most 1 (one exact Fisher test at 0.05), and a mutant supply. INCONCLUSIVE is a likely honest verdict.</p>
+      <p class="state"><b>Where it stands.</b> Not built. Runs only if the sweep finds a cliff or a dynamic window.</p>
+    </div>
+  </div>
+</section>
+
+<section id="live">
+  <h2><span class="idx">3</span>Watch the lattice</h2>
+  <p class="sub">This is the lattice reference of Q1 running in your browser. It is not our kernel. One run on one seed shows what a run looks like; it measures nothing.</p>
+  <noscript><p>The live lattice needs JavaScript. Everything else on this page is static.</p></noscript>
+  <div class="live">
+    <div class="stage">
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="lat" width="200" height="200" role="img" aria-label="The lattice: coloured sites are species 1, 2 and 3, dark sites are empty." aria-describedby="status">The lattice needs a browser with canvas and JavaScript.</canvas>
+      </div>
+      <div class="transport" role="group" aria-label="Run controls">
+        <button class="btn primary" id="play" type="button">Play</button>
+        <button class="btn" id="step" type="button" title="Run one generation">Step</button>
+        <button class="btn" id="reset" type="button" title="Start again from the same seed">Reset</button>
+        <button class="btn" id="newseed" type="button" title="Start again from the next seed">New seed</button>
+      </div>
+      <p class="status" id="status">Starting.</p>
+      <p class="sr-only" id="announce" aria-live="polite"></p>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <div class="lbl" id="presets-lbl">Start from a preset</div>
+        <div class="presets" role="group" aria-labelledby="presets-lbl">
+          <button class="btn preset" type="button" data-preset="spirals" data-size="200" data-m="1e-4" data-seed="900" data-speed="150" data-hint="Spirals: 200 sites a side, M = 1e-4, seed 900. Three kinds coexist; give it ten seconds or so for the waves to wind into spiral arms.">Spirals</button>
+          <button class="btn preset" type="button" data-preset="mixing" data-size="100" data-m="2e-3" data-seed="903" data-speed="60" data-hint="Too much mixing: 100 sites a side, M = 2e-3, seed 903. The shares swing wider and wider until chance removes two kinds.">Too much mixing</button>
+          <button class="btn preset" type="button" data-preset="threshold" data-size="30" data-m="4e-4" data-seed="900" data-speed="100" data-hint="Near the threshold: 30 sites a side, M = 4e-4, seed 900. Some seeds keep all three kinds for a long time and some lose two: press New seed to see both.">Near the threshold</button>
+        </div>
+        <p class="hint" id="preset-hint"></p>
+      </div>
+      <div class="ctl">
+        <label class="lbl" for="m"><span>Mobility <i>M</i></span><output class="val" id="m-val" for="m">1e-4</output></label>
+        <input id="m" type="range" min="-5" max="-2.7" step="0.005" value="-4">
+        <div class="mscale" id="mscale" aria-hidden="true"></div>
+        <p class="hint">Drag it while the lattice runs: only the swap rate changes, not the sites. Ticks are the 11 values of the registered sweep. The bar is the paper's <i>M</i><sub>c</sub>; the line above the scale is the registered pass band for it.</p>
+      </div>
+      <fieldset class="ctl">
+        <legend class="lbl"><span>Lattice side <i>L</i> (sites)</span></legend>
+        <div class="seg" id="sizes">
+          <label><input type="radio" name="size" value="20"><span>20</span></label>
+          <label><input type="radio" name="size" value="30"><span>30</span></label>
+          <label><input type="radio" name="size" value="40"><span>40</span></label>
+          <label><input type="radio" name="size" value="60"><span>60</span></label>
+          <label><input type="radio" name="size" value="100"><span>100</span></label>
+          <label><input type="radio" name="size" value="200" checked><span>200</span></label>
+          <label><input type="radio" name="size" value="256"><span>256</span></label>
+        </div>
+        <p class="hint">20 to 60 are the registered sizes; the larger ones have room for several spiral arms. Changing the size starts a fresh run.</p>
+      </fieldset>
+      <div class="ctl">
+        <label class="lbl" for="speed"><span>Speed</span><output class="val" id="speed-val" for="speed">150 gen/s</output></label>
+        <input id="speed" type="range" min="0.30103" max="3" step="0.01" value="2.18">
+        <p class="hint" id="speed-hint">Generations per second. A slow device runs slower than asked and says so.</p>
+      </div>
+      <ul class="species" id="species" aria-label="Share of sites">
+        <li style="--c: var(--sp1)"><span class="sw"></span><span>1 rock <small>kills 2</small></span><span class="share" data-k="1">0.000</span><span class="bar"><i data-b="1"></i></span></li>
+        <li style="--c: var(--sp2)"><span class="sw"></span><span>2 scissors <small>kills 3</small></span><span class="share" data-k="2">0.000</span><span class="bar"><i data-b="2"></i></span></li>
+        <li style="--c: var(--sp3)"><span class="sw"></span><span>3 paper <small>kills 1</small></span><span class="share" data-k="3">0.000</span><span class="bar"><i data-b="3"></i></span></li>
+        <li style="--c: var(--field)"><span class="sw"></span><span>empty <small>refilled by reproduction</small></span><span class="share" data-k="0">0.000</span><span class="bar"><i data-b="0"></i></span></li>
+      </ul>
+      <div class="tracebox">
+        <p class="cap" id="trace-cap">Share of sites over the last 300 generations</p>
+        <canvas id="trace" role="img" aria-label="Line chart of the shares of species 1, 2, 3 and empty sites over the last 300 generations; the numbers are in the list above."></canvas>
+      </div>
+      <details class="run" id="rundetails">
+        <summary>Run details</summary>
+        <dl id="rundl"></dl>
+      </details>
+    </div>
+  </div>
+  <ol class="try">
+    <li><strong>Spirals.</strong> Press "Spirals" and give it about ten seconds. The three colours chase each other round; where they meet in rings the waves wind into spiral arms. The literature says the wavelength grows with <i>M</i> up to <i>M</i><sub>c</sub>; here you can watch that, and nothing on this page measures it (rule draft 2.5).</li>
+    <li><strong>Too much mixing.</strong> While Spirals runs, drag <i>M</i> to the right, past 3 × 10<sup>−4</sup> and on to 2 × 10<sup>−3</sup>. The arms lose their shape, the shares in the chart start to swing, and given time chance removes two of the kinds.</li>
+    <li><strong>Chance.</strong> Press "Near the threshold", then "New seed" a few times. Same size, same <i>M</i>, different endings: on a small lattice a run can end by luck, which is why Q1 compares four sizes instead of trusting one.</li>
+  </ol>
+  <p class="selfcheck" id="selfcheck" data-ok="pending">Self-check: not yet run.</p>
+</section>
+
+<section id="results">
+  <h2><span class="idx">4</span>Results: none yet</h2>
+  <p class="sub">Every slot below belongs to a stage that has not run. Each says so, and each says what will fill it and from which file.</p>
+  <p class="banner"><strong>Nothing in this section has run.</strong> A slot is filled only from a result file, and then shows the file's name, hash and date beside the data. If Gate 0 stops, the kernel slots stay empty on purpose, the rules strike them by a dated amendment, and this page says so here.</p>
+
+  <h3 class="group">Q1 · the lattice</h3>
+  <div class="slots">
+    <article class="slot" id="slot-lattice-pext" data-slot="lattice-pext" data-state="empty">
+      <header><div><h4>Extinction probability against mobility</h4><p class="where">Q1 · M3a</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: no lattice sweep has run.</div>
+      <dl>
+        <dt>Will show</dt><dd><i>P</i><sub>ext</sub>(<i>L</i>, <i>M</i>) for <i>L</i> = 20, 30, 40 and 60 across the 11 values of <i>M</i>, with add-one error bars; the crossing of each pair of sizes and <i>M</i><sub>c</sub>; the outcome row LAT-PASS, LAT-CAVEAT, LAT-OFFSET, LAT-TREND or LAT-NOCROSS. <i>L</i> = 100 only if the contingency runs.</dd>
+        <dt>Read by</dt><dd>Rule draft 2.2 to 2.7, <code>readout-lattice.ts</code>.</dd>
+        <dt>Runs</dt><dd>After the freeze. No GPU. It does not depend on Gate 0, so it runs even if the kernel half stops.</dd>
+        <dt>Filled from</dt><dd>One <code>rmf-cell/1</code> JSON per (<i>L</i>, <i>M</i>), and the readout's crossing table.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3 class="group">Before the kernel is built</h3>
+  <div class="slots">
+    <article class="slot" id="slot-gate0" data-slot="gate0" data-state="empty">
+      <header><div><h4>Gate 0: which substrate can host a kill?</h4><p class="where">Pilot · before M0</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: the pilot has not run.</div>
+      <dl>
+        <dt>Will show</dt><dd>A row per rung (S0, S1, S2 if it ran, V with its substrate rung; a rung after the first GO is marked as not run): the verdict row and the numbers that decided it (levels, rates that work, horizon, confirmation). If a rung is GO: the rung, the kill form, the spread grid, the working rate, the calibration rates, the horizon, the shape and the dense rate. If none is: GATE-0-STOP.</dd>
+        <dt>Read by</dt><dd>Rule draft 3.0, <code>readout-gate0.ts</code>; the record <code>experiments/3d-rps/GATE0-RECORD.md</code>.</dd>
+        <dt>Runs</dt><dd>First of the kernel work, after the rules are frozen and on the committed spike, the rungs in the order S0, S1, S2, V, stopping at the first GO. The scratch evidence expects S0 to fail. Pilot numbers are never quoted as results.</dd>
+        <dt>Filled from</dt><dd><code>summary.json</code> and <code>census.tsv</code> of the <code>g0.*</code> jobs.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3 class="group">Q2 · the kernel</h3>
+  <div class="slots">
+    <article class="slot" id="slot-meter" data-slot="meter" data-state="empty">
+      <header><div><h4>Mobility meter</h4><p class="where">Q2 · M3m</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: the meter has not run.</div>
+      <dl>
+        <dt>Will show</dt><dd>The label mixing index (cells² per step, along x and along y) at each spread of the Gate-0 grid, in measured order, from inert stripes with <code>dtQ</code> 0. It is the x-axis of the sweep: a measurement, not the nominal diffusivity.</dd>
+        <dt>Read by</dt><dd>Rule draft 3.1.</dd>
+        <dt>Runs</dt><dd>After Gate 0 gives GO and its record is hashed into <code>FROZEN</code>. Cheap (plan 9: about 3 minutes).</dd>
+        <dt>Filled from</dt><dd>The meter's job files.</dd>
+      </dl>
+    </article>
+    <article class="slot" id="slot-calibration" data-slot="calibration" data-state="empty">
+      <header><div><h4>Kill-rate calibration</h4><p class="where">Q2 · M3k</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: the calibration has not run.</div>
+      <dl>
+        <dt>Will show</dt><dd>Five rates on two seeds, each paired with a rate-0 control; the rate picked for the sweep, or KAPPA-NONE, which stops the sweep and the mutation arms.</dd>
+        <dt>Read by</dt><dd>Rule draft 3.2, <code>readout-kernel.ts</code>.</dd>
+        <dt>Runs</dt><dd>After Gate 0 gives GO and its record is hashed into <code>FROZEN</code>. About 10 minutes (plan 9).</dd>
+        <dt>Filled from</dt><dd>The calibration's job files.</dd>
+      </dl>
+    </article>
+    <article class="slot" id="slot-sweep" data-slot="sweep" data-state="empty">
+      <header><div><h4>The coexistence sweep</h4><p class="where">Q2 · M3b</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: the sweep has not run.</div>
+      <dl>
+        <dt>Will show</dt><dd>Per spread: the class counts of five treatment runs and three paired controls (DC, FC, CHURN, LOSS, SPARSE, EXT), turnover, chirality and time to loss; the outcome row A1 to A11; <code>spread*</code>; the rate arms beside it. Plotted against <code>spread</code> and against the measured mixing index.</dd>
+        <dt>Read by</dt><dd>Rule draft 4, <code>readout-kernel.ts</code>.</dd>
+        <dt>Runs</dt><dd>After Gate 0 gives GO and its record is hashed into <code>FROZEN</code>. About 9 hours of M1 Max time (plan 9).</dd>
+        <dt>Filled from</dt><dd>Per-job <code>summary.json</code> and <code>census.tsv</code>.</dd>
+      </dl>
+    </article>
+    <article class="slot" id="slot-snapshots" data-slot="snapshots" data-state="empty">
+      <header><div><h4>Label-field snapshots</h4><p class="where">Q2 · M5b</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: there is no kernel run to draw.</div>
+      <dl>
+        <dt>Will show</dt><dd>The final label fields of selected jobs drawn as images, one per outcome class, beside their controls. They are for looking at: no rule reads them, and spiral arms are never a criterion.</dd>
+        <dt>Read by</dt><dd>Plan M5b.</dd>
+        <dt>Runs</dt><dd>After the sweep.</dd>
+        <dt>Filled from</dt><dd><code>final.bin</code> of the chosen jobs.</dd>
+      </dl>
+    </article>
+    <article class="slot" id="slot-deep" data-slot="deep" data-state="empty">
+      <header><div><h4>The deep volume</h4><p class="where">Q2 · conditional</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: the precondition has not been tested.</div>
+      <dl>
+        <dt>Will show</dt><dd>Three 64 × 64 × 32 runs: layers alive, vertical coherence, label shares and an exploratory render. Or the stated reason it was not made (no DC run, or a median correlation length under 6 cells). No scroll-wave claim in v1.</dd>
+        <dt>Read by</dt><dd>Rule draft 6.</dd>
+        <dt>Runs</dt><dd>Only after a go row of the sweep and a correlation length of at least 6 cells at <code>spread*</code>.</dd>
+        <dt>Filled from</dt><dd>The deep runs' job files, or the readout's reason.</dd>
+      </dl>
+    </article>
+  </div>
+
+  <h3 class="group">Q3 · does the cycle grow</h3>
+  <div class="slots">
+    <article class="slot" id="slot-cycles" data-slot="cycles" data-state="empty">
+      <header><div><h4>Longer cycles, as given</h4><p class="where">Q3 · M3c</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: no longer cycle has run.</div>
+      <dl>
+        <dt>Will show</dt><dd>Whether a four-cycle (<i>K</i><sub>0</sub> = 4, three seeds) and a five-cycle (<i>K</i><sub>0</sub> = 5, three seeds) are viable at all: class DC and a clean cycle through every label.</dd>
+        <dt>Read by</dt><dd>Rule draft 5. Reported only: it does not gate the mutation arms, but the write-up states it beside their verdicts.</dd>
+        <dt>Runs</dt><dd>After the sweep, if it gave a go row.</dd>
+        <dt>Filled from</dt><dd>The M3c job files.</dd>
+      </dl>
+    </article>
+    <article class="slot" id="slot-mutation" data-slot="mutation" data-state="empty">
+      <header><div><h4>Mutation arms</h4><p class="where">Q3 · M4</p></div><span class="stat" data-role="status">Not yet run</span></header>
+      <div class="frame" data-role="frame">Empty: no mutation arm has run.</div>
+      <dl>
+        <dt>Will show</dt><dd>Arms Z, A, B, C, N and W: class counts (LONG, THREE, LOOSE, MONO, EXTINCT), the mutant supply, each arm's verdict (GROWS, UNDISTINGUISHED, COLLAPSE, STABLE, INCONCLUSIVE), the horizon check (HORIZON-VOID) and the registered predictions marked hit or miss.</dd>
+        <dt>Read by</dt><dd>Rule draft 7, <code>readout-mutation.ts</code>.</dd>
+        <dt>Runs</dt><dd>Needs a go row from the sweep. Arm Z first; the other five only if the unmutated cycle holds for the horizon.</dd>
+        <dt>Filled from</dt><dd>Per-job <code>summary.json</code> and <code>census.tsv</code>.</dd>
+      </dl>
+    </article>
+  </div>
+  <script type="application/json" id="results-data">
+{
+  "format": "rps-companion-results/1",
+  "contract": "A slot is null until a result file fills it. A filled slot is { \"file\": path, \"sha256\": hex, \"date\": \"YYYY-MM-DD\", \"data\": ... } and shows all three of file, hash and date.",
+  "slots": {
+    "lattice-pext": null,
+    "gate0": null,
+    "meter": null,
+    "calibration": null,
+    "sweep": null,
+    "snapshots": null,
+    "deep": null,
+    "cycles": null,
+    "mutation": null
+  }
+}
+  </script>
+</section>
+
+<section id="scratch">
+  <h2><span class="idx">5</span>What the reviews saw, and what this page is not</h2>
+  <p class="sub">These are scratch observations from the two reviews of 24 October 2026, made with throwaway code. They explain what the plan expects. None is a result of this line.</p>
+  <div class="cards">
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>Where the lattice crosses</h3>
+      <p>Two independent scratch implementations of the lattice model put the crossing at <i>M</i> = 3.0 to 3.2 × 10<sup>−4</sup>, about 1.5 times below the paper's 4.5 × 10<sup>−4</sup> and on the lower edge of the registered pass band.</p>
+      <p class="state"><b>Registered.</b> Whether the sweep lands in LAT-PASS or LAT-CAVEAT will be decided by noise, and the write-up will not make the difference a finding. The convention of <i>M</i> and of a generation are the first suspects.</p>
+    </div>
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>The wavelength check failed</h3>
+      <p>A spectral check of the label field found its peak at wavenumber 1 to 3 for every <i>M</i> (slope 0.08), so the first draft's wavelength rule was dropped.</p>
+      <p class="state"><b>Registered.</b> No wavelength number is reported in v1. The live canvas shows the wavelength qualitatively and nothing else.</p>
+    </div>
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>Removal acts as replacement</h3>
+      <p>A shader-text prototype of the kill (128 × 128 × 4, not bit-checked against a CPU twin) kept all three labels for 100,000 steps without the kill, while every killing rate tried (32, 128, 512) had lost a founding label by step 20,000, the last by step 3,000. The living fraction stayed above 98 % from step 4,000.</p>
+      <p class="state"><b>Registered.</b> The plan's own substrate (S0) is expected to fail Gate 0. Nothing is built for the kernel until a rung does not.</p>
+    </div>
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>The mobility knob is a staircase</h3>
+      <p>At 28 quanta of matter per cell the inert-stripe meter read 0, 0, 0, 0.018, 0.041, 0.039, 0.041 and 0.031 at spreads 1, 2, 4, 8, 12, 16, 24 and 32: about three effective levels.</p>
+      <p class="state"><b>Registered.</b> Gate 0 needs at least 5 levels, and offers rungs with finer quanta (S1, S2) for that.</p>
+    </div>
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>Noise, then domains</h3>
+      <p>The label correlation length in the scratch carpet was about 2 cells. The images showed noise and then rough single-label domains, and no spiral arms.</p>
+      <p class="state"><b>Registered.</b> The deep volume needs a median correlation length of at least 6 cells before it runs.</p>
+    </div>
+    <div class="card">
+      <span class="tag plain">Scratch, not a result</span>
+      <h3>Most mutants die at once</h3>
+      <p>A mutant is a one-cell lineage and a critical branching process in this lottery (about one expected offspring per step), so most die at once.</p>
+      <p class="state"><b>Registered.</b> The supply of mutant lineages is recorded, and INCONCLUSIVE is a likely honest verdict for Q3.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 12px">
+    <h3>What this page does not show</h3>
+    <ul>
+      <li>No kernel run exists. The canvas is the lattice reference, a different model from the kernel. In the kernel, colonization and mobility are one transport, so a cliff may be inverted or absent, and the lattice's <i>M</i><sub>c</sub> has no counterpart.</li>
+      <li>The canvas is a picture of one run. It uses seeds 900 to 999999 only; the registered sweep's seeds start at 2,000,000 and are never used here.</li>
+      <li>Whether this model reproduces the literature's threshold is Q1's answer, and it is not in yet. Nothing here says it does.</li>
+      <li>Spirals and their wavelength are judged by eye. No spiral is detected or measured in the page.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p>Written from <code>docs/3d-cyclic-rps-plan-2026-10-23.md</code>, <code>runs/rps/rule-draft.md</code> (to become <code>experiments/3d-rps/RULES.md</code>) and <code>experiments/3d-rps/rmf-lattice.ts</code>.</p>
+  <p>The canvas runs a type-stripped copy of that module. <code>experiments/3d-rps/companion-build.ts</code> makes the copy, and <code>experiments/test/rps-companion.test.ts</code> compares a hash of the normalized code with the module's, so the page cannot drift from it. The page also re-runs seed 900 at load and compares two hashes (the self-check in section 3).</p>
+  <p>Literature as the plan cites it: Reichenbach, Mobilia and Frey, <i>Nature</i> 448:1046 (2007), <a href="https://arxiv.org/abs/0709.0217">arXiv:0709.0217</a>; <i>J. Theor. Biol.</i> 254:368 (2008), <a href="https://arxiv.org/abs/0801.1798">arXiv:0801.1798</a>; Szabo and Fath, <i>Phys. Rep.</i> 446:97 (2007), <a href="https://arxiv.org/abs/cond-mat/0607344">cond-mat/0607344</a>.</p>
+</footer>
+
+</div>
+<script>
+(() => {
+"use strict";
+// The model: a type-stripped copy of experiments/3d-rps/rmf-lattice.ts. Make it with `node experiments/3d-rps/companion-build.ts --write`
+// (steps in that file's header); experiments/test/rps-companion.test.ts compares a hash of its normalized code with the module's.
+// BEGIN rmf-lattice copy (generated: do not edit between the markers)
+const MU = 1;
+const SIGMA = 1;
+const TWO32 = 4294967296;
+const LATTICE_SIZES = [
+    20,
+    30,
+    40,
+    60,
+    100
+];
+const MAIN_SIZES = [
+    20,
+    30,
+    40,
+    60
+];
+const M_GRID = [
+    1e-5,
+    3e-5,
+    1e-4,
+    2e-4,
+    3e-4,
+    4e-4,
+    5e-4,
+    6e-4,
+    8e-4,
+    1e-3,
+    2e-3
+];
+const MAIN_R = 600;
+const CONTINGENCY_L = 100;
+const CONTINGENCY_R = 300;
+const CONTINGENCY_IM = [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+];
+const SEED_BLOCK = 2_000_000;
+const ABSORB_BINS = 10;
+function integerIn(name, v, lo, hi) {
+    if (!Number.isInteger(v) || v < lo || v > hi) throw new RangeError(`${name} must be an integer in [${lo}, ${hi}], got ${v}`);
+}
+function realizationSeed(iL, iM, r) {
+    integerIn("iL", iL, 0, LATTICE_SIZES.length - 1);
+    integerIn("iM", iM, 0, M_GRID.length - 1);
+    integerIn("r", r, 0, 999);
+    return SEED_BLOCK + 100_000 * iL + 1_000 * iM + r;
+}
+function latticeConstants(L, M, K = 3) {
+    integerIn("L", L, 3, 1024);
+    integerIn("K", K, 3, 64);
+    if (!(M >= 0) || !Number.isFinite(M)) throw new RangeError(`M must be a finite number >= 0, got ${M}`);
+    const N = L * L;
+    const epsilon = M * N / 2;
+    const q = epsilon / (MU + SIGMA + epsilon);
+    const exchangeThreshold = Math.min(TWO32 - 1, Math.floor(q * TWO32));
+    return {
+        L,
+        K,
+        N,
+        M,
+        epsilon,
+        epsOverN: epsilon / N,
+        twoEpsOverN: 2 * epsilon / N,
+        q,
+        exchangeThreshold,
+        pExchange: exchangeThreshold / TWO32,
+        reproduceThreshold: Math.floor(MU / (MU + SIGMA) * TWO32)
+    };
+}
+function estimatedEvents(L, M, R) {
+    const N = L * L;
+    return R * N * N * (1 + M * N / 4);
+}
+function splitmix32Expand(seed) {
+    let a = seed | 0;
+    const out = [];
+    for(let i = 0; i < 4; i++){
+        a = a + 0x9e3779b9 | 0;
+        let z = a;
+        z = Math.imul(z ^ z >>> 16, 0x21f0aaad);
+        z = Math.imul(z ^ z >>> 15, 0x735a2d97);
+        out.push((z ^ z >>> 15) >>> 0);
+    }
+    return [
+        out[0],
+        out[1],
+        out[2],
+        out[3]
+    ];
+}
+function nextU32(s) {
+    const m = Math.imul(s.s1, 5);
+    const r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+    const t = s.s1 << 9;
+    s.s2 ^= s.s0;
+    s.s3 ^= s.s1;
+    s.s1 ^= s.s2;
+    s.s0 ^= s.s3;
+    s.s2 ^= t;
+    s.s3 = s.s3 << 11 | s.s3 >>> 21;
+    return r;
+}
+const topologyCache = new Map();
+function neighbourTable(L) {
+    let t = topologyCache.get(L);
+    if (t === undefined) {
+        t = new Int32Array(4 * L * L);
+        for(let y = 0; y < L; y++){
+            for(let x = 0; x < L; x++){
+                const i = y * L + x;
+                t[4 * i] = y * L + (x + 1) % L;
+                t[4 * i + 1] = y * L + (x + L - 1) % L;
+                t[4 * i + 2] = (y + 1) % L * L + x;
+                t[4 * i + 3] = (y + L - 1) % L * L + x;
+            }
+        }
+        topologyCache.set(L, t);
+    }
+    return t;
+}
+function preyOf(s, K) {
+    return s === 0 ? 0 : s % K + 1;
+}
+function recount(grid, counts) {
+    counts.fill(0);
+    for(let i = 0; i < grid.length; i++)counts[grid[i]]++;
+    let alive = 0;
+    for(let s = 1; s < counts.length; s++)if (counts[s] > 0) alive++;
+    return alive;
+}
+function createLattice(opt) {
+    const K = opt.K ?? 3;
+    const constants = latticeConstants(opt.L, opt.M, K);
+    const N = constants.N;
+    integerIn("seed", opt.seed, 0, TWO32 - 1);
+    const grid = new Uint8Array(N);
+    const counts = new Int32Array(K + 1);
+    const prey = new Uint8Array(K + 1);
+    for(let s = 0; s <= K; s++)prey[s] = preyOf(s, K);
+    const w = splitmix32Expand(opt.seed);
+    const rng = {
+        s0: w[0] | 0,
+        s1: w[1] | 0,
+        s2: w[2] | 0,
+        s3: w[3] | 0
+    };
+    if ((rng.s0 | rng.s1 | rng.s2 | rng.s3) === 0) rng.s0 = 1;
+    if (opt.initial) {
+        if (opt.initial.length !== N) throw new RangeError(`initial grid has ${opt.initial.length} sites, expected ${N}`);
+        for(let i = 0; i < N; i++){
+            if (opt.initial[i] > K) throw new RangeError(`initial grid site ${i} holds ${opt.initial[i]}, above K = ${K}`);
+            grid[i] = opt.initial[i];
+        }
+    } else {
+        for(let i = 0; i < N; i++)grid[i] = Math.floor(nextU32(rng) * (K + 1) / TWO32);
+    }
+    const alive = recount(grid, counts);
+    const bins = opt.exchangeHistogramBins ?? 0;
+    return {
+        L: opt.L,
+        K,
+        N,
+        grid,
+        counts,
+        nbr: neighbourTable(opt.L),
+        prey,
+        constants,
+        s0: rng.s0,
+        s1: rng.s1,
+        s2: rng.s2,
+        s3: rng.s3,
+        steps: 0,
+        exchanges: 0,
+        alive,
+        absorbed: alive <= 1,
+        absorbedAtStep: alive <= 1 ? 0 : -1,
+        exchangeHistogram: bins > 0 ? new Uint32Array(bins) : null
+    };
+}
+function setMobility(st, M) {
+    st.constants = latticeConstants(st.L, M, st.K);
+}
+function generationsRun(st) {
+    return st.steps / st.N;
+}
+function recountGrid(st) {
+    const c = new Int32Array(st.K + 1);
+    recount(st.grid, c);
+    return c;
+}
+function runSteps(st, n) {
+    n = Math.floor(n);
+    if (st.absorbed || !(n > 0)) return 0;
+    const g = st.grid;
+    const cnt = st.counts;
+    const nbr = st.nbr;
+    const prey = st.prey;
+    const thr = st.constants.exchangeThreshold;
+    const rep = st.constants.reproduceThreshold;
+    const scale = st.N / TWO32;
+    const hist = st.exchangeHistogram;
+    const hlast = hist === null ? 0 : hist.length - 1;
+    let s0 = st.s0;
+    let s1 = st.s1;
+    let s2 = st.s2;
+    let s3 = st.s3;
+    let alive = st.alive;
+    let done = 0;
+    let exch = 0;
+    let m = 0;
+    let t = 0;
+    let r = 0;
+    while(done < n && alive > 1){
+        done++;
+        let e = 0;
+        for(;;){
+            m = Math.imul(s1, 5);
+            r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+            t = s1 << 9;
+            s2 ^= s0;
+            s3 ^= s1;
+            s1 ^= s2;
+            s0 ^= s3;
+            s2 ^= t;
+            s3 = s3 << 11 | s3 >>> 21;
+            if (r >= thr) break;
+            e++;
+        }
+        if (hist !== null) hist[e < hlast ? e : hlast]++;
+        for(let j = 0; j < e; j++){
+            m = Math.imul(s1, 5);
+            r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+            t = s1 << 9;
+            s2 ^= s0;
+            s3 ^= s1;
+            s1 ^= s2;
+            s0 ^= s3;
+            s2 ^= t;
+            s3 = s3 << 11 | s3 >>> 21;
+            const xa = r * scale | 0;
+            m = Math.imul(s1, 5);
+            r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+            t = s1 << 9;
+            s2 ^= s0;
+            s3 ^= s1;
+            s1 ^= s2;
+            s0 ^= s3;
+            s2 ^= t;
+            s3 = s3 << 11 | s3 >>> 21;
+            const xb = nbr[xa << 2 | r >>> 30];
+            const x = g[xa];
+            g[xa] = g[xb];
+            g[xb] = x;
+        }
+        exch += e;
+        m = Math.imul(s1, 5);
+        r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+        t = s1 << 9;
+        s2 ^= s0;
+        s3 ^= s1;
+        s1 ^= s2;
+        s0 ^= s3;
+        s2 ^= t;
+        s3 = s3 << 11 | s3 >>> 21;
+        const a = r * scale | 0;
+        m = Math.imul(s1, 5);
+        r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+        t = s1 << 9;
+        s2 ^= s0;
+        s3 ^= s1;
+        s1 ^= s2;
+        s0 ^= s3;
+        s2 ^= t;
+        s3 = s3 << 11 | s3 >>> 21;
+        const b = nbr[a << 2 | r >>> 30];
+        m = Math.imul(s1, 5);
+        r = Math.imul(m << 7 | m >>> 25, 9) >>> 0;
+        t = s1 << 9;
+        s2 ^= s0;
+        s3 ^= s1;
+        s1 ^= s2;
+        s0 ^= s3;
+        s2 ^= t;
+        s3 = s3 << 11 | s3 >>> 21;
+        const ga = g[a];
+        if (ga !== 0) {
+            if (r < rep) {
+                if (g[b] === 0) {
+                    g[b] = ga;
+                    cnt[0]--;
+                    cnt[ga]++;
+                }
+            } else {
+                const gb = g[b];
+                if (gb === prey[ga]) {
+                    g[b] = 0;
+                    cnt[0]++;
+                    if (--cnt[gb] === 0) alive--;
+                }
+            }
+        }
+    }
+    st.s0 = s0;
+    st.s1 = s1;
+    st.s2 = s2;
+    st.s3 = s3;
+    st.alive = alive;
+    st.exchanges += exch;
+    st.steps += done;
+    if (alive <= 1) {
+        st.absorbed = true;
+        st.absorbedAtStep = st.steps;
+    }
+    return done;
+}
+function hex8(x) {
+    return (x >>> 0).toString(16).padStart(8, "0");
+}
+function hashBytes(bytes) {
+    let h1 = 0x811c9dc5 | 0;
+    let h2 = 0x9747b28c | 0;
+    for(let i = 0; i < bytes.length; i++){
+        const b = bytes[i];
+        h1 = Math.imul(h1 ^ b, 0x01000193);
+        h2 = Math.imul(h2 ^ b, 0x85ebca6b);
+        h2 ^= h2 >>> 15;
+    }
+    return hex8(h1) + hex8(h2);
+}
+function gridHash(st) {
+    return hashBytes(st.grid);
+}
+function stateHash(st) {
+    const bytes = new Uint8Array(st.N + 32);
+    bytes.set(st.grid);
+    const dv = new DataView(bytes.buffer);
+    dv.setUint32(st.N, st.s0 >>> 0, true);
+    dv.setUint32(st.N + 4, st.s1 >>> 0, true);
+    dv.setUint32(st.N + 8, st.s2 >>> 0, true);
+    dv.setUint32(st.N + 12, st.s3 >>> 0, true);
+    dv.setUint32(st.N + 16, st.steps % TWO32, true);
+    dv.setUint32(st.N + 20, Math.floor(st.steps / TWO32), true);
+    dv.setUint32(st.N + 24, st.exchanges % TWO32, true);
+    dv.setUint32(st.N + 28, Math.floor(st.exchanges / TWO32), true);
+    return hashBytes(bytes);
+}
+function addOneP(k, R) {
+    integerIn("R", R, 1, Number.MAX_SAFE_INTEGER);
+    integerIn("k", k, 0, R);
+    return (k + 1) / (R + 2);
+}
+function addOneSE(k, R) {
+    const p = addOneP(k, R);
+    return Math.sqrt(p * (1 - p) / (R + 2));
+}
+function runRealization(L, M, seed, K = 3, generations) {
+    const st = createLattice({
+        L,
+        M,
+        seed,
+        K
+    });
+    runSteps(st, (generations ?? st.N) * st.N);
+    return {
+        constants: st.constants,
+        absorbed: st.absorbed,
+        absorbedAtStep: st.absorbedAtStep,
+        steps: st.steps,
+        exchanges: st.exchanges,
+        counts: Array.from(st.counts)
+    };
+}
+function absorptionBin(step, N) {
+    return step <= 0 ? 0 : Math.min(ABSORB_BINS - 1, Math.floor((10 * step - 1) / (N * N)));
+}
+function seedOfRealization(job, r) {
+    return job.seedBase === null ? realizationSeed(job.iL, job.iM, r) : job.seedBase + r;
+}
+function runChunk(job, clock = ()=>0) {
+    integerIn("rStart", job.rStart, 0, 999);
+    integerIn("rEnd", job.rEnd, job.rStart, 1000);
+    const N = job.L * job.L;
+    const t0 = clock();
+    let k = 0;
+    let reactionSteps = 0;
+    let exchanges = 0;
+    const absorbedBy = new Array(ABSORB_BINS).fill(0);
+    for(let r = job.rStart; r < job.rEnd; r++){
+        const res = runRealization(job.L, job.M, seedOfRealization(job, r), job.K);
+        if (res.absorbed) {
+            k++;
+            absorbedBy[absorptionBin(res.absorbedAtStep, N)]++;
+        }
+        reactionSteps += res.steps;
+        exchanges += res.exchanges;
+    }
+    return {
+        ...job,
+        k,
+        absorbedBy,
+        reactionSteps,
+        exchanges,
+        seconds: (clock() - t0) / 1000
+    };
+}
+function finalizeCell(parts) {
+    if (parts.length === 0) throw new Error("finalizeCell: no chunks");
+    const sorted = [
+        ...parts
+    ].sort((a, b)=>a.rStart - b.rStart);
+    const head = sorted[0];
+    let next = 0;
+    let k = 0;
+    let reactionSteps = 0;
+    let exchanges = 0;
+    let seconds = 0;
+    const absorbedBy = new Array(ABSORB_BINS).fill(0);
+    for (const p of sorted){
+        if (p.L !== head.L || p.M !== head.M || p.K !== head.K || p.iL !== head.iL || p.iM !== head.iM || p.seedBase !== head.seedBase) {
+            throw new Error("finalizeCell: chunks of different cells");
+        }
+        if (p.rStart !== next) throw new Error(`finalizeCell: chunks do not tile the cell (expected r ${next}, got ${p.rStart})`);
+        next = p.rEnd;
+        k += p.k;
+        reactionSteps += p.reactionSteps;
+        exchanges += p.exchanges;
+        seconds += p.seconds;
+        for(let b = 0; b < ABSORB_BINS; b++)absorbedBy[b] += p.absorbedBy[b];
+    }
+    const R = next;
+    if (R === 0) throw new Error("finalizeCell: empty cell");
+    const c = latticeConstants(head.L, head.M, head.K);
+    const events = reactionSteps + exchanges;
+    return {
+        format: "rmf-cell/1",
+        L: head.L,
+        iL: head.iL,
+        M: head.M,
+        iM: head.iM,
+        K: head.K,
+        N: c.N,
+        epsilon: c.epsilon,
+        epsOverN: c.epsOverN,
+        twoEpsOverN: c.twoEpsOverN,
+        q: c.q,
+        exchangeThreshold: c.exchangeThreshold,
+        R,
+        k,
+        pExt: k / R,
+        pAddOne: addOneP(k, R),
+        se: addOneSE(k, R),
+        absorbedBy,
+        seeds: [
+            seedOfRealization(head, 0),
+            seedOfRealization(head, R - 1)
+        ],
+        seedRule: head.seedBase === null ? "2000000 + 100000 iL + 1000 iM + r" : `${head.seedBase} + r (rehearsal)`,
+        reactionSteps,
+        exchanges,
+        events,
+        seconds,
+        stepsPerSecond: seconds > 0 ? reactionSteps / seconds : null,
+        eventsPerSecond: seconds > 0 ? events / seconds : null,
+        chunks: sorted.length
+    };
+}
+function runCell(job, clock = ()=>0) {
+    return finalizeCell([
+        runChunk({
+            L: job.L,
+            M: job.M,
+            K: job.K,
+            iL: job.iL,
+            iM: job.iM,
+            seedBase: job.seedBase,
+            rStart: 0,
+            rEnd: job.R
+        }, clock)
+    ]);
+}
+// END rmf-lattice copy
+// BEGIN self-check values
+const SELF_CHECK = { seed: 900, L: 20, M: 3e-4, steps: 20000, firstFrame: "69784b429cd424fa", afterSteps: "ae485a6f0090347d" };
+// END self-check values
+
+// ---- this page's own code, in a block of its own so that no name of the copy can clash with one of its names. It calls only
+// createLattice, runSteps, setMobility, gridHash, stateHash and M_GRID of the copy. ----
+{
+const SEED_MIN = 900;      // the canvas never uses the registered seeds (2,000,000 and up, Appendix A): 900 and up is plumbing
+const SEED_MAX = 999999;
+const LOG_LO = -5;         // the slider spans 1e-5 to 2e-3, the registered grid: log10 of M
+const LOG_HI = -2.7;
+const FRAME_MS = 10;       // simulation time per animation frame, so a slow device slows the run and not the page
+const TRACE_GENS = 300;    // the chart shows this many generations
+const TRACE_EVERY = 0.5;   // and takes a sample at most this often (in generations)
+const PAPER_MC = 4.5e-4;   // Reichenbach, Mobilia and Frey (2007); the registered pass band is [3e-4, 6e-4] (rule draft 2.6)
+const PASS_BAND = [3e-4, 6e-4];
+const FALLBACK = ["#0d1210", "#3987e5", "#d95926", "#199e70"];
+// M5b: one function per slot, renderers["lattice-pext"] = (frame, entry) => { ... }, called with the slot's filled entry.
+const renderers = {};
+
+function main() {
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+  const fmtM = (m) => m.toExponential(2).replace(/\.?0+e/, "e");
+  const fmtGen = (g) => (g < 100 ? g.toFixed(1) : String(Math.round(g)));
+  const fmtInt = (n) => n.toLocaleString("en-US");
+
+  // ---- theme: the same toggle as the other companion pages ----
+  const themeBtn = $("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const applyTheme = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    themeBtn.textContent = dark ? "Day" : "Night";
+    themeBtn.setAttribute("aria-pressed", String(dark));
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch (e) { saved = null; }
+  applyTheme(saved === "dark" || saved === "light" ? saved : null);
+  themeBtn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("bl-theme", next); } catch (e) { /* storage blocked: the theme just does not persist */ }
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) applyTheme(null); });
+
+  // ---- result slots: a slot is filled only from the inline results block, and only with a file name, a hash and a date ----
+  function fillSlots() {
+    let data = null;
+    try { data = JSON.parse($("results-data").textContent); } catch (e) { data = null; }
+    const slots = data && typeof data === "object" && data.slots && typeof data.slots === "object" ? data.slots : {};
+    for (const art of document.querySelectorAll("article[data-slot]")) {
+      const key = art.dataset.slot;
+      const entry = slots[key];
+      if (entry === null || entry === undefined) continue; // it stays "Not yet run"
+      const frame = art.querySelector('[data-role="frame"]');
+      const stat = art.querySelector('[data-role="status"]');
+      const named = typeof entry === "object" && typeof entry.file === "string" && typeof entry.sha256 === "string" && typeof entry.date === "string";
+      if (!named) {
+        stat.textContent = "Bad result block";
+        frame.textContent = "The block for this slot lacks a file name, a hash or a date, so it is not shown.";
+        continue;
+      }
+      art.dataset.state = "filled";
+      stat.textContent = "Result loaded";
+      frame.replaceChildren();
+      const prov = document.createElement("div");
+      prov.className = "prov";
+      prov.textContent = entry.file + " · sha256 " + entry.sha256.slice(0, 16) + "… · " + entry.date;
+      frame.appendChild(prov);
+      if (typeof renderers[key] === "function") {
+        renderers[key](frame, entry);
+      } else {
+        const note = document.createElement("div");
+        note.textContent = "The plot for this slot is not built yet (M5b). The data as loaded:";
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(entry.data, null, 1).slice(0, 6000);
+        frame.append(note, pre);
+      }
+    }
+  }
+  fillSlots();
+
+  // ---- the self-check: this copy of the model against the module, by two hashes the build step wrote ----
+  const checkEl = $("selfcheck");
+  const selfOk = (() => {
+    const t = createLattice({ L: SELF_CHECK.L, M: SELF_CHECK.M, seed: SELF_CHECK.seed });
+    const first = gridHash(t);
+    runSteps(t, SELF_CHECK.steps);
+    const after = stateHash(t);
+    const ok = first === SELF_CHECK.firstFrame && after === SELF_CHECK.afterSteps;
+    checkEl.dataset.ok = String(ok);
+    checkEl.textContent = ok
+      ? "Self-check passed: seed " + SELF_CHECK.seed + " at " + SELF_CHECK.L + " sites a side and M = " + fmtM(SELF_CHECK.M) + " draws first frame " + first + " and, after " + fmtInt(SELF_CHECK.steps) + " reaction steps, state " + after + ". These are the hashes the TypeScript module gives."
+      : "Self-check FAILED: this page's copy of the model draws " + first + " and then " + after + ", not " + SELF_CHECK.firstFrame + " and " + SELF_CHECK.afterSteps + ". It no longer matches the module: do not trust the canvas.";
+    return ok;
+  })();
+
+  // ---- the lattice ----
+  const cv = $("lat");
+  const wrap = $("canvas-wrap");
+  const stage = wrap.parentElement;
+  const ctx = cv.getContext("2d", { alpha: false });
+  const statusEl = $("status");
+  if (!ctx) { statusEl.textContent = "This browser has no 2D canvas, so the lattice cannot be drawn."; return; }
+
+  const css = getComputedStyle(root);
+  const token = (name, i) => { const v = css.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : FALLBACK[i]; };
+  const hex = ["--field", "--sp1", "--sp2", "--sp3"].map(token);
+  const little = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
+  const pal = Uint32Array.from(hex, (h) => {
+    const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
+    return (little ? (255 << 24) | (b << 16) | (g << 8) | r : (r << 24) | (g << 16) | (b << 8) | 255) >>> 0;
+  });
+  const ink = token("--field-ink", 0), grid = token("--field-line", 0), muted = token("--field-muted", 0);
+  const lineColors = [muted, hex[1], hex[2], hex[3]]; // empty, then species 1 to 3
+
+  const playBtn = $("play"), stepBtn = $("step"), resetBtn = $("reset"), seedBtn = $("newseed");
+  const mIn = $("m"), mOut = $("m-val"), spIn = $("speed"), spOut = $("speed-val");
+  const announceEl = $("announce"), detailsEl = $("rundetails"), dl = $("rundl");
+  const sizeInputs = Array.from(document.querySelectorAll('#sizes input[name="size"]'));
+  const shareEls = Array.from(document.querySelectorAll("#species [data-k]"));
+  const barEls = Array.from(document.querySelectorAll("#species [data-b]"));
+  const tcv = $("trace"), tctx = tcv.getContext("2d");
+
+  let L = 200, M = 1e-4, seed = 900, speed = 150; // the Spirals preset
+  let st = null, px = null, img = null;
+  let playing = false, ended = false, inView = true, touchedM = false;
+  let raf = 0, lastT = 0, backlog = 0, lastReadout = 0, achieved = 0, lastSampleG = -Infinity, hoverX = null;
+  let trace = [];
+
+  // The slider moves in steps of 0.005 decades; a position within 0.003 of a grid value is that value, so the registered values can be hit
+  // exactly. The radius stays under one step: a wider one would hold the thumb on a grid value against the arrow keys.
+  const hintEl = $("preset-hint");
+  const snapM = (m) => { for (const g of M_GRID) if (Math.abs(Math.log10(m / g)) < 0.003) return g; return m; };
+  const fmtSpeed = (v) => (v < 10 ? v.toFixed(1) : String(Math.round(v))) + " gen/s";
+
+  function syncControls() {
+    mIn.value = String(Math.log10(M));
+    mOut.textContent = fmtM(M);
+    mIn.setAttribute("aria-valuetext", "M equals " + fmtM(M));
+    spIn.value = String(Math.log10(speed));
+    spOut.textContent = fmtSpeed(speed);
+    spIn.setAttribute("aria-valuetext", fmtSpeed(speed));
+    for (const r of sizeInputs) r.checked = Number(r.value) === L;
+  }
+
+  function buildScale() {
+    const el = $("mscale");
+    const pos = (m) => Math.min(100, Math.max(0, ((Math.log10(m) - LOG_LO) / (LOG_HI - LOG_LO)) * 100));
+    const add = (cls, m, text) => {
+      const d = document.createElement("span");
+      d.className = cls;
+      d.style.left = pos(m) + "%";
+      if (text) d.textContent = text;
+      el.appendChild(d);
+      return d;
+    };
+    const band = document.createElement("span");
+    band.className = "band";
+    band.style.left = pos(PASS_BAND[0]) + "%";
+    band.style.width = pos(PASS_BAND[1]) - pos(PASS_BAND[0]) + "%";
+    el.appendChild(band);
+    for (const m of M_GRID) add("tick", m);
+    for (const [m, text] of [[1e-5, "1e-5"], [1e-4, "1e-4"], [1e-3, "1e-3"]]) add("lab", m, text);
+    add("lab end", M_GRID[M_GRID.length - 1], "2e-3");
+    add("mark", PAPER_MC);
+    add("lab low", PAPER_MC, "paper M_c");
+  }
+
+  // The canvas is L x L pixels, scaled by CSS. When a whole number of device pixels per site costs little size, use it, so the sites
+  // stay square; otherwise fill the box.
+  function layout() {
+    const avail = stage.clientWidth - 20;
+    if (avail <= 0) return;
+    const target = Math.min(avail, 560);
+    const dpr = window.devicePixelRatio || 1;
+    const k = Math.floor((target * dpr) / L);
+    const size = k >= 1 && k * L >= 0.8 * target * dpr ? (k * L) / dpr : target;
+    cv.style.width = size + "px";
+    cv.style.height = size + "px";
+  }
+
+  function draw() {
+    const g = st.grid;
+    for (let i = 0; i < g.length; i++) px[i] = pal[g[i]];
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function pushSample() {
+    const N = st.N, c = st.counts, g = st.steps / N;
+    trace.push({ g, v: [c[0] / N, c[1] / N, c[2] / N, c[3] / N] });
+    lastSampleG = g;
+    while (trace.length > 2 && trace[1].g < g - TRACE_GENS) trace.shift();
+  }
+
+  function drawTrace() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = tcv.clientWidth, h = tcv.clientHeight;
+    if (!w || !h) return;
+    if (tcv.width !== Math.round(w * dpr) || tcv.height !== Math.round(h * dpr)) { tcv.width = Math.round(w * dpr); tcv.height = Math.round(h * dpr); }
+    const c = tctx;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    const x0 = 30, x1 = w - 8, y0 = 6, y1 = h - 18;
+    const gEnd = trace.length ? trace[trace.length - 1].g : 0;
+    const gStart = Math.max(0, gEnd - TRACE_GENS);
+    const X = (g) => x0 + ((g - gStart) / TRACE_GENS) * (x1 - x0);
+    const Y = (v) => y1 - v * (y1 - y0);
+    c.font = "10px system-ui, sans-serif";
+    c.textBaseline = "middle";
+    c.lineWidth = 1;
+    for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+      c.strokeStyle = grid;
+      c.beginPath(); c.moveTo(x0, Math.round(Y(v)) + 0.5); c.lineTo(x1, Math.round(Y(v)) + 0.5); c.stroke();
+      c.fillStyle = muted; c.textAlign = "right";
+      c.fillText(v === 0 ? "0" : v === 1 ? "1" : String(v).replace("0.", "."), x0 - 5, Y(v));
+    }
+    c.textBaseline = "alphabetic";
+    c.fillStyle = muted; c.textAlign = "left"; c.fillText("gen " + Math.round(gStart), x0, h - 4);
+    c.textAlign = "right"; c.fillText("gen " + Math.round(gEnd), x1, h - 4);
+    c.save();
+    c.beginPath(); c.rect(x0, y0 - 2, x1 - x0, y1 - y0 + 4); c.clip(); // the oldest sample sits just left of the window
+    c.lineWidth = 2; c.lineJoin = "round"; c.lineCap = "round";
+    for (const s of [0, 1, 2, 3]) {
+      c.strokeStyle = lineColors[s];
+      c.beginPath();
+      trace.forEach((p, i) => { if (i === 0) c.moveTo(X(p.g), Y(p.v[s])); else c.lineTo(X(p.g), Y(p.v[s])); });
+      c.stroke();
+    }
+    c.restore();
+    if (hoverX !== null && trace.length) {
+      let best = trace[0], bd = Infinity;
+      for (const p of trace) { const d = Math.abs(X(p.g) - hoverX); if (d < bd) { bd = d; best = p; } }
+      const hx = X(best.g);
+      c.lineWidth = 1; c.strokeStyle = ink; c.globalAlpha = 0.4;
+      c.beginPath(); c.moveTo(Math.round(hx) + 0.5, y0); c.lineTo(Math.round(hx) + 0.5, y1); c.stroke();
+      c.globalAlpha = 1;
+      const names = ["empty", "1 rock", "2 scissors", "3 paper"];
+      const order = [1, 2, 3, 0];
+      const bw = 112, bh = 18 + order.length * 15;
+      const bx = hx + 10 + bw > w ? hx - 10 - bw : hx + 10, by = y0 + 2;
+      c.fillStyle = "#151d1a"; c.strokeStyle = grid;
+      c.beginPath();
+      if (c.roundRect) c.roundRect(bx, by, bw, bh, 6); else c.rect(bx, by, bw, bh);
+      c.fill(); c.stroke();
+      c.textAlign = "left"; c.fillStyle = muted; c.fillText("generation " + fmtGen(best.g), bx + 8, by + 13);
+      order.forEach((s, i) => {
+        const yy = by + 18 + i * 15 + 8;
+        c.strokeStyle = lineColors[s]; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(bx + 8, yy - 3); c.lineTo(bx + 18, yy - 3); c.stroke();
+        c.fillStyle = ink; c.font = "bold 11px system-ui, sans-serif"; c.fillText(best.v[s].toFixed(3), bx + 24, yy);
+        c.fillStyle = muted; c.font = "10px system-ui, sans-serif"; c.fillText(names[s], bx + 58, yy);
+      });
+    }
+  }
+
+  function survivor() { for (let k = 1; k < st.counts.length; k++) if (st.counts[k] > 0) return k; return 0; }
+
+  function statusText() {
+    const g = st.steps / st.N;
+    if (st.absorbed) {
+      const gEnd = st.absorbedAtStep / st.N, left = survivor();
+      return "Ended at generation " + fmtGen(gEnd) + ": " + (left > 0 ? "only species " + left + " is left." : "no species is left.") + " Press Run again, or New seed.";
+    }
+    let t = (playing ? "Running" : g === 0 ? "Ready" : "Paused") + ". Generation " + fmtGen(g) + ", " + st.alive + " of 3 species alive." + (!playing && g === 0 ? " Press Play." : "");
+    if (playing && achieved > 0 && achieved < 0.85 * speed) t += "\nRunning at " + Math.round(achieved) + " generations per second, the most this device manages here.";
+    return t;
+  }
+
+  function rows() {
+    const c = st.constants, N = st.N;
+    const list = [
+      ["seed", String(seed)],
+      ["sites", L + " × " + L + " = " + fmtInt(N)],
+      ["M", fmtM(c.M) + (touchedM ? " now (changed during this run)" : "")],
+      ["ε = M N / 2", c.epsilon.toPrecision(3)],
+      ["swaps per reaction step", "mean " + (c.epsilon / 2).toPrecision(3)],
+      ["ε / N, 2ε / N", c.epsOverN.toExponential(2) + ", " + c.twoEpsOverN.toExponential(2)],
+      ["reaction steps", fmtInt(st.steps)],
+      ["swaps", fmtInt(st.exchanges)],
+      ["state hash", stateHash(st)],
+      ["to reproduce", touchedM ? "not from the settings alone: M was changed during this run" : "createLattice({ L, M, seed }), runSteps by the steps above, stateHash: in experiments/3d-rps/rmf-lattice.ts"],
+    ];
+    return list.flatMap(([k, v]) => {
+      const dt = document.createElement("dt"); dt.textContent = k;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      return [dt, dd];
+    });
+  }
+
+  function readout() {
+    const N = st.N;
+    for (const el of shareEls) el.textContent = (st.counts[Number(el.dataset.k)] / N).toFixed(3);
+    for (const el of barEls) el.style.width = ((100 * st.counts[Number(el.dataset.b)]) / N).toFixed(1) + "%";
+    statusEl.textContent = (selfOk ? "" : "Self-check failed (see the end of this section).\n") + statusText();
+    statusEl.dataset.bad = String(!selfOk);
+    if (detailsEl.open) dl.replaceChildren(...rows());
+  }
+
+  function syncButtons() {
+    playBtn.textContent = playing ? "Pause" : ended ? "Run again" : "Play";
+    stepBtn.disabled = ended;
+  }
+
+  function finishIfDone() {
+    if (!st.absorbed || ended) return;
+    ended = true;
+    playing = false;
+    pushSample();
+    const left = survivor();
+    announceEl.textContent = "The run ended at generation " + fmtGen(st.absorbedAtStep / st.N) + (left > 0 ? ": only species " + left + " is left." : ": no species is left.");
+    syncButtons();
+  }
+
+  function newRun() {
+    seed = Math.min(SEED_MAX, Math.max(SEED_MIN, Math.floor(seed)));
+    st = createLattice({ L, M, seed });
+    touchedM = false; ended = false; backlog = 0; achieved = 0; lastT = 0;
+    cv.width = L; cv.height = L;
+    px = new Uint32Array(L * L);
+    img = new ImageData(new Uint8ClampedArray(px.buffer), L, L);
+    trace = []; lastSampleG = -Infinity;
+    pushSample();
+    layout(); draw(); drawTrace(); readout(); syncButtons();
+    announceEl.textContent = "";
+  }
+
+  function schedule() {
+    if (!raf && playing && inView && !document.hidden) raf = requestAnimationFrame(frame);
+  }
+
+  function setPlaying(on) {
+    if (on && ended) newRun();
+    playing = on; lastT = 0; backlog = 0;
+    syncButtons(); readout(); schedule();
+  }
+
+  // Run what the speed asks for in chunks, stop when the frame's time is spent, and drop what a slow device could not do.
+  function advance(dt) {
+    const N = st.N;
+    backlog = Math.min(backlog + speed * N * dt, speed * N * 0.25);
+    const chunk = Math.max(256, Math.min(8192, N >> 1));
+    const t0 = performance.now(), s0 = st.steps;
+    while (backlog >= 1 && !st.absorbed) {
+      backlog -= runSteps(st, Math.min(chunk, Math.floor(backlog)));
+      if (st.steps / N - lastSampleG >= TRACE_EVERY) pushSample();
+      if (performance.now() - t0 > FRAME_MS) break;
+    }
+    achieved = achieved === 0 ? (st.steps - s0) / N / dt : 0.85 * achieved + 0.15 * ((st.steps - s0) / N / dt);
+  }
+
+  function frame(t) {
+    raf = 0;
+    if (!playing || !inView || document.hidden) return;
+    const dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 1 / 60;
+    lastT = t;
+    advance(dt);
+    finishIfDone();
+    draw(); drawTrace();
+    if (t - lastReadout > 100 || ended) { readout(); lastReadout = t; }
+    schedule();
+  }
+
+  // ---- controls ----
+  playBtn.addEventListener("click", () => setPlaying(!playing));
+  stepBtn.addEventListener("click", () => {
+    if (ended) return;
+    playing = false;
+    runSteps(st, st.N);
+    pushSample(); finishIfDone(); draw(); drawTrace(); readout(); syncButtons();
+  });
+  resetBtn.addEventListener("click", () => { const was = playing; newRun(); setPlaying(was); });
+  seedBtn.addEventListener("click", () => { seed = seed >= SEED_MAX ? SEED_MIN : seed + 1; hintEl.textContent = ""; newRun(); setPlaying(true); });
+  mIn.addEventListener("input", () => {
+    const m = snapM(10 ** Number(mIn.value));
+    if (m !== st.constants.M) { touchedM = true; hintEl.textContent = ""; }
+    M = m;
+    setMobility(st, M);
+    syncControls(); readout();
+  });
+  spIn.addEventListener("input", () => { speed = 10 ** Number(spIn.value); spOut.textContent = fmtSpeed(speed); spIn.setAttribute("aria-valuetext", fmtSpeed(speed)); });
+  for (const r of sizeInputs) r.addEventListener("change", () => { if (r.checked) { L = Number(r.value); hintEl.textContent = ""; newRun(); } });
+  for (const b of document.querySelectorAll("button[data-preset]")) {
+    b.addEventListener("click", () => {
+      L = Number(b.dataset.size); M = Number(b.dataset.m); seed = Number(b.dataset.seed); speed = Number(b.dataset.speed);
+      hintEl.textContent = b.dataset.hint || "";
+      syncControls(); newRun(); setPlaying(true);
+    });
+  }
+  detailsEl.addEventListener("toggle", () => { if (detailsEl.open) dl.replaceChildren(...rows()); });
+  tcv.addEventListener("pointermove", (e) => { hoverX = e.clientX - tcv.getBoundingClientRect().left; if (!playing) drawTrace(); });
+  tcv.addEventListener("pointerleave", () => { hoverX = null; if (!playing) drawTrace(); });
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((entries) => { inView = entries[entries.length - 1].isIntersecting; lastT = 0; schedule(); }).observe(wrap);
+  }
+  document.addEventListener("visibilitychange", () => { lastT = 0; schedule(); });
+  if ("ResizeObserver" in window) {
+    let lastW = 0;
+    new ResizeObserver(() => { if (stage.clientWidth !== lastW) { lastW = stage.clientWidth; layout(); } drawTrace(); }).observe(stage);
+  } else {
+    addEventListener("resize", () => { layout(); drawTrace(); });
+  }
+
+  buildScale();
+  syncControls();
+  hintEl.textContent = document.querySelector('button[data-preset="spirals"]').dataset.hint;
+  newRun();
+  setPlaying(!matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+main();
+}
+})();
+</script>
+</body>
+</html>
