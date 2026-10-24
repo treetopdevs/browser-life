@@ -1909,3 +1909,116 @@ measure that does not depend on one clade's sweep.
 bundles and a Codex Sol 6.1 High review of both against the rule, fixes, the runs and replacements,
 and the independent re-derivation. Bundles, runner, planner, reader, tables and the re-derivation
 are in this worktree's `runs/evolution-game/polymer-world/` (gitignored).
+
+### Breeder test: does building evolve when shells exist? (rule written 2026-10-23 19:30 EDT, read after the runs the same day)
+
+**Why.** Both screens ran on gradient-m3 with a build gene and neither resolved the question (clade
+sweeps the likely reason, untested). The one
+sighting that polymer may pay came from the Pond keeper v3 sizing runs on the breeder (no genes, so
+every controller can drive BUILD): with the game's wounds and a shell of 2 (`breeder-wounded-shell`),
+membrane per living cell rose every cycle in seed 1 (0.14 to about 5.3 over six cycles) and barely
+moved in seed 2. This test asks, on fresh seeds, whether that is selection for building.
+
+**Rule** (`runs/pond-shell/evolve/rule.md`, sha256 `a29e6b8a…78a9c7`, unchanged through the runs).
+The game's three breeder worlds, unchanged: Calm (`breeder`), Wounds (`breeder-wounded`: radius-3
+discs, each cell hit about once per 3,250 steps) and Shells (`breeder-wounded-shell`: the same wounds
+plus `injuryShell` 2). Seeds 3–8, each starting cell for cell identical in the three worlds; 50,000
+steps (ten pond cycles) with the arm's own donor rule; 18 runs.
+- **M (membrane held):** mean P per living cell over the 21 states at 40,000, 40,500, …, 50,000.
+- **G (common garden):** the state at 50,000 stepped 4,000 more steps under the same seed's Calm
+  config with plain physics (no pond cycle, no donors); G = mean P per living cell at garden steps
+  3,000, 3,500 and 4,000, by which time most carried-in polymer has turned over.
+- A run with < 1,000 living cells at 50,000 has M = G = 0.
+- **EVOLVES** needs M(S) > M(W) and M(S) > M(C) each in ≥ 5 of 6 seeds, a mean M(S) − M(W) ≥ 0.5, and
+  G(S) > G(W) and G(S) > G(C) each in ≥ 5 of 6. **HELD, NOT SHOWN HERITABLE** is the M part alone;
+  anything else is **NO**. Gene v2's arms in the shell world only on EVOLVES.
+
+**Reading the rule left open, fixed before the runs.** At a cycle boundary the runner holds two
+states: the grown world before the pond cycle (about 20,000–51,000 living cells at 50,000 in the
+live runs) and the world just after it, where each pond holds only its 64-cell packet (600–998
+living cells in every live run). The
+rule does not say which is "the state at 50,000". Read literally as the post-cycle state, every run
+falls under its own 1,000-cell cut-off and M = G = 0 everywhere. The implementation phase chose the
+pre-cycle state for M's boundary states, for the cut-off and as the garden's start, and wrote that
+down before any of the 18 runs. The post-cycle readings are printed as sensitivity rows and also
+read NO.
+
+**Result: NO.** All 18 runs completed and 17 gardens ran (the Wounds seed-5 run, extinct, takes G = 0
+under the cut-off with no garden); conservation exact in every run and garden.
+An independent re-derivation from the raw checkpoints (a separate Python script, plus a GPU re-run
+of the 17 gardens with a live start) reproduces every M and G and the verdict.
+
+| Seed | M Calm | M Wounds | M Shells | G Calm | G Wounds | G Shells |
+|---|---|---|---|---|---|---|
+| 3 | 0.025 | 0.157 | 0.016 | 0.079 | 0.218 | 0.113 |
+| 4 | 0.002 | 1.812 | 0.000 | 0.002 | 3.872 | 0.020 |
+| 5 | 0.028 | 0 (extinct) | 0.052 | 0.089 | 0 (extinct) | 0.053 |
+| 6 | 0.126 | 0.004 | 0.181 | 0.196 | 0.107 | 0.222 |
+| 7 | 0.002 | 0.115 | 0.000 | 0.020 | 0.538 | 0.009 |
+| 8 | 0.033 | 0.080 | 0.029 | 0.235 | 0.369 | 0.011 |
+
+| Comparison | Shells wins | Needed |
+|---|---|---|
+| M(S) > M(W) | 2 of 6 (seeds 5, 6); mean M(S) − M(W) = −0.315 | 5, and mean ≥ +0.5 |
+| M(S) > M(C) | 2 of 6 (5, 6) | 5 |
+| G(S) > G(W) | 2 of 6 (5, 6) | 5 |
+| G(S) > G(C) | 3 of 6 (3, 4, 6) | 5 |
+
+Neither part holds, so no arms ran. Every other reading evaluated also gives NO (M pooled over cells,
+post-cycle states at the boundaries, G at one read, ties counted as wins): none takes any of those
+comparisons past 3 Shells wins, and M(S) > M(W) stays at 2 or fewer. A garden started from the
+post-cycle state was not run; the M part fails whatever it would show, so the label stays NO. The seed-5 wins on M and G are against a Wounds run
+that died out at step 22,800, so where both populations lived, Shells held more membrane than Wounds
+in 1 of 5 seeds.
+
+**What else the runs show (readings, not shown).**
+- *Shells mostly held less membrane than plain wounds.* Less in 4 of 6 seeds; Shells M was 0.052 or
+  less on five seeds (0.181 on seed 6). A shelled cell spends 2 membrane on every hit while an unshelled cell
+  with membrane simply dies, so one candidate mechanism is that shells keep draining the membrane
+  the population holds. This is a hypothesis; nothing here tests it.
+- *Membrane rose and then vanished in several runs.* Shells 7 held 0.15–0.40 per cell over cycles
+  2–7 and 0.00 from cycle 8; Shells 8 held 0.12–0.31 over cycles 2–8 and about 0 after; Wounds 6
+  fell to about 0 from cycle 6. None of the shell runs kept a climb to step 50,000.
+- *The one sustained climb was under plain wounds.* Wounds seed 4 rose, mostly from cycle 5 on, to M 1.81, with
+  61% of living cells holding ≥ 2 membrane at 50,000. In the calm garden it reached G 3.87, so the
+  building sits in the genomes, not only in the wound regime; on the controller probe its cells'
+  BUILD output averages 13.9, against 1.20 for founder 2 (descriptive, a canonical input grid).
+  Its Shells twin on the same start ends at M 0.0002 and G 0.020. Together with the sizing sighting
+  (Shells, seed 1), the eight seeds run so far in each wounded world (two 30,000-step sizing seeds and
+  these six) show one sustained climb under Shells and one under Wounds, on different seeds. Wounds
+  beat Calm on both M and G in 4 of 6 seeds here (4 of 6 has about one chance in three under no
+  effect), and the mean M(W) − M(C) of +0.33 falls to
+  +0.03 without seed 4.
+- *The breeder's score pays for membrane in every world.* The pond score (`drive+seed+body`) is built
+  on each cell's bound mass, which is biomass plus polymer (`pondBound` in `packages/schema/src/ponds.ts`),
+  so the donor rule itself can favour ponds that hold polymer, in Calm as much as under wounds. A
+  climb on the breeder can come from what the rule breeds for, not from the weather; this test does
+  not separate the two.
+- *Shells did not keep two to three times as many cells alive here.* Living cells at 50,000
+  (pre-cycle), Shells over Wounds: 0.86, 0.46, (Wounds extinct), 1.40, 1.41 and 1.35. That is more in 3
+  of the 5 pairs where both lived and fewer in 2, against about 2× and 3× in the two 30,000-step sizing seeds cited
+  in the screen v2 readout above and in `docs/pond-keeper-v3-2026-10-22.md`.
+
+**What this means.** On fresh seeds, shells of 2 under the game's wounds do not make the breeder's
+cells hold more membrane, and a common garden shows no sign that they evolve to build more. The
+sizing sighting looks like one seed's clade, not a property of the shell world. Building can rise
+and stay heritable on the breeder (Wounds seed 4), but in one seed of six and under plain wounds, with
+the donor rule's own taste for mass as a possible cause. The shell stays a playable Pond keeper
+weather; this test gives it no evolutionary claim. Next readings, if wanted: more seeds of
+`breeder-wounded` against `breeder` to see how often a climb happens and whether wounds raise that
+rate, ideally with a pond score that does not count polymer as mass; or gene v2's arms in
+`breeder-wounded` run as an exploration (labelled so, since nothing here passed).
+
+*Provenance:* one workflow (6 agents): runner, common garden and reader; a rule-conformance review
+on synthetic bundles and a Codex Sol 6.1 High review of the tools against the rule; fixes; the 18
+runs and 17 gardens; the independent re-derivation. The reviews found that the reader did not enforce
+the protocol on inputs it was not built for (Codex P1s: a run of another length or a garden with
+other parameters could read as FINAL; P2s: world and seed taken from directory names, a reused
+garden not checked against its checkpoint, duplicate or missing seeds still yielding a verdict) and
+that the 0.5 floor was compared in floating point. All were fixed before the runs: M and G are exact
+fractions, the window and garden parameters are pinned to the rule, identity comes from each run's
+manifest, gardens are checked by state hash, and a verdict is printed only for the complete
+seeds 3–8 set. Runs took about 20 minutes (about 800 steps/s), gardens and the reader about 1.5
+minutes; per-cycle gardens and the post-cycle-start garden were not run (descriptive only). Rule,
+tools, bundles (2.7 GB with every pre-cycle checkpoint), tables and the re-derivation are in this
+worktree's `runs/pond-shell/evolve/` (gitignored).

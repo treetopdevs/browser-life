@@ -547,13 +547,13 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "breeder-wounded": {
     asks: "Does breeding still work when the ponds are wounded all the time?",
     look: "Breed by hand and read the ranks: when every pond ties at the bottom, the rule falls back to the heaviest ponds, and the panel says so.",
-    seen: { state: "observed", text: "22 Oct, two seeds, 30,000 steps: about one cell in ten alive (calm, about a third); at 11 of 12 cycle boundaries every donor scored 0. Not read against a bar." },
+    seen: { state: "observed", text: "22 Oct, two seeds, 30,000 steps: about one cell in ten alive (calm, about a third); at 11 of 12 cycle boundaries every donor scored 0. Not read against a bar. 23 Oct, six more seeds, 50,000 steps: one died out, and in one the cells came to hold nearly 2 membrane each and kept making it after the wounds stopped. One seed, not a result." },
     base: "breeder",
   },
   "breeder-wounded-shell": {
     asks: "Can cells that store a little membrane sit out the wounds that kill everything else?",
     look: "Watch Cells wearing a shell under How it’s going: it starts near zero. Your own Wound tool still cuts through shells.",
-    seen: { state: "observed", text: "22 Oct, the same two seeds: living cells were 1.6 and 7.7 times the wounded runs’ at 15,000 steps, with shells on 1 living cell in 5 in one seed and about 1 in 70 in the other. A look, not a result." },
+    seen: { state: "observed", text: "22 Oct, the same two seeds: living cells were 1.6 and 7.7 times the wounded runs’ at 15,000 steps, with shells on 1 living cell in 5 in one seed and about 1 in 70 in the other. A look, not a result. 23 Oct, six new seeds, 50,000 steps, read against a bar set beforehand: shells did not make cells hold more membrane than the same wounds without them (more in 2 of 6 seeds, one of them against a wounded run that had died out), and nothing showed cells evolving to make more of it. Living cells at the end were 0.5 to 1.4 times the wounded runs’." },
     base: "breeder-wounded",
   },
 };
