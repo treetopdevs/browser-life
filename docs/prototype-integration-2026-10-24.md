@@ -120,42 +120,12 @@ BL_EXPECT_ISLAND_LEAVE=1 BL_ISLAND_BACKOFF_WIRE=1 BL_E2E_PORT=5272 BL_ISLAND_WIR
 
 Wire checks use the actual runner against a scratch Phoenix server: marked refusal delays the next join, accepted identity unregisters once with zero active rows, Stop during unknown-join cooldown produces no retry, and capacity-refusal headers are readable across origins. Existing held complete/reject/fail unit cases verify settlement before leave. No GPU or production behavior is claimed.
 
-### Portable integration test patch
+### Published integration test adjustment
 
-Apply this patch when combining the two source branches; do not weaken the exact leave assertions in the combined tree. It is retained here so the local integration-only change is reviewable and portable alongside the source-tip merge instructions.
+The exact fixture adjustment is now included in stacked PR83 commit `8d97f038568549d8d6b80577492061b3205ea22a`. It returns 204 for DELETE, requires one final cleanup for a known identity, and checks that cleanup bypasses the active retry cooldown. No patch needs applying separately when using that source tip. The original standalone-to-integrated change remains reproducible with:
 
-```diff
-diff --git a/packages/runner/test/island-retry-requests.test.ts b/packages/runner/test/island-retry-requests.test.ts
-index 60cbd877..f7a1c934 100644
---- a/packages/runner/test/island-retry-requests.test.ts
-+++ b/packages/runner/test/island-retry-requests.test.ts
-@@ -26,6 +26,7 @@ function setup(target: string, options: { status?: number; stop?: AbortControlle
-       options.stop?.abort("stop during refusal");
-       return refused(options.status);
-     }
-+    if (key === "DELETE /api/islands/isl") return new Response(null, { status: 204 });
-     if (key === "POST /api/islands") return json({ id: "isl", token: "secret" });
-     if (key === "POST /api/next") {
-       if (gaveTask) return json({ kind: "idle" });
-@@ -72,6 +73,8 @@ describe("runIsland retries complete HTTP requests without redoing work", () =>
-       expect(attempts[1].init.signal).toBeUndefined();
-     }
-     expect(run).toHaveBeenCalledTimes(mode === "reject" ? 0 : 1);
-+    expect(seen.at(-1)?.key).toBe("DELETE /api/islands/isl");
-+    expect(seen.filter((request) => request.key.startsWith("DELETE"))).toHaveLength(1);
-   });
- 
-   it.each(paths)("Stop after refused %s prevents another attempt", async (path) => {
-@@ -82,7 +85,8 @@ describe("runIsland retries complete HTTP requests without redoing work", () =>
-     expect(await promise).toBe(0);
-     expect(seen.filter((request) => request.key === path)).toHaveLength(1);
-     const at = seen.findIndex((request) => request.key === path);
--    expect(seen.slice(at + 1)).toEqual([]);
-+    expect(seen.slice(at + 1).map((request) => request.key)).toEqual(path === "POST /api/islands" ? [] : ["DELETE /api/islands/isl"]);
-+    if (path !== "POST /api/islands") expect(seen.at(-1)?.at).toBe(seen[at].at); // leave bypasses the still-active retry cooldown
-   });
- 
-   it.each(paths)("Stop during the %s backoff wait wakes immediately", async (path) => {
+```sh
+git diff 754e022d740757d4ab2932a0738cba2bb91a8f38 8d97f038568549d8d6b80577492061b3205ea22a -- packages/runner/test/island-retry-requests.test.ts
 ```
 
 No push, hosted merge or deployment was performed. PR82 remains outside the tree tested in this section.
