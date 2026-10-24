@@ -519,13 +519,19 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     task = build_conn() |> next(id, token)
     assert get_resp_header(task, "x-island-request-applied") == []
     %{"segment" => %{"id" => segment}, "lease" => lease} = json_response(task, 200)
+    # Give this attempt its own staged artifact, so the complete payload below
+    # can actually finish it once the budget permits the request.
+    hash = "0123456789abcdef"
+    staged = Path.join(:sys.get_state(Queue).dir, "backoff-complete-checkpoint")
+    File.write!(staged, "checkpoint fixture")
+    assert :ok = Queue.publish_checkpoint(segment, id, lease, staged, hash, hash)
+    body = %{"lease" => lease, "kind" => "run", "endHash" => hash, "reason" => "test"}
     set(:island_segment_requests_per_island, 1)
     assert IslandLimiter.take(:segment, id) == :ok
     before = :sys.get_state(Queue)
 
     for action <- ["heartbeat", "complete", "reject", "fail"] do
       path = "/api/segments/#{segment}/#{action}?island=#{id}"
-      body = %{"lease" => lease, "kind" => "run", "digest" => "x", "reason" => "test"}
       refused = build_conn() |> authed(token) |> post(path, body)
       assert refused.status == 429
       assert get_resp_header(refused, "x-island-request-applied") == ["false"]
@@ -546,6 +552,18 @@ defmodule CoordinatorWeb.IslandLimitsTest do
       assert get_resp_header(refused, "x-island-request-applied") == ["false"]
       assert :sys.get_state(Queue) == before
     end
+
+    # Positive control: exactly the previously refused completion now commits.
+    IslandLimiter.reset()
+
+    completed =
+      build_conn()
+      |> authed(token)
+      |> post("/api/segments/#{segment}/complete?island=#{id}", body)
+
+    assert completed.status == 200
+    assert get_resp_header(completed, "x-island-request-applied") == []
+    assert Queue.segment(segment).status == "done"
   end
 
   test "applied segment decisions and controller errors do not claim the request was unapplied" do

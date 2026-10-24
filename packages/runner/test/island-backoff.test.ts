@@ -112,6 +112,36 @@ describe("island refusal backoff", () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it("returns the readable previous refusal when a concurrent gate extension exceeds its deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const c = clock(); c.time.monotonic = () => Date.now(); c.time.sleep = islandDelay;
+      const backoff = new IslandBackoff(c.time);
+      let release!: (response: Response) => void;
+      const lateRun = backoff.request(() => new Promise<Response>((resolve) => { release = resolve; }));
+      const previous = refusal(429, "2");
+      const send = vi.fn(async () => previous);
+      const pending = backoff.request(send);
+      await vi.advanceTimersByTimeAsync(1_000);
+      release(refusal(503, "120")); // t=121000, beyond both t=120000 deadlines
+      await vi.advanceTimersByTimeAsync(1_000);
+      const answer = await pending;
+      expect(answer).toBe(previous);
+      expect(await answer.text()).toBe("refused");
+      expect(send).toHaveBeenCalledTimes(1);
+      expect((await lateRun).status).toBe(503);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("exhausts an attempt-zero budget behind a shared gate without sending anything", async () => {
+    const c = clock(); const backoff = new IslandBackoff(c.time);
+    await backoff.request(async () => refusal(503, "120"));
+    const send = vi.fn(async () => new Response("must not send"));
+    await expect(backoff.request(send)).rejects.toThrow("retry budget exhausted while waiting for coordinator cooldown");
+    expect(send).not.toHaveBeenCalled();
+    expect(c.waits).toEqual([]);
+  });
+
   it.each([undefined, null, "stop", NaN])("cancels a refused-attempt wait with exact reason %s", async (reason) => {
     const c = clock(); const controller = new AbortController();
     c.time.sleep = async () => { controller.abort(reason); };

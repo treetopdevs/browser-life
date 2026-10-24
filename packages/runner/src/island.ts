@@ -722,6 +722,10 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
             await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
             log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
           } catch (f) {
+            if (stopped(f)) {
+              log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
+              break;
+            }
             if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
             else throw f;
           }

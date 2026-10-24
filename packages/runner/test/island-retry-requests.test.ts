@@ -13,7 +13,7 @@ const json = (body: unknown, status = 200, headers: Record<string, string> = {})
 const refused = (status = 429) => json({ error: "busy" }, status, { "x-island-request-applied": "false", "retry-after": "1" });
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((r) => { resolve = r; }); return { promise, resolve }; }
 interface Seen { key: string; url: string; init: RequestInit; at: number }
-function setup(target: string, options: { status?: number; stop?: AbortController; mode?: "reject" | "fail"; answer?: () => Promise<Response> } = {}) {
+function setup(target: string, options: { status?: number; stop?: AbortController; mode?: "reject" | "fail"; answer?: () => Promise<Response>; checkpoint?: Promise<Response> } = {}) {
   const seen: Seen[] = [];
   let gaveTask = false;
   let refusedOnce = false;
@@ -26,6 +26,7 @@ function setup(target: string, options: { status?: number; stop?: AbortControlle
       options.stop?.abort("stop during refusal");
       return refused(options.status);
     }
+    if (key === "PUT /api/segments/seg/checkpoint" && options.checkpoint) return options.checkpoint;
     if (key === "DELETE /api/islands/isl") return new Response(null, { status: 204 });
     if (key === "POST /api/islands") return json({ id: "isl", token: "secret" });
     if (key === "POST /api/next") {
@@ -114,6 +115,42 @@ describe("runIsland retries complete HTTP requests without redoing work", () => 
     expect(await caught).toBeInstanceOf(Error);
     expect(seen.filter((request) => request.key.endsWith("/complete"))).toHaveLength(1);
     expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("Stop during a refused fail wait describes held work before confirming leave", async () => {
+    const stop = new AbortController();
+    const seen = setup("POST /api/segments/seg/fail", { mode: "fail" });
+    const messages: string[] = [];
+    const promise = start(stop.signal, { log: (message: string) => messages.push(message) });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(seen.filter((request) => request.key.endsWith("/fail"))).toHaveLength(1);
+    stop.abort();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await promise).toBe(0);
+    expect(messages).toContain("stopped local work: r #0; requesting release");
+    expect(messages).not.toContain("stopped");
+    expect(messages.at(-1)).toBe("left island: registration removed and unfinished work released");
+    expect(seen.at(-1)?.key).toBe("DELETE /api/islands/isl");
+  });
+
+  it("normal task teardown aborts a heartbeat's pending refusal retry", async () => {
+    const checkpoint = deferred<Response>();
+    const seen = setup("POST /api/segments/seg/heartbeat", { checkpoint: checkpoint.promise });
+    const promise = start(undefined, { heartbeatMs: 10 });
+    await vi.advanceTimersByTimeAsync(10);
+    expect(seen.filter((request) => request.key.endsWith("/checkpoint"))).toHaveLength(1);
+    expect(seen.filter((request) => request.key.endsWith("/heartbeat"))).toHaveLength(1);
+    // PUT was already sent before heartbeat refusal installed its cooldown.
+    // Its lost-lease response ends the task while heartbeat is still in ready().
+    checkpoint.resolve(json({ error: "lease lost" }, 409));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(await promise).toBe(0);
+    const count = seen.length;
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(seen).toHaveLength(count);
+    expect(seen.filter((request) => request.key.endsWith("/heartbeat"))).toHaveLength(1);
+    expect(seen.at(-1)?.key).toBe("DELETE /api/islands/isl");
   });
 
   it("Stop cancels a terminal decision's retry wait but not its already-sent response", async () => {
