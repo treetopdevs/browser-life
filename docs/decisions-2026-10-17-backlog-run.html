@@ -528,7 +528,15 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 
 <article id="d49">
 <h2><span>D-49</span>Replace the stale current-status pointer with a dated prototype inventory</h2>
-<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The README calls an October 18 snapshot current, but gene v2, bell v2, null-stone and sun letters have since landed. Several additional features exist in open PRs.</dd><dt>Decision</dt><dd>Keep the historical snapshot and create a new Markdown/HTML overview. Distinguish on-main implementation, open PRs, explicit follow-ups, deferred extensions and external decisions. Include all seven app surfaces and local entry points, with evidence limits.</dd><dt>Why</dt><dd>A finite inventory prevents repeating completed work or treating every brainstorm as an unfinished prototype. Open PRs and local tests do not establish merged or deployed behavior.</dd><dt>Validation</dt><dd>Source references and local links checked. Chrome at 1280 and 375 pixels in day/night modes has no overflow, script errors, external requests or axe violations. Argon review pending. No scientific experiment or public opening is included.</dd></dl>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The README calls an October 18 snapshot current, but gene v2, bell v2, null-stone and sun letters have since landed. Several additional features exist in open PRs.</dd><dt>Decision</dt><dd>Keep the historical snapshot and create a new Markdown/HTML overview. Distinguish on-main implementation, open PRs, explicit follow-ups, deferred extensions and external decisions. Include all seven app surfaces and local entry points, with evidence limits.</dd><dt>Why</dt><dd>A finite inventory prevents repeating completed work or treating every brainstorm as an unfinished prototype. Open PRs and local tests do not establish merged or deployed behavior.</dd><dt>Validation</dt><dd>Source references and local links checked. Chrome at 1280 and 375 pixels in day/night modes has no overflow, script errors, external requests or axe violations. Argon source review assessed; HTML anchors, accessible theme state, launch wording and missing runner-backoff disclosure corrected. No scientific experiment or public opening is included.</dd></dl>
+</article>
+
+<article id="d50">
+<h2><span>D-50</span>Validate the prototype branches together before any merge decision</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd>
+<dt>Decision</dt><dd>Combine eight exact feature-branch tips in a separate local integration checkout from origin/main b3fab906, preserving source commits. Resolve only decision-log append conflicts by retaining every complete D35–D49 entry. Keep source branches, main and local integration evidence distinct.</dd>
+<dt>Evidence</dt><dd>Typecheck and build pass; 247 focused unit tests, 573 coordinator tests and 41 combined Chrome feature checks pass. No runtime conflict or integration-only product fix was needed. Exact inputs, merge handling and commands are in <a href="prototype-integration-2026-10-24.md">the integration validation report</a>.</dd>
+<dt>Boundary</dt><dd>This is local engineering validation, not a PR merge, deployment, shared-garden opening, scientific trial or declaration that every prototype is complete. Independent review approvals remain separate.</dd></dl>
 </article>
 
 <!-- DECISIONS -->

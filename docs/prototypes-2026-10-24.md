@@ -8,7 +8,7 @@ Seven surfaces, one bounded snapshot. Main means `b3fab90605401c9cf61822ea4e7983
 
 **On main:** WebGPU worlds, interventions, checkpoints and replay; Pond keeper weather and whole-world shell share; Field notes and suggestions. Firsts now survive rewind through checkpoint sidecars, and refused Feed/Drain requests are nonfatal. [Pond keeper v3](pond-keeper-v3-2026-10-22.md) and [Field notes](naturalist-field-notes-v0-2026-10-18.md) describe the contracts and their recorded checks.
 
-**Open PRs:** [#73 shell-based donor ranking](https://github.com/treetopdevs/browser-life/pull/73), [#76 dedicated membrane view](https://github.com/treetopdevs/browser-life/pull/76), and [#77 matching Try receipts to requests](https://github.com/treetopdevs/browser-life/pull/77). Each has focused validation recorded in its PR. Their combined integration is not yet verified by this status audit.
+**Open PRs:** [#73 shell-based donor ranking](https://github.com/treetopdevs/browser-life/pull/73), [#76 dedicated membrane view](https://github.com/treetopdevs/browser-life/pull/76), and [#77 matching Try receipts to requests](https://github.com/treetopdevs/browser-life/pull/77). Each has focused validation recorded in its PR. A separate [local integration report](prototype-integration-2026-10-24.md) records checks of the exact combined revisions; they remain unmerged.
 
 **Try locally:** `pnpm dev`, then `http://localhost:5173/lab/?world=breeder&seed=1` for Pond keeper or `http://localhost:5173/lab/?world=gradient-m3&seed=1` for Field notes. Open `http://localhost:5173/selftest.html` for GPU/reference checks.
 
@@ -32,11 +32,13 @@ Seven surfaces, one bounded snapshot. Main means `b3fab90605401c9cf61822ea4e7983
 
 **Open PR:** [#78 configurable lease duration](https://github.com/treetopdevs/browser-life/pull/78) adds `BL_LEASE_MS`; its focused validation is recorded in the PR, and independent review is pending. Distributed branch runs and hand/model pickers remain explicitly deferred; the existing rule-picker prototype does not promise them.
 
+**Remaining:** The runner still stops on `429`/`503` join, next or upload responses; backoff that honours `Retry-After` remains unimplemented. The [deployment notes](../deploy/README.md) also leave client-address proxy forwarding, Compose environment additions and the per-address join budget pending a live-host change and verification. These are separate from the open PRs above.
+
 ## 4. Shared garden
 
 **On main, private:** The local garden has stones, collective food when enabled at founding, sun letters, prediction receipts and verified checkpoint forks. The null-stone control and sun implementation have landed; the older snapshot's corresponding “not built” rows are stale. [Sun letters](garden-sun-2026-10-18.md), [food](garden-food-2026-10-18.md) and [opening checklist](garden-opening-2026-10-18.md) describe the scope.
 
-**Try locally:** `bin/garden-dev`, then `http://localhost:5173/garden/`. It starts its own lab, coordinator and GPU islands; stop competing local servers first or set PORT/LAB_PORT. Its scratch garden is not a public commons.
+**Try locally:** `bin/garden-dev`, then `http://localhost:5173/garden/` (or the `LAB_PORT` address the launcher prints). It starts its own lab, coordinator and GPU islands; stop competing local servers first or set PORT/LAB_PORT. Its scratch garden is not a public commons.
 
 **Remaining local follow-up:** The launcher has no food configuration option. The mechanism exists, but launcher-created gardens do not enable it.
 
@@ -64,16 +66,18 @@ Seven surfaces, one bounded snapshot. Main means `b3fab90605401c9cf61822ea4e7983
 
 **Open PR:** [#72 recovery evidence and mass-matched feasibility](https://github.com/treetopdevs/browser-life/pull/72). This is a bounded diagnostic with an explicit gate, not a new mutation search or proof of improved recovery. Its evidence and limitations live with that PR.
 
-**Try locally:** The previous snapshot's [research-instrument instructions](prototypes-2026-10-18.md#7-research-instruments) show the committed lineage fixture and HTML report commands. Large scientific corpora under `runs/` are not included in a fresh clone.
+**Try locally:** The previous snapshot's [research-instrument instructions](prototypes-2026-10-18.html#research-instruments) show the committed lineage fixture and HTML report commands. Large scientific corpora under `runs/` are not included in a fresh clone.
 
 **Deferred research:** Genotype-keyed activity, matched nulls and further recovery experiments need their own protocols. They are not necessary to call the existing instrument implementation complete.
 
 ## What remains in this bounded backlog
 
-The implementation work in PRs72–78 still needs integration and its combined checks. Beyond those PRs, the small concrete follow-ups identified here are local garden food configuration and fixed-path 404 analytics. Documentation/verification follow-ups are sitemap dates, Field notes design documentation, and the two naturalist UI coverage gaps. Explicitly deferred features and external decisions stay visible without becoming automatic new scope. The overall backlog is not declared complete.
+The exact PR72–78 revisions in the [local integration report](prototype-integration-2026-10-24.md) passed 247 focused unit tests, 573 coordinator tests and 41 Chrome checks, plus typecheck and build. They still need repository integration through their open PRs; this local combination did not merge GitHub main. Beyond those PRs, the small concrete follow-ups identified here are local garden food configuration, fixed-path 404 analytics and runner `429`/`503` backoff. Live-host proxy forwarding and join-budget configuration remain a separate deployment follow-up. Documentation/verification follow-ups are sitemap dates, Field notes design documentation, and the two naturalist UI coverage gaps. Explicitly deferred features and external decisions stay visible without becoming automatic new scope. The overall backlog is not declared complete.
 
 ## Evidence and command checks
 
-This is a read-only source/PR audit at the named main revision, followed by writing these two status files. The seven launch paths and commands above were **read** from existing repository instructions and entry points; no simulation, coordinator, GPU workload or deployment was run for this snapshot. A fresh checkout needs `pnpm install` and, for coordinator paths, `(cd apps/coordinator && mix deps.get)`. Native GPU commands need a compatible device. Run `pnpm install` before Deno; `--no-lock` avoids rewriting its lockfile.
+This is a read-only source/PR audit at the named main revision, followed by writing these two status files and updating the README pointer and decision log. The seven launch paths and commands above were **read** from existing repository instructions and entry points; no simulation, coordinator, GPU workload or deployment was run for this snapshot. A fresh checkout needs `pnpm install` and, for coordinator paths, `(cd apps/coordinator && mix deps.get)`. Native GPU commands need a compatible device. Run `pnpm install` before Deno; `--no-lock` in the direct `deno run` command above avoids rewriting its lockfile. The `bin/garden-dev` launcher currently invokes Deno without that flag; check for lockfile changes after using it.
 
-Recorded test results belong to their source notes or PRs. They are not new runtime verification of the combined branches. Validation performed for this snapshot: all relative Markdown link targets exist; HTML is generated from the same content. Headless Chrome at 1280px and 375px in both day and night modes showed no horizontal overflow, script errors or external requests; the theme button worked in each case. Axe reported zero violations at all four viewport/theme combinations. The 375px night screenshot was visually inspected. `git diff --check` passed. These checks validate the status document, not the seven apps. Remote PR state is a point-in-time snapshot and can change.
+Recorded test results belong to their source notes or PRs. The separate integration report supplies combined-branch verification only for its pinned inputs; later public-page, garden-food and UI-coverage work is outside that run. Validation performed for this snapshot: all relative Markdown and HTML link targets exist, HTML fragment targets resolve, and every HTML section has a unique heading anchor; HTML is generated from the same content. Headless Chrome at 1280px and 375px in both day and night modes showed no horizontal overflow, script errors or external requests; the theme button worked in each case. Axe, including the optional `label-content-name-mismatch` rule, reported zero violations at all four viewport/theme combinations. The theme control exposes its night-mode state with `aria-pressed`. The 375px night screenshot was visually inspected. `git diff --check` passed. These checks validate the status document, not the seven apps. Remote PR state is a point-in-time snapshot and can change.
+
+Argon 4 High source review found no P0/P1 blockers. Its nonblocking findings were addressed: HTML edition/section links, accessible theme state, the omitted runner backoff and live-host proxy follow-ups, port/lockfile wording, and the complete changeset description.
