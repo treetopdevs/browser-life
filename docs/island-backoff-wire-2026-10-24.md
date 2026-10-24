@@ -19,6 +19,6 @@ Fixture corrections during development: an ordinary 404 page was replaced by ine
 
 ## Separate leave integration
 
-This branch's base does not implement DELETE island leave. The successful idle test therefore expects its one known registration to remain until normal pruning; this is explicitly not proof of immediate cleanup. Run the same spec after combining with the leave branch using `BL_EXPECT_ISLAND_LEAVE=1`. That mode instead requires exactly one DELETE and zero active registration rows after successful idle exit. The cancellation-before-join test always requires zero rows.
+The original standalone branch did not implement DELETE island leave. The successful idle test therefore expects its one known registration to remain until normal pruning; this is explicitly not proof of immediate cleanup. The branch now incorporates PR74 as its dependency. The combined local integration passed all three checks using `BL_EXPECT_ISLAND_LEAVE=1`. That mode instead requires exactly one DELETE and zero active registration rows after successful idle exit. The cancellation-before-join test always requires zero rows.
 
 This smoke does not create work assignments or exercise heartbeats during a GPU run. It proves real registration backoff, browser-visible refusal headers, cancellation while waiting, single in-flight request behavior for that lifecycle, capacity refusal state preservation, and scratch-process cleanup. Lease ownership and concurrent heartbeat behavior belong to the focused client/server suites.

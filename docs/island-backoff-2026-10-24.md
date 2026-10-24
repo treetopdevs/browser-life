@@ -2,7 +2,7 @@
 
 ## Scope and plan
 
-This implements the runner follow-up documented in `deploy/README.md`: an otherwise healthy island should tolerate a short coordinator admission refusal without repeating work whose result is unknown. The branch starts from `origin/main` at `b3fab906`; immediate island leave (PR #74) is a separate change and is not imported here.
+This implements the runner follow-up documented in `deploy/README.md`: an otherwise healthy island should tolerate a short coordinator admission refusal without repeating work whose result is unknown. The branch starts from `origin/main` at `b3fab906`; it subsequently incorporates reviewed PR #74 and is stacked on that branch so the retry/cleanup assertions are delivered together.
 
 1. Mark only coordinator refusals known to precede application, and expose the marker and delay to cross-origin browser clients.
 2. Route join, next, predecessor downloads, checkpoint/file uploads, heartbeat, complete, reject and fail through one per-island retry gate.
@@ -34,7 +34,7 @@ The 120-second budget bounds retry admission and waits; it is **not** a hard tim
 
 Lease preservation remains best effort. The task protocol does not expose the configured lease duration, and a cooldown may prevent heartbeat renewal. The client retains its lease and the coordinator checks it; expiry/reassignment produces the existing refusal rather than an invented success. This implementation neither guarantees lease renewal during throttling nor bypasses limits to refresh it.
 
-When PR #74 is integrated, rerun the held complete/reject/fail and heartbeat teardown cases together with immediate leave: no retry may follow leave, and leave must follow the settled sent decision. This branch does not change leave behavior.
+PR #74 is now included as a dependency. Cleanup uses its own bounded request outside the retry gate; it is allowed after Stop even while the cooldown is active. Combined tests require exactly one final DELETE for a known identity and no subsequent work retry. The existing held complete/reject/fail and heartbeat teardown tests also run together with leave.
 
 ## Validation
 
@@ -45,3 +45,9 @@ When PR #74 is integrated, rerun the held complete/reject/fail and heartbeat tea
 - `pnpm exec vitest run packages/runner/test/island-backoff.test.ts packages/runner/test/island-retry-requests.test.ts packages/runner/test/island-cancel.test.ts packages/runner/test/island.test.ts packages/runner/test/island-page.test.ts`: **5 files, 138 tests passed** (31.42 s). All retry-budget tests use controlled clocks, not real 120-second sleeps.
 - `pnpm typecheck` and `git diff --check`: passed.
 - Browser integration agent reported **3 real cross-origin Chromium/Phoenix checks passed** (21.3 s): actual limiter 429 then successful join after the exposed delay, exactly one join callback/no GPU, Stop during actual cooldown without a retry, and readable capacity-503 marker/delay. The new `tests/e2e/island-backoff-wire.spec.ts` also provides an optional combined-leave mode for later integration. No production deployment or real GPU claim follows from these checks.
+
+## Combined leave validation and PR dependency
+
+Local integration with PR74 passed 148 client tests, 124 targeted coordinator tests, typecheck and all three real browser/coordinator checks with `BL_EXPECT_ISLAND_LEAVE=1`. The source runtime and retry test fixture match that integrated tree. The only behavioral-test adjustment permits and requires immediate cleanup after Stop while still forbidding another work attempt. It also checks cleanup bypasses the active cooldown. No product repair was needed. PR83 is based on `codex/island-leave`; review its diff against that base, and merge the dependency first if later authorized. Neither PR is merged by this work.
+
+The stacked source branch independently reran all five client suites: 148 tests passed (38.15 seconds); typecheck passed.

@@ -26,6 +26,7 @@ function setup(target: string, options: { status?: number; stop?: AbortControlle
       options.stop?.abort("stop during refusal");
       return refused(options.status);
     }
+    if (key === "DELETE /api/islands/isl") return new Response(null, { status: 204 });
     if (key === "POST /api/islands") return json({ id: "isl", token: "secret" });
     if (key === "POST /api/next") {
       if (gaveTask) return json({ kind: "idle" });
@@ -72,6 +73,8 @@ describe("runIsland retries complete HTTP requests without redoing work", () => 
       expect(attempts[1].init.signal).toBeUndefined();
     }
     expect(run).toHaveBeenCalledTimes(mode === "reject" ? 0 : 1);
+    expect(seen.at(-1)?.key).toBe("DELETE /api/islands/isl");
+    expect(seen.filter((request) => request.key.startsWith("DELETE"))).toHaveLength(1);
   });
 
   it.each(paths)("Stop after refused %s prevents another attempt", async (path) => {
@@ -82,7 +85,8 @@ describe("runIsland retries complete HTTP requests without redoing work", () => 
     expect(await promise).toBe(0);
     expect(seen.filter((request) => request.key === path)).toHaveLength(1);
     const at = seen.findIndex((request) => request.key === path);
-    expect(seen.slice(at + 1)).toEqual([]);
+    expect(seen.slice(at + 1).map((request) => request.key)).toEqual(path === "POST /api/islands" ? [] : ["DELETE /api/islands/isl"]);
+    if (path !== "POST /api/islands") expect(seen.at(-1)?.at).toBe(seen[at].at); // leave bypasses the still-active retry cooldown
   });
 
   it.each(paths)("Stop during the %s backoff wait wakes immediately", async (path) => {
