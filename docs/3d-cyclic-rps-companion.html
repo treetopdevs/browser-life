@@ -312,7 +312,7 @@ footer p { margin: 0 0 8px; }
       <h3><span class="n">Q2</span>Does the kernel host it?</h3>
       <p><b>Plain.</b> Our real simulation is a thin slab of living cells lit from above. It has no swap button, only a <code>spread</code> knob that blurs matter sideways. Add a predation rule and turn that knob: does living together collapse somewhere along it?</p>
       <p><b>Technical.</b> Slab 128 × 128 × 4, a type and a beats-mask in each lineage, a kill in the react pass. Outcome rows A1 to A11 along <code>spread</code>. The kernel has no exchange rate, so no <i>M</i><sub>c</sub> is measured: the check is qualitative. A pilot (Gate 0) comes first, and the scratch evidence expects the plan's own substrate to fail it.</p>
-      <p class="state"><b>Where it stands.</b> The registered pilot stopped (GATE-0-STOP: too few mixing levels), so the kill is not built into the kernel and the cliff test has not run. Two explorations under amendments tried the kill anyway; in the larger world the vacancy kill kept the cycle going on 2 of 3 seeds (section 4).</p>
+      <p class="state"><b>Where it stands.</b> The registered pilot stopped (GATE-0-STOP: too few mixing levels), and the cliff test has not run. Amendment 3 now implements the vacancy rule in the real CPU/GPU kernels; its transfer validation passed (details below). Two explorations under amendments tried the kill anyway; in the larger world the vacancy kill kept the cycle going on 2 of 3 seeds (section 4).</p>
     </div>
     <div class="card">
       <h3><span class="n">Q3</span>Does the cycle grow?</h3>
@@ -703,7 +703,13 @@ footer p { margin: 0 0 8px; }
 </div>
 <!-- END result pictures -->
 
-  <h3 class="group">Q2 · the kernel · not run</h3>
+  <article class="card" id="transfer-3">
+    <h3>Amendment 3 · moving the vacancy rule into the real kernel</h3>
+    <p><b>TRANSFER-PASS · engineering validation, 25 October.</b> The smallest test asks whether the real simulation reproduces the prototype exactly. Mutation stays off, spread stays 8, and no ecological threshold is relaxed.</p>
+    <p>The comparison covers full cell state, canonical genomes, light/heat and every accounting total, first in tiny worlds and then at 256 × 256 × 4 through a 6,000-step burn-in and 2,000-step replay. The original 200,000-step explorations and their animations above remain unchanged.</p>
+    <p>All nine replay cases matched, the targeted boundary fixtures passed, and all 43 legacy CPU/GPU goldens retained their hashes. This supports a new held-out replication; it does not demonstrate evolution, a mobility cliff or a survival advantage over the controls. The registered pilot still stopped. <a href="3d-cyclic-rps-plan-2026-10-23.md">Plan and transfer record</a>.</p>
+  </article>
+  <h3 class="group">Q2 · registered kernel experiments · not run</h3>
   <div class="slots">
     <article class="slot" id="slot-meter" data-slot="meter" data-state="empty">
       <header><div><h4>Mobility meter</h4><p class="where">Q2 · M3m</p></div><span class="stat" data-role="status">Not yet run</span></header>
@@ -1309,7 +1315,7 @@ footer p { margin: 0 0 8px; }
       <span class="tag plain">Scratch, not a result</span>
       <h3>Removal acts as replacement</h3>
       <p>A shader-text prototype of the kill (128 × 128 × 4, not bit-checked against a CPU twin) kept all three labels for 100,000 steps without the kill, while every killing rate tried (32, 128, 512) had lost a founding label by step 20,000, the last by step 3,000. The living fraction stayed above 98 % from step 4,000.</p>
-      <p class="state"><b>Registered.</b> The plan's own substrate (S0) is expected to fail Gate 0. Nothing is built for the kernel until a rung does not.</p>
+      <p class="state"><b>Registered.</b> The plan's own substrate (S0) is expected to fail Gate 0. That registered gate remains stopped. The separately authorized Amendment 3 transfers only the vacancy rule for engineering validation.</p>
       <p class="state"><b>Then.</b> S0 did fail Gate 0, but on its mixing levels, before any kill ran. In the explorations the removal kill made a cyclic film in short screens and lost a kind on every seed over 200,000 steps in the larger world.</p>
     </div>
     <div class="card">

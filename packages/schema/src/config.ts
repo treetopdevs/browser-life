@@ -23,6 +23,11 @@ export const METRICS_VERSION = 2;
 export type LightMode = "uniform" | "gradient" | "patches" | "sweep";
 
 export interface WorldConfig {
+  /** Opt-in vacancy predation, Amendment 3. All four keys together; mutation disabled. */
+  rpsTypes?: number;
+  rpsRate?: number;
+  rpsMin?: number;
+  rpsKill?: "vacancy";
   ruleVersion: number;
   seed: number;
   /** One tile is an independent torus; tiles let many small worlds share one dispatch. */
@@ -752,6 +757,7 @@ export function validateConfig(c: WorldConfig): string[] {
   errs.push(...validateCells(c));
   errs.push(...validateGenes(c));
   errs.push(...validateSlab(c));
+  errs.push(...validateRps(c));
   return errs;
 }
 
@@ -873,4 +879,22 @@ export function maxLesionRadius(c: WorldConfig): number {
 
 export function clampLesionRadius(c: WorldConfig, r: number): number {
   return Math.max(0, Math.min(Math.floor(r), maxLesionRadius(c)));
+}
+
+/** Narrow vacancy-only transfer: mutation operators require a later amendment. */
+export function validateRps(c: WorldConfig): string[] {
+  const extra = c as WorldConfig & { rpsFlip?: unknown; rpsEdge?: unknown };
+  const errors: string[] = [];
+  if (extra.rpsFlip !== undefined || extra.rpsEdge !== undefined) errors.push("rpsFlip and rpsEdge are unsupported in the vacancy transfer");
+  const keys = [c.rpsTypes, c.rpsRate, c.rpsMin, c.rpsKill];
+  if (keys.every(v => v === undefined)) return errors;
+  if (keys.some(v => v === undefined)) errors.push("rpsTypes, rpsRate, rpsMin and rpsKill are set together");
+  if (!isSlab(c)) errors.push("RPS requires a slab");
+  if (c.mutRate !== 0) errors.push("RPS transfer requires mutRate 0");
+  if (c.rpsKill !== "vacancy") errors.push("rpsKill must be vacancy");
+  for (const [key, max] of [["rpsTypes", 8], ["rpsRate", 16384], ["rpsMin", 255]] as const) {
+    const v = c[key], min = key === "rpsTypes" ? 3 : key === "rpsMin" ? 1 : 0;
+    if (typeof v !== "number" || !Number.isInteger(v) || v < min || v > max) errors.push(`${key} must be an integer in ${min}..${max}`);
+  }
+  return errors;
 }
