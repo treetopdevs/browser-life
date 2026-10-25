@@ -766,3 +766,16 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 * Docs: https://hexdocs.pm/phoenix
 * Forum: https://elixirforum.com/c/phoenix-forum
 * Source: https://github.com/phoenixframework/phoenix
+
+## Graceful island leave
+
+A current island client unregisters when it stops or reaches its task limit. It waits for any already-sent completion/rejection/failure decision, then makes one independently bounded cleanup request. If leave cannot be confirmed within two seconds (including older coordinators without this route), unfinished leases still expire normally.
+
+`DELETE /api/islands/:id?island=:id` uses that island's bearer token. A successful response is 204: pending run attempts are abandoned and immediately requeued; pending verification attempts are abandoned without discarding the completed run. Accepted results remain accepted. Duplicate leave for an absent id is a harmless 204. A wrong token for a live island returns 401; mismatched path/query ids return 403. Active rows disappear, while adapter-only provenance remains for retained attempt history.
+
+```sh
+curl -X DELETE -H "Authorization: Bearer $ISLAND_TOKEN" \
+  "$COORDINATOR/api/islands/$ISLAND_ID?island=$ISLAND_ID"
+```
+
+Unknown-id retries do not allocate per-island rate-limit buckets. Authenticated live identities retain their segment budget, and the configured coarse address ceiling still applies. See [the lifecycle and validation record](../../docs/island-leave-2026-10-24.md).

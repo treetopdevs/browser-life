@@ -4,6 +4,7 @@ import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
 import type { FamilyEvent, FamilySummary, FamilyView, FirstsEntry, FirstsRule, FirstsSummary, NextUpItem } from "@bl/metrics";
 import type { KeptPond } from "./pond-play.ts";
+import type { ShellCount } from "./shell.ts";
 import type { SeriesFields } from "./naturalist-series.ts";
 
 export interface RunManifest {
@@ -179,6 +180,8 @@ export interface PondAwaitMsg {
   suggested: number[];
   /** Each term's value per pond; a pond whose "mass" is 0 is empty and cannot donate. */
   terms: Record<PondTerm, number[]>;
+  /** Display-only counts from this survey’s pre-cycle state; null in worlds without a shell. */
+  shells: ShellCount[] | null;
   /**
    * The score `suggested` was ranked by: the dial's latest setting for this cycle (`PressureMsg`), else `score`. A cycle that waits
    * is posted again, with the same `step`, when the dial or Keep changes: the new survey replaces the old.
