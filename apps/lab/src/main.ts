@@ -1,4 +1,4 @@
-import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, pondScoreTerms, sunError, sunLight, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, sunError, sunLight, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, PressureMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { donorsWithKeep, type KeptPond } from "./pond-play.ts";
@@ -11,6 +11,7 @@ import type { HandEntry } from "./naturalist.ts";
 import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, tiedAtZero, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, WEATHER, byId, familyOf, weatherDoes, weatherLevel } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
+import { rankOrder, rankValues } from "./pond-ranking.ts";
 import { fmtShare } from "./shell.ts";
 import "./theme.ts";
 import { track } from "./analytics.ts";
@@ -1161,25 +1162,19 @@ const termSel = $<HTMLSelectElement>("breeder-term");
 /** The lab can let a person choose donors for the arms whose cycle chooses them. */
 const takesDonors = (c: WorldConfig | null) => !!c && c.pondPeriod !== undefined && (c.pondArm === "scaf" || c.pondArm === "rand" || c.pondArm === "breed");
 
-/** Each pond's value of `key` at the waiting boundary. Speed is the motility term per unit of bound mass, in cells per 1,000 steps. */
-function rankValues(a: PondAwaitMsg, key: RankKey): number[] {
-  const score = a.ruleScore ?? a.score;
-  if (key === "score") return score === null ? a.terms.mass : (() => { const t = pondScoreTerms(score).map((term) => a.terms[term]); return t.length === 1 ? t[0] : worstRanks(t); })();
-  if (key === "speed") return a.terms.drive.map((d, p) => (a.terms.mass[p] > 0 ? ((d / a.terms.mass[p]) * 1000) / 64 : 0));
-  return a.terms[key];
-}
-/** Occupied ponds from the best value of `key` down; equal values by bound mass, then by index. */
-function rankOrder(a: PondAwaitMsg, key: RankKey): number[] {
-  const v = rankValues(a, key), mass = a.terms.mass;
-  return mass.map((_, p) => p).filter((p) => mass[p] > 0).sort((x, y) => v[y] - v[x] || mass[y] - mass[x] || x - y);
-}
-const showValue = (key: RankKey, v: number) => (key === "body" ? (v / 256).toFixed(1) : key === "speed" ? v.toFixed(1) : fmt(v));
+const showValue = (key: RankKey, v: number) => (key === "body" ? (v / 256).toFixed(1) : key === "speed" ? v.toFixed(1) : key === "shell" ? fmtShare(v) : fmt(v));
 /** The hover line's account of a pond while a cycle waits. */
 function pondReadout(pond: number): string {
   const a = awaiting;
   if (!a) return "";
   if (a.terms.mass[pond] === 0) return " · empty";
-  return ` · speed ${showValue("speed", rankValues(a, "speed")[pond])} · seed ${fmt(a.terms.seed[pond])} · body ${showValue("body", a.terms.body[pond])} · mass ${fmt(a.terms.mass[pond])}`;
+  return `${shellReadout(a, pond)} · speed ${showValue("speed", rankValues(a, "speed")[pond])} · seed ${fmt(a.terms.seed[pond])} · body ${showValue("body", a.terms.body[pond])} · mass ${fmt(a.terms.mass[pond])}`;
+}
+
+/** Counts keep a high share in a small pond legible; eligibility still follows bound mass. */
+function shellReadout(a: PondAwaitMsg, p: number): string {
+  const c = a.shells?.[p];
+  return c ? ` · shells ${c.living ? fmtShare(c.wearing / c.living * 100) : "no living cells"} (${c.wearing.toLocaleString()} of ${c.living.toLocaleString()} living cells)` : "";
 }
 
 function resetBreeder() {
@@ -1228,7 +1223,7 @@ function onPondAwait(m: PondAwaitMsg) {
   openPick(m);
 }
 /** What the ponds can be ranked by while cycle `a` waits: the rule's score first, when it ranks by one. */
-const rankKeys = (a: PondAwaitMsg): RankKey[] => [...((a.ruleScore ?? a.score) === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
+const rankKeys = (a: PondAwaitMsg): RankKey[] => [...((a.ruleScore ?? a.score) === null ? [] : ["score" as const]), "speed", ...(a.shells ? ["shell" as const] : []), "seed", "body", "mass", "drive", "reach"];
 const rankOption = (a: PondAwaitMsg, k: RankKey) => (k === "score" ? scoreLabel(a.ruleScore ?? a.score!) : RANK_LABELS[k]);
 /** A refreshed survey may rank by another score (the dial moved): the menu's "rule's score" names the new one. */
 function syncRankOptions(a: PondAwaitMsg) {
@@ -1337,6 +1332,12 @@ function syncPicks() {
     aside.textContent = ` ${tied}`;
     call.append(aside);
   }
+  if (key === "shell") {
+    const note = document.createElement("span");
+    note.className = "breeder-shell-note breeder-tied";
+    note.textContent = " Shells ranks by the share of living cells holding enough membrane now, before this cycle. Equal shares use bound mass, then pond number. It is no promise of surviving the next wound. Choose Top to use these donors; the rule and Auto-breed keep their own choices.";
+    call.append(note);
+  }
   // Say what Breed will do before it is pressed: it cannot be undone. While it is in flight, say that instead.
   $("breed-bar-call").textContent = breeding !== null
     ? breedSlow ? `Still applying cycle ${a.cycle}. The lab is waiting for the GPU; a failure will show on the field.` : `Applying cycle ${a.cycle}.`
@@ -1356,8 +1357,9 @@ function syncPicks() {
   const values = rankValues(a, key);
   $("breeder-list").replaceChildren(...picks.map((p) => {
     const li = document.createElement("li");
-    li.textContent = `${p} #${rank.get(p)} · ${showValue(key, values[p])}`;
-    li.setAttribute("aria-label", `Pond ${p}, rank ${rank.get(p)}, ${RANK_LABELS[key].toLowerCase()} ${showValue(key, values[p])}`);
+    const detail = key === "shell" ? shellReadout(a, p) : ` · ${showValue(key, values[p])}`;
+    li.textContent = `${p} #${rank.get(p)}${detail}`;
+    li.setAttribute("aria-label", `Pond ${p}, rank ${rank.get(p)}, ${RANK_LABELS[key].toLowerCase()}${detail}`);
     return li;
   }));
   drawPondOverlay();
