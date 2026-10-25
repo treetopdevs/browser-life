@@ -1,0 +1,531 @@
+{
+  "scope": "64 v1 scientific cases; geometric mass only, not remnant topology, collateral damage, or paired dose tolerance",
+  "cases": [
+    {
+      "id": "science-mutant-2026102401",
+      "source_sha256": "c2a494072a093d790aaf172e6d615dda08e32076724cd591043d10d1e69d4393",
+      "recovered": true,
+      "dose": 0.2752179327521793,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102402",
+      "source_sha256": "b48eb30f1a795e7e7f07bd0feaa5767322bc920a47db9cf17cf7109d331f5ad2",
+      "recovered": true,
+      "dose": 0.2807858169621466,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102403",
+      "source_sha256": "75d391fd59d10c188049e7df31f4a07121637380b6697863294894069addcb2c",
+      "recovered": true,
+      "dose": 0.27758872143898883,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102404",
+      "source_sha256": "14a1952dc88ea3c66fb7ad89edd03bbdacac5e1135f549e0b2058c859a2fa567",
+      "recovered": false,
+      "dose": 0.5794436586515794,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102405",
+      "source_sha256": "d4c8964430888ff35ac054a0555dc8ebbf305d33a3ed25ed7c41e26cd5e31000",
+      "recovered": true,
+      "dose": 0.29131455399061035,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102406",
+      "source_sha256": "103563fee334f1778e75fc678abc227b9e31842a9525e48f6f87dc14203aa8ed",
+      "recovered": true,
+      "dose": 0.26514373716632444,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102407",
+      "source_sha256": "64252052e09587deed0888a74f23d596e87698192d9840f0135bb0ec3abc35d6",
+      "recovered": false,
+      "dose": 0.5577830188679245,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102408",
+      "source_sha256": "944d419a11e8ef7e18ae04e92b487d1ad3f585d2d669ff523450d7bf768f9092",
+      "recovered": true,
+      "dose": 0.300253807106599,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102409",
+      "source_sha256": "d41611d9b213a97d16e9e758521d7f09ec29d9951ef6d5c4956c1fbed499019c",
+      "recovered": false,
+      "dose": 0.5920074349442379,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102410",
+      "source_sha256": "ff957b150c0510e67de2f266bb8e205226838b6b39c9354eae32c7c1ca809f59",
+      "recovered": true,
+      "dose": 0.38164621676891614,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102411",
+      "source_sha256": "82ebfe04afbdc12de13b5aeaa04cfd92a6c7b04d426df3d89e0dda27b68f3eb0",
+      "recovered": true,
+      "dose": 0.28640529531568226,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102412",
+      "source_sha256": "7739ffeb29eff260d9d6128ccc7f31860aecd8d58426055285ba3d2875ed672c",
+      "recovered": true,
+      "dose": 0.292484076433121,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102413",
+      "source_sha256": "eb9ea0cdf467293435adb8d7c1073349d9ce6d419a638935dec3a9986e40954b",
+      "recovered": true,
+      "dose": 0.3697798025816249,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102414",
+      "source_sha256": "17ec1ada06926a90e6a0d735135bd61acf71395c23f58ab5447be5865e1d8ca1",
+      "recovered": true,
+      "dose": 0.3027831094049904,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102415",
+      "source_sha256": "4c763760a2101a666bdd5f90a2239df79c2b3f44c96440e781aab1eb8db8a3cf",
+      "recovered": true,
+      "dose": 0.3223262690980779,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102416",
+      "source_sha256": "bad80660dbb0844bf9f51d46dc146dd6b1086db95805d775e76719890a05ddc5",
+      "recovered": true,
+      "dose": 0.3700729927007299,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102417",
+      "source_sha256": "1115daa965d8530b619a63ad6d0ea3552090317fb4cfed77d3e1753df0c70b71",
+      "recovered": true,
+      "dose": 0.27934392619169657,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102418",
+      "source_sha256": "e9c7fcf03f81c66ebe283c31863b7dbe0afd5c0ae6afb9c341bbf27f040df448",
+      "recovered": true,
+      "dose": 0.439712673165726,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102419",
+      "source_sha256": "58dc29e2d9b1eed0d07639899a6ab49930e084dda7a5e96d181f7ed6dd124f74",
+      "recovered": true,
+      "dose": 0.26712161832805265,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102420",
+      "source_sha256": "59f485447b6ebca1dff95d0afdf31a5a4625445fa74bc50f163c3fd988077b6d",
+      "recovered": true,
+      "dose": 0.33090909090909093,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102421",
+      "source_sha256": "e5cc511b771fe9278d7c258df8a92431bfa82b7256c9b12ba2441b611a1ac1a8",
+      "recovered": true,
+      "dose": 0.40269101393560786,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102422",
+      "source_sha256": "a2e8364fe5d3f1471608f9863d3eced656efff911ac49d229696e47c8f0d9c6b",
+      "recovered": true,
+      "dose": 0.2920741121976325,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102423",
+      "source_sha256": "c6b1b3c4f09f6ffafc03cd1cee64510ff5cc19c87255feea66ea5656e33d0569",
+      "recovered": false,
+      "dose": 0.585524784733535,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102424",
+      "source_sha256": "a851dcd398530a19b74c8a6bff441b161579ddc50a00285155b7132b41645ffb",
+      "recovered": true,
+      "dose": 0.4196852360729453,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102425",
+      "source_sha256": "5ee3fd8dad5843c05c3b069ef200e3b085540c9fc03a91ad0f800ac4e2c6204b",
+      "recovered": true,
+      "dose": 0.37615859938208035,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102426",
+      "source_sha256": "d168473c8270632cea03da0b3b011c438a37aeb03b0aca9b9fb83783f3a908ce",
+      "recovered": true,
+      "dose": 0.3576678098971093,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102427",
+      "source_sha256": "582cc4b16870a62c70cda767db50009d0ea4188d4067e7d2f67deb8023f25e9f",
+      "recovered": true,
+      "dose": 0.4243455497382199,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102428",
+      "source_sha256": "5f535b24ccbe697c41428ee5bda2f63dc47b70d2955e0a86ea9a45da95ed7b88",
+      "recovered": true,
+      "dose": 0.35208070617906684,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102429",
+      "source_sha256": "a45e511fb0f03020b702440a24164faaa9fb7a5e0bc3434e5447b0ea7c961afc",
+      "recovered": true,
+      "dose": 0.28286558345642543,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102430",
+      "source_sha256": "f2565fe58ecd525eb77078a694e34e4dacf3c31797f9ab0a751f7a5a8814dd32",
+      "recovered": true,
+      "dose": 0.3001968503937008,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102431",
+      "source_sha256": "33c297e39b93a5d2895b7a98f5216569db5b62b030966514944c792754943525",
+      "recovered": true,
+      "dose": 0.2833850931677019,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-mutant-2026102432",
+      "source_sha256": "0d642d7499819649f5fefb0bc2c358741ccc00d6a8c3680d51062e2d4096cd9d",
+      "recovered": true,
+      "dose": 0.28928225024248305,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102401",
+      "source_sha256": "e8a66478196f329960210dc91a54882ad2f498668483f43755cc752f8d7f07d0",
+      "recovered": true,
+      "dose": 0.35540241201082945,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102402",
+      "source_sha256": "82000f373f823ae1874892498a3bea2a942b85adef5eb1a229732b6fec133196",
+      "recovered": true,
+      "dose": 0.3130952380952381,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102403",
+      "source_sha256": "0701b986cc805187f6520f68fc8758074ede28ac7e6a78d8cf712b3768ad404f",
+      "recovered": false,
+      "dose": 0.578387325608891,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102404",
+      "source_sha256": "12037f75a2244d855b50e4dcd1f5d6c948abce9159f26c27d8d0b4532266b531",
+      "recovered": true,
+      "dose": 0.2564166459008223,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102405",
+      "source_sha256": "c8692e017b25b48504aa23b41d9e0bfb68e0c2174f61dcab2dfa08c571d33333",
+      "recovered": true,
+      "dose": 0.368558042686101,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102406",
+      "source_sha256": "d18447bd9e390cac0a417efafb8d6c02cb873791ac0fee8daa20de9f859ee85b",
+      "recovered": true,
+      "dose": 0.42890625,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102407",
+      "source_sha256": "79bab2a536c62a99f2780af6207b4e4802d13d214f19cdfa873004dca217a72b",
+      "recovered": true,
+      "dose": 0.3249741468459152,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102408",
+      "source_sha256": "80570dd50234dc0754c37f680ff3294ef45ef43744da61078d1ddad1582b75fe",
+      "recovered": true,
+      "dose": 0.3355506282335551,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102409",
+      "source_sha256": "4e431a4a12a0c2129d9d1b557b5b886fc6153622ba06fb8d0f02d31579ca95af",
+      "recovered": true,
+      "dose": 0.36521102707977554,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102410",
+      "source_sha256": "cee12346b80450b935a1212f9f6ad1c2029091fb8a56590c445ff2bba6b27acb",
+      "recovered": true,
+      "dose": 0.4106974552309142,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102411",
+      "source_sha256": "370dd2014b8046f4435dc997a45f6cdcb08e491afb399b9d42dd8b372334a90f",
+      "recovered": true,
+      "dose": 0.3057726241492312,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102412",
+      "source_sha256": "073ff1ebade0bba02b8c29a3479e24389b3044555cf695c81fe17cd1f49a1332",
+      "recovered": true,
+      "dose": 0.2698249227600412,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102413",
+      "source_sha256": "476e48ad547c880eb6b54a647491d57a34fd8978a9dd94cf26755007c7d4d222",
+      "recovered": true,
+      "dose": 0.35294117647058826,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102414",
+      "source_sha256": "1d401e83b03a4770fddb2e2236bb4acd7ff158eb86efdfaced97a4e21c4d1265",
+      "recovered": true,
+      "dose": 0.3347931873479319,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102415",
+      "source_sha256": "26ac867e156bf48d181bb3a1e5fe1e068ea1daa9cebd54c69d3f315b2b318aba",
+      "recovered": true,
+      "dose": 0.3392728148326511,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102416",
+      "source_sha256": "b64fc2000dc935f3ad52f81cdacde723943b4e2f0b954ab8762a3b5129b13cf1",
+      "recovered": true,
+      "dose": 0.3250373320059731,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102417",
+      "source_sha256": "74c36b778ca06fa6e6e3e5a5047754942d988a14e225cba8dc6a1ab289134f5e",
+      "recovered": true,
+      "dose": 0.2566074002883229,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102418",
+      "source_sha256": "98dd2fd33b8b0265c14cd816abb3be1f917039de8dbdd8edf871188873120f71",
+      "recovered": true,
+      "dose": 0.3741935483870968,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102419",
+      "source_sha256": "034e7fccd026f5bb590c780cb3ad18627231d08fe051eb3245c9dc1de02c3220",
+      "recovered": false,
+      "dose": 0.5519738378883439,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102420",
+      "source_sha256": "fb96f09a74fde189153fb1640da48d73ff07efe8798f798a3f90140e7f4c5957",
+      "recovered": false,
+      "dose": 0.5652900453568871,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102421",
+      "source_sha256": "769cd455fb2ce0706cfb5f551b739ae65277cb6879195a3a3da093a487e7edbd",
+      "recovered": true,
+      "dose": 0.26350851221317545,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102422",
+      "source_sha256": "a525a3f7e51e674672580a72d6d220dd41fea876c6267b84b20aaa8471a284e7",
+      "recovered": true,
+      "dose": 0.3750327825858904,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102423",
+      "source_sha256": "5d2c02ae10796c141f8d00d66e0ca6913e6140c162953d4dac84a1984c0d20ba",
+      "recovered": true,
+      "dose": 0.3352657004830918,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102424",
+      "source_sha256": "b96a9052d464cf9419f13328ea54b023c21925c55b90ce960c97499d531d1b95",
+      "recovered": true,
+      "dose": 0.35205078125,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102425",
+      "source_sha256": "716c3d52e44a10b22e68c13f62241c18786d21a8681628aee3c3aa35e13b3b97",
+      "recovered": true,
+      "dose": 0.3875226507895418,
+      "fixed_center_40": true,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102426",
+      "source_sha256": "3bff7223b44ff21dcdb8f5d380e146c639bd8516c9243b3e3f559d9b0f9b9dab",
+      "recovered": false,
+      "dose": 0.5729142046797447,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102427",
+      "source_sha256": "46661ad1bbf59a93954543cf43fa556c5fdb2902951910c6288f6a213644d92c",
+      "recovered": true,
+      "dose": 0.29846938775510207,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102428",
+      "source_sha256": "a1cd59dd5c8f3034f91512820e8689dbe981767d6ef62c29e0d699a6f6447f01",
+      "recovered": true,
+      "dose": 0.30386740331491713,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102429",
+      "source_sha256": "cea697a983ce70bc187e4273803831cfb47b6517eccb1f8171c28fd3fa299a67",
+      "recovered": true,
+      "dose": 0.366674567433041,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102430",
+      "source_sha256": "37d90b5c1d38d204af711fc24986f000f0eb18e96a3006d72f90f5ce8d295f17",
+      "recovered": true,
+      "dose": 0.28473456946913894,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102431",
+      "source_sha256": "713ca6dcadaece613aa22d0bb7d616e03cafefdc188bbea960b5be0a7a372d80",
+      "recovered": true,
+      "dose": 0.29281210592686,
+      "fixed_center_40": false,
+      "target_center_40": true
+    },
+    {
+      "id": "science-parent-2026102432",
+      "source_sha256": "7d3f13331e214c2adc48e3c437faea3897b64cd64803bfad7dea1aac65ff8775",
+      "recovered": true,
+      "dose": 0.40436456996148906,
+      "fixed_center_40": true,
+      "target_center_40": true
+    }
+  ],
+  "fixed_center_40": 9,
+  "target_center_40": 64,
+  "success": {
+    "n": 56,
+    "min": 0.2564166459008223,
+    "median": 0.32500573942594413,
+    "max": 0.439712673165726
+  },
+  "failure": {
+    "n": 8,
+    "min": 0.5519738378883439,
+    "median": 0.5756507651443179,
+    "max": 0.5920074349442379
+  }
+}
