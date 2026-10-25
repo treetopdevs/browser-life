@@ -51,6 +51,8 @@ defmodule CoordinatorWeb.IslandLimit do
         conn
 
       {:error, retry_after_ms} ->
+        Coordinator.OperatorEvents.rate_refusal(kind)
+
         conn
         |> put_resp_header("retry-after", Integer.to_string(div(retry_after_ms + 999, 1000)))
         |> put_status(429)
