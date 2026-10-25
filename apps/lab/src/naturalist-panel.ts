@@ -114,7 +114,7 @@ interface Drawn {
   same: HTMLElement | null;
 }
 
-export function createNaturalistPanel(opts: { fetch?: typeof fetch; apply?: (entries: HandEntry[], world: number) => void; loading?: () => boolean } = {}) {
+export function createNaturalistPanel(opts: { fetch?: typeof fetch; apply?: (entries: HandEntry[], world: number, id: number) => void; loading?: () => boolean } = {}) {
   const root = document.getElementById("naturalist");
   const $ = (id: string) => document.getElementById(id);
   // The model asks once per preset, and again only after a failure (NaturalistModel.onLoaded).
@@ -302,13 +302,17 @@ export function createNaturalistPanel(opts: { fetch?: typeof fetch; apply?: (ent
       model.onCensus(m);
       schedule();
     },
-    onTouched(world: number, runId: string, step: number) {
-      model.onTouched(world, runId, step);
+    onTouched(world: number, runId: string, step: number, id?: number) {
+      model.onTouched(world, runId, step, id);
       schedule();
     },
     /** The lab refused or failed the hand edit a Try sent (the model ignores this unless a Try is waiting). */
-    onApplyRefused(reason: string, certain = true) {
-      model.onApplyRefused(reason, certain);
+    onApplyRefused(reason: string, id?: number) {
+      model.onApplyRefused(reason, id);
+      schedule();
+    },
+    onApplyUncertain(reason: string) {
+      model.onApplyUncertain(reason);
       schedule();
     },
     /** The world on screen has failed (a lost GPU, a failed execution), or the worker reported an error it did not handle. */

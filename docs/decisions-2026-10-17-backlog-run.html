@@ -492,26 +492,102 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Matching the brainstorm (the sun is the first letter, the scarcity dial), the defaults stay as built, and the switch makes the user&rsquo;s choice a single founding parameter rather than a code change.</dd>
 </dl>
 </article>
+<article id="d35">
+<h2><span>D-35</span>Resume from current main; validate measured wound severity before new trials</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906. Bring forward the reviewed recovery assay and its stopped 32-pair result as dependencies; preserve the original checkout and its local bundles.</dd>
+<dt>Decision</dt><dd>Implement the proposed severity selector and a zero-time feasibility CLI first. The threshold remains at least 30 of 32 saved pairs. A failed threshold ends this protocol before new scientific seeds. Do not soften topology or collateral limits merely to obtain feasible wounds.</dd>
+<dt>Review</dt><dd>Use available agy Gemini 4 Argon High for adversarial review, plus the repository-required read-only Sol 6.1 High before committing. Subagents own selector/tests and independent backlog inventory; the coordinator owns evidence loading, decision records and publication.</dd>
+<dt>Scope</dt><dd>This is one research slice, not completion of all app prototypes. It leaves simulation physics and the private shared-garden deployment policy unchanged.</dd>
+</dl></article>
+<article id="d36">
+<h2><span>D-36</span>Use the current backlog, not the frozen October 18 inventory</h2>
+<dl><dt>Evidence</dt><dd>Inventory checked against b3fab906: plans 001–006 are DONE; Gene v2, injuryShell, Pond keeper v3, bell v2, null-stone and sun work have landed. The old prototypes document is explicitly pinned to 5e7bda5c and is not current status.</dd>
+<dt>Next slices</dt><dd>After severity feasibility: Pond keeper v3b per-pond shell ranking; explicit island leave/release; operator refusal/pruning counters. Naturalist v3 needs a separate preregistration after the negative v2 result. Shared-garden opening and human playtests remain distinct product/operational decisions and evidence gaps.</dd>
+<dt>Sources</dt><dd><a href="pond-keeper-v3-2026-10-22.md">Keeper v3 deferred work</a>; <a href="island-cancel-2026-10-18.md">Island cancellation</a>; <a href="ops-dashboard-2026-10-18.md">Operator dashboard</a>; <a href="../deploy/README.md">Deployment safeguards</a>.</dd>
+</dl></article>
+<article id="d37"><h2><span>D-37</span>Feasibility passed; retain the next engineering gate</h2><dl>
+<dt>Evidence</dt><dd><a href="recovery-severity-2026-10-24/FEASIBILITY.md">All 32 saved pairs admit the prescribed lesion pair</a>. Zero-time CPU transformations only; no fresh scientific seeds or recovery outcomes.</dd>
+<dt>Decision</dt><dd>Publish this runnable feasibility prototype with its input/output hashes. Keep GPU equality, endpoint validation and the three-arm trial runner as explicit next work. A CPU geometric pass does not authorize a recovery claim.</dd>
+<dt>Repair</dt><dd>Publish success only after its digest, via atomic rename; refuse reused output directories and record runtime plus source revision/patch. Retain both engineering run attempts. Deno refreshed its lockfile workspace Vite range to match the dependency update already on current main; no new dependency version was selected here.</dd>
+</dl></article>
+<article id="d38">
+<h2><span>D-38</span>Offer shell share as a donor-picker ranking</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 deferred a per-pond shell ranking to v3b. Whole-world shell counts show a trend but cannot guide a donor choice.</dd>
+<dt>Decision</dt><dd>Count shell-wearing and living cells per pond from the held pre-cycle state. Offer Cells wearing a shell, ranked by share of living cells, with both counts visible. Preserve positive bound-mass eligibility and mass/index tie breaks. Top explicitly selects donors; the rule and Auto-breed keep their own choices.</dd>
+<dt>Why</dt><dd>This makes shells actionable without adding a score term, changing the physics, or changing checkpoint/session formats. A current membrane share is not a survival forecast. See <a href="pond-keeper-v3b-2026-10-24.md">the v3b plan and validation</a>.</dd>
+</dl>
+</article>
 <article id="d39"><h2><span>D-39</span>Make island Stop release work immediately</h2><dl>
 <dt>Base</dt><dd>Fresh worktree from origin/main b3fab906, separate from recovery feasibility and Pond Keeper. The explicit island-cancel follow-up remains unimplemented on that tip.</dd>
 <dt>Decision</dt><dd>Add authenticated DELETE /api/islands/:id with matching island query identity. Serialize authentication, pending-attempt abandonment and row removal in Queue. An accepted completion remains accepted; a released run returns to pending and a released verification remains done. Missing identities are retry-safe no-ops.</dd>
 <dt>Client</dt><dd>After local work and already-sent decisions settle, make one best-effort leave request with an independent two-second bound. Require 204 to confirm release. Old or unreachable coordinators retain lease-expiry fallback. Normal task-limit exit also unregisters; unknown join identities cannot be released.</dd>
 <dt>History</dt><dd>Removing the active row must not erase producer/verifier or garden device labels. Persist adapter-only history while referenced by retained attempts; retain no credentials and prune discarded history.</dd>
 </dl></article>
+<article id="d40"><h2><span>D-40</span>Close the feasibility review through the authorized fallback</h2><dl><dt>Review</dt><dd>Argon file access was unavailable in headless mode; its source-only request remains pending. Sonnet 5.5 High completed a tool-free source-packet review with no blockers.</dd><dt>Fixes</dt><dd>Validate original target component identity, make the seam fixture actually cross the boundary, preserve original errors during failure recording, and return a nonzero negative-gate code. All 24 focused tests pass; the final engineering rerun selects the same 32 pairs. No scientific gate changed.</dd></dl></article>
+<article id="d41"><h2><span>D-41</span>Close shell-ranking review with stronger compatibility evidence</h2><dl><dt>Review</dt><dd>Argon 4 High and Sonnet 5.5 High source-packet reviews both found no blockers. Their observations were checked against current source rather than blindly applied.</dd><dt>Fixes and evidence</dt><dd>Anchor pond indices to actual mass terms, preserve both scaffold and breed replay coverage, and explain tiny-pond percentages and rounded display. Existing openPick already resets stale ranking keys. All 17 focused tests and both replay cases pass; typecheck passes. The previous desktop/mobile/browser replay evidence still applies because behavior was unchanged.</dd></dl></article>
+<article id="d42"><h2><span>D-42</span>Argon feasibility review completed</h2><dl><dt>Outcome</dt><dd>The pending Argon 4 High source-packet review returned no blockers. Sonnet fallback findings had already been addressed. PR #72 is ready for review; no recovery experiment has been run by this feasibility slice.</dd></dl></article>
 <article id="d43"><h2><span>D-43</span>Fix leave's limiter edge and verify the actual wire path</h2><dl>
 <dt>Finding</dt><dd>Anonymous leave requests for missing identities must not allocate authenticated-island limiter buckets. Missing-id retries bypass that bucket while coarse address limits remain; Queue still rechecks a live identity atomically.</dd>
 <dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
 <dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
 </dl></article>
+<article id="d44">
+<h2><span>D-44</span>Count operator refusals and pruning with an explicit reset epoch</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The operator dashboard deferred refusal and pruning counts. Limits alone cannot explain refused requests or how often capacity removes idle islands.</dd>
+<dt>Decision</dt><dd>Add six fixed aggregate counters to authenticated status and the Limits panel. Count actual island-budget 429 decisions, Queue capacity refusals, and rows pruned by successful joins. A separate supervised owner gives atomic snapshots and increments; display its reset timestamp. Missing or malformed observations display unavailable.</dd>
+<dt>Why</dt><dd>This supplies the missing operational evidence without collecting caller identities or changing scheduling. Counters are volatile observations, not durable audit history. Owner restart resets the epoch; Queue and limiter restarts preserve it. A crash gap may lose an observation.</dd>
+<dt>Validation</dt><dd>Backend precommit: 559 passing tests; final affected suites: 28 passing. Browser suite: 30 passing; final counter-specific suite: 11 passing, including malformed epochs and mobile display. Argon 4 High found no blockers. Its owner-down HTTP, conditional download, failed-persistence and cleanup coverage suggestions were implemented; final backend precommit passes 561 tests.</dd>
+</dl>
+</article>
+<article id="d45">
+<h2><span>D-45</span>Make membrane visible without presenting it as guaranteed protection</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 explicitly deferred a membrane view. Composite mixes membrane with other material, making the available shell-related trait difficult to inspect.</dd>
+<dt>Decision</dt><dd>Append a ninth Membrane display mode and shortcut 9, preserving the original eight modes. Render membrane quantity alone with a clearly described brightness scale. Explain that wound protection depends on the world's configured shell rule; visible membrane is not a prediction of survival.</dd>
+<dt>Why</dt><dd>A dedicated view lets players inspect the trait already measured in the pond census. This changes display only: no physics, scoring, checkpoint or selection semantics.</dd>
+<dt>Validation</dt><dd>Four Chrome checks pass, including synthetic pixels, unchanged current and next-step state hashes, mode order and world replacement. Typecheck and build pass; desktop, night and mobile screenshots were inspected. Argon review assessed: fixed held/failed replacement legend restoration and modified numeric shortcuts. Rejected the zero-shell finding because configuration/load/import validation requires 1..65535. Five Chrome checks, typecheck and build pass after fixes; dispositions documented.</dd>
+</dl>
+</article>
+<article id="d46">
+<h2><span>D-46</span>Match each suggestion receipt to the action that requested it</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The naturalist suggestion implementation acknowledges that an unrelated brush edit can be mistaken for a pending Try. This can say a suggestion landed when a different action actually changed the world.</dd>
+<dt>Decision</dt><dd>Give each accepted Try a fresh request identity and echo it through live worker success and refusal messages. Settle the Try only for that identity and world/run. Untagged brush edits still stop baseline reading. Replay events carry no request identity; generic errors remain uncertain rather than claiming nothing happened.</dd>
+<dt>Why</dt><dd>The player needs an accurate receipt for the action they clicked. Transport metadata resolves the race without changing interventions, physics, scientific outcomes or saved sessions. Retries get fresh identities so delayed replies cannot settle a later attempt.</dd>
+<dt>Validation</dt><dd>55 model tests and 9 Chrome browser tests pass, covering unrelated brush and late replies, worker success/refusal identity, untagged replay, and the actual one-click, one-intervention flow. Typecheck passes. Argon source review found no blockers. Its low wording finding was fixed and tested: unsupported non-control suggestions are not labelled replay controls. Review assessed; ready for review.</dd>
+</dl>
+</article>
 <article id="d47">
 <h2><span>D-47</span>Island leave clears adversarial review</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
+</article>
+<article id="d48">
+<h2><span>D-48</span>Expose the existing island lease duration for local development and tests</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The island cancellation plan explicitly deferred BL_LEASE_MS. Queue already reads lease_ms with a ten-minute default, but runtime configuration cannot set it.</dd><dt>Decision</dt><dd>Add the environment setting using the existing positive-integer parser, rejecting zero, off and malformed values. Preserve the default and all reclaim behavior. Document its distinction from the discovery lease.</dd><dt>Why</dt><dd>Graceful leave handles normal stops; crashed or disconnected islands still rely on lease expiry. Development and integration tests need a deliberate way to exercise that fallback.</dd><dt>Validation</dt><dd>134 targeted runtime/configuration/Queue tests and the full 557-test backend precommit pass. No production configuration change is made. Argon 4 High found no blockers. Documentation alignment follow-ups were applied; no runtime behavior changed.</dd></dl>
+</article>
+<article id="d51">
+<h2><span>D-51</span>Finish the documented public-page metadata follow-ups</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The prototype inventory still identifies arbitrary missing-page analytics paths and stale sitemap dates.</dd><dt>Decision</dt><dd>Give the 404 page a fixed analytics path while preserving ordinary-route behavior and query scrubbing. Derive sitemap last-modified dates from page history rather than assigning the current date to unchanged pages.</dd><dt>Why</dt><dd>This closes explicit public-site follow-ups without changing page content, adding tracking or claiming a deployment.</dd><dt>Validation</dt><dd>Two unit tests and eight Chrome analytics/public-route/build checks pass, along with typecheck and production build. Tests intercept all requests; no analytics events leave the test browser. Argon4 High found no blockers; the existing referrer-policy limitation remains explicitly documented.</dd></dl>
+</article>
+<article id="d52">
+<h2><span>D-52</span>Expose collective food as an opt-in for the local garden launcher</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The collective-food mechanism exists, but bin/garden-dev always founds without it. The prototype inventory explicitly lists a local launcher option as unfinished.</dd><dt>Decision</dt><dd>Add a strict opt-in setting to local scratch founding, default off. Reject malformed settings before starting services. Preserve the existing collective threshold and all production/opening decisions.</dd><dt>Why</dt><dd>This makes the implemented feature accessible in local demonstrations without silently enabling it or weakening the collective rules.</dd><dt>Validation</dt><dd>Five launcher checks pass: default/off/on payloads, existing-garden reuse and early invalid-input rejection. Typecheck and shell syntax pass. No public garden or deployment is included. Argon4 High found no runtime blockers. Reuse coverage, environment isolation, atomic harness startup and timeout follow-ups are verified.</dd></dl>
+</article>
+<article id="d53">
+<h2><span>D-53</span>Close the naturalist panel interaction and layout checks</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The existing prototype inventory explicitly lacks page-level wound/drain suggestion clicks, a 375-pixel open-suggestion layout check and a Field notes design entry.</dd><dt>Decision</dt><dd>Exercise actual panel actions and the narrow layout with a clearly identified deterministic fixture where necessary. Keep scientific bell performance claims separate from UI behavior. Document the existing Field notes interaction contract without adding new product features.</dd><dt>Validation</dt><dd>All seven action/naturalist browser checks pass. Argon source findings addressed: panel/command containment, screenshot-only fixture labels and complete note captures, persistent live-region identity, both-theme post-click accessibility, unchanged unmeasured predictions, and exact step/matter session receipts. Final changed action-spec rerun, typecheck and diff checks pass; see the dated coverage note for results. No new scientific experiment or model call.</dd></dl>
 </article>
 <article id="d54">
 <h2><span>D-54</span>Back off only when the coordinator confirms refusal before application</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The runner stops on 429/503. Blind retries could duplicate a join, assignment or terminal decision after an ambiguous failure.</dd><dt>Decision</dt><dd>Mark only genuine pre-application island refusals with X-Island-Request-Applied: false and expose that marker plus Retry-After to browsers. Retry marked 429/503 at most four total attempts within a 120-second retry budget, respecting the full advertised delay and a jittered exponential floor. Share cooldown across island traffic and keep heartbeats single-flight and task-scoped.</dd><dt>Boundary</dt><dd>Unmarked responses, network failures and 409 retain conservative handling. A sent terminal request is still awaited; its refused-attempt backoff is cancelable. No GPU work, upload bytes or leases are regenerated. Lease preservation is best effort because the client has no authoritative expiry metadata.</dd><dt>Validation</dt><dd>138 focused client tests, 556 coordinator precommit tests and 17 final targeted HTTP tests pass. Three real Chrome/Phoenix cross-origin checks pass, plus typecheck. Tests cover exact request replay, parser/budget arithmetic, Stop races, heartbeat teardown and pre-application refusal state preservation. Argon review completed and all four findings were assessed: fix fail-wait Stop context, strengthen concurrent-gate and pending-heartbeat retry coverage, and correct the completion fixture with a successful control. After stacking leave, 152 client tests, 21 targeted HTTP tests and typecheck pass. Earlier counts describe their original runs. No production deployment.</dd></dl>
 </article>
-
 <article id="d57">
 <h2><span>D-57</span>Publish the retry and cleanup contract together</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>Combined tests exposed assumptions that Stop permits no HTTP requests, although reviewed island leave must send cleanup after Stop. Runtime code merged without conflict.</dd><dt>Decision</dt><dd>Stack PR83 on PR74 and publish exact assertions requiring one final DELETE for a known identity, no subsequent work retry, and cleanup outside the active cooldown. Keep leave's independent two-second bound and awaited sent terminal decision.</dd><dt>Evidence</dt><dd>Combined integration passed 148 client tests, 124 targeted backend tests, typecheck and three real cross-origin checks with immediate leave enabled. Source-branch validation is recorded in the retry note. Argon backoff review is assessed; the retry note records all four dispositions and the final 152-client/21-HTTP-test follow-up.</dd><dt>Boundary</dt><dd>This changes the PR dependency and tests, not the previously reviewed leave behavior. Neither PR is merged into main.</dd></dl>

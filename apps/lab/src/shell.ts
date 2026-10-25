@@ -2,7 +2,7 @@
 // least the shell's worth of membrane (the lab's name for polymer) at one census. A pure function of that census's own
 // snapshot, in the style of pond-play.ts: no DOM, no worker state, and nothing it returns enters the observers, a
 // checkpoint, the session file or any digest. The page paints it; a vitest holds it to the rule.
-import { CH, G, cellCount, type WorldConfig } from "@bl/schema";
+import { CH, G, cellCount, worldW, type WorldConfig } from "@bl/schema";
 
 /** The cells of one census that could weather a wound, and the living cells they are counted among. */
 export interface ShellCount {
@@ -41,4 +41,18 @@ export function shellCount(cfg: WorldConfig, cells: Uint32Array, genome: Uint32A
  */
 export function fmtShare(percent: number): string {
   return percent > 0 && percent < 0.05 ? "<0.1%" : `${percent.toFixed(1)}%`;
+}
+
+/** Display-only counts per tile from the held pre-cycle state; never used by the breeder's rule. */
+export function shellCountsByPond(cfg: WorldConfig, cells: Uint32Array, genome: Uint32Array): ShellCount[] | null {
+  if (cfg.injuryShell === undefined) return null;
+  const counts = Array.from({ length: cfg.tilesX * cfg.tilesY }, () => ({ wearing: 0, living: 0 }));
+  const n = cellCount(cfg), width = worldW(cfg);
+  for (let i = 0; i < n; i++) {
+    if ((genome[G.LIN_HI * n + i] | genome[G.LIN_LO * n + i]) === 0) continue;
+    const pond = Math.floor(Math.floor(i / width) / cfg.tileH) * cfg.tilesX + Math.floor((i % width) / cfg.tileW);
+    counts[pond].living++;
+    if (cells[CH.P * n + i] >= cfg.injuryShell) counts[pond].wearing++;
+  }
+  return counts;
 }
