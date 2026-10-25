@@ -582,6 +582,11 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The prototype inventory still identifies arbitrary missing-page analytics paths and stale sitemap dates.</dd><dt>Decision</dt><dd>Give the 404 page a fixed analytics path while preserving ordinary-route behavior and query scrubbing. Derive sitemap last-modified dates from page history rather than assigning the current date to unchanged pages.</dd><dt>Why</dt><dd>This closes explicit public-site follow-ups without changing page content, adding tracking or claiming a deployment.</dd><dt>Validation</dt><dd>Two unit tests and eight Chrome analytics/public-route/build checks pass, along with typecheck and production build. Tests intercept all requests; no analytics events leave the test browser. Argon4 High found no blockers; the existing referrer-policy limitation remains explicitly documented.</dd></dl>
 </article>
 
+<article id="d52">
+<h2><span>D-52</span>Expose collective food as an opt-in for the local garden launcher</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The collective-food mechanism exists, but bin/garden-dev always founds without it. The prototype inventory explicitly lists a local launcher option as unfinished.</dd><dt>Decision</dt><dd>Add a strict opt-in setting to local scratch founding, default off. Reject malformed settings before starting services. Preserve the existing collective threshold and all production/opening decisions.</dd><dt>Why</dt><dd>This makes the implemented feature accessible in local demonstrations without silently enabling it or weakening the collective rules.</dd><dt>Validation</dt><dd>Five launcher checks pass: default/off/on payloads, existing-garden reuse and early invalid-input rejection. Typecheck and shell syntax pass. No public garden or deployment is included. Argon4 High found no runtime blockers. Reuse coverage, environment isolation, atomic harness startup and timeout follow-ups are verified.</dd></dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>
