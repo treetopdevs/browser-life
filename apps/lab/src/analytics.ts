@@ -8,9 +8,10 @@ import { init, track as plausibleTrack } from "@plausible-analytics/tracker";
 const SOURCE_KEYS = new Set(["ref", "source", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]);
 
 /** The page without its fragment and without any query beyond the source keys. Anything unparseable is dropped, not sent. */
-function cleanUrl(raw: string): string | null {
+function cleanUrl(raw: string, notFound = false): string | null {
   try {
     const url = new URL(raw);
+    if (notFound) url.pathname = "/404";
     for (const key of [...url.searchParams.keys()]) if (!SOURCE_KEYS.has(key)) url.searchParams.delete(key);
     url.hash = "";
     return url.toString();
@@ -26,7 +27,8 @@ try {
     endpoint: "https://plausible.zographos.net/api/event",
     logging: false,
     transformRequest: (payload) => {
-      const u = cleanUrl(payload.u);
+      // The rendered page identifies a missing route; the address itself may contain private text.
+      const u = cleanUrl(payload.u, document.documentElement.dataset.analyticsPage === "404");
       if (!u) return null;
       const r = payload.r ? cleanUrl(payload.r) : null;
       return { ...payload, u, r };
