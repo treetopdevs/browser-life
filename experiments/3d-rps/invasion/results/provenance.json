@@ -1,0 +1,17 @@
+{
+  "manifestSha256": "36b0892bf1eb379f5f316d0ebfb0e4b7c70d289b9a6e7adbd4c8f340c91310e0",
+  "started": "2026-10-25T16:58:46.879Z",
+  "seeds": [
+    1101,
+    1102,
+    1103,
+    1104
+  ],
+  "markers": [
+    4,
+    5
+  ],
+  "burn": 6000,
+  "horizon": 10000,
+  "independentSeeds": 4
+}

@@ -1156,3 +1156,11 @@ checks, 10000 run steps, a final-persistence requirement and an initial predatio
 exposure gate. The engineering controls establish direct protection, neutral
 replay and predation-off equivalence. The result will distinguish competitive
 replacement from ecosystem survival; no automatic extension or mutation campaign.
+
+Amendment 4 completed: **SELECTION-LEAD**, 4/4 seeds under both IDs. All sixteen
+fixed-horizon runs and the twenty-checkpoint audit passed. Immune final-window
+ancestor-group share was 5.7–32.1%, versus 0–0.21% for neutral controls. All founding
+types persisted in both treatments; ecosystem survival improvement and spontaneous
+mutation-driven evolution remain unproven. See `experiments/3d-rps/invasion/RESULTS.md`
+and its committed readouts. No automatic extension; propose fresh-seed confirmation
+before a separate mutation amendment.
