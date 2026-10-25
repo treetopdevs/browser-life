@@ -1142,3 +1142,17 @@ inert-key equivalence and all 43 legacy CPU/GPU golden hashes. See
 review. The next proposal is held-out ecological replication at the fixed A2
 operating point, before considering mutable dominance. No new ecological
 replication, mutation campaign, merge or deployment is included in this slice.
+
+
+## 15. 2026-10-25: Amendment 4, one selectable advantage
+
+The user authorized changing the next question from another persistence sweep to
+a rare-invasion positive control. The original section 4.4 already predicts the
+immune clone: change type 0 to unused type 3 while keeping prey mask 2. No mutation
+operator is added. The paired neutral introduction changes only the lineage mark.
+
+`experiments/3d-rps/invasion/PLAN.md` fixes four independent seeds, two marker
+checks, 10000 run steps, a final-persistence requirement and an initial predation
+exposure gate. The engineering controls establish direct protection, neutral
+replay and predation-off equivalence. The result will distinguish competitive
+replacement from ecosystem survival; no automatic extension or mutation campaign.
