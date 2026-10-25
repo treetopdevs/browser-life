@@ -145,6 +145,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     assert %{"error" => _, "retryAfterMs" => ms} = json_response(c, 429)
     assert is_integer(ms) and ms > 0 and ms <= 3_600_000
     assert get_resp_header(c, "retry-after") == [Integer.to_string(div(ms + 999, 1000))]
+    assert get_resp_header(c, "x-island-request-applied") == ["false"]
     assert islands() == 2
   end
 
@@ -320,6 +321,12 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     acao = fn origin ->
       c = build_conn() |> put_req_header("origin", origin) |> options("/api/islands")
       assert c.status == 204
+
+      unless origin == "https://lab.example" and
+               Application.get_env(:coordinator, :cors_origins) != [] do
+        assert get_resp_header(c, "access-control-expose-headers") == []
+      end
+
       get_resp_header(c, "access-control-allow-origin")
     end
 
@@ -327,6 +334,25 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     assert c.status == 204
     assert get_resp_header(c, "access-control-allow-origin") == ["https://lab.example"]
     assert get_resp_header(c, "vary") == ["origin"]
+
+    assert get_resp_header(c, "access-control-expose-headers") == [
+             "retry-after, x-island-request-applied"
+           ]
+
+    assert get_resp_header(c, "x-island-request-applied") == []
+
+    set(:island_joins_per_address, 1)
+    success = build_conn() |> put_req_header("origin", "https://lab.example") |> join()
+    assert success.status == 200
+    assert get_resp_header(success, "x-island-request-applied") == []
+    refused = build_conn() |> put_req_header("origin", "https://lab.example") |> join()
+    assert refused.status == 429
+
+    assert get_resp_header(refused, "access-control-expose-headers") == [
+             "retry-after, x-island-request-applied"
+           ]
+
+    assert get_resp_header(refused, "x-island-request-applied") == ["false"]
 
     # Exact match only: no prefix, suffix, scheme, port, case or slash variant.
     for origin <- [
@@ -403,7 +429,9 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     for route <- routes do
       IslandLimiter.reset()
       refute hit.(route).status == 429, inspect(route)
-      assert hit.(route).status == 429, inspect(route)
+      refused = hit.(route)
+      assert refused.status == 429, inspect(route)
+      assert get_resp_header(refused, "x-island-request-applied") == ["false"]
     end
 
     IslandLimiter.reset()
@@ -424,6 +452,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     for _ <- 1..2, do: refute(download.(token).status == 429)
     c = download.(token)
     assert %{"retryAfterMs" => _} = json_response(c, 429)
+    assert get_resp_header(c, "x-island-request-applied") == ["false"]
 
     # One budget: the island's other segment requests are over it too.
     assert build_conn()
@@ -453,10 +482,118 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     assert %{"kind" => "run"} = build_conn() |> next(id, token) |> json_response(200)
     set(:max_islands, 1)
 
-    assert %{"error" => "the coordinator has no room for new islands"} =
-             build_conn() |> join() |> json_response(503)
+    before = :sys.get_state(Queue)
+    refused = build_conn() |> join()
 
+    assert %{"error" => "the coordinator has no room for new islands"} =
+             json_response(refused, 503)
+
+    assert get_resp_header(refused, "retry-after") == ["1"]
+    assert get_resp_header(refused, "x-island-request-applied") == ["false"]
+    assert :sys.get_state(Queue) == before
     assert islands() == 1
+  end
+
+  test "marked next and segment budget refusals cannot assign work or apply a decision" do
+    {:ok, 1} =
+      Queue.create_experiment(%{
+        "experiment" => "backoff",
+        "presetId" => "spots",
+        "conditions" => ["treatment"],
+        "seeds" => [1],
+        "steps" => 500,
+        "segmentSteps" => 500,
+        "censusEvery" => 100,
+        "verifyFraction" => 0.0
+      })
+
+    {id, token} = joined(build_conn())
+    set(:island_next_per_island, 1)
+    assert IslandLimiter.take(:next, id) == :ok
+    before = :sys.get_state(Queue)
+    refused = build_conn() |> next(id, token)
+    assert refused.status == 429
+    assert get_resp_header(refused, "x-island-request-applied") == ["false"]
+    assert :sys.get_state(Queue) == before
+    IslandLimiter.reset()
+    task = build_conn() |> next(id, token)
+    assert get_resp_header(task, "x-island-request-applied") == []
+    %{"segment" => %{"id" => segment}, "lease" => lease} = json_response(task, 200)
+    # Give this attempt its own staged artifact, so the complete payload below
+    # can actually finish it once the budget permits the request.
+    hash = "0123456789abcdef"
+    staged = Path.join(:sys.get_state(Queue).dir, "backoff-complete-checkpoint")
+    File.write!(staged, "checkpoint fixture")
+    assert :ok = Queue.publish_checkpoint(segment, id, lease, staged, hash, hash)
+    body = %{"lease" => lease, "kind" => "run", "endHash" => hash, "reason" => "test"}
+    set(:island_segment_requests_per_island, 1)
+    assert IslandLimiter.take(:segment, id) == :ok
+    before = :sys.get_state(Queue)
+
+    for action <- ["heartbeat", "complete", "reject", "fail"] do
+      path = "/api/segments/#{segment}/#{action}?island=#{id}"
+      refused = build_conn() |> authed(token) |> post(path, body)
+      assert refused.status == 429
+      assert get_resp_header(refused, "x-island-request-applied") == ["false"]
+      assert :sys.get_state(Queue) == before
+      unauthorized = build_conn() |> authed("wrong") |> post(path, body)
+      assert unauthorized.status == 401
+      assert get_resp_header(unauthorized, "x-island-request-applied") == []
+    end
+
+    for suffix <- ["checkpoint", "files/series.jsonl"] do
+      refused =
+        build_conn()
+        |> authed(token)
+        |> put_req_header("content-type", "application/octet-stream")
+        |> put("/api/segments/#{segment}/#{suffix}?island=#{id}&lease=#{lease}", "bytes")
+
+      assert refused.status == 429
+      assert get_resp_header(refused, "x-island-request-applied") == ["false"]
+      assert :sys.get_state(Queue) == before
+    end
+
+    # Positive control: exactly the previously refused completion now commits.
+    IslandLimiter.reset()
+
+    completed =
+      build_conn()
+      |> authed(token)
+      |> post("/api/segments/#{segment}/complete?island=#{id}", body)
+
+    assert completed.status == 200
+    assert get_resp_header(completed, "x-island-request-applied") == []
+    assert Queue.segment(segment).status == "done"
+  end
+
+  test "applied segment decisions and controller errors do not claim the request was unapplied" do
+    {:ok, 1} =
+      Queue.create_experiment(%{
+        "experiment" => "applied",
+        "presetId" => "spots",
+        "conditions" => ["treatment"],
+        "seeds" => [1],
+        "steps" => 500,
+        "segmentSteps" => 500,
+        "censusEvery" => 100
+      })
+
+    {id, token} = joined(build_conn())
+
+    %{"segment" => %{"id" => segment}, "lease" => lease} =
+      build_conn() |> next(id, token) |> json_response(200)
+
+    path = "/api/segments/#{segment}/fail?island=#{id}"
+
+    rejected =
+      build_conn() |> authed(token) |> post(path, %{"lease" => "wrong", "reason" => "test"})
+
+    assert rejected.status == 409
+    assert get_resp_header(rejected, "x-island-request-applied") == []
+    applied = build_conn() |> authed(token) |> post(path, %{"lease" => lease, "reason" => "test"})
+    assert applied.status == 200
+    assert get_resp_header(applied, "x-island-request-applied") == []
+    assert Queue.segment(segment).status == "failed"
   end
 
   test "me answers 401, not a crash, for an island forgotten after it authenticated" do
@@ -497,6 +634,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
       c = build_conn() |> get("/api/public/status")
       assert %{"error" => _} = json_response(c, 503)
       assert get_resp_header(c, "retry-after") == ["1"]
+      assert get_resp_header(c, "x-island-request-applied") == []
       assert get_resp_header(c, "cache-control") == ["no-store"]
       assert Coordinator.OperatorEvents.snapshot() == events_before
 

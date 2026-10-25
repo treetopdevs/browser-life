@@ -534,11 +534,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
 <dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
 </dl></article>
-<article id="d47">
-<h2><span>D-47</span>Island leave clears adversarial review</h2>
-<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
-</article>
-
 <article id="d44">
 <h2><span>D-44</span>Count operator refusals and pruning with an explicit reset epoch</h2>
 <dl>
@@ -549,7 +544,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Validation</dt><dd>Backend precommit: 559 passing tests; final affected suites: 28 passing. Browser suite: 30 passing; final counter-specific suite: 11 passing, including malformed epochs and mobile display. Argon 4 High found no blockers. Its owner-down HTTP, conditional download, failed-persistence and cleanup coverage suggestions were implemented; final backend precommit passes 561 tests.</dd>
 </dl>
 </article>
-
 <article id="d45">
 <h2><span>D-45</span>Make membrane visible without presenting it as guaranteed protection</h2>
 <dl>
@@ -560,7 +554,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Validation</dt><dd>Four Chrome checks pass, including synthetic pixels, unchanged current and next-step state hashes, mode order and world replacement. Typecheck and build pass; desktop, night and mobile screenshots were inspected. Argon review assessed: fixed held/failed replacement legend restoration and modified numeric shortcuts. Rejected the zero-shell finding because configuration/load/import validation requires 1..65535. Five Chrome checks, typecheck and build pass after fixes; dispositions documented.</dd>
 </dl>
 </article>
-
 <article id="d46">
 <h2><span>D-46</span>Match each suggestion receipt to the action that requested it</h2>
 <dl>
@@ -571,27 +564,34 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Validation</dt><dd>55 model tests and 9 Chrome browser tests pass, covering unrelated brush and late replies, worker success/refusal identity, untagged replay, and the actual one-click, one-intervention flow. Typecheck passes. Argon source review found no blockers. Its low wording finding was fixed and tested: unsupported non-control suggestions are not labelled replay controls. Review assessed; ready for review.</dd>
 </dl>
 </article>
-
+<article id="d47">
+<h2><span>D-47</span>Island leave clears adversarial review</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
+</article>
 <article id="d48">
 <h2><span>D-48</span>Expose the existing island lease duration for local development and tests</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The island cancellation plan explicitly deferred BL_LEASE_MS. Queue already reads lease_ms with a ten-minute default, but runtime configuration cannot set it.</dd><dt>Decision</dt><dd>Add the environment setting using the existing positive-integer parser, rejecting zero, off and malformed values. Preserve the default and all reclaim behavior. Document its distinction from the discovery lease.</dd><dt>Why</dt><dd>Graceful leave handles normal stops; crashed or disconnected islands still rely on lease expiry. Development and integration tests need a deliberate way to exercise that fallback.</dd><dt>Validation</dt><dd>134 targeted runtime/configuration/Queue tests and the full 557-test backend precommit pass. No production configuration change is made. Argon 4 High found no blockers. Documentation alignment follow-ups were applied; no runtime behavior changed.</dd></dl>
 </article>
-
 <article id="d51">
 <h2><span>D-51</span>Finish the documented public-page metadata follow-ups</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The prototype inventory still identifies arbitrary missing-page analytics paths and stale sitemap dates.</dd><dt>Decision</dt><dd>Give the 404 page a fixed analytics path while preserving ordinary-route behavior and query scrubbing. Derive sitemap last-modified dates from page history rather than assigning the current date to unchanged pages.</dd><dt>Why</dt><dd>This closes explicit public-site follow-ups without changing page content, adding tracking or claiming a deployment.</dd><dt>Validation</dt><dd>Two unit tests and eight Chrome analytics/public-route/build checks pass, along with typecheck and production build. Tests intercept all requests; no analytics events leave the test browser. Argon4 High found no blockers; the existing referrer-policy limitation remains explicitly documented.</dd></dl>
 </article>
-
 <article id="d52">
 <h2><span>D-52</span>Expose collective food as an opt-in for the local garden launcher</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The collective-food mechanism exists, but bin/garden-dev always founds without it. The prototype inventory explicitly lists a local launcher option as unfinished.</dd><dt>Decision</dt><dd>Add a strict opt-in setting to local scratch founding, default off. Reject malformed settings before starting services. Preserve the existing collective threshold and all production/opening decisions.</dd><dt>Why</dt><dd>This makes the implemented feature accessible in local demonstrations without silently enabling it or weakening the collective rules.</dd><dt>Validation</dt><dd>Five launcher checks pass: default/off/on payloads, existing-garden reuse and early invalid-input rejection. Typecheck and shell syntax pass. No public garden or deployment is included. Argon4 High found no runtime blockers. Reuse coverage, environment isolation, atomic harness startup and timeout follow-ups are verified.</dd></dl>
 </article>
-
 <article id="d53">
 <h2><span>D-53</span>Close the naturalist panel interaction and layout checks</h2>
 <dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The existing prototype inventory explicitly lacks page-level wound/drain suggestion clicks, a 375-pixel open-suggestion layout check and a Field notes design entry.</dd><dt>Decision</dt><dd>Exercise actual panel actions and the narrow layout with a clearly identified deterministic fixture where necessary. Keep scientific bell performance claims separate from UI behavior. Document the existing Field notes interaction contract without adding new product features.</dd><dt>Validation</dt><dd>All seven action/naturalist browser checks pass. Argon source findings addressed: panel/command containment, screenshot-only fixture labels and complete note captures, persistent live-region identity, both-theme post-click accessibility, unchanged unmeasured predictions, and exact step/matter session receipts. Final changed action-spec rerun, typecheck and diff checks pass; see the dated coverage note for results. No new scientific experiment or model call.</dd></dl>
 </article>
-
+<article id="d54">
+<h2><span>D-54</span>Back off only when the coordinator confirms refusal before application</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The runner stops on 429/503. Blind retries could duplicate a join, assignment or terminal decision after an ambiguous failure.</dd><dt>Decision</dt><dd>Mark only genuine pre-application island refusals with X-Island-Request-Applied: false and expose that marker plus Retry-After to browsers. Retry marked 429/503 at most four total attempts within a 120-second retry budget, respecting the full advertised delay and a jittered exponential floor. Share cooldown across island traffic and keep heartbeats single-flight and task-scoped.</dd><dt>Boundary</dt><dd>Unmarked responses, network failures and 409 retain conservative handling. A sent terminal request is still awaited; its refused-attempt backoff is cancelable. No GPU work, upload bytes or leases are regenerated. Lease preservation is best effort because the client has no authoritative expiry metadata.</dd><dt>Validation</dt><dd>138 focused client tests, 556 coordinator precommit tests and 17 final targeted HTTP tests pass. Three real Chrome/Phoenix cross-origin checks pass, plus typecheck. Tests cover exact request replay, parser/budget arithmetic, Stop races, heartbeat teardown and pre-application refusal state preservation. Argon review completed and all four findings were assessed: fix fail-wait Stop context, strengthen concurrent-gate and pending-heartbeat retry coverage, and correct the completion fixture with a successful control. After stacking leave, 152 client tests, 21 targeted HTTP tests and typecheck pass. Earlier counts describe their original runs. No production deployment.</dd></dl>
+</article>
+<article id="d57">
+<h2><span>D-57</span>Publish the retry and cleanup contract together</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>Combined tests exposed assumptions that Stop permits no HTTP requests, although reviewed island leave must send cleanup after Stop. Runtime code merged without conflict.</dd><dt>Decision</dt><dd>Stack PR83 on PR74 and publish exact assertions requiring one final DELETE for a known identity, no subsequent work retry, and cleanup outside the active cooldown. Keep leave's independent two-second bound and awaited sent terminal decision.</dd><dt>Evidence</dt><dd>Combined integration passed 148 client tests, 124 targeted backend tests, typecheck and three real cross-origin checks with immediate leave enabled. Source-branch validation is recorded in the retry note. Argon backoff review is assessed; the retry note records all four dispositions and the final 152-client/21-HTTP-test follow-up.</dd><dt>Boundary</dt><dd>This changes the PR dependency and tests, not the previously reviewed leave behavior. Neither PR is merged into main.</dd></dl>
+</article>
 <!-- DECISIONS -->
 
 </main>

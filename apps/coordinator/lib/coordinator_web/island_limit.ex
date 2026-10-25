@@ -3,7 +3,9 @@ defmodule CoordinatorWeb.IslandLimit do
   Function plugs that charge the island routes' budgets
   (`Coordinator.IslandLimiter`) before the Queue is called, and answer 429 the
   way the garden's letter routes do: a `retry-after` header in whole seconds
-  (rounded up) and `{"error": ..., "retryAfterMs": n}`.
+  (rounded up) and `{"error": ..., "retryAfterMs": n}`. A refused request
+  carries `x-island-request-applied: false`: the requested operation never
+  reached its controller action, so the caller may retry after the delay.
 
     * `limit_join/2`: the join budget of the client address
       (`CoordinatorWeb.ClientAddress`);
@@ -54,6 +56,7 @@ defmodule CoordinatorWeb.IslandLimit do
         Coordinator.OperatorEvents.rate_refusal(kind)
 
         conn
+        |> put_resp_header("x-island-request-applied", "false")
         |> put_resp_header("retry-after", Integer.to_string(div(retry_after_ms + 999, 1000)))
         |> put_status(429)
         |> Phoenix.Controller.json(%{error: message, retryAfterMs: retry_after_ms})
