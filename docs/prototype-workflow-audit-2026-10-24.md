@@ -1,6 +1,6 @@
 # Prototype workflow evidence audit — 24 October 2026
 
-Status: **workflow complete in published, unmerged PRs**. Argon reviewed PR83, its four findings were repaired, and an independent read-only check cleared the repairs. This document audits the requested workflow and prototype scope; it does not redefine completion as merged or deployed software.
+Historical pre-merge audit: **workflow complete in published PRs**. Subsequent user authorization initiated merging; see the [merge record](prototype-merge-2026-10-24.md) for current state. Argon reviewed PR83, its four findings were repaired, and an independent read-only check cleared the repairs. This document audits the requested workflow and prototype scope; it does not redefine completion as merged or deployed software.
 
 ## Requirements and evidence
 
