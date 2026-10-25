@@ -16,6 +16,7 @@
 #   LAB_PORT [5173]             Vite port
 #   GARDEN_NAME [commons]       the page's default route shows "commons" with no query
 #   GARDEN_PRESET [spots]       spots (256x256, dev only) or wild-storm-large (512x512)
+#   GARDEN_FOOD [0]             1 enables collective food at founding; exactly 0 or 1
 #   GARDEN_SEED [1]
 #   GARDEN_STEPS_PER_DAY [2048]
 #   GARDEN_CENSUS [256]         must divide GARDEN_STEPS_PER_DAY
@@ -33,6 +34,13 @@
 # (and pnpm for the lab).
 
 set -eu
+
+# Validate before even directory/environment helpers run. Empty is invalid, not the default.
+case ${GARDEN_FOOD-0} in
+  0) food=false ;;
+  1) food=true ;;
+  *) printf '%s\n' 'bin/garden-dev: GARDEN_FOOD must be exactly 0 or 1' >&2; exit 1 ;;
+esac
 
 cd "$(dirname "$0")/.."
 
@@ -319,12 +327,20 @@ for pid in $owners; do
 done
 
 founding="[{\"step\":0,\"kind\":\"feed\",\"x\":$((width / 2)),\"y\":$((height / 2)),\"r\":$founding_r,\"amount\":16}]"
-body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census,\"dawnPeriodMs\":$dawn_ms,\"founding\":$founding}"
+body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census,\"dawnPeriodMs\":$dawn_ms,\"founding\":$founding,\"food\":$food}"
 code=$(curl -sS -o "$dir/logs/found.json" -w '%{http_code}' -X POST -H 'content-type: application/json' \
   --data "$body" "$api/api/gardens") || code=000
 answer=$(cat "$dir/logs/found.json" 2>/dev/null || true)
 case $code in
-  200) echo "Founded garden '$name' on $preset: $answer" ;;
+  200)
+    echo "Founded garden '$name' on $preset: $answer"
+    if [ "$food" = true ]; then
+      echo "Collective food: enabled at founding (default: 5 distinct networks in one dawn, at most once every 7 garden days)."
+      echo "Repeated requests from this machine do not bypass the collective threshold."
+    else
+      echo "Collective food: off (GARDEN_FOOD=1 enables it for a newly founded garden)."
+    fi
+    ;;
   422)
     case $answer in
       *"garden exists"*)
@@ -337,6 +353,7 @@ case $code in
 $world
 EOF
         echo "Garden '$name' already exists in $dir/data ($existing_preset, ${width}x$height); tending it as it is."
+        echo "GARDEN_FOOD is a founding-only choice; the existing garden's food rule is unchanged."
         if [ "$existing_preset" != "$preset" ]; then
           echo "bin/garden-dev: note: it was founded on $existing_preset, not GARDEN_PRESET=$preset; the founding settings of this run are ignored" >&2
         fi

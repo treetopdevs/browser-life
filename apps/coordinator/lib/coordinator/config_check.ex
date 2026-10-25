@@ -9,7 +9,7 @@ defmodule Coordinator.ConfigCheck do
   with a message that names the key, instead of crashing
   `Coordinator.IslandLimiter` on its first request. The environment variables
   that set some of these in production (`BL_ISLAND_JOINS_PER_ADDRESS`,
-  `BL_MAX_ISLANDS`, `BL_DISCOVERY_LEASE_MS`) are refused earlier, by name, in
+  `BL_MAX_ISLANDS`, `BL_LEASE_MS`, `BL_DISCOVERY_LEASE_MS`) are refused earlier, by name, in
   `config/runtime.exs`.
 
   A key that is absent passes: its consumer applies its own built-in default.

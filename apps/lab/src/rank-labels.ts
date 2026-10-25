@@ -3,10 +3,11 @@
 import { POND_SCORES, pondScoreTerms, worstRanks, type PondScore, type PondTerm, type WorldConfig } from "@bl/schema";
 
 /** What a pond is ranked by while picking: a term, or the score the rule ranks the waiting cycle by ("score") when there is one. */
-export type RankKey = PondTerm | "speed" | "score";
+export type RankKey = PondTerm | "speed" | "score" | "shell";
 export const RANK_LABELS: Record<RankKey, string> = {
   score: "The rule’s score",
   speed: "Speed",
+  shell: "Cells wearing a shell",
   drive: "Moving mass",
   seed: "Seed packet",
   body: "Body size",
