@@ -191,7 +191,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The latest instruction from the user for this run is the more specific one.</dd>
 </dl>
 </article>
-
 <article id="d2">
 <h2><span>D-02</span>Slices are separate sessions, each running its own workflow; at most three at once</h2>
 <dl>
@@ -201,7 +200,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Parallel slices spend the reset budget faster; the cap keeps test runs from timing out on a loaded machine and keeps GPU goldens honest.</dd>
 </dl>
 </article>
-
 <article id="d3">
 <h2><span>D-03</span>The evolution-game gene line is left to its peer session</h2>
 <dl>
@@ -211,7 +209,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Two writers on one line would conflict and could sweep each other's edits.</dd>
 </dl>
 </article>
-
 <article id="d4">
 <h2><span>D-04</span>Reviewed, green PRs are merged to main; nothing is deployed and no paid compute is spent</h2>
 <dl>
@@ -221,7 +218,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Merging keeps the next slice's tip current; deploys and spending are outward-facing and were not asked for.</dd>
 </dl>
 </article>
-
 <article id="d5">
 <h2><span>D-05</span>Local gates are the merge bar; Auto-fix carries review comments</h2>
 <dl>
@@ -231,7 +227,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Pushing CI to the public repo was ruled out by the user earlier; local gates are how every recent PR here was verified.</dd>
 </dl>
 </article>
-
 <article id="d6">
 <h2><span>D-06</span>A timeout under load is "unverified", not a failure</h2>
 <dl>
@@ -241,7 +236,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>On a machine this loaded, timing assertions fail for reasons that have nothing to do with the change.</dd>
 </dl>
 </article>
-
 <article id="d7">
 <h2><span>D-07</span>First wave: anomaly bell, garden coordinator, pond keeper; garden page after the contract lands</h2>
 <dl>
@@ -251,7 +245,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>These move the three apps that are doc-only or partial toward prototypes, on files that don't overlap each other or the gene-v2 line.</dd>
 </dl>
 </article>
-
 <article id="d8">
 <h2><span>D-08</span>Defaults taken for decisions the docs leave to the user</h2>
 <dl>
@@ -266,7 +259,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Not taken</dt><dd>Anything that costs money stays off until the user says yes: transition-hunt Stage 1 on AWS (~$38, $48 cap), naturalist part b model calls (~$10–15), the upper-bound RULE_VERSION 1 world (~$2–3) and the opportunity reset (~$1). The sun letter and the snowflake rule wait for gene v2, because they touch the kernel files.</dd>
 </dl>
 </article>
-
 <article id="d9">
 <h2><span>D-09</span>When to stop and notify</h2>
 <dl>
@@ -275,7 +267,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The user asked to run to 100% and be told. Starting a slice at 98% would only leave half-done branches.</dd>
 </dl>
 </article>
-
 <article id="d10">
 <h2><span>D-10</span>Slice 1 merged; slice 4 builds the notebook on the calibrated thresholds only</h2>
 <dl>
@@ -285,7 +276,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>A notebook is the first thing a person can read from the naturalist, and it has to say no more than the bell has shown.</dd>
 </dl>
 </article>
-
 <article id="d11">
 <h2><span>D-11</span>Slices started from event turns run as coordinator workflows in worktrees I create</h2>
 <dl>
@@ -295,7 +285,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>It keeps the backlog moving while the user is away, without waiting on proposal cards they can't click.</dd>
 </dl>
 </article>
-
 <article id="d12">
 <h2><span>D-12</span>What happened while the coordinator waited, and how it carries on</h2>
 <dl>
@@ -305,7 +294,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The garden is the one app with a backend and no face. Stitching makes its verified days analysable, which the notebook can then read.</dd>
 </dl>
 </article>
-
 <article id="d13">
 <h2><span>D-13</span>Slice 4 gets a third Sol pass; its P2s are fixed before merge</h2>
 <dl>
@@ -315,7 +303,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The notebook promises to refuse rather than print a wrong number, and each of these could print one.</dd>
 </dl>
 </article>
-
 <article id="d14">
 <h2><span>D-14</span>Wave 3: release checks and pond-run lineage dossiers</h2>
 <dl>
@@ -325,7 +312,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Release checks are what stands between the working site and publishing it. The lineage gap is the inspector's one known refusal on worlds the lab already shows.</dd>
 </dl>
 </article>
-
 <article id="d15">
 <h2><span>D-15</span>The garden page merges with its cross-tab "Yours" limits documented, not fixed</h2>
 <dl>
@@ -335,7 +321,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>They affect only a per-device convenience mark kept in localStorage, which is best-effort by design. The garden's own numbers are unaffected. A cross-tab lock costs more than it is worth before the garden is even open.</dd>
 </dl>
 </article>
-
 <article id="d16">
 <h2><span>D-16</span>Every slice workflow now runs a third Sol pass; the garden gets an end-to-end check next</h2>
 <dl>
@@ -345,7 +330,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Each garden piece is tested on its own, but nothing yet shows them working together. That is the bar for a working prototype.</dd>
 </dl>
 </article>
-
 <article id="d17">
 <h2><span>D-17</span>Release checks: join limit off in production until the proxy passes real addresses; build check skips without a build</h2>
 <dl>
@@ -356,7 +340,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>For the user</dt><dd>Apply the Caddy <code>trusted_proxies</code> change and set <code>BL_TRUST_FORWARDED_FOR=1</code> on the live host before opening the garden's letters to the public.</dd>
 </dl>
 </article>
-
 <article id="d18">
 <h2><span>D-18</span>The journal is updated on main but not deployed</h2>
 <dl>
@@ -365,7 +348,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The journal is how the project tells people what it has learned, so it should be written while the PRs are fresh. Publishing it means deploying, and that is the user's call.</dd>
 </dl>
 </article>
-
 <article id="d19">
 <h2><span>D-19</span>A third Sol pass is needed only when pass 2 found a P0 or P1; the live naturalist waits for Pond keeper v2</h2>
 <dl>
@@ -375,7 +357,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>A P2 fix with a test that fails without it is low risk. Two writers in <code>main.ts</code> would cost more than the wait.</dd>
 </dl>
 </article>
-
 <article id="d20">
 <h2><span>D-20</span>The proposer is code only and gated; running proposals is for later</h2>
 <dl>
@@ -385,7 +366,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The gate and the format are what make proposals auditable, the brainstorm's "unfair advantage". A model can be plugged in later as one more proposer, compared against the rules and the random baseline.</dd>
 </dl>
 </article>
-
 <article id="d21">
 <h2><span>D-21</span>Four slices at once while usage is behind pace</h2>
 <dl>
@@ -395,7 +375,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The user asked to run the quota to 100%. The extra slice spends tokens rather than GPU time, and its files don't overlap any other slice's.</dd>
 </dl>
 </article>
-
 <article id="d22">
 <h2><span>D-22</span>The 5-hour window resets on its own; five slices at once while the machine is quieter</h2>
 <dl>
@@ -405,7 +384,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The user wants the quota used. With load down, more parallel slices no longer starve each other's tests.</dd>
 </dl>
 </article>
-
 <article id="d23">
 <h2><span>D-23</span>Accept the app-wide <code>token</code> log filter</h2>
 <dl>
@@ -415,7 +393,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>It only hides values from logs, never changes behaviour, is covered by a test, and one line removes it.</dd>
 </dl>
 </article>
-
 <article id="d24">
 <h2><span>D-24</span>Food in the garden is collective and rare; open PRs from other sessions stay with them</h2>
 <dl>
@@ -425,7 +402,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Food is the one letter the brainstorm calls dangerous, so it is gated by consensus and by time. Merging another session's live PR could step on its in-flight fixes.</dd>
 </dl>
 </article>
-
 <article id="d25">
 <h2><span>D-25</span>Idle slice sessions are asked to land their own PRs</h2>
 <dl>
@@ -435,7 +411,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Each session knows its own in-flight state, so this lands its work without stepping on it.</dd>
 </dl>
 </article>
-
 <article id="d26">
 <h2><span>D-26</span>The proposer bench is planned and buildable, but approving and running it is the user's</h2>
 <dl>
@@ -445,7 +420,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The bench runs on the local GPU, so it costs nothing to run, but whether to run it is the kind of decision the gate keeps for a person.</dd>
 </dl>
 </article>
-
 <article id="d27">
 <h2><span>D-27</span>A change to the dev server's routing must pass the lab specs before merge</h2>
 <dl>
@@ -455,7 +429,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>A routing change breaks pages its own tests never load. A spec that hardcodes its port is a trap when several worktrees run tests at once. Worth a small follow-up to derive the key from <code>baseURL</code>.</dd>
 </dl>
 </article>
-
 <article id="d28">
 <h2><span>D-28</span>Run the stone horizon test now; the gene v2 line is stalled and left to the user</h2>
 <dl>
@@ -465,7 +438,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The garden's pace is the next open question for that app, and running the test locally is free. Touching another session's uncommitted kernel work could lose it.</dd>
 </dl>
 </article>
-
 <article id="d29">
 <h2><span>D-29</span>A regression on main is fixed on its own branch, and merges now run a wider e2e sweep</h2>
 <dl>
@@ -475,7 +447,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Each slice ran only the specs for its own files, so a page shared by two specs slipped through.</dd>
 </dl>
 </article>
-
 <article id="d30">
 <h2><span>D-30</span>After the session restart: resume the workflows, and start new slices as sessions again</h2>
 <dl>
@@ -485,7 +456,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Resuming keeps hours of finished work. Separate sessions keep the coordinator's context (65% used) for coordinating.</dd>
 </dl>
 </article>
-
 <article id="d31">
 <h2><span>D-31</span>Accept #56's world guard on lesion and feed messages</h2>
 <dl>
@@ -495,7 +465,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>The alternative, guarding only on the page, leaves a window. To veto it, revert that hunk and accept the race.</dd>
 </dl>
 </article>
-
 <article id="d32">
 <h2><span>D-32</span>The sun letter is attempted without the kernel files; the opening copy waits as a draft</h2>
 <dl>
@@ -505,7 +474,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Both move the garden toward opening without making the user&rsquo;s decisions for them or touching another session&rsquo;s uncommitted work.</dd>
 </dl>
 </article>
-
 <article id="d33">
 <h2><span>D-33</span>Scrub process command lines from committed records</h2>
 <dl>
@@ -515,7 +483,6 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Another process&rsquo;s argv can carry a token at any time, and the records gain nothing from it.</dd>
 </dl>
 </article>
-
 <article id="d34">
 <h2><span>D-34</span>Sun letters get a founding switch, default on; whether the commons takes them is the user&rsquo;s call</h2>
 <dl>
@@ -525,13 +492,43 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>Matching the brainstorm (the sun is the first letter, the scarcity dial), the defaults stay as built, and the switch makes the user&rsquo;s choice a single founding parameter rather than a code change.</dd>
 </dl>
 </article>
-
+<article id="d35">
+<h2><span>D-35</span>Resume from current main; validate measured wound severity before new trials</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906. Bring forward the reviewed recovery assay and its stopped 32-pair result as dependencies; preserve the original checkout and its local bundles.</dd>
+<dt>Decision</dt><dd>Implement the proposed severity selector and a zero-time feasibility CLI first. The threshold remains at least 30 of 32 saved pairs. A failed threshold ends this protocol before new scientific seeds. Do not soften topology or collateral limits merely to obtain feasible wounds.</dd>
+<dt>Review</dt><dd>Use available agy Gemini 4 Argon High for adversarial review, plus the repository-required read-only Sol 6.1 High before committing. Subagents own selector/tests and independent backlog inventory; the coordinator owns evidence loading, decision records and publication.</dd>
+<dt>Scope</dt><dd>This is one research slice, not completion of all app prototypes. It leaves simulation physics and the private shared-garden deployment policy unchanged.</dd>
+</dl></article>
+<article id="d36">
+<h2><span>D-36</span>Use the current backlog, not the frozen October 18 inventory</h2>
+<dl><dt>Evidence</dt><dd>Inventory checked against b3fab906: plans 001–006 are DONE; Gene v2, injuryShell, Pond keeper v3, bell v2, null-stone and sun work have landed. The old prototypes document is explicitly pinned to 5e7bda5c and is not current status.</dd>
+<dt>Next slices</dt><dd>After severity feasibility: Pond keeper v3b per-pond shell ranking; explicit island leave/release; operator refusal/pruning counters. Naturalist v3 needs a separate preregistration after the negative v2 result. Shared-garden opening and human playtests remain distinct product/operational decisions and evidence gaps.</dd>
+<dt>Sources</dt><dd><a href="pond-keeper-v3-2026-10-22.md">Keeper v3 deferred work</a>; <a href="island-cancel-2026-10-18.md">Island cancellation</a>; <a href="ops-dashboard-2026-10-18.md">Operator dashboard</a>; <a href="../deploy/README.md">Deployment safeguards</a>.</dd>
+</dl></article>
+<article id="d37"><h2><span>D-37</span>Feasibility passed; retain the next engineering gate</h2><dl>
+<dt>Evidence</dt><dd><a href="recovery-severity-2026-10-24/FEASIBILITY.md">All 32 saved pairs admit the prescribed lesion pair</a>. Zero-time CPU transformations only; no fresh scientific seeds or recovery outcomes.</dd>
+<dt>Decision</dt><dd>Publish this runnable feasibility prototype with its input/output hashes. Keep GPU equality, endpoint validation and the three-arm trial runner as explicit next work. A CPU geometric pass does not authorize a recovery claim.</dd>
+<dt>Repair</dt><dd>Publish success only after its digest, via atomic rename; refuse reused output directories and record runtime plus source revision/patch. Retain both engineering run attempts. Deno refreshed its lockfile workspace Vite range to match the dependency update already on current main; no new dependency version was selected here.</dd>
+</dl></article>
+<article id="d38">
+<h2><span>D-38</span>Offer shell share as a donor-picker ranking</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 deferred a per-pond shell ranking to v3b. Whole-world shell counts show a trend but cannot guide a donor choice.</dd>
+<dt>Decision</dt><dd>Count shell-wearing and living cells per pond from the held pre-cycle state. Offer Cells wearing a shell, ranked by share of living cells, with both counts visible. Preserve positive bound-mass eligibility and mass/index tie breaks. Top explicitly selects donors; the rule and Auto-breed keep their own choices.</dd>
+<dt>Why</dt><dd>This makes shells actionable without adding a score term, changing the physics, or changing checkpoint/session formats. A current membrane share is not a survival forecast. See <a href="pond-keeper-v3b-2026-10-24.md">the v3b plan and validation</a>.</dd>
+</dl>
+</article>
 <article id="d39"><h2><span>D-39</span>Make island Stop release work immediately</h2><dl>
 <dt>Base</dt><dd>Fresh worktree from origin/main b3fab906, separate from recovery feasibility and Pond Keeper. The explicit island-cancel follow-up remains unimplemented on that tip.</dd>
 <dt>Decision</dt><dd>Add authenticated DELETE /api/islands/:id with matching island query identity. Serialize authentication, pending-attempt abandonment and row removal in Queue. An accepted completion remains accepted; a released run returns to pending and a released verification remains done. Missing identities are retry-safe no-ops.</dd>
 <dt>Client</dt><dd>After local work and already-sent decisions settle, make one best-effort leave request with an independent two-second bound. Require 204 to confirm release. Old or unreachable coordinators retain lease-expiry fallback. Normal task-limit exit also unregisters; unknown join identities cannot be released.</dd>
 <dt>History</dt><dd>Removing the active row must not erase producer/verifier or garden device labels. Persist adapter-only history while referenced by retained attempts; retain no credentials and prune discarded history.</dd>
 </dl></article>
+<article id="d40"><h2><span>D-40</span>Close the feasibility review through the authorized fallback</h2><dl><dt>Review</dt><dd>Argon file access was unavailable in headless mode; its source-only request remains pending. Sonnet 5.5 High completed a tool-free source-packet review with no blockers.</dd><dt>Fixes</dt><dd>Validate original target component identity, make the seam fixture actually cross the boundary, preserve original errors during failure recording, and return a nonzero negative-gate code. All 24 focused tests pass; the final engineering rerun selects the same 32 pairs. No scientific gate changed.</dd></dl></article>
+<article id="d41"><h2><span>D-41</span>Close shell-ranking review with stronger compatibility evidence</h2><dl><dt>Review</dt><dd>Argon 4 High and Sonnet 5.5 High source-packet reviews both found no blockers. Their observations were checked against current source rather than blindly applied.</dd><dt>Fixes and evidence</dt><dd>Anchor pond indices to actual mass terms, preserve both scaffold and breed replay coverage, and explain tiny-pond percentages and rounded display. Existing openPick already resets stale ranking keys. All 17 focused tests and both replay cases pass; typecheck passes. The previous desktop/mobile/browser replay evidence still applies because behavior was unchanged.</dd></dl></article>
+<article id="d42"><h2><span>D-42</span>Argon feasibility review completed</h2><dl><dt>Outcome</dt><dd>The pending Argon 4 High source-packet review returned no blockers. Sonnet fallback findings had already been addressed. PR #72 is ready for review; no recovery experiment has been run by this feasibility slice.</dd></dl></article>
 <article id="d43"><h2><span>D-43</span>Fix leave's limiter edge and verify the actual wire path</h2><dl>
 <dt>Finding</dt><dd>Anonymous leave requests for missing identities must not allocate authenticated-island limiter buckets. Missing-id retries bypass that bucket while coarse address limits remain; Queue still rechecks a live identity atomically.</dd>
 <dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
