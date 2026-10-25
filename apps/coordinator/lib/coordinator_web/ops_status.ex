@@ -1,6 +1,6 @@
 defmodule CoordinatorWeb.OpsStatus do
   @moduledoc """
-  The three keys `GET /api/status` (admin only) adds to `Coordinator.Queue.status/0`
+  The operator keys `GET /api/status` (admin only) adds to `Coordinator.Queue.status/0`
   for the operator page (`priv/static/index.html`; docs/ops-dashboard-2026-10-18.md):
 
     * `limits`: the island table's size (`islands`) and the island limits as
@@ -33,8 +33,11 @@ defmodule CoordinatorWeb.OpsStatus do
       promise: work is gated on each request.
 
   Computed here, from the Queue's status and config, outside the Queue
-  process. Nothing counts refusals (429s, the 503 at the island bound) or
-  forgotten islands, so neither is reported.
+  process. `operatorEvents` is a fixed-label counter snapshot from
+  `Coordinator.OperatorEvents`: island-budget HTTP 429 decisions by kind,
+  Queue capacity refusals (not all HTTP 503s), and islands actually pruned by
+  successful joins. `since` starts the counter owner's volatile epoch, which
+  resets on owner restart; nil means temporarily unavailable.
 
   `needs/2` is a second copy of `Coordinator.Queue`'s private capability
   gating (`gated_experiments/2` and `gated?/3`, see its moduledoc);
@@ -55,12 +58,13 @@ defmodule CoordinatorWeb.OpsStatus do
   # the island table there could be tens of thousands.
   @shown_unknown_max 50
 
-  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits`, `capabilityNeeds` and `islandCapabilities` added."
+  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits`, `capabilityNeeds`, `islandCapabilities` and `operatorEvents` added."
   @spec extend(map) :: map
   def extend(%{} = status) do
     islands = Map.get(status, :islands, [])
 
     status
+    |> Map.put(:operatorEvents, Coordinator.OperatorEvents.snapshot())
     |> Map.put(:limits, limits(length(islands)))
     |> Map.put(:capabilityNeeds, capability_needs(Map.get(status, :experiments, %{})))
     |> Map.put(:islandCapabilities, island_capabilities(islands))

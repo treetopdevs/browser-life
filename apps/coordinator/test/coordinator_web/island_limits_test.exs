@@ -59,6 +59,81 @@ defmodule CoordinatorWeb.IslandLimitsTest do
   defp next(conn, id, token),
     do: conn |> authed(token) |> post("/api/next?island=#{id}", %{})
 
+  test "leave requires its own bearer, removes idle islands, and retries safely" do
+    {id, token} = joined(build_conn())
+    {other, other_token} = joined(build_conn())
+    path = "/api/islands/#{id}?island=#{id}"
+    assert build_conn() |> delete(path) |> json_response(401)
+    assert build_conn() |> authed(other_token) |> delete(path) |> json_response(401)
+
+    assert build_conn()
+           |> authed(other_token)
+           |> delete("/api/islands/#{id}?island=#{other}")
+           |> json_response(403)
+
+    assert Queue.authenticate(id, token)
+    assert build_conn() |> authed(token) |> delete(path) |> response(204) == ""
+    assert build_conn() |> authed(token) |> delete(path) |> response(204) == ""
+    assert nil == Queue.island_info(id)
+    assert Queue.authenticate(other, other_token)
+
+    assert build_conn()
+           |> authed(token)
+           |> get("/api/islands/me?island=#{id}")
+           |> json_response(401)
+  end
+
+  test "leave CORS preflight allows DELETE from the configured lab origin" do
+    set(:cors_origins, ["https://lab.example"])
+
+    c =
+      build_conn()
+      |> put_req_header("origin", "https://lab.example")
+      |> put_req_header("access-control-request-method", "DELETE")
+      |> options("/api/islands/test")
+
+    assert response(c, 204) == ""
+    assert get_resp_header(c, "access-control-allow-origin") == ["https://lab.example"]
+
+    assert get_resp_header(c, "access-control-allow-methods")
+           |> hd()
+           |> String.contains?("DELETE")
+  end
+
+  test "leave shares segment budget and unauthorized callers cannot consume it" do
+    set(:island_segment_requests_per_island, 1)
+    {id, token} = joined(build_conn())
+    path = "/api/islands/#{id}?island=#{id}"
+    assert build_conn() |> authed("wrong") |> delete(path) |> json_response(401)
+    assert :ok = IslandLimiter.take(:segment, id)
+    c = build_conn() |> authed(token) |> delete(path)
+    assert json_response(c, 429)["retryAfterMs"] > 0
+    assert get_resp_header(c, "retry-after") != []
+    assert Queue.authenticate(id, token)
+    IslandLimiter.reset()
+    assert build_conn() |> authed(token) |> delete(path) |> response(204) == ""
+    assert {:error, _} = IslandLimiter.take(:segment, id)
+    # A removed identity is a no-op even after its former budget is exhausted.
+    assert build_conn() |> authed(token) |> delete(path) |> response(204) == ""
+  end
+
+  test "unknown leave ids allocate no island limiter buckets" do
+    set(:island_requests_per_address, nil)
+    before = :ets.info(:coordinator_island_limits, :size)
+
+    for n <- 1..100 do
+      id = "unknown-#{n}"
+
+      assert build_conn()
+             |> authed("unverified")
+             |> delete("/api/islands/#{id}?island=#{id}")
+             |> response(204) == ""
+    end
+
+    assert :ets.info(:coordinator_island_limits, :size) == before
+    assert :ets.match_object(:coordinator_island_limits, {{:_, :segment, :_}, :_}) == []
+  end
+
   test "join past the budget answers 429 with Retry-After and retryAfterMs, and the island count is unchanged" do
     set(:island_joins_per_address, 2)
     ip = {203, 0, 113, 7}
@@ -310,6 +385,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     routes = [
       {:post, "/api/islands"},
       {:get, "/api/islands/me" <> q},
+      {:delete, "/api/islands/#{id}" <> q},
       {:post, "/api/next" <> q},
       {:post, "/api/segments/seg-none/heartbeat" <> q},
       {:post, "/api/segments/seg-none/complete" <> q},
@@ -409,6 +485,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
   test "public status over HTTP: a cold cache behind a slow Queue answers 503 with Retry-After, not a second Queue call" do
     set(:public_status_cache_ms, 60_000)
     set(:public_status_wait_ms, 50)
+    events_before = Coordinator.OperatorEvents.snapshot()
     IslandLimiter.reset()
     :sys.suspend(Queue)
 
@@ -421,6 +498,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
       assert %{"error" => _} = json_response(c, 503)
       assert get_resp_header(c, "retry-after") == ["1"]
       assert get_resp_header(c, "cache-control") == ["no-store"]
+      assert Coordinator.OperatorEvents.snapshot() == events_before
 
       :sys.resume(Queue)
       assert %{"counts" => _} = owner |> Task.await(30_000) |> json_response(200)
