@@ -22,6 +22,7 @@ defmodule CoordinatorWeb.Router do
     get "/experiments/:name", ApiController, :experiment
     post "/islands", ApiController, :join
     get "/islands/me", ApiController, :me
+    delete "/islands/:id", ApiController, :leave
     post "/experiments", ApiController, :create_experiment
     post "/next", ApiController, :next
     post "/segments/:id/heartbeat", ApiController, :heartbeat

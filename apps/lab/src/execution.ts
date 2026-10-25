@@ -27,7 +27,7 @@ import {
 import { MutationEdges } from "@bl/lineage";
 import type { CellBirth } from "@bl/sim-ref";
 import { donorsWithKeep, isLineageKey, keptPondOf, type KeptPond } from "./pond-play.ts";
-import { shellCount, type ShellCount } from "./shell.ts";
+import { shellCountsByPond, shellCount, type ShellCount } from "./shell.ts";
 import { lineageRows, seriesFields, type SeriesFields } from "./naturalist-series.ts";
 
 /**
@@ -114,6 +114,8 @@ export interface PondSurvey {
   suggested: number[];
   /** Each term's value per pond (`POND_TERMS`); a pond whose "mass" is 0 is empty and cannot donate. */
   terms: Record<PondTerm, number[]>;
+  /** Display only: shell eligibility in each pond of the held pre-cycle world. */
+  shells: ShellCount[] | null;
   /** The score `suggested` was ranked by: the active pressure's, else the config's `pondScore` (null for an arm without one). */
   ruleScore: PondScore | null;
   /** The kept lineage as this pre-cycle state sees it, or null when none is kept. */
@@ -596,6 +598,7 @@ export class LabExecution {
     const score = this.activeScore(cycle, list);
     return {
       step: pre.step, cycle, suggested: pondDonors(pre, cycle, donorArm(cfg)!, k, score), terms,
+      shells: shellCountsByPond(cfg, pre.cells, pre.genome),
       ruleScore: score ?? null, kept: this.keepKey === null ? null : keptPondOf(pre, this.keepKey), revision: ++this.surveyRevision,
     };
   }

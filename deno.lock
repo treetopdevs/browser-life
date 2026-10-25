@@ -23,7 +23,7 @@
         "npm:@types/node@22",
         "npm:@webgpu/types@~0.1.74",
         "npm:typescript@^7.0.2",
-        "npm:vite@^8.3.1",
+        "npm:vite@^8.3.3",
         "npm:vitest@^5.0.2"
       ]
     }

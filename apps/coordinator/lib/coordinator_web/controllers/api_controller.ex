@@ -36,6 +36,7 @@ defmodule CoordinatorWeb.ApiController do
   plug :limit_requests
        when action in [
               :join,
+              :leave,
               :me,
               :next,
               :complete,
@@ -61,6 +62,9 @@ defmodule CoordinatorWeb.ApiController do
               :put_file,
               :get_checkpoint
             ]
+
+  plug :require_leaving_island when action == :leave
+  plug :limit_leave when action == :leave
 
   plug :limit_next when action == :next
 
@@ -149,6 +153,8 @@ defmodule CoordinatorWeb.ApiController do
       # The island table is at `max_islands` and nothing could be forgotten.
       {:error, :full} ->
         conn
+        |> put_resp_header("x-island-request-applied", "false")
+        |> put_resp_header("retry-after", "1")
         |> put_status(503)
         |> json(%{error: "the coordinator has no room for new islands"})
     end
@@ -164,6 +170,16 @@ defmodule CoordinatorWeb.ApiController do
     case Queue.island_info(conn.assigns.island) do
       nil -> conn |> put_status(401) |> json(%{error: "island authentication required"})
       info -> json(conn, info)
+    end
+  end
+
+  def leave(conn, %{"id" => id}) do
+    case Queue.leave(id, bearer(conn)) do
+      :ok ->
+        send_resp(conn, 204, "")
+
+      {:error, :unauthorized} ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"})
     end
   end
 
@@ -386,6 +402,38 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   # ---- plugs ----
+
+  # Missing ids are harmless retry no-ops; no tombstone/token survives leave.
+  # Existing identities authenticate before charging their segment budget.
+  # Queue.leave checks again while atomically releasing work and removing the row.
+  defp require_leaving_island(conn, _) do
+    id = conn.params["id"]
+    island = conn.params["island"]
+    token = bearer(conn)
+
+    cond do
+      not is_binary(island) or not is_binary(token) ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"}) |> halt()
+
+      id != island ->
+        conn |> put_status(403) |> json(%{error: "cannot leave another island"}) |> halt()
+
+      Queue.authenticate(id, token) ->
+        assign(conn, :island, id)
+
+      is_nil(Queue.island_info(id)) ->
+        conn
+
+      true ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"}) |> halt()
+    end
+  end
+
+  # Unknown ids are unauthenticated no-ops: do not let arbitrary identifiers
+  # allocate authenticated-island limiter buckets. The coarse address budget
+  # still applies and Queue.leave always rechecks any live identity atomically.
+  defp limit_leave(%{assigns: %{island: _}} = conn, opts), do: limit_segment(conn, opts)
+  defp limit_leave(conn, _opts), do: conn
 
   defp require_island(conn, _) do
     island = conn.params["island"]
