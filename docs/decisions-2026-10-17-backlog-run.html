@@ -561,6 +561,17 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 </dl>
 </article>
 
+<article id="d46">
+<h2><span>D-46</span>Match each suggestion receipt to the action that requested it</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The naturalist suggestion implementation acknowledges that an unrelated brush edit can be mistaken for a pending Try. This can say a suggestion landed when a different action actually changed the world.</dd>
+<dt>Decision</dt><dd>Give each accepted Try a fresh request identity and echo it through live worker success and refusal messages. Settle the Try only for that identity and world/run. Untagged brush edits still stop baseline reading. Replay events carry no request identity; generic errors remain uncertain rather than claiming nothing happened.</dd>
+<dt>Why</dt><dd>The player needs an accurate receipt for the action they clicked. Transport metadata resolves the race without changing interventions, physics, scientific outcomes or saved sessions. Retries get fresh identities so delayed replies cannot settle a later attempt.</dd>
+<dt>Validation</dt><dd>55 model tests and 9 Chrome browser tests pass, covering unrelated brush and late replies, worker success/refusal identity, untagged replay, and the actual one-click, one-intervention flow. Typecheck passes. Argon source review found no blockers. Its low wording finding was fixed and tested: unsupported non-control suggestions are not labelled replay controls. Review assessed; ready for review.</dd>
+</dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>
