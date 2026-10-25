@@ -520,9 +520,25 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Why</dt><dd>This makes shells actionable without adding a score term, changing the physics, or changing checkpoint/session formats. A current membrane share is not a survival forecast. See <a href="pond-keeper-v3b-2026-10-24.md">the v3b plan and validation</a>.</dd>
 </dl>
 </article>
+<article id="d39"><h2><span>D-39</span>Make island Stop release work immediately</h2><dl>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906, separate from recovery feasibility and Pond Keeper. The explicit island-cancel follow-up remains unimplemented on that tip.</dd>
+<dt>Decision</dt><dd>Add authenticated DELETE /api/islands/:id with matching island query identity. Serialize authentication, pending-attempt abandonment and row removal in Queue. An accepted completion remains accepted; a released run returns to pending and a released verification remains done. Missing identities are retry-safe no-ops.</dd>
+<dt>Client</dt><dd>After local work and already-sent decisions settle, make one best-effort leave request with an independent two-second bound. Require 204 to confirm release. Old or unreachable coordinators retain lease-expiry fallback. Normal task-limit exit also unregisters; unknown join identities cannot be released.</dd>
+<dt>History</dt><dd>Removing the active row must not erase producer/verifier or garden device labels. Persist adapter-only history while referenced by retained attempts; retain no credentials and prune discarded history.</dd>
+</dl></article>
 <article id="d40"><h2><span>D-40</span>Close the feasibility review through the authorized fallback</h2><dl><dt>Review</dt><dd>Argon file access was unavailable in headless mode; its source-only request remains pending. Sonnet 5.5 High completed a tool-free source-packet review with no blockers.</dd><dt>Fixes</dt><dd>Validate original target component identity, make the seam fixture actually cross the boundary, preserve original errors during failure recording, and return a nonzero negative-gate code. All 24 focused tests pass; the final engineering rerun selects the same 32 pairs. No scientific gate changed.</dd></dl></article>
 <article id="d41"><h2><span>D-41</span>Close shell-ranking review with stronger compatibility evidence</h2><dl><dt>Review</dt><dd>Argon 4 High and Sonnet 5.5 High source-packet reviews both found no blockers. Their observations were checked against current source rather than blindly applied.</dd><dt>Fixes and evidence</dt><dd>Anchor pond indices to actual mass terms, preserve both scaffold and breed replay coverage, and explain tiny-pond percentages and rounded display. Existing openPick already resets stale ranking keys. All 17 focused tests and both replay cases pass; typecheck passes. The previous desktop/mobile/browser replay evidence still applies because behavior was unchanged.</dd></dl></article>
 <article id="d42"><h2><span>D-42</span>Argon feasibility review completed</h2><dl><dt>Outcome</dt><dd>The pending Argon 4 High source-packet review returned no blockers. Sonnet fallback findings had already been addressed. PR #72 is ready for review; no recovery experiment has been run by this feasibility slice.</dd></dl></article>
+<article id="d43"><h2><span>D-43</span>Fix leave's limiter edge and verify the actual wire path</h2><dl>
+<dt>Finding</dt><dd>Anonymous leave requests for missing identities must not allocate authenticated-island limiter buckets. Missing-id retries bypass that bucket while coarse address limits remain; Queue still rechecks a live identity atomically.</dd>
+<dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
+<dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
+</dl></article>
+<article id="d47">
+<h2><span>D-47</span>Island leave clears adversarial review</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
+</article>
+
 <!-- DECISIONS -->
 
 </main>
