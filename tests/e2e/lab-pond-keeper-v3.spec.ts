@@ -3,7 +3,7 @@ import { sessionFileError, type SessionFile } from "../../apps/lab/src/session-f
 
 // Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md, section 5), page level: the Weather control on the breeder, a world planted with
 // wounds and shells, the fourth chart and the "Cells wearing a shell" row, the Wound tool's line, a wounded pond, the first pond cycle
-// bred on the rule's donors, the replay check and the session file. No fixture is written: nothing here changes the session format.
+// bred on shell-ranked donors, the replay check and the session file. No fixture is written: nothing here changes the session format.
 // Whether the breeder panel's tied-at-zero line fires at the first cycle depends on the seed and the hand wound, so the spec does not
 // expect it either way: it checks the line against the ranks the panel shows (present exactly when every occupied pond scores 0), and
 // the vitest tests carry the rule.
@@ -178,8 +178,19 @@ test("lab page: weather for the breeder, a shelled pond, the shell readout and t
   console.log(`shell row at cycle 1: ${await kShell.textContent()}`);
   await expect(kShell).toHaveText(/^(none yet|(<)?\d+(?:\.\d)?% of living cells \([\d,]+ of [\d,]+\))$/);
 
-  // Cycle 1 on the rule's own donors; then on a little, past the reseeding, and a replay check (it moves the world on by 200 steps).
-  await page.locator("#breeder-rule").click();
+  // v3b: selecting a display ranking keeps the current picks; Top explicitly chooses its donors.
+  const originalPicks = await page.locator("#breeder-list li").allTextContents();
+  await page.locator("#breeder-term").selectOption("shell");
+  await expect(page.locator(".breeder-shell-note")).toContainText("share of living cells");
+  expect((await page.locator("#breeder-list li").allTextContents()).map(s => s.split(" #")[0])).toEqual(originalPicks.map(s => s.split(" #")[0]));
+  await page.locator("#breeder-top").click();
+  await expect(page.locator("#breeder-list li").first()).toContainText(/shells .*% \([\d,]+ of [\d,]+ living cells\)/);
+  const shellPicks = (await page.locator("#breeder-list li").allTextContents()).map(s => Number(s.split(" #")[0]));
+  await page.locator("#breeder-pick").screenshot({ path: `${SCRATCH}/pond-shell-ranking-desktop.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("#breeder-pick").screenshot({ path: `${SCRATCH}/pond-shell-ranking-mobile.png` });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Breed the shell-ranked choice, then check deterministic replay and the ordinary pick in the session file.
   await page.locator("#breeder-go").click();
   await page.locator("#guard-breed .row button").first().click();
   await expect(breedBar).toBeHidden({ timeout: LONG });
@@ -222,6 +233,7 @@ test("lab page: weather for the breeder, a shelled pond, the shell readout and t
   expect(lesions.length).toBeGreaterThanOrEqual(1);
   expect(lesions[0].step).toBe(500);
   expect(file.interventions.filter((iv) => iv.kind === "pick").map((iv) => iv.step)).toEqual([5_000]);
+  expect(file.interventions.filter((iv) => iv.kind === "pick").map((iv) => iv.donors)).toEqual([shellPicks]);
   // Display only: the shell count is a field of no part of the file.
   expect(Object.keys(file)).not.toContain("shell");
   console.log(`session file: preset ${file.presetId}, t=${file.final.step}, ${file.interventions.length} interventions, ${file.firsts.entries.length} firsts`);
