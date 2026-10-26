@@ -1,5 +1,7 @@
 # Ecosystem library integration validation — 26 October 2026
 
+Published as [PR98](https://github.com/treetopdevs/browser-life/pull/98), dependent on PR97. Implementation commit `6cca70dc`.
+
 ## Scope
 
 Fresh dependent branch `codex/ecosystem-prototype-library` from PR97 tip `aa049a1e28ab6e0868ae0bd334130d99b8fa6575`. Candidate9 model imported from `f1f98f3966ec36ec50577deec8a5914a20df8c51`, byte-identical SHA-256 `71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0`. Source worktree preserved. This integrates historical footage, not a new 20,000-tick batch.
