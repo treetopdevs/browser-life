@@ -18,7 +18,7 @@ const cards = [...document.querySelectorAll<HTMLElement>('.world-card')].map((ro
     id: index === 0 ? 'fixed' : 'mutation', root, canvas, ctx, historyCanvas, historyCtx,
     world: null as DevelopmentWorld | null, selectedID: null as number | null, selectionNote: '',
     foodHeatmap: false, samples: [] as readonly DevelopmentHistory[], cachedHistoryTick: -1,
-    lineage: [] as readonly DevelopmentLineageNode[], cachedBirthCount: -1, food: new Uint8Array(RULES.tileCount) as Uint8Array<ArrayBufferLike>, foodTick: -1,
+    lineage: [] as readonly DevelopmentLineageNode[], cachedBirthCount: -1, cachedDeathCount: -1, food: new Uint8Array(RULES.tileCount) as Uint8Array<ArrayBufferLike>, foodTick: -1,
     organisms: [] as readonly DevelopmentOrganism[], occupancy: new Float64Array(RULES.tileCount) as Float64Array<ArrayBufferLike>, census: null as DevelopmentCensus | null,
     drawWidth: 0,
   };
@@ -66,18 +66,18 @@ function clearSelection(card: typeof cards[number], note = ''): void {
   drawWorld(card);
 }
 
-function createWorlds(nextSeed: number): void {
+function createWorlds(nextSeed: number, initial = false): void {
   const fixed = new DevelopmentWorld(nextSeed, false);
   const mutated = new DevelopmentWorld(nextSeed, true);
   seed = nextSeed;
   comparisonTick = 0;
   paused = true;
-  pauseReason = document.hidden ? 'Paused while away' : 'Paused · comparison reset';
+  pauseReason = document.hidden ? 'Paused while away' : initial && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'Paused · reduced motion' : 'Paused · comparison reset';
   accumulator = 0; previousFrame = 0; lastMetricTick = -1; lastDrawTick = -1;
   cards.forEach((card, index) => {
     card.world = index === 0 ? fixed : mutated;
     card.selectedID = null; card.selectionNote = ''; card.samples = []; card.cachedHistoryTick = -1;
-    card.lineage = []; card.cachedBirthCount = -1; card.food = new Uint8Array(RULES.tileCount) as Uint8Array<ArrayBufferLike>; card.foodTick = -1;
+    card.lineage = []; card.cachedBirthCount = -1; card.cachedDeathCount = -1; card.food = new Uint8Array(RULES.tileCount) as Uint8Array<ArrayBufferLike>; card.foodTick = -1;
     card.organisms = []; card.occupancy = new Float64Array(RULES.tileCount) as Float64Array<ArrayBufferLike>; card.census = null;
     card.foodHeatmap = card.root.querySelector<HTMLInputElement>('.food-toggle')!.checked;
     card.root.querySelector<HTMLElement>('.selection-empty')!.textContent = 'Choose a colored body in the world.';
@@ -99,15 +99,24 @@ function cacheHistory(card: typeof cards[number], force = false): void {
   }
 }
 
-function refreshCard(card: typeof cards[number], forceHistory = false): void {
+function refreshPhysical(card: typeof cards[number]): void {
   const world = card.world!;
   card.organisms = world.organisms;
   card.occupancy = world.occupancy;
-  card.census = world.census();
-  if (card.census.births !== card.cachedBirthCount) {
+  const counters = world.countersView;
+  if (counters.births !== card.cachedBirthCount || counters.deaths !== card.cachedDeathCount) {
     card.lineage = world.lineage;
-    card.cachedBirthCount = card.census.births;
+    card.cachedBirthCount = counters.births;
+    card.cachedDeathCount = counters.deaths;
+    renderBirths(card);
   }
+  updateSelection(card);
+}
+
+function refreshCard(card: typeof cards[number], forceHistory = false): void {
+  const world = card.world!;
+  refreshPhysical(card);
+  card.census = world.census();
   cacheHistory(card, forceHistory);
   updateCard(card);
 }
@@ -139,6 +148,7 @@ function drawWorld(card: typeof cards[number]): void {
   const { canvas, ctx, world } = card;
   const size = canvas.width;
   if (!world || size < 1) return;
+  refreshPhysical(card);
   ctx.fillStyle = '#09151a'; ctx.fillRect(0, 0, size, size);
   const tileSize = size / RULES.width;
   if (card.foodHeatmap) {
@@ -249,7 +259,7 @@ function updateCard(card: typeof cards[number]): void {
   const extinct = card.root.querySelector<HTMLElement>('.extinction')!;
   extinct.hidden = world.extinctionTick === null;
   if (!extinct.hidden) extinct.textContent = `This world became extinct at tick ${fmt(world.extinctionTick!)} and stays frozen there.`;
-  updateSelection(card); renderBirths(card); drawHistory(card);
+  drawHistory(card);
 }
 
 function updateStatus(): void {
@@ -363,11 +373,14 @@ function frame(now: number): void {
       comparisonTick = next; accumulator -= tickDuration; ticks++;
       if (cards.every(card => card.world!.extinctionTick !== null) || comparisonTick >= DEVELOPMENT_TICK_LIMIT) { paused = true; break; }
     }
-    if (comparisonTick !== lastMetricTick && (comparisonTick % 5 === 0 || paused)) updateAll(false, paused);
-    if (ticks && comparisonTick !== lastDrawTick) { drawAll(); lastDrawTick = comparisonTick; }
+    if (ticks) {
+      if (comparisonTick - lastMetricTick >= 5 || paused) updateAll(false, paused);
+      else updateStatus();
+      if (comparisonTick !== lastDrawTick) { drawAll(); lastDrawTick = comparisonTick; }
+    }
   }
   previousFrame = now; requestAnimationFrame(frame);
 }
 
-createWorlds(1201);
+createWorlds(1201, true);
 requestAnimationFrame(frame);

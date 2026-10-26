@@ -361,6 +361,7 @@ export class DevelopmentWorld {
     world.droppedSamples = 0;
     world.nodes = [];
     world.droppedNodes = 0;
+    world.lastMutation = null;
     return world;
   }
 
@@ -448,7 +449,8 @@ export class DevelopmentWorld {
 
   snapshot(): DevelopmentSnapshot {
     return Object.freeze({ schemaVersion: 1, description: 'observation only; not a resume checkpoint',
-      runtime: `Node ${typeof process !== 'undefined' ? process.versions.node : 'browser'}`,
+      runtime: typeof process !== 'undefined' && typeof process.versions?.node === 'string'
+        ? `Node ${process.versions.node}` : 'browser',
       rules: RULES, seed: this.seed, mutation: this.mutation, tick: this._tick, extinctionTick: this._extinctionTick,
       food: Object.freeze(Array.from(this._food)), occupancy: Object.freeze(Array.from(this._occupancy)),
       organisms: this.organisms, ledger: this.computeLedger(), counters: Object.freeze({ ...this.counters }), history: this.history,
@@ -472,7 +474,7 @@ export class DevelopmentWorld {
     } else if (spec.food instanceof Uint8Array) {
       if (spec.food.length !== RULES.tileCount) throw new RangeError('food array must contain 9216 entries');
       for (const food of spec.food) if (food > RULES.maxFood) throw new RangeError('food values must be 0..40');
-      world._food = spec.food.slice();
+      world._food = new Uint8Array(spec.food);
     } else throw new TypeError('food must be a scalar or Uint8Array');
     const used = new Set<number>();
     founders.forEach((rawFounder, index) => {
@@ -549,7 +551,7 @@ export class DevelopmentWorld {
       age: 0, store: RULES.newbornStore, genome: childGenome, tile, heading });
     this._occupancy[tile] = child.id; // Reserve now; the child enters `living` only after the parent loop.
     this.nodes.push({ id: child.id, parentID: parent.id, family: child.family, generation: child.generation, birthTick: this._tick,
-      genome: copyGenome(childGenome), mutation: childGenome === parent.genome ? null : this.lastMutation, deathTick: null, deathCause: null });
+      genome: copyGenome(childGenome), mutation: this.lastMutation, deathTick: null, deathCause: null });
     this.pruneLineage();
     return child;
   }

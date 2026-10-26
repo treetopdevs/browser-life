@@ -26,14 +26,16 @@ Unique normalized footprints at tick 144: 3 of 3. Assay status: **pass**.
 
 Retained 6 outcomes: 6 alive at tick 3000 and 0 extinct. Batch status: **complete**.
 
-| Seed | Mutation | Outcome       | Births | Effective mutations | Population | Cells | Max generation | Ledger residual |
-| ---- | -------- | ------------- | ------ | ------------------- | ---------- | ----- | -------------- | --------------- |
-| 1201 | off      | alive at 3000 | 229    | 0                   | 47         | 1036  | 7              | 0               |
-| 1201 | on       | alive at 3000 | 230    | 56                  | 48         | 1057  | 7              | 0               |
-| 1202 | off      | alive at 3000 | 234    | 0                   | 47         | 1059  | 7              | 0               |
-| 1202 | on       | alive at 3000 | 231    | 53                  | 48         | 1060  | 7              | 0               |
-| 1203 | off      | alive at 3000 | 232    | 0                   | 48         | 1063  | 7              | 0               |
-| 1203 | on       | alive at 3000 | 231    | 48                  | 48         | 1076  | 7              | 0               |
+| Seed | Mutation | Outcome       | Births | Effective mutations | Population | Cells | Max generation | Cap-blocked births | Living variants | Age deaths | Starvation deaths | Ledger residual |
+| ---- | -------- | ------------- | ------ | ------------------- | ---------- | ----- | -------------- | ------------------ | --------------- | ---------- | ----------------- | --------------- |
+| 1201 | off      | alive at 3000 | 229    | 0                   | 47         | 1036  | 7              | 977                | 3               | 192        | 2                 | 0               |
+| 1201 | on       | alive at 3000 | 230    | 56                  | 48         | 1057  | 7              | 953                | 20              | 191        | 3                 | 0               |
+| 1202 | off      | alive at 3000 | 234    | 0                   | 47         | 1059  | 7              | 965                | 3               | 192        | 7                 | 0               |
+| 1202 | on       | alive at 3000 | 231    | 53                  | 48         | 1060  | 7              | 973                | 25              | 192        | 3                 | 0               |
+| 1203 | off      | alive at 3000 | 232    | 0                   | 48         | 1063  | 7              | 931                | 3               | 191        | 5                 | 0               |
+| 1203 | on       | alive at 3000 | 231    | 48                  | 48         | 1076  | 7              | 968                | 21              | 190        | 5                 | 0               |
+
+Cap-blocked births are eligible attempts denied by the population cap. Death totals are counted once from each run's final lineage records. Living variants count exact current genome tuples and can include neutral changes.
 
 ## Interpretation limits
 

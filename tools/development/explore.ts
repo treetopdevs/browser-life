@@ -14,6 +14,7 @@ import {
   GENOME_PRESETS,
   RULES,
   type DevelopmentCensus,
+  type DevelopmentGenome,
   type DevelopmentOrganism,
   type DevelopmentSnapshot,
 } from '../../apps/lab/src/development/model.ts';
@@ -68,6 +69,18 @@ function readSource(url: URL): Uint8Array {
 }
 
 function sameJSON(a: unknown, b: unknown): boolean { return JSON.stringify(a) === JSON.stringify(b); }
+
+function record(value: unknown, label: string): asserts value is AnyRecord {
+  invariant(value !== null && typeof value === 'object' && !Array.isArray(value), `${label}: expected object`);
+}
+
+function safeInteger(value: unknown, label: string, min = 0, max = Number.MAX_SAFE_INTEGER): asserts value is number {
+  invariant(Number.isSafeInteger(value) && (value as number) >= min && (value as number) <= max, `${label}: expected bounded integer`);
+}
+
+function hashString(value: unknown, label: string): asserts value is string {
+  invariant(typeof value === 'string' && /^[a-f0-9]{64}$/.test(value), `${label}: expected SHA-256 hex`);
+}
 
 function snapshotHash(world: DevelopmentWorld): string { return canonicalHash(world.snapshot()); }
 
@@ -206,28 +219,39 @@ function withoutMutationFlag(snapshot: DevelopmentSnapshot): AnyRecord {
 }
 
 function validateLineage(world: DevelopmentWorld, label: string): void {
-  const nodes = world.lineage;
+  validateLineageNodes(world.lineage, world.tick, label);
+}
+
+function validateLineageNodes(nodes: readonly DevelopmentSnapshot['lineage'][number][], tick: number, label: string): void {
   const byID = new Map(nodes.map((node) => [node.id, node]));
   invariant(byID.size === nodes.length, `${label}: duplicate lineage node`);
   for (const node of nodes) {
     invariant(Number.isSafeInteger(node.id) && node.id > 0 && Number.isSafeInteger(node.generation) && node.generation >= 0 &&
-      Number.isInteger(node.family) && node.family >= 0 && node.family <= 2 && Number.isSafeInteger(node.birthTick) && node.birthTick >= 0 && node.birthTick <= world.tick,
+      Number.isInteger(node.family) && node.family >= 0 && node.family <= 2 && Number.isSafeInteger(node.birthTick) && node.birthTick >= 0 && node.birthTick <= tick,
     `${label}: invalid lineage bounds for ${node.id}`);
     invariant(Number.isInteger(node.genome.turnEvery) && node.genome.turnEvery >= 2 && node.genome.turnEvery <= 8 &&
       Number.isInteger(node.genome.turn) && node.genome.turn >= -1 && node.genome.turn <= 1 &&
       Number.isInteger(node.genome.branchEvery) && node.genome.branchEvery >= 2 && node.genome.branchEvery <= 6 &&
       Number.isInteger(node.genome.maxCells) && node.genome.maxCells >= 16 && node.genome.maxCells <= RULES.maxCellsPerOrganism,
     `${label}: invalid lineage genome for ${node.id}`);
-    invariant(node.deathTick === null || (Number.isSafeInteger(node.deathTick) && node.deathTick >= node.birthTick && node.deathTick <= world.tick),
+    invariant(node.deathTick === null || (Number.isSafeInteger(node.deathTick) && node.deathTick >= node.birthTick && node.deathTick <= tick),
       `${label}: invalid lineage death tick for ${node.id}`);
     invariant(node.deathTick === null ? node.deathCause === null : node.deathCause === 'starvation' || node.deathCause === 'age',
       `${label}: invalid lineage death cause for ${node.id}`);
-    invariant(node.parentID === null || byID.has(node.parentID), `${label}: missing parent node for ${node.id}`);
     if (node.parentID === null) {
-      invariant(node.generation === 0 && node.mutation === null, `${label}: founder lineage metadata is invalid`);
+      invariant(node.generation === 0 && node.mutation === null && !node.parentRecordDropped, `${label}: founder lineage metadata is invalid`);
       continue;
     }
-    const parent = byID.get(node.parentID)!;
+    const parent = byID.get(node.parentID);
+    if (!parent) {
+      invariant(node.parentRecordDropped, `${label}: missing parent node without a dropped-record marker for ${node.id}`);
+      if (node.mutation !== null) {
+        invariant(GENOME_FIELDS.includes(node.mutation.field) && node.mutation.to === node.genome[node.mutation.field] && node.mutation.from !== node.mutation.to,
+          `${label}: invalid retained mutation record for ${node.id}`);
+      }
+      continue;
+    }
+    invariant(!node.parentRecordDropped, `${label}: parent marked dropped while retained for ${node.id}`);
     invariant(node.generation === parent.generation + 1 && node.family === parent.family, `${label}: parent link/family mismatch for ${node.id}`);
     const changed = GENOME_FIELDS.filter((field) => node.genome[field] !== parent.genome[field]);
     if (node.mutation === null) invariant(changed.length === 0, `${label}: child ${node.id} changed genome without a mutation record`);
@@ -236,6 +260,318 @@ function validateLineage(world: DevelopmentWorld, label: string): void {
       invariant(node.mutation.from === parent.genome[node.mutation.field] && node.mutation.to === node.genome[node.mutation.field],
         `${label}: mutation values mismatch for ${node.id}`);
       invariant(node.mutation.to !== node.mutation.from, `${label}: neutral change marked effective for ${node.id}`);
+    }
+  }
+}
+
+function assertGenome(value: unknown, label: string): DevelopmentGenome {
+  record(value, label);
+  const genome = value as unknown as DevelopmentGenome;
+  invariant(Object.keys(value).sort().join(',') === 'branchEvery,maxCells,turn,turnEvery', `${label}: genome fields are incomplete or unexpected`);
+  invariant(Number.isInteger(genome.turnEvery) && genome.turnEvery >= 2 && genome.turnEvery <= 8 &&
+    Number.isInteger(genome.turn) && genome.turn >= -1 && genome.turn <= 1 &&
+    Number.isInteger(genome.branchEvery) && genome.branchEvery >= 2 && genome.branchEvery <= 6 &&
+    Number.isInteger(genome.maxCells) && genome.maxCells >= 16 && genome.maxCells <= RULES.maxCellsPerOrganism,
+  `${label}: genome outside bounded integer settings`);
+  return genome;
+}
+
+function assertMutationOff(world: DevelopmentWorld, label: string): void {
+  const census = world.census();
+  invariant(census.attemptedMutations === 0 && census.effectiveMutations === 0, `${label}: mutation-off run recorded mutation counters`);
+  invariant(world.lineage.every((node) => node.mutation === null && GENOME_PRESETS.some((genome) => sameJSON(node.genome, genome))),
+    `${label}: mutation-off lineage contains a mutation or non-founder program`);
+}
+
+function censusFromSnapshot(snapshot: DevelopmentSnapshot): DevelopmentCensus {
+  const organisms = snapshot.organisms;
+  const familyCounts: [number, number, number] = [0, 0, 0];
+  let cells = 0;
+  let totalEnergy = 0;
+  let maxGeneration = 0;
+  const variants = new Set<string>();
+  for (const organism of organisms) {
+    familyCounts[organism.family]++;
+    cells += organism.cells.length;
+    totalEnergy += organism.store + RULES.structurePerCell * organism.cells.length;
+    maxGeneration = Math.max(maxGeneration, organism.generation);
+    variants.add(JSON.stringify([organism.genome.turnEvery, organism.genome.turn, organism.genome.branchEvery, organism.genome.maxCells]));
+  }
+  const counters = snapshot.counters;
+  const blockedBirths = counters.blockedSpaceBirths + counters.blockedCapBirths;
+  return {
+    tick: snapshot.tick,
+    population: organisms.length,
+    cells,
+    familyCounts,
+    births: counters.births,
+    growths: counters.growths,
+    deaths: counters.deaths,
+    effectiveMutations: counters.effectiveMutations,
+    attemptedMutations: counters.attemptedMutations,
+    maxGeneration,
+    totalCells: cells,
+    totalEnergy,
+    meanBodyCells: organisms.length ? cells / organisms.length : 0,
+    meanEnergy: organisms.length ? totalEnergy / organisms.length : 0,
+    blockedBirths,
+    blockedSpaceBirths: counters.blockedSpaceBirths,
+    blockedCapBirths: counters.blockedCapBirths,
+    ledgerResidual: snapshot.ledger.residual,
+    genomeVariantCount: variants.size,
+  };
+}
+
+function assertRecordedSnapshot(value: unknown, expected: { seed: number; mutation: boolean; actualTick: number; extinctionTick: number | null }, label: string): DevelopmentSnapshot {
+  record(value, label);
+  const state = value as unknown as DevelopmentSnapshot;
+  const requiredKeys = ['schemaVersion', 'description', 'runtime', 'rules', 'seed', 'mutation', 'tick', 'extinctionTick', 'food', 'occupancy',
+    'organisms', 'ledger', 'counters', 'history', 'droppedHistory', 'lineage', 'droppedLineage'].sort();
+  invariant(Object.keys(value).sort().join('|') === requiredKeys.join('|'), `${label}: full snapshot fields are incomplete`);
+  invariant(state.schemaVersion === 1 && state.description === 'observation only; not a resume checkpoint', `${label}: invalid snapshot schema`);
+  invariant(state.seed === expected.seed && state.mutation === expected.mutation && state.tick === expected.actualTick && state.extinctionTick === expected.extinctionTick,
+    `${label}: snapshot identity/tick mismatch`);
+  invariant(sameJSON(state.rules, RULES), `${label}: snapshot rules mismatch`);
+  invariant(state.runtime === `Node ${EXPECTED_NODE}`, `${label}: snapshot runtime mismatch`);
+  invariant(Array.isArray(state.food) && state.food.length === RULES.tileCount, `${label}: food snapshot is incomplete`);
+  invariant(state.food.every((amount) => Number.isInteger(amount) && amount >= 0 && amount <= RULES.maxFood), `${label}: food snapshot is out of bounds`);
+  invariant(Array.isArray(state.occupancy) && state.occupancy.length === RULES.tileCount, `${label}: occupancy snapshot is incomplete`);
+  invariant(state.occupancy.every((id) => Number.isSafeInteger(id) && id >= 0), `${label}: occupancy snapshot has invalid IDs`);
+  invariant(Array.isArray(state.organisms) && state.organisms.length <= RULES.maxOrganisms, `${label}: organism snapshot is incomplete`);
+  const organismIDs = new Set<number>();
+  const occupiedTiles = new Set<number>();
+  let cellCount = 0;
+  for (const organism of state.organisms) {
+    invariant(Number.isSafeInteger(organism.id) && organism.id > 0 && !organismIDs.has(organism.id), `${label}: duplicate or invalid organism ID`);
+    organismIDs.add(organism.id);
+    safeInteger(organism.family, `${label}: family`, 0, 2);
+    safeInteger(organism.generation, `${label}: generation`);
+    safeInteger(organism.age, `${label}: age`, 0, RULES.maxAge - 1);
+    safeInteger(organism.store, `${label}: store`, 0, RULES.storeCap);
+    safeInteger(organism.births, `${label}: organism births`);
+    invariant(organism.parentID === null || (Number.isSafeInteger(organism.parentID) && organism.parentID > 0), `${label}: invalid parent ID for organism ${organism.id}`);
+    const genome = assertGenome(organism.genome, `${label}: organism ${organism.id}`);
+    invariant(Array.isArray(organism.cells) && organism.cells.length > 0 && organism.cells.length <= genome.maxCells && organism.cells.length <= RULES.maxCellsPerOrganism,
+      `${label}: body is incomplete or over capacity`);
+    invariant(connected(organism), `${label}: disconnected body ${organism.id}`);
+    for (const cell of organism.cells) {
+      safeInteger(cell.tile, `${label}: cell tile`, 0, RULES.tileCount - 1);
+      safeInteger(cell.heading, `${label}: cell heading`, 0, 3);
+      safeInteger(cell.depth, `${label}: cell depth`);
+      invariant(!occupiedTiles.has(cell.tile) && state.occupancy[cell.tile] === organism.id, `${label}: overlapping or mismatched occupancy`);
+      occupiedTiles.add(cell.tile);
+    }
+    cellCount += organism.cells.length;
+  }
+  invariant(cellCount <= RULES.maxOccupied, `${label}: total body cap exceeded`);
+  for (let tile = 0; tile < state.occupancy.length; tile++) {
+    const id = state.occupancy[tile]!;
+    invariant(id === 0 ? !occupiedTiles.has(tile) : organismIDs.has(id) && occupiedTiles.has(tile), `${label}: occupancy contains unowned cells`);
+  }
+  record(state.ledger, `${label}: ledger`);
+  const foodTotal = state.food.reduce((sum, amount) => sum + amount, 0);
+  const bodyEnergy = state.organisms.reduce((sum, organism) => sum + organism.store + RULES.structurePerCell * organism.cells.length, 0);
+  const expectedEnergy = state.ledger.initialEnergy + state.ledger.supplied - state.ledger.dissipated - state.ledger.deathLoss;
+  invariant([state.ledger.initialEnergy, state.ledger.supplied, state.ledger.dissipated, state.ledger.deathLoss, state.ledger.expected, state.ledger.actual, state.ledger.residual]
+    .every(Number.isSafeInteger), `${label}: ledger contains a non-integer`);
+  invariant(state.ledger.actual === foodTotal + bodyEnergy && state.ledger.expected === expectedEnergy && state.ledger.residual === state.ledger.actual - state.ledger.expected && state.ledger.residual === 0,
+    `${label}: ledger snapshot does not reconcile exactly`);
+  record(state.counters, `${label}: counters`);
+  invariant(Object.values(state.counters).every((counter) => Number.isSafeInteger(counter) && counter >= 0), `${label}: invalid cumulative counters`);
+  invariant(Array.isArray(state.lineage), `${label}: lineage snapshot is incomplete`);
+  if (!expected.mutation) {
+    invariant(state.counters.attemptedMutations === 0 && state.counters.effectiveMutations === 0, `${label}: mutation-off snapshot has mutation counters`);
+    invariant(state.lineage.every((node) => node.mutation === null && GENOME_PRESETS.some((genome) => sameJSON(node.genome, genome))),
+      `${label}: mutation-off snapshot has a mutation or non-founder program`);
+  }
+  validateLineageNodes(state.lineage, state.tick, label);
+  invariant(state.droppedLineage === 0 && state.droppedHistory === 0, `${label}: dropped observation records`);
+  const lineageByID = new Map(state.lineage.map((node) => [node.id, node]));
+  const livingIDs = new Set<number>();
+  for (const organism of state.organisms) {
+    const node = lineageByID.get(organism.id);
+    invariant(node && node.deathTick === null, `${label}: living organism ${organism.id} has no live lineage record`);
+    invariant(node.parentID === organism.parentID && node.family === organism.family && node.generation === organism.generation && sameJSON(node.genome, organism.genome),
+      `${label}: living organism ${organism.id} differs from its lineage record`);
+    livingIDs.add(organism.id);
+  }
+  invariant(state.lineage.filter((node) => node.deathTick === null).length === livingIDs.size &&
+    state.lineage.every((node) => node.deathTick !== null || livingIDs.has(node.id)), `${label}: live lineage IDs do not match organisms`);
+  const lineageBirths = state.lineage.filter((node) => node.parentID !== null).length;
+  const lineageDeaths = state.lineage.filter((node) => node.deathTick !== null).length;
+  const lineageEffectiveMutations = state.lineage.filter((node) => node.mutation !== null).length;
+  invariant(state.counters.births === lineageBirths && state.counters.deaths === lineageDeaths && state.counters.effectiveMutations === lineageEffectiveMutations,
+    `${label}: birth, death or effective mutation counters disagree with lineage`);
+  invariant(Array.isArray(state.history), `${label}: history snapshot is incomplete`);
+  const historyTicks = expectedHistoryTicks(state.tick, state.extinctionTick);
+  invariant(state.history.map((entry) => entry.tick).join(',') === historyTicks.join(','), `${label}: history schedule is incomplete`);
+  const finalHistory = state.history.at(-1);
+  invariant(finalHistory && sameJSON(finalHistory, censusFromSnapshot(state)), `${label}: final snapshot history/census mismatch`);
+  return state;
+}
+
+function expectedHistoryTicks(actualTick: number, extinctionTick: number | null): number[] {
+  const ticks = [0];
+  for (let tick = RULES.historyEvery; tick <= actualTick; tick += RULES.historyEvery) ticks.push(tick);
+  if (extinctionTick !== null && !ticks.includes(extinctionTick)) ticks.push(extinctionTick);
+  return ticks.sort((a, b) => a - b);
+}
+
+function validateAssay(assayValue: unknown): asserts assayValue is AnyRecord {
+  record(assayValue, 'assay');
+  const assay = assayValue;
+  invariant(assay.foodPerTile === RULES.maxFood && assay.seed === 7100 && assay.tickLimit === 240 && assay.footprintTick === 144,
+    'Assay settings mismatch');
+  invariant(Array.isArray(assay.results) && assay.results.length === GENOME_PRESETS.length, 'Assay must contain all three supplied programs');
+  const footprints = new Set<string>();
+  for (let index = 0; index < GENOME_PRESETS.length; index++) {
+    const item = assay.results[index] as AnyRecord;
+    invariant(item.index === index && item.seed === assay.seed && item.foodPerTile === assay.foodPerTile &&
+      item.originTile === 48 * RULES.width + 48 && item.heading === 0 && sameJSON(item.genome, GENOME_PRESETS[index]), `Assay program ${index + 1} settings mismatch`);
+    invariant(Array.isArray(item.trajectory) && item.trajectory.length === assay.tickLimit + 1, `Assay program ${index + 1} trajectory is incomplete`);
+    for (let tick = 0; tick <= assay.tickLimit; tick++) {
+      const point = item.trajectory[tick] as AnyRecord;
+      invariant(point.tick === tick, `Assay program ${index + 1} missing tick ${tick}`);
+      safeInteger(point.population, `Assay program ${index + 1} population`, 0, RULES.maxOrganisms);
+      safeInteger(point.cells, `Assay program ${index + 1} cells`, 0, RULES.maxCellsPerOrganism);
+      invariant(point.founderAge === null || Number.isSafeInteger(point.founderAge), `Assay program ${index + 1} invalid founder age`);
+      safeInteger(point.births, `Assay program ${index + 1} births`);
+      invariant(point.ledgerResidual === 0, `Assay program ${index + 1} ledger is not exact`);
+    }
+    const maxFounderCells = Math.max(...item.trajectory.map((point: AnyRecord) => point.cells as number));
+    const firstBirth = item.trajectory.find((point: AnyRecord) => Number(point.births) > 0)?.tick ?? null;
+    invariant(item.maxFounderCells === maxFounderCells && item.firstBirthTick === firstBirth, `Assay program ${index + 1} summary disagrees with its trajectory`);
+    const footprintCells = item.trajectory[assay.footprintTick].cells as number;
+    const hasFootprint = typeof item.footprintAt144 === 'string' && item.footprintAt144.length > 0;
+    invariant(hasFootprint ? footprintCells > 0 : item.footprintAt144 === null && footprintCells === 0,
+      `Assay program ${index + 1} footprint presence does not match its tick-144 body`);
+    if (hasFootprint) {
+      const footprint = JSON.parse(item.footprintAt144 as string) as unknown;
+      invariant(Array.isArray(footprint) && footprint.length === footprintCells &&
+        footprint.every((offset) => Array.isArray(offset) && offset.length === 2 && offset.every((coordinate) => Number.isSafeInteger(coordinate) && Math.abs(coordinate) <= 31)),
+      `Assay program ${index + 1} footprint does not match its recorded body`);
+      const normalized = footprint as number[][];
+      invariant(new Set(normalized.map(([x, y]) => `${x},${y}`)).size === normalized.length && normalized.some(([x, y]) => x === 0 && y === 0) &&
+        normalized.every((offset, offsetIndex) => offsetIndex === 0 || normalized[offsetIndex - 1]![1]! < offset[1]! ||
+          (normalized[offsetIndex - 1]![1] === offset[1] && normalized[offsetIndex - 1]![0]! <= offset[0]!)),
+      `Assay program ${index + 1} footprint is not a normalized ordered set`);
+      footprints.add(item.footprintAt144 as string);
+    }
+    const expectedPass = maxFounderCells >= 18 && firstBirth !== null && firstBirth <= assay.tickLimit && hasFootprint;
+    invariant(item.passed === expectedPass, `Assay program ${index + 1} pass flag disagrees with evidence`);
+  }
+  invariant(assay.distinctFootprints === footprints.size && assay.passed === (assay.results.every((item: AnyRecord) => item.passed) && footprints.size === GENOME_PRESETS.length),
+    'Assay summary disagrees with its programs');
+}
+
+export function expectedSnapshotExtinctionTick(actualTick: number, extinctionTick: number | null): number | null {
+  return extinctionTick !== null && actualTick >= extinctionTick ? extinctionTick : null;
+}
+
+export function validateMilestoneSnapshot(
+  value: unknown,
+  run: { seed: number; mutation: boolean; extinctionTick: number | null },
+  scheduledTick: number,
+  label = 'milestone snapshot',
+): { state: DevelopmentSnapshot; stateHash: string } {
+  record(value, label);
+  const milestone = value;
+  const finalTick = run.extinctionTick === null ? MAX_TICK : run.extinctionTick;
+  const actualTick = Math.min(scheduledTick, finalTick);
+  invariant((SNAPSHOT_TICKS as readonly number[]).includes(scheduledTick), `${label}: unexpected scheduled tick`);
+  invariant(milestone.scheduledTick === scheduledTick && milestone.actualTick === actualTick, `${label}: milestone tick mismatch at ${scheduledTick}`);
+  hashString(milestone.stateHash, `${label}: hash`);
+  invariant(milestone.state !== undefined && milestone.state !== null, `${label}: full state missing at milestone ${scheduledTick}`);
+  const expected = {
+    seed: run.seed,
+    mutation: run.mutation,
+    actualTick,
+    extinctionTick: expectedSnapshotExtinctionTick(actualTick, run.extinctionTick),
+  };
+  const state = assertRecordedSnapshot(milestone.state, expected, `${label} ${scheduledTick}`);
+  invariant(canonicalHash(state) === milestone.stateHash, `${label}: state hash mismatch at ${scheduledTick}`);
+  return { state, stateHash: milestone.stateHash };
+}
+
+/** Validate the retained evidence structure without running the simulation. */
+export function validateEvidenceStructure(dataValue: unknown): void {
+  record(dataValue, 'pilot evidence');
+  const data = dataValue;
+  validateAssay(data.assay);
+  invariant(data.batchStatus === (data.assay.passed ? 'complete' : 'stopped-after-assay-failure'), 'Batch status conflicts with assay gate');
+  invariant(Array.isArray(data.runs), 'Run matrix is missing');
+  const expectedPairs: RunCondition[] = [];
+  for (const seed of SEEDS) for (const mutation of CONDITIONS) expectedPairs.push({ seed, mutation });
+  invariant(data.runs.length === (data.assay.passed ? expectedPairs.length : 0), 'Run matrix has the wrong number of conditions');
+  const keys = new Set<string>();
+  const normalizedInitialBySeed = new Map<number, string>();
+  for (let index = 0; index < expectedPairs.length && data.assay.passed; index++) {
+    const expectedPair = expectedPairs[index]!;
+    const run = data.runs[index] as AnyRecord;
+    invariant(run.seed === expectedPair.seed && run.mutation === expectedPair.mutation, `Run matrix order/pair mismatch at row ${index + 1}`);
+    const key = `${run.seed}/${run.mutation}`;
+    invariant(!keys.has(key), `Duplicate run condition ${key}`);
+    keys.add(key);
+    invariant(run.repeatVerified === true, `${key}: full repeat verification missing`);
+    const finalTick = run.extinctionTick === null ? MAX_TICK : run.extinctionTick;
+    safeInteger(finalTick, `${key}: final tick`, 0, MAX_TICK);
+    invariant(run.finalTick === finalTick && run.outcome === (run.extinctionTick === null ? 'alive-at-3000' : 'extinct'), `${key}: outcome/final tick mismatch`);
+    if (run.extinctionTick !== null) safeInteger(run.extinctionTick, `${key}: extinction tick`, 0, MAX_TICK);
+    invariant(Array.isArray(run.samples), `${key}: census samples missing`);
+    const expectedSamples = [0];
+    for (let tick = 1; tick <= MAX_TICK; tick++) if (tick % SAMPLE_EVERY === 0 || tick === run.extinctionTick) expectedSamples.push(tick);
+    invariant(run.samples.length === expectedSamples.length, `${key}: census schedule has missing or extra rows`);
+    let extinctionHash: string | null = null;
+    let frozenCensus: unknown = null;
+    for (let index = 0; index < expectedSamples.length; index++) {
+      const row = run.samples[index] as AnyRecord;
+      const scheduledTick = expectedSamples[index]!;
+      const actualTick = Math.min(scheduledTick, finalTick);
+      invariant(row.scheduledTick === scheduledTick && row.actualTick === actualTick, `${key}: sample schedule/actual tick mismatch at ${scheduledTick}`);
+      hashString(row.stateHash, `${key}: sample ${scheduledTick} hash`);
+      record(row.census, `${key}: sample ${scheduledTick} census`);
+      invariant(row.census.tick === actualTick && row.census.ledgerResidual === 0, `${key}: sample ${scheduledTick} census tick/ledger mismatch`);
+      if (run.extinctionTick !== null && scheduledTick >= run.extinctionTick) {
+        if (extinctionHash === null) { extinctionHash = row.stateHash; frozenCensus = row.census; }
+        invariant(row.stateHash === extinctionHash && sameJSON(row.census, frozenCensus), `${key}: extinct sample failed to freeze at ${scheduledTick}`);
+      }
+    }
+    invariant(Array.isArray(run.snapshots) && run.snapshots.length === SNAPSHOT_TICKS.length, `${key}: complete milestone snapshots missing`);
+    const snapshotStates: DevelopmentSnapshot[] = [];
+    for (let index = 0; index < SNAPSHOT_TICKS.length; index++) {
+      const milestone = run.snapshots[index] as AnyRecord;
+      const scheduledTick = SNAPSHOT_TICKS[index]!;
+      const validated = validateMilestoneSnapshot(milestone, {
+        seed: run.seed as number,
+        mutation: run.mutation as boolean,
+        extinctionTick: run.extinctionTick as number | null,
+      }, scheduledTick, key);
+      snapshotStates.push(validated.state);
+      const matchingSample = (run.samples as AnyRecord[]).find((sample) => sample.scheduledTick === scheduledTick);
+      invariant(matchingSample && matchingSample.stateHash === validated.stateHash, `${key}: milestone hash lacks matching census sample`);
+    }
+    const initialHash = canonicalHash(withoutMutationFlag(snapshotStates[0]!));
+    hashString(run.initialStateHash, `${key}: initial state hash`);
+    invariant(run.initialStateHash === initialHash, `${key}: initial state hash does not match tick 0 snapshot`);
+    const previousInitial = normalizedInitialBySeed.get(run.seed);
+    if (previousInitial === undefined) normalizedInitialBySeed.set(run.seed, initialHash);
+    else invariant(previousInitial === initialHash, `${key}: mutation pair does not share its initial state`);
+    const finalSnapshot = snapshotStates.at(-1)!;
+    const finalCensus = censusFromSnapshot(finalSnapshot);
+    invariant(run.finalStateHash === canonicalHash(finalSnapshot), `${key}: final state hash does not match final snapshot`);
+    invariant(sameJSON(run.finalCensus, finalCensus), `${key}: final census does not match final snapshot`);
+    invariant(sameJSON(run.finalLedger, finalSnapshot.ledger), `${key}: final ledger does not match final snapshot`);
+    invariant(sameJSON(run.history, finalSnapshot.history) && run.droppedHistory === finalSnapshot.droppedHistory && run.droppedLineage === finalSnapshot.droppedLineage,
+      `${key}: final history/lineage retention does not match final snapshot`);
+    invariant(Array.isArray(run.lineage) && sameJSON(run.lineage, finalSnapshot.lineage), `${key}: final lineage does not match final snapshot`);
+    validateLineageNodes(run.lineage, finalTick, `${key}: lineage`);
+    invariant(Array.isArray(run.births), `${key}: birth records missing`);
+    const expectedBirths = run.lineage.filter((node: DevelopmentSnapshot['lineage'][number]) => node.parentID !== null);
+    invariant(sameJSON(run.births, expectedBirths), `${key}: birth records do not match lineage`);
+    const historyByTick = new Map(finalSnapshot.history.map((row) => [row.tick, row]));
+    for (const row of run.samples as EvidenceSample[]) {
+      const historyRow = historyByTick.get(row.actualTick);
+      invariant(historyRow && sameJSON(row.census, historyRow), `${key}: sample census differs from hash-covered history at actual tick ${row.actualTick}`);
     }
   }
 }
@@ -258,6 +594,10 @@ function runCondition(condition: RunCondition): AnyRecord {
     if (replay.extinctionTick === null) replay.step(1);
     assertWorld(primary, `run-${condition.seed}-${Number(condition.mutation)}`);
     assertWorld(replay, `replay-${condition.seed}-${Number(condition.mutation)}`);
+    if (!condition.mutation) {
+      assertMutationOff(primary, `run-${condition.seed}/mutation-off`);
+      assertMutationOff(replay, `replay-${condition.seed}/mutation-off`);
+    }
     const primaryHash = snapshotHash(primary);
     const replayHash = snapshotHash(replay);
     invariant(primaryHash === replayHash, `Full-state replay mismatch ${condition.seed}/${condition.mutation} at ${scheduledTick}`);
@@ -318,6 +658,16 @@ function runtimeInfo(): AnyRecord {
   return { node: process.versions.node, platform: process.platform, arch: process.arch };
 }
 
+function deathsByCause(lineage: readonly DevelopmentSnapshot['lineage'][number][]): { age: number; starvation: number } {
+  let age = 0;
+  let starvation = 0;
+  for (const node of lineage) {
+    if (node.deathCause === 'age') age++;
+    else if (node.deathCause === 'starvation') starvation++;
+  }
+  return { age, starvation };
+}
+
 function buildArtifact(): AnyRecord {
   invariant(process.versions.node === EXPECTED_NODE, `Evidence requires Node ${EXPECTED_NODE}; found ${process.versions.node}`);
   const capturedSources = sourceHashes();
@@ -325,7 +675,7 @@ function buildArtifact(): AnyRecord {
   invariant(JSON.stringify(sourceHashes()) === JSON.stringify(capturedSources), 'Evidence sources changed during assay; discard and rerun');
   const runs = assay.passed ? runBatch() : [];
   invariant(JSON.stringify(sourceHashes()) === JSON.stringify(capturedSources), 'Evidence sources changed during fixed batch; discard and rerun');
-  return {
+  const data: AnyRecord = {
     schemaVersion: 1,
     pilot: 'developmental-programs-v1',
     batch: { seeds: [...SEEDS], mutation: [...CONDITIONS], maxTick: MAX_TICK, sampleEvery: SAMPLE_EVERY,
@@ -338,6 +688,8 @@ function buildArtifact(): AnyRecord {
     runs,
     batchStatus: assay.passed ? 'complete' : 'stopped-after-assay-failure',
   };
+  validateEvidenceStructure(data);
+  return data;
 }
 
 function table(headers: readonly string[], rows: readonly (readonly string[])[]): string {
@@ -354,7 +706,7 @@ function table(headers: readonly string[], rows: readonly (readonly string[])[])
   return [header, separator, ...renderedRows].join('\n');
 }
 
-function buildMarkdown(data: AnyRecord): string {
+export function buildMarkdown(data: AnyRecord): string {
   const batch = data.batch as AnyRecord;
   const runtime = data.runtime as AnyRecord;
   const assay = data.assay as AnyRecord;
@@ -365,13 +717,16 @@ function buildMarkdown(data: AnyRecord): string {
   ]);
   const runRows = (data.runs as AnyRecord[]).map((run) => {
     const final = run.finalCensus as DevelopmentCensus;
+    const deaths = deathsByCause(run.lineage as DevelopmentSnapshot['lineage']);
     const mutationLabel = run.mutation ? 'on' : 'off';
     const outcome = run.extinctionTick === null ? 'alive at 3000' : `extinct at ${run.extinctionTick}`;
     return [String(run.seed), mutationLabel, outcome, String(final.births), String(final.effectiveMutations),
-      String(final.population), String(final.cells), String(final.maxGeneration), String(final.ledgerResidual)];
+      String(final.population), String(final.cells), String(final.maxGeneration), String(final.blockedCapBirths), String(final.genomeVariantCount),
+      String(deaths.age), String(deaths.starvation), String(final.ledgerResidual)];
   });
   const assayTable = table(['Program', 'Genome', 'Max cells by 240', 'First birth tick', 'Gate'], assayRows);
-  const runsTable = table(['Seed', 'Mutation', 'Outcome', 'Births', 'Effective mutations', 'Population', 'Cells', 'Max generation', 'Ledger residual'], runRows);
+  const runsTable = table(['Seed', 'Mutation', 'Outcome', 'Births', 'Effective mutations', 'Population', 'Cells', 'Max generation',
+    'Cap-blocked births', 'Living variants', 'Age deaths', 'Starvation deaths', 'Ledger residual'], runRows);
   const complete = data.batchStatus === 'complete';
   const empty = (data.runs as unknown[]).length === 0;
   return `# Developmental programs pilot evidence\n\n` +
@@ -385,6 +740,7 @@ function buildMarkdown(data: AnyRecord): string {
 `Unique normalized footprints at tick 144: ${assay.distinctFootprints} of 3. Assay status: **${assay.passed ? 'pass' : 'fail'}**.\n\n` +
 `## Fixed batch\n\n` + (empty ? `The batch did not run because the required pre-batch assay failed. All assay trajectories and failures are retained; no program was tuned.\n\n` :
 `Retained ${((data.runs as unknown[]).length)} outcomes: ${(data.runs as AnyRecord[]).filter((run) => run.extinctionTick === null).length} alive at tick 3000 and ${(data.runs as AnyRecord[]).filter((run) => run.extinctionTick !== null).length} extinct. Batch status: **${complete ? 'complete' : String(data.batchStatus)}**.\n\n` + runsTable + `\n\n`) +
+`Cap-blocked births are eligible attempts denied by the population cap. Death totals are counted once from each run's final lineage records. Living variants count exact current genome tuples and can include neutral changes.\n\n` +
 `## Interpretation limits\n\n` +
 `This is a descriptive record of one engineered toy, three seeds, and two mutation settings. Connected bodies, growth, reproduction, inheritance, food supply, and mutation are explicit model mechanisms. The results do not show natural emergence, adaptation, selection benefit, or general survival. Differences between mutation settings are not a survival-benefit estimate. The age and size thresholds, growth queue, founder ordering, and cap create fixed demographic biases; those rules were not adjusted after seeing the batch.\n\n` +
 `The fixed evidence is complete for its stated horizon. Verify accepted JSON and Markdown with --check; rerun and compare the full batch, including snapshots, with --replay-check.\n`;
@@ -406,14 +762,7 @@ async function checkEvidence(): Promise<void> {
   invariant(sameJSON(data.sourceSha256, sourceHashes()), 'Source hash mismatch; regenerate evidence after reviewing changed sources');
   invariant(sameJSON(data.batch, { seeds: [...SEEDS], mutation: [...CONDITIONS], maxTick: MAX_TICK, sampleEvery: SAMPLE_EVERY,
     snapshots: [...SNAPSHOT_TICKS], assayTickLimit: 240, assayFootprintTick: 144 }), 'Recorded batch settings differ');
-  const assay = data.assay as AnyRecord;
-  invariant((assay.results as unknown[]).length === 3 && typeof assay.passed === 'boolean', 'Malformed assay matrix');
-  invariant(data.batchStatus === (assay.passed ? 'complete' : 'stopped-after-assay-failure'), 'Batch status conflicts with assay gate');
-  invariant(assay.passed ? (data.runs as unknown[]).length === 6 : (data.runs as unknown[]).length === 0, 'Batch condition count conflicts with assay gate');
-  for (const row of data.runs as AnyRecord[]) {
-    invariant(row.repeatVerified === true && Array.isArray(row.samples) && Array.isArray(row.snapshots) && Array.isArray(row.births), `Incomplete run evidence ${row.seed}/${row.mutation}`);
-    invariant((row.snapshots as AnyRecord[]).map((item) => item.scheduledTick).join(',') === SNAPSHOT_TICKS.join(','), `Missing milestone snapshot ${row.seed}/${row.mutation}`);
-  }
+  validateEvidenceStructure(data);
   const markdown = await readFile(MD_URL, 'utf8');
   invariant(markdown === buildMarkdown(data), 'Markdown does not match accepted JSON evidence or table column widths');
   process.stdout.write('Evidence rules, settings, source hashes, full condition matrix, snapshot coverage, and exact Markdown checks passed.\n');

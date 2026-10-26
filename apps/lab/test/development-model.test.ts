@@ -86,6 +86,18 @@ describe('development model geometry and copied inputs', () => {
     expect(fixed.organisms[0].age).toBe(0);
   });
 
+  it('copies Buffer food fixtures into a base Uint8Array with no aliases', () => {
+    const input = Buffer.alloc(RULES.tileCount);
+    input[0] = 17;
+    const world = createDevelopmentFixture({ seed: 7, mutation: false, food: input, founders: [] });
+    input[0] = 0;
+    expect(world.food[0]).toBe(17);
+    const readback = world.food;
+    expect(Buffer.isBuffer(readback)).toBe(false);
+    readback[0] = 2;
+    expect(world.food[0]).toBe(17);
+  });
+
   it('replays the same ecology and mutation streams exactly from a seed', () => {
     const first = fixture({ seed: 731, mutation: true, founders: [founder({ store: 160,
       genome: { turnEvery: 4, turn: 0, branchEvery: 4, maxCells: 24 } })] });
@@ -121,6 +133,54 @@ describe('growth, survival, and scheduling', () => {
     expect(after.store).toBe(before.store + 2 * 6 - 6 - 4);
     expect(world.occupancy[after.cells[1].tile]).toBe(after.id);
     expect(world.ledger.residual).toBe(0);
+  });
+
+  it('grows across a torus edge and skips a blocked FIFO attempt to use the next direction', () => {
+    const edge = fixture({ founders: [founder({ tile: 48 * RULES.width + 95, heading: 0, store: 40 })] });
+    const root = edge.organisms[0].cells[0].tile;
+    edge.step(6);
+    expect(edge.organisms[0].cells[1].tile).toBe(wrappedNeighbor(root, 0));
+    expect(edge.organisms[0].cells[1].tile % RULES.width).toBe(0);
+
+    const blockedRoot = 48 * RULES.width + 48;
+    const blocked = fixture({ founders: [
+      founder({ tile: blockedRoot, heading: 0, store: 40 }),
+      founder({ tile: wrappedNeighbor(blockedRoot, 0), heading: 2, store: 40 }),
+    ] });
+    blocked.step(6);
+    const growing = blocked.organisms.find((organism) => organism.id === 1)!;
+    expect(growing.cells[1].tile).toBe(wrappedNeighbor(blockedRoot, 3));
+    expect(growing.growthCursor).toBe(2);
+  });
+
+  it('stops growth at maxCells and pays upkeep rounded up above eight cells', () => {
+    const world = fixture({ food: 0, founders: [founder({ store: 160,
+      genome: { turnEvery: 4, turn: 0, branchEvery: 4, maxCells: 16 } })] });
+    world.step(48);
+    expect(world.organisms[0].cells).toHaveLength(9);
+    const dissipatedBefore = world.ledger.dissipated;
+    world.step();
+    expect(world.ledger.dissipated - dissipatedBefore).toBe(2);
+    while (world.organisms[0]?.cells.length < 16 && world.tick < 180) world.step();
+    expect(world.organisms[0].cells).toHaveLength(16);
+    const founderID = world.organisms[0].id;
+    world.step(12);
+    expect(world.organisms.find((organism) => organism.id === founderID)!.cells).toHaveLength(16);
+    expect(world.organisms.every((organism) => organism.cells.length <= organism.genome.maxCells)).toBe(true);
+  });
+
+  it('clips feeding at store capacity and leaves unabsorbed food on the tile', () => {
+    const tile = 48 * RULES.width + 48;
+    const food = new Uint8Array(RULES.tileCount);
+    food[tile] = 40;
+    const fed = createDevelopmentFixture({ seed: 1, mutation: false, food, founders: [founder({ tile, store: 160 })] });
+    fed.step();
+    expect(fed.organisms[0].store).toBe(159);
+    expect(fed.food[tile]).toBe(40);
+    fed.step();
+    expect(fed.organisms[0].store).toBe(159);
+    expect(fed.food[tile]).toBe(39);
+    expect(fed.ledger.residual).toBe(0);
   });
 
   it('preserves connected wrapped bodies under each preset through the assay horizon', () => {
@@ -247,7 +307,7 @@ describe('reproduction, mutation, history, and fixtures', () => {
     expect(world.lineage.find((node) => node.id === child.id)?.mutation).toBeNull();
   });
 
-  it('copies genomes unchanged when mutation is off and marks pruned parent records', () => {
+  it('copies genomes unchanged when mutation is off and marks a retained parent record present', () => {
     const world = fixture({ seed: 5, mutation: false, founders: [founder({ store: 160,
       genome: { turnEvery: 4, turn: 0, branchEvery: 4, maxCells: 24 } })] });
     world.step(160);
