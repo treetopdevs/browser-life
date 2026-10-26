@@ -13,6 +13,7 @@ const entries: Entry[] = [
   { title: "Bonds", href: "/particles/bonds/", status: "Live world", description: "Explore a particle world with bond formation and breakage." },
   { title: "Motifs", href: "/particles/motifs/", status: "Live world", description: "Compare twelve combinations of particle interaction and environment rules." },
   { title: "Boundaries", href: "/boundaries/", status: "Live world", description: "Compare smooth fields with engineered thresholds and reinforcing walls." },
+  { title: "Hungry shapes", href: "/hungry-shapes/", status: "Live world", description: "Compare growing bodies under abundant, scarce uniform and patchy food." },
   { title: "Development", href: "/development/", status: "Live world", description: "Watch inherited body programs grow branching shapes and produce descendants." },
   { title: "Matter", href: "/matter/", status: "Live world", description: "Compare a closed nutrient pool with finite rain and burial." },
   { title: "Currents", href: "/currents/", status: "Live world", description: "Compare nutrient pumps with still-water controls, plus saved replays." },

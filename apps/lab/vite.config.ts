@@ -160,6 +160,7 @@ export default defineConfig({
       if (id.includes("/src/spatial/model.ts")) return "spatial-model";
       if (id.includes("/src/currents/model.ts")) return "currents-model";
       if (id.includes("/src/matter/model.ts")) return "matter-model";
+      if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
       if (id.includes("/src/development/model.ts")) return "development-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
@@ -186,6 +187,7 @@ export default defineConfig({
       particleMotifs: r("./particles/motifs/index.html"),
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
+      hungryShapes: r("./hungry-shapes/index.html"),
       matter: r("./matter/index.html"),
       currents: r("./currents/index.html"),
       spatial: r("./spatial/index.html"),

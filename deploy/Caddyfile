@@ -14,6 +14,9 @@
   respond @private_boundaries 404
 
   # Developmental bodies are another local creative prototype.
+  # Hungry shapes remains a local prototype.
+  @private_hungry path_regexp private_hungry (?i)^/hungry-shapes(?:/|$)
+  respond @private_hungry 404
   @private_development path_regexp private_development (?i)^/development(?:/|$)
   respond @private_development 404
 

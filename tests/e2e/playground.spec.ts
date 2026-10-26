@@ -10,7 +10,7 @@ test("prototype directory lists all routes with plain status labels", async ({ p
   await expect(page.getByText("Supply, selection, and inherited traits are engineered", { exact: false })).toBeVisible();
 
   const cards = page.locator(".card");
-  await expect(cards).toHaveCount(14);
+  await expect(cards).toHaveCount(15);
   const expected = [
     ["Particles", "/particles/", "Live world", "A running particle environment with adjustable starting conditions."],
     ["Particle picker", "/particles/picker/", "Chooser", "Keep a favorite recipe and compare two nearby descendants."],
@@ -19,6 +19,7 @@ test("prototype directory lists all routes with plain status labels", async ({ p
     ["Bonds", "/particles/bonds/", "Live world", "Explore a particle world with bond formation and breakage."],
     ["Motifs", "/particles/motifs/", "Live world", "Compare twelve combinations of particle interaction and environment rules."],
     ["Boundaries", "/boundaries/", "Live world", "Compare smooth fields with engineered thresholds and reinforcing walls."],
+    ["Hungry shapes", "/hungry-shapes/", "Live world", "Compare growing bodies under abundant, scarce uniform and patchy food."],
     ["Development", "/development/", "Live world", "Watch inherited body programs grow branching shapes and produce descendants."],
     ["Matter", "/matter/", "Live world", "Compare a closed nutrient pool with finite rain and burial."],
     ["Currents", "/currents/", "Live world", "Compare nutrient pumps with still-water controls, plus saved replays."],

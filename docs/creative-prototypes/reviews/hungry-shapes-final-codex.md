@@ -1,0 +1,9 @@
+**No blocking defects found in the final outcomes or presentation.**
+
+- **STOP follows the frozen gate.** Original48 and uniform39 survive to3000; patches dies at2040 after generation8. Extension requires patch survival. Neither revision trigger applies: uniform survives, and late cap occupancy is6/500 for uniform and0/500 for patches. The appended resolutions explicitly cover uniform-only survival as STOP without revision. [Gate](docs/creative-prototypes/hungry-shapes-plan.md:44)
+- **The food comparison is honest.** At common tick2040, both scarce arms offered313,344; uniform accepted229,313 and patches83,086. These match retained evidence. The companion acknowledges overflow and does not isolate a causal mechanism for extinction. [Presentation](docs/creative-prototypes/hungry-shapes.html:14)
+- **Provenance and claims hold.** Source/media hashes, receipt bindings, snapshot statistics, reconstructed browser censuses and environments match. Inspected frames support the visual description. Synthetic presentation timing and terminal-clock freezing are disclosed. Single-seed observations remain descriptive, without adaptation or promotion claims. The sandbox clearly labels its fixed historical result. [Manifest](docs/creative-prototypes/hungry-shapes-media/manifest.json:23), [panel](apps/lab/hungry-shapes/index.html:87)
+
+**Optional clarity:** label the Markdown table’s blocked-attempt columns **“Late cap-blocked attempts”** and **“Late space-blocked attempts.”** Its131/13/0 cap counts cover2501–3000; lifetime counts are953/109/64. The current heading leaves that distinction ambiguous. [Table](docs/creative-prototypes/hungry-shapes-seed-1201.md:15)
+
+Read-only inspection and bounded artifact calculations only. I did not execute the parent’s tests, build, pilot or browser runs, and made no changes.
