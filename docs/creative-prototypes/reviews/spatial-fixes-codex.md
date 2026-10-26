@@ -1,0 +1,7 @@
+Two concrete validation defects remain:
+
+1. **P2 — Repeat validation silently substitutes primary records.** At [explore.ts:292](/Users/nicholas/.codex/worktrees/spatial-particle-worlds/browser-life/tools/spatial/explore.ts:292), `{ ...run, ...repeat }` fills missing repeat fields from the primary outcome. A repeat containing only matching `ticksCompleted`, `extinctionTick`, and `finalSnapshotSha256` passes after recomputing artifact integrity, despite lacking its own census and snapshots. Validate the repeat independently, adding only matrix identity fields.
+
+2. **P2 — “Full snapshot” validation still accepts incomplete particle state.** At [explore.ts:202](/Users/nicholas/.codex/worktrees/spatial-particle-worlds/browser-life/tools/spatial/explore.ts:202), particles are checked for position, velocity, energy, and family, but `id`, `traits`, `age`, `lifespan`, and `generation` are never required. Removing those fields from retained snapshots and updating their hashes still passes validation, losing identity, heredity, and lifecycle observations. Require the complete particle schema.
+
+The other requested fixes appear closed by static inspection. No edits, tests, simulations, subreviewers, or external research were performed.

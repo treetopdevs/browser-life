@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="An orbitable three-dimensional particle world with visible depth and family motion.">
+  <title>Spatial particle worlds · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to spatial world</a>
+  <header><a href="/particles/">← Particle playground</a><span>Local experiment / spatial worlds</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">A three-dimensional movement pilot</p>
+      <h1>Life in three dimensions</h1>
+      <p>Three founding families move through a unit cube with wraparound edges. Orbit the view to inspect crossings, schools and clusters from different angles.</p>
+      <p class="disclosure">Feeding is engineered from eight renewing spherical food patches. Pursuit means chase-and-flee motion, not predation. The population is capped at 240. Replay is intended within the same runtime. Camera and depth slice change only what is displayed, never the physics.</p>
+    </section>
+
+    <section class="transport" aria-label="Simulation controls">
+      <div class="buttons"><button id="play" class="primary" type="button">Play</button><button id="step" type="button">One tick</button><button id="reset" type="button">Reset world</button><label for="pace">Pace<select id="pace"><option value="1">1× · 60 ticks/s</option><option value="4">4× · 240 ticks/s</option></select></label></div>
+      <div class="clock"><span id="status" role="status">Paused · ready</span><strong>Tick <span id="tick">0</span> / 6,000</strong><span id="active-settings">Pursuit · seed 1201 · inherited mutation on</span></div>
+    </section>
+
+    <section class="world-layout" aria-label="Spatial world and view controls">
+      <div class="world-panel">
+        <canvas id="world" width="720" height="720" role="img" aria-label="Orbitable three-dimensional particle world. Mint, amber and lilac particles occupy a wire cube; depth affects projected position and marker size.">Canvas unavailable. Use the population and family counts below.</canvas>
+        <div class="legend" aria-label="Founding families"><span><i class="mint"></i>Mint family</span><span><i class="amber"></i>Amber family</span><span><i class="lilac"></i>Lilac family</span><span><i class="food-dot"></i>Food center when enabled</span></div>
+      </div>
+      <aside class="panel view-controls" aria-labelledby="view-heading">
+        <h2 id="view-heading">View</h2>
+        <label for="yaw">Camera yaw <output id="yaw-value">37°</output><input id="yaw" type="range" min="-180" max="180" step="1" value="37"></label>
+        <label for="pitch">Camera pitch <output id="pitch-value">−20°</output><input id="pitch" type="range" min="-75" max="75" step="1" value="-20"></label>
+        <button id="reset-view" type="button">Reset camera</button>
+        <label class="check"><input id="food-visible" type="checkbox"> Show food centers <span>(spherical radius 0.30)</span></label>
+        <label class="check"><input id="slice-enabled" type="checkbox"> Show a depth slice</label>
+        <label for="slice-z">Slice center z <output id="slice-value">0.50</output><input id="slice-z" type="range" min="0" max="1" step="0.01" value="0.5" disabled></label>
+        <p id="slice-note" class="muted">Slice thickness is fixed at 0.20 and wraps across the depth seam.</p>
+      </aside>
+    </section>
+
+    <section class="bottom-grid">
+      <div class="panel">
+        <h2>World settings</h2>
+        <form id="settings-form">
+          <label for="preset">Movement recipe<select id="preset"></select></label>
+          <label for="seed">Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="1201" required></label>
+          <label class="check"><input id="mutation" type="checkbox" checked> Allow small inherited changes to movement traits</label>
+          <button type="submit">Start new world</button>
+        </form>
+        <button id="export" type="button">Save bounded observation ↓</button>
+        <p id="file-status" class="muted" role="status">Includes current particles, food, ledger and recent history. Observation only, not a resumable save.</p>
+      </div>
+      <div class="panel population-panel">
+        <h2>Population</h2>
+        <div class="population"><strong id="population">120</strong><span>living · <span id="displayed">120</span> displayed</span></div>
+        <div id="families" class="families"></div>
+        <canvas id="history" width="540" height="150" role="img" aria-label="Recent population history by founding family; current family counts are listed above."></canvas>
+        <p class="chart-note">Recent population by family · up to 3,000 ticks <span id="chart-range">Ticks 0–0</span></p>
+        <dl class="stats"><div><dt>Births</dt><dd id="births">0</dd></div><div><dt>Deaths</dt><dd id="deaths">0</dd></div><div><dt>Mean speed</dt><dd id="speed">0</dd></div><div><dt>Occupied bins</dt><dd id="bins">0 / 125</dd></div><div><dt>Occupied z bands</dt><dd id="bands">0 / 5</dd></div><div><dt>Mean |vz|</dt><dd id="vz">0</dd></div></dl>
+      </div>
+    </section>
+    <section class="explanation"><div><p class="eyebrow">How to read this view</p><h2>Depth is part of the world.</h2></div><div><p>All three coordinates affect movement and wrap at the cube boundaries. The wire cube is a perspective view of those positions; markers farther from the camera appear smaller. Food centers are shown only when enabled.</p><p>The optional slice filters displayed particles by torus distance from its z center. The full population count stays visible beside the displayed count. This is an engineered toy world, separate from the conserved-matter research simulation; movement and turnover alone do not show adaptation.</p></div></section>
+  </main>
+  <script type="module" src="/src/spatial/page.ts"></script>
+</body>
+</html>
