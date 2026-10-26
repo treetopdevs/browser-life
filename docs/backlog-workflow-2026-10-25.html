@@ -6,7 +6,7 @@
 <style>body{font:17px/1.6 system-ui;margin:3rem auto;padding:0 1rem;max-width:76ch;color:#172c2a;background:#f5f6ef}h1,h2{line-height:1.2}a{color:#075b66}article{border-top:1px solid #becbc0;padding:1rem 0}code{overflow-wrap:anywhere}table{border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:.5rem;border-bottom:1px solid #becbc0}</style>
 <main>
 <h1>Backlog workflow</h1>
-<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. First-slice status: PR84 merged on 26 October 2026 at <code>4730417a</code>. Current slice: site-image verification, based on that fresh main tip in <code>codex/site-image-gate</code>.</p>
+<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. First-slice status: PR84 merged on 26 October 2026 at <code>4730417a</code>. Current slice: site-image verification complete in <a href="https://github.com/treetopdevs/browser-life/pull/89">PR89</a>, based on that fresh main tip in <code>codex/site-image-gate</code>.</p>
 <h2>Operating loop</h2>
 <ol>
 <li>Fetch main and reconcile planned work against merged code and held PRs.</li>
@@ -30,7 +30,7 @@
 </tr>
 <tr>
 <td>Actual site-image verification in CI</td>
-<td>Active slice: build the release image, check release files, run required forwarding/configuration checks using container Caddy, and fix hosted failures.</td>
+<td>Implemented and verified in PR89: actual packaged-image checks, native extracted-Caddy matrix, two expected-failure canaries and observable cleanup.</td>
 </tr>
 <tr>
 <td>Live deployment and host verification</td>
@@ -110,6 +110,10 @@
 <h3>D16 — Reject ambiguous canary and teardown outcomes</h3>
 <p>The final Sol CLI review found that an expected content failure could hide a cleanup/runtime error, and native teardown could silently accept a live process. Require canary exit1 plus a named JSON assertion and JUnit showing exactly one failure with zero errors. Fault probes accept only the assertion-only case and reject extra hook/runtime errors. Native Caddy escalates TERM to KILL and confirms exit; a TERM-ignoring probe is stopped. No timeout or signal alone qualifies as a passing canary.</p>
 </article>
+<article id="d17">
+<h3>D17 — Clear readiness from actual hosted evidence</h3>
+<p><a href="https://github.com/treetopdevs/browser-life/actions/runs/40274844856">Linux run40274844856</a> passed on source <code>e25bfc7b</code>:53 primary tests, zero skips,12 against the actual started image; both damaged-image canaries failed exactly as intended with no additional hook/runtime errors. Cleanup passed. Tested image: <code>sha256:81b44d68930eeaf80bf7964f086050dce2f17d04f2398d1071e6bc0bba4957bf</code>. Best-effort base RepoDigests warnings and the unprivileged extraction xattr warning are recorded with the resolved build inputs in the review note. This closes the site-image gap, not live deployment or coordinator-image verification.</p>
+</article>
 <h2>First-slice acceptance gates</h2>
 <ol>
 <li>Review the plan before implementation.</li>
@@ -128,10 +132,10 @@
 <li>Coordinator <code>mix precommit</code>: 575 tests pass, plus warnings-as-errors compilation and formatting. The actual island-leave smoke passes with the shared no-lock shim.</li>
 <li>Initial full unit run: 3779 pass, three stale graceful-leave checks fail, and two unchanged CPU-heavy tests time out. All three stale checks are repaired and pass focused reruns; the conservation suite passes in isolation. Final full rerun passed <strong>3,791 tests across 154 files</strong> with <code>--maxWorkers=2</code>, Caddy 2.10.2 and required-tools mode. Test time limits were not changed.</li>
 <li>HTML checked at 1280px and 375px: no horizontal overflow, zero axe violations; local links resolve. Node typecheck of the new tooling test and Deno checks of both smoke scripts pass.</li>
-<li>Publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> published implementation <code>7e803de5</code>, mergeable against unchanged <code>904a05a1</code> main. This evidence-only follow-up leaves all implementation and test files identical. The first GitHub snapshot reported CodeRabbit success with draft review skipped; this was not independent hosted review or CI evidence. Current readiness/check state is on the PR. No hosted test workflow is configured in this repository.</li>
+<li>Publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> published implementation <code>7e803de5</code>, mergeable against unchanged <code>904a05a1</code> main. This evidence-only follow-up leaves all implementation and test files identical. The first GitHub snapshot reported CodeRabbit success with draft review skipped; this was not independent hosted review or CI evidence. Current readiness/check state is on the PR. No hosted test workflow was configured at that first snapshot; the current slice below adds one.</li>
 </ul>
-<p>No live deployment or scientific experiment has been performed. The Alpine image and actual host/network remain unverified; the deployment runbook gives the required external checks. Plain tests may skip proxy tools when unavailable; release checks must set <code>BL_REQUIRE_DEPLOY_TOOLS=1</code>.</p>
+<p>First-slice boundary: no live deployment or scientific experiment was performed. The Alpine site image was unverified at PR84 publication; the current slice below closes that site-image gap. The actual host/network remain unverified; the deployment runbook gives the required external checks. Plain tests may skip proxy tools when unavailable; release checks must set <code>BL_REQUIRE_DEPLOY_TOOLS=1</code>.</p>
 <h2>Current slice evidence</h2>
-<p>Plan: <a href="site-image-gate-2026-10-26.md">site image verification gate</a>. Claude Sonnet 5.5 High and Sol 6.1 High plan reviews completed; their artifact-proof and lifecycle findings are incorporated (D12–D13). Implementation and native checks are complete. <a href="site-image-gate-review-2026-10-26.md">Review dispositions</a>: source and final repair findings are closed by Sonnet5.5 High and Sol6.1 High. Locally,41 tests pass and12 actual-image cases skip; missing required image/tag probes fail as intended. Root/tooling typechecks and actionlint pass. Cleanup fault probes reject failed queries and survivors. The real image and both canaries still require the Linux PR job. No image run claimed yet.</p>
+<p>Plan: <a href="site-image-gate-2026-10-26.md">site image verification gate</a>. Claude Sonnet 5.5 High and Sol 6.1 High plan reviews completed; their artifact-proof and lifecycle findings are incorporated (D12–D13). Implementation and native checks are complete. <a href="site-image-gate-review-2026-10-26.md">Review dispositions</a>: source and final repair findings are closed by Sonnet5.5 High and Sol6.1 High. Locally,41 tests pass and12 actual-image cases skip; missing required image/tag probes fail as intended. Root/tooling typechecks and actionlint pass. Cleanup fault probes reject failed queries and survivors. The <a href="https://github.com/treetopdevs/browser-life/actions/runs/40274844856">Linux PR job</a> now passes all53 tests without skips, including12 packaged-image cases; both canaries and cleanup pass. Exact source/image IDs and warning dispositions are in the review record. All source and final repair reviews are clear. Current PR89 state is linked above; live-host and real coordinator-image checks remain external.</p>
 </main>
 </html>
