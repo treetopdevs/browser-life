@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlog workflow — 25 October 2026</title>
+<style>body{font:17px/1.6 system-ui;margin:3rem auto;padding:0 1rem;max-width:76ch;color:#172c2a;background:#f5f6ef}h1,h2{line-height:1.2}a{color:#075b66}article{border-top:1px solid #becbc0;padding:1rem 0}code{overflow-wrap:anywhere}table{border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:.5rem;border-bottom:1px solid #becbc0}</style>
+<main>
+<h1>Backlog workflow</h1>
+<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. Status: local implementation, verification and independent review complete; published in PR84.</p>
+<h2>Operating loop</h2>
+<ol>
+<li>Fetch main and reconcile planned work against merged code and held PRs.</li>
+<li>Choose the smallest useful unblocked slice; make a fresh worktree from that tip.</li>
+<li>Record scope, decisions and observable acceptance gates before implementation; review the plan.</li>
+<li>Implement with Claude, agy or Cursor, run meaningful checks, and get independent Sonnet 5.5 High and required Sol reviews.</li>
+<li>Fix assessed findings, publish a focused PR, inspect hosted checks, and update this decision log with evidence and remaining boundaries.</li>
+<li>Reconcile the backlog again before selecting the next slice; distinguish shipped code from live deployment, human validation and new scientific results.</li>
+</ol>
+<p>Earlier history: <a href="decisions-2026-10-17-backlog-run.html">prototype backlog decisions</a>. Current publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> at implementation commit <code>7e803de5</code>.</p>
+<h2>Backlog routing</h2>
+<p>The <a href="prototypes-2026-10-24.html">seven-surface prototype inventory</a> records the previous implementation backlog as merged. Existing PR60 (opening-day copy) and PR69 (new scientific protocol) remain held. The next engineering slice comes from <a href="../deploy/README.md">deployment follow-ups</a>.</p>
+<table>
+<tr>
+<th>Work</th>
+<th>Disposition</th>
+</tr>
+<tr>
+<td>Compose settings and proxy address forwarding</td>
+<td>Active slice: plan, implement, local verification, independent reviews, commit and PR.</td>
+</tr>
+<tr>
+<td>Live deployment and host verification</td>
+<td>Separate operational step; local checks cannot establish host topology.</td>
+</tr>
+<tr>
+<td>Public garden opening</td>
+<td>Retain the existing release safeguards and opening checklist.</td>
+</tr>
+<tr>
+<td>New scientific trials and human playtests</td>
+<td>Retain protocol and participant requirements; automated engineering tests supply neither.</td>
+</tr>
+</table>
+<h2>Decisions</h2>
+<article id="d1">
+<h3>D1 — Complete the next operational gap</h3>
+<p>Expose supported coordinator settings in Compose and provide an opt-in client-address path through Caddy. This makes documented configuration usable without inventing a new scientific feature.</p>
+</article>
+<article id="d2">
+<h3>D2 — Trust no upstream by default</h3>
+<p>Use an empty static proxy allowlist by default, strict right-to-left parsing of X-Forwarded-For, and replace the upstream header with the single resolved client address. Document explicit Traefik CIDRs, isolated coordinator networking, and separate live verification before enabling per-address join limits. Do not default to all private networks.</p>
+</article>
+<article id="d3">
+<h3>D3 — Preserve release defaults</h3>
+<p>Pass through only existing runtime settings: BL_TRUST_FORWARDED_FOR, BL_ISLAND_JOINS_PER_ADDRESS, BL_MAX_ISLANDS, BL_CORS_ORIGINS and BL_LEASE_MS. Blank values retain coordinator defaults. Garden scheduling stays off, garden routes stay private, coordinator has no published port.</p>
+</article>
+<article id="d4">
+<h3>D4 — Use the requested reviewer directly</h3>
+<p>agy lists Claude Sonnet 5.5 High but returns RESOURCE_EXHAUSTED; Cursor requires authentication. Direct Claude CLI returned modelUsage claude-sonnet-5-5 successfully with --effort high. Use direct Claude for planning, implementation and adversarial review, plus the repository-required read-only Codex Sol 6.1 High phase/precommit review.</p>
+</article>
+<article id="d5">
+<h3>D5 — Resolve the phase review findings</h3>
+<p>Sol plan review required replacing broad private-range guidance, checking both Compose modes and live-host isolation, exercising production-line Caddy, updating the existing test harness, proving budget separation, and documenting lease headroom. The local gate uses the official Caddy 2.10.2 binary; the Alpine container and actual host networks remain separate live checks. Local tests will verify configuration and forwarding; existing Phoenix limiter tests plus a local Caddy/Phoenix check will distinguish address delivery from budget behavior. BL_LEASE_MS is milliseconds, default ten minutes; operators must leave heartbeat and retry headroom.</p>
+</article>
+<article id="d6">
+<h3>D6 — Adversarial review repairs</h3>
+<p>Sonnet 5.5 High found no blockers. Added a preflight using the actual mounted Caddyfile and release image: malformed CIDRs prevent site startup, unlike stale but valid entries. Clarified space-separated lists. Tests now pin alternate headers as untrusted pass-through data while address selection uses only XFF. Added explicit untrusted-peer, mixed-family allowlist and invalid-CIDR checks. Conditional tool checks, live network attachments and the unrun Alpine image remain explicit limitations.</p>
+</article>
+<article id="d7">
+<h3>D7 — Repair full-suite fallout from graceful leave</h3>
+<p>The initial full suite exposed two old runner assertions that allowed only join/next and rejected the new cleanup DELETE. Updated both to require exactly POST join, POST next, authenticated DELETE leave; unsupported work must still fetch no state and submit no task. Their 92 tests pass. The existing leave smoke also lacked the required no-lock Deno shim for its coordinator; reused the shared helper and retained the smoke's behavior. Both reviewers then caught credential/query assertions inside a caught fetch; these now run after the rejected island run, outside cleanup, and the 92-test rerun passes. These are test-only repairs to the previously merged leave feature, with no new runner behavior.</p>
+</article>
+<article id="d8">
+<h3>D8 — Preserve the test contract during verification</h3>
+<p>The initial broad run had three stale leave checks and two unchanged CPU-heavy timeouts. Fix only the stale tests. Re-run with two workers while retaining test limits, physics, rules, hash pins and scientific registration unchanged. A focused conservation run passed. The final full run passed all 3,791 tests across 154 files; this completes the local verification gate.</p>
+</article>
+<h2>Acceptance gates</h2>
+<ol>
+<li>Review the plan before implementation.</li>
+<li>Exercise the actual Caddy configuration against a synthetic local HTTP upstream: untrusted spoofing, trusted append-only chains, multiple visitors, absent/malformed headers, both API and health routes, private garden routes.</li>
+<li>Resolve Compose with synthetic secrets only: defaults, explicit values, isolated coordinator and garden safeguards.</li>
+<li>Run focused tests, typecheck, full unit suite and site build. Record installed Caddy version separately from the deployed 2.10 image.</li>
+<li>Adversarial Sonnet and required Sol reviews; repair concrete findings, rerun affected checks, commit and publish PR. Inspect hosted checks and repair failures.</li>
+</ol>
+<h2>Evidence</h2>
+<ul>
+<li>Claude Sonnet 5.5 High planned, implemented the configuration/docs and independently reviewed the full slice. <a href="backlog-proxy-review-2026-10-25.md">Review dispositions</a> record the findings and repairs.</li>
+<li>Test-first check: 6 failures / 12 passes on the pre-implementation configuration. Final expanded deployment gate: 35 passes using official Caddy 2.10.2 and Docker Compose 5.6.0, with required-tools mode enabled.</li>
+<li>Actual Caddy 2.10.2 → Phoenix: eight passes for separate budgets, attacker prefixes, duplicate fields, IPv6 normalization and peer fallback. Existing Phoenix limiter suite: 21 passes.</li>
+<li>Chrome public-not-found suite against Caddy 2.10.2 and the production build: all ten pass. Typecheck and site build pass.</li>
+<li>Independent Sol 6.1 High Standards: no findings. Spec: no findings. The test repairs received both Sonnet and Sol follow-up review; all findings are closed.</li>
+<li>Coordinator <code>mix precommit</code>: 575 tests pass, plus warnings-as-errors compilation and formatting. The actual island-leave smoke passes with the shared no-lock shim.</li>
+<li>Initial full unit run: 3779 pass, three stale graceful-leave checks fail, and two unchanged CPU-heavy tests time out. All three stale checks are repaired and pass focused reruns; the conservation suite passes in isolation. Final full rerun passed <strong>3,791 tests across 154 files</strong> with <code>--maxWorkers=2</code>, Caddy 2.10.2 and required-tools mode. Test time limits were not changed.</li>
+<li>HTML checked at 1280px and 375px: no horizontal overflow, zero axe violations; local links resolve. Node typecheck of the new tooling test and Deno checks of both smoke scripts pass.</li>
+<li>Publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> published implementation <code>7e803de5</code>, mergeable against unchanged <code>904a05a1</code> main. This evidence-only follow-up leaves all implementation and test files identical. The first GitHub snapshot reported CodeRabbit success with draft review skipped; this was not independent hosted review or CI evidence. Current readiness/check state is on the PR. No hosted test workflow is configured in this repository.</li>
+</ul>
+<p>No live deployment or scientific experiment has been performed. The Alpine image and actual host/network remain unverified; the deployment runbook gives the required external checks. Plain tests may skip proxy tools when unavailable; release checks must set <code>BL_REQUIRE_DEPLOY_TOOLS=1</code>.</p>
+</main>
+</html>
