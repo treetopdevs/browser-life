@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="A local toy world where inherited programs grow connected bodies." />
+  <title>Growing families · Cadence Garden</title>
+</head>
+<body class="development-page">
+  <a class="skip" href="#main">Skip to comparison</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Engineered world · local prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Inherited developmental programs</p>
+      <h1>How do simple instructions grow a body?</h1>
+      <p>Two matched worlds start with the same seed and founders. One passes each genome on unchanged; the other allows small inherited mutations.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> organisms, connected bodies, food, reproduction and inheritance are explicit parts of this toy. Their appearance is not evidence of natural emergence.</p>
+    </section>
+
+    <section class="toolbar" aria-label="Shared comparison controls">
+      <form id="seed-form" class="seed-form">
+        <label for="seed">Shared seed</label>
+        <input id="seed" name="seed" type="text" inputmode="numeric" value="1201" aria-describedby="seed-error" />
+        <button type="submit">Reset comparison</button>
+        <span id="seed-error" role="alert"></span>
+      </form>
+      <div class="transport" aria-label="Playback controls">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="step" type="button">One tick</button>
+        <label for="pace">Pace<select id="pace"><option value="1">1×</option><option value="2">2×</option></select></label>
+      </div>
+      <div class="clock" role="status"><span>Shared time</span><strong>Tick <span id="tick">0</span> <small>/ 6,000</small></strong><span id="status">Paused · ready</span></div>
+      <div class="toolbar-end"><button id="export" type="button">Download observations</button><span id="file-status" role="status">Both full world snapshots are included in the download.</span></div>
+    </section>
+
+    <section class="world-grid" id="worlds" aria-label="Matched world comparison">
+      <article class="world-card" data-world="fixed" aria-labelledby="fixed-title">
+        <header class="world-head"><div><p class="eyebrow">Matched world A</p><h2 id="fixed-title">Fixed inheritance</h2></div><span class="condition">Mutation off</span></header>
+        <p class="world-summary">Children receive a copy of the parent’s current program.</p>
+        <canvas class="world-canvas" width="576" height="576" tabindex="0" aria-label="Fixed inheritance world. Select an organism by clicking or tapping its body.">Canvas is unavailable. Organism and history details remain listed below.</canvas>
+        <div class="canvas-legend"><span class="family-count" data-family="0"><i class="family-dot mint"></i> Family 1 <strong>4</strong></span><span class="family-count" data-family="1"><i class="family-dot amber"></i> Family 2 <strong>4</strong></span><span class="family-count" data-family="2"><i class="family-dot lilac"></i> Family 3 <strong>4</strong></span><label><input class="food-toggle" type="checkbox" /> Food heatmap</label><span class="variant-key">Shading shows genome variants</span></div>
+        <dl class="world-stats"><div><dt>Living bodies</dt><dd class="population">12</dd></div><div><dt>Body cells</dt><dd class="cells">12</dd></div><div><dt>Growths</dt><dd class="growths">0</dd></div><div><dt>Births</dt><dd class="births">0</dd></div><div><dt>Deaths</dt><dd class="deaths">0</dd></div><div><dt>Mutations</dt><dd class="mutations">0</dd></div><div><dt>Max generation</dt><dd class="generation">0</dd></div><div><dt>Energy balance</dt><dd class="ledger">0</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <section class="selection" aria-live="polite"><h3>Selected body</h3><p class="selection-empty">Choose a colored body in the world.</p><div class="selection-info" hidden>
+          <div class="selected-title"><strong class="selected-name"></strong><button class="clear-selection" type="button">Clear</button></div>
+          <dl class="selection-stats"><div><dt>Program</dt><dd class="selected-genome"></dd></div><div><dt>Body cells</dt><dd class="selected-cells"></dd></div><div><dt>Parent</dt><dd class="selected-parent"></dd></div><div><dt>Generation</dt><dd class="selected-generation"></dd></div><div><dt>Age</dt><dd class="selected-age"></dd></div><div><dt>Births</dt><dd class="selected-births"></dd></div></dl>
+        </div></section>
+        <section class="programs"><h3>Programs in this world</h3><div class="program-cards"></div></section>
+        <section class="history-section"><div class="section-heading"><h3>Family history</h3><span>one point every 20 ticks</span></div><canvas class="history-canvas" width="576" height="144" role="img" aria-label="Living bodies over time, colored by founding family."></canvas></section>
+        <section class="births-section"><h3>Recent births</h3><ol class="recent-births"><li>No births yet.</li></ol></section>
+      </article>
+      <article class="world-card" data-world="mutation" aria-labelledby="mutation-title">
+        <header class="world-head"><div><p class="eyebrow">Matched world B</p><h2 id="mutation-title">Small inherited mutations</h2></div><span class="condition mutation-condition">Mutation on</span></header>
+        <p class="world-summary">A successful birth may change one copied program value by one step.</p>
+        <canvas class="world-canvas" width="576" height="576" tabindex="0" aria-label="Mutation world. Select an organism by clicking or tapping its body.">Canvas is unavailable. Organism and history details remain listed below.</canvas>
+        <div class="canvas-legend"><span class="family-count" data-family="0"><i class="family-dot mint"></i> Family 1 <strong>4</strong></span><span class="family-count" data-family="1"><i class="family-dot amber"></i> Family 2 <strong>4</strong></span><span class="family-count" data-family="2"><i class="family-dot lilac"></i> Family 3 <strong>4</strong></span><label><input class="food-toggle" type="checkbox" /> Food heatmap</label><span class="variant-key">Shading shows genome variants</span></div>
+        <dl class="world-stats"><div><dt>Living bodies</dt><dd class="population">12</dd></div><div><dt>Body cells</dt><dd class="cells">12</dd></div><div><dt>Growths</dt><dd class="growths">0</dd></div><div><dt>Births</dt><dd class="births">0</dd></div><div><dt>Deaths</dt><dd class="deaths">0</dd></div><div><dt>Effective mutations</dt><dd class="mutations">0</dd></div><div><dt>Max generation</dt><dd class="generation">0</dd></div><div><dt>Energy balance</dt><dd class="ledger">0</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <section class="selection" aria-live="polite"><h3>Selected body</h3><p class="selection-empty">Choose a colored body in the world.</p><div class="selection-info" hidden>
+          <div class="selected-title"><strong class="selected-name"></strong><button class="clear-selection" type="button">Clear</button></div>
+          <dl class="selection-stats"><div><dt>Program</dt><dd class="selected-genome"></dd></div><div><dt>Body cells</dt><dd class="selected-cells"></dd></div><div><dt>Parent</dt><dd class="selected-parent"></dd></div><div><dt>Generation</dt><dd class="selected-generation"></dd></div><div><dt>Age</dt><dd class="selected-age"></dd></div><div><dt>Births</dt><dd class="selected-births"></dd></div></dl>
+        </div></section>
+        <section class="programs"><h3>Programs in this world</h3><div class="program-cards"></div></section>
+        <section class="history-section"><div class="section-heading"><h3>Family history</h3><span>one point every 20 ticks</span></div><canvas class="history-canvas" width="576" height="144" role="img" aria-label="Living bodies over time, colored by founding family."></canvas></section>
+        <section class="births-section"><h3>Recent births</h3><ol class="recent-births"><li>No births yet.</li></ol></section>
+      </article>
+    </section>
+    <section class="explanation"><div><p class="eyebrow">Reading the instructions</p><h2>Each cell follows a small growth program.</h2></div><div><p>A cell tries the direction named by its program. At set depths, the program turns or adds side branches. New cells keep the place where they grew, so each body remains connected.</p><p>Parents pass a copied program to each child. The mutation world may alter one gene in that copy. Color tracks the original founder family; lighter or darker shades distinguish program variants. Selection and ancestry follow body IDs, never color.</p><p class="muted">Both worlds share the starting seed, locations, food and founders. The worlds are deterministic within the same browser runtime. Reproduction, lifespan, food renewal and the population limit are designed rules with known scheduling effects; births or survival do not show adaptation.</p></div></section>
+  </main>
+  <script type="module" src="/src/development/page.ts"></script>
+</body>
+</html>

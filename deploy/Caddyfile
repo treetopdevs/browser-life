@@ -13,6 +13,10 @@
   @private_boundaries path_regexp private_boundaries (?i)^/boundaries(?:/|$)
   respond @private_boundaries 404
 
+  # Developmental bodies are another local creative prototype.
+  @private_development path_regexp private_development (?i)^/development(?:/|$)
+  respond @private_development 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https
