@@ -1,0 +1,65 @@
+{
+  "seed": 1203,
+  "artifactSha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+  "dataSha256": "8c3ac66e4d3699e423a58597411c05b187dc56fdf9dab7b2550296da2fc95b33",
+  "numericalGate": {
+    "aliveAt9000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt9000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "pass": true,
+      "observation": "The large mint grouping across left-middle and bottom-middle gives way to separated upper and right-side groups. Purple bodies form a larger bottom-right cluster. Occupied regions and gaps change."
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "pass": true,
+      "observation": "The bottom-right purple cluster gives way to purple groups along the upper edge and lower middle. Mint occupies a central vertical arrangement, leaving larger left-side gaps."
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "pass": true,
+      "observation": "The central mint arrangement expands into a broad left-middle and lower-middle branching cluster. Purple bodies occupy the upper-left edge and sparse right and bottom locations. These are spatial changes beyond color or ID turnover."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "passes-uniform-endurance-screen-earns-1201-and-1202",
+  "reason": "All numerical and three manual spatial criteria pass. Run BOTH remaining frozen seeds to9000; no further horizon or rule change in this slice.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "occupiedA": 486,
+      "occupiedB": 566,
+      "sharedTiles": 5,
+      "unionTiles": 1047,
+      "jaccard": 0.004775549188156638
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "occupiedA": 566,
+      "occupiedB": 498,
+      "sharedTiles": 26,
+      "unionTiles": 1038,
+      "jaccard": 0.025048169556840076
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "occupiedA": 498,
+      "occupiedB": 824,
+      "sharedTiles": 7,
+      "unionTiles": 1315,
+      "jaccard": 0.00532319391634981
+    }
+  ]
+}
