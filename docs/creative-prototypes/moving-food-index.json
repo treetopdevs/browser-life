@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-moving-food-pair",
+  "seed": 1201,
+  "arms": {
+    "uniform": {
+      "mode": "uniform",
+      "url": "moving-food-uniform-seed-1201.json",
+      "rawSha256": "1ae6bdc3c9f5bedd2b6f6cfb70aa9dc94e8acb8177f4c2ecda9c2859bf1e4458"
+    },
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "moving-food-moving-band-seed-1201.json",
+      "rawSha256": "46017d1db1eaf1ff85b8cc51d92533d928aeac18b3e7cf261a82bb9d0d0816bf"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "Seed 1201 passes the first moving-band screen: 38 bodies and all three families at 3,000, continuing births and deaths, low ceiling occupancy, and concrete spatial differences from uniform. Stop after this seed; replication is the next proposed slice.",
+    "uniformArtifactSha256": "1ae6bdc3c9f5bedd2b6f6cfb70aa9dc94e8acb8177f4c2ecda9c2859bf1e4458",
+    "movingBandArtifactSha256": "46017d1db1eaf1ff85b8cc51d92533d928aeac18b3e7cf261a82bb9d0d0816bf",
+    "visualComparisons": [
+      {
+        "tick": 1500,
+        "pass": true,
+        "observation": "Uniform has separated clusters across the left edge, upper middle and lower right. Moving-band has a much denser upper-middle branching group and a near-continuous central vertical arrangement, with a broad empty region on the right. This concerns occupied bodies, not the outline."
+      },
+      {
+        "tick": 2500,
+        "pass": true,
+        "observation": "Uniform has occupied groups spread across the left-middle, upper-right and right-middle. Moving-band concentrates a tall chain of occupied groups in the right half and leaves a broad left-side gap."
+      },
+      {
+        "tick": 3000,
+        "pass": true,
+        "observation": "Uniform retains occupied clusters across both halves, including a large mint arrangement in the upper-right. Moving-band has gold groups near the upper-right edge and dense purple branches in the lower-right, with a much broader central-left gap."
+      }
+    ],
+    "lateWithinMoving": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "The moving worlds central-right mint chain becomes a gap with only sparse mint bodies. Purple branches consolidate farther right and gold bodies redistribute along the upper-right edge. Occupied locations and gaps change beyond family color replacement."
+    },
+    "visualReviewedBeforeOverlapDiagnostics": true,
+    "numericalGate": {
+      "aliveAt3000": true,
+      "atLeastTwoFamiliesAt3000": true,
+      "allWindowsReached": true,
+      "eachNewWindowHasBirthsAndDeaths": true,
+      "eachNewWindowCap48AtMost99": true,
+      "numericalPass": true,
+      "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+    },
+    "stopAt": 3000,
+    "additionalSeedsRun": [],
+    "reason": "All frozen numerical and visual criteria pass. This is a varied different trajectory under the whole band design, not proof of tracking, adaptation or superiority.",
+    "overlapDiagnosticsAfterVisualReview": [
+      {
+        "comparison": "uniform-vs-moving-band",
+        "tick": 1500,
+        "occupiedA": 576,
+        "occupiedB": 732,
+        "sharedTiles": 57,
+        "unionTiles": 1251,
+        "jaccard": 0.045563549160671464
+      },
+      {
+        "comparison": "uniform-vs-moving-band",
+        "tick": 2500,
+        "occupiedA": 639,
+        "occupiedB": 756,
+        "sharedTiles": 29,
+        "unionTiles": 1366,
+        "jaccard": 0.0212298682284041
+      },
+      {
+        "comparison": "uniform-vs-moving-band",
+        "tick": 3000,
+        "occupiedA": 629,
+        "occupiedB": 652,
+        "sharedTiles": 72,
+        "unionTiles": 1209,
+        "jaccard": 0.05955334987593052
+      },
+      {
+        "comparison": "moving-band-late",
+        "from": 2500,
+        "to": 3000,
+        "occupiedA": 756,
+        "occupiedB": 652,
+        "sharedTiles": 131,
+        "unionTiles": 1277,
+        "jaccard": 0.10258418167580266
+      }
+    ]
+  }
+}

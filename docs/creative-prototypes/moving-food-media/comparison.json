@@ -1,0 +1,18 @@
+{
+  "file": "seed-1201-comparison.png",
+  "sha256": "9bfbe208c2535fa56e857df784257a7251a7960a9ab1d4d74464236aa9099d5d",
+  "rowsActualTicks": [
+    1500,
+    2500,
+    3000
+  ],
+  "columns": [
+    "uniform",
+    "moving-band"
+  ],
+  "sourceRawSha256": {
+    "uniform": "1ae6bdc3c9f5bedd2b6f6cfb70aa9dc94e8acb8177f4c2ecda9c2859bf1e4458",
+    "movingBand": "46017d1db1eaf1ff85b8cc51d92533d928aeac18b3e7cf261a82bb9d0d0816bf"
+  },
+  "method": "Actual saved-state canvas screenshots, scaled to420px each; no simulation or interpolation. Moving replenishment outline is separate from food and bodies."
+}
