@@ -5,6 +5,10 @@
   @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
   respond @private_garden 404
 
+  # Creative particle prototype is local-only until separately approved for release.
+  @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
+  respond @private_particles 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https

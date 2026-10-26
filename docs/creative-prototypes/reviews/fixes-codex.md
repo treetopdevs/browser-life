@@ -1,0 +1,8 @@
+No remaining concrete findings in the requested scope. Both prior P3 issues are fixed in source.
+
+- **Visibility pause:** [main.ts:122](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/apps/lab/src/particles/main.ts:122) clears timing state and calls `showCensus()` on visibility changes. Hiding pauses the world; returning refreshes counters and leaves it paused.
+- **Production exclusion:** [Dockerfile.site:6](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/Dockerfile.site:6) removes `dist/particles` and `assets/particles-*.js`/`*.css` after building, before copying into the final image. This matches the README claim.
+- **Manual pause/export:** [main.ts:112](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/apps/lab/src/particles/main.ts:112) refreshes census immediately. The [regression test:42](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/tests/e2e/particles.spec.ts:42) checks frozen counters and exported tick/population agreement.
+- **Status and copy:** [main.ts:34](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/apps/lab/src/particles/main.ts:34) updates status text only when changed. The [page explanation:37](/Users/nicholas/.codex/worktrees/creative-prototype-backlog/browser-life/apps/lab/particles/index.html:37) and guide explicitly disclose the engineered nearest-food steering, consistent with the model.
+
+Static verification only: no edits, tests, builds, simulations, or network access. The parent’s reported 61 passing targeted tests and prior build/public-route checks were not independently rerun; browser behavior and final-image contents remain unverified by this follow-up.

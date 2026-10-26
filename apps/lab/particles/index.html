@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="A local particle playground with engineered attraction, renewable food, inherited traits and mutation." />
+  <title>Particle playground · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to playground</a>
+  <header><a href="/lab/" class="brand">Cadence Garden <span>/ experiments</span></a><span class="badge">Engineered world · local prototype</span></header>
+  <main id="main">
+    <section class="intro"><p class="eyebrow">A different kind of life-like world</p><h1>Little lives, moving together.</h1><p>Attraction brings them together. Food keeps them going. Their offspring inherit slightly different ways of moving.</p></section>
+    <div class="playground">
+      <section class="world-panel" aria-label="Particle world">
+        <div class="world-heading"><h2 id="world-title">Flocks</h2><span id="run-status" role="status">Starting…</span></div>
+        <canvas id="world" width="720" height="720" role="img" aria-label="Moving particles, colored by founding family. Current counts are shown below.">Your browser needs canvas to draw this world. Population counts remain available below.</canvas>
+        <div class="world-footer"><span>Tick <strong id="tick">0</strong></span><span>Edges join · brighter patches hold more food</span></div>
+      </section>
+      <aside aria-label="World controls and observations">
+        <section class="panel controls"><h2>Choose a world</h2>
+          <label for="preset">Movement recipe</label><select id="preset"></select><p id="preset-description" class="muted"></p>
+          <form id="restart-form"><label for="seed">Seed</label><div class="seed-row"><input id="seed" type="number" min="0" max="4294967295" step="1" value="1101" required /><button type="submit">Reset world</button></div></form>
+          <label class="check"><input id="mutation" type="checkbox" checked /> Small inherited changes <span>(resets world)</span></label>
+          <div class="transport"><button id="play" class="primary" type="button">Pause</button><button id="step" type="button">One tick</button><label for="speed" class="speed-label">Pace<select id="speed"><option value="1">1×</option><option value="4">4×</option></select></label></div>
+          <p id="control-note" class="muted">Pause to look closely, or change the seed for a fresh start.</p>
+        </section>
+        <section class="panel" aria-labelledby="population-heading"><h2 id="population-heading">Who’s here?</h2><div class="population"><strong id="population">0</strong><span>living particles</span></div><div id="families" class="families"></div><p class="muted">Colors follow founding families, not matching traits.</p><canvas id="history" width="540" height="150" role="img" aria-label="Recent population history by family; current family counts are listed above."></canvas><p class="chart-note">Recent population · one sample every 10 ticks</p>
+          <dl class="stats"><div><dt>Births</dt><dd id="births">0</dd></div><div><dt>Deaths</dt><dd id="deaths">0</dd></div><div><dt>Mutated births</dt><dd id="mutations">0</dd></div><div><dt>Living generation</dt><dd id="generation">0</dd></div><div><dt>Trait spread</dt><dd id="spread">0</dd></div><div><dt>Blocked births</dt><dd id="blocked">0</dd></div></dl>
+          <p class="muted">Trait spread includes starting family differences. Blocked births counts attempts at the population limit.</p><button id="export" type="button" class="download">Save observation ↓</button><p class="muted">JSON with settings and current state. An observation, not a resumable save.</p>
+        </section>
+      </aside>
+    </div>
+    <section class="explanation"><div><p class="eyebrow">What we put into this world</p><h2>Built ingredients. Changing patterns.</h2></div><div><p>These are deliberately designed attraction and repulsion rules, with renewable food, finite lifespans and energy shared at birth. A weak built-in food-seeking pull draws every particle toward its nearest patch. Pursuit means chase-and-flee motion; particles do not eat each other.</p><p>The world holds at most 240 particles. Births blocked by that limit are counted above. Extinct worlds stay empty until you reset. Mutation changes inherited movement traits, but motion alone is not evidence of adaptation or open-ended evolution.</p><p class="muted">A separate 2D toy, not the conserved-matter research simulation. Repeatability is checked within the same runtime. The page pauses when hidden and stays paused when you return.</p></div></section>
+  </main>
+  <script type="module" src="/src/particles/main.ts"></script>
+</body>
+</html>

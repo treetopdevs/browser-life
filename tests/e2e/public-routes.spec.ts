@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 const ORIGIN = "https://cadence.garden";
 const DIST = fileURLToPath(new URL("../../apps/lab/dist/", import.meta.url));
 const PUBLIC = fileURLToPath(new URL("../../apps/lab/public/", import.meta.url));
-const DIAGNOSTIC = ["/selftest.html", "/island.html"];
+const DIAGNOSTIC = ["/selftest.html", "/island.html", "/particles/"];
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const withoutComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");
@@ -200,7 +200,7 @@ test("the build ships robots, sitemap and every listed route with matching canon
     }
   }
   for (const path of DIAGNOSTIC) {
-    const html = readFileSync(join(DIST, path), "utf8");
+    const html = readFileSync(join(DIST, path.endsWith("/") ? `${path}index.html` : path), "utf8");
     expect(noindex(html), `${path}: noindex`).toBe(true);
   }
 });
