@@ -28,3 +28,5 @@ Visual receipts and artifacts were committed in 5cd6094a before running the diag
 - Final Claude and Codex reviews and fixture closures are clear. Both identified missing-frame handling and a contradictory test expectation; the viewer and test were corrected without altering any simulation or saved outcome. The 26-test suite passed after the corrections.
 
 Two paired MP4s contain151 exact saved frames each, at10fps for15.1seconds,1304×1108 pixels. `ffprobe` confirms frame count, rate and duration. Metadata binds raw arms, internal data, plan, model, runner, viewer JavaScript/CSS, pair manifest and visual receipt, plus each video digest. Parent independently recomputed metadata hashes and checked real browser playback. No simulation or interpolation was used for media. Comparison PNGs bind source artifacts and image hashes separately.
+
+Delivery: [PR #104](https://github.com/treetopdevs/browser-life/pull/104), based on PR #103. Initial hosted status query returned no commit statuses; local checks above are not a claim of hosted CI success.
