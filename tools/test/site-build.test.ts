@@ -4,7 +4,10 @@
 // Here rather than in apps/lab/test because it needs Node's file system and processes, which the browser-typed
 // typecheck of apps/lab does not include.
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { once } from "node:events";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,26 +48,68 @@ describe("the built site", () => {
 const caddyBin = process.env.BL_CADDY_BIN || "caddy";
 const caddy = spawnSync(caddyBin, ["version"]).status === 0;
 
+// BL_REQUIRE_DEPLOY_TOOLS=1 (release checks, CI) makes a missing Caddy a failure rather than a skipped block.
+it("has Caddy when the release gate is requested", () => {
+  if (process.env.BL_REQUIRE_DEPLOY_TOOLS === "1") expect(caddy, "Caddy is required").toBe(true);
+});
+
 describe.skipIf(!caddy)("served through deploy/Caddyfile", () => {
   let server: ChildProcess | undefined;
-  const port = 18_000 + Math.floor(Math.random() * 2000);
-  const origin = `http://127.0.0.1:${port}`;
+  let file = "";
+  let log = "";
+  let origin = "";
   const get = (path: string) => fetch(origin + path, { redirect: "manual" });
 
   beforeAll(async () => {
-    const config = readFileSync(repo("deploy/Caddyfile"), "utf8").replace(/^:80 \{/m, `:${port} {`).replace("root * /srv", `root * ${dir}`);
-    if (!config.includes(`:${port} {`) || !config.includes(dir)) throw new Error("could not point the Caddyfile at the build");
-    const file = join(dir, "..", `Caddyfile-${port}`);
+    // An address that was free a moment ago; if something takes it first, Caddy cannot bind, exits, and the check below fails.
+    const reservation = createServer();
+    reservation.listen(0, "127.0.0.1");
+    await once(reservation, "listening");
+    const port = (reservation.address() as { port: number }).port;
+    await new Promise<void>((resolve) => reservation.close(() => resolve()));
+    origin = `http://127.0.0.1:${port}`;
+
+    // The explicit http://127.0.0.1 address makes the listener plain HTTP on loopback only.
+    const config = readFileSync(repo("deploy/Caddyfile"), "utf8").replace(/^:80 \{/m, `http://127.0.0.1:${port} {`).replace("root * /srv", `root * ${dir}`);
+    if (!config.includes(`http://127.0.0.1:${port} {`) || !config.includes(dir)) throw new Error("could not point the Caddyfile at the build");
+    file = join(dir, "..", `Caddyfile-${port}`);
     // Caddy allows one global block: the Caddyfile opens with its own, so admin off goes inside it.
     if (!config.startsWith("{\n")) throw new Error("the Caddyfile must open with its global block");
     writeFileSync(file, config.replace(/^\{/, "{\n  admin off"));
-    server = spawn(caddyBin, ["run", "--config", file, "--adapter", "caddyfile"], { env: { ...process.env, BL_TRUSTED_PROXY_CIDRS: "" }, stdio: "ignore" });
+    // Ready means this process answered with a token only this run wrote into its scratch build, so another
+    // listener on the port cannot pass for it, and a Caddy that exited cannot either.
+    const sentinel = `bl-ready-${randomUUID()}.txt`;
+    const token = randomUUID();
+    writeFileSync(join(dir, sentinel), token);
+    server = spawn(caddyBin, ["run", "--config", file, "--adapter", "caddyfile"], { env: { ...process.env, BL_TRUSTED_PROXY_CIDRS: "" }, stdio: ["ignore", "pipe", "pipe"] });
+    server.stdout?.on("data", (data) => { log += data; });
+    server.stderr?.on("data", (data) => { log += data; });
+    let spawnError: Error | undefined;
+    server.once("error", (error) => { spawnError = error; });
     for (let i = 0; i < 100; i++) {
-      try { await fetch(`${origin}/`); return; } catch { await new Promise((r) => setTimeout(r, 100)); }
+      if (spawnError || server.exitCode !== null || server.signalCode !== null) throw new Error(`caddy exited: ${spawnError ?? ""}\n${log}`);
+      try { if ((await (await get(`/${sentinel}`)).text()) === token) return; } catch { /* starting */ }
+      await new Promise((r) => setTimeout(r, 100));
     }
-    throw new Error("caddy did not start");
+    throw new Error(`caddy did not start\n${log}`);
   }, 30_000);
-  afterAll(() => { server?.kill(); });
+  afterAll(async () => {
+    if (server?.pid && server.exitCode === null && server.signalCode === null) {
+      const exited = once(server, "exit");
+      const stopped = async (ms: number) => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          return await Promise.race([exited.then(() => true), new Promise<boolean>((resolve) => { timer = setTimeout(() => resolve(false), ms); })]);
+        } finally { if (timer) clearTimeout(timer); }
+      };
+      server.kill("SIGTERM");
+      if (!await stopped(5000)) {
+        server.kill("SIGKILL");
+        if (!await stopped(5000)) throw new Error(`Caddy termination could not be confirmed; retained ${file}\n${log}`);
+      }
+    }
+    if (file) rmSync(file, { force: true });
+  });
 
   it("sends a link naming a known world that world's copy, on either page, whatever else the query holds", async () => {
     for (const [path, title] of [
