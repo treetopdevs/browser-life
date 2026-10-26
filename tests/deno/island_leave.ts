@@ -3,6 +3,7 @@
 // Requires the coordinator's Mix dependencies. All server state is temporary.
 import { METRICS_VERSION } from "@bl/schema";
 import { runIsland } from "@bl/runner";
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
 
 function check(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
@@ -38,12 +39,14 @@ async function request(method: string, path: string, body?: unknown, token?: str
 const leavePath = (id: string) => `/api/islands/${encodeURIComponent(id)}?island=${encodeURIComponent(id)}`;
 
 try {
+  const denoBin = await noLockDenoBin(`${scratch}/bin`);
   server = new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: `${root}apps/coordinator`,
     clearEnv: true,
     env: {
       ...Object.fromEntries(Object.entries(Deno.env.toObject()).filter(([name]) => !name.startsWith("BL_"))),
+      PATH: `${denoBin}:${Deno.env.get("PATH") ?? ""}`,
       MIX_ENV: "dev", PORT: String(port), BL_ADMIN_TOKEN: admin,
       BL_DATA_DIR: `${scratch}/queue`, BL_DISCOVERY_DATA_DIR: `${scratch}/discovery`,
       BL_GARDEN_SCHEDULING: "off",

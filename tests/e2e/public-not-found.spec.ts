@@ -78,7 +78,8 @@ function adapt(source: string, port: number, upstream: number): string {
   expect(count(source, ":80 {"), "deploy/Caddyfile has one `:80 {` site").toBe(1);
   expect(count(source, "coordinator:4000"), "deploy/Caddyfile proxies to coordinator:4000").toBeGreaterThanOrEqual(1);
   expect(count(source, "root * /srv"), "deploy/Caddyfile has one `root * /srv`").toBe(1);
-  return "{\n  admin off\n  persist_config off\n}\n" + source
+  expect(source.startsWith("{\n"), "Caddyfile opens with its single global options block").toBe(true);
+  return source.replace(/^\{/, "{\n  admin off\n  persist_config off")
     .replace(":80 {", `http://127.0.0.1:${port} {`)
     .replaceAll("coordinator:4000", `127.0.0.1:${upstream}`)
     .replace("root * /srv", `root * ${JSON.stringify(DIST)}`);
@@ -134,7 +135,7 @@ test.describe("Caddy", () => {
     const config = join(dir, "Caddyfile");
     writeFileSync(config, adapt(readFileSync(CADDYFILE, "utf8"), port, upstream));
     caddy = spawn(CADDY!, ["run", "--adapter", "caddyfile", "--config", config], {
-      env: { ...process.env, XDG_DATA_HOME: join(dir, "xdg"), XDG_CONFIG_HOME: join(dir, "xdg") },
+      env: { ...process.env, BL_TRUSTED_PROXY_CIDRS: "", XDG_DATA_HOME: join(dir, "xdg"), XDG_CONFIG_HOME: join(dir, "xdg") },
       stdio: ["ignore", "pipe", "pipe"],
     });
     caddy.stdout?.on("data", (d) => { caddyLog += d; });
