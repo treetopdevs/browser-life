@@ -21,6 +21,10 @@
   @private_matter path_regexp private_matter (?i)^/matter(?:/|$)
   respond @private_matter 404
 
+  # Local vision calibration gallery.
+  @private_vision_screen path_regexp private_vision_screen (?i)^/vision-screen(?:/|$)
+  respond @private_vision_screen 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https

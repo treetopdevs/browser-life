@@ -1,0 +1,16 @@
+{
+  "fullScorerOutputExactlyEqual": true,
+  "artifactEqualExcludingOnlySourceSha256": true,
+  "oldSourceSha256": {
+    "apps/lab/src/vision-screen/core.ts": "f7571f21e87a0132ffffce618290419638f5f76817a6ade05e4656192a79222b",
+    "tools/vision-screen/calibrate.ts": "2033e138fb2943b70d0235d9afcb5a74a4429cbdcf089fa8dd3f365d0e9a6d5e",
+    "tools/vision-screen/score.py": "ecc53a6a28af274078f27426fc2390d259431d7626c5a96c8c412383862320e0",
+    "tools/vision-screen/report-calibration.ts": "e240f8c9b52d56768bf5e8070e25ad0af2f44e5e076b49c3097001774213fb00"
+  },
+  "newSourceSha256": {
+    "apps/lab/src/vision-screen/core.ts": "f7571f21e87a0132ffffce618290419638f5f76817a6ade05e4656192a79222b",
+    "tools/vision-screen/calibrate.ts": "a1d57c2d02c0a27cb681e128fcaf87a2524b855f9699a44b45394277e4451c55",
+    "tools/vision-screen/score.py": "ecc53a6a28af274078f27426fc2390d259431d7626c5a96c8c412383862320e0",
+    "tools/vision-screen/report-calibration.ts": "e240f8c9b52d56768bf5e8070e25ad0af2f44e5e076b49c3097001774213fb00"
+  }
+}

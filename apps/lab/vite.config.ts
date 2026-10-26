@@ -154,6 +154,7 @@ export default defineConfig({
   build: {
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/vision-screen/")) return "vision-screen-core";
       if (id.includes("/src/matter/model.ts")) return "matter-model";
       if (id.includes("/src/development/model.ts")) return "development-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
@@ -182,6 +183,7 @@ export default defineConfig({
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
       matter: r("./matter/index.html"),
+      visionScreen: r("./vision-screen/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
