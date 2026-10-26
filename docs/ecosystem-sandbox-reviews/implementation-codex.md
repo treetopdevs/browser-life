@@ -1,0 +1,5 @@
+- **P2 — Moving grants unintended immunity.** In [model.ts:148](/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/apps/lab/src/ecosystem/model.ts:148), movement sets `born = this.tick`; the next condition prevents attacks against those cells. An existing cell that moves early becomes invulnerable for the rest of the tick, adding an undocumented advantage unrelated to defense or refuges. Track “already acted” separately from birth time. Add a regression covering movement followed by predation; the current newborn test misses this.
+
+- **P3 — Export contents remain unvalidated.** [ecosystem.spec.ts:15](/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/tests/e2e/ecosystem.spec.ts:15) checks only the download filename. Parse the downloaded JSON and assert the current tick, disabled mutation setting, intervention notices, and retention metadata. Otherwise a broken observation payload can pass the browser check.
+
+Static review only; no edits, simulations, or tests run.

@@ -127,3 +127,7 @@ deno run -A tools/stitch.ts --experiment a1
 ```bash
 deno run -A tools/analyze.ts runs/a1/gradient
 ```
+
+## Engineered ecosystem playground
+
+Run `pnpm dev` and open `/ecosystem/` for a small, CPU-only life-like sandbox with inherited traits, mutation, costly protection, a staged predator, refuges and local droughts. This is a separate toy model inspired by Candidate 9, not the 3D research kernel. See [the sandbox guide and exploration results](docs/ecosystem-sandbox.md) and [the reviewed implementation plan](docs/ecosystem-sandbox-plan.md).

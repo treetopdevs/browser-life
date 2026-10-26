@@ -164,6 +164,7 @@ export default defineConfig({
       participate: r("./participate/index.html"),
       status: r("./status/index.html"),
       garden: r("./garden/index.html"),
+      ecosystem: r("./ecosystem/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
