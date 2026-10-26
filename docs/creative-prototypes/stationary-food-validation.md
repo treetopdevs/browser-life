@@ -25,3 +25,5 @@ Completed local checks:
 - Parent independently recomputed media source hashes, played the video in a real browser, and repeated Axe/overflow checks at 1440px and 390px after the video and comparison image were added. All pass.
 
 Final Claude and Codex reviews found no blockers. The stationary legend accessibility label was corrected after review. [Saved overlap diagnostics](stationary-food-diagnostics-1202.json) bind the committed receipt and remain descriptive, not a gate. The committed index and receipt retain their original wording and hashes.
+
+Delivery: [PR #105](https://github.com/treetopdevs/browser-life/pull/105), dependent on #104. The initial hosted status query returned no commit statuses; local checks are not a claim of hosted CI success.
