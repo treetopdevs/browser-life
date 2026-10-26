@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { ParticleWorld, PRESETS, RULES, torusDelta, recipeForPreset, validateRecipe } from '../src/particles/model.ts';
+import { ParticleWorld, PRESETS, RULES, torusDelta, recipeForPreset, validateEnvironment, validateRecipe, moveFoodPatches } from '../src/particles/model.ts';
 
 describe('engineered particle world', () => {
   it('replays 3000 ticks exactly and pure observations do not affect the world', () => {
@@ -65,7 +65,49 @@ describe('engineered particle world', () => {
     const world=new ParticleWorld(1);expect(()=>world.step(.5)).toThrow();
     const snapshot=world.snapshot();snapshot.particles[0].energy=0;snapshot.food[0].amount=0;
     expect(world.particles[0].energy).toBe(4);expect(world.food[0].amount).toBe(30);
-    expect(snapshot.rules.version).toBe(2);expect(snapshot.settings.seed).toBe(1);
+    expect(snapshot.rules.version).toBe(3);expect(snapshot.settings.seed).toBe(1);expect(snapshot.settings.environment).toEqual({kind:'still'});
+  });
+
+  it('moves travelling patches across the horizontal seam by row while preserving their stock and geometry', () => {
+    const food=[
+      {x:.99999,y:.16,radius:.18,amount:2.5},{x:.4,y:.16,radius:.17,amount:8},{x:.2,y:.16,radius:.16,amount:0},
+      {x:.00001,y:.5,radius:.15,amount:12},{x:.4,y:.5,radius:.14,amount:20},{x:.2,y:.5,radius:.13,amount:4},
+      {x:.99999,y:.83,radius:.12,amount:1},{x:.4,y:.83,radius:.11,amount:6},{x:.2,y:.83,radius:.1,amount:11},
+    ];
+    const before=food.map(p=>({...p}));
+    moveFoodPatches(food,validateEnvironment({kind:'travelling',speed:.0001}));
+    [0.00009,.4001,.2001,.99991,.3999,.1999,.00009,.4001,.2001].forEach((x,i)=>expect(food[i].x).toBeCloseTo(x,12));
+    expect(food.map(p=>[p.y,p.radius,p.amount])).toEqual(before.map(p=>[p.y,p.radius,p.amount]));
+    const still=food.map(p=>({...p}));moveFoodPatches(food,validateEnvironment({kind:'still'}));expect(food).toEqual(still);
+  });
+
+  it('feeds at the moved patch position, keeps the energy ledger balanced, and replays exactly', () => {
+    const env={kind:'travelling',speed:.0001} as const;
+    const moving=new ParticleWorld(19,'flocks',false,undefined,env),replay=new ParticleWorld(19,'flocks',false,undefined,env);
+    const still=new ParticleWorld(19,'flocks',false);
+    for(const world of [moving,replay,still]){
+      const patch=world.food[0];world.food.splice(1);
+      world.particles=[world.particles[0]];
+      const p=world.particles[0];p.x=patch.x+patch.radius+.00005;p.y=patch.y;p.vx=p.vy=0;p.energy=4;p.age=0;
+      world.ledger.initial=p.energy+world.food.reduce((sum,foodPatch)=>sum+foodPatch.amount,0);
+    }
+    moving.step();replay.step();still.step();
+    expect(moving.food[0].x).toBeCloseTo(.16666666666666666+.0001,14);
+    expect(moving.particles[0].energy-still.particles[0].energy).toBeCloseTo(RULES.uptake,10);
+    expect(moving.food[0].amount).toBeCloseTo(still.food[0].amount-RULES.uptake,10);
+    const total=moving.census().particleEnergy+moving.census().foodEnergy;
+    const expected=moving.ledger.initial+moving.ledger.renewed-moving.ledger.dissipated-moving.ledger.deathLoss;
+    expect(Math.abs(total-expected)).toBeLessThan(1e-7);
+    moving.step(200);replay.step(200);expect(moving.snapshot()).toEqual(replay.snapshot());
+    expect(moving.snapshot().settings.environment).toEqual(env);
+  });
+
+  it('validates exact frozen environment shapes and freezes empty travelling worlds', () => {
+    const original={kind:'travelling',speed:.00025} as const,validated=validateEnvironment(original);
+    expect(validated).toEqual(original);expect(Object.isFrozen(validated)).toBe(true);
+    for(const invalid of [null,[],{kind:'still',speed:0},{kind:'travelling',speed:.0002},{kind:'travelling',speed:NaN},{kind:'travelling',speed:.0001,extra:true},{kind:'other'},Object.assign(Object.create({kind:'still'}),{unexpected:true}),Object.assign({kind:'still'}, { [Symbol('extra')]:1 })])expect(()=>validateEnvironment(invalid)).toThrow();
+    const world=new ParticleWorld(20,'flocks',false,undefined,original);
+    world.particles=[];const before=world.snapshot();world.step(20);expect(world.snapshot()).toEqual(before);
   });
 });
 

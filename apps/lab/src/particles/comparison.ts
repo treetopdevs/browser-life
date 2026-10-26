@@ -50,14 +50,18 @@ function canonical(value: unknown, depth = 0): string {
   if(value&&typeof value==='object')return `{${Object.entries(value).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v, depth + 1)}`).join(',')}}`;
   return JSON.stringify(value);
 }
-export function parseExploration(text: string): Exploration {
+export interface ExplorationImport { session: Exploration; migratedFrom: number | null }
+export function parseExplorationWithNotice(text: string): ExplorationImport {
   if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_IMPORT_BYTES)throw new Error('Selection file exceeds 128 KiB');
   let input: unknown;try{input=JSON.parse(text);}catch{throw new Error('Selection file is not valid JSON');}
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Selection file must be an object');
   const data=input as Exploration;
-  if(data.kind!=='particle-recipe-selections'||data.formatVersion!==1||data.generatorVersion!==1||data.modelVersion!==RULES.version)throw new Error('Unsupported selection-file version');
+  const sourceVersion=data.modelVersion;
+  if(data.kind!=='particle-recipe-selections'||data.formatVersion!==1||data.generatorVersion!==1||(sourceVersion!==2&&sourceVersion!==RULES.version))throw new Error('Unsupported selection-file version');
   if(!Array.isArray(data.selections)||data.selections.length>MAX_SELECTIONS)throw new Error('Invalid selection history length');
   let rebuilt=createExploration(data.seed,data.preset,data.mutation);
+  // Rebuild the complete historical graph under the file's declared version before upgrading it.
+  if(sourceVersion!==RULES.version)rebuilt=freeze({...rebuilt,modelVersion:sourceVersion});
   for(const selection of data.selections){
     if(!selection||typeof selection!=='object')throw new Error('Invalid selection record');
     const slot=rebuilt.slate.indexOf(selection.chosenId);
@@ -66,6 +70,8 @@ export function parseExploration(text: string): Exploration {
   }
   // Reconstructing the whole bounded graph rejects invented parents, recipes, IDs and extra fields.
   if(canonical(data)!==canonical(rebuilt))throw new Error('Selection file recipes or relationships do not match its recorded choices');
-  return rebuilt;
+  const session=sourceVersion===RULES.version?rebuilt:freeze({...rebuilt,modelVersion:RULES.version});
+  return Object.freeze({session,migratedFrom:sourceVersion===RULES.version?null:sourceVersion});
 }
+export function parseExploration(text: string): Exploration { return parseExplorationWithNotice(text).session; }
 export function serializeExploration(session: Exploration): string { return JSON.stringify(session,null,2); }

@@ -1,6 +1,6 @@
 # World picker scripted pilot
 
-Seeds 1201–1203, three rounds of 1,000 ticks, three candidates per round: 27 candidate runs. Chosen slots were fixed in advance at **1, 2, 0** (zero-based). This exercises selection and ancestry; it is not a fitness search or a claim about human preferences. Organism mutation was enabled. Runtime v24.2.0, toy rules version 2.
+Seeds 1201–1203, three rounds of 1,000 ticks, three candidates per round: 27 candidate runs. Chosen slots were fixed in advance at **1, 2, 0** (zero-based). This exercises selection and ancestry; it is not a fitness search or a claim about human preferences. Organism mutation was enabled. Runtime v24.2.0, toy rules version 3. Historical v2 results are preserved in [history/picker-v2-pilot.json](history/picker-v2-pilot.json); complete outcomes compare exactly after version/source metadata is excluded, verified by `node tools/particles/check-still-compatibility.ts`.
 
 | Seed | Round | Final populations, slots 0 / 1 / 2 | Final mean speeds | Occupied bins / 100 | Chosen slot |
 |---|---:|---|---|---|---:|

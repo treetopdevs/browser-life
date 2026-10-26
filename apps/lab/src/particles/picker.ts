@@ -1,6 +1,6 @@
 import { ParticleWorld, PRESETS, RULES } from './model.ts';
 import type { PresetId, ParticleRecipe } from './model.ts';
-import { createExploration, keepFavorite, parseExploration, serializeExploration, recipeNode, MAX_SELECTIONS, MAX_IMPORT_BYTES } from './comparison.ts';
+import { createExploration, keepFavorite, parseExplorationWithNotice, serializeExploration, recipeNode, MAX_SELECTIONS, MAX_IMPORT_BYTES } from './comparison.ts';
 import type { Exploration } from './comparison.ts';
 import { advanceComparison } from './comparison-clock.ts';
 import './picker.css';
@@ -176,9 +176,11 @@ fileInput.addEventListener('change', async () => {
     const text = await file.text();
     if (request !== importRequest) return;
     if (startedAt !== revision) throw new Error('The comparison changed while reading the file. Import it again.');
-    const candidate = parseExploration(text);
-    install(candidate, 'Paused · imported recipes ready'); reason.value = '';
-    el('file-status').textContent = `Imported ${session.selections.length} choices. Recipes restart at tick zero; particle states were not restored.`;
+    const imported = parseExplorationWithNotice(text);
+    install(imported.session, 'Paused · imported recipes ready'); reason.value = '';
+    el('file-status').textContent = imported.migratedFrom === null
+      ? `Imported ${session.selections.length} choices. Recipes restart at tick zero; particle states were not restored.`
+      : `Imported ${session.selections.length} choices. Model v${imported.migratedFrom} still-world recipes were migrated to model v${session.modelVersion} and restarted at tick zero; no moving-environment choices were inferred. Particle states were not restored.`;
   } catch (error) {
     if (request === importRequest) el('file-status').textContent = `Import refused: ${error instanceof Error ? error.message : 'Unreadable file.'} Current worlds are unchanged.`;
   }

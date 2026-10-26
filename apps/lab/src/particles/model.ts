@@ -4,7 +4,26 @@ export type Family = 0 | 1 | 2;
 export interface Particle { id: number; family: Family; x: number; y: number; vx: number; vy: number; energy: number; age: number; lifespan: number; generation: number; traits: number[] }
 export interface FoodPatch { x: number; y: number; radius: number; amount: number }
 export interface Census { tick: number; population: number; counts: [number, number, number]; births: number; deaths: number; mutations: number; blockedBirths: number; maxGeneration: number; meanSpeed: number; traitSpread: number; particleEnergy: number; foodEnergy: number }
-export const RULES = Object.freeze({ version: 2, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
+export type ParticleEnvironment = { kind: 'still' } | { kind: 'travelling'; speed: 0.0001 | 0.00025 };
+export function validateEnvironment(input: unknown): ParticleEnvironment {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Environment must be an object');
+  const value = input as Record<string, unknown>;
+  const keys=Reflect.ownKeys(value);
+  if (value.kind === 'still' && keys.length === 1 && keys[0] === 'kind') return Object.freeze({ kind: 'still' });
+  if (value.kind === 'travelling' && keys.length === 2 && keys.every(key=>typeof key==='string') && keys.sort().join(',') === 'kind,speed' && (value.speed === 0.0001 || value.speed === 0.00025)) {
+    return Object.freeze({ kind: 'travelling', speed: value.speed });
+  }
+  throw new Error('Invalid particle environment');
+}
+/** Move the fixed 3x3 patch field on a horizontal torus without changing its stock or geometry. */
+export function moveFoodPatches(food: FoodPatch[], environment: ParticleEnvironment): void {
+  if (environment.kind === 'still') return;
+  for (let i = 0; i < food.length; i++) {
+    const direction = Math.floor(i / 3) % 2 === 0 ? 1 : -1;
+    food[i].x = wrap(food[i].x + direction * environment.speed);
+  }
+}
+export const RULES = Object.freeze({ version: 3, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
 export const PRESETS = [
   { id: 'flocks' as const, name: 'Flocks', description: 'Neighbours align and gather into moving family groups.', rows: [[.75,.15,.15],[.15,.75,.15],[.15,.15,.75]], alignment: .12 },
   { id: 'pursuit' as const, name: 'Pursuit', description: 'Each family chases one colour and flees another. Chasing does not eat particles.', rows: [[.2,.95,-.9],[-.9,.2,.95],[.95,-.9,.2]], alignment: 0 },
@@ -51,12 +70,13 @@ export class ParticleWorld {
   private readonly random: () => number;
   private readonly mutationRandom: () => number;
   readonly recipe: ParticleRecipe;
+  readonly environment: ParticleEnvironment;
 
-  constructor(seed: number, preset: PresetId = 'flocks', mutation = true, recipe?: ParticleRecipe) {
+  constructor(seed: number, preset: PresetId = 'flocks', mutation = true, recipe?: ParticleRecipe, environment: ParticleEnvironment = { kind: 'still' }) {
     if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Seed must be an unsigned 32-bit integer');
     const settings = PRESETS.find(p => p.id === preset);
     if (!settings) throw new Error('Unknown particle preset');
-    this.seed = seed; this.preset = preset; this.mutation = mutation; this.recipe = recipe === undefined ? recipeForPreset(preset) : validateRecipe(recipe);
+    this.seed = seed; this.preset = preset; this.mutation = mutation; this.recipe = recipe === undefined ? recipeForPreset(preset) : validateRecipe(recipe); this.environment = validateEnvironment(environment);
     this.random = stream(seed ^ 0x83a9f214); this.mutationRandom = stream(seed ^ 0x1bd9237a);
     for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) this.food.push({ x: (x + .5) / 3, y: (y + .5) / 3, radius: RULES.foodPatchRadius, amount: RULES.foodPatchInitial });
     for (let i = 0; i < RULES.initialPopulation; i++) {
@@ -74,6 +94,7 @@ export class ParticleWorld {
 
   private advance() {
     this.tick++;
+    moveFoodPatches(this.food, this.environment);
     for (const patch of this.food) { const renewed = Math.min(this.recipe.foodRenewal, RULES.foodCapacity - patch.amount); patch.amount += renewed; this.ledger.renewed += renewed; }
     const old = this.particles;
     const velocities: [number, number][] = [];
@@ -133,6 +154,6 @@ export class ParticleWorld {
   }
 
   snapshot() {
-    return structuredClone({kind:'particle-playground-observation',description:'Engineered open-energy toy. Observation only, not a resumable checkpoint. Same-runtime seeded replay only.',rules:RULES,settings:{seed:this.seed,preset:this.preset,mutation:this.mutation,recipe:this.recipe},current:this.census(),ledger:this.ledger,particles:this.particles,food:this.food,history:this.history});
+    return structuredClone({kind:'particle-playground-observation',description:'Engineered open-energy toy. Observation only, not a resumable checkpoint. Same-runtime seeded replay only.',rules:RULES,settings:{seed:this.seed,preset:this.preset,mutation:this.mutation,recipe:this.recipe,environment:this.environment},current:this.census(),ledger:this.ledger,particles:this.particles,food:this.food,history:this.history});
   }
 }

@@ -155,6 +155,7 @@ export default defineConfig({
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
       if (id.includes("/src/particles/model.ts")) return "particles-model";
+      if (id.includes("/src/particles/comparison-clock.ts")) return "particles-clock";
     } }, input: {
       home: r("./index.html"),
       lab: r("./lab/index.html"),
@@ -168,6 +169,7 @@ export default defineConfig({
       garden: r("./garden/index.html"),
       particles: r("./particles/index.html"),
       particlePicker: r("./particles/picker/index.html"),
+      particleOases: r("./particles/oases/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
