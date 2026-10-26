@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="description" content="A paired sampled replay comparing uniform food with one broad moving replenishment band.">
+    <title>Moving food · seed replication replay</title>
+    <link rel="stylesheet" href="moving-food-replication-viewer.css">
+    <script type="module" src="moving-food-replication-viewer.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to seed replication replay</a>
+    <header class="site-header">
+      <a class="brand" href="hungry-shapes.html">Hungry shapes <span>· creative prototypes</span></a>
+      <span class="badge">Local evidence companion</span>
+    </header>
+
+    <main id="main">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Moving food · two new seeds · frozen horizon 3,000</p>
+        <h1 id="page-title">Does the same pattern appear again?</h1>
+        <p>Choose one of the two planned follow-up seeds. Each view pairs its uniform-food world with a moving-band world from the same seed, mutation setting, and starting rules. Both receive 768 offered food units on each five-tick pulse and stop at tick 3,000 or actual extinction.</p>
+        <p class="scope-note"><strong>Recorded states only.</strong> The pair opens paused and uses saved frames at 20-tick intervals, plus the exact terminal frame when needed. Nothing is interpolated, simulated, or continued in this page. The moving stripe marks the replenishment region. Food outside it can remain from earlier pulses; the world is not cleared as the stripe moves. Equal offered food does not mean equal accepted food.</p>
+      </section>
+
+      <section class="decision" aria-labelledby="decision-title">
+        <div>
+          <p class="eyebrow">Selected-seed decision</p>
+          <h2 id="decision-title">Replication screen</h2>
+          <p id="decision-summary">A seed-specific decision appears only after its two recordings, plan identity, raw-file hashes, and accepted visual receipt (when present) verify. A pending record is not a pass.</p>
+        </div>
+        <span id="decision-status" class="decision-status" data-status="pending">Pending</span>
+      </section>
+
+      <section class="seed-picker-panel" aria-labelledby="seed-label">
+        <label id="seed-label" for="seed-picker">Choose a follow-up seed</label>
+        <select id="seed-picker" name="seed" aria-describedby="seed-help">
+          <option value="1202" selected>Seed 1202</option>
+          <option value="1203">Seed 1203</option>
+        </select>
+        <p id="seed-help" class="muted">Only the selected seed’s manifest and listed files are requested.</p>
+      </section>
+
+      <p id="source-status" class="source-status" role="status" aria-live="polite">Checking only seed 1202…</p>
+
+      <section id="replay" class="replay" aria-labelledby="replay-title" hidden>
+        <div class="replay-heading">
+          <div>
+            <p class="eyebrow">One selected seed · two food modes</p>
+            <h2 id="replay-title">Seed 1202 · paired world states</h2>
+          </div>
+          <p id="run-state" class="run-state">Paused · recorded replay</p>
+        </div>
+        <section id="pair-decision" class="seed-decision" aria-live="polite" hidden>
+          <p id="pair-decision-status" class="eyebrow">Pair decision</p>
+          <p id="pair-decision-summary"></p>
+        </section>
+
+        <section class="panel transport-panel" aria-labelledby="transport-title">
+          <h3 id="transport-title">Move through both recordings</h3>
+          <p class="muted">The shared timeline visits each recorded tick once. The worlds are paused on saved frames; they never run the model.</p>
+          <div class="transport">
+            <button id="previous" type="button" aria-label="Previous paired sample" disabled>← Previous</button>
+            <button id="play" class="primary" type="button" aria-label="Play paired sampled replay" disabled>Play both</button>
+            <button id="next" type="button" aria-label="Next paired sample" disabled>Next →</button>
+          </div>
+          <label class="scrub-label" for="scrub">Shared recorded tick <output id="scrub-value" for="scrub">0 / 0</output></label>
+          <input id="scrub" type="range" min="0" max="0" value="0" step="1" disabled aria-describedby="scrub-help">
+          <p id="scrub-help" class="muted">Use the arrow keys to move one recorded tick. Space toggles playback when focus is outside a control.</p>
+          <p class="keyboard-note">Hidden tabs pause and stay paused when you return.</p>
+          <div class="jump-ticks" aria-label="Jump to same-age comparison ticks">
+            <span>Compare at:</span>
+            <button type="button" data-jump-tick="500" disabled>500</button>
+            <button type="button" data-jump-tick="1500" disabled>1,500</button>
+            <button type="button" data-jump-tick="2500" disabled>2,500</button>
+            <button type="button" data-jump-tick="3000" disabled>3,000</button>
+          </div>
+        </section>
+
+        <p id="extinction-note" class="extinction-note" hidden></p>
+        <div class="paired-worlds">
+          <figure class="world-panel" aria-labelledby="uniform-title">
+            <div class="world-title"><h3 id="uniform-title">Uniform food</h3><span class="mode-tag">Baseline</span></div>
+            <canvas id="uniform-world" width="768" height="768" role="img" aria-label="Recorded uniform-food world at tick 0"></canvas>
+            <ul class="legend" aria-label="World legend">
+              <li><i class="swatch family-mint" aria-hidden="true"></i>Family 1</li>
+              <li><i class="swatch family-gold" aria-hidden="true"></i>Family 2</li>
+              <li><i class="swatch family-lilac" aria-hidden="true"></i>Family 3</li>
+              <li><i class="swatch food" aria-hidden="true"></i>Food remaining</li>
+            </ul>
+            <figcaption>
+              <span>One shared seed, the original uniform replenishment rule. Pale tiles show food still present.</span>
+              <span id="uniform-frame-label" class="sample-label">Tick 0 · saved sample</span>
+            </figcaption>
+            <dl class="arm-metrics" aria-label="Uniform-food measurements">
+              <div><dt>Actual tick</dt><dd id="uniform-tick">—</dd></div>
+              <div><dt>Living bodies</dt><dd id="uniform-population">—</dd></div>
+              <div><dt>Occupied cells</dt><dd id="uniform-cells">—</dd></div>
+              <div><dt>Families</dt><dd id="uniform-families">—</dd></div>
+              <div><dt>Food offered</dt><dd id="uniform-offered">—</dd></div>
+              <div><dt>Food accepted</dt><dd id="uniform-accepted">—</dd></div>
+              <div><dt>Food overflow</dt><dd id="uniform-overflow">—</dd></div>
+              <div><dt>Food remaining</dt><dd id="uniform-food">—</dd></div>
+            </dl>
+          </figure>
+
+          <figure class="world-panel moving-panel" aria-labelledby="moving-title">
+            <div class="world-title"><h3 id="moving-title">Moving-band food</h3><span class="mode-tag moving-tag">Replenishment region outlined</span></div>
+            <canvas id="moving-world" width="768" height="768" role="img" aria-label="Recorded moving-band world at tick 0, with replenishment stripe outlined"></canvas>
+            <ul class="legend" aria-label="Moving-band world legend">
+              <li><i class="swatch family-mint" aria-hidden="true"></i>Family 1</li>
+              <li><i class="swatch family-gold" aria-hidden="true"></i>Family 2</li>
+              <li><i class="swatch family-lilac" aria-hidden="true"></i>Family 3</li>
+              <li><i class="swatch food" aria-hidden="true"></i>Food remaining</li>
+              <li><i class="swatch band" aria-hidden="true"></i>Replenishment band · 48 columns</li>
+            </ul>
+            <figcaption>
+              <span>The outlined stripe shows where new food is offered. Food outside it can remain from earlier pulses; the world is not cleared as the band moves.</span>
+              <span id="moving-frame-label" class="sample-label">Tick 0 · saved sample</span>
+            </figcaption>
+            <dl class="arm-metrics" aria-label="Moving-band measurements">
+              <div><dt>Actual tick</dt><dd id="moving-tick">—</dd></div>
+              <div><dt>Living bodies</dt><dd id="moving-population">—</dd></div>
+              <div><dt>Occupied cells</dt><dd id="moving-cells">—</dd></div>
+              <div><dt>Families</dt><dd id="moving-families">—</dd></div>
+              <div><dt>Food offered</dt><dd id="moving-offered">—</dd></div>
+              <div><dt>Food accepted</dt><dd id="moving-accepted">—</dd></div>
+              <div><dt>Food overflow</dt><dd id="moving-overflow">—</dd></div>
+              <div><dt>Food remaining</dt><dd id="moving-food">—</dd></div>
+              <div><dt>Band starts at column</dt><dd id="moving-band-left">—</dd></div>
+            </dl>
+          </figure>
+        </div>
+
+        <section class="panel windows-panel" aria-labelledby="windows-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Fixed 500-tick windows</p><h3 id="windows-title">Turnover and food accounting</h3></div>
+            <p class="muted">Offered food is the same by rule; acceptance and overflow may differ. Band occupancy is a diagnostic, not a fitness score.</p>
+          </div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Window metrics, scroll horizontally on small screens">
+            <table>
+              <thead><tr><th scope="col">Arm · window</th><th scope="col">Births · deaths</th><th scope="col">Population min–max · end</th><th scope="col">Cap 48</th><th scope="col">Near-cap 47+</th><th scope="col">Blocked attempts</th><th scope="col">Food offered · accepted · overflow</th><th scope="col">Families · end</th><th scope="col">Programs · end</th><th scope="col">Living max generation</th><th scope="col">Max-ever generation</th><th scope="col">Occupied band cells · share</th></tr></thead>
+              <tbody id="window-rows"><tr><td colspan="12">Waiting for both selected-seed arm records.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="muted table-note">A window with no executed ticks is shown as unavailable. The same-age comparison buttons jump to actual saved ticks; extinction never invents later states.</p>
+        </section>
+      </section>
+
+      <section id="empty-state" class="empty-state" aria-labelledby="empty-title">
+        <p class="eyebrow">Paired replay not yet available</p>
+        <h2 id="empty-title">No pair is published for this seed yet.</h2>
+        <p>Select seed 1202 or 1203. The viewer loads only that seed’s pair record and its explicitly listed arm files.</p>
+      </section>
+
+      <section id="error-state" class="error-state" aria-labelledby="error-title" hidden>
+        <p class="eyebrow">Paired replay could not be loaded</p>
+        <h2 id="error-title">The listed evidence is unavailable or malformed.</h2>
+        <p id="error-detail">No replay frame or comparison decision was shown. Check the source links and paired record.</p>
+      </section>
+
+      <section class="panel between-seeds" aria-labelledby="between-seeds-title">
+        <h2 id="between-seeds-title">Uniform worlds can differ between seeds</h2>
+        <p>This reference compares saved uniform-food frames from seeds 1202 and 1203 at the same recorded ticks. It uses existing evidence only; no new simulation is run here.</p>
+        <figure>
+          <img src="moving-food-replication-media/uniform-between-seeds.png" alt="Saved uniform-food world frames for seeds 1202 and 1203 at matched ticks 1,500, 2,500, and 3,000">
+          <figcaption><a href="moving-food-replication-media/uniform-between-seeds.json">Image provenance and source hashes</a></figcaption>
+        </figure>
+      </section>
+
+      <section class="panel clips-panel" aria-labelledby="clips-title">
+        <h2 id="clips-title">Saved paired replays</h2>
+        <p>Each clip shows the saved frames from tick 0 through tick 3,000, every 20 ticks, at 10 frames per second. That is 151 recorded frames per seed. Nothing is simulated or interpolated for these clips.</p>
+        <div class="clip-grid">
+          <figure>
+            <figcaption><strong>Seed 1202</strong> · uniform and moving-band worlds</figcaption>
+            <video controls playsinline preload="none" aria-label="Seed 1202 paired saved replay from tick 0 to 3000 every 20 ticks" src="moving-food-replication-media/seed-1202-paired.mp4"></video>
+            <p><a href="moving-food-replication-media/seed-1202-paired.json">Seed 1202 recording provenance</a></p>
+          </figure>
+          <figure>
+            <figcaption><strong>Seed 1203</strong> · uniform and moving-band worlds</figcaption>
+            <video controls playsinline preload="none" aria-label="Seed 1203 paired saved replay from tick 0 to 3000 every 20 ticks" src="moving-food-replication-media/seed-1203-paired.mp4"></video>
+            <p><a href="moving-food-replication-media/seed-1203-paired.json">Seed 1203 recording provenance</a></p>
+          </figure>
+        </div>
+      </section>
+
+      <footer>
+        <a href="moving-food-replication-results.md">Two new-seed results</a>
+        <a href="moving-food.html">Frozen first-seed comparison</a>
+        <a href="decisions.html">Prototype decisions</a>
+        <a href="moving-food-replication-plan.md">Frozen two-seed replication plan and review resolutions</a>
+        <a href="moving-food-replication-index-1202.json">Seed 1202 pair manifest</a>
+        <a href="moving-food-replication-index-1203.json">Seed 1203 pair manifest</a>
+        <a href="../../tools/moving-food-replication/explore.ts">Moving-food replication runner source</a>
+        <a href="../../apps/lab/src/moving-food/model.ts">Moving-food model source</a>
+        <a href="uniform-endurance.html">Uniform-food endurance baseline</a>
+        <p class="footer-note">Local creative prototype · paired sampled evidence only · no merge or deployment</p>
+      </footer>
+    </main>
+  </body>
+</html>
