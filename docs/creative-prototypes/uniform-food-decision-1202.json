@@ -1,0 +1,65 @@
+{
+  "seed": 1202,
+  "artifactSha256": "9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7",
+  "dataSha256": "4dff34b745ac6d77394c6a4411db0764d8f286deb58dcd9d47638899437dbb81",
+  "numericalGate": {
+    "aliveAt6000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt6000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "pass": true,
+      "observation": "The mixed mint grouping across the upper-middle at3000 is replaced by mint branching upper-right at4000; the broad gold grouping shifts from lower-middle to lower-left."
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "pass": true,
+      "observation": "The lower-left gold gathering breaks up by5000; gold occupies the top edge and lower-right, with mint groups separated along the left and right edges. The large gaps move."
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "pass": true,
+      "observation": "Gold bodies redistribute to the bottom edge, with mint mainly above-left of center and large open food regions at center/right by6000. This differs spatially from5000, not just in palette."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "passes-uniform-longevity-screen",
+  "reason": "Numerical criteria pass and each adjacent milestone pair has concrete spatial changes. Stop at6000; no further seed/horizon earned in this slice.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "occupiedA": 706,
+      "occupiedB": 594,
+      "sharedTiles": 15,
+      "unionTiles": 1285,
+      "jaccard": 0.011673151750972763
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "occupiedA": 594,
+      "occupiedB": 754,
+      "sharedTiles": 11,
+      "unionTiles": 1337,
+      "jaccard": 0.008227374719521317
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "occupiedA": 754,
+      "occupiedB": 538,
+      "sharedTiles": 40,
+      "unionTiles": 1252,
+      "jaccard": 0.03194888178913738
+    }
+  ]
+}

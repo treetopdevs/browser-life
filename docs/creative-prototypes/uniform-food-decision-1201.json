@@ -1,0 +1,66 @@
+{
+  "seed": 1201,
+  "artifactSha256": "af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850",
+  "dataSha256": "39ddc124f20f7e61d7d125e877c125a502941e65ddbdd159c1ee666b663b1c76",
+  "numericalGate": {
+    "aliveAt6000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt6000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "pass": true,
+      "observation": "The mint groups on the upper-right edge at3000 are mostly replaced by a much larger mixed gold/mint grouping lower-right at4000; gold branches appear across the upper-left. Gaps and occupied regions change, beyond palette or IDs."
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "pass": true,
+      "observation": "The dense lower-right group breaks up. Gold bodies occupy the top edge and lower-left while a wide central-right food region opens. Mint occupancy becomes much sparser."
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "pass": true,
+      "observation": "The lower-left gold gathering largely disappears; mint forms a new upper-right gathering and gold bodies extend down the right edge. Large gaps shift between left, center and right."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "extend-frozen-uniform-to-1202-and-1203",
+  "reason": "Alive at6000, both families persist, births/deaths in every new window, cap48<=99 in each; concrete occupied-location/gap changes in each adjacent fixed-camera pair. No rule changes or horizon extension.",
+  "scope": "New uniform longevity screen; PR100 patch STOP unchanged.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "occupiedA": 629,
+      "occupiedB": 692,
+      "sharedTiles": 11,
+      "unionTiles": 1310,
+      "jaccard": 0.008396946564885497
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "occupiedA": 692,
+      "occupiedB": 564,
+      "sharedTiles": 12,
+      "unionTiles": 1244,
+      "jaccard": 0.00964630225080386
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "occupiedA": 564,
+      "occupiedB": 450,
+      "sharedTiles": 19,
+      "unionTiles": 995,
+      "jaccard": 0.019095477386934675
+    }
+  ]
+}
