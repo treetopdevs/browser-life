@@ -5,7 +5,7 @@ import { HungryWorld, RULES } from '../../apps/lab/src/stationary-food/model.ts'
 import {
   FIXED_SNAPSHOTS, LOADED_SOURCE_SHA256, assertPinnedInputs, evaluateGate, expectedSampleTicks,
   expectedSnapshotTicks, parseArgs, validateEnvironment, validateFrame, validateFrameEnergy,
-  validatePrefixRecord,
+  validateEvidenceStructure, validatePrefixRecord,
 } from '../stationary-food/explore.ts';
 
 type R = Record<string, any>;
@@ -13,6 +13,10 @@ const digest = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).di
 function movingReference(): R {
   return JSON.parse(readFileSync(new URL('../../docs/creative-prototypes/moving-food-replication-moving-band-seed-1202.json', import.meta.url), 'utf8')) as R;
 }
+function acceptedEvidence(mode: 'moving-band' | 'stationary-band'): R {
+  return JSON.parse(readFileSync(new URL(`../../docs/creative-prototypes/stationary-food-${mode}-seed-1202.json`, import.meta.url), 'utf8')) as R;
+}
+function reseal(data: R): void { delete data.dataSha256; data.dataSha256 = digest(data); }
 function prefixProof(reference: R): R {
   const checkpoints = reference.snapshots.map((snapshot: R) => ({
     tick: snapshot.tick,
@@ -80,6 +84,53 @@ describe('stationary-food evidence primitives', () => {
     const wrongSeed = structuredClone(evidence);
     wrongSeed.provenance.prefix.seed = 1203;
     expect(() => validatePrefixRecord(wrongSeed, reference)).toThrow(/moving-band baseline prefix proof missing/);
+  });
+
+  it('accepts both complete saved arms through the structural validator', () => {
+    for (const mode of ['moving-band', 'stationary-band'] as const) {
+      expect(() => validateEvidenceStructure(acceptedEvidence(mode), LOADED_SOURCE_SHA256)).not.toThrow();
+    }
+  });
+
+  it('rejects re-sealed mode geometry and false stationary-prefix claims', () => {
+    const wrongStationaryEdge = acceptedEvidence('stationary-band');
+    wrongStationaryEdge.samples[0].environment.bandLeft = 1;
+    reseal(wrongStationaryEdge);
+    expect(() => validateEvidenceStructure(wrongStationaryEdge, LOADED_SOURCE_SHA256)).toThrow(/band position\/width/);
+
+    const wrongMovingMode = acceptedEvidence('moving-band');
+    wrongMovingMode.run.mode = 'stationary-band';
+    reseal(wrongMovingMode);
+    expect(() => validateEvidenceStructure(wrongMovingMode, LOADED_SOURCE_SHA256)).toThrow(/mode parameters|band position\/width|stationary-band prefix/);
+
+    const falsePrefix = acceptedEvidence('stationary-band');
+    falsePrefix.provenance.prefix.comparedSamples = 151;
+    reseal(falsePrefix);
+    expect(() => validateEvidenceStructure(falsePrefix, LOADED_SOURCE_SHA256)).toThrow(/stationary-band prefix must be not-applicable/);
+  });
+
+  it('rejects re-sealed missing checkpoints and forged full historical snapshots', () => {
+    const missingCheckpoint = acceptedEvidence('moving-band');
+    missingCheckpoint.provenance.prefix.checkpoints = missingCheckpoint.provenance.prefix.checkpoints.filter((entry: R) => entry.tick !== 500);
+    reseal(missingCheckpoint);
+    expect(() => validateEvidenceStructure(missingCheckpoint, LOADED_SOURCE_SHA256)).toThrow(/checkpoint coverage mismatch/);
+
+    const forgedSnapshot = acceptedEvidence('moving-band');
+    forgedSnapshot.snapshots.find((snapshot: R) => snapshot.tick === 2_500).state.food[0]++;
+    reseal(forgedSnapshot);
+    expect(() => validateEvidenceStructure(forgedSnapshot, LOADED_SOURCE_SHA256)).toThrow();
+  });
+
+  it('rejects re-sealed stale plan and isolated-model source pins', () => {
+    const stalePlan = acceptedEvidence('moving-band');
+    stalePlan.provenance.planSha256 = '0'.repeat(64);
+    reseal(stalePlan);
+    expect(() => validateEvidenceStructure(stalePlan, LOADED_SOURCE_SHA256)).toThrow(/plan\/baseline identity mismatch/);
+
+    const staleModelPin = acceptedEvidence('stationary-band');
+    staleModelPin.provenance.sourceSha256['apps/lab/src/stationary-food/model.ts'] = 'f'.repeat(64);
+    reseal(staleModelPin);
+    expect(() => validateEvidenceStructure(staleModelPin, LOADED_SOURCE_SHA256)).toThrow(/stale source hash/);
   });
 
   it('requires stationary prefix to be explicitly not applicable', () => {
