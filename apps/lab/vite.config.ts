@@ -154,6 +154,7 @@ export default defineConfig({
   build: {
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/environment-page.ts")) return "particles-environment-page";
       if (id.includes("/src/particles/bonded-model.ts")) return "particles-bonded-model";
       if (id.includes("/src/particles/model.ts")) return "particles-model";
@@ -174,6 +175,7 @@ export default defineConfig({
       particleOases: r("./particles/oases/index.html"),
       particleSeasons: r("./particles/seasons/index.html"),
       particleBonds: r("./particles/bonds/index.html"),
+      boundaries: r("./boundaries/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),

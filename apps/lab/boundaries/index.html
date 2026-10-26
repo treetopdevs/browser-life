@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="A small field-pattern comparison using designed density and nutrient rules." />
+  <title>Boundary fields · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/src/boundaries/style.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to comparison</a>
+  <header><a href="/lab/" class="brand">Cadence Garden <span>/ experiments</span></a><span class="badge">Field toy · local prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Four recipes · one starting field</p>
+      <h1>Boundaries in a changing field</h1>
+      <p>Watch four small rule sets act on the same seeded density and nutrient patterns. The outlines show an engineered transport gate, not a living membrane.</p>
+    </section>
+
+    <section class="toolbar" aria-label="Shared comparison controls">
+      <form id="reset-form" class="seed-control">
+        <label for="seed">Shared seed</label>
+        <div><input id="seed" type="number" min="0" max="4294967295" step="any" value="1201" required /><button type="submit">Reset comparison</button></div>
+      </form>
+      <div class="transport" aria-label="Playback controls">
+        <button id="play" class="primary" type="button" aria-label="Play">Play</button>
+        <button id="step" type="button">One tick</button>
+        <label for="pace">Pace<select id="pace"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      </div>
+      <div class="display-controls">
+        <label for="field-view">Field view<select id="field-view"><option value="density">Density proxy</option><option value="nutrient">Nutrient proxy</option></select></label>
+        <label class="check"><input id="wall-overlay" type="checkbox" checked /> Show wall gate</label>
+      </div>
+      <p id="run-status" role="status" aria-live="polite">Preparing comparison…</p>
+    </section>
+
+    <section class="comparison" aria-label="Four rule recipe panels">
+      <article class="world-panel" data-mode="smooth" aria-labelledby="smooth-title">
+        <header class="world-heading"><div><p class="recipe">Smooth reaction</p><h2 id="smooth-title">Smooth</h2></div><span class="world-status" id="status-smooth">Starting</span></header>
+        <canvas id="field-smooth" width="64" height="64" role="img" aria-label="Smooth recipe density proxy field"></canvas>
+        <div class="panel-tick">Field tick <strong id="tick-smooth">0</strong></div>
+        <canvas id="history-smooth" width="420" height="64" role="img" aria-label="Recent total-density history for smooth recipe"></canvas>
+        <p class="chart-note">Recent total density · one sample per 100 ticks</p>
+        <dl class="metrics"><div><dt>Regions ≥4 cells</dt><dd id="components-smooth">—</dd></div><div><dt>Tiny regions</dt><dd id="tiny-smooth">—</dd></div><div><dt>Largest region</dt><dd id="largest-smooth">—</dd></div><div><dt>Active cells</dt><dd id="active-smooth">—</dd></div><div><dt>Total density</dt><dd id="total-smooth">—</dd></div><div><dt>Mean nutrient</dt><dd id="nutrient-smooth">—</dd></div><div><dt>Neighbor contrast</dt><dd id="contrast-smooth">—</dd></div><div><dt>Wall-gated edges</dt><dd id="blocked-smooth">—</dd></div><div><dt>Last sampled change</dt><dd id="change-smooth">—</dd></div></dl>
+      </article>
+      <article class="world-panel" data-mode="walls" aria-labelledby="walls-title">
+        <header class="world-heading"><div><p class="recipe">Smooth reaction + gate</p><h2 id="walls-title">Walls</h2></div><span class="world-status" id="status-walls">Starting</span></header>
+        <canvas id="field-walls" width="64" height="64" role="img" aria-label="Walls recipe density proxy field"></canvas>
+        <div class="panel-tick">Field tick <strong id="tick-walls">0</strong></div>
+        <canvas id="history-walls" width="420" height="64" role="img" aria-label="Recent total-density history for walls recipe"></canvas>
+        <p class="chart-note">Recent total density · one sample per 100 ticks</p>
+        <dl class="metrics"><div><dt>Regions ≥4 cells</dt><dd id="components-walls">—</dd></div><div><dt>Tiny regions</dt><dd id="tiny-walls">—</dd></div><div><dt>Largest region</dt><dd id="largest-walls">—</dd></div><div><dt>Active cells</dt><dd id="active-walls">—</dd></div><div><dt>Total density</dt><dd id="total-walls">—</dd></div><div><dt>Mean nutrient</dt><dd id="nutrient-walls">—</dd></div><div><dt>Neighbor contrast</dt><dd id="contrast-walls">—</dd></div><div><dt>Wall-gated edges</dt><dd id="blocked-walls">—</dd></div><div><dt>Last sampled change</dt><dd id="change-walls">—</dd></div></dl>
+      </article>
+      <article class="world-panel" data-mode="threshold" aria-labelledby="threshold-title">
+        <header class="world-heading"><div><p class="recipe">Threshold reaction</p><h2 id="threshold-title">Threshold</h2></div><span class="world-status" id="status-threshold">Starting</span></header>
+        <canvas id="field-threshold" width="64" height="64" role="img" aria-label="Threshold recipe density proxy field"></canvas>
+        <div class="panel-tick">Field tick <strong id="tick-threshold">0</strong></div>
+        <canvas id="history-threshold" width="420" height="64" role="img" aria-label="Recent total-density history for threshold recipe"></canvas>
+        <p class="chart-note">Recent total density · one sample per 100 ticks</p>
+        <dl class="metrics"><div><dt>Regions ≥4 cells</dt><dd id="components-threshold">—</dd></div><div><dt>Tiny regions</dt><dd id="tiny-threshold">—</dd></div><div><dt>Largest region</dt><dd id="largest-threshold">—</dd></div><div><dt>Active cells</dt><dd id="active-threshold">—</dd></div><div><dt>Total density</dt><dd id="total-threshold">—</dd></div><div><dt>Mean nutrient</dt><dd id="nutrient-threshold">—</dd></div><div><dt>Neighbor contrast</dt><dd id="contrast-threshold">—</dd></div><div><dt>Wall-gated edges</dt><dd id="blocked-threshold">—</dd></div><div><dt>Last sampled change</dt><dd id="change-threshold">—</dd></div></dl>
+      </article>
+      <article class="world-panel" data-mode="both" aria-labelledby="both-title">
+        <header class="world-heading"><div><p class="recipe">Threshold reaction + gate</p><h2 id="both-title">Both</h2></div><span class="world-status" id="status-both">Starting</span></header>
+        <canvas id="field-both" width="64" height="64" role="img" aria-label="Both recipe density proxy field"></canvas>
+        <div class="panel-tick">Field tick <strong id="tick-both">0</strong></div>
+        <canvas id="history-both" width="420" height="64" role="img" aria-label="Recent total-density history for both recipe"></canvas>
+        <p class="chart-note">Recent total density · one sample per 100 ticks</p>
+        <dl class="metrics"><div><dt>Regions ≥4 cells</dt><dd id="components-both">—</dd></div><div><dt>Tiny regions</dt><dd id="tiny-both">—</dd></div><div><dt>Largest region</dt><dd id="largest-both">—</dd></div><div><dt>Active cells</dt><dd id="active-both">—</dd></div><div><dt>Total density</dt><dd id="total-both">—</dd></div><div><dt>Mean nutrient</dt><dd id="nutrient-both">—</dd></div><div><dt>Neighbor contrast</dt><dd id="contrast-both">—</dd></div><div><dt>Wall-gated edges</dt><dd id="blocked-both">—</dd></div><div><dt>Last sampled change</dt><dd id="change-both">—</dd></div></dl>
+      </article>
+    </section>
+
+    <section class="legend" aria-label="Display legend">
+      <div><span class="swatch density" aria-hidden="true"></span><p><strong>Density proxy</strong><br />Fixed 0–1 scale. Brighter cells have higher field values.</p></div>
+      <div><span class="swatch nutrient" aria-hidden="true"></span><p><strong>Nutrient proxy</strong><br />Shown on the same fixed 0–1 scale; reactions consume and replenish it.</p></div>
+      <div><span class="swatch gate" aria-hidden="true"></span><p><strong>Wall gate</strong><br />Warm cells mark supplied wall strength at or above 0.55. It gates density transport only; nutrient still diffuses.</p></div>
+    </section>
+    <section class="notes">
+      <div><h2>Reading the measurements</h2><p>Connected regions use four-neighbor wrapping and a density threshold of 0.35. A region is counted only at four or more cells; smaller regions are listed separately. These are image regions, not organisms. A rising region count does not mean that anything divided.</p><p>Sampled change is the mean absolute density change and the fraction of threshold-mask cells that flipped during the last completed sample interval. It updates every 100 ticks, or at extinction. The wall metric counts edges gated by the current wall field. History in a downloaded observation keeps at most 300 samples.</p></div>
+      <aside class="panel"><h2>Save what you observe</h2><p>Download the four current fields, rule descriptions, accounting and retained sample history as JSON. It is an observation, not a save that can be resumed.</p><button id="export" class="download" type="button">Save observation ↓</button><p class="keys">Keyboard: <kbd>Space</kbd> play or pause · <kbd>→</kbd> one tick. Hidden tabs pause and stay paused when shown again.</p></aside>
+    </section>
+  </main>
+  <script type="module" src="/src/boundaries/page.ts"></script>
+</body>
+</html>

@@ -9,6 +9,10 @@
   @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
   respond @private_particles 404
 
+  # Standalone field prototype remains local-only.
+  @private_boundaries path_regexp private_boundaries (?i)^/boundaries(?:/|$)
+  respond @private_boundaries 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https

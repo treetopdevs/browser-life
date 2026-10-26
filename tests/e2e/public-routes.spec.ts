@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 const ORIGIN = "https://cadence.garden";
 const DIST = fileURLToPath(new URL("../../apps/lab/dist/", import.meta.url));
 const PUBLIC = fileURLToPath(new URL("../../apps/lab/public/", import.meta.url));
-const DIAGNOSTIC = ["/selftest.html", "/island.html", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/"];
+const DIAGNOSTIC = ["/selftest.html", "/island.html", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/boundaries/"];
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const withoutComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");
