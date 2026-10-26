@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-moving-food-pair",
+  "seed": 1203,
+  "planSha256": "72f651acc7f221991b0ce89f7264eed9dd47df54e955d3d164406b4d0a17cc47",
+  "arms": {
+    "uniform": {
+      "mode": "uniform",
+      "url": "moving-food-replication-uniform-seed-1203.json",
+      "rawSha256": "11b6ec8dd59de3fdd2e2447674b13e9409cf8cc1af04e69d8b2d3c90eea8e761"
+    },
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "moving-food-replication-moving-band-seed-1203.json",
+      "rawSha256": "8ce7be228812002e2d03a2f68a15b9d1107e6fff022006ae9059003bb66e0c9b"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "Seed 1203 passes the unchanged screen at3,000: 40 moving-band bodies, 2 founder families, continuing births and deaths, low ceiling occupancy and visible spatial changes. Stop at3,000; this is descriptive variety, not demonstrated superiority or adaptation.",
+    "uniformArtifactSha256": "11b6ec8dd59de3fdd2e2447674b13e9409cf8cc1af04e69d8b2d3c90eea8e761",
+    "movingBandArtifactSha256": "8ce7be228812002e2d03a2f68a15b9d1107e6fff022006ae9059003bb66e0c9b",
+    "visualReceiptUrl": "moving-food-replication-visual-receipt-1203.json",
+    "visualReceiptSha256": "6f66fd615d7944c98fed93da1122255101ac042c5381488080601e46ab2030b7"
+  }
+}

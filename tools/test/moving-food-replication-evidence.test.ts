@@ -11,10 +11,15 @@ import {
 
 type R = Record<string, any>;
 const digest = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const digestBytes = (x: Buffer) => createHash('sha256').update(x).digest('hex');
 function fixture(seed: 1202 | 1203 = 1202) { return new HungryWorld(seed, true, 'uniform'); }
 function baseline(seed: 1202 | 1203): R {
   return JSON.parse(readFileSync(new URL(`../../docs/creative-prototypes/uniform-endurance-seed-${seed}.json`, import.meta.url), 'utf8')) as R;
 }
+function acceptedEvidence(seed: 1202 | 1203, mode: 'uniform' | 'moving-band'): R {
+  return JSON.parse(readFileSync(new URL(`../../docs/creative-prototypes/moving-food-replication-${mode}-seed-${seed}.json`, import.meta.url), 'utf8')) as R;
+}
+function reseal(data: R): void { delete data.dataSha256; data.dataSha256 = digest(data); }
 function prefixEvidence(seed: 1202 | 1203, prior: R): R {
   const firstSample = prior.samples[0];
   return { run: { seed, mode: 'uniform' }, rules: prior.rules, samples: prior.samples.slice(0, 151),
@@ -62,6 +67,34 @@ describe('moving-food replication evidence primitives', () => {
       runtime: {}, rules: RULES, provenance: {}, samples: [], tickRows: [], frames: [], snapshots: [], windows: [], final: {}, repeat: {}, numericalGate: {}, dataSha256: '' });
     expect(() => validateEvidenceStructure(skeleton(1201))).toThrow(/run settings mismatch/);
     expect(() => validateEvidenceStructure(skeleton(1204))).toThrow(/run settings mismatch/);
+  });
+
+  it('accepts all four saved seed 1202/1203 arms through the complete validator', () => {
+    for (const seed of [1202, 1203] as const) for (const mode of ['uniform', 'moving-band'] as const) {
+      expect(() => validateEvidenceStructure(acceptedEvidence(seed, mode), LOADED_SOURCE_SHA256)).not.toThrow();
+    }
+  });
+
+  it('rejects re-sealed cross-seed baseline identities, missing/tampered plan pins, and false prefix proofs', () => {
+    const wrongBaseline = acceptedEvidence(1202, 'uniform'); const otherBaseline = baseline(1203);
+    const otherBaselineBytes = readFileSync(new URL('../../docs/creative-prototypes/uniform-endurance-seed-1203.json', import.meta.url));
+    wrongBaseline.provenance.baselineArtifactSha256 = digestBytes(otherBaselineBytes);
+    wrongBaseline.provenance.baselineDataSha256 = otherBaseline.dataSha256; reseal(wrongBaseline);
+    expect(() => validateEvidenceStructure(wrongBaseline, LOADED_SOURCE_SHA256)).toThrow(/plan\/baseline identity mismatch/);
+
+    const missingPlan = acceptedEvidence(1202, 'moving-band'); delete missingPlan.provenance.planSha256; reseal(missingPlan);
+    expect(() => validateEvidenceStructure(missingPlan, LOADED_SOURCE_SHA256)).toThrow(/provenance: required fields mismatch/);
+    const wrongPlan = acceptedEvidence(1203, 'moving-band'); wrongPlan.provenance.planSha256 = '0'.repeat(64); reseal(wrongPlan);
+    expect(() => validateEvidenceStructure(wrongPlan, LOADED_SOURCE_SHA256)).toThrow(/plan\/baseline identity mismatch/);
+
+    const falsePrefix = acceptedEvidence(1202, 'uniform'); falsePrefix.provenance.prefix.comparedFrames = 150; reseal(falsePrefix);
+    expect(() => validateEvidenceStructure(falsePrefix, LOADED_SOURCE_SHA256)).toThrow(/uniform baseline prefix proof missing/);
+  });
+
+  it('rejects a re-sealed window maximum-ever-generation contradiction', () => {
+    const data = acceptedEvidence(1203, 'uniform'); data.windows[0].endpoint.maxEverGeneration++;
+    reseal(data);
+    expect(() => validateEvidenceStructure(data, LOADED_SOURCE_SHA256)).toThrow(/window 1501-2000 differs from observations/);
   });
 
   it('keeps moving-band prefix explicitly not applicable and rejects false proof values', () => {
