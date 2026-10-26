@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="A local four-tank material-flow aquarium." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>A counted aquarium · Cadence Garden</title>
+</head>
+<body class="matter-page">
+  <a class="skip" href="#main">Skip to aquarium</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed material-flow toy · local prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">A counted aquarium</p>
+      <h1>Where does the matter go?</h1>
+      <p>Four matched tanks begin with the same seed, nutrients, biomass, detritus, and finite reservoir. Rain and burial change where counted material sits.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> light, growth, spreading, settling, threshold relaxation, recycling, and burial are supplied rules. Patches are image regions, not individuals.</p>
+    </section>
+
+    <section class="toolbar" aria-label="Shared aquarium controls">
+      <form id="seed-form" class="seed-form">
+        <label for="seed">Shared seed</label>
+        <input id="seed" name="seed" type="text" inputmode="numeric" value="1201" aria-describedby="seed-error" />
+        <button type="submit">Reset tanks</button>
+        <span id="seed-error" role="alert"></span>
+      </form>
+      <div class="transport" aria-label="Playback controls">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="step" type="button">One tick</button>
+        <label for="pace">Pace<select id="pace"><option value="1">1× · 30 ticks/s</option><option value="2">2× · 60 ticks/s</option></select></label>
+      </div>
+      <div class="clock" role="status"><span>Shared time</span><strong>Tick <span id="tick">0</span> <small>/ 6,000</small></strong><span id="seed-display">Matched seed 1,201</span><span id="light-position">Light center x=0</span><span id="status">Paused · ready</span></div>
+      <div class="toolbar-end"><button id="export" type="button">Download observations</button><span id="file-status" role="status">Full observations for all four tanks.</span></div>
+    </section>
+
+    <section class="view-switch" aria-label="Canvas channel">
+      <span>Show in all tanks</span>
+      <label><input type="radio" name="view" value="composite" checked /> Composite</label>
+      <label><input type="radio" name="view" value="biomass" /> Biomass</label>
+      <label><input type="radio" name="view" value="nutrient" /> Nutrient</label>
+      <label><input type="radio" name="view" value="detritus" /> Detritus</label>
+      <span class="scale-note">Shared square-root scales · brightness clips above N 32, B 64, D 16</span>
+    </section>
+
+    <section class="world-grid" id="worlds" aria-label="Four matched tanks">
+      <article class="world-card" data-mode="closed" aria-labelledby="closed-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 1</p><h2 id="closed-title">Closed pool</h2></div><span class="condition">No rain · no burial</span></header>
+        <p class="world-summary">A closed reference with the full reservoir still counted.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Closed pool tank; biomass, nutrient, and detritus fields with supplied zones marked.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats">
+          <div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div>
+          <div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div>
+          <div><dt>Reservoir · not connected</dt><dd class="reservoir-total">—</dd></div><div><dt>Sediment stock</dt><dd class="sediment-total">—</dd></div>
+          <div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div>
+        </dl>
+        <p class="extinction" hidden></p>
+        <div class="stocks" aria-label="Reservoir and sediment stocks"><div><span>Reservoir · not connected</span><progress class="reservoir-bar" max="69760" value="0"></progress></div><div><span>Sediment</span><progress class="sediment-bar" max="69760" value="0"></progress></div></div>
+        <div class="flows"><h3>Since start · material transfers</h3><div class="flow-path"><span>Source <b class="imported">—</b></span><i>→</i><span>Nutrient</span><i>→</i><span>Biomass <b class="growth">—</b></span><i>→</i><span>Detritus <b class="mortality">—</b></span><i>→</i><span>Sediment <b class="buried">—</b></span><span class="recycle-path">Detritus → Nutrient <b class="recycled">—</b></span></div><span class="unit-moves">Unit-moves: relaxed <b class="relaxed">—</b> · spread <b class="spread">—</b> · settled <b class="settled">—</b></span></div>
+        <section class="history-section"><div class="section-heading"><h3>Paired sampled history</h3><span>shared axes across all four tanks</span></div><div class="history-strips"><div class="history-strip"><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Biomass units over time on a shared scale across all four tanks."></canvas></div><div class="history-strip"><div class="history-axis"><span>Active cells · tiles</span><span class="history-active-scale"></span></div><canvas class="history-canvas history-active-canvas" width="640" height="64" role="img" aria-label="Active biomass cells over time on a shared scale across all four tanks."></canvas></div></div></section>
+      </article>
+      <article class="world-card" data-mode="rain" aria-labelledby="rain-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 2</p><h2 id="rain-title">Rain only</h2></div><span class="condition">Finite rain · no burial</span></header>
+        <p class="world-summary">A finite surface drip feeds the same initial material pool.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Rain only tank; biomass, nutrient, and detritus fields with supplied zones marked.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats">
+          <div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Rain remaining</dt><dd class="reservoir-total">—</dd></div><div><dt>Sediment stock</dt><dd class="sediment-total">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div>
+        </dl>
+        <p class="extinction" hidden></p><div class="stocks"><div><span>Rain remaining</span><progress class="reservoir-bar" max="69760" value="0"></progress></div><div><span>Sediment</span><progress class="sediment-bar" max="69760" value="0"></progress></div></div>
+        <div class="flows"><h3>Since start · material transfers</h3><div class="flow-path"><span>Source <b class="imported">—</b></span><i>→</i><span>Nutrient</span><i>→</i><span>Biomass <b class="growth">—</b></span><i>→</i><span>Detritus <b class="mortality">—</b></span><i>→</i><span>Sediment <b class="buried">—</b></span><span class="recycle-path">Detritus → Nutrient <b class="recycled">—</b></span></div><span class="unit-moves">Unit-moves: relaxed <b class="relaxed">—</b> · spread <b class="spread">—</b> · settled <b class="settled">—</b></span></div>
+        <section class="history-section"><div class="section-heading"><h3>Paired sampled history</h3><span>shared axes across all four tanks</span></div><div class="history-strips"><div class="history-strip"><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Biomass units over time on a shared scale across all four tanks."></canvas></div><div class="history-strip"><div class="history-axis"><span>Active cells · tiles</span><span class="history-active-scale"></span></div><canvas class="history-canvas history-active-canvas" width="640" height="64" role="img" aria-label="Active biomass cells over time on a shared scale across all four tanks."></canvas></div></div></section>
+      </article>
+      <article class="world-card" data-mode="burial" aria-labelledby="burial-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 3</p><h2 id="burial-title">Burial only</h2></div><span class="condition">No rain · burial</span></header>
+        <p class="world-summary">Detritus that reaches the marked lower zone leaves active water.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Burial only tank; biomass, nutrient, and detritus fields with supplied zones marked.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats">
+          <div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Reservoir · not connected</dt><dd class="reservoir-total">—</dd></div><div><dt>Sediment stock</dt><dd class="sediment-total">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div>
+        </dl>
+        <p class="extinction" hidden></p><div class="stocks"><div><span>Reservoir · not connected</span><progress class="reservoir-bar" max="69760" value="0"></progress></div><div><span>Sediment</span><progress class="sediment-bar" max="69760" value="0"></progress></div></div>
+        <div class="flows"><h3>Since start · material transfers</h3><div class="flow-path"><span>Source <b class="imported">—</b></span><i>→</i><span>Nutrient</span><i>→</i><span>Biomass <b class="growth">—</b></span><i>→</i><span>Detritus <b class="mortality">—</b></span><i>→</i><span>Sediment <b class="buried">—</b></span><span class="recycle-path">Detritus → Nutrient <b class="recycled">—</b></span></div><span class="unit-moves">Unit-moves: relaxed <b class="relaxed">—</b> · spread <b class="spread">—</b> · settled <b class="settled">—</b></span></div>
+        <section class="history-section"><div class="section-heading"><h3>Paired sampled history</h3><span>shared axes across all four tanks</span></div><div class="history-strips"><div class="history-strip"><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Biomass units over time on a shared scale across all four tanks."></canvas></div><div class="history-strip"><div class="history-axis"><span>Active cells · tiles</span><span class="history-active-scale"></span></div><canvas class="history-canvas history-active-canvas" width="640" height="64" role="img" aria-label="Active biomass cells over time on a shared scale across all four tanks."></canvas></div></div></section>
+      </article>
+      <article class="world-card" data-mode="rain-burial" aria-labelledby="rain-burial-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 4</p><h2 id="rain-burial-title">Rain and burial</h2></div><span class="condition">Finite rain · burial</span></header>
+        <p class="world-summary">The same finite rain and irreversible lower-zone burial.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Rain and burial tank; biomass, nutrient, and detritus fields with supplied zones marked.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats">
+          <div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Rain remaining</dt><dd class="reservoir-total">—</dd></div><div><dt>Sediment stock</dt><dd class="sediment-total">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div>
+        </dl>
+        <p class="extinction" hidden></p><div class="stocks"><div><span>Rain remaining</span><progress class="reservoir-bar" max="69760" value="0"></progress></div><div><span>Sediment</span><progress class="sediment-bar" max="69760" value="0"></progress></div></div>
+        <div class="flows"><h3>Since start · material transfers</h3><div class="flow-path"><span>Source <b class="imported">—</b></span><i>→</i><span>Nutrient</span><i>→</i><span>Biomass <b class="growth">—</b></span><i>→</i><span>Detritus <b class="mortality">—</b></span><i>→</i><span>Sediment <b class="buried">—</b></span><span class="recycle-path">Detritus → Nutrient <b class="recycled">—</b></span></div><span class="unit-moves">Unit-moves: relaxed <b class="relaxed">—</b> · spread <b class="spread">—</b> · settled <b class="settled">—</b></span></div>
+        <section class="history-section"><div class="section-heading"><h3>Paired sampled history</h3><span>shared axes across all four tanks</span></div><div class="history-strips"><div class="history-strip"><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Biomass units over time on a shared scale across all four tanks."></canvas></div><div class="history-strip"><div class="history-axis"><span>Active cells · tiles</span><span class="history-active-scale"></span></div><canvas class="history-canvas history-active-canvas" width="640" height="64" role="img" aria-label="Active biomass cells over time on a shared scale across all four tanks."></canvas></div></div></section>
+      </article>
+    </section>
+    <section class="explanation"><div><p class="eyebrow">Ingredients</p><h2>A designed material loop with a moving light.</h2></div><div><p>The light band moves across the upper 36 rows. Lit biomass can turn nutrient into biomass, then extend into nearby empty tiles. Biomass loss becomes detritus; detritus can be recycled to nutrients or settle downward.</p><p>Threshold relaxation redistributes nutrient only when neighboring amounts differ by at least four. Rain moves units from a finite shared-size source into the top row. Burial permanently moves detritus from the lower marked rows into sediment. The bars use the same initial-total scale, with exact counts beside them.</p><p class="muted">Color brightness uses the same fixed square-root scale in all tanks and clips above N 32, B 64, and D 16. Stocks show current locations; transfer counts and unit-moves are cumulative. These designed rules describe this toy only.</p></div></section>
+  </main>
+  <script type="module" src="/src/matter/page.ts"></script>
+</body>
+</html>

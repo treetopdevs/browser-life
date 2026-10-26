@@ -154,6 +154,7 @@ export default defineConfig({
   build: {
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/matter/model.ts")) return "matter-model";
       if (id.includes("/src/development/model.ts")) return "development-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
@@ -180,6 +181,7 @@ export default defineConfig({
       particleMotifs: r("./particles/motifs/index.html"),
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
+      matter: r("./matter/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),

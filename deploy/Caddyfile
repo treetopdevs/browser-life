@@ -17,6 +17,10 @@
   @private_development path_regexp private_development (?i)^/development(?:/|$)
   respond @private_development 404
 
+  # Counted matter aquarium remains a local creative prototype.
+  @private_matter path_regexp private_matter (?i)^/matter(?:/|$)
+  respond @private_matter 404
+
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
     header_up X-Forwarded-Proto https
