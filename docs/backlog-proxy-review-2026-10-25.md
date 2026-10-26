@@ -52,4 +52,30 @@ Sonnet and Sol independently caught assertions inside the new leave fetch stubs 
 
 Sonnet's final repair verdict: all three repair findings closed, no further findings. Sol's final inspection independently confirms the swallowed-assertion P2 resolved and no new findings. The new tooling test also passes a standalone Node TypeScript check (tools are outside the root typecheck); both Deno smoke scripts pass `deno check --no-lock`.
 
-Checks continued after midnight on 26 October. `mix precommit` passed 575 tests plus compile/format, the real leave smoke passed, 35 deployment tests passed with required tools, and all ten Chrome route checks passed. The initial full unit run completed with 3779 passes, three stale leave checks and two CPU-heavy timeouts; the conservation suite passes separately. The final full rerun uses two workers to limit contention. No production or physics source changed to address these failures.
+Checks continued after midnight on 26 October. `mix precommit` passed 575 tests plus compile/format, the real leave smoke passed, 35 deployment tests passed with required tools, and all ten Chrome route checks passed. The initial full unit run completed with 3779 passes, three stale leave checks and two CPU-heavy timeouts; the conservation suite passes separately. The final full rerun with two workers passed **3,791 tests across 154 files**, with Caddy 2.10.2 and `BL_REQUIRE_DEPLOY_TOOLS=1`. Test time limits were unchanged. No production or physics source changed to address these failures.
+
+## Reproduce the gates
+
+Use a Caddy 2.10.2 binary for the release-line check (`BL_CADDY_BIN` selects it); Docker Compose configuration rendering does not need a daemon. Mix dependencies must already be installed for the real coordinator scripts. The image preflight in the deployment README requires a daemon and remains separate.
+
+```sh
+BL_REQUIRE_DEPLOY_TOOLS=1 pnpm vitest run --maxWorkers=2
+pnpm typecheck
+pnpm build
+CADDY="$BL_CADDY_BIN" BL_REQUIRE_BUILD_CHECK=1 BL_E2E_PORT=5199 pnpm exec playwright test tests/e2e/public-not-found.spec.ts --project=chrome --workers=1
+deno run --no-lock -A tests/deno/proxy_addresses.ts
+deno run --no-lock -A tests/deno/island_leave.ts
+deno check --no-lock tests/deno/proxy_addresses.ts tests/deno/island_leave.ts
+pnpm exec tsc --ignoreConfig --noEmit --skipLibCheck --module esnext --moduleResolution bundler --target es2022 --types node tools/test/deployment-config.test.ts
+(cd apps/coordinator && mix precommit)
+```
+
+The recorded release-line runs used `BL_CADDY_BIN=/tmp/bl-caddy-2.10.2/caddy`, the official macOS binary. Their result does not assert an Alpine container build or live-host topology. Running the full suite with the dependency-required flag prevents a green result that merely skipped the Caddy/Compose checks.
+
+## Publication and final evidence
+
+[PR84](https://github.com/treetopdevs/browser-life/pull/84) publishes implementation/test commit `7e803de537073d6e813e22ff48220eecb296c2b5` from main `904a05a14aed83fb8c28f22014641dc8a8b902bb`. All implementation and test files still match that reviewed commit; the follow-up updates only this review record and the HTML log. The full run completed on 26 October with 154 files / 3,791 tests passing (1141.46 seconds, two workers).
+
+Local checks are distinct: 575 coordinator tests under `mix precommit`, ten Chrome route checks, eight real Caddy/Phoenix budget cases, the existing real island-leave smoke, root/tooling/Deno typechecks, site build, and HTML checks at 1280/375px (no overflow, zero axe violations, local links/IDs valid). The root full suite also runs the fixed hash and preregistration checks; no pins or scientific definitions changed.
+
+The PR's initial draft CodeRabbit status was green because review was skipped, not because hosted tests ran. Current GitHub state is linked from the PR; Sonnet 5.5 High and Sol review closure is recorded above. Actual-image preflight and live-host deployment checks remain external.
