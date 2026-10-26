@@ -153,7 +153,9 @@ export default defineConfig({
   worker: { format: "es" },
   build: {
     target: "es2023",
-    rollupOptions: { input: {
+    rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/particles/model.ts")) return "particles-model";
+    } }, input: {
       home: r("./index.html"),
       lab: r("./lab/index.html"),
       worlds: r("./worlds/index.html"),
@@ -165,6 +167,7 @@ export default defineConfig({
       status: r("./status/index.html"),
       garden: r("./garden/index.html"),
       particles: r("./particles/index.html"),
+      particlePicker: r("./particles/picker/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),

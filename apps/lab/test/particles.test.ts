@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { ParticleWorld, PRESETS, RULES, torusDelta } from '../src/particles/model.ts';
+import { ParticleWorld, PRESETS, RULES, torusDelta, recipeForPreset, validateRecipe } from '../src/particles/model.ts';
 
 describe('engineered particle world', () => {
   it('replays 3000 ticks exactly and pure observations do not affect the world', () => {
@@ -64,6 +65,37 @@ describe('engineered particle world', () => {
     const world=new ParticleWorld(1);expect(()=>world.step(.5)).toThrow();
     const snapshot=world.snapshot();snapshot.particles[0].energy=0;snapshot.food[0].amount=0;
     expect(world.particles[0].energy).toBe(4);expect(world.food[0].amount).toBe(30);
-    expect(snapshot.rules.version).toBe(1);expect(snapshot.settings.seed).toBe(1);
+    expect(snapshot.rules.version).toBe(2);expect(snapshot.settings.seed).toBe(1);
+  });
+});
+
+
+describe('particle recipes', () => {
+  it('preserves all v1 default physical fixtures and explicit preset behavior', () => {
+    // Captured before the v2 recipe extension: Node24, seed1201, 300ticks, PR85 86d3a6e.
+    const hashes = ['1648ae2c52defce09833eedb4893f69c26655f70e0d2ddd46b9fc4981e7e10b5','58b227dbc2264997140377b9a61f82813aafb02b1862ddfb20d1783778784265','ae06f75acd79a449b7760464c82032668885f351e57d74359d2f407d94cad813'];
+    PRESETS.forEach((preset,i) => {
+      const w=new ParticleWorld(1201,preset.id), explicit=new ParticleWorld(1201,preset.id,true,recipeForPreset(preset.id));w.step(300);explicit.step(300);
+      const physical={tick:w.tick,particles:w.particles,food:w.food,ledger:w.ledger,census:w.census()};
+      expect(createHash('sha256').update(JSON.stringify(physical)).digest('hex')).toBe(hashes[i]);
+      expect(w.snapshot()).toEqual(explicit.snapshot());
+    });
+  });
+  it('custom recipes change forces without changing initial positions and are isolated from caller mutation', () => {
+    const recipe=structuredClone(recipeForPreset('flocks'));recipe.rows[0][1]=-.9;
+    const a=new ParticleWorld(1201,'flocks'),b=new ParticleWorld(1201,'flocks',true,recipe);
+    expect(a.particles.map(p=>[p.x,p.y,p.vx,p.vy,p.age])).toEqual(b.particles.map(p=>[p.x,p.y,p.vx,p.vy,p.age]));
+    recipe.rows[0][1]=0;expect(b.recipe.rows[0][1]).toBe(-.9);expect(Object.isFrozen(b.recipe.rows[0])).toBe(true);
+    a.step(50);b.step(50);expect(a.particles).not.toEqual(b.particles);expect(b.snapshot().settings.recipe.rows[0][1]).toBe(-.9);
+  });
+  it('rejects invalid recipes and keeps corner recipes bounded with balanced energy', () => {
+    const base=structuredClone(recipeForPreset('flocks'));
+    for(const invalid of [{...base,foodRenewal:NaN},{...base,foodRenewal:.2},{...base,alignment:Infinity},{...base,alignment:.201},{...base,rows:Array(3)},{...base,rows:[Array(3),[0,0,0],[0,0,0]]},{...base,rows:[[0]]},{...base,rows:[[2,0,0],[0,0,0],[0,0,0]]},{...base,extra:true}])expect(()=>validateRecipe(invalid)).toThrow();
+    for(const high of [false,true]){
+      const w=new ParticleWorld(1203,'pursuit',true,{rows:Array.from({length:3},()=>Array(3).fill(high?1:-1)),alignment:high?.2:0,foodRenewal:high?1:.3});
+      w.step(300);const c=w.census();expect(c.population).toBeLessThanOrEqual(RULES.populationMax);
+      expect(Math.abs(c.particleEnergy+c.foodEnergy+w.ledger.dissipated+w.ledger.deathLoss-w.ledger.initial-w.ledger.renewed)).toBeLessThan(1e-7);
+      expect(w.particles.every(p=>Number.isFinite(p.x+p.y+p.energy)&&Math.hypot(p.vx,p.vy)<=RULES.speedMax+1e-12)).toBe(true);
+    }
   });
 });

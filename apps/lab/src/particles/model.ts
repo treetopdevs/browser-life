@@ -4,12 +4,31 @@ export type Family = 0 | 1 | 2;
 export interface Particle { id: number; family: Family; x: number; y: number; vx: number; vy: number; energy: number; age: number; lifespan: number; generation: number; traits: number[] }
 export interface FoodPatch { x: number; y: number; radius: number; amount: number }
 export interface Census { tick: number; population: number; counts: [number, number, number]; births: number; deaths: number; mutations: number; blockedBirths: number; maxGeneration: number; meanSpeed: number; traitSpread: number; particleEnergy: number; foodEnergy: number }
-export const RULES = Object.freeze({ version: 1, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
+export const RULES = Object.freeze({ version: 2, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
 export const PRESETS = [
   { id: 'flocks' as const, name: 'Flocks', description: 'Neighbours align and gather into moving family groups.', rows: [[.75,.15,.15],[.15,.75,.15],[.15,.15,.75]], alignment: .12 },
   { id: 'pursuit' as const, name: 'Pursuit', description: 'Each family chases one colour and flees another. Chasing does not eat particles.', rows: [[.2,.95,-.9],[-.9,.2,.95],[.95,-.9,.2]], alignment: 0 },
   { id: 'colonies' as const, name: 'Colonies', description: 'Strong family attraction and cross-family repulsion form separate clusters.', rows: [[1,-.6,-.6],[-.6,1,-.6],[-.6,-.6,1]], alignment: .015 },
 ] as const;
+export interface ParticleRecipe { rows: number[][]; alignment: number; foodRenewal: number }
+/** Reject malformed values rather than silently changing a saved recipe. */
+export function validateRecipe(input: unknown): ParticleRecipe {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Recipe must be an object');
+  const r = input as Record<string, unknown>;
+  if (Object.keys(r).sort().join(',') !== 'alignment,foodRenewal,rows') throw new Error('Recipe has unexpected fields');
+  if (!Array.isArray(r.rows) || r.rows.length !== 3 || !Array.from(r.rows).every(row => Array.isArray(row) && row.length === 3 && Array.from(row).every(v => typeof v === 'number' && Number.isFinite(v) && v >= -1 && v <= 1))) throw new Error('Attraction rows must be a finite 3 by 3 matrix within -1 and 1');
+  if (typeof r.alignment !== 'number' || !Number.isFinite(r.alignment) || r.alignment < 0 || r.alignment > .2) throw new Error('Alignment must be between 0 and 0.2');
+  if (typeof r.foodRenewal !== 'number' || !Number.isFinite(r.foodRenewal) || r.foodRenewal < .3 || r.foodRenewal > 1) throw new Error('Food renewal must be between 0.3 and 1');
+  const recipe: ParticleRecipe = { rows: r.rows.map(row => [...row]), alignment: r.alignment, foodRenewal: r.foodRenewal };
+  for (const row of recipe.rows) Object.freeze(row);
+  Object.freeze(recipe.rows);
+  return Object.freeze(recipe);
+}
+export function recipeForPreset(preset: PresetId): ParticleRecipe {
+  const settings = PRESETS.find(p => p.id === preset);
+  if (!settings) throw new Error('Unknown particle preset');
+  return validateRecipe({ rows: settings.rows, alignment: settings.alignment, foodRenewal: RULES.foodRenewal });
+}
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 export const torusDelta = (d: number) => d - Math.round(d);
 const wrap = (n: number) => ((n % 1) + 1) % 1;
@@ -31,18 +50,18 @@ export class ParticleWorld {
   private nextId = 0;
   private readonly random: () => number;
   private readonly mutationRandom: () => number;
-  private readonly settings: typeof PRESETS[number];
+  readonly recipe: ParticleRecipe;
 
-  constructor(seed: number, preset: PresetId = 'flocks', mutation = true) {
+  constructor(seed: number, preset: PresetId = 'flocks', mutation = true, recipe?: ParticleRecipe) {
     if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Seed must be an unsigned 32-bit integer');
     const settings = PRESETS.find(p => p.id === preset);
     if (!settings) throw new Error('Unknown particle preset');
-    this.seed = seed; this.preset = preset; this.mutation = mutation; this.settings = settings;
+    this.seed = seed; this.preset = preset; this.mutation = mutation; this.recipe = recipe === undefined ? recipeForPreset(preset) : validateRecipe(recipe);
     this.random = stream(seed ^ 0x83a9f214); this.mutationRandom = stream(seed ^ 0x1bd9237a);
     for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) this.food.push({ x: (x + .5) / 3, y: (y + .5) / 3, radius: RULES.foodPatchRadius, amount: RULES.foodPatchInitial });
     for (let i = 0; i < RULES.initialPopulation; i++) {
       const family = (i % 3) as Family;
-      this.particles.push({ id: this.nextId++, family, x: this.random(), y: this.random(), vx: (this.random() - .5) * RULES.initialVelocityRange, vy: (this.random() - .5) * RULES.initialVelocityRange, energy: RULES.initialEnergy, age: Math.floor(this.random() * RULES.initialAgeRange), lifespan: RULES.lifespanBase + Math.floor(this.random() * RULES.lifespanRange), generation: 0, traits: [...settings.rows[family]] });
+      this.particles.push({ id: this.nextId++, family, x: this.random(), y: this.random(), vx: (this.random() - .5) * RULES.initialVelocityRange, vy: (this.random() - .5) * RULES.initialVelocityRange, energy: RULES.initialEnergy, age: Math.floor(this.random() * RULES.initialAgeRange), lifespan: RULES.lifespanBase + Math.floor(this.random() * RULES.lifespanRange), generation: 0, traits: [...this.recipe.rows[family]] });
     }
     this.ledger.initial = this.particles.reduce((s,p) => s + p.energy,0) + this.food.reduce((s,p) => s + p.amount,0);
     this.history.push(this.census());
@@ -55,7 +74,7 @@ export class ParticleWorld {
 
   private advance() {
     this.tick++;
-    for (const patch of this.food) { const renewed = Math.min(RULES.foodRenewal, RULES.foodCapacity - patch.amount); patch.amount += renewed; this.ledger.renewed += renewed; }
+    for (const patch of this.food) { const renewed = Math.min(this.recipe.foodRenewal, RULES.foodCapacity - patch.amount); patch.amount += renewed; this.ledger.renewed += renewed; }
     const old = this.particles;
     const velocities: [number, number][] = [];
     for (let i = 0; i < old.length; i++) {
@@ -69,7 +88,7 @@ export class ParticleWorld {
         fx += force * dx / d; fy += force * dy / d; avx += q.vx; avy += q.vy; neighbours++;
       }
       let vx = p.vx * RULES.drag, vy = p.vy * RULES.drag;
-      if (neighbours) { vx += RULES.force * fx / Math.sqrt(neighbours) + this.settings.alignment * (avx / neighbours - p.vx); vy += RULES.force * fy / Math.sqrt(neighbours) + this.settings.alignment * (avy / neighbours - p.vy); }
+      if (neighbours) { vx += RULES.force * fx / Math.sqrt(neighbours) + this.recipe.alignment * (avx / neighbours - p.vx); vy += RULES.force * fy / Math.sqrt(neighbours) + this.recipe.alignment * (avy / neighbours - p.vy); }
       // A deliberately supplied weak food-seeking force, identical for all families.
       let nearest = this.food[0], distance = Infinity;
       for (const patch of this.food) { const dx = torusDelta(patch.x-p.x), dy = torusDelta(patch.y-p.y), d2 = dx*dx+dy*dy; if (d2 < distance) { distance=d2; nearest=patch; } }
@@ -114,6 +133,6 @@ export class ParticleWorld {
   }
 
   snapshot() {
-    return structuredClone({kind:'particle-playground-observation',description:'Engineered open-energy toy. Observation only, not a resumable checkpoint. Same-runtime seeded replay only.',rules:RULES,settings:{seed:this.seed,preset:this.preset,mutation:this.mutation,interactionRows:this.settings.rows,alignment:this.settings.alignment},current:this.census(),ledger:this.ledger,particles:this.particles,food:this.food,history:this.history});
+    return structuredClone({kind:'particle-playground-observation',description:'Engineered open-energy toy. Observation only, not a resumable checkpoint. Same-runtime seeded replay only.',rules:RULES,settings:{seed:this.seed,preset:this.preset,mutation:this.mutation,recipe:this.recipe},current:this.census(),ledger:this.ledger,particles:this.particles,food:this.food,history:this.history});
   }
 }

@@ -18,3 +18,7 @@ Keep variants that remain watchable: motion, turnover, distinct group patterns a
 The [nine-run pilot](pilot.md) kept all three families alive across all nine 3,000-tick runs. Pursuit is the strongest activity lead: it spreads across more of the world and moves several times faster than the cohesive presets. Flocks tend to gather around the supplied food patches. See the [visual check](visual-check.md) for its limits and local recording locations.
 
 Important engineered choices: food patches renew from an external source; every family receives the same weak attraction toward the nearest patch; food competition is resolved in particle ID order; a 240-particle ceiling blocks and counts birth attempts. These choices help form the observed ecology and are not hidden discoveries.
+
+## Compare and keep favorites
+
+The [world picker](picker.md) at `/particles/picker/` compares three seeded worlds, retains a selected recipe exactly and generates two nearby variants. Export/import records recipe choices and ancestry; it restarts worlds rather than resuming particle states. The [picker pilot](picker-pilot.md) records scripted choices separately from the [visual preference check](picker-visual-check.md).

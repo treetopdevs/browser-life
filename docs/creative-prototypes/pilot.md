@@ -1,6 +1,6 @@
 # Particle playground pilot
 
-Three presets × seeds 1201, 1202, 1203 × up to 3,000 ticks. Mutation enabled; no interventions or tuning during this sweep. Same runtime: v24.2.0. Toy rules version 1; model SHA-256: `85f275c3cc834db98ce61b67dc8eaf7281def31887509022cf8054087c0cb326`.
+Three presets × seeds 1201, 1202, 1203 × up to 3,000 ticks. Mutation enabled; no interventions or tuning during this sweep. Same runtime: v24.2.0. Toy rules version 2; model SHA-256: `b30a8b83a2cf7d26e7d673478c108606abf140f32401f4f646d35c067e9c53fd`.
 
 | Preset | Seed | Final population | Births / deaths | Mutated births | Living max generation | Occupied bins / 100 | Mean speed | Ticks at cap | Extinction tick |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|

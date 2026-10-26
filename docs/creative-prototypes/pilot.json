@@ -1,9 +1,9 @@
 {
   "kind": "particle-playground-pilot",
-  "sourceSha256": "85f275c3cc834db98ce61b67dc8eaf7281def31887509022cf8054087c0cb326",
+  "sourceSha256": "b30a8b83a2cf7d26e7d673478c108606abf140f32401f4f646d35c067e9c53fd",
   "runtime": "v24.2.0",
   "rules": {
-    "version": 1,
+    "version": 2,
     "populationMax": 240,
     "initialPopulation": 120,
     "speedMax": 0.008,
