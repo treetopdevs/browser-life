@@ -142,20 +142,20 @@ test('the visibility handler pauses and stays paused when visibility returns', a
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 });
 
-test('a supported v2 still-world file shows its migration notice and exports v3', async ({ page }) => {
+for (const sourceVersion of [2, 3]) test(`a supported v${sourceVersion} still-world file shows its migration notice and exports v4`, async ({ page }) => {
   let legacy = createExploration(1201, 'pursuit');
   legacy = keepFavorite(legacy, 1, 42);
   const oldFile = JSON.parse(serializeExploration(legacy));
-  oldFile.modelVersion = 2;
+  oldFile.modelVersion = sourceVersion;
   const before = structuredClone(oldFile);
   await page.goto('/particles/picker/');
   await page.getByLabel('Import choices', { exact: true }).setInputFiles({
     name: 'old-still-world-choices.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(oldFile)),
   });
-  await expect(page.locator('#file-status')).toContainText('Model v2 still-world recipes were migrated to model v3');
+  await expect(page.locator('#file-status')).toContainText(`Model v${sourceVersion} still-world recipes were migrated to model v4`);
   await expect(page.locator('#file-status')).toContainText('no moving-environment choices were inferred');
   await expect(page.locator('#tick')).toHaveText('0');
   await expect(page.locator('#selection-count')).toHaveText('1');
-  expect(JSON.parse(await exportChoices(page))).toMatchObject({ modelVersion: 3, seed: before.seed, preset: before.preset, mutation: before.mutation, nodes: before.nodes, slate: before.slate, selections: before.selections });
+  expect(JSON.parse(await exportChoices(page))).toMatchObject({ modelVersion: 4, seed: before.seed, preset: before.preset, mutation: before.mutation, nodes: before.nodes, slate: before.slate, selections: before.selections });
   expect(JSON.parse(await exportChoices(page))).not.toHaveProperty('environment');
 });

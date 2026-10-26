@@ -57,7 +57,7 @@ export function parseExplorationWithNotice(text: string): ExplorationImport {
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Selection file must be an object');
   const data=input as Exploration;
   const sourceVersion=data.modelVersion;
-  if(data.kind!=='particle-recipe-selections'||data.formatVersion!==1||data.generatorVersion!==1||(sourceVersion!==2&&sourceVersion!==RULES.version))throw new Error('Unsupported selection-file version');
+  if(data.kind!=='particle-recipe-selections'||data.formatVersion!==1||data.generatorVersion!==1||(sourceVersion!==2&&sourceVersion!==3&&sourceVersion!==RULES.version))throw new Error('Unsupported selection-file version');
   if(!Array.isArray(data.selections)||data.selections.length>MAX_SELECTIONS)throw new Error('Invalid selection history length');
   let rebuilt=createExploration(data.seed,data.preset,data.mutation);
   // Rebuild the complete historical graph under the file's declared version before upgrading it.

@@ -4,26 +4,51 @@ export type Family = 0 | 1 | 2;
 export interface Particle { id: number; family: Family; x: number; y: number; vx: number; vy: number; energy: number; age: number; lifespan: number; generation: number; traits: number[] }
 export interface FoodPatch { x: number; y: number; radius: number; amount: number }
 export interface Census { tick: number; population: number; counts: [number, number, number]; births: number; deaths: number; mutations: number; blockedBirths: number; maxGeneration: number; meanSpeed: number; traitSpread: number; particleEnergy: number; foodEnergy: number }
-export type ParticleEnvironment = { kind: 'still' } | { kind: 'travelling'; speed: 0.0001 | 0.00025 };
+export type ParticleEnvironment = { kind: 'still' } | { kind: 'travelling'; speed: 0.0001 | 0.00025 } | { kind: 'seasonal'; period: 600 | 1800 };
 export function validateEnvironment(input: unknown): ParticleEnvironment {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Environment must be an object');
   const value = input as Record<string, unknown>;
   const keys=Reflect.ownKeys(value);
-  if (value.kind === 'still' && keys.length === 1 && keys[0] === 'kind') return Object.freeze({ kind: 'still' });
-  if (value.kind === 'travelling' && keys.length === 2 && keys.every(key=>typeof key==='string') && keys.sort().join(',') === 'kind,speed' && (value.speed === 0.0001 || value.speed === 0.00025)) {
-    return Object.freeze({ kind: 'travelling', speed: value.speed });
+  const kind = value.kind;
+  if (kind === 'still' && keys.length === 1 && keys[0] === 'kind') return Object.freeze({ kind: 'still' });
+  if (kind === 'travelling' && keys.length === 2 && keys.every(key=>typeof key==='string') && keys.includes('kind') && keys.includes('speed')) {
+    const speed = value.speed;
+    if (speed === 0.0001 || speed === 0.00025) return Object.freeze({ kind: 'travelling', speed });
+  }
+  if (kind === 'seasonal' && keys.length === 2 && keys.every(key=>typeof key==='string') && keys.includes('kind') && keys.includes('period')) {
+    const period = value.period;
+    if (period === 600 || period === 1800) return Object.freeze({ kind: 'seasonal', period });
   }
   throw new Error('Invalid particle environment');
 }
+function positiveStep(step: number): void {
+  if (!Number.isSafeInteger(step) || step <= 0) throw new Error('Step must be a positive safe integer');
+}
+/** Return the seasonal phase applied at `step` and the first tick of the next phase. */
+export function seasonalPhase(environment: ParticleEnvironment, step: number): { phase: number; nextChangeTick: number } | null {
+  positiveStep(step);
+  if (environment.kind !== 'seasonal') return null;
+  const completedPhases = Math.floor((step - 1) / environment.period);
+  return { phase: completedPhases % 3, nextChangeTick: (completedPhases + 1) * environment.period + 1 };
+}
+/** Seasonal renewal factor for one patch at a positive, one-based world step. */
+export function renewalMultiplier(environment: ParticleEnvironment, step: number, patchIndex: number): number {
+  positiveStep(step);
+  if (!Number.isSafeInteger(patchIndex) || patchIndex < 0) throw new Error('Patch index must be a non-negative safe integer');
+  if (environment.kind !== 'seasonal') return 1;
+  const phase = Math.floor((step - 1) / environment.period) % 3;
+  const multipliers = [1.75, 1, 0.25] as const;
+  return multipliers[(Math.floor(patchIndex / 3) - phase + 3) % 3];
+}
 /** Move the fixed 3x3 patch field on a horizontal torus without changing its stock or geometry. */
 export function moveFoodPatches(food: FoodPatch[], environment: ParticleEnvironment): void {
-  if (environment.kind === 'still') return;
+  if (environment.kind !== 'travelling') return;
   for (let i = 0; i < food.length; i++) {
     const direction = Math.floor(i / 3) % 2 === 0 ? 1 : -1;
     food[i].x = wrap(food[i].x + direction * environment.speed);
   }
 }
-export const RULES = Object.freeze({ version: 3, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
+export const RULES = Object.freeze({ version: 4, populationMax: 240, initialPopulation: 120, speedMax: .008, interactionRadius: .12, repulsionRadius: .018, force: .0012, drag: .92, foodCapacity: 35, foodRenewal: .65, uptake: .11, upkeep: .028, movementCost: 3, birthEnergy: 8, maxEnergy: 10, mutationChance: .18, mutationSize: .15, foodSeekingForce: .000035, foodPatchRadius: .18, foodPatchInitial: 30, initialEnergy: 4, initialVelocityRange: .004, initialAgeRange: 300, lifespanBase: 900, lifespanRange: 500, birthOffset: .025, sampleEvery: 10, historyMax: 300 });
 export const PRESETS = [
   { id: 'flocks' as const, name: 'Flocks', description: 'Neighbours align and gather into moving family groups.', rows: [[.75,.15,.15],[.15,.75,.15],[.15,.15,.75]], alignment: .12 },
   { id: 'pursuit' as const, name: 'Pursuit', description: 'Each family chases one colour and flees another. Chasing does not eat particles.', rows: [[.2,.95,-.9],[-.9,.2,.95],[.95,-.9,.2]], alignment: 0 },
@@ -95,7 +120,12 @@ export class ParticleWorld {
   private advance() {
     this.tick++;
     moveFoodPatches(this.food, this.environment);
-    for (const patch of this.food) { const renewed = Math.min(this.recipe.foodRenewal, RULES.foodCapacity - patch.amount); patch.amount += renewed; this.ledger.renewed += renewed; }
+    for (let i = 0; i < this.food.length; i++) {
+      const patch = this.food[i];
+      const offered = this.environment.kind === 'seasonal' ? this.recipe.foodRenewal * renewalMultiplier(this.environment, this.tick, i) : this.recipe.foodRenewal;
+      const renewed = Math.min(offered, RULES.foodCapacity - patch.amount);
+      patch.amount += renewed; this.ledger.renewed += renewed;
+    }
     const old = this.particles;
     const velocities: [number, number][] = [];
     for (let i = 0; i < old.length; i++) {

@@ -1,10 +1,10 @@
 {
   "kind": "particle-picker-scripted-pilot",
   "runtime": "v24.2.0",
-  "rulesVersion": 3,
+  "rulesVersion": 4,
   "sourceHashes": {
-    "model.ts": "79fc847668a5f6337bd6b38d2e6831055516ddef98ded413e4a9488e1c28a8a9",
-    "comparison.ts": "88d399c17042f83f6b69cc370a4fec4aae919c7530714583fc90dfd6bf9397df"
+    "model.ts": "028cb90df07dacd4771cdbf6e9918ad7b691775d77fa090cf2dceca5e8f0b56f",
+    "comparison.ts": "574c5f1a1226361fb99b0db30b59d839893aff9751ab3ef7d5d998c98aeac652"
   },
   "settings": {
     "seeds": [
@@ -2236,7 +2236,7 @@
       "session": {
         "kind": "particle-recipe-selections",
         "formatVersion": 1,
-        "modelVersion": 3,
+        "modelVersion": 4,
         "generatorVersion": 1,
         "seed": 1201,
         "preset": "pursuit",
@@ -4743,7 +4743,7 @@
       "session": {
         "kind": "particle-recipe-selections",
         "formatVersion": 1,
-        "modelVersion": 3,
+        "modelVersion": 4,
         "generatorVersion": 1,
         "seed": 1202,
         "preset": "pursuit",
@@ -7250,7 +7250,7 @@
       "session": {
         "kind": "particle-recipe-selections",
         "formatVersion": 1,
-        "modelVersion": 3,
+        "modelVersion": 4,
         "generatorVersion": 1,
         "seed": 1203,
         "preset": "pursuit",

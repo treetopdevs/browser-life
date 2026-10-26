@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { ParticleWorld, PRESETS, RULES, torusDelta, recipeForPreset, validateEnvironment, validateRecipe, moveFoodPatches } from '../src/particles/model.ts';
+import { ParticleWorld, PRESETS, RULES, torusDelta, recipeForPreset, validateEnvironment, validateRecipe, moveFoodPatches, renewalMultiplier, seasonalPhase } from '../src/particles/model.ts';
 
 describe('engineered particle world', () => {
   it('replays 3000 ticks exactly and pure observations do not affect the world', () => {
@@ -65,7 +65,7 @@ describe('engineered particle world', () => {
     const world=new ParticleWorld(1);expect(()=>world.step(.5)).toThrow();
     const snapshot=world.snapshot();snapshot.particles[0].energy=0;snapshot.food[0].amount=0;
     expect(world.particles[0].energy).toBe(4);expect(world.food[0].amount).toBe(30);
-    expect(snapshot.rules.version).toBe(3);expect(snapshot.settings.seed).toBe(1);expect(snapshot.settings.environment).toEqual({kind:'still'});
+    expect(snapshot.rules.version).toBe(4);expect(snapshot.settings.seed).toBe(1);expect(snapshot.settings.environment).toEqual({kind:'still'});
   });
 
   it('moves travelling patches across the horizontal seam by row while preserving their stock and geometry', () => {
@@ -108,6 +108,53 @@ describe('engineered particle world', () => {
     for(const invalid of [null,[],{kind:'still',speed:0},{kind:'travelling',speed:.0002},{kind:'travelling',speed:NaN},{kind:'travelling',speed:.0001,extra:true},{kind:'other'},Object.assign(Object.create({kind:'still'}),{unexpected:true}),Object.assign({kind:'still'}, { [Symbol('extra')]:1 })])expect(()=>validateEnvironment(invalid)).toThrow();
     const world=new ParticleWorld(20,'flocks',false,undefined,original);
     world.particles=[];const before=world.snapshot();world.step(20);expect(world.snapshot()).toEqual(before);
+  });
+
+  it('validates exact frozen seasonal shapes and reads supplied values once', () => {
+    let kindReads=0, periodReads=0;
+    const input={get kind(){kindReads++;return 'seasonal';},get period(){periodReads++;return 600;}};
+    const validated=validateEnvironment(input);
+    expect(validated).toEqual({kind:'seasonal',period:600});expect(Object.isFrozen(validated)).toBe(true);
+    expect([kindReads,periodReads]).toEqual([1,1]);
+    for(const invalid of [{kind:'seasonal',period:601},{kind:'seasonal',period:0},{kind:'seasonal',period:600,extra:true},{kind:'seasonal',period:1800,[Symbol('extra')]:1},Object.assign(Object.create({kind:'seasonal'}),{period:600})]) expect(()=>validateEnvironment(invalid)).toThrow();
+    const seasonal=Array.from({length:9},(_,i)=>({x:i/9,y:.5,radius:.18,amount:i})),before=structuredClone(seasonal);
+    moveFoodPatches(seasonal,validated);expect(seasonal).toEqual(before);
+  });
+
+  it('applies seasonal rows at exact one-based boundaries with equal offered food', () => {
+    const short=validateEnvironment({kind:'seasonal',period:600}),long=validateEnvironment({kind:'seasonal',period:1800});
+    expect(seasonalPhase(short,600)).toEqual({phase:0,nextChangeTick:601});
+    expect(seasonalPhase(short,601)).toEqual({phase:1,nextChangeTick:1201});
+    expect(seasonalPhase(long,1800)).toEqual({phase:0,nextChangeTick:1801});
+    expect(seasonalPhase(long,1801)).toEqual({phase:1,nextChangeTick:3601});
+    expect(seasonalPhase(validateEnvironment({kind:'still'}),1)).toBeNull();
+    expect(()=>seasonalPhase(short,0)).toThrow();expect(()=>renewalMultiplier(short,-1,0)).toThrow();
+    const phase0=[1.75,1.75,1.75,1,1,1,.25,.25,.25],phase1=[.25,.25,.25,1.75,1.75,1.75,1,1,1],phase2=[1,1,1,.25,.25,.25,1.75,1.75,1.75];
+    for(const [environment,step,expected] of [[short,1,phase0],[short,600,phase0],[short,601,phase1],[short,1201,phase2],[short,1801,phase0],[long,1800,phase0],[long,1801,phase1]] as const) {
+      expect(Array.from({length:9},(_,i)=>renewalMultiplier(environment,step,i))).toEqual(expected);
+    }
+    for(const [environment,step] of [[short,1],[short,601],[long,1801]] as const) {
+      const factors=Array.from({length:9},(_,i)=>renewalMultiplier(environment,step,i));
+      expect(factors.reduce((sum,factor)=>sum+factor,0)).toBe(9);
+      const world=new ParticleWorld(37,'flocks',false,undefined,environment);
+      world.tick=step-1;
+      world.food.forEach((patch,i)=>patch.amount=30+(i%4)*1.5);
+      const expected=world.food.reduce((sum,patch,i)=>sum+Math.min(world.recipe.foodRenewal*renewalMultiplier(environment,step,i),RULES.foodCapacity-patch.amount),0);
+      world.particles=[world.particles[0]];world.particles[0].energy=.001;
+      world.ledger.initial=world.particles.reduce((sum,p)=>sum+p.energy,0)+world.food.reduce((sum,p)=>sum+p.amount,0);
+      world.step();
+      expect(world.ledger.renewed).toBeCloseTo(expected,12);
+      expect(world.food.every(patch=>patch.x===((Math.floor(world.food.indexOf(patch)%3)+.5)/3))).toBe(true);
+      const balance=world.ledger.initial+world.ledger.renewed-world.ledger.dissipated-world.ledger.deathLoss;
+      expect(Math.abs(world.census().particleEnergy+world.census().foodEnergy-balance)).toBeLessThan(1e-7);
+    }
+  });
+
+  it('replays seasonal worlds and freezes phase and patches after extinction', () => {
+    const environment={kind:'seasonal',period:600} as const;
+    const a=new ParticleWorld(48,'flocks',true,undefined,environment),b=new ParticleWorld(48,'flocks',true,undefined,environment);
+    a.step(700);b.step(700);expect(a.snapshot()).toEqual(b.snapshot());
+    a.particles=[];const frozen=a.snapshot();a.step(100);expect(a.snapshot()).toEqual(frozen);
   });
 });
 

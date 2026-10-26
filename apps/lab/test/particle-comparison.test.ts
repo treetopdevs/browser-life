@@ -49,18 +49,21 @@ describe('particle recipe selection',()=>{
     const s=keepFavorite(createExploration(1,'flocks'),1,0,'<img src=x onerror=alert(1)>');const reordered=Object.fromEntries(Object.entries(JSON.parse(serializeExploration(s))).reverse());
     expect(parseExploration(JSON.stringify(reordered))).toEqual(s);
   });
-  it('reconstructs a valid v2 history before upgrading it, and rejects tampering before migration',()=>{
+  it('reconstructs valid v2 and v3 histories before upgrading them, and rejects tampering before migration',()=>{
     let old=keepFavorite(createExploration(1202,'pursuit'),2,1000,'still-world choice');
     old=Object.freeze({...old,modelVersion:2});
     const imported=parseExplorationWithNotice(serializeExploration(old));
     expect(imported.migratedFrom).toBe(2);
-    expect(imported.session.modelVersion).toBe(3);
+    expect(imported.session.modelVersion).toBe(4);
     expect(imported.session.nodes).toEqual(old.nodes);expect(imported.session.slate).toEqual(old.slate);expect(imported.session.selections).toEqual(old.selections);
     expect(parseExploration(serializeExploration(old))).toEqual(imported.session);
     const current=parseExplorationWithNotice(serializeExploration(imported.session));expect(current.migratedFrom).toBeNull();expect(current.session).toEqual(imported.session);
+    const version3=Object.freeze({...old,modelVersion:3});
+    const migrated3=parseExplorationWithNotice(serializeExploration(version3));
+    expect(migrated3.migratedFrom).toBe(3);expect(migrated3.session.modelVersion).toBe(4);
     const altered=JSON.parse(serializeExploration(old));altered.nodes[3].recipe.rows[0][0]+=.001;
     expect(()=>parseExplorationWithNotice(JSON.stringify(altered))).toThrow();
-    const unsupported=JSON.parse(serializeExploration(old));unsupported.modelVersion=4;
+    const unsupported=JSON.parse(serializeExploration(old));unsupported.modelVersion=5;
     expect(()=>parseExplorationWithNotice(JSON.stringify(unsupported))).toThrow('Unsupported selection-file version');
   });
   it('replays a selected recipe independently of card order or observations',()=>{

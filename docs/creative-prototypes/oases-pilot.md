@@ -1,6 +1,6 @@
 # Travelling oases descriptive pilot
 
-Nine fixed runs: pursuit, mutation enabled, seeds 1201–1203, still / slow (0.0001) / faster (0.00025), target 6,000 ticks. No interventions or tuning. Runtime v24.2.0; toy rules version 3.
+Nine fixed runs: pursuit, mutation enabled, seeds 1201–1203, still / slow (0.0001) / faster (0.00025), target 6,000 ticks. No interventions or tuning. Runtime v24.2.0; toy rules version 4.
 
 | Environment | Seed | Completed | Final population | Overall range | Range after 1000 | Mean displacement | Contact-change fraction | Cap ticks | Extinction tick |
 |---|---:|---:|---:|---|---|---:|---:|---:|---:|
