@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local gallery of twelve composed particle worlds.">
+  <title>Motif gallery · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="motif-page">
+  <a class="skip" href="#main">Skip to gallery</a>
+  <header>
+    <a class="brand" href="/particles/">← Particle playground</a>
+    <span class="badge">Local experiment / motif gallery</span>
+  </header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Three ingredients · twelve starting compositions</p>
+      <h1>What happens when familiar rules meet?</h1>
+      <p>Each world combines an interaction, a coordination rule, and a food habitat. All twelve share the same seed and starting geometry, and advance together on one clock.</p>
+    </section>
+    <section class="toolbar" aria-label="Gallery controls">
+      <div class="transport">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="step" type="button">One tick</button>
+        <button id="restart" type="button">Reset all</button>
+        <label for="pace">Pace<select id="pace"><option value="1">1×</option><option value="2">2×</option></select></label>
+      </div>
+      <div class="clock"><span id="status" role="status">Paused · ready</span><strong>Shared tick <span id="tick">0</span></strong></div>
+      <form id="seed-form" class="seed-form">
+        <label for="seed">Seed<input id="seed" name="seed" type="text" inputmode="numeric" value="1201" autocomplete="off" aria-describedby="seed-error"></label>
+        <button type="submit">Reset with seed</button>
+        <span id="seed-error" role="alert" aria-live="assertive"></span>
+      </form>
+      <div class="favorites-toolbar"><span id="favorite-count">0 of 3 favorites</span><button id="export" type="button">Download observations</button><span id="file-status" role="status">All twelve worlds are included; full snapshots are included for favorites.</span></div>
+    </section>
+    <p class="composition-note"><strong>Initial composition:</strong> offspring inherit attraction traits and may mutate those traits. A badge describes the recipe supplied at the start; it does not claim the recipe remains unchanged.</p>
+    <div id="worlds" class="motif-grid" aria-label="Twelve particle compositions"></div>
+    <section class="explanation">
+      <div><p class="eyebrow">How to read the gallery</p><h2>Compare the recipes, then inspect the worlds.</h2></div>
+      <div><p>Food renewal is supplied by the habitat. The chase interaction steers families toward other family colours; it does not make particles eat one another. Family colours show the three inherited families.</p><p class="muted">Population and motion are observations of this open-energy toy. They do not establish adaptation, evolution, or a survival advantage. Each card reports local measurements without ranking or filtering the compositions.</p></div>
+    </section>
+  </main>
+  <script type="module" src="/src/particles/motif-page.ts"></script>
+</body>
+</html>
