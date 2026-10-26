@@ -21,6 +21,10 @@
   @private_matter path_regexp private_matter (?i)^/matter(?:/|$)
   respond @private_matter 404
 
+  # Selective nutrient-current toy and sampled replay stay local.
+  @private_currents path_regexp private_currents (?i)^/currents(?:/|$)
+  respond @private_currents 404
+
   # Local vision calibration gallery.
   @private_vision_screen path_regexp private_vision_screen (?i)^/vision-screen(?:/|$)
   respond @private_vision_screen 404
