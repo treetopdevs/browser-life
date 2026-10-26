@@ -1,5 +1,5 @@
 import { ParticleWorld, PRESETS, RULES, torusDelta } from './model.ts';
-import type { ParticleEnvironment, PresetId } from './model.ts';
+import type { Census, FoodPatch, Particle, ParticleEnvironment, PresetId } from './model.ts';
 import { advanceComparison } from './comparison-clock.ts';
 import './oases.css';
 
@@ -10,6 +10,24 @@ export interface EnvironmentPageConfig {
   filenamePrefix: string;
   phaseAt?: (environment: ParticleEnvironment, positiveStep: number) => { phase: number; nextChangeTick: number } | null;
   renewalAt?: (environment: ParticleEnvironment, positiveStep: number, patchIndex: number) => number;
+  worldFactory?: (settings: EnvironmentSettings, environment: ParticleEnvironment, slot: number) => ViewWorld;
+  overlay?: (ctx: CanvasRenderingContext2D, world: ViewWorld, size: number) => void;
+  summary?: (world: ViewWorld) => string;
+  worldMetadata?: readonly Record<string, string>[];
+}
+
+export interface EnvironmentSettings { seed: number; preset: PresetId; mutation: boolean }
+
+/** Narrow structural surface shared by ordinary and composed comparison worlds. */
+export interface ViewWorld {
+  readonly tick: number;
+  readonly particles: Particle[];
+  readonly food: FoodPatch[];
+  readonly history: Census[];
+  readonly environment: ParticleEnvironment;
+  step(count?: number): void;
+  census(): Census;
+  snapshot(): unknown;
 }
 
 export interface EnvironmentClock {
@@ -60,7 +78,7 @@ for (const item of PRESETS) preset.add(new Option(item.name, item.id));
 let settings = { ...config.initialSettings };
 seed.value = String(settings.seed);
 preset.value = settings.preset;
-let worlds: ParticleWorld[] = [];
+let worlds: ViewWorld[] = [];
 let comparisonTick = 0;
 let extinctionTicks: (number | null)[] = [null, null, null];
 let paused = matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden;
@@ -71,13 +89,15 @@ let lastDisplay = -1;
 let displayedRegimeKeys: string[] = [];
 
 function buildWorlds(candidate = settings) {
-  return environments.map(({ value }) => new ParticleWorld(candidate.seed, candidate.preset, candidate.mutation, undefined, value));
+  return environments.map(({ value }, index) => config.worldFactory
+    ? config.worldFactory(candidate, value, index)
+    : new ParticleWorld(candidate.seed, candidate.preset, candidate.mutation, undefined, value));
 }
 const cards = environments.map(({ label, detail }, index) => {
   const card = document.createElement('section');
   card.className = 'world';
   card.setAttribute('aria-labelledby', `world-${index}-title`);
-  card.innerHTML = `<div class="world-top"><h2 id="world-${index}-title">${label}</h2><span class="environment">${detail}<small>Same recipe, seed and mutation setting</small><small class="regime"></small></span></div><canvas class="world-view" width="560" height="560" role="img" aria-label="${label} environment; population and food contact are listed below.">Canvas unavailable. Population and food contact are listed below.</canvas><div class="world-summary"><div class="numbers"><span><strong class="population">120</strong>living</span><span>Births <b class="births">0</b><br>Deaths <b class="deaths">0</b></span></div><canvas class="world-history" width="540" height="150" role="img" aria-label="Recent population history by founding family; current family counts are listed below."></canvas><p class="chart-note">Population history · one sample every 10 ticks · up to 3,000 ticks <span class="chart-range"></span></p><div class="families"></div><div class="metric-row"><span>Inside food patches <b class="food-contact">—</b></span><span>Extinction <b class="extinction">—</b></span></div><p class="world-state"></p><p class="patch-stock"><strong>Food patch stock</strong> <span class="stocks"></span></p></div>`;
+  card.innerHTML = `<div class="world-top"><h2 id="world-${index}-title">${label}</h2><span class="environment">${detail}<small>Same recipe, seed and mutation setting</small><small class="regime"></small></span></div><canvas class="world-view" width="560" height="560" role="img" aria-label="${label} environment; population and food contact are listed below.">Canvas unavailable. Population and food contact are listed below.</canvas><div class="world-summary"><div class="numbers"><span><strong class="population">120</strong>living</span><span>Births <b class="births">0</b><br>Deaths <b class="deaths">0</b></span></div><canvas class="world-history" width="540" height="150" role="img" aria-label="Recent population history by founding family; current family counts are listed below."></canvas><p class="chart-note">Population history · one sample every 10 ticks · up to 3,000 ticks <span class="chart-range"></span></p><div class="families"></div><div class="metric-row"><span>Inside food patches <b class="food-contact">—</b></span><span>Extinction <b class="extinction">—</b></span></div><p class="world-state"></p><p class="extension-summary" hidden></p><p class="patch-stock"><strong>Food patch stock</strong> <span class="stocks"></span></p></div>`;
   el('worlds').append(card);
   const canvas = card.querySelector<HTMLCanvasElement>('.world-view')!;
   const history = card.querySelector<HTMLCanvasElement>('.world-history')!;
@@ -93,7 +113,7 @@ const cards = environments.map(({ label, detail }, index) => {
 });
 
 function setText(target: HTMLElement, value: string) { if (target.textContent !== value) target.textContent = value; }
-function regimeKey(world: ParticleWorld) {
+function regimeKey(world: ViewWorld) {
   const phase = config.phaseAt?.(world.environment, Math.max(1, world.tick)) ?? null;
   return config.phaseAt ? `${phase?.phase ?? 'still'}:${world.tick === 0 ? 'ready' : 'applied'}` : '';
 }
@@ -106,7 +126,7 @@ function status() {
   step.disabled = !paused || play.disabled;
   setText(el('status'), allExtinct ? 'All worlds extinct · restart to compare again' : comparisonTick >= 10_000_000 ? 'Tick limit reached · restart to continue' : paused ? pauseReason || 'Paused' : 'Running together');
 }
-function insideAnyPatch(world: ParticleWorld, x: number, y: number) {
+function insideAnyPatch(world: Pick<ViewWorld, 'food'>, x: number, y: number) {
   return world.food.some(patch => {
     const dx = torusDelta(patch.x - x), dy = torusDelta(patch.y - y);
     return dx * dx + dy * dy <= patch.radius * patch.radius;
@@ -128,6 +148,9 @@ function metrics() {
       const item = document.createElement('span'); item.className = 'family'; item.style.setProperty('--color', colors[family]); item.textContent = `${name} ${fmt(census.counts[family])}`; return item;
     }));
     setText(card.querySelector('.world-state')!, extinctionTicks[index] !== null ? `Extinct at tick ${fmt(extinctionTicks[index]!)} · remains empty` : `Tick ${fmt(comparisonTick)} · ${fmt(census.mutations)} mutated births · ${fmt(census.blockedBirths)} blocked birth attempts`);
+    const extension = card.querySelector<HTMLElement>('.extension-summary');
+    const extensionSummary = config.summary?.(world);
+    if (extension) { extension.hidden = !extensionSummary; extension.textContent = extensionSummary ?? ''; }
     const clock = environmentClock(world.environment, world.tick, comparisonTick, extinctionTicks[index], config.phaseAt);
     const phaseStep = clock.phaseReferenceStep;
     const phase = clock.seasonalPhase;
@@ -177,6 +200,7 @@ function drawWorld(index: number) {
       ctx.globalAlpha = .74; ctx.lineWidth = Math.max(1, size * .0017); ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
     }
   }
+  config.overlay?.(ctx, world, size);
   for (const particle of world.particles) for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]) {
     const x = (particle.x + dx) * size, y = (particle.y + dy) * size, radius = Math.max(1.4, size * .004);
     if (x < -radius || x > size + radius || y < -radius || y > size + radius) continue;
@@ -224,7 +248,7 @@ el('export').addEventListener('click', () => {
     description: 'Engineered open-energy toy. Observation only, not a resumable checkpoint. Same-runtime seeded replay only.',
     comparisonTick,
     extinctionTicks: [...extinctionTicks],
-    settings: { ...settings, environments: environments.map(({ value }) => value) },
+    settings: { ...settings, environments: environments.map(({ value }) => value), ...(config.worldMetadata ? { worlds: config.worldMetadata.map(item => ({ ...item })) } : {}) },
     ...(config.phaseAt ? { comparisonClocks: worlds.map((world, index) => environmentClock(world.environment, world.tick, comparisonTick, extinctionTicks[index], config.phaseAt)) } : {}),
     worlds: worlds.map(world => world.snapshot()),
   };

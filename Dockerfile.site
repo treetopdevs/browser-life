@@ -3,7 +3,7 @@ FROM node:22-alpine AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 COPY . .
-RUN pnpm install --frozen-lockfile && pnpm build && rm -rf apps/lab/dist/garden apps/lab/dist/particles apps/lab/dist/assets/particles-*.js apps/lab/dist/assets/particles-*.css apps/lab/dist/assets/particlePicker-*.js apps/lab/dist/assets/particlePicker-*.css apps/lab/dist/assets/particleOases-*.js apps/lab/dist/assets/particleOases-*.css apps/lab/dist/assets/particleSeasons-*.js apps/lab/dist/assets/particleSeasons-*.css
+RUN pnpm install --frozen-lockfile && pnpm build && rm -rf apps/lab/dist/garden apps/lab/dist/particles apps/lab/dist/assets/particles-*.js apps/lab/dist/assets/particles-*.css apps/lab/dist/assets/particlePicker-*.js apps/lab/dist/assets/particlePicker-*.css apps/lab/dist/assets/particleOases-*.js apps/lab/dist/assets/particleOases-*.css apps/lab/dist/assets/particleSeasons-*.js apps/lab/dist/assets/particleSeasons-*.css apps/lab/dist/assets/particleBonds-*.js apps/lab/dist/assets/particleBonds-*.css
 
 FROM caddy:2.10-alpine
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
