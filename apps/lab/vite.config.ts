@@ -155,6 +155,8 @@ export default defineConfig({
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
       if (id.includes("/src/vision-screen/")) return "vision-screen-core";
+      if (id.includes("/src/ecosystem/model.ts")) return "ecosystem-model";
+      if (id.includes("/docs/creative-prototypes/ecosystem-archive/source/")) return "ecosystemArchiveData";
       if (id.includes("/src/spatial/model.ts")) return "spatial-model";
       if (id.includes("/src/currents/model.ts")) return "currents-model";
       if (id.includes("/src/matter/model.ts")) return "matter-model";
@@ -187,6 +189,9 @@ export default defineConfig({
       matter: r("./matter/index.html"),
       currents: r("./currents/index.html"),
       spatial: r("./spatial/index.html"),
+      ecosystem: r("./ecosystem/index.html"),
+      ecosystemArchive: r("./ecosystem/archive/index.html"),
+      playground: r("./playground/index.html"),
       visionScreen: r("./vision-screen/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),

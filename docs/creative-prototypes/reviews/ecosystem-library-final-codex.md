@@ -1,0 +1,7 @@
+- **P2 — Concurrent retries silently cancel one another.** [archive.ts:367](/Users/nicholas/.codex/worktrees/ecosystem-prototype-library/browser-life/apps/lab/src/ecosystem/archive.ts:367): each retry increments the shared `playIntent`. Retrying a second recording before the first loads makes the first return without playing; its metadata handler also hides its retry button and clears its status. Use per-recording retry ownership.
+
+- **P2 — Native pause still produces a false playback failure.** [archive.ts:431](/Users/nicholas/.codex/worktrees/ecosystem-prototype-library/browser-life/apps/lab/src/ecosystem/archive.ts:431): pausing through a video’s native controls while Play all is pending rejects `play()` with `AbortError`, which is counted as failure. The native pause handler does not invalidate that attempt. Distinguish deliberate cancellation from playback errors.
+
+Both cases reproduced with bounded mocks of the current handlers. Immutable hashes and mock media-probe checks passed; packaging patterns cover existing built output.
+
+No edits, simulations, browser runs or large suites. The separate Node 24 replay gate was inspected, not rerun. Packaging checking provides no Docker/Caddy runtime proof.

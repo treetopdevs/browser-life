@@ -29,6 +29,12 @@
   @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
   respond @private_spatial 404
 
+  # Reunited creative ecosystem and local prototype directory.
+  @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
+  respond @private_ecosystem 404
+  @private_playground path_regexp private_playground (?i)^/playground(?:/|$)
+  respond @private_playground 404
+
   # Local vision calibration gallery.
   @private_vision_screen path_regexp private_vision_screen (?i)^/vision-screen(?:/|$)
   respond @private_vision_screen 404
