@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-food-band-foothold-body-comparison",
+  "seed": 1202,
+  "ticks": [
+    1500,
+    2000,
+    2500,
+    3000
+  ],
+  "imageSha256": "2d551a90eb807668ac6eda8bc70c0a588ef2daef800c16738dea187c2447349b",
+  "plan": {
+    "path": "docs/creative-prototypes/food-band-foothold-plan.md",
+    "sha256": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/food-band-foothold-plan.md",
+      "sha256": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27"
+    },
+    "model": {
+      "path": "apps/lab/src/food-band-foothold/model.ts",
+      "sha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403"
+    },
+    "runner": {
+      "path": "tools/food-band-foothold/explore.ts",
+      "sha256": "66b7dcf4e9844abcd6fc448557a55a950967ef4c6c0c93cb59d90c35c514fa3d"
+    },
+    "launcher": {
+      "path": "tools/food-band-foothold/launch.sh",
+      "sha256": "24036351704f71fd3d16a372f294b19701e036e4a174acfa4052c62aa6c87490"
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/alternating-food-replication-seed-1202.json",
+      "rawSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+      "dataSha256": "7ceae251dc216935c5dc72dad091958ec4d2d8d84ef9ea1610fa50745a86fec6"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/alternating-food-replication-index-1202.json",
+      "sha256": "28d9880651da421c0fe8a11b7d15c819106598280ee177e0443fb4ede8c18d1a"
+    },
+    "baselineRunner": {
+      "path": "tools/alternating-food-replication/explore.ts",
+      "sha256": "f616b0b1fa6ab1194e224ad7040f972c7b55ad65b6a5a2425e16b81a2ce7c162"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/alternating-food-replication-validation.md",
+      "sha256": "dcffcae8fda5c852b9fb3c6db5bb61d758f7b6e9b895d33a634e67ca7ccb06b2"
+    },
+    "alternating": {
+      "path": "docs/creative-prototypes/food-band-foothold-seed-1202.json",
+      "rawSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+      "dataSha256": "f815bdbeb3e9fc5fdb4b27ebaad87486f5011fde1e06e3e39842a89b739fe0c4"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/food-band-foothold.js",
+      "sha256": "6c590dd80383fb1861842886182cc76e9519bd1f1ec276c93ac3e6b548a3b7ac"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/food-band-foothold.css",
+      "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/food-band-foothold.html",
+      "sha256": "fc775e0d009c0251f6e79be7d087b19847852f09c68f698db37e0e2457a874f7"
+    }
+  },
+  "pinnedSources": {
+    "docs/creative-prototypes/food-band-foothold-plan.md": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "apps/lab/src/alternating-food/model.ts": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31",
+    "tools/alternating-food-replication/explore.ts": "f616b0b1fa6ab1194e224ad7040f972c7b55ad65b6a5a2425e16b81a2ce7c162",
+    "docs/creative-prototypes/alternating-food-replication-seed-1202.json": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+    "docs/creative-prototypes/alternating-food-replication-index-1202.json": "28d9880651da421c0fe8a11b7d15c819106598280ee177e0443fb4ede8c18d1a",
+    "docs/creative-prototypes/alternating-food-replication-validation.md": "dcffcae8fda5c852b9fb3c6db5bb61d758f7b6e9b895d33a634e67ca7ccb06b2",
+    "tools/food-band-foothold/launch.sh": "24036351704f71fd3d16a372f294b19701e036e4a174acfa4052c62aa6c87490",
+    "tools/food-band-foothold/explore.ts": "66b7dcf4e9844abcd6fc448557a55a950967ef4c6c0c93cb59d90c35c514fa3d"
+  },
+  "frameLabels": [
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2000,
+        "actualTick": 2000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ],
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2000,
+        "actualTick": 2000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ]
+  ],
+  "description": "Exact saved occupied body tiles for parent visual review before the SHA-bound receipt; no food, outlines, interpolation, or simulation. Alternating supply is accepted historical evidence."
+}
