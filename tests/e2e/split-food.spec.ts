@@ -22,6 +22,14 @@ const baseline = JSON.parse(baselineBytes.toString("utf8")) as AnyRecord;
 const baselineSha = sha(baselineBytes);
 const baselineIndexSha256 = sha(readFileSync(resolve(DOCS, "stationary-food-index-1202.json")));
 const baselineRaw = `${baselineBytes.toString("utf8")}`;
+// These read synchronously and intentionally fail the suite if the accepted saved evidence is absent.
+const publishedSplitBytes = readFileSync(resolve(DOCS, SPLIT_FILE));
+const publishedSplit = JSON.parse(publishedSplitBytes.toString("utf8")) as AnyRecord;
+const publishedIndexBytes = readFileSync(resolve(DOCS, INDEX_FILE));
+const publishedIndex = JSON.parse(publishedIndexBytes.toString("utf8")) as AnyRecord;
+const publishedReceiptBytes = readFileSync(resolve(DOCS, RECEIPT_FILE));
+const publishedReceipt = JSON.parse(publishedReceiptBytes.toString("utf8")) as AnyRecord;
+const publishedClipBytes = readFileSync(resolve(DOCS, "split-food-media/seed-1202-paired.mp4"));
 const FOOD = Buffer.alloc(96 * 96, 20).toString("base64");
 const GENOMES = [
   { turnEvery: 4, turn: 0, branchEvery: 3, maxCells: 22 },
@@ -180,6 +188,39 @@ async function installFixture(page: Page, fixture?: ReceiptFixture) {
   return requests;
 }
 
+async function installPublishedEvidence(page: Page) {
+  const requests: string[] = [];
+  const files = new Map<string, Buffer>([
+    [BASELINE_FILE, baselineBytes], [SPLIT_FILE, publishedSplitBytes], [INDEX_FILE, publishedIndexBytes], [RECEIPT_FILE, publishedReceiptBytes],
+    ["seed-1202-paired.mp4", publishedClipBytes],
+  ]);
+  await page.route(`${ORIGIN}/**`, async (route: Route) => {
+    const url = new URL(route.request().url()), name = url.pathname.split("/").at(-1) ?? "";
+    requests.push(url.pathname);
+    if (name === "split-food.html" || name === "split-food-viewer.css" || name === "split-food-viewer.js") {
+      const type = name.endsWith(".css") ? "text/css" : name.endsWith(".js") ? "text/javascript" : "text/html";
+      await route.fulfill({ contentType: type, body: await readFile(resolve(DOCS, name)) }); return;
+    }
+    const bytes = files.get(name);
+    if (bytes) {
+      if (name.endsWith(".mp4")) {
+        const range = route.request().headers().range;
+        const match = range?.match(/^bytes=(\d+)-(\d*)$/);
+        if (match) {
+          const start = Number(match[1]), requestedEnd = match[2] ? Number(match[2]) : bytes.length - 1;
+          const end = Math.min(requestedEnd, bytes.length - 1), chunk = bytes.subarray(start, end + 1);
+          await route.fulfill({ status: 206, headers: { "Content-Type": "video/mp4", "Accept-Ranges": "bytes", "Content-Range": `bytes ${start}-${end}/${bytes.length}`, "Content-Length": String(chunk.length) }, body: chunk }); return;
+        }
+        await route.fulfill({ headers: { "Content-Type": "video/mp4", "Accept-Ranges": "bytes", "Content-Length": String(bytes.length) }, body: bytes }); return;
+      }
+      await route.fulfill({ contentType: "application/json", body: bytes }); return;
+    }
+    await route.fulfill({ status: 404, contentType: "text/plain", body: `Unexpected request: ${name}` });
+  });
+  await page.goto(`${BASE}split-food.html`);
+  return requests;
+}
+
 test("only checks seed 1202 index when no pair is published", async ({ page }) => {
   const requests = await installFixture(page);
   await expect(page.getByRole("status")).toHaveText("No seed 1202 split-food pair index is published yet.");
@@ -273,4 +314,101 @@ test("viewer source pins match the import-safe split runner source map", () => {
   const viewer = readFileSync(resolve(DOCS, "split-food-viewer.js"), "utf8");
   const pins = Object.fromEntries([...viewer.matchAll(/^\s*"([^\"]+)":\s*"([a-f0-9]{64})",?$/gm)].map((match) => [match[1], match[2]]));
   expect(pins).toEqual(LOADED_SOURCE_SHA256);
+});
+
+test("accepted saved evidence loads with bound hashes and its displayed 1500, 2500, and 3000 tick results", async ({ page }) => {
+  const splitSha = sha(publishedSplitBytes), indexSha = sha(publishedIndexBytes), receiptSha = sha(publishedReceiptBytes);
+  expect(publishedIndex.planSha256).toBe(PLAN);
+  expect(publishedIndex.arms.baseline.rawSha256).toBe(baselineSha);
+  expect(publishedIndex.arms.split.rawSha256).toBe(splitSha);
+  expect(publishedIndex.decision.status).toBe("promising");
+  expect(publishedIndex.decision.baselineArtifactSha256).toBe(baselineSha);
+  expect(publishedIndex.decision.splitArtifactSha256).toBe(splitSha);
+  expect(publishedIndex.decision.visualReceiptSha256).toBe(receiptSha);
+  expect(publishedReceipt.baselineArtifactSha256).toBe(baselineSha);
+  expect(publishedReceipt.splitArtifactSha256).toBe(splitSha);
+  const resultSummary = JSON.parse(readFileSync(resolve(DOCS, "split-food-summary.json"), "utf8")) as AnyRecord;
+  expect(resultSummary.pairManifestSha256).toBe(indexSha);
+  expect(resultSummary.visualReceiptSha256).toBe(receiptSha);
+  expect(resultSummary.decision).toBe(publishedIndex.decision.status);
+
+  const requests = await installPublishedEvidence(page);
+  await expect(page.locator("#replay")).toBeVisible();
+  await expect(page.locator("#source-status")).toContainText("Historical baseline and split-band record verified");
+  await expect(page.locator("#decision-status")).toHaveText("Promising");
+  await expect(page.locator("#pair-decision-summary")).toHaveText(publishedIndex.decision.summary);
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+  const baseFinal = baseline.samples.find((sample: AnyRecord) => sample.tick === 3000);
+  const splitFinal = publishedSplit.samples.find((sample: AnyRecord) => sample.tick === 3000);
+  const resultSection = page.locator("#results");
+  await expect(resultSection.locator("h2")).toHaveText("Three families remain in play");
+  await expect(resultSection.locator("p").first()).toContainText(
+    `${splitFinal.census.population} bodies, with ${splitFinal.census.familyCounts[0]} mint, ${splitFinal.census.familyCounts[1]} gold and ${splitFinal.census.familyCounts[2]} lilac`,
+  );
+  const resultRows = resultSection.locator("table tbody tr");
+  await expect(resultRows).toHaveCount(2);
+  await expect(resultRows.nth(0)).toContainText(String(baseFinal.census.population));
+  await expect(resultRows.nth(0)).toContainText(baseFinal.census.familyCounts.join(" / "));
+  await expect(resultRows.nth(0)).toContainText(String(baseFinal.census.genomeVariantCount));
+  await expect(resultRows.nth(1)).toContainText(String(splitFinal.census.population));
+  await expect(resultRows.nth(1)).toContainText(splitFinal.census.familyCounts.join(" / "));
+  await expect(resultRows.nth(1)).toContainText(String(splitFinal.census.genomeVariantCount));
+  expect(requests.filter((path) => path.endsWith(".json"))).toEqual([
+    `/docs/creative-prototypes/${INDEX_FILE}`,
+    `/docs/creative-prototypes/${BASELINE_FILE}`,
+    `/docs/creative-prototypes/${SPLIT_FILE}`,
+    `/docs/creative-prototypes/${RECEIPT_FILE}`,
+  ]);
+
+  for (const tick of [1500, 2500, 3000]) {
+    await page.locator(`[data-jump-tick="${tick}"]`).click();
+    const baseSample = baseline.samples.find((sample: AnyRecord) => sample.tick === tick);
+    const splitSample = publishedSplit.samples.find((sample: AnyRecord) => sample.tick === tick);
+    const splitFrame = publishedSplit.frames.find((frame: AnyRecord) => frame.tick === tick);
+    await expect(page.locator("#baseline-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#split-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#baseline-population")).toHaveText(baseSample.census.population.toLocaleString("en-US"));
+    await expect(page.locator("#baseline-cells")).toHaveText(baseSample.census.cells.toLocaleString("en-US"));
+    await expect(page.locator("#baseline-families")).toHaveText(baseSample.census.familyCounts.map((count: number) => count.toLocaleString("en-US")).join(" · "));
+    await expect(page.locator("#split-population")).toHaveText(splitSample.census.population.toLocaleString("en-US"));
+    await expect(page.locator("#split-cells")).toHaveText(splitSample.census.cells.toLocaleString("en-US"));
+    await expect(page.locator("#split-families")).toHaveText(splitSample.census.familyCounts.map((count: number) => count.toLocaleString("en-US")).join(" · "));
+    const bandCounts = countBands(splitFrame.cells);
+    await expect(page.locator("#split-band-one")).toHaveText(bandCounts[0].toLocaleString("en-US"));
+    await expect(page.locator("#split-band-two")).toHaveText(bandCounts[1].toLocaleString("en-US"));
+  }
+
+  const splitRows = publishedSplit.windows;
+  await expect(page.locator("#window-rows tr")).toHaveCount(baseline.windows.length + splitRows.length);
+  for (const window of splitRows) {
+    const row = page.locator("#window-rows tr").filter({ hasText: `Split bands${window.from.toLocaleString("en-US")}–${window.to.toLocaleString("en-US")}` });
+    await expect(row).toContainText(`${window.births.toLocaleString("en-US")} · ${window.deaths.toLocaleString("en-US")}`);
+    await expect(row).toContainText(window.endpoint.familyCounts.map((count: number) => count.toLocaleString("en-US")).join(" / "));
+  }
+  await expect(page.locator("#numerical-gate")).toHaveText("Pass");
+  await expect(page.locator("#spatial-2500")).toHaveText("119 · 262 occupied tiles · pass");
+  await expect(page.locator("#spatial-3000")).toHaveText("109 · 290 occupied tiles · pass");
+  await expect(page.locator("#visual-gate")).toContainText("Pass · Not blind:");
+
+  const video = page.locator('[aria-labelledby="clip-title"] video');
+  await expect(video).toHaveAttribute("src", "split-food-media/seed-1202-paired.mp4");
+  await video.evaluate((node: HTMLVideoElement) => new Promise<void>((resolve, reject) => {
+    if (node.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) { resolve(); return; }
+    node.addEventListener("canplay", () => resolve(), { once: true });
+    node.addEventListener("error", () => reject(new Error(`Video could not play: ${node.error?.message ?? "unknown media error"}`)), { once: true });
+  }));
+  expect(await video.evaluate((node: HTMLVideoElement) => node.duration)).toBeCloseTo(15.1, 1);
+  await video.evaluate((node: HTMLVideoElement) => node.play());
+  await expect.poll(() => video.evaluate((node: HTMLVideoElement) => node.currentTime), { timeout: 5000 }).toBeGreaterThan(0.2);
+  await video.evaluate((node: HTMLVideoElement) => node.pause());
+
+  await page.locator('[data-jump-tick="1500"]').click();
+  await page.getByRole("button", { name: "Play paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Playing · saved states only");
+  await page.getByRole("button", { name: "Pause paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(axe.violations.map((item) => `${item.id}: ${item.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
