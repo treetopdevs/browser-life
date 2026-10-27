@@ -2,15 +2,17 @@
   "branch": "codex/food-floor-longevity-replication",
   "base": "5022964538ebdc7c29963abd7a708eb87c1dee7c",
   "planCommit": "df0a2f3b",
-  "status": "source reviewed CLEAR; committing then one scheduled attempt",
-  "attemptCount": 0,
-  "outcomeCount": 0,
-  "next": "Independent source review beforecommit and singletrackedlaunch. No extra seed, merge or deploy.",
+  "status": "one completed validStop; parentbodyonlyreceipt written; independent evidence review pending",
+  "attemptCount": 1,
+  "outcomeCount": 1,
+  "next": "Review/commit evidence and receipt, saved-data animation, finalchecks/review/commit/dependentPR. No retry, tuning, further biology, merge or deployment.",
   "sourceHashes": {
     "docs/creative-prototypes/food-floor-longevity-replication-plan.md": "02a221c637d238dc0feb6b50cb7220f84cfd016ff5a404200ab15e723fd8a914",
     "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
     "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
     "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
     "docs/creative-prototypes/food-floor-longevity-replication.js": "de483f302a74ac956afda1393634db3749b98468d6578fb850d70426dee0a121"
-  }
+  },
+  "sourceCommit": "8f0aae4f",
+  "runId": "20261027T181644Z-52804"
 }
