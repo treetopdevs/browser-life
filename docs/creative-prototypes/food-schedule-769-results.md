@@ -49,3 +49,7 @@ No retry, tuning, extra seed or automatic horizon extension. Stop this bounded s
 Raw SHA256 `b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823`; parent receipt SHA256 `e48e66bfac8396ac32d3afd4b0a0ca0df5c83699404c766c9eecb5b2a989f02e`.
 
 [Replay and animation](food-schedule-769.html) · [Frozen plan](food-schedule-769-plan.md) · [Validation](food-schedule-769-validation.md).
+
+## Saved replay delivery
+
+The companion includes a 301-frame, 30.1-second paired animation, showing the new 769 world and the known 768 reference at equal ages and equal scales. All frames come from saved evidence after the evidence commit; no biological rerun or interpolation. Exact approved capture HTML is archived before the later editorial and video embed. An initial presentation preflight exposed unequal inherited column widths; an independently reviewed HTML-only override fixed them before any numbered animation frames were captured. Rejected and approved preflight evidence is retained.

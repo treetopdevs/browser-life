@@ -25747,6 +25747,16 @@
     "genomeVariantCount": 2
   },
   "historicalControlIsNewOutcome": false,
-  "animation": null,
+  "animation": {
+    "url": "food-schedule-769-media/seed-1202.mp4",
+    "metadataUrl": "food-schedule-769-media/seed-1202.json",
+    "frames": 301,
+    "fps": 10,
+    "durationSeconds": 30.1,
+    "width": 1384,
+    "height": 966,
+    "sha256": "181031996399639fa463e9ee6f772cb7f9a3270080f57e0691167ce08e48b224",
+    "savedDataOnly": true
+  },
   "summary": "Valid Stop at tick 6000: 5 bodies, families 0/5/0, 1 program. The 3,000-tick gate passed before continuation; 0 late seasonal intervals qualify numerically. One selected seed and exact repeat; no retry, tuning, extra seed or automatic extension. Historical unchanged floor is known evidence, not a new control."
 }
