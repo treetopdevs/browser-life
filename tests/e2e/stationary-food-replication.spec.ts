@@ -154,6 +154,14 @@ function bindReceipt(fixture: Fixture, visual: { moving: boolean; stationary: bo
   fixture.index.decision.visualReceiptUrl = `stationary-food-replication-visual-receipt-${seed}.json`;
   fixture.index.decision.visualReceiptSha256 = sha(fixture.receiptText);
 }
+async function actualPair(seed: 1201 | 1203): Promise<Fixture> {
+  const prefix = `stationary-food-replication-`;
+  const index = JSON.parse(await readFile(resolve(DOCS, `${prefix}index-${seed}.json`), "utf8"));
+  const movingText = await readFile(resolve(DOCS, `${prefix}moving-band-seed-${seed}.json`), "utf8");
+  const stationaryText = await readFile(resolve(DOCS, `${prefix}stationary-band-seed-${seed}.json`), "utf8");
+  const receiptText = await readFile(resolve(DOCS, `${prefix}visual-receipt-${seed}.json`), "utf8");
+  return { index, movingText, stationaryText, receiptText };
+}
 async function installViewer(page: Page, source: FixtureSource, initialSeed = 1201) {
   const requests: string[] = [];
   const singleFixture = source && "index" in source ? source : null;
@@ -243,6 +251,51 @@ test("seed picker loads only the selected seed and replaces the paired replay", 
     "/docs/creative-prototypes/stationary-food-replication-index-1203.json",
     "/docs/creative-prototypes/stationary-food-replication-moving-band-seed-1203.json",
     "/docs/creative-prototypes/stationary-food-replication-stationary-band-seed-1203.json",
+  ]);
+});
+
+test("real seed 1201 and 1203 recordings replay from saved frames on desktop and phone", async ({ page }) => {
+  const seed1201 = await actualPair(1201);
+  const seed1203 = await actualPair(1203);
+  const requests = await installViewer(page, { 1201: seed1201, 1203: seed1203 });
+  await expect(page.locator("#decision-status")).toHaveText("Both varied");
+  await expect(page.locator("#run-state")).toHaveText("Paused · paired recorded states");
+  await expect(page.locator("#moving-frame-label")).toHaveText("Tick 0 · saved sample");
+  await expect(page.locator("#stationary-frame-label")).toHaveText("Tick 0 · saved sample");
+
+  for (const tick of [1500, 2500, 3000]) {
+    await page.locator(`[data-jump-tick="${tick}"]`).click();
+    await expect(page.locator("#moving-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#stationary-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#moving-frame-label")).toContainText("saved sample");
+    await expect(page.locator("#stationary-frame-label")).toContainText("saved sample");
+  }
+  await page.locator('[data-jump-tick="2500"]').click();
+  await page.getByRole("button", { name: "Play paired sampled replay" }).click();
+  await expect(page.getByRole("button", { name: "Pause paired sampled replay" })).toBeVisible();
+  await page.getByRole("button", { name: "Pause paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+
+  await page.locator("#seed-picker").selectOption("1203");
+  await expect(page.locator("#decision-status")).toHaveText("Both varied");
+  await expect(page.locator("#replay-title")).toHaveText("Seed 1,203 · paired world states");
+  await page.locator('[data-jump-tick="3000"]').click();
+  await expect(page.locator("#moving-tick")).toHaveText("3,000");
+  await expect(page.locator("#stationary-tick")).toHaveText("3,000");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(axe.violations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(requests.filter((path) => path.endsWith(".json"))).toEqual([
+    "/docs/creative-prototypes/stationary-food-replication-index-1201.json",
+    "/docs/creative-prototypes/stationary-food-replication-moving-band-seed-1201.json",
+    "/docs/creative-prototypes/stationary-food-replication-stationary-band-seed-1201.json",
+    "/docs/creative-prototypes/stationary-food-replication-visual-receipt-1201.json",
+    "/docs/creative-prototypes/stationary-food-replication-index-1203.json",
+    "/docs/creative-prototypes/stationary-food-replication-moving-band-seed-1203.json",
+    "/docs/creative-prototypes/stationary-food-replication-stationary-band-seed-1203.json",
+    "/docs/creative-prototypes/stationary-food-replication-visual-receipt-1203.json",
   ]);
 });
 
