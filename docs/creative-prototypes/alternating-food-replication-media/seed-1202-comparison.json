@@ -61,8 +61,10 @@
       "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
     },
     "viewerHtml": {
-      "path": "docs/creative-prototypes/alternating-food-replication.html",
-      "sha256": "d09b89eaacf477f91c826332e9a524f6fe0f61d4109fd654e2f750a56a6dd7cb"
+      "path": "docs/creative-prototypes/alternating-food-replication-media/capture-viewer.html",
+      "sha256": "d09b89eaacf477f91c826332e9a524f6fe0f61d4109fd654e2f750a56a6dd7cb",
+      "originalServedPath": "docs/creative-prototypes/alternating-food-replication.html",
+      "note": "Pre-editorial HTML identity recorded during comparison preparation; bytes preserved in capture-viewer.html. The body-only image is drawn directly from saved cells, not from this page."
     }
   },
   "pinnedSources": {
