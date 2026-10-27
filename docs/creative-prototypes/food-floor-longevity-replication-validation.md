@@ -11,3 +11,7 @@ Valid Stop:11 bodies, one family, band0 empty at5500 and6000. Numerical and spat
 Parent receipt SHA256 `96c1d02b113f145d9c75c92aa71ff2ae293b03e3e6d6fed8f26188d455a3f55b` binds raw `14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60`, frozen plan and historical prefix. Manifest SHA256 `666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19` records final Stop. Summary/results retain all six windows, per-tick population path and separate descriptive threshold/trough reporting. Actual saved-data browser/media checks remain the parent's delivery checks; this assembly did not run them.
 
 Independent Codex Sol 6.1 High evidence/receipt review is CLEAR. All attempt-file hashes, journal/raw/prefix parity, exact repeat and recomputed six windows were verified. No overlap diagnostics were used. Media/actual checks remain pending.
+
+## Delivered replay and animation
+
+Both actual evidence/media Chrome checks passed (2/2), including summary/receipt binding, video playback and mobile accessibility. Saved-data-only animation contains 301 frames at10fps,30.1seconds,1440×1320; full decode passed. Preflight was inspected before capture and final frame inspected afterward. Capture HTML is archived before editorial and referenced by video/comparison metadata. No capture/encoding retry, extra seed or biological rerun. Video SHA256 3a016f0c222b1cea7dc3220045375b158157400416ba62bacfd88aaf28203ae0. Independent Codex Sol6.1 High final delivery review CLEAR for commit and dependent PR. No hosted CI success claimed.

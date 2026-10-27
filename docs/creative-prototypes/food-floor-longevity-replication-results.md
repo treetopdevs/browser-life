@@ -30,3 +30,7 @@ One attempt: `20261027T181644Z-52804`, completed with exit status 0. The assembl
 The attempts manifest preserves the reservation, intent, source bindings and hashes of saved attempt files. The final Stop decision binds the parent receipt and raw evidence in the manifest. No further biology, tuning, retry, extra seed or automatic extension. No merge or deployment.
 
 Parent receipt SHA256: `96c1d02b113f145d9c75c92aa71ff2ae293b03e3e6d6fed8f26188d455a3f55b`. Raw SHA256: `14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60`. Manifest SHA256: `666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19`.
+
+## Replay delivery
+
+The [single-world replay](food-floor-longevity-replication.html) includes a 301-frame, 30.1-second animation and full population chart. It distinguishes the verified historical prefix through 3,000 from new continuation. Both actual/media checks pass; exact capture HTML is preserved. No additional simulation was used for media.

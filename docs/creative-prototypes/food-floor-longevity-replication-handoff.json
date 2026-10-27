@@ -2,10 +2,10 @@
   "branch": "codex/food-floor-longevity-replication",
   "base": "5022964538ebdc7c29963abd7a708eb87c1dee7c",
   "planCommit": "df0a2f3b",
-  "status": "one completed validStop; parentbodyonlyreceipt written; independent evidence review pending",
+  "status": "validStop; all delivery checks and independent finalreview CLEAR; pendingcommitPR",
   "attemptCount": 1,
   "outcomeCount": 1,
-  "next": "Review/commit evidence and receipt, saved-data animation, finalchecks/review/commit/dependentPR. No retry, tuning, further biology, merge or deployment.",
+  "next": "Finalreview/commit/dependentPR against115 thenstop. No retry,tuning,newseed,longerhorizon,merge or deployment.",
   "sourceHashes": {
     "docs/creative-prototypes/food-floor-longevity-replication-plan.md": "02a221c637d238dc0feb6b50cb7220f84cfd016ff5a404200ab15e723fd8a914",
     "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
@@ -14,5 +14,6 @@
     "docs/creative-prototypes/food-floor-longevity-replication.js": "de483f302a74ac956afda1393634db3749b98468d6578fb850d70426dee0a121"
   },
   "sourceCommit": "8f0aae4f",
-  "runId": "20261027T181644Z-52804"
+  "runId": "20261027T181644Z-52804",
+  "evidenceCommit": "f88fea08"
 }

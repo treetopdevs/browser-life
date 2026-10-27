@@ -62,8 +62,10 @@
       "sha256": "9320edf8bd45f854bb6449e69f656c87a19c17e06f505719933220b9390fd89c"
     },
     "viewerHtml": {
-      "path": "docs/creative-prototypes/food-floor-longevity-replication.html",
-      "sha256": "baeb6f1ec82452fd7914f95cef8f265228b4053b4d884ca5f46152d1d07a7d01"
+      "path": "docs/creative-prototypes/food-floor-longevity-replication-media/capture-viewer.html",
+      "sha256": "baeb6f1ec82452fd7914f95cef8f265228b4053b4d884ca5f46152d1d07a7d01",
+      "originalServedPath": "docs/creative-prototypes/food-floor-longevity-replication.html",
+      "note": "Exact committed HTML served during comparison; archived before live editorial."
     }
   },
   "pinnedSources": {
