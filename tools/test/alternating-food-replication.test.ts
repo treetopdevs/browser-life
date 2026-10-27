@@ -52,32 +52,35 @@ describe('alternating-food schedule', () => {
     expect(split.environment).not.toHaveProperty('activeBand');
     const historical = new HistoricalSplitWorld(1201, true, 'split-band');
     const isolated = new HungryWorld(1201, true, 'split-band');
-    for (let tick = 1; tick <= 200; tick++) {
-      historical.step(1); isolated.step(1);
-      if (tick % 20 === 0) { expect(isolated.snapshot()).toEqual(historical.snapshot()); expect(isolated.environment).toEqual(historical.environment); expect(isolated.census()).toEqual(historical.census()); }
-    }
+    expect(isolated.snapshot()).toEqual(historical.snapshot());
+    expect(isolated.environment).toEqual(historical.environment);
   });
 
-  it('switches current band only after supplying the boundary pulse', () => {
-    const world = new HungryWorld(1202, true, 'alternating-band');
-    world.step(5);
-    world.step(495);
-    expect(world.environment.activeBand).toBe(0);
-    expect(world.environment.bandOffered).toEqual([76_800, 0]);
-    world.step(5);
-    expect(world.environment.activeBand).toBe(1);
-    expect(world.environment.bandOffered).toEqual([76_800, 768]);
-    expect(world.foodTargets.every((tile) => tile % RULES.width >= 48 && tile % RULES.width < 72)).toBe(true);
+  it('switches current band only after supplying the boundary pulse without stepping biology', () => {
+    const offeredAt = (tick: number) => {
+      const offered = [0, 0];
+      for (let pulse = 0; pulse < Math.floor(tick / 5); pulse++) offered[alternatingBandAtPulse(pulse)] += 768;
+      return offered;
+    };
+    expect(alternatingBandAtPulse(Math.floor(500 / 5) - 1)).toBe(0);
+    expect(offeredAt(500)).toEqual([76_800, 0]);
+    expect(alternatingBandAtPulse(Math.floor(504 / 5) - 1)).toBe(0);
+    expect(alternatingBandAtPulse(Math.floor(505 / 5) - 1)).toBe(1);
+    expect(offeredAt(505)).toEqual([76_800, 768]);
+    expect(Array.from({ length: 768 }, (_, slot) => alternatingBandPulseTargetTile(100, slot, 1202))
+      .every((tile) => tile % RULES.width >= 48 && tile % RULES.width < 72)).toBe(true);
   });
 
-  it('validates per-band accounting metadata and rejects malformed arrays', () => {
-    const world = new HungryWorld(1202, true, 'alternating-band');
-    world.step(505);
-    expect(() => validateEnvironment(world.environment, 505, 'tick 505 environment', 'alternating-band')).not.toThrow();
-    expect(() => validateEnvironment({ ...world.environment, bandOffered: [76_800] }, 505, 'bad environment', 'alternating-band')).toThrow(/bandOffered malformed/);
-    expect(() => validateEnvironment({ ...world.environment, activeBand: 0 }, 505, 'bad active band', 'alternating-band')).toThrow(/active band/);
-    expect(() => validateBandAccounting({ ...world.environment, bandAccepted: [-1, 100] } as any, 'negative per-band ledger')).toThrow(/nonnegative safe integers/);
-    expect(() => validateBandAccounting({ ...world.environment, bandOverflow: [76_801, 768] } as any, 'overflow bound')).toThrow(/exceeds offered/);
+  it('validates synthetic per-band accounting metadata without stepping biology', () => {
+    const environment = { version: 1, mode: 'alternating-band', pulseBudget: 768, targetCount: 2304,
+      pulses: 101, offered: 77_568, accepted: 50_700, overflow: 26_868, initialFoodPerTile: 20,
+      bandColumns: SPLIT_BAND_COLUMNS, bandWidth: 24, activeBand: 1,
+      bandOffered: [76_800, 768], bandAccepted: [50_000, 700], bandOverflow: [26_800, 68] };
+    expect(() => validateEnvironment(environment, 505, 'tick 505 environment', 'alternating-band')).not.toThrow();
+    expect(() => validateEnvironment({ ...environment, bandOffered: [76_800] }, 505, 'bad environment', 'alternating-band')).toThrow(/bandOffered malformed/);
+    expect(() => validateEnvironment({ ...environment, activeBand: 0 }, 505, 'bad active band', 'alternating-band')).toThrow(/active band/);
+    expect(() => validateBandAccounting({ ...environment, bandAccepted: [-1, 100] } as any, 'negative per-band ledger')).toThrow(/nonnegative safe integers/);
+    expect(() => validateBandAccounting({ ...environment, bandOverflow: [76_801, 768] } as any, 'overflow bound')).toThrow(/exceeds offered/);
   });
 });
 

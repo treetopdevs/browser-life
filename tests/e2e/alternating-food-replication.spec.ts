@@ -295,6 +295,48 @@ test("rejects population rows whose cap flags contradict the recorded body count
   await expect(page.locator("#error-detail")).toContainText("contradict population cap flags");
 });
 
+for (const variant of ["invented trough", "invented lineage events", "sample cell mismatch"] as const) {
+  test(`rejects rehashed tick history with ${variant}`, async ({ page }) => {
+    const fixture = pairFixture(buildAlternating((data) => {
+      if (variant === "invented trough") {
+        const row = data.tickRows.find((item: Rec) => item.tick % 20 !== 0 && item.population < 47)!;
+        row.population = 0; row.cap48 = false; row.nearCap47 = false;
+      } else if (variant === "invented lineage events") {
+        const row = data.tickRows[0]; row.births++; row.deaths++;
+      } else {
+        const row = data.tickRows.find((item: Rec) => item.tick === 20)!; row.cells++;
+      }
+    }));
+    await install(page, fixture);
+    await expect(page.locator("#error-state")).toBeVisible();
+    await expect(page.locator("#error-detail")).toContainText(variant === "invented trough" ? "Population transition" : variant === "invented lineage events" ? "Lineage event delta" : "Sample counters disagree");
+    await expect(page.locator("#replay")).toBeHidden();
+  });
+}
+
+for (const variant of ["genome cap", "living lineage"] as const) {
+  test(`rejects a rehashed intermediate frame violating its ${variant}`, async ({ page }) => {
+    const fixture = pairFixture(buildAlternating((data) => {
+      const frame = data.frames.find((item: Rec) => item.tick === 520)!;
+      if (variant === "genome cap") {
+        const organism = frame.organisms.find((org: Rec) => frame.cells.filter((cell: number[]) => cell[1] === org.id).length > 16)!;
+        if (!organism) throw new Error("Fixture must have an intermediate body larger than16 cells.");
+        organism.genome = { ...organism.genome, maxCells: 16 };
+      } else {
+        const organism = frame.organisms[0];
+        organism.genome = { ...organism.genome, turn: organism.genome.turn === 0 ? 1 : 0 };
+      }
+      const envelope = { ...frame }; delete envelope.frameSha256;
+      frame.frameSha256 = hashJSON(envelope);
+      data.samples.find((item: Rec) => item.tick === 520)!.frameSha256 = frame.frameSha256;
+    }));
+    await install(page, fixture);
+    await expect(page.locator("#error-state")).toBeVisible();
+    await expect(page.locator("#error-detail")).toContainText(variant === "genome cap" ? "over-cap body" : "differ from living lineage");
+    await expect(page.locator("#replay")).toBeHidden();
+  });
+}
+
 test("rejects a rehashed full snapshot whose food differs from its saved frame", async ({ page }) => {
   const fixture = pairFixture(buildAlternating((data) => {
     const snapshot = data.snapshots.find((item: Rec) => item.tick === 1000)!;

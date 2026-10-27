@@ -214,8 +214,9 @@ async function loadArm(entry, role, index) {
     if (!Array.isArray(frame.cells) || frame.cells.length > 1536) fail(`${role} frame ${frame.tick} exceeds body-cell capacity.`);
     let last = -1; const tilesByOrganism = new Map([...organisms.keys()].map((id) => [id, []]));
     for (const cell of frame.cells) { if (!Array.isArray(cell) || cell.length !== 2 || !Number.isSafeInteger(cell[0]) || cell[0] <= last || cell[0] >= CELLS || !organisms.has(cell[1])) fail(`${role} frame ${frame.tick} has invalid body tiles.`); last = cell[0]; tilesByOrganism.get(cell[1]).push(cell[0]); }
-    if ([...tilesByOrganism.values()].some((tiles) => !tiles.length || tiles.length > 32 || !bodyIsConnected(tiles))) fail(`${role} frame ${frame.tick} contains an empty or disconnected body.`);
+    if ([...tilesByOrganism.entries()].some(([id, tiles]) => !tiles.length || tiles.length > 32 || tiles.length > organisms.get(id).genome.maxCells || !bodyIsConnected(tiles))) fail(`${role} frame ${frame.tick} contains an empty, disconnected, or over-cap body.`);
     validateCensus(sample.census, frame, organisms);
+    validateFrameLineage(frame, data.final.lineage, sample.census);
     const food = b64Food(frame.foodBase64, frame.tick);
     if (!exact(frame.ledger, ["initialEnergy", "supplied", "dissipated", "deathLoss", "expected", "actual", "residual"]) ||
         frame.ledger.supplied !== sample.environment.accepted || frame.ledger.actual !== food.total + sample.census.totalEnergy ||
@@ -247,6 +248,41 @@ async function loadArm(entry, role, index) {
   if (role === "alternating") validateGates(data, entries);
   return { data, entries, url: entry.url };
 }
+function validateFrameLineage(frame, nodes, census) {
+  if (!Array.isArray(nodes)) fail("Final lineage is missing.");
+  const living = nodes.filter((n) => n.birthTick <= frame.tick && (n.deathTick === null || n.deathTick > frame.tick)).sort((a, b) => a.id - b.id);
+  const expected = living.map((n) => ({ id: n.id, family: n.family, genome: n.genome }));
+  if (JSON.stringify(frame.organisms) !== JSON.stringify(expected)) fail(`Frame ${frame.tick} body IDs, family, or genome differ from living lineage.`);
+  const families = [0, 0, 0]; for (const node of living) families[node.family]++;
+  if (JSON.stringify(families) !== JSON.stringify(census.familyCounts) || living.length !== census.population ||
+      new Set(living.map((n) => JSON.stringify(n.genome))).size !== census.genomeVariantCount ||
+      living.reduce((m, n) => Math.max(m, n.generation), 0) !== census.maxGeneration ||
+      nodes.filter((n) => n.parentID !== null && n.birthTick <= frame.tick).length !== census.births ||
+      nodes.filter((n) => n.deathTick !== null && n.deathTick <= frame.tick).length !== census.deaths ||
+      nodes.filter((n) => n.mutation !== null && n.birthTick <= frame.tick).length !== census.effectiveMutations) fail(`Frame ${frame.tick} census disagrees with living or cumulative lineage.`);
+}
+function validateTickBindings(data) {
+  const born = new Map(), died = new Map();
+  for (const node of data.final.lineage) {
+    if (node.parentID !== null) born.set(node.birthTick, (born.get(node.birthTick) ?? 0) + 1);
+    if (node.deathTick !== null) died.set(node.deathTick, (died.get(node.deathTick) ?? 0) + 1);
+  }
+  let population = 12;
+  const totals = { births: 0, deaths: 0, blockedCap: 0, blockedSpace: 0 };
+  for (const row of data.tickRows) {
+    if (row.population !== population + row.births - row.deaths) fail(`Population transition disagrees at tick ${row.tick}.`);
+    if (row.population === 0 && row.tick !== data.run.finalTick) fail(`Population reached extinction before terminal tick ${row.tick}.`);
+    if (row.births !== (born.get(row.tick) ?? 0) || row.deaths !== (died.get(row.tick) ?? 0)) fail(`Lineage event delta disagrees at tick ${row.tick}.`);
+    population = row.population;
+    for (const key of Object.keys(totals)) totals[key] += row[key];
+    if (row.tick % 20 === 0 || row.tick === data.run.finalTick) {
+      const census = data.samples.find((x) => x.tick === row.tick)?.census;
+      if (!census || census.population !== row.population || census.cells !== row.cells || census.births !== totals.births ||
+          census.deaths !== totals.deaths || census.blockedCapBirths !== totals.blockedCap || census.blockedSpaceBirths !== totals.blockedSpace) fail(`Sample counters disagree with tick rows at ${row.tick}.`);
+    }
+  }
+  if (data.run.extinctionTick !== null && data.tickRows.length !== data.run.extinctionTick) fail("Extinction row coverage is incomplete.");
+}
 function validateGates(data, entries) {
   const n = data.numericalGate, s = data.spatialGate;
   if (!exact(n, ["aliveAt3000", "atLeastTwoFamiliesAt3000", "allWindowsReached", "eachNewWindowHasBirthsAndDeaths", "eachNewWindowCap48AtMost99", "numericalPass", "note"]) ||
@@ -256,6 +292,7 @@ function validateGates(data, entries) {
       row.tick !== i + 1 || !Number.isSafeInteger(row.population) || row.population < 0 || row.population > 48 || !Number.isSafeInteger(row.cells) || row.cells < 0 || row.cells > 1536 ||
       ![row.births, row.deaths, row.blockedCap, row.blockedSpace].every((x) => Number.isSafeInteger(x) && x >= 0) ||
       row.cap48 !== (row.population === 48) || row.nearCap47 !== (row.population >= 47))) fail("Alternating per-tick activity rows are malformed or contradict population cap flags.");
+  validateTickBindings(data);
   for (const w of data.windows) {
     const rows = data.tickRows.filter((r) => r.tick >= w.from && r.tick <= w.to), count = rows.length;
     const expectedStatus = count === 500 ? "complete" : count ? "partial" : "not-reached";
