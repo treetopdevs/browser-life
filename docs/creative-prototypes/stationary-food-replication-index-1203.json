@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-stationary-food-replication-pair",
+  "seed": 1203,
+  "planSha256": "74dc68201c7fb51ed9a87ba75d13e0ad79b171ff0d73d7929af4ba4f03fa114a",
+  "arms": {
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "stationary-food-replication-moving-band-seed-1203.json",
+      "rawSha256": "000e1ce6a3a60ab216707136ba97edf97bdcde826a63af2d3c27bf54e7810e3d"
+    },
+    "stationaryBand": {
+      "mode": "stationary-band",
+      "url": "stationary-food-replication-stationary-band-seed-1203.json",
+      "rawSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c"
+    }
+  },
+  "decision": {
+    "status": "both",
+    "summary": "Both arms pass the within-world screen on this seed. The screen did not distinguish them; this is not equality, motion benefit or independent moving evidence.",
+    "movingBandArtifactSha256": "000e1ce6a3a60ab216707136ba97edf97bdcde826a63af2d3c27bf54e7810e3d",
+    "stationaryBandArtifactSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+    "visualReceiptUrl": "stationary-food-replication-visual-receipt-1203.json",
+    "visualReceiptSha256": "bc3e4a9e7d05e632d145746d3d224a4a5edb205d3844e903c10dda0bf1296a64"
+  }
+}

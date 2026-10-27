@@ -1,0 +1,26 @@
+{
+  "outcomeProducingAttempts": [
+    {
+      "seed": 1201,
+      "attempt": 1,
+      "startedAtUTC": "2026-10-27T00:51:04.594878+00:00",
+      "command": "node --experimental-strip-types tools/stationary-food-replication/explore.ts --write --seed 1201",
+      "log": "runs/stationary-food-replication/seed-1201-attempt-1.log",
+      "finishedAtUTC": "2026-10-27T00:52:13.264751+00:00",
+      "exitCode": 0,
+      "logText": "(node:51863) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nWrote stationary-food replication seed 1201 moving-band and stationary-band evidence.\n"
+    },
+    {
+      "seed": 1203,
+      "attempt": 1,
+      "startedAtUTC": "2026-10-27T00:52:25.449985+00:00",
+      "command": "node --experimental-strip-types tools/stationary-food-replication/explore.ts --write --seed 1203",
+      "log": "runs/stationary-food-replication/seed-1203-attempt-1.log",
+      "finishedAtUTC": "2026-10-27T00:53:47.773404+00:00",
+      "exitCode": 0,
+      "logText": "(node:54290) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nWrote stationary-food replication seed 1203 moving-band and stationary-band evidence.\n"
+    }
+  ],
+  "failedAttempts": [],
+  "scope": "Scheduled1201 then1203; independent repeats. No additional seeds or horizon escalation."
+}
