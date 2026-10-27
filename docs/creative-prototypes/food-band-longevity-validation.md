@@ -17,3 +17,5 @@ Paired video: 301 exact saved frames at 10 fps, 30.1 seconds, 1304×1088. ffprob
 Parent independently verified every media hash/binding and preservation of the historical decision log. After final HTML video/description additions, paired video playback and desktop/phone Axe/overflow checks passed with no page errors (runs/food-band-longevity/delivery.log).
 
 The supplemental final video playback and layout smoke checks were parent-run using a temporary local script; that script and delivery.log are not included in the PR. Their pass is reported here, not presented as a reproducible CI artifact. The committed Playwright suite provides reproducible saved-data, playback, accessibility and layout checks. [Saved overlap diagnostics](food-band-longevity-diagnostics-1201.json) bind the committed receipt and remain descriptive, not pass criteria.
+
+Delivery: [PR #107](https://github.com/treetopdevs/browser-life/pull/107), dependent on #106. Final Claude and Codex reviews are clear. The initial hosted status query returned no commit statuses; this document reports local checks, not hosted CI success.
