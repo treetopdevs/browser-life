@@ -215,22 +215,26 @@ test.describe("Caddy", () => {
     }
   });
 
-  test("Caddy: the garden page and every garden API stay private", async () => {
+  // Opening day lifts the 19 Oct hold: the page is served like the others, and every garden API reaches Phoenix,
+  // which keeps its own rules (scheduling stays on compose's BL_GARDEN_SCHEDULING, off until the operator turns it on).
+  test("Caddy: the garden page is served and every garden API reaches Phoenix", async () => {
+    const page = await raw(base, "/garden/");
+    expect(page.status, "/garden/").toBe(200);
+    expect(page.body, "/garden/").not.toContain(TITLE);
     const paths = [
-      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html",
-      "/garden%2findex.html", "//garden/", "/x/../garden/",
       "/api/public/garden", "/api/public/garden/letters",
       "/api/public/garden/food/hands", "/api/public/garden/meteor/hands",
       "/api/public/gardens/commons", "/api/public/gardens/commons/letters",
       "/api/public/gardens/commons/checkpoints/abc",
       "/api/gardens", "/api/gardens/commons/days/0/requeue",
-      "/api/gardens/commons/letters/1/drop", "/api/public/garden%2fletters",
-      "/api/public/x/../gardens/commons", "/API/PUBLIC/GARDEN",
+      "/api/gardens/commons/letters/1/drop",
     ];
     for (const path of paths) {
-      for (const method of ["GET", "HEAD", "POST"]) {
+      for (const method of ["GET", "POST"]) {
+        stubSeen.length = 0;
         const res = await raw(base, path, { method });
-        expect(res.status, `${method} ${path}`).toBe(404);
+        expect(res.status, `${method} ${path}`).toBe(200);
+        expect(stubSeen, `${method} ${path}`).toEqual([{ url: path, proto: "https" }]);
       }
     }
   });

@@ -12,10 +12,6 @@
 :80 {
   encode zstd gzip
 
-  # Keep the shared garden private, including named gardens and keeper APIs.
-  @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
-  respond @private_garden 404
-
   @api path /api/*
   # The coordinator reads the right-most X-Forwarded-For entry (BL_TRUST_FORWARDED_FOR), so each proxy block
   # replaces the header with the one resolved client address. Never forward the client's own chain.

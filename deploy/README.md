@@ -56,18 +56,15 @@ The named `coordinator_data` volume contains the queue and checkpoints, and `dis
 
 ## Opening the shared garden
 
-The commons is not founded, and `/garden/` stays unlinked and `noindex` until it is. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
+The opening-day change (#60) links `/garden/` in the nav, indexes it (canonical link and sitemap entry) and lifts the release hold below, so merging it is the opening: deploy it together with the founding, not before. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
 
-## Site and lab release, garden held private — 19 October 2026
+## Garden hold lifted on opening day
 
-The site image removes `/garden/` from the built files. Caddy returns 404 for
-`/garden`, its descendants, and singular/plural garden API routes (public and
-keeper routes), before proxying requests. The coordinator remains reachable
-only on the private Compose network. Compose sets `BL_GARDEN_SCHEDULING=off`:
-no garden day advances at dawn or is assigned for running or verification,
-including existing days. Generic segment checkpoint and observation downloads
-also refuse garden artifacts while this switch is off. Ordinary experiments
-remain eligible. Local development
-keeps scheduling enabled unless explicitly disabled. Opening the garden later
-requires deliberately changing these release safeguards and completing the
-garden-opening checklist; an environment change alone does not publish it.
+The 19 October release held the garden private: the site image deleted `/garden/` from the built files and Caddy
+answered 404 for `/garden`, its descendants and every garden API route before proxying. The opening-day change
+removes both, so the page is served like the others and the garden APIs reach the coordinator like any `/api/*`
+route. Scheduling is still a separate, deliberate switch: Compose keeps `BL_GARDEN_SCHEDULING=off`, under which no
+garden day advances at dawn or is assigned for running or verification (existing days included), and generic segment
+checkpoint and observation downloads refuse garden artifacts. Ordinary experiments remain eligible. The operator sets
+it to `on` after the founding, as a step of the garden-opening checklist. Local development keeps scheduling enabled
+unless explicitly disabled. To close the garden again, revert the opening-day change and set the switch to `off`.
