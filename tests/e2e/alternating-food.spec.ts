@@ -179,6 +179,37 @@ async function install(page: Page, fixture?: ReturnType<typeof pairFixture>) {
   await page.goto(`${BASE}alternating-food.html`);
 }
 
+async function installActual(page: Page) {
+  const files = new Map<string, Buffer>([
+    [BASELINE_NAME, readFileSync(resolve(DOCS, BASELINE_NAME))], [BASELINE_INDEX, baselineIndexBytes],
+    [INDEX, readFileSync(resolve(DOCS, INDEX))], [ALTERNATING, readFileSync(resolve(DOCS, ALTERNATING))],
+    ["alternating-food-visual-receipt-1203.json", readFileSync(resolve(DOCS, "alternating-food-visual-receipt-1203.json"))],
+    ["seed-1203-paired.mp4", readFileSync(resolve(DOCS, "alternating-food-media/seed-1203-paired.mp4"))],
+  ]);
+  await page.route(`${ORIGIN}/**`, async (route: Route) => {
+    const name = new URL(route.request().url()).pathname.split("/").at(-1) ?? "";
+    if (["alternating-food.html", "alternating-food.js", "alternating-food.css"].includes(name)) {
+      const type = name.endsWith(".css") ? "text/css" : name.endsWith(".js") ? "text/javascript" : "text/html";
+      await route.fulfill({ contentType: type, body: await readFile(resolve(DOCS, name), "utf8") }); return;
+    }
+    const bytes = files.get(name);
+    if (bytes) {
+      if (name.endsWith(".mp4")) {
+        const range = route.request().headers().range;
+        const match = range?.match(/^bytes=(\d+)-(\d*)$/);
+        if (match) {
+          const start = Number(match[1]), end = Math.min(match[2] ? Number(match[2]) : bytes.length - 1, bytes.length - 1);
+          await route.fulfill({ status: 206, headers: { "Accept-Ranges": "bytes", "Content-Range": `bytes ${start}-${end}/${bytes.length}`, "Content-Length": String(end - start + 1), "Content-Type": "video/mp4" }, body: bytes.subarray(start, end + 1) }); return;
+        }
+        await route.fulfill({ headers: { "Accept-Ranges": "bytes", "Content-Type": "video/mp4" }, body: bytes }); return;
+      }
+      await route.fulfill({ contentType: "application/json", body: bytes }); return;
+    }
+    await route.fulfill({ status: 404, contentType: "text/plain", body: `Unexpected request: ${name}` });
+  });
+  await page.goto(`${BASE}alternating-food.html`);
+}
+
 test("does not invent a new outcome when only the static reference exists", async ({ page }) => {
   await install(page);
   await expect(page.locator("#empty-state")).toBeVisible();
@@ -341,7 +372,14 @@ test("published seed-1203 alternating evidence is bound to its actual summary an
     expect(summaryArm.finalCensus).toEqual(data.final.census);
     expect(summaryArm.finalEnvironment).toEqual(data.final.environment);
   }
-  await page.goto(`${BASE}alternating-food.html`);
+  await installActual(page);
+  await expect(page.locator("#outcome-title")).toHaveText("A large shift, a deep trough, and recovery");
+  await expect(page.locator("#outcome-title").locator(".." )).toContainText("48 bodies");
+  await expect(page.locator("#outcome-title").locator(".." )).toContainText("31 at tick 3,000");
+  await expect(page.locator("#outcome-title").locator(".." )).toContainText("7 mint / 2 gold / 22 lilac");
+  await expect(page.locator("#outcome-title").locator(".." )).toContainText("Only one of three late intervals passes");
+  await expect(page.locator("#static-caveat")).toContainText("meets the same growth/retreat screen without alternating supply");
+  await expect(page.locator("#outcome-title").locator("..").locator("video")).toHaveCount(1);
   await expect(page.locator("#replay")).toBeVisible();
   await expect(page.locator("#decision-status")).toHaveText(pair.decision.status === "promising" ? "Promising" : "Stop");
   for (const tick of [1500, 2000, 2500, 3000]) {
@@ -368,10 +406,31 @@ test("published seed-1203 alternating evidence is bound to its actual summary an
   await expect(page.locator("#seasonal-rows tr")).toHaveCount(3);
 });
 
-test("published alternating replay media is available when explicitly required", async () => {
+test("published alternating replay video plays and the final result remains accessible on mobile", async ({ page }) => {
   test.skip(process.env.BL_ALTERNATING_MEDIA !== "1", "Set BL_ALTERNATING_MEDIA=1 to require the published replay media files.");
   for (const name of ["seed-1203-paired.mp4", "seed-1203-paired.json", "seed-1203-comparison.png", "seed-1203-comparison.json"]) {
     const bytes = readFileSync(resolve(DOCS, "alternating-food-media", name));
     expect(bytes.byteLength, `${name} must not be empty`).toBeGreaterThan(0);
   }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installActual(page);
+  const video = page.locator("#outcome-title").locator(".." ).locator("video");
+  await expect(video).toBeVisible();
+  await video.evaluate((element: HTMLVideoElement) => new Promise<void>((resolve, reject) => {
+    element.addEventListener("canplay", () => resolve(), { once: true });
+    element.addEventListener("error", () => reject(new Error(`Video failed to load: ${element.error?.message}`)), { once: true });
+    if (element.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) resolve();
+  }));
+  const duration = await video.evaluate((element: HTMLVideoElement) => element.duration);
+  expect(duration).toBeGreaterThanOrEqual(15.0);
+  expect(duration).toBeLessThanOrEqual(15.2);
+  await video.evaluate((element: HTMLVideoElement) => element.play());
+  await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.currentTime)).toBeGreaterThan(0.2);
+  await video.evaluate((element: HTMLVideoElement) => element.pause());
+  await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.paused)).toBe(true);
+  await expect(page.locator("#outcome-title").locator(".." )).toContainText("Only one of three late intervals passes");
+  const width = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, page: document.documentElement.scrollWidth }));
+  expect(width.page).toBeLessThanOrEqual(width.viewport);
+  const accessibility = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(accessibility.violations).toEqual([]);
 });
