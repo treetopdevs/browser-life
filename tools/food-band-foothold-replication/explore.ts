@@ -712,7 +712,7 @@ export function parseArgs(argv:string[]):{mode:'--write'|'--check';seed:1203;att
 }
 export function assertCommittedInputs():void{
   for(const path of Object.keys(LOADED_SOURCE_SHA256)){
-    try{const status=execFileSync('git',['status','--porcelain','--',path],{encoding:'utf8'});invariant(status.trim()==='',`Refusing outcome with uncommitted input: ${path}`);const committed=execFileSync('git',['show',`HEAD:${path}`],{encoding:'buffer'});invariant(hashBytes(readFileSync(new URL(`../../${path}`,import.meta.url)))===hashBytes(committed),`Working input differs from committed input: ${path}`);}catch(error){if(error instanceof Error&&error.message.startsWith('Refusing outcome'))throw error;throw new Error(`Unable to verify committed input ${path}: ${String(error)}`);}
+    try{const status=execFileSync('git',['status','--porcelain','--',path],{encoding:'utf8'});invariant(status.trim()==='',`Refusing outcome with uncommitted input: ${path}`);const committed=execFileSync('git',['rev-parse',`HEAD:${path}`],{encoding:'utf8'}).trim();const working=execFileSync('git',['hash-object','--',path],{encoding:'utf8'}).trim();invariant(working===committed,`Working input differs from committed input: ${path}`);}catch(error){if(error instanceof Error&&error.message.startsWith('Refusing outcome'))throw error;throw new Error(`Unable to verify committed input ${path}: ${String(error)}`);}
   }
 }
 function legacyCheck():void{
