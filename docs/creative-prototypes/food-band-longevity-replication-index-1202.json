@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-band-longevity-replication-pair",
+  "seed": 1202,
+  "planSha256": "6ae73fea19692f95e50538fecdc4203d89cf7ec5687ee38b6f580a57d94a005a",
+  "arms": {
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "food-band-longevity-replication-moving-band-seed-1202.json",
+      "rawSha256": "6dd8473c87bbf2750e4946b0bf687fd670615c00e7043a630503298c1d25bc91"
+    },
+    "stationaryBand": {
+      "mode": "stationary-band",
+      "url": "food-band-longevity-replication-stationary-band-seed-1202.json",
+      "rawSha256": "a68f6c74c9db9caa7ca037d01a71e322a5c85103398aa05cff532793440a7007"
+    }
+  },
+  "decision": {
+    "status": "both",
+    "summary": "Both seed 1202 worlds pass the permissive numerical and late spatial-change screen through 6,000 ticks. The screen did not distinguish arms; this is not equality, superiority or adaptation.",
+    "movingBandArtifactSha256": "6dd8473c87bbf2750e4946b0bf687fd670615c00e7043a630503298c1d25bc91",
+    "stationaryBandArtifactSha256": "a68f6c74c9db9caa7ca037d01a71e322a5c85103398aa05cff532793440a7007",
+    "visualReceiptUrl": "food-band-longevity-replication-visual-receipt-1202.json",
+    "visualReceiptSha256": "25e2275106b4ab25cc4de8ece71e8a8c2e577feca38a3ac72925231c74108850"
+  }
+}

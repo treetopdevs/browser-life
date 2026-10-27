@@ -1,0 +1,36 @@
+{
+  "seed": 1203,
+  "planSha256": "6ae73fea19692f95e50538fecdc4203d89cf7ec5687ee38b6f580a57d94a005a",
+  "movingBandArtifactSha256": "098cd4c1cfb2df6376536a5cdd97b93eee449809aa03bb4b781eb08c7d71e15a",
+  "stationaryBandArtifactSha256": "9d3605b74a1af17dd3a944810c3f161d6d2f71d45bce6ea18b4e0ef2f3760e6f",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: historical media are already available and the parent knows both seeds' numerical outcomes. The dense upper-edge cluster at 5,500 has cleared by 6,000. A diagonal occupied group now crosses the middle, and a much broader branching cluster fills the lower middle. This is substantial spatial rearrangement of occupied bodies."
+    },
+    "stationaryBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: historical media are already available and the parent knows both seeds' numerical outcomes. The dense upper-left/middle group at 5,500 disperses by 6,000, leaving a broad gap. A new dense group occupies the middle-right of the populated half, while the lower occupied branches spread into a wider horizontal arrangement."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 3000,
+      "observation": "At 3,000 moving bodies cluster along the upper-right and lower-right boundaries; stationary bodies are mostly left of center with a lower-middle branch."
+    },
+    {
+      "tick": 5500,
+      "observation": "At 5,500 the moving upper-edge cluster and lower-left groups differ from stationary upper-left branching and lower horizontal groups."
+    },
+    {
+      "tick": 6000,
+      "observation": "At 6,000 moving bodies form a diagonal middle group and dense lower-middle branches; stationary bodies have a middle group separated from wide lower branches by open space."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T03:09:21.435641+00:00"
+}
