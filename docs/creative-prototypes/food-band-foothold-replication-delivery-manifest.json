@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "evidenceCommit": "ae6bf3c444c05305a076eb36d64defcf0486932b",
+  "executionSourceCommit": "fee9cc485775a24a5b4f01e8e2127fa54501bba7",
+  "protocolCommit": "64b425e1f4e4da1975e412e0b2756b2728d86437",
+  "finalReview": {
+    "status": "clear",
+    "path": "docs/creative-prototypes/foothold-replication-review/delivery-clear.md",
+    "sha256": "bfd1ed7e0428f01ad2de585c10599b89360dc8dd32379e05e8df63096867aff8"
+  },
+  "files": {
+    "docs/creative-prototypes/food-band-foothold-replication-attempt-20261027T224410Z.tar.gz": "8b12fb2b341afa52c4d905fde2b20aaa7268617e76d6233069e89bbf25c75443",
+    "docs/creative-prototypes/food-band-foothold-replication-attempts.json": "fde63f265efcb52ec79de721fa610b818336e4abc684705109a5a6101fdf03af",
+    "docs/creative-prototypes/food-band-foothold-replication-index-1203.json": "bdaf6c4ab1f36281587bf1d5726d0869b0b0b31b686e7af0ea74d9b111670072",
+    "docs/creative-prototypes/food-band-foothold-replication-inputs.json": "684b61f793c804cd551065c2b6cd65abe53e763df5b4a424e013fe8283e018af",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-1500.png": "094793741a4f77b4a8b5ff5cedd625d1d6a764970b26ce39e73e8f18d0b8111b",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-2000.png": "0a057c34223239ea695500e7d3062e29c6f6c465222debc09c9050701839b858",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-2500.png": "84140744ebb3f6441c74fbea62727c6a252885bfdbd0fdf653f53867a50f5831",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-3000.png": "6e81eda6399ae05c3a6f7c0113160936f7e049e9a1f793a6d9a8747b783ba6e6",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-capture.html": "ae311b647969337dbaa20593ef5d8bb97de0be4b383fb5122dc0b5962f57aa52",
+    "docs/creative-prototypes/food-band-foothold-replication-media/body-provenance.json": "9ac0989c3c07dfbebbd52686ac5f6be8a2170de4a949d9a394c95df203f79f92",
+    "docs/creative-prototypes/food-band-foothold-replication-media/capture-viewer.html": "f6e281617f74adb20f17c7f105340db5172d0f9d93f2e02aff07cc99344de951",
+    "docs/creative-prototypes/food-band-foothold-replication-media/capture-viewer.js": "9b106a9328081f1ea9700019ecf13751ae4442359260e68d4724c85f6ca00077",
+    "docs/creative-prototypes/food-band-foothold-replication-media/media-provenance.json": "764983945be302d725f293f13f872f50d53e8ce5a5e9e8305d22cce436cd4e90",
+    "docs/creative-prototypes/food-band-foothold-replication-media/seed-1203-comparison.png": "6bd6b83b8ab5309cbb4a8c97542c7f63e8021cb6fb23b0a5c15dd9a788955795",
+    "docs/creative-prototypes/food-band-foothold-replication-media/seed-1203-paired.mp4": "c2f7220a119815fc359b24335f9b77ef230ff7c667977bfe15d3133a5376a1e1",
+    "docs/creative-prototypes/food-band-foothold-replication-plan.md": "2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99",
+    "docs/creative-prototypes/food-band-foothold-replication-results.md": "ac4ae93be8429f52b0e531883d9d0b1f89bc94be212fe778078946e44d22e884",
+    "docs/creative-prototypes/food-band-foothold-replication-seed-1203.json": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+    "docs/creative-prototypes/food-band-foothold-replication-seed-1203.md": "c5613992bb9d88d95f0490e5c942916e67331d25a6508c738e9b4a2dc6b46055",
+    "docs/creative-prototypes/food-band-foothold-replication-summary.json": "dc998ca0227cc9a80648c399c5c04136c4712b080af74189b89464a666d7b1e5",
+    "docs/creative-prototypes/food-band-foothold-replication-validation.md": "ea17ba68651f96de5bab07e89b1bc2018960df480427f3a8f068dc2f84950069",
+    "docs/creative-prototypes/food-band-foothold-replication-viewer.js": "9b106a9328081f1ea9700019ecf13751ae4442359260e68d4724c85f6ca00077",
+    "docs/creative-prototypes/food-band-foothold-replication-visual-receipt-1203.json": "3e8752bac14497a2a6e52ad9e3e939aadf4bf0c346b16d78a3b80ceb20574d38",
+    "docs/creative-prototypes/food-band-foothold-replication.html": "f6e281617f74adb20f17c7f105340db5172d0f9d93f2e02aff07cc99344de951",
+    "tests/e2e/food-band-foothold-replication.spec.ts": "2bd4b7eeee4ee0b6d0e431559d6a3b91f441bf483f64e3872c066ad279c090c9",
+    "tools/food-band-foothold-replication/capture.mjs": "34350f2c77e78f218e10f4089f81f7301841fa957b175115750ba7d05ad9aa48",
+    "tools/food-band-foothold-replication/explore.ts": "603b22b82950423c22edb01c37ec3844f8e104f5dae5e93f0419a7baa2a8a859",
+    "tools/food-band-foothold-replication/inspect.mjs": "de393b898dfeab7a20950ce5c4364060c48637b21b161ef6dae1329af0edf742",
+    "tools/food-band-foothold-replication/launch.sh": "f0027114801031a5db9ce442953ed7a179f20feec9d0520225ea78b8cfca4416",
+    "tools/test/food-band-foothold-replication.test.ts": "f12e376b37804b0949e547a43059239e349971ff83b19a03919d309eb93f3b06"
+  }
+}
