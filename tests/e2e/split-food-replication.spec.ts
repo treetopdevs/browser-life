@@ -22,6 +22,15 @@ const baseline = JSON.parse(baselineBytes.toString("utf8")) as AnyRecord;
 const baselineSha = sha(baselineBytes);
 const baselineIndexSha256 = sha(readFileSync(resolve(DOCS, "stationary-food-replication-index-1203.json")));
 const baselineRaw = `${baselineBytes.toString("utf8")}`;
+// Missing accepted evidence is a test failure; this actual-data case never skips.
+const publishedSplitBytes = readFileSync(resolve(DOCS, SPLIT_FILE));
+const publishedSplit = JSON.parse(publishedSplitBytes.toString("utf8")) as AnyRecord;
+const publishedIndexBytes = readFileSync(resolve(DOCS, INDEX_FILE));
+const publishedIndex = JSON.parse(publishedIndexBytes.toString("utf8")) as AnyRecord;
+const publishedReceiptBytes = readFileSync(resolve(DOCS, RECEIPT_FILE));
+const publishedReceipt = JSON.parse(publishedReceiptBytes.toString("utf8")) as AnyRecord;
+const publishedSummary = JSON.parse(readFileSync(resolve(DOCS, "split-food-replication-summary.json"), "utf8")) as AnyRecord;
+const publishedClipBytes = readFileSync(resolve(DOCS, "split-food-replication-media/seed-1203-paired.mp4"));
 const FOOD = Buffer.alloc(96 * 96, 20).toString("base64");
 const GENOMES = [
   { turnEvery: 4, turn: 0, branchEvery: 3, maxCells: 22 },
@@ -180,6 +189,39 @@ async function installFixture(page: Page, fixture?: ReceiptFixture) {
   return requests;
 }
 
+async function installPublishedEvidence(page: Page) {
+  const requests: string[] = [];
+  const files = new Map<string, Buffer>([
+    [BASELINE_FILE, baselineBytes], [SPLIT_FILE, publishedSplitBytes], [INDEX_FILE, publishedIndexBytes], [RECEIPT_FILE, publishedReceiptBytes],
+    ["seed-1203-paired.mp4", publishedClipBytes],
+  ]);
+  await page.route(`${ORIGIN}/**`, async (route: Route) => {
+    const url = new URL(route.request().url()), name = url.pathname.split("/").at(-1) ?? "";
+    requests.push(url.pathname);
+    if (name === "split-food-replication.html" || name === "split-food-replication-viewer.css" || name === "split-food-replication-viewer.js") {
+      const type = name.endsWith(".css") ? "text/css" : name.endsWith(".js") ? "text/javascript" : "text/html";
+      await route.fulfill({ contentType: type, body: await readFile(resolve(DOCS, name)) }); return;
+    }
+    const bytes = files.get(name);
+    if (bytes) {
+      if (name.endsWith(".mp4")) {
+        const range = route.request().headers().range;
+        const match = range?.match(/^bytes=(\d+)-(\d*)$/);
+        if (match) {
+          const start = Number(match[1]), requestedEnd = match[2] ? Number(match[2]) : bytes.length - 1;
+          const end = Math.min(requestedEnd, bytes.length - 1), chunk = bytes.subarray(start, end + 1);
+          await route.fulfill({ status: 206, headers: { "Content-Type": "video/mp4", "Accept-Ranges": "bytes", "Content-Range": `bytes ${start}-${end}/${bytes.length}`, "Content-Length": String(chunk.length) }, body: chunk }); return;
+        }
+        await route.fulfill({ headers: { "Content-Type": "video/mp4", "Accept-Ranges": "bytes", "Content-Length": String(bytes.length) }, body: bytes }); return;
+      }
+      await route.fulfill({ contentType: "application/json", body: bytes }); return;
+    }
+    await route.fulfill({ status: 404, contentType: "text/plain", body: `Unexpected request: ${name}` });
+  });
+  await page.goto(`${BASE}split-food-replication.html`);
+  return requests;
+}
+
 
 test("only checks seed 1203 index when no pair is published", async ({ page }) => {
   const requests = await installFixture(page);
@@ -285,4 +327,116 @@ test("viewer source pins match the import-safe split runner source map", () => {
   const viewer = readFileSync(resolve(DOCS, "split-food-replication-viewer.js"), "utf8");
   const pins = Object.fromEntries([...viewer.matchAll(/^\s*"([^\"]+)":\s*"([a-f0-9]{64})",?$/gm)].map((match) => [match[1], match[2]]));
   expect(pins).toEqual(LOADED_SOURCE_SHA256);
+});
+
+test("published seed-1203 evidence is SHA-bound and displays the actual three-tick comparison", async ({ page }) => {
+  const baselineRawSha = sha(baselineBytes), splitRawSha = sha(publishedSplitBytes);
+  const indexRawSha = sha(publishedIndexBytes), receiptRawSha = sha(publishedReceiptBytes);
+  expect(publishedIndex.planSha256).toBe(PLAN);
+  expect(publishedIndex.arms.baseline.rawSha256).toBe(baselineRawSha);
+  expect(publishedIndex.arms.split.rawSha256).toBe(splitRawSha);
+  expect(publishedIndex.decision.status).toBe("promising");
+  expect(publishedIndex.decision.baselineArtifactSha256).toBe(baselineRawSha);
+  expect(publishedIndex.decision.splitArtifactSha256).toBe(splitRawSha);
+  expect(publishedIndex.decision.visualReceiptSha256).toBe(receiptRawSha);
+  expect(publishedReceipt.seed).toBe(1203);
+  expect(publishedReceipt.planSha256).toBe(PLAN);
+  expect(publishedReceipt.baselineArtifactSha256).toBe(baselineRawSha);
+  expect(publishedReceipt.splitArtifactSha256).toBe(splitRawSha);
+  expect(publishedReceipt.sameAgeComparisons.map((item: AnyRecord) => item.tick)).toEqual([1500, 2500, 3000]);
+  expect(publishedSummary.pairManifestSha256).toBe(indexRawSha);
+  expect(publishedSummary.visualReceiptSha256).toBe(receiptRawSha);
+  expect(publishedSummary.decision).toBe("promising");
+  expect(publishedSummary.threeFamilyEndpointRecurred).toBe(false);
+  expect(publishedSummary.arms[0].rawSha256).toBe(baselineRawSha);
+  expect(publishedSummary.arms[0].dataSha256).toBe(baseline.dataSha256);
+  expect(publishedSummary.arms[0].census).toEqual(baseline.final.census);
+  expect(publishedSummary.arms[1].rawSha256).toBe(splitRawSha);
+  expect(publishedSummary.arms[1].dataSha256).toBe(publishedSplit.dataSha256);
+  expect(publishedSummary.arms[1].census).toEqual(publishedSplit.final.census);
+
+  const requests = await installPublishedEvidence(page);
+  await expect(page.locator("#replay")).toBeVisible();
+  await expect(page.locator("#source-status")).toContainText("Historical baseline and split-band record verified");
+  await expect(page.locator("#decision-status")).toHaveText("Promising");
+  await expect(page.locator("#pair-decision-summary")).toHaveText(publishedIndex.decision.summary);
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+  const results = page.locator("#results");
+  await expect(results.locator("h2")).toHaveText("Still lively, but no three-family balance this time");
+  await expect(results.locator("p").first()).toContainText(
+    `${publishedSplit.final.census.population} bodies: ${publishedSplit.final.census.familyCounts[0]} mint, ${publishedSplit.final.census.familyCounts[1]} gold and ${publishedSplit.final.census.familyCounts[2]} lilac`,
+  );
+  await expect(results.locator("p").first()).toContainText("The previous seed's 10 / 8 / 9 balance did not recur");
+  const resultRows = results.locator("table tbody tr");
+  await expect(resultRows).toHaveCount(2);
+  for (const [rowIndex, arm] of [[0, baseline], [1, publishedSplit]] as const) {
+    const census = arm.final.census;
+    await expect(resultRows.nth(rowIndex)).toContainText(String(census.population));
+    await expect(resultRows.nth(rowIndex)).toContainText(census.familyCounts.join(" / "));
+    await expect(resultRows.nth(rowIndex)).toContainText(String(census.genomeVariantCount));
+  }
+  await expect(results).toContainText("The frozen gate required two families, not three.");
+  await expect(results).toContainText("not the first seed's three-family result.");
+  await expect(results).toContainText("tick-1,720 sample");
+  expect(requests.filter((path) => path.endsWith(".json"))).toEqual([
+    `/docs/creative-prototypes/${INDEX_FILE}`,
+    `/docs/creative-prototypes/${BASELINE_FILE}`,
+    `/docs/creative-prototypes/${SPLIT_FILE}`,
+    `/docs/creative-prototypes/${RECEIPT_FILE}`,
+  ]);
+
+  for (const tick of [1500, 2500, 3000]) {
+    await page.locator(`[data-jump-tick="${tick}"]`).click();
+    const baselineSample = baseline.samples.find((sample: AnyRecord) => sample.tick === tick);
+    const splitSample = publishedSplit.samples.find((sample: AnyRecord) => sample.tick === tick);
+    const splitFrame = publishedSplit.frames.find((frame: AnyRecord) => frame.tick === tick);
+    await expect(page.locator("#baseline-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#split-tick")).toHaveText(tick.toLocaleString("en-US"));
+    for (const [prefix, sample] of [["baseline", baselineSample], ["split", splitSample]] as const) {
+      await expect(page.locator(`#${prefix}-population`)).toHaveText(sample.census.population.toLocaleString("en-US"));
+      await expect(page.locator(`#${prefix}-cells`)).toHaveText(sample.census.cells.toLocaleString("en-US"));
+      await expect(page.locator(`#${prefix}-families`)).toHaveText(sample.census.familyCounts.map((count: number) => count.toLocaleString("en-US")).join(" · "));
+      await expect(page.locator(`#${prefix}-offered`)).toHaveText(sample.environment.offered.toLocaleString("en-US"));
+      await expect(page.locator(`#${prefix}-accepted`)).toHaveText(sample.environment.accepted.toLocaleString("en-US"));
+    }
+    const bands = countBands(splitFrame.cells);
+    await expect(page.locator("#split-band-one")).toHaveText(bands[0].toLocaleString("en-US"));
+    await expect(page.locator("#split-band-two")).toHaveText(bands[1].toLocaleString("en-US"));
+  }
+  await expect(page.locator("#numerical-gate")).toHaveText("Pass");
+  await expect(page.locator("#spatial-2500")).toHaveText("290 · 165 occupied tiles · pass");
+  await expect(page.locator("#spatial-3000")).toHaveText("126 · 448 occupied tiles · pass");
+  await expect(page.locator("#visual-gate")).toContainText("Pass · Not blind:");
+  const comparisons = page.locator("#same-age-comparisons li");
+  await expect(comparisons).toHaveCount(3);
+  for (const [index, tick] of [1500, 2500, 3000].entries()) {
+    await expect(comparisons.nth(index)).toContainText(`Tick ${tick.toLocaleString("en-US")} · Not blind: the historical baseline and numerical outcome are known.`);
+  }
+  await expect(page.locator("#window-rows tr")).toHaveCount(baseline.windows.length + publishedSplit.windows.length);
+  for (const window of publishedSplit.windows) {
+    const row = page.locator("#window-rows tr").filter({ hasText: `Split bands${window.from.toLocaleString("en-US")}–${window.to.toLocaleString("en-US")}` });
+    await expect(row).toContainText(`${window.births.toLocaleString("en-US")} · ${window.deaths.toLocaleString("en-US")}`);
+    await expect(row).toContainText(window.endpoint.familyCounts.map((count: number) => count.toLocaleString("en-US")).join(" / "));
+    await expect(row).toContainText(window.endpoint.genomeCounts.length.toLocaleString("en-US"));
+  }
+  const video = page.locator('[aria-labelledby="clip-title"] video');
+  await expect(video).toHaveAttribute("src", "split-food-replication-media/seed-1203-paired.mp4");
+  await video.evaluate((node: HTMLVideoElement) => new Promise<void>((resolve, reject) => {
+    if (node.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) { resolve(); return; }
+    node.addEventListener("canplay", () => resolve(), { once: true });
+    node.addEventListener("error", () => reject(new Error(`Video could not play: ${node.error?.message ?? "unknown media error"}`)), { once: true });
+  }));
+  expect(await video.evaluate((node: HTMLVideoElement) => node.duration)).toBeCloseTo(15.1, 1);
+  await video.evaluate((node: HTMLVideoElement) => node.play());
+  await expect.poll(() => video.evaluate((node: HTMLVideoElement) => node.currentTime), { timeout: 5000 }).toBeGreaterThan(0.2);
+  await video.evaluate((node: HTMLVideoElement) => node.pause());
+  await page.locator('[data-jump-tick="1500"]').click();
+  await page.getByRole("button", { name: "Play paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Playing · saved states only");
+  await page.getByRole("button", { name: "Pause paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(axe.violations.map((item) => `${item.id}: ${item.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
