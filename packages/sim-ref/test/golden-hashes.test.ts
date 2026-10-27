@@ -41,6 +41,8 @@ const PINNED: Record<number, Record<string, string>> = {
     // Recurring injury (WorldConfig.injuryPeriod, optional, ownership sandbox).
     injury: "1fd51d2042631706",
     "injury-extremes": "a007c064a2346ee8",
+    // Polymer shell (WorldConfig.injuryShell, optional, polymer-world line): a new case with its own pin.
+    "injury-shell": "df7319e10feb7d7a",
     // Heritable kernel shape (WorldConfig.shapeReach, optional, cells sandbox).
     "shape-far": "2f9a2c0e000f2330",
     "shape-near": "01fbc54dc408e1e1",
@@ -62,6 +64,11 @@ const PINNED: Record<number, Record<string, string>> = {
     // new cases with their own pins; every pin above is untouched.
     "genes-ladder": "c8d0270e732bad02",
     "genes-ladder-bounds": "1cc368ef05021263",
+    // Gene v2 (WorldConfig.geneDrive, a floor on build carriers' BUILD
+    // output; optional, absent elsewhere): two more new cases with their own
+    // pins; every pin above is untouched.
+    "genes-drive": "b6b4127aa58f0771",
+    "genes-drive-bounds": "6b4fe0eb8c8c68a2",
   },
 };
 

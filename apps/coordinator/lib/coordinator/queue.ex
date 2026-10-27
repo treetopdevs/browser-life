@@ -315,6 +315,9 @@ defmodule Coordinator.Queue do
     GenServer.call(__MODULE__, {:join, info, garden})
   end
 
+  @doc "Atomically authenticates, abandons pending work and removes an island. Missing ids are a retry-safe no-op."
+  def leave(island, token), do: GenServer.call(__MODULE__, {:leave, island, token})
+
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
 
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
@@ -456,6 +459,9 @@ defmodule Coordinator.Queue do
   @doc "An experiment's spec and every segment in run order, with its accepted digest and producing/verifying hosts (`nil` if unknown)."
   def experiment(name), do: GenServer.call(__MODULE__, {:experiment, name})
   def segment(seg_id), do: GenServer.call(__MODULE__, {:segment, seg_id})
+
+  # Generic island downloads must not expose a held-private garden.
+  def download_segment(seg_id), do: GenServer.call(__MODULE__, {:download_segment, seg_id})
   def data_dir, do: GenServer.call(__MODULE__, :data_dir)
 
   @doc "Directory for a segment's bundle files (server-generated id only; not content-addressed)."
@@ -649,8 +655,14 @@ defmodule Coordinator.Queue do
   @impl true
   def handle_call({:join, info, garden}, _from, s) do
     case make_room(s) do
-      {:ok, s} -> join_island(info, garden, s)
-      :full -> {:reply, {:error, :full}, s}
+      {:ok, room} ->
+        result = join_island(info, garden, room)
+        Coordinator.OperatorEvents.pruned_islands(map_size(s.islands) - map_size(room.islands))
+        result
+
+      :full ->
+        Coordinator.OperatorEvents.capacity_refusal()
+        {:reply, {:error, :full}, s}
     end
   end
 
@@ -665,6 +677,31 @@ defmodule Coordinator.Queue do
       end
 
     {:reply, ok, s}
+  end
+
+  def handle_call({:leave, id, token}, _from, s) do
+    case s.islands[id] do
+      nil ->
+        {:reply, :ok, s}
+
+      %{token_hash: h} when is_binary(token) ->
+        if Plug.Crypto.secure_compare(h, :crypto.hash(:sha256, token)) do
+          segments = Map.new(s.segments, fn {sid, seg} -> {sid, Segment.leave(seg, id)} end)
+
+          {:reply, :ok,
+           persist(
+             s
+             |> remember_island(id)
+             |> Map.put(:segments, segments)
+             |> Map.put(:islands, Map.delete(s.islands, id))
+           )}
+        else
+          {:reply, {:error, :unauthorized}, s}
+        end
+
+      _ ->
+        {:reply, {:error, :unauthorized}, s}
+    end
   end
 
   def handle_call({:island_info, id}, _from, s) do
@@ -772,7 +809,13 @@ defmodule Coordinator.Queue do
             shared_address: shared_address?()
           }
 
-          Garden.view(g, garden_segs(s, g), s.islands, now(), env)
+          Garden.view(
+            g,
+            garden_segs(s, g),
+            Map.merge(Map.get(s, :historical_islands, %{}), s.islands),
+            now(),
+            env
+          )
       end
 
     {:reply, view, s}
@@ -1249,6 +1292,18 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:segment, id}, _from, s), do: {:reply, s.segments[id], s}
+
+  def handle_call({:download_segment, id}, _from, s) do
+    seg = s.segments[id]
+
+    visible =
+      seg != nil and
+        (s.gardens[seg.experiment] == nil or
+           Application.get_env(:coordinator, :garden_scheduling, true))
+
+    {:reply, if(visible, do: seg), s}
+  end
+
   def handle_call(:data_dir, _from, s), do: {:reply, s.dir, s}
 
   # ---- gardens (see the moduledoc) ----
@@ -1699,6 +1754,12 @@ defmodule Coordinator.Queue do
   defp release_gardens(%{gardens: gardens} = s, _now) when map_size(gardens) == 0, do: s
 
   defp release_gardens(s, now) do
+    if Application.get_env(:coordinator, :garden_scheduling, true),
+      do: release_enabled_gardens(s, now),
+      else: s
+  end
+
+  defp release_enabled_gardens(s, now) do
     gardens =
       Map.new(s.gardens, fn {name, g} ->
         newest = Garden.newest_released(g)
@@ -1721,10 +1782,12 @@ defmodule Coordinator.Queue do
   # With `:garden_island_token` configured, a garden's days (to run or to
   # replay) go only to islands that joined showing it; anything else is open.
   defp garden_island?(s, seg, island) do
-    case {s.gardens[seg.experiment], Application.get_env(:coordinator, :garden_island_token)} do
-      {nil, _} -> true
-      {_g, token} when not is_binary(token) or token == "" -> true
-      {_g, _token} -> get_in(s, [:islands, island, :garden]) == true
+    case {s.gardens[seg.experiment], Application.get_env(:coordinator, :garden_scheduling, true),
+          Application.get_env(:coordinator, :garden_island_token)} do
+      {nil, _, _} -> true
+      {_g, false, _} -> false
+      {_g, _, token} when not is_binary(token) or token == "" -> true
+      {_g, _, _token} -> get_in(s, [:islands, island, :garden]) == true
     end
   end
 
@@ -2966,7 +3029,26 @@ defmodule Coordinator.Queue do
   end
 
   defp host(_s, nil), do: "?"
-  defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter
+
+  defp host(s, id),
+    do:
+      (s.islands[id] || Map.get(Map.get(s, :historical_islands, %{}), id) || %{adapter: "?"}).adapter
+
+  # Preserve provenance without credentials or an active island row. Entries
+  # exist only for ids referenced by retained attempts, never idle join/leave.
+  # Optional key keeps existing snapshots readable without a schema migration.
+  defp remember_island(s, id) do
+    referenced =
+      Enum.any?(s.segments, fn {_, seg} -> Enum.any?(seg.attempts, &(&1.island == id)) end)
+
+    if referenced do
+      history = Map.get(s, :historical_islands, %{})
+      Map.put(s, :historical_islands, Map.put(history, id, Map.take(s.islands[id], [:adapter])))
+    else
+      s
+    end
+  end
+
   defp now, do: Coordinator.Clock.now()
   defp rand(n), do: Base.url_encode64(:crypto.strong_rand_bytes(n), padding: false)
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
@@ -2981,6 +3063,20 @@ defmodule Coordinator.Queue do
     do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
+    # Resetting downstream segments can discard attempts. Keep the adapter
+    # archive bounded by surviving history, including across restart.
+    history = Map.get(s, :historical_islands, %{})
+
+    s =
+      if map_size(history) == 0 do
+        s
+      else
+        referenced =
+          for {_, seg} <- s.segments, a <- seg.attempts, into: MapSet.new(), do: a.island
+
+        Map.put(s, :historical_islands, Map.take(history, MapSet.to_list(referenced)))
+      end
+
     path = Path.join(s.dir, "state.bin")
     tmp = path <> ".tmp"
     File.write!(tmp, :erlang.term_to_binary(Map.drop(s, persist_drops(s))))

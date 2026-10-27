@@ -42,7 +42,8 @@ describe("the built site", () => {
   });
 });
 
-const caddy = spawnSync("caddy", ["version"]).status === 0;
+const caddyBin = process.env.BL_CADDY_BIN || "caddy";
+const caddy = spawnSync(caddyBin, ["version"]).status === 0;
 
 describe.skipIf(!caddy)("served through deploy/Caddyfile", () => {
   let server: ChildProcess | undefined;
@@ -54,8 +55,10 @@ describe.skipIf(!caddy)("served through deploy/Caddyfile", () => {
     const config = readFileSync(repo("deploy/Caddyfile"), "utf8").replace(/^:80 \{/m, `:${port} {`).replace("root * /srv", `root * ${dir}`);
     if (!config.includes(`:${port} {`) || !config.includes(dir)) throw new Error("could not point the Caddyfile at the build");
     const file = join(dir, "..", `Caddyfile-${port}`);
-    writeFileSync(file, `{\n  admin off\n}\n${config}`);
-    server = spawn("caddy", ["run", "--config", file, "--adapter", "caddyfile"], { stdio: "ignore" });
+    // Caddy allows one global block: the Caddyfile opens with its own, so admin off goes inside it.
+    if (!config.startsWith("{\n")) throw new Error("the Caddyfile must open with its global block");
+    writeFileSync(file, config.replace(/^\{/, "{\n  admin off"));
+    server = spawn(caddyBin, ["run", "--config", file, "--adapter", "caddyfile"], { env: { ...process.env, BL_TRUSTED_PROXY_CIDRS: "" }, stdio: "ignore" });
     for (let i = 0; i < 100; i++) {
       try { await fetch(`${origin}/`); return; } catch { await new Promise((r) => setTimeout(r, 100)); }
     }

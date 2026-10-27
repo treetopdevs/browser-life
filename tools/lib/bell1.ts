@@ -720,21 +720,26 @@ export class PairScorer {
     }
     this.n++;
   }
-  results(): PairResult[] {
+  /**
+   * The pair results. `keep` (bell v2, docs/naturalist-bell-v2-2026-10-18.md) chooses the signals that feed D, signal, side and
+   * windowMax; the default keeps all thirteen, which is v1's rule unchanged. dBySignal always lists all thirteen signals, both sides.
+   */
+  results(keep: (signal: string) => boolean = () => true): PairResult[] {
     return this.twins.map((t) => {
       const dBySignal: PairResult["dBySignal"] = [];
       const windowMax: number[] = new Array(this.nWindows).fill(-Infinity);
       let D = 0, signal: string | null = null, side: "high" | "low" | null = null;
       for (let s = 0; s < NS; s++) {
+        const kept = keep(SIGNALS[s].name);
         for (let si = 0; si < 2; si++) {
           let d = 0;
           for (let w = 0; w < this.nWindows; w++) {
             const m = t.windowMin[(s * 2 + si) * this.nWindows + w];
-            if (m > windowMax[w]) windowMax[w] = m;
+            if (kept && m > windowMax[w]) windowMax[w] = m;
             if (m > d) d = m;
           }
           dBySignal.push({ signal: SIGNALS[s].name, side: SIDE_NAME[si], D: d });
-          if (d > D) {
+          if (kept && d > D) {
             D = d;
             signal = SIGNALS[s].name;
             side = SIDE_NAME[si];

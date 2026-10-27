@@ -522,10 +522,11 @@ describe("the island: ponds-v2 and no branches", () => {
   });
 
   it("refuses a task whose spec has a branch before fetching anything, and runs on no state", async () => {
-    const paths: string[] = [];
-    vi.stubGlobal("fetch", async (url: string) => {
+    const requests: [string, string][] = [];
+    const leaves: { island: string | null; authorization: string | null }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
       const path = new URL(url).pathname;
-      paths.push(path);
+      requests.push([init?.method ?? "GET", path]);
       const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
       if (path === "/api/islands") return json({ id: "isl", token: "tok" });
       if (path === "/api/next")
@@ -537,10 +538,15 @@ describe("the island: ponds-v2 and no branches", () => {
           startFrom: "seg-0",
           startHash: "0123456789abcdef",
         });
+      if (path === "/api/islands/isl" && init?.method === "DELETE") {
+        leaves.push({ island: new URL(url).searchParams.get("island"), authorization: new Headers(init.headers).get("authorization") });
+        return new Response(null, { status: 204 });
+      }
       throw new Error(`unexpected ${path}`);
     });
     await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host, maxTasks: 1 })).rejects.toThrow(/refusing hunt\/ponds-small\/pond-nat\/seed-1 #1: .*branch.*not distributed/);
-    // No predecessor fetch, heartbeat, rejection or completion: the task is left to its lease.
-    expect(paths).toEqual(["/api/islands", "/api/next"]);
+    // No predecessor fetch, heartbeat, rejection or completion; normal leave returns the lease.
+    expect(requests).toEqual([["POST", "/api/islands"], ["POST", "/api/next"], ["DELETE", "/api/islands/isl"]]);
+    expect(leaves).toEqual([{ island: "isl", authorization: "Bearer tok" }]);
   });
 });

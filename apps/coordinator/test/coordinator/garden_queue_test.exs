@@ -41,6 +41,29 @@ defmodule Coordinator.GardenQueueTest do
     %{dir: dir}
   end
 
+  test "leave keeps garden device and verification provenance after restart", %{dir: dir} do
+    {:ok, _} = Queue.create_garden(params())
+    {:ok, a} = Queue.join(%{"adapter" => "producer"})
+    {:ok, b} = Queue.join(%{"adapter" => "verifier"})
+    task = next(a.id)
+    finish(dir, a.id, task)
+    verify = next(b.id)
+
+    assert {:ok, "verified"} =
+             Queue.complete(verify.segment.id, b.id, verify.lease, "verify", dg(0), %{})
+
+    before = Queue.garden_view("g1")
+    assert :ok = Queue.leave(a.id, a.token)
+    assert :ok = Queue.leave(b.id, b.token)
+    stop_supervised!(Queue)
+    start_supervised!({Queue, data_dir: dir})
+    after_leave = Queue.garden_view("g1")
+    assert after_leave.verification == before.verification
+    assert after_leave.tending.deviceTypesEver == before.tending.deviceTypesEver
+    assert after_leave.tending.deviceTypesEver == 2
+    assert after_leave.tending.activeNow == 0
+  end
+
   # ---- helpers ----
 
   defp params(over \\ %{}) do
@@ -121,6 +144,34 @@ defmodule Coordinator.GardenQueueTest do
   defp view, do: Queue.garden_view("g1")
 
   # ---- creation ----
+
+  test "disabled scheduling withholds existing garden work and resumes when enabled", %{dir: dir} do
+    saved = Application.fetch_env(:coordinator, :garden_scheduling)
+
+    on_exit(fn ->
+      case saved do
+        {:ok, value} -> Application.put_env(:coordinator, :garden_scheduling, value)
+        :error -> Application.delete_env(:coordinator, :garden_scheduling)
+      end
+    end)
+
+    assert {:ok, 5} = Queue.create_garden(params())
+    island = join("scheduler-switch")
+    Application.put_env(:coordinator, :garden_scheduling, false)
+    assert %{kind: "idle"} = next(island)
+    Application.put_env(:coordinator, :garden_scheduling, true)
+    task = next(island)
+    assert task.kind == "run"
+    finish(dir, island, task)
+    verifier = join("scheduler-verifier")
+    Application.put_env(:coordinator, :garden_scheduling, false)
+    TestClock.advance(@day)
+    assert %{kind: "idle"} = next(verifier)
+    assert Queue.garden_view("g1").clock.releasedStep == @d
+    Application.put_env(:coordinator, :garden_scheduling, true)
+    assert %{kind: "verify"} = next(verifier)
+    assert Queue.garden_view("g1").clock.releasedStep == 2 * @d
+  end
 
   describe "create_garden/1" do
     test "builds the experiment underneath and the garden record; the founding is the schedule" do

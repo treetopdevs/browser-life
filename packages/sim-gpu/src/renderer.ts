@@ -4,7 +4,7 @@ import { sameLight, withLight, worldH, worldW, type LightParams } from "@bl/sche
 import { prelude } from "./shaders.ts";
 import type { GpuSim } from "./gpu-sim.ts";
 
-export const VIEW_MODES = ["composite", "lineage", "nutrient", "waste", "energy", "signal", "affinity", "light"] as const;
+export const VIEW_MODES = ["composite", "lineage", "nutrient", "waste", "energy", "signal", "affinity", "light", "membrane"] as const;
 export type GpuViewMode = (typeof VIEW_MODES)[number];
 
 export interface ViewRect {
@@ -77,6 +77,10 @@ fn fs(@builtin(position) pos: vec4f) -> @location(0) vec4f {
     case 7u: {
       // The light the physics uses at this step (the sun's mode, day and season), not a decoration.
       col = vec3f(1.0, 0.76, 0.24) * f32(light_at(x, y, view.step)) / 255.0;
+    }
+    case 8u: {
+      // Membrane quantity, including material outside living cells. Boost low amounts without a shell threshold.
+      col = vec3f(sqrt(sat(P, u)));
     }
     default: {
       let g = f32(U[i]) / 256.0;

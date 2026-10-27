@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlog Run Decisions</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1c1a;--muted:#6b6660;--line:#e3dfd7;--accent:#8a5a1f;--card:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15161a;--fg:#ebe8e2;--muted:#9a958c;--line:#2d2f36;--accent:#e0b070;--card:#1d1f25}}
+:root[data-theme="dark"]{--bg:#15161a;--fg:#ebe8e2;--muted:#9a958c;--line:#2d2f36;--accent:#e0b070;--card:#1d1f25}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+main{max-width:880px;margin:0 auto;padding:32px 16px}
+h1{font-size:28px;margin:0 0 4px}
+p.lead{color:var(--muted);margin:0 0 24px}
+article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:0 0 14px}
+article h2{font-size:17px;margin:0 0 6px}
+article h2 span{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:8px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:8px 0 0}
+dt{color:var(--muted)}dd{margin:0}
+code{font-size:14px;background:var(--line);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:12px 0 24px}
+td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;font-size:15px}
+@media (max-width:600px){dl{grid-template-columns:1fr}dt{margin-top:6px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Backlog Run Decisions</h1>
+<p class="lead">Running record of every non-trivial decision made while the coordinator session drove the browser-life (Cadence Garden) backlog toward working prototypes of every app, starting 2026-10-17 from main <code>3f04d79</code>. Each slice runs in its own session and worktree cut from the latest main, plans, implements and reviews itself with a workflow, then commits, opens a PR with Auto-fix on, and gets a Codex Sol 6.1 xhigh adversarial review before merge.</p>
+
+<h2 id="slices">Slices</h2>
+<div class="scroll">
+<table id="slice-table">
+<thead><tr><th>#</th><th>Slice</th><th>Branch / PR</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr id="s1"><td>1</td><td>Naturalist anomaly bell (code only, null false-alarm rates)</td><td><code>claude/slice1-anomaly-bell-abb20e</code> / <a href="https://github.com/treetopdevs/browser-life/pull/19">#19</a></td><td>Merged as <code>712eebb</code> (exact tip <code>5c471e5</code>). Reading: rings on drift at Z = 4, W = 50 (30 of 70 neutral); the calibrated per-preset thresholds held out of sample (1 of 30 neutral). Two Sol xhigh passes, the second clean.</td></tr>
+<tr id="s2"><td>2</td><td>Shared-garden coordinator: paced release, public garden contract, letter queue</td><td><code>claude/slice2-garden-coordinator-a53df3</code> / <a href="https://github.com/treetopdevs/browser-life/pull/21">#21</a></td><td>Merged as <code>f178aca</code> at 21:54 UTC. Contract <code>garden-v1</code> frozen in its first commit (README section plus <code>garden-contract.example.json</code>, with a drift test). Three Sol xhigh passes, no P0 or P1. Deferred: stitching garden segments (now slice 6).</td></tr>
+<tr id="s3"><td>3</td><td>Pond keeper 0b: firsts log, session card, replayable manifest</td><td><code>claude/slice3-pond-keeper-b0cc96</code> / <a href="https://github.com/treetopdevs/browser-life/pull/20">#20</a></td><td>Merged as <code>2b4e842</code> at 21:55 UTC. Firsts log, session card and a replayable session file. Three Sol passes. Follow-up noted: persist the rewind log as a sidecar.</td></tr>
+<tr id="s4"><td>4</td><td>Naturalist field notebook: bell rings as HTML field notes with receipts</td><td><code>claude/slice4-naturalist-notebook</code> / <a href="https://github.com/treetopdevs/browser-life/pull/24">#24</a></td><td>Merged as <code>4339fa3</code> (exact tip <code>fa8967d</code>). It reproduces the record's D exactly on all 70 envelope runs. Three Sol passes: P0s fixed after pass 2, and the five P2s from pass 3 fixed with tests (D-13).</td></tr>
+<tr id="s5"><td>5</td><td>Shared garden page on the <code>garden-v1</code> contract</td><td><code>claude/slice5-garden-page</code> / <a href="https://github.com/treetopdevs/browser-life/pull/27">#27</a></td><td>Merged as <code>0a1179b</code> (exact tip <code>ec4f9e4</code>). An unlinked <code>/garden/</code> page with noindex, built on <code>garden-v1</code>, with a mock mode in dev only. Three Sol xhigh passes: a P0 in pass 2 (the wrong day named when the 14-day list hides older days) was fixed. Pass 3 found two P2s and one P3, left as known limits (D-15).</td></tr>
+<tr id="s6"><td>6</td><td>Stitch garden segments (per-segment intervention lists)</td><td><code>claude/slice6-garden-stitch</code> / <a href="https://github.com/treetopdevs/browser-life/pull/26">#26</a></td><td>Merged as <code>d683ad9</code> (exact tip <code>4d5aba6</code>). Garden mode in <code>stitchRun</code>: each day is checked against its own list, the past must agree, and only the verified prefix is exported. GPU check: a three-day stitch equals the continuous run byte for byte. Sol High then xhigh; P1s fixed, no P0/P1 left. The coordinator checked <code>mix format</code> and compile on the moduledoc change.</td></tr>
+<tr id="s7"><td>7</td><td>Release checks: status exposure, detailed status auth, join abuse limits, canonical URLs and sitemap</td><td><code>claude/slice7-release-checks</code> / <a href="https://github.com/treetopdevs/browser-life/pull/28">#28</a></td><td>Merged as <code>9b8af96</code> (exact tip <code>b35dc5b</code>). Island limiter, body limits, a cached public status, CORS boot checks and a public-routes e2e spec. Three Sol xhigh passes; pass 3 found two P2s (a cold-cache stampede and loose CORS origin parsing), both fixed. Of CodeRabbit's three comments, two were fixed; the third (a <code>%zz</code> path giving a 500) does not reproduce on Elixir 1.15 to 1.20 and is pinned by a test. <code>mix precommit</code> passed 348 tests.</td></tr>
+<tr id="s8"><td>8</td><td>Lineage dossiers for pond-cycle runner bundles</td><td><code>claude/slice8-lineage-ponds</code> / <a href="https://github.com/treetopdevs/browser-life/pull/29">#29</a></td><td>Merged as <code>f8214b3</code> (exact tip <code>1fcf5ea</code>). Genotype and pond dossiers now read pond-cycle runner bundles. Descent across a boundary is walked through the run&rsquo;s own <code>ponds.tsv</code>. Four real GPU runs: 465 of 465 walks exact. Sol pass 1 had 2 P1s and pass 2 only P2s, all fixed with tests.</td></tr>
+<tr id="s9"><td>9</td><td>Garden end to end: local dev loop and an integration check from founding to stitched bundle</td><td><code>claude/slice9-garden-e2e</code> / <a href="https://github.com/treetopdevs/browser-life/pull/30">#30</a></td><td>Merged as <code>3901c21</code> (exact tip <code>cfc0efb</code>). <code>bin/garden-dev</code>, a 36-check Deno end-to-end run (founding through a stitched bundle equal to an unsegmented run) and a launcher smoke test. Seven Sol xhigh passes. After merging main (a <code>dev.exs</code> conflict with #28, both settings kept), the e2e passed again: 36 of 36 in 68.9 s. Open for a later slice: islands cannot send a garden token, a fork checkpoint can 404 for 2 s, and nothing pins that production refuses <code>spots</code>.</td></tr>
+<tr id="s10"><td>10</td><td>Journal update for 17 and 18 Oct (what landed, in DESIGN.md's label vocabulary)</td><td><code>claude/slice10-journal</code> / <a href="https://github.com/treetopdevs/browser-life/pull/32">#32</a></td><td>Merged as <code>c673b76</code> (exact tip <code>cba180b</code>). It adds one evidence card, "An anomaly bell" (labelled Negative, because the bell rings on drift), and six log lines for 17 Oct. Each line says what is not deployed or not open.</td></tr>
+<tr id="s11"><td>11</td><td>Archipelago runs and verifies bred (breed-arm) pond worlds</td><td><code>claude/slice11-archipelago-breed</code> / <a href="https://github.com/treetopdevs/browser-life/pull/33">#33</a></td><td>Merged as <code>7ceb580</code> (exact tip <code>e235e1a</code>). Adds the <code>breed-v1</code> capability, the <code>breeder</code> preset and all 21 breeder conditions; breed segments run only on capable islands. Donor choices are verified through <code>ponds.tsv</code>, and stitching refuses tampered donors or a manifest with an injected score. Three Sol passes: pass 1 found two P0s, fixed; pass 3 said "SHIP". The coordinator merged main in and reran the garden e2e (36 of 36) and <code>garden_export</code>. Known: exports older than <code>pondArm</code> are moved aside (none exist under <code>runs/</code>).</td></tr>
+<tr id="s12"><td>12</td><td>Naturalist proposer v0: rule-based run-spec proposals behind a yes gate, plus a random-fork baseline</td><td><code>claude/slice12-naturalist-proposer</code> / <a href="https://github.com/treetopdevs/browser-life/pull/34">#34</a></td><td>Merged as <code>c16b5a6</code>. <code>tools/propose.ts</code> (propose, baseline, approve <code>--by</code>, run) with a 26-row rules table fixed before code, jar-disc probes and replay controls, and a seeded random-fork baseline. An additive <code>tools/run.ts --start-from/--start-step</code>. A GPU smoke ran on synthetic notes. No real proposal has been approved or run. Six Sol xhigh passes: pass 2 found two P0s (the approve guard and an edited runId), fixed; the later passes fixed path-folding issues. The coordinator merged main in and reran the tests: 173 of 173.</td></tr>
+<tr id="s13"><td>13</td><td>Public site accessibility pass: axe over every route in both themes, keyboard, reduced motion, missing-GPU wording</td><td><code>claude/slice13-public-a11y</code> / <a href="https://github.com/treetopdevs/browser-life/pull/36">#36</a></td><td>Merged as <code>275796c</code>. <code>@axe-core/playwright</code> 4.13.0 (pinned) runs over every public route, <code>/garden/</code> and <code>/island.html</code>, at 1280 and 375 px, day and night. Also checks: keyboard laps, the focus ring&rsquo;s contrast and that it is not hidden under the sticky header, a modal dialog, reduced motion, and no WebGPU (both <code>--disable-gpu</code> and <code>navigator.gpu</code> removed). The sticky header was hiding focus, fixed with <code>scroll-padding-top</code>. Four Sol xhigh passes; a P0 on dark focus contrast was fixed. Lab-only issues are excluded with reasons until #31 lands. No 404 page yet, so slice 19.</td></tr>
+<tr id="s14"><td>14</td><td>Clade and genotype measures from <code>mutations.tsv</code> (TMRCA, sweeps, clade turnover) with a neutral null check stated beforehand</td><td><code>claude/slice14-clade-measures</code> / <a href="https://github.com/treetopdevs/browser-life/pull/37">#37</a></td><td>Merged as <code>79bc666</code>. Result: <b>no clade measure is eligible</b> under the rules fixed beforehand (130 runs). TMRCA95: effect 0.34 on gradient, 16 of 70 neutral flagged. Mutant sweeps: 0.18, 40 of 70. Gross replacement: effect 0.00 on gradient. In gradient-m3, neutral runs drift faster than treatment runs, and the spots neutral runs are degenerate, so a null matched on population size and lineage structure is needed. Three Sol xhigh passes, no P0 or P1, and the readout was unchanged by every fix. The coordinator changed <code>--base</code> to default to <code>runs</code> instead of a home-directory path.</td></tr>
+<tr id="s15"><td>15</td><td>Garden hardening: islands can carry the garden token, fresh fork checkpoints never 404, a test pins that prod refuses dev presets</td><td><code>claude/slice15-garden-hardening</code> / <a href="https://github.com/treetopdevs/browser-life/pull/35">#35</a></td><td>Merged as <code>bde5978</code>. Islands carry an optional garden token: in the join body only, never persisted, sent from the page only to its own origin, and with redirects refused. Verifying a day invalidates the checkpoint cache, so a fresh fork never 404s. A test pins that prod refuses <code>spots</code>. Five Sol xhigh passes: P0s about the token being reflected or leaked were fixed. The coordinator accepted the app-wide <code>token</code> log filter (D-23) and fixed a stale launcher comment. Follow-up: <code>join</code> also accepts <code>?gardenToken=</code> in a query string.</td></tr>
+<tr id="s16"><td>16</td><td>Operator dashboard: gardens, bred runs, limits and failures in the token-gated page</td><td><code>claude/slice16-ops-dashboard</code> / <a href="https://github.com/treetopdevs/browser-life/pull/39">#39</a></td><td>Merged as <code>79e7cbe</code>. The operator page was rewritten (textContent only, token kept in memory, keeper actions as curl lines checked against the name rules). Two keys were added to the admin <code>/api/status</code>: <code>limits</code> and <code>capabilityNeeds</code>, the latter held to <code>Queue.next_task</code> by an agreement test. Four Sol passes: P1s fixed, none open. 372 ExUnit tests and 17 Playwright tests pass. Follow-ups, now slice 22: the limiter crashes on a bad window, a query-string garden token, and capabilities that are not stored.</td></tr>
+<tr id="s17"><td>17</td><td>Evolution game playtest kit: protocol, script and readout, with criteria fixed before any session</td><td><code>claude/slice17-playtest-kit</code> / <a href="https://github.com/treetopdevs/browser-life/pull/38">#38</a></td><td>Merged as <code>43d3df6</code>. <code>docs/playtest-kit-2026-10-18.md</code>: setup on a local dev server (cadence.garden has no v1 yet), a neutral 30-minute script, three tasks, an observation sheet, a questionnaire, a verdict table fixed before any session (its section 6 hash recorded) that maps each result to a next-build row, consent, and a readout template. Every UI string was checked in a Playwright walkthrough. Three Sol passes, one P1 fixed.</td></tr>
+<tr id="s18"><td>18</td><td>Garden: collective food letters (a feed lands only when enough visitors ask in one day)</td><td><code>claude/slice18-garden-food</code> / <a href="https://github.com/treetopdevs/browser-life/pull/41">#41</a></td><td>Merged as <code>f862bc2</code>. Collective food:
+<ul>
+<li>Off by default; a keeper turns it on at founding.</li>
+<li>The K-th distinct network (IPv4, or IPv6 /48) to ask within one dawn calls a feed at the world centre on the frontier day.</li>
+<li>Spacing: at least N days between foods.</li>
+<li>Bounded so MATTER_MAX holds; checked at founding.</li>
+<li>A notice window gives the keeper a veto before the day goes out.</li>
+<li>Hands are kept only as salted hashes in memory.</li>
+<li><code>sharedAddress</code> discloses the proxy problem (D-17).</li>
+</ul>
+The change to garden-v1 is additive. Sol pass 3 found no P0, P1 or P2. On the merged tree: 414 ExUnit tests, and the garden e2e passed 45 of 45. Turning food on for the commons is the user's call.</td></tr>
+<tr id="s19"><td>19</td><td>A real 404 page, served with status 404 by Caddy and by the dev server</td><td><code>claude/slice19-not-found</code> / <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a></td><td>Merged as <code>0af3216</code>. Adds <code>apps/lab/404.html</code> (noindex) and a Caddy <code>handle_errors</code> block that serves it with 404 for unknown site paths only. <code>/api</code> and <code>/healthz</code> are untouched, and a miss never gets the immutable cache header. Vite now uses <code>appType: mpa</code> plus a not-found plugin, so dev and preview answer 404 too. A Caddy spec runs the real Caddyfile locally. Three Sol xhigh passes, no P0 or P1. Before merging, the coordinator ran the lab specs and the garden spec on the merged tree. Not deployed.</td></tr>
+<tr id="s20"><td>20</td><td>Lineage report: draw the pond route (crossings named or not excluded, gaps) in the HTML panel</td><td><code>claude/slice20-lineage-route-panel</code> / <a href="https://github.com/treetopdevs/browser-life/pull/44">#44</a></td><td>Merged as <code>ba2741e</code>. The lineage HTML panel draws the pond route: lanes per pond and cycle ticks; filled, hollow and dashed marks with words for named, not excluded and not recorded; picker labels; a legend; a text table with the same data. The contract is additive (dossierVersion stays 1). Four Sol xhigh passes; every real P0, P1 and P2 was fixed with mutation-checked tests. The coordinator reran 275 of 275 on the merged tree.</td></tr>
+<tr id="s21"><td>21</td><td>Islands stop cleanly: an AbortSignal through runIsland, its requests and its GPU work</td><td><code>claude/slice21-island-cancel</code> / <a href="https://github.com/treetopdevs/browser-life/pull/43">#43</a></td><td>Merged as <code>fb102a0</code>. An AbortSignal now runs through <code>runIsland</code>: its fetches, the chunk loop in <code>runExperiment</code> (checked at chunk boundaries), uploads, heartbeats and GPU teardown. A stopped task sends nothing and is given back when its lease lapses. Complete, reject and fail are never torn. <code>tools/island.ts</code> exits 130 on SIGINT and 143 on SIGTERM, and a second signal exits at once. Three Sol xhigh passes, no P0; the pass-1 P1s were fixed. A Deno GPU check passes. The coordinator reran the island tests (88 of 88) and typecheck on the merged tree.</td></tr>
+<tr id="s1b"><td>1b</td><td>Bell v1 (the slice 1 session, after D-25): plan and code, 120 local runs, readouts A and B</td><td><a href="https://github.com/treetopdevs/browser-life/pull/22">#22</a>, <a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a></td><td>Merged by the slice 1 session as <code>0cbc0506</code> and <code>7df16912</code>. A (exploratory): quiet on fresh drift, 0 of 70 neutral runs ring on 11 signals, treatment 10 of 10. B: did not meet the exploratory bar (lesion and feed twins above Z*_pair on 4 of 10 seeds). Part C's paid model calls have <b>not</b> run and need the user's yes.</td></tr>
+<tr id="s22"><td>22</td><td>Coordinator hardening: limiter config validated at boot, no garden token in query strings, island capabilities kept for operators</td><td><code>claude/slice22-coordinator-hardening</code> / <a href="https://github.com/treetopdevs/browser-life/pull/45">#45</a></td><td>Merged as <code>676f011</code>. Three changes:
+<ul>
+<li><code>Coordinator.ConfigCheck</code> refuses bad numeric limits at boot, naming the key. A scan test fails when a new config key is neither checked nor reviewed.</li>
+<li>A <code>gardenToken</code> in the join query is refused with a 400 and never echoed.</li>
+<li>Island capabilities are stored on <code>/next</code>, bounded and cleaned, persisted additively, admin-only, and never used for gating. The operator page shows them.</li>
+</ul>
+Three Sol xhigh passes, no P0 or P1. After main was merged in, two scan tests caught the food keys #41 had added. A worker classified them (four food keys plus the sweep and timeout keys are now checked at boot), and <code>mix precommit</code> passed 454 tests with 0 failures.</td></tr>
+<tr id="s3b"><td>3b</td><td>Pond keeper v1 and v2 (the slice 3 session): pressure dial, auto-breed, keep a lineage, then a family tree and pond firsts</td><td><a href="https://github.com/treetopdevs/browser-life/pull/25">#25</a>, <a href="https://github.com/treetopdevs/browser-life/pull/31">#31</a></td><td>Merged by the slice 3 session: #25 as <code>39f946a</code>, and #31 as <code>6d22801</code> after D-25 (main merged in, all gates rerun). This frees <code>apps/lab/src</code> for the lab accessibility fixes and the live naturalist.</td></tr>
+<tr id="s23"><td>23</td><td>Lab accessibility: clear the lab-only exclusions #36 held for #31, plus Pond keeper v2's UI</td><td><code>claude/slice23-lab-a11y</code> / <a href="https://github.com/treetopdevs/browser-life/pull/46">#46</a></td><td>Merged as <code>f34c460</code>. Every LAB_HELD exclusion is gone, each with its fix:
+<ul>
+<li>the skip link is now the first Tab (an initial <code>scrollIntoView</code> had moved focus);</li>
+<li><code>#pools</code> is a labelled <code>img</code>;</li>
+<li>the dialog buttons have valid ARIA;</li>
+<li>contrast fixed with tokens;</li>
+<li>header order follows the drawn order at every width;</li>
+<li>reduced motion on the full-screen fade;</li>
+<li>the Session card body is focusable.</li>
+</ul>
+Adds Pond keeper, Session card and header checks. Three Sol passes, no P0 or P1. After the merge conflict with #42 was resolved: 96 passed, 8 skipped (no build) in Chrome.</td></tr>
+<tr id="s24"><td>24</td><td>Proposer bench v0: rules fixed before running, a dose-matched baseline, a launcher and a dry run; no runs without a person's batch approval</td><td><code>claude/slice24-proposer-bench</code> / <a href="https://github.com/treetopdevs/browser-life/pull/49">#49</a></td><td>Merged as <code>5bed5f3</code>. <code>tools/bench.ts</code> has five commands: plan, dry-run, approve <code>--by</code>, run and score. Rules were fixed beforehand:
+<ul>
+<li>ten gradient-m3 treatment sources;</li>
+<li>one proposal each, against three count-matched and three dose-matched random forks;</li>
+<li>scored with bell v1&rsquo;s PairScorer;</li>
+<li>a paired sign test, where rules win at 9 of 10.</li>
+</ul>
+The committed plan dry-runs to 70 forks and 2.68M steps. Three Sol passes. The coordinator added <code>--no-lock</code> to the child denos (#47 guard). <b>Not approved and not run</b>; that is the user&rsquo;s call.</td></tr>
+<tr id="s25"><td>25</td><td>Test hygiene for parallel worktrees: a configurable e2e port, no hardcoded origins, no <code>deno.lock</code> churn from tests</td><td><code>claude/slice25-test-hygiene</code> / <a href="https://github.com/treetopdevs/browser-life/pull/47">#47</a></td><td>Merged as <code>572e7d5</code>. <code>BL_E2E_PORT</code> sets the e2e port; a bad value throws, and strictPort stays with no reuse. The garden spec derives its origin from <code>baseURL</code>. Every deno that a test spawns uses <code>--no-lock</code>, and a guard test enforces it. <code>deno.lock</code> was updated on purpose for the axe-core dependency. After main was merged in, one operator-page test failed, and it fails the same way on main (D-29).</td></tr>
+<tr id="s26"><td>26</td><td>Garden: the stone horizon test on the big storm (how long a stone lasts), rules fixed before running</td><td><code>claude/slice26-stone-horizon</code> / <a href="https://github.com/treetopdevs/browser-life/pull/55">#55</a></td><td>Merged. The stone horizon test, with rules fixed first. The world was <code>wild-storm-large</code> with the garden&rsquo;s founding feed, using seeds 1, 3 and 4 (seed 2 died and was replaced by rule), with checkpoints at the ends of days 0 to 2. That gave 27 valid pairs, and every no-stone control showed exactly zero difference. It ran in 3 h 48 min of a 6 h cap.
+<ul>
+<li>R=8: median horizon 97,279 steps, so the prediction of under about 13,000 <b>fails</b>.</li>
+<li>R=32: 26,623 steps, a mark with no lasting effect.</li>
+<li>R=64: 35,839 steps.</li>
+</ul>
+The pace rule leaves the garden day at one wander, and the sun is the first letter. Caveat stated in the note: the jar diverges almost at once, so late horizons compare two saturated values. The verdicts are rule outcomes, not findings about legibility, and a null-stone control is still owed. No garden setting changed.</td></tr>
+<tr id="s27"><td>27</td><td>Live naturalist in the lab: field notes beside a running world, at the calibrated thresholds only</td><td><code>claude/slice27-live-naturalist</code> / <a href="https://github.com/treetopdevs/browser-life/pull/52">#52</a></td><td>Merged. The lab&rsquo;s Field notes panel rings only at the calibrated rule fixed in advance for each preset: bell v1 part A on gradient-m3 (0 of 70 fresh neutral runs rang), v0&rsquo;s held-out Z* on spots-m3.
+<ul>
+<li>Each preset scores against a neutral baseline asset built deterministically from the corpus, with SHA-256 pinned.</li>
+<li>Matching worlds only. Other worlds show no baseline. After the first wound, feed or drain, notes stop.</li>
+<li>Old worlds can&rsquo;t leak notes: runs, rewinds and failures are each tracked.</li>
+<li>The panel first says that a ring means the world&rsquo;s kind differs from neutral (Measured).</li>
+</ul>
+Four Sol passes; a P0 (a header that could change the threshold) was fixed. On the merged tree: 306 vitest and 127 Chrome tests pass.</td></tr>
+<tr id="s25b"><td>25b</td><td>Fix: an operator-page e2e regression on main ("operations details clear after authentication and network failures")</td><td><code>claude/fix-ops-page-regression</code> / <a href="https://github.com/treetopdevs/browser-life/pull/48">#48</a></td><td>Merged. The root cause was a stale spec, not a page fault. #39 deliberately keeps the last view, dimmed, after a network failure, and a 401 still clears everything. The old spec also checked <code>#counts</code>, renamed to <code>#totals</code>, so it could never fail. The spec now checks the dimmed view, and on a 401 requires every data container in <code>#data</code> to be empty. Five deliberate breakages each made it fail. Sol xhigh found no P0 or P1 and no privacy fault.</td></tr>
+<tr id="s28"><td>28</td><td>Small follow-ups: picker names in pond routes, focus-ring opacity in the a11y check, child denos in tests/deno, food ranges checked at boot</td><td><code>claude/slice28-small-fixes</code> / <a href="https://github.com/treetopdevs/browser-life/pull/50">#50</a></td><td>Merged. Four fixes:
+<ul>
+<li><code>tallyPickers</code> counts with a Map in both pond-route tallies.</li>
+<li>The ring check composites opacity, as the text check already did.</li>
+<li><code>mix phx.server</code> children get a no-lock deno shim, and the guard is extended to catch a missing one.</li>
+<li>The food ranges live in one table, <code>ConfigCheck.food_range/1</code>, used at boot and by <code>garden_spec</code>.</li>
+</ul>
+Three Sol passes, and P1 and P2 findings were fixed. On the merged tree: 457 ExUnit tests and 45 vitest tests pass.</td></tr>
+<tr id="s29"><td>29</td><td>Garden game: dawn predictions with free receipts (which lineage leads after the next day), from verified data only</td><td><code>claude/slice29-dawn-predictions</code> / <a href="https://github.com/treetopdevs/browser-life/pull/51">#51</a></td><td>Merged as <code>dee7a8d</code>. The game asks visitors which <em>line</em> holds the field after the next day: one of yesterday&rsquo;s top three, or the rest. Predicting exact keys was dead, because 0 of 30 day pairs on local storm runs kept a top-three key. Leaders are computed off the Queue, and only once the verified day&rsquo;s observation files match the replay (<code>lineages.tsv</code> and <code>mutations.tsv</code>). Receipts stay on the device; there is no route for predictions. Five Sol passes, no P0 or P1 left. On the merged tree: 485 ExUnit tests, garden e2e 50 of 50, and 52 Chrome tests passed.</td></tr>
+<tr id="s30"><td>30</td><td>Journal: 18 Oct, everything landed since #32, in DESIGN.md&rsquo;s vocabulary, nothing implied live</td><td><code>claude/slice30-journal-18oct</code> / <a href="https://github.com/treetopdevs/browser-life/pull/54">#54</a></td><td>Merged as <code>18f0626</code>. Three new evidence cards: "A quieter bell" (Measured), "Can the bell hear a wound?" (Negative) and the clade measures (Negative). Plus 18 Oct log lines for the proposer and bench (not run), accessibility and the 404 page, the archipelago work, the garden (food off by default, dawn predictions, no garden planted) and Pond keeper v2. Each line says where the work lives; nothing is deployed. The coordinator added one line for #52 (Field notes), which merged after the branch was cut. 94 public-site and a11y tests pass.</td></tr>
+<tr id="s31"><td>31</td><td>Refresh the Worlds catalogue notes with this run&rsquo;s results</td><td><code>slice31-world-notes</code> (session) / <a href="https://github.com/treetopdevs/browser-life/pull/53">#53</a></td><td>Merged. The Worlds catalogue notes now carry the 17–18 Oct results in DESIGN.md&rsquo;s vocabulary. At the coordinator&rsquo;s request the storm note was amended to cite #55 with its caveat: the readings mostly compare two worlds that already differ almost everywhere, so how long a stone stays findable is unclear, and the no-stone control is still to run. On the merged tree: 304 vitest and 100 Chrome tests pass. Codex pass 3 found nothing.</td></tr>
+<tr id="s32"><td>32</td><td>Naturalist proposals in the lab: each field note offers the rule proposer&rsquo;s replayable follow-up, never run without a click</td><td><code>claude/slice32-lab-proposals</code> / <a href="https://github.com/treetopdevs/browser-life/pull/56">#56</a></td><td>Merged as <code>a7d73ff</code>. Each field note now shows the rule proposer&rsquo;s suggestion, built by importing the proposer&rsquo;s own table, with no copy of it:
+<ul>
+<li>the intervention, its prediction marked Not yet measured, and offline <code>run.ts</code>/<code>propose.ts</code> commands;</li>
+<li>a "Try it here" button that sends one logged hand edit, only on a click;</li>
+<li>notes stop after it, and the panel says so.</li>
+</ul>
+Three Sol passes, ending with one P3. On the merged tree: 431 vitest and 103 Chrome tests pass. Includes an optional <code>world</code> guard on lesion and feed messages (D-31).</td></tr>
+<tr id="s33"><td>33</td><td>Opening the shared garden: a readiness checklist and a founding script that dry-runs by default (nothing deployed or founded)</td><td><code>claude/slice33-garden-opening</code> / <a href="https://github.com/treetopdevs/browser-life/pull/57">#57</a></td><td>Merged as <code>5e7bda5</code>. <code>docs/garden-opening-2026-10-18.md</code> lists every decision and step to open the commons, each with a default and its evidence and marked Done only where a merged PR verified it: the proxy fix, the deploy, founding parameters, the island token, the keeper Mac, linking <code>/garden/</code> and the copy that implies, what the operator watches, the opening-day journal line, and rollback. <code>bin/garden-found</code> dry-runs by default; <code>--apply</code> needs the URL twice and a typed confirmation, which <code>--yes</code> skips. The token comes only from the environment. Smoke test: 84 passed. Five Sol passes, and the last found nothing. Nothing founded or deployed.</td></tr>
+<tr id="s34"><td>34</td><td>Stone horizon follow-up: a null-stone control and a finer census (rules fixed before running)</td><td><code>claude/slice34-null-stone</code> / <a href="https://github.com/treetopdevs/browser-life/pull/59">#59</a></td><td>Merged as <code>5ad9d8d</code>. A lesion that writes nothing (a null stone) matched its unstoned twin by <code>stateHash</code> at all 16 censuses, 7 of 7 times; no fully dead disc exists at R=64. A one-cell kick on a stale cell is the divergence control. By the rules fixed beforehand, R=8 and R=64 read as stone effects, and R=32 as a weak divergence clock, driven by days 2 and 3 only. In a finer census on day 1, a stone&rsquo;s gap is more than twice the kick&rsquo;s at R=8 and R=32, mixed at R=64. No garden setting changes. Three Sol passes, all P2s fixed.</td></tr>
+<tr id="s35"><td>35</td><td>Prototype status, 18 Oct: every app, what works, how to try it locally, what waits on the user</td><td><code>claude/slice35-prototype-status</code> / <a href="https://github.com/treetopdevs/browser-life/pull/58">#58</a></td><td>Merged. <code>docs/prototypes-2026-10-18.md</code> and an <code>.html</code> twin cover each app: what it is now, how to try it locally, what is not built, and what waits on the user. Each command is marked Ran, Read or Needs data, with its rules fixed before writing. Sourced from PR bodies and docs. Nothing is implied deployed. Docs only.</td></tr>
+<tr id="s36"><td>36</td><td>Lab fixes: a refused Feed on a pond world no longer reads as &ldquo;World stopped&rdquo; (#38&rsquo;s finding); the Pond keeper rewind log survives a reload as an OPFS sidecar (#20&rsquo;s follow-up)</td><td><code>claude/slice36-lab-fixes</code> / <a href="https://github.com/treetopdevs/browser-life/pull/61">#61</a></td><td>Merged as <code>edba1ec</code>. A <code>FeedRefusedError</code> is now a refusal: the lab shows a notice and the world keeps running, while real failures still stop it. The firsts and rewind log is saved as an OPFS sidecar <code>&lt;checkpoint&gt;.rewind</code>. It is written before the manifest and index list the checkpoint, under the records lock, and is safe against torn writes. A restore checks it, older checkpoints show "watching since", and delete and prune remove it. Checkpoint bytes and the observer digest are unchanged. Three Sol passes. On the merged tree: 336 vitest and 128 Chrome tests pass.</td></tr>
+<tr id="s37"><td>37</td><td>The sun letter: a logged, replayable change to the light for a span (headless, lab, garden), with no rule change; stops with a design note if it needs the peer-held kernel files</td><td><code>claude/slice37-sun-letter</code> / <a href="https://github.com/treetopdevs/browser-life/pull/62">#62</a></td><td>Merged as <code>6a7e608</code>.
+<ul>
+<li><b>The sun letter.</b> A logged, replayable dim or brighten (50, 75, 125 or 150%) of light base, amplitude and season for a span of steps.</li>
+<li><b>Coverage.</b> Wired through the runner, sim-ref (a <code>SunRefSim</code> subclass, <code>step.ts</code> untouched), sim-gpu (react-pipeline swap, shaders untouched), the renderer, the lab Sun tool, <code>tools/run.ts --sun</code>, and the garden letter kind behind capability <code>sun-v1</code>.</li>
+<li><b>Not built.</b> Shifting the sun needs kernel edits, which the design note lists.</li>
+<li><b>Review.</b> Sol pass 2 found a P0 and P1s; all were fixed and pass 3 said ship.</li>
+<li><b>Gates.</b> GPU golden 27 of 27 with every pin unchanged; <code>sun.ts</code> 71 of 71; mix 501 tests; garden e2e 50 of 50.</li>
+<li><b>Coordinator fix.</b> The keyboard spec now treats a radio group as one Tab stop and checks its name and arrow keys.</li>
+</ul></td></tr>
+<tr id="s38"><td>38</td><td>Garden opening-day copy, staged as a <b>draft</b> PR to merge only on opening day</td><td><code>claude/slice38-garden-opening-copy</code> / <a href="https://github.com/treetopdevs/browser-life/pull/60">#60</a> (draft)</td><td>A draft, left unmerged on purpose. It contains:
+<ul>
+<li>Nav: a "Shared garden" link after Worlds in every public page header.</li>
+<li><code>/garden/</code> indexed with a canonical, added to the sitemap, and a Caddy <code>redir</code> line.</li>
+<li>Copy written for opening day in privacy (including dawn-prediction receipts), status, participate, about, home and the storm note.</li>
+</ul>
+Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
+<tr id="s39"><td>39</td><td>Bell v2: bell v1&rsquo;s after-the-fact 11-signal twin reading tested on fresh seeds, rules fixed before running</td><td><code>claude/slice39-bell-v2</code> / <a href="https://github.com/treetopdevs/browser-life/pull/66">#66</a></td><td>Merged as <code>6351610</code>. <b>Negative: v1&rsquo;s after-the-fact rule did not replicate.</b> Fresh seeds 3901&ndash;3910, with twins forked from 190,000; all 10 shams were identical, and 70 of 70 jobs ran in 1.39 h of a 5 h cap. Z*&#8322; was 6.036. L96 was heard on 4 of 10 and F on 2 of 10, against a bar of 8; B3 was 0 of 10 against a bar of 2. At v1&rsquo;s threshold 2.58, L96 is heard on 10 of 10, but nudge2 on 3 of 10, so that threshold does not hold out. A disk-full failure on one base was logged before scoring and rerun once, as the rules allow. Sol xhigh agreed that Negative is the correct call. Raw ps lines are scrubbed from the records.</td></tr>
+<tr id="s40"><td>40</td><td>Garden meteor: a rare large stone that visitors call together (off by default)</td><td><code>claude/slice40-garden-meteor</code> / <a href="https://github.com/treetopdevs/browser-life/pull/64">#64</a></td><td>Merged as <code>8a9a9ce</code>. The meteor is a radius-64 lesion that K distinct networks call within one dawn period, with at most one per N days. It is off by default. Where it lands follows a fixed rule (a SHA-256 of the garden name, seed and meteor number), not a vote, and the page shows the next one&rsquo;s place in advance. When merged with the sun letter, the order within one step is stones, foods, suns, meteors; earlier schedules are unchanged, and a test pins the order. CodeRabbit&rsquo;s "every 1 days" wording was fixed for both meteor and food. On the merged tree: <code>mix</code> 541 tests, vitest 858, garden e2e 57, <code>sun.ts</code> 71, and 138 Chrome tests passed. The final Sol pass found nothing.</td></tr>
+<tr id="s40b"><td>40b</td><td>Security fix: the horizon tool recorded the full command lines of other processes in committed records</td><td><code>claude/fix-horizon-ps</code> / <a href="https://github.com/treetopdevs/browser-life/pull/63">#63</a></td><td>Merged as <code>96dd612</code>. A ps line now keeps only its pid, CPU, elapsed time and program name. Other lines have paths, KEY=value pairs and URLs redacted, and a record is scrubbed again on every rewrite. All 18 ps fields in <code>stone-null</code> were rewritten with every other field unchanged. <code>hunt1-ops/aws/finish.sh</code> had the same pattern and is fixed. Two Sol passes: the four P1s from pass 1 were fixed. Remaining local paths in <code>experiments/</code> are tool inputs that the tools read back.</td></tr>
+<tr id="s41"><td>41</td><td>Garden: a founding switch for sun letters (default on, so nothing changes), the stale "place and size" copy, and sun and meteor rows in the opening checklist</td><td><code>claude/slice41-sun-switch</code> / <a href="https://github.com/treetopdevs/browser-life/pull/65">#65</a></td><td>Merged as <code>52392fe</code>. Adds a founding key <code>sun</code> (default true; older gardens count as true). With it off, a sun letter gets a 422, "this garden takes no sun letters", and nothing is scheduled. The view shows <code>sun.enabled</code>, and the page hides the form when it is false. The copy is now true for stones, suns, food and meteors. The opening checklist and <code>bin/garden-found</code> now include sun and meteor. Three Sol passes, no findings. <code>mix</code> 552 tests, garden e2e 57, smoke test 87, 119 Chrome tests. Draft #60 stays mergeable.</td></tr>
+<tr id="s42"><td>42</td><td>Journal: what landed after #54 (#55 to #65, and bell v2 if merged)</td><td><code>claude/slice42-journal-19oct</code> / <a href="https://github.com/treetopdevs/browser-life/pull/67">#67</a></td><td>Merged as <code>c595c2b</code>. Two cards: "How long a stone stays findable" (Unclear, since the measure saturates) and "A stone against a nudge" (Measured). Log lines cover the proposals in the lab, the sun letter with its switch, the meteor (off), the opening kit and status page, and the lab fixes and catalogue notes. Bell v2 is left out because it is not merged. Nothing is implied live. A stale line in the storm note (&ldquo;control still to run&rdquo;) is being fixed separately.</td></tr>
+<tr id="s42b"><td>42b</td><td>Storm note: the "no-stone control still to run" line, now that #59 has run it</td><td><a href="https://github.com/treetopdevs/browser-life/pull/68">#68</a></td><td>Merged as <code>e40bca6</code>. It now cites the null-stone and nudge results with their caveats and "None of these readings is firm". 364 vitest and 14 Chrome tests pass. Draft #60 then conflicted, and a worker is resolving that while keeping it a draft.</td></tr>
+<!-- SLICE-ROWS -->
+</tbody>
+</table>
+</div>
+
+<h2 id="status">Where things stand (2026-10-19 03:30 UTC)</h2>
+<article><dl>
+<dt>Merged</dt><dd>PRs #19 to #68 on main, except #40 (this log) and #60 (a draft), plus the peer sessions&rsquo; #22, #23, #25 and #31. Nothing is deployed.</dd>
+<dt>Waiting on the user</dt><dd>
+<ul>
+<li><b>Deploy main</b> to cadence.garden.</li>
+<li><b>The Caddy proxy fix</b> and <code>BL_TRUST_FORWARDED_FOR=1</code> (D-17), before garden letters are open.</li>
+<li><b>Open the garden</b> with <code>docs/garden-opening-2026-10-18.md</code> and <code>bin/garden-found</code>. Choose sun on or off, food and meteor on or off, and the island token. Then merge draft #60.</li>
+<li><b>Approve and run the proposer bench</b> (#49, local GPU).</li>
+<li><b>Bell v1 part C:</b> its model calls cost money.</li>
+<li><b>The gene v2 peer session:</b> stalled, with uncommitted kernel edits.</li>
+<li><b>The playtest kit (#38):</b> run its three sessions with people.</li>
+</ul></dd>
+<dt>Open research leads</dt><dd>
+<ul>
+<li>Bell v2 is Negative, so a v3 needs a new idea, not a retune.</li>
+<li>Clade measures need a null matched on population size and lineage structure (#37).</li>
+<li>Shifting the sun needs kernel edits (sun note &sect;8).</li>
+</ul></dd>
+</dl></article>
+
+<h2 id="decisions">Decisions</h2>
+
+<article id="d1">
+<h2><span>D-01</span>Codex reviews run at xhigh for this run</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17, before slice 1</dd>
+<dt>Context</dt><dd>CLAUDE.md and memory say Sol 6.1 at High. The user's request for this run says "codex sol 6.1 xhigh adversarial reviews".</dd>
+<dt>Decision</dt><dd>Every slice runs <code>codex exec -m gpt-6.1-sol -c model_reasoning_effort=xhigh -s read-only</code> with an adversarial prompt before its PR is opened and again on the final diff if the fixes were non-trivial. The standing High rule is unchanged outside this run.</dd>
+<dt>Why</dt><dd>The latest instruction from the user for this run is the more specific one.</dd>
+</dl>
+</article>
+<article id="d2">
+<h2><span>D-02</span>Slices are separate sessions, each running its own workflow; at most three at once</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17, before slice 1</dd>
+<dt>Context</dt><dd>Usage at start: 5-hour window 17% (resets 00:20 UTC), weekly all-models 5%. A peer browser-life session ("Workflow progress planning") is running gene v2 arm runs on the GPU, and earlier sessions recorded load averages near 285 on this Mac.</dd>
+<dt>Decision</dt><dd>The coordinator starts one session per slice (own worktree from the latest <code>origin/main</code>), each running a plan → implement → review workflow. Up to three slices run at once, on disjoint files, and at most one of them may need the GPU at a time.</dd>
+<dt>Why</dt><dd>Parallel slices spend the reset budget faster; the cap keeps test runs from timing out on a loaded machine and keeps GPU goldens honest.</dd>
+</dl>
+</article>
+<article id="d3">
+<h2><span>D-03</span>The evolution-game gene line is left to its peer session</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17, before slice 1</dd>
+<dt>Context</dt><dd>Session "Workflow progress planning" (worktree <code>workflow-progress-planning-7d159f</code>) is mid-way through gene v2 (arm runs and a review-fix workflow).</dd>
+<dt>Decision</dt><dd>No slice in this run touches the files that session has in flight (checked with <code>git diff --stat origin/main</code> in its worktree at 20:10 UTC): <code>docs/evolution-game-brainstorm-2026-10-16.md</code>, <code>docs/rules.md</code>, <code>packages/schema/src/config.ts</code>, <code>packages/sim-gpu/src/golden.ts</code>, <code>packages/sim-gpu/src/shaders.ts</code>, <code>packages/sim-ref/src/step.ts</code>, <code>packages/sim-ref/test/genes.test.ts</code>, <code>packages/sim-ref/test/golden-hashes.test.ts</code>. No slice changes dynamics or pins until it lands. Its GPU arm runs also mean no slice uses the GPU for long runs meanwhile.</dd>
+<dt>Why</dt><dd>Two writers on one line would conflict and could sweep each other's edits.</dd>
+</dl>
+</article>
+<article id="d4">
+<h2><span>D-04</span>Reviewed, green PRs are merged to main; nothing is deployed and no paid compute is spent</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17, before slice 1</dd>
+<dt>Context</dt><dd>The user asked for commits, PRs and Auto-fix, and for each slice to start "from the latest tip", so later slices need earlier ones on main. Memory: paid compute, deploys and pushes to main still need a yes; the production deploy runs only from the local <code>ci-deploy</code> bookmark, so a merge to main does not deploy.</dd>
+<dt>Decision</dt><dd>A slice's PR is merged with a merge commit once CI is green and its Sol review has no open P0/P1. No deploy to cadence.garden, no AWS or other paid runs, no model-API calls from experiment code; slices that would need them stop at a ready-to-run state and say so here.</dd>
+<dt>Why</dt><dd>Merging keeps the next slice's tip current; deploys and spending are outward-facing and were not asked for.</dd>
+</dl>
+</article>
+<article id="d5">
+<h2><span>D-05</span>Local gates are the merge bar; Auto-fix carries review comments</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17, before slice 1</dd>
+<dt>Context</dt><dd>main has no <code>.github/</code> workflows: the Actions CI lives only on the local <code>ci-deploy</code> bookmark, which memory says never to push. The only PR check is CodeRabbit, which stayed pending on PR #18.</dd>
+<dt>Decision</dt><dd>Each slice runs the gates for what it touched before opening its PR (typecheck, vitest, <code>mix precommit</code>, the Deno GPU golden when shaders or sim code move, Playwright for lab UI) and pastes the results in the PR body. Auto-fix stays on so CodeRabbit or human comments and merge conflicts wake the slice. A pending CodeRabbit status does not block a merge.</dd>
+<dt>Why</dt><dd>Pushing CI to the public repo was ruled out by the user earlier; local gates are how every recent PR here was verified.</dd>
+</dl>
+</article>
+<article id="d6">
+<h2><span>D-06</span>A timeout under load is "unverified", not a failure</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 20:05 UTC</dd>
+<dt>Context</dt><dd><code>uptime</code> showed load averages 597 / 328 / 208: the peer's arm runs plus about ten sessions in other repositories.</dd>
+<dt>Decision</dt><dd>The three-slice cap stands, but every slice runs its suites in the background with long timeouts, reruns a timed-out test once (alone, or when load is under 100) before calling it red, and puts <code>uptime</code> beside the test output in its PR body.</dd>
+<dt>Why</dt><dd>On a machine this loaded, timing assertions fail for reasons that have nothing to do with the change.</dd>
+</dl>
+</article>
+<article id="d7">
+<h2><span>D-07</span>First wave: anomaly bell, garden coordinator, pond keeper; garden page after the contract lands</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 20:10 UTC</dd>
+<dt>Context</dt><dd>Inventory of the docs. The lab, public site, archipelago and lineage inspector already work. The evolution game exists only as a kernel, with no player-facing loop. The shared garden and the AI naturalist exist only in docs.</dd>
+<dt>Decision</dt><dd>Slice 1 is the naturalist's anomaly-bell detector (code only, CPU, <code>tools/</code>, thresholds stated in a dated note before any run). Slice 2 is the garden coordinator (<code>apps/coordinator/**</code>, with the <code>/api/public/garden</code> contract as its first commit). Slice 3 is Pond keeper Stage 0b (firsts log, session card, manifest export; observer-only, <code>packages/metrics</code> and <code>apps/lab/src</code>). The garden page (<code>apps/lab/garden/</code>) starts once slice 2 merges, built on its contract. None of the three needs the GPU beyond a short golden check.</dd>
+<dt>Why</dt><dd>These move the three apps that are doc-only or partial toward prototypes, on files that don't overlap each other or the gene-v2 line.</dd>
+</dl>
+</article>
+<article id="d8">
+<h2><span>D-08</span>Defaults taken for decisions the docs leave to the user</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 20:10 UTC</dd>
+<dt>Context</dt><dd>The user's brief: "make reasonable decisions". The brainstorm docs list decisions that await the user.</dd>
+<dt>Decision</dt><dd>
+<b>Naturalist</b> (<code>docs/naturalist-brainstorm-2026-10-07.md</code>): the bench comes before any live use; it only proposes and never intervenes; it is code only first, with no model calls.<br>
+<b>Shared garden</b> (<code>docs/shared-garden-brainstorm-2026-10-09.md</code>): coordinator and runner work goes ahead on a branch and its PR, and merges only after review.<br>
+<b>Evolution game</b> (<code>docs/evolution-game-brainstorm-2026-10-16.md</code>): it stays a sibling of the lab, not a fork of the project. It declares nothing new beyond Stage 0 and the existing gene line. The player touches pressures and donor picks. The solo jar comes before the shared garden.<br>
+<b>Lineage Proposal B</b> threshold: persistence for ≥10⁵ steps, written in a dated note before anything is computed.</dd>
+<dt>Why</dt><dd>Each is the cheapest default and can be reversed. It keeps the prototypes honest (nothing declared that the physics doesn't infer) and spends nothing.</dd>
+<dt>Not taken</dt><dd>Anything that costs money stays off until the user says yes: transition-hunt Stage 1 on AWS (~$38, $48 cap), naturalist part b model calls (~$10–15), the upper-bound RULE_VERSION 1 world (~$2–3) and the opportunity reset (~$1). The sun letter and the snowflake rule wait for gene v2, because they touch the kernel files.</dd>
+</dl>
+</article>
+<article id="d9">
+<h2><span>D-09</span>When to stop and notify</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 20:10 UTC</dd>
+<dt>Decision</dt><dd>The coordinator reads plan usage each time a slice reports. When the 5-hour window reaches 97% or more, or any weekly window does, it sends one push notification. Running slices then finish their current step, but no new slice starts until the user says the reset is done.</dd>
+<dt>Why</dt><dd>The user asked to run to 100% and be told. Starting a slice at 98% would only leave half-done branches.</dd>
+</dl>
+</article>
+<article id="d10">
+<h2><span>D-10</span>Slice 1 merged; slice 4 builds the notebook on the calibrated thresholds only</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 21:15 UTC</dd>
+<dt>Context</dt><dd>PR #19 had local gates green (one lab timing test failed at load 120 and passed alone), two Sol xhigh passes (no P0/P1; the second found nothing), and a CodeRabbit thread that was resolved. Its pre-stated reading is that the bell rings on drift. The hits were differences between arms, not events inside a run.</dd>
+<dt>Decision</dt><dd>Merge #19. The naturalist's next piece is the field notebook. It rings only at the per-preset calibrated thresholds, labels every note in DESIGN.md's vocabulary, and never says "event" or "discovery". Its first page says the bell is not yet shown to hear events inside a run.</dd>
+<dt>Why</dt><dd>A notebook is the first thing a person can read from the naturalist, and it has to say no more than the bell has shown.</dd>
+</dl>
+</article>
+<article id="d11">
+<h2><span>D-11</span>Slices started from event turns run as coordinator workflows in worktrees I create</h2>
+<dl>
+<dt>When</dt><dd>2026-10-17 21:15 UTC</dd>
+<dt>Context</dt><dd>The app refuses to start a session in a turn that a side-session event woke, rather than a message from the user. The user is away until the reset.</dd>
+<dt>Decision</dt><dd>On those turns the coordinator runs the slice itself with a <code>backlog-slice</code> Workflow: plan, implement, three review lenses plus Codex Sol 6.1 xhigh pass 1, fix, Sol pass 2 and fix, then commit, push and PR. The worktree is one it creates from the latest <code>origin/main</code> under <code>.slices/</code> inside the coordinator's own worktree (a write guard refuses edits outside the session's folder, which stopped the first slice 4 run before any code was written; <code>.slices/</code> is in the repository's <code>info/exclude</code>), with upstream tracking removed so nothing can push to main. These PRs have no session of their own for Auto-fix, so before merging the coordinator reads their CodeRabbit and human comments and resolves them itself. When the user next writes, slices go back to separate sessions.</dd>
+<dt>Why</dt><dd>It keeps the backlog moving while the user is away, without waiting on proposal cards they can't click.</dd>
+</dl>
+</article>
+<article id="d12">
+<h2><span>D-12</span>What happened while the coordinator waited, and how it carries on</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 01:15 UTC</dd>
+<dt>Context</dt><dd>PRs #20 and #21 were merged under the shared account at 21:54 and 21:55 UTC, not by this coordinator. The slice 1 session went on to bell v1: plan PR #22, and draft PR #23 with 120 GPU runs in progress. The slice 3 session is active again. The 5-hour window reset at 00:20 UTC with no notification from this session, because no slice reported while it was near the limit. It now resets at 05:40 UTC.</dd>
+<dt>Decision</dt><dd>Treat #20 and #21 as landed and build on them. Leave the bell v1 line (<code>tools/lib/bell*</code>, <code>tools/bell*</code>) and anything the slice 3 session is doing to those sessions. Wave 2 takes the two pieces the garden needs next: its public page (slice 5) and stitching its segments (slice 6). Both are disjoint from each other and from those sessions. GPU use stays short because bell v1 and gene v2 both hold the GPU. The usage check now also runs when a workflow finishes, not only when a session reports.</dd>
+<dt>Why</dt><dd>The garden is the one app with a backend and no face. Stitching makes its verified days analysable, which the notebook can then read.</dd>
+</dl>
+</article>
+<article id="d13">
+<h2><span>D-13</span>Slice 4 gets a third Sol pass; its P2s are fixed before merge</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 01:30 UTC</dd>
+<dt>Context</dt><dd>The slice 4 workflow's first Codex pass ran at High, not xhigh, and its second pass found four P0s, all fixed. Nothing had checked those fixes.</dd>
+<dt>Decision</dt><dd>The coordinator ran a third Sol 6.1 xhigh pass on PR #24. It found no P0 or P1 and five P2s: a case-insensitive <code>RUNS/</code> path and a symlink with <code>..</code> slipping past the output guard, impossible or duplicate record entries changing the printed counts, and envelope runs whose departure overflows to Infinity without a refusal. A worker fixes all five, with tests, before the merge.</dd>
+<dt>Why</dt><dd>The notebook promises to refuse rather than print a wrong number, and each of these could print one.</dd>
+</dl>
+</article>
+<article id="d14">
+<h2><span>D-14</span>Wave 3: release checks and pond-run lineage dossiers</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 01:35 UTC</dd>
+<dt>Context</dt><dd>Usage stands at 14% of the 5-hour window and 20% of the weekly. The garden page (slice 5) is still running. Pond keeper v1 (#25, the slice 3 session) holds <code>apps/lab/src</code>, and bell v1 (#22, #23) holds <code>tools/lib/bell*</code>.</dd>
+<dt>Decision</dt><dd>Slice 7 takes the public site's "release checks after a host is chosen", as far as they can be done locally: an audit of what status exposes, auth on the detailed status, join abuse limits, canonical URLs and sitemap. Nothing is deployed, and a dated checklist marks what needs the live host. Slice 8 closes the lineage inspector's open gap: <code>tools/lineage.ts</code> refuses pond-cycle runner bundles. The descent rule is written before any code. The archipelago breed capability is held back while Pond keeper v1 is changing breeder code.</dd>
+<dt>Why</dt><dd>Release checks are what stands between the working site and publishing it. The lineage gap is the inspector's one known refusal on worlds the lab already shows.</dd>
+</dl>
+</article>
+<article id="d15">
+<h2><span>D-15</span>The garden page merges with its cross-tab "Yours" limits documented, not fixed</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 02:40 UTC</dd>
+<dt>Context</dt><dd>Sol pass 3 on #27 found no P0 or P1. It confirmed the pass-2 fixes: the day-name guard, the landing arithmetic, no XSS and no throwing storage parse. What it did find: two P2s, where an old or concurrent tab can overwrite the letter ids this device has saved, and one P3, where the once-per-dawn courtesy note forgets a letter that has scrolled out of the recent list of 32.</dd>
+<dt>Decision</dt><dd>Merge, and record these as known limits in a PR comment.</dd>
+<dt>Why</dt><dd>They affect only a per-device convenience mark kept in localStorage, which is best-effort by design. The garden's own numbers are unaffected. A cross-tab lock costs more than it is worth before the garden is even open.</dd>
+</dl>
+</article>
+<article id="d16">
+<h2><span>D-16</span>Every slice workflow now runs a third Sol pass; the garden gets an end-to-end check next</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 02:45 UTC</dd>
+<dt>Context</dt><dd>Twice now, a slice's second Codex pass found P0s whose fixes nothing then reviewed (#24, #27). Pond keeper v1 (#25) was merged by the slice 3 session at 02:30 UTC, so main is <code>39f946a</code> and then <code>0a1179b</code>.</dd>
+<dt>Decision</dt><dd>The <code>backlog-slice</code> workflow gains a Codex pass 3 at xhigh, which checks the pass-2 fixes and runs a fourth pass if it finds a P0 or P1. The prompts now require xhigh explicitly, because slice 4's first pass had run at High. Slice 9 makes the garden runnable on one machine: a <code>bin/garden-dev</code> script, and a Deno check that founds a small garden, posts a letter, runs a producing island and a verifying island for a few days, and stitches the verified prefix.</dd>
+<dt>Why</dt><dd>Each garden piece is tested on its own, but nothing yet shows them working together. That is the bar for a working prototype.</dd>
+</dl>
+</article>
+<article id="d17">
+<h2><span>D-17</span>Release checks: join limit off in production until the proxy passes real addresses; build check skips without a build</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 03:00 UTC</dd>
+<dt>Context</dt><dd>Slice 7 found that in production (Traefik, then Caddy, then Phoenix) every visitor reaches the coordinator as one address. Any per-address budget, including the garden's letter budget, is therefore shared by the whole site. The fix is a Caddy change plus <code>BL_TRUST_FORWARDED_FOR=1</code>, which is a deploy. The slice also made the new public-routes spec fail on a plain <code>npx playwright test</code> when no build exists.</dd>
+<dt>Decision</dt><dd>Keep the per-address join budget off in production (<code>BL_ISLAND_JOINS_PER_ADDRESS</code> turns it on). Keep the per-island budgets on. Leave the Caddy change written up in <code>deploy/README.md</code> and not applied. That needs the user's yes, because it is a deploy. A missing <code>dist</code> now skips the build check with a message, unless <code>BL_REQUIRE_BUILD_CHECK=1</code> is set. As with the other slices, a third Sol pass checks the pass-2 fixes before merge.</dd>
+<dt>Why</dt><dd>A per-address cap behind one shared address is a site-wide cap, so turning it on would let one visitor lock everyone out. A test that fails in a clean checkout only teaches people to ignore red.</dd>
+<dt>For the user</dt><dd>Apply the Caddy <code>trusted_proxies</code> change and set <code>BL_TRUST_FORWARDED_FOR=1</code> on the live host before opening the garden's letters to the public.</dd>
+</dl>
+</article>
+<article id="d18">
+<h2><span>D-18</span>The journal is updated on main but not deployed</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 03:30 UTC</dd>
+<dt>Decision</dt><dd>Slice 10 follows the <code>journal-update</code> skill to write up what landed (#19 to #28) in the public journal. It says plainly that none of it is deployed and that the garden is not open. The page goes live only when the user deploys.</dd>
+<dt>Why</dt><dd>The journal is how the project tells people what it has learned, so it should be written while the PRs are fresh. Publishing it means deploying, and that is the user's call.</dd>
+</dl>
+</article>
+<article id="d19">
+<h2><span>D-19</span>A third Sol pass is needed only when pass 2 found a P0 or P1; the live naturalist waits for Pond keeper v2</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 04:10 UTC</dd>
+<dt>Context</dt><dd>On #29 the second Sol pass found five P2s and no P0 or P1. All were fixed with regression tests. The slice 3 session's Pond keeper v2 holds <code>apps/lab/src/main.ts</code>, <code>sim.worker.ts</code>, <code>execution.ts</code>, <code>protocol.ts</code> and the lab's page and styles, uncommitted.</dd>
+<dt>Decision</dt><dd>Merge #29 without a third pass. D-16's pass 3 is for checking fixes to P0s and P1s. The planned "live naturalist in the lab" slice is set aside until Pond keeper v2 lands, because it would edit the same files. Slice 11 runs instead: bred pond worlds on the archipelago. It lives in <code>packages/runner</code> and the coordinator, and is listed as "Not built" in <code>docs/sandbox-wild.md</code>.</dd>
+<dt>Why</dt><dd>A P2 fix with a test that fails without it is low risk. Two writers in <code>main.ts</code> would cost more than the wait.</dd>
+</dl>
+</article>
+<article id="d20">
+<h2><span>D-20</span>The proposer is code only and gated; running proposals is for later</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 04:25 UTC</dd>
+<dt>Context</dt><dd>The naturalist brainstorm's shape 3 is a model proposing run specs, tested against random forks taken from the same checkpoints. Bell v1 (#22, the slice 1 session) already redesigns part b, where a model reads digests, so this slice stays out of that.</dd>
+<dt>Decision</dt><dd>Slice 12 builds the proposer's frame without a model. It has a versioned proposal format in the replayable vocabulary, a rule-based proposer written down in a dated note before any code, a seeded random-fork baseline with the same budget, and a yes gate. A proposal runs only after <code>approve --by &lt;name&gt;</code>. Running the bench itself (proposals against forks, scored by the bell) waits for bell v1's scoring and a quieter GPU.</dd>
+<dt>Why</dt><dd>The gate and the format are what make proposals auditable, the brainstorm's "unfair advantage". A model can be plugged in later as one more proposer, compared against the rules and the random baseline.</dd>
+</dl>
+</article>
+<article id="d21">
+<h2><span>D-21</span>Four slices at once while usage is behind pace</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 04:30 UTC</dd>
+<dt>Context</dt><dd>The 5-hour window was 53% used with 73 minutes left, and the weekly window 30%. Slices are slow mainly because of test runs on a machine at load ~500, not because of model calls.</dd>
+<dt>Decision</dt><dd>Raise D-02's cap from three slices to four. Slice 14 is CPU-only analysis in its own files: the clade and genotype measures that <code>plans/README.md</code> offers as plan 005's successor. Its eligibility rule is written down before any computing, and it records a partial readout if time runs out.</dd>
+<dt>Why</dt><dd>The user asked to run the quota to 100%. The extra slice spends tokens rather than GPU time, and its files don't overlap any other slice's.</dd>
+</dl>
+</article>
+<article id="d22">
+<h2><span>D-22</span>The 5-hour window resets on its own; five slices at once while the machine is quieter</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 06:25 UTC</dd>
+<dt>Context</dt><dd>The 5-hour window reset at 05:40 UTC at 53%+ without reaching 97%, so no notification went out. It is now 6% (resets 10:40 UTC); the weekly window is 36%. The load average fell from ~500 to ~50.</dd>
+<dt>Decision</dt><dd>Raise the cap to five slices at once. The 97% notification rule (D-09) stands for whichever window gets there first. Slice 16 brings the operator page up to date with today's features. Slice 17 writes the evolution game's playtest kit, because Stage 0a needs people rather than code, and the user can run it this week.</dd>
+<dt>Why</dt><dd>The user wants the quota used. With load down, more parallel slices no longer starve each other's tests.</dd>
+</dl>
+</article>
+<article id="d23">
+<h2><span>D-23</span>Accept the app-wide <code>token</code> log filter</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 06:50 UTC</dd>
+<dt>Context</dt><dd>Slice 15 added <code>config :phoenix, :filter_parameters, ["password", "token", "Token"]</code>, outside its listed area, and asked for confirmation. Phoenix's default filter is case-sensitive, so dev debug logs would otherwise print <code>gardenToken</code>.</dd>
+<dt>Decision</dt><dd>Keep it.</dd>
+<dt>Why</dt><dd>It only hides values from logs, never changes behaviour, is covered by a test, and one line removes it.</dd>
+</dl>
+</article>
+<article id="d24">
+<h2><span>D-24</span>Food in the garden is collective and rare; open PRs from other sessions stay with them</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 06:55 UTC</dd>
+<dt>Context</dt><dd>The brainstorm says food is "rare and collective, or absent" and that "the dangerous letter is food, not stones". Bell v1 (#22, #23) and Pond keeper v2 (#31) are open and ready. Each is driven by the session that wrote it (slice 1 and slice 3), and the user has worked with those sessions directly.</dd>
+<dt>Decision</dt><dd>Slice 18 builds food as a collective ask: a feed lands only when K distinct addresses ask within one dawn, with at most one food per N days. K and N are config, with conservative defaults. The ask is public before it lands. The landing rule and the anti-stuffing limits go into a dated note before any code. Until the proxy passes real addresses (D-17), K counts shared addresses, and the page says so. #22, #23 and #31 are left for their own sessions or the user to merge.</dd>
+<dt>Why</dt><dd>Food is the one letter the brainstorm calls dangerous, so it is gated by consensus and by time. Merging another session's live PR could step on its in-flight fixes.</dd>
+</dl>
+</article>
+<article id="d25">
+<h2><span>D-25</span>Idle slice sessions are asked to land their own PRs</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 07:55 UTC</dd>
+<dt>Context</dt><dd>PRs #22 and #23 (bell v1) and #31 (Pond keeper v2) have sat ready for about 90 minutes, and their sessions are idle. The lab-side slices this run still wants (live naturalist in the lab, lab accessibility fixes) wait on #31. D-24 left these PRs with their sessions.</dd>
+<dt>Decision</dt><dd>Send each session a message asking it to merge main in, rerun its gates (and, for #31, the new public-a11y spec), confirm no P0 or P1 is open after its last Sol pass, and merge. The coordinator does not merge them itself.</dd>
+<dt>Why</dt><dd>Each session knows its own in-flight state, so this lands its work without stepping on it.</dd>
+</dl>
+</article>
+<article id="d26">
+<h2><span>D-26</span>The proposer bench is planned and buildable, but approving and running it is the user's</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 08:30 UTC</dd>
+<dt>Context</dt><dd>#34's yes gate exists so that a person decides which experiments run. A bench approved by the coordinator would get around that.</dd>
+<dt>Decision</dt><dd>Slice 24 writes the bench's rules before any run, adds a dose-matched baseline to fix #34's caveat, and builds <code>tools/bench.ts</code> with plan, dry-run and run. Run needs one batch approval <code>--by &lt;person&gt;</code>, bound to the manifest hash. The coordinator does not approve or run it.</dd>
+<dt>Why</dt><dd>The bench runs on the local GPU, so it costs nothing to run, but whether to run it is the kind of decision the gate keeps for a person.</dd>
+</dl>
+</article>
+<article id="d27">
+<h2><span>D-27</span>A change to the dev server's routing must pass the lab specs before merge</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 08:45 UTC</dd>
+<dt>Context</dt><dd>#42 switched Vite to <code>appType: mpa</code>, which changes how every dev route falls back, but its gates covered only the public specs. On the first run, the garden spec failed 5 times, but only because the coordinator had run it on another port to avoid peer servers. The spec hardcodes origin <code>localhost:5174</code>.</dd>
+<dt>Decision</dt><dd>Before merging, run the lab specs (worlds, fullscreen, Pond keeper v2, execution, light, golden) on a private port, and the garden spec on 5174 once that port is free. 26 of 26 and 19 of 19 passed.</dd>
+<dt>Why</dt><dd>A routing change breaks pages its own tests never load. A spec that hardcodes its port is a trap when several worktrees run tests at once. Worth a small follow-up to derive the key from <code>baseURL</code>.</dd>
+</dl>
+</article>
+<article id="d28">
+<h2><span>D-28</span>Run the stone horizon test now; the gene v2 line is stalled and left to the user</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 09:35 UTC</dd>
+<dt>Context</dt><dd>The garden's pace (one day = one sun wander, provisionally) waits on the stone horizon test (brainstorm §6.2), which was blocked only on headless lesions, now built. Bell v1's GPU runs are done. The gene v2 peer session ("Workflow progress planning") has been idle since 2026-10-17 20:06 UTC, with uncommitted kernel edits in its worktree.</dd>
+<dt>Decision</dt><dd>Slice 26 runs §6.2 on the local GPU: rules first, a timing-only pilot, a grid that shrinks by a rule fixed beforehand if the time cap would be exceeded, and the readout recorded whatever it says. The gene v2 work is not this run's to finish or discard, so the kernel files stay off limits (D-03), and the sun letter and the snowflake rule keep waiting.</dd>
+<dt>Why</dt><dd>The garden's pace is the next open question for that app, and running the test locally is free. Touching another session's uncommitted kernel work could lose it.</dd>
+</dl>
+</article>
+<article id="d29">
+<h2><span>D-29</span>A regression on main is fixed on its own branch, and merges now run a wider e2e sweep</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 11:00 UTC</dd>
+<dt>Context</dt><dd>While checking #47, <code>public-site.spec.ts</code> "operations details clear after authentication and network failures" failed with 2 elements where 0 were expected, and it fails the same way on main <code>f34c460</code>. #39 and #45 changed the operator page, but neither PR ran <code>public-site.spec.ts</code>.</dd>
+<dt>Decision</dt><dd>Merge #47, since it is not the cause. A worker finds the root cause on <code>claude/fix-ops-page-regression</code>. If the page shows stale operator data after losing auth, that is a privacy fault and the page gets fixed. The assertion is never weakened. From here on, the coordinator runs <code>public-site</code>, <code>public-a11y</code> and <code>coordinator-ops</code> before merging any PR that touches a served page.</dd>
+<dt>Why</dt><dd>Each slice ran only the specs for its own files, so a page shared by two specs slipped through.</dd>
+</dl>
+</article>
+<article id="d30">
+<h2><span>D-30</span>After the session restart: resume the workflows, and start new slices as sessions again</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 15:05 UTC</dd>
+<dt>Context</dt><dd>The coordinator's process restarted and interrupted the workflows for slices 26, 27, 29 and 30. The user wrote "continue". Usage: the 5-hour window at 47% (resets 15:40 UTC), weekly at 59%.</dd>
+<dt>Decision</dt><dd>Resume each workflow with <code>resumeFromRunId</code> and the same args, so finished agents replay from cache. Now that the user has written, new slices start as their own sessions (D-11's fallback is no longer needed). Slice 31 is the first.</dd>
+<dt>Why</dt><dd>Resuming keeps hours of finished work. Separate sessions keep the coordinator's context (65% used) for coordinating.</dd>
+</dl>
+</article>
+<article id="d31">
+<h2><span>D-31</span>Accept #56's world guard on lesion and feed messages</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 17:20 UTC</dd>
+<dt>Context</dt><dd>#56 went outside its allowed area to add an optional <code>world</code> field to the worker's <code>lesion</code> and <code>feed</code> messages (<code>protocol.ts</code>, <code>sim.worker.ts</code>), so that a stale suggestion cannot edit a replacement world. It asked for the user&rsquo;s accept or veto, and the verifying worker merged it without one.</dd>
+<dt>Decision</dt><dd>The coordinator accepts it after the fact. The field is optional, so existing callers are unchanged. Codex judged it the narrowest fix, and it closes a real race: a suggestion clicked just as the world is replaced.</dd>
+<dt>Why</dt><dd>The alternative, guarding only on the page, leaves a window. To veto it, revert that hunk and accept the race.</dd>
+</dl>
+</article>
+<article id="d32">
+<h2><span>D-32</span>The sun letter is attempted without the kernel files; the opening copy waits as a draft</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 19:50 UTC</dd>
+<dt>Context</dt><dd>#55&rsquo;s pace reading names the sun as the garden&rsquo;s first letter. The inventory had noted that a sun letter might touch the kernel, and the stalled gene v2 session holds <code>config.ts</code>, <code>step.ts</code>, <code>shaders.ts</code> and <code>golden.ts</code>. The opening checklist (#57) lists the copy to change on the day <code>/garden/</code> is linked.</dd>
+<dt>Decision</dt><dd>Slice 37 builds the sun letter only if it can work through runtime light parameters, the runner, the schema and the uniform upload, leaving every golden pin unchanged. Otherwise it writes a design note listing the exact kernel edits and stops there. Slice 38 prepares the opening-day copy as a draft PR the coordinator will not merge, because linking the garden is part of opening it, and that is the user&rsquo;s call.</dd>
+<dt>Why</dt><dd>Both move the garden toward opening without making the user&rsquo;s decisions for them or touching another session&rsquo;s uncommitted work.</dd>
+</dl>
+</article>
+<article id="d33">
+<h2><span>D-33</span>Scrub process command lines from committed records</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 22:50 UTC</dd>
+<dt>Context</dt><dd>An automated security review flagged <code>tools/horizon.ts</code>, which writes full <code>ps</code> command lines into run records. <code>experiments/garden/stone-null-2026-10-18.json</code> on main holds local paths and other processes&rsquo; arguments, but no secrets. The repo is public.</dd>
+<dt>Decision</dt><dd>Keep only pid, CPU, elapsed time and the program name. Scrub the committed records without touching any other field. Add a test that a token or path in the input never survives. Fix any other tool with the same pattern.</dd>
+<dt>Why</dt><dd>Another process&rsquo;s argv can carry a token at any time, and the records gain nothing from it.</dd>
+</dl>
+</article>
+<article id="d34">
+<h2><span>D-34</span>Sun letters get a founding switch, default on; whether the commons takes them is the user&rsquo;s call</h2>
+<dl>
+<dt>When</dt><dd>2026-10-19 00:45 UTC</dd>
+<dt>Context</dt><dd>While resolving draft #60, the merge found that #62 accepts sun letters on any garden whose world allows them, the big storm included, with no switch. The sun note calls that the user&rsquo;s decision.</dd>
+<dt>Decision</dt><dd>Add a <code>sun</code> founding key, default true, so behaviour doesn&rsquo;t change. Gardens founded earlier also count as on. When it is off, a sun letter is refused with plain words and the page hides the form. The opening checklist gains sun and meteor rows. #60&rsquo;s copy now assumes suns are on, and the decision row records it.</dd>
+<dt>Why</dt><dd>Matching the brainstorm (the sun is the first letter, the scarcity dial), the defaults stay as built, and the switch makes the user&rsquo;s choice a single founding parameter rather than a code change.</dd>
+</dl>
+</article>
+<article id="d35">
+<h2><span>D-35</span>Resume from current main; validate measured wound severity before new trials</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906. Bring forward the reviewed recovery assay and its stopped 32-pair result as dependencies; preserve the original checkout and its local bundles.</dd>
+<dt>Decision</dt><dd>Implement the proposed severity selector and a zero-time feasibility CLI first. The threshold remains at least 30 of 32 saved pairs. A failed threshold ends this protocol before new scientific seeds. Do not soften topology or collateral limits merely to obtain feasible wounds.</dd>
+<dt>Review</dt><dd>Use available agy Gemini 4 Argon High for adversarial review, plus the repository-required read-only Sol 6.1 High before committing. Subagents own selector/tests and independent backlog inventory; the coordinator owns evidence loading, decision records and publication.</dd>
+<dt>Scope</dt><dd>This is one research slice, not completion of all app prototypes. It leaves simulation physics and the private shared-garden deployment policy unchanged.</dd>
+</dl></article>
+<article id="d36">
+<h2><span>D-36</span>Use the current backlog, not the frozen October 18 inventory</h2>
+<dl><dt>Evidence</dt><dd>Inventory checked against b3fab906: plans 001–006 are DONE; Gene v2, injuryShell, Pond keeper v3, bell v2, null-stone and sun work have landed. The old prototypes document is explicitly pinned to 5e7bda5c and is not current status.</dd>
+<dt>Next slices</dt><dd>After severity feasibility: Pond keeper v3b per-pond shell ranking; explicit island leave/release; operator refusal/pruning counters. Naturalist v3 needs a separate preregistration after the negative v2 result. Shared-garden opening and human playtests remain distinct product/operational decisions and evidence gaps.</dd>
+<dt>Sources</dt><dd><a href="pond-keeper-v3-2026-10-22.md">Keeper v3 deferred work</a>; <a href="island-cancel-2026-10-18.md">Island cancellation</a>; <a href="ops-dashboard-2026-10-18.md">Operator dashboard</a>; <a href="../deploy/README.md">Deployment safeguards</a>.</dd>
+</dl></article>
+<article id="d37"><h2><span>D-37</span>Feasibility passed; retain the next engineering gate</h2><dl>
+<dt>Evidence</dt><dd><a href="https://github.com/treetopdevs/browser-life/blob/2340d0928d45cac3a3395151e1603a652a85fd1e/docs/recovery-severity-2026-10-24/FEASIBILITY.md">All 32 saved pairs admit the prescribed lesion pair</a>. Zero-time CPU transformations only; no fresh scientific seeds or recovery outcomes.</dd>
+<dt>Decision</dt><dd>Publish this runnable feasibility prototype with its input/output hashes. Keep GPU equality, endpoint validation and the three-arm trial runner as explicit next work. A CPU geometric pass does not authorize a recovery claim.</dd>
+<dt>Repair</dt><dd>Publish success only after its digest, via atomic rename; refuse reused output directories and record runtime plus source revision/patch. Retain both engineering run attempts. Deno refreshed its lockfile workspace Vite range to match the dependency update already on current main; no new dependency version was selected here.</dd>
+</dl></article>
+<article id="d38">
+<h2><span>D-38</span>Offer shell share as a donor-picker ranking</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 deferred a per-pond shell ranking to v3b. Whole-world shell counts show a trend but cannot guide a donor choice.</dd>
+<dt>Decision</dt><dd>Count shell-wearing and living cells per pond from the held pre-cycle state. Offer Cells wearing a shell, ranked by share of living cells, with both counts visible. Preserve positive bound-mass eligibility and mass/index tie breaks. Top explicitly selects donors; the rule and Auto-breed keep their own choices.</dd>
+<dt>Why</dt><dd>This makes shells actionable without adding a score term, changing the physics, or changing checkpoint/session formats. A current membrane share is not a survival forecast. See <a href="https://github.com/treetopdevs/browser-life/blob/8f28c0156d86cc578e319aca7054fa87b108f2e8/docs/pond-keeper-v3b-2026-10-24.md">the v3b plan and validation</a>.</dd>
+</dl>
+</article>
+<article id="d39"><h2><span>D-39</span>Make island Stop release work immediately</h2><dl>
+<dt>Base</dt><dd>Fresh worktree from origin/main b3fab906, separate from recovery feasibility and Pond Keeper. The explicit island-cancel follow-up remains unimplemented on that tip.</dd>
+<dt>Decision</dt><dd>Add authenticated DELETE /api/islands/:id with matching island query identity. Serialize authentication, pending-attempt abandonment and row removal in Queue. An accepted completion remains accepted; a released run returns to pending and a released verification remains done. Missing identities are retry-safe no-ops.</dd>
+<dt>Client</dt><dd>After local work and already-sent decisions settle, make one best-effort leave request with an independent two-second bound. Require 204 to confirm release. Old or unreachable coordinators retain lease-expiry fallback. Normal task-limit exit also unregisters; unknown join identities cannot be released.</dd>
+<dt>History</dt><dd>Removing the active row must not erase producer/verifier or garden device labels. Persist adapter-only history while referenced by retained attempts; retain no credentials and prune discarded history.</dd>
+</dl></article>
+<article id="d40"><h2><span>D-40</span>Close the feasibility review through the authorized fallback</h2><dl><dt>Review</dt><dd>Argon file access was unavailable in headless mode; its source-only request remains pending. Sonnet 5.5 High completed a tool-free source-packet review with no blockers.</dd><dt>Fixes</dt><dd>Validate original target component identity, make the seam fixture actually cross the boundary, preserve original errors during failure recording, and return a nonzero negative-gate code. All 24 focused tests pass; the final engineering rerun selects the same 32 pairs. No scientific gate changed.</dd></dl></article>
+<article id="d41"><h2><span>D-41</span>Close shell-ranking review with stronger compatibility evidence</h2><dl><dt>Review</dt><dd>Argon 4 High and Sonnet 5.5 High source-packet reviews both found no blockers. Their observations were checked against current source rather than blindly applied.</dd><dt>Fixes and evidence</dt><dd>Anchor pond indices to actual mass terms, preserve both scaffold and breed replay coverage, and explain tiny-pond percentages and rounded display. Existing openPick already resets stale ranking keys. All 17 focused tests and both replay cases pass; typecheck passes. The previous desktop/mobile/browser replay evidence still applies because behavior was unchanged.</dd></dl></article>
+<article id="d42"><h2><span>D-42</span>Argon feasibility review completed</h2><dl><dt>Outcome</dt><dd>The pending Argon 4 High source-packet review returned no blockers. Sonnet fallback findings had already been addressed. PR #72 is ready for review; no recovery experiment has been run by this feasibility slice.</dd></dl></article>
+<article id="d43"><h2><span>D-43</span>Fix leave's limiter edge and verify the actual wire path</h2><dl>
+<dt>Finding</dt><dd>Anonymous leave requests for missing identities must not allocate authenticated-island limiter buckets. Missing-id retries bypass that bucket while coarse address limits remain; Queue still rechecks a live identity atomically.</dd>
+<dt>Evidence</dt><dd>563 coordinator tests and 100 client tests pass, with typecheck. Live loopback HTTP verifies wrong-token rejection, duplicate leave, immediate same-segment/new-lease reassignment and zero active rows. The first smoke fixture advertised legacy metrics and was correctly left idle; declaring current metrics fixed the fixture.</dd>
+<dt>Review</dt><dd>Argon 4 High source-packet adversarial review is running. Publication remains draft until its disposition is assessed. No production deployment or shared-garden opening.</dd>
+</dl></article>
+<article id="d44">
+<h2><span>D-44</span>Count operator refusals and pruning with an explicit reset epoch</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The operator dashboard deferred refusal and pruning counts. Limits alone cannot explain refused requests or how often capacity removes idle islands.</dd>
+<dt>Decision</dt><dd>Add six fixed aggregate counters to authenticated status and the Limits panel. Count actual island-budget 429 decisions, Queue capacity refusals, and rows pruned by successful joins. A separate supervised owner gives atomic snapshots and increments; display its reset timestamp. Missing or malformed observations display unavailable.</dd>
+<dt>Why</dt><dd>This supplies the missing operational evidence without collecting caller identities or changing scheduling. Counters are volatile observations, not durable audit history. Owner restart resets the epoch; Queue and limiter restarts preserve it. A crash gap may lose an observation.</dd>
+<dt>Validation</dt><dd>Backend precommit: 559 passing tests; final affected suites: 28 passing. Browser suite: 30 passing; final counter-specific suite: 11 passing, including malformed epochs and mobile display. Argon 4 High found no blockers. Its owner-down HTTP, conditional download, failed-persistence and cleanup coverage suggestions were implemented; final backend precommit passes 561 tests.</dd>
+</dl>
+</article>
+<article id="d45">
+<h2><span>D-45</span>Make membrane visible without presenting it as guaranteed protection</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>Pond keeper v3 explicitly deferred a membrane view. Composite mixes membrane with other material, making the available shell-related trait difficult to inspect.</dd>
+<dt>Decision</dt><dd>Append a ninth Membrane display mode and shortcut 9, preserving the original eight modes. Render membrane quantity alone with a clearly described brightness scale. Explain that wound protection depends on the world's configured shell rule; visible membrane is not a prediction of survival.</dd>
+<dt>Why</dt><dd>A dedicated view lets players inspect the trait already measured in the pond census. This changes display only: no physics, scoring, checkpoint or selection semantics.</dd>
+<dt>Validation</dt><dd>Four Chrome checks pass, including synthetic pixels, unchanged current and next-step state hashes, mode order and world replacement. Typecheck and build pass; desktop, night and mobile screenshots were inspected. Argon review assessed: fixed held/failed replacement legend restoration and modified numeric shortcuts. Rejected the zero-shell finding because configuration/load/import validation requires 1..65535. Five Chrome checks, typecheck and build pass after fixes; dispositions documented.</dd>
+</dl>
+</article>
+<article id="d46">
+<h2><span>D-46</span>Match each suggestion receipt to the action that requested it</h2>
+<dl>
+<dt>When</dt><dd>2026-10-24</dd>
+<dt>Context</dt><dd>The naturalist suggestion implementation acknowledges that an unrelated brush edit can be mistaken for a pending Try. This can say a suggestion landed when a different action actually changed the world.</dd>
+<dt>Decision</dt><dd>Give each accepted Try a fresh request identity and echo it through live worker success and refusal messages. Settle the Try only for that identity and world/run. Untagged brush edits still stop baseline reading. Replay events carry no request identity; generic errors remain uncertain rather than claiming nothing happened.</dd>
+<dt>Why</dt><dd>The player needs an accurate receipt for the action they clicked. Transport metadata resolves the race without changing interventions, physics, scientific outcomes or saved sessions. Retries get fresh identities so delayed replies cannot settle a later attempt.</dd>
+<dt>Validation</dt><dd>55 model tests and 9 Chrome browser tests pass, covering unrelated brush and late replies, worker success/refusal identity, untagged replay, and the actual one-click, one-intervention flow. Typecheck passes. Argon source review found no blockers. Its low wording finding was fixed and tested: unsupported non-control suggestions are not labelled replay controls. Review assessed; ready for review.</dd>
+</dl>
+</article>
+<article id="d47">
+<h2><span>D-47</span>Island leave clears adversarial review</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Mark the island-leave PR ready after Argon 4 High found no blockers in authentication, race handling, provenance or client cleanup. The reviewed source packet preceded the unknown-ID limiter hardening and portable HTTP smoke; their separate validation is recorded in the lifecycle document. Local checks include 563 coordinator tests, 100 client/page tests and real loopback HTTP cleanup.</dd><dt>Boundary</dt><dd>No merge or deployment is performed.</dd></dl>
+</article>
+<article id="d48">
+<h2><span>D-48</span>Expose the existing island lease duration for local development and tests</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The island cancellation plan explicitly deferred BL_LEASE_MS. Queue already reads lease_ms with a ten-minute default, but runtime configuration cannot set it.</dd><dt>Decision</dt><dd>Add the environment setting using the existing positive-integer parser, rejecting zero, off and malformed values. Preserve the default and all reclaim behavior. Document its distinction from the discovery lease.</dd><dt>Why</dt><dd>Graceful leave handles normal stops; crashed or disconnected islands still rely on lease expiry. Development and integration tests need a deliberate way to exercise that fallback.</dd><dt>Validation</dt><dd>134 targeted runtime/configuration/Queue tests and the full 557-test backend precommit pass. No production configuration change is made. Argon 4 High found no blockers. Documentation alignment follow-ups were applied; no runtime behavior changed.</dd></dl>
+</article>
+<article id="d49">
+<h2><span>D-49</span>Replace the stale current-status pointer with a dated prototype inventory</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The README calls an October 18 snapshot current, but gene v2, bell v2, null-stone and sun letters have since landed. Several additional features exist in open PRs.</dd><dt>Decision</dt><dd>Keep the historical snapshot and create a new Markdown/HTML overview. Distinguish on-main implementation, open PRs, explicit follow-ups, deferred extensions and external decisions. Include all seven app surfaces and local entry points, with evidence limits.</dd><dt>Why</dt><dd>A finite inventory prevents repeating completed work or treating every brainstorm as an unfinished prototype. Open PRs and local tests do not establish merged or deployed behavior.</dd><dt>Validation</dt><dd>Source references and local links checked. Chrome at 1280 and 375 pixels in day/night modes has no overflow, script errors, external requests or axe violations. Argon source review assessed; HTML anchors, accessible theme state, launch wording and missing runner-backoff disclosure corrected. No scientific experiment or public opening is included.</dd></dl>
+</article>
+<article id="d50">
+<h2><span>D-50</span>Validate the prototype branches together before any merge decision</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd>
+<dt>Decision</dt><dd>Combine eight exact feature-branch tips in a separate local integration checkout from origin/main b3fab906, preserving source commits. Resolve only decision-log append conflicts by retaining every complete D35–D49 entry. Keep source branches, main and local integration evidence distinct.</dd>
+<dt>Evidence</dt><dd>Typecheck and build pass; 247 focused unit tests, 573 coordinator tests and 41 combined Chrome feature checks pass. No runtime conflict or integration-only product fix was needed. Exact inputs, merge handling and commands are in <a href="prototype-integration-2026-10-24.md">the integration validation report</a>.</dd>
+<dt>Boundary</dt><dd>This is local engineering validation, not a PR merge, deployment, shared-garden opening, scientific trial or declaration that every prototype is complete. Independent review approvals remain separate.</dd></dl>
+</article>
+<article id="d51">
+<h2><span>D-51</span>Finish the documented public-page metadata follow-ups</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The prototype inventory still identifies arbitrary missing-page analytics paths and stale sitemap dates.</dd><dt>Decision</dt><dd>Give the 404 page a fixed analytics path while preserving ordinary-route behavior and query scrubbing. Derive sitemap last-modified dates from page history rather than assigning the current date to unchanged pages.</dd><dt>Why</dt><dd>This closes explicit public-site follow-ups without changing page content, adding tracking or claiming a deployment.</dd><dt>Validation</dt><dd>Two unit tests and eight Chrome analytics/public-route/build checks pass, along with typecheck and production build. Tests intercept all requests; no analytics events leave the test browser. Argon4 High found no blockers; the existing referrer-policy limitation remains explicitly documented.</dd></dl>
+</article>
+<article id="d52">
+<h2><span>D-52</span>Expose collective food as an opt-in for the local garden launcher</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The collective-food mechanism exists, but bin/garden-dev always founds without it. The prototype inventory explicitly lists a local launcher option as unfinished.</dd><dt>Decision</dt><dd>Add a strict opt-in setting to local scratch founding, default off. Reject malformed settings before starting services. Preserve the existing collective threshold and all production/opening decisions.</dd><dt>Why</dt><dd>This makes the implemented feature accessible in local demonstrations without silently enabling it or weakening the collective rules.</dd><dt>Validation</dt><dd>Five launcher checks pass: default/off/on payloads, existing-garden reuse and early invalid-input rejection. Typecheck and shell syntax pass. No public garden or deployment is included. Argon4 High found no runtime blockers. Reuse coverage, environment isolation, atomic harness startup and timeout follow-ups are verified.</dd></dl>
+</article>
+<article id="d53">
+<h2><span>D-53</span>Close the naturalist panel interaction and layout checks</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The existing prototype inventory explicitly lacks page-level wound/drain suggestion clicks, a 375-pixel open-suggestion layout check and a Field notes design entry.</dd><dt>Decision</dt><dd>Exercise actual panel actions and the narrow layout with a clearly identified deterministic fixture where necessary. Keep scientific bell performance claims separate from UI behavior. Document the existing Field notes interaction contract without adding new product features.</dd><dt>Validation</dt><dd>All seven action/naturalist browser checks pass. Argon source findings addressed: panel/command containment, screenshot-only fixture labels and complete note captures, persistent live-region identity, both-theme post-click accessibility, unchanged unmeasured predictions, and exact step/matter session receipts. Final changed action-spec rerun, typecheck and diff checks pass; see the dated coverage note for results. No new scientific experiment or model call.</dd></dl>
+</article>
+<article id="d54">
+<h2><span>D-54</span>Back off only when the coordinator confirms refusal before application</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>The runner stops on 429/503. Blind retries could duplicate a join, assignment or terminal decision after an ambiguous failure.</dd><dt>Decision</dt><dd>Mark only genuine pre-application island refusals with X-Island-Request-Applied: false and expose that marker plus Retry-After to browsers. Retry marked 429/503 at most four total attempts within a 120-second retry budget, respecting the full advertised delay and a jittered exponential floor. Share cooldown across island traffic and keep heartbeats single-flight and task-scoped.</dd><dt>Boundary</dt><dd>Unmarked responses, network failures and 409 retain conservative handling. A sent terminal request is still awaited; its refused-attempt backoff is cancelable. No GPU work, upload bytes or leases are regenerated. Lease preservation is best effort because the client has no authoritative expiry metadata.</dd><dt>Validation</dt><dd>138 focused client tests, 556 coordinator precommit tests and 17 final targeted HTTP tests pass. Three real Chrome/Phoenix cross-origin checks pass, plus typecheck. Tests cover exact request replay, parser/budget arithmetic, Stop races, heartbeat teardown and pre-application refusal state preservation. Argon review completed and all four findings were assessed: fix fail-wait Stop context, strengthen concurrent-gate and pending-heartbeat retry coverage, and correct the completion fixture with a successful control. After stacking leave, 152 client tests, 21 targeted HTTP tests and typecheck pass. Earlier counts describe their original runs. No production deployment.</dd></dl>
+</article>
+<article id="d55">
+<h2><span>D-55</span>Validate public follow-ups and local food against the combined prototypes</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Combine exact PR80 and PR81 tips into the existing isolated integration branch and check their affected surfaces. Preserve complete D51/D52 decision entries alongside prior decisions.</dd><dt>Evidence</dt><dd>Seven unit tests, typecheck, build and 13 Chrome analytics/not-found checks pass, including local Caddy and Vite preview. A stale-build first run skipped artifact checks; the rebuilt rerun had no skips. Exact heads and commands are in the integration report.</dd><dt>Boundary</dt><dd>No GitHub merge, deployment, fresh scientific trial or public garden opening. Naturalist UI review fixes and island backoff still require integration.</dd></dl>
+</article>
+<article id="d56">
+<h2><span>D-56</span>Validate retry backoff together with immediate island leave</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Merge exact island-backoff tip 754e022 into the isolated integration branch at 7a677bef, retaining prior prototype inputs and all existing decisions. Preserve bounded leave outside the shared retry gate, terminal-decision settlement, DELETE CORS and exposed refusal headers.</dd><dt>Evidence</dt><dd>148 client tests, 124 targeted coordinator tests, typecheck and three real cross-origin Chrome/Phoenix checks pass with combined-leave mode enabled. The browser confirms a single successful DELETE and zero active rows after retry success.</dd><dt>Integration adjustment</dt><dd>Seven backoff-only test expectations assumed no request followed Stop. The combined lifecycle correctly leaves; adapt fixtures to return 204 and require exactly one final DELETE, with no cooldown delay. No runtime fix was necessary. The portable test patch and exact inputs are in the integration report.</dd><dt>Boundary</dt><dd>Local merge and engineering evidence only; no push, GitHub merge, deployment or new scientific trial. D53 remains outside this tree until the separate PR82 integration.</dd></dl>
+</article>
+<article id="d57">
+<h2><span>D-57</span>Publish the retry and cleanup contract together</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Context</dt><dd>Combined tests exposed assumptions that Stop permits no HTTP requests, although reviewed island leave must send cleanup after Stop. Runtime code merged without conflict.</dd><dt>Decision</dt><dd>Stack PR83 on PR74 and publish exact assertions requiring one final DELETE for a known identity, no subsequent work retry, and cleanup outside the active cooldown. Keep leave's independent two-second bound and awaited sent terminal decision.</dd><dt>Evidence</dt><dd>Combined integration passed 148 client tests, 124 targeted backend tests, typecheck and three real cross-origin checks with immediate leave enabled. Source-branch validation is recorded in the retry note. Argon backoff review is assessed; the retry note records all four dispositions and the final 152-client/21-HTTP-test follow-up.</dd><dt>Boundary</dt><dd>This changes the PR dependency and tests, not the previously reviewed leave behavior. Neither PR is merged into main.</dd></dl>
+</article>
+<article id="d58">
+<h2><span>D-58</span>Close the planned prototype workflow with reviewed, published changes</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Close the planned implementation/review workflow after all twelve PRs are published and ready, every Argon finding is assessed and repaired, and the combined prototype checks pass. Preserve all 58 decisions in this consolidated log.</dd><dt>Evidence</dt><dd>The requirement-level audit and integration report pin source revisions, review dispositions, test scopes and limits. Final retry repairs passed 152 source client tests and 21 HTTP tests; combined checks passed 52 affected client tests, 21 HTTP tests and typecheck. Independent read-only review cleared all four repairs.</dd><dt>Boundary</dt><dd>PR83 depends on PR74. No GitHub PR is merged, no deployment or public garden opening is performed, and no human playtest or new scientific experiment is claimed. Deferred features and external decisions remain visible in the seven-surface inventory.</dd></dl>
+</article>
+<article id="d59">
+<h2><span>D-59</span>Merge reviewed prototypes in dependency order without deployment</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Authorization</dt><dd>The user explicitly requested merging the ready PRs, resolving conflicts and rerunning relevant checks; deployment remains excluded.</dd><dt>Decision</dt><dd>Merge PR72,73,74,75,76,77,78,80,81,82,83, then79. Preserve merge commits and branch history; retarget83 to main only after74 is merged. Keep draft69 and public-opening draft60 untouched. Use isolated existing worktrees and preserve the primary checkout's untracked research notes.</dd><dt>Validation plan</dt><dd>Rerun affected unit/browser checks, typecheck/build and full coordinator precommit on combined tree4b64bcea. Resolve decision-log conflicts by preserving complete uniquely numbered entries. Compare the final main runtime/test tree against the validated combined tree, and record actual merge commits and results before final closure.</dd><dt>Boundary</dt><dd>No deployment, production configuration changes, public founding, branch deletion, fresh scientific trials or edits to the frozen recovery results.</dd></dl>
+</article>
+<article id="d60">
+<h2><span>D-60</span>Publish the dependency-ordered merge results without deploying</h2>
+<dl><dt>When</dt><dd>2026-10-24</dd><dt>Decision</dt><dd>Merge the ready feature PRs in D59 order, with74 before83 and the status record79 last. Retain merge commits and all numbered decisions. Draft60 and draft69 remain untouched.</dd><dt>Evidence</dt><dd>Fresh combined validation passed306 unit tests,59 Chrome checks with zero skips,575 backend tests,typecheck and build. Two backend timing failures under concurrent load passed individually and in a full quiet rerun without changing code or thresholds. Source updates required only decision-log conflict resolution; the final feature runtime matches tested tree4b64bcea. Exact merge commits and commands are in <a href="prototype-merge-2026-10-24.md">the merge record</a>.</dd><dt>Preservation</dt><dd>The primary checkout's recovery branch and four untracked research files are preserved. No branches or worktrees are deleted.</dd><dt>Boundary</dt><dd>No deployment, production configuration changes, public opening or new scientific trials. This record is published through final status PR79; GitHub retains its final merge identity.</dd></dl>
+</article>
+<!-- DECISIONS -->
+
+</main>
+</body>
+</html>

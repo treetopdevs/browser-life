@@ -526,17 +526,23 @@ describe("the island refuses a picked spec", () => {
     expect(specRefusal(picked)).toMatch(/picked run.*not distributed/);
   });
   it("refuses a task whose spec is picked before fetching anything else", async () => {
-    const paths: string[] = [];
-    vi.stubGlobal("fetch", async (url: string) => {
+    const requests: [string, string][] = [];
+    const leaves: { island: string | null; authorization: string | null }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
       const path = new URL(url).pathname;
-      paths.push(path);
+      requests.push([init?.method ?? "GET", path]);
       const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
       if (path === "/api/islands") return json({ id: "isl", token: "tok" });
       if (path === "/api/next") return json({ kind: "run", lease: "L", segment: { id: "seg-1", run: "pk/ponds-small/treatment/seed-1", index: 1, startStep: 1000, steps: 1000 }, spec: picked, startFrom: "seg-0", startHash: "0123456789abcdef" });
+      if (path === "/api/islands/isl" && init?.method === "DELETE") {
+        leaves.push({ island: new URL(url).searchParams.get("island"), authorization: new Headers(init.headers).get("authorization") });
+        return new Response(null, { status: 204 });
+      }
       throw new Error(`unexpected ${path}`);
     });
     await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 })).rejects.toThrow(/refusing pk\/ponds-small\/treatment\/seed-1 #1: .*picked.*not distributed/);
-    expect(paths).toEqual(["/api/islands", "/api/next"]);
+    expect(requests).toEqual([["POST", "/api/islands"], ["POST", "/api/next"], ["DELETE", "/api/islands/isl"]]);
+    expect(leaves).toEqual([{ island: "isl", authorization: "Bearer tok" }]);
   });
 });
 

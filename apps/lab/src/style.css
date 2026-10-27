@@ -131,6 +131,15 @@ input[type="range"]:disabled { opacity: .45; }
 /* What the tool in your hand does, under the hand that holds it. */
 .tool-says { margin: 11px 0 0; color: var(--text); font-size: var(--t-small); line-height: 1.5; }
 .tool-says b { color: var(--sun-ink); }
+/* Weather for the breeder: three radios and one block saying what the chosen one does (a view of the preset id; see main.ts). */
+.weather { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; }
+.weather legend { font-size: var(--t-small); font-weight: 600; padding: 0; margin-bottom: 4px; }
+.weather-choices { display: grid; gap: 4px; margin: 8px 0; }
+.weather-choice { display: flex; gap: 8px; align-items: baseline; font-size: var(--t-small); line-height: 1.5; padding: 2px 0; }
+.weather-choice b { font-weight: 700; }
+.weather-choice input { accent-color: var(--sun-ink); }
+.weather-detail { display: grid; gap: 6px; font-size: var(--t-small); line-height: 1.5; }
+.weather-detail p { margin: 0; }
 .sun-panel { margin-top: 12px; }
 .sun-choices { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
 .sun-choices legend { font-size: var(--t-small); font-weight: 600; padding: 0; margin-bottom: 6px; }
@@ -205,6 +214,8 @@ input[type="range"]:disabled { opacity: .45; }
 .check { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 9px; font-size: var(--t-small); line-height: 1.45; color: var(--text); }
 .check input { margin: 2px 0 0; accent-color: var(--sun-ink); }
 .breeder-call { margin: 12px 0 10px; font-size: var(--t-ui); font-weight: 600; line-height: 1.4; }
+/* The line added when the rule's score ties for every pond: an aside to the status line, in the body weight. */
+.breeder-tied { font-weight: 400; }
 .breeder .row { margin: 0 0 9px; }
 .breeder .row button { min-height: 30px; padding: 4px 8px; font-size: var(--t-micro); }
 #breeder-hint[hidden] { display: none; }
@@ -296,9 +307,12 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .section-heading + .kv { margin-top: 12px; }
 .history .section-heading h2 { font-size: var(--t-body); line-height: 1.3; font-weight: 700; }
 .history-lines { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 10px; }
+/* A world with a polymer shell adds a fourth chart (Cells wearing a shell). */
+.history-lines.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.spark[hidden] { display: none; }
 .spark { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: var(--muted); font-size: var(--t-small); font-weight: 500; }
 /* The charts are drawn in the text colour: pool colours mean pools, and nothing else. */
-.spark canvas { display: block; width: 100%; height: 62px; color: var(--text); background: var(--surface); border: 1px solid var(--line-soft); border-radius: 6px; }
+.spark canvas { display: block; margin-top: auto; width: 100%; height: 62px; color: var(--text); background: var(--surface); border: 1px solid var(--line-soft); border-radius: 6px; }
 .key { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 2px; }
 .key-b { background: var(--biomass); }
 .key-a { background: var(--nutrient); }
@@ -309,6 +323,10 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .kv { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 8px; margin: 0; font-size: var(--t-small); }
 .kv dt { min-width: 0; color: var(--muted); font-family: var(--sans); font-weight: 500; }
 .kv dd { margin: 0; color: var(--text); text-align: right; white-space: nowrap; }
+/* A line under a row, across both columns (the shell row's "none yet" explanation). */
+.kv dd.kv-note { grid-column: 1 / -1; margin-top: -2px; color: var(--muted); font-family: var(--sans); font-size: var(--t-micro); line-height: 1.45; text-align: left; white-space: normal; }
+/* The shell row's value is long ("0.4% of living cells (55 of 14,123)"): it takes the line under its label, so it never narrows the other rows' labels. */
+#k-shell { grid-column: 1 / -1; text-align: left; white-space: normal; }
 /* No reading yet: a quiet mark for the eye that a screen reader skips. */
 .kv dd:empty::before, .run-strip dd:empty::before { content: "–"; content: "–" / ""; color: var(--soft); }
 .badge { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; color: var(--muted); font-size: var(--t-micro); font-weight: 700; line-height: 1.5; white-space: nowrap; }
@@ -582,7 +600,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .transport #btn-play { flex: 1; }
   .transport-speed { order: 1; flex-basis: 100%; max-width: none; margin-left: 0; }
   #views button { padding-inline: 8px; }
-  .history-lines { grid-template-columns: 1fr; gap: 8px; }
+  .history-lines, .history-lines.four { grid-template-columns: 1fr; gap: 8px; }
   .spark canvas { height: 48px; }
   .history .section-heading { display: block; }
 }

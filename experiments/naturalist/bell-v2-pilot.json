@@ -1,0 +1,203 @@
+{
+ "rule": "anomaly-bell-v2-pilot",
+ "note": "docs/naturalist-bell-v2-2026-10-18.md",
+ "seed": 3900,
+ "pilot": {
+  "seed": 3900,
+  "C": 10000,
+  "S": 15000,
+  "baseSteps": 16000,
+  "forkSteps": 6000
+ },
+ "root": "/Users/nicholas/browser-life-bell-v2/pilot",
+ "at": "2026-10-19T02:05:46.109Z",
+ "launch": "8510-1792375442276",
+ "uptimeBefore": "22:04  up 16 days, 23:27, 14 users, load averages: 696.22 590.07 489.49",
+ "uptimeAfter": "22:05  up 16 days, 23:28, 14 users, load averages: 331.89 505.01 468.89",
+ "wallSeconds": 104,
+ "jobs": {
+  "base-3900": {
+   "exit": "ok",
+   "seconds": 16,
+   "stepsPerSecond": 1046.3415546533847,
+   "summarySteps": 16000
+  },
+  "twin-sham-3900": {
+   "exit": "ok",
+   "seconds": 6,
+   "stepsPerSecond": 992.2651074378145,
+   "summarySteps": 16000
+  },
+  "twin-l96-3900": {
+   "exit": "ok",
+   "seconds": 6,
+   "stepsPerSecond": 986.5778211858573,
+   "summarySteps": 16000
+  },
+  "twin-f-3900": {
+   "exit": "ok",
+   "seconds": 6,
+   "stepsPerSecond": 1019.9493522322233,
+   "summarySteps": 16000
+  },
+  "twin-nudge-3900": {
+   "exit": "ok",
+   "seconds": 7,
+   "stepsPerSecond": 974.5140351758413,
+   "summarySteps": 16000
+  }
+ },
+ "nudgeCentre": {
+  "x": 128,
+  "y": 128
+ },
+ "rates": {
+  "rBase": 1046.3415546533847,
+  "rFork": 993.3265790079341,
+  "o": 0.2080100519999999
+ },
+ "baseOverheadSeconds": 0.7086260420000006,
+ "checks": [
+  {
+   "name": "sham checkpoint at 15,000 decodes to its step with the listed hash",
+   "ok": true,
+   "required": true,
+   "detail": "step 15000, hash ad33b1a9a487554d vs ad33b1a9a487554d"
+  },
+  {
+   "name": "a nudge centre can be found in it",
+   "ok": true,
+   "required": true,
+   "detail": "{\"x\":128,\"y\":128,\"d2\":0}"
+  },
+  {
+   "name": "all five pilot jobs exited 0",
+   "ok": true,
+   "required": true,
+   "detail": "{\"base-3900\":\"ok\",\"twin-sham-3900\":\"ok\",\"twin-l96-3900\":\"ok\",\"twin-f-3900\":\"ok\",\"twin-nudge-3900\":\"ok\"}"
+  },
+  {
+   "name": "base manifest",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "sham manifest (startStep, no initHash, summary at 16,000, base identity, one checkpoint at 15,000)",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "sham holds no interventions",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "l96 manifest (startStep, no initHash, summary at 16,000, base identity, no checkpoint)",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "l96 holds exactly its lesion at 15,000",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "f manifest (startStep, no initHash, summary at 16,000, base identity, no checkpoint)",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "f holds exactly its feed at 15,000",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "nudge manifest (startStep, no initHash, summary at 16,000, base identity, no checkpoint)",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "nudge holds exactly its lesion at 15,000",
+   "ok": true,
+   "required": true
+  },
+  {
+   "name": "sham series equals the base's over (10000, 16000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":60,\"expected\":60}"
+  },
+  {
+   "name": "sham lineage rows equal the base's over (10000, 16000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":9103}"
+  },
+  {
+   "name": "l96 series equals the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":50,\"expected\":50}"
+  },
+  {
+   "name": "l96 lineage rows equal the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":7255}"
+  },
+  {
+   "name": "l96 series differs from the base's after 15000",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":false,\"compared\":50,\"expected\":60,\"mismatchStep\":15100,\"detail\":\"the census at step 15100 differs\"}"
+  },
+  {
+   "name": "f series equals the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":50,\"expected\":50}"
+  },
+  {
+   "name": "f lineage rows equal the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":7255}"
+  },
+  {
+   "name": "f series differs from the base's after 15000",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":false,\"compared\":50,\"expected\":60,\"mismatchStep\":15100,\"detail\":\"the census at step 15100 differs\"}"
+  },
+  {
+   "name": "nudge series equals the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":50,\"expected\":50}"
+  },
+  {
+   "name": "nudge lineage rows equal the base's over (10000, 15000]",
+   "ok": true,
+   "required": true,
+   "detail": "{\"ok\":true,\"compared\":7255}"
+  },
+  {
+   "name": "nudge series differs from the base's after 15000",
+   "ok": true,
+   "required": false,
+   "detail": "{\"ok\":false,\"compared\":50,\"expected\":60,\"mismatchStep\":15100,\"detail\":\"the census at step 15100 differs\"}"
+  }
+ ],
+ "mechanicsOk": true,
+ "projection": {
+  "mode": "full",
+  "drop": [],
+  "hours": {
+   "full": 1.05239393220742,
+   "dropL64": 0.99574288315274,
+   "used": 0.028888888888888888
+  },
+  "capHours": 5
+ },
+ "freeBytes": 12721668096
+}

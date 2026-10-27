@@ -1,4 +1,4 @@
-import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, pondScoreTerms, sunError, sunLight, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, sunError, sunLight, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, PressureMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { donorsWithKeep, type KeptPond } from "./pond-play.ts";
@@ -8,9 +8,11 @@ import { createFirstsPanel } from "./firsts-panel.ts";
 import { createFamilyPanel } from "./family-panel.ts";
 import { createNaturalistPanel } from "./naturalist-panel.ts";
 import type { HandEntry } from "./naturalist.ts";
-import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
-import { FAMILIES, byId, familyOf } from "./worlds.ts";
+import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, tiedAtZero, type RankKey } from "./rank-labels.ts";
+import { FAMILIES, WEATHER, byId, familyOf, weatherDoes, weatherLevel } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
+import { rankOrder, rankValues } from "./pond-ranking.ts";
+import { fmtShare } from "./shell.ts";
 import "./theme.ts";
 import { track } from "./analytics.ts";
 
@@ -61,7 +63,7 @@ const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
 // ordinary hand edits, the same lesion and feed messages Wound and Feed/Drain send, from the suggestion alone (never the brush's
 // radius, amount or tool), each naming the world the suggestion was made for, so the worker refuses it for a world replaced since
 // (a restore, open or jump queued before the click). `loadingWorld` is read when the button is drawn and again on the click.
-const naturalistPanel = createNaturalistPanel({ apply: (entries, world) => tryHand(entries, world), loading: () => loadingWorld });
+const naturalistPanel = createNaturalistPanel({ apply: (entries, world, id) => tryHand(entries, world, id), loading: () => loadingWorld });
 // An error the worker did not catch (its own frame and message handlers post theirs): Field notes stops vouching for the censuses.
 worker.addEventListener("error", () => naturalistPanel.onFailed("worker"));
 
@@ -136,6 +138,7 @@ const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
   signal: ["Signal", "secreted signal S, what cells can sense of each other"],
   affinity: ["Pull", "where mass is pulled: red attracts, blue repels (the growth field U)"],
   light: ["Light", "where the sun falls at this step, brighter where there is more of it"],
+  membrane: ["Membrane", "white is membrane P; brighter means more, with low amounts boosted and white saturated at 256"],
 };
 
 // ---------- view modes ----------
@@ -166,10 +169,21 @@ function setMode(m: GpuViewMode) {
       else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
     }
   }
-  const name = document.createElement("b");
-  name.textContent = VIEW_LABELS[m][0];
-  $("legend").replaceChildren("Showing ", name, `: ${VIEW_LABELS[m][1]}`);
+  paintViewLegend();
   pushView();
+}
+/** The legend follows the loaded world's shell setting, including when the chosen view survives a replacement. */
+function paintViewLegend() {
+  const name = document.createElement("b");
+  name.textContent = VIEW_LABELS[mode][0];
+  let detail = VIEW_LABELS[mode][1];
+  if (mode === "membrane") {
+    detail += ". Tile borders and lineage highlighting overlay these colours";
+    detail += cfg?.injuryShell === undefined
+      ? ". Membrane quantity, not a map of shell protection."
+      : `. This world's scheduled wounds require ${cfg.injuryShell.toLocaleString()} membrane in a living cell to weather a hit; the Wound tool still cuts through shells. This shows membrane now, not a survival forecast.`;
+  }
+  $("legend").replaceChildren("Showing ", name, `: ${detail}`);
 }
 
 // ---------- presets ----------
@@ -213,7 +227,48 @@ const servedWorld = byId(new URLSearchParams(location.search).get("world"))?.id 
 const titleFor = (presetId: string | null, name: string) =>
   servedWorld === null || presetId === servedWorld ? servedTitle : `${name} · Cadence Garden`;
 const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
-const showPresetDesc = () => describeWorld(byId(presetSel.value), $("preset-desc"));
+// The Weather control (docs/pond-keeper-v3-2026-10-22.md, section 1): three radios that are a view of the select's preset id, shown
+// only where the chosen world is one of the breeder's weathers. Choosing one sets the select and runs what the catalogue's chooser
+// runs; nothing is planted until Plant is pressed. The select, the catalogue and a link move the radio through `showPresetDesc`.
+const weatherBox = $("weather");
+$("weather-legend").textContent = WEATHER.legend;
+$("weather-lead").textContent = WEATHER.lead;
+{
+  const choices = $("weather-choices");
+  for (const level of WEATHER.levels) {
+    const label = document.createElement("label");
+    label.className = "weather-choice";
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "weather";
+    input.value = level.id;
+    input.onchange = () => {
+      if (!input.checked) return;
+      presetSel.value = level.id;
+      showPresetDesc();
+      syncPlant();
+    };
+    const words = document.createElement("span");
+    const word = document.createElement("b");
+    word.textContent = `${level.word}.`;
+    words.append(word, ` ${level.gist}`);
+    label.append(input, words);
+    choices.append(label);
+  }
+}
+/** The radio follows the select; the one detail block says what the chosen weather does (from its config) and why it matters. */
+function paintWeather() {
+  const level = weatherLevel(presetSel.value);
+  weatherBox.hidden = !level;
+  if (!level) return;
+  for (const input of weatherBox.querySelectorAll<HTMLInputElement>('input[name="weather"]')) input.checked = input.value === level.id;
+  $("weather-does").textContent = weatherDoes(byId(level.id)!);
+  $("weather-matters").textContent = level.matters;
+}
+const showPresetDesc = () => {
+  describeWorld(byId(presetSel.value), $("preset-desc"));
+  paintWeather();
+};
 /**
  * Choosing a starting world or a seed changes nothing until Plant is pressed: the button says which it would do,
  * lights up when the choice differs from the world on screen, and the note says what is on screen meanwhile.
@@ -263,6 +318,7 @@ function sendPlant(keep?: Keep) {
   setWorldControls(false);
   cfgBeforeLoad = cfg;
   cfg = null;
+  paintViewLegend();
   loadingWorld = true;
   setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
   $<HTMLButtonElement>("btn-new").disabled = true;
@@ -287,6 +343,7 @@ function unblankWorld() {
   if (!loadingWorld) return;
   loadingWorld = false;
   cfg = cfgBeforeLoad;
+  paintViewLegend();
   setWorldControls(cfg !== null);
   // A pond cycle may still be waiting for its donors: Save, Download, the check and stepping wait with it.
   syncWaitingControls();
@@ -481,6 +538,8 @@ const TOOL_SAYS: Record<Tool, string> = {
 const TOOL_VERB: Record<Tool, string> = {
   inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", sun: "set the sun in its panel", pan: "drag to move", pick: "click to pick",
 };
+/** Said under the Wound tool in a world with a polymer shell: the brush always cuts (injuryShell is read only by the world's own wounds). */
+const WOUND_IS_A_CUT = "This tool is a cut, not weather: it clears whatever it touches, shell or not. Only the world's own wounds can be weathered.";
 function setTool(t: Tool) {
   tool = t;
   for (const o of tools.querySelectorAll<HTMLButtonElement>("button")) {
@@ -491,7 +550,8 @@ function setTool(t: Tool) {
   wrap.dataset.tool = tool;
   const name = document.createElement("b");
   name.textContent = `${TOOL_NAMES[t]}.`;
-  $("tool-says").replaceChildren(name, ` ${TOOL_SAYS[t]}`);
+  // The line depends on the world loaded, so the "loaded" handler runs this again (a click is not the only time it changes).
+  $("tool-says").replaceChildren(name, ` ${TOOL_SAYS[t]}${t === "lesion" && cfg?.injuryShell !== undefined ? ` ${WOUND_IS_A_CUT}` : ""}`);
   syncBrush();
 }
 for (const b of tools.querySelectorAll<HTMLButtonElement>("button")) b.onclick = () => setTool(b.dataset.tool as Tool);
@@ -539,11 +599,11 @@ function settleStroke() {
   strokeToastDue = false;
 }
 /** Field notes' Try it here: the suggestion's entries, sent as hand edits for world `world` and counted like a brush stroke's patches (no stroke toast). */
-function tryHand(entries: HandEntry[], world: number) {
+function tryHand(entries: HandEntry[], world: number, id: number) {
   for (const e of entries) {
     pendingHands++;
-    if (e.kind === "lesion") send({ type: "lesion", x: e.x, y: e.y, r: e.r, world });
-    else send({ type: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, world });
+    if (e.kind === "lesion") send({ type: "lesion", x: e.x, y: e.y, r: e.r, world, id });
+    else send({ type: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount, world, id });
   }
 }
 function noteBrushRefused() {
@@ -783,7 +843,7 @@ window.addEventListener("keydown", (e) => {
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
   else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
-  else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
+  else if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
 // ---------- checkpoints ----------
@@ -859,10 +919,32 @@ function showVerification() {
 const spInd = new Series($<HTMLCanvasElement>("sp-ind"));
 const spBio = new Series($<HTMLCanvasElement>("sp-bio"));
 const spLin = new Series($<HTMLCanvasElement>("sp-lin"));
-window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); });
+// The share of living cells wearing a shell, as a percentage: Series scales to the largest value pushed (floor 1), and prints one decimal.
+const spShell = new Series($<HTMLCanvasElement>("sp-shell"), 400, fmtShare);
+window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); spShell.redraw(); });
+
+/** The fourth chart and the "Cells wearing a shell" row exist only in a world with a shell (docs/pond-keeper-v3-2026-10-22.md, section 3). */
+function syncShell() {
+  const has = cfg?.injuryShell !== undefined;
+  $("sp-shell-box").hidden = !has;
+  $("history-lines").classList.toggle("four", has);
+  for (const id of ["k-shell-dt", "k-shell"]) $(id).hidden = !has;
+  $("k-shell").textContent = "";
+  $("k-shell-note").hidden = true;
+}
+/** One census's count: the share first, then the cells; at zero, "none yet" and what that means for a wound. */
+function onShell(shell: { wearing: number; living: number }) {
+  const { wearing, living } = shell;
+  const share = living > 0 ? (100 * wearing) / living : 0;
+  $("k-shell").textContent = wearing === 0 ? "none yet" : `${fmtShare(share)} of living cells (${wearing.toLocaleString()} of ${living.toLocaleString()})`;
+  const note = $("k-shell-note");
+  note.hidden = wearing > 0;
+  note.textContent = wearing > 0 || !cfg || cfg.injuryShell === undefined ? "" : `No living cell holds ${cfg.injuryShell.toLocaleString()} membrane right now, so a wound now would take whatever it hits.`;
+  spShell.push(share);
+}
 
 function resetEvidence() {
-  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
+  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen", "k-shell"])
     $(id).textContent = "";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
@@ -880,7 +962,9 @@ function resetEvidence() {
   topLinShown = "";
   $("pools").replaceChildren();
   $("pools").setAttribute("aria-label", POOLS_UNCOUNTED);
-  spInd.clear(); spBio.clear(); spLin.clear();
+  // The shell widgets are shown (or hidden) first, so the cleared chart is drawn at its real size.
+  syncShell();
+  spInd.clear(); spBio.clear(); spLin.clear(); spShell.clear();
   verifying = false;
 }
 
@@ -934,6 +1018,7 @@ function onCensus(c: CensusMsg) {
   $("k-gen").textContent = String(c.maxGen);
   spInd.push(c.individuals);
   spLin.push(c.lineageCount);
+  if (c.shell) onShell(c.shell);
   // A paused world is counted again every 600 ms with the same answer: the rows stay as they are, so a keyboard or
   // screen-reader user on a Keep button is not handed a new button (and told about it again) each time. Anything a
   // row comes to show beyond these goes into the signature too, or the rows would keep showing its old value.
@@ -1051,7 +1136,7 @@ function onPonds(m: PondsMsg) {
   // The line can clip a long donor list (up to 16 on the 8 × 8 preset); the tooltip always holds it in full.
   line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donor ponds ${m.donors.length ? m.donors.join(", ") : "none"}${m.hand && pickedBy ? ` · picked by hand, viewing ranks by ${pickedBy}` : ""}`;
   // A cycle clears every pond: the histories mark where, so the drop that follows reads as the cycle, not a collapse.
-  spInd.mark(); spBio.mark(); spLin.mark();
+  spInd.mark(); spBio.mark(); spLin.mark(); spShell.mark();
   autoApplied(m.step);
   // The cycle that was waiting has been applied.
   if (awaiting && awaiting.step === m.step) {
@@ -1091,25 +1176,19 @@ const termSel = $<HTMLSelectElement>("breeder-term");
 /** The lab can let a person choose donors for the arms whose cycle chooses them. */
 const takesDonors = (c: WorldConfig | null) => !!c && c.pondPeriod !== undefined && (c.pondArm === "scaf" || c.pondArm === "rand" || c.pondArm === "breed");
 
-/** Each pond's value of `key` at the waiting boundary. Speed is the motility term per unit of bound mass, in cells per 1,000 steps. */
-function rankValues(a: PondAwaitMsg, key: RankKey): number[] {
-  const score = a.ruleScore ?? a.score;
-  if (key === "score") return score === null ? a.terms.mass : (() => { const t = pondScoreTerms(score).map((term) => a.terms[term]); return t.length === 1 ? t[0] : worstRanks(t); })();
-  if (key === "speed") return a.terms.drive.map((d, p) => (a.terms.mass[p] > 0 ? ((d / a.terms.mass[p]) * 1000) / 64 : 0));
-  return a.terms[key];
-}
-/** Occupied ponds from the best value of `key` down; equal values by bound mass, then by index. */
-function rankOrder(a: PondAwaitMsg, key: RankKey): number[] {
-  const v = rankValues(a, key), mass = a.terms.mass;
-  return mass.map((_, p) => p).filter((p) => mass[p] > 0).sort((x, y) => v[y] - v[x] || mass[y] - mass[x] || x - y);
-}
-const showValue = (key: RankKey, v: number) => (key === "body" ? (v / 256).toFixed(1) : key === "speed" ? v.toFixed(1) : fmt(v));
+const showValue = (key: RankKey, v: number) => (key === "body" ? (v / 256).toFixed(1) : key === "speed" ? v.toFixed(1) : key === "shell" ? fmtShare(v) : fmt(v));
 /** The hover line's account of a pond while a cycle waits. */
 function pondReadout(pond: number): string {
   const a = awaiting;
   if (!a) return "";
   if (a.terms.mass[pond] === 0) return " · empty";
-  return ` · speed ${showValue("speed", rankValues(a, "speed")[pond])} · seed ${fmt(a.terms.seed[pond])} · body ${showValue("body", a.terms.body[pond])} · mass ${fmt(a.terms.mass[pond])}`;
+  return `${shellReadout(a, pond)} · speed ${showValue("speed", rankValues(a, "speed")[pond])} · seed ${fmt(a.terms.seed[pond])} · body ${showValue("body", a.terms.body[pond])} · mass ${fmt(a.terms.mass[pond])}`;
+}
+
+/** Counts keep a high share in a small pond legible; eligibility still follows bound mass. */
+function shellReadout(a: PondAwaitMsg, p: number): string {
+  const c = a.shells?.[p];
+  return c ? ` · shells ${c.living ? fmtShare(c.wearing / c.living * 100) : "no living cells"} (${c.wearing.toLocaleString()} of ${c.living.toLocaleString()} living cells)` : "";
 }
 
 function resetBreeder() {
@@ -1158,7 +1237,7 @@ function onPondAwait(m: PondAwaitMsg) {
   openPick(m);
 }
 /** What the ponds can be ranked by while cycle `a` waits: the rule's score first, when it ranks by one. */
-const rankKeys = (a: PondAwaitMsg): RankKey[] => [...((a.ruleScore ?? a.score) === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
+const rankKeys = (a: PondAwaitMsg): RankKey[] => [...((a.ruleScore ?? a.score) === null ? [] : ["score" as const]), "speed", ...(a.shells ? ["shell" as const] : []), "seed", "body", "mass", "drive", "reach"];
 const rankOption = (a: PondAwaitMsg, k: RankKey) => (k === "score" ? scoreLabel(a.ruleScore ?? a.score!) : RANK_LABELS[k]);
 /** A refreshed survey may rank by another score (the dial moved): the menu's "rule's score" names the new one. */
 function syncRankOptions(a: PondAwaitMsg) {
@@ -1256,7 +1335,23 @@ function syncPicks() {
   const occupied = a.terms.mass.filter((m) => m > 0).length;
   const key = rankKey ?? "speed";
   const ruled = scoreWords(a.ruleScore ?? undefined);
-  $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.${ruled ? ` The rule’s choice ranks them by ${ruled.toLowerCase()}.` : ""}`;
+  // When the score ties at zero for every occupied pond, the rule's order falls to bound mass: say so (display only; the rank-labels vitest holds the rule).
+  const tied = tiedAtZero(a);
+  const call = $("breeder-call");
+  call.replaceChildren(`Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.${ruled ? ` The rule’s choice ranks them by ${ruled.toLowerCase()}.` : ""}`);
+  // The tie line is an aside to the bold status line, in the body weight.
+  if (tied) {
+    const aside = document.createElement("span");
+    aside.className = "breeder-tied";
+    aside.textContent = ` ${tied}`;
+    call.append(aside);
+  }
+  if (key === "shell") {
+    const note = document.createElement("span");
+    note.className = "breeder-shell-note breeder-tied";
+    note.textContent = " Shells ranks by the share of living cells holding enough membrane now, before this cycle. Equal shares use bound mass, then pond number. It is no promise of surviving the next wound. Choose Top to use these donors; the rule and Auto-breed keep their own choices.";
+    call.append(note);
+  }
   // Say what Breed will do before it is pressed: it cannot be undone. While it is in flight, say that instead.
   $("breed-bar-call").textContent = breeding !== null
     ? breedSlow ? `Still applying cycle ${a.cycle}. The lab is waiting for the GPU; a failure will show on the field.` : `Applying cycle ${a.cycle}.`
@@ -1276,8 +1371,9 @@ function syncPicks() {
   const values = rankValues(a, key);
   $("breeder-list").replaceChildren(...picks.map((p) => {
     const li = document.createElement("li");
-    li.textContent = `${p} #${rank.get(p)} · ${showValue(key, values[p])}`;
-    li.setAttribute("aria-label", `Pond ${p}, rank ${rank.get(p)}, ${RANK_LABELS[key].toLowerCase()} ${showValue(key, values[p])}`);
+    const detail = key === "shell" ? shellReadout(a, p) : ` · ${showValue(key, values[p])}`;
+    li.textContent = `${p} #${rank.get(p)}${detail}`;
+    li.setAttribute("aria-label", `Pond ${p}, rank ${rank.get(p)}, ${RANK_LABELS[key].toLowerCase()}${detail}`);
     return li;
   }));
   drawPondOverlay();
@@ -1797,6 +1893,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       worldFailed = false;
       stopAuto("the world was replaced");
       cfg = m.manifest.cfg;
+      paintViewLegend();
       // An opened file, or a fork of one, holds its history only from the step it was opened at.
       historyFrom = m.manifest.presetId === "imported" || (m.manifest.edgesFrom ?? 0) > 0 ? m.manifest.edgesFrom ?? m.step : null;
       setWorldControls(true);
@@ -1824,6 +1921,8 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       resetEvidence();
       resetPondStatus();
       resetBreeder();
+      // The Wound tool's line depends on this world (a shell world says its hand wounds are cuts); a click on a tool is not the only time it changes.
+      setTool(tool);
       fit(true);
       lineagePanel.onLoaded();
       firstsPanel.onLoaded(m.manifest);
@@ -1900,7 +1999,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       naturalistPanel.onCensus(m);
       break;
     case "naturalistTouched":
-      naturalistPanel.onTouched(m.world, m.runId, m.step);
+      naturalistPanel.onTouched(m.world, m.runId, m.step, m.id);
       break;
     case "sessionFile":
       firstsPanel.onSessionFile(m);
@@ -1915,7 +2014,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       if (m.request === "load" || m.request === "restore" || m.request === "import") loadIntent = null;
       if (m.request === "lesion" || m.request === "feed") {
         noteBrushRefused();
-        naturalistPanel.onApplyRefused(m.message);
+        naturalistPanel.onApplyRefused(m.message, m.id);
       }
       if (m.request === "pressure") pressureAnswered();
       if (m.request === "sun") {
@@ -1955,6 +2054,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         // with whatever that world was waiting for (a pond cycle's donors) still on screen.
         loadingWorld = false;
         cfg = cfgBeforeLoad;
+        paintViewLegend();
         setWorldControls(cfg !== null);
         syncWaitingControls();
         drawPondOverlay();
@@ -1973,7 +2073,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         naturalistPanel.onFailed();
       }
       // A Try still waiting for its edit to be logged may not have been applied (the error names no request; the model ignores this otherwise).
-      naturalistPanel.onApplyRefused(m.message, false);
+      naturalistPanel.onApplyUncertain(m.message);
       {
         // The page pauses on any error, so auto-breed ends; it says the world failed only when it did.
         const wasAuto = auto !== null;

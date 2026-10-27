@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prototype status · 24 October 2026</title><meta name="description" content="Seven prototype surfaces: main, open PRs, remaining follow-ups and separate decisions. No deployment verified."><style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --field: oklch(12% 0.01 160);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; overflow-wrap: anywhere; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; margin: 10px 0; }
+pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; font-size: 13px; }
+.wrap { max-width: 920px; margin: 0 auto; }
+header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+header.top > div { min-width: 0; flex: 1 1 320px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 1px solid var(--control-line); border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+nav.toc { margin: 18px 0 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); }
+nav.toc h2 { font-size: 13px; margin: 0 0 6px; color: var(--soft); letter-spacing: .06em; text-transform: uppercase; }
+nav.toc ul { margin: 0; padding-left: 0; list-style: none; columns: 2 220px; column-gap: 24px; }
+nav.toc li { font-size: 14px; }
+section { margin: 36px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 8px; scroll-margin-top: 12px; }
+p, li { max-width: 76ch; }
+li + li { margin-top: 4px; }
+ol, ul { padding-left: 22px; }
+strong { font-weight: 700; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); margin: 10px 0; }
+table { border-collapse: collapse; font-size: 13px; min-width: 760px; width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td code { overflow-wrap: anywhere; }
+th { font-weight: 600; color: var(--muted); }
+th:nth-child(1), td:nth-child(1) { width: 44%; }
+th:nth-child(2), td:nth-child(2) { width: 16%; }
+tr:last-child td { border-bottom: 0; }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (max-width: 640px) { body { font-size: 14px; } .lede { font-size: 16px; } }
+
+h2 { margin-top: 36px; } p { overflow-wrap: anywhere; } main { padding-bottom: 32px; }
+</style></head><body><main class="wrap"><header class="top"><div><p class="eyebrow">Cadence Garden · project snapshot</p><h1>Prototype status — 24 October 2026</h1></div><button class="theme" type="button" aria-pressed="false">Night mode</button></header>
+<p>Seven surfaces, updated after the authorized feature merges on 24 October. Main includes PR72–78 and PR80–83 at <code>7d91e09fa508ab9407b2c856e7b24c84a8f41b04</code>; PR79 publishes this status and the final decision record last. The <a href="prototype-merge-2026-10-24.md">merge record</a> pins the merge commits and fresh checks. No deployment was performed or verified. The release configuration keeps the shared garden private.</p>
+<p><a href="prototypes-2026-10-24.md">Markdown edition</a> · <a href="prototypes-2026-10-18.md">Previous snapshot</a></p>
+<h2 id="1-lab">1. Lab</h2>
+<p><strong>On main:</strong> WebGPU worlds, interventions, checkpoints and replay; Pond keeper weather and whole-world shell share; Field notes and suggestions. Firsts now survive rewind through checkpoint sidecars, and refused Feed/Drain requests are nonfatal. <a href="pond-keeper-v3-2026-10-22.md">Pond keeper v3</a> and <a href="naturalist-field-notes-v0-2026-10-18.md">Field notes</a> describe the contracts and their recorded checks.</p>
+<p><strong>Merged PRs:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/73">#73 shell-based donor ranking</a>, <a href="https://github.com/treetopdevs/browser-life/pull/76">#76 dedicated membrane view</a>, and <a href="https://github.com/treetopdevs/browser-life/pull/77">#77 matching Try receipts to requests</a>. Each has focused validation recorded in its PR. A separate <a href="prototype-integration-2026-10-24.md">local integration report</a> records checks of the exact combined revisions; the corresponding feature changes are now on main.</p>
+<p><strong>Try locally:</strong> <code>pnpm dev</code>, then <code>http://localhost:5173/lab/?world=breeder&amp;seed=1</code> for Pond keeper or <code>http://localhost:5173/lab/?world=gradient-m3&amp;seed=1</code> for Field notes. Open <code>http://localhost:5173/selftest.html</code> for GPU/reference checks.</p>
+<p><strong>Merged verification PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/82">#82 naturalist UI coverage</a> adds the Field notes design entry and real wound/drain clicks with visibly labelled test suggestions, narrow-screen checks and session receipts. Adversarial review identified assertion gaps; the fixes passed seven browser checks and a final two-case action-spec rerun. The PR is merged. These fixtures do not establish naturally discovered wound/drain predictions. Hail, shell-respecting Wound, new firsts, and additional weather controls are explicitly deferred in v3, each needing its own rule or replay design.</p>
+<h2 id="2-public-site">2. Public site</h2>
+<p><strong>On main:</strong> Home, Worlds, research journal, explanations, participation, privacy, status and the 404 page. Local accessibility and route checks are recorded in <a href="release-checks-2026-10-18.md">release checks</a>. Journal updates after 18 October already landed; the older prototype snapshot&#x27;s missing-journal list is stale.</p>
+<p><strong>Try locally:</strong> With <code>pnpm dev</code>, open <code>http://localhost:5173/</code>, <code>/worlds/</code>, <code>/research/</code> or <code>/no-such-page/</code>. For the built site use <code>pnpm build</code>, then <code>pnpm --filter @bl/lab preview</code> and the address Vite prints.</p>
+<p><strong>Merged PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/80">#80 public follow-ups</a> normalizes missing-page analytics to <code>/404</code> and refreshes sitemap dates. Review is complete. Combined local validation passed all 13 analytics/not-found browser checks, including local Caddy and Vite preview. Live-domain behavior, real devices and screen readers require separate external verification. This page makes no claim about the current production version.</p>
+<h2 id="3-archipelago">3. Archipelago</h2>
+<p><strong>On main:</strong> Coordinator scheduling, islands, verification and stitched bundles; rule-picked bred worlds and authenticated operator views. <a href="archipelago-breed-2026-10-18.md">Bred runs</a> records the supported distributed contract.</p>
+<p><strong>Merged PRs:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/74">#74 graceful island leave</a> returns leases and unregisters a stopped island; <a href="https://github.com/treetopdevs/browser-life/pull/75">#75 operator counters</a> shows refusals/pruning with a reset epoch. These address the corresponding old backlog rows.</p>
+<p><strong>Try locally:</strong> <code>bin/dev</code> starts lab and coordinator; open <code>http://localhost:4000/index.html</code> for operations and <code>http://localhost:5173/island.html</code> for an island. Joining an island is an explicit action; it does not start from the homepage. Headless alternative: <code>deno run -A --no-lock tools/island.ts --coordinator http://localhost:4000</code>.</p>
+<p><strong>Merged PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/78">#78 configurable lease duration</a> adds <code>BL_LEASE_MS</code>; its focused validation and completed independent review are recorded in the PR. Distributed branch runs and hand/model pickers remain explicitly deferred; the existing rule-picker prototype does not promise them.</p>
+<p><strong>Merged PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/83">#83 island backoff</a> retries only explicitly unapplied <code>429</code>/<code>503</code> responses, with shared cooldown, retained request bytes and cancellable waits. Its initial 138 client tests, 556 backend tests and three real browser/coordinator checks passed. Combined leave validation passed 148 client tests, 124 targeted backend tests and three real wire checks. PR74 merged before PR83, so these cleanup assertions ship together. Argon review is complete and all four findings are addressed. The final source passed 152 client tests and 21 HTTP tests; the combined tree passed 52 affected client tests, 21 HTTP tests and typecheck. The <a href="../deploy/README.md">deployment notes</a> also leave client-address proxy forwarding, Compose environment additions and the per-address join budget pending a live-host change and verification. These deployment tasks are separate from the merged features above.</p>
+<h2 id="4-shared-garden">4. Shared garden</h2>
+<p><strong>On main, private:</strong> The local garden has stones, collective food when enabled at founding, sun letters, prediction receipts and verified checkpoint forks. The null-stone control and sun implementation have landed; the older snapshot&#x27;s corresponding “not built” rows are stale. <a href="garden-sun-2026-10-18.md">Sun letters</a>, <a href="garden-food-2026-10-18.md">food</a> and <a href="garden-opening-2026-10-18.md">opening checklist</a> describe the scope.</p>
+<p><strong>Try locally:</strong> <code>bin/garden-dev</code>, then <code>http://localhost:5173/garden/</code> (or the <code>LAB_PORT</code> address the launcher prints). It starts its own lab, coordinator and GPU islands; stop competing local servers first or set PORT/LAB_PORT. Its scratch garden is not a public commons.</p>
+<p><strong>Merged PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/81">#81 local food option</a> adds <code>GARDEN_FOOD=1</code> for newly founded local gardens. Review and five launcher tests pass. Existing gardens retain their founding rule; the collective threshold is unchanged. Launcher tests use stub services and do not prove a real collective landing.</p>
+<p><strong>External decision:</strong> Public opening and founding remain separate. The <a href="../deploy/README.md">release configuration</a> removes garden files, returns 404 for garden routes and disables scheduling. Opening requires deliberate changes and the checklist, not merely switching on one environment variable.</p>
+<h2 id="5-ai-naturalist">5. AI naturalist</h2>
+<p><strong>On main:</strong> Rule-based bell, notebook, proposal generation/approval tools, bench tooling, and the lab Field notes UI. <a href="naturalist-bell-v2-2026-10-18.md">Bell v2</a> is complete with a Negative readout: the post-hoc rule did not replicate. A ring is not proof of emergence.</p>
+<p><strong>Try locally:</strong> Use the lab route above or open the <a href="examples/field-notebook-2026-10-17-gradient-m3-neutral-seed-15.html">committed field notebook</a>. Offline tooling and its data prerequisites are documented in the <a href="naturalist-proposer-v0-2026-10-18.md">proposer note</a>.</p>
+<p><strong>Separate decision/research:</strong> The <a href="naturalist-bench-v0-2026-10-18.md">bench</a> remains unapproved/unrun in the committed record; paid model part C also needs authorization. A fresh v3 bell is a new scientific protocol, not a missing implementation of v2. Exact-step Try, on-page twins and prediction adjudication are explicitly outside the <a href="naturalist-lab-suggestions-v0-2026-10-18.md">suggestion UI v0</a>.</p>
+<h2 id="6-evolution-game">6. Evolution game</h2>
+<p><strong>On main:</strong> Pond keeper v3&#x27;s weather choices, shell-share display, breeding choices, firsts and family tree. Gene v2 and the polymer-world screens have landed; their conclusions remain Unclear/no pass at their stated scope in the <a href="evolution-game-brainstorm-2026-10-16.md">game research record</a>. They are no longer missing code.</p>
+<p><strong>Try locally:</strong> <code>http://localhost:5173/lab/?world=breeder&amp;seed=1</code> with <code>pnpm dev</code>; the shell-rank and membrane additions are now included on main through PR73/76.</p>
+<p><strong>Separate decision:</strong> The <a href="playtest-kit-2026-10-18.md">three-person playtest kit</a> uses its own pinned revision and frozen protocol. Human sessions are not replaced by automated browser checks. Hail and new breeding scores are deferred ideas, not silently added completion requirements.</p>
+<h2 id="7-research-instruments">7. Research instruments</h2>
+<p><strong>On main:</strong> Lineage/pond-route inspection and reports, clade measures, reproducible experiment tools. Clade measures did not pass their pre-stated eligibility rules; that is a recorded result, not a broken app. The <a href="../plans/README.md">instrument plans</a> mark plans 001–006 done.</p>
+<p><strong>Merged PR:</strong> <a href="https://github.com/treetopdevs/browser-life/pull/72">#72 recovery evidence and mass-matched feasibility</a>. This is a bounded diagnostic with an explicit gate, not a new mutation search or proof of improved recovery. Its evidence and limitations live with that PR.</p>
+<p><strong>Try locally:</strong> The previous snapshot&#x27;s <a href="prototypes-2026-10-18.html#research-instruments">research-instrument instructions</a> show the committed lineage fixture and HTML report commands. Large scientific corpora under <code>runs/</code> are not included in a fresh clone.</p>
+<p><strong>Deferred research:</strong> Genotype-keyed activity, matched nulls and further recovery experiments need their own protocols. They are not necessary to call the existing instrument implementation complete.</p>
+<h2 id="what-remains-in-this-bounded-backlog">What remains in this bounded backlog</h2>
+<p>The planned prototype changes are merged. Fresh verification of the complete feature tree passed 306 unit tests, 575 backend tests, 59 Chrome checks, typecheck and build; the <a href="prototype-merge-2026-10-24.md">merge record</a> includes exact revisions and the two initial timing failures that passed on quiet rerun. The earlier <a href="prototype-integration-2026-10-24.md">integration report</a> retains the development-stage evidence. Live-host proxy forwarding, join-budget configuration and deployment remain separate follow-ups. Explicitly deferred features, public opening, human validation and new scientific work remain separate decisions; merging does not establish successful evolution.</p>
+<p>The <a href="prototype-workflow-audit-2026-10-24.md">workflow completion audit</a> maps each requested deliverable to its evidence and remaining external boundaries.</p>
+<h2 id="evidence-and-command-checks">Evidence and command checks</h2>
+<p>The original snapshot was a source/PR audit at <code>b3fab906</code>, followed by the documented implementation, review, integration and authorized merge workflow. The seven launch paths and commands above were <strong>read</strong> from existing repository instructions and entry points; they are not a claim that every launch command was newly executed. The merge validation did run the bounded engineering tests recorded above; it ran no new scientific experiment or deployment. A fresh checkout needs <code>pnpm install</code> and, for coordinator paths, <code>(cd apps/coordinator &amp;&amp; mix deps.get)</code>. Native GPU commands need a compatible device. Run <code>pnpm install</code> before Deno; <code>--no-lock</code> in the direct <code>deno run</code> command above avoids rewriting its lockfile. The <code>bin/garden-dev</code> launcher currently invokes Deno without that flag; check for lockfile changes after using it.</p>
+<p>Recorded test results belong to their source notes or PRs. The separate integration report supplies combined-branch verification only for its pinned inputs; its incremental section includes public-page and garden-food work, and later sections include UI-coverage and backoff/leave integration at exact recorded revisions. Validation performed for this snapshot: all relative Markdown and HTML link targets exist, HTML fragment targets resolve, and every HTML section has a unique heading anchor; HTML is generated from the same content. Headless Chrome at 1280px and 375px in both day and night modes showed no horizontal overflow, script errors or external requests; the theme button worked in each case. Axe, including the optional <code>label-content-name-mismatch</code> rule, reported zero violations at all four viewport/theme combinations. The theme control exposes its night-mode state with <code>aria-pressed</code>. The 375px night screenshot was visually inspected. <code>git diff --check</code> passed. These checks validate the status document, not the seven apps. Remote PR state is a point-in-time snapshot and can change.</p>
+<p>Argon 4 High source review found no P0/P1 blockers. Its nonblocking findings were addressed: HTML edition/section links, accessible theme state, the omitted runner backoff and live-host proxy follow-ups, port/lockfile wording, and the complete changeset description.</p></main><script>
+const root = document.documentElement;
+const button = document.querySelector('button.theme');
+const preference = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : preference.matches;
+const reflectTheme = () => button.setAttribute('aria-pressed', String(isDark()));
+reflectTheme();
+preference.addEventListener('change', reflectTheme);
+button.addEventListener('click', () => {
+ root.dataset.theme = isDark() ? 'light' : 'dark';
+ reflectTheme();
+});
+</script></body></html>

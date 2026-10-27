@@ -99,7 +99,7 @@ defmodule Coordinator.ConfigCheckTest do
   @not_limits ~w(admin_token allow_local_admin breed_presets clock conditions cors_origins
                  data_dir discovery_cloud_envelope discovery_data_dir discovery_join_token
                  discovery_validator dns_cluster_query garden_island_token garden_presets
-                 garden_shared_address
+                 garden_shared_address garden_scheduling
                  incompatible light_conditions metrics_version migration_period pond_period
                  pond_presets presets public_garden rule_version start_discovery start_queue
                  trust_forwarded_for world_light world_size)a

@@ -41,6 +41,8 @@ const cellsInDisc = (r: number) => {
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r) disc++;
   return disc;
 };
+/** The steps between hits on one cell that a wounds preset was built with: it stored a rounded probability, so the rate comes back to three figures ("about"). */
+const woundEvery = (period: number, radius: number, prob: number) => Number(((2 ** 32 * period) / (cellsInDisc(radius) * prob)).toPrecision(3));
 const POND_TERM_NAMES: Record<PondTerm, string> = { mass: "mass", drive: "movement", reach: "reach to the pond’s edge", seed: "the seed packet’s mass", body: "body size" };
 const list = (items: string[]) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
 
@@ -127,9 +129,11 @@ export function worldTraits(p: Preset): Trait[] {
   }
   if (cfg.cellPeriod) traits.push({ lever: "rules", label: "Declared cells", detail: `every ${n(cfg.cellPeriod)} steps each body gets its own id, and a genome changes only at a cell’s birth` });
   if (cfg.injuryPeriod && cfg.injuryRadius !== undefined && cfg.injuryProb) {
-    // The preset stored a rounded probability, so the rate it was built from comes back to three figures ("about").
-    const every = Number(((2 ** 32 * cfg.injuryPeriod) / (cellsInDisc(cfg.injuryRadius) * cfg.injuryProb)).toPrecision(3));
+    const every = woundEvery(cfg.injuryPeriod, cfg.injuryRadius, cfg.injuryProb);
     traits.push({ lever: "wounds", label: `Recurring wounds, each cell hit about once per ${n(every)} steps`, detail: `discs of radius ${cfg.injuryRadius}, landing every ${cfg.injuryPeriod} steps` });
+    // A polymer shell (the lab calls polymer membrane): the wound spares a cell that holds enough of it. Only with a shell in the config.
+    if (cfg.injuryShell !== undefined)
+      traits.push({ lever: "wounds", label: `A wounded cell holding at least ${n(cfg.injuryShell)} membrane survives`, detail: `the wound takes the ${n(cfg.injuryShell)} membrane and spares the cell; a cell with less is lost` });
   }
   if (cfg.mutRate === 0 && !cfg.cellPeriod) traits.push({ lever: "mutation", label: "No mutation" });
   else if (cfg.mutRate > 0 && cfg.mutRate !== base.mutRate) {
@@ -268,9 +272,9 @@ export const FAMILIES: Family[] = [
     id: "wild",
     name: "Storms and the breeder",
     lever: "every lever at once, and selection by hand",
-    why: "The storm stacks everything the sandboxes built: a wandering sun, seasons, a readable signal, recurring wounds and heritable shape. The breeder turns the pond cycle into a selection loop for a trait we name, or for whatever you choose at each cycle. Both chase interesting life, not a registered claim.",
+    why: "The storm stacks everything the sandboxes built: a wandering sun, seasons, a readable signal, recurring wounds and heritable shape. The breeder turns the pond cycle into a selection loop for a trait we name, or for whatever you choose at each cycle. Both chase interesting life, not a registered claim. Wounds on the breeder, with and without a shell that lets a cell holding membrane survive one, ask whether cells that store a little membrane can sit out the wounds that kill everything else.",
     seen: "The full storm was extinct by step 29,000 in its one seed; the sun’s speed is what kills. The big jar dies early too (three seeds, 9 Oct) unless its starting food is doubled, and then nearly every cell is living, which reads as a carpet; raised by half, it holds a population on two seeds of three. On the 64-pond world (4 Oct, one seed each), breeding for movement alone bred real movement and emptied most ponds; adding the seed packet’s mass to the score kept them occupied at about half the pace, and body size too at about a third.",
-    ids: ["breeder", "wild-storm", "wild-storm-w01", "wild-storm-w10", "wild-storm-meteor", "wild-storm-m10", "wild-storm-3way", "wild-storm-large"],
+    ids: ["breeder", "breeder-wounded", "breeder-wounded-shell", "wild-storm", "wild-storm-w01", "wild-storm-w10", "wild-storm-meteor", "wild-storm-m10", "wild-storm-3way", "wild-storm-large"],
   },
 ];
 
@@ -540,8 +544,77 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
     seen: { state: "measured", text: "Measured on the 64-pond, 10,000-step world (4 Oct), one seed each: breeding for movement alone bred real movement and left 23 of 64 ponds occupied; adding the seed packet’s mass kept 63 occupied at about half the pace, and body size too kept 62 occupied at about a third. This 16-pond, 5,000-step version is sized for the lab and has not been measured. A vision model picking the most unusual-looking ponds bred no movement in one try: novelty and movement are not the same thing. Since 18 Oct the code can hand a run bred by the world’s own rule (not by hand or by a model) to islands in pieces, with a second island re-running pieces to check them. In short test runs every piece replayed exactly and the joined run matched one run straight through. It has run only in tests, and it shows the work can travel, not that breeding selects." },
     base: "ponds",
   },
+  "breeder-wounded": {
+    asks: "Does breeding still work when the ponds are wounded all the time?",
+    look: "Breed by hand and read the ranks: when every pond ties at the bottom, the rule falls back to the heaviest ponds, and the panel says so.",
+    seen: { state: "observed", text: "22 Oct, two seeds, 30,000 steps: about one cell in ten alive (calm, about a third); at 11 of 12 cycle boundaries every donor scored 0. Not read against a bar." },
+    base: "breeder",
+  },
+  "breeder-wounded-shell": {
+    asks: "Can cells that store a little membrane sit out the wounds that kill everything else?",
+    look: "Watch Cells wearing a shell under How it’s going: it starts near zero. Your own Wound tool still cuts through shells.",
+    seen: { state: "observed", text: "22 Oct, the same two seeds: living cells were 1.6 and 7.7 times the wounded runs’ at 15,000 steps, with shells on 1 living cell in 5 in one seed and about 1 in 70 in the other. A look, not a result." },
+    base: "breeder-wounded",
+  },
 };
 
 export const byId = (id: string | null | undefined): Preset | undefined => (id ? PRESETS.find((p) => p.id === id) : undefined);
 export const familyOf = (id: string): Family | undefined => FAMILIES.find((f) => f.ids.includes(id));
 export const noteOf = (id: string): WorldNote | undefined => WORLD_NOTES[id];
+
+/** One weather for the breeder: a world of the catalogue, said in a word, a gist and the reason it matters. */
+export interface WeatherLevel {
+  /** The preset this weather is. The control is a view of the preset id, not a second state. */
+  id: string;
+  word: string;
+  gist: string;
+  /** Why it matters: fixed text that states the mechanism and carries no figure from a run (a vitest keeps digits out of it). */
+  matters: string;
+}
+
+/**
+ * The Weather control of Plant a world (docs/pond-keeper-v3-2026-10-22.md, section 1): three worlds of the catalogue that differ only in
+ * their weather, offered on the breeder alone (the one world with a measurement). `levels[0]` is the base: a vitest holds every
+ * other level's config to it plus only the injury keys.
+ */
+export const WEATHER: { base: string; legend: string; lead: string; levels: WeatherLevel[] } = {
+  base: "breeder",
+  legend: "Weather for the breeder",
+  lead: "Set when you plant; to change it, plant again. Keep the seed number and the ponds start exactly the same under each weather, so you can compare.",
+  levels: [
+    { id: "breeder", word: "Calm", gist: "Only your own wounds.", matters: "Most ponds can still donate, and the donors are the ponds that score best." },
+    {
+      id: "breeder-wounded",
+      word: "Wounds, no shells",
+      gist: "For comparing with shells.",
+      matters: "Far fewer cells live, and the rule’s score can stop telling the ponds apart, so the choice under “The rule breeds for” may have little to grip.",
+    },
+    {
+      id: "breeder-wounded-shell",
+      word: "Wounds and shells",
+      gist: "Membrane can save a hit cell.",
+      matters:
+        "Membrane is one of the four kinds of matter in the matter bar (Is the jar still sealed?), and most cells hold little or none at first, so early wounds still take nearly everything. Does it spread in yours? Watch Cells wearing a shell: a chart in How it’s going and a row in Who’s living here?",
+    },
+  ],
+};
+
+/** The weather level a world is, or undefined for every other world (the control is hidden there). */
+export const weatherLevel = (id: string | null | undefined): WeatherLevel | undefined => WEATHER.levels.find((l) => l.id === id);
+
+/**
+ * What a weather does, in a sentence or two computed from the world's own config by the functions the chips use, so the control,
+ * the chips and the "Like X, except" line cannot disagree: none, holes that clear what they hit, or the same holes with a membrane-holding cell surviving.
+ */
+export function weatherDoes(p: Preset): string {
+  const cfg = presetConfig(p, 0);
+  if (!(cfg.injuryPeriod && cfg.injuryRadius !== undefined && cfg.injuryProb)) return "No wounds of its own: the only wounds are the ones you make with the Wound tool.";
+  const shell = cfg.injuryShell;
+  const every = woundEvery(cfg.injuryPeriod, cfg.injuryRadius, cfg.injuryProb);
+  const holes = `discs of radius ${cfg.injuryRadius}, each cell hit about once per ${n(every)} steps`;
+  const perCycle = cfg.pondPeriod ? `, which is about ${n(Number((cfg.pondPeriod / every).toPrecision(2)))} hits per cell between cycles` : "";
+  const lead = `Small holes keep getting punched in the ponds at random: ${holes}${perCycle}.`;
+  if (shell === undefined) return `${lead} A hit cell is cleared: its body turns to waste.`;
+  // The shell sentence stands on its own (a visitor may read this level first), so it says the holes again rather than "the same holes".
+  return `${lead} A cell holding at least ${n(shell)} membrane survives a hit and spends ${n(shell)} of its membrane; any other hit cell is cleared.`;
+}

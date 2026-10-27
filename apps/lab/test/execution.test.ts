@@ -1,6 +1,7 @@
+import { rankOrder } from "../src/pond-ranking.ts";
 import { describe, expect, it } from "vitest";
 import {
-  applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, worldW, CH, G,
+  applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, wounds, worldW, CH, G,
   type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { applyCellPass, applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
@@ -14,6 +15,7 @@ import { FirstsDetector, firstsContext } from "@bl/metrics";
 import { MutationEdges } from "@bl/lineage";
 import { LabExecution, PondWaitingError, PressureRefusedError, StaleSurveyError, type LabSimulation, type PondSurvey } from "../src/execution.ts";
 import { donorsWithKeep, keptPondOf } from "../src/pond-play.ts";
+import type { ShellCount } from "../src/shell.ts";
 import { buildSessionFile, interventionFacts, sessionFileError } from "../src/session-file.ts";
 
 const settings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
@@ -54,11 +56,15 @@ class CpuSimulation implements LabSimulation {
     if (this.fail === "drain") throw new Error("drain failed");
     return { events, dropped: this.dropped, flux: this.ref.state.flux, step: this.step, lightIn: this.ref.state.lightIn, heatOut: this.ref.state.heatOut };
   }
+  /** The cells and genome head of the latest snapshot read: the census's own copy, taken before any boundary transform. */
+  lastSnapshot?: { cells: Uint32Array; genomeHead: Uint32Array };
   async readSnapshot() {
     await this.beforeSnapshot?.();
     if (this.fail === "snapshot") throw new Error("snapshot failed");
     const s = this.ref.state;
-    return { step: s.step, cells: this.fail === "observer" ? new Proxy(s.cells, { get() { throw new Error("observer input failed"); } }) : s.cells.slice(), genomeHead: s.genome.slice(0, cellCount(s.cfg) * 4), flux: s.flux };
+    const snap = { step: s.step, cells: this.fail === "observer" ? new Proxy(s.cells, { get() { throw new Error("observer input failed"); } }) : s.cells.slice(), genomeHead: s.genome.slice(0, cellCount(s.cfg) * 4), flux: s.flux };
+    this.lastSnapshot = snap;
+    return snap;
   }
   async readState() { await this.beforeState?.(); return cloneState(this.ref.state); }
   upload(state: WorldState) {
@@ -1222,4 +1228,114 @@ describe("lab execution of declared-cell worlds", () => {
     const off = buildWorld({ ...cfg, cellPeriod: 150 }, { nutrient: 32, founders: [] });
     expect(() => setup(off)).toThrow(/cellPeriod 150 is not a multiple/);
   });
+});
+
+// Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md, sections 3 and 5): a world with a polymer shell reports, at each census, how many of
+// its living cells hold at least the shell of membrane; the count is display only, and a history in such a world replays to the same state.
+describe("lab execution of a wounded world with a shell", () => {
+  // ponds-small with a 20-step cycle and the breeder's wounds: the boundaries fall at 20 and 40 and the injury rounds at 13, 26 and 39
+  // (`(step + 1) % 13 === 0`), so the world is wounded across its cycles (the fast setup, pondPeriod 4, ends at step 8 and sees no round).
+  const shelled = { pondPeriod: 20, ...wounds(3, 3250), injuryShell: 2 } as const;
+  type Seen = { step: number; shell: ShellCount | null | undefined; recount: ShellCount };
+
+  /** The recount, written here from a census snapshot's own cells and lineage words: not shellCount, and not the state after a boundary. */
+  function recount(sim: CpuSimulation, shell: number): ShellCount {
+    const snap = sim.lastSnapshot!;
+    const n = cellCount(sim.cfg);
+    let wearing = 0, living = 0;
+    for (let i = 0; i < n; i++) {
+      if (snap.genomeHead[G.LIN_HI * n + i] === 0 && snap.genomeHead[G.LIN_LO * n + i] === 0) continue;
+      living++;
+      if (snap.cells[CH.P * n + i] >= shell) wearing++;
+    }
+    return { wearing, living };
+  }
+
+  /** A hand-picking execution of the shell world that records what each census reported next to a recount of its snapshot. */
+  function recording(state: WorldState) {
+    const seen: Seen[] = [];
+    const surveys: PondSurvey[] = [];
+    const s = pondSetup(state, {
+      onObservation: (c, _dropped, _firsts, _families, shell) => { seen.push({ step: c.step, shell, recount: recount(s.sim, state.cfg.injuryShell!) }); },
+      onPondAwait: (survey) => { surveys.push(survey); },
+    });
+    s.execution.setHandPicks(true);
+    return { ...s, seen, surveys };
+  }
+
+  it("reports at every census the count its own snapshot holds, and reads nonzero while the first cycle's wounds are in", async () => {
+    const start = pondWorld(0, shelled);
+    const seen: Seen[] = [];
+    const { sim, execution, cycles } = pondSetup(start, {
+      onObservation: (c, _dropped, _firsts, _families, shell) => { seen.push({ step: c.step, shell, recount: recount(sim, 2) }); },
+    });
+    for (let k = 0; k < 20; k++) expect(await execution.advanceFrame(2)).toBe(2);
+    expect(seen.map((o) => o.step)).toEqual(Array.from({ length: 20 }, (_, k) => 2 * (k + 1)));
+    // The cycles applied at 20 and 40 and the census at those steps still reported its pre-cycle snapshot.
+    expect(cycles.map((c) => c.step)).toEqual([20, 40]);
+    for (const o of seen) expect(o.shell, `census ${o.step}`).toEqual(o.recount);
+    // Not zero equals zero: the first wounds and the membrane the ponds build reach the shell in some cells while the first cycle runs.
+    expect(seen.filter((o) => o.step >= 14 && o.step <= 20).some((o) => o.shell!.wearing > 0)).toBe(true);
+    for (const o of seen) expect(o.shell!.wearing).toBeLessThanOrEqual(o.shell!.living);
+    // 40 steps took about 23 s on a laptop (0.6 s a step for this 128 x 128 world); the timeouts leave several times that.
+  }, 180_000);
+
+  it("reports nothing in a world without a shell", async () => {
+    const seen: (ShellCount | null | undefined)[] = [];
+    const { execution } = pondSetup(pondWorld(), { onObservation: (_c, _dropped, _firsts, _families, shell) => { seen.push(shell); } });
+    for (let k = 0; k < 2; k++) await execution.advanceFrame(2);
+    expect(seen).toEqual([null, null]);
+  }, 60_000);
+
+  it.each(["scaf", "breed"] as const)("replays a history with a hand wound and a hand pick under %s to the same state, and the same counts", async (arm) => {
+    const start = pondWorld(0, shelled);
+    if (arm === "breed") start.cfg = { ...start.cfg, pondArm: "breed", pondScore: "body" };
+    const first = recording(start);
+    const log: Intervention[] = [];
+    for (let k = 0; k < 3; k++) await first.execution.advanceFrame(2);
+    // A hand wound at step 6 (a cut: the brush clears what it touches, shell or not).
+    log.push({ step: first.sim.step, kind: "lesion", x: 32, y: 32, r: first.sim.lesion(32, 32, 6) });
+    while (!first.execution.awaiting) await first.execution.advanceFrame(2);
+    expect(first.execution.awaiting.step).toBe(20);
+    const pre = await first.sim.readState();
+    const counts = Array.from({ length: pre.cfg.tilesX * pre.cfg.tilesY }, () => ({ wearing: 0, living: 0 }));
+    const n = cellCount(pre.cfg), width = pre.cfg.tileW * pre.cfg.tilesX;
+    for (let y = 0; y < pre.cfg.tileH * pre.cfg.tilesY; y++) for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (!(pre.genome[G.LIN_HI * n + i] | pre.genome[G.LIN_LO * n + i])) continue;
+      const c = counts[Math.floor(y / pre.cfg.tileH) * pre.cfg.tilesX + Math.floor(x / pre.cfg.tileW)];
+      c.living++;
+      if (pre.cells[CH.P * n + i] >= pre.cfg.injuryShell!) c.wearing++;
+    }
+    expect(first.execution.awaiting.shells).toEqual(counts);
+    let picked = [1, 0]; // Preserve the original scaffold-arm replay and its explicit donor order.
+    if (arm === "breed") {
+      const revision = first.execution.awaiting.revision;
+      await first.execution.setPressure("mass");
+      const refreshed = first.execution.awaiting!;
+      expect(refreshed.revision).toBeGreaterThan(revision);
+      expect(refreshed.shells).toEqual(counts);
+      // Return the pressure to its original value before recording picks: the replay below has no pressure entries.
+      await first.execution.setPressure(start.cfg.pondScore!);
+      picked = rankOrder({ ...first.execution.awaiting!, type: "pondAwait", world: 1, arm, score: start.cfg.pondScore! }, "shell").slice(0, 2);
+    }
+    const done = await first.execution.resolvePond(picked);
+    log.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
+    while (!first.execution.awaiting) await first.execution.advanceFrame(2);
+    expect(first.execution.awaiting.step).toBe(40);
+    expect(log.map((iv) => [iv.step, iv.kind])).toEqual([[6, "lesion"], [20, "pick"]]);
+    const hash = stateHash(await first.sim.readState());
+    for (const o of first.seen) expect(o.shell, `census ${o.step}`).toEqual(o.recount);
+
+    // A second execution takes the logged history from its queue, wound and pick, and stops where the first one waits.
+    const again = recording(start);
+    again.execution.queueReplay(log, 40);
+    while (!again.execution.awaiting) await again.execution.advanceFrame(2);
+    expect(again.execution.awaiting.step).toBe(40);
+    expect(again.cycles.map((c) => c.donors)).toEqual([picked]);
+    expect(stateHash(await again.sim.readState())).toBe(hash);
+    expect(again.seen.map((o) => [o.step, o.shell])).toEqual(first.seen.map((o) => [o.step, o.shell]));
+    expect(again.execution.awaiting.shells).toEqual(first.execution.awaiting.shells);
+    // Two executions of 40 steps: about 45 s together.
+  }, 240_000);
 });
