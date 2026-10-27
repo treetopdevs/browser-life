@@ -5,7 +5,7 @@
   "sourceCommit": "cd160b44",
   "gateCommit": "ec3d3b3c",
   "evidenceCommit": "f01bb789",
-  "status": "Valid Stop complete with saved-data animation; final delivery review and dependent PR pending",
+  "status": "Completed Valid Stop; PR117 open dependent on PR116",
   "attemptCount": 1,
   "outcomeCount": 1,
   "runId": "20261027T214231Z-97616",
@@ -24,6 +24,8 @@
     "tools/test/food-schedule-769.test.ts": "0b6c500941fe28ccfb2424180b7144a3c229c64c4ff4a2f45c2ae69faa124002",
     "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d"
   },
-  "next": "Finish final reviewed delivery commit and open dependent PR on PR116. Then stop: no retry, tuning, extra seed, horizon extension, merge or deployment.",
-  "updatedAtUTC": "2026-10-27T21:57:23.499602+00:00"
+  "next": "Slice complete. Preserve all frozen source, evidence, receipts and media. Further work needs a separate reviewed plan. No automatic retry, tuning, extra seed, horizon extension, merge or deployment.",
+  "updatedAtUTC": "2026-10-27T22:00:06.921303+00:00",
+  "deliveryCommit": "fefb9ab6b571af4cbb2a4b8e9e517e8c94e962c0",
+  "pullRequest": "https://github.com/treetopdevs/browser-life/pull/117"
 }
