@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { LOADED_SOURCE_SHA256 } from "../../tools/food-band-longevity/explore.ts";
 
 const ORIGIN = `http://localhost:${process.env.BL_E2E_PORT || "5174"}`;
@@ -25,7 +25,16 @@ const G1 = { ...G0, turn: 1 };
 type Mode = "moving-band" | "stationary-band";
 type Evidence = Record<string, any>;
 type Fixture = { index: Record<string, any>; movingText: string; stationaryText: string; receiptText?: string };
+const REAL_INDEX = resolve(DOCS, "food-band-longevity-index-1201.json");
+const REAL_RECEIPT = resolve(DOCS, "food-band-longevity-visual-receipt-1201.json");
+const REAL_SUMMARY = resolve(DOCS, "food-band-longevity-summary.json");
 function sha(value: string | Buffer) { return createHash("sha256").update(value).digest("hex"); }
+async function readRealFixture(): Promise<Fixture> {
+  const indexText = await readFile(REAL_INDEX, "utf8"), index = JSON.parse(indexText);
+  const movingText = await readFile(resolve(DOCS, basename(index.arms.movingBand.url)), "utf8");
+  const stationaryText = await readFile(resolve(DOCS, basename(index.arms.stationaryBand.url)), "utf8");
+  return { index, movingText, stationaryText, receiptText: await readFile(REAL_RECEIPT, "utf8") };
+}
 function env(tick: number, mode: Mode) {
   const pulses = Math.floor(tick / 5), offered = pulses * 768;
   return { version: 1, mode, pulseBudget: 768, targetCount: 4608, pulses, offered, accepted: offered, overflow: 0,
@@ -192,6 +201,52 @@ test("full-horizon fixture validates paused saved frames and the three gated win
     "/docs/creative-prototypes/food-band-longevity-moving-band-seed-1201.json",
     "/docs/creative-prototypes/food-band-longevity-stationary-band-seed-1201.json",
   ]);
+});
+
+test("actual seed-1201 records replay their saved 3,000/5,500/6,000 frames", async ({ page }) => {
+  const fixture = await readRealFixture();
+  const summary = JSON.parse(await readFile(REAL_SUMMARY, "utf8"));
+  expect(fixture.index.decision.status).toBe("both");
+  expect(fixture.index.decision.visualReceiptUrl).toBe("food-band-longevity-visual-receipt-1201.json");
+  expect(fixture.index.arms.movingBand.rawSha256).toBe(sha(fixture.movingText));
+  expect(fixture.index.arms.stationaryBand.rawSha256).toBe(sha(fixture.stationaryText));
+  expect(summary.decision).toBe("both");
+  const moving = JSON.parse(fixture.movingText), stationary = JSON.parse(fixture.stationaryText);
+  const movingSummary = summary.arms.find((arm: Evidence) => arm.mode === "moving-band");
+  const stationarySummary = summary.arms.find((arm: Evidence) => arm.mode === "stationary-band");
+  expect(movingSummary.rawSha256).toBe(fixture.index.arms.movingBand.rawSha256);
+  expect(stationarySummary.rawSha256).toBe(fixture.index.arms.stationaryBand.rawSha256);
+  expect(movingSummary.census).toEqual(moving.final.census);
+  expect(stationarySummary.census).toEqual(stationary.final.census);
+  const historicalFamilyCounts: number[] = moving.samples.find((sample: Evidence) => sample.tick === 3000).census.familyCounts;
+  const smallestHistoricalFamily = historicalFamilyCounts.reduce((minimum, count) => count > 0 ? Math.min(minimum, count) : minimum, Infinity);
+  const reboundFamily = historicalFamilyCounts.indexOf(smallestHistoricalFamily);
+  const familyWord = (count: number) => ({ 1: "one", 2: "two", 3: "three" }[count] ?? String(count));
+  const requests = await installViewer(page, fixture);
+  await expect(page.locator("#replay")).toBeVisible();
+  await expect(page.locator("#decision-status")).toHaveText("Both varied");
+  const staticSummary = page.locator(".intro h1 + p");
+  await expect(staticSummary).toContainText(`Moving ends with ${movingSummary.census.population} bodies in ${familyWord(movingSummary.census.familyCounts.filter((count: number) => count > 0).length)} families`);
+  await expect(staticSummary).toContainText(`stationary with ${stationarySummary.census.population} in ${familyWord(stationarySummary.census.familyCounts.filter((count: number) => count > 0).length)}`);
+  await expect(staticSummary).toContainText(`smallest family at tick 3,000 rebounds from ${smallestHistoricalFamily} bodies to ${moving.final.census.familyCounts[reboundFamily]}`);
+  for (const tick of [3000, 5500, 6000]) {
+    await page.locator(`[data-jump-tick="${tick}"]`).click();
+    await expect(page.locator("#moving-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#stationary-tick")).toHaveText(tick.toLocaleString("en-US"));
+    await expect(page.locator("#moving-frame-label")).toHaveText(`Tick ${tick.toLocaleString("en-US")} · saved sample`);
+    await expect(page.locator("#stationary-frame-label")).toHaveText(`Tick ${tick.toLocaleString("en-US")} · saved sample`);
+  }
+  await page.locator("#scrub").fill("0");
+  await page.getByRole("button", { name: "Play paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Playing · saved states only");
+  await expect(page.locator("#moving-tick")).not.toHaveText("0");
+  await page.getByRole("button", { name: "Pause paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(axe.violations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(requests).toContain("/docs/creative-prototypes/food-band-longevity-visual-receipt-1201.json");
 });
 
 test("accepted paired receipt is SHA-bound to both numerical and visual screens", async ({ page }) => {
