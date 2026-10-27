@@ -2,10 +2,10 @@
   "branch": "codex/food-floor-longevity-replication",
   "base": "5022964538ebdc7c29963abd7a708eb87c1dee7c",
   "planCommit": "df0a2f3b",
-  "status": "validStop; all delivery checks and independent finalreview CLEAR; pendingcommitPR",
+  "status": "completed validStop; PR116 open dependent on115",
   "attemptCount": 1,
   "outcomeCount": 1,
-  "next": "Finalreview/commit/dependentPR against115 thenstop. No retry,tuning,newseed,longerhorizon,merge or deployment.",
+  "next": "Slice complete. Preserve all frozen evidence/source/media. Further work needs separate reviewed plan; no automatic retry,tuning,newseed,horizon extension,merge or deployment.",
   "sourceHashes": {
     "docs/creative-prototypes/food-floor-longevity-replication-plan.md": "02a221c637d238dc0feb6b50cb7220f84cfd016ff5a404200ab15e723fd8a914",
     "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
@@ -15,5 +15,8 @@
   },
   "sourceCommit": "8f0aae4f",
   "runId": "20261027T181644Z-52804",
-  "evidenceCommit": "f88fea08"
+  "evidenceCommit": "f88fea08",
+  "updatedAtUTC": "2026-10-27T18:24:37.895653+00:00",
+  "deliveryCommit": "b4a3aa31",
+  "pullRequest": "https://github.com/treetopdevs/browser-life/pull/116"
 }
