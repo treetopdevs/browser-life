@@ -15,6 +15,6 @@ All four frozen screens pass: Promising at6,000. Parent body-only review confirm
 
 Population falls to5 at3,357 and first returns to32 at5,600, ending34 with families0/28/6 and15 programs. The complete last500-tick mean is26.182, below32, so the chosen sustained-population summary is false. This descriptive rebound and the permissive screen do not establish adaptation, an eventual stable state or durable coexistence. All six new500-tick windows and resource/family endpoints are included in results and summary.
 
-## Remaining delivery checks
+## Delivery checks
 
-Independent Codex Sol 6.1 High evidence review is CLEAR for receipt/evidence commit. Actual replay/media checks remain pending. Animation must use saved data only, with exact capture HTML preserved. No hosted CI success is claimed. No merge or deployment.
+Independent Codex Sol 6.1 High evidence review is CLEAR for receipt/evidence commit. Both actual replay/media Chrome checks passed (2/2), including summary binding, video playback and mobile accessibility. Saved-data-only video contains301 frames at10fps,30.1seconds,1440×1320; full decode passed. Parent inspected preflight and final frames. Capture HTML SHA65ad3694 is archived before editorial; video and comparison metadata bind that archive. Video SHA256 a80c39a87017cf31b40121a38ba9e9a3c770b273ca029b2543b23da15ca6ba6d. No capture/encoding retry or additional biological run. Independent Codex Sol 6.1 High final delivery review is CLEAR for commit and dependent PR. No hosted CI success is claimed. No merge or deployment.

@@ -2,10 +2,10 @@
   "branch": "codex/food-floor-longevity",
   "base": "924b019b152880698d06816ed6e666f5769d3e4c",
   "planCommit": "c3197555",
-  "status": "one6000outcome completed; parentbodyonlyPromising; independent evidence review pending",
+  "status": "Promising outcome; all checks and final independent review clear; pending deliverycommit and PR",
   "attemptCount": 1,
   "outcomeCount": 1,
-  "next": "Commit reviewed evidence/receipt, saved-data animation and final checks/review/PR. No further biology, merge or deployment.",
+  "next": "Final review/commit and dependent PR against114, then stop. No extra seed, horizon, merge or deployment.",
   "sourceHashes": {
     "docs/creative-prototypes/food-floor-longevity-plan.md": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
     "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
@@ -14,5 +14,6 @@
     "docs/creative-prototypes/food-floor-longevity.js": "82531b12f2b2cf4507584c08c1de2d07753642dbee16024eb38220e816ca08c0"
   },
   "sourceCommit": "d34fd297",
-  "runId": "20261027T175755Z-96975"
+  "runId": "20261027T175755Z-96975",
+  "evidenceCommit": "6eeab52d"
 }

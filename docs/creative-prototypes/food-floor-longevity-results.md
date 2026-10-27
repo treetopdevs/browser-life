@@ -36,3 +36,7 @@ The complete record retains 301 samples/frames, 6,000 tick rows, 13 snapshots an
 Parent receipt SHA256 aa15a068d511f768836ccfb4318bed013cc7c992d1b8f0810008a9d4b1d8258b binds new raw SHA256 25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4 and accepted prefix SHA256 7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d. It records all three intervals and the historical 3,000 reference; no overlap diagnostics were used. No retries, extra seeds, parameter changes or horizon extensions occurred. Stop after this outcome. No adaptation, reliable superiority, learned migration or durable coexistence claim. No merge or deployment.
 
 [Replay and animation](food-floor-longevity.html) · [Plan](food-floor-longevity-plan.md) · [Summary](food-floor-longevity-summary.json) · [Validation](food-floor-longevity-validation.md).
+
+## Animation and checks
+
+The [saved replay](food-floor-longevity.html) includes a 301-frame, 30.1-second animation with the full population chart. Ages through 3,000 are labeled verified history; later ages are new continuation. Both actual evidence and video/mobile checks pass. Historical bytes and the exact capture HTML are preserved. No additional biological run was used for media.
