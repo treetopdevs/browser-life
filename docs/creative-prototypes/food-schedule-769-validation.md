@@ -15,3 +15,9 @@ Reviewed plan committed in bcaaeccc. New mode is an isolated copy of the frozen 
 An initial pure test invoked the default Node26 runtime and was correctly rejected by the Node24 snapshot metadata requirement; it passed under the required Node24.2.0 runtime. Typecheck caught a now-unused model URL after the source-map repair; it was removed and typecheck passed. Neither event was a biological attempt or retry.
 
 No attempt has been reserved, no historical full regression has run, and no new outcome exists at this point. Actual replay/media checks remain pending evidence.
+
+## Actual 3,000 barrier
+
+Reviewed source commit cd160b44 precedes sole attempt 20261027T214231Z-97616. The predetermined full old-mode regression exactly matched PR116 before either new world was constructed. Both novel worlds reached 3,000 with 151 exact repeat state/frame checks, 3,000 rows and seven full snapshots. They remain in the same process while the parent receipt is reviewed and committed; no state restoration or outcome rerun is used.
+
+All numerical gates pass: 24 bodies, families0/8/16; bands28/203 at2,500 and112/233 at3,000; late births/deaths/cap ticks98/86/26,74/107/12,41/32/0. Only the1,500–2,000 seasonal block passes (−289/+276); other deltas−20/−399 and+84/+30 fail. Parent inspected four exact monochrome body-only frames and confirmed the same first block plus own2,500→3,000 change. Review is explicitly not blind. This earns continuation only, not a final Promising result.
