@@ -2,7 +2,7 @@
   "branch": "codex/food-floor-replication",
   "base": "6ad255e1c43c710a30e9d9c25734d9d94e60700f",
   "planCommit": "ab3c601c",
-  "status": "single outcome completed; Promising after parent body-only review; independent evidence review pending",
+  "status": "Promising; all local delivery checks and independent final review clear; pending commit and PR",
   "attemptCount": 1,
   "outcomeCount": 1,
   "sourceHashes": {
@@ -15,5 +15,6 @@
   "updatedAtUTC": "2026-10-27T16:59:08.393345+00:00",
   "sourceCommit": "1b49cc62",
   "runId": "20261027T165600Z-38935",
-  "next": "Commit reviewed evidence/receipt before saved-data animation. Stop after this outcome; no extra seed, horizon extension, merge or deployment."
+  "next": "Finish final review and commit, open dependent PR against PR113, then stop. No further trial, merge or deployment.",
+  "evidenceCommit": "72af793c"
 }

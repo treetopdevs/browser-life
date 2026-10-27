@@ -61,8 +61,10 @@
       "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
     },
     "viewerHtml": {
-      "path": "docs/creative-prototypes/food-floor-replication.html",
-      "sha256": "6bd0454e6a18a47216bbe5de652183ca00913b91e36d4a713be7f3f5eef8573e"
+      "path": "docs/creative-prototypes/food-floor-replication-media/capture-viewer.html",
+      "sha256": "6bd0454e6a18a47216bbe5de652183ca00913b91e36d4a713be7f3f5eef8573e",
+      "originalServedPath": "docs/creative-prototypes/food-floor-replication.html",
+      "note": "Exact committed HTML served for the body-only capture; live page later adds editorial sections."
     }
   },
   "pinnedSources": {

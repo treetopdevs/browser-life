@@ -35,3 +35,7 @@ Parent body-only review was not blind to the reference or numerical outcomes. In
 The SHA-bound parent receipt is b4c332a7a34e8aa494c1b749c00844eed1aabc5646d52a6bc0e2d49b281f0345; new raw artifact SHA256 7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d. Keep the rule as promising, and **stop this slice now**. No further seed, horizon or rule change is earned automatically. No merge or deployment.
 
 [Replay and animation](food-floor-replication.html) · [Frozen plan](food-floor-replication-plan.md) · [Summary](food-floor-replication-summary.json) · [Validation](food-floor-replication-validation.md).
+
+## Replay delivery
+
+The [paired replay](food-floor-replication.html) includes a 151-frame, 15.1-second animation of exact saved ages 0–3,000. The historical alternating world is on the left; new food-floor world is on the right. Capture HTML is preserved separately. Both actual evidence and video/mobile browser checks pass. No additional biological run was used for media.
