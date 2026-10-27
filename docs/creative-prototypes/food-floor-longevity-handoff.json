@@ -1,0 +1,16 @@
+{
+  "branch": "codex/food-floor-longevity",
+  "base": "924b019b152880698d06816ed6e666f5769d3e4c",
+  "planCommit": "c3197555",
+  "status": "implementation review CLEAR; sourcecommit and one tracked attempt next",
+  "attemptCount": 0,
+  "outcomeCount": 0,
+  "next": "Independent source review before commit and one tracked launch; no other outcomes, merge or deploy.",
+  "sourceHashes": {
+    "docs/creative-prototypes/food-floor-longevity-plan.md": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "tools/food-floor-longevity/explore.ts": "cc3fa45e873eb8cd485eafc2a139fac39248fd30b63b2c39ec11860be20b75d9",
+    "tools/food-floor-longevity/launch.sh": "c67419b1ea35fc850a90283fb2998c1624f74d4cac09eb35a31fcd9fb677be74",
+    "docs/creative-prototypes/food-floor-longevity.js": "82531b12f2b2cf4507584c08c1de2d07753642dbee16024eb38220e816ca08c0"
+  }
+}
