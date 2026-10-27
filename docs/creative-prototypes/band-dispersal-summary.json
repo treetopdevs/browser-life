@@ -18413,7 +18413,20 @@
       "resolution": 20
     }
   ],
-  "animation": null,
+  "animation": {
+    "url": "band-dispersal-media/seed-1202.mp4",
+    "metadataUrl": "band-dispersal-media/seed-1202.json",
+    "frames": 215,
+    "fps": 10,
+    "durationSeconds": 21.5,
+    "width": 1384,
+    "height": 966,
+    "sha256": "c20cc56c19bc51ba938f6f99aea5aa48434806b4acdb786b60fbdbc93e6e7798",
+    "savedDataOnly": true,
+    "lastNewTick": 4279,
+    "lastHistoricalTick": 4260,
+    "terminalHold": false
+  },
   "summary": "Valid Stop: actual extinction at tick4279. The3000 persistence gate passed with12 bodies and families3/6/3; the SAME live worlds then continued until extinction. The6000 late windows and visual gates were not reached and cannot pass. One selected seed and exact repeat; no retry, tuning, extra seed or automatic extension. Known radius8 schedule769 is historical correctness/comparison evidence, not a new control.",
   "extinctionTick": 4279,
   "familyAbsenceResolutionNote": "Regular samples every20ticks; terminal gold loss is exact4279 because actualextinction is retained."

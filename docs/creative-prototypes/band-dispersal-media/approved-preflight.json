@@ -1,0 +1,30 @@
+{
+  "url": "http://127.0.0.1:5636/docs/creative-prototypes/band-dispersal.html",
+  "viewport": {
+    "width": 1760,
+    "height": 1440
+  },
+  "clip": {
+    "x": 188,
+    "y": 474.28125,
+    "width": 1384,
+    "height": 965.5
+  },
+  "dimensions": {
+    "width": 1384,
+    "height": 966
+  },
+  "canvasSizes": [
+    {
+      "width": 659,
+      "height": 659
+    },
+    {
+      "width": 659,
+      "height": 659
+    }
+  ],
+  "rawSha256": "a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60",
+  "htmlSha256": "af41ec958ed658976b8f3c3b47d0543d5d9c67cf5225f795752a84bfde4e6cd7",
+  "pngSha256": "8518afa3e3b00e505e50cceb5f7eb296b5c63472f889443c42fcbaf6724ace4f"
+}

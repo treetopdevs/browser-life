@@ -1,14 +1,23 @@
 {
-  "status": "valid extinction4279; evidence review pending, no further biology",
+  "status": "Completed Valid Stop at actual extinction4279; local delivery committed, no PR",
   "branch": "codex/band-dispersal",
   "base": "8c84eed5e06c6304b26eefb4dda5b25a089823ae",
   "planCommit": "3c06e877",
   "attemptCount": 1,
   "outcomeCount": 1,
-  "next": "Review/commit final evidence, saved-data animation, delivery review/commit. No retries or new simulation. No PR/push/merge/deploy.",
+  "next": "Stop. Preserve frozen source/evidence/gate/media. No retry, tuning, extra seed or horizon extension. Any next experiment needs separate reviewed plan. No PR/push/merge/deploy.",
   "sourceCommit": "55904ee2",
   "runId": "20261027T223345Z-18474",
   "gateCommit": "8579a7f4",
   "finalTick": 4279,
-  "extinctionTick": 4279
+  "extinctionTick": 4279,
+  "evidenceCommit": "1d041f9b",
+  "delivery": {
+    "animationFrames": 215,
+    "durationSeconds": 21.5,
+    "browserChecksPassed": 20,
+    "coreTestsPassed": 26,
+    "independentReviews": "plan, implementation,3000gate,finalevidence,delivery CLEAR",
+    "pullRequest": null
+  }
 }

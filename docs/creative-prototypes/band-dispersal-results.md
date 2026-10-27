@@ -57,3 +57,7 @@ Raw SHA256 `a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60`; p
 [Replay and animation](band-dispersal.html) · [Frozen plan](band-dispersal-plan.md) · [Validation](band-dispersal-validation.md).
 
 Mint is first absent at saved3260 and lilac at3640 (20-tick resolution); gold loss is exact at terminal4279. Band1 is first observed empty at3640 and occupied again at4000 before extinction. This is a saved occupancy return, not proof of migration or a successful rescue. Wider dispersal did not achieve the persistence goal in this selected trajectory.
+
+## Saved replay delivery
+
+The companion includes a 215-frame, 21.5-second paired animation ending at the actual new-world extinction at4,279. The historical right-hand world shows its last saved state at4,260 on that final off-cadence frame, explicitly labeled as an as-of observation. Equal canvas scales and even1384×966 capture dimensions were checked before any numbered frames. All frames use saved evidence after evidence commit1d041f9b; no interpolation, invented6,000 observations, simulation or capture retry. Exact captureHTML is archived before this editorial and video embed. The interactive timeline may explicitly hold the new terminal state while showing later known reference ages; those holds are not new observations.
