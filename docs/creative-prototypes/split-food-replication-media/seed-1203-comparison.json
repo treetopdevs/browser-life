@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-body-comparison",
+  "seed": 1203,
+  "ticks": [
+    1500,
+    2500,
+    3000
+  ],
+  "imageSha256": "47a6c08d5dacc7b0862b50e5ef2692a50af8cf0a3e17b501ccb5575df84e91d0",
+  "plan": {
+    "path": "docs/creative-prototypes/split-food-replication-plan.md",
+    "sha256": "0858e5292d1a9949d1dfd53479519a518fbbe5b849363e577a7e630a0ece384d"
+  },
+  "sources": [
+    {
+      "path": "docs/creative-prototypes/stationary-food-replication-stationary-band-seed-1203.json",
+      "rawSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+      "dataSha256": "236e98377fd6795236f2b6ecf3907bb637324866791e12c478e63ac7e9664ba7"
+    },
+    {
+      "path": "docs/creative-prototypes/split-food-replication-seed-1203.json",
+      "rawSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+      "dataSha256": "d9e546968191c29d35d4e096cc891d0576d68531870643d6f44e144ced35e343"
+    }
+  ],
+  "pinnedSources": {
+    "apps/lab/src/development/model.ts": "49416b11ae8d0491cb9b2ae1f102f36779cd9fe0c72917a7ddf86fbbc63db072",
+    "apps/lab/src/hungry-shapes/model.ts": "a33a3312caa6c91a46e2508f5b9267e3394089ff7320145a15157770068123bc",
+    "apps/lab/src/moving-food/model.ts": "b7aa0a3f1a0183d574e152e16b7f12c24fc0c9a201e7ddfae6d576915f10d8b0",
+    "tools/moving-food/explore.ts": "b77c58eca007727beeca81b1a797978a8ddfbacaa4d3192a094164bf868df63a",
+    "tools/moving-food-replication/explore.ts": "a8403864210d575baaa0acfae4a1a8ab684909bf0e8df541a1103394d2e11969",
+    "apps/lab/src/stationary-food/model.ts": "7bd5af02243cb0629547a20d889a05cd904246a16227f58df4e420edc84a859f",
+    "tools/stationary-food/explore.ts": "ab692de5ede5ece9cfdc1af8d0e44c651a0bc30ff8aa6493b35e6a02672250f6",
+    "docs/creative-prototypes/stationary-food-plan.md": "ba835f94fddbd48a823fb6264d3e4f9d8a815014c5bc5e4997fec56e6f7aaa51",
+    "tools/stationary-food-replication/explore.ts": "18d9c74da2cd2d803923a544c2b717b06976909738699756e16abaa832b316f4",
+    "docs/creative-prototypes/stationary-food-replication-plan.md": "74dc68201c7fb51ed9a87ba75d13e0ad79b171ff0d73d7929af4ba4f03fa114a",
+    "docs/creative-prototypes/split-food-plan.md": "134944138fc636b1c9677e9a40b5c2583d7184d608ce1e8d8c914e2ce8d93515",
+    "docs/creative-prototypes/split-food-replication-plan.md": "0858e5292d1a9949d1dfd53479519a518fbbe5b849363e577a7e630a0ece384d",
+    "apps/lab/src/split-food/model.ts": "c6b5c37f20f8daa73858fd9e437d0b25d029c712c065ab11ef495c281b58b506",
+    "tools/split-food/explore.ts": "aa2d3aeca0cd7a1a58e405c681cc6e61b5b15da2b0b85262a12c4f6fa95009bd",
+    "docs/creative-prototypes/stationary-food-replication-stationary-band-seed-1203.json": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+    "docs/creative-prototypes/stationary-food-replication-index-1203.json": "73cf2ebfa0ab266d716d48f1c6b966872ad7cc2a68d7d95fe51729cfab6a16b3",
+    "docs/creative-prototypes/stationary-food-replication-moving-band-seed-1203.json": "000e1ce6a3a60ab216707136ba97edf97bdcde826a63af2d3c27bf54e7810e3d",
+    "docs/creative-prototypes/moving-food-replication-moving-band-seed-1203.json": "8ce7be228812002e2d03a2f68a15b9d1107e6fff022006ae9059003bb66e0c9b",
+    "docs/creative-prototypes/moving-food-replication-index-1203.json": "44e02b3416e40cdde5318c1fecea2dd54bda8f9543df97c006aabc29dc24ce16",
+    "docs/creative-prototypes/moving-food-moving-band-seed-1201.json": "46017d1db1eaf1ff85b8cc51d92533d928aeac18b3e7cf261a82bb9d0d0816bf",
+    "docs/creative-prototypes/moving-food-index.json": "5f2ca66cb2d0bd39c0c017c4372381032746a0ba14076ecef71d8df079cccc57",
+    "docs/creative-prototypes/hungry-shapes-seed-1201.json": "2cb6366595e43e2f5f215448bd13a67925e21f2ea11e4747790f6f61470b6520",
+    "docs/creative-prototypes/hungry-shapes-seed-1201.md": "0f64a51d0ab22fe346160ed0ef94877a78998700372ce8ff1ffde3ef0f88a0f1",
+    "docs/creative-prototypes/hungry-shapes-decision.json": "f935884132cd1f34edb5fec1af57eeaa033d87505448ea07acd05ed772c5d5b0",
+    "apps/lab/src/uniform-endurance/model.ts": "b83de32cf42f58c13977dbbd3c74bf9d3068f90b40ec09600b9125ddb0a72009",
+    "tools/hungry-shapes/explore.ts": "f49d2a63fc7b464bcd2115c683f3e40ec8381eb28aa8b318889552ea9bc23581",
+    "tools/uniform-food/explore.ts": "312c2cffd7102e8c58fc1eabb72173d53692c8527f950b74ba33be4917b4a80c",
+    "tools/uniform-endurance/explore.ts": "99099663fd619a644c29ff639bca1e6c884bc9d07161f3ba40fe3ec2f0fd7f77",
+    "docs/creative-prototypes/uniform-endurance-seed-1201.json": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221",
+    "docs/creative-prototypes/uniform-endurance-seed-1201.md": "b7a831f8c6565479f9644d4ad06be86fbe230a41908773158af77116b7b699f2",
+    "docs/creative-prototypes/uniform-endurance-seed-1202.json": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602",
+    "docs/creative-prototypes/uniform-endurance-seed-1202.md": "3de277dc0d3a11acd20501a1c6a55133dd46ed80b0609c643f8111f7806aacda",
+    "docs/creative-prototypes/uniform-endurance-seed-1203.json": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+    "docs/creative-prototypes/uniform-endurance-seed-1203.md": "0ee0dc77840fa97babf8b1569ce66245b2e978692138cd2dc46cfeed587c1bbd",
+    "docs/creative-prototypes/moving-food-replication-plan.md": "72f651acc7f221991b0ce89f7264eed9dd47df54e955d3d164406b4d0a17cc47",
+    "docs/creative-prototypes/moving-food-uniform-seed-1201.json": "1ae6bdc3c9f5bedd2b6f6cfb70aa9dc94e8acb8177f4c2ecda9c2859bf1e4458",
+    "docs/creative-prototypes/moving-food-uniform-seed-1201.md": "af43523fa6108f6a136d5eb734db3908c6258c862c29bc69edb71f53123d6efe",
+    "docs/creative-prototypes/moving-food-moving-band-seed-1201.md": "b2de64b26073439a52ca2ed7fa121d078e559d32205c8737e3252cf1aa7f6471",
+    "tools/split-food-replication/explore.ts": "5f60e71043ee4335ff178ed5521897723adf782bc2e3fb17e15a2bb0884c5baf"
+  },
+  "frameLabels": [
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ],
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ]
+  ],
+  "description": "Exact saved occupied tiles prepared for manual review before the receipt; no simulation, food mask, outline or interpolation. Historical PR106 baseline is known evidence."
+}
