@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="description" content="Saved-frame replay comparing the accepted stationary food band with a split stationary food band." />
+    <title>Split stationary food bands · saved replay</title>
+    <link rel="stylesheet" href="split-food-viewer.css">
+    <script type="module" src="split-food-viewer.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to paired replay</a>
+    <header class="site-header">
+      <a class="brand" href="hungry-shapes.html">Hungry shapes <span>· creative prototypes</span></a>
+      <span class="badge">Local evidence companion</span>
+    </header>
+
+    <main id="main">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Stationary feeding geometry · seed 1202 · horizon 3,000</p>
+        <h1 id="page-title">What changes when one food band is split?</h1>
+        <p>The accepted stationary control feeds columns 0–47. The new condition feeds two stationary bands, columns 0–23 and 48–71. Both cover 4,608 tiles, with 384 scheduled food offers per band each pulse. Food begins on every tile and remains after each pulse.</p>
+        <p class="scope-note"><strong>Recorded states only.</strong> This page uses the accepted baseline and the one new split-band recording. It opens paused and visits saved frames every 20 ticks plus the actual terminal tick if needed. It does not simulate, interpolate, or continue a world. The selected seed was informed by its known baseline result; it is not a representative random sample. Equal offered food and area do not imply equal usable energy.</p>
+      </section>
+
+      <section class="decision" aria-labelledby="decision-title">
+        <div>
+          <p class="eyebrow">One selected-seed screen</p>
+          <h2 id="decision-title">Split stationary band · seed 1202</h2>
+          <p id="decision-summary">A decision appears only after the saved records, source identities, raw-file hashes, gate evidence, and SHA-bound visual receipt verify. Pending is not a pass.</p>
+        </div>
+        <span id="decision-status" class="decision-status" data-status="pending">Pending</span>
+      </section>
+
+      <p id="source-status" class="source-status" role="status" aria-live="polite">Checking only the seed 1202 pair record…</p>
+
+      <section id="replay" class="replay" aria-labelledby="replay-title" hidden>
+        <div class="replay-heading">
+          <div>
+            <p class="eyebrow">Historical stationary control · new split-band condition</p>
+            <h2 id="replay-title">Seed 1202 · paired world states</h2>
+          </div>
+          <p id="run-state" class="run-state">Paused · recorded replay</p>
+        </div>
+        <section id="pair-decision" class="seed-decision" aria-live="polite" hidden>
+          <p id="pair-decision-status" class="eyebrow">Pair decision</p>
+          <p id="pair-decision-summary"></p>
+        </section>
+        <section class="panel comparisons-panel" aria-labelledby="comparison-title">
+          <h3 id="comparison-title">Same-age observations</h3>
+          <ol id="same-age-comparisons"><li>Pending the saved visual receipt.</li></ol>
+          <p class="muted">These comparisons describe the known historical baseline and new split-band run. They are not a superiority test.</p>
+        </section>
+
+        <section class="panel transport-panel" aria-labelledby="transport-title">
+          <h3 id="transport-title">Move through both recordings</h3>
+          <p class="muted">The shared timeline uses recorded ticks through 3,000. If one world ended earlier, its actual terminal frame is held and labeled while the paired timeline continues.</p>
+          <div class="transport">
+            <button id="previous" type="button" aria-label="Previous paired sample" disabled>← Previous</button>
+            <button id="play" class="primary" type="button" aria-label="Play paired sampled replay" disabled>Play both</button>
+            <button id="next" type="button" aria-label="Next paired sample" disabled>Next →</button>
+          </div>
+          <label class="scrub-label" for="scrub">Shared recorded tick <output id="scrub-value" for="scrub">0 / 0</output></label>
+          <input id="scrub" type="range" min="0" max="0" value="0" step="1" disabled aria-describedby="scrub-help">
+          <p id="scrub-help" class="muted">Use arrow keys to move one saved tick. Space toggles playback when focus is outside a control.</p>
+          <p class="keyboard-note">Hidden tabs pause and stay paused when you return.</p>
+          <div class="jump-ticks" aria-label="Jump to recorded ticks">
+            <span>Jump to:</span>
+            <button type="button" data-jump-tick="1500" disabled>1,500</button>
+            <button type="button" data-jump-tick="2500" disabled>2,500</button>
+            <button type="button" data-jump-tick="3000" disabled>3,000</button>
+          </div>
+        </section>
+
+        <p id="extinction-note" class="extinction-note" hidden></p>
+        <div class="paired-worlds">
+          <figure class="world-panel" aria-labelledby="baseline-title">
+            <div class="world-title"><h3 id="baseline-title">Accepted stationary band</h3><span class="mode-tag moving-tag">Columns 0–47 · 4,608 tiles</span></div>
+            <canvas id="baseline-world" width="768" height="768" role="img" aria-label="Recorded stationary baseline world at tick 0"></canvas>
+            <ul class="legend" aria-label="Baseline world legend">
+              <li><i class="swatch family-mint" aria-hidden="true"></i>Family 1</li>
+              <li><i class="swatch family-gold" aria-hidden="true"></i>Family 2</li>
+              <li><i class="swatch family-lilac" aria-hidden="true"></i>Family 3</li>
+              <li><i class="swatch food" aria-hidden="true"></i>Food remaining</li>
+              <li><i class="swatch band" aria-hidden="true"></i>New food · columns 0–47</li>
+            </ul>
+            <figcaption><span>Food stays on tiles after it is deposited.</span><span id="baseline-frame-label" class="sample-label">Tick 0 · saved sample</span></figcaption>
+            <dl class="arm-metrics" aria-label="Baseline measurements">
+              <div><dt>Actual tick</dt><dd id="baseline-tick">—</dd></div>
+              <div><dt>Living bodies</dt><dd id="baseline-population">—</dd></div>
+              <div><dt>Occupied cells</dt><dd id="baseline-cells">—</dd></div>
+              <div><dt>Families</dt><dd id="baseline-families">—</dd></div>
+              <div><dt>Food offered</dt><dd id="baseline-offered">—</dd></div>
+              <div><dt>Food accepted</dt><dd id="baseline-accepted">—</dd></div>
+              <div><dt>Food overflow</dt><dd id="baseline-overflow">—</dd></div>
+              <div><dt>Food remaining</dt><dd id="baseline-food">—</dd></div>
+            </dl>
+          </figure>
+
+          <figure class="world-panel moving-panel" aria-labelledby="split-title">
+            <div class="world-title"><h3 id="split-title">Split stationary bands</h3><span class="mode-tag moving-tag">Columns 0–23 and 48–71 · 4,608 tiles</span></div>
+            <canvas id="split-world" width="768" height="768" role="img" aria-label="Recorded split-band world at tick 0 with both replenishment bands outlined"></canvas>
+            <ul class="legend" aria-label="Split-band world legend">
+              <li><i class="swatch family-mint" aria-hidden="true"></i>Family 1</li>
+              <li><i class="swatch family-gold" aria-hidden="true"></i>Family 2</li>
+              <li><i class="swatch family-lilac" aria-hidden="true"></i>Family 3</li>
+              <li><i class="swatch food" aria-hidden="true"></i>Food remaining</li>
+              <li><i class="swatch band" aria-hidden="true"></i>New food · both bands</li>
+            </ul>
+            <figcaption><span>Only the outlined columns receive each pulse; the food deposited elsewhere remains.</span><span id="split-frame-label" class="sample-label">Tick 0 · saved sample</span></figcaption>
+            <dl class="arm-metrics" aria-label="Split-band measurements">
+              <div><dt>Actual tick</dt><dd id="split-tick">—</dd></div>
+              <div><dt>Living bodies</dt><dd id="split-population">—</dd></div>
+              <div><dt>Occupied cells</dt><dd id="split-cells">—</dd></div>
+              <div><dt>Families</dt><dd id="split-families">—</dd></div>
+              <div><dt>Food offered</dt><dd id="split-offered">—</dd></div>
+              <div><dt>Food accepted</dt><dd id="split-accepted">—</dd></div>
+              <div><dt>Food overflow</dt><dd id="split-overflow">—</dd></div>
+              <div><dt>Food remaining</dt><dd id="split-food">—</dd></div>
+              <div><dt>Occupied tiles · band 1</dt><dd id="split-band-one">—</dd></div>
+              <div><dt>Occupied tiles · band 2</dt><dd id="split-band-two">—</dd></div>
+            </dl>
+          </figure>
+        </div>
+
+        <section class="panel windows-panel" aria-labelledby="windows-title">
+          <div class="section-heading"><div><p class="eyebrow">Fixed 500-tick windows</p><h3 id="windows-title">Turnover and occupancy</h3></div>
+            <p class="muted">Counts describe saved evidence. Band occupancy counts body tiles, not organisms; gaps count for neither band. These measures are not fitness scores.</p></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Arm window metrics, scroll horizontally on small screens">
+            <table><thead><tr><th scope="col">Arm · window</th><th scope="col">Births · deaths</th><th scope="col">Population min–max · end</th><th scope="col">Cap 48</th><th scope="col">Food offered · accepted · overflow</th><th scope="col">Families · end</th><th scope="col">Programs · end</th></tr></thead>
+              <tbody id="window-rows"><tr><td colspan="7">Waiting for the historical baseline and split-band records.</td></tr></tbody></table>
+          </div>
+        </section>
+        <section class="panel gates-panel" aria-labelledby="gates-title">
+          <h3 id="gates-title">Split-band checks</h3>
+          <dl class="gate-list">
+            <div><dt>Population, turnover and cap checks</dt><dd id="numerical-gate">—</dd></div>
+            <div><dt>Occupied tiles in each band at 2,500</dt><dd id="spatial-2500">—</dd></div>
+            <div><dt>Occupied tiles in each band at 3,000</dt><dd id="spatial-3000">—</dd></div>
+            <div><dt>Within-world visual change, 2,500 to 3,000</dt><dd id="visual-gate">—</dd></div>
+          </dl>
+        </section>
+      </section>
+
+      <section id="empty-state" class="empty-state" aria-labelledby="empty-title">
+        <p class="eyebrow">Paired replay not yet available</p>
+        <h2 id="empty-title">No verified split-food pair has been published.</h2>
+        <p>The viewer requests only the seed 1202 pair record and the files explicitly listed there.</p>
+      </section>
+      <section id="error-state" class="error-state" aria-labelledby="error-title" hidden>
+        <p class="eyebrow">Paired replay could not be loaded</p>
+        <h2 id="error-title">The listed evidence is unavailable or malformed.</h2>
+        <p id="error-detail">No replay frame or decision was shown.</p>
+      </section>
+
+      <footer>
+        <a href="split-food-plan.md">Frozen split-food plan</a>
+        <a href="stationary-food.html">Historical stationary-food screen</a>
+        <a href="decisions.html">Prototype decisions</a>
+        <p class="footer-note">Local evidence companion · saved states only · no merge or deployment</p>
+      </footer>
+    </main>
+  </body>
+</html>
