@@ -15,11 +15,13 @@
 <p><a href="split-food.html">Replay and animation</a> · <a href="split-food-results.md">Result</a> · <a href="split-food-plan.md">Frozen plan</a> · <a href="split-food-validation.md">Validation</a></p>
 </section>
 <section id="food-band-foothold" style="max-width:1100px;margin:2rem auto;padding:1.5rem;background:#17252c;color:#eef4ef;border-radius:12px">
-<h2>Food floor plus alternating majority: one planned seed</h2>
-<p>The user requested a small supply in both bands while alternating the rest. Frozen plan 866a67f4 assigns 96 units to each band and the remaining 576 to a majority band that switches every 500 ticks. Total food stays at 768 units per five ticks. This is deliberately engineered feeding; biology and mutation remain unchanged.</p>
-<p>Use one new seed 1202 to 3,000 or extinction, after exact regression against its known failed PR112 alternating record. The floor targets fixed subsets: 288 tiles per band; the full schedule reaches 2,016 per band. The geometric bands contain 2,304 tiles each. This changes allocation and target footprint together, not an isolated test of adaptation.</p>
-<p>Require activity, both-band occupation and a visible qualifying growth/retreat interval. Freeze the result if any screen fails; no retry, tuning or extension. Independent Codex Sol 6.1 High plan review is clear. No outcome exists yet; implementation review and closure are clear, with 16 pure core and 22 synthetic browser tests passing. Source commit precedes the one scheduled attempt.</p>
-<p><a href="food-band-foothold-plan.md">Frozen plan</a>. No merge or deployment.</p>
+<h2>Food floor: both bands stay occupied and late shifts recur</h2>
+<p><strong>Promising on one seed.</strong> New seed 1202 reaches 3,000 with 34 bodies, families 15 / 0 / 19 and 10 programs. Both bands remain occupied at 2,500 and 3,000. All three late blocks show the required majority-band growth and minority-band retreat: −319/+239, +162/−279, −130/+229. Numerical and body-only manual screens pass.</p>
+<p>We deliberately offer 96 units to each band and another 576 to the alternating majority every five ticks. Total food remains 768. Fixed floor targets cover 288 tiles per band; the full schedule reaches 2,016 per band. This changes allocation and footprint together. Biology and mutation are unchanged; this is not proof of adaptation or general superiority.</p>
+<p>Population at the four late ages is 37 / 48 / 35 / 34; its late minimum is 23. Gold first disappears at saved tick 1,900, so three-family persistence fails descriptively, but was not a passing requirement. Historical alternating seed 1202 remains a Stop with seven bodies and an empty second band; historical seed 1203 remains a separate pass.</p>
+<p>One scheduled new trajectory and independent repeat followed exact historical regression of 151 samples/frames, 3,000 rows and seven snapshots. Plan 866a67f4; independently reviewed source 46caddc5. Pure preflight tests did not advance biology. No retry, additional seed, tuning or extension; preserve all historical bytes.</p>
+<p>Keep the variant and stop here. A separate reviewed plan could replicate the unchanged rule on seed 1203 at the same horizon. No new replication or longer run is included. No merge or deployment.</p>
+<p><a href="food-band-foothold.html">Replay and animation</a> · <a href="food-band-foothold-results.md">Result</a> · <a href="food-band-foothold-plan.md">Frozen plan</a> · <a href="food-band-foothold-validation.md">Checks and review</a></p>
 </section>
 <section id="alternating-food-replication" style="max-width:1100px;margin:2rem auto;padding:1.5rem;background:#17252c;color:#eef4ef;border-radius:12px">
 <h2>Alternating food replication: the full pattern did not recur</h2>

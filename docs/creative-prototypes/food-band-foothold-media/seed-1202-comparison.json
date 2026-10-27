@@ -61,8 +61,10 @@
       "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
     },
     "viewerHtml": {
-      "path": "docs/creative-prototypes/food-band-foothold.html",
-      "sha256": "fc775e0d009c0251f6e79be7d087b19847852f09c68f698db37e0e2457a874f7"
+      "path": "docs/creative-prototypes/food-band-foothold-media/capture-viewer.html",
+      "sha256": "fc775e0d009c0251f6e79be7d087b19847852f09c68f698db37e0e2457a874f7",
+      "originalServedPath": "docs/creative-prototypes/food-band-foothold.html",
+      "note": "Pre-editorial HTML identity preserved in capture-viewer.html; comparison is drawn directly from saved body tiles, not this page."
     }
   },
   "pinnedSources": {
