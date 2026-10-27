@@ -333,6 +333,162 @@ test("keyboard playback pauses in hidden tabs and passes phone accessibility che
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+test("published seed 1202 replays its accepted saved frames and metrics on phone", async ({ page }) => {
+  await assertPublishedPair(page, 1202);
+});
+
+test("published seed 1203 replays its accepted saved frames and metrics on phone", async ({ page }) => {
+  await assertPublishedPair(page, 1203);
+});
+
+async function assertPublishedPair(page: Page, seed: Seed) {
+  const indexText = await readFile(resolve(DOCS, `food-band-longevity-replication-index-${seed}.json`), "utf8");
+  const index = JSON.parse(indexText) as Evidence;
+  expect(index.kind).toBe("hungry-shapes-food-band-longevity-replication-pair");
+  expect(index.seed).toBe(seed);
+  expect(index.decision.status).toBe("both");
+  expect(sha(await readFile(resolve(DOCS, index.decision.visualReceiptUrl)))).toBe(index.decision.visualReceiptSha256);
+  const summary = JSON.parse(await readFile(resolve(DOCS, "food-band-longevity-replication-summary.json"), "utf8")) as Evidence;
+  const summarySeed = summary.seeds.find((entry: Evidence) => entry.seed === seed);
+  expect(summarySeed).toBeTruthy();
+  expect(summarySeed.decision).toBe("both");
+  expect(summarySeed.pairManifestSha256).toBe(sha(indexText));
+  expect(summarySeed.visualReceiptSha256).toBe(index.decision.visualReceiptSha256);
+  expect(summary.aggregate.tally).toEqual({ both: 2, "moving-only": 0, "stationary-only": 0, neither: 0 });
+  expect(summary.aggregate.movingPasses).toBe(2);
+  expect(summary.aggregate.stationaryPasses).toBe(2);
+  const seed1202Summary = summary.seeds.find((entry: Evidence) => entry.seed === 1202);
+  const priorStationary = JSON.parse(await readFile(resolve(DOCS, "stationary-food-stationary-band-seed-1202.json"), "utf8")) as Evidence;
+  const prior1202Sample = priorStationary.samples.find((entry: Evidence) => entry.tick === 3000);
+  expect(prior1202Sample).toBeTruthy();
+  const final1202Stationary = seed1202Summary.arms.find((entry: Evidence) => entry.mode === "stationary-band");
+  const reboundDescription = `The striking rebound is stationary seed 1202: its lilac family grew from ${fmtMetric(prior1202Sample.census.familyCounts[2])} bodies at 3,000 to ${fmtMetric(final1202Stationary.census.familyCounts[2])} at 6,000.`;
+
+  const receipt = JSON.parse(await readFile(resolve(DOCS, index.decision.visualReceiptUrl), "utf8")) as Evidence;
+  expect(receipt.withinArmChanges.movingBand.pass).toBe(true);
+  expect(receipt.withinArmChanges.stationaryBand.pass).toBe(true);
+
+  const arms = {} as Record<Mode, Evidence>;
+  for (const mode of ["moving-band", "stationary-band"] as const) {
+    const path = `food-band-longevity-replication-${mode}-seed-${seed}.json`;
+    const raw = await readFile(resolve(DOCS, path));
+    const arm = JSON.parse(raw.toString("utf8")) as Evidence;
+    const manifestArm = mode === "moving-band" ? index.arms.movingBand : index.arms.stationaryBand;
+    expect(manifestArm.url).toBe(path);
+    expect(sha(raw)).toBe(manifestArm.rawSha256);
+    expect(arm.run.seed).toBe(seed);
+    expect(arm.run.finalTick).toBe(6000);
+    expect(arm.numericalGate.numericalPass).toBe(true);
+    const summaryArm = summarySeed.arms.find((entry: Evidence) => entry.mode === mode);
+    expect(summaryArm.rawSha256).toBe(manifestArm.rawSha256);
+    expect(summaryArm.run.finalTick).toBe(arm.run.finalTick);
+    arms[mode] = arm;
+  }
+
+  await installPublishedFiles(page);
+  await page.goto(`${BASE}food-band-longevity-replication.html`);
+  if (seed !== 1202) await page.getByRole("combobox", { name: "Choose recorded seed" }).selectOption(String(seed));
+  await expect(page.locator("#replay")).toBeVisible();
+  await expect(page.locator("#source-status")).toContainText(`Both seed-${seed} arms verified`);
+  await expect(page.locator("#decision-status")).toHaveText("Both varied");
+  await expect(page.locator("#replay-title")).toHaveText(`Seed ${seed} · paired world states`);
+  await expect(page.locator("#run-state")).toHaveText("Paused · paired recorded states");
+
+  const resultRows = page.getByRole("region", { name: "Final populations, scroll on small screens" }).locator("tbody tr");
+  const rowOffset = seed === 1202 ? 0 : 2;
+  for (const [modeIndex, mode] of (["moving-band", "stationary-band"] as const).entries()) {
+    const row = resultRows.nth(rowOffset + modeIndex);
+    const summaryArm = summarySeed.arms.find((entry: Evidence) => entry.mode === mode);
+    await expect(row.locator("th")).toHaveText(`${seed} ${mode === "moving-band" ? "moving" : "stationary"}`);
+    await expect(row.locator("td").nth(0)).toHaveText(fmtMetric(summaryArm.census.population));
+    await expect(row.locator("td").nth(1)).toHaveText(summaryArm.census.familyCounts.map(fmtMetric).join(" / "));
+    await expect(row.locator("td").nth(2)).toHaveText(fmtMetric(summaryArm.census.genomeVariantCount));
+  }
+  const bothPairs = new Map([[0, "zero"], [1, "one"], [2, "two"]]).get(summary.aggregate.tally.both);
+  expect(bothPairs).toBeTruthy();
+  await expect(page.locator("#results")).toContainText(`${bothPairs} both-pass pairs`);
+  await expect(page.locator("#results")).toContainText(reboundDescription);
+
+  for (const tick of [3000, 5500, 6000]) {
+    await page.locator(`[data-jump-tick="${tick}"]`).click();
+    for (const mode of ["moving-band", "stationary-band"] as const) {
+      const key = mode === "moving-band" ? "moving" : "stationary";
+      const frame = arms[mode].frames.find((entry: Evidence) => entry.tick === tick);
+      const sample = arms[mode].samples.find((entry: Evidence) => entry.tick === tick);
+      expect(frame, `${seed} ${mode} has saved frame at ${tick}`).toBeTruthy();
+      expect(sample, `${seed} ${mode} has saved sample at ${tick}`).toBeTruthy();
+      await expect(page.locator(`#${key}-tick`)).toHaveText(fmtMetric(tick));
+      await expect(page.locator(`#${key}-frame-label`)).toHaveText(`Tick ${tick.toLocaleString("en-US")} · saved sample`);
+      await expect(page.locator(`#${key}-population`)).toHaveText(fmtMetric(sample.census.population));
+      await expect(page.locator(`#${key}-cells`)).toHaveText(fmtMetric(sample.census.cells));
+      await expect(page.locator(`#${key}-families`)).toHaveText(sample.census.familyCounts.map(fmtMetric).join(" · "));
+      await expect(page.locator(`#${key}-offered`)).toHaveText(fmtMetric(sample.environment.offered));
+      await expect(page.locator(`#${key}-band-left`)).toHaveText(fmtMetric(sample.environment.bandLeft));
+      const remainingFood = Buffer.from(frame.foodBase64, "base64").reduce((sum, amount) => sum + amount, 0);
+      await expect(page.locator(`#${key}-food`)).toHaveText(fmtMetric(remainingFood));
+    }
+  }
+
+  await page.getByRole("button", { name: "Play paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Playing · saved states only");
+  await expect(page.getByRole("button", { name: "Pause paired sampled replay" })).toBeVisible();
+  await page.getByRole("button", { name: "Pause paired sampled replay" }).click();
+  await expect(page.locator("#run-state")).toHaveText("Paused · recorded replay");
+
+  const clip = page.locator(`video[aria-label="Seed ${seed} paired recorded animation"]`);
+  await clip.evaluate((element: HTMLVideoElement) => new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error("Saved animation did not reach canplay in time.")), 10000);
+    element.addEventListener("canplay", () => { window.clearTimeout(timeout); resolve(); }, { once: true });
+    if (element.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) { window.clearTimeout(timeout); resolve(); }
+  }));
+  expect(await clip.evaluate((element: HTMLVideoElement) => element.duration)).toBeGreaterThan(0);
+  const playedSeconds = await clip.evaluate(async (element: HTMLVideoElement) => {
+    await element.play();
+    const deadline = Date.now() + 4000;
+    while (element.currentTime <= 0 && Date.now() < deadline) await new Promise((resolve) => window.setTimeout(resolve, 50));
+    const currentTime = element.currentTime;
+    element.pause();
+    return currentTime;
+  });
+  expect(playedSeconds).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(axe.violations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+}
+
+function fmtMetric(value: number) { return new Intl.NumberFormat("en-US").format(value); }
+
+async function installPublishedFiles(page: Page) {
+  const names = new Set([
+    "food-band-longevity-replication.html",
+    "food-band-longevity-replication-viewer.css",
+    "food-band-longevity-replication-viewer.js",
+    "food-band-longevity-replication-summary.json",
+    ...[1202, 1203].flatMap((seed) => [
+      `food-band-longevity-replication-index-${seed}.json`,
+      `food-band-longevity-replication-visual-receipt-${seed}.json`,
+      `food-band-longevity-replication-moving-band-seed-${seed}.json`,
+      `food-band-longevity-replication-stationary-band-seed-${seed}.json`,
+      `food-band-longevity-replication-media/seed-${seed}-paired.mp4`,
+      `food-band-longevity-replication-media/seed-${seed}-comparison.png`,
+    ]),
+  ]);
+  await page.route(`${ORIGIN}/**`, async (route) => {
+    const url = new URL(route.request().url());
+    const prefix = "/docs/creative-prototypes/";
+    const relative = url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : "";
+    if (!names.has(relative)) {
+      await route.fulfill({ status: 404, contentType: "text/plain", body: `No published test asset: ${relative}` });
+      return;
+    }
+    const body = await readFile(resolve(DOCS, relative));
+    const contentType = relative.endsWith(".html") ? "text/html" : relative.endsWith(".css") ? "text/css" : relative.endsWith(".js") ? "text/javascript" : relative.endsWith(".json") ? "application/json" : relative.endsWith(".mp4") ? "video/mp4" : "image/png";
+    await route.fulfill({ status: 200, contentType, body });
+  });
+}
+
 test("viewer source pins exactly match the runner's loaded source map", () => {
   expect(PINNED_SOURCES).toEqual(LOADED_SOURCE_SHA256);
 });
