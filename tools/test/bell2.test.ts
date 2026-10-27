@@ -236,7 +236,9 @@ describe("fresh seeds are disjoint", () => {
         }
         if (!e.name.endsWith(".ts") || /(^|\/)bell2/.test(rel)) continue;
         const text = readFileSync(join(REPO, rel), "utf8");
-        for (const m of text.matchAll(/(?<![\d_.])(3_?9[01]\d|3_?920)(?![\d_])/g)) hits.push(`${rel}: ${text.slice(Math.max(0, m.index! - 30), m.index! + 10).replace(/\s+/g, " ")}`);
+        // Long hex runs (hashes) are not seeds; blank them so their digits cannot match, keeping offsets.
+        const scan = text.replace(/\b[0-9a-f]{16,}\b/gi, (m) => " ".repeat(m.length));
+        for (const m of scan.matchAll(/(?<![\d_.])(3_?9[01]\d|3_?920)(?![\d_])/g)) hits.push(`${rel}: ${text.slice(Math.max(0, m.index! - 30), m.index! + 10).replace(/\s+/g, " ")}`);
       }
     };
     for (const d of ["tools", "experiments", "apps/lab/src", ...readdirSync(join(REPO, "packages")).map((p) => `packages/${p}/src`)]) {

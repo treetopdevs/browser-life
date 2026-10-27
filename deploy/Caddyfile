@@ -16,6 +16,43 @@
   @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
   respond @private_garden 404
 
+  # Creative particle prototype is local-only until separately approved for release.
+  @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
+  respond @private_particles 404
+
+  # Standalone field prototype remains local-only.
+  @private_boundaries path_regexp private_boundaries (?i)^/boundaries(?:/|$)
+  respond @private_boundaries 404
+
+  # Developmental bodies are another local creative prototype.
+  # Hungry shapes remains a local prototype.
+  @private_hungry path_regexp private_hungry (?i)^/hungry-shapes(?:/|$)
+  respond @private_hungry 404
+  @private_development path_regexp private_development (?i)^/development(?:/|$)
+  respond @private_development 404
+
+  # Counted matter aquarium remains a local creative prototype.
+  @private_matter path_regexp private_matter (?i)^/matter(?:/|$)
+  respond @private_matter 404
+
+  # Selective nutrient-current toy and sampled replay stay local.
+  @private_currents path_regexp private_currents (?i)^/currents(?:/|$)
+  respond @private_currents 404
+
+  # Volumetric particle playground stays local.
+  @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
+  respond @private_spatial 404
+
+  # Reunited creative ecosystem and local prototype directory.
+  @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
+  respond @private_ecosystem 404
+  @private_playground path_regexp private_playground (?i)^/playground(?:/|$)
+  respond @private_playground 404
+
+  # Local vision calibration gallery.
+  @private_vision_screen path_regexp private_vision_screen (?i)^/vision-screen(?:/|$)
+  respond @private_vision_screen 404
+
   @api path /api/*
   # The coordinator reads the right-most X-Forwarded-For entry (BL_TRUST_FORWARDED_FOR), so each proxy block
   # replaces the header with the one resolved client address. Never forward the client's own chain.

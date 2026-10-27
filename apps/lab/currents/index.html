@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="A four-condition nutrient-current comparison." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>Nutrient currents · Cadence Garden</title>
+</head>
+<body class="currents-page">
+  <a class="skip" href="#main">Skip to comparison</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed nutrient pump · local prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Nutrient currents · matched comparison</p>
+      <h1>Can a nutrient conveyor keep the growth zone supplied?</h1>
+      <p>Four tanks share one starting state and one clock. Rain and a selective nutrient-only conveyor are varied independently; every tank continues through tick 6,000, including after biomass reaches zero.</p>
+      <p class="scope-note"><strong>Designed pump:</strong> every four ticks, nutrient follows 32 paired-column loops. The arrows mark supplied path direction, not measured fluid velocity or biomass movement. No biomass or detritus is carried; burial is off. Closed tanks retain a finite reservoir that is counted but unused.</p>
+      <p><a href="/matter/">Compare with the original matter baseline</a></p>
+    </section>
+    <section class="toolbar" aria-label="Shared comparison controls">
+      <form id="seed-form" class="seed-form"><label for="seed">Shared seed</label><input id="seed" inputmode="numeric" value="1201" aria-describedby="seed-error" /><button type="submit">Reset tanks</button><span id="seed-error" role="alert"></span></form>
+      <div class="transport"><button id="play" class="primary" type="button">Play</button><button id="step" type="button">One tick</button><label for="pace">Pace<select id="pace"><option value="1">1× · 30 ticks/s</option><option value="2">2× · 60 ticks/s</option></select></label></div>
+      <div class="clock" role="status"><span>Shared time</span><strong>Tick <span id="tick">0</span> <small>/ 6,000</small></strong><span id="seed-display">Matched seed 1,201</span><span id="status">Paused · ready</span></div>
+      <div class="toolbar-end"><button id="export" type="button">Download observations</button><span id="file-status" role="status">Four matched tanks · no burial</span></div>
+    </section>
+    <section class="view-switch" aria-label="Canvas channel">
+      <span>Show in all tanks</span>
+      <label><input type="radio" name="view" value="composite" checked /> Composite</label>
+      <label><input type="radio" name="view" value="biomass" /> Biomass</label>
+      <label><input type="radio" name="view" value="nutrient" /> Nutrient</label>
+      <label><input type="radio" name="view" value="detritus" /> Detritus</label>
+      <label><input type="radio" name="view" value="difference" /> Nutrient − still sibling</label>
+      <span class="scale-note">Fixed channels · difference clips at −8/+8 nutrient units, neutral at 0</span>
+    </section>
+    <section class="world-grid" id="worlds" aria-label="Four matched tanks">
+      <article class="world-card" data-condition="closed-still" aria-labelledby="closed-still-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 1 · closed</p><h2 id="closed-still-title">Closed · still</h2></div><span class="condition">Current off</span></header>
+        <p class="world-summary">Closed reference; reservoir is finite, counted, and unused.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Closed still tank fields and supplied zones.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats"><div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Reservoir · unused</dt><dd class="reservoir-total">—</dd></div><div><dt>Nutrient unit-moves</dt><dd class="circulated">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <div class="history-section"><div class="section-heading"><h3>Biomass history</h3><span>shared scale across four tanks</span></div><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Sampled biomass history on a shared scale."></canvas></div>
+      </article>
+      <article class="world-card" data-condition="closed-current" aria-labelledby="closed-current-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 2 · closed</p><h2 id="closed-current-title">Closed · current</h2></div><span class="condition current-on">Current on</span></header>
+        <p class="world-summary">Same closed start, with the selective nutrient conveyor.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Closed current tank fields, nutrient difference, and supplied pump paths.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats"><div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Reservoir · unused</dt><dd class="reservoir-total">—</dd></div><div><dt>Nutrient unit-moves</dt><dd class="circulated">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <div class="history-section"><div class="section-heading"><h3>Biomass history</h3><span>shared scale across four tanks</span></div><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Sampled biomass history on a shared scale."></canvas></div>
+      </article>
+      <article class="world-card" data-condition="rain-still" aria-labelledby="rain-still-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 3 · rain</p><h2 id="rain-still-title">Rain · still</h2></div><span class="condition">Current off</span></header>
+        <p class="world-summary">Finite rain enters at the surface; no conveyor.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Rain still tank fields and supplied zones.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats"><div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Rain remaining</dt><dd class="reservoir-total">—</dd></div><div><dt>Nutrient unit-moves</dt><dd class="circulated">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <div class="history-section"><div class="section-heading"><h3>Biomass history</h3><span>shared scale across four tanks</span></div><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Sampled biomass history on a shared scale."></canvas></div>
+      </article>
+      <article class="world-card" data-condition="rain-current" aria-labelledby="rain-current-title">
+        <header class="world-head"><div><p class="eyebrow">Tank 4 · rain</p><h2 id="rain-current-title">Rain · current</h2></div><span class="condition current-on">Current on</span></header>
+        <p class="world-summary">Same finite rain, with the selective nutrient conveyor.</p>
+        <canvas class="world-canvas" width="640" height="480" role="img" aria-label="Rain current tank fields, nutrient difference, and supplied pump paths.">Canvas is unavailable.</canvas>
+        <div class="canvas-legend"><span><i class="swatch biomass"></i>Biomass</span><span><i class="swatch nutrient"></i>Nutrient</span><span><i class="swatch detritus"></i>Detritus</span><span><i class="swatch light"></i>Moving light</span><span class="view-description">Composite view</span></div>
+        <dl class="world-stats"><div><dt>Biomass stock</dt><dd class="biomass-total">—</dd></div><div><dt>Active patch area</dt><dd class="active-cells">—</dd></div><div><dt>Nutrient stock</dt><dd class="nutrient-total">—</dd></div><div><dt>Detritus stock</dt><dd class="detritus-total">—</dd></div><div><dt>Rain remaining</dt><dd class="reservoir-total">—</dd></div><div><dt>Nutrient unit-moves</dt><dd class="circulated">—</dd></div><div><dt>Material balance</dt><dd class="ledger">—</dd></div><div><dt>Patch regions</dt><dd class="components">—</dd></div></dl>
+        <p class="extinction" hidden></p>
+        <div class="history-section"><div class="section-heading"><h3>Biomass history</h3><span>shared scale across four tanks</span></div><div class="history-axis"><span>Biomass · units</span><span class="history-biomass-scale"></span></div><canvas class="history-canvas history-biomass-canvas" width="640" height="64" role="img" aria-label="Sampled biomass history on a shared scale."></canvas></div>
+      </article>
+    </section>
+    <section class="replay-section" aria-labelledby="replay-title">
+      <div class="replay-heading"><div><p class="eyebrow">Recorded pilot · exact sampled states</p><h2 id="replay-title">Replay the three fixed seeds</h2></div><span id="replay-state" role="status">Pilot replay files are not available yet.</span></div>
+      <p>Each frame is an actual saved sample: every four ticks through 200, then every 100 ticks through 6,000. No physical states are interpolated.</p>
+      <div class="replay-toolbar">
+        <label for="replay-seed">Seed<select id="replay-seed" disabled><option>1201</option><option>1202</option><option>1203</option></select></label>
+        <label for="replay-condition">Condition<select id="replay-condition" disabled><option value="closed-still">Closed · still</option><option value="closed-current">Closed · current</option><option value="rain-still">Rain · still</option><option value="rain-current">Rain · current</option></select></label>
+        <button id="replay-play" type="button" disabled>Play replay</button><button id="replay-step" type="button" disabled>Next frame</button>
+        <label class="replay-window" for="replay-window">Timeline<select id="replay-window" disabled><option value="dense">Introduction · 0–200</option><option value="coarse">Full run · 0–6,000</option></select></label>
+        <strong class="replay-tick">Tick <span id="replay-tick">—</span></strong>
+      </div>
+      <input id="replay-slider" type="range" min="0" max="50" value="0" disabled aria-label="Actual replay sample tick" />
+      <div class="replay-grid">
+        <figure><figcaption>Closed · still</figcaption><canvas data-replay-condition="closed-still" width="640" height="480" aria-label="Recorded closed still replay frame.">Canvas is unavailable.</canvas><canvas class="replay-history" data-history-condition="closed-still" width="640" height="64" aria-label="Recorded closed still biomass history."></canvas><small class="replay-history-status" data-status-condition="closed-still"></small></figure>
+        <figure><figcaption>Closed · current</figcaption><canvas data-replay-condition="closed-current" width="640" height="480" aria-label="Recorded closed current replay frame.">Canvas is unavailable.</canvas><canvas class="replay-history" data-history-condition="closed-current" width="640" height="64" aria-label="Recorded closed current biomass history."></canvas><small class="replay-history-status" data-status-condition="closed-current"></small></figure>
+        <figure><figcaption>Rain · still</figcaption><canvas data-replay-condition="rain-still" width="640" height="480" aria-label="Recorded rain still replay frame.">Canvas is unavailable.</canvas><canvas class="replay-history" data-history-condition="rain-still" width="640" height="64" aria-label="Recorded rain still biomass history."></canvas><small class="replay-history-status" data-status-condition="rain-still"></small></figure>
+        <figure><figcaption>Rain · current</figcaption><canvas data-replay-condition="rain-current" width="640" height="480" aria-label="Recorded rain current replay frame.">Canvas is unavailable.</canvas><canvas class="replay-history" data-history-condition="rain-current" width="640" height="64" aria-label="Recorded rain current biomass history."></canvas><small class="replay-history-status" data-status-condition="rain-current"></small></figure>
+      </div>
+    </section>
+    <section class="explanation"><div><p class="eyebrow">How to read this</p><h2>Translation is counted; supply is measured.</h2></div><div><p>The pump translates all nutrient along four-tick pulses. “Nutrient unit-moves” is a cumulative translation ledger, even if a uniform field looks unchanged; it is not net delivery or an energy budget.</p><p>The nutrient-difference channel compares each current tank with its matched still sibling at the same tick. Both use a fixed −8 to +8 scale with zero neutral; clipped values are saturated. Brightness in the stock channels uses a common square-root scale.</p><p>These are designed material-flow rules. Biomass patches are not organisms, and a surviving biomass stock is not evidence of ongoing evolution.</p></div></section>
+  </main>
+  <script type="module" src="/src/currents/page.ts"></script>
+</body>
+</html>

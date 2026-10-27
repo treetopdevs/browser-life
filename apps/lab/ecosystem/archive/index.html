@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Recorded worlds · Cadence Garden</title>
+  <meta name="description" content="Three recorded 20,000-tick histories from the engineered ecosystem, with their archived footage and census data.">
+  <link rel="stylesheet" href="/src/ecosystem/archive.css">
+</head>
+<body>
+  <main>
+    <header class="site-head">
+      <a class="brand" href="/">CADENCE GARDEN</a>
+      <nav aria-label="Ecosystem pages"><a href="/ecosystem/">Live ecosystem</a><a href="/playground/">Prototype library</a></nav>
+      <p class="eyebrow">RECORDED WORLDS · HISTORICAL OBSERVATIONS</p>
+      <h1>Three paths through<br>the same world.</h1>
+      <p class="intro">Each recording follows one seeded run for 20,000 ticks. The charts summarize the complete recorded trajectory; moving through a movie does not change or recalculate them.</p>
+    </header>
+
+    <section class="archive-controls" aria-label="Playback controls">
+      <button id="play-all" class="primary">Play all</button>
+      <button id="restart-all">Restart all</button>
+      <button id="pause-all">Pause all</button>
+      <label for="playback-speed">Playback speed</label>
+      <select id="playback-speed" autocomplete="off">
+        <option value="0.5">Half speed</option>
+        <option value="1" selected>Normal</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+      </select>
+      <p id="playback-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="recordings" class="recordings" aria-label="Archived seed recordings">
+      <article class="recording" data-seed="1101">
+        <header class="recording-head"><p class="eyebrow">SEED 1101</p><h2>Five families remain</h2><p class="interpretation">All five families appear in the final census. Their recorded populations continue to move across the full run.</p></header>
+        <figure class="movie-figure">
+          <video id="movie-1101" controls playsinline preload="metadata" aria-label="Archived ecosystem footage for seed 1101"></video>
+          <figcaption><span>Sampled movie tick</span><output id="tick-1101" aria-live="off">0 / 20,000</output></figcaption>
+        </figure>
+        <p id="media-status-1101" class="media-status" role="status" aria-live="polite"></p>
+        <button class="retry" id="retry-1101" type="button" hidden>Retry and play this recording</button>
+        <section class="recorded-summary" aria-label="Seed 1101 historical summary"><h3>Whole-trajectory population</h3><canvas id="population-1101" class="population-chart" width="760" height="240" role="img" aria-label="Population by family across the complete 0 to 20,000 tick trajectory for seed 1101"></canvas><div id="legend-1101" class="legend"></div><div id="family-summary-1101" class="population-table"></div><p class="caption">Lines cover all 201 recorded censuses from tick 0 through 20,000. The table gives final counts and each family’s recorded range across ticks 15,000–20,000. Values stay fixed when seeking.</p><h3>Whole-trajectory inherited trait means</h3><div class="mean-charts"><section class="mean-chart-block"><h4>Mean attack</h4><canvas id="attack-1101" class="mean-chart" width="760" height="150" role="img" aria-label="Mean attack trait by family across the complete 0 to 20,000 tick trajectory for seed 1101. Gaps indicate no living members of a family at a census."></canvas></section><section class="mean-chart-block"><h4>Mean defense</h4><canvas id="defense-1101" class="mean-chart" width="760" height="150" role="img" aria-label="Mean defense trait by family across the complete 0 to 20,000 tick trajectory for seed 1101. Gaps indicate no living members of a family at a census."></canvas></section></div><div class="caption">Each trait mean uses the 125 archived bins at that census, grouped by family. The vertical scale is 0–4; lines break where a family is absent.</div><details id="trait-data-details-1101" class="trait-data"><summary>Tabular values for the full trait trajectories (201 censuses)</summary><p class="caption">One row per family at each recorded census. An em dash means that family had no living members.</p><div id="trait-data-1101" class="trait-data-table" tabindex="0" role="region" aria-label="Full trait trajectory table for seed 1101"></div></details><div id="facts-1101" class="facts"></div><details class="bin-details"><summary>Final census: within-family attack × defense counts</summary><div id="traits-1101" class="trait-tables"></div></details></section>
+      </article>
+
+      <article class="recording" data-seed="1102">
+        <header class="recording-head"><p class="eyebrow">SEED 1102</p><h2>Five families remain</h2><p class="interpretation">Each family is present at tick 20,000. The recorded abundance rises and falls differently from seed 1101.</p></header>
+        <figure class="movie-figure">
+          <video id="movie-1102" controls playsinline preload="metadata" aria-label="Archived ecosystem footage for seed 1102"></video>
+          <figcaption><span>Sampled movie tick</span><output id="tick-1102" aria-live="off">0 / 20,000</output></figcaption>
+        </figure>
+        <p id="media-status-1102" class="media-status" role="status" aria-live="polite"></p>
+        <button class="retry" id="retry-1102" type="button" hidden>Retry and play this recording</button>
+        <section class="recorded-summary" aria-label="Seed 1102 historical summary"><h3>Whole-trajectory population</h3><canvas id="population-1102" class="population-chart" width="760" height="240" role="img" aria-label="Population by family across the complete 0 to 20,000 tick trajectory for seed 1102"></canvas><div id="legend-1102" class="legend"></div><div id="family-summary-1102" class="population-table"></div><p class="caption">Lines cover all 201 recorded censuses from tick 0 through 20,000. The table gives final counts and each family’s recorded range across ticks 15,000–20,000. Values stay fixed when seeking.</p><h3>Whole-trajectory inherited trait means</h3><div class="mean-charts"><section class="mean-chart-block"><h4>Mean attack</h4><canvas id="attack-1102" class="mean-chart" width="760" height="150" role="img" aria-label="Mean attack trait by family across the complete 0 to 20,000 tick trajectory for seed 1102. Gaps indicate no living members of a family at a census."></canvas></section><section class="mean-chart-block"><h4>Mean defense</h4><canvas id="defense-1102" class="mean-chart" width="760" height="150" role="img" aria-label="Mean defense trait by family across the complete 0 to 20,000 tick trajectory for seed 1102. Gaps indicate no living members of a family at a census."></canvas></section></div><div class="caption">Each trait mean uses the 125 archived bins at that census, grouped by family. The vertical scale is 0–4; lines break where a family is absent.</div><details id="trait-data-details-1102" class="trait-data"><summary>Tabular values for the full trait trajectories (201 censuses)</summary><p class="caption">One row per family at each recorded census. An em dash means that family had no living members.</p><div id="trait-data-1102" class="trait-data-table" tabindex="0" role="region" aria-label="Full trait trajectory table for seed 1102"></div></details><div id="facts-1102" class="facts"></div><details class="bin-details"><summary>Final census: within-family attack × defense counts</summary><div id="traits-1102" class="trait-tables"></div></details></section>
+      </article>
+
+      <article class="recording" data-seed="1103">
+        <header class="recording-head"><p class="eyebrow">SEED 1103</p><h2>Two families disappear</h2><p class="interpretation">The archived notices record Hunter disappearing at tick 640 and Jade at tick 1,740, with no automatic rescue. This retained run shows those family losses; it is part of the observed range, not an excluded outlier.</p></header>
+        <figure class="movie-figure">
+          <video id="movie-1103" controls playsinline preload="metadata" aria-label="Archived ecosystem footage for seed 1103"></video>
+          <figcaption><span>Sampled movie tick</span><output id="tick-1103" aria-live="off">0 / 20,000</output></figcaption>
+        </figure>
+        <p id="media-status-1103" class="media-status" role="status" aria-live="polite"></p>
+        <button class="retry" id="retry-1103" type="button" hidden>Retry and play this recording</button>
+        <section class="recorded-summary" aria-label="Seed 1103 historical summary"><h3>Whole-trajectory population</h3><canvas id="population-1103" class="population-chart" width="760" height="240" role="img" aria-label="Population by family across the complete 0 to 20,000 tick trajectory for seed 1103"></canvas><div id="legend-1103" class="legend"></div><div id="family-summary-1103" class="population-table"></div><p class="caption">Lines cover all 201 recorded censuses from tick 0 through 20,000. The table gives final counts and each family’s recorded range across ticks 15,000–20,000. Values stay fixed when seeking.</p><h3>Whole-trajectory inherited trait means</h3><div class="mean-charts"><section class="mean-chart-block"><h4>Mean attack</h4><canvas id="attack-1103" class="mean-chart" width="760" height="150" role="img" aria-label="Mean attack trait by family across the complete 0 to 20,000 tick trajectory for seed 1103. Gaps indicate no living members of a family at a census."></canvas></section><section class="mean-chart-block"><h4>Mean defense</h4><canvas id="defense-1103" class="mean-chart" width="760" height="150" role="img" aria-label="Mean defense trait by family across the complete 0 to 20,000 tick trajectory for seed 1103. Gaps indicate no living members of a family at a census."></canvas></section></div><div class="caption">Each trait mean uses the 125 archived bins at that census, grouped by family. The vertical scale is 0–4; lines break where a family is absent.</div><details id="trait-data-details-1103" class="trait-data"><summary>Tabular values for the full trait trajectories (201 censuses)</summary><p class="caption">One row per family at each recorded census. An em dash means that family had no living members.</p><div id="trait-data-1103" class="trait-data-table" tabindex="0" role="region" aria-label="Full trait trajectory table for seed 1103"></div></details><div id="facts-1103" class="facts"></div><details class="bin-details"><summary>Final census: within-family attack × defense counts</summary><div id="traits-1103" class="trait-tables"></div></details></section>
+      </article>
+    </section>
+
+    <details class="methods">
+      <summary>How to read these recordings</summary>
+      <p>These are the original three recorded 20,000-tick observations, not newly generated runs. Raw censuses were sampled every 100 ticks. The source’s <code>captureEvery: 25</code> field describes movie frames: 801 frames at 20 fps represent 25 ticks each (40.05 seconds). The browser copies were re-encoded at 192 × 192 pixels; resizing and re-encoding are lossy and do not preserve a physical snapshot.</p>
+      <p>Movie tick is estimated from the displayed frame time using the archived 20 fps rate, rounded down to the prior 25-tick sample and capped at 20,000. The videos are not frame-locked to one another. Family and trait charts summarize the entire recorded trajectory and do not follow seeking.</p>
+      <p>Refuge and drought rules were enabled in these runs, but their outlines are not drawn in the movies. Seed 1103 is retained with its observed Jade and Hunter losses. The model is engineered: food supply, family selection, traits, introductions, refuges and weather are specified by the experiment.</p>
+    </details>
+  </main>
+  <script type="module" src="/src/ecosystem/archive.ts"></script>
+</body>
+</html>

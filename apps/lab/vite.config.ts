@@ -153,7 +153,22 @@ export default defineConfig({
   worker: { format: "es" },
   build: {
     target: "es2023",
-    rollupOptions: { input: {
+    rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/vision-screen/")) return "vision-screen-core";
+      if (id.includes("/src/ecosystem/model.ts")) return "ecosystem-model";
+      if (id.includes("/docs/creative-prototypes/ecosystem-archive/source/")) return "ecosystemArchiveData";
+      if (id.includes("/src/spatial/model.ts")) return "spatial-model";
+      if (id.includes("/src/currents/model.ts")) return "currents-model";
+      if (id.includes("/src/matter/model.ts")) return "matter-model";
+      if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
+      if (id.includes("/src/development/model.ts")) return "development-model";
+      if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
+      if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
+      if (id.includes("/src/particles/environment-page.ts")) return "particles-environment-page";
+      if (id.includes("/src/particles/bonded-model.ts")) return "particles-bonded-model";
+      if (id.includes("/src/particles/model.ts")) return "particles-model";
+      if (id.includes("/src/particles/comparison-clock.ts")) return "particles-clock";
+    } }, input: {
       home: r("./index.html"),
       lab: r("./lab/index.html"),
       worlds: r("./worlds/index.html"),
@@ -164,6 +179,22 @@ export default defineConfig({
       participate: r("./participate/index.html"),
       status: r("./status/index.html"),
       garden: r("./garden/index.html"),
+      particles: r("./particles/index.html"),
+      particlePicker: r("./particles/picker/index.html"),
+      particleOases: r("./particles/oases/index.html"),
+      particleSeasons: r("./particles/seasons/index.html"),
+      particleBonds: r("./particles/bonds/index.html"),
+      particleMotifs: r("./particles/motifs/index.html"),
+      boundaries: r("./boundaries/index.html"),
+      development: r("./development/index.html"),
+      hungryShapes: r("./hungry-shapes/index.html"),
+      matter: r("./matter/index.html"),
+      currents: r("./currents/index.html"),
+      spatial: r("./spatial/index.html"),
+      ecosystem: r("./ecosystem/index.html"),
+      ecosystemArchive: r("./ecosystem/archive/index.html"),
+      playground: r("./playground/index.html"),
+      visionScreen: r("./vision-screen/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),

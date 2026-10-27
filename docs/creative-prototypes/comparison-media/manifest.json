@@ -1,0 +1,122 @@
+[
+  {
+    "name": "development",
+    "source": "/Users/nicholas/.codex/worktrees/developmental-shapes/browser-life/runs/development/browser/development-seed-1201-0-to-3000.webm",
+    "sourceSha256": "20775f8ce5194e2bdb5eab3d924883569ddc4b598bb066dfeef19ef86b658e2b",
+    "delivered": "development.mp4",
+    "sha256": "df183fa7e9e6883965cd371e82ebcfdf6747d811b75afdff29570141e6ee3a76",
+    "bytes": 559096,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 960,
+          "height": 734,
+          "pix_fmt": "yuv420p",
+          "r_frame_rate": "25/1",
+          "nb_frames": "1206"
+        }
+      ],
+      "format": {
+        "duration": "48.240000"
+      }
+    },
+    "transformation": "Excerpt from source time5s through end, omitting browser startup/loading. Same remaining presentation timing; scale960:-2 libx264 CRF28 yuv420p noaudio. No simulated frames.",
+    "sourceProbe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1440,
+          "height": 1100,
+          "r_frame_rate": "25/1"
+        }
+      ],
+      "format": {
+        "duration": "53.240000"
+      }
+    }
+  },
+  {
+    "name": "spatial",
+    "source": "/Users/nicholas/.codex/worktrees/spatial-particle-worlds/browser-life/runs/spatial/browser/pursuit-seed-1201.webm",
+    "sourceSha256": "abbb450feeb64dfb779ccfd5d895c990c605f343919a6b6c2a9bb7fb03216a93",
+    "delivered": "spatial.mp4",
+    "sha256": "67cb6ba30cbfa0bd350a577a77f601fc41813c09ea4945326b33e5474f89cf7a",
+    "bytes": 284029,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 960,
+          "height": 666,
+          "pix_fmt": "yuv420p",
+          "r_frame_rate": "25/1",
+          "nb_frames": "534"
+        }
+      ],
+      "format": {
+        "duration": "21.360000"
+      }
+    },
+    "transformation": "Excerpt from source time5s through end, omitting browser startup/loading. Same remaining presentation timing; scale960:-2 libx264 CRF28 yuv420p noaudio. No simulated frames.",
+    "sourceProbe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1440,
+          "height": 1000,
+          "r_frame_rate": "25/1"
+        }
+      ],
+      "format": {
+        "duration": "26.360000"
+      }
+    }
+  },
+  {
+    "name": "development full recorded still",
+    "source": "/Users/nicholas/.codex/worktrees/developmental-shapes/browser-life/runs/development/browser/development-seed-1201-tick-3007-selected.png",
+    "sourceSha256": "8e77387f2966e0a0fb6ba37d604212d06503e7182d3199ebf8ef521b05d25cdb",
+    "delivered": "development-full.jpg",
+    "sha256": "ef93c1ff9aef72cfc64581d821c833276602b675793f92148b0cf65b11fbbbf8",
+    "transformation": "Resize to960px wide; JPEG quality3; no added scene content"
+  },
+  {
+    "name": "spatial full recorded still",
+    "source": "/Users/nicholas/.codex/worktrees/spatial-particle-worlds/browser-life/runs/spatial/browser/pursuit-seed-1201-tick-6000.png",
+    "sourceSha256": "8707dd84f0b91c87f7bf847710ced906d6fc8bb40ff3751c86b32e686e1ed402",
+    "delivered": "spatial-full.jpg",
+    "sha256": "253e58e294bb60637774ff447ef228d3f09a551c9a4095a4c0b8b6026a37a4af",
+    "transformation": "Resize to960px wide; JPEG quality3; no added scene content"
+  },
+  {
+    "name": "ecosystem 1101",
+    "reusedRepositoryPath": "apps/lab/src/ecosystem/archive-assets/ecosystem-archive-1101.mp4",
+    "sha256": "f382495dea160080085ef462f0fe1649fb2fc023d3a05bf5d5430252111c962a",
+    "transformation": "None; reuse PR98 delivered archive movie. Full provenance in ../ecosystem-archive/provenance.json"
+  },
+  {
+    "name": "ecosystem 1103",
+    "reusedRepositoryPath": "apps/lab/src/ecosystem/archive-assets/ecosystem-archive-1103.mp4",
+    "sha256": "e87bac5cf0f14b4a90824d62db5d869f48623c8fb5d88c40a130136abd67f0ae",
+    "transformation": "None; reuse PR98 delivered archive movie. Full provenance in ../ecosystem-archive/provenance.json"
+  },
+  {
+    "name": "development poster",
+    "delivered": "development.jpg",
+    "sha256": "3279e5dcd761449c9db9a0a8d9dbb49f6db694661d214ac3bc05d9c8b63bb951",
+    "transformation": "Frame at70% of the delivered recording duration; context only, not a simulated tick label"
+  },
+  {
+    "name": "spatial poster",
+    "delivered": "spatial.jpg",
+    "sha256": "e01b1d8443cd9e233849969c9a474151a85c95e3b4be37ba1e497c5e13ff1087",
+    "transformation": "Frame at70% of the delivered recording duration; context only, not a simulated tick label"
+  }
+]

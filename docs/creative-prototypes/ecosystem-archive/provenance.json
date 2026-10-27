@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Provenance for copied historical ecosystem observations and browser-sized archive media.",
+  "historicalSourceNote": "The 20,000-tick raw histories and original 576px movies were copied from the recorded source working tree. The historical report records Node 24 execution; this integration did not rerun 20,000 ticks. The separately recorded Node 24.2.0 verification here is a bounded replay through tick 3,000 only.",
+  "immutableBase": {
+    "commit": "f1f98f3966ec36ec50577deec8a5914a20df8c51",
+    "repository": "browser-life",
+    "trackedSourceFiles": [
+      {
+        "path": "apps/lab/src/ecosystem/model.ts",
+        "sha256": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-exploration-v1.json",
+        "sha256": "fc1e88b5a5346145c17d8f6de08cd11007462dfc5deb9665568240beea13b18b"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-exploration-v2.json",
+        "sha256": "5d05c5a5626566228870181388c3d886a80ecbb31be7ce7f366f8401cd411108"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-exploration-v3.json",
+        "sha256": "78e29ec5164766efebf3ad4c4e3784b367c2858d983d39f7d9bc0bbb7f04b59b"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-exploration.json",
+        "sha256": "2910b021f6ae51aec331cf023e46a9a775c2010307680c91aaa751ad4929a3eb"
+      },
+      {
+        "path": "tools/ecosystem/explore.ts",
+        "sha256": "46467755cf37a96386149ba1997e99cc98e97e2a1c95fa98ea2e0397da03cf5d"
+      },
+      {
+        "path": "docs/ecosystem-sandbox.md",
+        "sha256": "23b3ddd345f0f3a689781584eaed7e3f79f9449c9743bbfea149c56a327b64a4"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-plan.md",
+        "sha256": "d5649b8474f1eb643d005fb8ae35f694e09d106ae80c00de9978384af5e75f14"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-reviews/fixes-claude.md",
+        "sha256": "1a8b06a1a10caa2e650651388b854a2eda564e4eb61d3ada76c49878ec768f6a"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-reviews/fixes-codex.md",
+        "sha256": "75eb1a5f258d45266eb522a7dc43e7612b9dcbd8c7cb123d89f874b6ecccf5c4"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-reviews/implementation-claude.md",
+        "sha256": "4ea4d95dc287a5815d87a9ec14ffc03039595ce41e162625ee10b6871b9bf270"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-reviews/implementation-codex.md",
+        "sha256": "5b5aac4294a617cf8161ef05d2e2232e137df2edfc6319ae8bd5bd1539bcf163"
+      },
+      {
+        "path": "docs/ecosystem-sandbox-reviews/plan-claude.md",
+        "sha256": "b4857c50588ab0c4190ff9b83b2a984966a7a74945b556b43e4d332f1ae17bd9"
+      },
+      {
+        "path": "apps/lab/test/ecosystem.test.ts",
+        "sha256": "c323c2cb5ca139e335305af3541f824378d51b8aa9750028f018638a18de378b"
+      }
+    ]
+  },
+  "model": {
+    "path": "apps/lab/src/ecosystem/model.ts",
+    "sha256": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0",
+    "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/apps/lab/src/ecosystem/model.ts",
+    "sourceCommit": "f1f98f3966ec36ec50577deec8a5914a20df8c51",
+    "sourceCommitSha256": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0"
+  },
+  "historicalRuntime": {
+    "recordedBySourceDocuments": "Node 24",
+    "newlyVerifiedLongRun": false,
+    "newlyVerifiedBoundedReplay": {
+      "runtime": "Node.js v24.2.0",
+      "ticksPerSeed": 3000,
+      "seeds": [
+        1101,
+        1102,
+        1103
+      ],
+      "result": "exact match to staged v4 exploration census at tick 3000"
+    }
+  },
+  "rawHistories": {
+    "1101": {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/seed-1101.json",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1101.json",
+      "sha256": "478feddd09820cbfb1ed3cafaf9e6f579c8e713bbd7b61c50fd6ba0f1393bd1e",
+      "sourceBytes": 395554,
+      "seed": 1101,
+      "ticks": 20000,
+      "censusCadenceTicks": 100,
+      "traitBinsPerCensus": 125,
+      "sourceSha256": "478feddd09820cbfb1ed3cafaf9e6f579c8e713bbd7b61c50fd6ba0f1393bd1e"
+    },
+    "1102": {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/seed-1102.json",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1102.json",
+      "sha256": "404b7a751aa74f4eb19501226afa8444ae9453fc386486ff35f4f5cb17b66c15",
+      "sourceBytes": 395940,
+      "seed": 1102,
+      "ticks": 20000,
+      "censusCadenceTicks": 100,
+      "traitBinsPerCensus": 125,
+      "sourceSha256": "404b7a751aa74f4eb19501226afa8444ae9453fc386486ff35f4f5cb17b66c15"
+    },
+    "1103": {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/seed-1103.json",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1103.json",
+      "sha256": "ed10e90701433e06a407d5f077e13c8d8a484f9c01a9295cead95b1b6c66d2b6",
+      "sourceBytes": 386105,
+      "seed": 1103,
+      "ticks": 20000,
+      "censusCadenceTicks": 100,
+      "traitBinsPerCensus": 125,
+      "sourceSha256": "ed10e90701433e06a407d5f077e13c8d8a484f9c01a9295cead95b1b6c66d2b6"
+    }
+  },
+  "summary": {
+    "path": "docs/creative-prototypes/ecosystem-archive/source/ecosystem-20k-summary.json",
+    "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/docs/ecosystem-20k-summary.json",
+    "sha256": "b2695f7a69baeb664321da2732350233c08de9e5cf693f5905bc2802163656ac",
+    "sourceSha256": "b2695f7a69baeb664321da2732350233c08de9e5cf693f5905bc2802163656ac"
+  },
+  "summarizer": {
+    "path": "tools/ecosystem/summarize-long-run.py",
+    "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/tools/ecosystem/summarize-long-run.py",
+    "sha256": "cd7fb2ac8ce760448a7fac3ad8e57580fca2dabaeb0111ae8770ea4e0268e469",
+    "status": "copied unchanged; rerun in an isolated temporary directory during verification",
+    "sourceSha256": "cd7fb2ac8ce760448a7fac3ad8e57580fca2dabaeb0111ae8770ea4e0268e469"
+  },
+  "copiedWorkingFiles": [
+    {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/ecosystem-20k.md",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/docs/ecosystem-20k.md",
+      "sha256": "48725c9c28cf88cafabeedcef194158301a2d5bafd1e73a12d259a99aa0aaf8f",
+      "sourceKind": "untracked working-file snapshot; not immutable-commit evidence",
+      "sourceSha256": "48725c9c28cf88cafabeedcef194158301a2d5bafd1e73a12d259a99aa0aaf8f"
+    },
+    {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/ecosystem-20k.html",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/docs/ecosystem-20k.html",
+      "sha256": "0e27500df189898ec9fbe26dafcea7f805dc8a4a2ab7e74e2e1ae78234eed048",
+      "sourceKind": "untracked working-file snapshot; not immutable-commit evidence",
+      "sourceSha256": "0e27500df189898ec9fbe26dafcea7f805dc8a4a2ab7e74e2e1ae78234eed048"
+    },
+    {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/analysis.txt",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/analysis.txt",
+      "sha256": "9f281712f1d0bcd8cd67a11a4eb22c99e048a02e62d692b7e1a38f8a20ae6331",
+      "sourceKind": "untracked working-file snapshot; not immutable-commit evidence",
+      "sourceSha256": "9f281712f1d0bcd8cd67a11a4eb22c99e048a02e62d692b7e1a38f8a20ae6331"
+    },
+    {
+      "path": "docs/creative-prototypes/ecosystem-archive/source/review.md",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/review.md",
+      "sha256": "21669cb0354cbc8db43a6fe71112f9ec462e2aebd634d8f667819b8e6f6e6387",
+      "sourceKind": "untracked working-file snapshot; not immutable-commit evidence",
+      "sourceSha256": "21669cb0354cbc8db43a6fe71112f9ec462e2aebd634d8f667819b8e6f6e6387"
+    },
+    {
+      "path": "tools/ecosystem/long-run.ts",
+      "sourcePath": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/tools/ecosystem/long-run.ts",
+      "sha256": "ac9c2924ee1234357ecc34301959f259f59df1108b18e537b8528e641b919ba6",
+      "sourceKind": "untracked working-file snapshot; not immutable-commit evidence",
+      "sourceSha256": "ac9c2924ee1234357ecc34301959f259f59df1108b18e537b8528e641b919ba6"
+    }
+  ],
+  "media": {
+    "1101": {
+      "original": {
+        "path": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1101.mp4",
+        "sha256": "b89e15952d302c228ec0cf1a9874fe1c51e2159f15d368438b650476fe81f80b",
+        "bytes": 37920944,
+        "probe": {
+          "codec_name": "h264",
+          "width": 576,
+          "height": 576,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      },
+      "delivered": {
+        "path": "apps/lab/src/ecosystem/archive-assets/ecosystem-archive-1101.mp4",
+        "sha256": "f382495dea160080085ef462f0fe1649fb2fc023d3a05bf5d5430252111c962a",
+        "bytes": 6494328,
+        "probe": {
+          "codec_name": "h264",
+          "width": 192,
+          "height": 192,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      }
+    },
+    "1102": {
+      "original": {
+        "path": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1102.mp4",
+        "sha256": "90e77f4bba8c65bb8a7257b192d84245a25f63052c657368485ecb48edcb183e",
+        "bytes": 37866925,
+        "probe": {
+          "codec_name": "h264",
+          "width": 576,
+          "height": 576,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      },
+      "delivered": {
+        "path": "apps/lab/src/ecosystem/archive-assets/ecosystem-archive-1102.mp4",
+        "sha256": "376c660c864379b72ea290ab7be33e897f958662757b4df45d01bee261722ae4",
+        "bytes": 6500156,
+        "probe": {
+          "codec_name": "h264",
+          "width": 192,
+          "height": 192,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      }
+    },
+    "1103": {
+      "original": {
+        "path": "/Users/nicholas/.codex/worktrees/rps-vacancy-transfer/browser-life/runs/ecosystem-20k/seed-1103.mp4",
+        "sha256": "28297e6001595878c6ffe64c51f61e1df8a14031a7d673962f9a481392d873f0",
+        "bytes": 22679741,
+        "probe": {
+          "codec_name": "h264",
+          "width": 576,
+          "height": 576,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      },
+      "delivered": {
+        "path": "apps/lab/src/ecosystem/archive-assets/ecosystem-archive-1103.mp4",
+        "sha256": "e87bac5cf0f14b4a90824d62db5d869f48623c8fb5d88c40a130136abd67f0ae",
+        "bytes": 4678375,
+        "probe": {
+          "codec_name": "h264",
+          "width": 192,
+          "height": 192,
+          "r_frame_rate": "20/1",
+          "nb_frames": "801",
+          "start_time": "0.000000",
+          "duration": "40.050000",
+          "pix_fmt": "yuv420p"
+        }
+      }
+    }
+  },
+  "mediaEncoding": {
+    "command": "ffmpeg -i ORIGINAL -vf scale=192:192:flags=neighbor -c:v libx264 -preset fast -crf 24 -pix_fmt yuv420p -an -fps_mode passthrough -movflags +faststart OUTPUT",
+    "width": 192,
+    "height": 192,
+    "filter": "scale=192:192:flags=neighbor",
+    "codec": "h264",
+    "crf": 24,
+    "audio": "none",
+    "framePolicy": "preserve source timestamps; no interpolation or dropped frames",
+    "fps": "20/1",
+    "frames": 801,
+    "durationSeconds": 40.05,
+    "note": "Lossy resized copies of historical footage, not lossless physical snapshots."
+  }
+}

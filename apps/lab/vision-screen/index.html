@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="A local gallery of saved visual calibration results." />
+  <title>Vision screen · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to results</a>
+  <header><a href="/lab/" class="brand">Cadence Garden <span>/ experiments</span></a><span class="badge">Local calibration record</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Saved visual calibration</p>
+      <h1>Vision screen</h1>
+      <p>This gallery shows the exact still images and cosine scores from a local image and text model check.</p>
+    </section>
+    <section class="verdict" aria-labelledby="verdict-title">
+      <div class="verdict-mark" aria-hidden="true">!</div>
+      <div><p class="eyebrow" id="verdict-state"></p><h2 id="verdict-title"></h2>
+        <p><strong id="verdict-counts"></strong> <span id="verdict-reason"></span></p>
+        <div class="failure-summary"><h3>Failed checks by control fixture</h3><div id="failure-breakdown"></div><p id="degenerate-failure-note" class="failure-note"></p></div>
+      </div>
+    </section>
+    <section class="panel calibration" aria-labelledby="calibration-title">
+      <div class="section-heading"><div><p class="eyebrow">What was measured</p><h2 id="calibration-title">Visual resemblance only</h2></div><a class="button-link" href="#" id="export-json">Export full JSON ↓</a></div>
+      <div class="prompt-grid" id="prompts"></div>
+      <p class="caveat">These are image/text resemblance scores. The model cannot recognize motion: a mean over still-frame scores cannot establish temporal order, chasing, reproduction, heredity, or evolution. No clips were generated in this calibration run.</p>
+      <details class="provenance"><summary>Model and image details</summary><div id="provenance"></div></details>
+    </section>
+    <section class="gallery-section" aria-labelledby="gallery-title">
+      <div class="section-heading gallery-heading"><div><p class="eyebrow"><span id="fixture-total"></span> saved fixture images</p><h2 id="gallery-title">Calibration gallery</h2><p class="muted">Every tile is a still. Select one to inspect its failed and passed comparisons.</p></div></div>
+      <form class="filters" id="filters" aria-label="Filter calibration fixtures">
+        <label>Dot count<select id="count-filter"><option value="120" selected>120 dots</option><option value="60">60 dots</option><option value="240">240 dots</option><option value="diagnostics">Blank and one-dot controls</option></select></label>
+        <label>Layout offset<select id="layout-filter"><option value="0" selected>Layout 0</option><option value="1">Layout 1</option><option value="2">Layout 2</option></select></label>
+        <label>Fixture type<select id="group-filter"><option value="all">All fixture types</option><option value="1">One cluster</option><option value="3">Three clusters</option><option value="6">Six clusters</option><option value="12">Twelve clusters</option><option value="uniform">Uniform spread</option><option value="seam6">Six clusters across seam</option><option value="blank">Blank control</option><option value="one">One-dot control</option></select></label>
+      </form>
+      <p class="results-count" id="results-count" role="status" aria-live="polite"></p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+    <section class="selected panel" id="selected-panel" aria-labelledby="selected-title" hidden>
+      <div class="section-heading"><div><p class="eyebrow">Selected fixture</p><h2 id="selected-title"></h2></div><button id="close-selection" class="quiet-button" type="button">Close details</button></div>
+      <div class="selected-content"><canvas id="selected-image" width="128" height="128" role="img"></canvas><div><p id="selected-summary"></p><dl id="selected-scores" class="score-list"></dl></div></div>
+      <h3>Comparisons involving this image</h3><p class="comparison-explainer">The table shows target fixture margin − control margin. Positive means the target fixture scored above the control; negative means it scored below.</p><div class="table-scroll"><table><thead><tr><th scope="col">Compared with</th><th scope="col">Target fixture margin − control margin</th><th scope="col">Result</th></tr></thead><tbody id="comparison-rows"></tbody></table></div>
+    </section>
+    <footer><p><a href="https://github.com/treetopdevs/browser-life/blob/codex/vision-world-screen/docs/creative-prototypes/vision-screen-plan.md">Read the screening plan</a><span aria-hidden="true"> · </span><a href="https://github.com/treetopdevs/browser-life/blob/codex/vision-world-screen/docs/creative-prototypes/vision-calibration.md">Read the calibration report</a></p><p class="muted">Local record · no browser model downloads or network inference</p></footer>
+  </main>
+  <script type="module" src="/src/vision-screen/page.ts"></script>
+</body>
+</html>
