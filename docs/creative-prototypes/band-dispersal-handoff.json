@@ -1,0 +1,9 @@
+{
+  "status": "implementing after reviewed plan; no attempt",
+  "branch": "codex/band-dispersal",
+  "base": "8c84eed5e06c6304b26eefb4dda5b25a089823ae",
+  "planCommit": "3c06e877",
+  "attemptCount": 0,
+  "outcomeCount": 0,
+  "next": "Complete implementation, pure checks, independent source review and source commit before launch. One seed1202 gated3000 then6000 only if earned. No PR/push/merge/deploy."
+}
