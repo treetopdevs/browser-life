@@ -47,11 +47,11 @@ type AxeExclusion = { route: string; kind: "violation" | "incomplete"; rule: str
 const targetMatches = (e: AxeExclusion, target: string) => (typeof e.target === "string" ? e.target === target : e.target.test(target));
 const AXE_EXCLUSIONS: AxeExclusion[] = [
   // Reviewed by hand: at 375 the view picker scrolls sideways (DESIGN.md keeps view modes reachable that way, without
-  // page overflow) and clips these three, so axe cannot see what is behind them. They wear the same `.seg button`
+  // page overflow) and clips these four, so axe cannot see what is behind them. They wear the same `.seg button`
   // colours as the five view buttons axe passes beside them: --muted on the page's --bg, 6.3:1 by day and 7.4:1 at
   // night (from tokens.css); lit, ink on the sun as the composite button axe passes. scan() measures each one's text
   // against what is under it and fails under 4.5:1, so this reason cannot go stale.
-  ...["/lab/", "/lab/ (pond keeper)", "/lab/ (pond keeper, family tree in full)"].flatMap((route) => ["signal", "affinity", "light"].map((mode): AxeExclusion => (
+  ...["/lab/", "/lab/ (pond keeper)", "/lab/ (pond keeper, family tree in full)"].flatMap((route) => ["signal", "affinity", "light", "membrane"].map((mode): AxeExclusion => (
     { route, kind: "incomplete", rule: "color-contrast", target: `button[data-mode="${mode}"]`, widths: [375], reason: "reviewed: same colours as the view buttons axe passes" }))),
   // Reviewed by hand: the Session card's hint lines that wrap. axe finds the colours under each line of text through
   // its own model of what is stacked there, which for a modal dialog runs on into the inert page behind it; a page
