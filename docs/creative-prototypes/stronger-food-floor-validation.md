@@ -15,3 +15,9 @@ Clean synthetic rerun exit0:19passed,2actual/media skipped because no outcome ex
 Source1caa04c7 preceded sole attempt20261028T115018Z-92888. Exact known769 regression matched6000rows/301samples+frames/13snapshots before novel worlds. Both primary/repeat paused at3000 with28bodies,families26/2/0. Bands59/184 at2500→31/389 at3000. All numerical/activity/spatial gates pass; parent monochrome review confirms band0 clearance/rearrangement and band1 expansion/rearrangement from2500to3000. Seasonaltrue/false/true remains descriptive. Rawbf43f3b0eaa95beb5d24cd577a981b7acc6ab3a230d04b519a0b371c5b01404b. Savedgate/receipt validatorpassed; independent review+committed receipt required before3001.
 
 Independent3000gate review CLEAR, including source/journal/receipt/bodyimage bindings and exactly3000 durable rows. This commit permits continuation only.
+
+## Final valid stop
+
+Committed gateb3814421 preceded tick3001. SAME live worlds continued, exactrepeat matched, and actual extinction occurred3934. Sole attempt20261028T115018Z-92888 exited0; no retry/tuning/extra seed.198samples/frames,3934rows,9snapshots,494lineage retained. Rawfca948c8e43bdc1b778570bb772a9ad33c11deeffe94f1b6ff6991bdfdf37cec. Parent inspected required late-age panel showing4500/5000/5500/6000 unavailable, plus actual3000/3500/3920/3934 decline panel. Receiptfalse because6000agesunreached; no fabricated observations. Saved-data assembly and runnercheck-only passed. Lilac firstabsentsaved2720,gold3220 (20tickresolution),mint loss exactterminal3934. Partial3501–3934 window correctly434/500. Animation will use198actualframes through3934, not6000holds.
+
+Independent final evidence review CLEAR; saved-data checker, source/gate/journal/receipt/media bindings and monochrome images verified. Actual saved-evidence browser check passed5.4s: exact3934,known3920as-of,and later explicit terminalhold. No viewer repair or biology needed. Evidence commit precedes video capture.
