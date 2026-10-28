@@ -1,0 +1,5 @@
+- **[P2] A failed retry can clear the global failure before recovery.** The [`play` handler](apps/lab/src/ecosystem/archive.ts:273) removes the movie from `playbackFailures`, but `play` can fire while media is still loading, before `video.play()` succeeds. If the retry then fails, neither the error handler nor retry catch restores aggregate membership. The global message therefore disappears while that movie remains unavailable and the others continue playing. Clear it on confirmed playback (`playing` or fulfilled `play()`), and retain failure state through unsuccessful retries. The [recovery test](tests/e2e/ecosystem-archive.spec.ts:87) removes the network failure before retrying, so it misses this case; add a retry while still blocked before testing successful recovery.
+
+The other requested items are present: source movie palette matches, 100-tick census versus 25-tick movie cadence is disclosed, and whole-trajectory within-family trait charts break at null samples. Model bytes match immutable `f1f98f39` (SHA-256 `71b8cc9c…ccffed0`).
+
+Read-only inspection and hash/data checks only; no tests or simulations run.

@@ -13,7 +13,8 @@
     "gen:prereg": "deno run -A tools/gen-prereg.ts",
     "typecheck:capabilities": "tsc -p tools/agent-capabilities/tsconfig.json",
     "test:capabilities": "vitest run tools/test/agent-capabilities",
-    "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts"
+    "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts",
+    "verify:ecosystem": "python3 tools/ecosystem-library/verify.py && node --experimental-strip-types tools/ecosystem-library/replay-3000.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

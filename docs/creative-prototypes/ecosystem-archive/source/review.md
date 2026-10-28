@@ -1,0 +1,1 @@
+No blockers found in this bounded static audit. Capture timing is consistent, the 3,000-tick replay check compares the full census, and late-window calculations match the documented metrics. The summary supports “ongoing churn but familiar regimes,” with the stated sampling and three-trajectory limits.

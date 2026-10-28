@@ -1,0 +1,67 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
+
+test.use({ reducedMotion: 'reduce' });
+
+test('particle controls preserve a seeded start and download the observed state', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/particles/');
+  await expect(page.getByRole('heading', { name: 'Little lives, moving together.' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  await expect(page.locator('#tick')).toHaveText('0');
+  await page.getByRole('button', { name: 'One tick' }).click();
+  await expect(page.locator('#tick')).toHaveText('1');
+  await page.getByRole('button', { name: 'Reset world' }).click();
+  await expect(page.locator('#tick')).toHaveText('0');
+  await page.getByLabel('Movement recipe').selectOption('pursuit');
+  await expect(page.locator('#world-title')).toHaveText('Pursuit');
+  await page.getByLabel('Seed', { exact: true }).fill('1102');
+  await page.getByRole('button', { name: 'Reset world' }).click();
+  await page.getByLabel('Small inherited changes').uncheck();
+  await page.getByRole('button', { name: 'One tick' }).click();
+  await page.getByLabel('Seed', { exact: true }).fill('1.5');
+  await page.getByLabel('Movement recipe').selectOption('colonies');
+  await expect(page.getByLabel('Movement recipe')).toHaveValue('pursuit');
+  await expect(page.locator('#tick')).toHaveText('1');
+  await page.getByLabel('Seed', { exact: true }).fill('1102');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save observation' }).click();
+  const download = await downloadPromise;
+  const data = JSON.parse(await readFile((await download.path())!, 'utf8'));
+  expect(data.kind).toBe('particle-playground-observation');
+  expect(data.settings).toMatchObject({ seed: 1102, preset: 'pursuit', mutation: false });
+  expect(data.current.tick).toBe(1);
+  expect(data.particles.length).toBe(data.current.population);
+  expect(data.current.counts.reduce((a: number, b: number) => a + b, 0)).toBe(data.current.population);
+  expect(data.rules.version).toBeGreaterThan(0);
+  expect(download.suggestedFilename()).toContain('pursuit-seed-1102-tick-1');
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect.poll(async () => Number((await page.locator('#tick').textContent())!.replaceAll(',', ''))).toBeGreaterThan(1);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const stopped = await page.locator('#tick').textContent();
+  await page.waitForTimeout(150);
+  await expect(page.locator('#tick')).toHaveText(stopped!);
+  const pausedDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save observation' }).click();
+  const pausedDownload = await pausedDownloadPromise;
+  const pausedData = JSON.parse(await readFile((await pausedDownload.path())!, 'utf8'));
+  expect(pausedData.current.tick).toBe(Number(stopped!.replaceAll(',', '')));
+  await expect(page.locator('#population')).toHaveText(pausedData.current.population.toLocaleString('en-US'));
+  expect(errors).toEqual([]);
+});
+
+test('particle page fits a phone and its controls are accessible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/particles/');
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByLabel('Movement recipe').selectOption('colonies');
+  await expect(page.locator('#world-title')).toHaveText('Colonies');
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+  expect(results.violations).toEqual([]);
+  await page.getByRole('button', { name: 'One tick' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#tick')).toHaveText('1');
+});

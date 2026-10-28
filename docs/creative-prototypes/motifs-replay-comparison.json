@@ -1,0 +1,35 @@
+{
+  "comparison": "exact JSON payload equality excluding only sourceSha256; runtime and batch settings are included",
+  "exactMatch": true,
+  "runs": 36,
+  "runtime": {
+    "node": "24.2.0",
+    "zlib": "1.3.0.1-motley-780819f"
+  },
+  "batch": {
+    "recipeCount": 12,
+    "seeds": [
+      1201,
+      1202,
+      1203
+    ],
+    "maxTick": 3000,
+    "sampleEvery": 100,
+    "perturbTick": 1500,
+    "perturbDx": 0.08333333333333333
+  },
+  "preReviewArtifactSha256": "7ae2c208f6dbf7822f568cefdbc899550b61d5940f853c5f6a5c3b474b8cb065",
+  "finalArtifactSha256": "9dc625890ec985a7dc05099d6c1981fee7a8784c7f86861e4e8f9209b779fe28",
+  "preReviewSourceSha256": {
+    "apps/lab/src/particles/model.ts": "028cb90df07dacd4771cdbf6e9918ad7b691775d77fa090cf2dceca5e8f0b56f",
+    "apps/lab/src/particles/motifs.ts": "75146e9fcc21b1ea96887acc016847bccae814e211c39999296b1642752fb235",
+    "apps/lab/src/particles/motif-observers.ts": "6dcd3eca360f82f7004f048ae1b39f58eec24d5127ae91e32090f082e0f880a7",
+    "tools/particles/explore-motifs.ts": "83f55f888b7e80180504f56b2a231f62c2cd2099a3325ceaffcd1abf49ecdcd5"
+  },
+  "finalSourceSha256": {
+    "apps/lab/src/particles/model.ts": "028cb90df07dacd4771cdbf6e9918ad7b691775d77fa090cf2dceca5e8f0b56f",
+    "apps/lab/src/particles/motifs.ts": "a4564294a3d8b59a77cbcf7f0eee8929901a49e39ddc4aa6cfd3b1ad74daadf4",
+    "apps/lab/src/particles/motif-observers.ts": "6dcd3eca360f82f7004f048ae1b39f58eec24d5127ae91e32090f082e0f880a7",
+    "tools/particles/explore-motifs.ts": "5bd012a247741c1a1e03068ed587034a0ad8193169e70fa142667859637a5b5d"
+  }
+}

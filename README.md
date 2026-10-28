@@ -125,3 +125,7 @@ deno run -A tools/stitch.ts --experiment a1
 ```bash
 deno run -A tools/analyze.ts runs/a1/gradient
 ```
+
+### Creative world prototypes
+
+The [creative prototype queue and decision log](docs/creative-prototypes/decisions.html) tracks deliberately engineered life-like sandboxes. Start with the local particle playground at `/particles/` (`pnpm dev`); see the [guide](docs/creative-prototypes/README.md). These experiments are separate from the conserved-matter research kernel and are excluded from the production site image.

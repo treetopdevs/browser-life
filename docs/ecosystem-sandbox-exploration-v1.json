@@ -1,0 +1,3789 @@
+{
+  "model": {
+    "version": 1,
+    "size": 96,
+    "resourceCap": 8,
+    "renewal": 0.65,
+    "uptake": 1.8,
+    "baseCost": 0.45,
+    "attackCost": 0.18,
+    "defenseCost": 0.23,
+    "birthThreshold": 10,
+    "maxAge": 160,
+    "mutationRate": 0.04,
+    "predationFood": 3,
+    "introductionSize": 24
+  },
+  "purpose": "Creative diagnostic, not survival evidence",
+  "ticks": 3000,
+  "results": [
+    {
+      "seed": 1101,
+      "staged": true,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          2389,
+          2165,
+          2178,
+          0,
+          0
+        ],
+        "population": 6732,
+        "attack": 0.7382650029708854,
+        "defense": 0.8787878787878788,
+        "classes": 45,
+        "diversity": 3.23501662142946,
+        "births": 899242,
+        "deaths": 897698,
+        "mutations": 35913
+      },
+      "turnover": 0.06499348958333333,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1522,
+            1707,
+            1982,
+            24,
+            0
+          ],
+          "population": 5235,
+          "attack": 1.9318051575931232,
+          "defense": 0.9106017191977077,
+          "classes": 36,
+          "diversity": 2.2328009538525344,
+          "births": 12556,
+          "deaths": 12485,
+          "mutations": 507
+        },
+        {
+          "tick": 200,
+          "counts": [
+            1550,
+            2177,
+            1922,
+            0,
+            0
+          ],
+          "population": 5649,
+          "attack": 2.0766507346433,
+          "defense": 0.5822269428217384,
+          "classes": 44,
+          "diversity": 2.879572177337766,
+          "births": 26307,
+          "deaths": 25822,
+          "mutations": 1072
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1828,
+            1796,
+            1828,
+            0,
+            24
+          ],
+          "population": 5476,
+          "attack": 2.1705624543462383,
+          "defense": 0.4978086194302411,
+          "classes": 41,
+          "diversity": 3.022391975775191,
+          "births": 42669,
+          "deaths": 42381,
+          "mutations": 1711
+        },
+        {
+          "tick": 400,
+          "counts": [
+            1568,
+            1559,
+            2036,
+            0,
+            0
+          ],
+          "population": 5163,
+          "attack": 2.062560526825489,
+          "defense": 0.5446445864807282,
+          "classes": 45,
+          "diversity": 3.1530482715986796,
+          "births": 64753,
+          "deaths": 64778,
+          "mutations": 2574
+        },
+        {
+          "tick": 500,
+          "counts": [
+            2203,
+            1800,
+            1563,
+            0,
+            0
+          ],
+          "population": 5566,
+          "attack": 1.698706431908013,
+          "defense": 0.6575637800934243,
+          "classes": 44,
+          "diversity": 3.218533491740292,
+          "births": 94055,
+          "deaths": 93677,
+          "mutations": 3756
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1584,
+            2060,
+            1546,
+            0,
+            0
+          ],
+          "population": 5190,
+          "attack": 1.5283236994219653,
+          "defense": 0.635645472061657,
+          "classes": 48,
+          "diversity": 3.3542774904517385,
+          "births": 124572,
+          "deaths": 124570,
+          "mutations": 4969
+        },
+        {
+          "tick": 700,
+          "counts": [
+            1731,
+            2239,
+            1959,
+            0,
+            0
+          ],
+          "population": 5929,
+          "attack": 1.4111991904199697,
+          "defense": 0.5960532973519986,
+          "classes": 49,
+          "diversity": 3.324060141357324,
+          "births": 158254,
+          "deaths": 157513,
+          "mutations": 6336
+        },
+        {
+          "tick": 800,
+          "counts": [
+            2356,
+            2134,
+            1733,
+            0,
+            0
+          ],
+          "population": 6223,
+          "attack": 1.2736622207938293,
+          "defense": 0.68230756869677,
+          "classes": 46,
+          "diversity": 3.341310892587338,
+          "births": 194510,
+          "deaths": 193475,
+          "mutations": 7793
+        },
+        {
+          "tick": 900,
+          "counts": [
+            2193,
+            2177,
+            2151,
+            0,
+            0
+          ],
+          "population": 6521,
+          "attack": 1.3030210090476921,
+          "defense": 0.5351939886520473,
+          "classes": 47,
+          "diversity": 3.344637798193901,
+          "births": 229060,
+          "deaths": 227727,
+          "mutations": 9140
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            2466,
+            1688,
+            1911,
+            0,
+            0
+          ],
+          "population": 6065,
+          "attack": 1.215828524319868,
+          "defense": 0.6062654575432811,
+          "classes": 49,
+          "diversity": 3.2625411062470384,
+          "births": 265146,
+          "deaths": 264269,
+          "mutations": 10578
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            2011,
+            1841,
+            2119,
+            0,
+            0
+          ],
+          "population": 5971,
+          "attack": 1.1922626025791325,
+          "defense": 0.6231786970356724,
+          "classes": 47,
+          "diversity": 3.294271462985349,
+          "births": 296667,
+          "deaths": 295884,
+          "mutations": 11852
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            2268,
+            2014,
+            1922,
+            0,
+            0
+          ],
+          "population": 6204,
+          "attack": 1.132495164410058,
+          "defense": 0.6810122501611864,
+          "classes": 50,
+          "diversity": 3.366693855836994,
+          "births": 332365,
+          "deaths": 331349,
+          "mutations": 13278
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            1962,
+            2267,
+            2073,
+            0,
+            0
+          ],
+          "population": 6302,
+          "attack": 1.0474452554744527,
+          "defense": 0.7746747064423992,
+          "classes": 48,
+          "diversity": 3.3723972200241636,
+          "births": 367511,
+          "deaths": 366397,
+          "mutations": 14694
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            2561,
+            2000,
+            1994,
+            0,
+            0
+          ],
+          "population": 6555,
+          "attack": 0.9966437833714722,
+          "defense": 0.7556064073226545,
+          "classes": 46,
+          "diversity": 3.281556499970953,
+          "births": 401105,
+          "deaths": 399738,
+          "mutations": 16072
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            2215,
+            2229,
+            2009,
+            0,
+            0
+          ],
+          "population": 6453,
+          "attack": 1.0268092360142569,
+          "defense": 0.7601115760111576,
+          "classes": 48,
+          "diversity": 3.3011645980972233,
+          "births": 434148,
+          "deaths": 432883,
+          "mutations": 17393
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            2146,
+            1913,
+            1870,
+            0,
+            0
+          ],
+          "population": 5929,
+          "attack": 0.9247765221791195,
+          "defense": 0.8154832180806206,
+          "classes": 46,
+          "diversity": 3.250120579613425,
+          "births": 463627,
+          "deaths": 462886,
+          "mutations": 18555
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            2133,
+            2044,
+            2263,
+            0,
+            0
+          ],
+          "population": 6440,
+          "attack": 0.9285714285714286,
+          "defense": 0.7958074534161491,
+          "classes": 49,
+          "diversity": 3.3064707984309463,
+          "births": 495065,
+          "deaths": 493813,
+          "mutations": 19826
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            2318,
+            2173,
+            1831,
+            0,
+            0
+          ],
+          "population": 6322,
+          "attack": 0.9322999050933249,
+          "defense": 0.8495729199620373,
+          "classes": 49,
+          "diversity": 3.2759784620177363,
+          "births": 526583,
+          "deaths": 525449,
+          "mutations": 21126
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2369,
+            1693,
+            2401,
+            0,
+            0
+          ],
+          "population": 6463,
+          "attack": 0.9456908556397957,
+          "defense": 0.8344422095002321,
+          "classes": 46,
+          "diversity": 3.235549329116733,
+          "births": 557475,
+          "deaths": 556200,
+          "mutations": 22347
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2301,
+            1996,
+            2181,
+            0,
+            0
+          ],
+          "population": 6478,
+          "attack": 0.9803951836986724,
+          "defense": 0.8147576412472985,
+          "classes": 46,
+          "diversity": 3.2723870225809613,
+          "births": 588948,
+          "deaths": 587658,
+          "mutations": 23554
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            2435,
+            1872,
+            1528,
+            0,
+            0
+          ],
+          "population": 5835,
+          "attack": 0.9676092544987146,
+          "defense": 0.766923736075407,
+          "classes": 47,
+          "diversity": 3.267223929828413,
+          "births": 617672,
+          "deaths": 617025,
+          "mutations": 24766
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2333,
+            2472,
+            1829,
+            0,
+            0
+          ],
+          "population": 6634,
+          "attack": 0.9618631293337353,
+          "defense": 0.7256557129936689,
+          "classes": 48,
+          "diversity": 3.250768220234652,
+          "births": 649320,
+          "deaths": 647874,
+          "mutations": 25982
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            1828,
+            2357,
+            2279,
+            0,
+            0
+          ],
+          "population": 6464,
+          "attack": 0.916615099009901,
+          "defense": 0.7854269801980198,
+          "classes": 45,
+          "diversity": 3.2467899027466047,
+          "births": 682237,
+          "deaths": 680961,
+          "mutations": 27269
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2194,
+            2059,
+            2309,
+            0,
+            0
+          ],
+          "population": 6562,
+          "attack": 0.9277659250228589,
+          "defense": 0.7775068576653459,
+          "classes": 49,
+          "diversity": 3.299683114538261,
+          "births": 714031,
+          "deaths": 712657,
+          "mutations": 28542
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            2194,
+            1908,
+            2389,
+            0,
+            0
+          ],
+          "population": 6491,
+          "attack": 0.9030965952857803,
+          "defense": 0.7929440764134956,
+          "classes": 46,
+          "diversity": 3.3026905602113996,
+          "births": 746201,
+          "deaths": 744898,
+          "mutations": 29846
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            1876,
+            2217,
+            1897,
+            0,
+            0
+          ],
+          "population": 5990,
+          "attack": 0.7811352253756261,
+          "defense": 0.8696160267111853,
+          "classes": 45,
+          "diversity": 3.233058622144203,
+          "births": 774906,
+          "deaths": 774104,
+          "mutations": 30998
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            2188,
+            2493,
+            2061,
+            0,
+            0
+          ],
+          "population": 6742,
+          "attack": 0.7210026698309107,
+          "defense": 0.8137051320083062,
+          "classes": 50,
+          "diversity": 3.189154124372798,
+          "births": 805493,
+          "deaths": 803939,
+          "mutations": 32207
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            1877,
+            2428,
+            2250,
+            0,
+            0
+          ],
+          "population": 6555,
+          "attack": 0.7720823798627002,
+          "defense": 0.856140350877193,
+          "classes": 44,
+          "diversity": 3.2511515806419395,
+          "births": 836952,
+          "deaths": 835585,
+          "mutations": 33460
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            2228,
+            2254,
+            2138,
+            0,
+            0
+          ],
+          "population": 6620,
+          "attack": 0.8027190332326284,
+          "defense": 0.8341389728096676,
+          "classes": 46,
+          "diversity": 3.242296475232826,
+          "births": 868622,
+          "deaths": 867190,
+          "mutations": 34664
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            2389,
+            2165,
+            2178,
+            0,
+            0
+          ],
+          "population": 6732,
+          "attack": 0.7382650029708854,
+          "defense": 0.8787878787878788,
+          "classes": 45,
+          "diversity": 3.23501662142946,
+          "births": 899242,
+          "deaths": 897698,
+          "mutations": 35913
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 100,
+          "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 160,
+          "text": "Protected disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 300,
+          "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 360,
+          "text": "Hunter disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    },
+    {
+      "seed": 1101,
+      "staged": false,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          1870,
+          2317,
+          2414,
+          0,
+          0
+        ],
+        "population": 6601,
+        "attack": 0.7127707923041964,
+        "defense": 0.9188001817906378,
+        "classes": 44,
+        "diversity": 3.1002830788763,
+        "births": 885076,
+        "deaths": 883615,
+        "mutations": 35335
+      },
+      "turnover": 0.06397175202546296,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1531,
+            1709,
+            1981,
+            0,
+            0
+          ],
+          "population": 5221,
+          "attack": 1.9364106493009001,
+          "defense": 0.8967630722083892,
+          "classes": 36,
+          "diversity": 2.2111942665591995,
+          "births": 12558,
+          "deaths": 12477,
+          "mutations": 507
+        },
+        {
+          "tick": 200,
+          "counts": [
+            1389,
+            2151,
+            1812,
+            0,
+            0
+          ],
+          "population": 5352,
+          "attack": 2.194506726457399,
+          "defense": 0.577354260089686,
+          "classes": 41,
+          "diversity": 2.863768413577864,
+          "births": 26378,
+          "deaths": 26166,
+          "mutations": 1076
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1883,
+            1756,
+            1661,
+            0,
+            0
+          ],
+          "population": 5300,
+          "attack": 2.346981132075472,
+          "defense": 0.44981132075471697,
+          "classes": 39,
+          "diversity": 2.8261488660823595,
+          "births": 41443,
+          "deaths": 41283,
+          "mutations": 1656
+        },
+        {
+          "tick": 400,
+          "counts": [
+            2892,
+            1001,
+            1590,
+            0,
+            0
+          ],
+          "population": 5483,
+          "attack": 2.215393033011125,
+          "defense": 0.4457413824548605,
+          "classes": 41,
+          "diversity": 2.9812885771051834,
+          "births": 60533,
+          "deaths": 60190,
+          "mutations": 2402
+        },
+        {
+          "tick": 500,
+          "counts": [
+            1978,
+            1782,
+            1766,
+            0,
+            0
+          ],
+          "population": 5526,
+          "attack": 1.9623597538906985,
+          "defense": 0.45530220774520447,
+          "classes": 44,
+          "diversity": 3.223649350133345,
+          "births": 86941,
+          "deaths": 86555,
+          "mutations": 3465
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1890,
+            1459,
+            1754,
+            0,
+            0
+          ],
+          "population": 5103,
+          "attack": 1.8669410150891632,
+          "defense": 0.5059768763472468,
+          "classes": 46,
+          "diversity": 3.3238708017904375,
+          "births": 114668,
+          "deaths": 114705,
+          "mutations": 4586
+        },
+        {
+          "tick": 700,
+          "counts": [
+            1940,
+            1874,
+            1927,
+            0,
+            0
+          ],
+          "population": 5741,
+          "attack": 1.7639784009754398,
+          "defense": 0.4426058178017767,
+          "classes": 48,
+          "diversity": 3.296413750539132,
+          "births": 149010,
+          "deaths": 148409,
+          "mutations": 5976
+        },
+        {
+          "tick": 800,
+          "counts": [
+            1908,
+            1819,
+            1921,
+            0,
+            0
+          ],
+          "population": 5648,
+          "attack": 1.6841359773371105,
+          "defense": 0.5672804532577904,
+          "classes": 47,
+          "diversity": 3.38478731853824,
+          "births": 185258,
+          "deaths": 184750,
+          "mutations": 7380
+        },
+        {
+          "tick": 900,
+          "counts": [
+            1787,
+            2176,
+            2068,
+            0,
+            0
+          ],
+          "population": 6031,
+          "attack": 1.4639363289670038,
+          "defense": 0.6690432764052396,
+          "classes": 51,
+          "diversity": 3.442766562085055,
+          "births": 219455,
+          "deaths": 218564,
+          "mutations": 8758
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            1629,
+            2260,
+            2175,
+            0,
+            0
+          ],
+          "population": 6064,
+          "attack": 1.3627968337730871,
+          "defense": 0.6566622691292876,
+          "classes": 49,
+          "diversity": 3.4202898852800785,
+          "births": 253497,
+          "deaths": 252573,
+          "mutations": 10074
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            1775,
+            1683,
+            2175,
+            0,
+            0
+          ],
+          "population": 5633,
+          "attack": 1.2499556186756613,
+          "defense": 0.6484999112373513,
+          "classes": 46,
+          "diversity": 3.342386402551905,
+          "births": 284524,
+          "deaths": 284031,
+          "mutations": 11340
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            1951,
+            2153,
+            2262,
+            0,
+            0
+          ],
+          "population": 6366,
+          "attack": 1.158655356581841,
+          "defense": 0.6368206094879045,
+          "classes": 49,
+          "diversity": 3.3075257823350483,
+          "births": 318823,
+          "deaths": 317597,
+          "mutations": 12785
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            1763,
+            2343,
+            2198,
+            0,
+            0
+          ],
+          "population": 6304,
+          "attack": 1.2024111675126903,
+          "defense": 0.6790926395939086,
+          "classes": 45,
+          "diversity": 3.430994449360948,
+          "births": 352770,
+          "deaths": 351606,
+          "mutations": 14075
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            1845,
+            2142,
+            2234,
+            0,
+            0
+          ],
+          "population": 6221,
+          "attack": 1.1499758881208808,
+          "defense": 0.6838128918180357,
+          "classes": 48,
+          "diversity": 3.3748993390139552,
+          "births": 386522,
+          "deaths": 385441,
+          "mutations": 15475
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            2093,
+            1754,
+            2655,
+            0,
+            0
+          ],
+          "population": 6502,
+          "attack": 1.0753614272531529,
+          "defense": 0.7273146724084897,
+          "classes": 48,
+          "diversity": 3.3310688117268965,
+          "births": 421251,
+          "deaths": 419889,
+          "mutations": 16898
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            1916,
+            1943,
+            2086,
+            0,
+            0
+          ],
+          "population": 5945,
+          "attack": 1.0057190916736753,
+          "defense": 0.7465096719932717,
+          "classes": 43,
+          "diversity": 3.329930253743921,
+          "births": 451347,
+          "deaths": 450542,
+          "mutations": 18066
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            2206,
+            2116,
+            2207,
+            0,
+            0
+          ],
+          "population": 6529,
+          "attack": 1.0068923265431153,
+          "defense": 0.6867820493184255,
+          "classes": 46,
+          "diversity": 3.328957198847377,
+          "births": 484132,
+          "deaths": 482743,
+          "mutations": 19372
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            2380,
+            2034,
+            1900,
+            0,
+            0
+          ],
+          "population": 6314,
+          "attack": 0.9900221729490022,
+          "defense": 0.7443775736458663,
+          "classes": 44,
+          "diversity": 3.286927957379324,
+          "births": 517611,
+          "deaths": 516437,
+          "mutations": 20755
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2320,
+            2284,
+            1961,
+            0,
+            0
+          ],
+          "population": 6565,
+          "attack": 0.8581873571972581,
+          "defense": 0.7663366336633664,
+          "classes": 48,
+          "diversity": 3.256597589325983,
+          "births": 549427,
+          "deaths": 548002,
+          "mutations": 22018
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2157,
+            1951,
+            2360,
+            0,
+            0
+          ],
+          "population": 6468,
+          "attack": 0.9649041434755721,
+          "defense": 0.8152442795299938,
+          "classes": 50,
+          "diversity": 3.2841700259676205,
+          "births": 582257,
+          "deaths": 580929,
+          "mutations": 23305
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            2361,
+            1719,
+            1931,
+            0,
+            0
+          ],
+          "population": 6011,
+          "attack": 0.8276493095990684,
+          "defense": 0.7875561470637166,
+          "classes": 46,
+          "diversity": 3.2369102843784137,
+          "births": 610513,
+          "deaths": 609642,
+          "mutations": 24456
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2004,
+            2530,
+            2003,
+            0,
+            0
+          ],
+          "population": 6537,
+          "attack": 0.7719137218907756,
+          "defense": 0.8323389934220591,
+          "classes": 46,
+          "diversity": 3.182522243938765,
+          "births": 641466,
+          "deaths": 640069,
+          "mutations": 25679
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            2267,
+            2752,
+            1634,
+            0,
+            0
+          ],
+          "population": 6653,
+          "attack": 0.7580039080114234,
+          "defense": 0.8397715316398617,
+          "classes": 44,
+          "diversity": 3.12309673954553,
+          "births": 672188,
+          "deaths": 670675,
+          "mutations": 26891
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2263,
+            2259,
+            1984,
+            0,
+            0
+          ],
+          "population": 6506,
+          "attack": 0.8123270826928989,
+          "defense": 0.8163233937903474,
+          "classes": 42,
+          "diversity": 3.121637220948755,
+          "births": 704214,
+          "deaths": 702848,
+          "mutations": 28145
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            2088,
+            2327,
+            2220,
+            0,
+            0
+          ],
+          "population": 6635,
+          "attack": 0.7336850037678975,
+          "defense": 0.905802562170309,
+          "classes": 46,
+          "diversity": 3.1660854312976383,
+          "births": 736520,
+          "deaths": 735025,
+          "mutations": 29436
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            1663,
+            2198,
+            2156,
+            0,
+            0
+          ],
+          "population": 6017,
+          "attack": 0.7465514375934851,
+          "defense": 0.9233837460528502,
+          "classes": 43,
+          "diversity": 3.1585233506301527,
+          "births": 764765,
+          "deaths": 763888,
+          "mutations": 30591
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            2478,
+            2670,
+            1666,
+            0,
+            0
+          ],
+          "population": 6814,
+          "attack": 0.6995890813031993,
+          "defense": 0.8911065453478133,
+          "classes": 44,
+          "diversity": 3.1261978734433327,
+          "births": 794100,
+          "deaths": 792426,
+          "mutations": 31733
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            2097,
+            2248,
+            2303,
+            0,
+            0
+          ],
+          "population": 6648,
+          "attack": 0.6853188929001204,
+          "defense": 0.9529181708784596,
+          "classes": 43,
+          "diversity": 3.0686786177212935,
+          "births": 823798,
+          "deaths": 822290,
+          "mutations": 32944
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            2067,
+            2622,
+            2141,
+            0,
+            0
+          ],
+          "population": 6830,
+          "attack": 0.7152269399707174,
+          "defense": 0.8308931185944363,
+          "classes": 44,
+          "diversity": 3.130693529218136,
+          "births": 854225,
+          "deaths": 852535,
+          "mutations": 34099
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            1870,
+            2317,
+            2414,
+            0,
+            0
+          ],
+          "population": 6601,
+          "attack": 0.7127707923041964,
+          "defense": 0.9188001817906378,
+          "classes": 44,
+          "diversity": 3.1002830788763,
+          "births": 885076,
+          "deaths": 883615,
+          "mutations": 35335
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    },
+    {
+      "seed": 1102,
+      "staged": true,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          2254,
+          2218,
+          1976,
+          0,
+          0
+        ],
+        "population": 6448,
+        "attack": 0.9328473945409429,
+        "defense": 0.8478598014888338,
+        "classes": 43,
+        "diversity": 3.325012493093779,
+        "births": 903906,
+        "deaths": 902526,
+        "mutations": 36053
+      },
+      "turnover": 0.06533680555555556,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1709,
+            1691,
+            1968,
+            24,
+            0
+          ],
+          "population": 5392,
+          "attack": 1.927114243323442,
+          "defense": 0.8156528189910979,
+          "classes": 29,
+          "diversity": 2.1690877201697853,
+          "births": 12720,
+          "deaths": 12372,
+          "mutations": 509
+        },
+        {
+          "tick": 200,
+          "counts": [
+            2052,
+            2114,
+            1648,
+            0,
+            0
+          ],
+          "population": 5814,
+          "attack": 1.9889920880632954,
+          "defense": 0.500171998624011,
+          "classes": 38,
+          "diversity": 2.7458193718316593,
+          "births": 26630,
+          "deaths": 25860,
+          "mutations": 1066
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1782,
+            1555,
+            2317,
+            0,
+            24
+          ],
+          "population": 5678,
+          "attack": 2.2648820007044734,
+          "defense": 0.3717858400845368,
+          "classes": 37,
+          "diversity": 2.785204376397172,
+          "births": 42963,
+          "deaths": 42353,
+          "mutations": 1733
+        },
+        {
+          "tick": 400,
+          "counts": [
+            1551,
+            2168,
+            1954,
+            0,
+            0
+          ],
+          "population": 5673,
+          "attack": 2.120218579234973,
+          "defense": 0.35025559668605677,
+          "classes": 38,
+          "diversity": 2.9129628241644308,
+          "births": 63736,
+          "deaths": 63131,
+          "mutations": 2571
+        },
+        {
+          "tick": 500,
+          "counts": [
+            2056,
+            1375,
+            2080,
+            0,
+            0
+          ],
+          "population": 5511,
+          "attack": 1.8865904554527309,
+          "defense": 0.4665215024496462,
+          "classes": 41,
+          "diversity": 3.179245684372488,
+          "births": 94151,
+          "deaths": 93708,
+          "mutations": 3817
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1935,
+            1613,
+            1664,
+            0,
+            0
+          ],
+          "population": 5212,
+          "attack": 1.7900997697620875,
+          "defense": 0.4363008442056792,
+          "classes": 43,
+          "diversity": 3.2657083930075608,
+          "births": 125898,
+          "deaths": 125754,
+          "mutations": 5089
+        },
+        {
+          "tick": 700,
+          "counts": [
+            2029,
+            1794,
+            2046,
+            0,
+            0
+          ],
+          "population": 5869,
+          "attack": 1.6476401431248935,
+          "defense": 0.5179758050775259,
+          "classes": 46,
+          "diversity": 3.3302340832692465,
+          "births": 160967,
+          "deaths": 160166,
+          "mutations": 6495
+        },
+        {
+          "tick": 800,
+          "counts": [
+            1874,
+            1550,
+            2335,
+            0,
+            0
+          ],
+          "population": 5759,
+          "attack": 1.558603924292412,
+          "defense": 0.49001562771314466,
+          "classes": 45,
+          "diversity": 3.3150067639669447,
+          "births": 195864,
+          "deaths": 195173,
+          "mutations": 7869
+        },
+        {
+          "tick": 900,
+          "counts": [
+            1794,
+            1890,
+            2537,
+            0,
+            0
+          ],
+          "population": 6221,
+          "attack": 1.3695547339656005,
+          "defense": 0.6114772544606977,
+          "classes": 48,
+          "diversity": 3.3618831172797017,
+          "births": 230474,
+          "deaths": 229321,
+          "mutations": 9251
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            1883,
+            1850,
+            2244,
+            0,
+            0
+          ],
+          "population": 5977,
+          "attack": 1.3217333110255982,
+          "defense": 0.641124309854442,
+          "classes": 48,
+          "diversity": 3.400436370733826,
+          "births": 265661,
+          "deaths": 264752,
+          "mutations": 10653
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            2411,
+            1109,
+            2070,
+            0,
+            0
+          ],
+          "population": 5590,
+          "attack": 1.2329159212880143,
+          "defense": 0.7062611806797854,
+          "classes": 50,
+          "diversity": 3.2955176714905345,
+          "births": 297625,
+          "deaths": 297103,
+          "mutations": 11936
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            1971,
+            1700,
+            2702,
+            0,
+            0
+          ],
+          "population": 6373,
+          "attack": 1.1953554056174487,
+          "defense": 0.6857053193158638,
+          "classes": 49,
+          "diversity": 3.232820107512863,
+          "births": 330288,
+          "deaths": 328983,
+          "mutations": 13226
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            2223,
+            2060,
+            2070,
+            0,
+            0
+          ],
+          "population": 6353,
+          "attack": 1.271682669604911,
+          "defense": 0.6430033055249489,
+          "classes": 49,
+          "diversity": 3.29516535428038,
+          "births": 365063,
+          "deaths": 363778,
+          "mutations": 14604
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            2147,
+            1732,
+            2336,
+            0,
+            0
+          ],
+          "population": 6215,
+          "attack": 1.1744167337087692,
+          "defense": 0.728238133547868,
+          "classes": 48,
+          "diversity": 3.378949854760208,
+          "births": 397791,
+          "deaths": 396644,
+          "mutations": 15905
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            2311,
+            2013,
+            1817,
+            0,
+            0
+          ],
+          "population": 6141,
+          "attack": 1.1659338869890896,
+          "defense": 0.7104706073929328,
+          "classes": 52,
+          "diversity": 3.3455431693726347,
+          "births": 431012,
+          "deaths": 429939,
+          "mutations": 17274
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            2038,
+            1765,
+            2050,
+            0,
+            0
+          ],
+          "population": 5853,
+          "attack": 1.104390910644114,
+          "defense": 0.6955407483341876,
+          "classes": 45,
+          "diversity": 3.3235414531800607,
+          "births": 461911,
+          "deaths": 461126,
+          "mutations": 18504
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            2390,
+            1850,
+            2269,
+            0,
+            0
+          ],
+          "population": 6509,
+          "attack": 0.935934859425411,
+          "defense": 0.7460439391611615,
+          "classes": 48,
+          "diversity": 3.2493609969106565,
+          "births": 495264,
+          "deaths": 493823,
+          "mutations": 19839
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            2280,
+            1960,
+            2309,
+            0,
+            0
+          ],
+          "population": 6549,
+          "attack": 1.0677966101694916,
+          "defense": 0.7547717208734158,
+          "classes": 47,
+          "diversity": 3.332744840028826,
+          "births": 529567,
+          "deaths": 528086,
+          "mutations": 21200
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2228,
+            1873,
+            2267,
+            0,
+            0
+          ],
+          "population": 6368,
+          "attack": 1.0766331658291457,
+          "defense": 0.8384108040201005,
+          "classes": 50,
+          "diversity": 3.3608883609039264,
+          "births": 561284,
+          "deaths": 559984,
+          "mutations": 22430
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2492,
+            1857,
+            2158,
+            0,
+            0
+          ],
+          "population": 6507,
+          "attack": 1.0079913938835101,
+          "defense": 0.8191178730597818,
+          "classes": 47,
+          "diversity": 3.2787834993382448,
+          "births": 593363,
+          "deaths": 591924,
+          "mutations": 23691
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            1984,
+            1832,
+            1859,
+            0,
+            0
+          ],
+          "population": 5675,
+          "attack": 0.9198237885462555,
+          "defense": 0.8130396475770925,
+          "classes": 46,
+          "diversity": 3.211363946913801,
+          "births": 622155,
+          "deaths": 621548,
+          "mutations": 24814
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2758,
+            1922,
+            1755,
+            0,
+            0
+          ],
+          "population": 6435,
+          "attack": 0.9008547008547009,
+          "defense": 0.846930846930847,
+          "classes": 45,
+          "diversity": 3.18658022178486,
+          "births": 653563,
+          "deaths": 652196,
+          "mutations": 26080
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            2796,
+            1821,
+            1922,
+            0,
+            0
+          ],
+          "population": 6539,
+          "attack": 0.9674262119590151,
+          "defense": 0.7888056277718306,
+          "classes": 44,
+          "diversity": 3.2497812627223226,
+          "births": 685595,
+          "deaths": 684124,
+          "mutations": 27373
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2353,
+            2332,
+            1944,
+            0,
+            0
+          ],
+          "population": 6629,
+          "attack": 0.8769045104842359,
+          "defense": 0.7719112988384371,
+          "classes": 44,
+          "diversity": 3.2301144805792075,
+          "births": 718285,
+          "deaths": 716724,
+          "mutations": 28620
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            2131,
+            2500,
+            1920,
+            0,
+            0
+          ],
+          "population": 6551,
+          "attack": 0.8827659899252023,
+          "defense": 0.8159059685544192,
+          "classes": 46,
+          "diversity": 3.246839001431096,
+          "births": 749724,
+          "deaths": 748241,
+          "mutations": 29892
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            1776,
+            2416,
+            1904,
+            0,
+            0
+          ],
+          "population": 6096,
+          "attack": 0.7913385826771654,
+          "defense": 0.802001312335958,
+          "classes": 45,
+          "diversity": 3.188957335489248,
+          "births": 777943,
+          "deaths": 776915,
+          "mutations": 31025
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            2181,
+            1811,
+            2607,
+            0,
+            0
+          ],
+          "population": 6599,
+          "attack": 0.8125473556599485,
+          "defense": 0.7902712532201849,
+          "classes": 38,
+          "diversity": 3.1843238354186356,
+          "births": 808327,
+          "deaths": 806796,
+          "mutations": 32269
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            2350,
+            2373,
+            1859,
+            0,
+            0
+          ],
+          "population": 6582,
+          "attack": 0.8669097538742023,
+          "defense": 0.8380431479793375,
+          "classes": 43,
+          "diversity": 3.231065880684961,
+          "births": 840398,
+          "deaths": 838884,
+          "mutations": 33557
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            2131,
+            2078,
+            2242,
+            0,
+            0
+          ],
+          "population": 6451,
+          "attack": 0.9186172686405208,
+          "defense": 0.8336691985738646,
+          "classes": 43,
+          "diversity": 3.2745954034513014,
+          "births": 873174,
+          "deaths": 871791,
+          "mutations": 34837
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            2254,
+            2218,
+            1976,
+            0,
+            0
+          ],
+          "population": 6448,
+          "attack": 0.9328473945409429,
+          "defense": 0.8478598014888338,
+          "classes": 43,
+          "diversity": 3.325012493093779,
+          "births": 903906,
+          "deaths": 902526,
+          "mutations": 36053
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 100,
+          "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 140,
+          "text": "Protected disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 300,
+          "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 380,
+          "text": "Hunter disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    },
+    {
+      "seed": 1102,
+      "staged": false,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          1819,
+          2155,
+          2469,
+          0,
+          0
+        ],
+        "population": 6443,
+        "attack": 0.8641936985876144,
+        "defense": 0.9146360391122148,
+        "classes": 46,
+        "diversity": 3.2525552450911084,
+        "births": 909398,
+        "deaths": 907975,
+        "mutations": 36245
+      },
+      "turnover": 0.06573253038194445,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1718,
+            1693,
+            1971,
+            0,
+            0
+          ],
+          "population": 5382,
+          "attack": 1.9318097361575624,
+          "defense": 0.8023039762170197,
+          "classes": 29,
+          "diversity": 2.1475200051606476,
+          "births": 12725,
+          "deaths": 12363,
+          "mutations": 509
+        },
+        {
+          "tick": 200,
+          "counts": [
+            2004,
+            2115,
+            1608,
+            0,
+            0
+          ],
+          "population": 5727,
+          "attack": 1.998777719573948,
+          "defense": 0.5536930330015715,
+          "classes": 35,
+          "diversity": 2.691722600417443,
+          "births": 26833,
+          "deaths": 26126,
+          "mutations": 1071
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1650,
+            1686,
+            2048,
+            0,
+            0
+          ],
+          "population": 5384,
+          "attack": 2.239041604754829,
+          "defense": 0.49108469539375926,
+          "classes": 37,
+          "diversity": 2.9511400387302897,
+          "births": 43127,
+          "deaths": 42763,
+          "mutations": 1737
+        },
+        {
+          "tick": 400,
+          "counts": [
+            1701,
+            2166,
+            1613,
+            0,
+            0
+          ],
+          "population": 5480,
+          "attack": 2.134671532846715,
+          "defense": 0.4131386861313869,
+          "classes": 39,
+          "diversity": 3.1284234031581604,
+          "births": 64149,
+          "deaths": 63689,
+          "mutations": 2587
+        },
+        {
+          "tick": 500,
+          "counts": [
+            2204,
+            1713,
+            1842,
+            0,
+            0
+          ],
+          "population": 5759,
+          "attack": 1.74613648202813,
+          "defense": 0.44347977079354056,
+          "classes": 44,
+          "diversity": 3.195336217939498,
+          "births": 94744,
+          "deaths": 94005,
+          "mutations": 3843
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1706,
+            1927,
+            1854,
+            0,
+            0
+          ],
+          "population": 5487,
+          "attack": 1.7032987060324403,
+          "defense": 0.4235465646072535,
+          "classes": 41,
+          "diversity": 3.239233881742763,
+          "births": 127396,
+          "deaths": 126929,
+          "mutations": 5150
+        },
+        {
+          "tick": 700,
+          "counts": [
+            2267,
+            1963,
+            1858,
+            0,
+            0
+          ],
+          "population": 6088,
+          "attack": 1.4722404730617609,
+          "defense": 0.5014783180026281,
+          "classes": 46,
+          "diversity": 3.2924553654654547,
+          "births": 162374,
+          "deaths": 161306,
+          "mutations": 6544
+        },
+        {
+          "tick": 800,
+          "counts": [
+            1879,
+            1863,
+            2280,
+            0,
+            0
+          ],
+          "population": 6022,
+          "attack": 1.4417137163732978,
+          "defense": 0.5860179342411159,
+          "classes": 46,
+          "diversity": 3.2604940200414934,
+          "births": 198487,
+          "deaths": 197485,
+          "mutations": 7960
+        },
+        {
+          "tick": 900,
+          "counts": [
+            2087,
+            2103,
+            2240,
+            0,
+            0
+          ],
+          "population": 6430,
+          "attack": 1.3147744945567652,
+          "defense": 0.5618973561430793,
+          "classes": 44,
+          "diversity": 3.2029224109270014,
+          "births": 233716,
+          "deaths": 232306,
+          "mutations": 9379
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            1553,
+            2348,
+            2154,
+            0,
+            0
+          ],
+          "population": 6055,
+          "attack": 1.2868703550784475,
+          "defense": 0.6016515276630884,
+          "classes": 46,
+          "diversity": 3.2985557430242163,
+          "births": 267930,
+          "deaths": 266895,
+          "mutations": 10746
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            1767,
+            2154,
+            1711,
+            0,
+            0
+          ],
+          "population": 5632,
+          "attack": 1.3741122159090908,
+          "defense": 0.6040482954545454,
+          "classes": 50,
+          "diversity": 3.4227973552372757,
+          "births": 299377,
+          "deaths": 298765,
+          "mutations": 11995
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            2099,
+            1913,
+            2245,
+            0,
+            0
+          ],
+          "population": 6257,
+          "attack": 1.2451654147354962,
+          "defense": 0.5924564487773694,
+          "classes": 47,
+          "diversity": 3.3389759389940585,
+          "births": 332795,
+          "deaths": 331558,
+          "mutations": 13324
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            1898,
+            2183,
+            2225,
+            0,
+            0
+          ],
+          "population": 6306,
+          "attack": 1.1422454804947668,
+          "defense": 0.6744370440849984,
+          "classes": 49,
+          "diversity": 3.304674183703116,
+          "births": 367277,
+          "deaths": 365991,
+          "mutations": 14691
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            2018,
+            1875,
+            2374,
+            0,
+            0
+          ],
+          "population": 6267,
+          "attack": 1.221637146960268,
+          "defense": 0.6243816818254349,
+          "classes": 44,
+          "diversity": 3.363182840397746,
+          "births": 401293,
+          "deaths": 400046,
+          "mutations": 16048
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            1985,
+            2583,
+            1699,
+            0,
+            0
+          ],
+          "population": 6267,
+          "attack": 1.1715334290729216,
+          "defense": 0.7067177277804372,
+          "classes": 46,
+          "diversity": 3.3210449586315316,
+          "births": 435406,
+          "deaths": 434159,
+          "mutations": 17458
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            2169,
+            1865,
+            1881,
+            0,
+            0
+          ],
+          "population": 5915,
+          "attack": 1.043956043956044,
+          "defense": 0.6848689771766695,
+          "classes": 47,
+          "diversity": 3.355545466993669,
+          "births": 465652,
+          "deaths": 464757,
+          "mutations": 18650
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            2154,
+            1881,
+            2191,
+            0,
+            0
+          ],
+          "population": 6226,
+          "attack": 1.1416639897205267,
+          "defense": 0.7063925473819467,
+          "classes": 46,
+          "diversity": 3.365227697879614,
+          "births": 499557,
+          "deaths": 498351,
+          "mutations": 20011
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            2259,
+            1964,
+            2184,
+            0,
+            0
+          ],
+          "population": 6407,
+          "attack": 1.0527547994381146,
+          "defense": 0.7120337131262682,
+          "classes": 52,
+          "diversity": 3.3172646309860347,
+          "births": 534148,
+          "deaths": 532761,
+          "mutations": 21384
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2203,
+            2180,
+            2071,
+            0,
+            0
+          ],
+          "population": 6454,
+          "attack": 0.9975209172606135,
+          "defense": 0.8012085528354509,
+          "classes": 50,
+          "diversity": 3.316525042469032,
+          "births": 567957,
+          "deaths": 566523,
+          "mutations": 22673
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2125,
+            2037,
+            2420,
+            0,
+            0
+          ],
+          "population": 6582,
+          "attack": 0.8951686417502279,
+          "defense": 0.807353388027955,
+          "classes": 41,
+          "diversity": 3.2600076987984035,
+          "births": 599918,
+          "deaths": 598356,
+          "mutations": 23945
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            1861,
+            1967,
+            1997,
+            0,
+            0
+          ],
+          "population": 5825,
+          "attack": 0.8695278969957082,
+          "defense": 0.8569957081545064,
+          "classes": 44,
+          "diversity": 3.2694419460342274,
+          "births": 626251,
+          "deaths": 625446,
+          "mutations": 24983
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2381,
+            1836,
+            2459,
+            0,
+            0
+          ],
+          "population": 6676,
+          "attack": 0.8445176752546435,
+          "defense": 0.793289394847214,
+          "classes": 45,
+          "diversity": 3.2818150310242227,
+          "births": 655773,
+          "deaths": 654117,
+          "mutations": 26165
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            2452,
+            2383,
+            1667,
+            0,
+            0
+          ],
+          "population": 6502,
+          "attack": 0.8529683174407875,
+          "defense": 0.8308212857582282,
+          "classes": 46,
+          "diversity": 3.2220413212378336,
+          "births": 689116,
+          "deaths": 687634,
+          "mutations": 27516
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2386,
+            2342,
+            1944,
+            0,
+            0
+          ],
+          "population": 6672,
+          "attack": 0.9334532374100719,
+          "defense": 0.7777278177458034,
+          "classes": 43,
+          "diversity": 3.241614369067437,
+          "births": 721678,
+          "deaths": 720026,
+          "mutations": 28752
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            2046,
+            2371,
+            2060,
+            0,
+            0
+          ],
+          "population": 6477,
+          "attack": 0.8882198548710822,
+          "defense": 0.8212135247799908,
+          "classes": 47,
+          "diversity": 3.221831731997048,
+          "births": 753583,
+          "deaths": 752126,
+          "mutations": 30055
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            1956,
+            2134,
+            2035,
+            0,
+            0
+          ],
+          "population": 6125,
+          "attack": 0.7601632653061224,
+          "defense": 0.8238367346938775,
+          "classes": 43,
+          "diversity": 3.1760255088087743,
+          "births": 782799,
+          "deaths": 781694,
+          "mutations": 31242
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            2048,
+            2303,
+            2122,
+            0,
+            0
+          ],
+          "population": 6473,
+          "attack": 0.9425305113548587,
+          "defense": 0.7698130696740306,
+          "classes": 47,
+          "diversity": 3.2386067550879125,
+          "births": 814744,
+          "deaths": 813291,
+          "mutations": 32552
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            2029,
+            2391,
+            2282,
+            0,
+            0
+          ],
+          "population": 6702,
+          "attack": 0.8679498657117278,
+          "defense": 0.8479558340793792,
+          "classes": 48,
+          "diversity": 3.273780144376088,
+          "births": 846841,
+          "deaths": 845159,
+          "mutations": 33796
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            1855,
+            2486,
+            2368,
+            0,
+            0
+          ],
+          "population": 6709,
+          "attack": 0.7719481293784468,
+          "defense": 0.9055000745267551,
+          "classes": 41,
+          "diversity": 3.1768241127944687,
+          "births": 878255,
+          "deaths": 876566,
+          "mutations": 35043
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            1819,
+            2155,
+            2469,
+            0,
+            0
+          ],
+          "population": 6443,
+          "attack": 0.8641936985876144,
+          "defense": 0.9146360391122148,
+          "classes": 46,
+          "diversity": 3.2525552450911084,
+          "births": 909398,
+          "deaths": 907975,
+          "mutations": 36245
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    },
+    {
+      "seed": 1103,
+      "staged": true,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          2345,
+          2171,
+          2034,
+          0,
+          0
+        ],
+        "population": 6550,
+        "attack": 0.7735877862595419,
+        "defense": 0.9029007633587787,
+        "classes": 46,
+        "diversity": 3.2574362539003014,
+        "births": 910605,
+        "deaths": 909162,
+        "mutations": 36502
+      },
+      "turnover": 0.06581911892361111,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1824,
+            1741,
+            1801,
+            24,
+            0
+          ],
+          "population": 5390,
+          "attack": 1.9504638218923933,
+          "defense": 0.8478664192949907,
+          "classes": 28,
+          "diversity": 2.1420950591283083,
+          "births": 12745,
+          "deaths": 12438,
+          "mutations": 481
+        },
+        {
+          "tick": 200,
+          "counts": [
+            1605,
+            2274,
+            1707,
+            0,
+            0
+          ],
+          "population": 5586,
+          "attack": 2.101503759398496,
+          "defense": 0.5522735409953455,
+          "classes": 37,
+          "diversity": 2.8306604826105843,
+          "births": 26154,
+          "deaths": 25651,
+          "mutations": 1014
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1576,
+            2402,
+            1248,
+            0,
+            24
+          ],
+          "population": 5250,
+          "attack": 2.3727619047619046,
+          "defense": 0.4074285714285714,
+          "classes": 42,
+          "diversity": 3.0369304222172016,
+          "births": 42793,
+          "deaths": 42650,
+          "mutations": 1729
+        },
+        {
+          "tick": 400,
+          "counts": [
+            1259,
+            1898,
+            2086,
+            0,
+            0
+          ],
+          "population": 5243,
+          "attack": 2.115582681670799,
+          "defense": 0.49723440778180433,
+          "classes": 42,
+          "diversity": 3.081674664563226,
+          "births": 65046,
+          "deaths": 64910,
+          "mutations": 2641
+        },
+        {
+          "tick": 500,
+          "counts": [
+            1635,
+            1869,
+            1965,
+            0,
+            0
+          ],
+          "population": 5469,
+          "attack": 1.9489851892484915,
+          "defense": 0.4397513256536844,
+          "classes": 43,
+          "diversity": 3.2237945443853384,
+          "births": 96268,
+          "deaths": 95906,
+          "mutations": 3977
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1617,
+            1860,
+            1716,
+            0,
+            0
+          ],
+          "population": 5193,
+          "attack": 1.733102253032929,
+          "defense": 0.47429231658001153,
+          "classes": 44,
+          "diversity": 3.2938762291870343,
+          "births": 127925,
+          "deaths": 127839,
+          "mutations": 5198
+        },
+        {
+          "tick": 700,
+          "counts": [
+            1923,
+            2018,
+            1695,
+            0,
+            0
+          ],
+          "population": 5636,
+          "attack": 1.6447835344215755,
+          "defense": 0.4959190915542938,
+          "classes": 47,
+          "diversity": 3.331300419107774,
+          "births": 162968,
+          "deaths": 162439,
+          "mutations": 6561
+        },
+        {
+          "tick": 800,
+          "counts": [
+            1885,
+            2012,
+            2088,
+            0,
+            0
+          ],
+          "population": 5985,
+          "attack": 1.4653299916457811,
+          "defense": 0.5273182957393484,
+          "classes": 42,
+          "diversity": 3.283886873535411,
+          "births": 199050,
+          "deaths": 198172,
+          "mutations": 7987
+        },
+        {
+          "tick": 900,
+          "counts": [
+            1883,
+            2115,
+            1959,
+            0,
+            0
+          ],
+          "population": 5957,
+          "attack": 1.484472049689441,
+          "defense": 0.562699345308041,
+          "classes": 46,
+          "diversity": 3.363174204629647,
+          "births": 234780,
+          "deaths": 233930,
+          "mutations": 9438
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            2046,
+            2116,
+            2054,
+            0,
+            0
+          ],
+          "population": 6216,
+          "attack": 1.4033140283140284,
+          "defense": 0.5538931788931789,
+          "classes": 46,
+          "diversity": 3.3612996004096574,
+          "births": 271586,
+          "deaths": 270477,
+          "mutations": 10925
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            1987,
+            1968,
+            1831,
+            0,
+            0
+          ],
+          "population": 5786,
+          "attack": 1.2749740753543035,
+          "defense": 0.6515727618389215,
+          "classes": 48,
+          "diversity": 3.3268695086051845,
+          "births": 303745,
+          "deaths": 303066,
+          "mutations": 12198
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            2447,
+            1770,
+            2259,
+            0,
+            0
+          ],
+          "population": 6476,
+          "attack": 1.1002161828289068,
+          "defense": 0.6283199505867819,
+          "classes": 47,
+          "diversity": 3.2502086675007087,
+          "births": 336493,
+          "deaths": 335124,
+          "mutations": 13451
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            2284,
+            1846,
+            2349,
+            0,
+            0
+          ],
+          "population": 6479,
+          "attack": 1.0537119925914493,
+          "defense": 0.6676956320419818,
+          "classes": 45,
+          "diversity": 3.2014197745077073,
+          "births": 369820,
+          "deaths": 368448,
+          "mutations": 14827
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            2254,
+            2181,
+            2080,
+            0,
+            0
+          ],
+          "population": 6515,
+          "attack": 1.0274750575594782,
+          "defense": 0.7352264006139677,
+          "classes": 46,
+          "diversity": 3.271995628275235,
+          "births": 405247,
+          "deaths": 403839,
+          "mutations": 16275
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            2479,
+            1896,
+            2060,
+            0,
+            0
+          ],
+          "population": 6435,
+          "attack": 1.0427350427350428,
+          "defense": 0.752913752913753,
+          "classes": 48,
+          "diversity": 3.2853331122688267,
+          "births": 439498,
+          "deaths": 438170,
+          "mutations": 17661
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            1982,
+            1878,
+            1974,
+            0,
+            0
+          ],
+          "population": 5834,
+          "attack": 0.9691463832704834,
+          "defense": 0.7320877613986972,
+          "classes": 43,
+          "diversity": 3.246939752916832,
+          "births": 469666,
+          "deaths": 468939,
+          "mutations": 18855
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            1989,
+            2269,
+            2206,
+            0,
+            0
+          ],
+          "population": 6464,
+          "attack": 0.9310024752475248,
+          "defense": 0.7069925742574258,
+          "classes": 49,
+          "diversity": 3.271650268134212,
+          "births": 503118,
+          "deaths": 501761,
+          "mutations": 20147
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            2144,
+            2375,
+            1973,
+            0,
+            0
+          ],
+          "population": 6492,
+          "attack": 0.8308687615526802,
+          "defense": 0.8130006161429452,
+          "classes": 45,
+          "diversity": 3.256008971175405,
+          "births": 536842,
+          "deaths": 535457,
+          "mutations": 21471
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2182,
+            2491,
+            2009,
+            0,
+            0
+          ],
+          "population": 6682,
+          "attack": 0.7910805148159233,
+          "defense": 0.8295420532774619,
+          "classes": 47,
+          "diversity": 3.2321552322734606,
+          "births": 568596,
+          "deaths": 567021,
+          "mutations": 22758
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2377,
+            2127,
+            2129,
+            0,
+            0
+          ],
+          "population": 6633,
+          "attack": 0.8741142770993517,
+          "defense": 0.7939092416704358,
+          "classes": 49,
+          "diversity": 3.277598346763696,
+          "births": 601063,
+          "deaths": 599537,
+          "mutations": 24046
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            1817,
+            2261,
+            1939,
+            0,
+            0
+          ],
+          "population": 6017,
+          "attack": 0.8367957453880671,
+          "defense": 0.8461027089911917,
+          "classes": 47,
+          "diversity": 3.274881568273006,
+          "births": 630224,
+          "deaths": 629314,
+          "mutations": 25256
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2050,
+            1959,
+            2379,
+            0,
+            0
+          ],
+          "population": 6388,
+          "attack": 0.9369129618033814,
+          "defense": 0.7625234815278648,
+          "classes": 44,
+          "diversity": 3.2219247549539007,
+          "births": 660041,
+          "deaths": 658760,
+          "mutations": 26399
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            1783,
+            2310,
+            2273,
+            0,
+            0
+          ],
+          "population": 6366,
+          "attack": 0.9018221803330192,
+          "defense": 0.8452717562048382,
+          "classes": 49,
+          "diversity": 3.296601927430825,
+          "births": 691909,
+          "deaths": 690650,
+          "mutations": 27700
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2080,
+            2044,
+            2173,
+            0,
+            0
+          ],
+          "population": 6297,
+          "attack": 0.9201206923932032,
+          "defense": 0.8635858345243766,
+          "classes": 51,
+          "diversity": 3.274944343047171,
+          "births": 724015,
+          "deaths": 722825,
+          "mutations": 28984
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            1969,
+            2408,
+            1992,
+            0,
+            0
+          ],
+          "population": 6369,
+          "attack": 0.8577484691474329,
+          "defense": 0.8706233317632281,
+          "classes": 47,
+          "diversity": 3.2636351091739186,
+          "births": 755414,
+          "deaths": 754152,
+          "mutations": 30261
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            1499,
+            2016,
+            2372,
+            0,
+            0
+          ],
+          "population": 5887,
+          "attack": 0.8763376932223543,
+          "defense": 0.8595209784270427,
+          "classes": 50,
+          "diversity": 3.2586864850744033,
+          "births": 784562,
+          "deaths": 783782,
+          "mutations": 31446
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            1908,
+            1964,
+            2511,
+            0,
+            0
+          ],
+          "population": 6383,
+          "attack": 0.9016136612877957,
+          "defense": 0.7754974150086167,
+          "classes": 47,
+          "diversity": 3.3101043444206426,
+          "births": 816721,
+          "deaths": 815445,
+          "mutations": 32707
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            2097,
+            2229,
+            2253,
+            0,
+            0
+          ],
+          "population": 6579,
+          "attack": 0.8235294117647058,
+          "defense": 0.7969296245630035,
+          "classes": 46,
+          "diversity": 3.2661883465735104,
+          "births": 848678,
+          "deaths": 847206,
+          "mutations": 34039
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            1909,
+            2386,
+            2317,
+            0,
+            0
+          ],
+          "population": 6612,
+          "attack": 0.8198729582577132,
+          "defense": 0.8891409558378706,
+          "classes": 50,
+          "diversity": 3.271726284886818,
+          "births": 880120,
+          "deaths": 878615,
+          "mutations": 35345
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            2345,
+            2171,
+            2034,
+            0,
+            0
+          ],
+          "population": 6550,
+          "attack": 0.7735877862595419,
+          "defense": 0.9029007633587787,
+          "classes": 46,
+          "diversity": 3.2574362539003014,
+          "births": 910605,
+          "deaths": 909162,
+          "mutations": 36502
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 100,
+          "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 160,
+          "text": "Protected disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 300,
+          "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+        },
+        {
+          "tick": 340,
+          "text": "Hunter disappeared (census). No automatic rescue."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    },
+    {
+      "seed": 1103,
+      "staged": false,
+      "final": {
+        "tick": 3000,
+        "counts": [
+          1972,
+          2448,
+          1984,
+          0,
+          0
+        ],
+        "population": 6404,
+        "attack": 0.8924109931292942,
+        "defense": 0.8713304184884447,
+        "classes": 46,
+        "diversity": 3.3007462590804737,
+        "births": 917472,
+        "deaths": 916127,
+        "mutations": 36794
+      },
+      "turnover": 0.06631940827546297,
+      "flags": {
+        "sparse": false,
+        "monopoly": false,
+        "frozen": false
+      },
+      "history": [
+        {
+          "tick": 100,
+          "counts": [
+            1835,
+            1739,
+            1801,
+            0,
+            0
+          ],
+          "population": 5375,
+          "attack": 1.953674418604651,
+          "defense": 0.8347906976744186,
+          "classes": 27,
+          "diversity": 2.1156578344099466,
+          "births": 12729,
+          "deaths": 12413,
+          "mutations": 480
+        },
+        {
+          "tick": 200,
+          "counts": [
+            2022,
+            2309,
+            1602,
+            0,
+            0
+          ],
+          "population": 5933,
+          "attack": 2.0741614697454915,
+          "defense": 0.3938985336254846,
+          "classes": 37,
+          "diversity": 2.751389136247608,
+          "births": 25888,
+          "deaths": 25014,
+          "mutations": 1006
+        },
+        {
+          "tick": 300,
+          "counts": [
+            1830,
+            2183,
+            1927,
+            0,
+            0
+          ],
+          "population": 5940,
+          "attack": 2.220707070707071,
+          "defense": 0.25606060606060604,
+          "classes": 37,
+          "diversity": 2.6464915625723755,
+          "births": 42098,
+          "deaths": 41217,
+          "mutations": 1699
+        },
+        {
+          "tick": 400,
+          "counts": [
+            1922,
+            1765,
+            1804,
+            0,
+            0
+          ],
+          "population": 5491,
+          "attack": 2.090875978874522,
+          "defense": 0.3784374430886906,
+          "classes": 40,
+          "diversity": 2.9934901458298566,
+          "births": 67765,
+          "deaths": 67333,
+          "mutations": 2753
+        },
+        {
+          "tick": 500,
+          "counts": [
+            1672,
+            1888,
+            2006,
+            0,
+            0
+          ],
+          "population": 5566,
+          "attack": 2.0057491915199424,
+          "defense": 0.41753503413582466,
+          "classes": 43,
+          "diversity": 3.1303645224613126,
+          "births": 101981,
+          "deaths": 101474,
+          "mutations": 4202
+        },
+        {
+          "tick": 600,
+          "counts": [
+            1792,
+            1641,
+            1686,
+            0,
+            0
+          ],
+          "population": 5119,
+          "attack": 1.8181285407306114,
+          "defense": 0.46122289509669856,
+          "classes": 37,
+          "diversity": 3.159558826803306,
+          "births": 134848,
+          "deaths": 134788,
+          "mutations": 5469
+        },
+        {
+          "tick": 700,
+          "counts": [
+            2121,
+            1587,
+            2172,
+            0,
+            0
+          ],
+          "population": 5880,
+          "attack": 1.625,
+          "defense": 0.47993197278911565,
+          "classes": 44,
+          "diversity": 3.1903221639604236,
+          "births": 170232,
+          "deaths": 169411,
+          "mutations": 6863
+        },
+        {
+          "tick": 800,
+          "counts": [
+            2123,
+            1580,
+            2206,
+            0,
+            0
+          ],
+          "population": 5909,
+          "attack": 1.6375021154171603,
+          "defense": 0.5024538839059063,
+          "classes": 45,
+          "diversity": 3.25081853639754,
+          "births": 207561,
+          "deaths": 206711,
+          "mutations": 8335
+        },
+        {
+          "tick": 900,
+          "counts": [
+            2325,
+            1599,
+            2158,
+            0,
+            0
+          ],
+          "population": 6082,
+          "attack": 1.476981256165735,
+          "defense": 0.5697139098980598,
+          "classes": 46,
+          "diversity": 3.317297229747213,
+          "births": 243665,
+          "deaths": 242642,
+          "mutations": 9783
+        },
+        {
+          "tick": 1000,
+          "counts": [
+            2177,
+            2190,
+            1791,
+            0,
+            0
+          ],
+          "population": 6158,
+          "attack": 1.3494641117245858,
+          "defense": 0.5829814874959403,
+          "classes": 51,
+          "diversity": 3.3340306648495224,
+          "births": 277785,
+          "deaths": 276686,
+          "mutations": 11174
+        },
+        {
+          "tick": 1100,
+          "counts": [
+            1756,
+            1823,
+            1711,
+            0,
+            0
+          ],
+          "population": 5290,
+          "attack": 1.5593572778827978,
+          "defense": 0.4947069943289225,
+          "classes": 47,
+          "diversity": 3.305915595094738,
+          "births": 309750,
+          "deaths": 309519,
+          "mutations": 12436
+        },
+        {
+          "tick": 1200,
+          "counts": [
+            2141,
+            2213,
+            1935,
+            0,
+            0
+          ],
+          "population": 6289,
+          "attack": 1.3687390682143425,
+          "defense": 0.5570042932103673,
+          "classes": 48,
+          "diversity": 3.2946041702859983,
+          "births": 344521,
+          "deaths": 343291,
+          "mutations": 13771
+        },
+        {
+          "tick": 1300,
+          "counts": [
+            2426,
+            2042,
+            1660,
+            0,
+            0
+          ],
+          "population": 6128,
+          "attack": 1.2111618798955615,
+          "defense": 0.6540469973890339,
+          "classes": 48,
+          "diversity": 3.3229440801196595,
+          "births": 380464,
+          "deaths": 379395,
+          "mutations": 15261
+        },
+        {
+          "tick": 1400,
+          "counts": [
+            2293,
+            1645,
+            2128,
+            0,
+            0
+          ],
+          "population": 6066,
+          "attack": 1.33728981206726,
+          "defense": 0.6702934388394329,
+          "classes": 50,
+          "diversity": 3.3820156311292626,
+          "births": 414200,
+          "deaths": 413193,
+          "mutations": 16642
+        },
+        {
+          "tick": 1500,
+          "counts": [
+            2093,
+            2051,
+            2021,
+            0,
+            0
+          ],
+          "population": 6165,
+          "attack": 1.1980535279805353,
+          "defense": 0.6875912408759124,
+          "classes": 47,
+          "diversity": 3.3450908063140727,
+          "births": 448697,
+          "deaths": 447591,
+          "mutations": 18021
+        },
+        {
+          "tick": 1600,
+          "counts": [
+            1999,
+            1610,
+            1832,
+            0,
+            0
+          ],
+          "population": 5441,
+          "attack": 1.1490534828156589,
+          "defense": 0.7498621576916008,
+          "classes": 46,
+          "diversity": 3.3722320330158695,
+          "births": 478768,
+          "deaths": 478386,
+          "mutations": 19207
+        },
+        {
+          "tick": 1700,
+          "counts": [
+            2133,
+            2186,
+            2065,
+            0,
+            0
+          ],
+          "population": 6384,
+          "attack": 0.9782268170426065,
+          "defense": 0.7802318295739349,
+          "classes": 48,
+          "diversity": 3.299888777205166,
+          "births": 510618,
+          "deaths": 509293,
+          "mutations": 20440
+        },
+        {
+          "tick": 1800,
+          "counts": [
+            1972,
+            2079,
+            2064,
+            0,
+            0
+          ],
+          "population": 6115,
+          "attack": 1.0573998364677024,
+          "defense": 0.755028618152085,
+          "classes": 46,
+          "diversity": 3.262680773583399,
+          "births": 543654,
+          "deaths": 542598,
+          "mutations": 21731
+        },
+        {
+          "tick": 1900,
+          "counts": [
+            2500,
+            2164,
+            1849,
+            0,
+            0
+          ],
+          "population": 6513,
+          "attack": 0.9342852756026409,
+          "defense": 0.8168278826961461,
+          "classes": 46,
+          "diversity": 3.2586534957263873,
+          "births": 576596,
+          "deaths": 575142,
+          "mutations": 23100
+        },
+        {
+          "tick": 2000,
+          "counts": [
+            2566,
+            2055,
+            2016,
+            0,
+            0
+          ],
+          "population": 6637,
+          "attack": 0.9148711767364773,
+          "defense": 0.8113605544673799,
+          "classes": 44,
+          "diversity": 3.2988975761943897,
+          "births": 608732,
+          "deaths": 607154,
+          "mutations": 24371
+        },
+        {
+          "tick": 2100,
+          "counts": [
+            1886,
+            2143,
+            1803,
+            0,
+            0
+          ],
+          "population": 5832,
+          "attack": 0.8847736625514403,
+          "defense": 0.8367626886145405,
+          "classes": 47,
+          "diversity": 3.3208576352588137,
+          "births": 637609,
+          "deaths": 636836,
+          "mutations": 25560
+        },
+        {
+          "tick": 2200,
+          "counts": [
+            2366,
+            2099,
+            2145,
+            0,
+            0
+          ],
+          "population": 6610,
+          "attack": 0.8649016641452345,
+          "defense": 0.8099848714069592,
+          "classes": 43,
+          "diversity": 3.2634818455973833,
+          "births": 669294,
+          "deaths": 667743,
+          "mutations": 26753
+        },
+        {
+          "tick": 2300,
+          "counts": [
+            2022,
+            2461,
+            1965,
+            0,
+            0
+          ],
+          "population": 6448,
+          "attack": 0.9288151364764268,
+          "defense": 0.8303349875930521,
+          "classes": 49,
+          "diversity": 3.34197633403784,
+          "births": 700983,
+          "deaths": 699594,
+          "mutations": 28082
+        },
+        {
+          "tick": 2400,
+          "counts": [
+            2194,
+            2186,
+            1987,
+            0,
+            0
+          ],
+          "population": 6367,
+          "attack": 0.9880634521752788,
+          "defense": 0.8063452175278781,
+          "classes": 48,
+          "diversity": 3.343339393812766,
+          "births": 733757,
+          "deaths": 732449,
+          "mutations": 29362
+        },
+        {
+          "tick": 2500,
+          "counts": [
+            1933,
+            2227,
+            2195,
+            0,
+            0
+          ],
+          "population": 6355,
+          "attack": 0.9225806451612903,
+          "defense": 0.8690794649881982,
+          "classes": 49,
+          "diversity": 3.345881453443547,
+          "births": 765143,
+          "deaths": 763847,
+          "mutations": 30645
+        },
+        {
+          "tick": 2600,
+          "counts": [
+            2052,
+            1813,
+            2006,
+            0,
+            0
+          ],
+          "population": 5871,
+          "attack": 0.8870720490546755,
+          "defense": 0.8056549139839891,
+          "classes": 46,
+          "diversity": 3.2414680622052505,
+          "births": 792885,
+          "deaths": 792073,
+          "mutations": 31760
+        },
+        {
+          "tick": 2700,
+          "counts": [
+            1897,
+            2076,
+            2580,
+            0,
+            0
+          ],
+          "population": 6553,
+          "attack": 0.8553334350679078,
+          "defense": 0.7985655424996185,
+          "classes": 45,
+          "diversity": 3.2539860226186184,
+          "births": 824616,
+          "deaths": 823122,
+          "mutations": 33044
+        },
+        {
+          "tick": 2800,
+          "counts": [
+            1993,
+            2285,
+            2269,
+            0,
+            0
+          ],
+          "population": 6547,
+          "attack": 0.8649763250343668,
+          "defense": 0.8581029479150756,
+          "classes": 44,
+          "diversity": 3.2892580694518356,
+          "births": 856627,
+          "deaths": 855139,
+          "mutations": 34368
+        },
+        {
+          "tick": 2900,
+          "counts": [
+            1903,
+            2309,
+            2233,
+            0,
+            0
+          ],
+          "population": 6445,
+          "attack": 0.8516679596586502,
+          "defense": 0.8741660201706749,
+          "classes": 43,
+          "diversity": 3.2464206282505836,
+          "births": 886833,
+          "deaths": 885447,
+          "mutations": 35606
+        },
+        {
+          "tick": 3000,
+          "counts": [
+            1972,
+            2448,
+            1984,
+            0,
+            0
+          ],
+          "population": 6404,
+          "attack": 0.8924109931292942,
+          "defense": 0.8713304184884447,
+          "classes": 46,
+          "diversity": 3.3007462590804737,
+          "births": 917472,
+          "deaths": 916127,
+          "mutations": 36794
+        }
+      ],
+      "notices": [
+        {
+          "tick": 0,
+          "text": "World planted: three cyclic families. Food regrows from an external supply."
+        },
+        {
+          "tick": 500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 1500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 1620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2120,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 2500,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        },
+        {
+          "tick": 2620,
+          "text": "Rain returns: drought patch begins refilling."
+        },
+        {
+          "tick": 3000,
+          "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Three actionable findings remain in the latest files inspected:
+
+1. **P2 — Pausing can leave exported histories stale.** A 2× frame advancing 99→101 records wrapper sample 100 but skips the metric refresh. Pause only calls `updateStatus()`, and export reads cached `card.samples`, so scalar history omits sample 100 while selected full observations include it. Synchronize samples before export and refresh metrics when pausing. [motif-page.ts:305](/Users/nicholas/.codex/worktrees/motif-composition-gallery/browser-life/apps/lab/src/particles/motif-page.ts:305), [motif-page.ts:382](/Users/nicholas/.codex/worktrees/motif-composition-gallery/browser-life/apps/lab/src/particles/motif-page.ts:382)
+
+2. **P2 — Scoped compilation fails.** With the repository’s `noUnusedLocals` setting, the runner produces TS6133 for unused `compileMotif` and `snapshot`. The new evidence test imports this runner. Remove both unused declarations. [explore-motifs.ts:13](/Users/nicholas/.codex/worktrees/motif-composition-gallery/browser-life/tools/particles/explore-motifs.ts:13), [explore-motifs.ts:64](/Users/nicholas/.codex/worktrees/motif-composition-gallery/browser-life/tools/particles/explore-motifs.ts:64)
+
+3. **P3 — Manual Pause clears the status text.** The handler sets `pauseReason = ''`; `updateStatus()` displays that empty string when paused. A bounded source-function probe reproduced `{paused:true, button:"Play", status:""}`. Supply an explicit paused message. [motif-page.ts:354](/Users/nicholas/.codex/worktrees/motif-composition-gallery/browser-life/apps/lab/src/particles/motif-page.ts:354)
+
+Bounded probes passed matched starting geometry across all twelve compositions, both preset controls through 100 ticks, and observer noninterference through 20 ticks. The earlier runner stall was corrected concurrently and is excluded from these findings.
+
+`motifs-pilot.md` and `motifs-validation.md` were absent, so their evidence remains unreviewed. No edits, commits, full pilot, or recursive reviewers.

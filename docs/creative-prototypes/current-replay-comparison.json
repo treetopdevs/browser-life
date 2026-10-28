@@ -1,0 +1,34 @@
+{
+  "allNumericOutcomesAndFieldsExactlyEqual": true,
+  "comparisonExclusions": [
+    "sourceSha256",
+    "replay.seeds[].file container extension only"
+  ],
+  "oldSourceSha256": {
+    "apps/lab/src/currents/model.ts": "83f28f7d22ae33d55f81fc9fb3d6fba0792c4d5e16ab8d9049780e4700b7be4e",
+    "apps/lab/src/matter/model.ts": "e4d0ef43757ceeb01f5437c2e3bee27c1415b998195559a409d540a38f358bea",
+    "tools/currents/explore.ts": "bfd3ea47cd05e623f6842075084de5e2d3b644a37dd387ff2b2a21becc0b27f8"
+  },
+  "newSourceSha256": {
+    "apps/lab/src/currents/model.ts": "83f28f7d22ae33d55f81fc9fb3d6fba0792c4d5e16ab8d9049780e4700b7be4e",
+    "apps/lab/src/matter/model.ts": "e4d0ef43757ceeb01f5437c2e3bee27c1415b998195559a409d540a38f358bea",
+    "tools/currents/explore.ts": "d9c4de6b03b2f0fe64b2b201df2eb0f76d6cac2196fe6f031a7c9e8afd3e4759"
+  },
+  "renames": [
+    {
+      "old": "currents-replay-1201.bin.gz",
+      "new": "currents-replay-1201.replay",
+      "bytesIdentical": true
+    },
+    {
+      "old": "currents-replay-1202.bin.gz",
+      "new": "currents-replay-1202.replay",
+      "bytesIdentical": true
+    },
+    {
+      "old": "currents-replay-1203.bin.gz",
+      "new": "currents-replay-1203.replay",
+      "bytesIdentical": true
+    }
+  ]
+}
