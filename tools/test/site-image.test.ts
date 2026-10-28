@@ -192,7 +192,7 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(must(["exec", site, "cat", "/etc/caddy/Caddyfile"])).toBe(readFileSync(repo("deploy/Caddyfile"), "utf8"));
   });
 
-  it("packages the lab files, the media and the garden", () => {
+  it("packages the lab files and the media, and the garden", () => {
     const files = new Set(must(["exec", site, "find", "/srv"]).split("\n").filter(Boolean));
     expect(files.has("/srv/lab/index.html"), "packaged lab content: /srv/lab/index.html is missing from the image").toBe(true);
     const wanted = [
