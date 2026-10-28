@@ -6,7 +6,8 @@
   "finalReview": {
     "status": "clear",
     "path": "docs/creative-prototypes/foothold-replication-review/delivery-clear.md",
-    "sha256": "bfd1ed7e0428f01ad2de585c10599b89360dc8dd32379e05e8df63096867aff8"
+    "sha256": "bfd1ed7e0428f01ad2de585c10599b89360dc8dd32379e05e8df63096867aff8",
+    "reviewedCommit": "211c038f2061d307e04d9ad672a3e9c5f4282e7f"
   },
   "files": {
     "docs/creative-prototypes/food-band-foothold-replication-attempt-20261027T224410Z.tar.gz": "8b12fb2b341afa52c4d905fde2b20aaa7268617e76d6233069e89bbf25c75443",
@@ -25,7 +26,7 @@
     "docs/creative-prototypes/food-band-foothold-replication-media/seed-1203-comparison.png": "6bd6b83b8ab5309cbb4a8c97542c7f63e8021cb6fb23b0a5c15dd9a788955795",
     "docs/creative-prototypes/food-band-foothold-replication-media/seed-1203-paired.mp4": "c2f7220a119815fc359b24335f9b77ef230ff7c667977bfe15d3133a5376a1e1",
     "docs/creative-prototypes/food-band-foothold-replication-plan.md": "2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99",
-    "docs/creative-prototypes/food-band-foothold-replication-results.md": "ac4ae93be8429f52b0e531883d9d0b1f89bc94be212fe778078946e44d22e884",
+    "docs/creative-prototypes/food-band-foothold-replication-results.md": "7b278cd7d3ce2188a74d2d14f7d8093aa784930974442d3a591c3bb0e57eed37",
     "docs/creative-prototypes/food-band-foothold-replication-seed-1203.json": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
     "docs/creative-prototypes/food-band-foothold-replication-seed-1203.md": "c5613992bb9d88d95f0490e5c942916e67331d25a6508c738e9b4a2dc6b46055",
     "docs/creative-prototypes/food-band-foothold-replication-summary.json": "dc998ca0227cc9a80648c399c5c04136c4712b080af74189b89464a666d7b1e5",
@@ -39,5 +40,15 @@
     "tools/food-band-foothold-replication/inspect.mjs": "de393b898dfeab7a20950ce5c4364060c48637b21b161ef6dae1329af0edf742",
     "tools/food-band-foothold-replication/launch.sh": "f0027114801031a5db9ce442953ed7a179f20feec9d0520225ea78b8cfca4416",
     "tools/test/food-band-foothold-replication.test.ts": "f12e376b37804b0949e547a43059239e349971ff83b19a03919d309eb93f3b06"
-  }
+  },
+  "postReviewUpdates": [
+    {
+      "date": "2026-10-28",
+      "reviewComment": "https://github.com/treetopdevs/browser-life/pull/118#discussion_r4399925392",
+      "scope": "Editorial list separators in results only. All numeric tokens, frozen inputs, biological evidence and media remain unchanged; no simulation or rendering.",
+      "file": "docs/creative-prototypes/food-band-foothold-replication-results.md",
+      "previousSha256": "ac4ae93be8429f52b0e531883d9d0b1f89bc94be212fe778078946e44d22e884",
+      "sha256": "7b278cd7d3ce2188a74d2d14f7d8093aa784930974442d3a591c3bb0e57eed37"
+    }
+  ]
 }
