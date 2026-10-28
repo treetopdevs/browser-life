@@ -1,0 +1,73 @@
+{
+  "decision": "retain-promising-uniform-baseline-at-9000",
+  "firstSeed": 1203,
+  "firstSeedSelection": "Deliberately fragile family at6000; not a representative random seed.",
+  "earnedSeeds": [
+    1201,
+    1202
+  ],
+  "passed": 3,
+  "total": 3,
+  "stopAt": 9000,
+  "runs": [
+    {
+      "seed": 1201,
+      "artifactSha256": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221",
+      "dataSha256": "12b25a118166c3b0e9270d73b95a013c03c1a8afc7a12328f36fafd6374e496e",
+      "finalTick": 9000,
+      "population": 36,
+      "familyCounts": [
+        8,
+        28,
+        0
+      ],
+      "distinctPrograms": 15,
+      "maxEverGeneration": 44,
+      "lastWindowBirths": 91,
+      "lastWindowDeaths": 97,
+      "lastWindowCap48Ticks": 7,
+      "numericalPass": true,
+      "visualPass": true
+    },
+    {
+      "seed": 1202,
+      "artifactSha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602",
+      "dataSha256": "1fb5f81e128f7e6ecf60449349257df09ec2ce0fd1155d5d0c2784e3f59a8e2f",
+      "finalTick": 9000,
+      "population": 36,
+      "familyCounts": [
+        4,
+        32,
+        0
+      ],
+      "distinctPrograms": 9,
+      "maxEverGeneration": 43,
+      "lastWindowBirths": 98,
+      "lastWindowDeaths": 103,
+      "lastWindowCap48Ticks": 19,
+      "numericalPass": true,
+      "visualPass": true
+    },
+    {
+      "seed": 1203,
+      "artifactSha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+      "dataSha256": "8c3ac66e4d3699e423a58597411c05b187dc56fdf9dab7b2550296da2fc95b33",
+      "finalTick": 9000,
+      "population": 42,
+      "familyCounts": [
+        34,
+        0,
+        8
+      ],
+      "distinctPrograms": 18,
+      "maxEverGeneration": 45,
+      "lastWindowBirths": 84,
+      "lastWindowDeaths": 88,
+      "lastWindowCap48Ticks": 32,
+      "numericalPass": true,
+      "visualPass": true
+    }
+  ],
+  "nextProposal": "A separately planned broad slowly moving food region with the same offered budget against unchanged uniform food. No new rule run in this slice.",
+  "limits": "Three fixed seeds; modest visual and turnover criteria. No adaptation, fitness improvement, indefinite novelty, or increasing complexity claim."
+}

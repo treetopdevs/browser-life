@@ -1,0 +1,30 @@
+{
+  "seed": 1203,
+  "uniformArtifactSha256": "11b6ec8dd59de3fdd2e2447674b13e9409cf8cc1af04e69d8b2d3c90eea8e761",
+  "movingBandArtifactSha256": "8ce7be228812002e2d03a2f68a15b9d1107e6fff022006ae9059003bb66e0c9b",
+  "visualComparisons": [
+    {
+      "tick": 1500,
+      "pass": true,
+      "observation": "Uniform bodies occupy both halves with separated upper-left and lower-left groups. Moving bodies form a central vertical branching arrangement with a large right-side gap and mostly empty far-left region."
+    },
+    {
+      "tick": 2500,
+      "pass": true,
+      "observation": "Moving bodies form a right-middle vertical cluster and bottom-edge groups, with a large empty left-middle region. Uniform has an occupied central-left chain and several top-right groups, so the occupied arrangement and gaps differ."
+    },
+    {
+      "tick": 3000,
+      "pass": true,
+      "observation": "Moving bodies form a diagonal upper-right chain, a dense top-right edge group and substantial bottom-right edge occupancy. Uniform retains central-left and lower-left groups, a separate upper-right vertical chain, and a mostly empty bottom-right corner."
+    }
+  ],
+  "lateWithinMoving": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "The moving right-middle vertical chain at2500 becomes a diagonal connection higher in the world by3000. The top-middle group clears as top-right edge occupancy grows; the bottom-center grouping thins and new dense bodies occupy the bottom-right corner. These are location and gap changes, not only colors."
+  },
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-26T22:52:47.335195+00:00"
+}

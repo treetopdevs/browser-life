@@ -1,0 +1,5 @@
+**CLEAR — the supplied source closes the launch-log ordering blocker.**
+
+`writeEvidence()` silently checks runtime, verifies the reservation and exclusively claims the attempt while launcher logs are empty. It then fsyncs the preflight stage start before calling `preflight()` with inherited output. A repeated-preflight failure is recorded and stops execution before either regression. The synthetic test covers output after claim and rejection of a subsequent claim.
+
+Review limited to supplied text; no tools, tests or simulations used. Source must still be committed and required gates pass before launch. This is source closure, not execution or outcome approval.

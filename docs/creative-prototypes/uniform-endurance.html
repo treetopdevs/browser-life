@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="description" content="A sampled replay for a frozen uniform-food endurance screen.">
+    <title>Uniform-food endurance · 9,000 ticks</title>
+    <link rel="stylesheet" href="uniform-endurance-viewer.css">
+    <script type="module" src="uniform-endurance-viewer.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to replay</a>
+    <header class="site-header">
+      <a class="brand" href="uniform-food.html">Uniform food <span>· creative prototypes</span></a>
+      <span class="badge">Local evidence companion</span>
+    </header>
+
+    <main id="main">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Uniform-food endurance · seed 1203 · frozen horizon 9,000</p>
+        <h1 id="page-title">A tougher test of a fragile family.</h1>
+        <p>Seed 1203 begins with only five purple bodies against 32 mint bodies at tick 6,000. It was deliberately selected to stress family persistence; it is not a representative random seed. This continuation asks whether that fragile group remains part of the changing world for another 3,000 ticks.</p>
+        <p class="scope-note"><strong>Recorded states only.</strong> The replay opens paused and uses saved samples at 20-tick intervals, plus the exact terminal frame if extinction falls between samples. It does not interpolate, simulate, or continue the world. A family-only loss counts as a diversity-stress failure, not as a dead world.</p>
+      </section>
+
+      <section class="decision" aria-labelledby="decision-title">
+        <div>
+          <p class="eyebrow">Overall decision</p>
+          <h2 id="decision-title">All three worlds keep changing at 9,000</h2>
+          <p id="decision-summary">Seed 1203 passed and earned seeds 1201 and 1202; both also passed. Each retains two families, ongoing births and deaths, and changing occupied regions. Stop at the frozen 9,000-tick horizon. This supports a lively baseline, not indefinitely increasing complexity.</p>
+        </div>
+        <span id="decision-status" class="decision-status" data-status="pass">3 of 3 pass</span>
+      </section>
+
+      <p id="source-status" class="source-status" role="status" aria-live="polite">Checking for the accepted seed 1203 replay…</p>
+
+      <section id="replay" class="replay" aria-labelledby="replay-title" hidden>
+        <div class="replay-heading">
+          <div>
+            <p class="eyebrow">Recorded world</p>
+            <h2 id="replay-title">Uniform · seed 1203</h2>
+          </div>
+          <div class="replay-heading-tools">
+            <label id="seed-picker-wrap" class="seed-picker-wrap" for="seed-picker" hidden>Recorded seed
+              <select id="seed-picker" aria-label="Recorded seed"></select>
+            </label>
+            <p id="run-state" class="run-state">Paused · recorded replay</p>
+          </div>
+        </div>
+        <section id="seed-decision" class="seed-decision" aria-live="polite" hidden>
+          <p id="seed-decision-status" class="eyebrow">Seed decision</p>
+          <p id="seed-decision-summary"></p>
+        </section>
+
+        <div class="replay-layout">
+          <figure class="world-panel">
+            <canvas id="world" width="768" height="768" role="img" aria-label="Recorded full-world view at tick 0, with food and founder-colored bodies"></canvas>
+            <ul class="legend" aria-label="World legend">
+              <li><i class="swatch family-mint" aria-hidden="true"></i>Family 1</li>
+              <li><i class="swatch family-gold" aria-hidden="true"></i>Family 2</li>
+              <li><i class="swatch family-lilac" aria-hidden="true"></i>Family 3</li>
+              <li><i class="swatch food" aria-hidden="true"></i>Food remaining</li>
+            </ul>
+            <figcaption>
+              <span>Mint, gold, and lilac identify founder families. Body brightness follows the recorded inherited program. Pale tiles show food remaining; this uniform world has no patch mask.</span>
+              <span id="sample-label" class="sample-label">Tick 0 · saved sample</span>
+            </figcaption>
+          </figure>
+
+          <aside class="replay-side" aria-label="Replay controls and measurements">
+            <section class="panel transport-panel" aria-labelledby="transport-title">
+              <h3 id="transport-title">Move through the recording</h3>
+              <p class="muted">Frames are 20 ticks apart; an added terminal frame may be closer. Playback changes saved frames only; it never runs the model.</p>
+              <div class="transport">
+                <button id="previous" type="button" aria-label="Previous sample" disabled>← Previous</button>
+                <button id="play" class="primary" type="button" aria-label="Play sampled replay" disabled>Play</button>
+                <button id="next" type="button" aria-label="Next sample" disabled>Next →</button>
+              </div>
+              <label class="scrub-label" for="scrub">Recorded sample <output id="scrub-value" for="scrub">0 / 0</output></label>
+              <input id="scrub" type="range" min="0" max="0" value="0" step="1" disabled aria-describedby="scrub-help">
+              <p id="scrub-help" class="muted">Use the arrow keys to move one saved frame. Space toggles playback when focus is outside a control.</p>
+              <p class="keyboard-note">Hidden tabs pause and stay paused when you return.</p>
+            </section>
+
+            <section class="panel metrics-panel" aria-labelledby="metrics-title">
+              <h3 id="metrics-title">At this recorded tick</h3>
+              <dl class="metrics">
+                <div><dt>Actual tick</dt><dd id="metric-tick">—</dd></div>
+                <div><dt>Living bodies</dt><dd id="metric-population">—</dd></div>
+                <div><dt>Occupied cells</dt><dd id="metric-cells">—</dd></div>
+                <div><dt>Founder families</dt><dd id="metric-families">—</dd></div>
+                <div><dt>Food offered</dt><dd id="metric-offered">—</dd></div>
+                <div><dt>Food accepted</dt><dd id="metric-accepted">—</dd></div>
+                <div><dt>Food overflow</dt><dd id="metric-overflow">—</dd></div>
+              </dl>
+              <p id="extinction-note" class="extinction-note" hidden></p>
+              <p id="family-stress-note" class="family-stress-note" hidden></p>
+            </section>
+          </aside>
+        </div>
+
+        <section class="panel windows-panel" aria-labelledby="windows-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Fixed 500-tick windows</p><h3 id="windows-title">Turnover and ceiling pressure</h3></div>
+            <p class="muted">Cap occupancy is post-step population exactly 48. Near-cap means 47 or 48; the denominator remains 500 ticks.</p>
+          </div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Window metrics, scroll horizontally on small screens">
+            <table>
+              <thead><tr><th scope="col">Recorded window</th><th scope="col">Births</th><th scope="col">Deaths</th><th scope="col">Population, min–max · end</th><th scope="col">Cap 48</th><th scope="col">Near-cap 47+</th><th scope="col">Blocked births</th><th scope="col">Occupied cells · end</th><th scope="col">Families · end</th><th scope="col">Distinct programs · end</th></tr></thead>
+              <tbody id="window-rows"><tr><td colspan="10">Waiting for accepted run data.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="muted table-note">Population ranges use executed ticks only. After extinction, the endpoint names its actual terminal tick; later rows are not invented. Program values are counts of distinct inherited genomes, not raw gene tuples.</p>
+        </section>
+      </section>
+
+      <section id="empty-state" class="empty-state" aria-labelledby="empty-title">
+        <p class="eyebrow">Replay not yet available</p>
+        <h2 id="empty-title">No accepted seed 1203 recording is published here.</h2>
+        <p>This companion does not create or continue a world. Once the frozen run passes its correctness, prefix, replay, and provenance checks, its explicit record can be linked here.</p>
+      </section>
+
+      <section id="error-state" class="error-state" aria-labelledby="error-title" hidden>
+        <p class="eyebrow">Replay could not be loaded</p>
+        <h2 id="error-title">The listed evidence is unavailable or malformed.</h2>
+        <p id="error-detail">No replay frame was shown. Check the source links below and the accepted evidence record.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="late-clips-title">
+        <p class="eyebrow">The late period in 15 seconds</p>
+        <h2 id="late-clips-title">Watch the changing arrangements</h2>
+        <p>Each clip shows all 151 saved frames from tick 6,000 to 9,000, 20 ticks apart, at 10 frames per second (200 recorded ticks per second). These are screenshots of the replay, with no invented frames or live simulation. Use the interactive replay above to inspect any sample.</p>
+        <figure style="margin:1.5rem 0">
+          <video controls playsinline preload="none" aria-label="Seed 1203, recorded ticks 6000 to 9000" style="display:block;width:100%;max-width:560px;border-radius:12px" src="uniform-endurance-media/seed-1203-ticks-6000-9000.mp4"></video>
+          <figcaption>Seed 1203 · <a href="uniform-endurance-media/seed-1203-ticks-6000-9000.json">Capture provenance</a> · <a href="uniform-endurance-decision-1203.json">Decision receipt</a></figcaption>
+        </figure>
+        <figure style="margin:1.5rem 0">
+          <video controls playsinline preload="none" aria-label="Seed 1201, recorded ticks 6000 to 9000" style="display:block;width:100%;max-width:560px;border-radius:12px" src="uniform-endurance-media/seed-1201-ticks-6000-9000.mp4"></video>
+          <figcaption>Seed 1201 · <a href="uniform-endurance-media/seed-1201-ticks-6000-9000.json">Capture provenance</a> · <a href="uniform-endurance-decision-1201.json">Decision receipt</a></figcaption>
+        </figure>
+        <figure style="margin:1.5rem 0">
+          <video controls playsinline preload="none" aria-label="Seed 1202, recorded ticks 6000 to 9000" style="display:block;width:100%;max-width:560px;border-radius:12px" src="uniform-endurance-media/seed-1202-ticks-6000-9000.mp4"></video>
+          <figcaption>Seed 1202 · <a href="uniform-endurance-media/seed-1202-ticks-6000-9000.json">Capture provenance</a> · <a href="uniform-endurance-decision-1202.json">Decision receipt</a></figcaption>
+        </figure>
+      </section>
+
+      <footer>
+        <a href="uniform-endurance-plan.md">Frozen endurance plan and review resolutions</a>
+        <a href="uniform-endurance-results.md">Results and next proposal</a>
+        <a href="uniform-endurance-validation.md">Validation record</a>
+        <a href="uniform-endurance-index.json">Replay manifest</a>
+        <a id="record-link" href="uniform-endurance-seed-1203.json" hidden>Seed 1203 raw evidence</a>
+        <a href="../../tools/uniform-endurance/explore.ts">Replay checker source</a>
+        <a href="../../apps/lab/src/uniform-endurance/model.ts">Endurance model source</a>
+        <a href="uniform-food-seed-1203.md">Seed 1203 accepted record through tick 6,000</a>
+        <p class="footer-note">Local creative prototype · sampled evidence only · no merge or deployment</p>
+      </footer>
+    </main>
+  </body>
+</html>

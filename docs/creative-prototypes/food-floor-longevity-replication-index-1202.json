@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-floor-longevity-replication-manifest",
+  "seed": 1202,
+  "planSha256": "02a221c637d238dc0feb6b50cb7220f84cfd016ff5a404200ab15e723fd8a914",
+  "arm": {
+    "kind": "hungry-shapes-food-floor-longevity-replication-arm",
+    "mode": "foothold-band",
+    "url": "food-floor-longevity-replication-seed-1202.json",
+    "rawSha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "dataSha256": "89479f5352fe09628fd2314d785e67ca540873c0f766c0a7d0206f5127975315"
+  },
+  "prefix": {
+    "url": "food-band-foothold-seed-1202.json",
+    "rawSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+    "dataSha256": "f815bdbeb3e9fc5fdb4b27ebaad87486f5011fde1e06e3e39842a89b739fe0c4",
+    "indexUrl": "food-band-foothold-index-1202.json",
+    "indexSha256": "a6b4591cc590a7ed61d1eb2ef21be6d06f9f3c7c3e69b754f0a1368a5a932de5",
+    "throughTick": 3000
+  },
+  "decision": {
+    "status": "stop",
+    "summary": "Valid Stop: seed1202 survives to6000 with11 bodies but only one founder family; band0 is empty at5500 and6000. One late seasonal interval and own body-change pass, but diversity and both-band occupancy fail. Tailminimum2 at5589; final500mean5.99. Historical1203 passed, so the full screen did not recur. No tuning or retry.",
+    "artifactSha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "visualReceiptUrl": "food-floor-longevity-replication-visual-receipt-1202.json",
+    "visualReceiptSha256": "96c1d02b113f145d9c75c92aa71ff2ae293b03e3e6d6fed8f26188d455a3f55b"
+  }
+}

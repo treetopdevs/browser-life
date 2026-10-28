@@ -1,0 +1,11 @@
+**Actionable blockers:**
+
+1. **P1 — Durable intent and the one-attempt limit are bypassable.** [explore.ts:622](/Users/nicholas/.codex/worktrees/alternating-food-bands/browser-life/tools/alternating-food/explore.ts:622) permits direct `--write` without a durable intent record. The [launcher:29](/Users/nicholas/.codex/worktrees/alternating-food-bands/browser-life/runs/alternating-food/run-attempt.sh:29) creates a fresh attempt directory without rejecting previous attempts. A failed attempt leaving no accepted artifact can therefore be relaunched. Require an atomic attempt reservation and verified intent before simulation; reject prior attempts pending separately reviewed repair.
+
+2. **P1 — Failed and capacity-exceeded attempts lack durable closure evidence.** The [launcher:54](/Users/nicholas/.codex/worktrees/alternating-food-bands/browser-life/runs/alternating-food/run-attempt.sh:54) executes without saving stdout/stderr or recording completion status. Per-tick validation failures abort immediately, and [explore.ts:401](/Users/nicholas/.codex/worktrees/alternating-food-bands/browser-life/tools/alternating-food/explore.ts:401) validates and checks capacity before returning evidence for persistence. Failures can leave only intent, losing collected observations; genuine capacity exceedance receives no explicit inconclusive classification. Persist failure details and available observations in the attempt directory, with invalid/inconclusive status and exit information.
+
+3. **P2 — Per-band accounting accepts negative quantities.** [explore.ts:413](/Users/nicholas/.codex/worktrees/alternating-food-bands/browser-life/tools/alternating-food/explore.ts:413) checks safe integers but omits nonnegative bounds. A pure-validator probe accepted `bandAccepted=[-1,100]` and `bandOverflow=[76801,668]` at tick 505 with consistent global sums. Require nonnegative entries and accepted/overflow bounds per band; add focused rejection tests.
+
+No additional static blocker found in schedule arithmetic, static-path parity, inspected pins, repeat checks, connectivity, snapshot schedules, or gate formulas.
+
+No edits, simulations, outcomes, baseline regression, or test suites executed.

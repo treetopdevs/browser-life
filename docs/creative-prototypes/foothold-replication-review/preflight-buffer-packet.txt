@@ -1,0 +1,178 @@
+Independent read-only Sol6.1 High narrow preflight repair review. Use only supplied text; do not use tools. Return CLEAR or blockers. The command buffer failure happened before any reservation or biological stepping. Replacing buffered git show bytes with Git blob identities prevents large-file ENOBUFS. Exact original SHA256 pins and whole-file SHA checks remain. Caller still requires clean committed inputs; all other launch gates unchanged.24 pure tests and typecheck pass. Local reservation-status: runs/food-band-foothold-replication/attempts does not exist. Supplied facts are not reviewer-executed checks.
+DIFF
+diff --git a/tools/food-band-foothold-replication/explore.ts b/tools/food-band-foothold-replication/explore.ts
+index 06e7760c..f37a367f 100644
+--- a/tools/food-band-foothold-replication/explore.ts
++++ b/tools/food-band-foothold-replication/explore.ts
+@@ -712,7 +712,7 @@ export function parseArgs(argv:string[]):{mode:'--write'|'--check';seed:1203;att
+ }
+ export function assertCommittedInputs():void{
+   for(const path of Object.keys(LOADED_SOURCE_SHA256)){
+-    try{const status=execFileSync('git',['status','--porcelain','--',path],{encoding:'utf8'});invariant(status.trim()==='',`Refusing outcome with uncommitted input: ${path}`);const committed=execFileSync('git',['show',`HEAD:${path}`],{encoding:'buffer'});invariant(hashBytes(readFileSync(new URL(`../../${path}`,import.meta.url)))===hashBytes(committed),`Working input differs from committed input: ${path}`);}catch(error){if(error instanceof Error&&error.message.startsWith('Refusing outcome'))throw error;throw new Error(`Unable to verify committed input ${path}: ${String(error)}`);}
++    try{const status=execFileSync('git',['status','--porcelain','--',path],{encoding:'utf8'});invariant(status.trim()==='',`Refusing outcome with uncommitted input: ${path}`);const committed=execFileSync('git',['rev-parse',`HEAD:${path}`],{encoding:'utf8'}).trim();const working=execFileSync('git',['hash-object','--',path],{encoding:'utf8'}).trim();invariant(working===committed,`Working input differs from committed input: ${path}`);}catch(error){if(error instanceof Error&&error.message.startsWith('Refusing outcome'))throw error;throw new Error(`Unable to verify committed input ${path}: ${String(error)}`);}
+   }
+ }
+ function legacyCheck():void{
+
+FILE docs/creative-prototypes/food-band-foothold-replication-plan.md
+# Unchanged foothold feeding: one seed-1203 replication
+
+27 October 2026. Protocol drafted before any new foothold seed1203 stepping. Base is PR113 commit `6ad255e1c43c710a30e9d9c25734d9d94e60700f`. Preserve PR111, PR112 and PR113, including their valid successes, failures, conclusions, raw files, receipts and media. Exactly one new foothold-band trajectory, seed1203, mutation enabled, with one independently initialized repeat. Seed1203 is selected because its historical alternating reference is accepted, not randomly assigned. No tuning, sweep, new seed, valid-failure retry, horizon extension, merge or deployment.
+
+## Source freeze and gates
+
+`food-band-foothold-replication-inputs.json` pins exact SHA256 bytes of original model, runner, launcher, plan, seed1202 raw/index/validation, historical seed1203 alternating model/runner/raw/index/validation, and package/lockfile. All pins come from the base commit. Historical foothold internal data digest is `f815bdbeb3e9fc5fdb4b27ebaad87486f5011fde1e06e3e39842a89b739fe0c4`; alternating seed1203 internal data digest is `5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4`. Recompute internal digests as SHA256(JSON.stringify(parsed record with only dataSha256 omitted)), preserving property order. Recompute every raw/index/source hash; indices must bind the named arm and raw/data identities. No substituting wrappers or later source tips.
+
+Gate 1: independent adversarial Codex Sol6.1 High read-only protocol review, repair findings before freeze, retain exact prompt/output and review invocation. Commit approved protocol and input manifest before implementing the assay. Record their full commit and byte hashes outside the frozen plan to avoid self-reference. No outcome may be generated during drafting, review, testing or preflight.
+
+Gate 2: implement an isolated `tools/food-band-foothold-replication/` runner/launcher and focused tests. Import the ORIGINAL foothold model, byte unchanged. Existing historical validators must remain unchanged. New artifact kind `hungry-shapes-food-band-foothold-replication-arm`, paths `food-band-foothold-replication-*`, separate sticky attempts under runs/food-band-foothold-replication/attempts. Pin plan, manifest and all execution inputs. Check-only/import must never step biology. Preflight uses existing historical check-only infrastructure (both original foothold1202 and alternating1203), pure target enumeration, synthetic malformed records/gates/reservations and initialization-only comparisons. No exploratory outcome stepping. Require Node24.2.0 darwin/arm64, tracked pinned dependencies, typecheck and relevant core/browser synthetic checks. Independent Sol6.1 High source review/fixes, then commit reviewed source before launch. A missing required runtime/dependency/reviewer or failed gate blocks launch; report the exact prerequisite rather than waive it.
+
+Gate 3: verify clean committed execution inputs, hash identities and absence of previous reservation/output. Atomically reserve the only attempt; durably save intent with UTC, full source commit, all source/dependency/plan/manifest/raw/internal/index hashes, runtime/platform/arch, exact command, seed/mode/horizon and stop rules before stepping. Retain reservation, stdout/stderr/status, stage journal and partial observations even on error. No output overwrite. Under the reservation, FIRST exactly reproduce historical foothold seed1202 with the unchanged model: all151 sample/census/environment/frame records,3000 tick rows and seven complete state/environment snapshots0/500/1000/1500/2000/2500/3000, without normalization. THEN reproduce historical alternating seed1203 using the unchanged foothold model's alternating-band mode, comparing all151 samples/frames,3000 tick rows and its seven full snapshots. Both regression worlds must finish/pass before constructing either new foothold1203 world. These are predetermined correctness regressions, not new randomized controls. Regression mismatch is sticky invalid; retain it and stop. Known seed1202 foothold outcome is not reclassified.
+
+## Frozen dynamics and spatial schedule
+
+Use `apps/lab/src/food-band-foothold/model.ts` exactly as pinned, including all RULES, founders/placement, inherited programs, mutation, initial food20 everywhere, cap40, reserves, body/population capacities, toroidal geometry and retained food.96×96 grid. Bands0/1 are columns0–23/48–71,2304 tiles each; gaps get no new supply. Pulse every5 ticks, no pulse0. At pulse p=tick/5−1, majority=floor(p/100)%2. Ticks5..500 boost0,505..1000 boost1,1005..1500 boost0,1505..2000 boost1,2005..2500 boost0,2505..3000 boost1. Endpoint pulse belongs to the preceding block. Last-pulse majority is displayed,0 before first pulse.
+
+For global j=0..767: choose band0 if j<96, band1 if96<=j<192, majority otherwise. In ascending tile-ID list of that band use rank=((p*768+j)*2053+1203%2304)%2304. Apply ascending j; never compact slots or reset pulse index. Each pulse offers672 to majority and96 to minority,768 total; floor remains96 per band and additional majority576.600 pulses offer460800 total,230400 per band at3000. Preserve offered=accepted+overflow globally/per band, cumulative transitions, energy residual exactly zero, accepted uptake as measured rather than inferred. Every pulse has768 distinct targets. Enumerate before outcomes: floor288 distinct tiles per band, full schedule2016 per band,4032 total; geometric targetCount4608. The allocation AND reachable footprint differ from historical all-or-nothing feeding; neither effect is isolated.
+
+## Evidence, repeat and frozen decision
+
+Run primary and independently initialized repeat from tick0 to actual extinction or3000, never beyond. Require identical initialization, every tick census/environment/state where available, and all151 sampled full-state/frame digests (or actual samples plus off-cadence terminal on extinction). Repeat is determinism evidence, not an independent biological replicate. Save every tick row,20-tick samples/frames, complete history/lineage and full snapshots0/500/1000/1500/2000/2500/3000 plus true terminal. Validate integer bounds, capacities, toroidal four-neighbor body connectivity, unique occupancy, ledger/accounting, lineage/event/history/tick/sample/frame/snapshot consistency, source/provenance hashes and independent-repeat parity. Save exact raw bytes and internal digest, raw/index/summary/receipt hashes and all attempt evidence hashes in an auditable manifest. Generated output hashes are recorded after creation; they cannot be known before the trajectory.
+
+Unchanged PR113 numerical criteria:
+1. Alive at3000, at least two nonzero founder families, positive births AND deaths in EACH1501–2000,2001–2500,2501–3000 window, no more than99 ticks at population cap48 in EACH window. Extinction exactly3000 fails.
+2. At least10 occupied BODY tiles in EACH band at BOTH2500 and3000. Count tiles, not organisms; gap tiles count neither.
+3. At least ONE complete late block1500–2000/2000–2500/2500–3000 gains>=20 body tiles in its majority band AND loses>=20 in minority band, majority sequence1/0/1. Report all blocks, counts, deltas and failures.
+4. Parent manual body-only inspection at1500/2000/2500/3000 names majority-band cluster expansion AND minority clearance in the SAME numerically qualifying block, plus own-world occupied-body change2500→3000. Record observations for all three blocks and same-age historical comparisons. Food shading, colors, IDs and outlines alone cannot pass; uncertainty fails. Disclose not-blind review and bind exact evidence bytes, plan and reviewer identity in a committed receipt before any optional overlap diagnostics (none planned).
+
+Promising only if all four pass; otherwise valid biological Stop. Missing endpoints/windows due to extinction fail without fabrication/extrapolation. Missing/malformed assay evidence is invalid. Invalid runtime/source/bounds/accounting/connectivity/regression/repeat/evidence parity stops immediately with retained observations. Actual24MiB artifact or10000-lineage capacity exceedance closes inconclusive without raising limits. Only a separately reviewed assay-only repair could authorize retry of an invalid test; this protocol authorizes no such retry. Media failure permits encoding-only repair from saved evidence, never biological rerun or changed decision.
+
+Report population minima and counts, all three founder-family counts/retention/loss, programs, maximum-ever generation, births/deaths/cap exposure, per-band and total offered/accepted/overflow, body occupancy and all seasonal deltas. Compare equal saved ages with accepted historical alternating1203 (31 final bodies,families7/2/22), deriving its corresponding criteria and body deltas from pinned records without reclassifying its accepted result. If historical alternating also qualifies, explicitly say the screen occurs under both feeding rules. Do not treat a historical reference as newly randomized control or use between-rule difference to change the new world's criteria.
+
+## Evidence and delivery gates
+
+Gate 4: after the one attempt, run structure/hash/check-only validation, commit SHA-bound parent visual receipt and receive independent Sol6.1 High evidence review (including attempt journal/regression/repeat provenance) before accepting status. Retain results for valid failure too. No optional diagnostics ahead of receipt.
+
+Gate 5: deliver saved same-age historical/new replay and151-frame10fps animation0..3000 every20 ticks; if extinct, clearly labeled holds of actual terminal rather than fabricated states. No simulation during capture. Preserve exact capture HTML, full canvases/metrics, uniform viewport, family and majority/minority labels (minority is still fed). Validate frame count/duration/dimensions/full decode, evidence bindings and actual-data/browser/media checks. Retain media/source hashes and disclose encoding/editorial repairs. Results distinguish local validation from hosted evidence. Independent final Sol6.1 High review before final commit; no merge/deploy. Earlier files remain byte-identical; any decision log addition is append-only.
+
+Stop after this one seed regardless of outcome. Even a second successful foothold trajectory establishes only recurrence of this descriptive screen on two selected seeds, not adaptation, migration, independent colonies, reliable coexistence, causal superiority or general improved fitness. Any further work requires a separately reviewed plan.
+
+FILE tools/food-band-foothold-replication/launch.sh
+#!/bin/bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+NODE="/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node"
+PLAN="docs/creative-prototypes/food-band-foothold-replication-plan.md"
+MODEL="apps/lab/src/food-band-foothold/model.ts"
+RUNNER="tools/food-band-foothold-replication/explore.ts"
+LAUNCHER="tools/food-band-foothold-replication/launch.sh"
+PLAN_SHA="2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99"
+
+cd "$ROOT"
+[[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]] || { echo 'Launch requires darwin/arm64.' >&2; exit 2; }
+[[ -x "$NODE" ]] || { echo "Required Node executable is missing: $NODE" >&2; exit 2; }
+[[ "$("$NODE" --version)" == "v24.2.0" ]] || { echo 'Launch requires Node 24.2.0.' >&2; exit 2; }
+[[ -d node_modules ]] || { echo 'Workspace dependencies are not installed.' >&2; exit 2; }
+[[ ! -e docs/creative-prototypes/food-band-foothold-replication-seed-1203.json && ! -e docs/creative-prototypes/food-band-foothold-replication-seed-1203.md ]] || { echo 'Refusing to overwrite foothold evidence.' >&2; exit 2; }
+
+sha256() { shasum -a 256 "$1" | awk '{print $1}'; }
+[[ "$(sha256 "$PLAN")" == "$PLAN_SHA" ]] || { echo 'Committed plan hash does not match the reviewed plan.' >&2; exit 2; }
+for path in "$PLAN" "$MODEL" "$RUNNER" "$LAUNCHER" package.json pnpm-lock.yaml; do
+  git ls-files --error-unmatch "$path" >/dev/null 2>&1 || { echo "Required committed input is not tracked: $path" >&2; exit 2; }
+  [[ -z "$(git status --porcelain -- "$path")" ]] || { echo "Required input has uncommitted changes: $path" >&2; exit 2; }
+  [[ "$(sha256 "$path")" == "$(git show "HEAD:$path" | shasum -a 256 | awk '{print $1}')" ]] || { echo "Working input differs from committed input: $path" >&2; exit 2; }
+done
+[[ "$(sha256 docs/creative-prototypes/alternating-food-seed-1203.json)" == "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b" ]] || { echo 'Historical alternating artifact pin mismatch.' >&2; exit 2; }
+[[ "$(sha256 docs/creative-prototypes/alternating-food-index-1203.json)" == "aa6979c401989913ab5b6f69aa7db0e778ca493dbaf1f6261b529da33ae26915" ]] || { echo 'Historical alternating index pin mismatch.' >&2; exit 2; }
+for path in apps/lab/src/alternating-food/model.ts tools/alternating-food/explore.ts docs/creative-prototypes/alternating-food-validation.md; do
+  git ls-files --error-unmatch "$path" >/dev/null 2>&1 || { echo "Required historical input is not tracked: $path" >&2; exit 2; }
+  [[ -z "$(git status --porcelain -- "$path")" ]] || { echo "Historical input has uncommitted changes: $path" >&2; exit 2; }
+done
+[[ "$(sha256 docs/creative-prototypes/alternating-food-validation.md)" == "d28ab30e1566098a29d398e8a8a1e9b1e8d5098f20412a78cf4394e07aacd943" ]] || { echo 'Historical validation pin mismatch.' >&2; exit 2; }
+
+"$NODE" --experimental-strip-types tools/alternating-food/explore.ts --check --seed 1203
+"$NODE" --experimental-strip-types tools/food-band-foothold/explore.ts --check --seed 1202
+
+"$NODE" --experimental-strip-types --input-type=module -e 'import {preflight} from "./tools/food-band-foothold-replication/explore.ts";preflight();'
+
+PRELAUNCH_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+GIT_HEAD="$(git rev-parse HEAD)"
+ATTEMPTS_ROOT="runs/food-band-foothold-replication/attempts"
+[[ ! -e "$ATTEMPTS_ROOT" || -z "$(find "$ATTEMPTS_ROOT" -mindepth 1 -maxdepth 1 -print -quit)" ]] || { echo 'A prior attempt or reservation exists; retries require separately reviewed repair.' >&2; exit 2; }
+mkdir -p "$ATTEMPTS_ROOT"
+mkdir "$ATTEMPTS_ROOT/reservation.lock" || { echo 'Another attempt already reserved the single-run allowance.' >&2; exit 2; }
+RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
+ATTEMPT_DIR="$ATTEMPTS_ROOT/run-$RUN_ID"
+mkdir "$ATTEMPT_DIR"
+INTENT="$ATTEMPT_DIR/intent.json"
+cat > "$INTENT" <<EOF_JSON
+{
+  "schemaVersion": 1,
+  "sourceSha256": $("$NODE" --experimental-strip-types --input-type=module -e 'import {LOADED_SOURCE_SHA256} from "./tools/food-band-foothold-replication/explore.ts";process.stdout.write(JSON.stringify(LOADED_SOURCE_SHA256))'),
+  "platform": "darwin",
+  "arch": "arm64",
+  "status": "intent-recorded-before-launch",
+  "runId": "$RUN_ID",
+  "gitHead": "$GIT_HEAD",
+  "prelaunchUtc": "$PRELAUNCH_UTC",
+  "intentDurability": "fsynced-before-runner",
+  "seed": 1203,
+  "mode": "foothold-band",
+  "maxTick": 3000,
+  "stop": "actual extinction or tick 3000",
+  "planSha256": "$(sha256 "$PLAN")",
+  "modelSha256": "$(sha256 "$MODEL")",
+  "runnerSha256": "$(sha256 "$RUNNER")",
+  "packageJsonSha256": "$(sha256 package.json)",
+  "pnpmLockSha256": "$(sha256 pnpm-lock.yaml)",
+  "historicalArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+  "historicalDataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4",
+  "historicalIndexSha256": "aa6979c401989913ab5b6f69aa7db0e778ca493dbaf1f6261b529da33ae26915",
+  "historicalValidationSha256": "d28ab30e1566098a29d398e8a8a1e9b1e8d5098f20412a78cf4394e07aacd943",
+  "copySourceModelSha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31",
+  "historicalRunnerSha256": "6a172232d875eaff523bc729c24026a3166818dab58f4d494d25ea3d343a769a",
+  "launcherSha256": "$(shasum -a 256 "$LAUNCHER" | awk '{print $1}')",
+  "nodeVersion": "24.2.0",
+  "environment": {"NODE_NO_WARNINGS": "1"},
+  "command": ["$NODE", "--experimental-strip-types", "$RUNNER", "--write", "--seed", "1203", "--attempt-dir", "$ROOT/$ATTEMPT_DIR"]
+}
+EOF_JSON
+sync
+INTENT_SHA256="$(sha256 "$INTENT")"
+cat > "$ATTEMPTS_ROOT/reservation.json" <<EOF_RESERVATION
+{
+  "schemaVersion": 1,
+  "status": "reserved",
+  "runId": "$RUN_ID",
+  "attemptDir": "run-$RUN_ID",
+  "prelaunchUtc": "$PRELAUNCH_UTC",
+  "gitHead": "$GIT_HEAD",
+  "intentSha256": "$INTENT_SHA256"
+}
+EOF_RESERVATION
+sync
+
+echo "Intent recorded at $INTENT; beginning reviewed checks and the scheduled attempt."
+export NODE_NO_WARNINGS=1
+set +e
+"$NODE" --experimental-strip-types "$RUNNER" --write --seed 1203 --attempt-dir "$ROOT/$ATTEMPT_DIR" > "$ATTEMPT_DIR/stdout.log" 2> "$ATTEMPT_DIR/stderr.log"
+RUN_STATUS=$?
+set -e
+FINISHED_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+RUN_RESULT="completed"
+[[ "$RUN_STATUS" -eq 0 ]] || RUN_RESULT="failed"
+cat > "$ATTEMPT_DIR/result.json" <<EOF_RESULT
+{
+  "status": "$RUN_RESULT",
+  "exitStatus": $RUN_STATUS,
+  "finishedUtc": "$FINISHED_UTC",
+  "classification": "$(if [[ "$RUN_STATUS" -eq 0 ]]; then echo completed; elif [[ -f "$ATTEMPT_DIR/failures.jsonl" ]]; then "$NODE" -e 'const f=require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").map(x=>JSON.parse(x));process.stdout.write(f.at(-1).classification)' "$ATTEMPT_DIR/failures.jsonl"; else echo invalid; fi)",
+  "stdout": "stdout.log",
+  "stderr": "stderr.log"
+}
+EOF_RESULT
+sync
+cat "$ATTEMPT_DIR/stdout.log"
+cat "$ATTEMPT_DIR/stderr.log" >&2
+exit "$RUN_STATUS"

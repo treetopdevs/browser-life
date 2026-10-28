@@ -1,0 +1,1297 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-split-food-paired-video",
+  "seed": 1202,
+  "timeline": {
+    "ticks": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000,
+      1020,
+      1040,
+      1060,
+      1080,
+      1100,
+      1120,
+      1140,
+      1160,
+      1180,
+      1200,
+      1220,
+      1240,
+      1260,
+      1280,
+      1300,
+      1320,
+      1340,
+      1360,
+      1380,
+      1400,
+      1420,
+      1440,
+      1460,
+      1480,
+      1500,
+      1520,
+      1540,
+      1560,
+      1580,
+      1600,
+      1620,
+      1640,
+      1660,
+      1680,
+      1700,
+      1720,
+      1740,
+      1760,
+      1780,
+      1800,
+      1820,
+      1840,
+      1860,
+      1880,
+      1900,
+      1920,
+      1940,
+      1960,
+      1980,
+      2000,
+      2020,
+      2040,
+      2060,
+      2080,
+      2100,
+      2120,
+      2140,
+      2160,
+      2180,
+      2200,
+      2220,
+      2240,
+      2260,
+      2280,
+      2300,
+      2320,
+      2340,
+      2360,
+      2380,
+      2400,
+      2420,
+      2440,
+      2460,
+      2480,
+      2500,
+      2520,
+      2540,
+      2560,
+      2580,
+      2600,
+      2620,
+      2640,
+      2660,
+      2680,
+      2700,
+      2720,
+      2740,
+      2760,
+      2780,
+      2800,
+      2820,
+      2840,
+      2860,
+      2880,
+      2900,
+      2920,
+      2940,
+      2960,
+      2980,
+      3000
+    ],
+    "frameCount": 151,
+    "fps": 10,
+    "interpolation": false,
+    "modelSimulation": false,
+    "terminalTicks": {
+      "baseline": 3000,
+      "split": 3000
+    },
+    "labels": [
+      {
+        "timelineTick": 0,
+        "baselineActualTick": 0,
+        "splitActualTick": 0,
+        "baselineLabel": "Tick 0 · saved sample",
+        "splitLabel": "Tick 0 · saved sample"
+      },
+      {
+        "timelineTick": 20,
+        "baselineActualTick": 20,
+        "splitActualTick": 20,
+        "baselineLabel": "Tick 20 · saved sample",
+        "splitLabel": "Tick 20 · saved sample"
+      },
+      {
+        "timelineTick": 40,
+        "baselineActualTick": 40,
+        "splitActualTick": 40,
+        "baselineLabel": "Tick 40 · saved sample",
+        "splitLabel": "Tick 40 · saved sample"
+      },
+      {
+        "timelineTick": 60,
+        "baselineActualTick": 60,
+        "splitActualTick": 60,
+        "baselineLabel": "Tick 60 · saved sample",
+        "splitLabel": "Tick 60 · saved sample"
+      },
+      {
+        "timelineTick": 80,
+        "baselineActualTick": 80,
+        "splitActualTick": 80,
+        "baselineLabel": "Tick 80 · saved sample",
+        "splitLabel": "Tick 80 · saved sample"
+      },
+      {
+        "timelineTick": 100,
+        "baselineActualTick": 100,
+        "splitActualTick": 100,
+        "baselineLabel": "Tick 100 · saved sample",
+        "splitLabel": "Tick 100 · saved sample"
+      },
+      {
+        "timelineTick": 120,
+        "baselineActualTick": 120,
+        "splitActualTick": 120,
+        "baselineLabel": "Tick 120 · saved sample",
+        "splitLabel": "Tick 120 · saved sample"
+      },
+      {
+        "timelineTick": 140,
+        "baselineActualTick": 140,
+        "splitActualTick": 140,
+        "baselineLabel": "Tick 140 · saved sample",
+        "splitLabel": "Tick 140 · saved sample"
+      },
+      {
+        "timelineTick": 160,
+        "baselineActualTick": 160,
+        "splitActualTick": 160,
+        "baselineLabel": "Tick 160 · saved sample",
+        "splitLabel": "Tick 160 · saved sample"
+      },
+      {
+        "timelineTick": 180,
+        "baselineActualTick": 180,
+        "splitActualTick": 180,
+        "baselineLabel": "Tick 180 · saved sample",
+        "splitLabel": "Tick 180 · saved sample"
+      },
+      {
+        "timelineTick": 200,
+        "baselineActualTick": 200,
+        "splitActualTick": 200,
+        "baselineLabel": "Tick 200 · saved sample",
+        "splitLabel": "Tick 200 · saved sample"
+      },
+      {
+        "timelineTick": 220,
+        "baselineActualTick": 220,
+        "splitActualTick": 220,
+        "baselineLabel": "Tick 220 · saved sample",
+        "splitLabel": "Tick 220 · saved sample"
+      },
+      {
+        "timelineTick": 240,
+        "baselineActualTick": 240,
+        "splitActualTick": 240,
+        "baselineLabel": "Tick 240 · saved sample",
+        "splitLabel": "Tick 240 · saved sample"
+      },
+      {
+        "timelineTick": 260,
+        "baselineActualTick": 260,
+        "splitActualTick": 260,
+        "baselineLabel": "Tick 260 · saved sample",
+        "splitLabel": "Tick 260 · saved sample"
+      },
+      {
+        "timelineTick": 280,
+        "baselineActualTick": 280,
+        "splitActualTick": 280,
+        "baselineLabel": "Tick 280 · saved sample",
+        "splitLabel": "Tick 280 · saved sample"
+      },
+      {
+        "timelineTick": 300,
+        "baselineActualTick": 300,
+        "splitActualTick": 300,
+        "baselineLabel": "Tick 300 · saved sample",
+        "splitLabel": "Tick 300 · saved sample"
+      },
+      {
+        "timelineTick": 320,
+        "baselineActualTick": 320,
+        "splitActualTick": 320,
+        "baselineLabel": "Tick 320 · saved sample",
+        "splitLabel": "Tick 320 · saved sample"
+      },
+      {
+        "timelineTick": 340,
+        "baselineActualTick": 340,
+        "splitActualTick": 340,
+        "baselineLabel": "Tick 340 · saved sample",
+        "splitLabel": "Tick 340 · saved sample"
+      },
+      {
+        "timelineTick": 360,
+        "baselineActualTick": 360,
+        "splitActualTick": 360,
+        "baselineLabel": "Tick 360 · saved sample",
+        "splitLabel": "Tick 360 · saved sample"
+      },
+      {
+        "timelineTick": 380,
+        "baselineActualTick": 380,
+        "splitActualTick": 380,
+        "baselineLabel": "Tick 380 · saved sample",
+        "splitLabel": "Tick 380 · saved sample"
+      },
+      {
+        "timelineTick": 400,
+        "baselineActualTick": 400,
+        "splitActualTick": 400,
+        "baselineLabel": "Tick 400 · saved sample",
+        "splitLabel": "Tick 400 · saved sample"
+      },
+      {
+        "timelineTick": 420,
+        "baselineActualTick": 420,
+        "splitActualTick": 420,
+        "baselineLabel": "Tick 420 · saved sample",
+        "splitLabel": "Tick 420 · saved sample"
+      },
+      {
+        "timelineTick": 440,
+        "baselineActualTick": 440,
+        "splitActualTick": 440,
+        "baselineLabel": "Tick 440 · saved sample",
+        "splitLabel": "Tick 440 · saved sample"
+      },
+      {
+        "timelineTick": 460,
+        "baselineActualTick": 460,
+        "splitActualTick": 460,
+        "baselineLabel": "Tick 460 · saved sample",
+        "splitLabel": "Tick 460 · saved sample"
+      },
+      {
+        "timelineTick": 480,
+        "baselineActualTick": 480,
+        "splitActualTick": 480,
+        "baselineLabel": "Tick 480 · saved sample",
+        "splitLabel": "Tick 480 · saved sample"
+      },
+      {
+        "timelineTick": 500,
+        "baselineActualTick": 500,
+        "splitActualTick": 500,
+        "baselineLabel": "Tick 500 · saved sample",
+        "splitLabel": "Tick 500 · saved sample"
+      },
+      {
+        "timelineTick": 520,
+        "baselineActualTick": 520,
+        "splitActualTick": 520,
+        "baselineLabel": "Tick 520 · saved sample",
+        "splitLabel": "Tick 520 · saved sample"
+      },
+      {
+        "timelineTick": 540,
+        "baselineActualTick": 540,
+        "splitActualTick": 540,
+        "baselineLabel": "Tick 540 · saved sample",
+        "splitLabel": "Tick 540 · saved sample"
+      },
+      {
+        "timelineTick": 560,
+        "baselineActualTick": 560,
+        "splitActualTick": 560,
+        "baselineLabel": "Tick 560 · saved sample",
+        "splitLabel": "Tick 560 · saved sample"
+      },
+      {
+        "timelineTick": 580,
+        "baselineActualTick": 580,
+        "splitActualTick": 580,
+        "baselineLabel": "Tick 580 · saved sample",
+        "splitLabel": "Tick 580 · saved sample"
+      },
+      {
+        "timelineTick": 600,
+        "baselineActualTick": 600,
+        "splitActualTick": 600,
+        "baselineLabel": "Tick 600 · saved sample",
+        "splitLabel": "Tick 600 · saved sample"
+      },
+      {
+        "timelineTick": 620,
+        "baselineActualTick": 620,
+        "splitActualTick": 620,
+        "baselineLabel": "Tick 620 · saved sample",
+        "splitLabel": "Tick 620 · saved sample"
+      },
+      {
+        "timelineTick": 640,
+        "baselineActualTick": 640,
+        "splitActualTick": 640,
+        "baselineLabel": "Tick 640 · saved sample",
+        "splitLabel": "Tick 640 · saved sample"
+      },
+      {
+        "timelineTick": 660,
+        "baselineActualTick": 660,
+        "splitActualTick": 660,
+        "baselineLabel": "Tick 660 · saved sample",
+        "splitLabel": "Tick 660 · saved sample"
+      },
+      {
+        "timelineTick": 680,
+        "baselineActualTick": 680,
+        "splitActualTick": 680,
+        "baselineLabel": "Tick 680 · saved sample",
+        "splitLabel": "Tick 680 · saved sample"
+      },
+      {
+        "timelineTick": 700,
+        "baselineActualTick": 700,
+        "splitActualTick": 700,
+        "baselineLabel": "Tick 700 · saved sample",
+        "splitLabel": "Tick 700 · saved sample"
+      },
+      {
+        "timelineTick": 720,
+        "baselineActualTick": 720,
+        "splitActualTick": 720,
+        "baselineLabel": "Tick 720 · saved sample",
+        "splitLabel": "Tick 720 · saved sample"
+      },
+      {
+        "timelineTick": 740,
+        "baselineActualTick": 740,
+        "splitActualTick": 740,
+        "baselineLabel": "Tick 740 · saved sample",
+        "splitLabel": "Tick 740 · saved sample"
+      },
+      {
+        "timelineTick": 760,
+        "baselineActualTick": 760,
+        "splitActualTick": 760,
+        "baselineLabel": "Tick 760 · saved sample",
+        "splitLabel": "Tick 760 · saved sample"
+      },
+      {
+        "timelineTick": 780,
+        "baselineActualTick": 780,
+        "splitActualTick": 780,
+        "baselineLabel": "Tick 780 · saved sample",
+        "splitLabel": "Tick 780 · saved sample"
+      },
+      {
+        "timelineTick": 800,
+        "baselineActualTick": 800,
+        "splitActualTick": 800,
+        "baselineLabel": "Tick 800 · saved sample",
+        "splitLabel": "Tick 800 · saved sample"
+      },
+      {
+        "timelineTick": 820,
+        "baselineActualTick": 820,
+        "splitActualTick": 820,
+        "baselineLabel": "Tick 820 · saved sample",
+        "splitLabel": "Tick 820 · saved sample"
+      },
+      {
+        "timelineTick": 840,
+        "baselineActualTick": 840,
+        "splitActualTick": 840,
+        "baselineLabel": "Tick 840 · saved sample",
+        "splitLabel": "Tick 840 · saved sample"
+      },
+      {
+        "timelineTick": 860,
+        "baselineActualTick": 860,
+        "splitActualTick": 860,
+        "baselineLabel": "Tick 860 · saved sample",
+        "splitLabel": "Tick 860 · saved sample"
+      },
+      {
+        "timelineTick": 880,
+        "baselineActualTick": 880,
+        "splitActualTick": 880,
+        "baselineLabel": "Tick 880 · saved sample",
+        "splitLabel": "Tick 880 · saved sample"
+      },
+      {
+        "timelineTick": 900,
+        "baselineActualTick": 900,
+        "splitActualTick": 900,
+        "baselineLabel": "Tick 900 · saved sample",
+        "splitLabel": "Tick 900 · saved sample"
+      },
+      {
+        "timelineTick": 920,
+        "baselineActualTick": 920,
+        "splitActualTick": 920,
+        "baselineLabel": "Tick 920 · saved sample",
+        "splitLabel": "Tick 920 · saved sample"
+      },
+      {
+        "timelineTick": 940,
+        "baselineActualTick": 940,
+        "splitActualTick": 940,
+        "baselineLabel": "Tick 940 · saved sample",
+        "splitLabel": "Tick 940 · saved sample"
+      },
+      {
+        "timelineTick": 960,
+        "baselineActualTick": 960,
+        "splitActualTick": 960,
+        "baselineLabel": "Tick 960 · saved sample",
+        "splitLabel": "Tick 960 · saved sample"
+      },
+      {
+        "timelineTick": 980,
+        "baselineActualTick": 980,
+        "splitActualTick": 980,
+        "baselineLabel": "Tick 980 · saved sample",
+        "splitLabel": "Tick 980 · saved sample"
+      },
+      {
+        "timelineTick": 1000,
+        "baselineActualTick": 1000,
+        "splitActualTick": 1000,
+        "baselineLabel": "Tick 1,000 · saved sample",
+        "splitLabel": "Tick 1,000 · saved sample"
+      },
+      {
+        "timelineTick": 1020,
+        "baselineActualTick": 1020,
+        "splitActualTick": 1020,
+        "baselineLabel": "Tick 1,020 · saved sample",
+        "splitLabel": "Tick 1,020 · saved sample"
+      },
+      {
+        "timelineTick": 1040,
+        "baselineActualTick": 1040,
+        "splitActualTick": 1040,
+        "baselineLabel": "Tick 1,040 · saved sample",
+        "splitLabel": "Tick 1,040 · saved sample"
+      },
+      {
+        "timelineTick": 1060,
+        "baselineActualTick": 1060,
+        "splitActualTick": 1060,
+        "baselineLabel": "Tick 1,060 · saved sample",
+        "splitLabel": "Tick 1,060 · saved sample"
+      },
+      {
+        "timelineTick": 1080,
+        "baselineActualTick": 1080,
+        "splitActualTick": 1080,
+        "baselineLabel": "Tick 1,080 · saved sample",
+        "splitLabel": "Tick 1,080 · saved sample"
+      },
+      {
+        "timelineTick": 1100,
+        "baselineActualTick": 1100,
+        "splitActualTick": 1100,
+        "baselineLabel": "Tick 1,100 · saved sample",
+        "splitLabel": "Tick 1,100 · saved sample"
+      },
+      {
+        "timelineTick": 1120,
+        "baselineActualTick": 1120,
+        "splitActualTick": 1120,
+        "baselineLabel": "Tick 1,120 · saved sample",
+        "splitLabel": "Tick 1,120 · saved sample"
+      },
+      {
+        "timelineTick": 1140,
+        "baselineActualTick": 1140,
+        "splitActualTick": 1140,
+        "baselineLabel": "Tick 1,140 · saved sample",
+        "splitLabel": "Tick 1,140 · saved sample"
+      },
+      {
+        "timelineTick": 1160,
+        "baselineActualTick": 1160,
+        "splitActualTick": 1160,
+        "baselineLabel": "Tick 1,160 · saved sample",
+        "splitLabel": "Tick 1,160 · saved sample"
+      },
+      {
+        "timelineTick": 1180,
+        "baselineActualTick": 1180,
+        "splitActualTick": 1180,
+        "baselineLabel": "Tick 1,180 · saved sample",
+        "splitLabel": "Tick 1,180 · saved sample"
+      },
+      {
+        "timelineTick": 1200,
+        "baselineActualTick": 1200,
+        "splitActualTick": 1200,
+        "baselineLabel": "Tick 1,200 · saved sample",
+        "splitLabel": "Tick 1,200 · saved sample"
+      },
+      {
+        "timelineTick": 1220,
+        "baselineActualTick": 1220,
+        "splitActualTick": 1220,
+        "baselineLabel": "Tick 1,220 · saved sample",
+        "splitLabel": "Tick 1,220 · saved sample"
+      },
+      {
+        "timelineTick": 1240,
+        "baselineActualTick": 1240,
+        "splitActualTick": 1240,
+        "baselineLabel": "Tick 1,240 · saved sample",
+        "splitLabel": "Tick 1,240 · saved sample"
+      },
+      {
+        "timelineTick": 1260,
+        "baselineActualTick": 1260,
+        "splitActualTick": 1260,
+        "baselineLabel": "Tick 1,260 · saved sample",
+        "splitLabel": "Tick 1,260 · saved sample"
+      },
+      {
+        "timelineTick": 1280,
+        "baselineActualTick": 1280,
+        "splitActualTick": 1280,
+        "baselineLabel": "Tick 1,280 · saved sample",
+        "splitLabel": "Tick 1,280 · saved sample"
+      },
+      {
+        "timelineTick": 1300,
+        "baselineActualTick": 1300,
+        "splitActualTick": 1300,
+        "baselineLabel": "Tick 1,300 · saved sample",
+        "splitLabel": "Tick 1,300 · saved sample"
+      },
+      {
+        "timelineTick": 1320,
+        "baselineActualTick": 1320,
+        "splitActualTick": 1320,
+        "baselineLabel": "Tick 1,320 · saved sample",
+        "splitLabel": "Tick 1,320 · saved sample"
+      },
+      {
+        "timelineTick": 1340,
+        "baselineActualTick": 1340,
+        "splitActualTick": 1340,
+        "baselineLabel": "Tick 1,340 · saved sample",
+        "splitLabel": "Tick 1,340 · saved sample"
+      },
+      {
+        "timelineTick": 1360,
+        "baselineActualTick": 1360,
+        "splitActualTick": 1360,
+        "baselineLabel": "Tick 1,360 · saved sample",
+        "splitLabel": "Tick 1,360 · saved sample"
+      },
+      {
+        "timelineTick": 1380,
+        "baselineActualTick": 1380,
+        "splitActualTick": 1380,
+        "baselineLabel": "Tick 1,380 · saved sample",
+        "splitLabel": "Tick 1,380 · saved sample"
+      },
+      {
+        "timelineTick": 1400,
+        "baselineActualTick": 1400,
+        "splitActualTick": 1400,
+        "baselineLabel": "Tick 1,400 · saved sample",
+        "splitLabel": "Tick 1,400 · saved sample"
+      },
+      {
+        "timelineTick": 1420,
+        "baselineActualTick": 1420,
+        "splitActualTick": 1420,
+        "baselineLabel": "Tick 1,420 · saved sample",
+        "splitLabel": "Tick 1,420 · saved sample"
+      },
+      {
+        "timelineTick": 1440,
+        "baselineActualTick": 1440,
+        "splitActualTick": 1440,
+        "baselineLabel": "Tick 1,440 · saved sample",
+        "splitLabel": "Tick 1,440 · saved sample"
+      },
+      {
+        "timelineTick": 1460,
+        "baselineActualTick": 1460,
+        "splitActualTick": 1460,
+        "baselineLabel": "Tick 1,460 · saved sample",
+        "splitLabel": "Tick 1,460 · saved sample"
+      },
+      {
+        "timelineTick": 1480,
+        "baselineActualTick": 1480,
+        "splitActualTick": 1480,
+        "baselineLabel": "Tick 1,480 · saved sample",
+        "splitLabel": "Tick 1,480 · saved sample"
+      },
+      {
+        "timelineTick": 1500,
+        "baselineActualTick": 1500,
+        "splitActualTick": 1500,
+        "baselineLabel": "Tick 1,500 · saved sample",
+        "splitLabel": "Tick 1,500 · saved sample"
+      },
+      {
+        "timelineTick": 1520,
+        "baselineActualTick": 1520,
+        "splitActualTick": 1520,
+        "baselineLabel": "Tick 1,520 · saved sample",
+        "splitLabel": "Tick 1,520 · saved sample"
+      },
+      {
+        "timelineTick": 1540,
+        "baselineActualTick": 1540,
+        "splitActualTick": 1540,
+        "baselineLabel": "Tick 1,540 · saved sample",
+        "splitLabel": "Tick 1,540 · saved sample"
+      },
+      {
+        "timelineTick": 1560,
+        "baselineActualTick": 1560,
+        "splitActualTick": 1560,
+        "baselineLabel": "Tick 1,560 · saved sample",
+        "splitLabel": "Tick 1,560 · saved sample"
+      },
+      {
+        "timelineTick": 1580,
+        "baselineActualTick": 1580,
+        "splitActualTick": 1580,
+        "baselineLabel": "Tick 1,580 · saved sample",
+        "splitLabel": "Tick 1,580 · saved sample"
+      },
+      {
+        "timelineTick": 1600,
+        "baselineActualTick": 1600,
+        "splitActualTick": 1600,
+        "baselineLabel": "Tick 1,600 · saved sample",
+        "splitLabel": "Tick 1,600 · saved sample"
+      },
+      {
+        "timelineTick": 1620,
+        "baselineActualTick": 1620,
+        "splitActualTick": 1620,
+        "baselineLabel": "Tick 1,620 · saved sample",
+        "splitLabel": "Tick 1,620 · saved sample"
+      },
+      {
+        "timelineTick": 1640,
+        "baselineActualTick": 1640,
+        "splitActualTick": 1640,
+        "baselineLabel": "Tick 1,640 · saved sample",
+        "splitLabel": "Tick 1,640 · saved sample"
+      },
+      {
+        "timelineTick": 1660,
+        "baselineActualTick": 1660,
+        "splitActualTick": 1660,
+        "baselineLabel": "Tick 1,660 · saved sample",
+        "splitLabel": "Tick 1,660 · saved sample"
+      },
+      {
+        "timelineTick": 1680,
+        "baselineActualTick": 1680,
+        "splitActualTick": 1680,
+        "baselineLabel": "Tick 1,680 · saved sample",
+        "splitLabel": "Tick 1,680 · saved sample"
+      },
+      {
+        "timelineTick": 1700,
+        "baselineActualTick": 1700,
+        "splitActualTick": 1700,
+        "baselineLabel": "Tick 1,700 · saved sample",
+        "splitLabel": "Tick 1,700 · saved sample"
+      },
+      {
+        "timelineTick": 1720,
+        "baselineActualTick": 1720,
+        "splitActualTick": 1720,
+        "baselineLabel": "Tick 1,720 · saved sample",
+        "splitLabel": "Tick 1,720 · saved sample"
+      },
+      {
+        "timelineTick": 1740,
+        "baselineActualTick": 1740,
+        "splitActualTick": 1740,
+        "baselineLabel": "Tick 1,740 · saved sample",
+        "splitLabel": "Tick 1,740 · saved sample"
+      },
+      {
+        "timelineTick": 1760,
+        "baselineActualTick": 1760,
+        "splitActualTick": 1760,
+        "baselineLabel": "Tick 1,760 · saved sample",
+        "splitLabel": "Tick 1,760 · saved sample"
+      },
+      {
+        "timelineTick": 1780,
+        "baselineActualTick": 1780,
+        "splitActualTick": 1780,
+        "baselineLabel": "Tick 1,780 · saved sample",
+        "splitLabel": "Tick 1,780 · saved sample"
+      },
+      {
+        "timelineTick": 1800,
+        "baselineActualTick": 1800,
+        "splitActualTick": 1800,
+        "baselineLabel": "Tick 1,800 · saved sample",
+        "splitLabel": "Tick 1,800 · saved sample"
+      },
+      {
+        "timelineTick": 1820,
+        "baselineActualTick": 1820,
+        "splitActualTick": 1820,
+        "baselineLabel": "Tick 1,820 · saved sample",
+        "splitLabel": "Tick 1,820 · saved sample"
+      },
+      {
+        "timelineTick": 1840,
+        "baselineActualTick": 1840,
+        "splitActualTick": 1840,
+        "baselineLabel": "Tick 1,840 · saved sample",
+        "splitLabel": "Tick 1,840 · saved sample"
+      },
+      {
+        "timelineTick": 1860,
+        "baselineActualTick": 1860,
+        "splitActualTick": 1860,
+        "baselineLabel": "Tick 1,860 · saved sample",
+        "splitLabel": "Tick 1,860 · saved sample"
+      },
+      {
+        "timelineTick": 1880,
+        "baselineActualTick": 1880,
+        "splitActualTick": 1880,
+        "baselineLabel": "Tick 1,880 · saved sample",
+        "splitLabel": "Tick 1,880 · saved sample"
+      },
+      {
+        "timelineTick": 1900,
+        "baselineActualTick": 1900,
+        "splitActualTick": 1900,
+        "baselineLabel": "Tick 1,900 · saved sample",
+        "splitLabel": "Tick 1,900 · saved sample"
+      },
+      {
+        "timelineTick": 1920,
+        "baselineActualTick": 1920,
+        "splitActualTick": 1920,
+        "baselineLabel": "Tick 1,920 · saved sample",
+        "splitLabel": "Tick 1,920 · saved sample"
+      },
+      {
+        "timelineTick": 1940,
+        "baselineActualTick": 1940,
+        "splitActualTick": 1940,
+        "baselineLabel": "Tick 1,940 · saved sample",
+        "splitLabel": "Tick 1,940 · saved sample"
+      },
+      {
+        "timelineTick": 1960,
+        "baselineActualTick": 1960,
+        "splitActualTick": 1960,
+        "baselineLabel": "Tick 1,960 · saved sample",
+        "splitLabel": "Tick 1,960 · saved sample"
+      },
+      {
+        "timelineTick": 1980,
+        "baselineActualTick": 1980,
+        "splitActualTick": 1980,
+        "baselineLabel": "Tick 1,980 · saved sample",
+        "splitLabel": "Tick 1,980 · saved sample"
+      },
+      {
+        "timelineTick": 2000,
+        "baselineActualTick": 2000,
+        "splitActualTick": 2000,
+        "baselineLabel": "Tick 2,000 · saved sample",
+        "splitLabel": "Tick 2,000 · saved sample"
+      },
+      {
+        "timelineTick": 2020,
+        "baselineActualTick": 2020,
+        "splitActualTick": 2020,
+        "baselineLabel": "Tick 2,020 · saved sample",
+        "splitLabel": "Tick 2,020 · saved sample"
+      },
+      {
+        "timelineTick": 2040,
+        "baselineActualTick": 2040,
+        "splitActualTick": 2040,
+        "baselineLabel": "Tick 2,040 · saved sample",
+        "splitLabel": "Tick 2,040 · saved sample"
+      },
+      {
+        "timelineTick": 2060,
+        "baselineActualTick": 2060,
+        "splitActualTick": 2060,
+        "baselineLabel": "Tick 2,060 · saved sample",
+        "splitLabel": "Tick 2,060 · saved sample"
+      },
+      {
+        "timelineTick": 2080,
+        "baselineActualTick": 2080,
+        "splitActualTick": 2080,
+        "baselineLabel": "Tick 2,080 · saved sample",
+        "splitLabel": "Tick 2,080 · saved sample"
+      },
+      {
+        "timelineTick": 2100,
+        "baselineActualTick": 2100,
+        "splitActualTick": 2100,
+        "baselineLabel": "Tick 2,100 · saved sample",
+        "splitLabel": "Tick 2,100 · saved sample"
+      },
+      {
+        "timelineTick": 2120,
+        "baselineActualTick": 2120,
+        "splitActualTick": 2120,
+        "baselineLabel": "Tick 2,120 · saved sample",
+        "splitLabel": "Tick 2,120 · saved sample"
+      },
+      {
+        "timelineTick": 2140,
+        "baselineActualTick": 2140,
+        "splitActualTick": 2140,
+        "baselineLabel": "Tick 2,140 · saved sample",
+        "splitLabel": "Tick 2,140 · saved sample"
+      },
+      {
+        "timelineTick": 2160,
+        "baselineActualTick": 2160,
+        "splitActualTick": 2160,
+        "baselineLabel": "Tick 2,160 · saved sample",
+        "splitLabel": "Tick 2,160 · saved sample"
+      },
+      {
+        "timelineTick": 2180,
+        "baselineActualTick": 2180,
+        "splitActualTick": 2180,
+        "baselineLabel": "Tick 2,180 · saved sample",
+        "splitLabel": "Tick 2,180 · saved sample"
+      },
+      {
+        "timelineTick": 2200,
+        "baselineActualTick": 2200,
+        "splitActualTick": 2200,
+        "baselineLabel": "Tick 2,200 · saved sample",
+        "splitLabel": "Tick 2,200 · saved sample"
+      },
+      {
+        "timelineTick": 2220,
+        "baselineActualTick": 2220,
+        "splitActualTick": 2220,
+        "baselineLabel": "Tick 2,220 · saved sample",
+        "splitLabel": "Tick 2,220 · saved sample"
+      },
+      {
+        "timelineTick": 2240,
+        "baselineActualTick": 2240,
+        "splitActualTick": 2240,
+        "baselineLabel": "Tick 2,240 · saved sample",
+        "splitLabel": "Tick 2,240 · saved sample"
+      },
+      {
+        "timelineTick": 2260,
+        "baselineActualTick": 2260,
+        "splitActualTick": 2260,
+        "baselineLabel": "Tick 2,260 · saved sample",
+        "splitLabel": "Tick 2,260 · saved sample"
+      },
+      {
+        "timelineTick": 2280,
+        "baselineActualTick": 2280,
+        "splitActualTick": 2280,
+        "baselineLabel": "Tick 2,280 · saved sample",
+        "splitLabel": "Tick 2,280 · saved sample"
+      },
+      {
+        "timelineTick": 2300,
+        "baselineActualTick": 2300,
+        "splitActualTick": 2300,
+        "baselineLabel": "Tick 2,300 · saved sample",
+        "splitLabel": "Tick 2,300 · saved sample"
+      },
+      {
+        "timelineTick": 2320,
+        "baselineActualTick": 2320,
+        "splitActualTick": 2320,
+        "baselineLabel": "Tick 2,320 · saved sample",
+        "splitLabel": "Tick 2,320 · saved sample"
+      },
+      {
+        "timelineTick": 2340,
+        "baselineActualTick": 2340,
+        "splitActualTick": 2340,
+        "baselineLabel": "Tick 2,340 · saved sample",
+        "splitLabel": "Tick 2,340 · saved sample"
+      },
+      {
+        "timelineTick": 2360,
+        "baselineActualTick": 2360,
+        "splitActualTick": 2360,
+        "baselineLabel": "Tick 2,360 · saved sample",
+        "splitLabel": "Tick 2,360 · saved sample"
+      },
+      {
+        "timelineTick": 2380,
+        "baselineActualTick": 2380,
+        "splitActualTick": 2380,
+        "baselineLabel": "Tick 2,380 · saved sample",
+        "splitLabel": "Tick 2,380 · saved sample"
+      },
+      {
+        "timelineTick": 2400,
+        "baselineActualTick": 2400,
+        "splitActualTick": 2400,
+        "baselineLabel": "Tick 2,400 · saved sample",
+        "splitLabel": "Tick 2,400 · saved sample"
+      },
+      {
+        "timelineTick": 2420,
+        "baselineActualTick": 2420,
+        "splitActualTick": 2420,
+        "baselineLabel": "Tick 2,420 · saved sample",
+        "splitLabel": "Tick 2,420 · saved sample"
+      },
+      {
+        "timelineTick": 2440,
+        "baselineActualTick": 2440,
+        "splitActualTick": 2440,
+        "baselineLabel": "Tick 2,440 · saved sample",
+        "splitLabel": "Tick 2,440 · saved sample"
+      },
+      {
+        "timelineTick": 2460,
+        "baselineActualTick": 2460,
+        "splitActualTick": 2460,
+        "baselineLabel": "Tick 2,460 · saved sample",
+        "splitLabel": "Tick 2,460 · saved sample"
+      },
+      {
+        "timelineTick": 2480,
+        "baselineActualTick": 2480,
+        "splitActualTick": 2480,
+        "baselineLabel": "Tick 2,480 · saved sample",
+        "splitLabel": "Tick 2,480 · saved sample"
+      },
+      {
+        "timelineTick": 2500,
+        "baselineActualTick": 2500,
+        "splitActualTick": 2500,
+        "baselineLabel": "Tick 2,500 · saved sample",
+        "splitLabel": "Tick 2,500 · saved sample"
+      },
+      {
+        "timelineTick": 2520,
+        "baselineActualTick": 2520,
+        "splitActualTick": 2520,
+        "baselineLabel": "Tick 2,520 · saved sample",
+        "splitLabel": "Tick 2,520 · saved sample"
+      },
+      {
+        "timelineTick": 2540,
+        "baselineActualTick": 2540,
+        "splitActualTick": 2540,
+        "baselineLabel": "Tick 2,540 · saved sample",
+        "splitLabel": "Tick 2,540 · saved sample"
+      },
+      {
+        "timelineTick": 2560,
+        "baselineActualTick": 2560,
+        "splitActualTick": 2560,
+        "baselineLabel": "Tick 2,560 · saved sample",
+        "splitLabel": "Tick 2,560 · saved sample"
+      },
+      {
+        "timelineTick": 2580,
+        "baselineActualTick": 2580,
+        "splitActualTick": 2580,
+        "baselineLabel": "Tick 2,580 · saved sample",
+        "splitLabel": "Tick 2,580 · saved sample"
+      },
+      {
+        "timelineTick": 2600,
+        "baselineActualTick": 2600,
+        "splitActualTick": 2600,
+        "baselineLabel": "Tick 2,600 · saved sample",
+        "splitLabel": "Tick 2,600 · saved sample"
+      },
+      {
+        "timelineTick": 2620,
+        "baselineActualTick": 2620,
+        "splitActualTick": 2620,
+        "baselineLabel": "Tick 2,620 · saved sample",
+        "splitLabel": "Tick 2,620 · saved sample"
+      },
+      {
+        "timelineTick": 2640,
+        "baselineActualTick": 2640,
+        "splitActualTick": 2640,
+        "baselineLabel": "Tick 2,640 · saved sample",
+        "splitLabel": "Tick 2,640 · saved sample"
+      },
+      {
+        "timelineTick": 2660,
+        "baselineActualTick": 2660,
+        "splitActualTick": 2660,
+        "baselineLabel": "Tick 2,660 · saved sample",
+        "splitLabel": "Tick 2,660 · saved sample"
+      },
+      {
+        "timelineTick": 2680,
+        "baselineActualTick": 2680,
+        "splitActualTick": 2680,
+        "baselineLabel": "Tick 2,680 · saved sample",
+        "splitLabel": "Tick 2,680 · saved sample"
+      },
+      {
+        "timelineTick": 2700,
+        "baselineActualTick": 2700,
+        "splitActualTick": 2700,
+        "baselineLabel": "Tick 2,700 · saved sample",
+        "splitLabel": "Tick 2,700 · saved sample"
+      },
+      {
+        "timelineTick": 2720,
+        "baselineActualTick": 2720,
+        "splitActualTick": 2720,
+        "baselineLabel": "Tick 2,720 · saved sample",
+        "splitLabel": "Tick 2,720 · saved sample"
+      },
+      {
+        "timelineTick": 2740,
+        "baselineActualTick": 2740,
+        "splitActualTick": 2740,
+        "baselineLabel": "Tick 2,740 · saved sample",
+        "splitLabel": "Tick 2,740 · saved sample"
+      },
+      {
+        "timelineTick": 2760,
+        "baselineActualTick": 2760,
+        "splitActualTick": 2760,
+        "baselineLabel": "Tick 2,760 · saved sample",
+        "splitLabel": "Tick 2,760 · saved sample"
+      },
+      {
+        "timelineTick": 2780,
+        "baselineActualTick": 2780,
+        "splitActualTick": 2780,
+        "baselineLabel": "Tick 2,780 · saved sample",
+        "splitLabel": "Tick 2,780 · saved sample"
+      },
+      {
+        "timelineTick": 2800,
+        "baselineActualTick": 2800,
+        "splitActualTick": 2800,
+        "baselineLabel": "Tick 2,800 · saved sample",
+        "splitLabel": "Tick 2,800 · saved sample"
+      },
+      {
+        "timelineTick": 2820,
+        "baselineActualTick": 2820,
+        "splitActualTick": 2820,
+        "baselineLabel": "Tick 2,820 · saved sample",
+        "splitLabel": "Tick 2,820 · saved sample"
+      },
+      {
+        "timelineTick": 2840,
+        "baselineActualTick": 2840,
+        "splitActualTick": 2840,
+        "baselineLabel": "Tick 2,840 · saved sample",
+        "splitLabel": "Tick 2,840 · saved sample"
+      },
+      {
+        "timelineTick": 2860,
+        "baselineActualTick": 2860,
+        "splitActualTick": 2860,
+        "baselineLabel": "Tick 2,860 · saved sample",
+        "splitLabel": "Tick 2,860 · saved sample"
+      },
+      {
+        "timelineTick": 2880,
+        "baselineActualTick": 2880,
+        "splitActualTick": 2880,
+        "baselineLabel": "Tick 2,880 · saved sample",
+        "splitLabel": "Tick 2,880 · saved sample"
+      },
+      {
+        "timelineTick": 2900,
+        "baselineActualTick": 2900,
+        "splitActualTick": 2900,
+        "baselineLabel": "Tick 2,900 · saved sample",
+        "splitLabel": "Tick 2,900 · saved sample"
+      },
+      {
+        "timelineTick": 2920,
+        "baselineActualTick": 2920,
+        "splitActualTick": 2920,
+        "baselineLabel": "Tick 2,920 · saved sample",
+        "splitLabel": "Tick 2,920 · saved sample"
+      },
+      {
+        "timelineTick": 2940,
+        "baselineActualTick": 2940,
+        "splitActualTick": 2940,
+        "baselineLabel": "Tick 2,940 · saved sample",
+        "splitLabel": "Tick 2,940 · saved sample"
+      },
+      {
+        "timelineTick": 2960,
+        "baselineActualTick": 2960,
+        "splitActualTick": 2960,
+        "baselineLabel": "Tick 2,960 · saved sample",
+        "splitLabel": "Tick 2,960 · saved sample"
+      },
+      {
+        "timelineTick": 2980,
+        "baselineActualTick": 2980,
+        "splitActualTick": 2980,
+        "baselineLabel": "Tick 2,980 · saved sample",
+        "splitLabel": "Tick 2,980 · saved sample"
+      },
+      {
+        "timelineTick": 3000,
+        "baselineActualTick": 3000,
+        "splitActualTick": 3000,
+        "baselineLabel": "Tick 3,000 · saved sample",
+        "splitLabel": "Tick 3,000 · saved sample"
+      }
+    ]
+  },
+  "playback": {
+    "durationSeconds": 15.1,
+    "frameCount": 151,
+    "frameRate": "10/1",
+    "width": 1304,
+    "height": 1242,
+    "fullDecodeVerified": true
+  },
+  "artifact": {
+    "path": "docs/creative-prototypes/split-food-media/seed-1202-paired.mp4",
+    "sha256": "593d6fb2ca6d81fe33bed554e08b8566f37120a54f0d6e263c773dc38919c97a"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/split-food-plan.md",
+      "sha256": "134944138fc636b1c9677e9a40b5c2583d7184d608ce1e8d8c914e2ce8d93515"
+    },
+    "model": {
+      "path": "apps/lab/src/split-food/model.ts",
+      "sha256": "c6b5c37f20f8daa73858fd9e437d0b25d029c712c065ab11ef495c281b58b506"
+    },
+    "runner": {
+      "path": "tools/split-food/explore.ts",
+      "sha256": "aa2d3aeca0cd7a1a58e405c681cc6e61b5b15da2b0b85262a12c4f6fa95009bd"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/split-food-viewer.js",
+      "sha256": "66eed14b49f84f5848d11d52b03d94db0c7b3b42e16137f0f429f6f521e112ff"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/split-food-viewer.css",
+      "sha256": "4d9dcb6258033d72988c4efe5e6ea47d4a82bb8d5844355470d79c997d1e13cd"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/split-food-media/capture-viewer.html",
+      "sha256": "70dea348711afc38f47bccd5ba983fb2398da37d0c216954c738f3cb9a4ac43f",
+      "originalServedPath": "docs/creative-prototypes/split-food.html",
+      "note": "Exact committed HTML bytes served for capture, preserved separately as source provenance."
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/stationary-food-stationary-band-seed-1202.json",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+      "dataSha256": "3c3ee5857d3f1f3f4eb2cad6eed6a1863db324e6bc5ed19635532a69b3f25bcf"
+    },
+    "split": {
+      "path": "docs/creative-prototypes/split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+      "dataSha256": "1379b36370340873e531443ab8f9176a19a69d88b942d20e4d982ed81a81a349"
+    },
+    "manifest": {
+      "path": "docs/creative-prototypes/split-food-index-1202.json",
+      "rawSha256": "e3e3aa26ace9722ca15175d208ba0d5e2aaa09608e03af072695066c14089afc"
+    },
+    "receipt": {
+      "path": "docs/creative-prototypes/split-food-visual-receipt-1202.json",
+      "rawSha256": "4a6ae883c69bd85b05713f71da39a5e79a6f3d7a529ede00f8a61808d0c1f138"
+    }
+  },
+  "capture": {
+    "url": "http://127.0.0.1:56517/docs/creative-prototypes/split-food.html",
+    "viewport": {
+      "width": 1760,
+      "height": 1320
+    },
+    "region": ".paired-worlds",
+    "sourceSha256": "70dea348711afc38f47bccd5ba983fb2398da37d0c216954c738f3cb9a4ac43f",
+    "firstFramePngSha256": "908fc284c966dcace59cbde6de105b96f75e0aef622322ea448177724ff454f3",
+    "browser": "Chrome",
+    "savedFramesOnly": true
+  }
+}

@@ -1,0 +1,45 @@
+# Do moving and stationary food bands remain varied to 6,000 ticks?
+
+26 October 2026. Start from reviewed PR #106 tip e6099fe62951a942292979c6aeb3e2200ee492e4. Both stationary replications passed at 3,000, and moving controls exactly reproduced their historical trajectories. The open question is persistence, not a new food rule. User authorizes this longer comparison.
+
+## Smallest frozen test
+
+Seed 1201 only. Run moving-band then stationary-band from initialization to 6,000 or actual extinction, each with one independently initialized exact repeat. The first 3,000 ticks of BOTH arms must exactly reproduce their PR #106 records. That prefix is historical regression, not new evidence. Only ticks 3,001–6,000 are newly observed. No other seed, parameter change, rescue, automatic replication or longer horizon in this slice, whatever the result.
+
+Use apps/lab/src/stationary-food/model.ts byte-for-byte (SHA256 7bd5af02243cb0629547a20d889a05cd904246a16227f58df4e420edc84a859f). Both bands are 48 columns by 96 rows; stationary left edge 0, moving floor(tick/50)%96. Initial food 20 per tile, 768 units every 5 ticks, unchanged stride, seed rotation, biology, mutation, reserves, caps, history and lineage limits. History every 20 ticks and capacity 451 already accommodate 301 samples through 6,000. Offered food matches per pulse through shared executed time; deposited food remains, and accepted food can differ.
+
+## Stop rules and interpretation
+
+Log every outcome-producing attempt before launch and retain stdout/stderr/error text. Any source, accounting, correctness, repeat, truncation or prefix mismatch invalidates the pair and halts further outcomes. Preserve all evidence and logs; review any assay-only repair before a whole-pair retry. Unresolved invalid evidence closes inconclusive. Moving must validate before stationary starts. Valid biological failure in moving does not cancel the scheduled stationary arm. Extinction stops that arm at its actual tick; otherwise run through 6,000, even if a family has already disappeared. No hidden early screening or tuning.
+
+Apply separately to each arm: positive living population at 6,000; at least two nonzero founder families then; births AND deaths positive in EACH window 4,501–5,000, 5,001–5,500 and 5,501–6,000; no more than 99 cap-48 ticks in EACH 500-tick window. Missing or partial windows fail, never extrapolate. Parent judges occupied-body arrangements from 5,500 to 6,000: name at least one concrete shifted, expanded or cleared cluster or gap. Colors, IDs, food brightness and band outline alone cannot pass. Unclear or biologically unreached endpoints fail. Missing data due to an assay error invalidates the pair. Commit SHA-bound observations before overlap diagnostics. This is a permissive variety screen, not proof of enduring minority diversity or evolution.
+
+Both passing means the screen did not distinguish the arms on this seed. One passing means it separated them on this seed; neither passing means neither retained the screened variety. List each failed criterion, separating extinction, family loss, saturation, turnover and unclear visuals. Do not call a visual uncertainty a biological failure. No equality, superiority, fitness, adaptation or generalization claim. Stationary failure confounds motion with coverage: half the torus never receives direct replenishment. Compare family sizes and changes descriptively. Historical 3,000-tick success and repeats are not independent additional trials.
+
+Stop after this one pair. If either arm passes, a separate reviewed plan may propose at most two unchanged replication seeds; none are run automatically here. If neither passes, preserve the result and propose a separately reviewed rule change rather than rescuing this frozen run. No horizon escalation or parameter sweep.
+
+## Evidence contracts
+
+New tools/food-band-longevity/explore.ts, seed 1201 explicitly required, isolated output prefix food-band-longevity. Preserve all prior files except appending the running HTML decision log. No import execution or overwrite. Node 24.2.0 darwin/arm64. --check reads and validates only; --replay-check simulates and is not a routine validation step. Commit reviewed plan before implementation, and reviewed runner before outcomes.
+
+Pin both PR #106 seed-1201 arm raw/data hashes and accepted pair-index bindings. Validate historical records with the frozen runner's check-only path before new writes. Compare exact prefix samples (151 complete census/environment/hash records), frames (151 full saved payloads), all 3,000 tick rows, and full snapshots at 0/500/1500/2500/3000 for EACH mode. No state normalization. Compare rules and identity seed/mode/mutation; longer maxTick and finalTick, final summaries, repeat totals, late-window summaries and wrapper provenance necessarily differ and are not claimed identical. Pin unchanged model, old runner and dependencies plus new plan/runner identities.
+
+Save samples/frames at 0, every 20 executed ticks, and actual terminal if off cadence; all tick rows; full snapshots at 0/500/1500/2500/3000/4500/5500/6000 plus actual terminal. No invented postextinction data. Per-tick safety, bounds, conservation, connectivity, census and independently initialized repeat checks remain; exact repeat states/frames every 20 ticks plus terminal. Keep lineage/history joins, maximum-ever generation, resource accounting and 24 MiB maximum per arm. Snapshot at 5,500 is on the normal cadence. Prefix checks run as observations are produced, stopping immediately on a mismatch.
+
+New manifests/receipts bind seed, plan, raw arm hashes and decisions. Replay uses truthful outlines, shared actual-tick timeline, paused default and honest terminal hold, with turnover, family and resource history. Fail closed on source/hash/mode/seed/receipt/gate contradictions or missing true visual endpoints. Include two-arm saved-frame animation and body-only images at 3,000, 5,500 and 6,000. Same-age comparisons are descriptive, not an extra gate. Prior prefix media already exist; disclose that visual judgment is not blind. Overlap diagnostics only after committed receipt and successful check-only validation.
+
+## Workflow
+
+Claude Sonnet 5.5 High and Codex Sol 6.1 High plan review → freeze plan → delegated implementation and meaningful tests → both implementation reviews/fixes → freeze runner → one scheduled pair → parent visual receipt committed before diagnostics → results/replay/decision log → both final reviews/fixes → commit and dependent PR on codex/stationary-food-replication. No merge or deployment.
+
+## Pre-freeze review resolutions
+
+Capacity preflight on the accepted seed-1201 records: moving has 458 lineage nodes and 4,809,751 raw bytes; stationary has 467 nodes and 4,757,085 bytes. A generous three-times-current planning projection gives 1,374/1,401 nodes versus the unchanged 10,000-node limit, and 14,429,253/14,271,255 bytes versus 25,165,824 bytes (24 MiB). These are estimates, not guarantees: snapshot and lineage growth need not be linear. Hard checks remain authoritative; exceeding either limit invalidates the assay and does not authorize silently raising limits.
+
+Use distinct historical horizon 3,000 and new horizon 6,000 constants throughout the new runner and tests. Test both mode-specific historical projections and late-window/partial-window calculations without producing new outcomes. The tick-3,000 sample and frame ARE compared exactly: they have no terminal-only flag. Its saved snapshot terminal flag is false in both the historical live arm and the new live prefix. Exclude only horizon-wide run fields/final/windows/repeat/gate and provenance as specified above; do not discard tick-3,000 state evidence. Claude's suggestion to exclude that sample/frame is not adopted because it would weaken the prefix contract.
+
+For an extinct arm, its actual terminal frame is the truthful replay endpoint and is accepted and held. A visual pass requires both exact 5,500 and 6,000 frames; a false visual verdict may explain biological nonreach. Record a visual observation for both arms even if one already fails numerically, marking unavailable endpoints and the reason. Unclear visuals fail the screen but are reported separately from extinction or family loss.
+
+Only an invalid pair permits an assay-repair retry after review; it repeats the same scheduled pair, never adds a seed or changes biology. Disclose every outcome seen in invalid attempts, even if only moving completed. Valid biological failures are never retried.
+
+This plan is informed by known 3,000-tick family sizes (moving 2/14/22; stationary 0/33/6), not blind to them. Report first observed absent-family samples at 20-tick resolution and which gated windows fail; those are diagnostics, not extra pass criteria. The moving band completes its first lap at tick 4,800 and then revisits earlier columns. This geometry is engineered, not adaptive behavior. The family gate remains deliberately permissive and can pass with only one body in a minority family.

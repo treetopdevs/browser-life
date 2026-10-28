@@ -1,0 +1,30 @@
+{
+  "scope": "Only outcome-producing attempts in this slice; fixture tests and check-only commands do not rerun worlds.",
+  "attempts": [
+    {
+      "seed": 1202,
+      "attempt": 1,
+      "action": "write paired arms plus independent repeats",
+      "exitCode": 0,
+      "log": "(node:21428) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nWrote moving-food replication seed 1202 uniform and moving-band evidence.\n",
+      "logSha256": "fb24da0f92b3360f1d796d76aef2587e7c53ac18580ed1bc9c6c8f700e8122de",
+      "acceptedFiles": [
+        "moving-food-replication-uniform-seed-1202.json",
+        "moving-food-replication-moving-band-seed-1202.json"
+      ]
+    },
+    {
+      "seed": 1203,
+      "attempt": 1,
+      "action": "write paired arms plus independent repeats",
+      "exitCode": 0,
+      "log": "(node:23692) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nWrote moving-food replication seed 1203 uniform and moving-band evidence.\n",
+      "logSha256": "7e712c957936819d61e86e33535dbffcdd7f1420f5860457ae5a4f6fb0fe2407",
+      "acceptedFiles": [
+        "moving-food-replication-uniform-seed-1203.json",
+        "moving-food-replication-moving-band-seed-1203.json"
+      ]
+    }
+  ],
+  "failedAttempts": []
+}

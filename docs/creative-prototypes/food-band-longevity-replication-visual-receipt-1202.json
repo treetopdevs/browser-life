@@ -1,0 +1,36 @@
+{
+  "seed": 1202,
+  "planSha256": "6ae73fea19692f95e50538fecdc4203d89cf7ec5687ee38b6f580a57d94a005a",
+  "movingBandArtifactSha256": "6dd8473c87bbf2750e4946b0bf687fd670615c00e7043a630503298c1d25bc91",
+  "stationaryBandArtifactSha256": "a68f6c74c9db9caa7ca037d01a71e322a5c85103398aa05cff532793440a7007",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: historical media are already available and the parent knows both seeds' numerical outcomes. The compact upper-left cluster at 5,500 breaks into separated groups by 6,000: a broad group appears farther down the left side, while the former lower central vertical chain separates into two larger groups and open gaps. These are changes in occupied tiles, not just family colors."
+    },
+    "stationaryBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: historical media are already available and the parent knows both seeds' numerical outcomes. The lower-middle chain at 5,500 clears by 6,000, while a separate dense lower-left cluster appears. The upper-middle groups reorganize into a longer central vertical occupied cluster with a newly open upper region."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 3000,
+      "observation": "At 3,000 the moving bodies are concentrated on the right, while stationary bodies are mostly in the left half, with a lower-left group."
+    },
+    {
+      "tick": 5500,
+      "observation": "At 5,500 moving bodies form separated central-left groups and a lower vertical chain; stationary bodies make a broader scattered left-half arrangement."
+    },
+    {
+      "tick": 6000,
+      "observation": "At 6,000 moving bodies occupy several separated left and central groups; stationary bodies form a central vertical group and a distinct lower-left cluster."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T03:09:21.215515+00:00"
+}

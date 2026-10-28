@@ -1,0 +1,3 @@
+Review blocked: the command runner failed to start, and UI access to Terminal and Finder was denied. I couldn’t inspect the plan, manifest, pinned PR113 sources, or seed1203 evidence, so I can’t return CLEAR or substantiated findings.
+
+No simulations ran and no files changed. Restore read access to the workspace, or provide the plan, manifest, and referenced evidence so I can complete the review.

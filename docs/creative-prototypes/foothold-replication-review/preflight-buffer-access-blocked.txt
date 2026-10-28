@@ -1,0 +1,3 @@
+BLOCKED — I couldn’t inspect the diff, frozen plan, or reservation state. The shell tool reports `code-mode host is disabled`; terminal UI access was also denied.
+
+No source findings are established, and equivalence remains unverified. No files were changed, and no simulations or launch/step functions were run. Provide the diff, relevant frozen-plan excerpts, and reservation-status output to complete this narrow review.

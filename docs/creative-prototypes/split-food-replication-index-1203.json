@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-split-food-replication-pair",
+  "seed": 1203,
+  "planSha256": "0858e5292d1a9949d1dfd53479519a518fbbe5b849363e577a7e630a0ece384d",
+  "arms": {
+    "baseline": {
+      "mode": "stationary-band",
+      "url": "stationary-food-replication-stationary-band-seed-1203.json",
+      "rawSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c"
+    },
+    "split": {
+      "mode": "split-band",
+      "url": "split-food-replication-seed-1203.json",
+      "rawSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "The seed-1203 split world passes the unchanged activity, both-band occupancy and late spatial-change screen with 35 bodies and two families at 22 / 13. The first seed\u2019s three-family balance did not recur. No adaptation or superiority claim; stop after this one replication.",
+    "baselineArtifactSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+    "splitArtifactSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+    "visualReceiptUrl": "split-food-replication-visual-receipt-1203.json",
+    "visualReceiptSha256": "ca80286ef1fb354f4333d8d85a01e786565209f61ef3ff030be3fed566b64b18"
+  }
+}
