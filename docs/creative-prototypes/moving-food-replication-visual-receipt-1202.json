@@ -1,0 +1,30 @@
+{
+  "seed": 1202,
+  "uniformArtifactSha256": "008c047b984c55236dc8fcec27f39083cd028e7790f8eaa1b963ca88bc5cce9f",
+  "movingBandArtifactSha256": "183d90f551dcaf6c29ab4f397bba52d93365c22ad3315787423a49926a792a83",
+  "visualComparisons": [
+    {
+      "tick": 1500,
+      "pass": true,
+      "observation": "Uniform bodies spread around both edges and the upper-right, leaving a large middle gap. Moving bodies form a central vertical sequence from upper center to bottom center, with a broad right-side gap."
+    },
+    {
+      "tick": 2500,
+      "pass": true,
+      "observation": "Moving bodies form several right-half clusters from the top edge down to the bottom-right, leaving the left half mostly empty. Uniform has separate middle-left and lower-middle groups as well as lower-right bodies."
+    },
+    {
+      "tick": 3000,
+      "pass": true,
+      "observation": "Moving bodies form a broad horizontal branching cluster across the middle-right and a separate bottom-right group. Uniform has occupied groups across the center and lower middle, including a distinct middle-left cluster."
+    }
+  ],
+  "lateWithinMoving": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "The large upper-right and top-center arrangements at2500 clear, opening a broad upper-middle gap by3000. The middle-right grouping broadens into a horizontal band of branches; the lower-right cluster changes shape and reaches the bottom edge."
+  },
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-26T22:52:03.162737+00:00"
+}

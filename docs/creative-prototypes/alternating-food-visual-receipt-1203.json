@@ -1,0 +1,52 @@
+{
+  "seed": 1203,
+  "planSha256": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8",
+  "baselineArtifactSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+  "alternatingArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+  "alternatingChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: the historical baseline and numerical outcome are known. The sparse upper part of band1 at2500 becomes a broad branching vertical cluster at3000. Scattered lower band1 fragments expand into a longer branching arrangement, and new occupied clusters appear in lower band0. These are occupied-tile and gap changes, not color changes."
+  },
+  "seasonalChanges": [
+    {
+      "from": 1500,
+      "to": 2000,
+      "pass": true,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. In the numerically qualifying block, the dense upper-left and lower-left clusters in band0 largely clear, leaving small isolated bodies and broad gaps. The fed band1 gains broad upper-edge and lower-edge branching clusters plus a large middle-lower cluster. This is simultaneous visible growth in band1 and retreat in band0."
+    },
+    {
+      "from": 2000,
+      "to": 2500,
+      "pass": false,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The dense upper and lower band1 clusters clear into sparse fragments. Band0 also loses occupied area overall and does not show the required20-tile gain; the numerical seasonal block fails. Visible collapse alone is not the frozen growth-and-retreat pass."
+    },
+    {
+      "from": 2500,
+      "to": 3000,
+      "pass": false,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Band1 visibly expands into upper and lower branching clusters, while band0 also gains occupied tiles. The unfed band does not retreat by20tiles, so the numerical seasonal block fails despite clear overall regrowth."
+    }
+  ],
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The static split world has multiple separated clusters in both bands. The alternating world is denser along the left edge, with smaller groups in band1 and broad central gaps."
+    },
+    {
+      "tick": 2000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The static split world retains substantial left-side and right-of-center clusters. The alternating world has sparse left-side fragments and large upper and lower band1 clusters."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The static split world remains populated by several branching clusters. The alternating world is visibly sparse in both bands, with widely separated small bodies."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The static split world has broad upper and lower clusters in band1 and a few edge groups in band0. The alternating world has regrown a long upper band1 cluster, lower branching groups and several small band0 clusters. This is descriptive, not superiority."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T09:14:26.760392+00:00"
+}

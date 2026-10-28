@@ -1,0 +1,21 @@
+{
+  "seed": 1201,
+  "ticks": [
+    1500,
+    2500,
+    3000
+  ],
+  "kind": "saved-frame-body-comparison",
+  "imageSha256": "88ad7011e7e03593892331f82f302f7a9c841b55727bea9ebf6c2742173c583a",
+  "sources": [
+    {
+      "mode": "moving-band",
+      "rawSha256": "570aba2c02c52b7f949c60990b8bf33aa929a5352728c75d01d547666299c294"
+    },
+    {
+      "mode": "stationary-band",
+      "rawSha256": "65e160a97cd829b6e740db757eaee7364228c4890116a8cb2422f56795675d2b"
+    }
+  ],
+  "description": "Exact saved occupied tiles, family colors by organism ID; no simulation, food mask, outline or interpolation."
+}

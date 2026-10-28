@@ -1,0 +1,36 @@
+{
+  "seed": 1202,
+  "planSha256": "ba835f94fddbd48a823fb6264d3e4f9d8a815014c5bc5e4997fec56e6f7aaa51",
+  "movingBandArtifactSha256": "1ba5caec32d22feef2482e13eab9550552bec974a6f9f7791c21714d375e598a",
+  "stationaryBandArtifactSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "The upper-right and top-center groups at2500 clear, opening a broad upper-middle gap by3000. Middle-right bodies broaden into a horizontal branching cluster; the lower-right grouping changes shape and reaches the bottom edge. This matches the earlier moving trajectory but is judged under this new within-arm screen."
+    },
+    "stationaryBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "The tall upper-middle cluster at2500 clears by3000, leaving a broad empty upper-middle region. New branching groups occupy the middle-left and lower-middle-left. The bottom-left group expands into a wider, denser arrangement along the bottom edge. These are occupied-location and gap changes, not only colors."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Moving has a central vertical sequence with branches extending into the lower right; stationary has upper-left edge occupancy and a lower-left/central chain with a broad right-side gap."
+    },
+    {
+      "tick": 2500,
+      "observation": "Moving bodies concentrate in several right-half groups; stationary has small upper-left and upper-middle groups with a broad middle gap and dense bottom-left occupancy."
+    },
+    {
+      "tick": 3000,
+      "observation": "Moving retains a broad middle-right cluster and bottom-right grouping. Stationary has middle-left and bottom-left branching groups with a broad empty right-middle region."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-26T23:48:19.379425+00:00"
+}

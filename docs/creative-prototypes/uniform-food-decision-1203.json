@@ -1,0 +1,65 @@
+{
+  "seed": 1203,
+  "artifactSha256": "96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae",
+  "dataSha256": "858bcf1f71057641184cf884cd2dbc8eca6b437fc5875db9677dbd25b6a2d75b",
+  "numericalGate": {
+    "aliveAt6000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt6000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "pass": true,
+      "observation": "Gold visible at3000 disappears by4000; more importantly, purple bodies form a diagonal upper-right-to-bottom-right chain while mint occupies left-edge groups. Occupied regions/gaps shift."
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "pass": true,
+      "observation": "The right-edge purple chain redistributes into central branches by5000 and mint forms a substantial bottom-middle grouping, with a broad upper-left gap."
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "pass": true,
+      "observation": "By6000 the central purple branches are largely gone and mint branches span left-middle through bottom-middle; only sparse purple groups remain. Locations and gaps change in addition to the family balance."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "passes-uniform-longevity-screen",
+  "reason": "Numerical criteria pass and each adjacent milestone pair has concrete spatial changes. Stop at6000; no further seed/horizon earned in this slice.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 3000,
+      "to": 4000,
+      "occupiedA": 544,
+      "occupiedB": 698,
+      "sharedTiles": 19,
+      "unionTiles": 1223,
+      "jaccard": 0.01553556827473426
+    },
+    {
+      "from": 4000,
+      "to": 5000,
+      "occupiedA": 698,
+      "occupiedB": 750,
+      "sharedTiles": 54,
+      "unionTiles": 1394,
+      "jaccard": 0.03873744619799139
+    },
+    {
+      "from": 5000,
+      "to": 6000,
+      "occupiedA": 750,
+      "occupiedB": 486,
+      "sharedTiles": 40,
+      "unionTiles": 1196,
+      "jaccard": 0.033444816053511704
+    }
+  ]
+}

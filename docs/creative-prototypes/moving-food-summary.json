@@ -1,0 +1,62 @@
+{
+  "seed": 1201,
+  "decision": "promising-first-seed-stop-at-3000",
+  "arms": [
+    {
+      "mode": "uniform",
+      "finalTick": 3000,
+      "population": 39,
+      "familyCounts": [
+        22,
+        17,
+        0
+      ],
+      "distinctPrograms": 20,
+      "maxEverGeneration": 15,
+      "lastWindowBirths": 94,
+      "lastWindowDeaths": 94,
+      "lastWindowCap48Ticks": 6,
+      "offered": 460800,
+      "accepted": 309822,
+      "overflow": 150978,
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      }
+    },
+    {
+      "mode": "moving-band",
+      "finalTick": 3000,
+      "population": 38,
+      "familyCounts": [
+        2,
+        14,
+        22
+      ],
+      "distinctPrograms": 12,
+      "maxEverGeneration": 13,
+      "lastWindowBirths": 74,
+      "lastWindowDeaths": 78,
+      "lastWindowCap48Ticks": 20,
+      "offered": 460800,
+      "accepted": 283182,
+      "overflow": 177618,
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      }
+    }
+  ],
+  "nextProposal": "Replicate the unchanged two-arm3000-tick screen on seeds1202 and1203 under a separately reviewed plan; do not increase horizon or change parameters.",
+  "limits": "One seed. The moving band changes both concentration and movement; accepted food differs and reserves persist. This does not establish tracking, adaptation or superiority."
+}

@@ -1,0 +1,13 @@
+**Core model/runner: no blocker found by static review. Companion viewer/tests: three blockers.**
+
+1. **P1 — Viewer fails before fetching evidence.** `selectedSeed` is declared `const` at line 44, then reassigned in [loadPair()](/Users/nicholas/.codex/worktrees/stationary-food-band/browser-life/docs/creative-prototypes/stationary-food-viewer.js:640), before its `try`. Remove the assignment or make the binding mutable. Even the expected missing-manifest state cannot load currently.
+
+2. **P1 — Viewer and diagnostic helper require incompatible manifest schemas.** The [viewer](/Users/nicholas/.codex/worktrees/stationary-food-band/browser-life/docs/creative-prototypes/stationary-food-viewer.js:435) requires `acceptedVisualReceiptUrl/Sha256`; the [helper](/Users/nicholas/.codex/worktrees/stationary-food-band/browser-life/tools/stationary-food-diagnostics.mjs:94) requires `visualReceiptUrl/Sha256`. Both reject unexpected keys, so no final manifest can satisfy both. Standardize the names and fixtures. Also align receipt timestamps: the helper requires nonempty `reviewedAtUTC`, while viewer fixtures omit it.
+
+3. **P2 — Two e2e expectations contradict intended viewer behavior.** The [endpoint test](/Users/nicholas/.codex/worktrees/stationary-food-band/browser-life/tests/e2e/stationary-food.spec.ts:185) marks the extinct stationary arm’s visual judgment **false**, yet expects rejection for missing endpoints; rejection applies only to **true** judgments. Make that claim true for the negative test and retain a false-judgment acceptance case. The terminal-hold test at line 198 also expects `"saved sample · timeline 3,000"`, whereas an exact-tick frame renders `"saved sample"`.
+
+The core inspection supports fixed-left-zero wiring across target creation, getter, environment and supply; unchanged biology/RNG; matched pulse indexing/budget; own-mode band occupancy; and exact moving-reference validation of **151 samples/frames, 3,000 rows and five snapshots**, without state normalization. Checked source hashes match. Historical files are unchanged; `decisions.html` is the sole tracked modification.
+
+The diagnostic entrypoint checks committed, unchanged receipt bytes before computing overlap. Missing pilot artifacts are expected. **Commit the reviewed runner before outcomes**, and preserve/log every outcome-producing attempt as the frozen plan requires.
+
+No edits, tests, outcome simulations or overlap computations were performed.

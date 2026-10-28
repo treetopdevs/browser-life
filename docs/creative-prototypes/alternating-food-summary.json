@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "seed": 1203,
+  "decision": "promising",
+  "newOutcomeArms": 1,
+  "historicalBaselineIsNewEvidence": false,
+  "planSha256": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8",
+  "arms": {
+    "baseline": {
+      "artifactSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+      "dataSha256": "d9e546968191c29d35d4e096cc891d0576d68531870643d6f44e144ced35e343",
+      "finalCensus": {
+        "tick": 3000,
+        "population": 35,
+        "cells": 620,
+        "familyCounts": [
+          0,
+          22,
+          13
+        ],
+        "births": 455,
+        "growths": 8546,
+        "deaths": 432,
+        "effectiveMutations": 105,
+        "attemptedMutations": 114,
+        "maxGeneration": 14,
+        "totalCells": 620,
+        "totalEnergy": 6373,
+        "meanBodyCells": 17.714285714285715,
+        "meanEnergy": 182.0857142857143,
+        "blockedBirths": 172,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 172,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 16
+      },
+      "finalEnvironment": {
+        "version": 1,
+        "mode": "split-band",
+        "pulseBudget": 768,
+        "targetCount": 4608,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 278816,
+        "overflow": 181984,
+        "initialFoodPerTile": 20,
+        "bandColumns": [
+          [
+            0,
+            23
+          ],
+          [
+            48,
+            71
+          ]
+        ],
+        "bandWidth": 24
+      }
+    },
+    "alternating": {
+      "artifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4",
+      "finalCensus": {
+        "tick": 3000,
+        "population": 31,
+        "cells": 515,
+        "familyCounts": [
+          7,
+          2,
+          22
+        ],
+        "births": 425,
+        "growths": 7403,
+        "deaths": 406,
+        "effectiveMutations": 98,
+        "attemptedMutations": 109,
+        "maxGeneration": 15,
+        "totalCells": 515,
+        "totalEnergy": 5493,
+        "meanBodyCells": 16.612903225806452,
+        "meanEnergy": 177.19354838709677,
+        "blockedBirths": 65,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 65,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 11
+      },
+      "finalEnvironment": {
+        "version": 1,
+        "mode": "alternating-band",
+        "pulseBudget": 768,
+        "targetCount": 2304,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 247476,
+        "overflow": 213324,
+        "initialFoodPerTile": 20,
+        "bandColumns": [
+          [
+            0,
+            23
+          ],
+          [
+            48,
+            71
+          ]
+        ],
+        "bandWidth": 24,
+        "activeBand": 1,
+        "bandOffered": [
+          230400,
+          230400
+        ],
+        "bandAccepted": [
+          145366,
+          102110
+        ],
+        "bandOverflow": [
+          85034,
+          128290
+        ]
+      }
+    }
+  },
+  "numericalGate": {
+    "aliveAt3000": true,
+    "atLeastTwoFamiliesAt3000": true,
+    "allWindowsReached": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "numericalPass": true,
+    "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+  },
+  "spatialGate": {
+    "requiredTilesPerBand": 10,
+    "checkpoints": [
+      {
+        "tick": 2500,
+        "occupiedTilesByBand": [
+          79,
+          65
+        ],
+        "pass": true
+      },
+      {
+        "tick": 3000,
+        "occupiedTilesByBand": [
+          155,
+          262
+        ],
+        "pass": true
+      }
+    ],
+    "pass": true
+  },
+  "seasonalGate": {
+    "blocks": [
+      {
+        "from": 1500,
+        "to": 2000,
+        "fedBand": 1,
+        "fromOccupiedTilesByBand": [
+          519,
+          116
+        ],
+        "toOccupiedTilesByBand": [
+          88,
+          539
+        ],
+        "deltasByBand": [
+          -431,
+          423
+        ],
+        "pass": true
+      },
+      {
+        "from": 2000,
+        "to": 2500,
+        "fedBand": 0,
+        "fromOccupiedTilesByBand": [
+          88,
+          539
+        ],
+        "toOccupiedTilesByBand": [
+          79,
+          65
+        ],
+        "deltasByBand": [
+          -9,
+          -474
+        ],
+        "pass": false
+      },
+      {
+        "from": 2500,
+        "to": 3000,
+        "fedBand": 1,
+        "fromOccupiedTilesByBand": [
+          79,
+          65
+        ],
+        "toOccupiedTilesByBand": [
+          155,
+          262
+        ],
+        "deltasByBand": [
+          76,
+          197
+        ],
+        "pass": false
+      }
+    ],
+    "pass": true
+  },
+  "staticBaselineSeasonalReference": {
+    "blocks": [
+      {
+        "from": 1500,
+        "to": 2000,
+        "fedBand": 1,
+        "fromOccupiedTilesByBand": [
+          284,
+          281
+        ],
+        "toOccupiedTilesByBand": [
+          379,
+          282
+        ],
+        "deltasByBand": [
+          95,
+          1
+        ],
+        "pass": false
+      },
+      {
+        "from": 2000,
+        "to": 2500,
+        "fedBand": 0,
+        "fromOccupiedTilesByBand": [
+          379,
+          282
+        ],
+        "toOccupiedTilesByBand": [
+          290,
+          165
+        ],
+        "deltasByBand": [
+          -89,
+          -117
+        ],
+        "pass": false
+      },
+      {
+        "from": 2500,
+        "to": 3000,
+        "fedBand": 1,
+        "fromOccupiedTilesByBand": [
+          290,
+          165
+        ],
+        "toOccupiedTilesByBand": [
+          126,
+          448
+        ],
+        "deltasByBand": [
+          -164,
+          283
+        ],
+        "pass": true
+      }
+    ],
+    "pass": true
+  },
+  "manualGate": {
+    "lateChange": true,
+    "seasonalBlocks": [
+      true,
+      false,
+      false
+    ],
+    "pass": true
+  },
+  "receiptSha256": "a8e246ce1d6290c07325292a9651a9283b487df60da47e57432416976010a22b"
+}

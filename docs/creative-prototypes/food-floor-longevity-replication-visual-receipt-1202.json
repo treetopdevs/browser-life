@@ -1,0 +1,38 @@
+{
+  "seed": 1202,
+  "planSha256": "02a221c637d238dc0feb6b50cb7220f84cfd016ff5a404200ab15e723fd8a914",
+  "prefixArtifactSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+  "artifactSha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+  "ownChange": {
+    "from": 5500,
+    "to": 6000,
+    "pass": true,
+    "observation": "Not blind: accepted history and numerical outcomes are known. At5500 band1 has a small upper group and a small bottom group. By6000 the upper group occupies a broader branching patch and the bottom group has cleared. These occupied-body changes are visible even though band0 remains empty and the overall screen fails."
+  },
+  "seasonalChanges": [
+    {
+      "from": 4500,
+      "to": 5000,
+      "pass": true,
+      "observation": "Not blind: accepted history and numerical outcomes are known. Majority-fed band1 grows its small lower fragments into a dense lower branching cluster. Minority-fed band0 loses almost all of its tall left-side branching mass, leaving a short upper horizontal fragment. This supports the same numerically qualifying growth-and-retreat interval."
+    },
+    {
+      "from": 5000,
+      "to": 5500,
+      "pass": false,
+      "observation": "Not blind: accepted history and numerical outcomes are known. Majority-fed band0 loses its last upper fragment and becomes empty rather than expanding. Band1 also contracts to two small separated groups. Both bands lose tiles, so this interval fails."
+    },
+    {
+      "from": 5500,
+      "to": 6000,
+      "pass": false,
+      "observation": "Not blind: accepted history and numerical outcomes are known. Majority-fed band1 expands its upper group while its bottom group clears. Minority-fed band0 stays empty at both endpoints, so there is no required20-tile retreat; this interval fails despite growth in band1."
+    }
+  ],
+  "reference3000": {
+    "tick": 3000,
+    "observation": "Not blind: accepted history and numerical outcomes are known. The accepted3000 endpoint has multiple groups in both bands and two families. At4500 a broad left-side mass and several right groups remain. The later5500/6000 endpoints are sparse and confined to band1 with one family. This temporal comparison is descriptive, not a simultaneous untreated control."
+  },
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T18:19:08.141535+00:00"
+}

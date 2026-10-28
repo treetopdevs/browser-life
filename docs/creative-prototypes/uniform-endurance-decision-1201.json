@@ -1,0 +1,65 @@
+{
+  "seed": 1201,
+  "artifactSha256": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221",
+  "dataSha256": "12b25a118166c3b0e9270d73b95a013c03c1a8afc7a12328f36fafd6374e496e",
+  "numericalGate": {
+    "aliveAt9000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt9000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "pass": true,
+      "observation": "The upper mint cluster becomes more separated across upper and central areas, while gold bodies form a larger central-right branching group and the lower-right edge grouping disperses."
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "pass": true,
+      "observation": "The central-right gold grouping breaks into separated right-middle, lower-left and bottom groups. Mint shifts to a small left-middle arrangement, opening the upper middle."
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "pass": true,
+      "observation": "Mint now appears near the upper-left and upper-right edges, while gold forms upper-middle and lower-left clusters with a broad central gap. Occupied locations and arrangement change."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "passes-uniform-endurance-screen",
+  "reason": "All numerical and three spatial criteria pass. Stop at9000; no further trials or horizon earned.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "occupiedA": 450,
+      "occupiedB": 543,
+      "sharedTiles": 17,
+      "unionTiles": 976,
+      "jaccard": 0.017418032786885244
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "occupiedA": 543,
+      "occupiedB": 423,
+      "sharedTiles": 21,
+      "unionTiles": 945,
+      "jaccard": 0.022222222222222223
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "occupiedA": 423,
+      "occupiedB": 613,
+      "sharedTiles": 16,
+      "unionTiles": 1020,
+      "jaccard": 0.01568627450980392
+    }
+  ]
+}

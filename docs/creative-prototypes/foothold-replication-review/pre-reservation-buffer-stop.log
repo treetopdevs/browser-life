@@ -1,0 +1,18 @@
+(node:37477) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Alternating-food replication seed 1203 arm structure, provenance, accounting, spatial and seasonal gates, and Markdown passed.
+(node:37735) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Food-band foothold seed 1202 arm structure, provenance, accounting, spatial and seasonal gates, and Markdown passed.
+(node:37901) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///Users/nicholas/.codex/worktrees/foothold-seed-1203/browser-life/tools/food-band-foothold-replication/explore.ts:715
+    try{const status=execFileSync('git',['status','--porcelain','--',path],{encoding:'utf8'});invariant(status.trim()==='',`Refusing outcome with uncommitted input: ${path}`);const committed=execFileSync('git',['show',`HEAD:${path}`],{encoding:'buffer'});invariant(hashBytes(readFileSync(new URL(`../../${path}`,import.meta.url)))===hashBytes(committed),`Working input differs from committed input: ${path}`);}catch(error){if(error instanceof Error&&error.message.startsWith('Refusing outcome'))throw error;throw new Error(`Unable to verify committed input ${path}: ${String(error)}`);}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ^
+
+Error: Unable to verify committed input docs/creative-prototypes/food-band-foothold-seed-1202.json: Error: spawnSync git ENOBUFS
+    at assertCommittedInputs (file:///Users/nicholas/.codex/worktrees/foothold-seed-1203/browser-life/tools/food-band-foothold-replication/explore.ts:715:514)
+    at preflight (file:///Users/nicholas/.codex/worktrees/foothold-seed-1203/browser-life/tools/food-band-foothold-replication/explore.ts:740:50)
+    at file:///Users/nicholas/.codex/worktrees/foothold-seed-1203/browser-life/[eval1]:1:77
+
+Node.js v24.2.0
