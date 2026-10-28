@@ -1,0 +1,13 @@
+{
+  "comparison": "exact parsed JSON equality excluding only sourceSha256",
+  "equal": true,
+  "oldSourceSha256": {
+    "apps/lab/src/development/model.ts": "de9f61e50b7f326ee7a7a08250073da414439857ecb02b7b3ed5c68f06d2091b",
+    "tools/development/explore.ts": "e7409371731b13f096d3249e27bbb08e851319b9ef245eb53d8c7086e27fe103"
+  },
+  "newSourceSha256": {
+    "apps/lab/src/development/model.ts": "49416b11ae8d0491cb9b2ae1f102f36779cd9fe0c72917a7ddf86fbbc63db072",
+    "tools/development/explore.ts": "973ed60dcd48cf96be8cebe04928a7ffea6975937c69f5f3ecb3320ee3905ebc"
+  },
+  "outcomes": 6
+}

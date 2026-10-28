@@ -1,0 +1,14 @@
+{
+  "comparison": "all pre-existing JSON fields equal excluding sourceSha256; only added runs[].physicalHashes omitted from comparison",
+  "equal": true,
+  "addedEvidence": "3001 physical-only SHA-256 values per run for exact divergence receipts",
+  "oldSourceSha256": {
+    "apps/lab/src/matter/model.ts": "e4d0ef43757ceeb01f5437c2e3bee27c1415b998195559a409d540a38f358bea",
+    "tools/matter/explore.ts": "bd3c345f897173e8cdb4ecd70761826bbb0d4a1074758ce024668fffd553150d"
+  },
+  "newSourceSha256": {
+    "apps/lab/src/matter/model.ts": "e4d0ef43757ceeb01f5437c2e3bee27c1415b998195559a409d540a38f358bea",
+    "tools/matter/explore.ts": "2147c75f6c947c9d817976294c1e8322213db8008eebb422c94b83273c330bf6"
+  },
+  "outcomes": 12
+}

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="A local comparison of food supply patterns in an engineered growing-shapes world." />
+  <title>Hungry shapes · Cadence Garden</title>
+</head>
+<body class="hungry-page">
+  <a class="skip" href="#main">Skip to comparison</a>
+  <header class="siteheader"><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Engineered world · local prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Food allocation comparison</p>
+      <h1>When food gets scarce, where can shapes grow?</h1>
+      <p>Three matched worlds share one seed, founders, inherited programs and mutation. They differ only in how renewing food is offered: the original supply, the same scarce budget spread across the map, or concentrated in founder-centered patches.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> bodies, growth, food, reproduction, inheritance and the founder-centered patches are explicit rules. The patches are supplied around known starting locations; they are not discovered niches.</p>
+      <p class="reserve-note">All worlds begin with 20 food units on every tile. Those initial reserves can hide the effect of later scarcity.</p>
+    </section>
+
+    <section class="toolbar" aria-label="Shared comparison controls">
+      <form id="seed-form" class="seed-form">
+        <label for="seed">Shared seed</label>
+        <input id="seed" name="seed" type="text" inputmode="numeric" value="1201" aria-describedby="seed-error" />
+        <button type="submit">Reset comparison</button>
+        <span id="seed-error" role="alert"></span>
+      </form>
+      <div class="transport" aria-label="Playback controls">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="step" type="button">One tick</button>
+        <label for="pace">Pace<select id="pace"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      </div>
+      <div class="clock" aria-live="off"><span>Shared time</span><strong>Tick <span id="tick">0</span> <small>/ 3,000</small></strong><span id="status" role="status" aria-live="polite">Paused · ready</span></div>
+      <div class="toolbar-end"><button id="export" type="button">Download observations</button><span id="file-status" role="status">Includes model provenance and all three observed worlds.</span></div>
+    </section>
+
+    <section class="world-grid" id="worlds" aria-label="Matched food allocation worlds">
+      <article class="world-card" data-mode="original" aria-labelledby="original-title">
+        <header class="world-head"><div><p class="eyebrow">World A</p><h2 id="original-title">Original supply</h2></div><span class="condition">9,216 offered / pulse</span></header>
+        <p class="world-summary">One food unit is offered to every tile every five ticks, subject to the tile ceiling.</p>
+        <canvas class="world-canvas" width="576" height="576" role="img" aria-label="Original supply world. Food backdrop, target area and living body cells.">Canvas is unavailable. Population and accounting remain listed below.</canvas>
+        <div class="canvas-legend"><span><i class="key-family family-1"></i> Family 1</span><span><i class="key-family family-2"></i> Family 2</span><span><i class="key-family family-3"></i> Family 3</span><span><i class="key-target"></i> Food targets</span><span><i class="key-food"></i> Food remaining</span></div>
+        <p class="world-tick">Observed through tick <strong class="observed-tick">0</strong></p>
+        <dl class="world-stats">
+          <div><dt>Living bodies</dt><dd class="population">12</dd></div><div><dt>Occupied cells</dt><dd class="cells">12</dd></div><div><dt>Highest generation</dt><dd class="generation">0</dd></div>
+          <div><dt>Offered</dt><dd class="offered">0</dd></div><div><dt>Accepted</dt><dd class="accepted">0</dd></div><div><dt>Overflow</dt><dd class="overflow">0</dd></div>
+          <div><dt>Starvation deaths</dt><dd class="starvation">0</dd></div><div><dt>Age deaths</dt><dd class="age-deaths">0</dd></div><div><dt>Cap-blocked attempts</dt><dd class="blocked-cap">0</dd></div>
+          <div><dt>Space-blocked attempts</dt><dd class="blocked-space">0</dd></div><div><dt>Ticks at cap 48</dt><dd class="cap-ticks">0 / 3,000</dd></div><div><dt>Ticks at 47–48</dt><dd class="near-cap-ticks">0 / 3,000</dd></div>
+        </dl>
+        <p class="extinction" hidden></p>
+        <section class="history-section"><div class="section-heading"><h3>Population over time</h3><span>family colors · observed ticks only</span></div><canvas class="history-canvas" width="576" height="112" role="img" aria-label="Living body count over observed time, colored by founding family."></canvas></section>
+      </article>
+      <article class="world-card" data-mode="uniform" aria-labelledby="uniform-title">
+        <header class="world-head"><div><p class="eyebrow">World B</p><h2 id="uniform-title">Scarce · spread evenly</h2></div><span class="condition">768 offered / pulse</span></header>
+        <p class="world-summary">The scarce budget is spread across all 9,216 tiles: one offer to 768 targets each pulse.</p>
+        <canvas class="world-canvas" width="576" height="576" role="img" aria-label="Scarce uniform world. Food backdrop, target area and living body cells.">Canvas is unavailable. Population and accounting remain listed below.</canvas>
+        <div class="canvas-legend"><span><i class="key-family family-1"></i> Family 1</span><span><i class="key-family family-2"></i> Family 2</span><span><i class="key-family family-3"></i> Family 3</span><span><i class="key-target"></i> Food targets</span><span><i class="key-food"></i> Food remaining</span></div>
+        <p class="world-tick">Observed through tick <strong class="observed-tick">0</strong></p>
+        <dl class="world-stats">
+          <div><dt>Living bodies</dt><dd class="population">12</dd></div><div><dt>Occupied cells</dt><dd class="cells">12</dd></div><div><dt>Highest generation</dt><dd class="generation">0</dd></div>
+          <div><dt>Offered</dt><dd class="offered">0</dd></div><div><dt>Accepted</dt><dd class="accepted">0</dd></div><div><dt>Overflow</dt><dd class="overflow">0</dd></div>
+          <div><dt>Starvation deaths</dt><dd class="starvation">0</dd></div><div><dt>Age deaths</dt><dd class="age-deaths">0</dd></div><div><dt>Cap-blocked attempts</dt><dd class="blocked-cap">0</dd></div>
+          <div><dt>Space-blocked attempts</dt><dd class="blocked-space">0</dd></div><div><dt>Ticks at cap 48</dt><dd class="cap-ticks">0 / 3,000</dd></div><div><dt>Ticks at 47–48</dt><dd class="near-cap-ticks">0 / 3,000</dd></div>
+        </dl>
+        <p class="extinction" hidden></p>
+        <section class="history-section"><div class="section-heading"><h3>Population over time</h3><span>family colors · observed ticks only</span></div><canvas class="history-canvas" width="576" height="112" role="img" aria-label="Living body count over observed time, colored by founding family."></canvas></section>
+      </article>
+      <article class="world-card" data-mode="patches" aria-labelledby="patches-title">
+        <header class="world-head"><div><p class="eyebrow">World C</p><h2 id="patches-title">Scarce · founder patches</h2></div><span class="condition">768 offered / pulse</span></header>
+        <p class="world-summary">The same scarce budget is offered inside twelve 9 × 9 squares centered on the unchanged founder grid.</p>
+        <canvas class="world-canvas" width="576" height="576" role="img" aria-label="Scarce patches world. Food backdrop, target area and living body cells.">Canvas is unavailable. Population and accounting remain listed below.</canvas>
+        <div class="canvas-legend"><span><i class="key-family family-1"></i> Family 1</span><span><i class="key-family family-2"></i> Family 2</span><span><i class="key-family family-3"></i> Family 3</span><span><i class="key-target"></i> Food targets</span><span><i class="key-food"></i> Food remaining</span></div>
+        <p class="world-tick">Observed through tick <strong class="observed-tick">0</strong></p>
+        <dl class="world-stats">
+          <div><dt>Living bodies</dt><dd class="population">12</dd></div><div><dt>Occupied cells</dt><dd class="cells">12</dd></div><div><dt>Highest generation</dt><dd class="generation">0</dd></div>
+          <div><dt>Offered</dt><dd class="offered">0</dd></div><div><dt>Accepted</dt><dd class="accepted">0</dd></div><div><dt>Overflow</dt><dd class="overflow">0</dd></div>
+          <div><dt>Starvation deaths</dt><dd class="starvation">0</dd></div><div><dt>Age deaths</dt><dd class="age-deaths">0</dd></div><div><dt>Cap-blocked attempts</dt><dd class="blocked-cap">0</dd></div>
+          <div><dt>Space-blocked attempts</dt><dd class="blocked-space">0</dd></div><div><dt>Ticks at cap 48</dt><dd class="cap-ticks">0 / 3,000</dd></div><div><dt>Ticks at 47–48</dt><dd class="near-cap-ticks">0 / 3,000</dd></div>
+        </dl>
+        <p class="extinction" hidden></p>
+        <section class="history-section"><div class="section-heading"><h3>Population over time</h3><span>family colors · observed ticks only</span></div><canvas class="history-canvas" width="576" height="112" role="img" aria-label="Living body count over observed time, colored by founding family."></canvas></section>
+      </article>
+    </section>
+
+    <section class="decision" aria-labelledby="decision-title">
+      <p class="eyebrow">Fixed first-seed result · historical record</p><h2 id="decision-title">Stop after seed 1201.</h2>
+      <p><strong>Original supply:</strong> 48 bodies alive at tick 3,000. <strong>Scarce uniform:</strong> 39 alive at tick 3,000. <strong>Scarce patches:</strong> extinct at tick 2,040, after reaching generation 8.</p>
+      <p>The patch arm did not meet the continuation gate of surviving through tick 3,000. The v1 revision trigger was not met. Decision: no seeds 1202 or 1203, and no v2 food design.</p>
+      <p class="muted">These are fixed seed 1201 results; resetting or advancing the interactive worlds above does not change this historical record.</p>
+      <p>The evidence is in the repository: <code>docs/creative-prototypes/<wbr>hungry-shapes.html</code>. Its companion recording is kept outside git (<code>docs/creative-prototypes/<wbr>ARTIFACTS.md</code>).</p>
+    </section>
+    <section class="explanation"><div><p class="eyebrow">How to read the comparison</p><h2>Supply and allocation are separate ingredients.</h2></div><div><p>The original world offers twelve times as much food per pulse as either scarce world. The scarce uniform arm is a deliberately harsh, spread-out floor; the patch arm concentrates that same scarce budget around known founder sites.</p><p>“Offered” counts attempted food additions. “Accepted” is what fit below the per-tile food ceiling; “overflow” was offered but not accepted. Population and supply stop changing in an extinct world, and each card reports its actual last tick against the shared comparison clock.</p><p class="muted">This is an engineered toy. Living bodies, inherited programs, reproduction, age limits and food targeting are explicit rules. An observed shape or survival difference does not establish adaptation or emergence.</p></div></section>
+  </main>
+  <script type="module" src="/src/hungry-shapes/page.ts"></script>
+</body>
+</html>
