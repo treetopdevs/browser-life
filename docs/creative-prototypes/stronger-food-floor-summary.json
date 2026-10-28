@@ -17254,6 +17254,19 @@
     }
   ],
   "savedSampleRecolonizations": [],
-  "animation": null,
+  "animation": {
+    "url": "stronger-food-floor-media/seed-1202.mp4",
+    "metadataUrl": "stronger-food-floor-media/seed-1202.json",
+    "frames": 198,
+    "fps": 10,
+    "durationSeconds": 19.8,
+    "width": 1384,
+    "height": 968,
+    "sha256": "8b10e5353d54c9eeb6e9a5d428f4f1cee8b1ac325ddf8e16eda44d44d07a15cc",
+    "savedDataOnly": true,
+    "lastNewTick": 3934,
+    "lastHistoricalTick": 3920,
+    "terminalHold": false
+  },
   "summary": "Valid Stop at tick3934: 0 bodies, families0/0/0, 0 programs. Actual extinction at3934; later planned gates were not reached and cannot pass. The3000 gate passed before continuation. One selected seed and exact repeat; no retry/tuning/extra seed. Known floor96 radius8 is historical evidence, not a new control."
 }

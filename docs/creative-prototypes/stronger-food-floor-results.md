@@ -181,3 +181,7 @@ Known floor96 radius8 seed1202 ended6000 with5bodies/onefamily/emptyband; histor
 RawSHAfca948c8e43bdc1b778570bb772a9ad33c11deeffe94f1b6ff6991bdfdf37cec; receiptSHA4f6c97e1447800c6f1b4b803cb25533de9a527dd207d8ebf536354d015e10a54.
 
 [Replay](stronger-food-floor.html) · [Plan](stronger-food-floor-plan.md) · [Validation](stronger-food-floor-validation.md).
+
+## Saved replay delivery
+
+The companion includes a198-frame,19.8-second paired animation through actual extinction3,934. Its final historical frame is3,920, explicitly labeled as the last saved reference state before3,934. Equal659×659 canvases are captured within an outward-rounded1384×968 rectangle containing the complete panels. Exact captureHTML is archived before editorial. Two rejected preflights preceded the first numbered sequence: odd element-screenshot height, then viewport-clipped document coordinates. Both were preserved; reviewed capture-only repairs use an outward-even document rectangle with fullPage:true. One numbered sequence and encoding; no biological retry, interpolation or fabricated6,000 observation. Interactive later reference ages explicitly hold the new actual terminal state.
