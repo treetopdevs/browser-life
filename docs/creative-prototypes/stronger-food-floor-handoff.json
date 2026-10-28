@@ -1,9 +1,11 @@
 {
-  "status": "implementing, no attempt",
+  "status": "same live worlds paused3000, gate review pending",
   "branch": "codex/stronger-food-floor",
   "base": "8767d3cf64f370732edae4d5c8382250312c4b06",
   "planCommit": "39d0e44e",
-  "attemptCount": 0,
+  "attemptCount": 1,
   "outcomeCount": 0,
-  "next": "Pure validation, independent source review/commit before sole attempt. Radius8 floor192 seed1202 gated3000 then6000 only if earned. No PR/push/merge/deploy."
+  "next": "Review/commit exact gate receipt before3001. Do not restart. No PR/push/merge/deploy.",
+  "sourceCommit": "1caa04c7",
+  "runId": "20261028T115018Z-92888"
 }
