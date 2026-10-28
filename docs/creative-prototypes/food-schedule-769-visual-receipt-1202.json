@@ -1,0 +1,33 @@
+{
+  "seed": 1202,
+  "planSha256": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+  "artifactSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+  "ownChange": {
+    "from": 5500,
+    "to": 6000,
+    "pass": true,
+    "observation": "Not blind: several separated band-0 groups at 5500 collapse to a single small lower-left cluster at 6000. This is visible occupied-body change, but not a qualifying seasonal growth-and-retreat pattern."
+  },
+  "seasonalChanges": [
+    {
+      "from": 4500,
+      "to": 5000,
+      "pass": false,
+      "observation": "Not blind: the majority band 1 is empty at both 4500 and 5000. Band 0 loses its dense upper and lower masses and is reduced to two smaller middle-left groups. There is no majority expansion, so this interval fails."
+    },
+    {
+      "from": 5000,
+      "to": 5500,
+      "pass": false,
+      "observation": "Not blind: band 0 changes from two middle groups at 5000 to several separated upper, middle and lower structures at 5500. Although the majority band gains tiles, band 1 remains empty and cannot supply the required minority retreat. This interval fails."
+    },
+    {
+      "from": 5500,
+      "to": 6000,
+      "pass": false,
+      "observation": "Not blind: the upper and middle band-0 structures at 5500 disappear, leaving a small lower-left group at 6000. Majority band 1 stays empty, so this interval fails."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T21:46:49.515536+00:00"
+}

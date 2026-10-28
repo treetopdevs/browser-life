@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "kind": "moving-food-replication-summary",
+  "planSha256": "72f651acc7f221991b0ce89f7264eed9dd47df54e955d3d164406b4d0a17cc47",
+  "newSeedsRun": [
+    1202,
+    1203
+  ],
+  "newSeedsPassed": 2,
+  "historicalSeed": {
+    "seed": 1201,
+    "rerun": false,
+    "indexSha256": "5f2ca66cb2d0bd39c0c017c4372381032746a0ba14076ecef71d8df079cccc57",
+    "status": "promising"
+  },
+  "descriptiveCombinedPassed": 3,
+  "descriptiveCombinedTotal": 3,
+  "outcome": "Screen repeats in both new seeds; retain as a promising prototype. Stop at3000.",
+  "visualReceiptCommit": "5cd6094a",
+  "seeds": [
+    {
+      "seed": 1202,
+      "decision": "promising",
+      "indexSha256": "858bee65662722783add7f051d8014b1f57e2223269e682afe3e01d443b7db55",
+      "visualReceiptSha256": "21f554e0d21b0dab0a9aa8ce74caedab8d07e3c97a5c0c1b329831578e72f66e",
+      "arms": [
+        {
+          "mode": "uniform",
+          "rawSha256": "008c047b984c55236dc8fcec27f39083cd028e7790f8eaa1b963ca88bc5cce9f",
+          "dataSha256": "c9d662b408789d572f80def545acf9925e205011c2ac5046b95022b6634e7cde",
+          "finalTick": 3000,
+          "population": 41,
+          "familyCounts": [
+            19,
+            22,
+            0
+          ],
+          "distinctPrograms": 17,
+          "maxEverGeneration": 15,
+          "environment": {
+            "version": 1,
+            "mode": "uniform",
+            "pulseBudget": 768,
+            "targetCount": 9216,
+            "pulses": 600,
+            "offered": 460800,
+            "accepted": 317285,
+            "overflow": 143515,
+            "initialFoodPerTile": 20
+          },
+          "numericalGate": {
+            "aliveAt3000": true,
+            "atLeastTwoFamiliesAt3000": true,
+            "allWindowsReached": true,
+            "eachNewWindowHasBirthsAndDeaths": true,
+            "eachNewWindowCap48AtMost99": true,
+            "numericalPass": true,
+            "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+          }
+        },
+        {
+          "mode": "moving-band",
+          "rawSha256": "183d90f551dcaf6c29ab4f397bba52d93365c22ad3315787423a49926a792a83",
+          "dataSha256": "3d68bf6611f5b89466f8f0ef5080526f110a914c0c5816d64863e9132d30c68c",
+          "finalTick": 3000,
+          "population": 38,
+          "familyCounts": [
+            3,
+            9,
+            26
+          ],
+          "distinctPrograms": 10,
+          "maxEverGeneration": 13,
+          "environment": {
+            "version": 1,
+            "mode": "moving-band",
+            "pulseBudget": 768,
+            "targetCount": 4608,
+            "pulses": 600,
+            "offered": 460800,
+            "accepted": 304428,
+            "overflow": 156372,
+            "initialFoodPerTile": 20,
+            "bandLeft": 60,
+            "bandWidth": 48
+          },
+          "numericalGate": {
+            "aliveAt3000": true,
+            "atLeastTwoFamiliesAt3000": true,
+            "allWindowsReached": true,
+            "eachNewWindowHasBirthsAndDeaths": true,
+            "eachNewWindowCap48AtMost99": true,
+            "numericalPass": true,
+            "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1203,
+      "decision": "promising",
+      "indexSha256": "44e02b3416e40cdde5318c1fecea2dd54bda8f9543df97c006aabc29dc24ce16",
+      "visualReceiptSha256": "6f66fd615d7944c98fed93da1122255101ac042c5381488080601e46ab2030b7",
+      "arms": [
+        {
+          "mode": "uniform",
+          "rawSha256": "11b6ec8dd59de3fdd2e2447674b13e9409cf8cc1af04e69d8b2d3c90eea8e761",
+          "dataSha256": "20049ecada2006718dc10e9aab7e7e239a0680bbb560d12ac10ac6bfcff474e5",
+          "finalTick": 3000,
+          "population": 35,
+          "familyCounts": [
+            11,
+            5,
+            19
+          ],
+          "distinctPrograms": 14,
+          "maxEverGeneration": 15,
+          "environment": {
+            "version": 1,
+            "mode": "uniform",
+            "pulseBudget": 768,
+            "targetCount": 9216,
+            "pulses": 600,
+            "offered": 460800,
+            "accepted": 320330,
+            "overflow": 140470,
+            "initialFoodPerTile": 20
+          },
+          "numericalGate": {
+            "aliveAt3000": true,
+            "atLeastTwoFamiliesAt3000": true,
+            "allWindowsReached": true,
+            "eachNewWindowHasBirthsAndDeaths": true,
+            "eachNewWindowCap48AtMost99": true,
+            "numericalPass": true,
+            "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+          }
+        },
+        {
+          "mode": "moving-band",
+          "rawSha256": "8ce7be228812002e2d03a2f68a15b9d1107e6fff022006ae9059003bb66e0c9b",
+          "dataSha256": "eb8a0985950d5de4450b1a911bd602761644a3adb96a9bd8265c5fd1e5af572e",
+          "finalTick": 3000,
+          "population": 40,
+          "familyCounts": [
+            0,
+            33,
+            7
+          ],
+          "distinctPrograms": 15,
+          "maxEverGeneration": 13,
+          "environment": {
+            "version": 1,
+            "mode": "moving-band",
+            "pulseBudget": 768,
+            "targetCount": 4608,
+            "pulses": 600,
+            "offered": 460800,
+            "accepted": 292017,
+            "overflow": 168783,
+            "initialFoodPerTile": 20,
+            "bandLeft": 60,
+            "bandWidth": 48
+          },
+          "numericalGate": {
+            "aliveAt3000": true,
+            "atLeastTwoFamiliesAt3000": true,
+            "allWindowsReached": true,
+            "eachNewWindowHasBirthsAndDeaths": true,
+            "eachNewWindowCap48AtMost99": true,
+            "numericalPass": true,
+            "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+          }
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Unblinded subjective novelty screen",
+    "No stationary-band control",
+    "Lower accepted food in both moving arms",
+    "No superiority, robustness, adaptation or open-ended evolution claim"
+  ],
+  "nextProposal": "One-seed moving versus stationary broad-band comparison, same3000 horizon, separate reviewed plan; not run."
+}

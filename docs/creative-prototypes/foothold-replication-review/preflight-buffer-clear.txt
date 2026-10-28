@@ -1,0 +1,5 @@
+**CLEAR — no blockers in the supplied narrow repair.**
+
+The replacement compares Git blob identities without buffering large blob contents, removing the reported ENOBUFS cause. Retained whole-file SHA256 checks preserve exact-byte verification; the supplied launcher still requires clean committed inputs.
+
+Review used only supplied text. Tests, typecheck, and absence of reservations are reported facts, not reviewer-executed checks.

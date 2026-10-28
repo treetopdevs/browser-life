@@ -1,0 +1,31 @@
+{
+  "artifact": "seed-1201-paired.mp4",
+  "artifactSha256": "8bb48bb21b65e71509d091ad6cc395a50944f794ca5878b5fde20f7b377880d8",
+  "capture": {
+    "method": "Screenshots of the actual paired viewer world panels; no simulation or interpolation",
+    "viewerUrl": "http://localhost:5418/docs/creative-prototypes/moving-food.html",
+    "viewerRegion": ".paired-worlds",
+    "seed": 1201,
+    "firstActualTick": 0,
+    "lastActualTick": 3000,
+    "cadenceTicks": 20,
+    "frameCount": 151,
+    "playbackFramesPerSecond": 10,
+    "recordedTicksPerSecond": 200,
+    "durationSeconds": 15.1,
+    "sourceScreenshotSize": "1304x1110",
+    "encodedVideoSize": "1304x1110",
+    "encoding": "H.264, yuv420p, CRF 30"
+  },
+  "sourceSha256": {
+    "uniformArmRawFile": "1ae6bdc3c9f5bedd2b6f6cfb70aa9dc94e8acb8177f4c2ecda9c2859bf1e4458",
+    "uniformArmData": "30775b3db7278244157b03e55769c5189ddd72b62e5fa98973385e5f31bc577d",
+    "movingBandArmRawFile": "46017d1db1eaf1ff85b8cc51d92533d928aeac18b3e7cf261a82bb9d0d0816bf",
+    "movingBandArmData": "d72aca82bdce496b59fcc8f6e10d1576a3b91b6e3931a209c1af0640c93f61c8",
+    "viewerJavaScript": "3617546c562b702edb1eade34436de5c307e3d7704582c0a0c22d698e46753eb",
+    "viewerCss": "40822e80358612ca13831f4e1e2e58cdcc847b45a02d5dcea9a1b09a61ebe0c7",
+    "model": "b7aa0a3f1a0183d574e152e16b7f12c24fc0c9a201e7ddfae6d576915f10d8b0",
+    "runner": "b77c58eca007727beeca81b1a797978a8ddfbacaa4d3192a094164bf868df63a"
+  },
+  "verification": "Both raw arm files were verified by the paired viewer. Each slider position was checked against both actual-tick labels before capture."
+}

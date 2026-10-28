@@ -1,0 +1,52 @@
+{
+  "seed": 1203,
+  "planSha256": "0786ea89b9cfa99470d64de2856a7372b821ae5ce2572cb80bb8c222ce03e1fd",
+  "baselineArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+  "alternatingArtifactSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+  "alternatingChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: the historical reference and numerical outcome are known. The broad middle-left branching group at 2500 clears to two small separated fragments by 3000. The diagonal central-right arrangement breaks into smaller upper and lower groups with larger open gaps. These are occupied-body changes, not just food or color changes."
+  },
+  "seasonalChanges": [
+    {
+      "from": 1500,
+      "to": 2000,
+      "pass": true,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Majority-fed band1 expands its small upper cluster into a wide dense upper branching mass, and its lower scattered bodies become a dense lower cluster. Minority-fed band0 loses the upper-left lattice and most lower-left bodies, leaving sparse middle-left fragments."
+    },
+    {
+      "from": 2000,
+      "to": 2500,
+      "pass": true,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Majority-fed band0 expands its sparse middle-left fragments into a broad branching group spanning the central-left region. Minority-fed band1 clears the large upper mass almost entirely, leaving an open upper region and smaller central and lower groups."
+    },
+    {
+      "from": 2500,
+      "to": 3000,
+      "pass": false,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Band0 clears most of its central-left branching group. Band1 also loses occupied structure: the broad diagonal central-right group contracts into separated smaller clusters. Both bands retreat overall; this does not show the required majority-band expansion."
+    }
+  ],
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Historical alternating has large upper-left and bottom-left lattices and small lower band1 clusters. The food-floor world has a compact upper-left lattice, a lower-left cluster and a distinct upper band1 group."
+    },
+    {
+      "tick": 2000,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Both worlds have sparse left-side bodies and substantial band1 structure. Historical alternating has denser lower band1 branching; the food-floor world has its largest mass in upper band1 with a smaller lower cluster."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Historical alternating is sparse, with small separated bodies in both bands. The food-floor world retains a broad central-left group and diagonal central-right branching bodies."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Historical alternating has tall upper band1 branching and a lower band1 network, plus several left groups. The food-floor world is sparser on the left and has separated central-right clusters. This is a descriptive difference, not general superiority."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T16:58:21.122750+00:00"
+}

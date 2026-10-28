@@ -1,0 +1,11 @@
+**Clear for the pre-outcome implementation commit. No concrete blockers found.**
+
+- Diagnostics now requires exact `{tick, observation}` keys, matching the viewer. The corresponding test supplies an extra field and expects rejection. [Check](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tools/food-band-longevity-replication-diagnostics.mjs:66), [test](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tools/test/food-band-longevity-replication-diagnostics.test.ts:198).
+- The viewer checks generation immediately after `response.json()`. The new browser test delays body completion until seed 1203 is displayed, then checks status and absence of stale arm requests. [Guard](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/docs/creative-prototypes/food-band-longevity-replication-viewer.js:727), [test](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tests/e2e/food-band-longevity-replication.spec.ts:245).
+- Completed-arm disclosure includes the full numerical gate, windows, census, environment, identity and hash, and is emitted before the next arm starts. Its test uses synthetic data without producing outcomes. [Disclosure](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tools/food-band-longevity-replication/explore.ts:421), [ordering](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tools/food-band-longevity-replication/explore.ts:701), [test](/Users/nicholas/.codex/worktrees/food-band-longevity-replication/browser-life/tools/test/food-band-longevity-replication-evidence.test.ts:159).
+
+The viewer’s runner pin matches disk: `19f90040a7b2…`. The logging helper records intent before launch and preserves combined stdout/stderr. The separate successful check-only after 1202 and before 1203 remains parent-enforced.
+
+Execution remains pending; no attempts ledger exists. Parent should commit all reviewed implementation before any `--write`.
+
+Six pertinent inspections; no edits, tests, simulations, overlap diagnostics, or unfinished own-review reads.

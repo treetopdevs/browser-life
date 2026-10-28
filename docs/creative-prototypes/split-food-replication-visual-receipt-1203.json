@@ -1,0 +1,28 @@
+{
+  "seed": 1203,
+  "planSha256": "0858e5292d1a9949d1dfd53479519a518fbbe5b849363e577a7e630a0ece384d",
+  "baselineArtifactSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+  "splitArtifactSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+  "splitChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: the historical baseline and numerical outcome are known. Between the split body-only frames at 2500 and 3000, the compact upper-middle/right group becomes a wider branching group nearer the upper edge. The dense lower-left group clears, while the lower-middle/right bodies form a much longer vertical branching cluster. These changes affect occupied tiles and open gaps, not just colors or food outlines."
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical contiguous world has broad left-half clusters and lower-left branches; the split world has occupied groups near both feeding bands, including upper and lower groups right of center."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical contiguous world forms a long middle-left branching arrangement; the split world has separated upper-middle/right and lower-left groups with broad gaps between them."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical contiguous world retains upper-left and lower-left branching groups. The split world has a large upper-middle/right group and a long lower-middle/right branch, plus smaller left-edge groups. This is descriptive, not a superiority test."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T07:01:22.448751+00:00"
+}

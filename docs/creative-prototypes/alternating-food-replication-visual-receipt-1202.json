@@ -1,0 +1,52 @@
+{
+  "seed": 1202,
+  "planSha256": "2070ef956ca73855e9b032a7cbaa5e53e594dddaa9ed82f84f72c49256f5c743",
+  "baselineArtifactSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+  "alternatingArtifactSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+  "alternatingChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: the historical baseline and numerical outcome are known. The upper-left branching cluster at 2500 clears and is replaced by a smaller cluster farther down the left edge at 3000. The dense lower-left lattice breaks into separated short lower clusters and small edge fragments. These are occupied-body and gap changes; band1 remains empty."
+  },
+  "seasonalChanges": [
+    {
+      "from": 1500,
+      "to": 2000,
+      "pass": false,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The dense vertical belt of branching bodies in band0 largely clears, leaving small upper-left and lower-left fragments. Fed band1 is empty at both endpoints and shows no expansion. The numerical growth/retreat block fails."
+    },
+    {
+      "from": 2000,
+      "to": 2500,
+      "pass": false,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Fed band0 expands from small upper and lower fragments into a wider upper branching cluster and a compact lower lattice. Band1 remains empty, so there is no required retreat from that band and the numerical block fails."
+    },
+    {
+      "from": 2500,
+      "to": 3000,
+      "pass": false,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Band0 loses much of its upper cluster and lower lattice, leaving smaller separated bodies. Fed band1 remains empty, so the required growth is absent and the numerical block fails."
+    }
+  ],
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical static world has separated upper and lower clusters in both bands. The alternating world forms a dense belt near the left edge with sparse wrapped-edge fragments, while band1 is empty."
+    },
+    {
+      "tick": 2000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical static world retains substantial clusters in both bands, including a lower band1 branching group. The alternating world has only small upper-left and lower-left fragments and no band1 bodies."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical static world has upper and lower occupied clusters in band1 and smaller left-side groups. The alternating world has an upper branching group and lower compact lattice in band0; band1 remains empty."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. The historical static world has multiple clusters across both bands. The alternating world has sparse left-side upper and lower fragments plus wrapped-edge cells; band1 is still empty. This is descriptive comparison, not evidence of general superiority."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T14:04:44.556742+00:00"
+}

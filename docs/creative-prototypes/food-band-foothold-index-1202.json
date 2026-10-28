@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-band-foothold-pair",
+  "seed": 1202,
+  "planSha256": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27",
+  "arms": {
+    "baseline": {
+      "kind": "hungry-shapes-alternating-food-replication-arm",
+      "mode": "alternating-band",
+      "url": "alternating-food-replication-seed-1202.json",
+      "rawSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+      "dataSha256": "7ceae251dc216935c5dc72dad091958ec4d2d8d84ef9ea1610fa50745a86fec6"
+    },
+    "alternating": {
+      "kind": "hungry-shapes-food-band-foothold-arm",
+      "mode": "foothold-band",
+      "url": "food-band-foothold-seed-1202.json",
+      "rawSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+      "dataSha256": "f815bdbeb3e9fc5fdb4b27ebaad87486f5011fde1e06e3e39842a89b739fe0c4"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "Promising for this one seed:34 bodies, families15/0/19, both bands occupied at both final checkpoints, all3 late growth/retreat blocks pass numerical and manual review. Historical alternating1202 was Stop. No claim of adaptation or general superiority; stop after this outcome.",
+    "baselineArtifactSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+    "alternatingArtifactSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+    "visualReceiptUrl": "food-band-foothold-visual-receipt-1202.json",
+    "visualReceiptSha256": "cb5238846041a7e2c471b8ef7858b69871d0c80eaacef37e8d9f8232b628a39d"
+  }
+}

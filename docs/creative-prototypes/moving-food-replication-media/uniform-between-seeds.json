@@ -1,0 +1,25 @@
+{
+  "kind": "saved-frame-reference",
+  "ticks": [
+    1500,
+    2500,
+    3000
+  ],
+  "seeds": [
+    1202,
+    1203
+  ],
+  "description": "Uniform baseline1202 vs1203 occupied cells only; no new simulations. Illustrates ordinary between-seed variation, not a new gate.",
+  "sources": [
+    {
+      "seed": 1202,
+      "rawSha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602"
+    },
+    {
+      "seed": 1203,
+      "rawSha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d"
+    }
+  ],
+  "imageSha256": "c6eacd5a5a7c0808274f0425dcece2df9db1cc3bb8689634f8d4f9bcbe173bc2",
+  "renderer": "Occupied tile at x=tile%96,y=floor(tile/96); family color from frame.organisms by organism ID; no food or outline overlay."
+}

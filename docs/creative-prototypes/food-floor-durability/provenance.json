@@ -1,0 +1,48 @@
+{
+  "analysisDate": "2026-10-28",
+  "analysisType": "Retrospective descriptive comparison; no trajectories generated",
+  "evidenceBaseCommit": "9085497e1561606d6209f42a7df43f05d165e0c7",
+  "sources": [
+    {
+      "seed": 1203,
+      "sourceCommit": "5022964538ebdc7c29963abd7a708eb87c1dee7c",
+      "path": "docs/creative-prototypes/food-floor-longevity-seed-1203.json",
+      "sha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+      "kind": "hungry-shapes-food-floor-longevity-arm",
+      "internalDataSha256": "74cdc92b5cb64b2450f239edcc437768f75c6b46959556d14990cf2d45c4dd6a"
+    },
+    {
+      "seed": 1202,
+      "sourceCommit": "9085497e1561606d6209f42a7df43f05d165e0c7",
+      "path": "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json",
+      "sha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+      "kind": "hungry-shapes-food-floor-longevity-replication-arm",
+      "internalDataSha256": "89479f5352fe09628fd2314d785e67ca540873c0f766c0a7d0206f5127975315"
+    }
+  ],
+  "tables": [
+    {
+      "path": "aligned-ticks.csv",
+      "sha256": "7c3b856f1a6ca3c1382b75cafc872a4604cf70491571dadcc19a9b7b57616e51",
+      "dataRows": 12002
+    },
+    {
+      "path": "aligned-500-tick-windows.csv",
+      "sha256": "f63664421896409897587610f7d4c46f2ee23e2d4dcf8bfa0409c0fcedb18c8a",
+      "dataRows": 24
+    }
+  ],
+  "definitions": {
+    "alignment": "Sort by tick or interval endpoint, then numeric seed. Include accepted historical prefix through 3000; only ticks 3001-6000 are continuation evidence.",
+    "population": "tickRows.population each executed tick; tick zero from samples[0].census.population",
+    "family_counts_and_families": "samples.census.familyCounts in family index order mint/gold/lilac, slash-separated",
+    "band_occupancy": "Count saved frame.cells entries whose linear tile index modulo 96 is 0..23 or 48..71 inclusive. Occupied body tiles, not body counts.",
+    "food_remaining": "Sum decoded unsigned bytes of frames.foodBase64; whole-world food stock.",
+    "window_population": "Minimum, arithmetic mean, maximum and final population over inclusive from..to (500 executed ticks).",
+    "accepted_and_overflow": "Difference of cumulative samples.environment.accepted/overflow at interval endpoints. Each interval offers 76800; accepted is deposition, not uptake.",
+    "missing_values": "Empty CSV fields are unsampled. Family, occupancy and food are saved every 20 ticks. No interpolation.",
+    "repeat": "Independently initialized exact repeats verify reproducibility, not additional independent samples.",
+    "recommendations": "Future metrics are recommendations only; frozen conclusions and stopping rules unchanged."
+  },
+  "validation": "Every CSV field recomputed from immutable committed JSON; sample/frame census and state digest identities, family counts, all 26 snapshot food/occupancy endpoints, existing six-tail-window summaries, source artifact SHA256 bindings, and zero cap48/positive births/deaths in each continuation window checked. No model import or stepping."
+}

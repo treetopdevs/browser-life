@@ -1,0 +1,1516 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-alternating-food-paired-video",
+  "seed": 1203,
+  "timeline": {
+    "ticks": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000,
+      1020,
+      1040,
+      1060,
+      1080,
+      1100,
+      1120,
+      1140,
+      1160,
+      1180,
+      1200,
+      1220,
+      1240,
+      1260,
+      1280,
+      1300,
+      1320,
+      1340,
+      1360,
+      1380,
+      1400,
+      1420,
+      1440,
+      1460,
+      1480,
+      1500,
+      1520,
+      1540,
+      1560,
+      1580,
+      1600,
+      1620,
+      1640,
+      1660,
+      1680,
+      1700,
+      1720,
+      1740,
+      1760,
+      1780,
+      1800,
+      1820,
+      1840,
+      1860,
+      1880,
+      1900,
+      1920,
+      1940,
+      1960,
+      1980,
+      2000,
+      2020,
+      2040,
+      2060,
+      2080,
+      2100,
+      2120,
+      2140,
+      2160,
+      2180,
+      2200,
+      2220,
+      2240,
+      2260,
+      2280,
+      2300,
+      2320,
+      2340,
+      2360,
+      2380,
+      2400,
+      2420,
+      2440,
+      2460,
+      2480,
+      2500,
+      2520,
+      2540,
+      2560,
+      2580,
+      2600,
+      2620,
+      2640,
+      2660,
+      2680,
+      2700,
+      2720,
+      2740,
+      2760,
+      2780,
+      2800,
+      2820,
+      2840,
+      2860,
+      2880,
+      2900,
+      2920,
+      2940,
+      2960,
+      2980,
+      3000
+    ],
+    "frameCount": 151,
+    "fps": 10,
+    "interpolation": false,
+    "modelSimulation": false,
+    "terminalTicks": {
+      "baseline": 3000,
+      "alternating": 3000
+    },
+    "labels": [
+      {
+        "timelineTick": 0,
+        "baselineActualTick": 0,
+        "alternatingActualTick": 0,
+        "baselineLabel": "Tick 0 · saved",
+        "alternatingLabel": "Tick 0 · saved",
+        "activeBand": "Band 0 · columns 0–23 · before first pulse"
+      },
+      {
+        "timelineTick": 20,
+        "baselineActualTick": 20,
+        "alternatingActualTick": 20,
+        "baselineLabel": "Tick 20 · saved",
+        "alternatingLabel": "Tick 20 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 20"
+      },
+      {
+        "timelineTick": 40,
+        "baselineActualTick": 40,
+        "alternatingActualTick": 40,
+        "baselineLabel": "Tick 40 · saved",
+        "alternatingLabel": "Tick 40 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 40"
+      },
+      {
+        "timelineTick": 60,
+        "baselineActualTick": 60,
+        "alternatingActualTick": 60,
+        "baselineLabel": "Tick 60 · saved",
+        "alternatingLabel": "Tick 60 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 60"
+      },
+      {
+        "timelineTick": 80,
+        "baselineActualTick": 80,
+        "alternatingActualTick": 80,
+        "baselineLabel": "Tick 80 · saved",
+        "alternatingLabel": "Tick 80 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 80"
+      },
+      {
+        "timelineTick": 100,
+        "baselineActualTick": 100,
+        "alternatingActualTick": 100,
+        "baselineLabel": "Tick 100 · saved",
+        "alternatingLabel": "Tick 100 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 100"
+      },
+      {
+        "timelineTick": 120,
+        "baselineActualTick": 120,
+        "alternatingActualTick": 120,
+        "baselineLabel": "Tick 120 · saved",
+        "alternatingLabel": "Tick 120 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 120"
+      },
+      {
+        "timelineTick": 140,
+        "baselineActualTick": 140,
+        "alternatingActualTick": 140,
+        "baselineLabel": "Tick 140 · saved",
+        "alternatingLabel": "Tick 140 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 140"
+      },
+      {
+        "timelineTick": 160,
+        "baselineActualTick": 160,
+        "alternatingActualTick": 160,
+        "baselineLabel": "Tick 160 · saved",
+        "alternatingLabel": "Tick 160 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 160"
+      },
+      {
+        "timelineTick": 180,
+        "baselineActualTick": 180,
+        "alternatingActualTick": 180,
+        "baselineLabel": "Tick 180 · saved",
+        "alternatingLabel": "Tick 180 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 180"
+      },
+      {
+        "timelineTick": 200,
+        "baselineActualTick": 200,
+        "alternatingActualTick": 200,
+        "baselineLabel": "Tick 200 · saved",
+        "alternatingLabel": "Tick 200 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 200"
+      },
+      {
+        "timelineTick": 220,
+        "baselineActualTick": 220,
+        "alternatingActualTick": 220,
+        "baselineLabel": "Tick 220 · saved",
+        "alternatingLabel": "Tick 220 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 220"
+      },
+      {
+        "timelineTick": 240,
+        "baselineActualTick": 240,
+        "alternatingActualTick": 240,
+        "baselineLabel": "Tick 240 · saved",
+        "alternatingLabel": "Tick 240 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 240"
+      },
+      {
+        "timelineTick": 260,
+        "baselineActualTick": 260,
+        "alternatingActualTick": 260,
+        "baselineLabel": "Tick 260 · saved",
+        "alternatingLabel": "Tick 260 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 260"
+      },
+      {
+        "timelineTick": 280,
+        "baselineActualTick": 280,
+        "alternatingActualTick": 280,
+        "baselineLabel": "Tick 280 · saved",
+        "alternatingLabel": "Tick 280 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 280"
+      },
+      {
+        "timelineTick": 300,
+        "baselineActualTick": 300,
+        "alternatingActualTick": 300,
+        "baselineLabel": "Tick 300 · saved",
+        "alternatingLabel": "Tick 300 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 300"
+      },
+      {
+        "timelineTick": 320,
+        "baselineActualTick": 320,
+        "alternatingActualTick": 320,
+        "baselineLabel": "Tick 320 · saved",
+        "alternatingLabel": "Tick 320 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 320"
+      },
+      {
+        "timelineTick": 340,
+        "baselineActualTick": 340,
+        "alternatingActualTick": 340,
+        "baselineLabel": "Tick 340 · saved",
+        "alternatingLabel": "Tick 340 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 340"
+      },
+      {
+        "timelineTick": 360,
+        "baselineActualTick": 360,
+        "alternatingActualTick": 360,
+        "baselineLabel": "Tick 360 · saved",
+        "alternatingLabel": "Tick 360 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 360"
+      },
+      {
+        "timelineTick": 380,
+        "baselineActualTick": 380,
+        "alternatingActualTick": 380,
+        "baselineLabel": "Tick 380 · saved",
+        "alternatingLabel": "Tick 380 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 380"
+      },
+      {
+        "timelineTick": 400,
+        "baselineActualTick": 400,
+        "alternatingActualTick": 400,
+        "baselineLabel": "Tick 400 · saved",
+        "alternatingLabel": "Tick 400 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 400"
+      },
+      {
+        "timelineTick": 420,
+        "baselineActualTick": 420,
+        "alternatingActualTick": 420,
+        "baselineLabel": "Tick 420 · saved",
+        "alternatingLabel": "Tick 420 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 420"
+      },
+      {
+        "timelineTick": 440,
+        "baselineActualTick": 440,
+        "alternatingActualTick": 440,
+        "baselineLabel": "Tick 440 · saved",
+        "alternatingLabel": "Tick 440 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 440"
+      },
+      {
+        "timelineTick": 460,
+        "baselineActualTick": 460,
+        "alternatingActualTick": 460,
+        "baselineLabel": "Tick 460 · saved",
+        "alternatingLabel": "Tick 460 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 460"
+      },
+      {
+        "timelineTick": 480,
+        "baselineActualTick": 480,
+        "alternatingActualTick": 480,
+        "baselineLabel": "Tick 480 · saved",
+        "alternatingLabel": "Tick 480 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 480"
+      },
+      {
+        "timelineTick": 500,
+        "baselineActualTick": 500,
+        "alternatingActualTick": 500,
+        "baselineLabel": "Tick 500 · saved",
+        "alternatingLabel": "Tick 500 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 500"
+      },
+      {
+        "timelineTick": 520,
+        "baselineActualTick": 520,
+        "alternatingActualTick": 520,
+        "baselineLabel": "Tick 520 · saved",
+        "alternatingLabel": "Tick 520 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 520"
+      },
+      {
+        "timelineTick": 540,
+        "baselineActualTick": 540,
+        "alternatingActualTick": 540,
+        "baselineLabel": "Tick 540 · saved",
+        "alternatingLabel": "Tick 540 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 540"
+      },
+      {
+        "timelineTick": 560,
+        "baselineActualTick": 560,
+        "alternatingActualTick": 560,
+        "baselineLabel": "Tick 560 · saved",
+        "alternatingLabel": "Tick 560 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 560"
+      },
+      {
+        "timelineTick": 580,
+        "baselineActualTick": 580,
+        "alternatingActualTick": 580,
+        "baselineLabel": "Tick 580 · saved",
+        "alternatingLabel": "Tick 580 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 580"
+      },
+      {
+        "timelineTick": 600,
+        "baselineActualTick": 600,
+        "alternatingActualTick": 600,
+        "baselineLabel": "Tick 600 · saved",
+        "alternatingLabel": "Tick 600 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 600"
+      },
+      {
+        "timelineTick": 620,
+        "baselineActualTick": 620,
+        "alternatingActualTick": 620,
+        "baselineLabel": "Tick 620 · saved",
+        "alternatingLabel": "Tick 620 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 620"
+      },
+      {
+        "timelineTick": 640,
+        "baselineActualTick": 640,
+        "alternatingActualTick": 640,
+        "baselineLabel": "Tick 640 · saved",
+        "alternatingLabel": "Tick 640 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 640"
+      },
+      {
+        "timelineTick": 660,
+        "baselineActualTick": 660,
+        "alternatingActualTick": 660,
+        "baselineLabel": "Tick 660 · saved",
+        "alternatingLabel": "Tick 660 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 660"
+      },
+      {
+        "timelineTick": 680,
+        "baselineActualTick": 680,
+        "alternatingActualTick": 680,
+        "baselineLabel": "Tick 680 · saved",
+        "alternatingLabel": "Tick 680 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 680"
+      },
+      {
+        "timelineTick": 700,
+        "baselineActualTick": 700,
+        "alternatingActualTick": 700,
+        "baselineLabel": "Tick 700 · saved",
+        "alternatingLabel": "Tick 700 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 700"
+      },
+      {
+        "timelineTick": 720,
+        "baselineActualTick": 720,
+        "alternatingActualTick": 720,
+        "baselineLabel": "Tick 720 · saved",
+        "alternatingLabel": "Tick 720 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 720"
+      },
+      {
+        "timelineTick": 740,
+        "baselineActualTick": 740,
+        "alternatingActualTick": 740,
+        "baselineLabel": "Tick 740 · saved",
+        "alternatingLabel": "Tick 740 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 740"
+      },
+      {
+        "timelineTick": 760,
+        "baselineActualTick": 760,
+        "alternatingActualTick": 760,
+        "baselineLabel": "Tick 760 · saved",
+        "alternatingLabel": "Tick 760 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 760"
+      },
+      {
+        "timelineTick": 780,
+        "baselineActualTick": 780,
+        "alternatingActualTick": 780,
+        "baselineLabel": "Tick 780 · saved",
+        "alternatingLabel": "Tick 780 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 780"
+      },
+      {
+        "timelineTick": 800,
+        "baselineActualTick": 800,
+        "alternatingActualTick": 800,
+        "baselineLabel": "Tick 800 · saved",
+        "alternatingLabel": "Tick 800 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 800"
+      },
+      {
+        "timelineTick": 820,
+        "baselineActualTick": 820,
+        "alternatingActualTick": 820,
+        "baselineLabel": "Tick 820 · saved",
+        "alternatingLabel": "Tick 820 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 820"
+      },
+      {
+        "timelineTick": 840,
+        "baselineActualTick": 840,
+        "alternatingActualTick": 840,
+        "baselineLabel": "Tick 840 · saved",
+        "alternatingLabel": "Tick 840 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 840"
+      },
+      {
+        "timelineTick": 860,
+        "baselineActualTick": 860,
+        "alternatingActualTick": 860,
+        "baselineLabel": "Tick 860 · saved",
+        "alternatingLabel": "Tick 860 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 860"
+      },
+      {
+        "timelineTick": 880,
+        "baselineActualTick": 880,
+        "alternatingActualTick": 880,
+        "baselineLabel": "Tick 880 · saved",
+        "alternatingLabel": "Tick 880 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 880"
+      },
+      {
+        "timelineTick": 900,
+        "baselineActualTick": 900,
+        "alternatingActualTick": 900,
+        "baselineLabel": "Tick 900 · saved",
+        "alternatingLabel": "Tick 900 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 900"
+      },
+      {
+        "timelineTick": 920,
+        "baselineActualTick": 920,
+        "alternatingActualTick": 920,
+        "baselineLabel": "Tick 920 · saved",
+        "alternatingLabel": "Tick 920 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 920"
+      },
+      {
+        "timelineTick": 940,
+        "baselineActualTick": 940,
+        "alternatingActualTick": 940,
+        "baselineLabel": "Tick 940 · saved",
+        "alternatingLabel": "Tick 940 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 940"
+      },
+      {
+        "timelineTick": 960,
+        "baselineActualTick": 960,
+        "alternatingActualTick": 960,
+        "baselineLabel": "Tick 960 · saved",
+        "alternatingLabel": "Tick 960 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 960"
+      },
+      {
+        "timelineTick": 980,
+        "baselineActualTick": 980,
+        "alternatingActualTick": 980,
+        "baselineLabel": "Tick 980 · saved",
+        "alternatingLabel": "Tick 980 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 980"
+      },
+      {
+        "timelineTick": 1000,
+        "baselineActualTick": 1000,
+        "alternatingActualTick": 1000,
+        "baselineLabel": "Tick 1,000 · saved",
+        "alternatingLabel": "Tick 1,000 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,000"
+      },
+      {
+        "timelineTick": 1020,
+        "baselineActualTick": 1020,
+        "alternatingActualTick": 1020,
+        "baselineLabel": "Tick 1,020 · saved",
+        "alternatingLabel": "Tick 1,020 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,020"
+      },
+      {
+        "timelineTick": 1040,
+        "baselineActualTick": 1040,
+        "alternatingActualTick": 1040,
+        "baselineLabel": "Tick 1,040 · saved",
+        "alternatingLabel": "Tick 1,040 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,040"
+      },
+      {
+        "timelineTick": 1060,
+        "baselineActualTick": 1060,
+        "alternatingActualTick": 1060,
+        "baselineLabel": "Tick 1,060 · saved",
+        "alternatingLabel": "Tick 1,060 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,060"
+      },
+      {
+        "timelineTick": 1080,
+        "baselineActualTick": 1080,
+        "alternatingActualTick": 1080,
+        "baselineLabel": "Tick 1,080 · saved",
+        "alternatingLabel": "Tick 1,080 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,080"
+      },
+      {
+        "timelineTick": 1100,
+        "baselineActualTick": 1100,
+        "alternatingActualTick": 1100,
+        "baselineLabel": "Tick 1,100 · saved",
+        "alternatingLabel": "Tick 1,100 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,100"
+      },
+      {
+        "timelineTick": 1120,
+        "baselineActualTick": 1120,
+        "alternatingActualTick": 1120,
+        "baselineLabel": "Tick 1,120 · saved",
+        "alternatingLabel": "Tick 1,120 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,120"
+      },
+      {
+        "timelineTick": 1140,
+        "baselineActualTick": 1140,
+        "alternatingActualTick": 1140,
+        "baselineLabel": "Tick 1,140 · saved",
+        "alternatingLabel": "Tick 1,140 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,140"
+      },
+      {
+        "timelineTick": 1160,
+        "baselineActualTick": 1160,
+        "alternatingActualTick": 1160,
+        "baselineLabel": "Tick 1,160 · saved",
+        "alternatingLabel": "Tick 1,160 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,160"
+      },
+      {
+        "timelineTick": 1180,
+        "baselineActualTick": 1180,
+        "alternatingActualTick": 1180,
+        "baselineLabel": "Tick 1,180 · saved",
+        "alternatingLabel": "Tick 1,180 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,180"
+      },
+      {
+        "timelineTick": 1200,
+        "baselineActualTick": 1200,
+        "alternatingActualTick": 1200,
+        "baselineLabel": "Tick 1,200 · saved",
+        "alternatingLabel": "Tick 1,200 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,200"
+      },
+      {
+        "timelineTick": 1220,
+        "baselineActualTick": 1220,
+        "alternatingActualTick": 1220,
+        "baselineLabel": "Tick 1,220 · saved",
+        "alternatingLabel": "Tick 1,220 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,220"
+      },
+      {
+        "timelineTick": 1240,
+        "baselineActualTick": 1240,
+        "alternatingActualTick": 1240,
+        "baselineLabel": "Tick 1,240 · saved",
+        "alternatingLabel": "Tick 1,240 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,240"
+      },
+      {
+        "timelineTick": 1260,
+        "baselineActualTick": 1260,
+        "alternatingActualTick": 1260,
+        "baselineLabel": "Tick 1,260 · saved",
+        "alternatingLabel": "Tick 1,260 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,260"
+      },
+      {
+        "timelineTick": 1280,
+        "baselineActualTick": 1280,
+        "alternatingActualTick": 1280,
+        "baselineLabel": "Tick 1,280 · saved",
+        "alternatingLabel": "Tick 1,280 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,280"
+      },
+      {
+        "timelineTick": 1300,
+        "baselineActualTick": 1300,
+        "alternatingActualTick": 1300,
+        "baselineLabel": "Tick 1,300 · saved",
+        "alternatingLabel": "Tick 1,300 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,300"
+      },
+      {
+        "timelineTick": 1320,
+        "baselineActualTick": 1320,
+        "alternatingActualTick": 1320,
+        "baselineLabel": "Tick 1,320 · saved",
+        "alternatingLabel": "Tick 1,320 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,320"
+      },
+      {
+        "timelineTick": 1340,
+        "baselineActualTick": 1340,
+        "alternatingActualTick": 1340,
+        "baselineLabel": "Tick 1,340 · saved",
+        "alternatingLabel": "Tick 1,340 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,340"
+      },
+      {
+        "timelineTick": 1360,
+        "baselineActualTick": 1360,
+        "alternatingActualTick": 1360,
+        "baselineLabel": "Tick 1,360 · saved",
+        "alternatingLabel": "Tick 1,360 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,360"
+      },
+      {
+        "timelineTick": 1380,
+        "baselineActualTick": 1380,
+        "alternatingActualTick": 1380,
+        "baselineLabel": "Tick 1,380 · saved",
+        "alternatingLabel": "Tick 1,380 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,380"
+      },
+      {
+        "timelineTick": 1400,
+        "baselineActualTick": 1400,
+        "alternatingActualTick": 1400,
+        "baselineLabel": "Tick 1,400 · saved",
+        "alternatingLabel": "Tick 1,400 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,400"
+      },
+      {
+        "timelineTick": 1420,
+        "baselineActualTick": 1420,
+        "alternatingActualTick": 1420,
+        "baselineLabel": "Tick 1,420 · saved",
+        "alternatingLabel": "Tick 1,420 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,420"
+      },
+      {
+        "timelineTick": 1440,
+        "baselineActualTick": 1440,
+        "alternatingActualTick": 1440,
+        "baselineLabel": "Tick 1,440 · saved",
+        "alternatingLabel": "Tick 1,440 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,440"
+      },
+      {
+        "timelineTick": 1460,
+        "baselineActualTick": 1460,
+        "alternatingActualTick": 1460,
+        "baselineLabel": "Tick 1,460 · saved",
+        "alternatingLabel": "Tick 1,460 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,460"
+      },
+      {
+        "timelineTick": 1480,
+        "baselineActualTick": 1480,
+        "alternatingActualTick": 1480,
+        "baselineLabel": "Tick 1,480 · saved",
+        "alternatingLabel": "Tick 1,480 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,480"
+      },
+      {
+        "timelineTick": 1500,
+        "baselineActualTick": 1500,
+        "alternatingActualTick": 1500,
+        "baselineLabel": "Tick 1,500 · saved",
+        "alternatingLabel": "Tick 1,500 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,500"
+      },
+      {
+        "timelineTick": 1520,
+        "baselineActualTick": 1520,
+        "alternatingActualTick": 1520,
+        "baselineLabel": "Tick 1,520 · saved",
+        "alternatingLabel": "Tick 1,520 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,520"
+      },
+      {
+        "timelineTick": 1540,
+        "baselineActualTick": 1540,
+        "alternatingActualTick": 1540,
+        "baselineLabel": "Tick 1,540 · saved",
+        "alternatingLabel": "Tick 1,540 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,540"
+      },
+      {
+        "timelineTick": 1560,
+        "baselineActualTick": 1560,
+        "alternatingActualTick": 1560,
+        "baselineLabel": "Tick 1,560 · saved",
+        "alternatingLabel": "Tick 1,560 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,560"
+      },
+      {
+        "timelineTick": 1580,
+        "baselineActualTick": 1580,
+        "alternatingActualTick": 1580,
+        "baselineLabel": "Tick 1,580 · saved",
+        "alternatingLabel": "Tick 1,580 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,580"
+      },
+      {
+        "timelineTick": 1600,
+        "baselineActualTick": 1600,
+        "alternatingActualTick": 1600,
+        "baselineLabel": "Tick 1,600 · saved",
+        "alternatingLabel": "Tick 1,600 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,600"
+      },
+      {
+        "timelineTick": 1620,
+        "baselineActualTick": 1620,
+        "alternatingActualTick": 1620,
+        "baselineLabel": "Tick 1,620 · saved",
+        "alternatingLabel": "Tick 1,620 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,620"
+      },
+      {
+        "timelineTick": 1640,
+        "baselineActualTick": 1640,
+        "alternatingActualTick": 1640,
+        "baselineLabel": "Tick 1,640 · saved",
+        "alternatingLabel": "Tick 1,640 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,640"
+      },
+      {
+        "timelineTick": 1660,
+        "baselineActualTick": 1660,
+        "alternatingActualTick": 1660,
+        "baselineLabel": "Tick 1,660 · saved",
+        "alternatingLabel": "Tick 1,660 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,660"
+      },
+      {
+        "timelineTick": 1680,
+        "baselineActualTick": 1680,
+        "alternatingActualTick": 1680,
+        "baselineLabel": "Tick 1,680 · saved",
+        "alternatingLabel": "Tick 1,680 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,680"
+      },
+      {
+        "timelineTick": 1700,
+        "baselineActualTick": 1700,
+        "alternatingActualTick": 1700,
+        "baselineLabel": "Tick 1,700 · saved",
+        "alternatingLabel": "Tick 1,700 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,700"
+      },
+      {
+        "timelineTick": 1720,
+        "baselineActualTick": 1720,
+        "alternatingActualTick": 1720,
+        "baselineLabel": "Tick 1,720 · saved",
+        "alternatingLabel": "Tick 1,720 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,720"
+      },
+      {
+        "timelineTick": 1740,
+        "baselineActualTick": 1740,
+        "alternatingActualTick": 1740,
+        "baselineLabel": "Tick 1,740 · saved",
+        "alternatingLabel": "Tick 1,740 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,740"
+      },
+      {
+        "timelineTick": 1760,
+        "baselineActualTick": 1760,
+        "alternatingActualTick": 1760,
+        "baselineLabel": "Tick 1,760 · saved",
+        "alternatingLabel": "Tick 1,760 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,760"
+      },
+      {
+        "timelineTick": 1780,
+        "baselineActualTick": 1780,
+        "alternatingActualTick": 1780,
+        "baselineLabel": "Tick 1,780 · saved",
+        "alternatingLabel": "Tick 1,780 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,780"
+      },
+      {
+        "timelineTick": 1800,
+        "baselineActualTick": 1800,
+        "alternatingActualTick": 1800,
+        "baselineLabel": "Tick 1,800 · saved",
+        "alternatingLabel": "Tick 1,800 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,800"
+      },
+      {
+        "timelineTick": 1820,
+        "baselineActualTick": 1820,
+        "alternatingActualTick": 1820,
+        "baselineLabel": "Tick 1,820 · saved",
+        "alternatingLabel": "Tick 1,820 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,820"
+      },
+      {
+        "timelineTick": 1840,
+        "baselineActualTick": 1840,
+        "alternatingActualTick": 1840,
+        "baselineLabel": "Tick 1,840 · saved",
+        "alternatingLabel": "Tick 1,840 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,840"
+      },
+      {
+        "timelineTick": 1860,
+        "baselineActualTick": 1860,
+        "alternatingActualTick": 1860,
+        "baselineLabel": "Tick 1,860 · saved",
+        "alternatingLabel": "Tick 1,860 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,860"
+      },
+      {
+        "timelineTick": 1880,
+        "baselineActualTick": 1880,
+        "alternatingActualTick": 1880,
+        "baselineLabel": "Tick 1,880 · saved",
+        "alternatingLabel": "Tick 1,880 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,880"
+      },
+      {
+        "timelineTick": 1900,
+        "baselineActualTick": 1900,
+        "alternatingActualTick": 1900,
+        "baselineLabel": "Tick 1,900 · saved",
+        "alternatingLabel": "Tick 1,900 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,900"
+      },
+      {
+        "timelineTick": 1920,
+        "baselineActualTick": 1920,
+        "alternatingActualTick": 1920,
+        "baselineLabel": "Tick 1,920 · saved",
+        "alternatingLabel": "Tick 1,920 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,920"
+      },
+      {
+        "timelineTick": 1940,
+        "baselineActualTick": 1940,
+        "alternatingActualTick": 1940,
+        "baselineLabel": "Tick 1,940 · saved",
+        "alternatingLabel": "Tick 1,940 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,940"
+      },
+      {
+        "timelineTick": 1960,
+        "baselineActualTick": 1960,
+        "alternatingActualTick": 1960,
+        "baselineLabel": "Tick 1,960 · saved",
+        "alternatingLabel": "Tick 1,960 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,960"
+      },
+      {
+        "timelineTick": 1980,
+        "baselineActualTick": 1980,
+        "alternatingActualTick": 1980,
+        "baselineLabel": "Tick 1,980 · saved",
+        "alternatingLabel": "Tick 1,980 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,980"
+      },
+      {
+        "timelineTick": 2000,
+        "baselineActualTick": 2000,
+        "alternatingActualTick": 2000,
+        "baselineLabel": "Tick 2,000 · saved",
+        "alternatingLabel": "Tick 2,000 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,000"
+      },
+      {
+        "timelineTick": 2020,
+        "baselineActualTick": 2020,
+        "alternatingActualTick": 2020,
+        "baselineLabel": "Tick 2,020 · saved",
+        "alternatingLabel": "Tick 2,020 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,020"
+      },
+      {
+        "timelineTick": 2040,
+        "baselineActualTick": 2040,
+        "alternatingActualTick": 2040,
+        "baselineLabel": "Tick 2,040 · saved",
+        "alternatingLabel": "Tick 2,040 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,040"
+      },
+      {
+        "timelineTick": 2060,
+        "baselineActualTick": 2060,
+        "alternatingActualTick": 2060,
+        "baselineLabel": "Tick 2,060 · saved",
+        "alternatingLabel": "Tick 2,060 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,060"
+      },
+      {
+        "timelineTick": 2080,
+        "baselineActualTick": 2080,
+        "alternatingActualTick": 2080,
+        "baselineLabel": "Tick 2,080 · saved",
+        "alternatingLabel": "Tick 2,080 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,080"
+      },
+      {
+        "timelineTick": 2100,
+        "baselineActualTick": 2100,
+        "alternatingActualTick": 2100,
+        "baselineLabel": "Tick 2,100 · saved",
+        "alternatingLabel": "Tick 2,100 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,100"
+      },
+      {
+        "timelineTick": 2120,
+        "baselineActualTick": 2120,
+        "alternatingActualTick": 2120,
+        "baselineLabel": "Tick 2,120 · saved",
+        "alternatingLabel": "Tick 2,120 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,120"
+      },
+      {
+        "timelineTick": 2140,
+        "baselineActualTick": 2140,
+        "alternatingActualTick": 2140,
+        "baselineLabel": "Tick 2,140 · saved",
+        "alternatingLabel": "Tick 2,140 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,140"
+      },
+      {
+        "timelineTick": 2160,
+        "baselineActualTick": 2160,
+        "alternatingActualTick": 2160,
+        "baselineLabel": "Tick 2,160 · saved",
+        "alternatingLabel": "Tick 2,160 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,160"
+      },
+      {
+        "timelineTick": 2180,
+        "baselineActualTick": 2180,
+        "alternatingActualTick": 2180,
+        "baselineLabel": "Tick 2,180 · saved",
+        "alternatingLabel": "Tick 2,180 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,180"
+      },
+      {
+        "timelineTick": 2200,
+        "baselineActualTick": 2200,
+        "alternatingActualTick": 2200,
+        "baselineLabel": "Tick 2,200 · saved",
+        "alternatingLabel": "Tick 2,200 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,200"
+      },
+      {
+        "timelineTick": 2220,
+        "baselineActualTick": 2220,
+        "alternatingActualTick": 2220,
+        "baselineLabel": "Tick 2,220 · saved",
+        "alternatingLabel": "Tick 2,220 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,220"
+      },
+      {
+        "timelineTick": 2240,
+        "baselineActualTick": 2240,
+        "alternatingActualTick": 2240,
+        "baselineLabel": "Tick 2,240 · saved",
+        "alternatingLabel": "Tick 2,240 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,240"
+      },
+      {
+        "timelineTick": 2260,
+        "baselineActualTick": 2260,
+        "alternatingActualTick": 2260,
+        "baselineLabel": "Tick 2,260 · saved",
+        "alternatingLabel": "Tick 2,260 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,260"
+      },
+      {
+        "timelineTick": 2280,
+        "baselineActualTick": 2280,
+        "alternatingActualTick": 2280,
+        "baselineLabel": "Tick 2,280 · saved",
+        "alternatingLabel": "Tick 2,280 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,280"
+      },
+      {
+        "timelineTick": 2300,
+        "baselineActualTick": 2300,
+        "alternatingActualTick": 2300,
+        "baselineLabel": "Tick 2,300 · saved",
+        "alternatingLabel": "Tick 2,300 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,300"
+      },
+      {
+        "timelineTick": 2320,
+        "baselineActualTick": 2320,
+        "alternatingActualTick": 2320,
+        "baselineLabel": "Tick 2,320 · saved",
+        "alternatingLabel": "Tick 2,320 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,320"
+      },
+      {
+        "timelineTick": 2340,
+        "baselineActualTick": 2340,
+        "alternatingActualTick": 2340,
+        "baselineLabel": "Tick 2,340 · saved",
+        "alternatingLabel": "Tick 2,340 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,340"
+      },
+      {
+        "timelineTick": 2360,
+        "baselineActualTick": 2360,
+        "alternatingActualTick": 2360,
+        "baselineLabel": "Tick 2,360 · saved",
+        "alternatingLabel": "Tick 2,360 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,360"
+      },
+      {
+        "timelineTick": 2380,
+        "baselineActualTick": 2380,
+        "alternatingActualTick": 2380,
+        "baselineLabel": "Tick 2,380 · saved",
+        "alternatingLabel": "Tick 2,380 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,380"
+      },
+      {
+        "timelineTick": 2400,
+        "baselineActualTick": 2400,
+        "alternatingActualTick": 2400,
+        "baselineLabel": "Tick 2,400 · saved",
+        "alternatingLabel": "Tick 2,400 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,400"
+      },
+      {
+        "timelineTick": 2420,
+        "baselineActualTick": 2420,
+        "alternatingActualTick": 2420,
+        "baselineLabel": "Tick 2,420 · saved",
+        "alternatingLabel": "Tick 2,420 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,420"
+      },
+      {
+        "timelineTick": 2440,
+        "baselineActualTick": 2440,
+        "alternatingActualTick": 2440,
+        "baselineLabel": "Tick 2,440 · saved",
+        "alternatingLabel": "Tick 2,440 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,440"
+      },
+      {
+        "timelineTick": 2460,
+        "baselineActualTick": 2460,
+        "alternatingActualTick": 2460,
+        "baselineLabel": "Tick 2,460 · saved",
+        "alternatingLabel": "Tick 2,460 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,460"
+      },
+      {
+        "timelineTick": 2480,
+        "baselineActualTick": 2480,
+        "alternatingActualTick": 2480,
+        "baselineLabel": "Tick 2,480 · saved",
+        "alternatingLabel": "Tick 2,480 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,480"
+      },
+      {
+        "timelineTick": 2500,
+        "baselineActualTick": 2500,
+        "alternatingActualTick": 2500,
+        "baselineLabel": "Tick 2,500 · saved",
+        "alternatingLabel": "Tick 2,500 · saved",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,500"
+      },
+      {
+        "timelineTick": 2520,
+        "baselineActualTick": 2520,
+        "alternatingActualTick": 2520,
+        "baselineLabel": "Tick 2,520 · saved",
+        "alternatingLabel": "Tick 2,520 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,520"
+      },
+      {
+        "timelineTick": 2540,
+        "baselineActualTick": 2540,
+        "alternatingActualTick": 2540,
+        "baselineLabel": "Tick 2,540 · saved",
+        "alternatingLabel": "Tick 2,540 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,540"
+      },
+      {
+        "timelineTick": 2560,
+        "baselineActualTick": 2560,
+        "alternatingActualTick": 2560,
+        "baselineLabel": "Tick 2,560 · saved",
+        "alternatingLabel": "Tick 2,560 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,560"
+      },
+      {
+        "timelineTick": 2580,
+        "baselineActualTick": 2580,
+        "alternatingActualTick": 2580,
+        "baselineLabel": "Tick 2,580 · saved",
+        "alternatingLabel": "Tick 2,580 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,580"
+      },
+      {
+        "timelineTick": 2600,
+        "baselineActualTick": 2600,
+        "alternatingActualTick": 2600,
+        "baselineLabel": "Tick 2,600 · saved",
+        "alternatingLabel": "Tick 2,600 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,600"
+      },
+      {
+        "timelineTick": 2620,
+        "baselineActualTick": 2620,
+        "alternatingActualTick": 2620,
+        "baselineLabel": "Tick 2,620 · saved",
+        "alternatingLabel": "Tick 2,620 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,620"
+      },
+      {
+        "timelineTick": 2640,
+        "baselineActualTick": 2640,
+        "alternatingActualTick": 2640,
+        "baselineLabel": "Tick 2,640 · saved",
+        "alternatingLabel": "Tick 2,640 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,640"
+      },
+      {
+        "timelineTick": 2660,
+        "baselineActualTick": 2660,
+        "alternatingActualTick": 2660,
+        "baselineLabel": "Tick 2,660 · saved",
+        "alternatingLabel": "Tick 2,660 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,660"
+      },
+      {
+        "timelineTick": 2680,
+        "baselineActualTick": 2680,
+        "alternatingActualTick": 2680,
+        "baselineLabel": "Tick 2,680 · saved",
+        "alternatingLabel": "Tick 2,680 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,680"
+      },
+      {
+        "timelineTick": 2700,
+        "baselineActualTick": 2700,
+        "alternatingActualTick": 2700,
+        "baselineLabel": "Tick 2,700 · saved",
+        "alternatingLabel": "Tick 2,700 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,700"
+      },
+      {
+        "timelineTick": 2720,
+        "baselineActualTick": 2720,
+        "alternatingActualTick": 2720,
+        "baselineLabel": "Tick 2,720 · saved",
+        "alternatingLabel": "Tick 2,720 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,720"
+      },
+      {
+        "timelineTick": 2740,
+        "baselineActualTick": 2740,
+        "alternatingActualTick": 2740,
+        "baselineLabel": "Tick 2,740 · saved",
+        "alternatingLabel": "Tick 2,740 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,740"
+      },
+      {
+        "timelineTick": 2760,
+        "baselineActualTick": 2760,
+        "alternatingActualTick": 2760,
+        "baselineLabel": "Tick 2,760 · saved",
+        "alternatingLabel": "Tick 2,760 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,760"
+      },
+      {
+        "timelineTick": 2780,
+        "baselineActualTick": 2780,
+        "alternatingActualTick": 2780,
+        "baselineLabel": "Tick 2,780 · saved",
+        "alternatingLabel": "Tick 2,780 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,780"
+      },
+      {
+        "timelineTick": 2800,
+        "baselineActualTick": 2800,
+        "alternatingActualTick": 2800,
+        "baselineLabel": "Tick 2,800 · saved",
+        "alternatingLabel": "Tick 2,800 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,800"
+      },
+      {
+        "timelineTick": 2820,
+        "baselineActualTick": 2820,
+        "alternatingActualTick": 2820,
+        "baselineLabel": "Tick 2,820 · saved",
+        "alternatingLabel": "Tick 2,820 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,820"
+      },
+      {
+        "timelineTick": 2840,
+        "baselineActualTick": 2840,
+        "alternatingActualTick": 2840,
+        "baselineLabel": "Tick 2,840 · saved",
+        "alternatingLabel": "Tick 2,840 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,840"
+      },
+      {
+        "timelineTick": 2860,
+        "baselineActualTick": 2860,
+        "alternatingActualTick": 2860,
+        "baselineLabel": "Tick 2,860 · saved",
+        "alternatingLabel": "Tick 2,860 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,860"
+      },
+      {
+        "timelineTick": 2880,
+        "baselineActualTick": 2880,
+        "alternatingActualTick": 2880,
+        "baselineLabel": "Tick 2,880 · saved",
+        "alternatingLabel": "Tick 2,880 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,880"
+      },
+      {
+        "timelineTick": 2900,
+        "baselineActualTick": 2900,
+        "alternatingActualTick": 2900,
+        "baselineLabel": "Tick 2,900 · saved",
+        "alternatingLabel": "Tick 2,900 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,900"
+      },
+      {
+        "timelineTick": 2920,
+        "baselineActualTick": 2920,
+        "alternatingActualTick": 2920,
+        "baselineLabel": "Tick 2,920 · saved",
+        "alternatingLabel": "Tick 2,920 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,920"
+      },
+      {
+        "timelineTick": 2940,
+        "baselineActualTick": 2940,
+        "alternatingActualTick": 2940,
+        "baselineLabel": "Tick 2,940 · saved",
+        "alternatingLabel": "Tick 2,940 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,940"
+      },
+      {
+        "timelineTick": 2960,
+        "baselineActualTick": 2960,
+        "alternatingActualTick": 2960,
+        "baselineLabel": "Tick 2,960 · saved",
+        "alternatingLabel": "Tick 2,960 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,960"
+      },
+      {
+        "timelineTick": 2980,
+        "baselineActualTick": 2980,
+        "alternatingActualTick": 2980,
+        "baselineLabel": "Tick 2,980 · saved",
+        "alternatingLabel": "Tick 2,980 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,980"
+      },
+      {
+        "timelineTick": 3000,
+        "baselineActualTick": 3000,
+        "alternatingActualTick": 3000,
+        "baselineLabel": "Tick 3,000 · saved",
+        "alternatingLabel": "Tick 3,000 · saved",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 3,000"
+      }
+    ]
+  },
+  "playback": {
+    "durationSeconds": 15.1,
+    "frameCount": 151,
+    "frameRate": "10/1",
+    "width": 1384,
+    "height": 988,
+    "fullDecodeVerified": true
+  },
+  "artifact": {
+    "path": "docs/creative-prototypes/alternating-food-media/seed-1203-paired.mp4",
+    "sha256": "0780f2a12e847f4195195b0e9b3f4a92acbd7907fba205da43e9f3ddf5eb926b"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/alternating-food-plan.md",
+      "sha256": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8"
+    },
+    "model": {
+      "path": "apps/lab/src/alternating-food/model.ts",
+      "sha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31"
+    },
+    "runner": {
+      "path": "tools/alternating-food/explore.ts",
+      "sha256": "6a172232d875eaff523bc729c24026a3166818dab58f4d494d25ea3d343a769a"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/alternating-food.js",
+      "sha256": "5d2428e7b4b9a4026f0105292354d36b06c5b89006cc59a485f770694ddd3f85"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/alternating-food.css",
+      "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/alternating-food-media/capture-viewer.html",
+      "sha256": "dd5485d6100d19cba66884941987f2325621620811f7b10ad7c4b29bc07b0709",
+      "originalServedPath": "docs/creative-prototypes/alternating-food.html",
+      "note": "Exact committed pre-editorial HTML bytes served for the original screenshot attempt, preserved separately as source provenance. The live page may receive a later results editorial; this snapshot identifies the captured version."
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/split-food-replication-seed-1203.json",
+      "rawSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+      "dataSha256": "d9e546968191c29d35d4e096cc891d0576d68531870643d6f44e144ced35e343"
+    },
+    "alternating": {
+      "path": "docs/creative-prototypes/alternating-food-seed-1203.json",
+      "rawSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/split-food-replication-index-1203.json",
+      "rawSha256": "591ebadc051f55f7d8eeb774b9fab4694b820f814f719696029ad900fcde01f3"
+    },
+    "pairIndex": {
+      "path": "docs/creative-prototypes/alternating-food-index-1203.json",
+      "rawSha256": "aa6979c401989913ab5b6f69aa7db0e778ca493dbaf1f6261b529da33ae26915"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/split-food-replication-validation.md",
+      "sha256": "22800cadbd42548600909444065853854fd68062a8a636201f2bc415a43a9461"
+    },
+    "receipt": {
+      "path": "docs/creative-prototypes/alternating-food-visual-receipt-1203.json",
+      "rawSha256": "a8e246ce1d6290c07325292a9651a9283b487df60da47e57432416976010a22b"
+    }
+  },
+  "capture": {
+    "url": null,
+    "urlUnavailableNote": "The first capture used an ephemeral loopback port that was not persisted; exact committed HTML and its SHA-256 are preserved.",
+    "viewport": {
+      "width": 1760,
+      "height": 1320
+    },
+    "region": ".worlds",
+    "sourceSha256": "dd5485d6100d19cba66884941987f2325621620811f7b10ad7c4b29bc07b0709",
+    "firstFramePngSha256": "859e2c8a39009f5b65bd122818bf037c247ee5f5154bc78356606eee342790e5",
+    "screenshotSourceSize": {
+      "width": 1384,
+      "height": 967
+    },
+    "screenshotSourceSizes": [
+      {
+        "width": 1384,
+        "height": 967,
+        "count": 1
+      },
+      {
+        "width": 1384,
+        "height": 988,
+        "count": 150
+      }
+    ],
+    "browser": "Chrome",
+    "savedFramesOnly": true,
+    "livePageMayLaterIncludeResultsEditorial": true
+  },
+  "encodingRetry": {
+    "retry": 1,
+    "failedAttemptPath": "runs/alternating-food/capture-attempt-01/seed-1203-paired.mp4",
+    "failedAttemptSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceFramesPath": "runs/alternating-food/capture-attempt-01/video-frames",
+    "sourceFrameCount": 151,
+    "sourceFrameSizeVariants": [
+      {
+        "width": 1384,
+        "height": 967,
+        "count": 1
+      },
+      {
+        "width": 1384,
+        "height": 988,
+        "count": 150
+      }
+    ],
+    "adjustment": {
+      "method": "pad",
+      "placement": "bottom",
+      "addedPixelsBySourceHeight": [
+        {
+          "width": 1384,
+          "height": 967,
+          "count": 1,
+          "addedPixels": 21
+        },
+        {
+          "width": 1384,
+          "height": 988,
+          "count": 150,
+          "addedPixels": 0
+        }
+      ],
+      "reason": "The first 1384×967 screenshot had odd height and was shorter than the remaining frames. Frames were padded to one even 1384×988 canvas for H.264 yuv420p."
+    },
+    "outputFrameSize": {
+      "width": 1384,
+      "height": 988
+    }
+  }
+}

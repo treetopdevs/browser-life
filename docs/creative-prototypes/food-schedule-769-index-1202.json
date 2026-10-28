@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-schedule-769-manifest",
+  "seed": 1202,
+  "planSha256": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+  "arm": {
+    "kind": "hungry-shapes-food-schedule-769-arm",
+    "mode": "schedule-769",
+    "url": "food-schedule-769-seed-1202.json",
+    "rawSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+    "dataSha256": "ffa8cd2c9ab820e5524f874afae874800694b47d0526a84688e7ad7e71e03840"
+  },
+  "historical": {
+    "url": "food-floor-longevity-replication-seed-1202.json",
+    "rawSha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "dataSha256": "89479f5352fe09628fd2314d785e67ca540873c0f766c0a7d0206f5127975315"
+  },
+  "decision": {
+    "status": "stop",
+    "summary": "Valid Stop at tick 6000: 5 bodies, families 0/5/0, 1 program. The 3,000-tick gate passed before continuation; 0 late seasonal intervals qualify numerically. One selected seed and exact repeat; no retry, tuning, extra seed or automatic extension. Historical unchanged floor is known evidence, not a new control.",
+    "artifactSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+    "visualReceiptUrl": "food-schedule-769-visual-receipt-1202.json",
+    "visualReceiptSha256": "e48e66bfac8396ac32d3afd4b0a0ca0df5c83699404c766c9eecb5b2a989f02e"
+  }
+}
