@@ -1,0 +1,164 @@
+# Builds the coordinator image from Dockerfile.coordinator on a Linux runner and tests that exact image started the way
+# compose.dokploy.yaml deploys it: default command, the Compose-resolved environment with synthetic secrets generated in
+# this run, two named volumes, no source mounted (tools/test/coordinator-image.test.ts). Then two damaged-image canaries
+# must each fail one named assertion. Nothing is pushed or deployed and no repository secret is used. Sibling of
+# site-image.yml, which it deliberately does not touch. See "Coordinator image gate" in deploy/README.md.
+name: coordinator-image
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coordinator-image-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  coordinator-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      # Labels every container, volume and image this run creates, so the last step can remove exactly those.
+      BL_COORDINATOR_IMAGE_CI_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The action itself runs on Node 24; the tests and verifiers use Node 22, as the site gate does.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Prepare scratch directory
+        run: |
+          set -euo pipefail
+          scratch="$RUNNER_TEMP/bl-coordinator-image-$BL_COORDINATOR_IMAGE_CI_RUN"
+          mkdir -p "$scratch"
+          echo "BL_SCRATCH=$scratch" >> "$GITHUB_ENV"
+          echo "TMPDIR=$scratch" >> "$GITHUB_ENV"
+
+      - name: Require Docker and Docker Compose
+        run: |
+          set -euo pipefail
+          docker version
+          docker compose version
+
+      - name: Install pnpm and dependencies
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.14.0 --activate
+          node --version
+          pnpm --version
+          pnpm install --frozen-lockfile
+
+      # Synthetic, per run, masked in the log. They exist only to start the image; nothing real is read.
+      - name: Generate synthetic secrets
+        run: |
+          set -euo pipefail
+          for pair in BL_TEST_SECRET_KEY_BASE:64 BL_TEST_ADMIN_TOKEN:32 BL_TEST_JOIN_TOKEN:32; do
+            name="${pair%%:*}"
+            value="$(openssl rand -hex "${pair##*:}")"
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+          done
+
+      - name: Build the coordinator image
+        run: |
+          set -euo pipefail
+          docker build --pull --file Dockerfile.coordinator \
+            --iidfile "$BL_SCRATCH/coordinator.iid" \
+            --tag "bl-coordinator-image:$BL_COORDINATOR_IMAGE_CI_RUN" \
+            --label "bl.coordinator-image.ci=$BL_COORDINATOR_IMAGE_CI_RUN" .
+          iid="$(cat "$BL_SCRATCH/coordinator.iid")"
+          if ! [[ "$iid" =~ ^sha256:[0-9a-f]{64}$ ]]; then echo "unexpected image ID: $iid"; exit 1; fi
+          echo "Built coordinator image ID (tested by this ID, not by tag): $iid"
+          for base in elixir:1.18.4-otp-27 elixir:1.18.4-otp-27-slim denoland/deno:bin-2.9.7; do
+            docker image inspect --format "base $base: {{json .RepoDigests}}" "$base" \
+              || echo "::warning::could not read the digest of $base"
+          done
+
+      - name: Test the coordinator image, started as deployed
+        env:
+          BL_REQUIRE_COORDINATOR_IMAGE: "1"
+        run: |
+          set -euo pipefail
+          BL_COORDINATOR_IMAGE="$(cat "$BL_SCRATCH/coordinator.iid")"
+          export BL_COORDINATOR_IMAGE
+          pnpm exec vitest run tools/test/coordinator-image.test.ts \
+            --reporter=verbose --reporter=json --outputFile.json="$BL_SCRATCH/gate.json" --maxWorkers=1
+
+      - name: Require that the live suites ran and nothing was skipped
+        run: node tools/ci/verify-image-gate.mjs gate "$BL_SCRATCH/gate.json"
+
+      # Two disposable images: a missing validator cache and a root user must each fail their own assertion.
+      - name: Check that the gate fails on broken images
+        env:
+          BL_REQUIRE_COORDINATOR_IMAGE: "1"
+        run: |
+          set -euo pipefail
+          mkdir "$BL_SCRATCH/canary-context"
+          # Canaries build FROM the tag: BuildKit reads `FROM sha256:<id>` as a registry reference and cannot resolve it.
+          # They are then tested by their own image IDs.
+          tag="bl-coordinator-image:$BL_COORDINATOR_IMAGE_CI_RUN"
+          for variant in cache root; do
+            case "$variant" in
+              cache) printf 'FROM %s\nUSER root\nRUN rm -rf /opt/browser-life/.deno\nUSER coordinator\n' "$tag" > "$BL_SCRATCH/canary-$variant.Dockerfile" ;;
+              root) printf 'FROM %s\nUSER root\n' "$tag" > "$BL_SCRATCH/canary-$variant.Dockerfile" ;;
+            esac
+            docker build --file "$BL_SCRATCH/canary-$variant.Dockerfile" --iidfile "$BL_SCRATCH/canary-$variant.iid" \
+              --tag "bl-coordinator-image-canary-$variant:$BL_COORDINATOR_IMAGE_CI_RUN" \
+              --label "bl.coordinator-image.ci=$BL_COORDINATOR_IMAGE_CI_RUN" "$BL_SCRATCH/canary-context"
+            status=0
+            BL_COORDINATOR_IMAGE="$(cat "$BL_SCRATCH/canary-$variant.iid")" pnpm exec vitest run tools/test/coordinator-image.test.ts \
+              -t "started as deployed" --reporter=json --reporter=junit \
+              --outputFile.json="$BL_SCRATCH/canary-$variant.json" \
+              --outputFile.junit="$BL_SCRATCH/canary-$variant.xml" --maxWorkers=1 || status=$?
+            if [ "$status" -ne 1 ]; then echo "expected test failure (exit 1), got $status for $variant"; exit 1; fi
+            node tools/ci/verify-image-gate.mjs canary "$variant" "$BL_SCRATCH/canary-$variant.json" "$BL_SCRATCH/canary-$variant.xml"
+          done
+
+      - name: Print failure reports before cleanup
+        if: failure()
+        run: |
+          for report in gate canary-cache canary-root; do
+            file="${BL_SCRATCH:-}/$report.json"
+            if [ -f "$file" ]; then echo "Report: $file"; cat "$file"; fi
+            xml="${BL_SCRATCH:-}/$report.xml"
+            if [ -f "$xml" ]; then echo "Report: $xml"; cat "$xml"; fi
+          done
+
+      # Also runs when the job fails or is cancelled. Removes only what carries this run's label, and the scratch directory.
+      - name: Remove this run's containers, volumes and scratch files
+        if: always()
+        timeout-minutes: 5
+        run: |
+          set -uo pipefail
+          failed=0
+          label="label=bl.coordinator-image.ci=$BL_COORDINATOR_IMAGE_CI_RUN"
+          containers="$(timeout 60 docker ps -aq --filter "$label")" || failed=1
+          if [ -n "$containers" ]; then
+            printf '%s\n' "$containers" | xargs -r timeout 120 docker rm -f -v || failed=1
+          fi
+          volumes="$(timeout 60 docker volume ls -q --filter "$label")" || failed=1
+          if [ -n "$volumes" ]; then
+            printf '%s\n' "$volumes" | xargs -r timeout 60 docker volume rm -f || failed=1
+          fi
+          left_containers="$(timeout 60 docker ps -aq --filter "$label")" || failed=1
+          left_volumes="$(timeout 60 docker volume ls -q --filter "$label")" || failed=1
+          if [ -n "$left_containers$left_volumes" ]; then
+            echo "left behind: $left_containers $left_volumes"
+            failed=1
+          fi
+          if [ "$failed" -eq 0 ]; then
+            [ -z "${BL_SCRATCH:-}" ] || rm -rf "$BL_SCRATCH" || failed=1
+          else
+            echo "Cleanup could not be confirmed; scratch retained at ${BL_SCRATCH:-unset}"
+          fi
+          exit "$failed"
