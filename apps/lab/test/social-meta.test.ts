@@ -17,8 +17,8 @@ const read = (p: string) => {
   if (text === undefined) throw new Error(`no source ${p}`);
   return text;
 };
-const PUBLIC = ["index.html", "lab/index.html", "worlds/index.html", "how-it-works/index.html", "research/index.html",
-  "about/index.html", "participate/index.html", "status/index.html", "privacy/index.html"];
+const PUBLIC = ["index.html", "lab/index.html", "worlds/index.html", "garden/index.html", "how-it-works/index.html",
+  "research/index.html", "about/index.html", "participate/index.html", "status/index.html", "privacy/index.html"];
 const UNSHARED = ["selftest.html", "island.html", "social-card.html", "discovery/index.html"];
 const worldCards = import.meta.glob<string>("../public/og/worlds/*.jpg", { query: "?inline", import: "default", eager: true });
 const bytesOf = (dataUrl: string) => Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(",") + 1)), (c) => c.charCodeAt(0));

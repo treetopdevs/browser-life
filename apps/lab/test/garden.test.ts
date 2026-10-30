@@ -11,6 +11,7 @@ import {
   readReceipts, readStoredReceipts, receiptHash, receiptId, settle, tallyWords, windowWords, writeReceipts, type Receipt, type ReceiptBody,
 } from "../garden/garden.ts";
 import { pageMeta } from "../src/social-meta.ts";
+import { WORLD_NOTES } from "../src/worlds.ts";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MATTER_MAX, PRESETS, cellCount, defaultConfig, initWorld, maxLesionRadius, totalsOf, worldH, worldW } from "@bl/schema";
@@ -914,15 +915,90 @@ describe("meteor (docs/garden-meteor-2026-10-18.md)", () => {
   });
 });
 
-describe("the page is hidden", () => {
-  it("has no canonical link, says noindex, is not in the sitemap and loads its module", () => {
-    expect(pageMeta(gardenHtml)).toBeNull();
-    expect(gardenHtml).toMatch(/<meta name="robots" content="noindex" \/>/);
-    expect(sitemap).not.toMatch(/\/garden\//);
+describe("the page is public and linked", () => {
+  it("has a canonical link the sitemap lists, no noindex, its own nav item, and loads its module", () => {
+    const meta = pageMeta(gardenHtml);
+    expect(meta?.canonical).toBe("https://cadence.garden/garden/");
+    expect(meta!.title.length, meta!.title).toBeLessThanOrEqual(70);
+    expect(meta!.description.length, meta!.description).toBeGreaterThanOrEqual(70);
+    expect(meta!.description.length, meta!.description).toBeLessThanOrEqual(160);
+    expect(gardenHtml).not.toMatch(/noindex/);
+    expect(sitemap).toMatch(/<loc>https:\/\/cadence\.garden\/garden\/<\/loc>/);
     expect(gardenHtml).toMatch(/<script type="module" src="\/garden\/main\.ts"><\/script>/);
-    expect(gardenHtml).not.toMatch(/aria-current/);
+    expect(gardenHtml).toContain('<a href="/garden/" aria-current="page">Shared garden</a>');
     // The prediction panel says the answer can be worked out ahead (the note's third amendment, item 5).
     expect(gardenHtml).toMatch(/anyone can replay the next day before it is released/);
+    // Only the verified prefix's checkpoints are served (Garden.verified_digests), so the page says when one is public.
+    expect(gardenHtml).toMatch(/becomes a public checkpoint once it and every day before it have been replayed/);
+    // A verified day may still have no count to check against (unchecked, unreadable): the page says why, so the copy does not promise a check.
+    expect(gardenHtml).toMatch(/this page checks your receipt against the garden’s public numbers, or says why it cannot\./);
+  });
+
+  // The site's own pages (not the build in ../dist), and the world notes the lab and /worlds/ show.
+  const pages = import.meta.glob<string>(["../*.html", "../*/index.html", "!../dist/**"], { query: "?raw", import: "default", eager: true });
+  const navOf = (html: string, label: string) => new RegExp(`<nav class="site-nav"\\s+aria-label="${label}">([\\s\\S]*?)</nav>`).exec(html)?.[1];
+  const footerOf = (html: string) => /<nav\s+aria-label="Footer">([\s\S]*?)<\/nav>/.exec(html)?.[1];
+  const hrefs = (nav: string) => [...nav.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]);
+  /** A page's words: tags and scripts gone, entities and spacing left as they are. */
+  const words = (html: string) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  const SITE = ["../index.html", "../404.html", "../about/index.html", "../garden/index.html", "../how-it-works/index.html",
+    "../participate/index.html", "../privacy/index.html", "../research/index.html", "../status/index.html", "../worlds/index.html"];
+
+  it("every site header and footer links to the shared garden, and so does the lab's bench header", () => {
+    expect(Object.keys(pages)).toEqual(expect.arrayContaining(SITE));
+    for (const p of SITE) {
+      const header = navOf(pages[p], "Primary");
+      expect(header, `${p} has the site header`).toBeDefined();
+      expect(hrefs(header!), p).toEqual(["/", "/lab/", "/worlds/", "/garden/", "/how-it-works/", "/research/", "/participate/", "/status/"]);
+      const footer = footerOf(pages[p]);
+      expect(footer, `${p} has the site footer`).toBeDefined();
+      expect(hrefs(footer!), p).toEqual(["/garden/", "/about/", "/privacy/", "https://github.com/treetopdevs/browser-life"]);
+      // Only the garden page marks the garden link as the current page, and only in its header.
+      expect(pages[p].includes('<a href="/garden/" aria-current="page">'), p).toBe(p === "../garden/index.html");
+    }
+    expect(hrefs(navOf(pages["../lab/index.html"], "Main navigation")!)).toEqual(["/lab/", "/worlds/", "/garden/", "/research/"]);
+  });
+
+  it("the pages that spoke of the garden as to come now link to it and say it is open", () => {
+    const say: Record<string, RegExp[]> = {
+      "../index.html": [/<span class="state measured">Open<\/span><h3>The shared garden<\/h3><p><a href="\/garden\/">The commons<\/a>/, /The lab is open, and so is the shared garden\./],
+      "../about/index.html": [/so does a first <a href="\/garden\/">shared garden<\/a>/],
+      "../participate/index.html": [/<a href="\/garden\/">The shared garden<\/a> is open too/],
+      "../status/index.html": [/the islands and days of <a href="\/garden\/">the shared garden<\/a>/],
+      "../privacy/index.html": [/The shared garden is open at <a href="\/garden\/">/, /What a letter carries/, /a stone carries a place and a size, a sun only how bright the light should be\./],
+    };
+    for (const [p, lines] of Object.entries(say)) for (const line of lines) expect(pages[p], p).toMatch(line);
+    // A stone's mark: how long it lasts is not known yet (#55), and the page says so rather than promising.
+    expect(gardenHtml).toMatch(/It is a small nudge to one patch of the garden, and we do not know yet how long its mark lasts\./);
+    // The storm note says what the commons was founded with (docs/garden-opening-2026-10-18.md §3): seed 1, food at
+    // the start, stones and suns (a sun is not a founding key: every garden on the storm takes 50 and 75, Queue.sun_percents),
+    // no food or meteor. Re-read it if the founding changes.
+    expect(WORLD_NOTES["wild-storm-large"].seen.text).toMatch(/the commons, planted at seed 1 with food added at the start, grown one sun wander a day, with stones \([^)]*\) and suns \(a day at half or three quarters of its own light\) open to visitors, and asking for food or a meteor switched off\./);
+    // It also keeps #59's controls (#68) and their caveat, not the older "still to run".
+    expect(WORLD_NOTES["wild-storm-large"].seen.text).toMatch(/A stone that changes no cell left its twin identical in all 7 tries\..*None of these readings is firm\."?$/);
+    expect(WORLD_NOTES["wild-storm-large"].seen.text).not.toMatch(/still to run/);
+    // Sun letters are on wherever the light takes one, so no page may still say every letter is a stone.
+    for (const p of SITE) expect(pages[p], p).not.toMatch(/every letter is a stone/i);
+  });
+
+  it("no current page still speaks of the garden as closed or to come", () => {
+    // Every sentence that names the garden or the commons, on every page but the journal, whose dated entries say
+    // what was true on their day ("its page stays unlinked", 17 Oct), and in the world notes.
+    const closed = /not (?:yet )?open|not open yet|closed|coming soon|future|direction|someday|horizon|planned|unlinked|hidden|noindex|not founded|no garden is planted|nothing on this site links/i;
+    const sentences = (text: string) => text.split(/(?<=[.!?:;])\s+/).filter((s) => /garden|commons/i.test(s));
+    for (const [p, html] of Object.entries(pages)) {
+      if (p === "../research/index.html" || !SITE.includes(p)) continue;
+      for (const s of sentences(words(html))) expect(s, p).not.toMatch(closed);
+    }
+    const noteSentences = sentences(WORLD_NOTES["wild-storm-large"].seen.text);
+    // The storm note names the garden, so this checks something rather than passing on an empty list.
+    expect(noteSentences.length).toBeGreaterThan(0);
+    for (const s of noteSentences) expect(s, "the wild-storm-large note").not.toMatch(closed);
+  });
+
+  it("the privacy page says what a dawn guess's receipt keeps, as the garden page does", () => {
+    expect(pages["../privacy/index.html"]).toMatch(/it also keeps your receipts, the last 32 at most\. Each holds the planting and day you guessed about, your choice, when you made it, a random name for the guess, and what the page showed then: the garden’s day and step, how many cells were living, its biggest lines, and a fingerprint of all that\./);
+    expect(gardenHtml).toMatch(/a receipt \(the day, your choice, when you made it, and what the page showed then, with a fingerprint of it\)/);
   });
 });
 

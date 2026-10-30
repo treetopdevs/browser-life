@@ -12,10 +12,6 @@
 :80 {
   encode zstd gzip
 
-  # Keep the shared garden private, including named gardens and keeper APIs.
-  @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
-  respond @private_garden 404
-
   # Creative particle prototype is local-only until separately approved for release.
   @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
   respond @private_particles 404
@@ -81,6 +77,7 @@
   redir /participate /participate/{?query} 308
   redir /status /status/{?query} 308
   redir /privacy /privacy/{?query} 308
+  redir /garden /garden/{?query} 308
 
   # A link that names a world (/lab/?world=<id> plants it, /worlds/?world=<id> shows its card) previews as that
   # world: the build writes a copy of each page per world, differing only in its title, description and card, at

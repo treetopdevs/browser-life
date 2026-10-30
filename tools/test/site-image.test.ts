@@ -54,7 +54,7 @@ const ids = Object.keys(cards);
 const TITLE = "<title>Page not found · Cadence Garden</title>";
 const titleOf = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
 const metaOf = (html: string, key: string) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
-const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/"];
+const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/", "/garden/"];
 
 // What the synthetic coordinator says; the site must pass these through untouched.
 const NOT_FOUND = "upstream-not-found";
@@ -192,15 +192,14 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(must(["exec", site, "cat", "/etc/caddy/Caddyfile"])).toBe(readFileSync(repo("deploy/Caddyfile"), "utf8"));
   });
 
-  it("packages the lab files and the media and leaves the garden out", () => {
+  it("packages the lab files and the media, and the garden", () => {
     const files = new Set(must(["exec", site, "find", "/srv"]).split("\n").filter(Boolean));
     expect(files.has("/srv/lab/index.html"), "packaged lab content: /srv/lab/index.html is missing from the image").toBe(true);
     const wanted = [
-      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
+      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/garden/index.html", "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
       ...ids.flatMap((world) => [`/srv/lab/world/${world}/index.html`, `/srv/worlds/world/${world}/index.html`, `/srv/og/worlds/${world}.jpg`]),
     ];
     expect(wanted.filter((file) => !files.has(file)), "packaged files missing from the image").toEqual([]);
-    expect([...files].filter((file) => file === "/srv/garden" || file.startsWith("/srv/garden/")), "the garden is not packaged").toEqual([]);
   });
 
   it("serves every page with the styles and scripts it names", async () => {
@@ -299,14 +298,20 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(asset.body).toBe(full.body);
   });
 
-  it("keeps the garden page and every garden API private", async () => {
-    const paths = [
-      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html", "/garden%2findex.html", "//garden/", "/x/../garden/",
+  it("serves the garden page and sends every garden API to the coordinator", async () => {
+    const bare = await raw(origin, "/garden");
+    expect([bare.status, bare.headers.location]).toEqual([308, "/garden/"]);
+    const copy = await raw(origin, "/garden?x=1");
+    expect([copy.status, copy.headers.location]).toEqual([308, "/garden/?x=1"]);
+    for (const path of [
       "/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/public/gardens/commons/checkpoints/abc",
-      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test", "/api/public/garden%2fletters", "/API/PUBLIC/GARDEN",
-    ];
-    for (const path of paths) {
-      for (const method of ["GET", "HEAD", "POST"]) expect((await raw(origin, path, { method })).status, `${method} ${path}`).toBe(404);
+      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test",
+    ]) {
+      for (const method of ["GET", "POST"]) {
+        const res = await raw(origin, path, { method });
+        expect(res.status, `${method} ${path}`).toBe(200);
+        expect(echo(res).path, `${method} ${path}`).toBe(path);
+      }
     }
   });
 
