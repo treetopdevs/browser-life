@@ -8,7 +8,7 @@ defmodule CoordinatorWeb.DiscoveryController do
   when `:allow_local_admin`) registers campaigns, uploads frozen blobs and
   exports; a worker joins with the research join token
   (`:discovery_join_token`, env `BL_DISCOVERY_JOIN_TOKEN`; unset: loopback
-  only) and then authenticates as `Bearer <workerId>:<token>`. Admin
+  only, in dev and test; production refuses to start without it) and then authenticates as `Bearer <workerId>:<token>`. Admin
   credentials never reach workers.
 
   Hashing, staging and the TypeScript validator (`:discovery_validator`, a
