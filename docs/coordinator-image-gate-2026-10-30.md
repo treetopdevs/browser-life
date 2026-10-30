@@ -1,6 +1,6 @@
 # Coordinator image verification gate — 30 October 2026
 
-Base: `3c0c0afae598483be89d19c350c338d68ff78d63` (origin/main, merge of PR122). Worktree `backlog-project-workflow-45cc4d`; branch `claude/backlog-project-workflow-45cc4d`. Status: implemented. Passed locally against the actual image on arm64 Docker Desktop: 27 tests, both canaries and cleanup (see the last section). Not yet run on a hosted amd64 Linux runner.
+Base: `3c0c0afae598483be89d19c350c338d68ff78d63` (origin/main, merge of PR122). Worktree `backlog-project-workflow-45cc4d`; branch `claude/backlog-project-workflow-45cc4d`. Status: implemented. Passed locally against the actual image on arm64 Docker Desktop: 27 tests, both canaries and cleanup (see the last section). It also passed on the hosted amd64 runner (run 41091103109; see `coordinator-image-gate-review-2026-10-30.md`).
 
 ## Problem and chosen slice
 

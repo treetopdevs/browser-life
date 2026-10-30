@@ -6,7 +6,7 @@
 <style>body{font:17px/1.6 system-ui;margin:3rem auto;padding:0 1rem;max-width:76ch;color:#172c2a;background:#f5f6ef}h1,h2{line-height:1.2}a{color:#075b66}article{border-top:1px solid #becbc0;padding:1rem 0}code{overflow-wrap:anywhere}table{border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:.5rem;border-bottom:1px solid #becbc0}</style>
 <main>
 <h1>Backlog workflow</h1>
-<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. First-slice status: PR84 merged on 26 October 2026 at <code>4730417a</code>. Site-image verification completed in <a href="https://github.com/treetopdevs/browser-life/pull/89">PR89</a>. Current slice (30 October): coordinator-image verification, from main <code>3c0c0afa</code> in <code>claude/backlog-project-workflow-45cc4d</code>. It passed locally against the actual image, and the hosted run is pending (D19).</p>
+<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. First-slice status: PR84 merged on 26 October 2026 at <code>4730417a</code>. Site-image verification completed in <a href="https://github.com/treetopdevs/browser-life/pull/89">PR89</a>. Current slice (30 October): coordinator-image verification, from main <code>3c0c0afa</code> in <code>claude/backlog-project-workflow-45cc4d</code>. Verified in PR124 (D19).</p>
 <h2>Operating loop</h2>
 <ol>
 <li>Fetch main and reconcile planned work against merged code and held PRs.</li>
@@ -34,11 +34,11 @@
 </tr>
 <tr>
 <td>Actual coordinator-image verification in CI</td>
-<td>Implemented (D19). The local arm64 run against the actual image passed: 27 tests and both canaries. The hosted amd64 run is the acceptance gate and is pending.</td>
+<td>Implemented and verified in PR124 (D19): 27 tests against the actual image on hosted amd64 and on local arm64, two canaries, clean cleanup.</td>
 </tr>
 <tr>
 <td>Refuse a production start without the discovery join token</td>
-<td>Follow-up from D19: the coordinator admits IPv6-loopback joins when the token is unset, and only Compose's required-variable check prevents that. Needs a coordinator runtime change in its own PR.</td>
+<td>Follow-up from D19: the coordinator admits IPv6-loopback joins when the token is unset, and only Compose's required-variable check prevents that. Coordinator runtime refusal in draft PR125.</td>
 </tr>
 <tr>
 <td>Live deployment and host verification</td>
@@ -128,7 +128,7 @@
 </article>
 <article id="d19">
 <h3>D19 — Coordinator image gate written, not yet proven on Linux</h3>
-<p>A sibling workflow, <code>coordinator-image.yml</code>, builds <code>Dockerfile.coordinator</code> and tests the image by ID, started as <code>compose.dokploy.yaml</code> deploys it (plan: <a href="coordinator-image-gate-2026-10-30.md">coordinator image gate</a>). It adds ten refusal cases, two canaries (validator cache removed, root user) and label-scoped cleanup, and records that an unset join token leaves the discovery plane guarded only by Compose's required-variable check; whether an in-container request is then treated as loopback under the release's dual-stack <code>::</code> bind is not established and is printed, not asserted, by the control until the first hosted run. A local arm64 run against the actual image (Docker Desktop, 30 October) passed all 27 tests, 13 of them against the started image. Both canaries failed only on their named assertions, and cleanup left nothing behind. The printed control showed an unauthenticated join refused through <code>127.0.0.1</code> but admitted through <code>[::1]</code>, which confirms the finding. The D17 caveat about coordinator-image verification stays until the hosted amd64 Linux run passes.</p>
+<p>A sibling workflow, <code>coordinator-image.yml</code>, builds <code>Dockerfile.coordinator</code> and tests the image by ID, started as <code>compose.dokploy.yaml</code> deploys it (plan: <a href="coordinator-image-gate-2026-10-30.md">coordinator image gate</a>). It adds ten refusal cases, two canaries (validator cache removed, root user) and label-scoped cleanup, and records that an unset join token leaves the discovery plane guarded only by Compose's required-variable check; whether an in-container request is then treated as loopback under the release's dual-stack <code>::</code> bind is not established and is printed, not asserted, by the control until the first hosted run. A local arm64 run against the actual image (Docker Desktop, 30 October) passed all 27 tests, 13 of them against the started image. Both canaries failed only on their named assertions, and cleanup left nothing behind. The printed control showed an unauthenticated join refused through <code>127.0.0.1</code> but admitted through <code>[::1]</code>, which confirms the finding. Hosted amd64 run <a href="https://github.com/treetopdevs/browser-life/actions/runs/41091103109">41091103109</a> on PR124 matched it: 27 of 27 tests, both canaries and clean cleanup (<a href="coordinator-image-gate-review-2026-10-30.md">record</a>). This closes the coordinator-image gap that D17 left open. Live-host checks remain external. The join-token refusal is draft PR125.</p>
 </article>
 <h2>First-slice acceptance gates</h2>
 <ol>
