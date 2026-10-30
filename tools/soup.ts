@@ -84,6 +84,11 @@ const logPath = `${out}/log.csv`;
 const fresh = !a.load;
 const transitionPath = `${out}/transition.json`;
 let transitionAt: number | null = null;
+const recordTransition = async (higherEntropy: number, c: { top: Uint8Array; topCount: number }) => {
+  const record = { epoch: soup.epoch, higherEntropy, topCount: c.topCount, copyScore: copyScore(c.top, lang), top: show(c.top), topHex: Array.from(c.top, (b) => b.toString(16).padStart(2, "0")).join("") };
+  await Deno.writeTextFile(transitionPath, JSON.stringify(record, null, 2) + "\n");
+  return record;
+};
 if (fresh) await Deno.remove(transitionPath).catch(() => {});
 else {
   try {
@@ -91,6 +96,12 @@ else {
     if (prev.epoch <= soup.epoch) transitionAt = prev.epoch;
     else await Deno.remove(transitionPath); // recorded after this snapshot: not this run's history
   } catch { /* no earlier transition */ }
+  // A transition snapshot is the transition itself: when its record is not in
+  // --out (a new output directory), rebuild it from the snapshot.
+  if (transitionAt === null && /-transition\.bin$/.test(a.load!)) {
+    transitionAt = soup.epoch;
+    await recordTransition((await stats(soup.programs)).higherEntropy, census(soup.programs));
+  }
 }
 if (!fresh) {
   // Drop log lines recorded after the loaded epoch, so a rewind does not leave
@@ -134,8 +145,7 @@ while (soup.epoch < maxEpochs) {
     if (transitionAt === null && st.higherEntropy > threshold) {
       transitionAt = soup.epoch;
       await snapshot("-transition");
-      const record = { epoch: soup.epoch, higherEntropy: st.higherEntropy, topCount: c.topCount, copyScore: copyScore(c.top, lang), top: show(c.top), topHex: Array.from(c.top, (b) => b.toString(16).padStart(2, "0")).join("") };
-      await Deno.writeTextFile(transitionPath, JSON.stringify(record, null, 2) + "\n");
+      const record = await recordTransition(st.higherEntropy, c);
       console.log(`TRANSITION at epoch ${soup.epoch}; most common program (${c.topCount} copies, copyScore ${record.copyScore.toFixed(2)}):\n  ${record.top}`);
     }
     if (transitionAt !== null && soup.epoch - transitionAt >= after) break;
