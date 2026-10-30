@@ -56,7 +56,9 @@ if (a.grid) {
 const num = grid ? grid.width * grid.height : 2 ** log2;
 if (num > MAX_NUM || num % 2 !== 0) throw new Error("the soup must have an even number of programs, at most 2^24");
 const frame = Number(a.frame);
-const mutation = a.mutation !== undefined ? Math.round(Number(a.mutation) * 2 ** 30) : DEFAULT_MUTATION;
+const mutationProb = a.mutation !== undefined ? Number(a.mutation) : DEFAULT_MUTATION / 2 ** 30;
+if ((a.mutation !== undefined && String(a.mutation).trim() === "") || !Number.isFinite(mutationProb) || mutationProb < 0 || mutationProb > 1) throw new Error("--mutation must be a probability in [0, 1]");
+const mutation = Math.round(mutationProb * 2 ** 30);
 const [maxEpochs, every, after, save] = [a.epochs, a.every, a.after, a.save].map(Number);
 for (const [k, v] of Object.entries({ epochs: maxEpochs, every, after, save })) if (!Number.isInteger(v) || v < (k === "after" ? 0 : 1)) throw new Error(`--${k} must be a positive integer`);
 const threshold = Number(a.transition);
@@ -70,8 +72,8 @@ if ((await brotliSizeC(new Uint8Array(16))) === null) console.warn("no brotli CL
 const gpu = a.cpu ? null : await GpuSoup.create(await soupDevice(), { num, seed, lang, mutation, grid });
 const soup = gpu ? gpu.cpu : new Soup({ num, seed, lang, mutation, grid });
 if (a.load) {
-  const m = a.load.match(/soup-(\d+)\.bin$/);
-  if (!m) throw new Error("--load expects a soup-<epoch>.bin file");
+  const m = a.load.match(/soup-(\d+)(?:-transition)?\.bin$/);
+  if (!m) throw new Error("--load expects a soup-<epoch>.bin or soup-<epoch>-transition.bin file");
   const bytes = await Deno.readFile(a.load);
   if (bytes.length !== num * TAPE) throw new Error("snapshot size does not match --num-log2");
   soup.programs.set(bytes);
@@ -90,7 +92,15 @@ else {
     else await Deno.remove(transitionPath); // recorded after this snapshot: not this run's history
   } catch { /* no earlier transition */ }
 }
-if (fresh) await Deno.writeTextFile(logPath, "epoch,brotli_size,soup_size,higher_entropy,distinct,top_share,ops_per_run,seconds\n");
+if (!fresh) {
+  // Drop log lines recorded after the loaded epoch, so a rewind does not leave
+  // a later history in front of the new one.
+  let lines: string[] = [];
+  try { lines = (await Deno.readTextFile(logPath)).split("\n").filter((l) => l !== ""); } catch { /* no log yet */ }
+  const kept = lines.filter((l, i) => i === 0 || Number(l.split(",")[0]) <= soup.epoch);
+  if (kept.length > 0) await Deno.writeTextFile(logPath, kept.join("\n") + "\n");
+}
+if (fresh || !(await Deno.stat(logPath).then(() => true, () => false))) await Deno.writeTextFile(logPath, "epoch,brotli_size,soup_size,higher_entropy,distinct,top_share,ops_per_run,seconds\n");
 await Deno.writeTextFile(`${out}/params.json`, JSON.stringify({ seed, lang, num, grid: grid ?? null, mutation, mutationProb: mutation / 2 ** 30, maxEpochs, threshold, every, after, save, loadedFrom: a.load ?? null, port: "cubff bff.inc.h + common_language.h" }, null, 2) + "\n");
 
 const framed = (e: number) => grid !== undefined && e % frame === 0;

@@ -18,7 +18,9 @@ for (let i = 0; i < n; i++) {
   for (let k = i * TAPE; k < (i + 1) * TAPE; k++) key += String.fromCharCode(soup[k]);
   counts.set(key, (counts.get(key) ?? 0) + 1);
 }
-const top = [...counts].sort((x, y) => y[1] - x[1]).slice(0, Number(a.top));
+const limit = Number(a.top);
+if (!Number.isInteger(limit) || limit < 0) throw new Error("--top must be a non-negative integer");
+const top = [...counts].sort((x, y) => y[1] - x[1]).slice(0, limit);
 console.log(`${path}: ${n} programs, ${counts.size} distinct, byte entropy ${byteEntropy(soup).toFixed(3)} bits`);
 console.log("copies  copyScore  program");
 for (const [key, c] of top) {
