@@ -1,10 +1,10 @@
 // Lists the most common programs in a soup snapshot written by tools/soup.ts,
-// with how many copies each has and its copyScore (tools/soup/bff.ts: the
-// share of a random partner it overwrites with itself; near 1 = replicator).
+// with how many copies each has and its selfRep (tools/soup/bff.ts: cubff's
+// CheckSelfRep, 0..64; high = self-replicator).
 //
 //   deno run -A tools/soup-inspect.ts runs/soup/noheads/seed-2/soup-12609.bin [--top 10] [--lang noheads]
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { copyScore, type Lang, show, TAPE } from "./soup/bff.ts";
+import { selfRep, type Lang, show, TAPE } from "./soup/bff.ts";
 import { byteEntropy } from "./soup/stats.ts";
 
 const a = parseArgs(Deno.args, { string: ["top", "lang"], default: { top: "10", lang: "noheads" } });
@@ -22,8 +22,8 @@ const limit = Number(a.top);
 if (String(a.top).trim() === "" || !Number.isInteger(limit) || limit < 0) throw new Error("--top must be a non-negative integer");
 const top = [...counts].sort((x, y) => y[1] - x[1]).slice(0, limit);
 console.log(`${path}: ${n} programs, ${counts.size} distinct, byte entropy ${byteEntropy(soup).toFixed(3)} bits`);
-console.log("copies  copyScore  program");
+console.log("copies  selfRep  program");
 for (const [key, c] of top) {
   const prog = Uint8Array.from(key, (ch) => ch.charCodeAt(0));
-  console.log(`${String(c).padStart(6)}  ${copyScore(prog, a.lang as Lang).toFixed(2).padStart(9)}  ${show(prog)}`);
+  console.log(`${String(c).padStart(6)}  ${String(selfRep(prog, a.lang as Lang)).padStart(7)}  ${show(prog)}`);
 }

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { copyScore, evaluate, gridNeighbours, parse, show, Soup, splitmix64, STEPS } from "../soup/bff.ts";
+import { evaluate, selfRep, gridNeighbours, parse, show, Soup, splitmix64, STEPS } from "../soup/bff.ts";
 import { drawGrid, encodePng } from "../soup/png.ts";
 import { inflateSync } from "node:zlib";
 import { brotliSize, byteEntropy, census } from "../soup/stats.ts";
@@ -99,8 +99,12 @@ describe("soup", () => {
     expect(s.programs.slice(1, 64)).toEqual(tail);
   });
 
-  it("scores an inert program low on the copy probe", () => {
-    expect(copyScore(new Uint8Array(64).fill(200))).toBeLessThan(0.1);
+  it("scores an inert program 0 and an evolved replicator 64 on cubff's self-replication test", () => {
+    expect(selfRep(new Uint8Array(64).fill(200))).toBe(0);
+    // The most common program after seed 2's transition (2^17 programs, epoch 12609).
+    const hex = "80b6f65bf6b6ff81dca81f73a13d3cb6a12c4cee7de6b4262836a9363636924c4c5d36bb3636362826e0e67d4c4c2ca1b63c3da1b61f4fdc6e0f5b265bf6b6a1";
+    const replicator = Uint8Array.from(hex.match(/../g)!, (h) => parseInt(h, 16));
+    expect(selfRep(replicator)).toBe(64);
   });
 
   it("measures entropy and census", () => {

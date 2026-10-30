@@ -292,31 +292,44 @@ export class Soup {
 // ---- replication probe ----
 
 /**
- * Does `prog` copy itself into a partner? Pairs it with `trials` random
- * partners, on each side, runs each tape once (no mutation) and returns the
- * best mean fraction of the partner half that ends up equal to `prog`. A
- * self-replicator scores near 1; a high-entropy but inert soup scores near 0.
+ * cubff's self-replication test (CheckSelfRep in common_language.h, as
+ * EvalParsedSelfrep calls it for one program). For 13 random partners, run
+ * prog + partner, then 4 more generations that move the second half to the
+ * first and refill the second with the same partner. A byte position counts
+ * when the same value comes out in more than 3 of the 13 runs (and, in the
+ * first half, equals prog). Returns the smaller count of the two halves, 0..64:
+ * high for a self-replicator (which reproduces itself whatever its partner),
+ * near 0 for inert programs, whose partner half stays random. Unlike a plain
+ * positional compare, it also catches replicators that copy themselves at an
+ * offset.
  */
-export function copyScore(prog: Uint8Array, lang: Lang = "noheads", trials = 16, seed = 1): number {
-  const t = new Uint8Array(2 * TAPE);
-  let best = 0;
-  for (const side of [0, 1]) {
-    let sum = 0;
-    for (let k = 0; k < trials; k++) {
-      for (let i = 0; i < TAPE; i++) {
-        splitmix(seed >>> 0, (k * TAPE + i) >>> 0);
-        t[i + (side ? 0 : TAPE)] = ol & 255;
-      }
-      t.set(prog.subarray(0, TAPE), side ? TAPE : 0);
+export function selfRep(prog: Uint8Array, lang: Lang = "noheads", seed = 0n): number {
+  const ITERS = 13, GENS = 4;
+  const local = splitmix64(seed);
+  const tapes = Array.from({ length: ITERS }, () => new Uint8Array(2 * TAPE));
+  for (let i = 0; i < ITERS; i++) {
+    const noise = new Uint8Array(TAPE);
+    for (let j = 0; j < TAPE; j++) noise[j] = Number(splitmix64(local ^ splitmix64(BigInt((i + 1) * TAPE + j))) & 255n);
+    const t = tapes[i];
+    t.set(prog.subarray(0, TAPE), 0);
+    t.set(noise, TAPE);
+    evaluate(t, lang);
+    for (let g = 0; g < GENS; g++) {
+      t.copyWithin(0, TAPE, 2 * TAPE);
+      t.set(noise, TAPE);
       evaluate(t, lang);
-      const off = side ? 0 : TAPE;
-      let same = 0;
-      for (let i = 0; i < TAPE; i++) if (t[off + i] === prog[i]) same++;
-      sum += same / TAPE;
     }
-    best = Math.max(best, sum / trials);
   }
-  return best;
+  const res = [0, 0];
+  for (let i = 0; i < 2 * TAPE; i++) {
+    for (let a = 0; a < ITERS; a++) {
+      if (i < TAPE && tapes[a][i] !== prog[i]) continue;
+      let count = 1;
+      for (let b = a + 1; b < ITERS; b++) if (tapes[a][i] === tapes[b][i]) count++;
+      if (count > Math.floor(ITERS / 4)) { res[i < TAPE ? 0 : 1]++; break; }
+    }
+  }
+  return Math.min(res[0], res[1]);
 }
 
 // ---- display ----

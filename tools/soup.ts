@@ -20,10 +20,10 @@
 // pair and wall seconds), soup-<epochs done>.bin snapshots every --save epochs
 // and at the transition, and transition.json with the epoch and the most
 // common program when higher-order entropy first exceeds --transition (bits
-// per byte). transition.json also records copyScore: how much of a random
-// partner the most common program overwrites with a copy of itself (near 1 for
-// a self-replicator, near 0 for an inert but repetitive soup), because high
-// entropy alone does not prove replication. The run stops at the first census
+// per byte). transition.json also records selfRep for the most common program
+// (cubff's CheckSelfRep, 0..64: high for a self-replicator, near 0 for an
+// inert but repetitive soup), because high entropy alone does not prove
+// replication. The run stops at the first census
 // at least --after epochs past the transition, or at --epochs (always measured).
 // --load resumes from a snapshot (the epoch comes from its file name; all
 // randomness is keyed on seed and epoch, so a resumed run equals a continuous
@@ -31,7 +31,7 @@
 // (brew install brotli); otherwise it falls back to a slightly different
 // encoder and says so.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { copyScore, DEFAULT_MUTATION, type Grid, type Lang, MAX_NUM, show, Soup, TAPE } from "./soup/bff.ts";
+import { selfRep, DEFAULT_MUTATION, type Grid, type Lang, MAX_NUM, show, Soup, TAPE } from "./soup/bff.ts";
 import { drawGrid, encodePng } from "./soup/png.ts";
 import { GpuSoup, soupDevice } from "./soup/gpu.ts";
 import { brotliSizeC, census, stats } from "./soup/stats.ts";
@@ -85,7 +85,7 @@ const fresh = !a.load;
 const transitionPath = `${out}/transition.json`;
 let transitionAt: number | null = null;
 const recordTransition = async (higherEntropy: number, c: { top: Uint8Array; topCount: number }) => {
-  const record = { epoch: soup.epoch, higherEntropy, topCount: c.topCount, copyScore: copyScore(c.top, lang), top: show(c.top), topHex: Array.from(c.top, (b) => b.toString(16).padStart(2, "0")).join("") };
+  const record = { epoch: soup.epoch, higherEntropy, topCount: c.topCount, selfRep: selfRep(c.top, lang), top: show(c.top), topHex: Array.from(c.top, (b) => b.toString(16).padStart(2, "0")).join("") };
   await Deno.writeTextFile(transitionPath, JSON.stringify(record, null, 2) + "\n");
   return record;
 };
@@ -146,7 +146,7 @@ while (soup.epoch < maxEpochs) {
       transitionAt = soup.epoch;
       await snapshot("-transition");
       const record = await recordTransition(st.higherEntropy, c);
-      console.log(`TRANSITION at epoch ${soup.epoch}; most common program (${c.topCount} copies, copyScore ${record.copyScore.toFixed(2)}):\n  ${record.top}`);
+      console.log(`TRANSITION at epoch ${soup.epoch}; most common program (${c.topCount} copies, selfRep ${record.selfRep}/64):\n  ${record.top}`);
     }
     if (transitionAt !== null && soup.epoch - transitionAt >= after) break;
   }
