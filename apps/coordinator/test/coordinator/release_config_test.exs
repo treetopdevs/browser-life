@@ -8,7 +8,7 @@ defmodule Coordinator.ReleaseConfigTest do
   """
   use ExUnit.Case, async: false
 
-  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN BL_DISCOVERY_LEASE_MS BL_LEASE_MS)
+  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN BL_DISCOVERY_LEASE_MS BL_LEASE_MS BL_DISCOVERY_JOIN_TOKEN)
 
   setup do
     saved = for v <- @vars, do: {v, System.get_env(v)}
@@ -28,6 +28,7 @@ defmodule Coordinator.ReleaseConfigTest do
   defp prod_env(cors \\ nil) do
     System.put_env("SECRET_KEY_BASE", String.duplicate("k", 64))
     System.put_env("BL_ADMIN_TOKEN", "admin")
+    System.put_env("BL_DISCOVERY_JOIN_TOKEN", "join")
     if cors, do: System.put_env("BL_CORS_ORIGINS", cors)
   end
 
@@ -143,6 +144,7 @@ defmodule Coordinator.ReleaseConfigTest do
 
   test "prod runtime requires SECRET_KEY_BASE" do
     System.put_env("BL_ADMIN_TOKEN", "admin")
+    System.put_env("BL_DISCOVERY_JOIN_TOKEN", "join")
     assert_raise RuntimeError, ~r/SECRET_KEY_BASE/, fn -> prod_runtime() end
   end
 
@@ -151,6 +153,31 @@ defmodule Coordinator.ReleaseConfigTest do
     assert_raise RuntimeError, ~r/BL_ADMIN_TOKEN/, fn -> prod_runtime() end
     System.put_env("BL_ADMIN_TOKEN", "")
     assert_raise RuntimeError, ~r/BL_ADMIN_TOKEN/, fn -> prod_runtime() end
+  end
+
+  test "prod runtime requires BL_DISCOVERY_JOIN_TOKEN, and names it without printing a value" do
+    System.put_env("SECRET_KEY_BASE", String.duplicate("k", 64))
+    System.put_env("BL_ADMIN_TOKEN", "admin-secret-value")
+
+    for unset <- [nil, ""] do
+      if unset,
+        do: System.put_env("BL_DISCOVERY_JOIN_TOKEN", unset),
+        else: System.delete_env("BL_DISCOVERY_JOIN_TOKEN")
+
+      e = assert_raise RuntimeError, ~r/BL_DISCOVERY_JOIN_TOKEN/, fn -> prod_runtime() end
+      refute e.message =~ "admin-secret-value"
+      refute e.message =~ String.duplicate("k", 64)
+    end
+
+    System.put_env("BL_DISCOVERY_JOIN_TOKEN", "join")
+    assert prod_runtime()[:coordinator][:discovery_join_token] == "join"
+  end
+
+  test "dev and test still start without a join token (loopback joins)" do
+    for env <- [:dev, :test] do
+      coordinator = Config.Reader.read!("config/runtime.exs", env: env)[:coordinator] || []
+      refute Keyword.has_key?(coordinator, :discovery_join_token)
+    end
   end
 
   test "prod runtime refuses a wildcard origin" do

@@ -123,6 +123,13 @@ if dir = System.get_env("BL_DISCOVERY_DATA_DIR"),
 if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
   do: config(:coordinator, discovery_join_token: token)
 
+# Without a join token the discovery plane admits loopback joins (a local
+# convenience, DiscoveryController.require_join). Under the release's
+# dual-stack bind that includes [::1] from inside the container, so production
+# refuses to start without one rather than lean on Compose's check alone.
+if config_env() == :prod and System.get_env("BL_DISCOVERY_JOIN_TOKEN") in [nil, ""],
+  do: raise("BL_DISCOVERY_JOIN_TOKEN must be set in production")
+
 # The discovery lease (ms); a lease has no "off".
 with {:ok, ms} <- env_count.("BL_DISCOVERY_LEASE_MS", false),
      do: config(:coordinator, discovery_lease_ms: ms)
