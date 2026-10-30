@@ -166,4 +166,4 @@ Docker became available on this Mac (Docker 29.9.2, linux/arm64). The image was 
 - **Cleanup:** no containers or volumes carrying the run's labels were left.
 - **Join-token control, as printed:** with `BL_DISCOVERY_JOIN_TOKEN` unset, an unauthenticated join from inside the container returned **401 via `127.0.0.1`** (the address arrives IPv4-mapped) and **200 via `[::1]`**. This confirms the Grounding finding. A coordinator started without the join token admits IPv6-loopback joins, and only Compose's `:?` guard prevents that deployment. The site container is not loopback to the coordinator, so it does not reach this path. A runtime refusal in `runtime.exs` is a separate follow-up, outside this slice.
 
-Limits: this was arm64 on Docker Desktop. The hosted run is amd64 on `ubuntu-24.04` and is still the acceptance gate, and the D17 caveat stays until it passes.
+Limits: this was arm64 on Docker Desktop. The hosted amd64 run on `ubuntu-24.04` was the acceptance gate; it later passed (run 41091103109, see the status line and the [review record](coordinator-image-gate-review-2026-10-30.md)), which lifts the D17 caveat.
