@@ -321,6 +321,17 @@ defmodule Coordinator.SoupTest do
     assert File.exists?(Store.blob_path(dir, sha0))
   end
 
+  test "one island holds at most four live leases at once", %{dir: dir} do
+    {:ok, _} = Soup.register(%{@world | "segments" => 6, "verifyEvery" => 1})
+    for k <- 0..4, do: run(dir, "b", k)
+
+    # Five done segments to verify, plus a runnable one; "a" gets four leases, then idles.
+    for k <- 0..3, do: take("a", "verify", k)
+    assert {:ok, %{idle: true}} = Soup.next("a")
+    # Another island is not held back by "a".
+    take("c", "verify", 4)
+  end
+
   test "state survives a restart", %{dir: dir} do
     {:ok, :registered} = Soup.register(@world)
     sha0 = run(dir, "a", 0)

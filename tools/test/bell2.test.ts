@@ -921,12 +921,12 @@ describe("other GPU users", () => {
     expect(liveRunOf(runs, { experiment: "bell-v2-twins-f", seed: 3904 })).toEqual([301]);
     expect(liveRunOf(runs, { experiment: "bell-v2-twins-l96", seed: 3904 })).toEqual([]);
   });
-  it("GPU_TOOLS is every tools/*.ts that opens a WebGPU device or runs runExperiment (plus calibrate.ts, which the note names)", () => {
+  it("GPU_TOOLS is every tools/*.ts that opens a WebGPU device or runs runExperiment (plus calibrate.ts, which the note names, and soup.ts, whose device comes from tools/soup/gpu.ts)", () => {
     const opens = readdirSync(join(REPO, "tools"))
       .filter((f) => f.endsWith(".ts"))
       .filter((f) => /navigator\.gpu|requestDevice\(|requestAdapter\(|runExperiment\(/.test(readFileSync(join(REPO, "tools", f), "utf8")))
       .map((f) => f.slice(0, -3));
-    expect([...GPU_TOOLS].sort()).toEqual([...new Set([...opens, "calibrate"])].sort());
+    expect([...GPU_TOOLS].sort()).toEqual([...new Set([...opens, "calibrate", "soup"])].sort());
     for (const t of GPU_TOOLS) expect(gpuUsers(` 9 deno run -A tools/${t}.ts`).length).toBe(1);
   });
   it("a GPU tool run from inside tools/ (a bare or ./ script name) counts; the same name in another directory does not", () => {

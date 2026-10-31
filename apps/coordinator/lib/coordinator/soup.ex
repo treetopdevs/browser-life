@@ -38,6 +38,9 @@ defmodule Coordinator.Soup do
   without it is written, unless an accepted segment holds the same bytes.
   """
   use GenServer
+
+  # Live leases one island may hold at once (as Queue's :island_max_pending).
+  @max_leases_per_island 4
   require Logger
   alias Coordinator.Discovery.Disk
   alias Coordinator.Store
@@ -272,8 +275,12 @@ defmodule Coordinator.Soup do
 
   def handle_call({:next, island}, _from, st) do
     st = sweep(st)
+    # One island may hold only a few live leases at once (as Queue's
+    # :island_max_pending), so polling `next` cannot squat on every verify.
+    choice =
+      if leases_held(st.s, island) >= @max_leases_per_island, do: nil, else: pick(st.s, island)
 
-    case pick(st.s, island) do
+    case choice do
       {name, k, role} ->
         lease = %{
           "id" => Base.url_encode64(:crypto.strong_rand_bytes(12), padding: false),
@@ -499,29 +506,47 @@ defmodule Coordinator.Soup do
     if changed, do: persist(%{st | s: %{st.s | "worlds" => Map.new(worlds)}}), else: st
   end
 
-  # Verifies first (an island never checks its own run), then the lowest runnable segment.
+  defp leases_held(s, island) do
+    Enum.reduce(s["worlds"], 0, fn {_, w}, n ->
+      n + Enum.count(w["chain"], &match?(%{"lease" => %{"island" => ^island}}, &1))
+    end)
+  end
+
+  # Verifies first (an island never checks its own run), then the lowest
+  # runnable segment. One pass per world, carrying the previous segment's
+  # status; blocked segments are always a suffix (after a divergence), so the
+  # pass stops at the first one.
   defp pick(s, island) do
     Enum.find_value(s["order"], fn name ->
       w = s["worlds"][name]
-      chain = Enum.with_index(w["chain"])
-      live = Enum.reject(chain, fn {seg, _} -> seg["blocked"] end)
 
-      verify =
-        Enum.find(live, fn {seg, k} ->
-          seg["status"] == "done" and seg["lease"] == nil and seg["ranBy"] != island and
-            verify?(w, k)
+      {verify, run} =
+        w["chain"]
+        |> Enum.with_index()
+        |> Enum.reduce_while({nil, nil, nil}, fn {seg, k}, {verify, run, prev} ->
+          if seg["blocked"] do
+            {:halt, {verify, run, prev}}
+          else
+            verify =
+              verify ||
+                if seg["status"] == "done" and seg["lease"] == nil and seg["ranBy"] != island and
+                     verify?(w, k),
+                   do: k
+
+            run =
+              run ||
+                if seg["status"] == "pending" and (k == 0 or prev in ["done", "verified"]),
+                  do: k
+
+            {:cont, {verify, run, seg["status"]}}
+          end
         end)
+        |> then(fn {v, r, _} -> {v, r} end)
 
-      run =
-        Enum.find(live, fn {seg, k} ->
-          seg["status"] == "pending" and
-            (k == 0 or Enum.at(w["chain"], k - 1)["status"] in ["done", "verified"])
-        end)
-
-      case {verify, run} do
-        {{_, k}, _} -> {name, k, "verify"}
-        {nil, {_, k}} -> {name, k, "run"}
-        _ -> nil
+      cond do
+        verify -> {name, verify, "verify"}
+        run -> {name, run, "run"}
+        true -> nil
       end
     end)
   end

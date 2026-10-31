@@ -51,7 +51,9 @@ async function getDevice(): Promise<GPUDevice | null> {
   return device;
 }
 
-/** Stops the run and says why; used when a step fails or the GPU is lost. */
+const message = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+/** Stops the run and says why; used when a start or a step fails, or the GPU is lost. */
 function fail(message: string) {
   setRunning(false);
   setText(el('status'), message);
@@ -299,7 +301,8 @@ function setRunning(on: boolean) {
 
 playButton.addEventListener('click', () => setRunning(!running));
 view.addEventListener('change', () => { el('legend-bytes').hidden = view.value !== 'bytes'; el('legend-families').hidden = view.value === 'bytes'; draw(); });
-stepButton.addEventListener('click', () => void exclusive(async () => { await advance(1); draw(true); }));
+stepButton.addEventListener('click', () => void exclusive(async () => { await advance(1); draw(true); })
+  .catch((err) => fail(`The step failed: ${message(err)}`)));
 window.addEventListener('browser-life-theme-change', drawHistory);
 document.addEventListener('visibilitychange', () => { if (document.hidden && running) setRunning(false); });
 
@@ -309,7 +312,8 @@ el<HTMLFormElement>('settings-form').addEventListener('submit', (ev) => {
   const [w, h] = el<HTMLSelectElement>('grid').value.split('x').map(Number);
   const mutationProb = Number(el<HTMLSelectElement>('mutation').value);
   setRunning(false);
-  void start(Number.isInteger(seed) && seed >= 0 && seed < 2 ** 32 ? seed : 1, { width: w, height: h, radius: 2 }, mutationProb);
+  void start(Number.isInteger(seed) && seed >= 0 && seed < 2 ** 32 ? seed : 1, { width: w, height: h, radius: 2 }, mutationProb)
+    .catch((err) => fail(`Could not start: ${message(err)}`));
 });
 
 new ResizeObserver(() => {
@@ -318,6 +322,4 @@ new ResizeObserver(() => {
   if (width > 0 && historyCanvas.width !== width) { historyCanvas.width = width; historyCanvas.height = Math.round(width / 3.6); drawHistory(); }
 }).observe(historyCanvas);
 
-void start(1, { width: 240, height: 135, radius: 2 }, 2 ** -12).catch((err) => {
-  setText(el('status'), `Could not start: ${err instanceof Error ? err.message : String(err)}`);
-});
+void start(1, { width: 240, height: 135, radius: 2 }, 2 ** -12).catch((err) => fail(`Could not start: ${message(err)}`));

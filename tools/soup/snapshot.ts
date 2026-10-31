@@ -56,6 +56,8 @@ export function decodeSnapshot(bytes: Uint8Array): Snapshot {
   const epoch = u(40) + u(44) * 2 ** 32;
   if (!Number.isSafeInteger(epoch)) throw new Error("snapshot epoch exceeds 2^53");
   if (langId >= LANGS.length) throw new Error(`unknown lang ${langId}`);
+  // Out of 2^30: the CPU compares it with a 30-bit draw and the GPU takes it as a u32, so anything larger could split them.
+  if (mutation > 2 ** 30) throw new Error(`mutation ${mutation} exceeds 2^30`);
   for (let i = 48; i < HEADER_BYTES; i++) if (bytes[i] !== 0) throw new Error("reserved header bytes must be zero");
   if (num < 2 || num % 2 !== 0) throw new Error("num must be even and at least 2");
   if (bytes.length !== HEADER_BYTES + num * TAPE) throw new Error(`snapshot length ${bytes.length} != ${HEADER_BYTES + num * TAPE}`);
@@ -67,10 +69,19 @@ export function decodeSnapshot(bytes: Uint8Array): Snapshot {
   return { params, epoch, programs: bytes.subarray(HEADER_BYTES) };
 }
 
+/**
+ * The parameters to build a soup with. A radius past the grid's larger side reaches the same neighbours as that side,
+ * so it is clamped there: a malformed header cannot make the neighbour table's loops run for 2^32 steps.
+ */
+function buildParams(params: SoupParams): SoupParams {
+  const g = params.grid;
+  return g ? { ...params, grid: { ...g, radius: Math.min(g.radius ?? 2, Math.max(g.width, g.height)) } } : params;
+}
+
 /** A CPU soup resumed from a snapshot, with the parameters it was built with. */
 export function resumeSoup(bytes: Uint8Array): { soup: Soup; params: SoupParams } {
   const { params, epoch, programs } = decodeSnapshot(bytes);
-  const soup = new Soup(params);
+  const soup = new Soup(buildParams(params));
   soup.programs.set(programs);
   soup.epoch = epoch;
   return { soup, params };
@@ -79,7 +90,7 @@ export function resumeSoup(bytes: Uint8Array): { soup: Soup; params: SoupParams 
 /** A GPU soup resumed from a snapshot. Call `read()` after stepping, before encoding `g.cpu`. */
 export async function resumeGpuSoup(device: GPUDevice, bytes: Uint8Array): Promise<{ soup: GpuSoup; params: SoupParams }> {
   const { params, epoch, programs } = decodeSnapshot(bytes);
-  const soup = await GpuSoup.create(device, params);
+  const soup = await GpuSoup.create(device, buildParams(params));
   soup.cpu.programs.set(programs);
   soup.cpu.epoch = epoch;
   soup.upload();

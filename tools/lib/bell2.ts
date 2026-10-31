@@ -1011,10 +1011,11 @@ export function launchState(events: readonly LaunchEvent[]): { over: boolean; fi
 
 /**
  * The repo's deno entry points that open a WebGPU device (tools/*.ts that call requestDevice or runExperiment; a vitest keeps this list
- * equal to the files that do), plus tools/calibrate.ts, which the note names. Every tests/deno script counts too.
+ * equal to the files that do), plus tools/calibrate.ts, which the note names, and tools/soup.ts, which opens its device through
+ * tools/soup/gpu.ts's soupDevice(). Every tests/deno script counts too.
  */
 export const GPU_TOOLS: readonly string[] = [
-  "assay", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays", "soup_island",
+  "assay", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays", "soup", "soup_island",
 ];
 const GPU_TOOL_NAMES = GPU_TOOLS.map((t) => t.replace(/-/g, "\\-")).join("|");
 /**

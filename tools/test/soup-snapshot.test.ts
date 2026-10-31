@@ -43,6 +43,20 @@ describe("BLSOUP snapshots", () => {
     expect(bad((b) => { b[20] = 9; return b; })).toThrow(/grid/);
   });
 
+  it("rejects a mutation past 2^30, where the CPU and GPU would disagree", () => {
+    const bytes = snapshotOf(GRID, new Soup(GRID));
+    new DataView(bytes.buffer).setUint32(32, 2 ** 30 + 1, true);
+    expect(() => decodeSnapshot(bytes)).toThrow(/exceeds 2\^30/);
+  });
+
+  it("resumes a huge grid radius as the grid's larger side, which reaches the same neighbours", () => {
+    const wide: SoupParams = { ...GRID, grid: { width: 8, height: 8, radius: 8 } };
+    const bytes = snapshotOf(wide, new Soup(wide));
+    new DataView(bytes.buffer).setUint32(28, 0xffffffff, true);
+    const { soup } = resumeSoup(bytes); // would loop for 2^32 steps per cell without the clamp
+    expect(run(soup, 4).programs).toEqual(run(new Soup(wide), 4).programs);
+  });
+
   it("hashes with SHA-256", async () => {
     const bytes = snapshotOf(GRID, new Soup(GRID));
     expect(await sha256Hex(bytes)).toBe(createHash("sha256").update(bytes).digest("hex"));
