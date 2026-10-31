@@ -43,10 +43,6 @@
   @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
   respond @private_spatial 404
 
-  # Program soup (self-replicating byte programs) stays local.
-  @private_soup path_regexp private_soup (?i)^/soup(?:/|$)
-  respond @private_soup 404
-
   # Reunited creative ecosystem and local prototype directory.
   @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
   respond @private_ecosystem 404
@@ -85,6 +81,7 @@
   redir /participate /participate/{?query} 308
   redir /status /status/{?query} 308
   redir /privacy /privacy/{?query} 308
+  redir /soup /soup/{?query} 308
 
   # A link that names a world (/lab/?world=<id> plants it, /worlds/?world=<id> shows its card) previews as that
   # world: the build writes a copy of each page per world, differing only in its title, description and card, at

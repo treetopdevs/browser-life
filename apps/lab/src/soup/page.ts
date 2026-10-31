@@ -169,12 +169,14 @@ function updateCensus() {
 function drawHistory() {
   if (!run) return;
   const w = historyCanvas.width, h = historyCanvas.height, total = run.grid.width * run.grid.height;
+  // The chart sits on the page's paper (or dusk), so it takes the theme's line and life colours.
+  const css = getComputedStyle(document.documentElement);
   historyCtx.clearRect(0, 0, w, h);
-  historyCtx.strokeStyle = '#2b3e43'; historyCtx.lineWidth = 1;
+  historyCtx.strokeStyle = css.getPropertyValue('--line').trim() || '#888'; historyCtx.lineWidth = 1;
   for (const f of [0.25, 0.5, 0.75]) { historyCtx.beginPath(); historyCtx.moveTo(0, h * f); historyCtx.lineTo(w, h * f); historyCtx.stroke(); }
   if (history.length < 2) { setText(el('chart-range'), ''); return; }
   const e0 = history[0].epoch, e1 = history[history.length - 1].epoch || 1;
-  historyCtx.strokeStyle = '#9fe4c4'; historyCtx.lineWidth = 2; historyCtx.beginPath();
+  historyCtx.strokeStyle = css.getPropertyValue('--life').trim() || '#2a8'; historyCtx.lineWidth = 2; historyCtx.beginPath();
   history.forEach((p, i) => {
     const x = ((p.epoch - e0) / Math.max(1, e1 - e0)) * (w - 4) + 2;
     const y = h - 2 - (p.distinct / total) * (h - 4);
@@ -298,6 +300,7 @@ function setRunning(on: boolean) {
 playButton.addEventListener('click', () => setRunning(!running));
 view.addEventListener('change', () => { el('legend-bytes').hidden = view.value !== 'bytes'; el('legend-families').hidden = view.value === 'bytes'; draw(); });
 stepButton.addEventListener('click', () => void exclusive(async () => { await advance(1); draw(true); }));
+window.addEventListener('browser-life-theme-change', drawHistory);
 document.addEventListener('visibilitychange', () => { if (document.hidden && running) setRunning(false); });
 
 el<HTMLFormElement>('settings-form').addEventListener('submit', (ev) => {

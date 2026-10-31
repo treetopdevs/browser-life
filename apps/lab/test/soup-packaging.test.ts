@@ -1,13 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
-it('keeps the soup prototype outside the deployed site', () => {
+it('ships the program soup page with the site', () => {
   expect(read('apps/lab/vite.config.ts')).toContain('soup: r("./soup/index.html")');
-  const docker = read('Dockerfile.site');
-  for (const path of ['apps/lab/dist/soup', 'apps/lab/dist/assets/soup-*.js', 'apps/lab/dist/assets/soup-*.css']) expect(docker).toContain(path);
-  const source = read('deploy/Caddyfile').match(/@private_soup path_regexp private_soup (.+)/)?.[1];
-  expect(source).toBe('(?i)^/soup(?:/|$)');
-  const route = new RegExp(source!.replace('(?i)', ''), 'i');
-  for (const path of ['/soup', '/soup/', '/SOUP/index.html']) expect(route.test(path)).toBe(true);
-  expect(route.test('/soup-other')).toBe(false);
+  // The site image keeps the built page and its assets: nothing named soup is removed after the build.
+  expect(read('Dockerfile.site')).not.toMatch(/dist\/(?:assets\/)?soup/);
+  const caddy = read('deploy/Caddyfile');
+  expect(caddy).not.toMatch(/private_soup|\^\/soup/);
+  expect(caddy).toContain('redir /soup /soup/{?query} 308');
+  const page = read('apps/lab/soup/index.html');
+  expect(page).not.toContain('noindex');
+  expect(page).toContain('<link rel="canonical" href="https://cadence.garden/soup/" />');
 });

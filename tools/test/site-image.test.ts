@@ -54,7 +54,7 @@ const ids = Object.keys(cards);
 const TITLE = "<title>Page not found · Cadence Garden</title>";
 const titleOf = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
 const metaOf = (html: string, key: string) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
-const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/"];
+const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/", "/soup/"];
 
 // What the synthetic coordinator says; the site must pass these through untouched.
 const NOT_FOUND = "upstream-not-found";
@@ -196,7 +196,7 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     const files = new Set(must(["exec", site, "find", "/srv"]).split("\n").filter(Boolean));
     expect(files.has("/srv/lab/index.html"), "packaged lab content: /srv/lab/index.html is missing from the image").toBe(true);
     const wanted = [
-      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
+      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/soup/index.html", "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
       ...ids.flatMap((world) => [`/srv/lab/world/${world}/index.html`, `/srv/worlds/world/${world}/index.html`, `/srv/og/worlds/${world}.jpg`]),
     ];
     expect(wanted.filter((file) => !files.has(file)), "packaged files missing from the image").toEqual([]);
