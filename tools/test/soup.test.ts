@@ -174,3 +174,12 @@ describe("grid soup", () => {
     expect(raw.subarray(1, 1 + width * 3)).toEqual(Buffer.from(rgb.subarray(0, width * 3)));
   });
 });
+
+describe("soup parameters", () => {
+  it("rejects a mutation rate outside [0, 2^30]", () => {
+    expect(() => new Soup({ num: 4, seed: 1, mutation: -1 })).toThrow(/mutation/);
+    expect(() => new Soup({ num: 4, seed: 1, mutation: 2 ** 30 + 1 })).toThrow(/mutation/);
+    expect(() => new Soup({ num: 4, seed: 1, mutation: 0.5 })).toThrow(/mutation/);
+    expect(() => new Soup({ num: 4, seed: 1, mutation: 2 ** 30 })).not.toThrow();
+  });
+});

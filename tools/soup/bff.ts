@@ -181,6 +181,8 @@ export class Soup {
     this.num = p.num;
     this.lang = p.lang ?? "noheads";
     this.mutation = p.mutation ?? DEFAULT_MUTATION;
+    // A rate out of 2^30 (cubff compares a 30-bit draw against it); outside [0, 2^30] the u32 kernels misbehave.
+    if (!Number.isInteger(this.mutation) || this.mutation < 0 || this.mutation > 2 ** 30) throw new Error("mutation must be an integer in [0, 2^30]");
     this.programs = new Uint8Array(p.num * TAPE);
     this.order = new Uint32Array(p.num);
     this.grid = p.grid ?? null;
