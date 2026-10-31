@@ -129,8 +129,9 @@ const t0 = performance.now();
 let ops = 0;
 // A restored transition may already satisfy --after (loading a transition
 // snapshot with --after 0): then there is nothing to run.
-const afterDone = () => transitionAt !== null && soup.epoch - transitionAt >= after;
-while (soup.epoch < maxEpochs && !afterDone()) {
+// Checked once: inside the loop the stop happens at a census, as documented.
+const stopBeforeRun = transitionAt !== null && soup.epoch - transitionAt >= after;
+while (soup.epoch < maxEpochs && !stopBeforeRun) {
   // Advance to the next epoch that needs a log line (cubff logs after epoch e
   // with e % every == 0, labelled e + 1), a snapshot, or the end.
   let t = soup.epoch + 1;
