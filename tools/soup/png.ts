@@ -23,17 +23,28 @@ const COLORS = (() => {
 export function drawGrid(programs: Uint8Array, g: Grid): { width: number; height: number; rgb: Uint8Array } {
   const width = g.width * 8, height = g.height * 8;
   const rgb = new Uint8Array(width * height * 3);
+  paintGrid(programs, g, rgb, 3);
+  return { width, height, rgb };
+}
+
+/**
+ * Paints the grid into a caller-owned buffer of (width*8) x (height*8) pixels
+ * with `channels` bytes each (3 for RGB, 4 for canvas RGBA, whose alpha is set
+ * to 255), so a live view can reuse one buffer.
+ */
+export function paintGrid(programs: Uint8Array, g: Grid, out: Uint8Array | Uint8ClampedArray, channels: 3 | 4 = 4): void {
+  const width = g.width * 8;
   for (let i = 0; i < g.width * g.height; i++) {
     const x = i % g.width, y = Math.floor(i / g.width);
     for (let j = 0; j < TAPE; j++) {
       const ix = j % 8, iy = j >> 3;
-      const p = ((y * 8 + iy) * width + x * 8 + ix) * 3;
+      const p = ((y * 8 + iy) * width + x * 8 + ix) * channels;
       const b = programs[i * TAPE + j] * 3;
       const dark = ix === 0 || iy === 0 ? 32 : 0;
-      for (let c = 0; c < 3; c++) rgb[p + c] = Math.max(COLORS[b + c] - dark, 0);
+      for (let c = 0; c < 3; c++) out[p + c] = Math.max(COLORS[b + c] - dark, 0);
+      if (channels === 4) out[p + 3] = 255;
     }
   }
-  return { width, height, rgb };
 }
 
 const CRC = (() => {

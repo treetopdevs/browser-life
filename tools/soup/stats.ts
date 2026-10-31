@@ -4,7 +4,8 @@
 // (distinct programs, most common program) is a second signal that does not
 // depend on the compressor.
 import { brotliCompressSync, constants } from "node:zlib";
-import { TAPE } from "./bff.ts";
+import { byteEntropy } from "./census.ts";
+export { byteEntropy, census, type Census } from "./census.ts";
 
 // Under Deno, node:zlib's brotli is a different encoder from the C library
 // cubff links, and sizes differ by about 0.02%. Use the C `brotli` CLI when
@@ -38,30 +39,6 @@ export function brotliSize(data: Uint8Array): number {
       [constants.BROTLI_PARAM_SIZE_HINT]: data.length,
     },
   }).length;
-}
-
-export function byteEntropy(data: Uint8Array): number {
-  const counts = new Float64Array(256);
-  for (const b of data) counts[b]++;
-  let h = 0;
-  for (const c of counts) if (c) { const f = c / data.length; h -= f * Math.log2(f); }
-  return h;
-}
-
-export interface Census { distinct: number; top: Uint8Array; topCount: number }
-
-export function census(programs: Uint8Array): Census {
-  const n = programs.length / TAPE;
-  const counts = new Map<string, number>();
-  let best = "", bestN = 0;
-  for (let i = 0; i < n; i++) {
-    let key = "";
-    for (let k = i * TAPE; k < (i + 1) * TAPE; k++) key += String.fromCharCode(programs[k]);
-    const c = (counts.get(key) ?? 0) + 1;
-    counts.set(key, c);
-    if (c > bestN) { bestN = c; best = key; }
-  }
-  return { distinct: counts.size, top: Uint8Array.from(best, (ch) => ch.charCodeAt(0)), topCount: bestN };
 }
 
 export interface Stats { brotli: number; h0: number; higherEntropy: number }

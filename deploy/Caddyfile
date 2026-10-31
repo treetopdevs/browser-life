@@ -43,6 +43,10 @@
   @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
   respond @private_spatial 404
 
+  # Program soup (self-replicating byte programs) stays local.
+  @private_soup path_regexp private_soup (?i)^/soup(?:/|$)
+  respond @private_soup 404
+
   # Reunited creative ecosystem and local prototype directory.
   @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
   respond @private_ecosystem 404

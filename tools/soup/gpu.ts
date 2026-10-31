@@ -181,6 +181,11 @@ export class GpuSoup {
 
   get epoch(): number { return this.cpu.epoch; }
 
+  /** Frees the GPU buffers; the soup cannot step afterwards. */
+  destroy(): void {
+    for (const b of [this.progs, this.orderBuf, this.params, this.opsBuf]) b.destroy();
+  }
+
   /** Sends the CPU soup's programs to the GPU (after construction, plant() or a load). */
   upload(): void { this.device.queue.writeBuffer(this.progs, 0, this.cpu.programs); }
 
