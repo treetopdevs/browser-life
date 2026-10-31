@@ -5,7 +5,7 @@
 .buttons{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.buttons label,#settings-form>label{display:grid;gap:5px;color:#c2d0cd;font-size:13px}
 .clock{display:grid;gap:4px;text-align:right;color:#b4c1bd;font-size:13px}.clock strong{font-size:17px;color:#f3f5ef;font-variant-numeric:tabular-nums}.clock #status{color:#a7d8c5}
 .world-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}.world-panel,.panel{border:1px solid #34484e;border-radius:10px;background:#101e24;padding:14px}.world-panel{min-width:0}
-#world{display:block;width:100%;height:auto;aspect-ratio:240/135;background:#08151c;border-radius:6px;image-rendering:pixelated;cursor:crosshair}
+#world{display:block;width:100%;height:auto;aspect-ratio:240/135;background:#08151c;border-radius:6px;image-rendering:pixelated;cursor:crosshair}#world:focus-visible{outline:2px solid #9fe4c4;outline-offset:3px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;padding:11px 3px 1px;color:#c1cfca;font-size:12px}.legend span{display:flex;align-items:center;gap:6px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px}.legend code{color:#e7efeb}.legend[hidden]{display:none}
 .loop{background:rgb(0,192,0)}.edit{background:rgb(200,0,200)}.move{background:rgb(200,128,220)}.zero{background:rgb(255,0,0)}.data{background:rgb(215,215,215)}.family{background:linear-gradient(90deg,#e87b7b,#7be8a4,#7b9be8)}.loner{background:rgb(22,38,44);border:1px solid #53666a}
 .panel h2{margin-top:0}.inspector{display:grid;gap:10px;min-width:0}.inspector>*{min-width:0}.inspector p{margin:0}.cell{color:#c2d0cd;font-size:13px}

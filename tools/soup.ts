@@ -127,7 +127,10 @@ if (grid && fresh) await writeFrame();
 const snapshot = (tag = "") => Deno.writeFile(`${out}/soup-${soup.epoch}${tag}.bin`, soup.programs);
 const t0 = performance.now();
 let ops = 0;
-while (soup.epoch < maxEpochs) {
+// A restored transition may already satisfy --after (loading a transition
+// snapshot with --after 0): then there is nothing to run.
+const afterDone = () => transitionAt !== null && soup.epoch - transitionAt >= after;
+while (soup.epoch < maxEpochs && !afterDone()) {
   // Advance to the next epoch that needs a log line (cubff logs after epoch e
   // with e % every == 0, labelled e + 1), a snapshot, or the end.
   let t = soup.epoch + 1;

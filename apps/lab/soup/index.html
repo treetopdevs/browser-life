@@ -37,7 +37,7 @@
 
     <section class="world-layout" aria-label="The soup and the program inspector">
       <div class="world-panel">
-        <canvas id="world" width="1920" height="1080" role="img" aria-label="The program soup, one square per program. In the family view, programs with the same instructions share a colour; in the byte view each program is an 8 by 8 block of its bytes. Click a square to inspect it.">Canvas unavailable. The counts below still update.</canvas>
+        <canvas id="world" width="1920" height="1080" tabindex="0" role="img" aria-label="The program soup, one square per program. In the family view, programs with the same instructions share a colour; in the byte view each program is an 8 by 8 block of its bytes. Click a square, or focus the grid and use the arrow keys (Shift for steps of 10), to inspect it.">Canvas unavailable. The counts below still update.</canvas>
         <div id="legend-families" class="legend" aria-label="Family colours">
           <span><i class="family"></i>A family: at least 3 programs with the same 6 or more instructions (data bytes ignored), one colour each</span>
           <span><i class="loner"></i>Everything else: fewer than 3 copies, or fewer than 6 instructions</span>
@@ -52,9 +52,9 @@
       </div>
       <aside class="panel inspector" aria-labelledby="inspect-heading">
         <h2 id="inspect-heading">Inspect a program</h2>
-        <p id="inspect-hint" class="muted">Click a square on the grid.</p>
+        <p id="inspect-hint" class="muted">Click a square on the grid, or focus the grid and use the arrow keys.</p>
         <div id="inspect" hidden>
-          <p class="cell">Square <strong id="cell-xy"></strong></p>
+          <p class="cell" aria-live="polite">Square <strong id="cell-xy"></strong></p>
           <pre id="program" class="program" aria-label="The program's 64 bytes, as commands"></pre>
           <p id="selfrep" class="selfrep"></p>
           <p class="muted">The copy test runs this program against 13 random partners for 5 generations and counts the byte positions that come out the same in at least 4 of the 13 runs, taking the smaller count of the two halves (cubff's own test). 64 of 64 means it reliably makes copies of itself.</p>

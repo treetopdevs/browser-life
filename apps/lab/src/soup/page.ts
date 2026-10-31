@@ -40,8 +40,21 @@ let opsSince = 0, runsSince = 0;
 async function getDevice(): Promise<GPUDevice | null> {
   if (device) return device;
   const adapter = await navigator.gpu?.requestAdapter({ powerPreference: 'high-performance' }).catch(() => null);
-  device = adapter ? await adapter.requestDevice().catch(() => null) : null;
+  const dev = adapter ? await adapter.requestDevice().catch(() => null) : null;
+  // A lost device (driver reset, GPU switch) cannot be reused: stop, and let
+  // the next "Start new soup" ask for a fresh one.
+  void dev?.lost.then((info) => {
+    if (device === dev) device = null;
+    if (run?.gpu?.device === dev) fail(`The GPU was lost (${(info.message || info.reason).replace(/\.$/, '')}). Start a new soup to continue.`);
+  });
+  device = dev;
   return device;
+}
+
+/** Stops the run and says why; used when a step fails or the GPU is lost. */
+function fail(message: string) {
+  setRunning(false);
+  setText(el('status'), message);
 }
 
 /** Runs `fn` after any step or edit in flight, so the CPU copy of the programs is current while it runs. */
@@ -197,9 +210,28 @@ canvas.addEventListener('click', (ev) => {
   const x = Math.floor((ev.clientX - rect.left) / (rect.width / run.grid.width));
   const y = Math.floor((ev.clientY - rect.top) / (rect.height / run.grid.height));
   if (x < 0 || y < 0 || x >= run.grid.width || y >= run.grid.height) return;
-  selected = y * run.grid.width + x;
-  // The CPU copy is the frame on screen, so inspecting need not wait for a step.
-  inspect(selected); draw();
+  select(y * run.grid.width + x);
+});
+
+/** Selects a square; the CPU copy is the frame on screen, so inspecting need not wait for a step. */
+function select(i: number) {
+  selected = i;
+  inspect(i); draw();
+}
+
+// Keyboard: arrows move the selected square (Shift moves 10), starting from the centre.
+canvas.addEventListener('keydown', (ev) => {
+  if (!run) return;
+  const step = ev.shiftKey ? 10 : 1;
+  const d = ({ ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] } as Record<string, [number, number]>)[ev.key];
+  if (!d && ev.key !== 'Enter' && ev.key !== ' ') return;
+  ev.preventDefault();
+  const { width, height } = run.grid;
+  const cur = selected ?? Math.floor(height / 2) * width + Math.floor(width / 2);
+  if (!d) { select(cur); return; }
+  const x = Math.min(width - 1, Math.max(0, (cur % width) + d[0]));
+  const y = Math.min(height - 1, Math.max(0, Math.floor(cur / width) + d[1]));
+  select(y * width + x);
 });
 
 el('plant').addEventListener('click', () => {
@@ -240,7 +272,12 @@ async function loop() {
     while (running) {
       const max = pace.value === 'max';
       const chunk = max ? 4 : Number(pace.value);
-      await exclusive(async () => { if (running) await advance(chunk); });
+      try {
+        await exclusive(async () => { if (running) await advance(chunk); });
+      } catch (err) {
+        fail(`Stopped: ${err instanceof Error ? err.message : String(err)}. Start a new soup to continue.`);
+        break;
+      }
       if (!max || performance.now() - lastDraw > 250) { draw(); lastDraw = performance.now(); await nextFrame(); }
       else await new Promise((resolve) => setTimeout(resolve, 0));
     }
