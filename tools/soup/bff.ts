@@ -139,7 +139,10 @@ export interface SoupParams { num: number; seed: number; lang?: Lang; mutation?:
 
 /** Neighbour lists in make_2d_pattern.py order, as CSR: neighbours of i are list[start[i] .. start[i+1]). */
 export function gridNeighbours(g: Grid): { start: Uint32Array; list: Uint32Array } {
-  const r = g.radius ?? 2, n = g.width * g.height;
+  const n = g.width * g.height;
+  // Offsets past the grid's extent add no neighbours, so capping keeps the same lists in the same order
+  // while bounding the loops (a malformed snapshot or flag could otherwise pass a huge radius).
+  const r = Math.min(g.radius ?? 2, Math.max(g.width, g.height) - 1);
   const start = new Uint32Array(n + 1), list: number[] = [];
   for (let i = 0; i < g.height; i++) {
     for (let j = 0; j < g.width; j++) {

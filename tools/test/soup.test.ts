@@ -176,6 +176,14 @@ describe("grid soup", () => {
 });
 
 describe("soup parameters", () => {
+  it("caps a huge grid radius without changing the neighbour lists", () => {
+    const g = { width: 5, height: 3 };
+    const full = gridNeighbours({ ...g, radius: 4 });
+    const huge = gridNeighbours({ ...g, radius: 2 ** 31 });
+    expect([...huge.start]).toEqual([...full.start]);
+    expect([...huge.list]).toEqual([...full.list]);
+  });
+
   it("rejects a mutation rate outside [0, 2^30]", () => {
     expect(() => new Soup({ num: 4, seed: 1, mutation: -1 })).toThrow(/mutation/);
     expect(() => new Soup({ num: 4, seed: 1, mutation: 2 ** 30 + 1 })).toThrow(/mutation/);
