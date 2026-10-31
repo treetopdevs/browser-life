@@ -26,6 +26,9 @@ defmodule CoordinatorWeb.SoupController do
 
   @island_actions [:next, :start, :snapshot, :put_snapshot, :complete]
 
+  # Before anything else: with the plane off (production without
+  # BL_SOUP_DATA_DIR, see config/runtime.exs) every soup route is a plain 404.
+  plug :require_plane
   plug :limit_requests when action in @island_actions
   plug :require_admin when action in [:register, :status]
   plug :require_island when action in [:next, :start, :put_snapshot, :complete]
@@ -35,6 +38,13 @@ defmodule CoordinatorWeb.SoupController do
   plug :limit_segment when action in [:start, :put_snapshot, :complete]
   # An island's download is a segment request; the administrator's export is not.
   plug :limit_island_download when action == :snapshot
+
+  defp require_plane(conn, _opts) do
+    if Process.whereis(Soup),
+      do: conn,
+      else:
+        conn |> put_status(404) |> json(%{error: "the shared soup is not enabled here"}) |> halt()
+  end
 
   # ---- admin ----
 

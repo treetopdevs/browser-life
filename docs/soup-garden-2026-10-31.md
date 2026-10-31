@@ -89,6 +89,8 @@ Uploads stream to disk, and each one is capped at its world's exact snapshot len
 
 ### Not in the slice
 
+In production the plane is opt-in: it starts only when `BL_SOUP_DATA_DIR` names its own writable, persistent directory, and `/api/soup` answers 404 until then. The deployment (`compose.dokploy.yaml`, the coordinator image gate) has no soup volume yet; adding one is part of deploying it.
+
 - The browser island (`island.html`) taking soup work.
 - A public view of the shared soup (its head snapshot drawn on `/soup/`).
 - Gzip, pruning, and the status page.
