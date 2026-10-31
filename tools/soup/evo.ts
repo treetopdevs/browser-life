@@ -247,7 +247,7 @@ export function randomProgram(r: () => number): Uint8Array {
 
 export interface AssayJob {
   id: string;
-  kind: "pair" | "neutral" | "grid";
+  kind: "pair" | "neutral" | "grid" | "gneutral" | "xpair"; // xpair: exploratory time points (doc: Exploratory)
   lineage: string;
   rare: string; // type id (or "<id>*" for the marked neutral form)
   common: string;

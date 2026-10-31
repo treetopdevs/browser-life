@@ -59,7 +59,7 @@ const formsOf = (r: Pick<TypeRow, "rep" | "mirror">) => r.mirror ? [r.rep, r.mir
 interface Lineage { key: string; dir: string; from: number; to: number; grid: boolean }
 interface Competitor { id: string; firstLead: number; epoch: number; row: TypeRow }
 interface Plan {
-  lineages: (Lineage & { epochs: number[]; leaders: (string | null)[]; changes: number; competitors: Competitor[]; marker: ReturnType<typeof findMarker> })[];
+  lineages: (Lineage & { epochs: number[]; leaders: (string | null)[]; changes: number; competitors: Competitor[]; timePoints: Competitor[]; marker: ReturnType<typeof findMarker> })[];
 }
 
 if (cmd === "census") {
@@ -100,13 +100,21 @@ if (cmd === "census") {
     });
     const L0 = competitors[0];
     const marker = L0 ? findMarker(refOf(L0.row)) : null;
-    plan.lineages.push({ ...L, epochs: snaps.map((s) => s.epoch), leaders, changes: lead.changes, competitors, marker });
+    // Exploratory: the leaders at 5 evenly spaced snapshots (sustained or not), deduplicated, frozen there.
+    const timePoints: Competitor[] = [];
+    for (const q of [0, 1, 2, 3, 4]) {
+      const si = Math.round(q * (snaps.length - 1) / 4);
+      const id = snaps[si].leader;
+      if (!id || timePoints.some((c) => c.id === id)) continue;
+      timePoints.push({ id, firstLead: si, epoch: snaps[si].epoch, row: snaps[si].types.find((r) => r.id === id)! });
+    }
+    plan.lineages.push({ ...L, epochs: snaps.map((s) => s.epoch), leaders, changes: lead.changes, competitors, timePoints, marker });
     // Pair assays: every distinct unordered pair, both directions, seeds 1..3.
-    const pairJobs = (kind: "pair" | "grid") => {
-      for (let x = 0; x < competitors.length; x++) for (let y = x + 1; y < competitors.length; y++) {
-        for (const [rare, common] of [[competitors[x], competitors[y]], [competitors[y], competitors[x]]]) {
+    const pairJobs = (kind: "pair" | "grid" | "xpair", set: Competitor[] = competitors) => {
+      for (let x = 0; x < set.length; x++) for (let y = x + 1; y < set.length; y++) {
+        for (const [rare, common] of [[set[x], set[y]], [set[y], set[x]]]) {
           for (let s = 1; s <= 3; s++) {
-            const id = `${L.key}-${kind}-${competitors[x].id}-${competitors[y].id}-r${rare.id}-s${s}`;
+            const id = `${L.key}-${kind}-${set[x].id}-${set[y].id}-r${rare.id}-s${s}`;
             jobs.push({
               id, kind, lineage: L.key, rare: rare.id, common: common.id, rareForms: formsOf(rare.row), commonForms: formsOf(common.row), seed: fnv(id),
               ...(kind === "grid" ? { grid: { width: 64, height: 64, radius: 2 } } : {}),
@@ -117,14 +125,16 @@ if (cmd === "census") {
     };
     pairJobs("pair");
     if (L.grid) pairJobs("grid");
+    pairJobs("xpair", timePoints);
     // Neutral: L0* vs L0, both directions, calibration seeds 1..3 and validation seeds 4..6.
     if (L0 && marker) {
       const ref = refOf(L0.row);
       const marked = markForms(ref, marker.pos, marker.value).map(hex);
-      for (const markedRare of [true, false]) for (let s = 1; s <= 6; s++) {
-        const id = `${L.key}-neutral-${L0.id}-${markedRare ? "marked" : "plain"}-rare-s${s}`;
+      const kinds: ("neutral" | "gneutral")[] = L.grid ? ["neutral", "gneutral"] : ["neutral"];
+      for (const kind of kinds) for (const markedRare of [true, false]) for (let s = 1; s <= (kind === "neutral" ? 6 : 3); s++) {
+        const id = `${L.key}-${kind}-${L0.id}-${markedRare ? "marked" : "plain"}-rare-s${s}`;
         jobs.push({
-          id, kind: "neutral", lineage: L.key, rare: markedRare ? `${L0.id}*` : L0.id, common: markedRare ? L0.id : `${L0.id}*`,
+          id, kind, lineage: L.key, ...(kind === "gneutral" ? { grid: { width: 64, height: 64, radius: 2 } } : {}), rare: markedRare ? `${L0.id}*` : L0.id, common: markedRare ? L0.id : `${L0.id}*`,
           rareForms: markedRare ? marked : formsOf(L0.row), commonForms: markedRare ? formsOf(L0.row) : marked, seed: fnv(id),
           // Classification reads the marker: "rare" = whoever holds the rare side's byte.
           marker: markedRare ? marker : { pos: marker.pos, value: marker.original, original: marker.value },
@@ -154,10 +164,11 @@ if (cmd === "census") {
   const plan: Plan = JSON.parse(await Deno.readTextFile(`${out}/plan.json`));
   const jobs: AssayJob[] = (await Deno.readTextFile(`${out}/jobs.jsonl`)).trim().split("\n").map((l) => JSON.parse(l));
   const results = new Map<string, AssayResult>();
-  let missing = 0;
+  let missing = 0, missingExploratory = 0; // exploratory (xpair) jobs never hold up the headline
   for (const j of jobs) {
     const p = `${out}/assays/${j.id}.json`;
     if (await exists(p)) results.set(j.id, JSON.parse(await Deno.readTextFile(p)));
+    else if (j.kind === "xpair") missingExploratory++;
     else missing++;
   }
   const fOf = (r: AssayResult | undefined) => r && r.valid && Number.isFinite(r.final.f) ? r.final.f : null;
@@ -182,15 +193,15 @@ if (cmd === "census") {
   const lineageResults = [];
   for (const L of plan.lineages) {
     const comp = L.competitors;
-    const k = comp.length;
-    const score = (kind: "pair" | "grid") => {
+    const score = (kind: "pair" | "grid" | "xpair", comp: Competitor[] = L.competitors, s0 = sigma0) => {
+      const k = comp.length;
       const pairs: { a: string; b: string; outcome: string; D: number | null; theta: number | null; aRare: (number | null)[]; bRare: (number | null)[] }[] = [];
       const wins: [number, number][] = [];
       for (let x = 0; x < k; x++) for (let y = x + 1; y < k; y++) {
         const base = `${L.key}-${kind}-${comp[x].id}-${comp[y].id}`;
         const fs = (rare: string) => [1, 2, 3].map((s) => fOf(results.get(`${base}-r${rare}-s${s}`)));
         const aRare = fs(comp[x].id), bRare = fs(comp[y].id);
-        const o = pairOutcome(aRare, bRare, sigma0);
+        const o = pairOutcome(aRare, bRare, s0);
         pairs.push({ a: comp[x].id, b: comp[y].id, ...o, aRare, bRare });
         if (o.outcome === "a") wins.push([x, y]); else if (o.outcome === "b") wins.push([y, x]);
       }
@@ -201,7 +212,11 @@ if (cmd === "census") {
       return { pairs, resolved, failed, laterWins: perm.laterWins, p: perm.p, ...v, cyclic: cyc, coexist: pairs.filter((p) => p.outcome === "coexist").map((p) => [p.a, p.b]) };
     };
     const wellMixed = score("pair");
-    const grid = L.grid ? score("grid") : null;
+    const gn = jobs.filter((j) => j.kind === "gneutral" && j.lineage === L.key);
+    const gf = gn.map((j) => fOf(results.get(j.id))).filter((f): f is number => f !== null);
+    const sigmaGrid = gn.length && gn.every((j) => results.has(j.id)) && gf.length >= 3 ? sd(gf) : NaN;
+    const grid = L.grid ? { sigma0: sigmaGrid, ...score("grid", L.competitors, sigmaGrid) } : null;
+    const explore = score("xpair", L.timePoints);
 
     // Censuses for probes, trends and the similarity graph.
     const snaps = await readCensus(L.dir, L.from, L.epochs);
@@ -230,7 +245,7 @@ if (cmd === "census") {
         seen.add(r.id);
         if (si === 0) { similarity.push({ epoch: snaps[si].epoch, id: r.id, parent: null, distance: null }); continue; }
         let best: TypeRow | null = null, bd = TAPE + 1, radius = 0;
-        for (const q of snaps[si - 1].types) {
+        for (const q of snaps[si - 1].types.slice(0, 64)) {
           const ref = refOf(q);
           const d = ref.distance(unhex(r.rep), 0, TAPE).d;
           if (d < bd || (d === bd && best && q.count > best.count)) { bd = d; best = q; radius = ref.match; }
@@ -247,9 +262,16 @@ if (cmd === "census") {
       chain.push({ epoch: s.epoch, id: row.id, distance: prevRow ? refOf(prevRow).distance(unhex(row.rep), 0, TAPE).d : null });
       prevRow = row;
     }
-    const muller = snaps.map((s) => ({ epoch: s.epoch, copierShare: s.copierShare, typesAbove: s.typesAbove, diversity: s.diversity, distinct: s.distinct, leader: s.leader, top: s.types.slice(0, 24).map((r) => [r.id, r.share, r.selfRep]) }));
+    // Clade view (exploratory): each type coloured by the nearest competitor or time-point leader within that one's radius, else null.
+    const anchors = [...comp, ...L.timePoints.filter((c) => !comp.some((d) => d.id === c.id))].map((c) => ({ id: c.id, ref: refOf(c.row) }));
+    const cladeOf = (r: TypeRow): string | null => {
+      let best: string | null = null, bd = Infinity;
+      for (const a of anchors) { const d = a.ref.distance(unhex(r.rep), 0, a.ref.match).d; if (d <= a.ref.match && d < bd) { bd = d; best = a.id; } }
+      return best;
+    };
+    const muller = snaps.map((s) => ({ epoch: s.epoch, copierShare: s.copierShare, typesAbove: s.typesAbove, diversity: s.diversity, distinct: s.distinct, leader: s.leader, top: s.types.slice(0, 24).map((r) => [r.id, r.share, r.selfRep, cladeOf(r)]) }));
     const turnover = L.changes >= 3 ? "TURNOVER" : L.changes === 0 ? "no turnover" : "some turnover";
-    lineageResults.push({ key: L.key, changes: L.changes, turnover, competitors: comp.map((c) => ({ id: c.id, epoch: c.epoch, selfRep: c.row.selfRep, instructions: c.row.instructions, canon: c.row.canon, rep: c.row.rep })), marker: L.marker, wellMixed, grid, probes, trends, trendCorr, similarity, chain, muller });
+    lineageResults.push({ key: L.key, changes: L.changes, turnover, competitors: comp.map((c) => ({ id: c.id, epoch: c.epoch, selfRep: c.row.selfRep, instructions: c.row.instructions, canon: c.row.canon, rep: c.row.rep })), timePoints: L.timePoints.map((c) => ({ id: c.id, epoch: c.epoch, selfRep: c.row.selfRep, instructions: c.row.instructions, canon: c.row.canon, rep: c.row.rep })), marker: L.marker, wellMixed, grid, explore, probes, trends, trendCorr, similarity, chain, muller });
   }
   const turnoverN = lineageResults.filter((l) => l.turnover === "TURNOVER").length;
   const bothN = lineageResults.filter((l) => l.turnover === "TURNOVER" && l.wellMixed.verdict === "ADAPTIVE").length;
@@ -262,9 +284,9 @@ if (cmd === "census") {
   const summary = {
     headline: !complete ? `INCOMPLETE (${missing} assays missing, ${plan.lineages.length} of 4 lineages, sigma0 ${Number.isFinite(sigma0) ? "set" : "not set"}): ${headline}`
       : calibrationFailed ? `${headline} (calibration failed: provisional)` : headline,
-    missingAssays: missing, sigma0, neutralCalibrationRuns: calib.length, neutralMeanF: allNeutral.length ? allNeutral.reduce((s, x) => s + x, 0) / allNeutral.length : null,
+    missingAssays: missing, missingExploratory, sigma0, neutralCalibrationRuns: calib.length, neutralMeanF: allNeutral.length ? allNeutral.reduce((s, x) => s + x, 0) / allNeutral.length : null,
     validation, calibrationFailed, parasitesPresent: parasiteLineages >= 2, parasiteLineages,
-    lineages: lineageResults.map((l) => ({ key: l.key, changes: l.changes, turnover: l.turnover, competitors: l.competitors.length, verdict: l.wellMixed.verdict, resolved: l.wellMixed.resolved, laterWins: l.wellMixed.laterWins, p: l.wellMixed.p, failed: l.wellMixed.failed, cyclic: l.wellMixed.cyclic.length, coexist: l.wellMixed.coexist.length, grid: l.grid ? l.grid.verdict : null, parasites: l.probes.map((p) => p.parasites.length) })),
+    lineages: lineageResults.map((l) => ({ key: l.key, changes: l.changes, turnover: l.turnover, competitors: l.competitors.length, verdict: l.wellMixed.verdict, resolved: l.wellMixed.resolved, laterWins: l.wellMixed.laterWins, p: l.wellMixed.p, failed: l.wellMixed.failed, cyclic: l.wellMixed.cyclic.length, coexist: l.wellMixed.coexist.length, grid: l.grid ? l.grid.verdict : null, explore: `${l.explore.verdict} (${l.explore.laterWins}/${l.explore.resolved}, p ${l.explore.p})`, parasites: l.probes.map((p) => p.parasites.length) })),
   };
   await Deno.writeTextFile(`${out}/results.json`, JSON.stringify({ summary, lineages: lineageResults }));
   console.log(JSON.stringify(summary, null, 1));

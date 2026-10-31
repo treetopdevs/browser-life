@@ -110,7 +110,7 @@ A **sustained leader change**: a snapshot's leader differs from the current lead
 - **NO DIRECTION**: otherwise.
 - **CYCLIC** is noted when the resolved relations contain an intransitive triple. Coexisting pairs are listed.
 
-**Grid assays (g1 only, secondary).** The same pairs, both directions and 3 seeds, on a 64 × 64 grid with radius 2. The rare type is planted as one central square patch of 512 programs (a 23 × 23 square, trimmed row by row). Same classification and outcome rule, with σ0 from the well-mixed calibration. Reported beside the well-mixed verdict; the headline uses only the well-mixed one.
+**Grid assays (g1 only, secondary).** The same pairs, both directions and 3 seeds, on a 64 × 64 grid with radius 2. The rare type is planted as one central square patch of 512 programs (a 23 × 23 square, trimmed row by row). Same classification and outcome rule. σ0 comes from a grid neutral control: L0* against L0 on the same grid, 3 seeds × 2 directions, with the marked or plain type as the central patch. Reported beside the well-mixed verdict; the headline uses only the well-mixed one.
 
 ### Q3. Interactions and parasites
 
@@ -156,6 +156,15 @@ ADAPTIVE (weak), REVERSED, INSUFFICIENT EVIDENCE, CYCLIC, coexistence, PARASITES
 - The neutral control uses only the T0 leaders.
 - 512 epochs in 16,384 programs can miss slow advantages.
 - Assay seeding splits two-form types 50/50, which may not match their natural phase ratio.
+
+## Exploratory additions (after seeing the leader sequences)
+
+Added on 2026-10-31, after the censuses of the first ~9,000 post-T0 epochs of wm2 and wm6 were seen, and before any assay result. These cannot change the headline.
+
+wm2 had one leader change and then a stable leader. In wm6, from about step 8,700 a different type led at almost every snapshot, which the sustained-change rule hardly counts. That looks like a cloud of near-equal variants trading the lead. Two additions follow:
+
+- **Time-point assays (xpair)**: the leaders at 5 evenly spaced snapshots (indices round(q · (n − 1) / 4), q = 0..4), deduplicated, with representatives frozen at that snapshot. They use the same assays, outcome rule and verdict as Q2, and are reported as "exploratory".
+- **Clade view**: the Muller plot colours each type by the nearest competitor within its radius, with the rest grey. This shows whether a churning cloud of types is one clade.
 
 ## Readout
 
