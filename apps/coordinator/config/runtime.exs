@@ -120,6 +120,12 @@ if dir = System.get_env("BL_DATA_DIR"), do: config(:coordinator, data_dir: dir)
 if dir = System.get_env("BL_DISCOVERY_DATA_DIR"),
   do: config(:coordinator, discovery_data_dir: dir)
 
+if dir = System.get_env("BL_SOUP_DATA_DIR"), do: config(:coordinator, soup_data_dir: dir)
+
+# The shared soup's segment lease (ms).
+with {:ok, ms} <- env_count.("BL_SOUP_LEASE_MS", false),
+     do: config(:coordinator, soup_lease_ms: ms)
+
 if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
   do: config(:coordinator, discovery_join_token: token)
 
