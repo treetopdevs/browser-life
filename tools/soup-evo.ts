@@ -269,7 +269,19 @@ if (cmd === "census") {
       for (const a of anchors) { const d = a.ref.distance(unhex(r.rep), 0, a.ref.match).d; if (d <= a.ref.match && d < bd) { bd = d; best = a.id; } }
       return best;
     };
-    const muller = snaps.map((s) => ({ epoch: s.epoch, copierShare: s.copierShare, typesAbove: s.typesAbove, diversity: s.diversity, distinct: s.distinct, leader: s.leader, top: s.types.slice(0, 24).map((r) => [r.id, r.share, r.selfRep, cladeOf(r)]) }));
+    // Composition per snapshot over every type with a copy test (share >= 0.1%): shares by clade, other copiers, non-copiers.
+    const muller = snaps.map((s) => {
+      const clades: Record<string, number> = {};
+      let otherCopier = 0, nonCopier = 0;
+      for (const r of s.types) {
+        if (r.selfRep === null) continue;
+        const c = r.selfRep >= 48 ? cladeOf(r) : null;
+        if (c) clades[c] = (clades[c] ?? 0) + r.share;
+        else if (r.selfRep >= 48) otherCopier += r.share;
+        else nonCopier += r.share;
+      }
+      return { epoch: s.epoch, copierShare: s.copierShare, typesAbove: s.typesAbove, diversity: s.diversity, distinct: s.distinct, leader: s.leader, clades, otherCopier, nonCopier, top: s.types.slice(0, 12).map((r) => [r.id, r.share, r.selfRep, cladeOf(r)]) };
+    });
     const turnover = L.changes >= 3 ? "TURNOVER" : L.changes === 0 ? "no turnover" : "some turnover";
     lineageResults.push({ key: L.key, changes: L.changes, turnover, competitors: comp.map((c) => ({ id: c.id, epoch: c.epoch, selfRep: c.row.selfRep, instructions: c.row.instructions, canon: c.row.canon, rep: c.row.rep })), timePoints: L.timePoints.map((c) => ({ id: c.id, epoch: c.epoch, selfRep: c.row.selfRep, instructions: c.row.instructions, canon: c.row.canon, rep: c.row.rep })), marker: L.marker, wellMixed, grid, explore, probes, trends, trendCorr, similarity, chain, muller });
   }
