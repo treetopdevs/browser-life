@@ -1,0 +1,1002 @@
+{
+ "protocolHash": "6fc6370a79ea043a3661dc3e9ac923364391bb434971dc51919ab3868ed00325",
+ "note": "measured labels are never relabelled to match expectations; disagreements are reported. Tuning fields (effects, variantEffects, tallies, crossSeedEffectStability) cover the qualify subset only; devEffects (all dev families) feed the dev class prior only.",
+ "qualifyFamilies": [
+  "f00",
+  "f09",
+  "f07",
+  "f23"
+ ],
+ "effects": [
+  {
+   "caseId": "c731185bc587e",
+   "familyId": "f00",
+   "mechanism": "feedOccupied",
+   "bodyMass": 300,
+   "livingCells": 1,
+   "freeNutrient": 57526
+  },
+  {
+   "caseId": "c177e6c5a3085",
+   "familyId": "f00",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -517,
+   "livingCells": -39,
+   "freeNutrient": 347
+  },
+  {
+   "caseId": "c7bcc93198991",
+   "familyId": "f00",
+   "mechanism": "drainOccupied",
+   "bodyMass": -17,
+   "livingCells": 0,
+   "freeNutrient": -39
+  },
+  {
+   "caseId": "c859f79f692f9",
+   "familyId": "f00",
+   "mechanism": "sham",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "cb6df59dcd20a",
+   "familyId": "f00",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c0df4e82298d6",
+   "familyId": "f00",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 7,
+   "livingCells": 0,
+   "freeNutrient": -5
+  },
+  {
+   "caseId": "c6ce9bd29fd58",
+   "familyId": "f09",
+   "mechanism": "feedOccupied",
+   "bodyMass": 110,
+   "livingCells": 0,
+   "freeNutrient": 57752
+  },
+  {
+   "caseId": "c72fe5aaa9c8a",
+   "familyId": "f09",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -575,
+   "livingCells": -38,
+   "freeNutrient": 352
+  },
+  {
+   "caseId": "c11040bb20677",
+   "familyId": "f09",
+   "mechanism": "drainOccupied",
+   "bodyMass": -10,
+   "livingCells": 0,
+   "freeNutrient": -43
+  },
+  {
+   "caseId": "c429a0efc0e56",
+   "familyId": "f09",
+   "mechanism": "sham",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c5889ef2feae0",
+   "familyId": "f09",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c14a83e00ffa7",
+   "familyId": "f09",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 5
+  },
+  {
+   "caseId": "ce6724c2a865b",
+   "familyId": "f07",
+   "mechanism": "feedOccupied",
+   "bodyMass": 18,
+   "livingCells": 0,
+   "freeNutrient": 57828
+  },
+  {
+   "caseId": "cc15397a68b3c",
+   "familyId": "f07",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -575,
+   "livingCells": -32,
+   "freeNutrient": 337
+  },
+  {
+   "caseId": "c1a55e85b32cf",
+   "familyId": "f07",
+   "mechanism": "drainOccupied",
+   "bodyMass": -35,
+   "livingCells": 0,
+   "freeNutrient": -145
+  },
+  {
+   "caseId": "cf43ffcbfb14e",
+   "familyId": "f07",
+   "mechanism": "sham",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c0b7e0992520f",
+   "familyId": "f07",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c73943edfc062",
+   "familyId": "f07",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 2,
+   "livingCells": 0,
+   "freeNutrient": -2
+  },
+  {
+   "caseId": "c38c6681f0a9f",
+   "familyId": "f23",
+   "mechanism": "feedOccupied",
+   "bodyMass": 225,
+   "livingCells": 1,
+   "freeNutrient": 57610
+  },
+  {
+   "caseId": "cac0338043327",
+   "familyId": "f23",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -505,
+   "livingCells": -33,
+   "freeNutrient": 248
+  },
+  {
+   "caseId": "c6650be75968e",
+   "familyId": "f23",
+   "mechanism": "drainOccupied",
+   "bodyMass": -42,
+   "livingCells": 0,
+   "freeNutrient": -97
+  },
+  {
+   "caseId": "c077f73992e71",
+   "familyId": "f23",
+   "mechanism": "sham",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "c4964122608ce",
+   "familyId": "f23",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0,
+   "livingCells": 0,
+   "freeNutrient": 0
+  },
+  {
+   "caseId": "cb0755ecdca61",
+   "familyId": "f23",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 2,
+   "livingCells": 0,
+   "freeNutrient": 12
+  }
+ ],
+ "devEffects": [
+  {
+   "caseId": "c731185bc587e",
+   "familyId": "f00",
+   "mechanism": "feedOccupied",
+   "bodyMass": 300
+  },
+  {
+   "caseId": "c177e6c5a3085",
+   "familyId": "f00",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -517
+  },
+  {
+   "caseId": "c7bcc93198991",
+   "familyId": "f00",
+   "mechanism": "drainOccupied",
+   "bodyMass": -17
+  },
+  {
+   "caseId": "c859f79f692f9",
+   "familyId": "f00",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cb6df59dcd20a",
+   "familyId": "f00",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0df4e82298d6",
+   "familyId": "f00",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 7
+  },
+  {
+   "caseId": "c6ce9bd29fd58",
+   "familyId": "f09",
+   "mechanism": "feedOccupied",
+   "bodyMass": 110
+  },
+  {
+   "caseId": "c72fe5aaa9c8a",
+   "familyId": "f09",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -575
+  },
+  {
+   "caseId": "c11040bb20677",
+   "familyId": "f09",
+   "mechanism": "drainOccupied",
+   "bodyMass": -10
+  },
+  {
+   "caseId": "c429a0efc0e56",
+   "familyId": "f09",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c5889ef2feae0",
+   "familyId": "f09",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c14a83e00ffa7",
+   "familyId": "f09",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "ce6724c2a865b",
+   "familyId": "f07",
+   "mechanism": "feedOccupied",
+   "bodyMass": 18
+  },
+  {
+   "caseId": "cc15397a68b3c",
+   "familyId": "f07",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -575
+  },
+  {
+   "caseId": "c1a55e85b32cf",
+   "familyId": "f07",
+   "mechanism": "drainOccupied",
+   "bodyMass": -35
+  },
+  {
+   "caseId": "cf43ffcbfb14e",
+   "familyId": "f07",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0b7e0992520f",
+   "familyId": "f07",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c73943edfc062",
+   "familyId": "f07",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 2
+  },
+  {
+   "caseId": "c38c6681f0a9f",
+   "familyId": "f23",
+   "mechanism": "feedOccupied",
+   "bodyMass": 225
+  },
+  {
+   "caseId": "cac0338043327",
+   "familyId": "f23",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -505
+  },
+  {
+   "caseId": "c6650be75968e",
+   "familyId": "f23",
+   "mechanism": "drainOccupied",
+   "bodyMass": -42
+  },
+  {
+   "caseId": "c077f73992e71",
+   "familyId": "f23",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c4964122608ce",
+   "familyId": "f23",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cb0755ecdca61",
+   "familyId": "f23",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 2
+  },
+  {
+   "caseId": "c19d8e390bbf4",
+   "familyId": "f18",
+   "mechanism": "feedOccupied",
+   "bodyMass": 416
+  },
+  {
+   "caseId": "cf235d34f6b6b",
+   "familyId": "f18",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -522
+  },
+  {
+   "caseId": "ce040f03add24",
+   "familyId": "f18",
+   "mechanism": "drainOccupied",
+   "bodyMass": -50
+  },
+  {
+   "caseId": "cb793beea554a",
+   "familyId": "f18",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cd5f8c6cd9179",
+   "familyId": "f18",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c3b61e8137641",
+   "familyId": "f18",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": -6
+  },
+  {
+   "caseId": "c41829f309a67",
+   "familyId": "f02",
+   "mechanism": "feedOccupied",
+   "bodyMass": 331
+  },
+  {
+   "caseId": "cbb0a0a2ef2c9",
+   "familyId": "f02",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -628
+  },
+  {
+   "caseId": "cf0d6fb78c1a0",
+   "familyId": "f02",
+   "mechanism": "drainOccupied",
+   "bodyMass": -61
+  },
+  {
+   "caseId": "c0f6ae89bf57c",
+   "familyId": "f02",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c3cb0b5844470",
+   "familyId": "f02",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cc35ecd4253d0",
+   "familyId": "f02",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 8
+  },
+  {
+   "caseId": "cd3a9e69f5afa",
+   "familyId": "f10",
+   "mechanism": "feedOccupied",
+   "bodyMass": 462
+  },
+  {
+   "caseId": "cfb0f56213b40",
+   "familyId": "f10",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -622
+  },
+  {
+   "caseId": "c88aa70f74c7a",
+   "familyId": "f10",
+   "mechanism": "drainOccupied",
+   "bodyMass": -30
+  },
+  {
+   "caseId": "c6ddf675ace90",
+   "familyId": "f10",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c55c81f3f861b",
+   "familyId": "f10",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cd050f4590bca",
+   "familyId": "f10",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 30
+  },
+  {
+   "caseId": "c2b24ee5b13ab",
+   "familyId": "f19",
+   "mechanism": "feedOccupied",
+   "bodyMass": 325
+  },
+  {
+   "caseId": "c6f72145e89b7",
+   "familyId": "f19",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -550
+  },
+  {
+   "caseId": "cd8221fb0b450",
+   "familyId": "f19",
+   "mechanism": "drainOccupied",
+   "bodyMass": -39
+  },
+  {
+   "caseId": "c2724f3bb7541",
+   "familyId": "f19",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c07264cb77e73",
+   "familyId": "f19",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cd9546d5926cb",
+   "familyId": "f19",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 22
+  },
+  {
+   "caseId": "c9ec8d704cc6f",
+   "familyId": "f11",
+   "mechanism": "feedOccupied",
+   "bodyMass": 57
+  },
+  {
+   "caseId": "c7779b2ec438a",
+   "familyId": "f11",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -687
+  },
+  {
+   "caseId": "c21cba20b1c6a",
+   "familyId": "f11",
+   "mechanism": "drainOccupied",
+   "bodyMass": -66
+  },
+  {
+   "caseId": "c528726c07ee0",
+   "familyId": "f11",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c101dca362760",
+   "familyId": "f11",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cb0ba9db474d5",
+   "familyId": "f11",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "caee28643d311",
+   "familyId": "f01",
+   "mechanism": "feedOccupied",
+   "bodyMass": 137
+  },
+  {
+   "caseId": "c8284f896db73",
+   "familyId": "f01",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -538
+  },
+  {
+   "caseId": "c071191491e0e",
+   "familyId": "f01",
+   "mechanism": "drainOccupied",
+   "bodyMass": -39
+  },
+  {
+   "caseId": "c55a441aab784",
+   "familyId": "f01",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c16bc8e82465b",
+   "familyId": "f01",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0ae6f5520624",
+   "familyId": "f01",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": -1
+  },
+  {
+   "caseId": "c200728627f4a",
+   "familyId": "f22",
+   "mechanism": "feedOccupied",
+   "bodyMass": 400
+  },
+  {
+   "caseId": "cad6107403499",
+   "familyId": "f22",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -507
+  },
+  {
+   "caseId": "ca1482b5bb783",
+   "familyId": "f22",
+   "mechanism": "drainOccupied",
+   "bodyMass": -40
+  },
+  {
+   "caseId": "c238183b22368",
+   "familyId": "f22",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "ca1376d79075a",
+   "familyId": "f22",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c2e49efee6585",
+   "familyId": "f22",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 34
+  },
+  {
+   "caseId": "c25af86e97431",
+   "familyId": "f21",
+   "mechanism": "feedOccupied",
+   "bodyMass": 49
+  },
+  {
+   "caseId": "cdcd589d8f249",
+   "familyId": "f21",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -429
+  },
+  {
+   "caseId": "c23554f10d1dc",
+   "familyId": "f21",
+   "mechanism": "drainOccupied",
+   "bodyMass": 4
+  },
+  {
+   "caseId": "c3d5d5b5470ef",
+   "familyId": "f21",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c99d0a332b683",
+   "familyId": "f21",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c2d20b7ac76eb",
+   "familyId": "f21",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  }
+ ],
+ "variantEffects": [
+  {
+   "caseId": "c731185bc587e",
+   "mechanism": "feedOccupied",
+   "bodyMass": 365
+  },
+  {
+   "caseId": "c177e6c5a3085",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -487
+  },
+  {
+   "caseId": "c7bcc93198991",
+   "mechanism": "drainOccupied",
+   "bodyMass": -21
+  },
+  {
+   "caseId": "c859f79f692f9",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cb6df59dcd20a",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0df4e82298d6",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": -2
+  },
+  {
+   "caseId": "c6ce9bd29fd58",
+   "mechanism": "feedOccupied",
+   "bodyMass": 150
+  },
+  {
+   "caseId": "c72fe5aaa9c8a",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -640
+  },
+  {
+   "caseId": "c11040bb20677",
+   "mechanism": "drainOccupied",
+   "bodyMass": -13
+  },
+  {
+   "caseId": "c429a0efc0e56",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c5889ef2feae0",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c14a83e00ffa7",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": -8
+  },
+  {
+   "caseId": "ce6724c2a865b",
+   "mechanism": "feedOccupied",
+   "bodyMass": 235
+  },
+  {
+   "caseId": "cc15397a68b3c",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -844
+  },
+  {
+   "caseId": "c1a55e85b32cf",
+   "mechanism": "drainOccupied",
+   "bodyMass": -63
+  },
+  {
+   "caseId": "cf43ffcbfb14e",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0b7e0992520f",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c73943edfc062",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": -7
+  },
+  {
+   "caseId": "c38c6681f0a9f",
+   "mechanism": "feedOccupied",
+   "bodyMass": 1478
+  },
+  {
+   "caseId": "cac0338043327",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -880
+  },
+  {
+   "caseId": "c6650be75968e",
+   "mechanism": "drainOccupied",
+   "bodyMass": -117
+  },
+  {
+   "caseId": "c077f73992e71",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c4964122608ce",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cb0755ecdca61",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 31
+  }
+ ],
+ "tallies": [
+  {
+   "minEffect": 25,
+   "perMechanism": [
+    {
+     "mechanism": "feedOccupied",
+     "expected": "up",
+     "up": 3,
+     "down": 0,
+     "none": 1,
+     "agreeWithExpected": 3
+    },
+    {
+     "mechanism": "lesionOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 4,
+     "none": 0,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "drainOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 2,
+     "none": 2,
+     "agreeWithExpected": 2
+    },
+    {
+     "mechanism": "sham",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lesionEmpty",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lowDoseFeed",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    }
+   ]
+  },
+  {
+   "minEffect": 50,
+   "perMechanism": [
+    {
+     "mechanism": "feedOccupied",
+     "expected": "up",
+     "up": 3,
+     "down": 0,
+     "none": 1,
+     "agreeWithExpected": 3
+    },
+    {
+     "mechanism": "lesionOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 4,
+     "none": 0,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "drainOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 0
+    },
+    {
+     "mechanism": "sham",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lesionEmpty",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lowDoseFeed",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    }
+   ]
+  },
+  {
+   "minEffect": 100,
+   "perMechanism": [
+    {
+     "mechanism": "feedOccupied",
+     "expected": "up",
+     "up": 3,
+     "down": 0,
+     "none": 1,
+     "agreeWithExpected": 3
+    },
+    {
+     "mechanism": "lesionOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 4,
+     "none": 0,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "drainOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 0
+    },
+    {
+     "mechanism": "sham",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lesionEmpty",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lowDoseFeed",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    }
+   ]
+  },
+  {
+   "minEffect": 200,
+   "perMechanism": [
+    {
+     "mechanism": "feedOccupied",
+     "expected": "up",
+     "up": 2,
+     "down": 0,
+     "none": 2,
+     "agreeWithExpected": 2
+    },
+    {
+     "mechanism": "lesionOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 4,
+     "none": 0,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "drainOccupied",
+     "expected": "down",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 0
+    },
+    {
+     "mechanism": "sham",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lesionEmpty",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    },
+    {
+     "mechanism": "lowDoseFeed",
+     "expected": "none",
+     "up": 0,
+     "down": 0,
+     "none": 4,
+     "agreeWithExpected": 4
+    }
+   ]
+  }
+ ],
+ "crossSeedEffectStability": [
+  {
+   "minEffect": 25,
+   "n": 24,
+   "agree": 22,
+   "rate": 0.9166666666666666
+  },
+  {
+   "minEffect": 50,
+   "n": 24,
+   "agree": 21,
+   "rate": 0.875
+  },
+  {
+   "minEffect": 100,
+   "n": 24,
+   "agree": 22,
+   "rate": 0.9166666666666666
+  },
+  {
+   "minEffect": 200,
+   "n": 24,
+   "agree": 23,
+   "rate": 0.9583333333333334
+  }
+ ],
+ "neutralityChecks": 468,
+ "cellSteps": 55705600
+}
