@@ -5,7 +5,7 @@
  *   node tools/predictability/atlas.ts --check         validate the saved artifacts without simulating
  *   node tools/predictability/atlas.ts --replay-check  regenerate the payload and require byte equality
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { arch, platform } from "node:os";
@@ -119,8 +119,11 @@ async function main(): Promise<void> {
     if (existsSync(EVIDENCE) && !process.argv.includes("--force")) throw new Error("evidence.json exists; files are written once. Pass --force to rewrite deliberately.");
     const payload = await generate();
     const text = serialize(payload);
-    writeFileSync(EVIDENCE, text);
-    writeFileSync(MANIFEST, serialize(makeManifest(payload, text)));
+    const manifestText = serialize(makeManifest(payload, text));
+    writeFileSync(`${EVIDENCE}.tmp`, text);
+    writeFileSync(`${MANIFEST}.tmp`, manifestText);
+    renameSync(`${EVIDENCE}.tmp`, EVIDENCE);
+    renameSync(`${MANIFEST}.tmp`, MANIFEST);
     console.log(`wrote evidence.json (${text.length} bytes) seal ${payload.integritySha256}`);
   } else if (mode === "--check" || mode === "--replay-check") {
     const problems = mode === "--check" ? checkSaved() : await replayCheck();

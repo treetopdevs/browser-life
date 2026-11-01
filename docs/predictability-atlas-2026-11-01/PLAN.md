@@ -91,8 +91,8 @@ Add:
 - Tests (section 5)
 
 Change (small):
-- `packages/metrics/src/index.ts`: `export * from "./predictability/index.ts";`; `PREDICTABILITY_VERSION` lives in `predictability/index.ts` (not `schema`), so `METRICS_VERSION` and golden pins are untouched.
-- `apps/lab/vite.config.ts`: input `predictability` and a `predictability-core` manual chunk.
+- `packages/metrics/src/index.ts`: `export * from "./predictability/index.ts";`; `PREDICTABILITY_VERSION` lives in `predictability/index.ts` (not `schema`), so `METRICS_VERSION` and golden pins are untouched. **Superseded: the re-export was removed after source review finding 1 in `REVIEW.md`; do not re-add it.**
+- `apps/lab/vite.config.ts`: input `predictability` remains required. **Superseded: the `predictability-core` manual chunk was removed after source review finding 1 in `REVIEW.md`; do not re-add it.**
 - `Dockerfile.site`: add `apps/lab/dist/predictability apps/lab/dist/assets/predictability-*.js apps/lab/dist/assets/predictability-*.css` to the removal list.
 - `deploy/Caddyfile`: `@private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)` with a 404 response, next to `private_spatial`.
 - `tools/test/site-image.test.ts`: not changed (its route matrix covers garden routes only; `/spatial/` is not in it either). The packaging test is the check; image checks are reported as not run unless an image is built.
