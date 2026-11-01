@@ -3,8 +3,8 @@
 **1 November 2026 · exploratory engineering, no scientific runs.** Source: idea I01 of the research
 programme at `/Users/nicholas/develop/browser-life/docs/simulation-research-2026-11-01/report.md`
 (written against `c975f834`, uncommitted in the default workspace; not copied here). This branch
-(`claude/behaviour-atlas`) starts from `4c5c4500` on `claude/3d-line-bistability-c35648`, which
-carries 18 soup commits not yet on `main`; none of them touches `packages/search`.
+(`claude/behaviour-atlas`) was written on `4c5c4500` (`claude/3d-line-bistability-c35648`) and then
+rebased onto `main` for review; the soup commits it skipped touch none of its files.
 
 ## Bounded question
 
