@@ -50,6 +50,32 @@ On Linux, add `docker create`/`docker cp` of `/usr/bin/caddy` and `BL_CADDY_BIN`
 
 Not proven by the gate: Traefik topology, TLS, the trusted-proxy address on the live network, a populated allowlist in the container, or anything about the live host; the live-host checks below stay open.
 
+### Coordinator image gate: the actual coordinator image on Linux
+
+`.github/workflows/coordinator-image.yml` (pull requests, pushes to `main`, manual runs; read-only token, no repository secrets, nothing pushed or deployed) is the sibling of the site gate and builds `Dockerfile.coordinator` with `docker build --pull --iidfile`, testing the image by its `sha256:` ID. It is a separate workflow so the several-minute Elixir/Deno build neither slows nor masks the site check. Do not make it a required status until it has been green on a hosted run. **Status: passed on the hosted amd64 runner (30 October, run 41091103109: 27 tests, both canaries, clean cleanup) and locally on arm64.** The record is in `docs/coordinator-image-gate-review-2026-10-30.md`.
+
+- **Started as deployed** (`tools/test/coordinator-image.test.ts`). The image starts with its default `CMD` and the environment that `docker compose config` resolves for the `coordinator` service in `compose.dokploy.yaml` (the optional variables blank, as Compose passes them), with three synthetic secrets generated for the run (`SECRET_KEY_BASE`, `BL_ADMIN_TOKEN`, `BL_DISCOVERY_JOIN_TOKEN`, masked in the log and handed to Docker by name, never in a command line), two labelled named volumes at `/data` and `/data-discovery`, nothing else mounted, and only an ephemeral `127.0.0.1` port published for probes. It checks: readiness and no crash markers; the public status shape; the admin token on `/api/status`; the discovery join token (required even from inside the container, and over the published port); `Host: cadence.garden` redirected to https unless `X-Forwarded-Proto: https`; no CORS allowance for a foreign origin; `state.bin` written into the volume by the non-root user; the effective release config via `bin/coordinator rpc`; the Deno validator, the vendored pin's hashes and the pinned renewal case script (a `freeze-check` call as `pinCall` makes it) running from the image's cache as that user; the user is not root and both volumes are writable; a graceful stop within Compose's `stop_grace_period` with exit code 0; and a second start on the same volumes that still lists the discovery workers.
+- **Refuses to start.** Ten one-change variants of that environment must exit non-zero, never answer, and name the cause without printing a secret: no or empty admin token, no key base, wildcard or plain-http CORS origin, a non-numeric count, a bad garden switch, a relative discovery directory (the original crash loop under read-only `/app`), and a discovery directory inside or equal to the data directory.
+- **Findings, not changes.** With `BL_DISCOVERY_JOIN_TOKEN` unset the discovery plane admits only loopback clients, and `runtime.exs` does not refuse that: the only guard is Compose's `${BL_DISCOVERY_JOIN_TOKEN:?...}`. The gate checks that guard statically (Compose must name each missing secret). A labelled control start without the token asserts that the published port still answers 401 and prints, without asserting, what an in-container request via `127.0.0.1` and `[::1]` gets. On the first local run it was 401 via `127.0.0.1` (the release binds `::`, so that client arrives as an IPv4-mapped address the loopback check does not match) and 200 via `[::1]`. A coordinator started without the join token therefore admits IPv6-loopback joins.
+- **Canaries.** Two disposable images, built `FROM` the tested image's tag (BuildKit cannot take `FROM sha256:<id>`) and run by their own image IDs, must each fail one named assertion and nothing else: one with the validator cache deleted (`validator runs from the image's cache`), one running as root (`runs as the unprivileged coordinator user`). `tools/ci/verify-image-gate.mjs` demands exit 1, exactly one failed test with the expected name and message, and JUnit `failures="1"`, `errors="0"`. It also requires the main run to have passed all 13 live and all 10 refusal tests with nothing skipped. These images are never published.
+- **Cleanup.** Every container and volume carries `bl.coordinator-image.invocation=<id>` (and `bl.coordinator-image.ci=<run>` in CI). A recorded name is only a candidate: removal is by an ID that a successful label-filtered listing returned, so an unlabelled resource with the same name is never touched, and a failed listing or a survivor is a failure. The final `always()` step repeats this by run label; built and canary images keep the label but are not removed (runner disposal is the boundary).
+
+| Variable | Meaning |
+| --- | --- |
+| `BL_COORDINATOR_IMAGE` | image ID (`sha256:` and 64 hex digits; a tag is refused). Unset: the Docker suites skip and no Docker command runs. |
+| `BL_REQUIRE_COORDINATOR_IMAGE=1` | fail, rather than skip, when the ID is missing or invalid, Docker or Compose is unavailable, or Docker does not know the image. |
+| `BL_COORDINATOR_IMAGE_CI_RUN` | optional extra label value (`bl.coordinator-image.ci`) the CI cleanup step filters on. |
+| `BL_TEST_SECRET_KEY_BASE`, `BL_TEST_ADMIN_TOKEN`, `BL_TEST_JOIN_TOKEN` | optional pre-generated synthetic secrets (CI masks them); random per run when unset. |
+
+Locally, with a Docker daemon:
+
+```sh
+docker build --pull --file Dockerfile.coordinator --iidfile /tmp/coordinator.iid .
+BL_COORDINATOR_IMAGE="$(cat /tmp/coordinator.iid)" BL_REQUIRE_COORDINATOR_IMAGE=1 pnpm vitest run tools/test/coordinator-image.test.ts
+```
+
+Not proven: Traefik/Caddy in front of the coordinator, TLS, the live host and its volumes, real client addresses, a real campaign accepted through the validator (that stays in `tests/deno/coordinator_integration.ts`), multi-minute stability or load.
+
 ### Client addresses, abuse limits and CORS
 
 Checked locally on 17 October 2026 (`docs/release-checks-2026-10-18.md`) and, for the proxy configuration, with Caddy 2.10.2 on 25 October 2026; the live-host checks below are still open.
