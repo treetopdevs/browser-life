@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: the same simple past-only observer run on very different movies.">
+  <title>Predictability atlas · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the atlas</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / predictability atlas</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">An observer benchmark</p>
+      <h1>The same observer, nine movies and one ecology</h1>
+      <p>Each movie is read by the same few simple predictors that see only the past. How hard a movie is to predict depends on what it is made of, and on how the observer looks at it. Randomness is hard to predict without being alive.</p>
+      <p class="disclosure">CPU only: deterministic integer fixtures, no GPU evidence. Local experiment, kept off the public site. It checks whether cheap readouts can be fooled; it does not say whether anything here is alive.</p>
+    </section>
+
+    <section class="observer" aria-labelledby="observer-heading">
+      <h2 id="observer-heading">The shared observer</h2>
+      <div class="controls">
+        <label for="res">Looks at<select id="res">
+          <option value="1">every cell (finest view)</option>
+          <option value="2">2 by 2 blocks (coarser, small details blur)</option>
+          <option value="4">4 by 4 blocks (coarsest, a lone glider disappears)</option>
+        </select></label>
+        <label for="hor">Predicts<select id="hor">
+          <option value="1">the next frame</option>
+          <option value="2">2 frames ahead</option>
+          <option value="4">4 frames ahead</option>
+          <option value="8">8 frames ahead (errors compound)</option>
+        </select></label>
+        <label for="pred">Method<select id="pred">
+          <option value="persistence">persistence: nothing changes</option>
+          <option value="marginal">marginal: always the commonest value (the no-skill reference)</option>
+          <option value="best-period">best period: repeat what happened one cycle ago</option>
+          <option value="local-stats">local statistics: what usually follows this 3 by 3 patch</option>
+        </select></label>
+        <button id="toggle" type="button" aria-pressed="false">Pause movies</button>
+      </div>
+      <p id="status" class="muted" role="status">Loading the movies and checking them against the saved evidence.</p>
+    </section>
+
+    <section aria-labelledby="cards-heading">
+      <h2 id="cards-heading">Substrates</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section class="table-section" aria-labelledby="table-heading">
+      <h2 id="table-heading">The same numbers as a table</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Loss table, scrolls sideways on narrow screens">
+        <table id="table"><caption>Prediction errors and skill for the chosen observer. Skill compares against the better of persistence and marginal; a dash means undefined (the reference makes no errors, or the view erased the movie).</caption><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">Why this is not yet evidence of life</h2>
+      <ul>
+        <li>Independent noise can defeat temporal prediction without being alive.</li>
+        <li>Duplicated motifs repeat the same predictive structure rather than adding any: nine gliders make exactly nine times the errors of one.</li>
+        <li>Losses depend on the observer (resolution, horizon and method), and rankings across different alphabets (2 values against 16) are not comparable.</li>
+        <li>The check that a ranking could flip with the resolution is weak here: at the finest view nearly every Life movie is predicted exactly, ties do not count as flips, and a view where nothing can be scored drops out of the ranking instead of counting as a change. "No flip" says little.</li>
+        <li>Resistance to deflate compression is not algorithmic incompressibility. Compression is shown apart from prediction and never blended with it.</li>
+        <li>Life is a calibration world. It does not make chemistry or energy bookkeeping unnecessary.</li>
+        <li>That our simple predictors fail on a movie does not show computational irreducibility.</li>
+        <li>The ecology clip is one small world and one seed, an illustration and not an ensemble result.</li>
+      </ul>
+      <p class="muted">CPU only, deterministic integer fixtures, no GPU evidence, not on the public site. Labels describe how the predictors behaved on a movie; they are not claims about the substrate. No score here selected anything.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/predictability/page.ts"></script>
+</body>
+</html>
