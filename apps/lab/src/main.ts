@@ -153,21 +153,28 @@ VIEW_MODES.forEach((m, k) => {
   b.onclick = () => setMode(m);
   views.appendChild(b);
 });
+/**
+ * Scrolls the view picker so `b` is wholly inside it. The picker's own scrollLeft moves, not the page: scrollIntoView
+ * at start-up would make this button Chrome's starting point for sequential focus, and the first Tab on a fresh lab
+ * would land after it instead of on the skip link.
+ */
+function keepInPicker(b: HTMLElement) {
+  const box = views.getBoundingClientRect();
+  const r = b.getBoundingClientRect();
+  if (r.left < box.left) views.scrollLeft -= box.left - r.left;
+  else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
+}
+// Chrome leaves a focused button where it is when any of it shows, so Shift+Tab could stop on a sliver at the
+// picker's edge: bring the whole button in.
+views.addEventListener("focusin", (e) => { if (e.target instanceof HTMLButtonElement) keepInPicker(e.target); });
 function setMode(m: GpuViewMode) {
   mode = m;
   for (const b of views.querySelectorAll("button")) {
     const selected = b.dataset.mode === m;
     b.classList.toggle("on", selected);
     b.setAttribute("aria-pressed", String(selected));
-    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key. The picker's own
-    // scrollLeft moves, not the page: scrollIntoView at start-up would make this button Chrome's starting point for
-    // sequential focus, and the first Tab on a fresh lab would land after it instead of on the skip link.
-    if (selected) {
-      const box = views.getBoundingClientRect();
-      const r = b.getBoundingClientRect();
-      if (r.left < box.left) views.scrollLeft -= box.left - r.left;
-      else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
-    }
+    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key.
+    if (selected) keepInPicker(b);
   }
   paintViewLegend();
   pushView();

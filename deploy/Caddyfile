@@ -38,6 +38,8 @@
   # Volumetric particle playground stays local.
   @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
   respond @private_spatial 404
+  @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
+  respond @private_predictability 404
 
   # Reunited creative ecosystem and local prototype directory.
   @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
