@@ -192,6 +192,7 @@ export default defineConfig({
       currents: r("./currents/index.html"),
       spatial: r("./spatial/index.html"),
       soup: r("./soup/index.html"),
+      predictability: r("./predictability/index.html"),
       ecosystem: r("./ecosystem/index.html"),
       ecosystemArchive: r("./ecosystem/archive/index.html"),
       playground: r("./playground/index.html"),

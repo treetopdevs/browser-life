@@ -136,6 +136,28 @@ with {:ok, ms} <- env_count.("BL_SOUP_LEASE_MS", false),
 if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
   do: config(:coordinator, discovery_join_token: token)
 
+# Without a join token the discovery plane admits loopback joins (a local
+# convenience, DiscoveryController.require_join). Under the release's
+# dual-stack bind that includes [::1] from inside the container, so production
+# refuses to start without one rather than lean on Compose's check alone.
+# A whitespace-only value counts as unset. A token must also survive an HTTP
+# Authorization header unchanged (clients strip surrounding whitespace, so a
+# trailing newline would make every join fail): visible ASCII only.
+if config_env() == :prod do
+  join_token = System.get_env("BL_DISCOVERY_JOIN_TOKEN") || ""
+
+  cond do
+    String.trim(join_token) == "" ->
+      raise("BL_DISCOVERY_JOIN_TOKEN must be set in production")
+
+    not String.match?(join_token, ~r/\A[\x21-\x7E]+\z/) ->
+      raise("BL_DISCOVERY_JOIN_TOKEN must be visible ASCII with no spaces or control characters")
+
+    true ->
+      :ok
+  end
+end
+
 # The discovery lease (ms); a lease has no "off".
 with {:ok, ms} <- env_count.("BL_DISCOVERY_LEASE_MS", false),
      do: config(:coordinator, discovery_lease_ms: ms)
