@@ -86,6 +86,9 @@ describe("seeds", () => {
     expect(() => checkSchedule({ pool, budget: 12 + 199 * 16 + 1, batchSize: 16, arms: ["a"] })).toThrow(/200 search batches/);
     expect(() => checkSchedule({ pool, budget: 2000, batchSize: 1601, arms: ["a"] })).toThrow(/more than 100 evaluateBatch chunks/);
     expect(() => perBatch({ ...DEFAULT_EVAL, side: 1, reps: 4 })).toThrow(/holds no genome/);
+    expect(() => checkSchedule({ pool, budget: 0, batchSize: 16, arms: ["a"] })).toThrow(/smaller than the pool/);
+    expect(() => checkSchedule({ pool, budget: 12, batchSize: 0, arms: ["a"] })).toThrow(/positive integer/);
+    expect(() => checkSchedule({ pool, budget: 64, batchSize: 1.5, arms: ["a"] })).toThrow(/positive integer/);
   });
 });
 

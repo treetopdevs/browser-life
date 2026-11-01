@@ -192,6 +192,8 @@ export function perBatch(ec: EvalConfig): number {
  * run that would fail part way.
  */
 export function checkSchedule(spec: { pool: readonly unknown[]; budget: number; batchSize: number; arms: readonly string[] }, ec: EvalConfig = DEFAULT_EVAL): void {
+  if (!(Number.isSafeInteger(spec.batchSize) && spec.batchSize > 0)) throw new Error(`batch ${spec.batchSize} must be a positive integer`);
+  if (!(Number.isSafeInteger(spec.budget) && spec.budget >= spec.pool.length)) throw new Error(`budget ${spec.budget} is smaller than the pool (${spec.pool.length})`);
   const per = perBatch(ec);
   const batches = Math.ceil((spec.budget - spec.pool.length) / spec.batchSize);
   if (batches > 199) throw new Error(`budget ${spec.budget} at batch ${spec.batchSize} needs ${batches} search batches; the seed scheme holds 199`);

@@ -68,9 +68,17 @@ Codex `gpt-6.1-sol`, high, read-only, over the uncommitted slice 2 change (`PLAN
 | 7 | P2 | History bounds, reservation and duplicates were checked after history 1 had run | `compareSpec()` validates every argument before the GPU is requested; checked by hand: `1,1`, `1,9000`, `1,8999` and an oversized budget all fail at once |
 | 8 | P2 | `score` lost histories whose arms all selected nothing | Every history in `histories.json` gets a map; checked by hand on a constructed run with an empty history |
 
-Pass 2 confirmed fixes 1–6. **No third pass:** Codex failed to start twice ("failed to load
-configuration: Failed to synchronize managed preferences"), so fixes 7–8 and the new
-`manifest.gitDirty` flag are verified by the manual runs above, not by review.
+Pass 2 confirmed fixes 1–6. Codex then failed to start twice ("failed to load configuration:
+Failed to synchronize managed preferences"); fixes 7–8 and `manifest.gitDirty` were checked by
+hand first.
+
+## Pass 3 (after the rebase onto `main`, PR #132): one P3, no P1 or P2
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 9 | P3 | `--budget 0` and `--batch 0` passed the upfront check and failed only after the GPU was requested | `checkSchedule` refuses a budget below the pool and a non-positive or fractional batch; tests; the CLI now fails at once |
+
+Pass 3 confirmed fixes 7–8 and `gitDirty`, and that every import resolves on `main` after the rebase.
 
 ## Verification
 
