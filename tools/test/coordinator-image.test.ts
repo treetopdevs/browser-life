@@ -112,10 +112,10 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
   /** A start hook failed; a container may exist whose start never returned, so print every tracked container's logs. */
   let startupFailed = false;
   let survivors: string[] = [];
-  const d = (args: string[], timeout = 30_000, input?: string) =>
-    spawnSync("docker", args, { encoding: "utf8", timeout, killSignal: "SIGKILL", maxBuffer: 64 * 1024 * 1024, env: dockerEnv, input });
-  const must = (args: string[], timeout?: number, input?: string) => {
-    const r = d(args, timeout, input);
+  const d = (args: string[], timeout = 30_000, input?: string, env: NodeJS.ProcessEnv = dockerEnv) =>
+    spawnSync("docker", args, { encoding: "utf8", timeout, killSignal: "SIGKILL", maxBuffer: 64 * 1024 * 1024, env, input });
+  const must = (args: string[], timeout?: number, input?: string, env?: NodeJS.ProcessEnv) => {
+    const r = d(args, timeout, input, env);
     if (r.status !== 0) throw new Error(redact(`docker ${args[0]} ${args[1] ?? ""} failed: ${r.error ?? ""}${r.stderr}`, secretList));
     return r.stdout;
   };
@@ -139,16 +139,20 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
   function start(tag: string, env: Record<string, string | undefined>, vols?: [string, string], publish = true): string {
     const name = unique(tag);
     const args = ["run", "-d", "--pull=never", "--restart", "no", "--name", name, ...labels];
+    // A secret is handed over by name, so its value comes from this start's own subprocess environment: an override
+    // (say a whitespace-only token) must reach the container instead of the run's synthetic value.
+    const runEnv: NodeJS.ProcessEnv = { ...dockerEnv };
+    for (const k of SECRET_NAMES) delete runEnv[k];
     for (const [k, v] of Object.entries(env)) {
       if (v === undefined) continue;
-      if ((SECRET_NAMES as readonly string[]).includes(k) && v !== "") args.push("-e", k);
+      if ((SECRET_NAMES as readonly string[]).includes(k) && v !== "") { runEnv[k] = v; args.push("-e", k); }
       else args.push("-e", `${k}=${v}`);
     }
     if (vols) args.push("-v", `${vols[0]}:/data`, "-v", `${vols[1]}:/data-discovery`);
     if (publish) args.push("-p", "127.0.0.1::4000");
     args.push(image);
     tracker.record("container", name);
-    must(args, 60_000);
+    must(args, 60_000, undefined, runEnv);
     return name;
   }
   const originOf = (name: string) => {
@@ -385,23 +389,6 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
     }, 120_000);
   });
 
-  describe("without a join token (control, not a deployed configuration)", () => {
-    it("still refuses a join over the published port", async () => {
-      const env = { ...deployedEnv };
-      delete env.BL_DISCOVERY_JOIN_TOKEN;
-      const name = start("nojoin", env, undefined);
-      const o = await ready(name);
-      const outside = await http(o, "/api/discovery/workers", { method: "POST", body: joinBody("control-host-2") });
-      expect(outside.status, "a join over the published port was admitted without a token").toBe(401);
-      // Recorded, not asserted: the release binds ::, so an IPv4 client inside the container may arrive as an
-      // IPv4-mapped address that the controller's loopback check does not match. The first hosted run settles it.
-      for (const host of ["127.0.0.1", "[::1]"]) {
-        const r = inside(name, "/api/discovery/workers", { host, body: joinBody(`control-${host.replace(/\W/g, "")}`) });
-        console.info(`join-token control: unauthenticated join from inside the container via ${host}: status ${r.status}${r.error ? ` (${r.error})` : ""}`);
-      }
-    }, 150_000);
-  });
-
   describe("refuses to start", () => {
     /** Runs the deployed environment with one change; returns how the container ended. */
     async function refused(tag: string, change: (env: Record<string, string | undefined>) => void) {
@@ -458,6 +445,17 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
       expectRefusal(r);
       expect(/eacces|permission denied|eperm|read-only/i.test(r.logs), "no permission error in the logs").toBe(true);
       expect(r.diff.includes("/app/data-discovery"), "a directory was created under /app").toBe(false);
+    }, T);
+    // Without a join token the discovery plane would admit loopback joins, which under the release's dual-stack bind
+    // includes [::1] from inside the container (the earlier control's hosted result). Production refuses to start.
+    it("without a discovery join token", async () => {
+      expectRefusal(await refused("no-join", (e) => { delete e.BL_DISCOVERY_JOIN_TOKEN; }), "BL_DISCOVERY_JOIN_TOKEN must be set in production");
+    }, T);
+    it("with a whitespace-only discovery join token", async () => {
+      expectRefusal(await refused("blank-join", (e) => { e.BL_DISCOVERY_JOIN_TOKEN = "   "; }), "BL_DISCOVERY_JOIN_TOKEN must be set in production");
+    }, T);
+    it("with a join token a header would alter", async () => {
+      expectRefusal(await refused("newline-join", (e) => { e.BL_DISCOVERY_JOIN_TOKEN = `${JOIN}\n`; }), "BL_DISCOVERY_JOIN_TOKEN must be visible ASCII");
     }, T);
     it("with the discovery directory inside the data directory", async () => {
       expectRefusal(await refused("inside-data", (e) => { e.BL_DISCOVERY_DATA_DIR = "/data/discovery"; }), "overlaps the registered queue's");

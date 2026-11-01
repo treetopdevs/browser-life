@@ -24,17 +24,17 @@ const report = (assertions: A[], over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const many = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => a(`${prefix} ${i}`));
-const goodReport = () => report([...many(LIVE, 13), ...many(REFUSE, 10)]);
+const goodReport = () => report([...many(LIVE, 13), ...many(REFUSE, 13)]);
 
 describe("gate report", () => {
   it("accepts a run with the live floor and every refusal case", () => {
     expect(gateProblems(goodReport())).toEqual([]);
   });
   it("rejects skipped, failed, todo or too few tests", () => {
-    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 10)], { numPendingTests: 3 }))).toEqual(["numPendingTests = 3"]);
-    expect(gateProblems(report([...many(LIVE, 12), ...many(REFUSE, 10)])).join()).toContain("only 12 tests ran against the started image");
-    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 9)])).join()).toContain("only 9 refusal cases");
-    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 10), a("x started as deployed", "failed")], { numFailedTests: 1 })).join()).toContain("numFailedTests = 1");
+    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 13)], { numPendingTests: 3 }))).toEqual(["numPendingTests = 3"]);
+    expect(gateProblems(report([...many(LIVE, 12), ...many(REFUSE, 13)])).join()).toContain("only 12 tests ran against the started image");
+    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 12)])).join()).toContain("only 12 refusal cases");
+    expect(gateProblems(report([...many(LIVE, 13), ...many(REFUSE, 13), a("x started as deployed", "failed")], { numFailedTests: 1 })).join()).toContain("numFailedTests = 1");
   });
   it("rejects a missing or empty suite", () => {
     expect(gateProblems({ ...goodReport(), testResults: [] }).join()).toContain("no result");
