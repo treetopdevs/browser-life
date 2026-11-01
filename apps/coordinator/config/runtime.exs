@@ -127,7 +127,8 @@ if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
 # convenience, DiscoveryController.require_join). Under the release's
 # dual-stack bind that includes [::1] from inside the container, so production
 # refuses to start without one rather than lean on Compose's check alone.
-if config_env() == :prod and System.get_env("BL_DISCOVERY_JOIN_TOKEN") in [nil, ""],
+# A whitespace-only value counts as unset; a real token keeps its bytes as given.
+if config_env() == :prod and String.trim(System.get_env("BL_DISCOVERY_JOIN_TOKEN") || "") == "",
   do: raise("BL_DISCOVERY_JOIN_TOKEN must be set in production")
 
 # The discovery lease (ms); a lease has no "off".

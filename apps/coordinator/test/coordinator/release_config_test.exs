@@ -159,7 +159,7 @@ defmodule Coordinator.ReleaseConfigTest do
     System.put_env("SECRET_KEY_BASE", String.duplicate("k", 64))
     System.put_env("BL_ADMIN_TOKEN", "admin-secret-value")
 
-    for unset <- [nil, ""] do
+    for unset <- [nil, "", "   ", "\t\n"] do
       if unset,
         do: System.put_env("BL_DISCOVERY_JOIN_TOKEN", unset),
         else: System.delete_env("BL_DISCOVERY_JOIN_TOKEN")
@@ -171,6 +171,10 @@ defmodule Coordinator.ReleaseConfigTest do
 
     System.put_env("BL_DISCOVERY_JOIN_TOKEN", "join")
     assert prod_runtime()[:coordinator][:discovery_join_token] == "join"
+
+    # A nonblank token is kept byte for byte, surrounding spaces included.
+    System.put_env("BL_DISCOVERY_JOIN_TOKEN", " join ")
+    assert prod_runtime()[:coordinator][:discovery_join_token] == " join "
   end
 
   test "dev and test still start without a join token (loopback joins)" do
