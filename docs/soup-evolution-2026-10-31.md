@@ -168,4 +168,75 @@ wm2 had one leader change and then a stable leader. In wm6, from about step 8,70
 
 ## Readout
 
-_Not yet run._
+Added 2026-11-01, after every assay had run. No rule above changed after the first assay result.
+
+**How it was run.**
+- Censuses, plan, assays and analysis: `runs/soup/evo-pipeline.sh`, which calls `deno run -A --no-lock tools/soup-evo.ts census | plan | assay | analyze` (744 jobs, 0 missing). Output: `runs/soup/evo/results.json`.
+- g1's resume to step 53,248 crashed on its first attempt, with no error kept. It was rerun unchanged from the same snapshot, `soup-21057.bin`; a resume is byte-exact, so the rerun is the run.
+
+### Headline: **"Copiers keep replacing each other; improvement not shown"**, marked **provisional (calibration failed)**
+
+| Lineage | Sustained leader changes | Competitors | Resolved pairs | Later won | q | p | Verdict | Grid (secondary) |
+|---|---|---|---|---|---|---|---|---|
+| wm2 | 4 | 4 | 1 of 6 | 1 | 1.00 | 0.50 | INSUFFICIENT EVIDENCE | — |
+| wm6 | 7 | 6 | 4 of 15 | 3 | 0.75 | 0.35 | NO DIRECTION | — |
+| wm8 | 6 | 7 | 0 of 21 | 0 | — | — | INSUFFICIENT EVIDENCE | — |
+| g1 | 15 | 7 | 6 of 21 | 3 | 0.50 | 0.61 | NO DIRECTION | ADAPTIVE (weak), 2 of 2 |
+
+- **Q1, turnover:** all four lineages are TURNOVER.
+- **Q2, adaptation:** no lineage is ADAPTIVE, so rule 2 of the headline applies. No pair failed, none coexisted, and there are no CYCLIC triples.
+- **Q3, interactions and parasites:** not PARASITES PRESENT. Parasites were found in only one lineage: 5 parasite types, in 9 host–parasite pairings, at wm8's middle snapshot (step 19,968). The rule needs two lineages.
+- **Calibration failed.**
+  - σ0 = 0.071, from 18 calibration runs.
+  - In the validation batch, wm6's neutral pair resolved: D = −0.187 against θ = 0.145, meaning the plain L0 beat its marked copy. Each of the 6 plain-rare runs ended above the marked-rare run with the same seed label. These are independent runs: the soup seed is a hash of the whole job id.
+  - wm8 (D = 0.050) and g1 (D = −0.060) were unresolved, as expected. wm2 had no usable marker.
+  - Mean neutral f was 0.132.
+  - The rules' consequence is the provisional mark. Possible explanations are that wm6's marker (position 13) carries a cost or is misread, or that the drift is wider than σ0 allows for. σ0 pools every lineage's calibration runs, so wm6's runs also feed every lineage's threshold.
+
+### What the resolved races show
+
+- **wm6:** two of the T0 leader's (bd6f64ad) five races resolved, and it lost both to later leaders (a240625b and 017d10fc). Later 0f5728c7 lost to the earlier 017d10fc, then lost to the later 55e27793. So 3 of 4 races went to the later leader.
+- **g1 rises, then falls back.**
+  - The first three leaders improve in turn: d9daa193 < 77bbcc97 < 19f5adcf, all three races clear (|D| 0.19–0.50).
+  - The second leader, 77bbcc97, then beats the last three leaders, d16f0a27, 04b6b27f and 3ec8492f, all narrowly (D 0.15–0.21, θ 0.145).
+  - In a stirred soup, g1's later leaders are not better than its early ones. On the grid, where they evolved, only the first two steps resolved, and both went to the later leader.
+- **wm2:** 989bcdcb beat the T0 leader e858e219, which differs from it by one instruction. The two later leaders, 4c9502cb and b25d3a1b, are a related pair (different keys, very similar), unlike the first two, and none of their races resolved.
+- **wm8:** none of the 21 races resolved.
+  - Its first four competitors share almost one key: they differ only in where two brackets sit.
+  - The leader chain keeps returning to the T0 type (ee84be12) until about step 16,000.
+  - This looks like near-neutral drift among variants.
+
+### Trends (descriptive)
+
+Spearman correlation of the leader's measurements with time:
+
+| Lineage | Instructions | Copy test | Instructions run | Robustness |
+|---|---|---|---|---|
+| wm2 | 0.02 | −0.31 | −0.11 | 0.00 |
+| wm6 | −0.46 | (constant 64) | −0.27 | 0.11 |
+| wm8 | 0.71 | (constant 64) | 0.22 | 0.39 |
+| g1 | −0.69 | 0.69 | −0.17 | 0.37 |
+
+- **Fidelity** was constant at 1 throughout.
+- **g1's leaders got shorter:** 12 instructions fell to 9, while the copy test rose from 63 to 64.
+- **wm8's leaders got longer:** 10 instructions rose to 13 at most, and the last leader has 12.
+
+### Exploratory (cannot change the headline)
+
+| Lineage | Resolved | Later won | p | Verdict |
+|---|---|---|---|---|
+| wm2 | 1 | 1 | 0.50 | INSUFFICIENT EVIDENCE |
+| wm6 | 3 | 1 | 0.79 | NO DIRECTION |
+| wm8 | 0 | 0 | — | INSUFFICIENT EVIDENCE |
+| g1 | 1 | 1 | 0.50 | INSUFFICIENT EVIDENCE |
+
+### What this means
+
+- After takeover, the copiers keep replacing each other in all four lineages.
+- These races do not show that the replacements are improvements. Most of them (52 of 63) could not resolve at 3 seeds per direction.
+  - The one clear sign of improvement is g1's first three leaders and wm6's early ones.
+  - g1 also shows the reverse later on, at least in a stirred soup.
+- The headline is provisional for two reasons:
+  - The wm6 marker failed as a neutral control.
+  - The pooled σ0 may not suit every race, since spreads differ a lot between races.
+- [soup-evolution-rerun-2026-10-31.md](soup-evolution-rerun-2026-10-31.md) is the follow-up, with longer races, 8 seeds and a per-race test.

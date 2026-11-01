@@ -104,7 +104,7 @@ for (const l of S.lineages) {
     "<td class='num'>" + l.changes + " · " + esc(l.turnover) + "</td><td class='num'>" + l.competitors + "</td>" +
     "<td><span class='pill " + vclass(l.verdict) + "'>" + esc(l.verdict) + "</span></td>" +
     "<td class='num'>" + l.laterWins + " of " + l.resolved + " resolved</td><td class='num'>" + fmt(l.p, 3) + "</td>" +
-    "<td class='num'>" + esc(l.explore) + "</td><td class='num'>" + esc(l.grid ?? "–") + "</td>";
+    "<td class='num'>" + esc(String(l.explore).replace(/[0-9][.][0-9]{4,}/g, (x) => Number(x).toFixed(2))) + "</td><td class='num'>" + esc(l.grid ?? "–") + "</td>";
   tb.appendChild(tr);
 }
 st.appendChild(tb);
