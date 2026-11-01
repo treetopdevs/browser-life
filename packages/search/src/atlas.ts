@@ -181,8 +181,16 @@ export interface AtlasSpec {
   persistenceRange: [number, number];
 }
 
-/** Provisional ranges: to be calibrated on GPU evaluations before any pilot (PLAN.md, open decisions). */
-export const DEFAULT_ATLAS: AtlasSpec = { descriptors: ATLAS_DESCRIPTORS, interval: 100, bins: 8, displacementRange: [0, 4], persistenceRange: [0, 1] };
+/**
+ * Ranges from the 2026-11-01 calibration (PLAN-2.md): the M3 founder set and three mutants each,
+ * 47 live genomes, put displacement in 0.054–0.322 cells per 100 steps and persistence in
+ * 0.508–0.888. Whole-tile centres of mass move far less than tracked individuals do, since many
+ * bodies average out, so the placeholder range [0, 4] would have put every founder in the lowest
+ * displacement bin, leaving only persistence to separate them.
+ * These ranges place the founders in bins 1–6 of 8 on both axes, leaving a bin of headroom at
+ * each end; values outside clamp to the edge bins.
+ */
+export const DEFAULT_ATLAS: AtlasSpec = { descriptors: ATLAS_DESCRIPTORS, interval: 100, bins: 8, displacementRange: [0, 0.4], persistenceRange: [0.4, 1] };
 
 export type ProposalOperator = "seed" | "random" | "mutate";
 

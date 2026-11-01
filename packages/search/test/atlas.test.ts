@@ -8,6 +8,7 @@ import { RefSim } from "@bl/sim-ref";
 import type { CensusInput } from "@bl/metrics";
 import {
   BehaviourAtlas,
+  DEFAULT_ATLAS,
   DEFAULT_EVAL,
   OCCUPIED_MASS,
   SCREEN_ASSAY,
@@ -125,10 +126,12 @@ describe("the negative fixture: a new bin is not a new capability", () => {
 });
 
 describe("BehaviourAtlas", () => {
+  // A fixed spec, so these cases do not move when the calibrated default ranges do.
+  const SPEC = { ...DEFAULT_ATLAS, displacementRange: [0, 4] as [number, number], persistenceRange: [0, 1] as [number, number] };
   const d = (displacement: number, persistence: number): PhysicalDescriptors => ({ interval: 100, displacement, persistence });
 
   it("inserts on viability alone: a better regenerator with equal viability keeps out, a more viable one displaces", () => {
-    const a = new BehaviourAtlas();
+    const a = new BehaviourAtlas(SPEC);
     const first = a.offer({ genome: genome(1), operator: "seed", parents: [], seed: 0, batch: 0 }, { survived: 2, reps: 4, descriptors: d(1.1, 0.9) });
     expect(first.inserted).toBe(true);
     // The Screened type has no regeneration field at all; equal viability ties keep the incumbent.
@@ -145,7 +148,7 @@ describe("BehaviourAtlas", () => {
   });
 
   it("keeps displaced ancestors as stepping stones and flags duplicate genomes", () => {
-    const a = new BehaviourAtlas();
+    const a = new BehaviourAtlas(SPEC);
     const root = a.offer({ genome: genome(1), operator: "seed", parents: [], seed: 0, batch: 0 }, { survived: 2, reps: 4, descriptors: d(0.1, 0.95) });
     const mid = a.offer({ genome: genome(2), operator: "mutate", parents: [root.id], seed: 11, batch: 1 }, { survived: 2, reps: 4, descriptors: d(1.6, 0.6) });
     const tip = a.offer({ genome: genome(3), operator: "mutate", parents: [mid.id], seed: 12, batch: 2 }, { survived: 3, reps: 4, descriptors: d(3.6, 0.3) });
@@ -162,7 +165,7 @@ describe("BehaviourAtlas", () => {
   });
 
   it("keeps gene-distinct genomes apart, which genomeKey alone would merge", () => {
-    const a = new BehaviourAtlas();
+    const a = new BehaviourAtlas(SPEC);
     const plain = a.offer({ genome: genome(1), operator: "seed", parents: [], seed: 0, batch: 0 }, { survived: 4, reps: 4, descriptors: d(0.5, 0.5) });
     const gene = a.offer({ genome: { ...genome(1), genes: 3 }, operator: "seed", parents: [], seed: 1, batch: 0 }, { survived: 4, reps: 4, descriptors: d(2.5, 0.5) });
     expect(genomeKey({ ...genome(1), genes: 3 })).toBe(genomeKey(genome(1)));
@@ -172,7 +175,7 @@ describe("BehaviourAtlas", () => {
   });
 
   it("refuses descriptors sampled at another census interval", () => {
-    const a = new BehaviourAtlas();
+    const a = new BehaviourAtlas(SPEC);
     expect(() => a.offer({ genome: genome(1), operator: "seed", parents: [], seed: 0, batch: 0 }, { survived: 4, reps: 4, descriptors: { interval: 200, displacement: 1, persistence: 0.5 } })).toThrow(
       /every 200 steps offered to an atlas defined at 100/,
     );
@@ -184,7 +187,7 @@ describe("BehaviourAtlas", () => {
   });
 
   it("is rebuilt exactly by replaying its ledger, including through JSON", () => {
-    const a = new BehaviourAtlas();
+    const a = new BehaviourAtlas(SPEC);
     for (let i = 0; i < 40; i++) {
       const u = lowbias32(i * 77 + 3);
       const parents = i > 0 && u % 3 === 0 ? [u % i] : [];
@@ -193,11 +196,11 @@ describe("BehaviourAtlas", () => {
         { survived: u % 5, reps: 3 + (u % 2), descriptors: u % 11 === 0 ? undefined : d((u % 400) / 100, ((u >>> 8) % 101) / 100) },
       );
     }
-    const back = BehaviourAtlas.replay(a.ledger);
+    const back = BehaviourAtlas.replay(a.ledger, SPEC);
     expect(back.ledger).toEqual(a.ledger);
     expect([...back.cells]).toEqual([...a.cells]);
     const revived = JSON.parse(JSON.stringify(a.ledger)).map((e: { genome: { weights: Record<string, number> } }) => ({ ...e, genome: { ...e.genome, weights: Int8Array.from(Object.values(e.genome.weights)) } }));
-    expect([...BehaviourAtlas.replay(revived).cells]).toEqual([...a.cells]);
+    expect([...BehaviourAtlas.replay(revived, SPEC).cells]).toEqual([...a.cells]);
   });
 });
 

@@ -26,8 +26,8 @@ fixes 6 and 7 and their tests found nothing remaining.
 ## Remaining limits (not defects)
 
 - `assertSeparated` trusts each test's `reads` declaration; it cannot see what `passes` reads.
-- Descriptor ranges and bins are provisional until a GPU calibration.
-- No held-out capability panel is registered; selections cannot yet be scored.
+- Descriptor ranges and bins were provisional here; slice 2 sets them from a GPU calibration.
+- No held-out capability panel was registered in slice 1; slice 2 adds panel v1.
 
 ## Verification run
 
@@ -45,3 +45,36 @@ fixes 6 and 7 and their tests found nothing remaining.
 - After the run, `pnpm vitest run packages/sim-ref/test/golden-hashes.test.ts packages/search
   --testTimeout=900000` passed: 8 files, 111 tests, every golden pin unchanged. No file under
   `packages/sim-ref`, `packages/schema` or `packages/sim-gpu` changed.
+
+# Slice 2: held-out panel, calibration, comparison CLI
+
+Codex `gpt-6.1-sol`, high, read-only, over the uncommitted slice 2 change (`PLAN-2.md`).
+
+## Pass 1: three P2, three P3, no P1
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | P2 | Held-out results of every history were merged by genome key, so a founder selected in two histories was scored on the last history's seeds; order could change the result | `matchedCoverage` takes held-out maps per history; the CLI keeps them per history; order-independence test |
+| 2 | P2 | `fresh-reproduction` counted tracker births, which include fast motion without division, so it partly re-measured selected motion | Dropped from panel v1; reason in `panel.ts` and `PLAN-2.md` |
+| 3 | P2 | Budgets beyond the seed scheme failed only after thousands of evaluations | `checkSchedule` before any evaluation |
+| 4 | P3 | A batch shape holding no genome made chunking loop forever | `perBatch` throws |
+| 5 | P3 | Summaries silently dropped histories with an empty selection | Unconditional means; `emptyHistories` reported |
+| 6 | P3 | PLAN-2 called the calibration genomes independent of the comparison's | Reworded: independence is fresh seeds and protocols, not genomes |
+
+## Pass 2: two P2, no P1
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 7 | P2 | History bounds, reservation and duplicates were checked after history 1 had run | `compareSpec()` validates every argument before the GPU is requested; checked by hand: `1,1`, `1,9000`, `1,8999` and an oversized budget all fail at once |
+| 8 | P2 | `score` lost histories whose arms all selected nothing | Every history in `histories.json` gets a map; checked by hand on a constructed run with an empty history |
+
+Pass 2 confirmed fixes 1–6. **No third pass:** Codex failed to start twice ("failed to load
+configuration: Failed to synchronize managed preferences"), so fixes 7–8 and the new
+`manifest.gitDirty` flag are verified by the manual runs above, not by review.
+
+## Verification
+
+- `pnpm typecheck` clean; `deno check tools/atlas.ts` clean.
+- `pnpm vitest run packages/search packages/sim-ref/test/golden-hashes.test.ts tools/test/deno-no-lock.test.ts tools/test/site-build.test.ts --testTimeout=900000`: 11 files, 131 tests pass; golden pins unchanged.
+- GPU: calibration (48 genomes) and a two-history smoke comparison on the local WebGPU device; see `PLAN-2.md`.
+- The full suite was not rerun for slice 2; slice 2 changes only `packages/search` and adds `tools/atlas.ts`.
