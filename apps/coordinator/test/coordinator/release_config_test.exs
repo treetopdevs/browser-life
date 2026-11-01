@@ -172,9 +172,17 @@ defmodule Coordinator.ReleaseConfigTest do
     System.put_env("BL_DISCOVERY_JOIN_TOKEN", "join")
     assert prod_runtime()[:coordinator][:discovery_join_token] == "join"
 
-    # A nonblank token is kept byte for byte, surrounding spaces included.
-    System.put_env("BL_DISCOVERY_JOIN_TOKEN", " join ")
-    assert prod_runtime()[:coordinator][:discovery_join_token] == " join "
+    # A token a client's Authorization header would alter is refused, without printing it.
+    for bad <- [" join ", "join\n", "jo in", "join\t", "j\u00e9oin"] do
+      System.put_env("BL_DISCOVERY_JOIN_TOKEN", bad)
+
+      e =
+        assert_raise RuntimeError, ~r/BL_DISCOVERY_JOIN_TOKEN must be visible ASCII/, fn ->
+          prod_runtime()
+        end
+
+      refute e.message =~ "join"
+    end
   end
 
   test "dev and test still start without a join token (loopback joins)" do

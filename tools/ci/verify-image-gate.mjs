@@ -6,7 +6,7 @@
 //   node tools/ci/verify-image-gate.mjs canary <cache|root> <vitest.json> <junit.xml>
 //
 // gate:   the live suites must really have run: nothing failed, skipped or todo, and every test against the started
-//         image (13) and every refusal case (12) passed. The floors equal the suite's size on purpose: a deleted or
+//         image (13) and every refusal case (13) passed. The floors equal the suite's size on purpose: a deleted or
 //         renamed test fails the gate; raise them with the suite.
 // canary: a deliberately damaged image must fail exactly one named assertion (Vitest JSON) with no hook or runtime
 //         error (JUnit: failures="1", errors="0", no <error> element).
@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 export const MIN_LIVE = 13;
-export const MIN_REFUSAL = 12;
+export const MIN_REFUSAL = 13;
 export const LIVE_NAME = "started as deployed";
 export const REFUSAL_NAME = "refuses to start";
 export const GATE_FILE = "tools/test/coordinator-image.test.ts";

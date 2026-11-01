@@ -112,10 +112,10 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
   /** A start hook failed; a container may exist whose start never returned, so print every tracked container's logs. */
   let startupFailed = false;
   let survivors: string[] = [];
-  const d = (args: string[], timeout = 30_000, input?: string) =>
-    spawnSync("docker", args, { encoding: "utf8", timeout, killSignal: "SIGKILL", maxBuffer: 64 * 1024 * 1024, env: dockerEnv, input });
-  const must = (args: string[], timeout?: number, input?: string) => {
-    const r = d(args, timeout, input);
+  const d = (args: string[], timeout = 30_000, input?: string, env: NodeJS.ProcessEnv = dockerEnv) =>
+    spawnSync("docker", args, { encoding: "utf8", timeout, killSignal: "SIGKILL", maxBuffer: 64 * 1024 * 1024, env, input });
+  const must = (args: string[], timeout?: number, input?: string, env?: NodeJS.ProcessEnv) => {
+    const r = d(args, timeout, input, env);
     if (r.status !== 0) throw new Error(redact(`docker ${args[0]} ${args[1] ?? ""} failed: ${r.error ?? ""}${r.stderr}`, secretList));
     return r.stdout;
   };
@@ -139,16 +139,20 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
   function start(tag: string, env: Record<string, string | undefined>, vols?: [string, string], publish = true): string {
     const name = unique(tag);
     const args = ["run", "-d", "--pull=never", "--restart", "no", "--name", name, ...labels];
+    // A secret is handed over by name, so its value comes from this start's own subprocess environment: an override
+    // (say a whitespace-only token) must reach the container instead of the run's synthetic value.
+    const runEnv: NodeJS.ProcessEnv = { ...dockerEnv };
+    for (const k of SECRET_NAMES) delete runEnv[k];
     for (const [k, v] of Object.entries(env)) {
       if (v === undefined) continue;
-      if ((SECRET_NAMES as readonly string[]).includes(k) && v !== "") args.push("-e", k);
+      if ((SECRET_NAMES as readonly string[]).includes(k) && v !== "") { runEnv[k] = v; args.push("-e", k); }
       else args.push("-e", `${k}=${v}`);
     }
     if (vols) args.push("-v", `${vols[0]}:/data`, "-v", `${vols[1]}:/data-discovery`);
     if (publish) args.push("-p", "127.0.0.1::4000");
     args.push(image);
     tracker.record("container", name);
-    must(args, 60_000);
+    must(args, 60_000, undefined, runEnv);
     return name;
   }
   const originOf = (name: string) => {
@@ -449,6 +453,9 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
     }, T);
     it("with a whitespace-only discovery join token", async () => {
       expectRefusal(await refused("blank-join", (e) => { e.BL_DISCOVERY_JOIN_TOKEN = "   "; }), "BL_DISCOVERY_JOIN_TOKEN must be set in production");
+    }, T);
+    it("with a join token a header would alter", async () => {
+      expectRefusal(await refused("newline-join", (e) => { e.BL_DISCOVERY_JOIN_TOKEN = `${JOIN}\n`; }), "BL_DISCOVERY_JOIN_TOKEN must be visible ASCII");
     }, T);
     it("with the discovery directory inside the data directory", async () => {
       expectRefusal(await refused("inside-data", (e) => { e.BL_DISCOVERY_DATA_DIR = "/data/discovery"; }), "overlaps the registered queue's");
