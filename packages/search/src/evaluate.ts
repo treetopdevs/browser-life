@@ -22,6 +22,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
+import { AtlasRecorder, ATLAS_WINDOW, summarizeAtlas, type AtlasEval } from "./descriptors.ts";
 import { Tracker, census, classify, individuals, type Census, type CensusInput, type Role } from "@bl/metrics";
 
 /** Optional read-only evidence stream; omitted by all historical callers. */
@@ -69,6 +70,13 @@ export interface EvalConfig {
    * lineage only (see lineageMass).
    */
   medium?: { waste?: number; background?: Genome; backgroundBiomass?: number };
+  /**
+   * Behaviour-atlas observer (I01), off by default: records `Evaluation.atlas`, the two physical descriptors of
+   * descriptors.ts over the last ATLAS_WINDOW growth steps, from the census readbacks growth already makes. Never
+   * scored or gated, and not supported with a `medium.background`. Absent from DEFAULT_EVAL, so existing
+   * evaluations are byte-identical.
+   */
+  atlas?: boolean;
 }
 
 export const DEFAULT_EVAL: EvalConfig = {
@@ -156,6 +164,8 @@ export interface Evaluation {
   /** With `roleScope: "lineage"` on a background medium: fluxes of every non-candidate lineage in the genome's tiles, and their mean bound mass per tile. */
   roleSumsOther?: RoleSums;
   otherMass?: number;
+  /** With `EvalConfig.atlas`: the candidate's behaviour-atlas descriptors (descriptors.ts). */
+  atlas?: AtlasEval;
   /** With `EvalConfig.perRep`: each replicate tile's values (a dead tile has zero traits). */
   perRep?: RepEval[];
 }
@@ -279,6 +289,7 @@ export function addLineageRoles(cfg: WorldConfig, roles: Uint32Array, genomeHead
 /** Evaluates up to side²/reps genomes in one batch world. */
 export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL, observer?: EvalObserver, observationEvery: 25 | 50 = 25): Promise<Evaluation[]> {
   const tiles = ec.side * ec.side;
+  if (ec.atlas && ec.medium?.background) throw new Error("EvalConfig.atlas is not supported with a medium.background");
   const perBatch = Math.floor(tiles / ec.reps);
   if (genomes.length > perBatch) throw new Error(`batch holds ${perBatch} genomes`);
   const cfg = defaultConfig({ ...ec.world, tileW: ec.tile, tileH: ec.tile, tilesX: ec.side, tilesY: ec.side, seed: ec.seed, mutRate: 0 });
@@ -342,6 +353,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   for (let t = 0; t < tiles; t++) candLo[t] = owner[t] < 0 ? 0 : packLineageLo(cfg, candidateRawId[t]);
   const candLineage = (t: number) => `0:${packLineageLo(cfg, candidateRawId[t])}`;
   const isCand = (t: number, lineage: string) => !bg || lineage === candLineage(t);
+  const atlasRec = ec.atlas ? new AtlasRecorder(cfg, [...owner.keys()].filter((t) => owner[t] >= 0), Math.max(0, ec.growSteps - ATLAS_WINDOW)) : undefined;
   let grown: WorldState;
   try {
     await runChunked(device, sim, ec.growSteps, ec.censusEvery, (c) => {
@@ -364,7 +376,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         }
         last.set(ind.id, [ind.cx, ind.cy]);
       }
-    }, onRoles);
+    }, onRoles, atlasRec ? async (input) => atlasRec.observe(input) : undefined);
     grown = await sim.readState();
     await observer?.({ kind: "state", phase: "grown", state: grown });
   } finally {
@@ -515,6 +527,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         extra.otherMass = ts.reduce((a, t) => a + otherMass![t], 0) / ts.length;
       }
     }
+    if (atlasRec) extra.atlas = summarizeAtlas(ts.map((t) => atlasRec.tile(t)));
     if (ec.perRep)
       extra.perRep = ts.map((t) => {
         const alive = before[t] > 0 && indCount[t] > 0;

@@ -3,7 +3,8 @@
 // confirmation spent (--resume confirms on seeds above them). Pure, so both are tested without a GPU.
 
 import { quality, qualityMaintenance } from "./evaluate.ts";
-import type { GateName, ScoreFn } from "./mapelites.ts";
+import type { CellFn, GateName, ScoreFn } from "./mapelites.ts";
+import { ATLAS_V1, atlasCell } from "./descriptors.ts";
 
 export type ScoreName = "quality" | "maintenance";
 /** The archive scores a search can use (`--score`). "quality" is the default. */
@@ -76,4 +77,20 @@ export function recordedSeeds(prev: ConfirmSeedRecord | undefined, file: string)
 export function nextConfirmSeed(recorded: { confirm: Range[]; dependence: Range[] }, flag: number): number {
   const all = [...recorded.confirm, ...recorded.dependence];
   return all.length ? Math.max(...all.map((r) => r[1])) + 1 : flag;
+}
+
+export type ArchiveName = "mass-speed" | "atlas-v1";
+/** The archive cell functions a search can use (`--archive`). "mass-speed" is the default and has no cell function (the unchanged `cellOf`). */
+export const ARCHIVE_CELLS: Record<ArchiveName, CellFn | undefined> = { "mass-speed": undefined, "atlas-v1": (e) => atlasCell(ATLAS_V1, e) };
+
+/**
+ * The archive an earlier search used, from its `search` block. tools/bootstrap.ts records `archive` only when it
+ * is not the default, so a missing one (or a missing block) means "mass-speed"; a value it never writes is refused.
+ * Replaying a log under the wrong archive would rebuild a different archive without any error, so --resume and
+ * --confirm-only take the recorded one and list a disagreeing --archive flag in `ignored`.
+ */
+export function searchedArchive(search: { archive?: unknown } | undefined, given?: string): { archive: ArchiveName; ignored: string[] } {
+  const archive = search?.archive ?? "mass-speed";
+  if (archive !== "mass-speed" && archive !== "atlas-v1") throw new Error(`archive search block records an unknown archive ${JSON.stringify(archive)}`);
+  return { archive, ignored: given !== undefined && given !== archive ? [`--archive ${given} (searched with ${archive})`] : [] };
 }

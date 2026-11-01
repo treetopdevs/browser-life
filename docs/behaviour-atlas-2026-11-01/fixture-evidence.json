@@ -1,0 +1,268 @@
+{
+ "definition": "docs/behaviour-atlas-2026-11-01/PLAN.md",
+ "tile": 64,
+ "frames": 11,
+ "cadenceSteps": 100,
+ "ruleVersion": 1,
+ "rows": [
+  {
+   "id": "static-disc",
+   "note": "a body that does not move",
+   "expect": {
+    "d1": 0,
+    "d2": 1,
+    "comPath": 0
+   },
+   "got": {
+    "d1": 0,
+    "comPath": 0,
+    "d2": 1,
+    "frames": 11
+   }
+  },
+  {
+   "id": "slow-disc",
+   "note": "1 cell per 100 steps",
+   "expect": {
+    "d1": [
+     0.999,
+     1.001
+    ],
+    "d2": [
+     0.7,
+     0.95
+    ]
+   },
+   "got": {
+    "d1": 1,
+    "comPath": 1,
+    "d2": 0.7936507936507936,
+    "frames": 11
+   }
+  },
+  {
+   "id": "fast-disc",
+   "note": "3 cells per 100 steps; persistence falls with speed",
+   "expect": {
+    "d1": [
+     2.999,
+     3.001
+    ],
+    "d2": [
+     0.3,
+     0.7
+    ]
+   },
+   "got": {
+    "d1": 3,
+    "comPath": 3,
+    "d2": 0.5270270270270271,
+    "frames": 11
+   }
+  },
+  {
+   "id": "out-and-back",
+   "note": "NEGATIVE: 5 frames out, 5 back. Path-length COM (naive) reads 1.0 as if it were a steady mover; net transport is 0",
+   "expect": {
+    "d1": [
+     0,
+     1e-9
+    ],
+    "d2": [
+     0.7,
+     0.95
+    ],
+    "comPath": [
+     0.999,
+     1.001
+    ]
+   },
+   "got": {
+    "d1": 0,
+    "comPath": 1,
+    "d2": 0.7936507936507936,
+    "frames": 11
+   }
+  },
+  {
+   "id": "flickering-edge",
+   "note": "NEGATIVE: a static body whose edge cells flicker one side at a time. Path-length COM (naive) is nonzero; net transport stays near zero and persistence stays high but below 1",
+   "expect": {
+    "d1": [
+     0,
+     0.05
+    ],
+    "d2": [
+     0.85,
+     0.999
+    ],
+    "comPath": [
+     0.1,
+     5
+    ]
+   },
+   "got": {
+    "d1": 0,
+    "comPath": 0.5766511795445126,
+    "d2": 0.9186991869918699,
+    "frames": 11
+   }
+  },
+  {
+   "id": "checker-alternating",
+   "note": "NEGATIVE: occupied fraction is 0.5 at every census (naive 'occupancy is constant' calls it static) but every cell turns over",
+   "expect": {
+    "d1": null,
+    "d2": 0
+   },
+   "got": {
+    "d1": null,
+    "comPath": null,
+    "d2": 0,
+    "frames": 11
+   }
+  },
+  {
+   "id": "checker-static",
+   "note": "the same occupied fraction, truly static",
+   "expect": {
+    "d1": null,
+    "d2": 1
+   },
+   "got": {
+    "d1": null,
+    "comPath": null,
+    "d2": 1,
+    "frames": 11
+   }
+  },
+  {
+   "id": "noise",
+   "note": "NEGATIVE: independent 25% speckle each census; no centre of mass exists, persistence is the chance overlap (about 1/7)",
+   "expect": {
+    "d1": null,
+    "d2": [
+     0.1,
+     0.2
+    ]
+   },
+   "got": {
+    "d1": null,
+    "comPath": null,
+    "d2": 0.14041031332147058,
+    "frames": 11
+   }
+  },
+  {
+   "id": "recoloured-copy",
+   "note": "same trajectory as slow-disc with all masses x7 (a re-rendered or recoloured copy): descriptors must be identical",
+   "expect": {
+    "d1": [
+     0.999,
+     1.001
+    ],
+    "d2": [
+     0.7,
+     0.95
+    ]
+   },
+   "got": {
+    "d1": 1,
+    "comPath": 1,
+    "d2": 0.7936507936507936,
+    "frames": 11
+   }
+  },
+  {
+   "id": "translated-copy",
+   "note": "slow-disc shifted by (17, 9) on the torus: displacement is not position, descriptors identical",
+   "expect": {
+    "d1": [
+     0.999,
+     1.001
+    ],
+    "d2": [
+     0.7,
+     0.95
+    ]
+   },
+   "got": {
+    "d1": 1,
+    "comPath": 1,
+    "d2": 0.7936507936507936,
+    "frames": 11
+   }
+  },
+  {
+   "id": "wrap-crossing",
+   "note": "a body crossing the tile edge: the minimal wrapped step keeps D1 at its true speed",
+   "expect": {
+    "d1": [
+     1.999,
+     2.001
+    ],
+    "d2": [
+     0.5,
+     0.85
+    ]
+   },
+   "got": {
+    "d1": 2,
+    "comPath": 2,
+    "d2": 0.6496350364963505,
+    "frames": 11
+   }
+  },
+  {
+   "id": "texture-drift",
+   "note": "NEGATIVE/limit: a whole-tile periodic texture sliding 1 cell per frame. No centre of mass exists (D1 undefined); persistence is not drift-invariant, so it reads as turnover (0.6). Reported as D1-undefined with D2 < 1",
+   "expect": {
+    "d1": null,
+    "d2": [
+     0.55,
+     0.65
+    ]
+   },
+   "got": {
+    "d1": null,
+    "comPath": null,
+    "d2": 0.5999999999999999,
+    "frames": 11
+   }
+  },
+  {
+   "id": "symmetric-split",
+   "note": "KNOWN BLIND SPOT: two bodies separating symmetrically leave the tile's centre of mass still, so D1 = 0 although both move. D1 is net transport, per-body speed is the existing speed axis",
+   "expect": {
+    "d1": [
+     0,
+     1e-9
+    ],
+    "d2": [
+     0.2,
+     0.9
+    ]
+   },
+   "got": {
+    "d1": 0,
+    "comPath": 0,
+    "d2": 0.7797901682949264,
+    "frames": 11
+   }
+  },
+  {
+   "id": "extinct",
+   "note": "no occupied cell at any census: both undefined",
+   "expect": {
+    "d1": null,
+    "d2": null
+   },
+   "got": {
+    "d1": null,
+    "comPath": null,
+    "d2": null,
+    "frames": 11
+   }
+  }
+ ]
+}
