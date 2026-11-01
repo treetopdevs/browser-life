@@ -247,7 +247,7 @@ export function randomProgram(r: () => number): Uint8Array {
 
 export interface AssayJob {
   id: string;
-  kind: "pair" | "neutral" | "grid" | "gneutral" | "xpair"; // xpair: exploratory time points (doc: Exploratory)
+  kind: "pair" | "neutral" | "grid" | "gneutral" | "xpair" | "mpair"; // xpair: exploratory time points (doc: Exploratory); mpair: rerun's two-marker control
   lineage: string;
   rare: string; // type id (or "<id>*" for the marked neutral form)
   common: string;
@@ -259,11 +259,13 @@ export interface AssayJob {
   rareCount?: number; // default 2048 (12.5%; 512 on the 64 x 64 grid)
   epochs?: number; // default 512
   every?: number; // default 64
-  marker?: { pos: number; value: number; original: number }; // neutral: position in rareForms[0]
+  marker?: { pos: number; value: number; original: number }; // neutral: position in rareForms[0]; mpair: the rare side's marker
+  marker2?: { pos: number; value: number; original: number }; // mpair: the common side's marker (rerun doc)
+  validAt?: number[]; // extra epochs at which the invalid-run rule is also applied (rerun doc: 512-epoch reading)
 }
 
 export interface AssayPoint { epoch: number; rare: number; common: number; other: number; f: number }
-export interface AssayResult { id: string; job: Omit<AssayJob, "rareForms" | "commonForms">; points: AssayPoint[]; final: AssayPoint; valid: boolean; intruder: { id: string; count: number; selfRep: number } | null }
+export interface AssayResult { id: string; job: Omit<AssayJob, "rareForms" | "commonForms">; points: AssayPoint[]; final: AssayPoint; valid: boolean; intruder: { id: string; count: number; selfRep: number } | null; validAt?: Record<number, boolean> }
 
 /** Indices of the central square patch of `count` cells on a grid (closest square, trimmed row by row). */
 export function patch(g: Grid, count: number): number[] {
@@ -295,6 +297,17 @@ export function classify(programs: Uint8Array, job: AssayJob, rareRef: TypeRef, 
   let rare = 0, common = 0, other = 0;
   for (let p = 0; p < num; p++) {
     const off = p * TAPE;
+    if (job.marker && job.marker2) {
+      // Two-marker control: both sides are one type. Rare: its marker present and the other position original; common: the reverse.
+      const m = commonRef.distance(programs, off, commonRef.match);
+      if (m.d > commonRef.match) { other++; continue; }
+      const v1 = programs[off + markerPosition(commonRef, m.form, m.t, job.marker.pos)];
+      const v2 = programs[off + markerPosition(commonRef, m.form, m.t, job.marker2.pos)];
+      if (v1 === job.marker.value && v2 === job.marker2.original) rare++;
+      else if (v2 === job.marker2.value && v1 === job.marker.original) common++;
+      else other++;
+      continue;
+    }
     if (job.marker) {
       // Neutral: both sides are one type; align to the unmarked form and read the marker position.
       const m = commonRef.distance(programs, off, commonRef.match);
@@ -336,23 +349,32 @@ export function runAssay(job: AssayJob): AssayResult {
     const c = classify(soup.programs, job, rareRef, commonRef);
     points.push({ epoch: soup.epoch, ...c, f: c.rare + c.common ? c.rare / (c.rare + c.common) : NaN });
   };
+  // Invalid if a third copier type (not within either side's radius) outnumbers both sides together.
+  const intruderNow = (pt: AssayPoint): AssayResult["intruder"] => {
+    const end = typeCensus(soup.programs, soup.epoch, { top: 0, testShare: 0.01, maxTests: 100 });
+    for (const t of end.types) {
+      if (t.count <= pt.rare + pt.common) break;
+      const rep = unhex(t.rep);
+      if (rareRef.distance(rep, 0, rareRef.match).d <= rareRef.match || commonRef.distance(rep, 0, commonRef.match).d <= commonRef.match) continue;
+      if (t.selfRep !== null && t.selfRep >= COPIER) return { id: t.id, count: t.count, selfRep: t.selfRep };
+    }
+    return null;
+  };
+  const extra = new Set((job.validAt ?? []).filter((e) => e < epochs));
+  const validAt: Record<number, boolean> = {};
   measure();
   while (soup.epoch < epochs) {
     soup.step();
     if (soup.epoch % every === 0 || soup.epoch === epochs) measure();
+    if (extra.has(soup.epoch)) {
+      if (points.at(-1)!.epoch !== soup.epoch) measure();
+      validAt[soup.epoch] = intruderNow(points.at(-1)!) === null;
+    }
   }
   const final = points[points.length - 1];
-  // Invalid if a third copier type (not within either side's radius) outnumbers both sides together.
-  let intruder: AssayResult["intruder"] = null;
-  const end = typeCensus(soup.programs, soup.epoch, { top: 0, testShare: 0.01, maxTests: 100 });
-  for (const t of end.types) {
-    if (t.count <= final.rare + final.common) break;
-    const rep = unhex(t.rep);
-    if (rareRef.distance(rep, 0, rareRef.match).d <= rareRef.match || commonRef.distance(rep, 0, commonRef.match).d <= commonRef.match) continue;
-    if (t.selfRep !== null && t.selfRep >= COPIER) { intruder = { id: t.id, count: t.count, selfRep: t.selfRep }; break; }
-  }
+  const intruder = intruderNow(final);
   const { rareForms: _r, commonForms: _c, ...meta } = job;
-  return { id: job.id, job: meta, points, final, valid: intruder === null, intruder };
+  return { id: job.id, job: meta, points, final, valid: intruder === null, intruder, ...(extra.size ? { validAt } : {}) };
 }
 
 /** The marked form for the neutral control: forms with one data byte changed (mirror form at its corresponding position). */
@@ -416,7 +438,12 @@ export function markerCandidates(ref: TypeRef, max = 8, seed = 1, lang: Lang = "
  * no usable control for this type.
  */
 export function findMarker(ref: TypeRef, lang: Lang = "noheads", pilot = { num: 4096, rareCount: 512, epochs: 128 }): Marker | null {
-  let best: Marker | null = null;
+  return rankMarkers(ref, lang, pilot)[0] ?? null;
+}
+
+/** Every marker candidate with its pilot misreads, fewest first, ties to the lower position (findMarker's order). */
+export function rankMarkers(ref: TypeRef, lang: Lang = "noheads", pilot = { num: 4096, rareCount: 512, epochs: 128 }): Marker[] {
+  const ranked: Marker[] = [];
   for (const c of markerCandidates(ref, 8, 1, lang)) {
     const job: AssayJob = {
       id: "marker-pilot", kind: "neutral", lineage: "", rare: "*", common: "", seed: 99, ...pilot,
@@ -431,9 +458,9 @@ export function findMarker(ref: TypeRef, lang: Lang = "noheads", pilot = { num: 
       const v = soup.programs[p * TAPE + markerPosition(ref, m.form, m.t, c.pos)];
       if (v !== c.value && v !== c.original) misread++;
     }
-    if (!best || misread < best.misread!) best = { ...c, misread };
+    ranked.push({ ...c, misread });
   }
-  return best;
+  return ranked.sort((x, y) => x.misread! - y.misread! || x.pos - y.pos);
 }
 
 // ---- pair outcomes and verdicts (doc: Q2) ----
@@ -467,6 +494,49 @@ export function pairOutcome(aRare: (number | null)[], bRare: (number | null)[], 
   if (D < -theta) return { outcome: "b", D, theta };
   const gain = (xs: number[]) => mean(xs) - START > 2.5 * sigma0 / Math.sqrt(xs.length);
   return { outcome: gain(va) && gain(vb) ? "coexist" : "unresolved", D, theta };
+}
+
+/**
+ * Rerun pair outcome (docs/soup-evolution-rerun-2026-10-31.md): exact two-sided
+ * permutation p for D = mean(a) - mean(b) over all splits of the pooled runs
+ * (seeded Monte Carlo with 200,000 splits, p = (hits + 1) / (N + 1), when there
+ * are more than 2,000,000 splits). Resolved at p < alpha; coexist when not
+ * resolved and every valid run in both directions ends above START; failed
+ * when either side has fewer than minValid runs.
+ */
+export function permPairOutcome(aRare: (number | null)[], bRare: (number | null)[], minValid: number, alpha = 0.01, seed = 1): { outcome: Outcome; D: number | null; p: number | null } {
+  const va = aRare.filter((f): f is number => f !== null && Number.isFinite(f));
+  const vb = bRare.filter((f): f is number => f !== null && Number.isFinite(f));
+  if (va.length < minValid || vb.length < minValid) return { outcome: "failed", D: null, p: null };
+  const D = mean(va) - mean(vb);
+  const all = [...va, ...vb], n = all.length, k = va.length, total = all.reduce((s, x) => s + x, 0);
+  const eps = 1e-12 * Math.max(1, Math.abs(D));
+  const dOf = (sumA: number) => sumA / k - (total - sumA) / (n - k);
+  let comb = 1;
+  for (let i = 0; i < k; i++) comb = comb * (n - i) / (i + 1);
+  let p: number;
+  if (comb <= 2_000_000) {
+    let hits = 0, count = 0;
+    const rec = (start: number, left: number, sum: number) => {
+      if (left === 0) { count++; if (Math.abs(dOf(sum)) >= Math.abs(D) - eps) hits++; return; }
+      for (let i = start; i <= n - left; i++) rec(i + 1, left - 1, sum + all[i]);
+    };
+    rec(0, k, 0);
+    p = hits / count;
+  } else {
+    const r = rng(seed), idx = all.map((_, i) => i), N = 200_000;
+    let hits = 0;
+    for (let s = 0; s < N; s++) {
+      for (let i = 0; i < k; i++) { const j = i + Math.floor(r() * (n - i)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+      let sum = 0;
+      for (let i = 0; i < k; i++) sum += all[idx[i]];
+      if (Math.abs(dOf(sum)) >= Math.abs(D) - eps) hits++;
+    }
+    p = (hits + 1) / (N + 1);
+  }
+  if (p < alpha) return { outcome: D > 0 ? "a" : "b", D, p };
+  const gained = (xs: number[]) => xs.every((f) => f > START);
+  return { outcome: gained(va) && gained(vb) ? "coexist" : "unresolved", D, p };
 }
 
 /**

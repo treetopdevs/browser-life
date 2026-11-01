@@ -2,7 +2,7 @@
 
 A follow-up to [soup-evolution-2026-10-31.md](soup-evolution-2026-10-31.md) ("run 1"). It asks the same question of the same competitors, with races sized to answer it.
 
-**Status: DRAFT.** These rules freeze when run 1's grid lineage (g1) has been analysed, and before any rerun race starts. The freeze is the commit that removes this line. After that, any change goes in a dated amendment section above the readout, and it names what it changes.
+**Status: FROZEN 2026-11-01**, before any rerun race ran, the pilot included. Run 1's grid lineage (g1) was analysed first. Any change from here goes in a dated amendment section above the readout, and it names what it changes.
 
 This is a prospective follow-up on competitors that run 1 already selected. Its design was written after seeing run 1's well-mixed results (below). It uses fresh seeds only.
 
@@ -18,7 +18,7 @@ Run 1's three well-mixed lineages showed turnover but not improvement. All figur
 - Mean |f − 0.125| over all these races went from 0.017 at epoch 64 to 0.067 at epoch 512. That growth mixes selection, drift and classification effects, so it says nothing about how D itself grows.
 
 **2. The noise control was asymmetric.**
-- In wm6, the plain-rare runs ended above the marked-rare runs in all 6 same-seed comparisons: means 0.236 against 0.100. A sign test gives p = 2/64 two-sided, before allowing for having picked this out after the fact.
+- In wm6, each of the 6 plain-rare runs ended above the marked-rare run with the same seed label, though they are independent runs (the soup seed hashes the whole job id). Means: 0.236 against 0.100. A sign test gives p = 2/64 two-sided, before allowing for having picked this out after the fact.
 - This fits a marker-associated asymmetry. It may be a fitness cost, or the marker being misread or lost; the data cannot separate the two.
 - σ0 was pooled over every lineage's calibration runs (seeds 1–3, both directions). So wm6's asymmetry raised every lineage's threshold.
 - wm8's control showed no such pattern. wm2 had no usable marker.
@@ -43,8 +43,10 @@ Run 1's result stands as reported. The rerun's runs are not pooled with run 1's.
 ### Pair outcome, using each race's own spread
 
 For a pair A, B: a_i is final f at H in valid A-rare runs, and b_j the same in valid B-rare runs.
-- **Failed:** either direction has fewer than 6 valid runs (75%). A run whose f is not finite counts as invalid.
+- **Failed:** either direction has fewer than 75% valid runs: 6 of 8, or 12 of 16 in the fallback. A run whose f is not finite counts as invalid.
 - **Otherwise:** D = mean(a) − mean(b). p is the exact two-sided permutation p for D: all C(nA + nB, nA) ways of splitting the pooled runs into groups of sizes nA and nB, with p = the share giving |D'| ≥ |D|.
+  - If there are more than 2,000,000 splits, which happens only in the 16-seed fallback, p comes instead from 200,000 seeded random splits, with p = (hits + 1) / 200,001, using generator seed 1.
+  - A split counts as at least as extreme when |D'| ≥ |D| − 10⁻¹² · max(1, |D|). The small allowance stops rounding error from dropping the observed split.
   - Under "no advantage" the two directions are the same experiment with names swapped, so the runs are exchangeable.
   - The test needs no variance estimate and copes with zero variance and with f near 0 or 1.
 - **A beats B** if p < 0.01 and D > 0. **B beats A** if p < 0.01 and D < 0.
@@ -73,11 +75,21 @@ With 63 pairs, about 0.6 false resolutions in all are expected if no pair truly 
 
 ### Secondary: the 512-epoch reading
 
-Only when H is 1,024: the same runs are read at epoch 512 and scored with the same rules, validity included. This is reported beside the primary result as a check against run 1, and it is not scored.
+Only when H is 1,024: the same runs are read at epoch 512 and scored with the same rules, validity included. This covers the pair races only; the marker controls are scored at H alone. This is reported beside the primary result as a check against run 1, and it is not scored.
 
 ### Dropped from the rerun
 
 The grid races, cross-time races (xpair), probes and trends. Run 1 reports them, and the rerun answers only the headline question.
+
+### Seeds and code
+
+- "Seed 101" means the job id ends in `-s101`. The soup's random seed is the FNV-1a hash of the job id, as in run 1. So rerun soups share no randomness with run 1's.
+- Code: `tools/soup-evo2.ts` (plan, pilot-check, analyze), plus run 1's unchanged `tools/soup-evo.ts assay` as the runner.
+- New pieces in `tools/soup/evo.ts`, tested in `tools/test/soup-evo.test.ts`:
+  - `permPairOutcome`, the pair test.
+  - `rankMarkers`, the marker ranking.
+  - Two-marker classification.
+  - `validAt`, which applies the invalid-run rule at epoch 512.
 
 ## Pilot, fixed now
 
@@ -91,7 +103,7 @@ The grid races, cross-time races (xpair), probes and trends. Run 1 reports them,
 
 ## Size and cost
 
-- **Pairs:** wm2 6, wm6 15, wm8 21, g1 21 (g1 is to be confirmed from its plan), 63 pairs in all.
+- **Pairs:** wm2 6, wm6 15, wm8 21, g1 21 (7 competitors in run 1's final plan), 63 pairs in all.
 - **Runs:** 1,008 race runs plus up to 64 marker-control runs, at 1,024 epochs.
 - **Time:** about 10 hours at run 1's measured rate (3.6 runs of 512 epochs a minute on 6 workers).
 - **Cost:** local CPU only.
@@ -117,3 +129,7 @@ Reported beside the headline:
 - The competitors are run 1's. A poor representative stays poor.
 - The permutation test assumes the two directions are exchangeable under "no advantage". Seeding is symmetric, but two-form types are split 50/50, which may not match their natural ratio (as in run 1).
 - The races are well-mixed only, so any claim of improvement applies to the stirred soup.
+
+## Readout
+
+_Not yet run._

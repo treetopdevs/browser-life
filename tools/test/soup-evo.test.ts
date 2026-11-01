@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { evaluate, selfRep, TAPE } from "../soup/bff.ts";
 import {
-  canonical, findMarker, intransitive, interact, keyOf, leadership, lineageVerdict, markForms, pairOutcome, patch, permutationP,
-  runAssay, spearman, src, START, transforms, TypeRef, typeCensus, unhex,
+  canonical, classify, findMarker, intransitive, interact, keyOf, leadership, lineageVerdict, markForms, pairOutcome, patch, permPairOutcome, permutationP,
+  rankMarkers, runAssay, spearman, src, START, transforms, TypeRef, typeCensus, unhex,
 } from "../soup/evo.ts";
 
 // A copier from the well-mixed seed 2 run (copy test 64) and one from grid seed 1.
@@ -181,5 +181,58 @@ describe("probe and trends", () => {
     expect(spearman([1, 2, 3, 4], [4, 3, 2, 1])).toBeCloseTo(-1);
     expect(spearman([1, 2, 3], [5, 5, 5])).toBeNaN();
     expect(spearman([1, 2, 3], [1, NaN, 3])).toBeNaN();
+  });
+});
+
+describe("rerun pieces", () => {
+  it("permutation pair outcome: exact p, direction, coexist and failed", () => {
+    const hi = [0.30, 0.32, 0.28, 0.31, 0.29, 0.33, 0.30, 0.31];
+    const lo = [0.05, 0.04, 0.06, 0.05, 0.07, 0.03, 0.05, 0.06];
+    const r = permPairOutcome(hi, lo, 6);
+    expect(r.outcome).toBe("a");
+    expect(r.p).toBeCloseTo(2 / 12870, 10); // only the observed split and its mirror are as extreme
+    expect(permPairOutcome(lo, hi, 6).outcome).toBe("b");
+    // all above 0.125 both ways, no difference: coexist
+    expect(permPairOutcome([0.3, 0.31, 0.29, 0.3, 0.32, 0.28], [0.31, 0.3, 0.29, 0.3, 0.28, 0.32], 6).outcome).toBe("coexist");
+    expect(permPairOutcome([0.1, 0.2, 0.15, 0.12, 0.13, 0.11], [0.12, 0.13, 0.2, 0.1, 0.11, 0.15], 6).outcome).toBe("unresolved");
+    expect(permPairOutcome([0.3, 0.3, 0.3, 0.3, 0.3, null, null, null], hi, 6).outcome).toBe("failed");
+    // zero variance on both sides still resolves
+    expect(permPairOutcome(Array(6).fill(0.4), Array(6).fill(0.1), 6).outcome).toBe("a");
+  });
+
+  it("falls back to seeded Monte Carlo for large samples, deterministically", () => {
+    const a = Array.from({ length: 16 }, (_, i) => 0.2 + (i % 4) * 0.01), b = Array.from({ length: 16 }, (_, i) => 0.1 + (i % 4) * 0.01);
+    const r1 = permPairOutcome(a, b, 12), r2 = permPairOutcome(a, b, 12);
+    expect(r1).toEqual(r2);
+    expect(r1.outcome).toBe("a");
+    expect(r1.p).toBeCloseTo(1 / 200001, 10);
+  });
+
+  it("rankMarkers puts findMarker's choice first", () => {
+    const ref = new TypeRef([WM2]);
+    const pilot = { num: 256, rareCount: 32, epochs: 4 };
+    const ranked = rankMarkers(ref, "noheads", pilot);
+    expect(ranked.length).toBeGreaterThan(1);
+    expect(ranked[0]).toEqual(findMarker(ref, "noheads", pilot));
+    for (let i = 1; i < ranked.length; i++) expect(ranked[i].misread! > ranked[i - 1].misread! || (ranked[i].misread === ranked[i - 1].misread && ranked[i].pos > ranked[i - 1].pos)).toBe(true);
+  });
+
+  it("two-marker classification reads both positions", () => {
+    const ref = new TypeRef([WM2]);
+    const [m1, m2] = rankMarkers(ref, "noheads", { num: 256, rareCount: 32, epochs: 4 });
+    const f1 = markForms(ref, m1.pos, m1.value)[0], f2 = markForms(ref, m2.pos, m2.value)[0];
+    const both = f1.slice(); both[m2.pos] = m2.value;
+    const programs = new Uint8Array(4 * TAPE);
+    programs.set(f1, 0); programs.set(t(f2, 70), TAPE); programs.set(both, 2 * TAPE); programs.set(WM2, 3 * TAPE);
+    const job = { id: "m", kind: "mpair" as const, lineage: "x", rare: "1", common: "2", rareForms: [hexOf(f1)], commonForms: [hexOf(f2)], seed: 1, marker: m1, marker2: m2 };
+    expect(classify(programs, job, new TypeRef([f1]), new TypeRef([f2]))).toEqual({ rare: 1, common: 1, other: 2 });
+  });
+
+  it("checks validity at extra epochs", () => {
+    const job = { id: "v", kind: "pair" as const, lineage: "t", rare: "a", common: "b", rareForms: [hexOf(WM2)], commonForms: [hexOf(G1)], seed: 5, num: 256, rareCount: 32, epochs: 8, every: 8, validAt: [4] };
+    const r = runAssay(job);
+    expect(Object.keys(r.validAt!)).toEqual(["4"]);
+    expect(r.points.map((p) => p.epoch)).toEqual([0, 4, 8]);
+    expect(runAssay({ ...job, validAt: undefined }).validAt).toBeUndefined();
   });
 });
