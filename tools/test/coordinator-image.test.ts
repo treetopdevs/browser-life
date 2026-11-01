@@ -385,23 +385,6 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
     }, 120_000);
   });
 
-  describe("without a join token (control, not a deployed configuration)", () => {
-    it("still refuses a join over the published port", async () => {
-      const env = { ...deployedEnv };
-      delete env.BL_DISCOVERY_JOIN_TOKEN;
-      const name = start("nojoin", env, undefined);
-      const o = await ready(name);
-      const outside = await http(o, "/api/discovery/workers", { method: "POST", body: joinBody("control-host-2") });
-      expect(outside.status, "a join over the published port was admitted without a token").toBe(401);
-      // Recorded, not asserted: the release binds ::, so an IPv4 client inside the container may arrive as an
-      // IPv4-mapped address that the controller's loopback check does not match. The first hosted run settles it.
-      for (const host of ["127.0.0.1", "[::1]"]) {
-        const r = inside(name, "/api/discovery/workers", { host, body: joinBody(`control-${host.replace(/\W/g, "")}`) });
-        console.info(`join-token control: unauthenticated join from inside the container via ${host}: status ${r.status}${r.error ? ` (${r.error})` : ""}`);
-      }
-    }, 150_000);
-  });
-
   describe("refuses to start", () => {
     /** Runs the deployed environment with one change; returns how the container ended. */
     async function refused(tag: string, change: (env: Record<string, string | undefined>) => void) {
@@ -458,6 +441,14 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
       expectRefusal(r);
       expect(/eacces|permission denied|eperm|read-only/i.test(r.logs), "no permission error in the logs").toBe(true);
       expect(r.diff.includes("/app/data-discovery"), "a directory was created under /app").toBe(false);
+    }, T);
+    // Without a join token the discovery plane would admit loopback joins, which under the release's dual-stack bind
+    // includes [::1] from inside the container (the earlier control's hosted result). Production refuses to start.
+    it("without a discovery join token", async () => {
+      expectRefusal(await refused("no-join", (e) => { delete e.BL_DISCOVERY_JOIN_TOKEN; }), "BL_DISCOVERY_JOIN_TOKEN must be set in production");
+    }, T);
+    it("with a whitespace-only discovery join token", async () => {
+      expectRefusal(await refused("blank-join", (e) => { e.BL_DISCOVERY_JOIN_TOKEN = "   "; }), "BL_DISCOVERY_JOIN_TOKEN must be set in production");
     }, T);
     it("with the discovery directory inside the data directory", async () => {
       expectRefusal(await refused("inside-data", (e) => { e.BL_DISCOVERY_DATA_DIR = "/data/discovery"; }), "overlaps the registered queue's");
