@@ -1,0 +1,64 @@
+{
+ "kind": "controller-locality-manifest",
+ "payloadFileSha256": "71e24ee0841559c45005ac412238697ad242a8b764fc9becb4213fe8bb9a8895",
+ "integritySha256": "f9d748e2a004c0bae9e0207e2b564307a5b255376cf453dd6e9d4f9a67fe2bd0",
+ "version": 1,
+ "sources": {
+  "packages/lineage/src/locality/descriptors.ts": "7bb21563035c9162b3abdebaac3266b95c2fc8226d7a6f33fef5354cfd73852e",
+  "packages/lineage/src/locality/fixtures.ts": "1c228fde882e67b611e0c3fb6988b94d786e37b3cd929087da6ba467c04f78df",
+  "packages/lineage/src/locality/index.ts": "1e2b83344f981f48f8e618ca85af924068ea1155ced102432ff17b8fe97f3417",
+  "packages/lineage/src/locality/matrix.ts": "1141fc3ab2434b820aa88f61a4c514270b2f2422922a18b37672b6cb9ea0fa35",
+  "packages/lineage/src/locality/neighbourhood.ts": "2477ce7b02d36087987ec7df414a30c128a875e239d7fe93d1787d6de24c479d",
+  "packages/lineage/src/locality/scenarios.ts": "548896398394f40e0a9333a8118313b0919b87e4ccdef1966b08d0f8adf5a00b",
+  "packages/lineage/src/genotype.ts": "7ea6adc07cef6a1aed11bbf9c7668025d41cd5fe98184fc06fef234356f0a140",
+  "tools/locality/matrix.ts": "5a130a6ad4a20e9788a7bf401a123ac090b59e6ad75fe5c00a2296986fa4f220"
+ },
+ "genomes": [
+  {
+   "id": "generalist",
+   "hash": "5fdf53487e7d590c",
+   "cluster": null,
+   "votes": false
+  },
+  {
+   "id": "m3-c4",
+   "hash": "4914309dd66cd139",
+   "cluster": 4,
+   "votes": true
+  },
+  {
+   "id": "m3-c9",
+   "hash": "312be6f426e3a06d",
+   "cluster": 9,
+   "votes": true
+  }
+ ],
+ "candidates": [
+  {
+   "slot": "sparse",
+   "cluster": 4,
+   "pass": true,
+   "chosen": true
+  },
+  {
+   "slot": "dense",
+   "cluster": 16,
+   "pass": false,
+   "chosen": false
+  },
+  {
+   "slot": "dense",
+   "cluster": 9,
+   "pass": true,
+   "chosen": true
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "b43db3be",
+  "runtime": "deno 2.9.8",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-01T23:57:27.964Z",
+  "generateSeconds": 59
+ }
+}
