@@ -6,6 +6,7 @@
 //     [--select lineages|cells] [--pass-bias 0.5] [--random 0.25] [--resume]
 //     [--medium waste:A:C | background:HEX[:biomass]] [--score quality|maintenance]
 //     [--gate m3|maintenance] [--roles] [--dep-order shuffled|discovery]
+//     [--archive mass-speed|atlas-v1 [--uncalibrated-smoke]]
 //
 // Parents are chosen by genetic lineage (Archive.pickParent) so that one
 // lineage holding many behaviour cells does not crowd out other founders;
@@ -21,6 +22,12 @@
 // in a seeded shuffle (--dep-order shuffled, the default) so that a partial
 // reading is not biased by discovery order; --dep-order discovery keeps the
 // confirm.json row order. Rows are matched by genome, never by position.
+//
+// --archive atlas-v1 (I01, docs/behaviour-atlas-2026-11-01/) bins the archive by two physical descriptors
+// (centre-of-mass displacement, occupancy persistence) instead of mass and speed; it turns on the evaluation's
+// `atlas` observer. The default mass-speed archive is unchanged. --confirm-only takes the archive of record from
+// archive.json (a disagreeing --archive is ignored with a warning); --resume must repeat the same --archive or it
+// refuses. Both refuse an archive.json whose recorded atlas definition is not the current ATLAS_V1. Every viable offer in viable.jsonl carries its proposal provenance (`prov`).
 //
 // --gate sets the screening and confirmation gate: m3 (the default: regeneration
 // above 0.8, alive and light-dependent in every replicate) or maintenance (alive
@@ -80,15 +87,21 @@ import {
   nextConfirmSeed,
   recordedSeeds,
   searchedWith,
+  searchedArchive,
+  ARCHIVE_CELLS,
+  ATLAS_V1,
+  sameAtlasSpec,
+  proposalGenome,
+  type Provenance,
   type Evaluation,
   type EvalConfig,
   type GateName,
 } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed", "select", "pass-bias", "medium", "score", "gate", "dep-order"],
-  boolean: ["confirm-only", "resume", "roles"],
-  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001", select: "lineages", "pass-bias": "0.5", score: "quality", gate: "m3", "dep-order": "shuffled" },
+  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed", "select", "pass-bias", "medium", "score", "gate", "dep-order", "archive"],
+  boolean: ["confirm-only", "resume", "roles", "uncalibrated-smoke"],
+  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001", select: "lineages", "pass-bias": "0.5", score: "quality", gate: "m3", "dep-order": "shuffled", archive: "mass-speed" },
 });
 const int = (flag: "batches" | "seed" | "confirm-reps" | "confirm-seed") => {
   const raw = a[flag];
@@ -131,10 +144,15 @@ if (gateFlag !== "m3" && gateFlag !== "maintenance") throw new Error(`--gate mus
 const gateName: GateName = gateFlag;
 const depOrder = a["dep-order"] ?? "shuffled";
 if (depOrder !== "shuffled" && depOrder !== "discovery") throw new Error(`--dep-order must be shuffled or discovery, not ${JSON.stringify(depOrder)}`);
+const archiveFlag = a.archive ?? "mass-speed";
+if (archiveFlag !== "mass-speed" && archiveFlag !== "atlas-v1") throw new Error(`--archive must be mass-speed or atlas-v1, not ${JSON.stringify(archiveFlag)}`);
+if (archiveFlag === "atlas-v1" && ATLAS_V1.calibration !== "passed" && !a["uncalibrated-smoke"] && !a["confirm-only"])
+  throw new Error(`--archive atlas-v1 is not calibrated (${ATLAS_V1.calibration}); a real search must not be built on it. --uncalibrated-smoke runs it as a tool test only`);
+if (archiveFlag === "atlas-v1" && a.medium?.startsWith("background:")) throw new Error("--archive atlas-v1 does not support --medium background (the descriptors read whole-tile mass)");
 const mediumPatch = a.medium ? parseMedium(a.medium) : {};
 // `roles` is an observer (each evaluation also records its role, never scored or gated); it is part of
 // the evaluation config, so a search started without it cannot be resumed with it.
-const ec: EvalConfig = { ...DEFAULT_EVAL, ...mediumPatch, seed: int("seed"), ...(a.roles ? { roles: true } : {}) };
+const ec: EvalConfig = { ...DEFAULT_EVAL, ...mediumPatch, seed: int("seed"), ...(a.roles ? { roles: true } : {}), ...(archiveFlag === "atlas-v1" ? { atlas: true } : {}) };
 if (a.select !== "lineages" && a.select !== "cells") throw new Error(`--select must be lineages or cells, not ${a.select}`);
 // `score` and `gate` are recorded only when non-default so resumes of pre-score and pre-gate archives still match.
 const search = {
@@ -143,6 +161,7 @@ const search = {
   random: parseProbability("--random", a.random),
   ...(scoreName !== "quality" ? { score: scoreName as "maintenance" } : {}),
   ...(gateName !== "m3" ? { gate: gateName as "maintenance" } : {}),
+  ...(archiveFlag !== "mass-speed" ? { archive: archiveFlag } : {}),
 };
 const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
 type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
@@ -151,14 +170,14 @@ const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.mo
 type SavedArchive = {
   evaluated: number;
   eval: typeof ec;
-  search?: typeof search;
+  search?: typeof search & { archive?: string };
   searchSeeds?: [number, number];
   batches?: number;
   viableCount?: number;
   resumes?: { from: number; exact: boolean }[];
   elites: { born: number; eval: Evaluation; genome: EncGenome }[];
 };
-type SavedRow = { screenCell: [number, number]; cell: [number, number]; eval: Evaluation; genome: EncGenome };
+type SavedRow = { screenCell: [number, number] | null; cell: [number, number] | null; eval: Evaluation; genome: EncGenome };
 type DependenceSummary = { seed: number; seeds: [number, number]; obligate: number; n: number; order?: string };
 type SavedConfirm = {
   gate: { confirmSeed: number; confirmSeeds?: [number, number][]; dependenceSeeds?: [number, number][]; batchSize: number };
@@ -193,7 +212,7 @@ async function writeAtomic(path: string, text: string) {
   await sync(`${path}.tmp`);
   await Deno.rename(`${path}.tmp`, path);
 }
-const logLines = (es: { born: number; eval: Evaluation; genome: Genome }[]) => es.map((e) => JSON.stringify({ born: e.born, eval: e.eval, genome: enc(e.genome) }) + "\n").join("");
+const logLines = (es: { born: number; eval: Evaluation; genome: Genome; prov?: Provenance }[]) => es.map((e) => JSON.stringify({ born: e.born, eval: e.eval, genome: enc(e.genome), ...(e.prov ? { prov: e.prov } : {}) }) + "\n").join("");
 const gateJson = (arch: Archive) => JSON.stringify(arch.gatePassing().map((e) => ({ cell: e.cell, quality: scoreFn(e.eval), eval: e.eval, genome: enc(e.genome) })), null, 1);
 const archiveJson = (arch: Archive, batchesDone: number, resumes: { from: number; exact: boolean }[]) => {
   const lineages = arch.lineages();
@@ -225,6 +244,10 @@ if (a["confirm-only"] && !a.resume && reps > 0 && (await readJson(confirmPath)))
 const passed = (flag: string) => Deno.args.some((x) => x === `--${flag}` || x.startsWith(`--${flag}=`));
 const recorded = a["confirm-only"] ? searchedWith(saved!.search, { ...(passed("score") ? { score: scoreName } : {}), ...(passed("gate") ? { gate: gateName } : {}) }) : undefined;
 if (recorded?.ignored.length) console.warn(`--confirm-only confirms under the settings ${archivePath} was searched with, ignoring ${recorded.ignored.join(", ")}`);
+const recordedArchive = a["confirm-only"] ? searchedArchive(saved!.search, passed("archive") ? archiveFlag : undefined) : undefined;
+if (recordedArchive?.ignored.length) console.warn(`--confirm-only confirms under the archive ${archivePath} was searched with, ignoring ${recordedArchive.ignored.join(", ")}`);
+const effArchive = recordedArchive?.archive ?? archiveFlag;
+const cellFn = ARCHIVE_CELLS[effArchive];
 const effGate: GateName = recorded?.gate ?? gateName;
 const effScore = recorded?.score ?? scoreName;
 const scoreFn = SCORES[effScore];
@@ -247,10 +270,11 @@ const provenance = {
   select: searchOfRecord?.select ?? null,
   random: searchOfRecord?.random ?? null,
   score: effScore,
+  ...(effArchive !== "mass-speed" ? { archive: effArchive, atlasSpec: ATLAS_V1 } : {}),
   roles: !!evalRef.roles,
   depOrder,
 };
-let archive = new Archive(DEFAULT_ARCHIVE, scoreFn, gateFn);
+let archive = new Archive(DEFAULT_ARCHIVE, scoreFn, gateFn, cellFn);
 let done = 0;
 let resumes: { from: number; exact: boolean }[] = [];
 // --confirm-only restores a logged archive too, so it confirms only committed
@@ -259,6 +283,8 @@ const restore = a.resume || (a["confirm-only"] && saved?.viableCount !== undefin
 if (restore) {
   const prev = saved!;
   if (!a["confirm-only"]) {
+    const ra = searchedArchive(prev.search).archive;
+    if (ra !== archiveFlag) throw new Error(`--resume: ${archivePath} was searched with --archive ${ra}, not ${archiveFlag}`);
     if (JSON.stringify(prev.eval) !== JSON.stringify(ec)) throw new Error(`--resume: ${archivePath} was searched with another evaluation config or --seed`);
     if (prev.search && JSON.stringify(prev.search) !== JSON.stringify(search)) throw new Error(`--resume: ${archivePath} was searched with ${JSON.stringify(prev.search)}, not ${JSON.stringify(search)}`);
     // An archive without a search block (or without a recorded gate) was screened with the m3 gate.
@@ -267,7 +293,7 @@ if (restore) {
   done = prev.batches ?? (prev.searchSeeds ? prev.searchSeeds[1] - prev.searchSeeds[0] + 1 : NaN);
   if (!Number.isInteger(done)) throw new Error(`--resume: ${archivePath} records neither batches nor searchSeeds`);
   const exact = prev.viableCount !== undefined;
-  let log: { genome: Genome; eval: Evaluation; born: number }[];
+  let log: { genome: Genome; eval: Evaluation; born: number; prov?: Provenance }[];
   let tail = false;
   if (exact) {
     const lines = (await Deno.readTextFile(logPath)).split("\n").filter(Boolean);
@@ -275,7 +301,7 @@ if (restore) {
     tail = lines.length > prev.viableCount!;
     log = lines.slice(0, prev.viableCount).map((l) => {
       const r = JSON.parse(l);
-      return { genome: dec(r.genome), eval: r.eval, born: r.born };
+      return { genome: dec(r.genome), eval: r.eval, born: r.born, ...(r.prov ? { prov: r.prov as Provenance } : {}) };
     });
   } else {
     // Legacy archive: only cell elites and screening passers survive. A genome
@@ -291,7 +317,11 @@ if (restore) {
       })
       .sort((x, y) => x.born - y.born);
   }
-  archive = Archive.replay(log, prev.evaluated, DEFAULT_ARCHIVE, scoreFn, gateFn);
+  if (effArchive === "atlas-v1") {
+    const savedSpec = (prev as { provenance?: { atlasSpec?: typeof ATLAS_V1 } }).provenance?.atlasSpec;
+    if (!savedSpec || !sameAtlasSpec(savedSpec, ATLAS_V1)) throw new Error(`${archivePath} recorded atlas definition ${JSON.stringify(savedSpec)}, which is not the current ATLAS_V1; replaying would rebuild different cells`);
+  }
+  archive = Archive.replay(log, prev.evaluated, DEFAULT_ARCHIVE, scoreFn, gateFn, cellFn);
   resumes = [...(prev.resumes ?? []), { from: done, exact }];
   if (!a["confirm-only"] && (tail || !exact)) await writeAtomic(logPath, logLines(archive.viableLog()));
   // gate.json may lag the committed archive if a run stopped between the two writes.
@@ -341,18 +371,34 @@ if (!a["confirm-only"]) {
   if (!a.resume) await writeAtomic(logPath, "");
   for (let b = done; b < batches; b++) {
     const cands: Genome[] = [];
+    const provs: Provenance[] = [];
+    // Each proposal records how it was made (the generator arguments and the parent's viable index): the
+    // generation below is unchanged, so the candidate stream is identical to a search without provenance.
     for (let k = 0; k < perBatch; k++) {
       rng++;
       const el = archive.elites();
-      if (b === 0 && k === 0) cands.push(generalistGenome(mu, sigma));
-      else if (!el.length || (rng * 2654435761 >>> 0) / 2 ** 32 < search.random) cands.push(k % 2 ? randomGenome(rng, mu, sigma) : mutateGenome(generalistGenome(mu, sigma), rng, 6));
-      else cands.push(mutateGenome(search.select === "cells" ? pick(el, rng).genome : archive.pickParent(rng, search.passBias)!.genome, rng, 1 + (rng % 4)));
+      if (b === 0 && k === 0) {
+        cands.push(generalistGenome(mu, sigma));
+        provs.push({ op: "generalist", parent: null });
+      } else if (!el.length || (rng * 2654435761 >>> 0) / 2 ** 32 < search.random) {
+        if (k % 2) {
+          cands.push(randomGenome(rng, mu, sigma));
+          provs.push({ op: "random", parent: null, seed: rng });
+        } else {
+          cands.push(mutateGenome(generalistGenome(mu, sigma), rng, 6));
+          provs.push({ op: "generalist-mutant", parent: null, seed: rng, count: 6 });
+        }
+      } else {
+        const parent = search.select === "cells" ? pick(el, rng) : archive.pickParent(rng, search.passBias)!;
+        cands.push(mutateGenome(parent.genome, rng, 1 + (rng % 4)));
+        provs.push({ op: "mutant", parent: parent.idx ?? null, seed: rng, count: 1 + (rng % 4) });
+      }
     }
     const t0 = performance.now();
     const evals = await evaluateBatch(await gpu(), cands, { ...ec, seed: ec.seed + b });
     let inserted = 0;
     const logged = archive.viableLog().length;
-    cands.forEach((g, k) => archive.offer(g, evals[k], b) && inserted++);
+    cands.forEach((g, k) => archive.offer(g, evals[k], b, provs[k]) && inserted++);
     // Order matters for recovery: the log, then gate.json, then archive.json (the commit point).
     await Deno.writeTextFile(logPath, logLines(archive.viableLog(logged)), { append: true });
     await sync(logPath);
@@ -371,7 +417,7 @@ if (!a["confirm-only"]) {
 // --resume, earlier confirmations stand: only new screening passers are
 // evaluated, on the confirmation seeds after the ones already used.
 if (reps > 0) {
-  const allScreened: { cell: [number, number]; genome: EncGenome }[] = JSON.parse(await Deno.readTextFile(gatePath));
+  const allScreened: { cell: [number, number] | null; genome: EncGenome }[] = JSON.parse(await Deno.readTextFile(gatePath));
   const arch: SavedArchive = JSON.parse(await Deno.readTextFile(archivePath));
   const cec = { ...reviveEvalConfig(arch.eval), reps, seed: confirmSeed };
   const confirmed = new Set(prevConfirm?.rows.map((r) => genomeKey(dec(r.genome))));
@@ -380,7 +426,7 @@ if (reps > 0) {
   const newRange: [number, number] = [confirmSeed, confirmSeed + confirmBatches - 1];
   if (overlapsSearch(newRange)) throw new Error(`confirmation seeds ${newRange[0]}..${newRange[1]} overlap search seeds ${s0}..${s1}; pass another --confirm-seed`);
   if (reps < CONFIRM_REPS) console.warn(`--confirm-reps ${reps} < ${CONFIRM_REPS}: exploratory only, confirmations cannot meet the M3 gate`);
-  const rows: { screenCell: [number, number]; cell: [number, number]; genome: Genome; eval: Evaluation }[] = (prevConfirm?.rows ?? []).map((r) => ({ screenCell: r.screenCell, cell: r.cell, eval: r.eval, genome: dec(r.genome) }));
+  const rows: { screenCell: [number, number] | null; cell: [number, number] | null; genome: Genome; eval: Evaluation }[] = (prevConfirm?.rows ?? []).map((r) => ({ screenCell: r.screenCell, cell: r.cell, eval: r.eval, genome: dec(r.genome) }));
   const before = rows.length;
   if (prevConfirm) console.log(`${before} earlier confirmations kept; confirming ${screened.length} new screening passers from seed ${confirmSeed}`);
   for (let i = 0; i < screened.length; i += confirmPer) {
@@ -406,7 +452,7 @@ if (reps > 0) {
     lowerBoundAbove08: strict.length,
     /** Robustness figure: genetic clusters among those passers. */
     lowerBoundClusters: new Set(geneticClusters(strict.map((r) => r.genome))).size,
-    distinctCells: new Set(passing.map((r) => r.cell.join(","))).size,
+    distinctCells: new Set(passing.flatMap((r) => (r.cell ? [r.cell.join(",")] : []))).size,
   };
   console.log(`M3 gate ${gate.met ? "MET" : "NOT MET"}: ${JSON.stringify(detail)}`);
 

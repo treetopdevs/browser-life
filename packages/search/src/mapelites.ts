@@ -2,7 +2,7 @@
 // repertoire of viable founders; ensemble runs switch it off, and none of the
 // held-out observables is a descriptor or part of quality.
 
-import { CLUSTER_DISTANCE, NN_BYTES, draw, genomeDistance, geneticClusters, lowbias32, ringsOf, type Genome } from "@bl/schema";
+import { CLUSTER_DISTANCE, NN_BYTES, draw, generalistGenome, genomeDistance, geneticClusters, lowbias32, randomGenome, ringsOf, type Genome } from "@bl/schema";
 import { quality, type Evaluation } from "./evaluate.ts";
 
 // CLUSTER_DISTANCE/genomeDistance/geneticClusters used to be defined here;
@@ -15,12 +15,52 @@ import { quality, type Evaluation } from "./evaluate.ts";
 // unchanged.
 export { CLUSTER_DISTANCE, genomeDistance, geneticClusters };
 
+/**
+ * How a candidate was proposed (I01 ancestry), recorded beside each viable offer. `parent` is the viable index
+ * (position in `Archive.viableLog()`) of the elite it was mutated from, null for a fresh candidate; `seed` and
+ * `count` are the arguments of the generator, so the genome can be regenerated (see `proposalGenome`).
+ * Only viable offers are logged, so ancestry covers accepted candidates, not the proposals that scored 0.
+ */
+export interface Provenance {
+  op: "generalist" | "random" | "generalist-mutant" | "mutant";
+  parent: number | null;
+  seed?: number;
+  count?: number;
+}
+
 export interface Elite {
   genome: Genome;
   eval: Evaluation;
   quality: number;
-  cell: [number, number];
+  /** Archive cell; null only under an opt-in descriptor archive when a descriptor is undefined (never in a cell). */
+  cell: [number, number] | null;
   born: number;
+  /** Viable index of this offer. */
+  idx?: number;
+  prov?: Provenance;
+}
+
+/** Opt-in replacement for the mass/speed cell of an evaluation (see `atlasCell`); null = no cell. */
+export type CellFn = (e: Evaluation) => [number, number] | null;
+
+/** One viable offer as the accepted-candidate ledger reports it; derived from the archive, never stored separately. */
+export interface LedgerEntry {
+  idx: number;
+  born: number;
+  key: string;
+  quality: number;
+  cell: [number, number] | null;
+  /** Took an empty cell or replaced a worse elite. */
+  inserted: boolean;
+  /** Viable index of the elite it replaced. */
+  displaced: number | null;
+  /** Still the elite of its cell now. */
+  current: boolean;
+  /** Passed the archive's screening gate. */
+  passer: boolean;
+  /** Same genome key as an earlier viable offer. */
+  duplicate: boolean;
+  prov?: Provenance;
 }
 
 export interface ArchiveSpec {
@@ -69,21 +109,28 @@ export class Archive {
     readonly score: ScoreFn = quality,
     /** Screening gate: which offers are kept as passers and counted in `lineages()`; defaults to `passesGate`. */
     readonly gate: GateFn = passesGate,
+    /** Opt-in cell function (behaviour atlas); absent means the mass/speed cell of `spec`. */
+    readonly cellFn?: CellFn,
   ) {}
 
-  cellOf(e: Evaluation): [number, number] {
+  /** Per viable offer: whether it took a cell and the viable index it displaced (parallel to `viable`). */
+  private readonly outcome: { inserted: boolean; displaced: number | null }[] = [];
+
+  cellOf(e: Evaluation): [number, number] | null {
+    if (this.cellFn) return this.cellFn(e);
     const bin = (v: number, [lo, hi]: [number, number]) => Math.max(0, Math.min(this.spec.bins - 1, Math.floor(((v - lo) / (hi - lo)) * this.spec.bins)));
     return [bin(Math.log2(Math.max(1, e.meanMass)), this.spec.massRange), bin(e.speed, this.spec.speedRange)];
   }
 
   /** Inserts if the cell is empty or the candidate is better. Returns true when inserted. */
-  offer(genome: Genome, e: Evaluation, born: number): boolean {
+  offer(genome: Genome, e: Evaluation, born: number, prov?: Provenance): boolean {
     this.evaluated++;
     const q = this.score(e);
     if (q <= 0) return false;
     const cell = this.cellOf(e);
     const idx = this.viable.length;
-    this.viable.push({ genome, eval: e, quality: q, cell, born });
+    this.viable.push({ genome, eval: e, quality: q, cell, born, idx, ...(prov ? { prov } : {}) });
+    this.outcome.push({ inserted: false, displaced: null });
     this.link.push(idx);
     this.lineageCache = undefined;
     for (let j = 0; j < idx; j++) {
@@ -92,12 +139,14 @@ export class Archive {
     }
     if (this.gate(e)) {
       const key = genomeKey(genome);
-      if (!this.passers.has(key)) this.passers.set(key, { genome, eval: e, quality: q, cell, born });
+      if (!this.passers.has(key)) this.passers.set(key, { genome, eval: e, quality: q, cell, born, idx, ...(prov ? { prov } : {}) });
     }
+    if (!cell) return false;
     const key = cell.join(",");
     const cur = this.cells.get(key);
     if (cur && cur.quality >= q) return false;
-    this.cells.set(key, { genome, eval: e, quality: q, cell, born });
+    this.cells.set(key, { genome, eval: e, quality: q, cell, born, idx, ...(prov ? { prov } : {}) });
+    this.outcome[idx] = { inserted: true, displaced: cur?.idx ?? null };
     return true;
   }
 
@@ -165,14 +214,41 @@ export class Archive {
   }
 
   /**
+   * The accepted-candidate ledger: every viable offer in order with what became of it. Derived from the same
+   * array that `viableLog`/`replay` use, so it is rebuilt exactly on replay and cannot disagree with the archive.
+   */
+  ledger(): LedgerEntry[] {
+    const seen = new Set<string>();
+    return this.viable.map((el, i) => {
+      const key = genomeKey(el.genome);
+      const duplicate = seen.has(key);
+      seen.add(key);
+      const o = this.outcome[i];
+      return {
+        idx: i,
+        born: el.born,
+        key,
+        quality: el.quality,
+        cell: el.cell,
+        inserted: o.inserted,
+        displaced: o.displaced,
+        current: !!el.cell && this.cells.get(el.cell.join(","))?.idx === i,
+        passer: this.gate(el.eval),
+        duplicate,
+        ...(el.prov ? { prov: el.prov } : {}),
+      };
+    });
+  }
+
+  /**
    * Rebuilds an archive from a viable-offer log (see viableLog) and the total
    * number of candidates evaluated. Non-viable offers change nothing but the
    * count, so replaying the viable ones in order reproduces cells, passers and
    * lineages exactly.
    */
-  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE, score: ScoreFn = quality, gate: GateFn = passesGate): Archive {
-    const a = new Archive(spec, score, gate);
-    for (const r of log) a.offer(r.genome, r.eval, r.born);
+  static replay(log: { genome: Genome; eval: Evaluation; born: number; prov?: Provenance }[], evaluated: number, spec = DEFAULT_ARCHIVE, score: ScoreFn = quality, gate: GateFn = passesGate, cellFn?: CellFn): Archive {
+    const a = new Archive(spec, score, gate, cellFn);
+    for (const r of log) a.offer(r.genome, r.eval, r.born, r.prov);
     a.evaluated = evaluated;
     return a;
   }
@@ -242,6 +318,24 @@ export function mutateGenome(g: Genome, seed: number, count = 3, step = 24): Gen
     else out.motGain = Math.max(0, Math.min(255, out.motGain + d));
   }
   return out;
+}
+
+/**
+ * The genome a logged proposal produced, from its provenance and its parent's genome (`mu`/`sigma` are the search
+ * world's defaults, as tools/bootstrap.ts passes them). Lets an audit replay a mutation edge from the log alone.
+ */
+export function proposalGenome(p: Provenance, parent: Genome | undefined, mu: number, sigma: number): Genome {
+  switch (p.op) {
+    case "generalist":
+      return generalistGenome(mu, sigma);
+    case "random":
+      return randomGenome(p.seed!, mu, sigma);
+    case "generalist-mutant":
+      return mutateGenome(generalistGenome(mu, sigma), p.seed!, p.count);
+    case "mutant":
+      if (!parent) throw new Error("proposalGenome: a mutant needs its parent's genome");
+      return mutateGenome(parent, p.seed!, p.count);
+  }
 }
 
 export function pick<T>(xs: T[], seed: number): T {
