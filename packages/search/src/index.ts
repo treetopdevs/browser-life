@@ -1,3 +1,4 @@
+export * from "./atlas.ts";
 export * from "./bootstrap.ts";
 export * from "./evaluate.ts";
 export * from "./mapelites.ts";
