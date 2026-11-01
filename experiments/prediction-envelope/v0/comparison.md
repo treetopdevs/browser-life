@@ -2,132 +2,132 @@
 
 No model call, no GPU, no paid compute: every prediction is from a deterministic rule. This table says nothing about any model.
 
-Protocol hash `dcbb2b2b702e1aa60cf98727c0daa4537a4c234ff68b3636a010d2d724ae6ac8`. Primary readout: body mass (B+P); minimum effect 25 mass quanta. Strongest simple baseline on dev: **v0Rules**. Measurement-limited cases (label flips at 0.75x or 1.25x the threshold): 8, kept in every denominator of the first two tables.
+Protocol hash `ad924e6bf6caaf78f99e1785728657d5f4a02e2938fa9d5d847140230b8da3b0`. Primary readout: body mass (B+P); minimum effect 25 mass quanta. Strongest simple baseline on dev: **v0Rules**. Measurement-limited cases (label flips at 0.75x or 1.25x the threshold): 10, kept in every denominator of the first two tables.
 
-### dev (72 cases, 12 families; up 13, down 21, none 38)
-
-| proposer | role | answered | abstained | invalid | missing | coverage | Brier (imputed) | Brier (answered) | direction acc. | balanced acc. | acc. at matched coverage | valid non-null yield |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| priorMajority | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.604 | 0.604 | 0.528 | 0.333 | 0.528 | 0.472 |
-| alwaysNone | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.944 | 0.944 | 0.528 | 0.333 | 0.528 | 0.472 |
-| fixedRule | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.529 | 0.529 | 0.639 | 0.772 | 0.639 | 0.472 |
-| numericTrend | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.680 | 0.680 | 0.292 | 0.333 | 0.292 | 0.472 |
-| v0Rules | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.411 | 0.411 | 0.639 | 0.772 | 0.639 | 0.472 |
-| shuffledEvidence | control | 72 | 0 | 0 | 0 | 1.000 | 0.680 | 0.680 | 0.292 | 0.333 | 0.292 | 0.472 |
-| abstainAll | baseline | 0 | 72 | 0 | 0 | 0.000 | 0.604 | n/a | n/a | n/a | n/a | 0.000 |
-| mechanismRule | oracle | 72 | 0 | 0 | 0 | 1.000 | 0.227 | 0.227 | 0.917 | 0.914 | 0.917 | 0.472 |
-
-Mean absolute effect: bodyMass (mass quanta (B+P)) 139.3; freeNutrient (nutrient quanta, diagnostic) 9671.2; livingCells (cells, diagnostic) 5.1.
-
-### test (72 cases, 12 families; up 12, down 21, none 39)
+### dev (96 cases, 16 families; up 13, down 26, none 57)
 
 | proposer | role | answered | abstained | invalid | missing | coverage | Brier (imputed) | Brier (answered) | direction acc. | balanced acc. | acc. at matched coverage | valid non-null yield |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| priorMajority | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.594 | 0.594 | 0.542 | 0.333 | 0.542 | 0.458 |
-| alwaysNone | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.917 | 0.917 | 0.542 | 0.333 | 0.542 | 0.458 |
-| fixedRule | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.540 | 0.540 | 0.625 | 0.769 | 0.625 | 0.458 |
-| numericTrend | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.674 | 0.674 | 0.292 | 0.333 | 0.292 | 0.458 |
-| v0Rules | baseline | 72 | 0 | 0 | 0 | 1.000 | 0.417 | 0.417 | 0.625 | 0.769 | 0.625 | 0.458 |
-| shuffledEvidence | control | 72 | 0 | 0 | 0 | 1.000 | 0.674 | 0.674 | 0.292 | 0.333 | 0.292 | 0.458 |
-| abstainAll | baseline | 0 | 72 | 0 | 0 | 0.000 | 0.594 | n/a | n/a | n/a | n/a | 0.000 |
+| priorMajority | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.556 | 0.556 | 0.594 | 0.333 | 0.594 | 0.406 |
+| alwaysNone | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.813 | 0.813 | 0.594 | 0.333 | 0.594 | 0.406 |
+| fixedRule | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.582 | 0.582 | 0.573 | 0.760 | 0.573 | 0.406 |
+| numericTrend | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.680 | 0.680 | 0.271 | 0.298 | 0.271 | 0.406 |
+| v0Rules | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.437 | 0.437 | 0.573 | 0.760 | 0.573 | 0.406 |
+| shuffledEvidence | control | 96 | 0 | 0 | 0 | 1.000 | 0.681 | 0.681 | 0.260 | 0.338 | 0.260 | 0.406 |
+| abstainAll | baseline | 0 | 96 | 0 | 0 | 0.000 | 0.556 | n/a | n/a | n/a | n/a | 0.000 |
+| mechanismRule | oracle | 96 | 0 | 0 | 0 | 1.000 | 0.284 | 0.284 | 0.865 | 0.884 | 0.865 | 0.406 |
 
-Mean absolute effect: bodyMass (mass quanta (B+P)) 151.5; freeNutrient (nutrient quanta, diagnostic) 9673.1; livingCells (cells, diagnostic) 5.5.
+Mean absolute effect: bodyMass (mass quanta (B+P)) 155.1; freeNutrient (nutrient quanta, diagnostic) 9923.5; livingCells (cells, diagnostic) 5.3.
 
-### test, measurement-limited cases excluded (67 cases, 12 families; up 12, down 20, none 35)
+### test (96 cases, 16 families; up 12, down 27, none 57)
 
 | proposer | role | answered | abstained | invalid | missing | coverage | Brier (imputed) | Brier (answered) | direction acc. | balanced acc. | acc. at matched coverage | valid non-null yield |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| priorMajority | baseline | 67 | 0 | 0 | 0 | 1.000 | 0.606 | 0.606 | 0.522 | 0.333 | 0.522 | 0.478 |
-| alwaysNone | baseline | 67 | 0 | 0 | 0 | 1.000 | 0.955 | 0.955 | 0.522 | 0.333 | 0.522 | 0.478 |
-| fixedRule | baseline | 67 | 0 | 0 | 0 | 1.000 | 0.515 | 0.515 | 0.657 | 0.781 | 0.657 | 0.478 |
-| numericTrend | baseline | 67 | 0 | 0 | 0 | 1.000 | 0.677 | 0.677 | 0.299 | 0.333 | 0.299 | 0.478 |
-| v0Rules | baseline | 67 | 0 | 0 | 0 | 1.000 | 0.400 | 0.400 | 0.657 | 0.781 | 0.657 | 0.478 |
-| shuffledEvidence | control | 67 | 0 | 0 | 0 | 1.000 | 0.677 | 0.677 | 0.299 | 0.333 | 0.299 | 0.478 |
-| abstainAll | baseline | 0 | 67 | 0 | 0 | 0.000 | 0.606 | n/a | n/a | n/a | n/a | 0.000 |
+| priorMajority | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.553 | 0.553 | 0.594 | 0.333 | 0.594 | 0.406 |
+| alwaysNone | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.813 | 0.813 | 0.594 | 0.333 | 0.594 | 0.406 |
+| fixedRule | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.582 | 0.582 | 0.573 | 0.760 | 0.573 | 0.406 |
+| numericTrend | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.704 | 0.704 | 0.219 | 0.259 | 0.219 | 0.406 |
+| v0Rules | baseline | 96 | 0 | 0 | 0 | 1.000 | 0.437 | 0.437 | 0.573 | 0.760 | 0.573 | 0.406 |
+| shuffledEvidence | control | 96 | 0 | 0 | 0 | 1.000 | 0.690 | 0.690 | 0.240 | 0.346 | 0.240 | 0.406 |
+| abstainAll | baseline | 0 | 96 | 0 | 0 | 0.000 | 0.553 | n/a | n/a | n/a | n/a | 0.000 |
 
-Mean absolute effect: bodyMass (mass quanta (B+P)) 161.1; freeNutrient (nutrient quanta, diagnostic) 10389.4; livingCells (cells, diagnostic) 5.9.
+Mean absolute effect: bodyMass (mass quanta (B+P)) 199.7; freeNutrient (nutrient quanta, diagnostic) 9953.5; livingCells (cells, diagnostic) 6.1.
+
+### test, measurement-limited cases excluded (90 cases, 16 families; up 12, down 25, none 53)
+
+| proposer | role | answered | abstained | invalid | missing | coverage | Brier (imputed) | Brier (answered) | direction acc. | balanced acc. | acc. at matched coverage | valid non-null yield |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| priorMajority | baseline | 90 | 0 | 0 | 0 | 1.000 | 0.558 | 0.558 | 0.589 | 0.333 | 0.589 | 0.411 |
+| alwaysNone | baseline | 90 | 0 | 0 | 0 | 1.000 | 0.822 | 0.822 | 0.589 | 0.333 | 0.589 | 0.411 |
+| fixedRule | baseline | 90 | 0 | 0 | 0 | 1.000 | 0.569 | 0.569 | 0.589 | 0.767 | 0.589 | 0.411 |
+| numericTrend | baseline | 90 | 0 | 0 | 0 | 1.000 | 0.704 | 0.704 | 0.222 | 0.267 | 0.222 | 0.411 |
+| v0Rules | baseline | 90 | 0 | 0 | 0 | 1.000 | 0.428 | 0.428 | 0.589 | 0.767 | 0.589 | 0.411 |
+| shuffledEvidence | control | 90 | 0 | 0 | 0 | 1.000 | 0.696 | 0.696 | 0.233 | 0.338 | 0.233 | 0.411 |
+| abstainAll | baseline | 0 | 90 | 0 | 0 | 0.000 | 0.558 | n/a | n/a | n/a | n/a | 0.000 |
+
+Mean absolute effect: bodyMass (mass quanta (B+P)) 211.4; freeNutrient (nutrient quanta, diagnostic) 10557.4; livingCells (cells, diagnostic) 6.4.
 
 ## Family-level intervals (imputed Brier, whole-family bootstrap)
 
 - dev: intervals computed
-  - abstainAll: 0.604 [0.568, 0.646]
-  - alwaysNone: 0.944 [0.833, 1.083]
-  - fixedRule: 0.529 [0.473, 0.573]
-  - numericTrend: 0.680 [0.659, 0.701]
-  - priorMajority: 0.604 [0.568, 0.646]
-  - shuffledEvidence: 0.680 [0.659, 0.701]
-  - v0Rules: 0.411 [0.383, 0.433]
-  - abstainAll minus v0Rules: 0.193 [0.132, 0.263]
-  - alwaysNone minus v0Rules: 0.533 [0.400, 0.700]
-  - fixedRule minus v0Rules: 0.118 [0.090, 0.140]
-  - numericTrend minus v0Rules: 0.269 [0.234, 0.306]
-  - priorMajority minus v0Rules: 0.193 [0.132, 0.263]
-  - shuffledEvidence minus v0Rules: 0.269 [0.234, 0.306]
+  - abstainAll: 0.556 [0.495, 0.617]
+  - alwaysNone: 0.813 [0.667, 0.958]
+  - fixedRule: 0.582 [0.523, 0.640]
+  - numericTrend: 0.680 [0.627, 0.721]
+  - priorMajority: 0.556 [0.495, 0.617]
+  - shuffledEvidence: 0.681 [0.654, 0.709]
+  - v0Rules: 0.438 [0.408, 0.467]
+  - abstainAll minus v0Rules: 0.118 [0.028, 0.209]
+  - alwaysNone minus v0Rules: 0.375 [0.200, 0.550]
+  - fixedRule minus v0Rules: 0.144 [0.115, 0.173]
+  - numericTrend minus v0Rules: 0.243 [0.176, 0.293]
+  - priorMajority minus v0Rules: 0.118 [0.028, 0.209]
+  - shuffledEvidence minus v0Rules: 0.244 [0.196, 0.294]
 - test: intervals computed
-  - abstainAll: 0.594 [0.574, 0.607]
-  - alwaysNone: 0.917 [0.833, 0.972]
-  - fixedRule: 0.540 [0.518, 0.573]
-  - numericTrend: 0.674 [0.666, 0.687]
-  - priorMajority: 0.594 [0.574, 0.607]
-  - shuffledEvidence: 0.674 [0.666, 0.687]
-  - v0Rules: 0.417 [0.406, 0.433]
-  - abstainAll minus v0Rules: 0.177 [0.141, 0.202]
-  - alwaysNone minus v0Rules: 0.500 [0.400, 0.567]
-  - fixedRule minus v0Rules: 0.123 [0.112, 0.140]
-  - numericTrend minus v0Rules: 0.258 [0.253, 0.260]
-  - priorMajority minus v0Rules: 0.177 [0.141, 0.202]
-  - shuffledEvidence minus v0Rules: 0.258 [0.253, 0.260]
+  - abstainAll: 0.553 [0.507, 0.595]
+  - alwaysNone: 0.813 [0.688, 0.917]
+  - fixedRule: 0.582 [0.540, 0.632]
+  - numericTrend: 0.704 [0.677, 0.735]
+  - priorMajority: 0.553 [0.507, 0.595]
+  - shuffledEvidence: 0.690 [0.662, 0.720]
+  - v0Rules: 0.438 [0.417, 0.463]
+  - abstainAll minus v0Rules: 0.115 [0.044, 0.178]
+  - alwaysNone minus v0Rules: 0.375 [0.225, 0.500]
+  - fixedRule minus v0Rules: 0.144 [0.123, 0.169]
+  - numericTrend minus v0Rules: 0.267 [0.251, 0.288]
+  - priorMajority minus v0Rules: 0.115 [0.044, 0.178]
+  - shuffledEvidence minus v0Rules: 0.252 [0.208, 0.298]
 
 ## Mechanism audit (measured vs fixture expectation)
 
 | mechanism | expected | up | down | none |
 |---|---|---|---|---|
-| feedOccupied | up | 23 | 0 | 1 |
-| lesionOccupied | down | 0 | 24 | 0 |
-| drainOccupied | down | 0 | 18 | 6 |
-| sham | none | 0 | 0 | 24 |
-| lesionEmpty | none | 0 | 0 | 24 |
-| lowDoseFeed | none | 2 | 0 | 22 |
+| feedOccupied | up | 23 | 0 | 9 |
+| lesionOccupied | down | 0 | 32 | 0 |
+| drainOccupied | down | 0 | 21 | 11 |
+| sham | none | 0 | 0 | 32 |
+| lesionEmpty | none | 0 | 0 | 32 |
+| lowDoseFeed | none | 2 | 0 | 30 |
 
 ## File-level diagnostics (per proposer, over the envelopes it was meant to answer)
 
 | proposer | lines | invalid | missing | extra | duplicates | not an object | unsound envelopes |
 |---|---|---|---|---|---|---|---|
-| abstainAll | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| alwaysNone | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| fixedRule | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| mechanismRule | 72 | 0 | 0 | 0 | 0 | 0 | 0 |
-| numericTrend | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| priorMajority | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| shuffledEvidence | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
-| v0Rules | 144 | 0 | 0 | 0 | 0 | 0 | 0 |
+| abstainAll | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| alwaysNone | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| fixedRule | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| mechanismRule | 96 | 0 | 0 | 0 | 0 | 0 | 0 |
+| numericTrend | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| priorMajority | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| shuffledEvidence | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v0Rules | 192 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Predicted class on the test split (answered cases)
 
 | proposer | up | down | none |
 |---|---|---|---|
 | abstainAll | 0 | 0 | 0 |
-| alwaysNone | 0 | 0 | 72 |
-| fixedRule | 24 | 36 | 12 |
-| numericTrend | 0 | 72 | 0 |
-| priorMajority | 0 | 0 | 72 |
-| shuffledEvidence | 0 | 72 | 0 |
-| v0Rules | 24 | 36 | 12 |
+| alwaysNone | 0 | 0 | 96 |
+| fixedRule | 32 | 48 | 16 |
+| numericTrend | 24 | 72 | 0 |
+| priorMajority | 0 | 0 | 96 |
+| shuffledEvidence | 24 | 72 | 0 |
+| v0Rules | 32 | 48 | 16 |
 
 ## Trend-confound diagnostic
 
 Share of cases labelled up by the paired rule (treated minus control) vs the naive before/after rule (treated minus value at the fork); an always-rising predictor is right exactly when its rule says up.
 
-- share of cases labelled up: paired rule 0.174, naive before/after rule 0.000; cases with treated above the fork value: 0/144
-- sham: 24 cases, naive rule says up on 0, paired rule says none on 24
-- low-dose feed: 24 cases, naive rule says up on 0, paired rule says none on 22
+- share of cases labelled up: paired rule 0.130, naive before/after rule 0.182; cases with treated above the fork value: 35/192
+- sham: 32 cases, naive rule says up on 7, paired rule says none on 32
+- low-dose feed: 32 cases, naive rule says up on 7, paired rule says none on 30
+- null-effect cases (sham and low-dose feed), all splits: 64 cases, 14 with treated above the fork value; naive before/after rule says up on 14; numericTrend predicts up on 14; paired outcome is none on 62; numericTrend says up where the paired outcome is none on 14
 
 ## Cost and stability
 
-- total evaluation cost 97484800 cell-steps; cost per non-null case 1454997
+- total evaluation cost 125337600 cell-steps; cost per non-null case 1606892
 - cross-seed effect stability (qualify families, sibling seed): 22/24 labels agree (0.917); heterogeneity across seeds of one family, not a predictor's accuracy limit
 
 - the strongest simple baseline is whichever of priorMajority, alwaysNone, fixedRule, numericTrend, v0Rules scores best on dev; a calibrated majority is legitimately strong
 - shuffledEvidence is a control, mechanismRule a dev-only oracle (run on dev cases only), abstainAll a coverage floor
-- degenerate on the test split, one predicted class for every answered case: priorMajority (all none), alwaysNone (all none), numericTrend (all down), shuffledEvidence (all down); a degenerate row cannot show the harness separating an evidence-using rule from its shuffled control (test: tools/test/prediction-proposers.test.ts, opposite-trend envelopes)
-- no fixture case has a treated value above its fork value, so these fixtures cannot demonstrate the before/after trend confound (the confound rule is tested on a synthetic rising set)
+- degenerate on the test split, one predicted class for every answered case: priorMajority (all none), alwaysNone (all none); a degenerate row cannot show the harness separating an evidence-using rule from its shuffled control (test: tools/test/prediction-proposers.test.ts, opposite-trend envelopes)

@@ -60,3 +60,34 @@ describe("assertNoLeak", () => {
     expect(assertNoLeak(p, d, hist).join()).toMatch(/two families/);
   });
 });
+
+describe("cohort splits (draft protocol)", () => {
+  it("adding the rising cohort leaves the original cohort's split untouched and splits the cohort whole-family", async () => {
+    const { draftProtocol, splitPlanOf } = await import("../lib/prediction/run.ts");
+    const full = draftProtocol();
+    const orig = { ...full, cohorts: undefined, families: full.families.filter((f) => f.cohort === undefined) };
+    const a = splitPlanOf(orig), b = splitPlanOf(full);
+    const origIds = new Set(orig.families.map((f) => f.id));
+    expect(b.dev.filter((f) => origIds.has(f))).toEqual(a.dev);
+    expect(b.test.filter((f) => origIds.has(f))).toEqual(a.test);
+    expect(b.qualify).toEqual(a.qualify);
+    const rising = full.families.filter((f) => f.cohort === "rising").map((f) => f.id);
+    expect(rising).toHaveLength(8);
+    expect(b.dev.filter((f) => rising.includes(f))).toHaveLength(4);
+    expect(b.test.filter((f) => rising.includes(f))).toHaveLength(4);
+    expect(b.qualify.some((f) => rising.includes(f))).toBe(false);
+    expect([...b.dev, ...b.test].sort()).toEqual(full.families.map((f) => f.id).sort());
+  });
+  it("a family id repeated across cohorts is refused", async () => {
+    const { draftProtocol, splitPlanOf } = await import("../lib/prediction/run.ts");
+    const p = draftProtocol();
+    p.families.find((f) => f.cohort === "rising")!.id = "f00";
+    expect(() => splitPlanOf(p)).toThrow(/duplicate family id f00/);
+  });
+  it("a family naming an undeclared cohort is refused", async () => {
+    const { draftProtocol, splitPlanOf } = await import("../lib/prediction/run.ts");
+    const p = draftProtocol();
+    p.cohorts = [];
+    expect(() => splitPlanOf(p)).toThrow(/cohort/);
+  });
+});

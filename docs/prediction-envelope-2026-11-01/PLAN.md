@@ -265,3 +265,21 @@ Dated, made after the Sol xhigh source review and before any committed freeze. D
 - **`report --out DIR`** is implemented: it re-renders `comparison.md`, `report.html` and `canonical.sha256` from the data files.
 - **Gate fix**: the reproduction diff is `diff -r --exclude=meta.json --exclude=dev --exclude=.gitignore`, run locally where the
   gitignored `envelopes.jsonl` and `predictions.jsonl` exist; the `canonical.sha256` check covers them.
+
+## Amendment 2 (2026-11-01, rising-world cohort; revision 4)
+
+Dated, made after the first delivered v0 run, whose fixtures could not discriminate the baselines (every world declined in body
+mass, so `numericTrend` and `shuffledEvidence` both said "down" on all 144 cases and the trend-confound negative case never
+appeared). The existing dev and test families had been looked at, so this regenerated v0 stays **EXPLORATORY**. Details: `EVIDENCE.md`.
+- **A second fixture cohort, `rising` (families f24..f31)**: spots light, nutrient 50 (rich), founders 1, 2, 3, 4, 5, 2, 3, 4,
+  seeds 5024..5031. These worlds grow without any intervention. The founder counts and nutrient were fixed by a probe that only
+  checked that such worlds rise (no mechanism outcome, label, threshold or score was looked at before the cohort was written).
+- **Split rule unchanged for the original 24 families**: each cohort is split by its own hash ranking (`protocol.cohorts`,
+  `FamilySpec.cohort`), whole-family, 4 dev and 4 test from `rising`; none join the `qualify` subset. Dev now has 16 families
+  and test 16. The donor derangement is taken over the combined split lists, so a rising family can donate its census to a
+  declining one (this is what lets `shuffledEvidence` differ from `numericTrend`).
+- **`minEffect` not re-tuned**: the rule of Amendment 1 re-applied to the unchanged `qualify` tallies again gives 25 (21 of 24
+  matching; 19, 19, 18 at 50, 100, 200). `devPrior` is recomputed over all 16 dev families (it is a dev class frequency, not a tuned threshold).
+- **Protocol re-frozen** (`protocol.json`, `protocol.freeze.sha256` new hash); a held-out confirmation still needs fresh families.
+- **Diagnostic added**: `trendConfound.numericTrendOnNull` counts, on sham and low-dose cases, those where the before/after
+  rule says up, `numericTrend` predicts up and the paired outcome is none.

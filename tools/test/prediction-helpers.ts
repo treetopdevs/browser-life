@@ -35,6 +35,7 @@ export const SHAM: TaskOp = { kind: "none" };
 export function tinyProtocol(): Protocol {
   const p = draftProtocol();
   p.families = p.families.slice(0, 6);
+  delete p.cohorts;
   p.nDev = 3;
   p.nQualify = 2;
   p.window = { forkStep: 40, delta: 5, horizon: 30, censusEvery: 10, frameSteps: [20, 40] };

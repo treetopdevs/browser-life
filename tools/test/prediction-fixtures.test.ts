@@ -2,7 +2,7 @@
 // invariants, not from tuning. Explicit per-test timeouts (the fixture runs take a few seconds).
 import { describe, expect, it } from "vitest";
 import { census } from "@bl/metrics";
-import { cellCount, CH, G, stateHash, totalsOf } from "@bl/schema";
+import { cellCount, CH, G, stateHash, totalsOf, worldW } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
 import { CpuInterventionAdapter } from "../lib/prediction/adapter.ts";
 import { assertNoPostFork, envelopeIntact, frameOf, hashEnvelopeBody, envelopeBody } from "../lib/prediction/envelope.ts";
@@ -114,6 +114,12 @@ describe("one family", () => {
     const sim = new RefSim(makeWorld(p, fam));
     sim.run(40);
     const h = heaviestCell(sim.state), e = emptiestCell(sim.state);
+    const n = cellCount(sim.cfg), W = worldW(sim.cfg);
+    const mass = (c: { x: number; y: number }): number => sim.state.cells[CH.B * n + c.y * W + c.x] + sim.state.cells[CH.P * n + c.y * W + c.x];
+    let max = 0;
+    for (let i = 0; i < n; i++) max = Math.max(max, sim.state.cells[CH.B * n + i] + sim.state.cells[CH.P * n + i]);
+    expect(mass(h)).toBe(max);
+    expect(mass(e)).toBe(0);
     expect(h).not.toEqual(e);
   }, T);
 });
@@ -149,6 +155,8 @@ describe("bounds and budget are checked before simulating", () => {
     expect(() => assertFixtureBounds({ ...p, window: { ...p.window, horizon: 1 } })).toThrow(/window.horizon/);
     expect(() => assertFixtureBounds({ ...p, window: { ...p.window, frameSteps: [p.window.forkStep + 1] } })).toThrow(/frameSteps/);
     expect(() => assertFixtureBounds({ ...p, mechanisms: [{ id: "x", kind: "feed", where: "occupied", r: 99, amount: 5, expected: "up" }] })).toThrow(/mechanism x r/);
+    expect(() => assertFixtureBounds({ ...p, mechanisms: [{ id: "y", kind: "lesion", where: "none", r: 2, expected: "down" }] })).toThrow(/does not match where/);
+    expect(() => assertFixtureBounds({ ...p, mechanisms: [{ id: "z", kind: "none", where: "occupied", expected: "none" }] })).toThrow(/does not match where/);
   });
   it("generate refuses over the cap before simulating anything (variants included)", () => {
     const p = tinyProtocol();

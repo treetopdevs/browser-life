@@ -120,7 +120,7 @@ export function validatePrediction(input: unknown, env: PredictionEnvelope): Val
   if (errors.length) return { ok: false, errors };
   let stable = false;
   try {
-    stable = canonical(p) === canonical(JSON.parse(JSON.stringify(p)));
+    stable = canonical(input) === canonical(p);
   } catch {
     stable = false;
   }

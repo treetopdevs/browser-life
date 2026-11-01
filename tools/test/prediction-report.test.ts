@@ -113,6 +113,12 @@ describe("outputs", () => {
     const again = rerender((n) => built.files[n]);
     for (const n of ["comparison.md", "report.html", "canonical.sha256"]) expect(again[n], n).toBe(built.files[n]);
   });
+  it("rerender keeps a proposer whose prediction lines are all missing", () => {
+    const keep = (n: string): string => (n === "predictions.jsonl" ? built.files[n].split("\n").filter((l) => !l.includes('"proposer":"v0Rules"')).join("\n") : built.files[n]);
+    expect(keep("predictions.jsonl")).not.toContain('"proposer":"v0Rules"');
+    const again = rerender(keep);
+    expect(again["report.html"]).toContain("v0Rules");
+  });
   it("abstainAll scores exactly the prior (imputation) on the headline Brier", () => {
     const prior = built.comparison.test.rows.find((r) => r.id === "priorMajority")!;
     const ab = built.comparison.test.rows.find((r) => r.id === "abstainAll")!;

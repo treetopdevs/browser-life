@@ -24,6 +24,11 @@ export interface Protocol extends FixtureProtocol {
   families: FamilySpec[];
   nDev: number;
   nQualify: number;
+  /**
+   * Extra family cohorts, each split by its own hash ranking so the original cohort's dev/test/qualify assignment is unchanged by
+   * adding them: `nDev` of the cohort's families go to dev (none to the reserved qualify subset, so minEffect is never retuned on them).
+   */
+  cohorts?: { id: string; nDev: number }[];
   donors: Record<string, string>;
   proposers: ProposerParams;
   devPrior: Probs | null;
@@ -60,13 +65,35 @@ export function committedRefusal(c: CommittedCopies): string | null {
 }
 export const confirmRefusal = (p: Protocol, freezeText: string | null, committed: CommittedCopies | undefined): string | null =>
   freezeRefusal(p, freezeText) ?? (committed ? committedRefusal(committed) : "no committed copy supplied: the freeze must be committed before test outcomes are generated");
-export const splitPlanOf = (p: Protocol): SplitPlan => assignSplits(p.families.map((f) => f.id), p.salt, p.nDev, p.nQualify);
+export function splitPlanOf(p: Protocol): SplitPlan {
+  const seen = new Set<string>();
+  for (const f of p.families) {
+    if (seen.has(f.id)) throw new Error(`duplicate family id ${f.id}`);
+    seen.add(f.id);
+  }
+  const base = assignSplits(p.families.filter((f) => f.cohort === undefined).map((f) => f.id), p.salt, p.nDev, p.nQualify);
+  const named = new Set((p.cohorts ?? []).map((c) => c.id));
+  for (const f of p.families) if (f.cohort !== undefined && !named.has(f.cohort)) throw new Error(`family ${f.id} names cohort ${f.cohort}, which protocol.cohorts does not declare`);
+  for (const c of p.cohorts ?? []) {
+    const ids = p.families.filter((f) => f.cohort === c.id).map((f) => f.id);
+    if (ids.length === 0) continue;
+    const sub = assignSplits(ids, `${p.salt}|cohort|${c.id}`, c.nDev, 0);
+    base.dev.push(...sub.dev);
+    base.test.push(...sub.test);
+  }
+  return base;
+}
 
 /** The draft protocol (dev-stage defaults). protocol.json on disk is the source of truth once written. */
 export function draftProtocol(): Protocol {
   const lights = ["spots", "gradient"] as const;
   const nutrients = [0, 1, 2];
   const families: FamilySpec[] = Array.from({ length: 24 }, (_, k) => ({ id: `f${String(k).padStart(2, "0")}`, seed: 5000 + k, light: lights[k % 2], nutrient: nutrients[k % 3], founders: 3 + (k % 3) }));
+  // A second cohort of worlds that grow without any intervention (spots light, rich nutrient: body mass rises through the observed
+  // window), so a before/after metric and the numeric-trend baseline can be fooled by a trend the paired outcome removes. Founder counts
+  // were fixed before any outcome was generated; the probe only checked that such worlds rise (EVIDENCE.md, Amendment 2).
+  const risingFounders = [1, 2, 3, 4, 5, 2, 3, 4];
+  families.push(...risingFounders.map((founders, j): FamilySpec => ({ id: `f${24 + j}`, seed: 5024 + j, light: "spots", nutrient: 50, founders, cohort: "rising" })));
   const base: Protocol = {
     protocolVersion: PROTOCOL_VERSION,
     readoutsVersion: READOUTS_VERSION,
@@ -77,6 +104,7 @@ export function draftProtocol(): Protocol {
     families,
     nDev: 12,
     nQualify: 4,
+    cohorts: [{ id: "rising", nDev: 4 }],
     donors: {},
     world: { side: 32, kernelRadius: 4, founderRadius: 3, founderBiomass: 64, founderEnergy: 128 },
     window: { forkStep: 300, delta: 10, horizon: 200, censusEvery: 10, frameSteps: [75, 150, 225, 300] },
@@ -367,9 +395,15 @@ export interface TrendConfound {
   /** Cases whose treated value is above the fork value, of all cases: when 0, the fixtures cannot show the confound. */
   risingCases: number;
   totalCases: number;
+  /**
+   * The asserted property in real data: on the null-effect cases (sham and low-dose feed) of rising worlds, the before/after metric
+   * calls "up" and the numeric-trend baseline (which extrapolates the same rise) predicts "up", while the paired outcome is "none".
+   * `risingNull` counts those cases (treated above the fork value); null when no numeric-trend predictions were supplied.
+   */
+  numericTrendOnNull: { n: number; risingNull: number; naiveUp: number; numericTrendUp: number; pairedNone: number; numericTrendUpWherePairedNone: number } | null;
 }
 /** A naive predictor that says "up" whenever treated ends above its before-value, scored by the naive before/after rule vs the paired rule. */
-export function trendConfoundOf(rows: readonly CaseRow[], minEffect: number): TrendConfound {
+export function trendConfoundOf(rows: readonly CaseRow[], minEffect: number, numericTrendClass?: (caseId: string) => Direction3 | undefined): TrendConfound {
   const share = (f: (r: CaseRow) => Direction3): number | null => (rows.length ? rows.filter((r) => f(r) === "up").length / rows.length : null);
   const naive = (r: CaseRow): Direction3 => labelOf(r.treated - r.before, minEffect);
   const paired = (r: CaseRow): Direction3 => labelOf(r.effect.bodyMass, minEffect);
@@ -385,6 +419,20 @@ export function trendConfoundOf(rows: readonly CaseRow[], minEffect: number): Tr
     lowDose: tally("lowDoseFeed"),
     risingCases: rows.filter((r) => r.treated > r.before).length,
     totalCases: rows.length,
+    numericTrendOnNull: numericTrendClass
+      ? (() => {
+          const nulls = rows.filter((r) => r.mechanismId === "sham" || r.mechanismId === "lowDoseFeed");
+          const up = (r: CaseRow): boolean => numericTrendClass(r.caseId) === "up";
+          return {
+            n: nulls.length,
+            risingNull: nulls.filter((r) => r.treated > r.before).length,
+            naiveUp: nulls.filter((r) => naive(r) === "up").length,
+            numericTrendUp: nulls.filter(up).length,
+            pairedNone: nulls.filter((r) => paired(r) === "none").length,
+            numericTrendUpWherePairedNone: nulls.filter((r) => up(r) && paired(r) === "none").length,
+          };
+        })()
+      : null,
   };
 }
 
@@ -434,6 +482,12 @@ export function compare(p: Protocol, gen: Generated, envelopes: readonly Predict
   }
   const degenerate = Object.entries(argmaxTest).filter(([, c]) => c.up + c.down + c.none > 0 && [c.up, c.down, c.none].filter((v) => v > 0).length === 1).map(([id, c]) => `${id} (all ${(["up", "down", "none"] as const).find((k) => c[k] > 0)})`);
 
+  const ntClass = new Map<string, Direction3>();
+  {
+    const chk = validatePredictionFile(lines.filter((l) => l.proposer === "numericTrend").map((l) => JSON.stringify(l.prediction)), envelopes);
+    for (const [id, g] of chk.byCase) if (g.prediction && !g.prediction.abstain) ntClass.set(id, argmax(g.prediction.probs!));
+  }
+  const numericTrendClassOf = ntClass.size ? (id: string): Direction3 | undefined => ntClass.get(id) : undefined;
   const mechanismAudit = p.mechanisms.map((m) => {
     const counts: Record<Direction3, number> = { up: 0, down: 0, none: 0 };
     for (const r of rows.filter((x) => x.mechanismId === m.id)) counts[labelOf(r.effect.bodyMass, minEffect)]++;
@@ -458,7 +512,7 @@ export function compare(p: Protocol, gen: Generated, envelopes: readonly Predict
     fileDiagnostics,
     argmaxTest,
     mechanismAudit,
-    trendConfound: trendConfoundOf(rows, minEffect),
+    trendConfound: trendConfoundOf(rows, minEffect, numericTrendClassOf),
     validNonNullYieldAndCost: { totalCellSteps, costPerUseful: costPerUseful(totalCellSteps, rows.map((r) => labelOf(r.effect.bodyMass, minEffect))) },
     crossSeedEffectStability: stab,
     notes: [

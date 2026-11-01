@@ -178,35 +178,113 @@
       "light": "gradient",
       "nutrient": 2,
       "founders": 5
+    },
+    {
+      "id": "f24",
+      "seed": 5024,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 1,
+      "cohort": "rising"
+    },
+    {
+      "id": "f25",
+      "seed": 5025,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 2,
+      "cohort": "rising"
+    },
+    {
+      "id": "f26",
+      "seed": 5026,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 3,
+      "cohort": "rising"
+    },
+    {
+      "id": "f27",
+      "seed": 5027,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 4,
+      "cohort": "rising"
+    },
+    {
+      "id": "f28",
+      "seed": 5028,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 5,
+      "cohort": "rising"
+    },
+    {
+      "id": "f29",
+      "seed": 5029,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 2,
+      "cohort": "rising"
+    },
+    {
+      "id": "f30",
+      "seed": 5030,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 3,
+      "cohort": "rising"
+    },
+    {
+      "id": "f31",
+      "seed": 5031,
+      "light": "spots",
+      "nutrient": 50,
+      "founders": 4,
+      "cohort": "rising"
     }
   ],
   "nDev": 12,
   "nQualify": 4,
+  "cohorts": [
+    {
+      "id": "rising",
+      "nDev": 4
+    }
+  ],
   "donors": {
     "f00": "f18",
-    "f18": "f23",
-    "f23": "f11",
+    "f18": "f27",
+    "f27": "f23",
+    "f23": "f25",
+    "f25": "f11",
     "f11": "f01",
     "f01": "f19",
-    "f19": "f21",
-    "f21": "f09",
+    "f19": "f26",
+    "f26": "f21",
+    "f21": "f29",
+    "f29": "f09",
     "f09": "f10",
     "f10": "f07",
     "f07": "f02",
     "f02": "f22",
     "f22": "f00",
-    "f08": "f20",
+    "f30": "f08",
+    "f08": "f28",
+    "f28": "f20",
     "f20": "f04",
-    "f04": "f15",
+    "f04": "f24",
+    "f24": "f15",
     "f15": "f12",
-    "f12": "f06",
+    "f12": "f31",
+    "f31": "f06",
     "f06": "f05",
     "f05": "f03",
     "f03": "f16",
     "f16": "f13",
     "f13": "f17",
     "f17": "f14",
-    "f14": "f08"
+    "f14": "f30"
   },
   "world": {
     "side": 32,
@@ -299,9 +377,9 @@
     }
   },
   "devPrior": {
-    "up": 180,
-    "down": 292,
-    "none": 528
+    "up": 135,
+    "down": 271,
+    "none": 594
   },
   "bootstrap": {
     "resamples": 2000,

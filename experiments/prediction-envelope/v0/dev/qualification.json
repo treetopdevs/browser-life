@@ -1,5 +1,5 @@
 {
- "protocolHash": "6fc6370a79ea043a3661dc3e9ac923364391bb434971dc51919ab3868ed00325",
+ "protocolHash": "fb127ee7ad5d38cef895e6f2004bd8f79c9d9046ed01cdaf92fc28103ac6c6ad",
  "note": "measured labels are never relabelled to match expectations; disagreements are reported. Tuning fields (effects, variantEffects, tallies, crossSeedEffectStability) cover the qualify subset only; devEffects (all dev families) feed the dev class prior only.",
  "qualifyFamilies": [
   "f00",
@@ -633,6 +633,150 @@
    "familyId": "f21",
    "mechanism": "lowDoseFeed",
    "bodyMass": 0
+  },
+  {
+   "caseId": "c7d18421474bb",
+   "familyId": "f25",
+   "mechanism": "feedOccupied",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c0d76e96f6fc2",
+   "familyId": "f25",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -1714
+  },
+  {
+   "caseId": "ca671fa382003",
+   "familyId": "f25",
+   "mechanism": "drainOccupied",
+   "bodyMass": -69
+  },
+  {
+   "caseId": "caa1e03197c34",
+   "familyId": "f25",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c8cea52d8cb68",
+   "familyId": "f25",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cadc7373a9f1f",
+   "familyId": "f25",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c292e4ffa6f51",
+   "familyId": "f27",
+   "mechanism": "feedOccupied",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cefde4a3e009d",
+   "familyId": "f27",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -1681
+  },
+  {
+   "caseId": "c1cfe460d7959",
+   "familyId": "f27",
+   "mechanism": "drainOccupied",
+   "bodyMass": 2
+  },
+  {
+   "caseId": "c9df05c500ab5",
+   "familyId": "f27",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c675c18028bee",
+   "familyId": "f27",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c60a10662bdff",
+   "familyId": "f27",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cf462ada574f7",
+   "familyId": "f26",
+   "mechanism": "feedOccupied",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c31da70de3a91",
+   "familyId": "f26",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -754
+  },
+  {
+   "caseId": "c925e28727c79",
+   "familyId": "f26",
+   "mechanism": "drainOccupied",
+   "bodyMass": -21
+  },
+  {
+   "caseId": "c08b14b7efc66",
+   "familyId": "f26",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "cef18f898891c",
+   "familyId": "f26",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c6061b96b2155",
+   "familyId": "f26",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c02c11550ad98",
+   "familyId": "f29",
+   "mechanism": "feedOccupied",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c17b4088ffcd7",
+   "familyId": "f29",
+   "mechanism": "lesionOccupied",
+   "bodyMass": -610
+  },
+  {
+   "caseId": "c4da260fc1a50",
+   "familyId": "f29",
+   "mechanism": "drainOccupied",
+   "bodyMass": -9
+  },
+  {
+   "caseId": "ceb8ae3ce7c8d",
+   "familyId": "f29",
+   "mechanism": "sham",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c7fd72552be77",
+   "familyId": "f29",
+   "mechanism": "lesionEmpty",
+   "bodyMass": 0
+  },
+  {
+   "caseId": "c2aa0bb4e3cd8",
+   "familyId": "f29",
+   "mechanism": "lowDoseFeed",
+   "bodyMass": 0
   }
  ],
  "variantEffects": [
@@ -997,6 +1141,6 @@
    "rate": 0.9583333333333334
   }
  ],
- "neutralityChecks": 468,
- "cellSteps": 55705600
+ "neutralityChecks": 624,
+ "cellSteps": 69632000
 }

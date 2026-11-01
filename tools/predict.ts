@@ -108,7 +108,7 @@ function main(): number {
         status: stage === "smoke" ? "SMOKE" : exploratory ? "EXPLORATORY" : "CONFIRM",
         ...(exploratory ? { exploratoryReason: "run before the freeze was committed, with test outcomes already inspected; not a held-out confirmation" } : {}),
         gitSha: sh("git", ["rev-parse", "HEAD"]),
-        gitDirty: sh("git", ["status", "--porcelain", "--", "tools", "packages", "experiments/prediction-envelope"]) !== "",
+        gitDirty: sh("git", ["status", "--porcelain", "--", "tools", "packages", "experiments/prediction-envelope", "deno.json", "package.json", "tsconfig.json"]) !== "",
         sourceClosureSha256: sourceClosureHash(),
         versions: RUN_VERSIONS,
         protocolSha256: protocolHash(p),

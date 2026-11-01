@@ -21,6 +21,8 @@ export interface FamilySpec {
   light: "spots" | "gradient";
   nutrient: number;
   founders: number;
+  /** Optional cohort name. Families without one form the original cohort (split by `Protocol.nDev`/`nQualify`); a named cohort is split on its own (`Protocol.cohorts`). */
+  cohort?: string;
 }
 export interface MechanismSpec {
   id: string;
@@ -75,6 +77,7 @@ export function assertFixtureBounds(p: FixtureProtocol): void {
   int(menu.amountMax, 1, 1 << 24, "menu.amountMax");
   if (p.mechanisms.length < 1 || p.mechanisms.length > 64) throw new Error("protocol needs 1..64 mechanisms");
   for (const m of p.mechanisms) {
+    if ((m.kind === "none") !== (m.where === "none")) throw new Error(`protocol mechanism ${m.id}: kind ${m.kind} does not match where ${m.where}`);
     if (m.kind !== "none") int(m.r, 1, menu.rMax, `mechanism ${m.id} r`);
     if (m.kind === "feed" || m.kind === "drain") int(m.amount, 1, menu.amountMax, `mechanism ${m.id} amount`);
   }
@@ -182,7 +185,7 @@ export function runFamily(p: FixtureProtocol, fam: FamilySpec, variantSeed?: num
   const startTotals = totalsOf(world0.cfg, world0.cells);
 
   // The sampled steps: every census step, plus the frame steps (all <= C).
-  const sampled = [...new Set([...Array.from({ length: Math.floor(C / censusEvery) }, (_, i) => (i + 1) * censusEvery), ...frameSteps, C])].sort((a, b) => a - b);
+  const sampled = [...new Set([...Array.from({ length: Math.floor(C / censusEvery) }, (_, i) => (i + 1) * censusEvery), ...frameSteps, C])].filter((t) => t > 0).sort((a, b) => a - b);
 
   // Instrumented history.
   const inst = new RefSim(cloneState(world0));
