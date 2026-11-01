@@ -38,7 +38,7 @@ only; no cloud, no model calls.
    every evaluateBatch seed and timings, the physical arm's ledger, selections, held-out
    evaluations and coverage.
 
-## Calibration result (2026-11-01, `runs/atlas/calib-2026-11-01`)
+## Calibration result (2026-11-01, `evidence/calib-2026-11-01` (copied from `runs/atlas/`))
 
 48 genomes (12 founders, 36 mutants) in 3 batches of 16, about 23 s per batch (73 s total) on the
 local WebGPU device under load average ~100. 47 survived. Displacement 0.054–0.322 cells per 100
@@ -48,7 +48,7 @@ less than tracked individuals (tracker speed reaches 1.0 for founder 2, whose di
 every founder in its lowest bin. New ranges: displacement [0, 0.4], persistence [0.4, 1], 8 bins
 each. The 47 live genomes then fill 14 distinct cells, in bins 1–6 on both axes.
 
-## Smoke comparison (2026-11-01, `runs/atlas/smoke-2026-11-01`)
+## Smoke comparison (2026-11-01, `evidence/smoke-2026-11-01` (copied from `runs/atlas/`))
 
 `compare --histories 1,2 --budget 64 --batch 16`: 41 evaluateBatch calls, 534 s of search and
 1,042 s in all, under load average ~100. It ran on `42cad5d` plus this slice's uncommitted code,
