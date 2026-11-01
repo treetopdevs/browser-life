@@ -1027,6 +1027,19 @@ const GPU_TOOL_RE = new RegExp(`(^|/)(tools/(${GPU_TOOL_NAMES})\\.ts|tests/deno/
 const argvOf = (cmd: string): string[] => cmd.trim().split(/\s+/);
 /** Whether a ps command line is a deno process itself (its program's basename is deno), not a shell or wrapper whose text mentions deno. */
 export const isDenoProcess = (cmd: string): boolean => /(^|\/)deno$/.test(argvOf(cmd)[0] ?? "");
+/** Whether a ps command line is tools/soup.ts or tools/soup_island.ts given --cpu after the script: those runs open no WebGPU device. */
+function cpuSoup(cmd: string, script: string): boolean {
+  if (!/(^|\/)(soup|soup_island)\.ts$/.test(script)) return false;
+  const argv = argvOf(cmd);
+  // Only the plain form counts: a bare --cpu before any "--", with no other cpu-like token (--cpu false, --cpu=x, --no-cpu...),
+  // whose parsed value would take parseArgs' quirks to know. Anything else stays a GPU user, the safe side.
+  // ps flattens arguments, so a quoted value holding " --cpu " would read as the flag; like denoScript, this accepts that.
+  const args = argv.slice(argv.indexOf(script) + 1);
+  const end = args.indexOf("--");
+  const own = end < 0 ? args : args.slice(0, end);
+  const cpuLike = own.map((t, i) => [t, own[i + 1]] as const).filter(([t]) => /^--(no-)?cpu/.test(t));
+  return cpuLike.length > 0 && cpuLike.every(([t, next]) => t === "--cpu" && next !== "true" && next !== "false");
+}
 /** The script a deno process runs (`deno run [flags] x.ts`, or deno 2's `deno [flags] x.ts`): its first argument ending in .ts that is not a flag. */
 export function denoScript(cmd: string): string | null {
   if (!isDenoProcess(cmd)) return null;
@@ -1044,7 +1057,7 @@ export function gpuUsers(psText: string, ignore: readonly number[] = []): { pid:
     const pid = Number(m[1]), cmd = m[2];
     if (ignore.includes(pid)) continue;
     const script = denoScript(cmd);
-    const denoGpu = script !== null && GPU_TOOL_RE.test(script);
+    const denoGpu = script !== null && GPU_TOOL_RE.test(script) && !cpuSoup(cmd, script);
     // The executable is the command up to its first flag (Chrome's path can hold spaces): a Chrome binary, started by Playwright
     // (its ms-playwright install or a playwright profile) or with WebGPU forced on, and not one of its helper processes.
     const exe = cmd.split(" --")[0].trim();

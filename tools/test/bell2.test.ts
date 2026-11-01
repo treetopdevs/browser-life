@@ -933,6 +933,14 @@ describe("other GPU users", () => {
     const ps = [" 401 deno run -A run.ts --experiment x", " 402 deno run -A ./island.ts", " 403 deno run -A other/run.ts", " 404 deno run -A ../tools/breed.ts", " 405 deno run -A bell1.ts"].join("\n");
     expect(gpuUsers(ps).map((u) => u.pid)).toEqual([401, 402, 404]);
   });
+  it("a soup tool given --cpu after its script opens no device and does not count", () => {
+    const ps = [" 501 deno run -A tools/soup.ts --cpu --seed 1", " 502 deno run -A tools/soup_island.ts --url x --cpu", " 503 deno run -A tools/soup.ts --seed 1", " 504 deno run -A tools/run.ts --cpu",
+      " 505 deno run -A tools/soup.ts --cpu false", " 506 deno run -A tools/soup.ts --cpu=false", " 507 deno run -A tools/soup.ts --cpu --no-cpu",
+      " 508 deno run -A tools/soup.ts -- --cpu", " 509 deno run -A tools/soup.ts --cpu true", " 510 deno run -A tools/soup.ts --no-cpu --cpu",
+      " 511 deno run -A tools/soup.ts --cpu --no-cpu=false", " 512 deno run -A tools/soup.ts --cpu --frame 8 --cpu"].join("\n");
+    // Only a plain --cpu is trusted; anything stranger stays a GPU user.
+    expect(gpuUsers(ps).map((u) => u.pid)).toEqual([503, 504, 505, 506, 507, 508, 509, 510, 511]);
+  });
 });
 
 describe("lineage rows over (from, to]", () => {
