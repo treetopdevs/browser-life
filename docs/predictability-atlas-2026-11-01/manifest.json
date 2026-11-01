@@ -1,0 +1,254 @@
+{
+ "kind": "predictability-atlas-manifest",
+ "payloadFileSha256": "506065e12fea033fd9c1af3d7078d38b52ed784e67ceadfab9c7d4b548ac2501",
+ "integritySha256": "9aefddd88f1094cdbf5e9e04aa017bcaa37c2c258ec328970eb2e909fc54d449",
+ "versions": {
+  "predictability": 1,
+  "ruleVersion": 1,
+  "metricsVersion": 2
+ },
+ "sources": {
+  "packages/metrics/src/predictability/atlas.ts": "9a071d7a916052f79e475f47be36dae383e970378a659d387149db9be88efe50",
+  "packages/metrics/src/predictability/controls.ts": "d874e71f3c5f8d251db7a371df785d49c9b91b05de5f53270f66af5bb713ce47",
+  "packages/metrics/src/predictability/ecology.ts": "f3801d339dbd99b14facac42361739b1f1668c554a9bd92c12af57f9755464fb",
+  "packages/metrics/src/predictability/fixtures.ts": "6e0ba3806bf840913bd7721fa19030fe0fee89ceac374c1c401e94f0426db4fb",
+  "packages/metrics/src/predictability/index.ts": "7cc93588acae36ff468747c390cd6efdc52a13adbccb66ea097f57e379568b3d",
+  "packages/metrics/src/predictability/labels.ts": "0363bca6b1b4f0f6c6cf729776d18ac23761b2d5b42c92c2cbae6d0253223a99",
+  "packages/metrics/src/predictability/life.ts": "32c5e621c9da7f184bfd7727372dba55ecfe94dd57322a5a8dc1d1ac711080da",
+  "packages/metrics/src/predictability/losses.ts": "f4c90bacc9fe5099ed054d919cdbef73899e906449341695d2b1f8fd2064c7bb",
+  "packages/metrics/src/predictability/movie.ts": "84239d1b96d968696f56c80bc459d1111013b2fdd389bd6a868252585c06e3f7",
+  "packages/metrics/src/predictability/predictors.ts": "e394ad117f3c601079dc612d592d728e7badd38c6941f52fa3fc524e92e6477b",
+  "packages/metrics/src/predictability/resolution.ts": "4def751844655fc8e117e9329bbfcc645a9abe1a7f1131a80d7150a8f798d223",
+  "packages/metrics/src/predictability/version.ts": "e1ec5174d2f08dc3aee691fe2d4479a07b4b5ee59496d11ad0d3c60512da9a86",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "tools/predictability/atlas.ts": "8f76e106dd5d0808ada432da2dd926dea40c985c9d19b32e6006c83e5226cbcb"
+ },
+ "fixtures": [
+  {
+   "id": "life-block",
+   "sha256": "5bd07af625dff8984c172a5b29023a837574e9eb7a53b3e2da2c48c6a8ec4914",
+   "params": {
+    "pattern": "block",
+    "at": [
+     30,
+     30
+    ]
+   }
+  },
+  {
+   "id": "life-blinker",
+   "sha256": "68bea1fa63df2cbea6c64ab5ebb03d143e2a425480fb2353a28bbf2bca3e800c",
+   "params": {
+    "pattern": "blinker",
+    "at": [
+     30,
+     30
+    ]
+   }
+  },
+  {
+   "id": "life-pulsar",
+   "sha256": "2a8249c816b01a7a879ecaad0a6da8cf45c29ee66bcc1baffb577bc715713904",
+   "params": {
+    "pattern": "pulsar",
+    "at": [
+     25,
+     25
+    ]
+   }
+  },
+  {
+   "id": "life-glider",
+   "sha256": "39334ce389f6899c1b04b1f1b822242bab735f08ec7268996cbaa133ea52ad1e",
+   "params": {
+    "pattern": "glider",
+    "at": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "id": "life-gliders-dup",
+   "sha256": "3a2786ccf230fe1ed97a20f95ec41f23f73ec0f25645527953b55878b663debd",
+   "params": {
+    "pattern": "glider",
+    "positions": [
+     [
+      0,
+      0
+     ],
+     [
+      20,
+      0
+     ],
+     [
+      40,
+      0
+     ],
+     [
+      0,
+      20
+     ],
+     [
+      20,
+      20
+     ],
+     [
+      40,
+      20
+     ],
+     [
+      0,
+      40
+     ],
+     [
+      20,
+      40
+     ],
+     [
+      40,
+      40
+     ]
+    ]
+   }
+  },
+  {
+   "id": "life-soup-early",
+   "sha256": "052dcd4a49c31798201219476777610e00951287ded3890c5ec4b42625b44f94",
+   "params": {
+    "density256": 64,
+    "seed": 20649
+   }
+  },
+  {
+   "id": "random-bits",
+   "sha256": "1942adbfcc27dda40dcb5d5dd0225aee1386af03beb56d508c6cd53a80b73586",
+   "params": {
+    "seed": 2839
+   }
+  },
+  {
+   "id": "random-static",
+   "sha256": "04adb46d8b1d8dc371aecd00f0b76a9a63a103a4fc7d097416fcc82c3bdf0453",
+   "params": {
+    "seed": 22439
+   }
+  },
+  {
+   "id": "blobs-diffuse",
+   "sha256": "153655ccc915d6d22b26c16c7db3a1d6971e1afea1560caa7c79a69c4681ad19",
+   "params": {
+    "particles": 600,
+    "side": 12,
+    "seed": 45323,
+    "cap": 15,
+    "latentTotal": 600,
+    "saturatedCellFrames": 0,
+    "maxCount": 14,
+    "observed": "min(count, 15); saturation is counted, not hidden"
+   }
+  },
+  {
+   "id": "ecology-clip",
+   "sha256": "ba53597f6a769b159e5f0e4c5fc2df412c17a57dfc185d69ae63276d8ca06d52",
+   "params": {
+    "protocol": {
+     "preset": "spots",
+     "seed": 1,
+     "override": {
+      "tileW": 32,
+      "tileH": 32
+     },
+     "frames": 96,
+     "stride": 4,
+     "channel": "B",
+     "shift": 5,
+     "cap": 15
+    },
+    "config": {
+     "ruleVersion": 1,
+     "seed": 1,
+     "tileW": 32,
+     "tileH": 32,
+     "tilesX": 1,
+     "tilesY": 1,
+     "eA": 0,
+     "eB": 10,
+     "eC": 2,
+     "eP": 12,
+     "massUnit": 256,
+     "kernelRadius": 9,
+     "thetaMass": 512,
+     "dtQ": 51,
+     "spread": 8,
+     "defaultMu": 60,
+     "defaultSigma": 20,
+     "diffA": 200,
+     "diffC": 200,
+     "diffS": 150,
+     "gateK": 64,
+     "kCatHalf": 128,
+     "kPhoto": 160,
+     "kResp": 128,
+     "kDecomp": 96,
+     "kGrow": 128,
+     "kBuild": 64,
+     "kEmit": 64,
+     "kCost": 64,
+     "kMaint": 200,
+     "kPDecay": 66,
+     "kBDecay": 20,
+     "kELeak": 330,
+     "kSDecay": 1300,
+     "kAbio": 400,
+     "mutRate": 429497,
+     "mutStep": 24,
+     "lightMode": "uniform",
+     "lightBase": 40,
+     "lightAmp": 160,
+     "seasonPeriod": 0,
+     "seasonAmp": 0,
+     "eventCap": 65536,
+     "neutral": false,
+     "motility": true
+    },
+    "init": {
+     "kind": "generalist",
+     "founders": 6,
+     "nutrient": 32,
+     "biomass": 64
+    }
+   }
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "8d577be4",
+  "node": "v24.2.0",
+  "fflate": "0.8.3",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-01T21:20:06.120Z"
+ }
+}
