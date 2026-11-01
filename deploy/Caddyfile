@@ -42,6 +42,8 @@
   # Volumetric particle playground stays local.
   @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
   respond @private_spatial 404
+  @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
+  respond @private_predictability 404
 
   # Program soup (self-replicating byte programs) stays local.
   @private_soup path_regexp private_soup (?i)^/soup(?:/|$)
