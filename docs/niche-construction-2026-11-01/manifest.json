@@ -1,0 +1,53 @@
+{
+ "kind": "niche-evidence-manifest",
+ "payloadFileSha256": "5979f4a924c8cf6a093202886c43c3ca753d78f573d706f77747b9a9d28a9904",
+ "integritySha256": "504747c42a18298d1ee10a5880ad30f4d09efd2c1bd3987658af0ad79eb3d66d",
+ "protocolHash": "4d782009c08987a8177d6bee7d6d9c3ff4ab0260d49434626810e01243046f3d",
+ "registryDigest": "b512b2e22930336aa452cfcb8b949d0059f3a1f7f72ebf5df38bdfabef67da5b",
+ "stepProjection": {
+  "formula": "blocks * (2*T1 + 10*T2) + devBlocks * 2*T2 + wall runs (4 * 2 * wallSeeds * T2) + fixtures (5 * seeds * 9 * fixtureT2 + seeds * 9 * T2)",
+  "blocks": 36,
+  "steps": 60320
+ },
+ "sources": {
+  "packages/runner/src/niche/arms.ts": "e8be7a27bfb8243666b4077ef1af5207d06a5d426478c6946216de1e649a0035",
+  "packages/runner/src/niche/assay.ts": "85165d5b1976d0e356a591b2356b3598e527f4432ed8bf370bcea034944127be",
+  "packages/runner/src/niche/decision.ts": "1c15ea31742d0404900fdf98349cc6f5b17c4d742e2f4406bd7793b9e2991976",
+  "packages/runner/src/niche/evidence.ts": "ebbd9a5203f582d26ab589e93d051092f4bfc0fe9fff9c0320ab27c179d9fa43",
+  "packages/runner/src/niche/fixtures.ts": "4f3d6e549a6fdebafeb94596d018758d144a71d5d6752ff084321940e0448282",
+  "packages/runner/src/niche/index.ts": "3cf89c1500dd1ca9d37aa371261f5d1c645e2b766ac966efec4fd3f12361c8e0",
+  "packages/runner/src/niche/protocol.ts": "4df2401540d73486373aa13f6dc2f74f2b69d28bf15ac426e5997c07816d634e",
+  "packages/runner/src/niche/transfer.ts": "e279476dd9a22e590f7279dbc6469045fffa63246ed9c99678adce6961e82202",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "tools/niche/niche.ts": "a21772f1dfa9694d10fa52cb3b78f74b2f4a4bbd7ac43d21b36f8b6c9f7c9df7"
+ },
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "dc7dbbde",
+  "node": "v24.2.0",
+  "platform": "darwin-arm64",
+  "regenerationSeconds": 83,
+  "generatedAt": "2026-11-02T06:33:55.989Z"
+ }
+}
