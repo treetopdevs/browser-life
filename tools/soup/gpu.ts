@@ -1,8 +1,10 @@
 // WebGPU version of the BFF soup step (tools/soup/bff.ts). One invocation runs
 // one pair: load, mutate with the same SplitMix64 keys, evaluate, store. The
 // CPU still does the per-epoch shuffle (Soup.prepare), so the GPU soup equals
-// the CPU soup byte for byte; tools/test/soup.test.ts and `tools/soup.ts
-// --check` compare them.
+// the CPU soup byte for byte; tests/deno/soup_gpu.ts compares them. That holds
+// only for work the GPU actually runs: it can silently drop work under
+// contention, so Deno tools step with stepChecked/advance (which redo a short
+// batch) and take the one-process lock in tools/soup/device.ts.
 import { type Lang, Soup, type SoupParams, STEPS, TAPE } from "./bff.ts";
 
 const WGSL = /* wgsl */ `
@@ -135,14 +137,9 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
     }
     progs[a + w] = x; progs[b + w] = y;
   }
+  atomicAdd(&ops[2], 1u); // pairs finished: a short count means the GPU dropped work (see stepChecked)
 }
 `;
-
-export async function soupDevice(): Promise<GPUDevice> {
-  const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
-  if (!adapter) throw new Error("WebGPU: no adapter");
-  return adapter.requestDevice();
-}
 
 export class GpuSoup {
   readonly cpu: Soup; // holds seed, epoch and the shuffle; programs are synced on read()
@@ -161,7 +158,7 @@ export class GpuSoup {
     this.progs = d.createBuffer({ size: p.num * TAPE, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
     this.orderBuf = d.createBuffer({ size: p.num * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
     this.params = d.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    this.opsBuf = d.createBuffer({ size: 8, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+    this.opsBuf = d.createBuffer({ size: 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
     this.pipeline = d.createComputePipeline({ layout: "auto", compute: { module: d.createShaderModule({ code: WGSL }), entryPoint: "main" } });
     this.bind = d.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(0),
@@ -208,21 +205,57 @@ export class GpuSoup {
     }
   }
 
+  /** Pairs finished in the epochs since the last read() (set by read()). */
+  lastDone = 0;
+  /** Tests only: the next this many read()s report one pair short, as if the GPU had dropped work. */
+  dropForTest = 0;
+
   /** Waits for queued work, copies programs into cpu.programs, and returns instructions executed since the last read. */
   async read(): Promise<number> {
     const d = this.device;
     const staging = d.createBuffer({ size: this.cpu.num * TAPE, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
-    const opsStaging = d.createBuffer({ size: 8, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    const opsStaging = d.createBuffer({ size: 16, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
     const enc = d.createCommandEncoder();
     enc.copyBufferToBuffer(this.progs, 0, staging, 0, this.cpu.num * TAPE);
-    enc.copyBufferToBuffer(this.opsBuf, 0, opsStaging, 0, 8);
+    enc.copyBufferToBuffer(this.opsBuf, 0, opsStaging, 0, 16);
     d.queue.submit([enc.finish()]);
-    d.queue.writeBuffer(this.opsBuf, 0, new Uint32Array([0, 0]));
+    d.queue.writeBuffer(this.opsBuf, 0, new Uint32Array([0, 0, 0, 0]));
     await Promise.all([staging.mapAsync(GPUMapMode.READ), opsStaging.mapAsync(GPUMapMode.READ)]);
     this.cpu.programs.set(new Uint8Array(staging.getMappedRange()));
     const o = new Uint32Array(opsStaging.getMappedRange());
     const ops = o[0] + o[1] * 2 ** 32;
+    this.lastDone = o[2];
+    if (this.dropForTest > 0) { this.dropForTest--; this.lastDone--; }
     staging.destroy(); opsStaging.destroy();
     return ops;
+  }
+
+  /**
+   * Runs `n` epochs and reads back, checking that every pair of every epoch
+   * finished. The GPU can silently drop work (other GPU processes, or the
+   * desktop, competing for it; found 2026-11-01), which leaves the count short;
+   * then the batch is undone from cpu.programs (the state before it) and run
+   * again, up to `tries` times. Returns instructions executed and retries used.
+   */
+  async stepChecked(n: number, tries = 20): Promise<{ ops: number; retries: number }> {
+    const before = this.cpu.programs.slice(), epoch = this.cpu.epoch, runs = this.cpu.runs;
+    for (let t = 0; t < tries; t++) {
+      this.step(n);
+      const ops = await this.read();
+      if (this.lastDone === n * (this.cpu.num / 2)) return { ops, retries: t };
+      this.cpu.programs.set(before); this.cpu.epoch = epoch; this.cpu.runs = runs;
+      this.upload();
+    }
+    throw new Error(`GPU soup: ${n} epochs from ${epoch} dropped work ${tries} times`);
+  }
+
+  /** stepChecked over `n` epochs in batches of at most `batch`; returns instructions executed and retries used. */
+  async advance(n: number, batch = 64): Promise<{ ops: number; retries: number }> {
+    let ops = 0, retries = 0;
+    for (let left = n; left > 0; left -= batch) {
+      const r = await this.stepChecked(Math.min(batch, left));
+      ops += r.ops; retries += r.retries;
+    }
+    return { ops, retries };
   }
 }

@@ -132,4 +132,50 @@ Reported beside the headline:
 
 ## Readout
 
-_Not yet run._
+Added 2026-11-01, after every race had run. No rule above changed after the first result.
+
+**How it was run.** `runs/soup/evo2-pipeline.sh`: the pilot, `soup-evo2.ts pilot-check`, `plan --horizon 512`, 8 CPU workers on `soup-evo.ts assay`, then `soup-evo2.ts analyze`. 2,112 jobs, 0 missing, 0 invalid runs. Output: `runs/soup/evo2/results.json`.
+
+**Pilot: H = 512.** All 8 pilot runs were valid at 1,024. wm6's four had 13–20% "other", but wm8's four had 50–73%, so the go rule failed and the fallback ran: 512 epochs, 16 seeds per direction (101–116), marker controls on 201–216.
+
+### Headline: **"Copiers keep replacing each other; improvement not shown"**
+
+Not provisional this time: every marker control was unresolved (below).
+
+| Lineage | Competitors | Resolved pairs | Later won | q | p | Verdict | Median abs(D) |
+|---|---|---|---|---|---|---|---|
+| wm2 | 4 | 1 of 6 | 1 | 1.00 | 0.50 | INSUFFICIENT EVIDENCE | 0.029 |
+| wm6 | 6 | 11 of 15 | 7 | 0.64 | 0.35 | NO DIRECTION | 0.100 |
+| wm8 | 7 | 1 of 21 | 1 | 1.00 | 0.50 | INSUFFICIENT EVIDENCE | 0.022 |
+| g1 | 7 | 6 of 21 | 6 | 1.00 | 0.083 | NO DIRECTION | 0.029 |
+
+- All four lineages are TURNOVER (run 1's censuses). None is ADAPTIVE, so rule 2 of the headline applies.
+- No pair failed or coexisted, and there are no CYCLIC triples.
+- With 63 pairs, about 0.6 false resolutions are expected if no pair truly differs. 19 resolved.
+
+**Marker controls (sanity check).** wm6 (D = −0.016, p = 0.39), wm8 (D = −0.030, p = 0.26) and g1 (D = +0.027, p = 0.28) were all unresolved, with 16 of 16 valid runs per side. wm2 had no usable marker. Run 1's wm6 asymmetry did not recur with two symmetric markers.
+
+### What the resolved races show
+
+- **The first leader lost every resolved race in wm6 and g1.**
+  - wm6's T0 leader bd6f64ad lost all four of its resolved races, to a240625b, 017d10fc, c86d2138 and 55e27793. Its race with 0f5728c7 was unresolved.
+  - g1's T0 leader d9daa193 lost all five of its resolved races, to 77bbcc97, 19f5adcf, d16f0a27, 04b6b27f and 3ec8492f. Its race with 92d2b1af was unresolved.
+- **After that, no direction.**
+  - wm6's next two leaders (a240625b, 017d10fc) beat the later c86d2138 and 0f5728c7. The last leader, 55e27793, beat c86d2138, 0f5728c7 and bd6f64ad. That gives 7 later wins out of 11 resolved races.
+  - g1's only resolved race not involving its first leader is 19f5adcf over 77bbcc97 (D = −0.49). Every g1 race resolved for the later side, but five of the six involve the first leader. The order test (p = 0.083) does not reach 0.05, so the frozen rule gives NO DIRECTION, though q = 1.
+- **wm2 and wm8: INSUFFICIENT EVIDENCE.** One pair each resolved (989bcdcb over e858e219; 58aa44ea over d0f19982), and the median abs(D) is about 0.02–0.03. Small differences between their leaders may exist below what 16 seeds can resolve; these races do not show whether they do.
+- **Against run 1.** Sixteen seeds resolved 19 of 63 pairs, against 11 in run 1. Of the 19, 15 went to the later leader. Run 1's suspicion that g1 "rises and then falls back" did not recur: 77bbcc97's run-1 wins over the last three leaders were not resolved here.
+
+### What it means
+
+In wm6 and g1, the first leader after takeover lost every resolved race against later leaders. After that, the soups keep changing leaders without progress measurable at this resolution. That is turnover, not demonstrated adaptation. The rules give the same headline as run 1, now without the provisional mark.
+
+The Red Queen test ([soup-redqueen-2026-11-01.md](soup-redqueen-2026-11-01.md)) asks whether these later leaders do better against copiers from other soups.
+
+### A caveat found afterwards: the long soups ran two GPU processes at once
+
+Found 2026-11-01 while preparing the Red Queen test, after this rerun finished.
+- **The defect.** The GPU soup on this Mac can silently drop work. Two GPU processes started from the same snapshot and seed at the same time ran fewer instructions in the first 64 epochs than a solo run (about 7.0–7.2 billion against 7.8 billion), with no error reported, and ended with almost every program different. A solo process usually matched the CPU, but one solo run of 64 epochs did not (7.74 against 7.81 billion instructions). So no unchecked GPU run, solo or not, is guaranteed exact. GPU steps are now checked and redone when work is dropped (`tools/soup/gpu.ts`), and one GPU process runs at a time (`tools/soup/device.ts`).
+- **Where it applies.** Run 1's long post-takeover soups ran unchecked, two at a time (`runs/soup/evo-queue.txt`). So the lineage histories (which leaders appeared, and when) come from GPU runs that were not exact cubff runs.
+- **What it does not touch.** Every race in run 1 and in this rerun ran on the CPU, which is exact. So the competitors are real programs that led real (if imperfectly simulated) soups, and their races stand as measured.
+

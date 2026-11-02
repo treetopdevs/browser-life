@@ -174,6 +174,8 @@ Added 2026-11-01, after every assay had run. No rule above changed after the fir
 - Censuses, plan, assays and analysis: `runs/soup/evo-pipeline.sh`, which calls `deno run -A --no-lock tools/soup-evo.ts census | plan | assay | analyze` (744 jobs, 0 missing). Output: `runs/soup/evo/results.json`.
 - g1's resume to step 53,248 crashed on its first attempt, with no error kept. It was rerun unchanged from the same snapshot, `soup-21057.bin`; a resume is byte-exact, so the rerun is the run.
 
+**Amendment 2026-11-01 (after the readout): GPU caveat.** The GPU soup on this Mac can silently drop work, almost always with two GPU processes at once and occasionally alone (details in [the rerun's readout](soup-evolution-rerun-2026-10-31.md#a-caveat-found-afterwards-the-long-soups-ran-two-gpu-processes-at-once)). The long post-takeover soups here ran unchecked, two at a time, so the lineage histories are not exact cubff runs, and "a resume is byte-exact" below is not guaranteed for them. Every race ran on the CPU and stands as measured. The rerun has since given the same headline without the provisional mark.
+
 ### Headline: **"Copiers keep replacing each other; improvement not shown"**, marked **provisional (calibration failed)**
 
 | Lineage | Sustained leader changes | Competitors | Resolved pairs | Later won | q | p | Verdict | Grid (secondary) |
