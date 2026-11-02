@@ -1,0 +1,7 @@
+- **P2 — Negative half-integer medians render incorrectly.** [render.ts:6](/Users/nicholas/develop/browser-life-i06-niche-construction/apps/lab/src/niche/render.ts:6) uses `Math.floor` before appending `.5`. The saved cluster-0 spatial median displays **−35.5 instead of −34.5**; cluster-4 inoculum median displays **−25.5 instead of −24.5**.
+
+- **P3 — FIX log overstates freeze-order verification.** [REVIEW.md:69](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/REVIEW.md:69) says `--check` verifies lock time precedes evidence time. It does not: substituting `frozenAt=2099` in memory still returned no problems. Only the separate test checks ordering.
+
+- **P3 — A stated limitation contradicts the new positive fixture.** [EVIDENCE.md:25](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/EVIDENCE.md:25) says a spatial benefit “cannot beat” the inoculum controls. Yet `hand-wall-gate-W2` beats them in all eight blocks, with inoculum contrasts **+33 to +270**. The page repeats this categorical claim through `LIMITS`; qualify it.
+
+Read-only `--check` passed. Dissipation arithmetic passed positive, negative, large-BigInt, zero-E and over-budget probes. Normal, stopped and invalid payloads rendered without throwing. The measurement-limited verdict and reported numerical results match the JSON. New seeds are disjoint; REVIEW adequately discloses first-pass influence. No evidence of new-seed previewing was found.

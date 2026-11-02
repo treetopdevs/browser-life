@@ -44,6 +44,8 @@
   respond @private_spatial 404
   @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
   respond @private_predictability 404
+  @private_niche path_regexp private_niche (?i)^/niche(?:/|$)
+  respond @private_niche 404
   @private_controller_locality path_regexp private_controller_locality (?i)^/controller-locality(?:/|$)
   respond @private_controller_locality 404
   @private_opponents path_regexp private_opponents (?i)^/opponents(?:/|$)

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: does what a builder leaves behind help a receiver, with every transfer audited to zero?">
+  <title>Does a builder open a niche? · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the result</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / niche construction</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">First causal rung</p>
+      <h1>Does what a builder leaves behind help a receiver?</h1>
+      <p>A builder lineage conditions a small world: it lays down polymer and reshapes the nutrient, waste and energy around it. Then the builder is taken away, a receiver is placed on empty ground, and we ask whether the leftovers, and not something else, help it. Every transfer moves matter and energy by exact accounting, and the same receiver is also run against copies of the world that keep the totals but lose the structure, or give the receiver the energy alone.</p>
+      <p class="disclosure">Exploratory, CPU only, no GPU evidence, mutation off. A local experiment, kept off the public site. A negative here means "no causal benefit detected in this small panel, horizon and field", not that a second link is impossible.</p>
+    </section>
+
+    <section class="verdict" id="verdict" aria-labelledby="verdict-heading" aria-live="polite">
+      <h2 id="verdict-heading">What the pre-stated rules say</h2>
+    </section>
+
+    <section aria-labelledby="arms-heading">
+      <h2 id="arms-heading">The arms, side by side</h2>
+      <div class="controls"><label for="cand">Builder candidate<select id="cand"></select></label></div>
+      <div class="edge" id="edge"></div>
+      <p class="muted">Bars show the receiver's labelled biomass at the end of the assay: the median over the fresh blocks, with one tick per block. Higher is more receiver biomass; it can rise by relabelling detritus, so it is called an inventory, not growth, unless flux attribution says so.</p>
+      <ul class="arms" id="arms"></ul>
+    </section>
+
+    <section class="table-section" aria-labelledby="c-heading">
+      <h2 id="c-heading">The four contrasts that decide the edge</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Contrast table, scrolls sideways on narrow screens">
+        <table><caption>Paired differences per block with an exact one-sided sign test (zeros count as not positive). All four must pass, with the median above the noise floor delta and the survival rule, for the edge to be supported.</caption>
+          <thead><tr><th scope="col">Contrast</th><th scope="col">Blocks positive</th><th scope="col">Sign-test p</th><th scope="col">Median</th><th scope="col">Result</th></tr></thead>
+          <tbody id="contrasts"></tbody></table>
+      </div>
+      <p class="muted" id="flux"></p>
+    </section>
+
+    <section class="table-section" aria-labelledby="l-heading">
+      <h2 id="l-heading">Budget before the receiver arrives</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Budget table, scrolls sideways on narrow screens">
+        <table><caption>Totals at the start of the assay, one block. The receiver reserve is carried off the lattice from step 0. The last column is the exact energy and matter residual of every transfer in that arm.</caption>
+          <thead><tr><th scope="col">Arm</th><th scope="col">Matter</th><th scope="col">Energy</th><th scope="col">Reserve left</th><th scope="col">Residual</th></tr></thead>
+          <tbody id="ledger"></tbody></table>
+      </div>
+      <p class="muted" id="ledger-note"></p>
+      <div class="scroll" tabindex="0" role="region" aria-label="Builder cost table, scrolls sideways on narrow screens">
+        <table><caption>What conditioning left behind in the same block (matter and energy at the end of the conditioning stage).</caption>
+          <thead><tr><th scope="col">History</th><th scope="col">Biomass B</th><th scope="col">Polymer P</th><th scope="col">Free energy E</th><th scope="col">Builder-lineage B</th></tr></thead>
+          <tbody id="cost"></tbody></table>
+      </div>
+    </section>
+
+    <section class="table-section" aria-labelledby="f-heading">
+      <h2 id="f-heading">Can the naive metric be fooled? Fixtures</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Fixture table, scrolls sideways on narrow screens">
+        <table><caption>The naive metric says "more receiver biomass after conditioning than without it". In the energy-gift worlds the only difference is extra stored energy and no polymer: the naive metric reports a benefit, the matched-inventory and energy-matched controls catch it. The last row sends a hand-built polymer wall under the receiver through the whole four-contrast gate, to show the gate can say supported.</caption>
+          <thead><tr><th scope="col">Fixture</th><th scope="col">Naive metric says</th><th scope="col">Matched controls</th><th scope="col">Edge label</th></tr></thead>
+          <tbody id="fixtures"></tbody></table>
+      </div>
+      <p class="muted" id="guards"></p>
+    </section>
+
+    <section class="table-section" aria-labelledby="d-heading">
+      <h2 id="d-heading">Calibration on dev seeds (not evidence)</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Calibration table, scrolls sideways on narrow screens">
+        <table><caption>Hand-built positive control: a polymer structure against the same polymer scrambled. W2 is a floor under the receiver cells (protects against wounds; the real assay never places a receiver on polymer, so this only shows structure can be detected), W1 a ring around them. It tests the structure-versus-scramble contrast only, not the four-contrast gate. Builder-scale rows re-run it at the polymer the builders actually leave.</caption>
+          <thead><tr><th scope="col">Structure</th><th scope="col">Blocks positive</th><th scope="col">Sign-test p</th><th scope="col">Median</th><th scope="col">Assay</th></tr></thead>
+          <tbody id="wall"></tbody></table>
+      </div>
+      <div class="scroll" tabindex="0" role="region" aria-label="Noise floor table, scrolls sideways on narrow screens">
+        <table><caption>Noise floor delta from re-running the same conditioned field with a different assay random seed. A candidate is adequately measured only when the builder left more polymer (median) than that noise floor.</caption>
+          <thead><tr><th scope="col">Candidate</th><th scope="col">Builder polymer at end of conditioning (median)</th><th scope="col">delta</th><th scope="col">Measurement</th></tr></thead>
+          <tbody id="devrows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">Limits</h2>
+      <ul class="limits" id="limits"></ul>
+      <p class="muted">Exploratory, CPU only, no GPU evidence, not on the public site. No score here selected anything.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/niche/page.ts"></script>
+</body>
+</html>
