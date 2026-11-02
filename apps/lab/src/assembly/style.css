@@ -1,0 +1,22 @@
+@import '../particles/style.css';
+.disclosure{padding:12px 15px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.65}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{border:1px solid #34484e;border-radius:10px;background:#101e24;padding:12px;min-width:0}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:600}
+.tag{font-size:11px;font-weight:400;color:#f2dfb7;border:1px solid #7b6744;border-radius:10px;padding:1px 7px;margin-left:6px}
+.prov{margin:6px 0;font-size:12px;line-height:1.55;color:#b4c4c0}
+.card canvas{display:block;width:100%;height:auto;aspect-ratio:1;background:#08151c;border-radius:4px;image-rendering:pixelated}
+.readouts{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:8px 0 0;font-size:12px;color:#b4c4c0}
+.readouts dt{margin:0}.readouts dd{margin:0;color:#e9f1ec;font-variant-numeric:tabular-nums;text-align:right}
+.table-section{margin-top:28px}
+.scroll{overflow-x:auto;border:1px solid #34484e;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+caption{text-align:left;padding:10px;color:#9cadaa;font-size:12px;line-height:1.55}
+th,td{padding:7px 10px;border-top:1px solid #2b3e43;text-align:left;white-space:nowrap}
+#vtable td:last-child{white-space:normal;min-width:260px}
+thead th{color:#aebbb7}
+.caption{margin:28px 0 48px;padding:16px;border:1px solid #7b6744;border-radius:10px;background:#221f19}
+.caption h2{margin-top:0;color:#f2dfb7}
+.caption li{margin:7px 0;line-height:1.6;color:#e3d7bd;font-size:14px}
+.skip{position:absolute;left:-10000px}.skip:focus{left:10px;top:10px;z-index:10;background:#fff;color:#000;padding:10px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}

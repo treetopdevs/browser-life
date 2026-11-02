@@ -44,6 +44,8 @@
   respond @private_spatial 404
   @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
   respond @private_predictability 404
+  @private_assembly path_regexp private_assembly (?i)^/assembly(?:/|$)
+  respond @private_assembly 404
   @private_niche path_regexp private_niche (?i)^/niche(?:/|$)
   respond @private_niche 404
   @private_moving_light path_regexp private_moving_light (?i)^/moving-light(?:/|$)

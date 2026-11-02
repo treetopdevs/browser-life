@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: an assembly-inspired construction-length observer run on matched calibration objects.">
+  <title>Assembly observer · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the observer</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / assembly observer</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">An observer calibration</p>
+      <h1>Does copying a random motif look like building something?</h1>
+      <p>Each picture is a 64 by 64 patch with exactly 240 occupied cells. A small, openly assembly-inspired grammar says how cheaply each object can be built from single cells when finished pieces can be reused. Construction length, copy count and persistence are read apart, next to simple baselines (cell count, compressed size). The test that matters is the pair <strong>hier-12</strong> (a hand-built nested shape) against <strong>random-dup-12</strong> (a random shape of the same size, copied the same number of times).</p>
+      <p class="disclosure">CPU only: deterministic integer fixtures, no GPU evidence. Local experiment, kept off the public site. Values are the construction length under this grammar: exact for objects up to 10 cells, otherwise an upper bound from a bounded search. The 12-cell comparison objects are above that line, so their costs are upper bounds, and the 12-cell random shapes were picked by those bounds (see the note under the verdicts). It is not the published assembly index and it does not say whether anything here is alive.</p>
+      <p id="status" class="muted" role="status">Drawing the patches from the saved evidence and checking each against its saved hash.</p>
+    </section>
+
+    <section aria-labelledby="cards-heading">
+      <h2 id="cards-heading">Calibration objects (replicate 0 of 16)</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section class="table-section" aria-labelledby="table-heading">
+      <h2 id="table-heading">The same numbers as a table</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Readout table, scrolls sideways on narrow screens">
+        <table id="table"><caption>Each cell is the range over the 16 replicates. Shared bound and reuse ratio are costs, so lower means more reuse. Each readout is its own column; nothing is blended.</caption><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section class="table-section" aria-labelledby="verdict-heading">
+      <h2 id="verdict-heading">Verdicts, by the rule fixed before scoring</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Verdict table, scrolls sideways on narrow screens">
+        <table id="vtable"><caption>Order accuracy is for hier-12 against random-dup-12 over all 256 replicate pairs. A readout separates only if every pair is ordered the declared way, in every segmentation variant.</caption><thead><tr><th scope="col">Readout</th><th scope="col">Declared direction</th><th scope="col">Pairs ordered</th><th scope="col">Segmentation variants</th><th scope="col">Verdict</th></tr></thead><tbody></tbody></table>
+      </div>
+      <p id="gap" class="muted"></p>
+      <p class="muted">Shared bound measures the cost of the distinct shapes in a patch, not how many copies there are: it is the same at 2 and at 4 copies. It separates the pair on per-shape cost alone. Of the four segmentation variants, only the touching-pairs variant at 8-connectivity is an independent test; the spaced 8-connectivity variant is identical to the spaced 4-connectivity one by construction, and the touching-pairs 4-connectivity variant uses the same 12-cell objects with different placement.</p>
+    </section>
+
+    <section class="table-section" aria-labelledby="movie-heading">
+      <h2 id="movie-heading">Movies and clips: persistence and sampling</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Movie table, scrolls sideways on narrow screens">
+        <table id="mtable"><caption>Whole-movie values at 4-connectivity and threshold 1, read apart from the construction readouts. Persistence is the share of earlier shapes that reappear after the lag; the column &ldquo;Persistence lag 1, every 4th frame&rdquo; is the same measure when only every fourth frame is looked at. The last column says what moves the counts by a factor of two across the grid: connectivity, the occupancy threshold, or both. Clips are descriptive only and not matched.</caption><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">Why this is not yet evidence of life</h2>
+      <ul>
+        <li>A random shape copied many times is expensive to build once and cheap to copy. A naive "cost times copies" score rewards the copying, not the building.</li>
+        <li>The hierarchy is hand-built by us. Passing it shows the readout tracks that construction, not that nature does.</li>
+        <li>What counts as one object depends on the segmentation rule; the touching-pairs control shows how much.</li>
+        <li>Construction lengths above 10 cells are upper bounds from a heuristic search, never an exact index. Compression is a baseline, not an assembly index.</li>
+        <li>Destruction and reconstruction interventions are a later rung and have not been done. No evolving-world clip is a positive case.</li>
+      </ul>
+      <p class="muted">CPU only, deterministic integer fixtures, no GPU evidence, not on the public site. No score selected which worlds or clips were shown; the negative-class motifs are picked by construction-length score (best of 256 candidates).</p>
+    </section>
+  </main>
+  <script type="module" src="/src/assembly/page.ts"></script>
+</body>
+</html>
