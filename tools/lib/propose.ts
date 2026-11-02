@@ -55,6 +55,8 @@ export function canonical(v: unknown, path = "$"): string {
   throw new Error(`canonical: ${path} has unsupported type ${typeof v}`);
 }
 const sha = (text: string): string => sha256HexJS(new TextEncoder().encode(text));
+/** SHA-256 hex of a text (additive export for tools/lib/prediction, which hashes its envelopes the same way). */
+export const sha256Text = sha;
 export const bodySha256 = (body: ProposalBody): string => sha(canonical(body));
 export const proposalId = (body: ProposalBody): string => bodySha256(body).slice(0, 16);
 /** The SHA-256 of a run spec's canonical JSON: two rings that propose the same run are one proposal (the note, "Which rings"). */
