@@ -29,6 +29,11 @@ defmodule Coordinator.Application do
          data_dir: Application.get_env(:coordinator, :discovery_data_dir, "data-discovery"),
          queue_data_dir: Application.get_env(:coordinator, :data_dir, "data"),
          lease_ms: Application.get_env(:coordinator, :discovery_lease_ms, 120_000)},
+      Application.get_env(:coordinator, :start_soup, true) &&
+        {Coordinator.Soup,
+         data_dir: Application.get_env(:coordinator, :soup_data_dir, "data-soup"),
+         queue_data_dir: Application.get_env(:coordinator, :data_dir, "data"),
+         lease_ms: Application.get_env(:coordinator, :soup_lease_ms, 600_000)},
       # Start to serve requests, typically the last entry
       CoordinatorWeb.Endpoint
     ]

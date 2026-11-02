@@ -1,113 +1,144 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
-  <meta name="description" content="A grid of random byte programs where self-copying programs appear on their own and spread.">
-  <title>Program soup · Cadence Garden</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-</head>
-<body>
-  <a class="skip" href="#main">Skip to the soup</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / program soup</span></header>
-  <main id="main">
-    <section class="intro">
-      <p class="eyebrow">Life from noise</p>
-      <h1>Programs that learn to copy themselves</h1>
-      <p>Every square on the grid is a 64-byte program, random at the start. Each step, neighbours pair up: their bytes are joined into one tape, run as a tiny self-editing program, and split back. Nothing rewards copying and nothing declares a birth. Sooner or later, a program that happens to copy itself into its partner appears, and its copies spread across the grid.</p>
-      <p class="disclosure">A port of Google's cubff, the code behind <cite>Computational Life</cite> (Agüera y Arcas et al., 2024), checked byte for byte against its published numbers. The wait is long and luck-dependent: in our runs on the paper's 240 × 135 grid, one of two seeds produced copiers, after about 17,000 steps. "Plant copiers here" skips the wait.</p>
-    </section>
-
-    <section class="transport" aria-label="Soup controls">
-      <div class="buttons">
-        <button id="play" class="primary" type="button">Play</button>
-        <button id="step" type="button">One step</button>
-        <label for="pace">Speed<select id="pace">
-          <option value="1">1 · watch each step</option>
-          <option value="4">4 · steady</option>
-          <option value="max" selected>As fast as this GPU goes</option>
-        </select></label>
-        <label for="view">Show<select id="view">
-          <option value="families" selected>Families · copies share a colour</option>
-          <option value="bytes">Bytes · every byte of every program, as the paper draws it</option>
-        </select></label>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <meta name="description" content="A grid of random 64-byte programs where programs that copy themselves appear on their own and spread. Watch it, or plant one." />
+    <title>Program soup · Cadence Garden</title>
+    <link rel="canonical" href="https://cadence.garden/soup/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#soup-main">Skip to the soup</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="2.6" rx="1.3"/><path class="bm-jar" d="M8 14.5h16a3 3 0 0 1 3 3V26a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-8.5a3 3 0 0 1 3-3z"/><circle class="bm-life" cx="10.5" cy="25.6" r="1.5"/><circle class="bm-life" cx="15.6" cy="23.2" r="2.1"/><circle class="bm-life" cx="21.3" cy="20.4" r="2.7"/></svg><span>Cadence<span class="brand-light"> Garden</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
       </div>
-      <div class="clock"><span id="status" role="status">Starting…</span><strong>Step <span id="epoch">0</span></strong><span id="active-settings"></span></div>
-    </section>
+    </header>
+    <main id="main">
+      <section class="page-intro shell soup-intro">
+        <p class="eyebrow">A different chemistry · life from noise</p>
+        <h1>Programs that learn to copy themselves.</h1>
+        <p class="lede">Every square on the grid is a 64-byte program, random at the start. Each step, neighbours pair up: their bytes are joined into one tape, run as a tiny self-editing program, and split back. Nothing rewards copying and nothing declares a birth. Sooner or later a program that happens to copy itself into its partner appears, and its copies spread across the grid.</p>
+        <p class="soup-honest"><b>The wait is long and depends on luck.</b> On the paper’s 240 × 135 grid, one of our two seeds grew copiers, after about 17,000 steps; the other did not in the time we ran it. To skip the wait, click a square and press <b>Plant copiers here</b>.</p>
+      </section>
 
-    <section class="world-layout" aria-label="The soup and the program inspector">
-      <div class="world-panel">
-        <canvas id="world" width="1920" height="1080" tabindex="0" role="img" aria-label="The program soup, one square per program. In the family view, programs with the same instructions share a colour; in the byte view each program is an 8 by 8 block of its bytes. Click a square, or focus the grid and use the arrow keys (Shift for steps of 10), to inspect it.">Canvas unavailable. The counts below still update.</canvas>
-        <div id="legend-families" class="legend" aria-label="Family colours">
-          <span><i class="family"></i>A family: at least 3 programs with the same 6 or more instructions (data bytes ignored), one colour each</span>
-          <span><i class="loner"></i>Everything else: fewer than 3 copies, or fewer than 6 instructions</span>
+      <div id="soup-main" class="shell soup-main" tabindex="-1">
+        <section class="transport" aria-label="Soup controls">
+          <div class="buttons">
+            <button id="play" class="button primary" type="button" aria-pressed="false">Play</button>
+            <button id="step" class="button quiet" type="button">One step</button>
+            <label for="pace">Speed<select id="pace">
+              <option value="1">1 step at a time · watch each one</option>
+              <option value="4">4 steps per frame · steady</option>
+              <option value="max" selected>As fast as this GPU goes</option>
+            </select></label>
+            <label for="view">Show<select id="view">
+              <option value="families" selected>Families · copies share a colour</option>
+              <option value="bytes">Bytes · every byte of every program, as the paper draws it</option>
+            </select></label>
+          </div>
+          <div class="clock"><span id="status" role="status">Starting…</span><strong>Step <span id="epoch">0</span></strong><span id="active-settings"></span></div>
+        </section>
+
+        <section class="world-layout" aria-label="The soup and the program inspector">
+          <div class="world-panel">
+            <div class="jar-glass">
+              <canvas id="world" width="1920" height="1080" tabindex="0" role="img" aria-label="The program soup, one square per program. In the family view, programs with the same instructions share a colour; in the byte view each program is an 8 by 8 block of its bytes. Click a square, or focus the grid and use the arrow keys (Shift for steps of 10), to inspect it.">Canvas unavailable. The counts below still update.</canvas>
+            </div>
+            <div id="legend-families" class="legend" aria-label="Family colours">
+              <span><i class="sw-family"></i>A family: at least 3 programs with the same 6 or more instructions (data bytes ignored), one colour each</span>
+              <span><i class="sw-loner"></i>Everything else: fewer than 3 copies, or fewer than 6 instructions</span>
+            </div>
+            <div id="legend-bytes" class="legend" aria-label="Byte colours" hidden>
+              <span><i class="sw-loop"></i>Loop <code>[ ]</code></span>
+              <span><i class="sw-edit"></i>Copy or change <code>. , + -</code></span>
+              <span><i class="sw-move"></i>Move a head <code>&lt; &gt; { }</code></span>
+              <span><i class="sw-zero"></i>Zero byte</span>
+              <span><i class="sw-data"></i>Other bytes (do nothing)</span>
+            </div>
+          </div>
+          <aside class="panel inspector" aria-labelledby="inspect-heading">
+            <h2 id="inspect-heading">Inspect a program</h2>
+            <p id="inspect-hint" class="muted">Click a square on the grid, or focus the grid and use the arrow keys.</p>
+            <div id="inspect" hidden>
+              <p class="cell" aria-live="polite">Square <strong id="cell-xy"></strong></p>
+              <pre id="program" class="program" aria-label="The program's 64 bytes, as commands"></pre>
+              <p id="selfrep" class="selfrep"></p>
+              <p class="muted">The copy test runs this program against 13 random partners for 5 generations and counts the byte positions that come out the same in at least 4 of the 13 runs, taking the smaller count of the two halves (cubff’s own test). 64 of 64 means it reliably makes copies of itself.</p>
+              <button id="plant" class="button primary" type="button">Plant copiers here</button>
+              <p class="muted">Fills the 5 × 5 patch around this square with a copier that evolved in one of our runs (grid seed 1, step 16,961). One copier alone is often overwritten by its first partner. After planting, the soup is yours: it no longer matches an unplanted run with the same seed.</p>
+            </div>
+          </aside>
+        </section>
+
+        <section class="bottom-grid">
+          <div class="panel">
+            <h2>New soup</h2>
+            <form id="settings-form">
+              <label for="seed">Seed · the same seed gives the same soup<input id="seed" type="number" min="0" max="4294967295" step="1" value="1" required></label>
+              <label for="grid">Grid
+                <select id="grid">
+                  <option value="240x135">240 × 135 · the paper’s grid, 32,400 programs</option>
+                  <option value="120x68">120 × 68 · quicker steps, 8,160 programs, longer odds</option>
+                </select>
+              </label>
+              <label for="mutation">Mutation
+                <select id="mutation">
+                  <option value="0.000244140625">1 in 4,096 bytes per pairing · the paper’s rate</option>
+                  <option value="0.0009765625">1 in 1,024 · four times more noise</option>
+                  <option value="0">None · only what programs write changes the soup</option>
+                </select>
+              </label>
+              <button class="button quiet" type="submit">Start new soup</button>
+            </form>
+            <p class="muted">Seed, grid and mutation fix the whole history: the same three give the same soup byte for byte, here or with the command-line tool in the <a href="https://github.com/treetopdevs/browser-life">source code</a>, until you plant something.</p>
+          </div>
+          <div class="panel population-panel">
+            <h2>What the soup holds</h2>
+            <div class="population"><strong id="distinct">0</strong><span>different programs, out of <span id="total">0</span></span></div>
+            <dl class="stats">
+              <div><dt>Most common program</dt><dd id="top-count">0 copies</dd></div>
+              <div><dt>Its copy test</dt><dd id="top-selfrep">–</dd></div>
+              <div><dt>Instructions per pairing</dt><dd id="ops">–</dd></div>
+            </dl>
+            <canvas id="history" width="540" height="150" role="img" aria-label="Different programs over time. A sharp fall means copies of a few programs are taking over."></canvas>
+            <p class="chart-note"><span>Different programs over time. A sharp fall means copiers are taking over.</span><span id="chart-range"></span></p>
+          </div>
+        </section>
+      </div>
+
+      <section class="shell prose-grid soup-explain">
+        <div class="aside-label">How to read it</div>
+        <div class="prose">
+          <h2>Colour marks copies.</h2>
+          <p>In the family view a random soup is dark: almost every program is one of a kind. When copiers take over, a coloured patch grows outward from where they started. Each family has its own colour, picked at random from its instructions. A mutation that changes an instruction makes a new family with an unrelated colour, so competing variants look speckled, and a variant that wins turns its region one colour.</p>
+          <p>The byte view draws what the paper draws: every program as an 8 × 8 block of its bytes. It shows the most on a large screen, where copies of one program appear as a shared texture.</p>
+          <p>Each program only ever meets programs within two squares of it, so families spread as fronts instead of mixing at once. Mutation keeps throwing in random bytes; copiers survive it by copying faster than it wears them down.</p>
         </div>
-        <div id="legend-bytes" class="legend" aria-label="Byte colours" hidden>
-          <span><i class="loop"></i>Loop <code>[ ]</code></span>
-          <span><i class="edit"></i>Copy or change <code>. , + -</code></span>
-          <span><i class="move"></i>Move a head <code>&lt; &gt; { }</code></span>
-          <span><i class="zero"></i>Zero byte</span>
-          <span><i class="data"></i>Other bytes (do nothing)</span>
+      </section>
+      <section class="shell prose-grid soup-explain">
+        <div class="aside-label">Where it comes from</div>
+        <div class="prose">
+          <h2>A port of a published experiment.</h2>
+          <p>This is Google’s cubff, the code behind <cite>Computational Life</cite> (Agüera y Arcas and colleagues, 2024), ported to run in your browser and checked byte for byte against the original. It is not the lab’s chemistry: there is no matter, light or energy here, only programs rewriting each other. We keep it beside the jars because it asks the same question from the other end: what does it take for copying to start?</p>
+          <p>Without WebGPU the page falls back to a smaller 120 × 68 grid on the processor, which is much slower.</p>
         </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Cadence Garden</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
       </div>
-      <aside class="panel inspector" aria-labelledby="inspect-heading">
-        <h2 id="inspect-heading">Inspect a program</h2>
-        <p id="inspect-hint" class="muted">Click a square on the grid, or focus the grid and use the arrow keys.</p>
-        <div id="inspect" hidden>
-          <p class="cell" aria-live="polite">Square <strong id="cell-xy"></strong></p>
-          <pre id="program" class="program" aria-label="The program's 64 bytes, as commands"></pre>
-          <p id="selfrep" class="selfrep"></p>
-          <p class="muted">The copy test runs this program against 13 random partners for 5 generations and counts the byte positions that come out the same in at least 4 of the 13 runs, taking the smaller count of the two halves (cubff's own test). 64 of 64 means it reliably makes copies of itself.</p>
-          <button id="plant" type="button">Plant copiers here</button>
-          <p class="muted">Fills the 5 × 5 patch around this square with a copier that evolved in one of our runs (grid seed 1, step 16,961). One copier alone is often overwritten by its first partner. After planting, the soup no longer matches a run of <code>tools/soup.ts</code> with the same seed.</p>
-        </div>
-      </aside>
-    </section>
-
-    <section class="bottom-grid">
-      <div class="panel">
-        <h2>New soup</h2>
-        <form id="settings-form">
-          <label for="seed">Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="1" required></label>
-          <label for="grid">Grid
-            <select id="grid">
-              <option value="240x135">240 × 135 · the paper's grid, 32,400 programs</option>
-              <option value="120x68">120 × 68 · quicker, 8,160 programs, longer odds</option>
-            </select>
-          </label>
-          <label for="mutation">Mutation
-            <select id="mutation">
-              <option value="0.000244140625">1 in 4,096 bytes per pairing · the paper's rate</option>
-              <option value="0.0009765625">1 in 1,024 · four times more noise</option>
-              <option value="0">None · only what programs write changes the soup</option>
-            </select>
-          </label>
-          <button type="submit">Start new soup</button>
-        </form>
-        <p class="muted">Same seed, grid and mutation as <code>deno run -A tools/soup.ts --grid 240x135 --seed 1</code> gives the same soup byte for byte, until you plant something.</p>
-      </div>
-      <div class="panel population-panel">
-        <h2>What the soup holds</h2>
-        <div class="population"><strong id="distinct">0</strong><span>different programs, out of <span id="total">0</span></span></div>
-        <dl class="stats">
-          <div><dt>Most common program</dt><dd id="top-count">0 copies</dd></div>
-          <div><dt>Its copy test</dt><dd id="top-selfrep">–</dd></div>
-          <div><dt>Instructions per pairing</dt><dd id="ops">–</dd></div>
-        </dl>
-        <canvas id="history" width="540" height="150" role="img" aria-label="Different programs over time. A sharp fall means copies of a few programs are taking over."></canvas>
-        <p class="chart-note"><span>Different programs over time. A sharp fall means copiers are taking over.</span><span id="chart-range"></span></p>
-      </div>
-    </section>
-
-    <section class="explanation">
-      <div><p class="eyebrow">How to read this view</p><h2>Colour marks copies.</h2></div>
-      <div>
-        <p>In the family view, a random soup is dark: almost every program is one of a kind. When copiers take over, a coloured patch grows outward from where they started. Each family has its own colour, picked at random from its instructions; a mutation that changes an instruction makes a new family with an unrelated colour, so a population of competing variants looks speckled, and a variant that wins turns its region one colour.</p>
-        <p>The byte view draws what the paper draws: every program as an 8 × 8 block of its bytes. It shows the most detail on a large screen, where copies of one program appear as a shared texture.</p>
-        <p>Each program only ever meets programs within two squares of it, so families spread as fronts instead of mixing instantly. Mutation keeps throwing in random bytes; copiers survive it by copying faster than it erodes them.</p>
-      </div>
-    </section>
-  </main>
-  <script type="module" src="/src/soup/page.ts"></script>
-</body>
+    </footer>
+    <script type="module" src="/src/soup/page.ts"></script>
+    <script type="module" src="/src/theme.ts"></script>
+  </body>
 </html>

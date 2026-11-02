@@ -15,7 +15,7 @@ defmodule Coordinator.ConfigCheckTest do
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
                discovery_lease_ms garden_letter_window_ms garden_letter_table_max
-               garden_hands_sweep_ms garden_call_timeout_ms)a
+               garden_hands_sweep_ms garden_call_timeout_ms soup_lease_ms)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms
@@ -101,8 +101,8 @@ defmodule Coordinator.ConfigCheckTest do
                  discovery_validator dns_cluster_query garden_island_token garden_presets
                  garden_shared_address garden_scheduling
                  incompatible light_conditions metrics_version migration_period pond_period
-                 pond_presets presets public_garden rule_version start_discovery start_queue
-                 trust_forwarded_for world_light world_size)a
+                 pond_presets presets public_garden rule_version soup_data_dir start_discovery
+                 start_queue start_soup trust_forwarded_for world_light world_size)a
 
   # Files that read `:coordinator` config by a variable key, each reviewed, with
   # the number of such reads in it. A new variable-key read (a new helper, say)

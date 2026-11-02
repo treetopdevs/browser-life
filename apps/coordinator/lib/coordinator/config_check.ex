@@ -62,7 +62,7 @@ defmodule Coordinator.ConfigCheck do
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
                discovery_lease_ms garden_letter_window_ms garden_letter_table_max
-               garden_hands_sweep_ms garden_call_timeout_ms)a
+               garden_hands_sweep_ms garden_call_timeout_ms soup_lease_ms)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms

@@ -274,6 +274,12 @@ config :coordinator,
   discovery_cloud_envelope: nil,
   discovery_validator: nil
 
+# Shared soup (Coordinator.Soup; docs/soup-garden-2026-10-31.md Part B): its own
+# data directory, never inside :data_dir, and its segment lease (ms).
+config :coordinator,
+  soup_data_dir: "data-soup",
+  soup_lease_ms: 600_000
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

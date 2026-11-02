@@ -63,6 +63,22 @@ defmodule CoordinatorWeb.Router do
     put "/leases/:id/files/:name", DiscoveryController, :put_file
   end
 
+  # The shared soup (Coordinator.Soup): its own data directory; the queue's islands.
+  scope "/api/soup", CoordinatorWeb do
+    pipe_through :api
+    post "/worlds", SoupController, :register
+    get "/status", SoupController, :status
+    post "/next", SoupController, :next
+    post "/segments/:id/complete", SoupController, :complete
+  end
+
+  scope "/api/soup", CoordinatorWeb do
+    pipe_through :raw
+    get "/segments/:id/start", SoupController, :start
+    get "/segments/:id/snapshot", SoupController, :snapshot
+    put "/segments/:id/snapshot", SoupController, :put_snapshot
+  end
+
   scope "/api", CoordinatorWeb do
     pipe_through :raw
     put "/segments/:id/checkpoint", ApiController, :put_checkpoint
