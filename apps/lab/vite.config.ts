@@ -194,6 +194,7 @@ export default defineConfig({
       soup: r("./soup/index.html"),
       predictability: r("./predictability/index.html"),
       niche: r("./niche/index.html"),
+      movingLight: r("./moving-light/index.html"),
       controllerLocality: r("./controller-locality/index.html"),
       opponents: r("./opponents/index.html"),
       ecosystem: r("./ecosystem/index.html"),
