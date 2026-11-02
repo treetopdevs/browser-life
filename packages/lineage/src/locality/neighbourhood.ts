@@ -21,6 +21,16 @@ export const NEIGHBOURHOOD = {
   drawsPerMulti: 8,
 } as const;
 
+/** The knobs of a neighbourhood draw. `NEIGHBOURHOOD` is the PR136 panel; a larger panel widens the counts of the same families (docs/controller-locality-power-2026-11-02/AMENDMENT.md). */
+export interface NbParams {
+  salt: number;
+  singleSlots: { w1: number; b1: number; w2: number; b2: number };
+  drawsPerMulti: number;
+  /** Emit the equal-slot-count secondary family (it never entered the decision rule). */
+  secondary: boolean;
+}
+export const NB_V1: NbParams = { salt: NEIGHBOURHOOD.salt, singleSlots: NEIGHBOURHOOD.singleSlots, drawsPerMulti: NEIGHBOURHOOD.drawsPerMulti, secondary: true };
+
 export type Family = "single6" | "single24" | "multi2" | "multi4" | "multi2x24" | "multi4x24";
 export type EditClass = "unchanged" | "boundary-clamped" | "genuine";
 export type StratumKind = "w1" | "b1" | "w2" | "b2" | "physics" | "multi";
@@ -147,8 +157,8 @@ export interface Neighbourhood {
  * The neighbourhood of `base`: single-locus edits (per-kind stratified slot sample, two signed magnitudes), the matched-magnitude
  * multi-locus families and the equal-slot-count secondary family. Selection depends on (salt, genomeId, family, index) only.
  */
-export function buildNeighbourhood(base: Uint32Array, genomeId: string, cfg: WorldConfig = CTRL_CONFIG): Neighbourhood {
-  const N = NEIGHBOURHOOD;
+export function buildNeighbourhood(base: Uint32Array, genomeId: string, cfg: WorldConfig = CTRL_CONFIG, par: NbParams = NB_V1): Neighbourhood {
+  const N = { ...NEIGHBOURHOOD, salt: par.salt, singleSlots: par.singleSlots, drawsPerMulti: par.drawsPerMulti };
   const gid = strHash(genomeId);
   const key = (tag: string) => lowbias32((N.salt ^ gid ^ strHash(tag)) >>> 0);
   const edits: Edit[] = [];
@@ -175,7 +185,7 @@ export function buildNeighbourhood(base: Uint32Array, genomeId: string, cfg: Wor
     const s = multiSlots(k, d), sg = multiSigns(k, d);
     push(`multi${k}:${d}`, `multi${k}` as Family, "multi", s.map((slot, i) => ({ slot, opDelta: sg[i] * per })));
   }
-  for (const { k, per } of N.multiEqualCount) for (let d = 0; d < N.drawsPerMulti; d++) {
+  if (par.secondary) for (const { k, per } of N.multiEqualCount) for (let d = 0; d < N.drawsPerMulti; d++) {
     const s = multiSlots(k, d), sg = multiSigns(k, d);
     push(`multi${k}x24:${d}`, `multi${k}x24` as Family, "multi", s.map((slot, i) => ({ slot, opDelta: sg[i] * per })));
   }
@@ -185,23 +195,33 @@ export function buildNeighbourhood(base: Uint32Array, genomeId: string, cfg: Wor
 /** Stratified draw of edits to assay, frozen before any outcome: allocation[stratum] genuine, non-duplicate edits per stratum by counter draws. */
 export type Allocation = Record<string, number>;
 export const strataKey = (e: Pick<Edit, "family" | "kind">): string => `${e.family}/${e.kind}`;
-export function drawAssaySubset(nb: Neighbourhood, allocation: Allocation): { chosen: number[]; strata: Record<string, { population: number; chosen: number }> } {
+/** Genuine non-duplicate edits per stratum (`generated`), and those not excluded from the draw (`byStratum`, edit indices, eligible). */
+export function strataPools(nb: Neighbourhood, exclude?: ReadonlySet<string>): { generated: Record<string, number>; byStratum: Map<string, number[]> } {
   const byStratum = new Map<string, number[]>();
+  const generated: Record<string, number> = {};
   nb.edits.forEach((e, i) => {
     if (e.cls !== "genuine" || e.dupOf !== null) return;
     const k = strataKey(e);
+    generated[k] = (generated[k] ?? 0) + 1;
+    // Eligible: not an edit whose genome words an earlier panel already generated (zero inclusion probability).
+    if (exclude?.has(e.hash)) return;
     byStratum.set(k, [...(byStratum.get(k) ?? []), i]);
   });
+  return { generated, byStratum };
+}
+
+export function drawAssaySubset(nb: Neighbourhood, allocation: Allocation, salt: number = NEIGHBOURHOOD.salt, exclude?: ReadonlySet<string>): { chosen: number[]; strata: Record<string, { population: number; chosen: number }>; generated: Record<string, number> } {
+  const { generated, byStratum } = strataPools(nb, exclude);
   const gid = strHash(nb.genomeId);
   const chosen: number[] = [];
   const strata: Record<string, { population: number; chosen: number }> = {};
   for (const k of Object.keys(allocation).sort()) {
     const pool = byStratum.get(k) ?? [];
-    const take = pick(pool, allocation[k], lowbias32((NEIGHBOURHOOD.salt ^ gid ^ strHash(`assay:${k}`)) >>> 0));
+    const take = pick(pool, allocation[k], lowbias32((salt ^ gid ^ strHash(`assay:${k}`)) >>> 0));
     chosen.push(...take);
     strata[k] = { population: pool.length, chosen: take.length };
   }
-  return { chosen: chosen.sort((a, b) => a - b), strata };
+  return { chosen: chosen.sort((a, b) => a - b), strata, generated };
 }
 
 export const NN_SENSORS = NN_I;

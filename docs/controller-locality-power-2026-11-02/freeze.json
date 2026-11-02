@@ -1,0 +1,2360 @@
+{
+ "kind": "controller-locality-power-freeze",
+ "version": 1,
+ "statement": "Written before any edited genome of this panel was assayed. Baselines only: no mutant outcome exists when this file is made.",
+ "n": 192,
+ "allocations": {
+  "m3-c4": {
+   "144": {
+    "single6/w1": 16,
+    "single6/b1": 2,
+    "single6/w2": 14,
+    "single6/b2": 3,
+    "single6/physics": 1,
+    "single24/w1": 17,
+    "single24/b1": 3,
+    "single24/w2": 14,
+    "single24/b2": 2,
+    "multi2/multi": 36,
+    "multi4/multi": 36
+   },
+   "192": {
+    "single6/w1": 22,
+    "single6/b1": 2,
+    "single6/w2": 19,
+    "single6/b2": 4,
+    "single6/physics": 1,
+    "single24/w1": 22,
+    "single24/b1": 4,
+    "single24/w2": 19,
+    "single24/b2": 3,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   }
+  },
+  "m3-c9": {
+   "144": {
+    "single6/w1": 17,
+    "single6/b1": 3,
+    "single6/w2": 13,
+    "single6/b2": 2,
+    "single6/physics": 1,
+    "single24/w1": 17,
+    "single24/b1": 3,
+    "single24/w2": 13,
+    "single24/b2": 2,
+    "single24/physics": 1,
+    "multi2/multi": 36,
+    "multi4/multi": 36
+   },
+   "192": {
+    "single6/w1": 23,
+    "single6/b1": 4,
+    "single6/w2": 17,
+    "single6/b2": 3,
+    "single6/physics": 1,
+    "single24/w1": 23,
+    "single24/b1": 4,
+    "single24/w2": 17,
+    "single24/b2": 3,
+    "single24/physics": 1,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   }
+  }
+ },
+ "panel": {
+  "id": "power-v1",
+  "nb": {
+   "salt": 29416966,
+   "singleSlots": {
+    "w1": 40,
+    "b1": 8,
+    "w2": 32,
+    "b2": 8
+   },
+   "drawsPerMulti": 64,
+   "secondary": false
+  },
+  "seeds": [
+   101,
+   102
+  ],
+  "allocM3": {},
+  "allocControl": {
+   "single24/w1": 2,
+   "single24/w2": 2,
+   "single24/b1": 1,
+   "single24/b2": 1,
+   "single24/physics": 1,
+   "multi2/multi": 1
+  },
+  "allocByGenome": {
+   "m3-c4": {
+    "single6/w1": 22,
+    "single6/b1": 2,
+    "single6/w2": 19,
+    "single6/b2": 4,
+    "single6/physics": 1,
+    "single24/w1": 22,
+    "single24/b1": 4,
+    "single24/w2": 19,
+    "single24/b2": 3,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   },
+   "m3-c9": {
+    "single6/w1": 23,
+    "single6/b1": 4,
+    "single6/w2": 17,
+    "single6/b2": 3,
+    "single6/physics": 1,
+    "single24/w1": 23,
+    "single24/b1": 4,
+    "single24/w2": 17,
+    "single24/b2": 3,
+    "single24/physics": 1,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   }
+  },
+  "slots": [
+   {
+    "slot": "sparse",
+    "clusters": [
+     4
+    ]
+   },
+   {
+    "slot": "dense",
+    "clusters": [
+     9
+    ]
+   }
+  ],
+  "nullPrefix": "power:",
+  "exclude": {
+   "generalist": [
+    "0010f1dfd7765387",
+    "061164b40f8c2cef",
+    "0e0352f3e7963091",
+    "101573e73c84f757",
+    "1231400ef10ba6aa",
+    "16f302734f233f25",
+    "17b1b08c01d786f8",
+    "1fddac7b7b491b52",
+    "2276b6c8e6bd0610",
+    "22d75ebc5e608976",
+    "25b48ea3de2a2c3f",
+    "2b1dc1b41ad61951",
+    "2c24c714283d694d",
+    "2d43cd00dcce6ff6",
+    "328d66742b5a113a",
+    "39f364d022ba6d81",
+    "3ca56f60024052e4",
+    "3e2a65eabd858b26",
+    "3ff5d135a4c9c395",
+    "40a8f49c4b4c6962",
+    "42a71e3990ba043d",
+    "44caa4ba551b41e7",
+    "491622e35cf317bb",
+    "4a0be6df39a2ded0",
+    "4ac3166bbd7814df",
+    "55b55a927cf959c4",
+    "5c1ee0131ba5fd8a",
+    "5cda50d41cde5b3c",
+    "5dbf4d9c6ee2f035",
+    "5fda9ea4d6b6f611",
+    "5fdf53487e7d590c",
+    "608404a0a3ec4640",
+    "617bb415a439cc6a",
+    "67b9a0673d3f8efb",
+    "69c42e7fc55d7379",
+    "6b74d3f3af156d58",
+    "6d269f90965ffba0",
+    "6d67214fcdf13b55",
+    "6f28251f398cab84",
+    "749dc72bacae6a25",
+    "760cc3162b596ab4",
+    "77dadf244572a5da",
+    "824935da189ddb42",
+    "83e602c5117882b0",
+    "84b44c8562c5fd6b",
+    "850b26bdb2d780fe",
+    "882403f3b215858e",
+    "8f021ddeabd7ffcd",
+    "90d787ec920920e9",
+    "99437c8e39bd476e",
+    "9aa84cc3d57dffc7",
+    "9aba2d0a53f2e936",
+    "9f556b8a9f34d8cd",
+    "a0879fba897bcafa",
+    "a60e604f775cd0b1",
+    "a71b65dc6b7b6399",
+    "a8ed1e7c77afb84c",
+    "a9fb51d818fe485f",
+    "aa5f7ec1b353e239",
+    "b28fe72351e87a3d",
+    "b2b5bed251e9578f",
+    "b2cbd92f900aaa0f",
+    "b744575d8490477f",
+    "b7d55db7578d1a8f",
+    "c010f404aab83be2",
+    "c305a9ab919ce3b4",
+    "c369a68ce9e3bcb3",
+    "c7b2cd8d2e83ec58",
+    "ceeeb66d5a54f61b",
+    "d20cfd638085baa2",
+    "d558924b4fa0dfc3",
+    "d572cc113658fc75",
+    "d58cdf9679685b40",
+    "d833b5b0d77f700b",
+    "d98d28adfebb7677",
+    "d990b3d401cb2657",
+    "d9cbe24214a9e6c0",
+    "dab87da09a0d9a64",
+    "dcf087f95fda8897",
+    "ddccb90fa5e673d2",
+    "de82c6b69ad9200b",
+    "e07fc16fb72e4d6b",
+    "e6ca7f5324de0a70",
+    "e8815ae6a3301ee5",
+    "e91ef8601ac1350a",
+    "ea8fe587a1ca860d",
+    "edb55318a7823927",
+    "f0cf5afea5413230",
+    "f1de4518fc46afa2",
+    "f1deeb939a95c54a",
+    "f431e222a9ef5096",
+    "fb83588a107009e1"
+   ],
+   "m3-c4": [
+    "02cb75e08fe6ffc8",
+    "0449a6b64ae9ad99",
+    "07dfdf91dd01753b",
+    "09fe6a1fae551c6d",
+    "0b7de58d2071f619",
+    "0f8dd91e46e53772",
+    "123b8b33e841148d",
+    "1775922b33f07834",
+    "1bca6422f5f7c72c",
+    "1f99b8bde6a6115a",
+    "202679157af9ccbf",
+    "25ec5b9d731a0d59",
+    "2694684d14602c8b",
+    "27a365416738fff2",
+    "2b1069b4d9f4e239",
+    "334cf89479f3892b",
+    "352e1dc82cea226c",
+    "394d52cd68e0d605",
+    "3961fc90ca8f66f1",
+    "39c8968d80858139",
+    "3a5408f50f811a74",
+    "44a613b725393599",
+    "47882c878e8b0050",
+    "47b0c6d5bd82626c",
+    "4914309dd66cd139",
+    "4da06848a5408acd",
+    "542ea172254093c9",
+    "5ce98b9edbd96ffa",
+    "5f999a232a8bdc17",
+    "5fa6b60a4f0f541a",
+    "63e66c5eb6ab8815",
+    "64fd302cd24703b0",
+    "6670187c254dd304",
+    "6d2204b6878affab",
+    "6fdac06546243e9a",
+    "72faf56c09c50313",
+    "7300e4f09a31f8a2",
+    "7523982fc15f982f",
+    "76a6631c572db78b",
+    "7a81abbc573e1c01",
+    "7b7064e7068bc992",
+    "7bf4516aa3e8e432",
+    "7de2532aa04b64e3",
+    "7e0dffd8d03fe4ad",
+    "7fb26ddc55ce0093",
+    "820c35407c69e570",
+    "84fb0e3fb01ea773",
+    "868d7665fa8d04df",
+    "8abbd988362edcad",
+    "8d83943d728aaf42",
+    "90c5a0bf2c4de0b7",
+    "910ecd0b132bdb2d",
+    "936005c029744371",
+    "945896a94497722c",
+    "9789d69b6745ebc6",
+    "9799c78ad9921ec0",
+    "9a850a9fea370d74",
+    "9bb5ebc4f207128e",
+    "9d8a768f1511c72d",
+    "9dd2f321a17ed111",
+    "aa597bcd6dec25d2",
+    "ac5c7d5cc2777fff",
+    "b0b8fc69fb5ded22",
+    "b40ed62f79b98b47",
+    "b48e0f7959f0d5ad",
+    "b6c511fa86eeaa1b",
+    "bb89f81fdd9e4824",
+    "c1c4f370098055a6",
+    "c25b885258b55002",
+    "c3828b8fb331557e",
+    "c45758c8158ec6a9",
+    "c45d2577763cee3c",
+    "c6982ebc6e5e25b7",
+    "c9a5e9eecd358ba9",
+    "caf21735242d903f",
+    "cf1f6a6bd1876124",
+    "d4e8f5537d45b378",
+    "d5c510df97a549d2",
+    "d7d3bdcb4c6910be",
+    "daa3936eeea224de",
+    "dce719eb0ae74178",
+    "dd7b180320106ec5",
+    "df0fe9d556404a5a",
+    "e2bfd23752ad65d5",
+    "ef2b31657f362774",
+    "eff44742bc35dfaf",
+    "f1241ef88251387a",
+    "f7b5ef4073514185",
+    "f9150ec01b75f919",
+    "faf7f2037c47764d",
+    "fee4dddd4ed4c3f5",
+    "ff6131a45bfb823d",
+    "ffa9cf3892bfecb9"
+   ],
+   "m3-c9": [
+    "0306b34ed1d1064b",
+    "0b0649b712dbc854",
+    "0e91ca830485a8b3",
+    "0f24f7b8b77cea82",
+    "0fa134dad11d82c0",
+    "125497be86ac1625",
+    "14811f3b7b77902c",
+    "1680b365dfbfaa36",
+    "1708656dad66caa8",
+    "1720940477261af1",
+    "181e88ecc71a7fdd",
+    "192a5df74166bc53",
+    "1a954e781a13100e",
+    "1bae9ca179dddd6b",
+    "22df127dfb8bde36",
+    "262b4b85e68935ea",
+    "2bef280af23736c2",
+    "2ee2c0cefdc46090",
+    "312be6f426e3a06d",
+    "33124deb299e9745",
+    "34a9951dcaa3a4b5",
+    "372cbbae5fc0d209",
+    "37e43b90c5473502",
+    "5081e909f184c027",
+    "50f71f3faf56ec5a",
+    "51389592e1247c6d",
+    "514c2f876dd485f4",
+    "5389e71ea0fc4fd0",
+    "54497df51b92d41c",
+    "5ac72fbeedbd7181",
+    "5ae9236c9132229f",
+    "5bca05689953ade2",
+    "5f5127156dbabb5a",
+    "605eb66de5d89772",
+    "60e0e3017073d1a5",
+    "6cd1bfce801450cd",
+    "6f0093139548fe51",
+    "7af43d440240579b",
+    "7c800b0321587c4b",
+    "7cbfd08a36e729ad",
+    "7e59ed8c61b7cd3c",
+    "87aad92876e9af2b",
+    "892d3688bd03eb86",
+    "8a045d14777189ce",
+    "8b5f12ec0a904da5",
+    "8b83089a8a1c1f01",
+    "8c421ec85981512d",
+    "8e45eb49da72c244",
+    "8ef9499cbc232473",
+    "9066c28e5e39f7c4",
+    "92bfebe187002340",
+    "942517921eae35c8",
+    "95699e8cc038e5a7",
+    "9968efb2e617b474",
+    "99e3b016517008db",
+    "9ea302a265738f6b",
+    "a286bfff9228de8f",
+    "a5989759ade21578",
+    "a7ec69bb42c05f8b",
+    "a97311020b0d93e9",
+    "aa34ca648856637a",
+    "acc7522a10442c92",
+    "ad8202137a9aec56",
+    "b8cd0d9ca4286d01",
+    "bfbdd3ae18ad9832",
+    "c09ce1ca1079d5c7",
+    "c30cdc23d60a1727",
+    "c5a9a853390b157d",
+    "c5b0173f71c9ba7c",
+    "cbc7a7bcb010afc7",
+    "d2df54594a555639",
+    "d62ba43699ba5438",
+    "d7bbd82f480ab68a",
+    "dbfd18d433c91df0",
+    "dd5d26399d217cc8",
+    "dda956ea48a4379d",
+    "ddede18dba128a42",
+    "e30fefedb135ad3d",
+    "e6a090ce58545784",
+    "e95e6e601785f1c6",
+    "ec3f3782db6bc9ef",
+    "efa8b545def61d06",
+    "f0b98c5fb6b9b30c",
+    "f10db81553575ef5",
+    "f1e97ad97588cc82",
+    "f3204bee8cb7f079",
+    "f3d0bc5621345171",
+    "f55df15363e6fd10",
+    "fac2e366b26967e6",
+    "fd4bc36051ff4964",
+    "fe1abacd81069646",
+    "fec5ed3da4851c6f",
+    "ff6a4dd3441dcc35"
+   ]
+  }
+ },
+ "genomes": [
+  {
+   "id": "generalist",
+   "label": "Hand-built generalist",
+   "role": "control",
+   "cluster": null,
+   "hex": "0018009a0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c",
+   "hash": "5fdf53487e7d590c",
+   "nonzero": {
+    "w1": 2,
+    "b1": 1,
+    "w2": 3,
+    "b2": 4
+   },
+   "baseline": {
+    "lg": [
+     1647,
+     1712
+    ],
+    "dp": [
+     668,
+     667
+    ],
+    "dt": [
+     719,
+     721
+    ]
+   },
+   "tau": [
+    390,
+    67,
+    72
+   ],
+   "qualification": {
+    "pass": true,
+    "minLightGrowth": 1647,
+    "minLightOverDark": 979,
+    "reasons": []
+   },
+   "votes": false
+  },
+  {
+   "id": "m3-c4",
+   "label": "M3 cluster 4",
+   "role": "m3-sparse",
+   "cluster": 4,
+   "hex": "0014003c000000000000000000000000000000000000ec00000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007ff18100000000000000186e0000000000000000000000f2000000000000000000000001000000000000000000e9000000000000000000000000000000000000e82846000000000c",
+   "hash": "4914309dd66cd139",
+   "nonzero": {
+    "w1": 3,
+    "b1": 1,
+    "w2": 8,
+    "b2": 4
+   },
+   "baseline": {
+    "lg": [
+     1129,
+     1138
+    ],
+    "dp": [
+     745,
+     751
+    ],
+    "dt": [
+     724,
+     726
+    ]
+   },
+   "tau": [
+    390,
+    75,
+    73
+   ],
+   "qualification": {
+    "pass": true,
+    "minLightGrowth": 1129,
+    "minLightOverDark": 384,
+    "reasons": []
+   },
+   "votes": true
+  },
+  {
+   "id": "m3-c9",
+   "label": "M3 cluster 9",
+   "role": "m3-dense",
+   "cluster": 9,
+   "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada",
+   "hash": "312be6f426e3a06d",
+   "nonzero": {
+    "w1": 80,
+    "b1": 8,
+    "w2": 63,
+    "b2": 8
+   },
+   "baseline": {
+    "lg": [
+     1102,
+     1117
+    ],
+    "dp": [
+     768,
+     776
+    ],
+    "dt": [
+     778,
+     788
+    ]
+   },
+   "tau": [
+    390,
+    78,
+    79
+   ],
+   "qualification": {
+    "pass": true,
+    "minLightGrowth": 1102,
+    "minLightOverDark": 334,
+    "reasons": []
+   },
+   "votes": true
+  }
+ ],
+ "candidates": [
+  {
+   "slot": "sparse",
+   "cluster": 4,
+   "id": "m3-c4",
+   "baseline": {
+    "lg": [
+     1129,
+     1138
+    ],
+    "dp": [
+     745,
+     751
+    ],
+    "dt": [
+     724,
+     726
+    ]
+   },
+   "qualification": {
+    "pass": true,
+    "minLightGrowth": 1129,
+    "minLightOverDark": 384,
+    "reasons": []
+   },
+   "chosen": true
+  },
+  {
+   "slot": "dense",
+   "cluster": 9,
+   "id": "m3-c9",
+   "baseline": {
+    "lg": [
+     1102,
+     1117
+    ],
+    "dp": [
+     768,
+     776
+    ],
+    "dt": [
+     778,
+     788
+    ]
+   },
+   "qualification": {
+    "pass": true,
+    "minLightGrowth": 1102,
+    "minLightOverDark": 334,
+    "reasons": []
+   },
+   "chosen": true
+  }
+ ],
+ "plans": [
+  {
+   "id": "generalist",
+   "votes": false,
+   "generated": {
+    "single6/w1": 38,
+    "single6/b1": 8,
+    "single6/w2": 32,
+    "single6/b2": 8,
+    "single6/physics": 2,
+    "single24/w1": 39,
+    "single24/b1": 8,
+    "single24/w2": 32,
+    "single24/b2": 8,
+    "single24/physics": 3,
+    "multi2/multi": 62,
+    "multi4/multi": 62
+   },
+   "eligible": {
+    "single6/w1": 37,
+    "single6/b1": 6,
+    "single6/w2": 30,
+    "single6/b2": 7,
+    "single6/physics": 2,
+    "single24/w1": 37,
+    "single24/b1": 4,
+    "single24/w2": 30,
+    "single24/b2": 6,
+    "single24/physics": 1,
+    "multi2/multi": 62,
+    "multi4/multi": 62
+   },
+   "allocation": {
+    "single24/w1": 2,
+    "single24/w2": 2,
+    "single24/b1": 1,
+    "single24/b2": 1,
+    "single24/physics": 1,
+    "multi2/multi": 1
+   },
+   "chosen": [
+    [
+     "single24:12",
+     "946de60f8d08afdc"
+    ],
+    [
+     "single24:32",
+     "72bc8579a8b687a8"
+    ],
+    [
+     "single24:47",
+     "02c7d925ad25a3ed"
+    ],
+    [
+     "single24:61",
+     "e0f557ec241af6ea"
+    ],
+    [
+     "single24:79",
+     "16d25c630c434706"
+    ],
+    [
+     "single24:85",
+     "45776e425f5b3876"
+    ],
+    [
+     "single24:89",
+     "c6678cc2c443a738"
+    ],
+    [
+     "multi2:47",
+     "dbcf5854b5b6a232"
+    ]
+   ],
+   "breadthUpperBound2": 0,
+   "entanglementReachable": false
+  },
+  {
+   "id": "m3-c4",
+   "votes": true,
+   "generated": {
+    "single6/w1": 40,
+    "single6/b1": 8,
+    "single6/w2": 32,
+    "single6/b2": 8,
+    "single6/physics": 2,
+    "single24/w1": 40,
+    "single24/b1": 8,
+    "single24/w2": 32,
+    "single24/b2": 8,
+    "single24/physics": 2,
+    "multi2/multi": 63,
+    "multi4/multi": 58
+   },
+   "eligible": {
+    "single6/w1": 36,
+    "single6/b1": 4,
+    "single6/w2": 31,
+    "single6/b2": 7,
+    "single6/physics": 1,
+    "single24/w1": 36,
+    "single24/b1": 6,
+    "single24/w2": 31,
+    "single24/b2": 4,
+    "multi2/multi": 63,
+    "multi4/multi": 58
+   },
+   "allocation": {
+    "single6/w1": 22,
+    "single6/b1": 2,
+    "single6/w2": 19,
+    "single6/b2": 4,
+    "single6/physics": 1,
+    "single24/w1": 22,
+    "single24/b1": 4,
+    "single24/w2": 19,
+    "single24/b2": 3,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   },
+   "chosen": [
+    [
+     "single6:0",
+     "33e160c24300c048"
+    ],
+    [
+     "single6:1",
+     "247f13672f3870db"
+    ],
+    [
+     "single6:2",
+     "5403e41c54548afa"
+    ],
+    [
+     "single6:3",
+     "f091b15e200febdc"
+    ],
+    [
+     "single6:4",
+     "0d81b5f2eda4a7fc"
+    ],
+    [
+     "single6:5",
+     "fd1135ae8868ab19"
+    ],
+    [
+     "single6:9",
+     "76b79f88b42a33eb"
+    ],
+    [
+     "single6:10",
+     "7e2a093727f7b696"
+    ],
+    [
+     "single6:12",
+     "466ff62432de7abc"
+    ],
+    [
+     "single6:13",
+     "ce33bd4d5774f8b3"
+    ],
+    [
+     "single6:14",
+     "6455044b4fcd24c4"
+    ],
+    [
+     "single6:15",
+     "930a22b31532620b"
+    ],
+    [
+     "single6:16",
+     "7b2522a04ccc1322"
+    ],
+    [
+     "single6:18",
+     "075147ab5385df3b"
+    ],
+    [
+     "single6:21",
+     "b3a737387ea87c11"
+    ],
+    [
+     "single6:23",
+     "e840e95c744f79be"
+    ],
+    [
+     "single6:27",
+     "89efb197677c0752"
+    ],
+    [
+     "single6:29",
+     "f316c5fd142e2a86"
+    ],
+    [
+     "single6:32",
+     "2e7a4b571c3fb47e"
+    ],
+    [
+     "single6:36",
+     "26c9aede74fc149f"
+    ],
+    [
+     "single6:38",
+     "edc0bef154ca4f7b"
+    ],
+    [
+     "single6:39",
+     "daa49b0c60f0c43d"
+    ],
+    [
+     "single6:41",
+     "f189d5340bf3b54f"
+    ],
+    [
+     "single6:45",
+     "c276081f7340f2ba"
+    ],
+    [
+     "single6:48",
+     "d2f4dd34c49b0c84"
+    ],
+    [
+     "single6:50",
+     "5783f910180525ac"
+    ],
+    [
+     "single6:51",
+     "9363c3fabe434e67"
+    ],
+    [
+     "single6:52",
+     "12a2e5c4d5da89a4"
+    ],
+    [
+     "single6:53",
+     "b875f50dc5da753b"
+    ],
+    [
+     "single6:57",
+     "69df8a34b67ee2e2"
+    ],
+    [
+     "single6:58",
+     "eaab69b548c46d3d"
+    ],
+    [
+     "single6:59",
+     "4300eb365d9e4b96"
+    ],
+    [
+     "single6:63",
+     "2d09d607687a3037"
+    ],
+    [
+     "single6:64",
+     "407b80cd95e23bc9"
+    ],
+    [
+     "single6:65",
+     "4057ed6a9baa11d2"
+    ],
+    [
+     "single6:66",
+     "9fe16743df7c2e90"
+    ],
+    [
+     "single6:69",
+     "9bc039366d75d419"
+    ],
+    [
+     "single6:70",
+     "73eef6800481afbd"
+    ],
+    [
+     "single6:72",
+     "d8f13887b2ece7b4"
+    ],
+    [
+     "single6:73",
+     "bdfdda2ceb06e8b8"
+    ],
+    [
+     "single6:74",
+     "d9b43d8ee4460b65"
+    ],
+    [
+     "single6:75",
+     "540dbbbb0ee51b8b"
+    ],
+    [
+     "single6:78",
+     "866918d2bb1ce74f"
+    ],
+    [
+     "single6:82",
+     "6f4f879879e5a001"
+    ],
+    [
+     "single6:83",
+     "9e41951e3835966e"
+    ],
+    [
+     "single6:85",
+     "6497462d58cc481c"
+    ],
+    [
+     "single6:86",
+     "d0e05dc412bf7afe"
+    ],
+    [
+     "single6:89",
+     "da31d8a2adcfdebe"
+    ],
+    [
+     "single24:4",
+     "0eee39461fff1fe9"
+    ],
+    [
+     "single24:5",
+     "443ee683ead8dc70"
+    ],
+    [
+     "single24:6",
+     "e014e2d379958400"
+    ],
+    [
+     "single24:7",
+     "e739538eb2605139"
+    ],
+    [
+     "single24:10",
+     "fca17df496911741"
+    ],
+    [
+     "single24:13",
+     "470c6522a7e7a455"
+    ],
+    [
+     "single24:16",
+     "4703c149cc8de93e"
+    ],
+    [
+     "single24:18",
+     "0f7339b534c08485"
+    ],
+    [
+     "single24:20",
+     "21a61108b1a11ef3"
+    ],
+    [
+     "single24:21",
+     "aca5924635cfdf8d"
+    ],
+    [
+     "single24:23",
+     "6231a1f1aeeaa87d"
+    ],
+    [
+     "single24:25",
+     "d8fe7a3dae15752b"
+    ],
+    [
+     "single24:26",
+     "03da4f8b043ff170"
+    ],
+    [
+     "single24:27",
+     "113093b672cbeea1"
+    ],
+    [
+     "single24:28",
+     "d0d188baa7e27f87"
+    ],
+    [
+     "single24:29",
+     "11549f9621c1fb83"
+    ],
+    [
+     "single24:31",
+     "1fb78a175d234f8f"
+    ],
+    [
+     "single24:32",
+     "7ba45c9cebe43236"
+    ],
+    [
+     "single24:34",
+     "831e5d4fd0ea5ad7"
+    ],
+    [
+     "single24:35",
+     "047edcfac14929b5"
+    ],
+    [
+     "single24:37",
+     "91044753f5de62b8"
+    ],
+    [
+     "single24:38",
+     "73568b33317b55a4"
+    ],
+    [
+     "single24:40",
+     "8ac8b687c2e59506"
+    ],
+    [
+     "single24:41",
+     "64a72dc5d58179da"
+    ],
+    [
+     "single24:44",
+     "0350c7ecabbee01e"
+    ],
+    [
+     "single24:45",
+     "e299d57e3d9f9060"
+    ],
+    [
+     "single24:49",
+     "2fa82a0bd7eae332"
+    ],
+    [
+     "single24:50",
+     "9ad00e7a1165fa00"
+    ],
+    [
+     "single24:51",
+     "f33d444873396c50"
+    ],
+    [
+     "single24:53",
+     "9c4fa97b0193a80d"
+    ],
+    [
+     "single24:54",
+     "80a48da74703a62b"
+    ],
+    [
+     "single24:55",
+     "ea9e91d962e5eaf2"
+    ],
+    [
+     "single24:61",
+     "92bd49a391c7511d"
+    ],
+    [
+     "single24:62",
+     "d492c7e76bf3e886"
+    ],
+    [
+     "single24:65",
+     "e15b7fb394fc57f2"
+    ],
+    [
+     "single24:66",
+     "3b0f7b88acd3aaa7"
+    ],
+    [
+     "single24:67",
+     "ba86184eef174e58"
+    ],
+    [
+     "single24:70",
+     "cf1d4673f941283d"
+    ],
+    [
+     "single24:71",
+     "0fd927e925126cf8"
+    ],
+    [
+     "single24:73",
+     "394e8f35c2ea76dc"
+    ],
+    [
+     "single24:74",
+     "7de37a781bea4774"
+    ],
+    [
+     "single24:75",
+     "7817fa9902bbd9c4"
+    ],
+    [
+     "single24:76",
+     "7d5f1d4d4b82b6f4"
+    ],
+    [
+     "single24:77",
+     "eac7dc6ccca04a87"
+    ],
+    [
+     "single24:78",
+     "2fd59febff7db7db"
+    ],
+    [
+     "single24:82",
+     "7905fd31e3012938"
+    ],
+    [
+     "single24:83",
+     "2b41a22e5b7dda3c"
+    ],
+    [
+     "single24:87",
+     "be75d1deb298ce8c"
+    ],
+    [
+     "multi2:0",
+     "c35742684482a9b7"
+    ],
+    [
+     "multi2:1",
+     "edba7d2c039752a5"
+    ],
+    [
+     "multi2:2",
+     "89b983c16ef9a1ea"
+    ],
+    [
+     "multi2:3",
+     "e89f85aae230c28e"
+    ],
+    [
+     "multi2:4",
+     "23c15059c07938a6"
+    ],
+    [
+     "multi2:6",
+     "92857998915715cb"
+    ],
+    [
+     "multi2:7",
+     "e88d812878a60d2c"
+    ],
+    [
+     "multi2:9",
+     "b1893f91ea1332a4"
+    ],
+    [
+     "multi2:10",
+     "82a01097d04d7d0f"
+    ],
+    [
+     "multi2:11",
+     "0a6a4225fcb01eb8"
+    ],
+    [
+     "multi2:12",
+     "14c7ccb93255d8fe"
+    ],
+    [
+     "multi2:13",
+     "6c539a1d45b2ed45"
+    ],
+    [
+     "multi2:15",
+     "79533220385a2b69"
+    ],
+    [
+     "multi2:16",
+     "7624c111b45e1754"
+    ],
+    [
+     "multi2:17",
+     "6b374e14d10d513d"
+    ],
+    [
+     "multi2:19",
+     "55987a9b8bfa33ad"
+    ],
+    [
+     "multi2:20",
+     "8922a9b972bebc5a"
+    ],
+    [
+     "multi2:21",
+     "6c763dabeaf1f0d2"
+    ],
+    [
+     "multi2:22",
+     "7e901140a9eca1f7"
+    ],
+    [
+     "multi2:25",
+     "c3fc1e9e2f5b8582"
+    ],
+    [
+     "multi2:27",
+     "85cdc30955e4c328"
+    ],
+    [
+     "multi2:31",
+     "519f77b91f726e95"
+    ],
+    [
+     "multi2:32",
+     "3ee6da28c8ba0990"
+    ],
+    [
+     "multi2:34",
+     "806b940cdb790d2e"
+    ],
+    [
+     "multi2:35",
+     "76f7143ea1fa0076"
+    ],
+    [
+     "multi2:36",
+     "62f769190c813f7d"
+    ],
+    [
+     "multi2:38",
+     "05960eaba9924faa"
+    ],
+    [
+     "multi2:39",
+     "07467d09a0d4f692"
+    ],
+    [
+     "multi2:40",
+     "0e8444c40a1d2446"
+    ],
+    [
+     "multi2:42",
+     "6ef3950890fe8171"
+    ],
+    [
+     "multi2:43",
+     "6877b25189dda1d3"
+    ],
+    [
+     "multi2:44",
+     "52b795ed7037f163"
+    ],
+    [
+     "multi2:45",
+     "f2aee3d115191963"
+    ],
+    [
+     "multi2:46",
+     "1f2fcafef53fc032"
+    ],
+    [
+     "multi2:47",
+     "e8b69671065f64a3"
+    ],
+    [
+     "multi2:48",
+     "f28d129824338f58"
+    ],
+    [
+     "multi2:50",
+     "3e3c42e3a5211ca6"
+    ],
+    [
+     "multi2:51",
+     "caca25ca41f3f899"
+    ],
+    [
+     "multi2:52",
+     "dcf4ad02f053ff8d"
+    ],
+    [
+     "multi2:54",
+     "ab7a41ae5bcaa34c"
+    ],
+    [
+     "multi2:55",
+     "cff7c4d6af041923"
+    ],
+    [
+     "multi2:56",
+     "c0c2a56c32eb6a8a"
+    ],
+    [
+     "multi2:57",
+     "2fd8306b891ae48f"
+    ],
+    [
+     "multi2:59",
+     "5fda7c0448229633"
+    ],
+    [
+     "multi2:60",
+     "27dca3966c396946"
+    ],
+    [
+     "multi2:61",
+     "3b7ea429117e5a19"
+    ],
+    [
+     "multi2:62",
+     "6e7f9eaf8c511f6b"
+    ],
+    [
+     "multi2:63",
+     "0e225992f730e50e"
+    ],
+    [
+     "multi4:0",
+     "004f3190cfe07ba2"
+    ],
+    [
+     "multi4:1",
+     "9e6c9658c4490f08"
+    ],
+    [
+     "multi4:3",
+     "37aec7dfc56efe7e"
+    ],
+    [
+     "multi4:4",
+     "9a03197e165fa321"
+    ],
+    [
+     "multi4:5",
+     "c1fe53188b29bb0f"
+    ],
+    [
+     "multi4:6",
+     "e0c89f62444e607a"
+    ],
+    [
+     "multi4:7",
+     "8fcae0a42c4d2603"
+    ],
+    [
+     "multi4:8",
+     "7dbca42f92df66bb"
+    ],
+    [
+     "multi4:9",
+     "825c5b9ef3bc0ed9"
+    ],
+    [
+     "multi4:10",
+     "07aa45dc7024314f"
+    ],
+    [
+     "multi4:11",
+     "9d48ed8982576245"
+    ],
+    [
+     "multi4:12",
+     "ffb5cb6133124622"
+    ],
+    [
+     "multi4:13",
+     "5b02429150ab7407"
+    ],
+    [
+     "multi4:14",
+     "ff0e46f27113faa8"
+    ],
+    [
+     "multi4:18",
+     "66a010e99f0b6021"
+    ],
+    [
+     "multi4:19",
+     "5edc6193da93b3ef"
+    ],
+    [
+     "multi4:20",
+     "e6acd821624cb37a"
+    ],
+    [
+     "multi4:21",
+     "eddc64185c68f7ba"
+    ],
+    [
+     "multi4:22",
+     "4aec1c8a6fefe781"
+    ],
+    [
+     "multi4:23",
+     "41662a9dd3a468f8"
+    ],
+    [
+     "multi4:24",
+     "fcfe5df77290d16d"
+    ],
+    [
+     "multi4:25",
+     "273ec7b034401956"
+    ],
+    [
+     "multi4:26",
+     "34aa13e42795022a"
+    ],
+    [
+     "multi4:27",
+     "c0d8088eb5f64c81"
+    ],
+    [
+     "multi4:28",
+     "5809ed2421d86f3f"
+    ],
+    [
+     "multi4:29",
+     "fdcd5d5c0c8da153"
+    ],
+    [
+     "multi4:32",
+     "14b31a51bf87a41a"
+    ],
+    [
+     "multi4:33",
+     "4cd330924eb731a7"
+    ],
+    [
+     "multi4:34",
+     "08ed635924ac5ea4"
+    ],
+    [
+     "multi4:35",
+     "72fed639bac58b3d"
+    ],
+    [
+     "multi4:37",
+     "93a0d7a81e30ff72"
+    ],
+    [
+     "multi4:38",
+     "1115cc76aa7e5db0"
+    ],
+    [
+     "multi4:39",
+     "06c7b4b127f5928f"
+    ],
+    [
+     "multi4:40",
+     "1655a8ba7ec051ce"
+    ],
+    [
+     "multi4:43",
+     "c1e009b1e58aa986"
+    ],
+    [
+     "multi4:44",
+     "85d27edf60209a42"
+    ],
+    [
+     "multi4:45",
+     "e9a555e56540842f"
+    ],
+    [
+     "multi4:47",
+     "890845ca189f2fd9"
+    ],
+    [
+     "multi4:49",
+     "6a37d35394f526f5"
+    ],
+    [
+     "multi4:50",
+     "b9ae761a1ea9597e"
+    ],
+    [
+     "multi4:51",
+     "bf28f0827655edf0"
+    ],
+    [
+     "multi4:52",
+     "0c0984a99c079b5e"
+    ],
+    [
+     "multi4:54",
+     "9cb19817c577e7e3"
+    ],
+    [
+     "multi4:57",
+     "ab864eadd5eee48f"
+    ],
+    [
+     "multi4:59",
+     "f586e1045887697e"
+    ],
+    [
+     "multi4:60",
+     "34c2da6d95b0e05d"
+    ],
+    [
+     "multi4:61",
+     "6f2b7658a667dd4f"
+    ],
+    [
+     "multi4:62",
+     "4a57b932270a165e"
+    ]
+   ],
+   "breadthUpperBound2": 2,
+   "entanglementReachable": false
+  },
+  {
+   "id": "m3-c9",
+   "votes": true,
+   "generated": {
+    "single6/w1": 40,
+    "single6/b1": 8,
+    "single6/w2": 32,
+    "single6/b2": 8,
+    "single6/physics": 3,
+    "single24/w1": 40,
+    "single24/b1": 8,
+    "single24/w2": 32,
+    "single24/b2": 8,
+    "single24/physics": 3,
+    "multi2/multi": 64,
+    "multi4/multi": 64
+   },
+   "eligible": {
+    "single6/w1": 37,
+    "single6/b1": 6,
+    "single6/w2": 28,
+    "single6/b2": 4,
+    "single6/physics": 2,
+    "single24/w1": 36,
+    "single24/b1": 7,
+    "single24/w2": 26,
+    "single24/b2": 4,
+    "single24/physics": 2,
+    "multi2/multi": 64,
+    "multi4/multi": 64
+   },
+   "allocation": {
+    "single6/w1": 23,
+    "single6/b1": 4,
+    "single6/w2": 17,
+    "single6/b2": 3,
+    "single6/physics": 1,
+    "single24/w1": 23,
+    "single24/b1": 4,
+    "single24/w2": 17,
+    "single24/b2": 3,
+    "single24/physics": 1,
+    "multi2/multi": 48,
+    "multi4/multi": 48
+   },
+   "chosen": [
+    [
+     "single6:1",
+     "40f07d053c97ef9d"
+    ],
+    [
+     "single6:3",
+     "2c412decce1464e6"
+    ],
+    [
+     "single6:5",
+     "30f88f14075d441a"
+    ],
+    [
+     "single6:6",
+     "f5e25c19212e4329"
+    ],
+    [
+     "single6:7",
+     "c1709bac57143bc5"
+    ],
+    [
+     "single6:11",
+     "64f20fc16c88a0f4"
+    ],
+    [
+     "single6:12",
+     "dce60566090c4535"
+    ],
+    [
+     "single6:15",
+     "c1a13be15e5bc831"
+    ],
+    [
+     "single6:16",
+     "08d19741eaa1eca4"
+    ],
+    [
+     "single6:17",
+     "a30f34d5a23482c0"
+    ],
+    [
+     "single6:18",
+     "6846c6316710efbd"
+    ],
+    [
+     "single6:20",
+     "bc025775e611c816"
+    ],
+    [
+     "single6:21",
+     "d18a6cc6070d107f"
+    ],
+    [
+     "single6:22",
+     "73aad5187c45c53a"
+    ],
+    [
+     "single6:23",
+     "651303f6428cb8ea"
+    ],
+    [
+     "single6:24",
+     "54aefebf4f0426d2"
+    ],
+    [
+     "single6:28",
+     "e2d6e32123194bf3"
+    ],
+    [
+     "single6:30",
+     "508f1c4fea99e15b"
+    ],
+    [
+     "single6:32",
+     "9dad7cb14014da1b"
+    ],
+    [
+     "single6:33",
+     "56ec2bbe24a36fdb"
+    ],
+    [
+     "single6:34",
+     "f4ca7cfe8979a4b0"
+    ],
+    [
+     "single6:37",
+     "60a1f411fe798a39"
+    ],
+    [
+     "single6:39",
+     "05cb7f3591173f44"
+    ],
+    [
+     "single6:40",
+     "e85e59fd551c4823"
+    ],
+    [
+     "single6:42",
+     "a3bb47ff057e0646"
+    ],
+    [
+     "single6:46",
+     "b0bb2f33019663e6"
+    ],
+    [
+     "single6:47",
+     "a2fa70b96e1b8d17"
+    ],
+    [
+     "single6:50",
+     "0ab03a4e65b6ceac"
+    ],
+    [
+     "single6:53",
+     "7c4a3adb67c40552"
+    ],
+    [
+     "single6:55",
+     "826ead21621bb4c7"
+    ],
+    [
+     "single6:56",
+     "183d4d274e7d5fb8"
+    ],
+    [
+     "single6:58",
+     "9f041a036d5edb34"
+    ],
+    [
+     "single6:61",
+     "840d5491738f59cd"
+    ],
+    [
+     "single6:62",
+     "4501b03f9d0918ee"
+    ],
+    [
+     "single6:63",
+     "6c06ff912d124d70"
+    ],
+    [
+     "single6:65",
+     "703e1e566703f36f"
+    ],
+    [
+     "single6:67",
+     "920fb12f8fce4c34"
+    ],
+    [
+     "single6:71",
+     "935d0bd8e27220d9"
+    ],
+    [
+     "single6:72",
+     "e547aa43b8e85a1d"
+    ],
+    [
+     "single6:73",
+     "74db535bc98348b9"
+    ],
+    [
+     "single6:75",
+     "4aa79fa53822f8c7"
+    ],
+    [
+     "single6:76",
+     "b88f29e5cebbcfd5"
+    ],
+    [
+     "single6:78",
+     "2caa43fc42d4f43f"
+    ],
+    [
+     "single6:79",
+     "d7f812d6602ba852"
+    ],
+    [
+     "single6:80",
+     "389bc3560dd3c5d7"
+    ],
+    [
+     "single6:82",
+     "1a867f03fde0df52"
+    ],
+    [
+     "single6:87",
+     "97747ff9f6328bd7"
+    ],
+    [
+     "single6:90",
+     "a2bfa6f7a4754bd8"
+    ],
+    [
+     "single24:0",
+     "32c3a769bacb2c43"
+    ],
+    [
+     "single24:1",
+     "f45d6c0241246932"
+    ],
+    [
+     "single24:2",
+     "ca1f947bce2b4c23"
+    ],
+    [
+     "single24:7",
+     "41062c88ce2692f7"
+    ],
+    [
+     "single24:8",
+     "45f9da1ad5bbf634"
+    ],
+    [
+     "single24:10",
+     "c5c1a7a44731d1fc"
+    ],
+    [
+     "single24:11",
+     "de1e2005db8f2cdd"
+    ],
+    [
+     "single24:15",
+     "a48e763b32217208"
+    ],
+    [
+     "single24:17",
+     "1f9c6d3904995f04"
+    ],
+    [
+     "single24:20",
+     "86f91abb40023d12"
+    ],
+    [
+     "single24:21",
+     "b6f0974cde5adb8f"
+    ],
+    [
+     "single24:24",
+     "25d03204ff8ca457"
+    ],
+    [
+     "single24:25",
+     "e4a5c14c61789481"
+    ],
+    [
+     "single24:28",
+     "48dfa586a69b284b"
+    ],
+    [
+     "single24:29",
+     "772befc4126ce938"
+    ],
+    [
+     "single24:30",
+     "de8083c7ce0d64fb"
+    ],
+    [
+     "single24:31",
+     "50193e775771a178"
+    ],
+    [
+     "single24:32",
+     "407d4259f77a410e"
+    ],
+    [
+     "single24:33",
+     "acf5c5637a659b9b"
+    ],
+    [
+     "single24:34",
+     "cfba3297345eaaaf"
+    ],
+    [
+     "single24:35",
+     "209495f704dccc66"
+    ],
+    [
+     "single24:36",
+     "9bd02d06e283dde1"
+    ],
+    [
+     "single24:39",
+     "fe0636695f579be4"
+    ],
+    [
+     "single24:40",
+     "006b675f0265e784"
+    ],
+    [
+     "single24:43",
+     "74dcec1317da6b96"
+    ],
+    [
+     "single24:46",
+     "17a5e79d85deaa23"
+    ],
+    [
+     "single24:47",
+     "584608f878508f1a"
+    ],
+    [
+     "single24:51",
+     "d1f79496ab8a8269"
+    ],
+    [
+     "single24:54",
+     "791a582ce2da98b4"
+    ],
+    [
+     "single24:58",
+     "3a543149c0ead2bc"
+    ],
+    [
+     "single24:60",
+     "ac7ed9ad30ed0b14"
+    ],
+    [
+     "single24:61",
+     "456fe8985ac16b38"
+    ],
+    [
+     "single24:62",
+     "d6898272aa5a27a2"
+    ],
+    [
+     "single24:64",
+     "299ac12e60fc8db4"
+    ],
+    [
+     "single24:66",
+     "f7e5ec3c3a844d5f"
+    ],
+    [
+     "single24:68",
+     "ffc48047a773f3c2"
+    ],
+    [
+     "single24:69",
+     "9c7771ea8d90cb04"
+    ],
+    [
+     "single24:70",
+     "d4d6f83fc96acd0d"
+    ],
+    [
+     "single24:71",
+     "9d862314ce2ccbc4"
+    ],
+    [
+     "single24:72",
+     "d44c27acee729508"
+    ],
+    [
+     "single24:73",
+     "79f7d2ec9780204e"
+    ],
+    [
+     "single24:74",
+     "97fa19824d43bc7c"
+    ],
+    [
+     "single24:76",
+     "e8d51fb9a63ae9b0"
+    ],
+    [
+     "single24:78",
+     "6ad26233266037f1"
+    ],
+    [
+     "single24:81",
+     "b77dd414f2d27aec"
+    ],
+    [
+     "single24:82",
+     "98127b2d806ca73d"
+    ],
+    [
+     "single24:87",
+     "e84171007b6a639d"
+    ],
+    [
+     "single24:88",
+     "e4dd8392c604acd4"
+    ],
+    [
+     "multi2:0",
+     "8705f6938f8ff1c6"
+    ],
+    [
+     "multi2:2",
+     "dbfef93a9f5ef27f"
+    ],
+    [
+     "multi2:4",
+     "6dc49619b1145060"
+    ],
+    [
+     "multi2:5",
+     "457bb838a36c51bb"
+    ],
+    [
+     "multi2:6",
+     "bc5fc3d0f254acd7"
+    ],
+    [
+     "multi2:7",
+     "0e2c8cb3cef0becb"
+    ],
+    [
+     "multi2:8",
+     "6ebe966e907fdb64"
+    ],
+    [
+     "multi2:9",
+     "55e07951c4eba603"
+    ],
+    [
+     "multi2:10",
+     "09a907562d4a5033"
+    ],
+    [
+     "multi2:11",
+     "309ae927a28ef86e"
+    ],
+    [
+     "multi2:12",
+     "9faf0c82aabe67da"
+    ],
+    [
+     "multi2:14",
+     "973b82126e021fef"
+    ],
+    [
+     "multi2:16",
+     "f3372665dce1fc46"
+    ],
+    [
+     "multi2:17",
+     "677dd7e06924b1bf"
+    ],
+    [
+     "multi2:19",
+     "d8b45be4ab43ce5e"
+    ],
+    [
+     "multi2:22",
+     "ea5ab163c4fb8de8"
+    ],
+    [
+     "multi2:23",
+     "2e1dfad42fd62ee9"
+    ],
+    [
+     "multi2:26",
+     "6372723ae9d54725"
+    ],
+    [
+     "multi2:27",
+     "10da89d98deae480"
+    ],
+    [
+     "multi2:28",
+     "2c7b9fbfebddc85a"
+    ],
+    [
+     "multi2:29",
+     "d6c62d8a8f712a7d"
+    ],
+    [
+     "multi2:30",
+     "b8a9e23e0ba0bd37"
+    ],
+    [
+     "multi2:31",
+     "55dc1214dcca4d19"
+    ],
+    [
+     "multi2:32",
+     "0a5f984975337fd1"
+    ],
+    [
+     "multi2:33",
+     "44971dd8e524b530"
+    ],
+    [
+     "multi2:34",
+     "46270e1197269195"
+    ],
+    [
+     "multi2:35",
+     "ecf0bc4395e7e3fe"
+    ],
+    [
+     "multi2:36",
+     "98597a4b053ab6b4"
+    ],
+    [
+     "multi2:37",
+     "de2f896eb244c333"
+    ],
+    [
+     "multi2:38",
+     "5590b405c480970d"
+    ],
+    [
+     "multi2:39",
+     "551d50ad9703c837"
+    ],
+    [
+     "multi2:42",
+     "f73720dc01afe433"
+    ],
+    [
+     "multi2:43",
+     "4b8a989771aeb201"
+    ],
+    [
+     "multi2:44",
+     "d6dc6f1a4dee4cb7"
+    ],
+    [
+     "multi2:45",
+     "ab21b52345c4b7b4"
+    ],
+    [
+     "multi2:47",
+     "e5222f1629ddd9a4"
+    ],
+    [
+     "multi2:48",
+     "4c4eab30ff916a5a"
+    ],
+    [
+     "multi2:49",
+     "f7a2deb4d16b4ddf"
+    ],
+    [
+     "multi2:50",
+     "c397046b0c4c58ba"
+    ],
+    [
+     "multi2:51",
+     "5b60192d2d9fbe3d"
+    ],
+    [
+     "multi2:52",
+     "0ff0e8739b40e3c8"
+    ],
+    [
+     "multi2:53",
+     "946220cdd2e7e037"
+    ],
+    [
+     "multi2:54",
+     "c23a9c0e22440fcc"
+    ],
+    [
+     "multi2:55",
+     "da57f9477e91ac97"
+    ],
+    [
+     "multi2:57",
+     "423acd1cdd5696f2"
+    ],
+    [
+     "multi2:58",
+     "368b92fe1e2e2b30"
+    ],
+    [
+     "multi2:59",
+     "c115611a17a734ba"
+    ],
+    [
+     "multi2:61",
+     "6f54ab3c81b6b759"
+    ],
+    [
+     "multi4:0",
+     "f46b32a2e7a400ef"
+    ],
+    [
+     "multi4:1",
+     "78bf712db74969f2"
+    ],
+    [
+     "multi4:2",
+     "3f9be33bc8922304"
+    ],
+    [
+     "multi4:3",
+     "ff121d559cc05a32"
+    ],
+    [
+     "multi4:4",
+     "69c1401a78f53393"
+    ],
+    [
+     "multi4:5",
+     "94b01d848029254f"
+    ],
+    [
+     "multi4:7",
+     "f1c6933088248662"
+    ],
+    [
+     "multi4:8",
+     "6a0743bd33d38246"
+    ],
+    [
+     "multi4:9",
+     "90563c24bfe31eb8"
+    ],
+    [
+     "multi4:10",
+     "75f11973c4162ee8"
+    ],
+    [
+     "multi4:11",
+     "cc6a5af4e0737a1e"
+    ],
+    [
+     "multi4:13",
+     "fa16a7bd62983722"
+    ],
+    [
+     "multi4:14",
+     "0068697eb011b54d"
+    ],
+    [
+     "multi4:16",
+     "7da99934f9a68330"
+    ],
+    [
+     "multi4:17",
+     "465b2ae8ea786353"
+    ],
+    [
+     "multi4:18",
+     "7c9d5961592b44dc"
+    ],
+    [
+     "multi4:19",
+     "17ad3260c07ec887"
+    ],
+    [
+     "multi4:20",
+     "322c2580e9d34568"
+    ],
+    [
+     "multi4:21",
+     "14d42ae0ac372843"
+    ],
+    [
+     "multi4:22",
+     "61afd0d8273af0b3"
+    ],
+    [
+     "multi4:24",
+     "9220eb62080e0f07"
+    ],
+    [
+     "multi4:26",
+     "9090e0503bc94349"
+    ],
+    [
+     "multi4:27",
+     "07c72bf51e811065"
+    ],
+    [
+     "multi4:29",
+     "3d1fb8dbe2f4d7ee"
+    ],
+    [
+     "multi4:30",
+     "e017615db8a20c3c"
+    ],
+    [
+     "multi4:31",
+     "716211634a05a748"
+    ],
+    [
+     "multi4:33",
+     "72a6e1f2ac6d6bbb"
+    ],
+    [
+     "multi4:34",
+     "fea9454b35c289dc"
+    ],
+    [
+     "multi4:35",
+     "3630350ea9fc1e13"
+    ],
+    [
+     "multi4:39",
+     "ee33f04af4bf1abc"
+    ],
+    [
+     "multi4:40",
+     "c83ff0cb2e01e169"
+    ],
+    [
+     "multi4:41",
+     "f8ba173087145591"
+    ],
+    [
+     "multi4:42",
+     "186d8239764bc9b9"
+    ],
+    [
+     "multi4:43",
+     "d1ba25ad2ed7ae78"
+    ],
+    [
+     "multi4:45",
+     "5a872cf02cb39795"
+    ],
+    [
+     "multi4:46",
+     "0a0bb0999e6457fe"
+    ],
+    [
+     "multi4:49",
+     "a7839bed2f84f71b"
+    ],
+    [
+     "multi4:51",
+     "5f36559df2154b6c"
+    ],
+    [
+     "multi4:52",
+     "64dbb64eefb2dcdf"
+    ],
+    [
+     "multi4:53",
+     "8bff32aa7e4286f3"
+    ],
+    [
+     "multi4:54",
+     "96191ae94d2e4be7"
+    ],
+    [
+     "multi4:55",
+     "20401c05377b8fb2"
+    ],
+    [
+     "multi4:56",
+     "97c63d98b41b2129"
+    ],
+    [
+     "multi4:57",
+     "7531cae47753053e"
+    ],
+    [
+     "multi4:58",
+     "582995b02b821d1f"
+    ],
+    [
+     "multi4:59",
+     "1d716df182659528"
+    ],
+    [
+     "multi4:62",
+     "516a43809ea8c5ba"
+    ],
+    [
+     "multi4:63",
+     "253cd63f7a0c6ec3"
+    ]
+   ],
+   "breadthUpperBound2": 16,
+   "entanglementReachable": true
+  }
+ ],
+ "fixtureInventory": [
+  "generalist-hidden-permutation",
+  "generalist-dead-hidden-edit",
+  "generalist-clamp-edit",
+  "generalist-shuffled-sensor-labels",
+  "generalist-localised-edit",
+  "m3-c4-hidden-permutation",
+  "m3-c9-hidden-permutation"
+ ],
+ "workload": {
+  "144": {
+   "assayRuns": 1894,
+   "probes": 2082
+  },
+  "192": {
+   "assayRuns": 2470,
+   "probes": 2082
+  }
+ },
+ "projectedSeconds": {
+  "144": 267,
+  "192": 343
+ },
+ "calibration": {
+  "note": "timing is provenance, not part of any deterministic payload",
+  "repetitions": 3,
+  "baselineRuns": 36,
+  "mutantAssays": 0,
+  "secondsPerRunMedian": 0.13165889816666665,
+  "secondsPerProbeMedian": 0.008559458333333167
+ },
+ "baselineAssayRuns": 18,
+ "inputs": {
+  "pr136EvidenceSha256": "71e24ee0841559c45005ac412238697ad242a8b764fc9becb4213fe8bb9a8895",
+  "amendmentSha256": "708efb5632252e07404f3aad3c54ee794cb03e2fe5cacdd5170a5999d6188705"
+ },
+ "sources": {
+  "packages/lineage/src/locality/descriptors.ts": "7bb21563035c9162b3abdebaac3266b95c2fc8226d7a6f33fef5354cfd73852e",
+  "packages/lineage/src/locality/fixtures.ts": "1c228fde882e67b611e0c3fb6988b94d786e37b3cd929087da6ba467c04f78df",
+  "packages/lineage/src/locality/index.ts": "30fa25bc660229f441b30ee353f7853ff3191828cd1055cbdb46295ff8020d00",
+  "packages/lineage/src/locality/matrix.ts": "5ad9146521bb053412de6434275ee6d313fc57901b0070fe80fbd220598f5885",
+  "packages/lineage/src/locality/neighbourhood.ts": "3d531d17dc0c49fba9665faba529d468b517766409898d2f74829c4cd2596518",
+  "packages/lineage/src/locality/panel.ts": "a5c99261626db4a9745bcc4cf02d8949e0156a17f88cde24e180996266fbe33e",
+  "packages/lineage/src/locality/scenarios.ts": "e21a1d7b5ace21f99a8d07adea4c291fa85b7e943887d3fe5020106f4eeeb560",
+  "packages/lineage/src/genotype.ts": "7ea6adc07cef6a1aed11bbf9c7668025d41cd5fe98184fc06fef234356f0a140",
+  "tools/locality/matrix.ts": "089398ad9f2e13f78acd9d86fc5e0fbeaa1031f16fa2a0912e47637d5062c29f",
+  "tools/locality/power.ts": "a7b80ab4dcb21bf400b7c9f9cdc76b0a8f6cf364aa8e4ba202c228a91364eaf7"
+ },
+ "integritySha256": "d7e0fc72e25a026fba9b214e166daf7139ecedd6a042b58d88ed96884eb2cf9b"
+}

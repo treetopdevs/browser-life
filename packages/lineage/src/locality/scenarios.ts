@@ -73,7 +73,7 @@ export class AssayCache {
 }
 
 /** Per-seed responses of a genome on one scenario. */
-export const responses = (c: AssayCache, words: Uint32Array, scenario: Scenario): number[] => ASSAY.seeds.map((s) => c.get(words, scenario, s).permille);
+export const responses = (c: AssayCache, words: Uint32Array, scenario: Scenario, seeds: readonly number[] = ASSAY.seeds): number[] => seeds.map((s) => c.get(words, scenario, s).permille);
 export const sum = (a: readonly number[]): number => a.reduce((x, y) => x + y, 0);
 
 /**

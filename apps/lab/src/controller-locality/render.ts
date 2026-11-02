@@ -12,8 +12,8 @@ export const FAMILY_TEXT: Record<string, string> = {
 export const CLASS_TEXT: Record<string, string> = { genuine: 'changes the genome', unchanged: 'no change (bound)', 'boundary-clamped': 'partly clipped at a bound' };
 export const KIND_TEXT: Record<string, string> = { w1: 'sensor to hidden weight', b1: 'hidden bias', w2: 'hidden to actuator weight', b2: 'actuator bias', physics: 'growth parameter (mu, sigma, motility gain)', multi: 'several controller weights' };
 
-export interface Filter { genome: string; family: string; assayedOnly: boolean }
-export const filterRows = (rows: readonly Row[], f: Filter): Row[] => rows.filter((r) => r.genome === f.genome && (f.family === 'all' || r.family === f.family) && (!f.assayedOnly || r.assayed));
+export interface Filter { genome: string; family: string; assayedOnly: boolean; /** Locus kind (stratum): w1, b1, w2, b2, physics, multi. Absent or 'all' keeps every kind. */ kind?: string }
+export const filterRows = (rows: readonly Row[], f: Filter): Row[] => rows.filter((r) => r.genome === f.genome && (f.family === 'all' || r.family === f.family) && (!f.kind || f.kind === 'all' || r.kind === f.kind) && (!f.assayedOnly || r.assayed));
 
 const sensorsText = (mask: number) => SENSORS.filter((_, i) => mask & (1 << i)).join(' ') || 'none';
 const heat = (permille: number) => `<td class="heat" style="--v:${Math.round(permille / 10)}">${permille === 0 ? '0' : permille}</td>`;
@@ -54,3 +54,42 @@ export function verdictText(v: Verdict): string {
 }
 
 export const candidatesText = (p: Payload): string => p.candidates.map((c) => `cluster ${c.cluster} (${c.slot}): ${c.qualification.pass ? 'passed the viability gate' : `failed: ${c.qualification.reasons.join('; ')}`}${c.chosen ? ', used' : ''}`).join(' | ');
+
+export interface NamedPanel { id: string; label: string; p: Payload }
+
+/** Side-by-side counts of the panels: one row per genome per panel, never pooled. Each panel is read on its own. */
+export function panelSummaryTable(panels: readonly NamedPanel[]): string {
+  const head = '<thead><tr><th scope="col">Panel</th><th scope="col">Controller</th><th scope="col">Assay seeds</th><th scope="col">Assayed edits (N)</th><th scope="col">Improve one response (A)</th><th scope="col">Of those, harm another (C)</th><th scope="col">Of those, harm none (K)</th><th scope="col">Weighted improving rate</th><th scope="col">Tolerance (light / dark / dim)</th><th scope="col">Rule outcome</th></tr></thead>';
+  const rows = panels.flatMap(({ label, p }) => p.genomes.map((g) => {
+    const r = p.readouts.find((x) => x.genome === g.id)!;
+    const t = r.overall;
+    const seeds = ((p.protocol as { assay?: { seeds?: number[] } }).assay?.seeds ?? []).join(', ');
+    const ipw = r.ipw.improvingPermille;
+    const role = g.votes ? '' : g.role === 'control' ? ' (positive control, does not vote)' : ' (did not qualify)';
+    return `<tr><th scope="row">${esc(label)}</th><td>${esc(g.label)}${esc(role)}</td><td>${esc(seeds)}</td><td>${t.assayedGenuine}</td><td>${pm(t.improving, t.assayedGenuine)}</td><td>${pm(t.collateral, t.improving)}</td><td>${pm(t.clean, t.improving)}</td><td>${ipw === null ? '-' : `${ipw} permille`}</td><td>${g.tau.join(' / ')}</td><td>${esc(verdictText(p.verdict))}</td></tr>`;
+  })).join('');
+  return `${head}<tbody>${rows}</tbody>`;
+}
+
+export const panelNote = (p: Payload): string => {
+  const panel = (p as { panel?: { id: string; seeds: readonly number[] } }).panel;
+  const seeds = ((p.protocol as { assay?: { seeds?: number[] } }).assay?.seeds ?? []).join(' and ');
+  const n = p.genomes.filter((g) => g.votes).map((g) => `${g.label}: ${p.rows.filter((r) => r.genome === g.id && r.assay).length}`).join('; ');
+  return `${panel ? `Power-up panel (${panel.id}), a fresh larger draw` : 'Original panel (PR136)'}: assay seeds ${seeds}; assayed edits per voting controller (${n}). Read on its own: not pooled with the other panel.`;
+};
+
+/** Heading and prose of the summary section, from the panels actually loaded (a single panel is not described as "side by side"). */
+export function summaryIntro(panels: readonly NamedPanel[]): { heading: string; paragraphs: string[] } {
+  const rule = 'A is the number of assayed edits that improve a response by more than the tolerance; the rule needs at least 5 per controller before it will say anything about collateral loss.';
+  if (panels.length < 2) {
+    return { heading: 'The original panel', paragraphs: ['This run assayed 24 edits per M3 controller and ended inconclusive because too few edits helped for the rule to decide. A larger, fresh power-up panel under the same rule has not been run yet, so only this panel is shown.', rule] };
+  }
+  return {
+    heading: 'Two panels, side by side',
+    paragraphs: [
+      'The first run assayed 24 edits per M3 controller and ended inconclusive because too few edits helped for the rule to decide. The power-up assayed 192 per controller with disjoint seeds, excluding every edited-genome hash recorded for that controller in the first run (generated matrix rows can still overlap). The assayed multi-locus share changes from 25% to 50%, and the power-up weighted rates describe the eligible complement. The same rule is applied unchanged. Each panel is read on its own; they are never pooled.',
+      rule,
+      'On this pair of controllers a "go" for a separate architecture study could not have happened: the only go outcome needs an entanglement signal on both controllers, and the sparse one cannot reach it by its wiring. So every possible outcome reads as "no-go for now". That is how the test was built; it is not evidence against such a study.',
+    ],
+  };
+}
