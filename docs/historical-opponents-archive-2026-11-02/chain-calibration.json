@@ -1,0 +1,93 @@
+{
+ "kind": "historical-opponents-archive-chain-calibration",
+ "note": "planted-chain trials on screen seeds 901..903 only (no scoring seed), arena 32/3/300, weakening of the generalist's photosynthesis weight by the listed percents, time order = ascending strength. Run before the freeze with node tools/opponents/archive.ts --calibrate-chain --percents P (about 130 CPU-s each, 7 trials, about 900 CPU-s plus 68 CPU-s of viability screening).",
+ "attempts": [
+  {
+   "percents": [
+    70,
+    45,
+    20,
+    0
+   ],
+   "label": "nothing-beyond-null",
+   "rDir": 0.0833,
+   "rDirResid": 0.5
+  },
+  {
+   "percents": [
+    60,
+    40,
+    20,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.2917
+  },
+  {
+   "percents": [
+    90,
+    65,
+    40,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.6667
+  },
+  {
+   "percents": [
+    80,
+    60,
+    40,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.4167
+  },
+  {
+   "percents": [
+    85,
+    60,
+    35,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.375
+  },
+  {
+   "percents": [
+    90,
+    70,
+    50,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.5833
+  },
+  {
+   "percents": [
+    75,
+    50,
+    25,
+    0
+   ],
+   "label": "directional-vigour-only",
+   "rDir": 0.0417,
+   "rDirResid": 0.2917
+  }
+ ],
+ "selected": {
+  "percents": [
+   80,
+   60,
+   40,
+   0
+  ],
+  "reason": "first predeclared-by-eye ordering with r_dir at the K=4 floor (1/24); every trial with r_dir at the floor had a vigour residual that did not align (0.29 to 0.67), so the planted chain is a positive control for directional-rank OR directional-vigour-only, see the PLAN amendment"
+ },
+ "finding": "no fixture or control reaches directional-rank: strength-aligned (first rung panel) and planted-chain both land on directional-vigour-only. The top label has no positive control."
+}

@@ -1,0 +1,611 @@
+{
+ "kind": "historical-opponents-archive-fixture",
+ "version": 1,
+ "transferConditions": [
+  "search worlds: 64x64 tile, uniform light (base 40, amplitude 160), mu/sigma 60/20, kernel radius 9; arena: 32x32 tile, gradient light, amplitude 200, mu/sigma 154/24 (the first rung's arena)",
+  "search score: survival, recovery after a 30% lesion and light dependence over 7000 steps; arena payoff: biomass share at step 300 against another label, mutation off",
+  "bootstrap-200 records a legacy resume with exact:false (resumed from its elites and gate passers, not byte-exact)"
+ ],
+ "screenSeeds": [
+  901,
+  902,
+  903
+ ],
+ "sources": [
+  {
+   "name": "bootstrap-m3",
+   "short": "m3",
+   "file": "runs/bootstrap-m3/archive.json",
+   "fileSha256": "14d937497c60a3d2958ff179b282553db6efef052965aacde874303a90ad2500",
+   "evaluated": 1280,
+   "elites": 38,
+   "horizon": 80,
+   "resumeExact": null,
+   "bins": [
+    {
+     "bin": 0,
+     "lo": 0,
+     "hi": 16,
+     "status": "viable",
+     "candidates": 2,
+     "screened": 1,
+     "snapshot": "m3:0"
+    },
+    {
+     "bin": 1,
+     "lo": 16,
+     "hi": 32,
+     "status": "viable",
+     "candidates": 5,
+     "screened": 1,
+     "snapshot": "m3:1"
+    },
+    {
+     "bin": 2,
+     "lo": 32,
+     "hi": 48,
+     "status": "viable",
+     "candidates": 10,
+     "screened": 1,
+     "snapshot": "m3:2"
+    },
+    {
+     "bin": 3,
+     "lo": 48,
+     "hi": 64,
+     "status": "viable",
+     "candidates": 6,
+     "screened": 1,
+     "snapshot": "m3:3"
+    },
+    {
+     "bin": 4,
+     "lo": 64,
+     "hi": 80,
+     "status": "viable",
+     "candidates": 15,
+     "screened": 1,
+     "snapshot": "m3:4"
+    }
+   ],
+   "snapshots": [
+    {
+     "id": "m3:0",
+     "bin": 0,
+     "cell": [
+      6,
+      0
+     ],
+     "born": 11,
+     "quality": 0.9985156550965678,
+     "hex": "0014003c0000000000000000000000000500000000000000000000000000000000000000000000000000007f0000000000007fec00000010000000000000000000000000000000f000ee00000000090000e900000000000000400000000000007f008100000000000000026e000000000000000000000000000b0000000000000000000000000000000000000000000000000000000000000000000002000000e82846000000000c",
+     "sharedWith": []
+    },
+    {
+     "id": "m3:1",
+     "bin": 1,
+     "cell": [
+      5,
+      0
+     ],
+     "born": 23,
+     "quality": 0.9999654294548137,
+     "hex": "000f005900000000d800c140d70537cbc8c5c8d2e838033cc4c9f627ec25ea31dc3706ffe613f5efdef5c7d8cb0cf00dc105f9d01ac61aec3316310c23f5c8c3cbddede225e702fb0be2e01d0f13d90c1de4e3d1191330d52cd22a113cf0c0331ade1bdcec32c5c140c0dc1e04eed2d5f62c0d2d101c3db913d3060ef92bd5e6dac3e8f10ae73640e1f13b2a282e0f3705dde6cce7cd3623fa01eaf40d10f011c726203cc4330cfa",
+     "sharedWith": []
+    },
+    {
+     "id": "m3:2",
+     "bin": 2,
+     "cell": [
+      5,
+      1
+     ],
+     "born": 39,
+     "quality": 1,
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "sharedWith": []
+    },
+    {
+     "id": "m3:3",
+     "bin": 3,
+     "cell": [
+      6,
+      4
+     ],
+     "born": 50,
+     "quality": 0.875,
+     "hex": "0011005900000000d811c140e0fb37cbdec5c8d2e838033cc4c9f627ec25ea31dc37eeffe613f5efdef5c7d8cb0cf00dc105f9d51ac61aec3316350c23f5c2c3cbddedca25e702fb0be2e01d0f13c6181de4e3d7191340d52cd22a113cf0c0331acc1bdcec32dac140c0dc1e04eed2d5f62cfa2d101c3dcb13d3060ef12bc1e6dac3e8f10ae73640e1f13b2a28250f2705f9d9cccfcd3623fa01fef40d10f011c726203cc4330ce2",
+     "sharedWith": []
+    },
+    {
+     "id": "m3:4",
+     "bin": 4,
+     "cell": [
+      7,
+      7
+     ],
+     "born": 74,
+     "quality": 1,
+     "hex": "001100770000000cd811c140d7fb37cbdec5c8d2e838033cc4c9f627ec25ea19dc37eeffe60ff5efdef5c7d8cb0cf40dc105f9d51ac61a033316350c23fac2c3cbddeddb12e702fb0bdce01d0f13c6181de4e3d7191340d52cd235113cddc01b1acc1bdcec32dac140c0dc1e04eed2d5f62c112d101c3dcb22d3060ef12bd5e6ddc3e8f10ae73640e1f13b2a282e0f2705f9d9e3cfcd3623fa01fef40d10f011c726203cc6330ce2",
+     "sharedWith": []
+    }
+   ],
+   "status": "kept",
+   "dropReason": null,
+   "compat": {
+    "ok": true,
+    "problems": []
+   },
+   "screens": [
+    {
+     "hex": "0014003c0000000000000000000000000500000000000000000000000000000000000000000000000000007f0000000000007fec00000010000000000000000000000000000000f000ee00000000090000e900000000000000400000000000007f008100000000000000026e000000000000000000000000000b0000000000000000000000000000000000000000000000000000000000000000000002000000e82846000000000c",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      16558,
+      20079,
+      15874
+     ]
+    },
+    {
+     "hex": "000f005900000000d800c140d70537cbc8c5c8d2e838033cc4c9f627ec25ea31dc3706ffe613f5efdef5c7d8cb0cf00dc105f9d01ac61aec3316310c23f5c8c3cbddede225e702fb0be2e01d0f13d90c1de4e3d1191330d52cd22a113cf0c0331ade1bdcec32c5c140c0dc1e04eed2d5f62c0d2d101c3db913d3060ef92bd5e6dac3e8f10ae73640e1f13b2a282e0f3705dde6cce7cd3623fa01eaf40d10f011c726203cc4330cfa",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      15944,
+      18907,
+      14924
+     ]
+    },
+    {
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      24854,
+      27250,
+      23132
+     ]
+    },
+    {
+     "hex": "0011005900000000d811c140e0fb37cbdec5c8d2e838033cc4c9f627ec25ea31dc37eeffe613f5efdef5c7d8cb0cf00dc105f9d51ac61aec3316350c23f5c2c3cbddedca25e702fb0be2e01d0f13c6181de4e3d7191340d52cd22a113cf0c0331acc1bdcec32dac140c0dc1e04eed2d5f62cfa2d101c3dcb13d3060ef12bc1e6dac3e8f10ae73640e1f13b2a28250f2705f9d9cccfcd3623fa01fef40d10f011c726203cc4330ce2",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      14721,
+      16695,
+      14017
+     ]
+    },
+    {
+     "hex": "001100770000000cd811c140d7fb37cbdec5c8d2e838033cc4c9f627ec25ea19dc37eeffe60ff5efdef5c7d8cb0cf40dc105f9d51ac61a033316350c23fac2c3cbddeddb12e702fb0bdce01d0f13c6181de4e3d7191340d52cd235113cddc01b1acc1bdcec32dac140c0dc1e04eed2d5f62c112d101c3dcb22d3060ef12bd5e6ddc3e8f10ae73640e1f13b2a282e0f2705f9d9e3cfcd3623fa01fef40d10f011c726203cc6330ce2",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      14609,
+      15373,
+      14789
+     ]
+    }
+   ]
+  },
+  {
+   "name": "bootstrap-200",
+   "short": "b200",
+   "file": "runs/bootstrap-200/archive.json",
+   "fileSha256": "9504ecb73592c396e9fd73d7af424099a423353ce6edbda5ff9210dd5a882fc6",
+   "evaluated": 4800,
+   "elites": 47,
+   "horizon": 298,
+   "resumeExact": false,
+   "bins": [
+    {
+     "bin": 0,
+     "lo": 0,
+     "hi": 60,
+     "status": "viable",
+     "candidates": 5,
+     "screened": 1,
+     "snapshot": "b200:0"
+    },
+    {
+     "bin": 1,
+     "lo": 60,
+     "hi": 120,
+     "status": "viable",
+     "candidates": 7,
+     "screened": 1,
+     "snapshot": "b200:1"
+    },
+    {
+     "bin": 2,
+     "lo": 120,
+     "hi": 179,
+     "status": "viable",
+     "candidates": 10,
+     "screened": 1,
+     "snapshot": "b200:2"
+    },
+    {
+     "bin": 3,
+     "lo": 179,
+     "hi": 239,
+     "status": "viable",
+     "candidates": 12,
+     "screened": 1,
+     "snapshot": "b200:3"
+    },
+    {
+     "bin": 4,
+     "lo": 239,
+     "hi": 298,
+     "status": "viable",
+     "candidates": 13,
+     "screened": 1,
+     "snapshot": "b200:4"
+    }
+   ],
+   "snapshots": [
+    {
+     "id": "b200:0",
+     "bin": 0,
+     "cell": [
+      5,
+      1
+     ],
+     "born": 39,
+     "quality": 1,
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "sharedWith": [
+      "m3:2"
+     ]
+    },
+    {
+     "id": "b200:1",
+     "bin": 1,
+     "cell": [
+      5,
+      0
+     ],
+     "born": 80,
+     "quality": 1,
+     "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700021810d436dffb211b17fadcd8cef7d11fdee0f237f2e0f90212f6340527e91a1731cecc3ada",
+     "sharedWith": []
+    },
+    {
+     "id": "b200:2",
+     "bin": 2,
+     "cell": [
+      6,
+      4
+     ],
+     "born": 123,
+     "quality": 1,
+     "hex": "0012002a0000000ce5f2e3fcca122324e1353104f123192fef1c110a2a31c3babbe80d2b34d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1d20dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb350ed50fcef104e337ef0adee9fd29c5cdf63e3f2624ccdbd21dd2daf80325cedb2dd9ddf6402ed7f62d2708f42af01bfcf20ff0c7093bdcfff90f36172bcd1305da29d62f2dc6",
+     "sharedWith": []
+    },
+    {
+     "id": "b200:3",
+     "bin": 3,
+     "cell": [
+      3,
+      4
+     ],
+     "born": 220,
+     "quality": 0.75,
+     "hex": "001c005d00000000e21be240f90733150bd90715ecd2faf5340fc02e07dccc14c420ed193bda13dd3b2ec3f633cc05e809dc0cf937ec37f3dffd34d11e33e5e7ecd2f30eefcbcf3e3a12f40af6c2051ef837331906d1cec6f600160ed90427f7e8ee0609be1bc13936f7f3403313cac92936c30816c4eec21fe81322fb04cf0816c603cee5012afc1e09ff25fa00c9133accc412f628c3c20cfd20dacc1539023206c63bd5d5c51a",
+     "sharedWith": []
+    },
+    {
+     "id": "b200:4",
+     "bin": 4,
+     "cell": [
+      4,
+      1
+     ],
+     "born": 262,
+     "quality": 1,
+     "hex": "000c0038000000001c3f3d2b11063efa1b28e0daef0029e603fcc8fbe3273d3b3efbd33d28f5351f0ac8c1db3af5c330f029c618343b2629041c3e273300df12d938281afe01e522f619d3c527d4eb0af80ac3ef11c430ce27c907e635e2373b03fd14da1ff7d4edc934dbe6c332160edbf9131c20d31c33df1de73cf92d021ac913d1fe14d3ca0933ce1ff825e8c0eae622fe401c2dcdc8cb1a2002c43a17102409d33dd3db0513",
+     "sharedWith": []
+    }
+   ],
+   "status": "kept",
+   "dropReason": null,
+   "compat": {
+    "ok": true,
+    "problems": []
+   },
+   "screens": [
+    {
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      24854,
+      27250,
+      23132
+     ]
+    },
+    {
+     "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700021810d436dffb211b17fadcd8cef7d11fdee0f237f2e0f90212f6340527e91a1731cecc3ada",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      14607,
+      16495,
+      13890
+     ]
+    },
+    {
+     "hex": "0012002a0000000ce5f2e3fcca122324e1353104f123192fef1c110a2a31c3babbe80d2b34d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1d20dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb350ed50fcef104e337ef0adee9fd29c5cdf63e3f2624ccdbd21dd2daf80325cedb2dd9ddf6402ed7f62d2708f42af01bfcf20ff0c7093bdcfff90f36172bcd1305da29d62f2dc6",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      22513,
+      28278,
+      25896
+     ]
+    },
+    {
+     "hex": "001c005d00000000e21be240f90733150bd90715ecd2faf5340fc02e07dccc14c420ed193bda13dd3b2ec3f633cc05e809dc0cf937ec37f3dffd34d11e33e5e7ecd2f30eefcbcf3e3a12f40af6c2051ef837331906d1cec6f600160ed90427f7e8ee0609be1bc13936f7f3403313cac92936c30816c4eec21fe81322fb04cf0816c603cee5012afc1e09ff25fa00c9133accc412f628c3c20cfd20dacc1539023206c63bd5d5c51a",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      48358,
+      51938,
+      46616
+     ]
+    },
+    {
+     "hex": "000c0038000000001c3f3d2b11063efa1b28e0daef0029e603fcc8fbe3273d3b3efbd33d28f5351f0ac8c1db3af5c330f029c618343b2629041c3e273300df12d938281afe01e522f619d3c527d4eb0af80ac3ef11c430ce27c907e635e2373b03fd14da1ff7d4edc934dbe6c332160edbf9131c20d31c33df1de73cf92d021ac913d1fe14d3ca0933ce1ff825e8c0eae622fe401c2dcdc8cb1a2002c43a17102409d33dd3db0513",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      69667,
+      152927,
+      109529
+     ]
+    }
+   ]
+  },
+  {
+   "name": "bootstrap-div",
+   "short": "div",
+   "file": "runs/bootstrap-div/archive.json",
+   "fileSha256": "fea37548ca7ffb45ab87cdaaaa27fe4c46143747e06fe7cef0ab9c349fa8e42e",
+   "evaluated": 1280,
+   "elites": 26,
+   "horizon": 80,
+   "resumeExact": null,
+   "bins": [
+    {
+     "bin": 0,
+     "lo": 0,
+     "hi": 16,
+     "status": "viable",
+     "candidates": 1,
+     "screened": 1,
+     "snapshot": "div:0"
+    },
+    {
+     "bin": 1,
+     "lo": 16,
+     "hi": 32,
+     "status": "viable",
+     "candidates": 5,
+     "screened": 1,
+     "snapshot": "div:1"
+    },
+    {
+     "bin": 2,
+     "lo": 32,
+     "hi": 48,
+     "status": "viable",
+     "candidates": 4,
+     "screened": 1,
+     "snapshot": "div:2"
+    },
+    {
+     "bin": 3,
+     "lo": 48,
+     "hi": 64,
+     "status": "viable",
+     "candidates": 9,
+     "screened": 1,
+     "snapshot": "div:3"
+    },
+    {
+     "bin": 4,
+     "lo": 64,
+     "hi": 80,
+     "status": "viable",
+     "candidates": 7,
+     "screened": 1,
+     "snapshot": "div:4"
+    }
+   ],
+   "snapshots": [
+    {
+     "id": "div:0",
+     "bin": 0,
+     "cell": [
+      6,
+      1
+     ],
+     "born": 5,
+     "quality": 1,
+     "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfec80e26c0c03b063a3aeeda40cf0ecc20dbcd1019323b390e2abcfa0815393a1a212cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea1c213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc",
+     "sharedWith": []
+    },
+    {
+     "id": "div:1",
+     "bin": 1,
+     "cell": [
+      6,
+      0
+     ],
+     "born": 19,
+     "quality": 1,
+     "hex": "0014003c000000000000000000000000000000000000000000000000000000000000000000fd00000000007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e82846000000000c",
+     "sharedWith": []
+    },
+    {
+     "id": "div:2",
+     "bin": 2,
+     "cell": [
+      5,
+      1
+     ],
+     "born": 39,
+     "quality": 1,
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "sharedWith": [
+      "m3:2"
+     ]
+    },
+    {
+     "id": "div:3",
+     "bin": 3,
+     "cell": [
+      6,
+      6
+     ],
+     "born": 61,
+     "quality": 0.9805131904861928,
+     "hex": "0012002a0000000ce5f2e3fcca122324e13530fcf123192fef1c11132a31c3bacfe80d3836d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1735dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbf23e3f2624ccdbd21dd2f2f80325cedb2de5ddf6402ed7e12d2708f42af01bfcf20fe4c7093bdce6f90f36172bcd1305da29d62f32c6",
+     "sharedWith": []
+    },
+    {
+     "id": "div:4",
+     "bin": 4,
+     "cell": [
+      5,
+      0
+     ],
+     "born": 76,
+     "quality": 0.9984666885006361,
+     "hex": "001a0020000000003be030ddc131f43dcacdc627f513173d03fa0ede3b0c17ede7f638cde9fd200d09da303830efe8e4e0ef25deff0e3ad5d8d8e8d1f7cd3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700021810d436dffb211b17fadcd8cef7d11fdee0f237f2e0f90212f6340527e91a1731cecc3ada",
+     "sharedWith": []
+    }
+   ],
+   "status": "kept",
+   "dropReason": null,
+   "compat": {
+    "ok": true,
+    "problems": []
+   },
+   "screens": [
+    {
+     "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfec80e26c0c03b063a3aeeda40cf0ecc20dbcd1019323b390e2abcfa0815393a1a212cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea1c213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      20476,
+      22501,
+      18618
+     ]
+    },
+    {
+     "hex": "0014003c000000000000000000000000000000000000000000000000000000000000000000fd00000000007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e82846000000000c",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      16253,
+      19569,
+      15151
+     ]
+    },
+    {
+     "hex": "001a003b00000000230ef10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a3ccbdaed3c0c40c0403a1f21df19d7e90ffcc2f2c320263b20c837db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0f106c919d00d300a1b16c10827322ad02711c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec62b",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      24854,
+      27250,
+      23132
+     ]
+    },
+    {
+     "hex": "0012002a0000000ce5f2e3fcca122324e13530fcf123192fef1c11132a31c3bacfe80d3836d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1735dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbf23e3f2624ccdbd21dd2f2f80325cedb2de5ddf6402ed7e12d2708f42af01bfcf20fe4c7093bdce6f90f36172bcd1305da29d62f32c6",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      22992,
+      24978,
+      24756
+     ]
+    },
+    {
+     "hex": "001a0020000000003be030ddc131f43dcacdc627f513173d03fa0ede3b0c17ede7f638cde9fd200d09da303830efe8e4e0ef25deff0e3ad5d8d8e8d1f7cd3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700021810d436dffb211b17fadcd8cef7d11fdee0f237f2e0f90212f6340527e91a1731cecc3ada",
+     "viable": true,
+     "b0": [
+      14203,
+      16016,
+      13381
+     ],
+     "b300": [
+      14559,
+      16435,
+      13834
+     ]
+    }
+   ]
+  }
+ ]
+}
