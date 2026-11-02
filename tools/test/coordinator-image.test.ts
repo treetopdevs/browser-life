@@ -102,6 +102,35 @@ const joinBody = (host: string) => JSON.stringify({ physicalHostId: host, label:
 /** Markers that mean the application crashed or could not use its directories, whatever else the logs say. */
 const CRASH_MARKERS = ["Application coordinator exited", "CRASH REPORT", "Config provider", "eacces"];
 
+/**
+ * A boot refusal is reported twice: a "** (RuntimeError) message" block the config provider writes to stderr, and the
+ * VM's own "Runtime terminating during boot" line. The VM halts right after raising, and the stderr block is sometimes
+ * dropped before docker captures it (CI logs of the failed runs show the "** (RuntimeError)" line, even the "ERROR!"
+ * header, absent from `docker logs` both at assertion time and at cleanup, while the terminating line is there). That
+ * line carries the same message as an Erlang term: quotes escaped, a long message as a list of byte codes. Return the
+ * logs plus that term decoded, so a refusal message is found in either form.
+ */
+function withBootTerms(logs: string): string {
+  const decoded = logs.replace(/<<(\d+(?:,\d+)*)>>/g, (_m, codes: string) => Buffer.from(codes.split(",").map(Number)).toString("utf8"));
+  return `${logs}\n${decoded.replaceAll('\\"', '"')}`;
+}
+
+describe("withBootTerms", () => {
+  const msg = `BL_MAX_ISLANDS: "lots" is not a positive whole number`;
+  it("finds a message only the terminating line carries, quotes escaped", () => {
+    const logs = `Runtime terminating during boot ({#{message=><<"BL_MAX_ISLANDS: \\"lots\\" is not a positive whole number">>}})`;
+    expect(logs.includes(msg)).toBe(false);
+    expect(withBootTerms(logs).includes(msg)).toBe(true);
+  });
+  it("decodes a message printed as byte codes", () => {
+    const codes = [...Buffer.from("SECRET_KEY_BASE is missing")].join(",");
+    expect(withBootTerms(`terminating (<<${codes}>>)`).includes("SECRET_KEY_BASE is missing")).toBe(true);
+  });
+  it("does not invent a message the logs never carried", () => {
+    expect(withBootTerms("Runtime terminating during boot (<<\"other\">>)").includes(msg)).toBe(false);
+  });
+});
+
 describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
   const invocation = randomBytes(6).toString("hex");
   const labels = ["--label", `bl.coordinator-image.invocation=${invocation}`, ...(ciRun ? ["--label", `bl.coordinator-image.ci=${ciRun}`] : [])];
@@ -414,7 +443,8 @@ describe.skipIf(!usable || !hasCompose)("the coordinator image", () => {
       expect(r.answered, "the coordinator answered although it should have refused").toBe(false);
       expect(r.stillRunning, "the container is still running").toBe(false);
       expect(r.code, "the container exited 0").not.toBe(0);
-      for (const m of messages) expect(r.logs.includes(m), `logs lack "${m}"`).toBe(true);
+      const seen = withBootTerms(r.logs);
+      for (const m of messages) expect(seen.includes(m), `logs lack "${m}"`).toBe(true);
       expect(r.leaked, "the logs carried a secret").toBe(false);
     };
     const T = 120_000;
