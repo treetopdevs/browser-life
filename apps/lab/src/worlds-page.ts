@@ -77,7 +77,9 @@ const grid = (ids: string[], picks?: Map<string, string>) => {
 
 const jump = document.getElementById("worlds-jump");
 if (jump) {
-  for (const f of [{ id: "start-here", name: "Start here" }, ...FAMILIES]) {
+  // The page's own last section (worlds/index.html) is not a lab family but is listed with them.
+  const extra = document.getElementById("other-chemistry") ? [{ id: "other-chemistry", name: "A different chemistry" }] : [];
+  for (const f of [{ id: "start-here", name: "Start here" }, ...FAMILIES, ...extra]) {
     const li = document.createElement("li");
     const a = document.createElement("a");
     a.href = `#${f.id}`;

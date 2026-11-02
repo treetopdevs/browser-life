@@ -52,6 +52,13 @@ if (a.grid) {
   if (!m) throw new Error("--grid expects WIDTHxHEIGHT, e.g. 240x135");
   grid = { width: Number(m[1]), height: Number(m[2]), radius: Number(a.radius) };
   if (!Number.isInteger(grid.radius) || grid.radius! < 1) throw new Error("--radius must be a positive integer");
+  // A radius past the grid's larger side reaches the same neighbours as that
+  // side, and a huge one would hang building the neighbour lists.
+  const reach = Math.max(grid.width, grid.height);
+  if (grid.radius! > reach) {
+    console.warn(`--radius ${grid.radius} reaches no further than ${reach} on this grid; using ${reach}`);
+    grid.radius = reach;
+  }
 }
 const num = grid ? grid.width * grid.height : 2 ** log2;
 if (num > MAX_NUM || num % 2 !== 0) throw new Error("the soup must have an even number of programs, at most 2^24");
