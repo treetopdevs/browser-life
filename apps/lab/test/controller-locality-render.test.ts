@@ -100,3 +100,14 @@ it('the summary intro depends on the panels loaded and states that go was unreac
   expect(two.paragraphs.join(' ')).toMatch(/could not have happened/);
   expect(two.paragraphs.join(' ')).toMatch(/not evidence against/);
 });
+
+it('renders the real power-up evidence: A of 3 and 4 over 192, below the minimum, unpooled with the original', async () => {
+  const real = (await import('../../../docs/controller-locality-power-2026-11-02/evidence.json')).default as unknown as Payload;
+  const html = panelSummaryTable([{ id: 'original', label: 'Original', p }, { id: 'power', label: 'Power-up', p: real }]);
+  const rows = html.split('<tr>').filter((x) => x.includes('<th scope="row">') && x.includes('>Power-up<'));
+  const c4 = rows.find((r) => r.includes('M3 cluster 4'))!, c9 = rows.find((r) => r.includes('M3 cluster 9'))!;
+  expect(c4).toContain('3/192');
+  expect(c9).toContain('4/192');
+  expect(html).toContain('1/24');
+  expect(verdictText(real.verdict)).toMatch(/inconclusive/i);
+});
