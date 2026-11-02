@@ -8,16 +8,20 @@
 //       leaders, turnover, competitors -> <out>/plan.json, assay jobs -> <out>/jobs.jsonl
 //   deno run -A tools/soup-evo.ts assay [--out runs/soup/evo] [--shard i/n]
 //       runs the jobs not yet done -> <out>/assays/<id>.json (run shards in parallel)
+//       [--gpu] runs them on the GPU instead (same results; tools/soup/evo-gpu.ts)
+//       [--claim] skips jobs another worker holds (an OS lock on <id>.json.lock), so GPU and CPU workers can share a list
 //   deno run -A tools/soup-evo.ts analyze [--out runs/soup/evo]
 //       verdicts, probes, trends, similarity graph -> <out>/results.json, and a summary
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { TAPE } from "./soup/bff.ts";
+import { runAssayGpu } from "./soup/evo-gpu.ts";
+import { soupDevice } from "./soup/device.ts";
 import {
   type AssayJob, type AssayResult, findMarker, hex, intransitive, interact, leadership, lineageVerdict, markForms, pairOutcome,
   parasites, permutationP, refOf, runAssay, sd, type Snapshot, spearman, trend, type TypeRow, typeCensus, unhex,
 } from "./soup/evo.ts";
 
-const a = parseArgs(Deno.args, { string: ["from", "shard", "out", "grid-lineage"], collect: ["lineage"], default: { out: "runs/soup/evo" } });
+const a = parseArgs(Deno.args, { string: ["from", "shard", "out", "grid-lineage"], collect: ["lineage"], boolean: ["gpu", "claim"], default: { out: "runs/soup/evo" } });
 const cmd = String(a._[0] ?? "");
 const out = String(a.out);
 
@@ -148,16 +152,32 @@ if (cmd === "census") {
   await Deno.writeTextFile(`${out}/jobs.jsonl`, jobs.map((j) => JSON.stringify(j)).join("\n") + "\n");
   console.log(`${jobs.length} assay jobs -> ${out}/jobs.jsonl`);
 } else if (cmd === "assay") {
+  // --claim: an OS file lock on <id>.json.lock, held while the job runs and released by the OS if the worker dies.
+  const claim = async (lock: string, result: string): Promise<Deno.FsFile | null> => {
+    const f = await Deno.open(lock, { create: true, read: true, write: true });
+    if (!(await f.tryLock(true))) { f.close(); return null; }
+    if (await exists(result)) { f.close(); return null; } // finished while we waited
+    return f;
+  };
   const [i, n] = shard();
+  // --gpu: the same races on the GPU (byte-identical, tests/deno/soup_gpu.ts).
+  const gpuDevice = a.gpu ? await soupDevice() : null;
   const jobs: AssayJob[] = (await Deno.readTextFile(`${out}/jobs.jsonl`)).trim().split("\n").map((l) => JSON.parse(l));
   await Deno.mkdir(`${out}/assays`, { recursive: true });
   for (let k = i; k < jobs.length; k += n) {
     const p = `${out}/assays/${jobs[k].id}.json`;
     if (await exists(p)) continue;
+    // --claim: workers sharing one job list take a job by creating its lock file first.
+    const held = a.claim ? await claim(`${p}.lock`, p) : null;
+    if (a.claim && !held) continue;
     const t = performance.now();
-    const r = runAssay(jobs[k]);
-    await Deno.writeTextFile(p + ".tmp", JSON.stringify(r));
-    await Deno.rename(p + ".tmp", p);
+    let r;
+    try {
+      r = gpuDevice ? await runAssayGpu(jobs[k], gpuDevice) : runAssay(jobs[k]);
+      const tmp = `${p}.${Deno.pid}.tmp`; // per worker, so two writers can never share a temp file
+      await Deno.writeTextFile(tmp, JSON.stringify(r));
+      await Deno.rename(tmp, p);
+    } finally { held?.close(); }
     console.log(`${jobs[k].id}: f ${r.final.f.toFixed(3)} other ${r.final.other}${r.valid ? "" : " INVALID"} (${((performance.now() - t) / 1000).toFixed(0)}s)`);
   }
 } else if (cmd === "analyze") {

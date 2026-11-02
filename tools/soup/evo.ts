@@ -339,6 +339,18 @@ export function markerPosition(ref: TypeRef, form: number, t: number, pos: numbe
   return 0;
 }
 
+/** Invalid-run rule: a third copier type (not within either side's radius) that outnumbers both sides together. */
+export function assayIntruder(programs: Uint8Array, epoch: number, pt: AssayPoint, rareRef: TypeRef, commonRef: TypeRef): AssayResult["intruder"] {
+  const end = typeCensus(programs, epoch, { top: 0, testShare: 0.01, maxTests: 100 });
+  for (const t of end.types) {
+    if (t.count <= pt.rare + pt.common) break;
+    const rep = unhex(t.rep);
+    if (rareRef.distance(rep, 0, rareRef.match).d <= rareRef.match || commonRef.distance(rep, 0, commonRef.match).d <= commonRef.match) continue;
+    if (t.selfRep !== null && t.selfRep >= COPIER) return { id: t.id, count: t.count, selfRep: t.selfRep };
+  }
+  return null;
+}
+
 export function runAssay(job: AssayJob): AssayResult {
   const soup = seedAssay(job);
   const epochs = job.epochs ?? 512, every = job.every ?? 64;
@@ -349,17 +361,7 @@ export function runAssay(job: AssayJob): AssayResult {
     const c = classify(soup.programs, job, rareRef, commonRef);
     points.push({ epoch: soup.epoch, ...c, f: c.rare + c.common ? c.rare / (c.rare + c.common) : NaN });
   };
-  // Invalid if a third copier type (not within either side's radius) outnumbers both sides together.
-  const intruderNow = (pt: AssayPoint): AssayResult["intruder"] => {
-    const end = typeCensus(soup.programs, soup.epoch, { top: 0, testShare: 0.01, maxTests: 100 });
-    for (const t of end.types) {
-      if (t.count <= pt.rare + pt.common) break;
-      const rep = unhex(t.rep);
-      if (rareRef.distance(rep, 0, rareRef.match).d <= rareRef.match || commonRef.distance(rep, 0, commonRef.match).d <= commonRef.match) continue;
-      if (t.selfRep !== null && t.selfRep >= COPIER) return { id: t.id, count: t.count, selfRep: t.selfRep };
-    }
-    return null;
-  };
+  const intruderNow = (pt: AssayPoint) => assayIntruder(soup.programs, soup.epoch, pt, rareRef, commonRef);
   const extra = new Set((job.validAt ?? []).filter((e) => e < epochs));
   const validAt: Record<number, boolean> = {};
   measure();
