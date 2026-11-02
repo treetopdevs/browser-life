@@ -202,6 +202,11 @@ export function verdictOf(v: VerdictInput): Verdict {
     if (f.nonPositive) return done("unsupported-within-tested-domain", `screen: median S or median B is not positive (failed ${failed})`);
     return done("inconclusive", `screen: estimates are positive but ${failed} failed`);
   }
+  // Completeness holds for every required schedule before any benefit label: a missing block in a control or a transfer schedule is not a smaller panel.
+  for (const id of ["paused", "reversed", "wandering"] as const) {
+    const d = v[id];
+    if (d && d.complete < d.blocks) return done("inconclusive", `${id} schedule incomplete: ${d.complete} of ${d.blocks} blocks have every strategy`);
+  }
   const pausedBenefit = v.paused === null || v.paused.B.median2 === null || Math.abs(v.paused.B.median2) > 2 * v.floors.paused.cap;
   if (pausedBenefit) return done("inconclusive-confounded", "paused (static) control shows a benefit or was not run");
   for (const id of ["reversed", "wandering"] as const) {

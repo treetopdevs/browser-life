@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: when the sun moves, does a group of signalling bodies do better than the same bodies spread out?">
+  <title>Does a group find the moving sun? · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the result</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / moving light</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">First rung</p>
+      <h1>Does a group find the moving sun better than the same bodies alone?</h1>
+      <p>Four bodies sit in a small jar lit by a sun that slides along it. Some can signal in the dark and move away from signal, so a group could, in principle, drift toward the light together. We run the same four bodies packed together and spread apart, in the same jar with the same competition, and ask whether the group does better than the spread-out bodies, beyond what three comparison strategies do. Bodies moving together is not the test: a sun pulling everything the same way looks like teamwork too.</p>
+      <p class="disclosure">Exploratory, CPU only, no GPU evidence, mutation off. A local replay, kept off the public site. The page runs no simulation: each choice below shows a separate precomputed history, not a change made to a running world. A negative here means "no interaction benefit detected in this small jar, horizon and schedule set".</p>
+    </section>
+
+    <section class="verdict" id="verdict" aria-labelledby="verdict-heading" aria-live="polite">
+      <h2 id="verdict-heading">What the pre-stated rules say</h2>
+    </section>
+
+    <section class="table-section" aria-labelledby="f-heading">
+      <h2 id="f-heading">Can the naive reading be fooled? Fixtures</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Synthetic fixture table, scrolls sideways on narrow screens">
+        <table><caption>Synthetic tracks. The naive reading is "bodies move the same way as each other". When the sun alone drags every body along (common-forcing) it reads collective motion, but the residual coordination, which removes the sun's own movement and compares grouped against spread-out bodies, is inside the noise floor. Coupled bodies are detected; a frozen world is reported unavailable, never zero. In tracking-asymmetry the grouped bodies follow the sun fully and the spread-out ones only half: the residual comes out negative and is rejected, and without the sun subtraction it would read as coordination.</caption>
+          <thead><tr><th scope="col">Fixture</th><th scope="col">Naive reading</th><th scope="col">Residual coordination (median over fixture seeds)</th><th scope="col">Label</th><th scope="col">Result</th></tr></thead>
+          <tbody id="coord-fixtures"></tbody></table>
+      </div>
+      <div class="scroll" tabindex="0" role="region" aria-label="Physical fixture table, scrolls sideways on narrow screens">
+        <table><caption>Real simulated worlds that look like group behaviour but have no useful interaction.</caption>
+          <thead><tr><th scope="col">Fixture</th><th scope="col">Naive reading</th><th scope="col">Decision inputs</th><th scope="col">Result</th><th scope="col">Why</th></tr></thead>
+          <tbody id="phys-fixtures"></tbody></table>
+      </div>
+    </section>
+
+    <section aria-labelledby="arms-heading">
+      <h2 id="arms-heading">The four strategies, side by side</h2>
+      <div class="controls">
+        <label for="schedule">Sun schedule<select id="schedule"></select></label>
+        <button id="reveal" type="button" aria-pressed="false">Reveal the names</button>
+        <label for="scrub">Time cursor (first fresh block)<input id="scrub" type="range" min="0" max="0" value="0"><output id="scrub-out" for="scrub"></output></label>
+      </div>
+      <p class="muted" id="schedule-what"></p>
+      <p class="legend"><i style="background:#9fe4c4"></i>grouped <i style="background:#f2c978"></i>dispersed <i style="background:#f2dfb7"></i>the sun (dashed line is zero distance). Each trace is how far the bodies' mass sits from the sun, in cells, over the run. The four panels and the contrast rows use letters until you reveal the names, so you can judge the traces first; the fixtures table above and the limits below use the real names throughout.</p>
+      <ul class="arms" id="panels"></ul>
+    </section>
+
+    <section class="table-section" aria-labelledby="c-heading">
+      <h2 id="c-heading">The contrasts behind the verdict, for the chosen schedule</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Contrast table, scrolls sideways on narrow screens">
+        <table><caption>Light captured per input energy, grouped minus dispersed, per block, with an exact one-sided sign test (zeros count as not positive). Medians and bootstrap lower bounds are in parts per million of the input energy.</caption>
+          <thead><tr><th scope="col">Contrast</th><th scope="col">Blocks positive</th><th scope="col">Sign-test p</th><th scope="col">Median</th><th scope="col">Bootstrap lower bound</th></tr></thead>
+          <tbody id="contrasts"></tbody></table>
+      </div>
+      <ul class="limits" id="criteria"></ul>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">Limits and gaps</h2>
+      <ul class="limits" id="limits"></ul>
+      <ul class="limits" id="gaps"></ul>
+      <p class="muted">Exploratory, CPU only, no GPU evidence, not on the public site. No score here selected anything.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/moving-light/page.ts"></script>
+</body>
+</html>

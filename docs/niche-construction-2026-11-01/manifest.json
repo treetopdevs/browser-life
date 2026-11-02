@@ -40,7 +40,7 @@
   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
-  "tools/niche/niche.ts": "a21772f1dfa9694d10fa52cb3b78f74b2f4a4bbd7ac43d21b36f8b6c9f7c9df7"
+  "tools/niche/niche.ts": "bd752dce431b7775b409fe1919df245eaaad798bda9ea4776c8bb6343c15e6f1"
  },
  "provenance": {
   "note": "not replayed; excluded from the deterministic payload",

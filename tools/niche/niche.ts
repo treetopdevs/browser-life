@@ -63,7 +63,16 @@ export const sha256 = async (text: string | Uint8Array): Promise<string> => {
   const { schema } = await lib();
   return schema.sha256HexJS(typeof text === "string" ? new TextEncoder().encode(text) : text);
 };
-export const registryDigest = async (root = REPO): Promise<string> => sha256(readFileSync(`${root}experiments/discovery/seed-registry.json`));
+/**
+ * Reservations made by slices after this one are not part of this protocol's registry binding: the digest is of the registry as it stood
+ * when this slice froze, so a later slice reserving its own seeds does not invalidate this evidence. Collisions with those reservations
+ * are still checked against the live registry below. A further slice adds its owner prefix here (or scopes its own digest to its own reservations, as I08 does).
+ */
+const LATER_SLICE_OWNERS = ["i08 moving light"];
+export const registryDigest = async (root = REPO): Promise<string> => {
+  const text = readFileSync(`${root}experiments/discovery/seed-registry.json`, "utf8");
+  return sha256(text.split("\n").filter((line) => !LATER_SLICE_OWNERS.some((o) => line.includes(`"owner": "${o}`))).join("\n"));
+};
 
 /** Files whose bytes feed the evidence: the library, the simulator and schema it reads, and this tool. */
 const SOURCE_DIRS = [SRC_DIR, "packages/schema/src/", "packages/sim-ref/src/"];

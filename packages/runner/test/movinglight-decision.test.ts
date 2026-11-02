@@ -97,3 +97,19 @@ describe("movinglight decision", () => {
     expect(verdictOf({ fixed: d, paused: d, reversed: d, wandering: d, floors: FS, insensitive: false, invalidBlocks: 0, blocks: 8 }).label).toBe("unsupported-within-tested-domain");
   });
 });
+
+describe("movinglight completeness across schedules", () => {
+  it("a paused control with a missing block cannot yield supported", () => {
+    const t = plantedTable({ fixed: 600_000, paused: 0, reversed: 600_000, wandering: 600_000 }, 3);
+    const d = (s: string, full: boolean, drop = false) => decideSchedule(drop ? [...t[s].slice(0, 7), {}] : t[s], F, full);
+    const base = { floors: FS, insensitive: false, invalidBlocks: 0, blocks: 8 };
+    expect(verdictOf({ fixed: d("fixed", true), paused: d("paused", false), reversed: d("reversed", false), wandering: d("wandering", false), ...base }).label).toBe("supported");
+    const v = verdictOf({ fixed: d("fixed", true), paused: d("paused", false, true), reversed: d("reversed", false), wandering: d("wandering", false), ...base });
+    expect(v.label).toBe("inconclusive");
+    expect(v.reasons[0]).toMatch(/paused schedule incomplete/);
+    for (const id of ["reversed", "wandering"] as const) {
+      const w = verdictOf({ fixed: d("fixed", true), paused: d("paused", false), reversed: d("reversed", false, id === "reversed"), wandering: d("wandering", false, id === "wandering"), ...base });
+      expect(w.label).not.toBe("supported");
+    }
+  });
+});

@@ -58,7 +58,12 @@ export const sha256 = async (text: string | Uint8Array): Promise<string> => {
   const { schema } = await lib();
   return schema.sha256HexJS(typeof text === "string" ? new TextEncoder().encode(text) : text);
 };
-export const registryDigest = async (root = REPO): Promise<string> => sha256(readFileSync(`${root}experiments/discovery/seed-registry.json`));
+/** Reservation-scoped: only this slice's own reservations are hashed, so another slice reserving seeds does not change the protocol hash. The collision check against every other reservation stays global (checkSaved). */
+export const registryDigest = async (root = REPO): Promise<string> => {
+  const { schema } = await lib();
+  const reservations = (JSON.parse(readFileSync(`${root}experiments/discovery/seed-registry.json`, "utf8")).reservations as { owner: string }[]).filter((r) => r.owner.startsWith(OWN_NAMESPACE));
+  return sha256(schema.canonicalJSON(reservations));
+};
 
 /** Files whose bytes feed the evidence: the library, the simulator and schema it reads, and this tool. */
 const SOURCE_DIRS = [SRC_DIR, "packages/schema/src/", "packages/sim-ref/src/"];
@@ -136,7 +141,7 @@ export async function checkSaved(paths = { evidence: EVIDENCE, manifest: MANIFES
   if (manifest.integritySha256 !== payload.integritySha256) problems.push("manifest seal differs from the payload seal");
   if (manifest.protocolHash !== payload.protocolHash) problems.push("manifest protocolHash differs from the payload");
   const digest = await registryDigest(root);
-  if (payload.registryDigest !== digest) problems.push("seed-registry.json changed since the evidence was written");
+  if (payload.registryDigest !== digest) problems.push("this slice's seed reservation changed since the evidence was written");
   if (lock.protocolHash !== payload.protocolHash) problems.push("protocol.lock.json does not match the payload protocol hash");
   if (lock.protocolHash !== L.protocolHash(digest, L.PROTOCOL)) problems.push("the protocol in code differs from the frozen lock");
   if (canon(payload.protocol) !== canon(L.PROTOCOL)) problems.push("payload protocol differs from the protocol in code");
@@ -153,12 +158,8 @@ export async function checkSaved(paths = { evidence: EVIDENCE, manifest: MANIFES
   if (canon(re.decisions) !== canon(payload.fresh.decisions) || canon(re.verdict) !== canon(payload.fresh.verdict)) problems.push("fresh decisions do not follow the stated decision rules");
   if (L.PROTOCOL.freshSeeds.some((s: number, i: number) => payload.fresh.blocks[i]?.seed !== s)) problems.push("fresh blocks are not the frozen fresh seeds in order");
   for (const b of payload.fresh.blocks) for (const e of b.patchAudit.problems) problems.push(`block ${b.seed}: ${e}`);
-  // The cheap fixtures recomputed.
-  const cal = payload.calibration;
-  const cf = L.coordFixture("common-forcing", "fixed", L.syntheticFloor("fixed", L.PROTOCOL), L.PROTOCOL);
-  if (canon(cf) !== canon(payload.fixtures.coordination.find((c: any) => c.id === "common-forcing" && c.schedule === "fixed"))) problems.push("common-forcing fixture differs from its recomputation");
-  for (const f of payload.fixtures.coordination) if (!f.rejected && !["coupled-synthetic"].includes(f.id)) problems.push(`fixture ${f.id} was not rejected`);
-  void cal;
+  // The full fixture inventory, its expected outcomes, and every cheap fixture recomputed; physical fixtures are re-judged from their stored series.
+  problems.push(...checkFixtures(L, payload));
   if (canon(lock.sources ?? null) !== canon(manifest.sources)) problems.push("the source hashes in protocol.lock.json differ from the manifest: the implementation changed between the freeze and the run");
   const manifestSources = Object.keys(manifest.sources as Record<string, string>);
   if (existsSync(root + SRC_DIR)) for (const f of sourceFiles(root)) if (!manifestSources.includes(f)) problems.push(`source ${f} is not in the manifest (added since the evidence was written)`);
@@ -166,6 +167,48 @@ export async function checkSaved(paths = { evidence: EVIDENCE, manifest: MANIFES
     if (!existsSync(root + file)) problems.push(`source ${file} is missing`);
     else if ((await sha256(readFileSync(root + file))) !== hash) problems.push(`source ${file} changed since the evidence was written`);
   }
+  return problems;
+}
+
+/** Fixture inventory against the frozen expected-outcome table (not against the file itself), plus recomputation of everything cheap. */
+export function checkFixtures(L: any, payload: any): string[] {
+  const problems: string[] = [];
+  const canon = L.schema.canonicalJSON;
+  const fx = payload.fixtures;
+  const P = L.PROTOCOL;
+  if (canon(fx.syntheticOpts) !== canon(L.SYNTH)) problems.push("fixture synthetic options differ from the protocol in code");
+  const floors: Record<string, number> = { fixed: L.syntheticFloor("fixed", P), wandering: L.syntheticFloor("wandering", P) };
+  if (canon(fx.syntheticFloor) !== canon(floors)) problems.push("synthetic floors differ from their recomputation");
+  const key = (c: any) => `${c.id}/${c.schedule}`;
+  if (canon(fx.coordination.map(key)) !== canon(L.EXPECTED_FIXTURES.coordination.map(key))) problems.push("coordination fixture inventory differs from the frozen inventory");
+  for (const e of L.EXPECTED_FIXTURES.coordination) {
+    const f = fx.coordination.find((c: any) => key(c) === key(e));
+    if (!f) continue;
+    if (f.label !== e.label || f.rejected !== e.rejected || f.naiveReads !== e.naiveReads) problems.push(`fixture ${key(e)}: outcome ${f.label}/rejected ${f.rejected}/naive ${f.naiveReads} differs from the expected ${e.label}/${e.rejected}/${e.naiveReads}`);
+    const re = L.coordFixture(e.id, e.schedule, e.id === "static-sun" ? 0 : floors[e.schedule], P, L.SYNTH);
+    if (canon(re) !== canon(f)) problems.push(`fixture ${key(e)} differs from its recomputation`);
+  }
+  const fooled = fx.coordination.filter((c: any) => c.naiveReads && c.rejected).map((c: any) => c.id);
+  if (canon(fooled) !== canon(fx.naiveFooled)) problems.push("naiveFooled differs from the fixtures");
+  if (canon(fx.physical.map((f: any) => f.id)) !== canon(L.EXPECTED_FIXTURES.physical.map((f: any) => f.id))) problems.push("physical fixture inventory differs from the frozen inventory");
+  const floorFixed = payload.calibration.floors.fixed;
+  for (const e of L.EXPECTED_FIXTURES.physical) {
+    const f = fx.physical.find((q: any) => q.id === e.id);
+    if (!f) continue;
+    if (f.S.length !== P.fixtureSeeds.length || f.B.length !== P.fixtureSeeds.length || f.residual.length !== P.fixtureSeeds.length) problems.push(`physical fixture ${e.id}: series are not one per fixture seed`);
+    if (f.B.some((b: number) => b !== 0)) problems.push(`physical fixture ${e.id}: B is not zero by identity`);
+    const j = L.judgePhysical(e.id, f.S, f.B, f.residual, floorFixed, P);
+    for (const k of Object.keys(j)) if (canon(j[k]) !== canon(f[k])) problems.push(`physical fixture ${e.id}: ${k} does not follow from the stored series`);
+    if (f.rejected !== e.rejected) problems.push(`physical fixture ${e.id}: rejected ${f.rejected}, expected ${e.rejected}`);
+  }
+  if (canon(fx.planted.map((q: any) => q.id)) !== canon(L.EXPECTED_FIXTURES.planted.map((q: any) => q.id))) problems.push("planted fixture inventory differs from the frozen inventory");
+  for (const c of L.PLANTED_CASES) {
+    const f = fx.planted.find((q: any) => q.id === c.id);
+    const exp = L.EXPECTED_FIXTURES.planted.find((q: any) => q.id === c.id);
+    if (f && exp && f.verdict.label !== exp.label) problems.push(`planted fixture ${c.id}: ${f.verdict.label}, expected ${exp.label}`);
+    if (f && canon(L.plantedReport(c.id, c.planted, P)) !== canon(f)) problems.push(`planted fixture ${c.id} differs from its recomputation`);
+  }
+  if (canon(fx.plantedFloors) !== canon(L.PLANTED_FLOORS)) problems.push("planted floors differ from the code");
   return problems;
 }
 
@@ -181,8 +224,15 @@ export async function replayCheck(evidencePath = EVIDENCE, calibrationPath = CAL
   blocks.forEach((b: any, i: number) => {
     if (L.schema.canonicalJSON(b) !== L.schema.canonicalJSON(saved.fresh.blocks[i])) problems.push(`regenerated block ${b.seed} differs from evidence.json`);
   });
-  const cf = L.coordFixture("common-forcing", "fixed", L.syntheticFloor("fixed", L.PROTOCOL), L.PROTOCOL);
-  if (L.schema.canonicalJSON(cf) !== L.schema.canonicalJSON(saved.fixtures.coordination.find((c: any) => c.id === "common-forcing" && c.schedule === "fixed"))) problems.push("regenerated common-forcing fixture differs");
+  problems.push(...checkFixtures(L, saved));
+  // The first two fixture seeds of the physical fixtures, regenerated and compared series by series.
+  const fseeds = L.PROTOCOL.fixtureSeeds.slice(0, 2);
+  const pblocks = L.mergeBlocks(await run(fseeds.map((seed: number) => ({ seed, schedules: ["fixed"], strategies: L.PHYS_STRATEGIES }))));
+  const phys = L.physicalFixtures(saved.calibration.floors.fixed, L.PROTOCOL, pblocks);
+  for (const f of phys) {
+    const sv = saved.fixtures.physical.find((q: any) => q.id === f.id);
+    for (const k of ["S", "B", "residual", "naiveSignAgreementPpm"]) if (L.schema.canonicalJSON(f[k]) !== L.schema.canonicalJSON(sv?.[k]?.slice(0, 2))) problems.push(`regenerated physical fixture ${f.id}.${k} differs`);
+  }
   void calibrationPath;
   return problems;
 }
@@ -222,7 +272,7 @@ async function main(): Promise<void> {
     writeAtomic(CALIBRATION, serialize(cal));
     for (const sc of L.SCHEDULE_IDS) console.log(`floors ${sc}: cap ${cal.floors[sc].cap} ppm, res ${cal.floors[sc].res}`);
     console.log(`sense tracks the sun on dev: ${cal.sensitivity.senseTracks} (2*median gain ${cal.sensitivity.gain2}, 2*noise ${2 * cal.sensitivity.noiseFloor}); capture floor usable: ${cal.sensitivity.floorUsable}; assay sensitive: ${cal.sensitivity.sensitive}`);
-    console.log(`cross-talk (dispersed) ${cal.crossTalk.dispersed.foreignPpm} ppm, grouped ${cal.crossTalk.grouped.foreignPpm} ppm, flagged ${cal.crossTalk.flagged}`);
+    console.log(`signal-difference proxy (dispersed) ${cal.crossTalk.dispersed.signalDiffPpm} ppm, grouped ${cal.crossTalk.grouped.signalDiffPpm} ppm, flagged ${cal.crossTalk.flagged}`);
     console.log(`wrote calibration.json (dev and noise seeds only) in ${Math.round((Date.now() - t0) / 1000)} s. Copy the floors into PROTOCOL.delta, then --freeze.`);
     return;
   }

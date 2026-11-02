@@ -1,7 +1,7 @@
 import { CH, G, cellCount, packLineageLo } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
 import { describe, expect, it } from "vitest";
-import { ARM_EDITS, auditArm, buildArm, buildPatches, genomeHash, genomeOf, positions } from "../src/movinglight/arms.ts";
+import { ARM_EDITS, auditArm, buildArm, buildPatches, genomeHash, weightedLight1000, genomeOf, positions } from "../src/movinglight/arms.ts";
 import { crossTalkOf, isFlagged } from "../src/movinglight/evidence.ts";
 import { PLACEMENTS, PROTOCOL as P, STRATEGY_IDS } from "../src/movinglight/protocol.ts";
 import { circ } from "../src/movinglight/schedule.ts";
@@ -75,9 +75,17 @@ describe("movinglight arms", () => {
   });
   it("dispersed cross-talk is measured and flagged above threshold", () => {
     const ct = crossTalkOf("dispersed", SHORT, 8_700_001);
-    expect(ct.foreignPpm).toBeGreaterThanOrEqual(0);
-    expect(ct.foreignPpm).toBeLessThanOrEqual(1_000_000);
-    expect(isFlagged({ ...ct, foreignPpm: P.crossTalkMaxPpm + 1 })).toBe(true);
-    expect(isFlagged({ ...ct, foreignPpm: P.crossTalkMaxPpm })).toBe(false);
+    expect(ct.signalDiffPpm).toBeGreaterThanOrEqual(0);
+    expect(ct.signalDiffPpm).toBeLessThanOrEqual(1_000_000);
+    expect(isFlagged({ ...ct, signalDiffPpm: P.crossTalkMaxPpm + 1 })).toBe(true);
+    expect(isFlagged({ ...ct, signalDiffPpm: P.crossTalkMaxPpm })).toBe(false);
+  });
+
+  it("grouped and dispersed placements stand in different light (recorded confound of the placement design)", () => {
+    const patches = buildPatches(P, P.devSeeds[0]);
+    const g = weightedLight1000(buildArm("sense", "grouped", "fixed", P.devSeeds[0], patches)), d = weightedLight1000(buildArm("sense", "dispersed", "fixed", P.devSeeds[0], patches));
+    expect(g).toBeGreaterThan(d + d / 10);
+    expect(g).toBe(162_287);
+    expect(d).toBe(127_313);
   });
 });

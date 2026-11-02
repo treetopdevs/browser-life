@@ -1,0 +1,25 @@
+@import '../particles/style.css';
+.disclosure{padding:12px 15px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.65}
+.verdict{padding:16px;margin:20px 0;border:1px solid #35484e;border-radius:10px;background:#111f25}
+.verdict-text{font-size:17px;line-height:1.6;margin:0 0 10px}
+.verdict ul{margin:8px 0;padding-left:20px;font-size:13px;line-height:1.6;color:#c2d0cd}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:14px 0;align-items:end}
+.controls label{display:grid;gap:5px;color:#c2d0cd;font-size:13px;margin:0}
+.controls input[type=range]{padding:0;min-height:32px}
+.arms{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.arm{border:1px solid #34484e;border-radius:10px;background:#101e24;padding:12px;min-width:0}
+.arm-head{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.arm-what{margin:6px 0;font-size:12px;line-height:1.55;color:#b4c4c0}
+.strip{display:block;width:100%;height:auto;background:#08151c;border-radius:6px;margin:6px 0}
+.table-section{margin-top:28px}
+.scroll{overflow-x:auto;border:1px solid #34484e;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+caption{text-align:left;padding:10px;color:#9cadaa;font-size:12px;line-height:1.55}
+th,td{padding:7px 10px;border-top:1px solid #2b3e43;text-align:left}
+tbody th{font-weight:500;color:#dce7e2;min-width:140px}
+thead th{color:#aebbb8;font-weight:500;border-top:0}
+.legend{font-size:12px;color:#c2d0cd}.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin:0 4px}
+.caption ul,.limits{font-size:13px;line-height:1.7;color:#c2d0cd}
+.skip{position:absolute;left:20px;top:-100px;padding:12px;background:#14232a;z-index:10}.skip:focus{top:15px}
+:focus-visible{outline:3px solid #f2c978;outline-offset:4px}
+@media(max-width:690px){th,td{padding:7px 8px}tbody th{min-width:110px}}

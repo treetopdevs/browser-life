@@ -8650,17 +8650,17 @@
    "disc": 29,
    "allSignal": "138",
    "soloSignal": "5",
-   "foreignPpm": 963768
+   "signalDiffPpm": 963768
   },
   "dispersed": {
    "disc": 29,
    "allSignal": "73",
    "soloSignal": "3",
-   "foreignPpm": 958904
+   "signalDiffPpm": 958904
   },
   "thresholdPpm": 250000,
   "flagged": true,
-  "method": "foreign signal = (signal in a radius-3 disc at body 0 with all bodies) - (signal at the same cells with body 0 alone), at the horizon, fixed schedule, dev seed 1; the signal field has no ownership so this is measured once on the frozen geometry, not per run"
+  "method": "counterfactual signal-difference proxy = ((signal in a radius-3 disc at body 0 with all bodies) - (signal at the same cells with body 0 alone)) / (all-bodies signal), at the horizon, fixed schedule, dev seed 1. The field carries no ownership and the two runs differ in competition, movement and emission as well as in the other bodies' signal, so this is not a foreign or owned fraction and no ownership percentage is claimed; it is measured once on the frozen geometry and can only flag the dispersed placement"
  },
  "ladder": {
   "applied": [],

@@ -5,7 +5,7 @@ import { RefSim } from "@bl/sim-ref";
 import { ARM_EDITS, buildArm, buildPatches, genomeHash, positions } from "./arms.ts";
 import { runBlock, type BlockRecord, type BlockSpec } from "./assay.ts";
 import { decideSchedule, medianTimes2, verdictOf, contrastsOf, type BlockNumbers, type Floors, type ScheduleDecision, type Verdict } from "./decision.ts";
-import { PLANTED_FLOORS, coordFixture, physicalFixtures, plantedReport, syntheticFloor, type CoordFixture, type PhysicalFixture, type PlantedReport } from "./fixtures.ts";
+import { PLANTED_CASES, PLANTED_FLOORS, SYNTH, coordFixture, physicalFixtures, plantedReport, syntheticFloor, type CoordFixture, type PhysicalFixture, type PlantedReport } from "./fixtures.ts";
 import { PROTOCOL, SCHEDULE_IDS, protocolHash, type Protocol, type ScheduleId, type StrategyId } from "./protocol.ts";
 import { meridianPath, reportOf, type ScheduleReport } from "./schedule.ts";
 
@@ -70,7 +70,8 @@ export interface CrossTalk {
   disc: number;
   allSignal: string;
   soloSignal: string;
-  foreignPpm: number;
+  /** Counterfactual signal-difference proxy, ppm: (all - solo) / all in the probe disc. Not signal ownership: removing the other bodies also changes competition, movement and emission. */
+  signalDiffPpm: number;
 }
 export interface Workload {
   formula: string;
@@ -123,11 +124,11 @@ export function crossTalkOf(placement: "grouped" | "dispersed", p: Protocol, see
       s += solo.cells[CH.S * n + i];
       cells++;
     }
-  return { disc: cells, allSignal: `${a}`, soloSignal: `${s}`, foreignPpm: a > s ? Math.floor((p.PPM * (a - s)) / a) : 0 };
+  return { disc: cells, allSignal: `${a}`, soloSignal: `${s}`, signalDiffPpm: a > s ? Math.floor((p.PPM * (a - s)) / a) : 0 };
 }
 
-/** A dispersed run is flagged when the measured foreign share of the neighbourhood signal exceeds the frozen threshold; the claim then stays 'dispersed'. */
-export const isFlagged = (c: CrossTalk, p: Protocol = PROTOCOL): boolean => c.foreignPpm > p.crossTalkMaxPpm;
+/** A dispersed run is flagged when the counterfactual signal-difference proxy of the neighbourhood signal exceeds the frozen threshold; the claim then stays 'dispersed'. */
+export const isFlagged = (c: CrossTalk, p: Protocol = PROTOCOL): boolean => c.signalDiffPpm > p.crossTalkMaxPpm;
 
 export async function calibrationReport(run: JobRunner, p: Protocol = PROTOCOL): Promise<Calibration> {
   const dev = mergeBlocks(await run(jobsFor(p.devSeeds, ["fixed"], ALL)));
@@ -143,7 +144,7 @@ export async function calibrationReport(run: JobRunner, p: Protocol = PROTOCOL):
   const gain2 = medianTimes2(still.map((x, i) => x - sense[i]));
   const sensitivity = { absErrStill1000: still, absErrSense1000: sense, gain2, noiseFloor, senseTracks: gain2 !== null && gain2 > 2 * noiseFloor, floorUsable: floors.fixed.cap <= p.maxFloorCapPpm, sensitive: false, rule: "sensitive = senseTracks and floorUsable. senseTracks: twice the median of (still - sense) absolute circular tracking error over dev blocks and placements must exceed twice the largest replicate-noise spread of the still arm's error. floorUsable: the fixed-schedule capture floor delta_cap must not exceed maxFloorCapPpm" };
   sensitivity.sensitive = sensitivity.senseTracks && sensitivity.floorUsable;
-  const crossTalk = { grouped: crossTalkOf("grouped", p, p.devSeeds[0]), dispersed: crossTalkOf("dispersed", p, p.devSeeds[0]), thresholdPpm: p.crossTalkMaxPpm, flagged: false, method: "foreign signal = (signal in a radius-3 disc at body 0 with all bodies) - (signal at the same cells with body 0 alone), at the horizon, fixed schedule, dev seed 1; the signal field has no ownership so this is measured once on the frozen geometry, not per run" };
+  const crossTalk = { grouped: crossTalkOf("grouped", p, p.devSeeds[0]), dispersed: crossTalkOf("dispersed", p, p.devSeeds[0]), thresholdPpm: p.crossTalkMaxPpm, flagged: false, method: "counterfactual signal-difference proxy = ((signal in a radius-3 disc at body 0 with all bodies) - (signal at the same cells with body 0 alone)) / (all-bodies signal), at the horizon, fixed schedule, dev seed 1. The field carries no ownership and the two runs differ in competition, movement and emission as well as in the other bodies' signal, so this is not a foreign or owned fraction and no ownership percentage is claimed; it is measured once on the frozen geometry and can only flag the dispersed placement" };
   crossTalk.flagged = isFlagged(crossTalk.dispersed, p);
   return {
     kind: "movinglight-calibration",
@@ -186,6 +187,7 @@ export function decideFresh(cal: Pick<Calibration, "floors" | "sensitivity">, bl
 
 export interface FixturesReport {
   syntheticFloor: Record<string, number>;
+  syntheticOpts: typeof SYNTH;
   coordination: CoordFixture[];
   physical: PhysicalFixture[];
   planted: PlantedReport[];
@@ -198,16 +200,12 @@ export async function fixturesReport(cal: Calibration, run: JobRunner, p: Protoc
   const floorSynth = { fixed: syntheticFloor("fixed", p), wandering: syntheticFloor("wandering", p) };
   const coord: CoordFixture[] = [];
   for (const kind of ["common-forcing", "coupled-synthetic", "label-takeover", "null-world"] as const) coord.push(coordFixture(kind, "fixed", floorSynth.fixed, p));
-  coord.push(coordFixture("common-forcing", "wandering", floorSynth.wandering, p), coordFixture("static-sun", "paused", 0, p));
+  coord.push(coordFixture("common-forcing", "wandering", floorSynth.wandering, p), coordFixture("tracking-asymmetry", "wandering", floorSynth.wandering, p), coordFixture("static-sun", "paused", 0, p));
   const blocks = mergeBlocks(await run(p.fixtureSeeds.map((seed) => ({ seed, schedules: ["fixed"] as ScheduleId[], strategies: ["drift", "sense-nosig", "still"] as StrategyId[] }))));
   const physical = physicalFixtures(cal.floors.fixed, p, blocks);
-  const planted = [
-    plantedReport("planted-benefit", { fixed: 600_000, paused: 0, reversed: 600_000, wandering: 600_000 }, p),
-    plantedReport("planted-benefit-in-paused-too", { fixed: 600_000, paused: 600_000, reversed: 600_000, wandering: 600_000 }, p),
-    plantedReport("planted-nothing", { fixed: 0, paused: 0, reversed: 0, wandering: 0 }, p),
-  ];
+  const planted = PLANTED_CASES.map((c) => plantedReport(c.id, c.planted, p));
   const naiveFooled = coord.filter((c) => c.naiveReads && c.rejected).map((c) => c.id);
-  return { syntheticFloor: floorSynth, coordination: coord, physical, planted, plantedFloors: PLANTED_FLOORS, naiveFooled };
+  return { syntheticFloor: floorSynth, syntheticOpts: SYNTH, coordination: coord, physical, planted, plantedFloors: PLANTED_FLOORS, naiveFooled };
 }
 
 // ---------------------------------------------------------------------------------------------------------------- payload
@@ -215,12 +213,14 @@ export async function fixturesReport(cal: Calibration, run: JobRunner, p: Protoc
 export const LIMITS: readonly string[] = [
   "Exploratory, CPU only (sim-ref), mutation off, small tile (24 x 16), one horizon of 1,024 steps, four bodies per inoculum. No GPU evidence, no physics change, not part of the frozen preregistration.",
   "A positive answer is 'a group-level interaction benefit is supported in this panel, world size, horizon and schedule set'; a negative is 'no interaction benefit detected here'. It does not say sensing cannot help elsewhere, does not test evolution, does not claim a new flocking mechanism.",
-  "'Dispersed' is not 'isolated': the signal field diffuses and decays slowly, so no spacing is signal-free; cross-talk is measured once on the frozen geometry by a solo probe (the field carries no ownership), not per run.",
+  "'Dispersed' is not 'isolated': the signal field diffuses and decays slowly, so no spacing is signal-free. The cross-talk number is a counterfactual signal-difference proxy ((all - solo) / all in a probe disc, measured once on the frozen geometry): removing the other bodies also changes competition, movement and emission, so it is not a foreign or owned fraction of the signal and no ownership percentage is claimed. It can only flag the dispersed placement.",
+  "Grouped and dispersed placements keep the mean sun-relative offset (four cells west of the t=0 meridian) but not its distribution, so they stand in different light: the biomass-weighted light at step 0 is 162.3 grouped against 127.3 dispersed on dev seed 8700001 (172.6 against 138.7 on 8700002, 165.4 against 134.3 on 8700501; light units, base 20 plus amplitude 220). The contrasts S, N, V and B are grouped-minus-dispersed, so a placement-only illumination offset cancels to first order in B, but a strategy-by-illumination interaction does not; a matched-illumination geometry (preserve each body's sun-relative x while changing spacing) was deferred to the next rung because it changes every arm and needs new calibration and new fresh seeds. The consumed fresh blocks are not re-read against it.",
   "The sense versus sense-nosig contrast is the total strategy effect (emission, reading and their costs); information is not separated from emission cost.",
   "sense-nosig is dynamically identical to still: with no signal the movement wiring's offsets cancel, so the 'movement-capable information-free comparator' never moves (every dev probe gave identical capture, survival, tracking and coordination numbers; the state hashes differ only because the genome words differ). N therefore equals the still arm's grouped-minus-dispersed contrast, crowding-physical (still against sense-nosig) is zero by identity and not by rejection, and no arm separates 'could move but has nothing to read' from 'does not move'.",
   "Dev calibration (fixed schedule, 24 x 16 tile, 1,024 steps) found the engine-seed noise of the capture contrasts larger than the readout itself: the fixed-schedule floor delta_cap exceeds the frozen bound (half the audited input energy), so the pre-stated sensitivity rule labels the run unsupported-measurement before any fresh block is read. The fresh run is still made and reported in full; the blocks and contrasts are evidence about how noisy the assay is, not about whether grouping helps.",
   "Reversal is a mid-run turn of the wander triangle (existing keys have no westward constant-speed rotation); a live reverse or pause of a displayed world does not exist (the live sun intervention scales brightness only), so the page replays precomputed, separate histories.",
   "Capture is the scored-window lightIn increment per audited inoculum input energy; exposure, biomass change and emission are covariates and are not corrected for.",
+  "The residual-coordination control cancels common forcing that reaches both placements equally. It does not cancel a difference in how well the placements follow the sun: a placement that tracks the sun more tightly than the other reads as coordination when the other lags (fixture tracking-asymmetry shows the rejecting direction); the still and sense-nomot residual controls bound this, they do not remove it.",
   "Lineage displacement is not locomotion: growth, transport and label takeover move lineage centroids. The still and sense-nomot residuals and the stationary-growth and label-takeover fixtures bound this, they do not remove it.",
   "Composition transfer (a transferred group state) is deferred. Solo baselines were not used in the run of record. Results do not transfer to the 256 x 256 planet presets.",
   "Blocks differ in their patches (biomass noise per cell) and engine seed; arms within a block share the patches exactly, so the contrasts are within-block.",

@@ -25,6 +25,7 @@ import {
   type Genome,
   type WorldState,
 } from "@bl/schema";
+import { RefSim } from "@bl/sim-ref";
 import { PROTOCOL, worldConfig, type Placement, type Protocol, type ScheduleId, type StrategyId } from "./protocol.ts";
 
 export const ARM_EDITS: Record<StrategyId, string> = {
@@ -165,4 +166,23 @@ export function auditArm(a: Arm, patches: Patch[]): string[] {
   if (t.B !== BigInt(B)) out.push("state B total differs from the patches");
   void G; void IN;
   return out;
+}
+
+/**
+ * Diagnostic, not part of any arm: the biomass-weighted light (x1000, integer) the arm's bodies stand in at step `step`, from the world's own
+ * light function. Grouped and dispersed placements keep the mean sun-relative offset but not its distribution, so their illumination
+ * differs; this reports by how much (a recorded confound of the placement design, see LIMITS).
+ */
+export function weightedLight1000(a: Arm, step = 0): number {
+  const sim = new RefSim(a.state);
+  const n = cellCount(a.state.cfg);
+  let num = 0, den = 0;
+  for (let y = 0; y < a.state.cfg.tileH; y++)
+    for (let x = 0; x < a.state.cfg.tileW; x++) {
+      const B = a.state.cells[CH.B * n + y * a.state.cfg.tileW + x];
+      if (B <= 0) continue;
+      num += B * sim.light(x, y, step);
+      den += B;
+    }
+  return den ? Math.floor((1000 * num) / den) : 0;
 }

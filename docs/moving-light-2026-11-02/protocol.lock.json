@@ -1,7 +1,7 @@
 {
  "kind": "movinglight-protocol-lock",
- "protocolHash": "7a9d809a889bc4f5d11f84a608f3f758eb54945093ebf8ad094bd664a7fce85c",
- "registryDigest": "28e4725dac77e377691218db80bf7ac661dd2aef30bb260c05dad55a1c481dd2",
+ "protocolHash": "ac6f71a6f21e42f77a2977278d7b0b19eed46fe10a931668f45c4db445457c0f",
+ "registryDigest": "976942373d5a34a14682bdef15e992d28eb59659191e9ae362c77329620dc0b7",
  "seeds": {
   "dev": [
    8700001,
@@ -36,17 +36,17 @@
    8700508
   ]
  },
- "calibrationSha256": "4868859368a66503d32b09aae579730c8ac02332eaeb3838923a73b2de9bcc77",
+ "calibrationSha256": "a7859f2f627c14c83d36da126903109b8f55ab695eaf8398fdaf0e88bae36de4",
  "sources": {
-  "packages/runner/src/movinglight/arms.ts": "302be039334b286d20d5debb842582c7a6d2b47d38843c7ba2c9939f1ba061f1",
+  "packages/runner/src/movinglight/arms.ts": "f26014eb896bac56b272ddf659959b65f63262873a395140adde2418d337b382",
   "packages/runner/src/movinglight/assay.ts": "94b4516aa27e1157b9ade6f2f1e3302f32c97d5337055ee63b1780c660827b91",
-  "packages/runner/src/movinglight/coordination.ts": "0d9910b7e6e642b444a827ba6384d475910d9ba9bd54a32a4426da22f830f599",
-  "packages/runner/src/movinglight/decision.ts": "abe24a76e4b708cbb1df1fc7ba888a6f312dac8c68968c7ceccecb3c5aef0836",
-  "packages/runner/src/movinglight/evidence.ts": "349119a49f17689392a014c2d4ccb119c93d366d36c9cf66f972a9edfaa6b347",
-  "packages/runner/src/movinglight/fixtures.ts": "cda7343cf2d34b7f957769b4396fd9f2ab3817dca333201c8c49709f184a67ff",
+  "packages/runner/src/movinglight/coordination.ts": "1db6d16c6e595cc2716f86fe06011af4a34b74e125c2a5a55409829aee3d28d2",
+  "packages/runner/src/movinglight/decision.ts": "9054b9e1f2b1c5c5fe89d254f9ddfbc2018ba007758b2a88024aa0d5459f7b71",
+  "packages/runner/src/movinglight/evidence.ts": "a82e9b808a5db94b69de419201da3665cc2035040ec1feb96dfd6b14490c07f8",
+  "packages/runner/src/movinglight/fixtures.ts": "01d4388981aa58ae63931f0d14638483c6bb9334cef231eeb21bee8e77f56dee",
   "packages/runner/src/movinglight/index.ts": "f9f18fe00c40c063c29b9d0734445ea5b8f7847ed3de290a476b4f5f96e2fc12",
   "packages/runner/src/movinglight/observe.ts": "5eafc6ce1bc102bd8a8a74b3365e1af726f842c6edad9eb1b960b9711d626859",
-  "packages/runner/src/movinglight/protocol.ts": "1d971d5bf6d38416a3b4f3495de6a5bb1f6c73628ec0289d9f650f20f4d3eb83",
+  "packages/runner/src/movinglight/protocol.ts": "241951e7a526c96cb340fb648931f65062a752300d780a86289724e963a7fda6",
   "packages/runner/src/movinglight/schedule.ts": "5a283d54b280788dc8cae2a7ce998d8a1e1702c8f833b7bd55db5f967863be33",
   "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
   "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
@@ -70,8 +70,8 @@
   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
-  "tools/movinglight/movinglight.ts": "43005dcf437c9ed19e82bd834e1b8dd8a8a0b295d01363e0becf7baca578feae"
+  "tools/movinglight/movinglight.ts": "18ed4151e6e373496b340a68474f22fe20260c5fb6c8d351360a368268ed5053"
  },
  "note": "written before the fresh-seed run; fresh results never tune the protocol; the source hashes bind the implementation",
- "frozenAt": "2026-11-02T07:54:17.862Z"
+ "frozenAt": "2026-11-02T08:48:48.992Z"
 }

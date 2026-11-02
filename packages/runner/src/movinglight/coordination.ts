@@ -32,11 +32,12 @@ export interface Coordination {
   signAgreementPpm: number | null;
 }
 
-export function coordination(tr: Track, path: readonly number[], p: Protocol = PROTOCOL): Coordination {
+/** `subtractSun` false removes the sun subtraction (e_i = dx_i): a test hook that shows what the control protects, never used for evidence. */
+export function coordination(tr: Track, path: readonly number[], p: Protocol = PROTOCOL, subtractSun = true): Coordination {
   const WQ = p.W * p.Q;
   const K = tr.t.length - 1;
   const dm: number[] = [];
-  for (let k = 0; k < K; k++) dm.push(sunDelta(path, tr.t[k], tr.t[k + 1], p.W) * p.Q);
+  for (let k = 0; k < K; k++) dm.push(subtractSun ? sunDelta(path, tr.t[k], tr.t[k + 1], p.W) * p.Q : 0);
   const nb = tr.q.length;
   let moved = 0;
   let excluded = 0, pairs = 0, pairIntervals = 0, agree = 0, both = 0, sum = 0;

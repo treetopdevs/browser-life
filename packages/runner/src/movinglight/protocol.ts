@@ -44,7 +44,7 @@ export const PROTOCOL = {
   /** Fixed-point scales: positions are in 1/Q cell; ratios in parts per million. */
   Q: 256,
   PPM: 1_000_000,
-  /** Cross-talk threshold: the foreign fraction of the signal mass a dispersed body's neighbourhood holds at the horizon, in ppm (calibration measures; it can only flag). */
+  /** Cross-talk threshold: the counterfactual signal-difference proxy (signal lost when the other bodies are removed, as a share of the all-bodies signal) in a dispersed body's neighbourhood at the horizon, in ppm; it mixes competition, movement and emission effects, is not signal ownership, and can only flag. */
   crossTalkMaxPpm: 250_000,
   /** Sensitivity bound: if the fixed-schedule capture floor delta_cap exceeds this, engine-seed noise swamps any effect the capture readout could show and the label is unsupported-measurement, not 'no benefit'. */
   maxFloorCapPpm: 500_000,

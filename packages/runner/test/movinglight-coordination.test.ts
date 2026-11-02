@@ -24,7 +24,7 @@ describe("movinglight coordination", () => {
     expect(coupled).toBeGreaterThan(5 * maxDiff);
   });
   it("coupled agents give a residual above the floor", () => {
-    const quiet = { ...SYNTH, couplingQ: 0 };
+    const quiet = { ...SYNTH, couplingPermille: 0 };
     const withC = coordination(syntheticTracks("coupled-synthetic", "grouped", 5, "wandering"), path).covMilliQ2!;
     const without = coordination(syntheticTracks("coupled-synthetic", "grouped", 5, "wandering", P, quiet), path).covMilliQ2!;
     expect(withC).toBeGreaterThan(without);
