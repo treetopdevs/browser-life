@@ -4,6 +4,8 @@ Slice S2, branch `claude/i02-prediction-envelope`, 2026-11-01. CPU only (sim-ref
 compute. Outputs: `experiments/prediction-envelope/v0/` (see `comparison.md`, `report.html`, `meta.json`); regenerated 2026-11-01 with the rising cohort (Deviation 3). No advance or stop
 decision about any model is evaluable from this run.
 
+**Update 2026-11-02 (I02b):** a held-out confirmation on 20 fresh families was run and read mechanically: **NEGATIVE** for `numericTrend` (worse than `priorMajority`, interval above 0; not separable from its shuffled control). See `docs/prediction-confirm-2026-11-02/RESULT.md` and `experiments/prediction-envelope/confirm-2026-11-02/report.html`. The v0 text above is unchanged.
+
 ## Status of the delivered run: EXPLORATORY, not a held-out confirmation
 
 `meta.json` says `status: "EXPLORATORY"`. The first delivered run (superseded) generated test-split outcomes from a working-tree
