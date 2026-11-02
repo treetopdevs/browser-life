@@ -3,6 +3,7 @@
 import { canonical, sha256Text } from "../propose.ts";
 import type { PredictionEnvelope } from "./envelope.ts";
 import { labelOf, recipeHash, recipeOf } from "./fixtures.ts";
+import type { ConfirmationDoc } from "./confirm.ts";
 import { renderReport } from "./report-html.ts";
 import { BASELINE_IDS, buildProposers, caseRows, checkLeaks, compare, devOnlyOracle, measurementLimited, protocolHash, runProposers, splitPlanOf, type CaseRow, type Comparison, type Generated, type PredictionLine, type Protocol, type SplitTable } from "./run.ts";
 
@@ -86,7 +87,7 @@ export function buildOutputs(p: Protocol, gen: Generated): Built {
  * `read(name)` returns a file's text. The data files (envelopes, predictions, outcomes, comparison.json, protocol.snapshot.json)
  * are never changed; the three derived files are a pure function of them and the renderer.
  */
-export function rerender(read: (name: string) => string): Record<string, string> {
+export function rerender(read: (name: string) => string, confirmation?: ConfirmationDoc): Record<string, string> {
   const parse = <T>(name: string): T[] => read(name).split("\n").filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as T);
   const comparison = JSON.parse(read("comparison.json")) as Comparison;
   const protocol = JSON.parse(read("protocol.snapshot.json")) as Protocol;
@@ -101,7 +102,7 @@ export function rerender(read: (name: string) => string): Record<string, string>
   const files: Record<string, string> = {};
   for (const n of CANONICAL_FILES) if (n !== "comparison.md" && n !== "report.html") files[n] = read(n);
   files["comparison.md"] = comparisonMarkdown(comparison, minEffect);
-  files["report.html"] = renderReport({ comparison, envelopes, lines, rows, minEffect, proposerIds, eligible: (id, env) => !oracleIds.has(id) || plan.dev.includes(env.familyId) });
+  files["report.html"] = renderReport({ comparison, envelopes, lines, rows, minEffect, proposerIds, eligible: (id, env) => !oracleIds.has(id) || plan.dev.includes(env.familyId), ...(confirmation ? { confirmation } : {}) });
   const out: Record<string, string> = { "comparison.md": files["comparison.md"], "report.html": files["report.html"] };
   out["canonical.sha256"] = CANONICAL_FILES.map((n) => `${sha256Text(files[n])}  ${n}\n`).join("");
   return out;
