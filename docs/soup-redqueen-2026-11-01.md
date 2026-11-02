@@ -2,7 +2,7 @@
 
 Step 2 of the papers plan ([mlst-evolution-papers-2026-10-31.md](mlst-evolution-papers-2026-10-31.md), "Red Queen for copiers"). It follows the post-takeover test: [run 1](soup-evolution-2026-10-31.md) and [the sharper rerun](soup-evolution-rerun-2026-10-31.md).
 
-**Status: DRAFT.** Nothing here has run except timing and GPU checks (under GPU rules and Compute). It is frozen before the hall pilot or any Red Queen race runs. Any change after that goes in a dated amendment section above the readout, and names what it changes.
+**Status: FROZEN 2026-11-01**, before the hall pilot or any Red Queen race ran. Nothing here had run except timing and GPU checks (under GPU rules and Compute). Any change after that goes in a dated amendment section above the readout, and names what it changes.
 
 **What was known when.** The first draft was written before the rerun's results were seen. The rerun finished during the second and third reviews, and its readout was written before this freeze. Its results did not change the design: the competitors, panel, race design and tests were all fixed in the first two drafts; the changes since are the GPU rules, robustness fixes and wording. Run 1's results were known throughout; the competitors and pilot pairs come from them.
 
