@@ -43,3 +43,7 @@ Follow-up review of the fixes (`review-sol-fixes.txt`, Codex gpt-6.1-sol xhigh):
 |---|-----|---------|-------------|----------|
 | F1 | P1 | The reserved-seed guard checked `seed - offset`, but qualification variants are generated at `seed + offset` | Fixed. The guard now checks seed, seed + offset and seed - offset against every reserved seed. | Regression in the smoke CLI test: base 5999 with offset 1, and 5001 with offset 1000 |
 | F2 | P3 | CLI test title claimed dev and unamended-confirm coverage | Fixed by retitling. Dev and the unamended confirm read only v0's fixed protocol file (dev rejects `--protocol` outright, tested earlier), so smoke is the only stage that can be handed a reserved protocol; no guard injection point exists to test. | Test title |
+
+## Result review (2026-11-02)
+
+Codex gpt-6.1-sol xhigh read-only (`review-sol-result.txt`). No P1/P2 and no flaw in the run; ledger scores, both intervals, digests and the source closure at the freeze commit reproduce, and NEGATIVE follows from rule 4b. Two P3 reporting findings, both fixed in `RESULT.md` only (outcome files and reading untouched): the full list of 73 failures is now in RESULT.md; the "operation kind alone" wording is limited to `v0Rules` and `fixedRule`. Unprovable from artifacts alone: that no other attempt occurred (attested; none was made).

@@ -1,0 +1,30 @@
+{
+  "stage": "confirm",
+  "status": "CONFIRM",
+  "gitSha": "1a69e9e8a21096bfcd6b7390b66234638f3ece4b",
+  "gitDirty": false,
+  "sourceClosureSha256": "7dc7f9b942233bc960ebd1279cc4b70dd194d3be9a0351fcea4cd607874efe3b",
+  "versions": {
+    "protocol": 1,
+    "envelope": 1,
+    "readouts": 1,
+    "ruleVersion": 1
+  },
+  "protocolSha256": "07dbf7333dcfc6d150c51a1071ef4f9c9616fa9bf32beec5d1187ff256bf620b",
+  "amendment": {
+    "path": "docs/prediction-confirm-2026-11-02/AMENDMENT.md",
+    "sha256": "baa5370ab4de2b3b48aef76b32621e24c53c0ee30aa3bd69c025c8e579bc534d",
+    "protocolFile": "experiments/prediction-envelope/protocol.confirm.json",
+    "freezeFile": "experiments/prediction-envelope/protocol.confirm.freeze.sha256"
+  },
+  "command": "deno run -A --no-lock tools/predict.ts run --stage confirm --protocol experiments/prediction-envelope/protocol.confirm.json --freeze experiments/prediction-envelope/protocol.confirm.freeze.sha256 --amendment docs/prediction-confirm-2026-11-02/AMENDMENT.md --out experiments/prediction-envelope/confirm-2026-11-02",
+  "hardware": {
+    "cpu": "Apple M1 Max",
+    "cores": 10,
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "wallMs": 216498,
+  "cellSteps": 69632000,
+  "statement": "CPU only (sim-ref). No model call, no GPU, no network, no paid compute."
+}
