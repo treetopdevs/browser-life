@@ -1,0 +1,67 @@
+{
+ "kind": "controller-locality-manifest",
+ "payloadFileSha256": "7ca0c0dd091f3158b51cf9c64959e76c34856cfadde7c00d030500b2193ffab7",
+ "integritySha256": "613f69e8db23a410b0ba05b4a60eb1fa24a6c20b46f8840dce388c2228f12d40",
+ "version": 1,
+ "sources": {
+  "packages/lineage/src/locality/descriptors.ts": "7bb21563035c9162b3abdebaac3266b95c2fc8226d7a6f33fef5354cfd73852e",
+  "packages/lineage/src/locality/fixtures.ts": "1c228fde882e67b611e0c3fb6988b94d786e37b3cd929087da6ba467c04f78df",
+  "packages/lineage/src/locality/index.ts": "30fa25bc660229f441b30ee353f7853ff3191828cd1055cbdb46295ff8020d00",
+  "packages/lineage/src/locality/matrix.ts": "5ad9146521bb053412de6434275ee6d313fc57901b0070fe80fbd220598f5885",
+  "packages/lineage/src/locality/neighbourhood.ts": "3d531d17dc0c49fba9665faba529d468b517766409898d2f74829c4cd2596518",
+  "packages/lineage/src/locality/panel.ts": "a5c99261626db4a9745bcc4cf02d8949e0156a17f88cde24e180996266fbe33e",
+  "packages/lineage/src/locality/scenarios.ts": "e21a1d7b5ace21f99a8d07adea4c291fa85b7e943887d3fe5020106f4eeeb560",
+  "packages/lineage/src/genotype.ts": "7ea6adc07cef6a1aed11bbf9c7668025d41cd5fe98184fc06fef234356f0a140",
+  "tools/locality/matrix.ts": "089398ad9f2e13f78acd9d86fc5e0fbeaa1031f16fa2a0912e47637d5062c29f",
+  "tools/locality/power.ts": "a7b80ab4dcb21bf400b7c9f9cdc76b0a8f6cf364aa8e4ba202c228a91364eaf7"
+ },
+ "freezeSha256": "63dcfe2e0a3b889bf8391f0f79ccd8c7a69264cbcf0e2c6036d92d9f77e2d5d5",
+ "n": 192,
+ "workers": {
+  "requested": 2,
+  "used": 1,
+  "note": "worker pool not built: the serial projection is within the budget"
+ },
+ "genomes": [
+  {
+   "id": "generalist",
+   "hash": "5fdf53487e7d590c",
+   "cluster": null,
+   "votes": false
+  },
+  {
+   "id": "m3-c4",
+   "hash": "4914309dd66cd139",
+   "cluster": 4,
+   "votes": true
+  },
+  {
+   "id": "m3-c9",
+   "hash": "312be6f426e3a06d",
+   "cluster": 9,
+   "votes": true
+  }
+ ],
+ "candidates": [
+  {
+   "slot": "sparse",
+   "cluster": 4,
+   "pass": true,
+   "chosen": true
+  },
+  {
+   "slot": "dense",
+   "cluster": 9,
+   "pass": true,
+   "chosen": true
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "b43db3be",
+  "runtime": "deno 2.9.8",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-02T08:28:43.366Z",
+  "generateSeconds": 356
+ }
+}

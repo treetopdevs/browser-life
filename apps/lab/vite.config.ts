@@ -195,6 +195,7 @@ export default defineConfig({
       predictability: r("./predictability/index.html"),
       assembly: r("./assembly/index.html"),
       niche: r("./niche/index.html"),
+      movingLight: r("./moving-light/index.html"),
       controllerLocality: r("./controller-locality/index.html"),
       opponents: r("./opponents/index.html"),
       ecosystem: r("./ecosystem/index.html"),

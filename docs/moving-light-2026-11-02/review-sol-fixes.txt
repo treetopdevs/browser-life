@@ -1,0 +1,9 @@
+# Codex gpt-6.1-sol xhigh follow-up review of the FIX-stage fixes (read-only, 2026-11-02). Prompt: fixes-review-prompt (items 1-8). Final message below.
+
+- **[P3] Fix 6 is incomplete in the documentation.** [REVIEW.md:32](/Users/nicholas/develop/browser-life-i08-moving-light/docs/moving-light-2026-11-02/REVIEW.md:32) still says 958,904/963,768 ppm of neighbourhood signal “is foreign.” A reader can still infer 95.9% foreign ownership despite the corrected probe semantics. Add a disposition withdrawing that interpretation and identifying the numbers as signal-difference proxies.
+
+No P1/P2 findings in the scoped fixes.
+
+Fix 2 remains explicitly deferred/incomplete. The disclosure is accurate. Cancellation is defensible for a common additive **capture** offset; strategy-dependent illumination effects can remain at first order, as `LIMITS` acknowledges.
+
+Direct Node assertions, full-horizon physical fixtures, checker tamper probes, and I06 `--check` passed. Vitest suites—including `niche-evidence.test.ts`—remain unverified here: sandbox `EPERM` blocked temporary SSR directory creation before test collection.

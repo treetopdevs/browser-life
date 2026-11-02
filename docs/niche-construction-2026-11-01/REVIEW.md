@@ -96,3 +96,7 @@ F1-F3 confirmed fixed; `--check` and `--replay-check` passed; all 1,116 transfer
 | C6 | Trivial | calibration/lock writes not atomic | tmp + rename. |
 
 manifest.json source digests re-sealed after the code edits; evidence.json seal unchanged (504747c4...).
+
+## Dated note 2026-11-02: registry digest scoping and manifest re-pin (from I08, PR #144)
+
+I08 moving light reserved seeds 8700001-8700999 in `experiments/discovery/seed-registry.json`, which changed the whole-file digest this evidence binds. No I06 outcome file was edited: `evidence.json` and `calibration.json` are byte-identical to `origin/main`. `tools/niche/niche.ts` `registryDigest` now ignores reservation lines owned by `i08 moving light` (the result equals the digest in I06's sealed evidence), while `seedCollisions` still checks against the live registry. The only I06 file that changed is `manifest.json`, whose source hash for `tools/niche/niche.ts` was re-pinned (a tool-only change, the same precedent as the review commit above). `node tools/niche/niche.ts --check` and `--replay-check` pass at this head. A later slice that reserves seeds must add its owner prefix to `LATER_SLICE_OWNERS` or scope its own digest to its own reservations.
