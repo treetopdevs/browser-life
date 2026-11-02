@@ -1,0 +1,90 @@
+/*
+ * The program soup on the site's paper. The grid is a jar: it stays dark (--field) in both themes, and the byte and
+ * family colours on it are the paper's own drawing, so they do not change with the theme. Everything around it is
+ * site chrome: surfaces, lines, ink and one sun for the primary action.
+ */
+.soup-intro .lede { max-width: 66ch; }
+.soup-honest { max-width: 66ch; margin: 18px 0 0; padding: 12px 16px; border-left: 3px solid var(--sun); border-radius: 0 var(--radius) var(--radius) 0; background: var(--sun-soft); color: var(--text); font-size: .9375rem; line-height: 1.55; }
+.soup-honest b { font-weight: 700; }
+.soup-main { padding-block: 28px 8px; }
+.soup-main:focus { outline: none; }
+
+.transport { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 16px; margin: 0 0 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.buttons { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.buttons .button { min-height: 42px; }
+/* "One step" is disabled while the soup runs: say so, and give no hover or press feedback. */
+.soup-main .button:disabled { opacity: .5; cursor: not-allowed; }
+.soup-main .button:disabled:hover { background: transparent; border-color: var(--control-line); }
+.soup-main .button:disabled:active { transform: none; }
+.buttons label, #settings-form > label { display: grid; gap: 5px; color: var(--muted); font-size: .8125rem; font-weight: 600; }
+.buttons select, #settings-form input[type=number], #settings-form select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: .9375rem; font-weight: 400; }
+.clock { display: grid; gap: 3px; text-align: right; color: var(--muted); font-size: .8125rem; }
+.clock strong { color: var(--text); font-size: 1.125rem; font-variant-numeric: tabular-nums; }
+.clock #status { color: var(--text); font-weight: 600; }
+
+.world-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.world-panel, .panel { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.world-panel .jar-glass { padding: 8px; border-radius: 12px; }
+#world { display: block; width: 100%; height: auto; aspect-ratio: 240 / 135; border-radius: 6px; background: var(--field); image-rendering: pixelated; cursor: crosshair; }
+#world:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 11px 3px 1px; color: var(--muted); font-size: .8125rem; line-height: 1.4; }
+.legend span { display: flex; align-items: center; gap: 7px; }
+.legend i { flex: none; display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.legend code { color: var(--text); font-family: var(--mono); }
+.legend[hidden] { display: none; }
+/* Swatches match the colours page.ts paints (png.ts): data, not theme. */
+.sw-loop { background: rgb(0, 192, 0); }
+.sw-edit { background: rgb(200, 0, 200); }
+.sw-move { background: rgb(200, 128, 220); }
+.sw-zero { background: rgb(255, 0, 0); }
+.sw-data { background: rgb(215, 215, 215); box-shadow: inset 0 0 0 1px var(--line); }
+.sw-family { background: linear-gradient(90deg, #e87b7b, #7be8a4, #7b9be8); }
+.sw-loner { background: rgb(22, 38, 44); }
+
+.panel h2 { margin: 0 0 10px; font-size: 1.25rem; letter-spacing: -.02em; }
+.inspector { display: grid; gap: 10px; }
+.inspector > *, #inspect > * { min-width: 0; }
+#inspect { display: grid; gap: 10px; }
+#inspect[hidden] { display: none; }
+.inspector p { margin: 0; }
+.cell { color: var(--muted); font-size: .875rem; }
+.cell strong { color: var(--text); }
+.program { margin: 0; padding: 10px; border-radius: var(--radius); background: var(--field); color: var(--field-ink); font: .8125rem/1.5 var(--mono); letter-spacing: .06em; white-space: pre; overflow-x: auto; }
+.selfrep { font-weight: 700; font-variant-numeric: tabular-nums; }
+.selfrep[data-level=high] { color: var(--success); }
+.selfrep[data-level=mid] { color: var(--sun-ink); }
+.selfrep[data-level=low] { color: var(--muted); }
+.muted, .chart-note { color: var(--muted); font-size: .8125rem; line-height: 1.55; }
+.muted code { color: var(--text); font-family: var(--mono); }
+.muted a { color: var(--text); text-decoration-color: var(--sun-ink); text-decoration-thickness: 2px; text-underline-offset: 3px; font-weight: 600; }
+
+.bottom-grid { display: grid; grid-template-columns: minmax(250px, .8fr) minmax(0, 1.2fr); gap: 16px; margin-top: 16px; }
+#settings-form { display: grid; gap: 12px; margin-bottom: 12px; }
+#settings-form .button { justify-self: start; }
+.population { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; color: var(--muted); }
+.population strong { color: var(--text); font-size: 2.25rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0 0; }
+.stats div { padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--bg); }
+.stats dt { color: var(--soft); font-size: .75rem; font-weight: 600; }
+.stats dd { margin: 3px 0 0; color: var(--text); font-size: .875rem; font-variant-numeric: tabular-nums; }
+#history { display: block; width: 100%; height: auto; aspect-ratio: 3.6; margin-top: 14px; border-radius: var(--radius); background: var(--bg); }
+.chart-note { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0 0; }
+.chart-note span:last-child { flex: none; font-variant-numeric: tabular-nums; }
+.soup-explain:last-of-type { margin-bottom: 40px; border-bottom: 0; }
+.soup-explain h2 { margin: 0 0 14px; font-size: clamp(1.5rem, 2.6vw, 2rem); line-height: 1.15; }
+
+@media (max-width: 860px) {
+  .transport { flex-direction: column; align-items: stretch; }
+  .clock { text-align: left; }
+  .world-layout, .bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .shell.soup-main { width: calc(100% - 32px); }
+  .buttons > label { flex: 1 1 100%; }
+}
+@media (max-width: 420px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .world-panel, .panel { padding: 11px; }
+  .world-panel .jar-glass { padding: 5px; }
+  .program { font-size: .6875rem; }
+}

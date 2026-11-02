@@ -191,6 +191,7 @@ export default defineConfig({
       matter: r("./matter/index.html"),
       currents: r("./currents/index.html"),
       spatial: r("./spatial/index.html"),
+      soup: r("./soup/index.html"),
       predictability: r("./predictability/index.html"),
       controllerLocality: r("./controller-locality/index.html"),
       ecosystem: r("./ecosystem/index.html"),
