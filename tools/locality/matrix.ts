@@ -53,19 +53,20 @@ export const serialize = (p: unknown): string => `${JSON.stringify(p, null, 1)}\
  * `--replay-check`, which regenerates the payload; `--check` is a no-simulation integrity check of the saved artifacts only.
  */
 const SOURCE_DIRS = [SRC_DIR];
-export function sourceFiles(root = REPO): string[] {
+export function sourceFiles(root = REPO, extra: readonly string[] = []): string[] {
   const dirs = SOURCE_DIRS.flatMap((d) => readdirSync(`${root}${d}`).filter((f) => f.endsWith(".ts")).sort().map((f) => d + f));
-  return [...dirs, "packages/lineage/src/genotype.ts", "tools/locality/matrix.ts"];
+  return [...dirs, "packages/lineage/src/genotype.ts", "tools/locality/matrix.ts", ...extra];
 }
-const sourceHashes = (): Record<string, string> => Object.fromEntries(sourceFiles().map((f) => [f, sha256(readFileSync(REPO + f))]));
+export const sourceHashes = (extra: readonly string[] = []): Record<string, string> => Object.fromEntries(sourceFiles(REPO, extra).map((f) => [f, sha256(readFileSync(REPO + f))]));
 
-export function makeManifest(payload: Payload, evidenceText: string, seconds: number): Record<string, unknown> {
+export function makeManifest(payload: Payload, evidenceText: string, seconds: number, extraSources: readonly string[] = [], extra: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     kind: "controller-locality-manifest",
     payloadFileSha256: sha256(evidenceText),
     integritySha256: payload.integritySha256,
     version: payload.version,
-    sources: sourceHashes(),
+    sources: sourceHashes(extraSources),
+    ...extra,
     genomes: payload.genomes.map((g) => ({ id: g.id, hash: g.hash, cluster: g.cluster, votes: g.votes })),
     candidates: payload.candidates.map((c) => ({ slot: c.slot, cluster: c.cluster, pass: c.qualification.pass, chosen: c.chosen })),
     provenance: { note: "not replayed; excluded from the deterministic payload", baseCommit: BASE_COMMIT, runtime: (globalThis as { Deno?: { version: { deno: string } } }).Deno ? `deno ${(globalThis as { Deno?: { version: { deno: string } } }).Deno!.version.deno}` : `node ${process.version}`, platform: `${platform()}-${arch()}`, generatedAt: new Date().toISOString(), generateSeconds: seconds },
@@ -77,8 +78,16 @@ const ROW_KEYS = ["genome", "id", "family", "kind", "k", "cls", "slots", "reques
 const sameJson = (a: unknown, b: unknown): boolean => canonical(a) === canonical(b);
 
 /** Everything in the payload that follows from other saved numbers is recomputed here, so a resealed edit to a derived field is caught. */
-export function recomputeProblems(payload: Payload): string[] {
+export interface CheckOptions {
+  /** Files beyond the shared source closure that the manifest must pin (the power tool). */
+  extraSources?: readonly string[];
+  /** The exact fixture ids a payload must carry; absent keeps PR136's behaviour (whatever it carries, each must pass). */
+  fixtureInventory?: readonly string[];
+}
+
+export function recomputeProblems(payload: Payload, opts: CheckOptions = {}): string[] {
   const out: string[] = [];
+  const panel = payload.panel ?? lib.PANEL_V1;
   for (const [i, r] of payload.rows.entries()) {
     const at = `row ${i} (${r.genome} ${r.id})`;
     const slotCls = r.slots.map((x) => (x.after - x.before !== x.applied ? "inconsistent" : x.applied === 0 ? "unchanged" : x.applied === x.exp ? "genuine" : "boundary-clamped"));
@@ -113,7 +122,7 @@ export function recomputeProblems(payload: Payload): string[] {
     const want: Record<string, { population: number; chosen: number }> = {};
     for (const r of mine) {
       const k = lib.strataKey(r as unknown as Parameters<typeof lib.strataKey>[0]);
-      if (r.cls === "genuine" && r.dupOf === null) (want[k] ??= { population: 0, chosen: 0 }).population++;
+      if (r.cls === "genuine" && r.dupOf === null && !panel.exclude[g.id]?.includes(r.hash)) (want[k] ??= { population: 0, chosen: 0 }).population++;
       if (r.assay) (want[k] ??= { population: 0, chosen: 0 }).chosen++;
     }
     const have = payload.strata[g.id] ?? {};
@@ -122,6 +131,11 @@ export function recomputeProblems(payload: Payload): string[] {
       // Strata are recorded only for allocated keys; an unallocated stratum must hold no assayed rows.
       if (!h ? w.chosen !== 0 : h.population !== w.population || h.chosen !== w.chosen) out.push(`genome ${g.id}: stratum ${k} counts do not follow from the rows`);
     }
+    if (payload.generated) {
+      const gen: Record<string, number> = {};
+      for (const r of mine) if (r.cls === "genuine" && r.dupOf === null) { const k = lib.strataKey(r as unknown as Parameters<typeof lib.strataKey>[0]); gen[k] = (gen[k] ?? 0) + 1; }
+      if (!sameJson(gen, payload.generated[g.id] ?? {})) out.push(`genome ${g.id}: generated counts do not follow from the rows`);
+    }
     const nb = payload.nullBreadth[g.id];
     if (nb && nb.median2 !== lib.median2(nb.values)) out.push(`genome ${g.id}: nullBreadth median2 does not follow from its values`);
     const gen0 = payload.genomes.find((x) => x.id === lib.GENERALIST_ID);
@@ -129,7 +143,7 @@ export function recomputeProblems(payload: Payload): string[] {
   }
   // Selection: per slot the first passing candidate in order is used, and exactly those genomes vote.
   const picked = new Set<string>();
-  for (const { slot } of lib.SLOTS) {
+  for (const { slot } of panel.slots) {
     let done = false;
     for (const c of payload.candidates.filter((x) => x.slot === slot)) {
       const want = c.qualification.pass && !done;
@@ -138,10 +152,15 @@ export function recomputeProblems(payload: Payload): string[] {
     }
   }
   for (const g of payload.genomes) if (g.votes !== picked.has(g.id)) out.push(`genome ${g.id}: votes does not follow from candidate selection`);
-  if (!sameJson(payload.protocol, JSON.parse(JSON.stringify(lib.protocolRecord())))) out.push("protocol differs from the code's constants");
+  if (!sameJson(payload.protocol, JSON.parse(JSON.stringify(lib.protocolRecord(panel))))) out.push("protocol differs from the code's constants");
   for (const f of payload.fixtures) {
     const passes = f.neutral ? f.physical.identical && f.functional.changedOutputs === 0 && f.physical.dev.every((d) => d === 0) : f.functional.changedOutputs > 0;
     if (f.passes !== passes) out.push(`fixture ${f.id}: passes does not follow from its numbers`);
+  }
+  if (opts.fixtureInventory) {
+    const have = payload.fixtures.map((f) => f.id).sort(), want = [...opts.fixtureInventory].sort();
+    if (!sameJson(have, want)) out.push(`fixture inventory differs from the expected one (have ${have.join(", ")})`);
+    if (!payload.fixtures.some((f) => f.neutral)) out.push("no neutral fixture is present");
   }
   const neutralOk = payload.fixtures.filter((f) => f.neutral).every((f) => f.passes);
   if (payload.neutralControlsOk !== neutralOk) out.push("neutralControlsOk does not follow from the fixtures");
@@ -164,7 +183,7 @@ export function recomputeProblems(payload: Payload): string[] {
 }
 
 /** Validate saved artifacts without simulating. Returns problems (empty when sound). */
-export function checkSaved(evidencePath = EVIDENCE, manifestPath = MANIFEST, root = REPO): string[] {
+export function checkSaved(evidencePath = EVIDENCE, manifestPath = MANIFEST, root = REPO, opts: CheckOptions = {}): string[] {
   const problems: string[] = [];
   if (!existsSync(evidencePath) || !existsSync(manifestPath)) return ["evidence.json or manifest.json is missing"];
   const text = readFileSync(evidencePath, "utf8");
@@ -184,12 +203,12 @@ export function checkSaved(evidencePath = EVIDENCE, manifestPath = MANIFEST, roo
   if (payload.grid.points !== lib.GRID_POINTS) problems.push(`grid points ${payload.grid.points} differ from the derived ${lib.GRID_POINTS}`);
   try { lib.assertIntegers(payload); } catch (e) { problems.push(String((e as Error).message)); }
   if (rowsWellFormed) {
-    problems.push(...recomputeProblems(payload));
+    problems.push(...recomputeProblems(payload, opts));
     const again = lib.verdictFromPayload(payload);
     if (canonical(again) !== canonical(payload.verdict)) problems.push("the saved verdict does not follow from the saved rows");
   }
   if (!payload.neutralControlsOk) problems.push("a neutral control was not neutral");
-  if (existsSync(root + SRC_DIR)) for (const f of sourceFiles(root)) if (!Object.keys(manifest.sources).includes(f)) problems.push(`source ${f} is not in the manifest (added since the evidence was written)`);
+  if (existsSync(root + SRC_DIR)) for (const f of sourceFiles(root, opts.extraSources)) if (!Object.keys(manifest.sources).includes(f)) problems.push(`source ${f} is not in the manifest (added since the evidence was written)`);
   for (const [file, hash] of Object.entries(manifest.sources as Record<string, string>)) {
     if (!existsSync(root + file)) problems.push(`source ${file} is missing`);
     else if (sha256(readFileSync(root + file)) !== hash) problems.push(`source ${file} changed since the evidence was written`);

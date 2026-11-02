@@ -18,17 +18,28 @@
       <p class="disclosure">CPU only: deterministic integer simulator and probe, no GPU evidence. Exploratory, bounded to the tested genomes, this one-step operator and three short tiny-world assays. Local experiment, kept off the public site. It is not a finding about evolved creatures in general, and it does not say whether anything here is alive.</p>
     </section>
 
+    <section aria-labelledby="summary-heading">
+      <h2 id="summary-heading">The panels</h2>
+      <div id="summary-text"></div>
+      <div class="scroll" tabindex="0" role="region" aria-label="Panel comparison table, scrolls sideways">
+        <table id="summary"></table>
+      </div>
+    </section>
+
     <section aria-labelledby="verdict-heading">
       <h2 id="verdict-heading">Where the numbers land</h2>
       <div class="verdict"><strong id="verdict"></strong><ul id="verdict-reasons"></ul></div>
       <p class="muted" id="candidates"></p>
+      <p class="muted" id="panel-note"></p>
     </section>
 
     <section aria-labelledby="matrix-heading">
       <h2 id="matrix-heading">The matrix</h2>
       <div class="controls">
+        <label for="panel">Panel<select id="panel"></select></label>
         <label for="genome">Starting controller<select id="genome"></select></label>
         <label for="family">Kind of edit<select id="family"></select></label>
+        <label for="kind">Kind of locus<select id="kind"></select></label>
         <label class="check" for="assayed"><input id="assayed" type="checkbox"> only edits that also ran in the tiny worlds</label>
       </div>
       <p id="shown" class="muted" role="status"></p>
