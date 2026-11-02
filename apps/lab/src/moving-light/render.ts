@@ -45,7 +45,7 @@ export const VERDICT_TEXT: Record<string, string> = {
   'inconclusive-confounded': 'Inconclusive: a control or a comparator disagrees, so the benefit cannot be pinned on the interaction.',
   inconclusive: 'Inconclusive: the estimates lean positive but the pre-stated bar was not met.',
   'invalid-or-incomplete': 'The run was invalid or incomplete. Not a negative result.',
-  'unsupported-measurement': 'The assay was too noisy to answer the question (or the sensor did not track the sun at the dev stage): the engine-seed noise of the capture readout is larger than the readout itself. Not a negative result.',
+  'unsupported-measurement': 'The assay was too noisy to answer the question (or the sensor did not track the sun at the dev stage): the engine-seed noise floor of the capture contrast (1,429,742 ppm of input energy on the fixed schedule) is above the frozen 500,000 ppm sensitivity bound. Not a negative result.',
 };
 
 export function verdictHtml(ev: EvidenceView): string {

@@ -1,5 +1,5 @@
 import evidence from '../../../../docs/moving-light-2026-11-02/evidence.json';
-import { BLIND, SCHEDULE_TEXT, blindedOrder, contrastsHtml, coordFixturesHtml, criteriaHtml, esc, listHtml, panelHtml, physFixturesHtml, stripSvg, verdictHtml, type EvidenceView } from './render.ts';
+import { BLIND, SCHEDULE_TEXT, labelOf, blindedOrder, contrastsHtml, coordFixturesHtml, criteriaHtml, esc, listHtml, panelHtml, physFixturesHtml, stripSvg, verdictHtml, type EvidenceView } from './render.ts';
 import './style.css';
 
 const ev = evidence as unknown as EvidenceView;
@@ -13,7 +13,16 @@ function drawStrips() {
   const cursor = Number(scrub.value);
   for (const s of blindedOrder()) {
     const svg = document.getElementById(`strip-${BLIND[s]}`);
-    if (svg) svg.innerHTML = stripSvg(ev, sel.value, s, cursor);
+    if (svg) {
+      svg.innerHTML = stripSvg(ev, sel.value, s, cursor);
+      const at = (pl: string) => {
+        const r = ev.fresh.blocks[0]?.strip?.[`${sel.value}/${s}/${pl}`];
+        if (!r || !r.t.length) return 'no value';
+        const i = Math.min(cursor, r.t.length - 1);
+        return `${(r.d1000[i] / 1000).toFixed(1)} cells`;
+      };
+      svg.setAttribute('aria-label', `${labelOf(s, revealed)}: signed offset of the bodies from the sun at the cursor, grouped ${at('grouped')}, dispersed ${at('dispersed')}`);
+    }
   }
   const t = ev.fresh.blocks[0]?.strip?.[`${sel.value}/sense/grouped`]?.t ?? [];
   el('scrub-out').textContent = t.length ? `step ${t[Math.min(cursor, t.length - 1)]} of ${t[t.length - 1]}` : 'no strip stored';
