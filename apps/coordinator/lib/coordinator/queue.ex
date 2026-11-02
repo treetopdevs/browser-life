@@ -225,7 +225,8 @@ defmodule Coordinator.Queue do
 
   The island table is bounded by `:max_islands` (20,000 by default). At the
   bound a join first reclaims expired leases, then forgets every island that
-  never ran or verified anything, holds no pending attempt and was last seen
+  never ran or verified anything, holds no pending attempt (nor a hold from
+  another plane's live lease, `authenticate_and_hold/3`) and was last seen
   more than `:island_prune_after_ms` ago (a day); if there is none, the
   least recently seen such islands last seen more than
   `:island_prune_grace_ms` ago (ten minutes), a twentieth of the bound at once
@@ -319,6 +320,25 @@ defmodule Coordinator.Queue do
   def leave(island, token), do: GenServer.call(__MODULE__, {:leave, island, token})
 
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
+
+  @doc """
+  Authenticates an island for another plane (`Coordinator.Soup`) and, in the
+  same call, records it as seen; with `hold_until` (ms since the epoch) it also
+  holds the island until then: pruning at the island bound skips it, as it
+  skips an island holding a queue attempt. `:ok`, or `:error` for an absent
+  island or a wrong token, so a plane never grants work to credentials pruned
+  a moment earlier. The hold and `last_seen` are saved with the queue's next
+  write, never on their own; a plane re-asserts its live holds after a restart.
+  """
+  def authenticate_and_hold(island, token, hold_until \\ nil),
+    do: GenServer.call(__MODULE__, {:auth_hold, island, token, hold_until})
+
+  @doc """
+  Holds a known island until `hold_until` without authenticating it: for a
+  plane re-asserting its live leases after its own restart, or topping up a
+  hold to a lease's exact end. `:ok`, or `:error` if the island is not there.
+  """
+  def hold(island, hold_until), do: GenServer.call(__MODULE__, {:hold, island, hold_until})
 
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
   def island_info(id), do: GenServer.call(__MODULE__, {:island_info, id})
@@ -679,6 +699,27 @@ defmodule Coordinator.Queue do
     {:reply, ok, s}
   end
 
+  def handle_call({:auth_hold, id, token, until}, _from, s) do
+    case s.islands[id] do
+      %{token_hash: h} when is_binary(token) ->
+        if Plug.Crypto.secure_compare(h, :crypto.hash(:sha256, token)) do
+          s = put_in(s, [:islands, id, :last_seen], now())
+          {:reply, :ok, raise_hold(s, id, until)}
+        else
+          {:reply, :error, s}
+        end
+
+      _ ->
+        {:reply, :error, s}
+    end
+  end
+
+  def handle_call({:hold, id, until}, _from, s) do
+    if Map.has_key?(s.islands, id),
+      do: {:reply, :ok, raise_hold(s, id, until)},
+      else: {:reply, :error, s}
+  end
+
   def handle_call({:leave, id, token}, _from, s) do
     case s.islands[id] do
       nil ->
@@ -706,7 +747,7 @@ defmodule Coordinator.Queue do
 
   def handle_call({:island_info, id}, _from, s) do
     # The recorded capabilities are the operator's (`status/0`) alone.
-    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities])
+    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities, :held_until])
     {:reply, info, s}
   end
 
@@ -1188,7 +1229,7 @@ defmodule Coordinator.Queue do
 
     islands =
       for i <- Map.values(s.islands) do
-        i |> Map.drop([:token_hash]) |> Map.put(:stale, stale?(i.last_seen, now))
+        i |> Map.drop([:token_hash, :held_until]) |> Map.put(:stale, stale?(i.last_seen, now))
       end
 
     # A segment whose verify attempt's regenerated observation files disagree
@@ -2976,6 +3017,8 @@ defmodule Coordinator.Queue do
         for {id, i} <- reclaimed.islands,
             i.runs + i.verifies == 0,
             not MapSet.member?(holding, id),
+            # Held by another plane's live lease (authenticate_and_hold/3).
+            Map.get(i, :held_until, 0) <= now,
             do: {id, i.last_seen}
 
       forget =
@@ -3017,6 +3060,19 @@ defmodule Coordinator.Queue do
 
         held >= cap
     end
+  end
+
+  # Raises an island's hold (another plane's lease end). It is kept in memory
+  # and saved with the queue's next write, never written on its own: a plane
+  # polling `next` would otherwise rewrite the whole queue state per request.
+  # After a restart the plane re-asserts its live leases (`Coordinator.Soup`'s
+  # init), so a hold that was not saved yet is not lost.
+  defp raise_hold(s, _id, nil), do: s
+
+  defp raise_hold(s, id, until) when is_integer(until) do
+    if until > Map.get(s.islands[id], :held_until, 0),
+      do: put_in(s, [:islands, id, :held_until], until),
+      else: s
   end
 
   # Islands with a pending (assigned, not completed) attempt, in one pass.
