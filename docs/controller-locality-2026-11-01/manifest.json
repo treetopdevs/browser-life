@@ -11,7 +11,7 @@
   "packages/lineage/src/locality/neighbourhood.ts": "2477ce7b02d36087987ec7df414a30c128a875e239d7fe93d1787d6de24c479d",
   "packages/lineage/src/locality/scenarios.ts": "548896398394f40e0a9333a8118313b0919b87e4ccdef1966b08d0f8adf5a00b",
   "packages/lineage/src/genotype.ts": "7ea6adc07cef6a1aed11bbf9c7668025d41cd5fe98184fc06fef234356f0a140",
-  "tools/locality/matrix.ts": "5a130a6ad4a20e9788a7bf401a123ac090b59e6ad75fe5c00a2296986fa4f220"
+  "tools/locality/matrix.ts": "d9741d0d90ca0dfc5b8536f54a5ebf5d8815bc768e622b3db7b0c685b2195418"
  },
  "genomes": [
   {

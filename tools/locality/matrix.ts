@@ -175,16 +175,19 @@ export function checkSaved(evidencePath = EVIDENCE, manifestPath = MANIFEST, roo
   if (manifest.integritySha256 !== payload.integritySha256) problems.push("manifest seal differs from the payload seal");
   const ids = new Set(payload.genomes.map((g) => g.id));
   for (const g of manifest.genomes as { id: string; hash: string }[]) if (payload.genomes.find((x) => x.id === g.id)?.hash !== g.hash) problems.push(`genome ${g.id}: manifest hash differs`);
+  let rowsWellFormed = true;
   for (const [i, r] of payload.rows.entries()) {
     const missing = ROW_KEYS.filter((k) => !(k in r));
-    if (missing.length) problems.push(`row ${i} lacks ${missing.join(", ")}`);
+    if (missing.length) { problems.push(`row ${i} lacks ${missing.join(", ")}`); rowsWellFormed = false; }
     if (!ids.has(r.genome)) problems.push(`row ${i} names unknown genome ${r.genome}`);
   }
   if (payload.grid.points !== lib.GRID_POINTS) problems.push(`grid points ${payload.grid.points} differ from the derived ${lib.GRID_POINTS}`);
   try { lib.assertIntegers(payload); } catch (e) { problems.push(String((e as Error).message)); }
-  problems.push(...recomputeProblems(payload));
-  const again = lib.verdictFromPayload(payload);
-  if (canonical(again) !== canonical(payload.verdict)) problems.push("the saved verdict does not follow from the saved rows");
+  if (rowsWellFormed) {
+    problems.push(...recomputeProblems(payload));
+    const again = lib.verdictFromPayload(payload);
+    if (canonical(again) !== canonical(payload.verdict)) problems.push("the saved verdict does not follow from the saved rows");
+  }
   if (!payload.neutralControlsOk) problems.push("a neutral control was not neutral");
   if (existsSync(root + SRC_DIR)) for (const f of sourceFiles(root)) if (!Object.keys(manifest.sources).includes(f)) problems.push(`source ${f} is not in the manifest (added since the evidence was written)`);
   for (const [file, hash] of Object.entries(manifest.sources as Record<string, string>)) {

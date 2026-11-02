@@ -10,7 +10,7 @@ caption{text-align:left;padding:10px;color:#9cadaa;font-size:12px;line-height:1.
 th,td{padding:6px 9px;border-top:1px solid #2b3e43;text-align:left;white-space:nowrap}
 thead th{color:#aebbb7;position:sticky;top:0;background:#0f1d23}
 tbody th{font-weight:500;color:#e9f1ec}
-td.heat{background:color-mix(in srgb,#5fc9a4 calc(var(--v) * 1%),transparent);color:#f2f7f4;text-align:right}
+td.heat{background:color-mix(in srgb,#5fc9a4 calc(var(--v) * 0.5%),transparent);color:#f2f7f4;text-align:right}
 .verdict{padding:14px 16px;margin:18px 0;border:1px solid #7b6744;border-radius:10px;background:#221f19;color:#f2dfb7}
 .verdict strong{font-size:16px}
 .caption{margin:28px 0 48px;padding:16px;border:1px solid #7b6744;border-radius:10px;background:#221f19}
