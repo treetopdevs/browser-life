@@ -189,6 +189,17 @@ describe("trendConfoundOf on a synthetic rising set", () => {
     expect(t.risingCases).toBe(3);
     expect(t.totalCases).toBe(4);
   });
+  it("numericTrendOnNull counts the three-way conjunction only", () => {
+    const up = () => "up" as const;
+    const t = trendConfoundOf(rows, 50, up);
+    expect(t.numericTrendOnNull).toMatchObject({ n: 2, risingNull: 2, naiveUp: 2, numericTrendUp: 2, pairedNone: 2, numericTrendUpWherePairedNone: 2 });
+    // before/after says down (before 200, treated = control 100) although numericTrend says up and the paired outcome is none.
+    const d = trendConfoundOf([row("sham", 200, 100, 100)], 25, up).numericTrendOnNull!;
+    expect(d.numericTrendUp).toBe(1);
+    expect(d.pairedNone).toBe(1);
+    expect(d.naiveUp).toBe(0);
+    expect(d.numericTrendUpWherePairedNone).toBe(0);
+  });
   it("on a declining set the confound cannot show: no rising cases, naive never says up", () => {
     const t = trendConfoundOf([row("sham", 200, 150, 150), row("lowDoseFeed", 200, 153, 150)], 50);
     expect(t.risingCases).toBe(0);

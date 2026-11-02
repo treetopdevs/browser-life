@@ -77,3 +77,21 @@ After these edits the delivered run was regenerated from the final source (`conf
 all eight `canonical.sha256` digests verify, `diff -r --exclude=meta.json --exclude=dev --exclude=.gitignore` is empty, the two
 source hashes are equal, and `validate` on `predictions.jsonl` exits 0 (`mechanismRule` 72 lines, 0 missing). No second
 follow-up review was run for these three small fixes; each has its own test.
+
+## Second follow-up review (F1-F3 and the rising cohort)
+
+Reviewer: Codex gpt-6.1-sol, xhigh, read-only, 2026-11-01, on `30abb614`. Prompt `/tmp/pe-r2-prompt.md`; session log `review-sol-cohort.txt`.
+An earlier pass of the same review was cut off by a tool kill before its final message; it had already found the duplicate-ID
+and stale-count items below, which were fixed in `30abb614`. The restarted review (finished) gave: F1 CLOSED, F2 CLOSED, F3 CLOSED, no P1, one P2, two P3.
+
+| # | Sev | Finding | Disposition |
+|---|-----|---------|-------------|
+| G1 | P2 | `splitPlanOf` per-cohort splitting let a family id repeated across cohorts escape the global uniqueness check (rename f24 to f00) (first pass) | Fixed in `30abb614`: duplicate ids across all families are refused; test "a family id repeated across cohorts is refused". |
+| G2 | P3 | Two stale counts in EVIDENCE.md (12 test families; 8 of 144 measurement-limited) (first pass) | Fixed in `30abb614`. |
+| G3 | P2 | `numericTrendUpWherePairedNone` did not require the before/after rule to say up, so it was not the documented three-way conjunction | Fixed: the counter now requires all three; test "numericTrendOnNull counts the three-way conjunction only" (sham with before 200, treated = control 100 gives 0). The delivered 14 cases satisfy all three (reviewer verified); v0 regenerated. |
+| G4 | P3 | "64 null-effect cases" overstated: two low-dose cases (f10, f22) measure up | Fixed: wording is "intended-null" with 62 of 64 measured none, in output.ts and EVIDENCE.md. |
+| G5 | P3 | Reproduction steps checked a v0 directory lacking the gitignored files | Fixed: generate into a scratch dir, verify and diff the digests there. |
+
+CodeRabbit threads on 07d7b4a8 (seven, all Minor) were fixed in `30abb614`: bounds kind/where pairing, step-0 sampling filter,
+rerender keeps proposers with no lines, serialization stability compares the original input, gitDirty covers resolver config,
+heaviest/emptiest test asserts the properties, and the reproduction steps start from the frozen protocol.

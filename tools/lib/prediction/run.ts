@@ -396,9 +396,9 @@ export interface TrendConfound {
   risingCases: number;
   totalCases: number;
   /**
-   * The asserted property in real data: on the null-effect cases (sham and low-dose feed) of rising worlds, the before/after metric
+   * The asserted property in real data: on the intended-null cases (sham and low-dose feed) of rising worlds, the before/after metric
    * calls "up" and the numeric-trend baseline (which extrapolates the same rise) predicts "up", while the paired outcome is "none".
-   * `risingNull` counts those cases (treated above the fork value); null when no numeric-trend predictions were supplied.
+   * `numericTrendUpWherePairedNone` requires all three conditions at once (before/after up, numericTrend up, paired none); `risingNull` counts those cases (treated above the fork value); null when no numeric-trend predictions were supplied.
    */
   numericTrendOnNull: { n: number; risingNull: number; naiveUp: number; numericTrendUp: number; pairedNone: number; numericTrendUpWherePairedNone: number } | null;
 }
@@ -429,7 +429,7 @@ export function trendConfoundOf(rows: readonly CaseRow[], minEffect: number, num
             naiveUp: nulls.filter((r) => naive(r) === "up").length,
             numericTrendUp: nulls.filter(up).length,
             pairedNone: nulls.filter((r) => paired(r) === "none").length,
-            numericTrendUpWherePairedNone: nulls.filter((r) => up(r) && paired(r) === "none").length,
+            numericTrendUpWherePairedNone: nulls.filter((r) => up(r) && paired(r) === "none" && naive(r) === "up").length,
           };
         })()
       : null,

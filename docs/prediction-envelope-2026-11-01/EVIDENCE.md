@@ -74,9 +74,9 @@ minutes on one core (125 M cell-steps).
   are a derangement over the combined split, so a rising family can receive a declining census and the reverse). Imputed Brier on test:
   `numericTrend` 0.704, `shuffledEvidence` 0.690, `priorMajority` 0.553, `fixedRule` 0.582, `v0Rules` 0.437.
 - **The trend-confound negative case now appears in real data.** 35 of 192 cases have a treated value above the fork value; 14 of the
-  64 null-effect cases (sham and low-dose feed) are among them. On those 14 the naive before/after rule says up, `numericTrend`
-  predicts up, and the paired outcome is none (`comparison.md`, trend-confound diagnostic: "numericTrend says up where the paired
-  outcome is none on 14"). On the 24 test cases in rising families `numericTrend` is right on 0 (it says up everywhere; the labels
+  64 intended-null cases (sham and low-dose feed; 62 of the 64 measure none, two low-dose cases measure up) are among them. On those 14 the naive before/after rule says up, `numericTrend`
+  predicts up, and the paired outcome is none (`comparison.md`, trend-confound diagnostic: "the before/after rule, numericTrend and a
+  paired outcome of none coincide on 14"). On the 24 test cases in rising families `numericTrend` is right on 0 (it says up everywhere; the labels
   are down 6, none 18); on the 72 test cases in declining families it is right on 21 (0.292).
 - What this does not show: an evidence-using rule beating its shuffled control. `numericTrend` is no better than `shuffledEvidence`
   (0.704 vs 0.690 imputed Brier; the paired difference is not computed because both are weak) and both are worse than
@@ -98,15 +98,17 @@ minutes on one core (125 M cell-steps).
 
 ## Reproduction
 
-Reproduce the delivered files from the checked-in (frozen) protocol:
+Reproduce the delivered files from the checked-in (frozen) protocol. `envelopes.jsonl` and `predictions.jsonl` are gitignored, so a clean
+checkout has only the committed files; regenerate into a scratch directory and compare:
 ```
 export PATH=~/.nvm/versions/node/v24.2.0/bin:$PATH
 pnpm install
-deno run -A --no-lock tools/predict.ts run --stage confirm --exploratory yes --out /tmp/pe2    # what produced the delivered files (about 6 minutes)
-(cd experiments/prediction-envelope/v0 && shasum -a 256 -c canonical.sha256)
-diff -r --exclude=meta.json --exclude=dev --exclude=.gitignore experiments/prediction-envelope/v0 /tmp/pe2
-deno run -A --no-lock tools/predict.ts validate experiments/prediction-envelope/v0/predictions.jsonl
-deno run -A --no-lock tools/predict.ts report --out experiments/prediction-envelope/v0   # re-render derived files from the data files
+deno run -A --no-lock tools/predict.ts run --stage confirm --exploratory yes --out /tmp/pe2    # what produced the delivered files (about 5 minutes)
+(cd /tmp/pe2 && shasum -a 256 -c canonical.sha256)                                              # the generated set verifies
+diff <(cd /tmp/pe2 && cat canonical.sha256) experiments/prediction-envelope/v0/canonical.sha256   # equals the committed digests
+diff -r --exclude=meta.json --exclude=dev --exclude=.gitignore --exclude=envelopes.jsonl --exclude=predictions.jsonl experiments/prediction-envelope/v0 /tmp/pe2
+deno run -A --no-lock tools/predict.ts validate /tmp/pe2/predictions.jsonl
+deno run -A --no-lock tools/predict.ts report --out /tmp/pe2   # re-render derived files from the data files
 ```
 A real confirmation needs the freeze committed and fresh families (a dated amendment), then `run --stage confirm` without the flag.
 

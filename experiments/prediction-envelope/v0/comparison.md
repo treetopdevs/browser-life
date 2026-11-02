@@ -121,7 +121,7 @@ Share of cases labelled up by the paired rule (treated minus control) vs the nai
 - share of cases labelled up: paired rule 0.130, naive before/after rule 0.182; cases with treated above the fork value: 35/192
 - sham: 32 cases, naive rule says up on 7, paired rule says none on 32
 - low-dose feed: 32 cases, naive rule says up on 7, paired rule says none on 30
-- null-effect cases (sham and low-dose feed), all splits: 64 cases, 14 with treated above the fork value; naive before/after rule says up on 14; numericTrend predicts up on 14; paired outcome is none on 62; numericTrend says up where the paired outcome is none on 14
+- intended-null cases (sham and low-dose feed; paired outcome is none on most, not all), all splits: 64 cases, 14 with treated above the fork value; naive before/after rule says up on 14; numericTrend predicts up on 14; paired outcome is none on 62; the before/after rule, numericTrend and a paired outcome of none coincide on 14
 
 ## Cost and stability
 
