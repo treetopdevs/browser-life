@@ -1,0 +1,181 @@
+{
+ "kind": "assembly-observer-manifest",
+ "payloadFileSha256": "3976795383c54f09639311e5dae059b55393be297445922e319a1e61a4014bae",
+ "integritySha256": "eb7e741ce3e1b003e2225f9fe626b7936fcc4eeda5a4945f6e36b3495d749845",
+ "versions": {
+  "assembly": 1,
+  "ruleVersion": 1,
+  "metricsVersion": 2
+ },
+ "freezeCommit": "89215592e6480fe55602a2ed709075746b5d4562",
+ "sources": {
+  "packages/metrics/src/assembly/bound.ts": "9581593e6c4ebd7db472141de0ff1391a110f260fffe03cac74a420bdd877e6b",
+  "packages/metrics/src/assembly/clips.ts": "abdd18bc0a22d2caca58275a4de618ef520587998899e1f60e1ef911889d2bd5",
+  "packages/metrics/src/assembly/construct.ts": "d86965b6b1efc32494d728ba2c958aa3bdcf50cc9c4f17466a08705bd96a33a5",
+  "packages/metrics/src/assembly/exact.ts": "a78a42a609037ba5675aded821a33a6697a56e716c9d6daad0aa1ae0fd030a6e",
+  "packages/metrics/src/assembly/fixtures.ts": "cdb1e6da128180d4ae98ea7510050a82a6ef81ed840cdcb58e3f39d8f7cdaba6",
+  "packages/metrics/src/assembly/grammar.ts": "968e87914caebee221cbe86c30fe1738e116eead8660f0d104935a6b3cdc48b6",
+  "packages/metrics/src/assembly/index.ts": "e32a02279e864c5fab5d295453bfc003336093b75256c3458d3c74a973504c5a",
+  "packages/metrics/src/assembly/lazy.ts": "4499a3a24b7bd5f6e3238390ee5d649910915d7c859481edc31ba998094d66d9",
+  "packages/metrics/src/assembly/observer.ts": "1d8e0a8046a9cdfdea8006b156650cb76cce15f7abb1e5cfc8916d1907ff398f",
+  "packages/metrics/src/assembly/protocol.ts": "46318fb63c796ff465f6fc263c2f7a06c71384194a384da604cd7d65ff31072f",
+  "packages/metrics/src/assembly/readouts.ts": "2d094aaefe4d667c02664028f5fa0ccea2fdcd49491049e04746d50565da2866",
+  "packages/metrics/src/assembly/segment.ts": "11fc12d1015e3eeac46a8b4aebd01aafef837e15318cff160e86d891e9c679b8",
+  "packages/metrics/src/assembly/stream.ts": "91bf51b6a370b92e9d22b17633118c8fc6859c4745a09809b1028edc4ec3fd89",
+  "packages/metrics/src/assembly/verdict.ts": "057e5015716a12c70a0687093b2c618b9118534afa98987577e1b10603a8d34c",
+  "packages/metrics/src/assembly/version.ts": "c3b3d16f73da096fcf94457fa4c3a32766c5312e9f52f0a8c3c8279d4152b1ff",
+  "packages/metrics/src/predictability/atlas.ts": "9a071d7a916052f79e475f47be36dae383e970378a659d387149db9be88efe50",
+  "packages/metrics/src/predictability/controls.ts": "d874e71f3c5f8d251db7a371df785d49c9b91b05de5f53270f66af5bb713ce47",
+  "packages/metrics/src/predictability/ecology.ts": "f3801d339dbd99b14facac42361739b1f1668c554a9bd92c12af57f9755464fb",
+  "packages/metrics/src/predictability/fixtures.ts": "6e0ba3806bf840913bd7721fa19030fe0fee89ceac374c1c401e94f0426db4fb",
+  "packages/metrics/src/predictability/index.ts": "7cc93588acae36ff468747c390cd6efdc52a13adbccb66ea097f57e379568b3d",
+  "packages/metrics/src/predictability/labels.ts": "0363bca6b1b4f0f6c6cf729776d18ac23761b2d5b42c92c2cbae6d0253223a99",
+  "packages/metrics/src/predictability/life.ts": "32c5e621c9da7f184bfd7727372dba55ecfe94dd57322a5a8dc1d1ac711080da",
+  "packages/metrics/src/predictability/losses.ts": "f4c90bacc9fe5099ed054d919cdbef73899e906449341695d2b1f8fd2064c7bb",
+  "packages/metrics/src/predictability/movie.ts": "84239d1b96d968696f56c80bc459d1111013b2fdd389bd6a868252585c06e3f7",
+  "packages/metrics/src/predictability/predictors.ts": "e394ad117f3c601079dc612d592d728e7badd38c6941f52fa3fc524e92e6477b",
+  "packages/metrics/src/predictability/resolution.ts": "4def751844655fc8e117e9329bbfcc645a9abe1a7f1131a80d7150a8f798d223",
+  "packages/metrics/src/predictability/version.ts": "e1ec5174d2f08dc3aee691fe2d4479a07b4b5ee59496d11ad0d3c60512da9a86",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "tools/assembly/observer.ts": "1069789fb44f67215e5c66663455fb63fdb9ec8525c026eb75e456197740fd8e",
+  "docs/assembly-observer-2026-11-02/GRAMMAR.md": "4c78a0749f3776d687f3bcac39afaf7cd6b5f43223bcfca3ff3eeea8d6f1bb4e",
+  "docs/assembly-observer-2026-11-02/PROTOCOL.md": "9a6862fdfeb6f040089b79977e5b2f77c27777b1ed5954cc020af2dd3b46440a",
+  "docs/assembly-observer-2026-11-02/amendment-1-exact12.json": "4d79db72ffaff9618063ab638715ed0bf42146bd5ad5b231889179af55285702",
+  "docs/assembly-observer-2026-11-02/amendment-1-exact12.md": "904f3f558ff87a775071f32ed12d04ee25d7db55da20636f9b32b02be0ed3f83",
+  "docs/assembly-observer-2026-11-02/amendment-2-source-review.json": "604c8fb52d6609175abed8f92a5ac1e179f0a0a2837e730fbc8ff7d940c26654",
+  "docs/assembly-observer-2026-11-02/amendment-2-source-review.md": "4525418e2884a3c78e4d1b1fe8cd2b122d4bac6cf615f12c7a37df73ce4fa1ac"
+ },
+ "calibration": [
+  {
+   "id": "tile-repeat",
+   "sha256": "6b252bdfface64ad1959615be67f046fd8e41626a0ace1b0aced638eafa7719e"
+  },
+  {
+   "id": "crystal-lattice",
+   "sha256": "538f971347330cbc171d68ecad4d2df0994041be544018f9fbb9adb08b6ca727"
+  },
+  {
+   "id": "crystal-spaced",
+   "sha256": "ad96e491f00b10eec127a1a54cf3de41de0e82e38601096262cefb3d4207f4f8"
+  },
+  {
+   "id": "random-field",
+   "sha256": "605f5b4f9fa3e290049a48cfff7beec76f724325e5713e8d2b73d32e96915f1a"
+  },
+  {
+   "id": "random-dup",
+   "sha256": "1b04dfa59258b14f729af722050d0ffd7cc00e066ea795e39ca6dc6fdb7baf84"
+  },
+  {
+   "id": "random-dup-hi",
+   "sha256": "7b3dcd361dcdecf0f4b8829c4f8ea9acc60dd8fc4fd222aece389ba2fe1376b4"
+  },
+  {
+   "id": "random-dup-12",
+   "sha256": "29d42c235e930190fcd5bccfa4e151aab3776a6dde400a75a080030037819651"
+  },
+  {
+   "id": "hier-12",
+   "sha256": "b5098ee37448a51e01b26a9ff91f3590feb44ccf9da8ef8b49c155c7d69e1bf4"
+  },
+  {
+   "id": "hierarchy",
+   "sha256": "40b128d03332a7d6cd1b6b451921723851ce98f1a43442ccfff2e176ae5e1ff0"
+  },
+  {
+   "id": "hierarchy-mixed",
+   "sha256": "3929bcec0429ea0d0a4cab6db1eaf7203ca96b70b7c2eff49a30a30a0cf1ec42"
+  },
+  {
+   "id": "random-scatter",
+   "sha256": "cf05a58eb6ff120a8cd6bfe927c4fe9c4b264f21527846ab2ad0caed03bd1751"
+  },
+  {
+   "id": "seam-hier-12",
+   "sha256": "eb2f0e325d5d68773f0d1a241065e3f75ac1061b01d0a6845422ec975a44b54a"
+  },
+  {
+   "id": "seam-dup-12",
+   "sha256": "6c3e1dcd790a5921a2fad0a5a75a827ac0f11ad8231ddf816fe6903ceeec7c83"
+  }
+ ],
+ "fixtures": [
+  {
+   "id": "life-block",
+   "sha256": "5bd07af625dff8984c172a5b29023a837574e9eb7a53b3e2da2c48c6a8ec4914"
+  },
+  {
+   "id": "life-blinker",
+   "sha256": "68bea1fa63df2cbea6c64ab5ebb03d143e2a425480fb2353a28bbf2bca3e800c"
+  },
+  {
+   "id": "life-pulsar",
+   "sha256": "2a8249c816b01a7a879ecaad0a6da8cf45c29ee66bcc1baffb577bc715713904"
+  },
+  {
+   "id": "life-glider",
+   "sha256": "39334ce389f6899c1b04b1f1b822242bab735f08ec7268996cbaa133ea52ad1e"
+  },
+  {
+   "id": "life-gliders-dup",
+   "sha256": "3a2786ccf230fe1ed97a20f95ec41f23f73ec0f25645527953b55878b663debd"
+  },
+  {
+   "id": "life-soup-early",
+   "sha256": "052dcd4a49c31798201219476777610e00951287ded3890c5ec4b42625b44f94"
+  },
+  {
+   "id": "random-bits",
+   "sha256": "1942adbfcc27dda40dcb5d5dd0225aee1386af03beb56d508c6cd53a80b73586"
+  },
+  {
+   "id": "random-static",
+   "sha256": "04adb46d8b1d8dc371aecd00f0b76a9a63a103a4fc7d097416fcc82c3bdf0453"
+  },
+  {
+   "id": "blobs-diffuse",
+   "sha256": "153655ccc915d6d22b26c16c7db3a1d6971e1afea1560caa7c79a69c4681ad19"
+  },
+  {
+   "id": "clip-spots",
+   "sha256": "27b6035c6ed2cc51b8125d6b4df0bb869f1902638f7ed3ab65e06a5566bbb559"
+  },
+  {
+   "id": "clip-gradient",
+   "sha256": "4146ef2dc5da1a94f27128cabba9f817d57b7dde8ddbbb15ee8189464a223258"
+  },
+  {
+   "id": "clip-seasons",
+   "sha256": "50d6f697265101e2ab1aac096fa0838a6dfece948493d6cd837fa54fa5b31bf9"
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "c5098735",
+  "node": "v24.2.0",
+  "fflate": "0.8.3",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-02T11:44:01.835Z"
+ }
+}
