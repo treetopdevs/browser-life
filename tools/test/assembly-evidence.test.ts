@@ -103,6 +103,28 @@ describe('assembly evidence', () => {
     expect(checkFreeze(BASE_COMMIT_FULL()).join()).toContain('expected only');
   });
 
+  it('a re-sealed payload with a zero denominator or duplicate class is reported, not thrown', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'asm-den-'));
+    const mf = join(dir, 'manifest.json');
+    copyFileSync(MANIFEST, mf);
+    const reseal = (f: ReturnType<typeof saved>, name: string) => {
+      const body = { ...f }; delete body.integritySha256;
+      f.integritySha256 = sha(canonical(body));
+      const p = join(dir, name);
+      writeFileSync(p, JSON.stringify(f, null, 1) + '\n');
+      return p;
+    };
+    const bad = saved();
+    bad.calibration.find((c) => c.id === 'random-dup')!.replicates[0].primary.construction.meanA.den = 0;
+    let problems: string[] = [];
+    expect(() => { problems = checkSaved(reseal(bad, 'a.json'), mf); }).not.toThrow();
+    expect(problems.join('\n')).toContain('not a valid rational');
+    const dup = saved();
+    dup.calibration.push(structuredClone(dup.calibration[0]));
+    expect(() => { problems = checkSaved(reseal(dup, 'b.json'), mf); }).not.toThrow();
+    expect(problems.length).toBeGreaterThan(0);
+  });
+
   it('a re-sealed payload with a removed negative class or emptied replicates is rejected', () => {
     const dir = mkdtempSync(join(tmpdir(), 'asm-empty-'));
     const mf = join(dir, 'manifest.json');

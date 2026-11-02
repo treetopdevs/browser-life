@@ -108,11 +108,12 @@ export function checkSaved(evidencePath = EVIDENCE, manifestPath = MANIFEST, roo
   const wantIds = [...CLASS_IDS, ...SEAM_IDS] as string[];
   if (payload.replicates !== PROTOCOL.replicates) problems.push(`replicates ${payload.replicates} differ from the protocol (${PROTOCOL.replicates})`);
   if (canonical(payload.calibration.map((c) => c.id)) !== canonical(wantIds)) problems.push("calibration classes differ from the protocol's thirteen");
-  problems.push(...validateCalibration(payload.calibration, PROTOCOL.replicates));
+  const structural = validateCalibration(payload.calibration, PROTOCOL.replicates);
+  problems.push(...structural);
   if (canonical(payload.fixtures.map((f) => f.id)) !== canonical(PROTOCOL.movieFixtures)) problems.push("movie fixtures differ from the protocol list");
   if (canonical(payload.clips.map((c) => c.preset)) !== canonical(PROTOCOL.clips.presets)) problems.push("clips differ from the protocol list");
   if (canonical(payload.protocol) !== canonical(PROTOCOL)) problems.push("payload protocol differs from protocol.ts");
-  if (!problems.some((x) => x.startsWith("required class") || x.includes("replicates"))) {
+  if (structural.length === 0) {
     // verdicts must follow the stated rule from the stored rows
     const again = deriveVerdicts(payload.calibration);
     if (canonical(again.verdicts) !== canonical(payload.verdicts)) problems.push("verdicts do not follow the frozen rule from the stored rows");

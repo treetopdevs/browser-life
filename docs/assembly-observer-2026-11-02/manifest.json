@@ -58,7 +58,7 @@
   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
-  "tools/assembly/observer.ts": "1069789fb44f67215e5c66663455fb63fdb9ec8525c026eb75e456197740fd8e",
+  "tools/assembly/observer.ts": "fa407981e088e4345a52649df1d3b72c1e9f3f262c963587b123203283727075",
   "docs/assembly-observer-2026-11-02/GRAMMAR.md": "4c78a0749f3776d687f3bcac39afaf7cd6b5f43223bcfca3ff3eeea8d6f1bb4e",
   "docs/assembly-observer-2026-11-02/PROTOCOL.md": "9a6862fdfeb6f040089b79977e5b2f77c27777b1ed5954cc020af2dd3b46440a",
   "docs/assembly-observer-2026-11-02/amendment-1-exact12.json": "4d79db72ffaff9618063ab638715ed0bf42146bd5ad5b231889179af55285702",
