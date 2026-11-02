@@ -73,6 +73,12 @@
 <p><strong>Phases.</strong> Phase C is covered by the soup line's I11 (PR126/127). This run starts no second new world, per the report's "do not start all three". Phase D (I12, I13) waits: it needs a constraint located, and I05 was underpowered. Next: an I05 power-up under a pushed amendment, then I08. PR126 merged separately at <code>679fb996</code> after further soup commits. PR128 (peer) was retargeted from the stale stacked branch to main, metadata only; it merges only under the 2-hour rule.</p>
 <p><strong>Decisions left to the user:</strong> deployment (the next deploy makes <code>/soup/</code> public; the new research pages stay private); a model proposer for I02 (paid calls); Phase D go/no-go after the I05 power-up; I01's replacement descriptor (other session).</p></article>
 
+<article id="D15"><h3>D15 — I06 and I08 merged as measurement-limited; I05 power-up still inconclusive; I07 last</h3>
+<p><strong>I06</strong> (PR142, <code>c4b16ccd</code>): merged as measurement-limited. A final Sol P2 is recorded and was not fixed because the protocol is frozen. The receiver-alone comparators match total energy but not free energy (for example 9,917 against 22,169), so the negative inoculum contrasts cannot be blamed on extra inoculum alone. A next rung should match free energy.</p>
+<p><strong>I05 power-up</strong> (PR145, <code>956d6e4b</code>): 192 assayed edits per genome under a pushed freeze (<code>410eb40a</code>) with the decision rule unchanged. c4 had A = 3 and c9 had A = 4, both below the minimum of 5, so the result is again <strong>inconclusive (underpowered)</strong>. The go branch (entanglement) could not be reached for c4. The improving rate is about 2%, so this rule cannot decide at feasible sizes. This stops I05 here; it is not evidence against a separately versioned controller. Phase D therefore stays unjustified on evidence, and its go/no-go is the user's.</p>
+<p><strong>I08</strong> (PR144, <code>8898b594</code>): the label is <strong>measurement-limited</strong>. The replicate-noise floor on the capture contrast (1,429,742 ppm) exceeds the frozen 500,000 ppm sensitivity bound; that bound was added after the dev floors were seen and before any fresh seed was read. Read descriptively, the signalling sensor beat its silent twin in 8 of 8 wandering and reversed blocks, but not the blind drifter. Gaps recorded: the existing config keys cannot express a constant westward rotation, and the lab has no live reverse-sun control. Provenance: the freeze commit <code>ea254699</code> was pushed, then the branch was rebased and force-pushed. The original is preserved as the tag <code>i08-moving-light-freeze-ea254699</code>. Review fixes changed lock-bound files after one read of the fresh blocks; the verdict comes from the unchanged calibration and the regenerated fresh blocks are identical. I08's seed-registry reservation forced a manifest re-pin for I06, and I06's evidence bytes are unchanged. Template fixes: freeze commits are merged with main, never rebased; workflow stages must not rely on background notifications.</p>
+<p><strong>I07</strong> (assembly-inspired observer, calibration rung) started from <code>c5098735</code>. It is the last of the report's "Next" items. The I04 recovery line belongs to another session.</p></article>
+
 <h2>Slices</h2>
 <table>
 <tr><th>Slice</th><th>Branch</th><th>PR</th><th>State</th></tr>
@@ -82,9 +88,12 @@
 <tr><td>S3 I05</td><td><code>claude/i05-controller-locality</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/136">#136</a></td><td>Merged 061c4559; inconclusive (D12, D13)</td></tr>
 <tr><td>S4 I03</td><td><code>claude/i03-historical-opponents</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/139">#139</a></td><td>Merged 17546637; assay-sensitive (D13)</td></tr>
 <tr><td>Main fix</td><td><code>claude/fix-gpu-tools-atlas</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/138">#138</a></td><td>Merged f6052a8c (D13)</td></tr>
-<tr><td>S5 I06</td><td><code>claude/i06-niche-construction</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/142">#142</a></td><td>Held; measurement-limited (D14)</td></tr>
+<tr><td>S5 I06</td><td><code>claude/i06-niche-construction</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/142">#142</a></td><td>Merged c4b16ccd; measurement-limited (D15)</td></tr>
 <tr><td>S6 I02b</td><td><code>claude/i02-confirm</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/141">#141</a></td><td>Merged e56077bd; NEGATIVE (D14)</td></tr>
 <tr><td>I01 (other session)</td><td><code>claude/behaviour-atlas</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/132">#132</a></td><td>Merged 67fdd025 under the peer rule (D6)</td></tr>
+<tr><td>S7 I05b</td><td><code>claude/i05-power</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/145">#145</a></td><td>Merged 956d6e4b; inconclusive (D15)</td></tr>
+<tr><td>S8 I08</td><td><code>claude/i08-moving-light</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/144">#144</a></td><td>Merged 8898b594; measurement-limited (D15)</td></tr>
+<tr><td>S9 I07</td><td><code>claude/i07-assembly</code></td><td>—</td><td>Workflow running (D15)</td></tr>
 </table>
 </body>
 </html>
