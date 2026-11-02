@@ -87,7 +87,7 @@ export function summaryIntro(panels: readonly NamedPanel[]): { heading: string; 
   return {
     heading: 'Two panels, side by side',
     paragraphs: [
-      'The first run assayed 24 edits per M3 controller and ended inconclusive because too few edits helped for the rule to decide. The power-up draws a larger, fresh set of edits (new seeds, new draw, none shared with the first run) and applies the same rule unchanged. Each panel is read on its own; they are never pooled.',
+      'The first run assayed 24 edits per M3 controller and ended inconclusive because too few edits helped for the rule to decide. The power-up assayed 192 per controller with disjoint seeds, excluding every edited-genome hash recorded for that controller in the first run (generated matrix rows can still overlap). The assayed multi-locus share changes from 25% to 50%, and the power-up weighted rates describe the eligible complement. The same rule is applied unchanged. Each panel is read on its own; they are never pooled.',
       rule,
       'On this pair of controllers a "go" for a separate architecture study could not have happened: the only go outcome needs an entanglement signal on both controllers, and the sparse one cannot reach it by its wiring. So every possible outcome reads as "no-go for now". That is how the test was built; it is not evidence against such a study.',
     ],

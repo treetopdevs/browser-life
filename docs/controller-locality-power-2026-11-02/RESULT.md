@@ -1,6 +1,6 @@
 # I05b controller-locality power-up: result
 
-Exploratory, CPU only (deterministic integer reference simulator and controller probe). No GPU evidence, no physics or schema change. Bounded to M3 clusters 4 (sparse) and 9 (dense), the one-step operator, the 26,244-point probe grid and three 16x16 tiny-world biomass assays. Frozen by `AMENDMENT.md` and `freeze.json` (pushed as commit 410eb40a before any mutant assay); the run was made once, with no rerun and no reinterpretation.
+Exploratory, CPU only (deterministic integer reference simulator and controller probe). No GPU evidence, no physics or schema change. Bounded to M3 clusters 4 (sparse) and 9 (dense), the one-step operator, the 26,244-point probe grid and three 16x16 tiny-world biomass assays. Frozen by `AMENDMENT.md` and `freeze.json` (the full N = 192 panel was frozen and pushed as commit 410eb40a before its single full run; AMENDMENT.md discloses the earlier reduced-panel harness assays); the run was made once, with no rerun and no reinterpretation.
 
 ## Verdict
 
@@ -25,7 +25,7 @@ Where the improving edits sit (assayed genuine in brackets):
 
 Inverse-probability weighted improving rate over the eligible complement: c4 14 per mille, c9 23 per mille (viable 1000 per mille on both). These describe this panel's eligible neighbourhood, not PR136's.
 
-Multi-locus edits (96 assayed per genome): 1 clean improvement each. Single-locus edits in the verdict comparison (48 for c4, 47 for c9): 2 clean each. The multi-versus-single comparison is underpowered by the same guard.
+Multi-locus edits (96 assayed per genome): 1 clean improvement each. Single-locus edits (96 assayed per genome): 2 improved on c4 and 3 on c9, all clean. The multi-versus-single comparison is underpowered by the same guard.
 
 ## Collateral
 
@@ -38,13 +38,13 @@ Undo-exactness (the inverse edit restores the original genome hash) holds for 30
 ## What was and was not reachable
 
 - Reachable and delivered: a mechanically decided outcome under the unchanged rule on a fresh, larger panel with disjoint seeds, fresh edits and a declared estimand ("the same rule read on a larger, differently mixed, fresh panel", AMENDMENT section 2). It landed on `inconclusive (underpowered)`.
-- Not reachable on this pair: `entanglement-signal` for c4. The freeze preflight bounds c4 median breadth at 2 doubled units against a threshold of 6, so no outcome of the assays could have produced it (AMENDMENT section 2.3). The null result here is therefore not evidence about entanglement in either direction.
+- Not reachable on this pair: `entanglement-signal` for c4. The freeze preflight bounds c4 median breadth at 2 doubled units against a threshold of 6, so no outcome of the assays could have produced it (AMENDMENT section 2.3). This inconclusive, underpowered result supplies no entanglement conclusion in either direction.
 - Not tested: other genomes, other operators, other scenarios, longer horizons, any search or evolution run, GPU behaviour.
-- The panel mixture is outcome-informed (it raises the multi-locus share, since both PR136 improvements were multi2 edits); the AMENDMENT declares this. It does not change the verdict above: the rule's count threshold was missed regardless.
+- The assayed multi-locus share rises from 6/24 to 96/192. Both PR136 improvements were multi2 edits, so this mixture change could affect A; the frozen allocation follows the structural rule declared in the AMENDMENT. The unchanged rule therefore reads a differently mixed eligible neighbourhood. It does not change the verdict: the count threshold was missed.
 
 ## Go or no-go on a separately versioned controller architecture
 
-**No-go, by construction and by result.** The only outcome that could have been advisory-go was `entanglement-signal`, which the AMENDMENT shows cannot occur on c4. The result is `inconclusive (underpowered)`, so there is no evidence that fixing local controller edits is entangled, and no evidence against it either. Reading this no-go as evidence against an architecture fork would be wrong; it only says this slice supplies no reason to open one. Improving single-locus edits are rare (about 1 to 2 percent of the neighbourhood, tilted to bias and 24-unit edits) and where they occur they are clean, which is weakly in the direction of locality, but the count is below the pre-stated floor and is not used for a conclusion.
+**No-go, by construction and by result.** The only outcome that could have been advisory-go was `entanglement-signal`, which the AMENDMENT shows cannot occur on c4. The result is `inconclusive (underpowered)`, so there is no evidence that fixing local controller edits is entangled, and no evidence against it either. Reading this no-go as evidence against an architecture fork would be wrong; it only says this slice supplies no reason to open one. Among assayed single-locus edits, 2/96 improved on c4 and 3/96 on c9; restricting to controller loci gives 2/95 and 2/94. None of those improving edits harmed another scenario beyond tau. These are descriptive counts; the underpowered result supports no locality or collateral conclusion.
 
 If someone wants the question settled, the remaining routes each need their own versioned protocol: a different genome pair with reachable breadth, a larger panel (about 2x more assays per genome would be needed at the observed rate of 1.6 to 2.1 percent to expect A = 5 with margin, which is a planning remark and not a statistic), or a rule change.
 
