@@ -50,11 +50,27 @@
 <article id="D7"><h3>D7 — Rebase before publishing</h3>
 <p>Because the monitor can move main, every slice rebases onto fresh <code>origin/main</code> and reruns its focused checks before pushing.</p></article>
 
+<article id="D8"><h3>D8 — PR125 repaired and merged</h3>
+<p>CodeRabbit (once triggered) found that a whitespace-only token passed the production check; the image gate's no-token control then could not start by design. Fixes: refuse tokens that are blank after trimming or not visible ASCII (a client's Authorization header strips a trailing newline, so every join would fail); the control became three refusal cases (unset, whitespace-only, trailing newline) with the gate floor raised to 13; each container start now gets its own secret values, so overrides reach the container. Sol 6.1 xhigh found two P2s and a P3 in the first fix; the follow-up review found none. Hosted coordinator-image and site-image passed on f9259b19; merged at <code>0f2964df</code>. Not deployed.</p></article>
+<article id="D9"><h3>D9 — S1 (I14) merged</h3>
+<p>PR133: null fixture library, past-only predictors at 3 resolutions × 4 horizons, shuffle/phase/duplication controls, sealed evidence with <code>--check</code>, and a local <code>/predictability/</code> page kept off the deployed site. Sol xhigh plan review found 7 P1s (labels not pre-stated, coarsening made fair bits look predictable, unenforced gates, among others), all addressed in the plan before code. Both source reviewers found a P1 that would have broken the public lab and worlds pages in the site image (a shared Vite chunk matched the removal glob); fixed and re-reviewed. Full suite: 4,176 passed, 2 load-sensitive failures in untouched code (hunt1-ops, sim-ref shape timeout) that pass alone. Two CodeRabbit minors fixed. Merged at <code>b43db3be</code>.</p></article>
+<article id="D10"><h3>D10 — Phase B starts with I05 controller probes</h3>
+<p>The report's Phase B: run I05's cheap controller probes before any representation fork; choose I03 or I06 by available validated fixture. I05 needs no new physics and reuses the lineage package's controller probe and exact mutation replay, so it starts first (S3), CPU only, bounded to committed founders and fixtures, ending in an exploratory go/no-go argument. I03/I06 follow once I02's fixtures are known.</p></article>
+
+<article id="D11"><h3>D11 — Hold S2 (I02) until its fixtures discriminate</h3>
+<p>PR135 delivers the evidence envelope, validator, baseline proposers, multiclass Brier scoring and whole-family splits; Sol xhigh plan review found 7 P1s (improper score, proposer choosing easier questions, shuffled evidence leaking a history's own future, among others), all fixed before code, and a source P1 (confirm did not require a committed freeze) was fixed, so v0 is stamped exploratory. It is held because every fixture world declined, so the numeric and shuffled baselines both predicted "down" on all 144 cases and the trend-confound negative case never appeared in real data. Its owner adds a rising-world cohort, a follow-up Sol review and the full suite before merge.</p></article>
+<article id="D12"><h3>D12 — S3 (I05) published as inconclusive; I03 next</h3>
+<p>PR136: mutation neighbourhoods of M3 founders, probe-grid locality descriptors, four negative fixtures (permutation, dead hidden unit, clamp, shuffled sensor labels), tiny-world biomass responses and a local matrix page. Sol xhigh plan review found two unreachable/vacuous decision gates (P1), fixed before code. Result: cluster 4 and cluster 9 each had 1 of 24 assayed edits improve a response, below the pre-stated minimum of 5, so the verdict is inconclusive (underpowered) and there is no case yet for a separately versioned controller. Cluster 16 failed viability and is recorded. For Phase B's second slice, I03 is chosen over I06: competition and common-garden machinery already exist and its first rung (assay sensitivity on a known panel, neutral two-label control, isolated-growth vigour) is CPU-small; I06 waits for a validated conditioned-field fixture. A session restart interrupted the monitor, the PR135 owner and the I05 workflow; all three were resumed from their saved state.</p></article>
+
 <h2>Slices</h2>
 <table>
-<tr><th>Slice</th><th>Worktree / branch</th><th>PR</th><th>State</th></tr>
-<tr><td>S1 I14</td><td><code>browser-life-i14-predictability-atlas</code> / <code>claude/i14-predictability-atlas</code></td><td>—</td><td>Workflow started</td></tr>
-<tr><td>S2 I02</td><td><code>browser-life-i02-prediction-envelope</code> / <code>claude/i02-prediction-envelope</code></td><td>—</td><td>Workflow started</td></tr>
+<tr><th>Slice</th><th>Branch</th><th>PR</th><th>State</th></tr>
+<tr><td>PR125 join-token refusal</td><td><code>claude/happy-bhaskara-a8060c</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/125">#125</a></td><td>Merged 0f2964df (D8)</td></tr>
+<tr><td>S1 I14</td><td><code>claude/i14-predictability-atlas</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/133">#133</a></td><td>Merged b43db3be (D9)</td></tr>
+<tr><td>S2 I02</td><td><code>claude/i02-prediction-envelope</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/135">#135</a></td><td>Held for fixtures (D11)</td></tr>
+<tr><td>S3 I05</td><td><code>claude/i05-controller-locality</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/136">#136</a></td><td>Inconclusive; full suite running (D12)</td></tr>
+<tr><td>S4 I03</td><td><code>claude/i03-historical-opponents</code></td><td>—</td><td>Workflow started from 67fdd025 (D12)</td></tr>
+<tr><td>I01 (other session)</td><td><code>claude/behaviour-atlas</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/132">#132</a></td><td>Merged 67fdd025 under the peer rule (D6)</td></tr>
 </table>
 </body>
 </html>

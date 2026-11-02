@@ -14,6 +14,7 @@
     "typecheck:capabilities": "tsc -p tools/agent-capabilities/tsconfig.json",
     "test:capabilities": "vitest run tools/test/agent-capabilities",
     "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts",
+    "locality:check": "deno run -A --no-lock tools/locality/matrix.ts --check",
     "verify:ecosystem": "python3 tools/ecosystem-library/verify.py && node --experimental-strip-types tools/ecosystem-library/replay-3000.ts"
   },
   "devDependencies": {

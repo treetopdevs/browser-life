@@ -1,0 +1,4 @@
+# Regenerable byte for byte by `deno run -A --no-lock tools/predict.ts run --stage confirm --out <dir>`; their hashes are in canonical.sha256.
+# Kept out to hold the committed size under the plan's 1.5 MB budget (PLAN.md section 9).
+envelopes.jsonl
+predictions.jsonl

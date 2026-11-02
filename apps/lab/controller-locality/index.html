@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: what each small edit to a creature's controller changes, and whether useful edits cost something else.">
+  <title>Controller locality · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the mutation-effect matrix</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / controller locality</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">A mutation-effect matrix</p>
+      <h1>What does one small edit to a controller change?</h1>
+      <p>Each creature carries a tiny neural controller of 160 small whole-number weights. For three starting controllers we edit it a little in a fixed set of ways and ask two things: which of its eight actions does the edit move, and does an edit that helps one thing cost another?</p>
+      <p class="disclosure">CPU only: deterministic integer simulator and probe, no GPU evidence. Exploratory, bounded to the tested genomes, this one-step operator and three short tiny-world assays. Local experiment, kept off the public site. It is not a finding about evolved creatures in general, and it does not say whether anything here is alive.</p>
+    </section>
+
+    <section aria-labelledby="verdict-heading">
+      <h2 id="verdict-heading">Where the numbers land</h2>
+      <div class="verdict"><strong id="verdict"></strong><ul id="verdict-reasons"></ul></div>
+      <p class="muted" id="candidates"></p>
+    </section>
+
+    <section aria-labelledby="matrix-heading">
+      <h2 id="matrix-heading">The matrix</h2>
+      <div class="controls">
+        <label for="genome">Starting controller<select id="genome"></select></label>
+        <label for="family">Kind of edit<select id="family"></select></label>
+        <label class="check" for="assayed"><input id="assayed" type="checkbox"> only edits that also ran in the tiny worlds</label>
+      </div>
+      <p id="shown" class="muted" role="status"></p>
+      <div class="scroll" tabindex="0" role="region" aria-label="Mutation-effect matrix, scrolls sideways and down">
+        <table id="matrix"><caption>One row per edit. The eight shaded columns give the permille of the probe grid points at which that action changes; the three assay columns are paired changes against the unedited controller, summed over two seeds, with a star beyond the stated tolerance.</caption><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section aria-labelledby="readout-heading">
+      <h2 id="readout-heading">Counts for the chosen controller</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Counts by kind of locus and kind of edit">
+        <table id="readout"><caption>Finite-panel counts with denominators, no intervals. Assayed means run in the tiny worlds: a stratified subset fixed before any outcome, not every edit.</caption></table>
+      </div>
+    </section>
+
+    <section aria-labelledby="fixtures-heading">
+      <h2 id="fixtures-heading">Fixtures: where the easy metrics fail</h2>
+      <p>Hand-built controllers with a known history. Counting bytes changed or weight distance calls a permuted controller very different; it behaves identically on every probe point and in every assay run.</p>
+      <div class="scroll" tabindex="0" role="region" aria-label="Fixture table">
+        <table id="fixtures"><caption>Naive metrics next to functional ones. These rows are never in any rate.</caption></table>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">What this does not show</h2>
+      <ul>
+        <li>The probe grid is canonical, not the inputs a creature meets: no change on the grid is not proof of no change in the ecology.</li>
+        <li>The three tiny-world scenarios score environmental biomass response over 200 steps in a 16 by 16 tile. They are not independent capabilities, and not survival, regeneration or ecological fitness.</li>
+        <li>Three starting controllers and one fixed one-step neighbourhood: no population claim, no claim about evolved lineages, no walks, no combinations beyond the matched multi-locus families.</li>
+        <li>Counts describe the sampled edits of each controller. They are not rates over all possible mutations, and controllers are never pooled.</li>
+        <li>The rule that turns the counts into a recommendation was written before the outcomes were computed; the horizon, viability floor and margin were calibrated with the M3 baselines visible, and the plan's preferred dense genome failed both calibrated criteria. The recommendation is advice for a later plan, not authorisation for a new architecture.</li>
+      </ul>
+      <p class="muted">CPU only, deterministic integer evidence, no GPU evidence, not on the public site. Evidence seal: <span class="seal" id="seal"></span></p>
+    </section>
+  </main>
+  <script type="module" src="/src/controller-locality/page.ts"></script>
+</body>
+</html>

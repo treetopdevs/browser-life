@@ -1,0 +1,35 @@
+| Row | Status | Evidence |
+|---|---|---|
+| 1 | CLOSED | Fixed-root, root-relative HEAD lookup rejects missing/renamed files and byte differences, including CRLF; exploratory always stamps EXPLORATORY (`tools/predict.ts:55,93`). |
+| 2 | CLOSED | Empty input creates a validation group and counts every envelope as missing (`tools/predict.ts:166`). |
+| 3 | PARTIAL | Inherited records are rejected, but non-enumerable required fields still validate and disappear during serialization; reproduced. |
+| 4 | CLOSED | File-level invalid, extra, duplicate and envelope diagnostics reach both comparison formats (`run.ts:419`). |
+| 5 | CLOSED | Amendment 1 specifies bodyMass; the documented development effects match outcomes exactly (`PLAN.md:250`, `EVIDENCE.md:19`). |
+| 6 | CLOSED | Tuning covers four qualify families; delivered `devEffects` contains only the twelve dev families, with no test overlap (`run.ts:187,213`). |
+| 7 | CLOSED | Artifacts contain 72 dev oracle predictions and zero test oracle predictions, notebook entries, comparison rows or intervals. |
+| 8 | CLOSED | Independent continuation twins execute intermediate observers and compare endpoint hashes; their cost is included (`fixtures.ts:277`). |
+| 9 | PARTIAL | All 73 local closure files are covered, but Deno’s import-map configuration and resolved npm dependency remain outside the hash. |
+| 10 | CLOSED | Generation checks the common planned cost before simulation; variants have the same cost and cannot bypass that gate (`run.ts:123`). |
+| 11 | CLOSED | Pure rerender reproduces Markdown, HTML and manifest byte-for-byte from delivered inputs (`output.ts:89`). |
+| 12 | CLOSED | All eight digests and the current source hash match; rebuilding from stored outcomes/recipes reproduces every canonical file. |
+| 13 | CLOSED | Tests compute and pin `bodySha256`, `proposalId` and `specHash` (`prediction-proposers.test.ts:58`). |
+| 14 | PARTIAL | Degeneracy is disclosed and opposite-trend behavior is tested; both rules still predict down on all 144 real cases. |
+| 15 | CLOSED | Threshold rationale matches qualification: 21/24 expected labels and 22/24 seed agreement at 25 (`EVIDENCE.md:43`). |
+| 16 | CLOSED | Negative tests perturb history and continuation endpoints and require hash-comparison failure (`prediction-fixtures.test.ts:125`). |
+| 17 | CLOSED | Inclusive boundaries are documented and tested at both thresholds and immediately inside (`prediction-fixtures.test.ts:160`). |
+| 18 | CLOSED | The test includes `abstainAll` and requires non-null matched-coverage accuracy for answering proposers (`prediction-report.test.ts:97`). |
+| 19 | CLOSED | Every envelope is validated; stale-hash envelopes become invalid cases and appear in diagnostics (`validate.ts:161`). |
+| 20 | CLOSED | Report is implemented; below-ten-family notes are conditional (`run.ts:465`). |
+| 21 | CLOSED | Amendment records the qualification deviation and corrected reproduction exclusions (`PLAN.md:252,266`). |
+| 22 | PARTIAL | Tests now exercise the named functions, but the real-data confound remains absent: 0/144 rising cases, explicitly disclosed. |
+
+1. **P2 — Serialization defense still accepts predictions that lose required fields.** [validate.ts:94](/Users/nicholas/develop/browser-life-i02-prediction-envelope/tools/lib/prediction/validate.ts:94)  
+   Reproduced: making `caseId` non-enumerable returns `ok: true`, although JSON omits it. Likewise, own non-enumerable probability fields validate but serialize as `{}`. Both canonicalizations omit those fields, so their equality proves insufficient. Require enumerable data properties and validate/return an authoritative serialized snapshot; avoid returning unchecked live getters or Proxies. Ordinary reason strings and null-prototype records passed the probes.
+
+2. **P2 — Closure hashing ignores Deno’s actual resolution configuration.** [closure.ts:13](/Users/nicholas/develop/browser-life-i02-prediction-envelope/tools/lib/prediction/closure.ts:13)  
+   `@bl/*` resolution is hardcoded; `deno.json` is unhashed. Changing its `@bl/sim-ref` target can change executed physics without changing this hash. Deno also resolves the existing `fflate` mapping to `npm:fflate@0.8.3`, which the resolver silently skips. Resolve through Deno’s graph/import map and record resolver configuration plus dependency identities. No current local import-form omissions were found.
+
+3. **P2 — New report command overwrites simulation provenance.** [tools/predict.ts:185](/Users/nicholas/develop/browser-life-i02-prediction-envelope/tools/predict.ts:185)  
+   After changing simulator code, running `report` on an older run replaces its `sourceClosureSha256` with today’s hash while retaining the old outcomes. Metadata then attributes unchanged measurements to code that never generated them. Preserve the generation hash and record a separate rendering hash.
+
+Read-only probes only; no simulations or Vitest suite were run.

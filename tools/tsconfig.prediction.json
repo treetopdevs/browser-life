@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["@webgpu/types", "node"], "noEmit": true },
+  "include": ["lib/prediction/**/*.ts", "../tools/test/prediction-*.test.ts"],
+  "exclude": []
+}
