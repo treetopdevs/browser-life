@@ -6,16 +6,21 @@
 //   deno run -A --no-lock tools/predict.ts freeze --min-effect N [--out DIR]   set minEffect and devPrior from DIR/dev/qualification.json, write the freeze hash
 //   deno run -A --no-lock tools/predict.ts run --stage confirm --out DIR  all families; refuses unless protocol.json and protocol.freeze.sha256 are COMMITTED (HEAD) and match; `--exploratory yes` (last) skips the commit gate and marks the output EXPLORATORY
 //   deno run -A --no-lock tools/predict.ts run --stage smoke --protocol P --out DIR   a small protocol, no freeze check (output marked SMOKE in meta.json)
+//   deno run -A --no-lock tools/predict.ts protocol-confirm               write experiments/prediction-envelope/protocol.confirm.json + .freeze.sha256 from the fresh-family recipe (I02b; never overwrites; no simulation)
+//   deno run -A --no-lock tools/predict.ts run --stage confirm --protocol P --freeze F --amendment A --out DIR   confirmation on an amendment protocol: refuses unless A, P, F are committed byte-equal, the closure is clean and DIR is empty; `--exploratory` is refused
+//   deno run -A --no-lock tools/predict.ts confirm-analysis --out DIR     write confirmation.json, ledger.jsonl, confirm.sha256 and re-render report.html with the reading (the run's outputs must exist)
 //   deno run -A --no-lock tools/predict.ts validate FILE [--envelopes F]  check a predictions file against its envelopes (wrapped {proposer, prediction} or bare lines)
 //   deno run -A --no-lock tools/predict.ts report --out DIR               re-render report.html from the files in DIR
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { cpus, platform, arch } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonical, sha256Text } from "./lib/propose.ts";
 import type { PredictionEnvelope } from "./lib/prediction/envelope.ts";
+import type { CaseRow, PredictionLine } from "./lib/prediction/run.ts";
 import { CANONICAL_FILES, buildOutputs, rerender } from "./lib/prediction/output.ts";
+import { amendmentRefusal, buildConfirmProtocol, buildConfirmation, buildLedger, confirmDigest, digestProblems, disjointnessProblems, provenanceProblems, recipeTupleProblems, reservedConfirmProblems, type V0RecipeRow } from "./lib/prediction/confirm.ts";
 import { ORACLE_IDS, RUN_VERSIONS, confirmRefusal, draftProtocol, freezeRefusal, generate, priorFromEffects, protocolHash, qualificationReport, splitPlanOf, type Protocol } from "./lib/prediction/run.ts";
 import { validatePredictionFile } from "./lib/prediction/validate.ts";
 import { sourceClosureHash as closureHash } from "./lib/prediction/closure.ts";
@@ -25,6 +30,19 @@ const root = resolve(here, "..");
 const EXP = join(root, "experiments/prediction-envelope");
 const PROTOCOL = join(EXP, "protocol.json");
 const FREEZE = join(EXP, "protocol.freeze.sha256");
+const CONFIRM_PROTOCOL = join(EXP, "protocol.confirm.json");
+const CONFIRM_FREEZE = join(EXP, "protocol.confirm.freeze.sha256");
+const V0_RECIPES = join(EXP, "v0/recipes.jsonl");
+/** Paths whose uncommitted state would make the executable closure differ from the committed one. */
+const CLOSURE_PATHS = ["tools", "packages", "experiments/prediction-envelope", "deno.json", "package.json", "tsconfig.json"];
+/** `git status --porcelain` lines over the executable closure; sampled BEFORE any output is written (outputs may live inside the closure paths). */
+function closureStatus(): string[] {
+  try {
+    return execFileSync("git", ["status", "--porcelain", "--", ...CLOSURE_PATHS], { cwd: root, encoding: "utf8" }).split("\n").filter((l) => l !== "");
+  } catch {
+    return ["(git status unavailable)"];
+  }
+}
 
 function args(argv: string[]): { cmd: string; pos: string[]; opt: Record<string, string> } {
   const [cmd = "", ...rest] = argv;
@@ -72,13 +90,42 @@ function main(): number {
     console.log(`wrote ${PROTOCOL}`);
     return 0;
   }
+  if (cmd === "protocol-confirm") {
+    if (existsSync(CONFIRM_PROTOCOL) || existsSync(CONFIRM_FREEZE)) {
+      console.error("protocol.confirm.json or its freeze file exists; not overwriting");
+      return 1;
+    }
+    const v0 = readProtocol(PROTOCOL);
+    const p = buildConfirmProtocol(v0);
+    const problems = [...recipeTupleProblems(p, v0), ...disjointnessProblems(p, v0, readJsonl<V0RecipeRow>(V0_RECIPES))];
+    if (problems.length) throw new Error(`refusing to write the confirm protocol: ${problems.join("; ")}`);
+    writeText(CONFIRM_PROTOCOL, JSON.stringify(p, null, 2) + "\n");
+    writeText(CONFIRM_FREEZE, protocolHash(p) + "\n");
+    console.log(`wrote ${CONFIRM_PROTOCOL} (hash ${protocolHash(p)})`);
+    return 0;
+  }
   if (cmd === "run") {
     const stage = opt.stage ?? "";
     const out = resolve(opt.out ?? "");
     if (!opt.out) throw new Error("--out is required");
-    const protoPath = stage === "smoke" ? resolve(opt.protocol ?? "") : PROTOCOL;
+    // `--protocol` with the confirm stage selects an amendment protocol (I02b); every read below goes through the selected paths.
+    const amended = stage === "confirm" && opt.protocol !== undefined;
+    if (stage === "dev" && opt.protocol !== undefined) throw new Error("the dev stage uses the v0 protocol only");
+    const protoPath = stage === "smoke" ? resolve(opt.protocol ?? "") : amended ? resolve(opt.protocol) : PROTOCOL;
+    const freezePath = amended ? resolve(opt.freeze ?? "") : FREEZE;
+    if (amended && (!opt.freeze || !opt.amendment)) throw new Error("--protocol for the confirm stage needs --freeze and --amendment");
+    const amendmentPath = amended ? resolve(opt.amendment) : "";
     const p = readProtocol(protoPath);
     const t0 = Date.now();
+    // The reserved confirmation families may be simulated only by the amended confirm run, whose gate demands the committed amendment.
+    if (!amended) {
+      const reserved = reservedConfirmProblems(p);
+      if (reserved.length) throw new Error(`refusing to run stage ${stage}: the protocol uses reserved held-out confirmation identities (${reserved.slice(0, 3).join("; ")}); only \`run --stage confirm --protocol ... --amendment ...\` on committed files may simulate them`);
+    }
+    // Source state is captured before generation and before any output is written.
+    const dirtyAtStart = closureStatus();
+    const gitShaAtStart = sh("git", ["rev-parse", "HEAD"]);
+    const closureAtStart = sourceClosureHash();
     if (stage === "dev") {
       if (p.frozen) throw new Error("the protocol is already frozen; the dev stage is for qualification before the freeze");
       const plan = splitPlanOf(p);
@@ -91,7 +138,20 @@ function main(): number {
       // `--exploratory` runs the confirm computation without the committed-freeze gate and marks every output EXPLORATORY: the test
       // families are then not held out (their outcomes may already have been seen), so the run is a rehearsal, not a confirmation.
       const exploratory = stage === "confirm" && opt.exploratory !== undefined;
-      if (stage === "confirm" && !exploratory) {
+      if (amended) {
+        const freezeWorking = existsSync(freezePath) ? readFileSync(freezePath, "utf8") : null;
+        const refusal = amendmentRefusal({
+          protocol: p,
+          freezeWorking,
+          protocolWorking: readFileSync(protoPath, "utf8"),
+          amendmentWorking: existsSync(amendmentPath) ? readFileSync(amendmentPath, "utf8") : null,
+          committed: { amendment: committedText(amendmentPath), protocol: committedText(protoPath), freeze: committedText(freezePath) },
+          dirtyPaths: dirtyAtStart,
+          outDirNonEmpty: existsSync(out) && readdirSync(out).length > 0,
+          exploratory,
+        });
+        if (refusal) throw new Error(`refusing to confirm: ${refusal}`);
+      } else if (stage === "confirm" && !exploratory) {
         const freezeWorking = existsSync(FREEZE) ? readFileSync(FREEZE, "utf8") : null;
         const refusal = confirmRefusal(p, freezeWorking, { protocol: committedText(PROTOCOL), freeze: committedText(FREEZE), protocolWorking: readFileSync(PROTOCOL, "utf8"), freezeWorking: freezeWorking ?? "" });
         if (refusal) throw new Error(`refusing to confirm: ${refusal}`);
@@ -103,15 +163,17 @@ function main(): number {
       const gen = generate(p, p.families.map((f) => f.id), true);
       const built = buildOutputs(p, gen);
       for (const [name, text] of Object.entries(built.files)) writeText(join(out, name), text);
+      if (amended) writeText(join(out, ".gitignore"), "# Regenerable byte for byte from the committed amendment protocol; their hashes are in canonical.sha256.\nenvelopes.jsonl\npredictions.jsonl\n");
       const meta = {
         stage,
         status: stage === "smoke" ? "SMOKE" : exploratory ? "EXPLORATORY" : "CONFIRM",
         ...(exploratory ? { exploratoryReason: "run before the freeze was committed, with test outcomes already inspected; not a held-out confirmation" } : {}),
-        gitSha: sh("git", ["rev-parse", "HEAD"]),
-        gitDirty: sh("git", ["status", "--porcelain", "--", "tools", "packages", "experiments/prediction-envelope", "deno.json", "package.json", "tsconfig.json"]) !== "",
-        sourceClosureSha256: sourceClosureHash(),
+        gitSha: gitShaAtStart,
+        gitDirty: dirtyAtStart.length > 0,
+        sourceClosureSha256: closureAtStart,
         versions: RUN_VERSIONS,
         protocolSha256: protocolHash(p),
+        ...(amended ? { amendment: { path: relative(root, amendmentPath), sha256: sha256Text(readFileSync(amendmentPath, "utf8")), protocolFile: relative(root, protoPath), freezeFile: relative(root, freezePath) } } : {}),
         command: `deno run -A --no-lock tools/predict.ts ${Deno.args.join(" ")}`,
         hardware: { cpu: cpus()[0]?.model ?? "unknown", cores: cpus().length, platform: platform(), arch: arch() },
         wallMs: Date.now() - t0,
@@ -123,6 +185,31 @@ function main(): number {
       return 0;
     }
     throw new Error(`unknown --stage ${JSON.stringify(stage)} (dev, confirm, smoke)`);
+  }
+  if (cmd === "confirm-analysis") {
+    if (!opt.out) throw new Error("--out is required");
+    const dir = resolve(opt.out);
+    const meta = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8")) as { stage?: string; status: string; protocolSha256?: string; gitDirty?: boolean; amendment?: { path: string; sha256: string; protocolFile: string; freezeFile: string } };
+    const p = JSON.parse(readFileSync(join(dir, "protocol.snapshot.json"), "utf8")) as Protocol;
+    // Tampering is an error; a withheld CONFIRM status is a finding in the sealed document.
+    const digests = digestProblems(readFileSync(join(dir, "canonical.sha256"), "utf8"), (n) => readFileSync(join(dir, n), "utf8"));
+    if (digests.length) throw new Error(`refusing to analyse: ${digests.join("; ")}`);
+    const committed = (f: string | undefined): string | null => (f ? committedText(resolve(root, f)) : null);
+    const provenance = provenanceProblems({ meta, snapshot: p, committed: { amendment: committed(meta.amendment?.path), protocol: committed(meta.amendment?.protocolFile), freeze: committed(meta.amendment?.freezeFile) } });
+    const envelopes = readJsonl<PredictionEnvelope>(join(dir, "envelopes.jsonl"));
+    const lines = readJsonl<PredictionLine>(join(dir, "predictions.jsonl"));
+    const rows = readJsonl<CaseRow>(join(dir, "outcomes.jsonl"));
+    const ledger = buildLedger(p, envelopes, lines, rows);
+    const doc = buildConfirmation(p, meta.status, ledger, provenance);
+    const confirmationText = canonical(doc) + "\n";
+    const ledgerText = ledger.map((r) => canonical(r) + "\n").join("");
+    writeText(join(dir, "confirmation.json"), confirmationText);
+    writeText(join(dir, "ledger.jsonl"), ledgerText);
+    writeText(join(dir, "confirm.sha256"), confirmDigest(confirmationText, ledgerText));
+    const derived = rerender((name) => readFileSync(join(dir, name), "utf8"), doc);
+    for (const [name, text] of Object.entries(derived)) writeText(join(dir, name), text);
+    console.log(`confirm-analysis: ${doc.reading.label}${doc.reading.suffix ? ` (${doc.reading.suffix})` : ""}; ${doc.reading.testFamilies} test families, ${ledger.length} ledger rows -> ${dir}`);
+    return 0;
   }
   if (cmd === "freeze") {
     const out = resolve(opt.out ?? join(EXP, "v0"));
@@ -177,7 +264,8 @@ function main(): number {
     // Re-renders comparison.md, report.html and canonical.sha256 from the canonical data files in DIR, and refreshes the source hash in meta.json.
     if (!opt.out) throw new Error("--out is required");
     const dir = resolve(opt.out);
-    const derived = rerender((name) => readFileSync(join(dir, name), "utf8"));
+    const confirmationPath = join(dir, "confirmation.json");
+    const derived = rerender((name) => readFileSync(join(dir, name), "utf8"), existsSync(confirmationPath) ? JSON.parse(readFileSync(confirmationPath, "utf8")) : undefined);
     for (const [name, text] of Object.entries(derived)) writeText(join(dir, name), text);
     const metaPath = join(dir, "meta.json");
     if (existsSync(metaPath)) {
@@ -189,7 +277,7 @@ function main(): number {
     console.log(`report: re-rendered ${Object.keys(derived).join(", ")} in ${dir}`);
     return 0;
   }
-  console.error("usage: predict.ts protocol | run --stage dev|confirm|smoke --out DIR | freeze --min-effect N | validate FILE | report --out DIR");
+  console.error("usage: predict.ts protocol | protocol-confirm | confirm-analysis --out DIR | run --stage dev|confirm|smoke --out DIR | freeze --min-effect N | validate FILE | report --out DIR");
   return 2;
 }
 
