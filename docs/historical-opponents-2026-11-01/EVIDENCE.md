@@ -37,4 +37,4 @@ Real panel (G, three farthest-point M3 founders F1..F3, W): confirmed edges G>F3
 
 ## Left undone
 
-Nothing committed. Publication needs D7 (rebase on origin/main, rerun focused tests and `--check`, `--write --force` if a hashed source changed) and the Codex Sol xhigh source review. Calibration commit should precede evidence in history. D12 text still unverified.
+Rebased onto origin/main 061c4559 (conflicts only in the private-route lists of Dockerfile.site, vite.config.ts and Caddyfile, kept both sides); typecheck, the focused tests (106) and `--check` pass after the rebase; no hashed source changed. The calibration was not committed before the evidence (see REVIEW finding 5). D12 text still unverified.
