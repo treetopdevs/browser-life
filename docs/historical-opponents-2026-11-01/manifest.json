@@ -1,0 +1,126 @@
+{
+ "kind": "historical-opponents-assay-manifest",
+ "payloadFileSha256": "35927826d34144c440f627e09cb045645b39d66ddf323c31db9ed0c49f30a56c",
+ "integritySha256": "85fe724cc84d44cc92702c673f29e070e7a6e7ec3142df61fa9f7cc0e10dbdef",
+ "config": {
+  "arena": {
+   "tile": 32,
+   "radius": 3,
+   "steps": 300
+  },
+  "depletion": {
+   "override": {
+    "lightBase": 0,
+    "lightAmp": 0,
+    "kBDecay": 600,
+    "kELeak": 1000
+   },
+   "pair": [
+    "G",
+    "F1"
+   ]
+  },
+  "weakenPercent": 50,
+  "ids": [
+   "G",
+   "F1",
+   "F2",
+   "F3",
+   "W"
+  ],
+  "seeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110
+  ],
+  "rareSeeds": [
+   101,
+   102,
+   103,
+   104,
+   105,
+   106
+  ],
+  "rarePositions": 2,
+  "twinG": true,
+  "effectTarget": 0.075
+ },
+ "constants": {
+  "floorDiv": 16,
+  "edgeMinBlocks": 9,
+  "edgeMinOffset": 0.05,
+  "familySize": 10,
+  "g2MeanMax": 0.4,
+  "g3BothFloorMax": 0.2,
+  "completeFraction": 0.8,
+  "checkpoints": [
+   75,
+   150,
+   225,
+   300
+  ],
+  "plant": {
+   "biomass": 256,
+   "energy": 512,
+   "nutrient": 256
+  },
+  "ruleVersion": 1
+ },
+ "schedule": {
+  "jobs": 724,
+  "contests": 484,
+  "solo": 220,
+  "depletion": 20
+ },
+ "verdict": "assay-sensitive",
+ "calibrationSha256": "10c423a2fd2b38f67fb2559c35a97c4161d7179a0ce9c365f6516debbdea7894",
+ "sources": {
+  "packages/metrics/src/opponents/arena.ts": "1256e4c97e12e3060dacb0b69e94a84ee4809c7f9e32311543b1e87b4bd0c807",
+  "packages/metrics/src/opponents/evidence.ts": "abca5e53cb55cdd763f9872f1a7015a9e8221602c2ae8616811598e3ea593abc",
+  "packages/metrics/src/opponents/panel.ts": "2ef87b4a19ce165b701c2b40084081bfb148ef9d8cf91154d3d26a95b3bbadc6",
+  "packages/metrics/src/opponents/payoff.ts": "228927871524d9d90468dc8e1a5307669e57d8593cef65624d1d3a052242882b",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "packages/metrics/src/stats.ts": "4bb88c4ad8acbc11592249b4a14f481d9a01db68a38ae9e10f6e9cb244e0ba26",
+  "tools/opponents/assay.ts": "3927396960bf6e673a8bdc61a8e86400d15420d3e48e692a6666febbae300f4f",
+  "tools/opponents/worker.ts": "51d67fb160da31d395ff57a487fe40eea46ca482cd37d70927e1aa51e5ddc4a0",
+  "tools/opponents/boot.ts": "52fa1bb823d2a6558fdbbdf9104f11aead23f473c69bb578832b88e34d06e170",
+  "tools/opponents/calibrate.ts": "a538ce26ff4ec85f50202740b1aa4d692f3073e15811bf9216cb251fdb9b588f",
+  "tools/opponents/config.json": "9c214e6fb9117b46c717ee25858140af7218c08f63f2f88ecec34e6bcf3b4e7f"
+ },
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "67fdd025",
+  "node": "v24.2.0",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-02T01:59:08.261Z",
+  "wallSeconds": 396
+ }
+}

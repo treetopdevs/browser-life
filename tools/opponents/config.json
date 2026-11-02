@@ -1,0 +1,11 @@
+{
+  "arena": { "tile": 32, "radius": 3, "steps": 300 },
+  "depletion": { "override": { "lightBase": 0, "lightAmp": 0, "kBDecay": 600, "kELeak": 1000 }, "pair": ["G", "F1"] },
+  "weakenPercent": 50,
+  "ids": ["G", "F1", "F2", "F3", "W"],
+  "seeds": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+  "rareSeeds": [101, 102, 103, 104, 105, 106],
+  "rarePositions": 2,
+  "twinG": true,
+  "effectTarget": 0.075
+}
