@@ -1,0 +1,25 @@
+{
+  "stage": "confirm",
+  "status": "EXPLORATORY",
+  "exploratoryReason": "run before the freeze was committed, with test outcomes already inspected; not a held-out confirmation",
+  "gitSha": "30abb61412df972955c45cc430bb9b004d8bc111",
+  "gitDirty": true,
+  "sourceClosureSha256": "058002dceb4f54fddaf613937a0719c63fd97be4da1fd80cae59d9fcb05b6935",
+  "versions": {
+    "protocol": 1,
+    "envelope": 1,
+    "readouts": 1,
+    "ruleVersion": 1
+  },
+  "protocolSha256": "ad924e6bf6caaf78f99e1785728657d5f4a02e2938fa9d5d847140230b8da3b0",
+  "command": "deno run -A --no-lock tools/predict.ts run --stage confirm --exploratory yes --out experiments/prediction-envelope/v0",
+  "hardware": {
+    "cpu": "Apple M1 Max",
+    "cores": 10,
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "wallMs": 327641,
+  "cellSteps": 125337600,
+  "statement": "CPU only (sim-ref). No model call, no GPU, no network, no paid compute."
+}
