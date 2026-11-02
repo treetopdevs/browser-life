@@ -46,6 +46,8 @@
   respond @private_predictability 404
   @private_controller_locality path_regexp private_controller_locality (?i)^/controller-locality(?:/|$)
   respond @private_controller_locality 404
+  @private_opponents path_regexp private_opponents (?i)^/opponents(?:/|$)
+  respond @private_opponents 404
 
   # Reunited creative ecosystem and local prototype directory.
   @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
