@@ -93,8 +93,8 @@ describe("niche assay", () => {
   });
 
   it("polymer adequacy compares twice the median builder P with twice the candidate's dev replicate floor (PLAN 5.3)", () => {
-    // The frozen dev medians (122, 112, 97) against the dev floors (341, 291, 404): none adequate.
-    expect([[244, 341], [224, 291], [194, 404]].map(([p2, d]) => isPolymerAdequate(p2, d))).toEqual([false, false, false]);
+    // The frozen dev medians (103.5, 98, 84.5) against the dev floors (341, 291, 404): none adequate.
+    expect([[207, 341], [196, 291], [169, 404]].map(([p2, d]) => isPolymerAdequate(p2, d))).toEqual([false, false, false]);
     expect(isPolymerAdequate(2 * 341 + 1, 341)).toBe(true);
     expect(isPolymerAdequate(2 * 341, 341)).toBe(false);
   });

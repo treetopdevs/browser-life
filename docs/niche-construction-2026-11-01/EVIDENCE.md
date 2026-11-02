@@ -20,9 +20,9 @@ Even read as plain contrasts none is near the gate. The receiver usually does be
 
 ## What this does and does not say
 
-- The assay did not see a benefit, and it is shown to be unable to see one at the polymer scale these builders leave. A null at builder scale is weak evidence of absence, and the PLAN labels it measurement-limited, not negative.
+- The assay did not see a benefit, and it did not detect the hand-built walls at builder-scale polymer (120) on dev, so it is not shown able to see a benefit at the polymer scale these builders leave. A null at builder scale is weak evidence of absence, and the PLAN labels it measurement-limited, not negative.
 - The dev positive control (W2, polymer floor under the receiver, 7 of 8 blocks, p 9/256) shows structure can be detected. It places polymer under the receiver, which the real placement rule forbids, and tests only the structure-versus-scramble contrast. The same wall run through all arms and all four gating contrasts (fixture `hand-wall-gate-W2`) returns `supported` (every contrast positive in 8 of 8 fixture blocks), so the gate is able to say supported; that does not show a builder's field can pass it.
-- Receiver-alone comparators (d0, d1E, d1B) now carry the conditioning stage's net energy dissipation as named analytic heat, so they no longer start with far more free energy than the conditioned field. The inoculum-matched contrast is still negative in most blocks, because those controls hand matter to the receiver as living inoculum, which a modest spatial benefit may not beat (the strong hand wall does, by +33 to +270 in every fixture block). They screen resource totals; they do not prove no spatial resource effect.
+- Receiver-alone comparators (d0, d1E, d1B) now carry the conditioning stage's net energy dissipation as named analytic heat, so total energy matches the conditioned field. Free energy E does not: the Sol review (post-fix) found free E at the start of the assay is higher in d0/d1E than in the builder-removed arm (cluster 0, seed 8600501: 9,917 vs 22,169, both totals 26,969), in all 24 fresh blocks. This is a known residual confound of the frozen protocol, not corrected (the protocol and evidence are frozen); negative inoculum contrasts cannot be attributed to extra inoculum alone. The inoculum-matched contrast is still negative in most blocks, because those controls hand matter to the receiver as living inoculum, which a modest spatial benefit may not beat (the strong hand wall does, by +33 to +270 in every fixture block). They screen resource totals; they do not prove no spatial resource effect.
 - The biomass-matched control d1B matches bound biomass B only (amended from B + P): with B + P, a pure polymer wall lost to the control by about 800 and the gate could never certify a structure.
 - Co-culture (arm a) flux attribution is unavailable: producing-cell ownership is not observed before injury clears a lineage. Attribution in the other arms was complete (no counter saturated).
 - Builder cost is reported from census totals; `kGene` maintenance is `unavailable` (not separable in the reference step).
@@ -44,3 +44,7 @@ node tools/niche/niche.ts --check              ok (no simulation)
 node tools/niche/niche.ts --replay-check       see REVIEW.md "Source review dispositions"
 ```
 Projected step budget including fixtures: 60,320 steps (`stepProjection`). The browser check of the page at 1280 px and 375 px from the first pass was not repeated after the page was rebuilt from pure section functions; the render tests cover stopped, invalid and normal payloads.
+
+## Sealed inputs
+
+`seed-registry.json` is hashed whole into `protocolHash`: an unrelated edit of the shared registry makes `--check` fail until artifacts are re-sealed. This coupling is intended (it is the cheapest way to bind the reservation); foreign collisions are checked separately by `seedCollisions`, which now also covers the fixture seeds.

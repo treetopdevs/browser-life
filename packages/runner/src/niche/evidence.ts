@@ -98,6 +98,8 @@ export function deltaOf(reserveB: number, replicateAbs: readonly number[]): numb
 export function devReport(p: Protocol = PROTOCOL): DevReport {
   const candidates: DevCandidate[] = p.panel.map((cluster) => {
     const blocks = p.devSeeds.map((s, i) => compactBlock(runBlock(cluster, s, p, p.devReplicateSeeds[i])));
+    const invalid = blocks.filter((b) => !b.valid);
+    if (invalid.length) throw new Error(`cluster ${cluster}: invalid dev block(s) ${invalid.map((b) => `${b.seed} (${b.invalidReason})`).join(", ")}`);
     const rep = blocks.flatMap((b) => (b.contrasts ? [Math.abs(b.contrasts.replicateBuilder ?? 0), Math.abs(b.contrasts.replicateNonbuilder ?? 0)] : []));
     const pMed2 = medianTimes2(blocks.map((b) => Number(b.costs.find((c) => c.kind === "builder")?.P ?? 0)));
     const deltaProposed = deltaOf(p.reserve.B, rep);

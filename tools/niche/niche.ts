@@ -13,6 +13,11 @@ import { registerHooks } from "node:module";
 import { arch, platform } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+const writeAtomic = (path: string, text: string): void => {
+  writeFileSync(`${path}.tmp`, text);
+  renameSync(`${path}.tmp`, path);
+};
+
 export const REPO = fileURLToPath(new URL("../../", import.meta.url));
 export const OUT_DIR = `${REPO}docs/niche-construction-2026-11-01/`;
 export const EVIDENCE = `${OUT_DIR}evidence.json`;
@@ -42,14 +47,15 @@ function registerAliases(): void {
 
 const lib = async () => {
   registerAliases();
-  const [evidence, protocol, schema, decision, assay] = await Promise.all([
+  const [evidence, protocol, schema, decision, assay, fixtures] = await Promise.all([
     import("../../packages/runner/src/niche/evidence.ts"),
     import("../../packages/runner/src/niche/protocol.ts"),
     import("../../packages/schema/src/index.ts"),
     import("../../packages/runner/src/niche/decision.ts"),
     import("../../packages/runner/src/niche/assay.ts"),
+    import("../../packages/runner/src/niche/fixtures.ts"),
   ]);
-  return { ...evidence, ...protocol, ...decision, ...assay, schema };
+  return { ...evidence, ...protocol, ...decision, ...assay, FIXTURE_SEEDS: fixtures.FIXTURE_SEEDS, schema };
 };
 
 export const serialize = (p: unknown): string => `${JSON.stringify(p, null, 1)}\n`;
@@ -115,7 +121,7 @@ export async function checkSaved(paths = { evidence: EVIDENCE, manifest: MANIFES
   for (const c of payload.dev.candidates) if (L.PROTOCOL.delta[String(c.cluster)] !== c.deltaProposed) problems.push(`delta for cluster ${c.cluster} (${L.PROTOCOL.delta[String(c.cluster)]}) is not the dev replicate floor (${c.deltaProposed})`);
   // Seed hygiene.
   const registry = JSON.parse(readFileSync(`${root}experiments/discovery/seed-registry.json`, "utf8")).reservations as { first: number; last: number; owner: string }[];
-  const all = [...L.PROTOCOL.devSeeds, ...L.PROTOCOL.devReplicateSeeds, ...L.PROTOCOL.wallSeeds, ...L.PROTOCOL.freshSeeds].map((seed, i) => ({ id: `s${i}`, seed }));
+  const all = [...L.PROTOCOL.devSeeds, ...L.PROTOCOL.devReplicateSeeds, ...L.PROTOCOL.wallSeeds, ...L.PROTOCOL.freshSeeds, ...L.FIXTURE_SEEDS].map((seed, i) => ({ id: `s${i}`, seed }));
   const own = "i06 niche construction";
   const foreign = L.schema.seedCollisions(all, registry.filter((r) => !r.owner.startsWith(own)), own);
   for (const f of foreign) problems.push(`seed collision: ${f}`);
@@ -158,7 +164,7 @@ async function main(): Promise<void> {
   if (mode === "--calibrate") {
     const L = await lib();
     const dev = L.devReport();
-    writeFileSync(CALIBRATION, serialize(dev));
+    writeAtomic(CALIBRATION, serialize(dev));
     for (const c of dev.candidates) console.log(`cluster ${c.cluster}: delta ${c.deltaProposed} builder P median x2 ${c.builderPMedianTimes2} adequate ${c.polymerAdequate}`);
     console.log(`hand-wall: W1 k=${dev.wall.W1.k} passes=${dev.wall.W1.passes}; W2 k=${dev.wall.W2.k} passes=${dev.wall.W2.passes}; positive control ${dev.wall.positiveControlPassed ? "passed" : "FAILED"} (${dev.wall.used})`);
     console.log("wrote calibration.json (dev only). Copy the deltas into PROTOCOL.delta, then --freeze.");
@@ -172,7 +178,7 @@ async function main(): Promise<void> {
     const calibration = JSON.parse(readFileSync(CALIBRATION, "utf8"));
     for (const c of calibration.candidates) if (L.PROTOCOL.delta[String(c.cluster)] !== c.deltaProposed) throw new Error(`PROTOCOL.delta[${c.cluster}] must be ${c.deltaProposed} (the dev replicate floor)`);
     const lock = { kind: "niche-protocol-lock", protocolHash: L.protocolHash(digest, L.PROTOCOL), registryDigest: digest, seeds: { dev: L.PROTOCOL.devSeeds, replicates: L.PROTOCOL.devReplicateSeeds, wall: L.PROTOCOL.wallSeeds, fresh: L.PROTOCOL.freshSeeds }, calibrationSha256: await sha256(readFileSync(CALIBRATION)), note: "written before the fresh-seed run; fresh results never tune the protocol", frozenAt: new Date().toISOString() };
-    writeFileSync(LOCK, serialize(lock));
+    writeAtomic(LOCK, serialize(lock));
     console.log(`wrote protocol.lock.json ${lock.protocolHash}`);
     return;
   }

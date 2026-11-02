@@ -4,7 +4,7 @@
 import { CH, cellCount, encodeGenome, founderGenome, lowbias32, packLineageLo, type Genome, type WorldState } from "@bl/schema";
 import { disc, footprintCells, matchedControls, outsideRegion, placeAll, receiverAlone, regionCells, startWorld, type ArmId, type Budget, type PreArm } from "./arms.ts";
 import { contrastsOf, runArm, type ArmOutcome, type Contrasts } from "./assay.ts";
-import { decideCandidates, type CandidateResult } from "./decision.ts";
+import { decideCandidates, medianTimes2, type CandidateResult } from "./decision.ts";
 import { PROTOCOL, candidateOf, founderOf, type Protocol } from "./protocol.ts";
 import { NicheInvalid, audited, cloneAudit, cloneState, convertPolymer, debitEven, openAudit, placeInoculum, scrambleChannels, type Audit } from "./transfer.ts";
 
@@ -264,7 +264,7 @@ export function decideFixture(id: string, seeds: readonly number[], results: { o
   const caughtBy = (["space", "inoc"] as const).filter((k) => !dec.gating[k].passes);
   const gatingK = Object.fromEntries((["builder", "poly", "space", "inoc"] as const).map((k) => [k, dec.gating[k].k]));
   const naiveK = col(cs, "naive").filter((x) => x > 0).length;
-  const naivePositive = naiveK * 2 > results.length && col(cs, "naive").sort((a, b) => a - b)[Math.floor(results.length / 2)] >= delta;
+  const naivePositive = naiveK * 2 > results.length && medianTimes2(col(cs, "naive")) >= 2 * delta;
   return {
     id,
     seeds,

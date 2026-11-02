@@ -13,8 +13,8 @@
   "packages/runner/src/niche/arms.ts": "e8be7a27bfb8243666b4077ef1af5207d06a5d426478c6946216de1e649a0035",
   "packages/runner/src/niche/assay.ts": "85165d5b1976d0e356a591b2356b3598e527f4432ed8bf370bcea034944127be",
   "packages/runner/src/niche/decision.ts": "1c15ea31742d0404900fdf98349cc6f5b17c4d742e2f4406bd7793b9e2991976",
-  "packages/runner/src/niche/evidence.ts": "672f7e2a928ae1f8b5293b7a9e2b6925c638a2abdfb3621170f43f8d795d7366",
-  "packages/runner/src/niche/fixtures.ts": "69482a356f78937e6e26d266bb89fccd8f02693de8b32a20891223b09a1299ff",
+  "packages/runner/src/niche/evidence.ts": "ebbd9a5203f582d26ab589e93d051092f4bfc0fe9fff9c0320ab27c179d9fa43",
+  "packages/runner/src/niche/fixtures.ts": "4f3d6e549a6fdebafeb94596d018758d144a71d5d6752ff084321940e0448282",
   "packages/runner/src/niche/index.ts": "3cf89c1500dd1ca9d37aa371261f5d1c645e2b766ac966efec4fd3f12361c8e0",
   "packages/runner/src/niche/protocol.ts": "4df2401540d73486373aa13f6dc2f74f2b69d28bf15ac426e5997c07816d634e",
   "packages/runner/src/niche/transfer.ts": "e279476dd9a22e590f7279dbc6469045fffa63246ed9c99678adce6961e82202",
@@ -40,14 +40,14 @@
   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
-  "tools/niche/niche.ts": "c3dee5ed2cb5a0024caceb59f9a6764dfffa7fc90604e6e238b7f49de19aedcb"
+  "tools/niche/niche.ts": "a21772f1dfa9694d10fa52cb3b78f74b2f4a4bbd7ac43d21b36f8b6c9f7c9df7"
  },
  "provenance": {
   "note": "not replayed; excluded from the deterministic payload",
   "baseCommit": "dc7dbbde",
   "node": "v24.2.0",
   "platform": "darwin-arm64",
-  "regenerationSeconds": 82,
-  "generatedAt": "2026-11-02T06:04:49.221Z"
+  "regenerationSeconds": 83,
+  "generatedAt": "2026-11-02T06:33:55.989Z"
  }
 }

@@ -79,3 +79,20 @@ Three findings, all fixed; the reviewer's other checks (dissipation arithmetic f
 | F1 | P2 | `half()` printed negative half-integers wrongly (floor before ".5"): -35.5 for -34.5, -25.5 for -24.5 | Fixed (sign handled on the absolute value); test asserts -34.5, -24.5, -2, -0.5. |
 | F2 | P3 | REVIEW row 16 said `--check` verifies lock time precedes evidence time; only the test does | Fixed: wording corrected. |
 | F3 | P3 | "a spatial benefit cannot beat" the inoculum controls contradicted `hand-wall-gate-W2` (inoc contrasts +33 to +270) | Fixed in LIMITS (sealed, so the evidence was rewritten once more), EVIDENCE.md and this log: the controls can be beaten by a strong structure; a modest spatial benefit may not beat them. |
+
+### Post-fix Sol 6.1 xhigh review and CodeRabbit round (PR #142)
+
+F1-F3 confirmed fixed; `--check` and `--replay-check` passed; all 1,116 transfers have zero residuals.
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| G1 | P2 | Receiver-alone comparators match total energy, not free energy E (PLAN 5.2/4.2 say equal free energy): cluster 0 seed 8600501 builder-removed E 9,917 vs d0/d1E 22,169, same in all 24 fresh blocks; `niche-arms.test.ts` checks `.energy` | Recorded, not fixed: protocol and evidence are frozen. EVIDENCE.md bullet corrected; negative inoculum contrasts are not attributable to extra inoculum alone. Verdict unaffected (unsupported-measurement from polymer adequacy). Flag to main. |
+| G2 | P3 | "shown to be unable" overstates | Reworded in EVIDENCE.md. |
+| C1 | Minor | niche-assay test used first-pass medians 122/112/97 | Test updated to 103.5/98/84.5. |
+| C2 | Minor | `devReport` accepted invalid dev blocks | Now throws; evidence unchanged (all dev blocks valid; `--replay-check` byte-identical). |
+| C3 | Minor | fixture `naivePositive` used the upper-middle median | Now `medianTimes2`; sealed fixture output byte-identical. |
+| C4 | Trivial | registry digest covers the whole shared file | Kept; documented in EVIDENCE.md (changing it would rewrite protocolHash). |
+| C5 | Trivial | fixture seeds absent from seed hygiene | Added to `--check` collision scan. |
+| C6 | Trivial | calibration/lock writes not atomic | tmp + rename. |
+
+manifest.json source digests re-sealed after the code edits; evidence.json seal unchanged (504747c4...).
