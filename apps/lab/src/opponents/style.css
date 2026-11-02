@@ -1,0 +1,21 @@
+@import '../particles/style.css';
+.disclosure{padding:12px 15px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.65}
+.verdict{padding:12px 15px;border-radius:8px;font-size:14px;line-height:1.6;border:1px solid #35484e;background:#111f25}
+.verdict.good{border-color:#4b8a6b}.verdict.warn{border-color:#a8744f;background:#26201a;color:#f2dfb7}
+.observer{padding:16px;margin:20px 0;border:1px solid #35484e;border-radius:10px;background:#111f25}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end}
+.controls label{display:grid;gap:5px;color:#c2d0cd;font-size:13px;margin:0}
+.controls select{width:100%}
+.scroll{overflow-x:auto;border:1px solid #34484e;border-radius:8px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+caption{text-align:left;padding:10px;color:#9cadaa;font-size:12px;line-height:1.55}
+th,td{padding:7px 10px;border-top:1px solid #2b3e43;text-align:left;vertical-align:top}
+td.cell{min-width:128px;white-space:nowrap}
+td.uninformative{color:#f2dfb7}
+thead th{color:#aebbb7}
+.caption{margin:28px 0 48px;padding:16px;border:1px solid #7b6744;border-radius:10px;background:#221f19}
+.caption h2{margin-top:0;color:#f2dfb7}
+.caption li{margin:7px 0;line-height:1.6;color:#e3d7bd;font-size:14px}
+.skip{position:absolute;left:-10000px}.skip:focus{left:10px;top:10px;z-index:10;background:#fff;color:#000;padding:10px}
+@media(max-width:760px){.controls{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
