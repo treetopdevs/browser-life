@@ -1,4 +1,6 @@
+export * from "./atlas.ts";
 export * from "./bootstrap.ts";
 export * from "./evaluate.ts";
 export * from "./mapelites.ts";
+export * from "./panel.ts";
 export * from "./retest.ts";

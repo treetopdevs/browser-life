@@ -28,7 +28,9 @@ import { Tracker, census, classify, individuals, type Census, type CensusInput, 
 export type EvalEvidence =
   | { kind: "state"; phase: "initial" | "grown" | "tile-lesion-end" | "regen-start" | "regen-end" | "dark-end" | "light-end"; state: WorldState }
   | { kind: "targets"; targets: { tile: number; idx: number; cells: number[]; mass: number; lesion: { center: number; radius: number } | null }[] }
-  | { kind: "regen-census"; input: CensusInput };
+  | { kind: "regen-census"; input: CensusInput }
+  /** Each growth census (every `censusEvery` steps), only when an observer is passed. */
+  | { kind: "grow-census"; input: CensusInput };
 export type EvalObserver = (event: EvalEvidence) => Promise<void>;
 
 export interface EvalConfig {
@@ -364,7 +366,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         }
         last.set(ind.id, [ind.cx, ind.cy]);
       }
-    }, onRoles);
+    }, onRoles, observer ? (input) => observer({ kind: "grow-census", input }) : undefined);
     grown = await sim.readState();
     await observer?.({ kind: "state", phase: "grown", state: grown });
   } finally {

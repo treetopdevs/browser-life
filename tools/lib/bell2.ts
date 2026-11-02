@@ -1014,7 +1014,7 @@ export function launchState(events: readonly LaunchEvent[]): { over: boolean; fi
  * equal to the files that do), plus tools/calibrate.ts, which the note names. Every tests/deno script counts too.
  */
 export const GPU_TOOLS: readonly string[] = [
-  "assay", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays",
+  "assay", "atlas", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays",
 ];
 const GPU_TOOL_NAMES = GPU_TOOLS.map((t) => t.replace(/-/g, "\\-")).join("|");
 /**
