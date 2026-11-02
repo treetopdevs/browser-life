@@ -1,0 +1,11 @@
+- **P2 — Reduced test assays real experimental mutants before commitment.** [power-reduced.ts:16](/Users/nicholas/develop/browser-life-i05-power/tools/locality/power-reduced.ts:16) retains production seeds and draw salt. All **4/4 edits per M3 controller**, plus **8/8 control edits**, overlap the real freeze. Existing reduced artifacts contain their outcomes. This contradicts AMENDMENT.md’s pre-outcome commitment; a synthetic freeze file does not isolate the experiment. Use separate test data and disclose the precommit pilot.
+
+- **P3 — Power-specific manifest fields remain unchecked.** [power.ts:304](/Users/nicholas/develop/browser-life-i05-power/tools/locality/power.ts:304): deleting manifest `freezeSha256`, setting `n=123456`, and supplying invalid worker metadata still returns `checkPower(...) === []`, verified through in-memory alterations. Payload binding remains intact, but the reduced test does not establish manifest consistency.
+
+- **P3 — The summary test cannot detect reused panel statistics.** [controller-locality-render.test.ts:49](/Users/nicholas/develop/browser-life-i05-power/apps/lab/test/controller-locality-render.test.ts:49) clones identical A/C/K/verdict values and searches the combined HTML. Reusing original statistics for power rows would pass. Give panels distinct values and assert their rows separately.
+
+- **P3 — Sample-size wording overstates the control.** [render.ts:85](/Users/nicholas/develop/browser-life-i05-power/apps/lab/src/controller-locality/render.ts:85) says “24 edits per controller”; the generalist received eight. Say “per M3 controller,” including the two-panel prose.
+
+Freeze verification passed: only the `power.ts` hash, amendment hash, and consequent seal changed. N=192, allocations, selected edits, and other fields are unchanged; source hashes match and recomputation returns no problems. The unreachable-go explanation is sound.
+
+Coverage remains incomplete: the reduced harness bypasses production `--write`/`--check` CLI dispatch, worker metadata construction, and writes/renames. N=4 also cannot reach powered verdict branches, although separate rule tests cover those. Production-only bugs can therefore still escape. No files were written or new mutant assays run during this review.

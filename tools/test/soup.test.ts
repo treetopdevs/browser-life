@@ -117,16 +117,17 @@ describe("soup", () => {
   });
 
   // cubff testdata/bff_noheads.txt: seed 10248, 2^17 programs. Under Node,
-  // node:zlib is the C brotli cubff links, so sizes match exactly. About a
-  // minute; run with BL_SOUP_GOLDEN=1.
+  // node:zlib is the C brotli cubff links, so sizes match exactly.
+  // Reference revision: f212e849027c98fcf4b242eccfb5fed435223e23.
+  // All five logged epochs through 257; run with BL_SOUP_GOLDEN=1.
   it.runIf(process.env.BL_SOUP_GOLDEN === "1")("matches cubff's logged brotli sizes for seed 10248", () => {
     const s = new Soup({ num: 131072, seed: 10248 });
     const got: number[] = [];
-    for (let e = 0; e <= 64; e++) {
+    for (let e = 0; e <= 256; e++) {
       s.step();
       if (e % 64 === 0) got.push(brotliSize(s.programs));
     }
-    expect(got).toEqual([8388776, 8286015]);
+    expect(got).toEqual([8388776, 8286015, 8216575, 8161711, 8114689]);
   }, 600_000);
 });
 

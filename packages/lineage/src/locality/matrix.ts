@@ -5,7 +5,8 @@ import { M3_FOUNDERS, NN_BYTES, NN_H, NN_I, NN_O, W1_OFF, W2_OFF, defaultConfig,
 import { probeGenome, wordsHex, type Probe } from "../genotype.ts";
 import { GRID_POINTS, OUTPUT_VALUES, BREADTH_FLOOR_PERMILLE, PARTICIPATION_DELTA, describeEdit, describeProbes, popcount, withinStructural, type Descriptor } from "./descriptors.ts";
 import { GENERALIST_ROLES, bytesChanged, deadHidden, generalistWords, permuteHidden, permuteSensors, weightL1, weightsOf, widestPermutation, withWeights, zeroSlot } from "./fixtures.ts";
-import { NEIGHBOURHOOD, applyOperator, buildNeighbourhood, drawAssaySubset, genomeHash, strHash, strataKey, type Allocation, type Edit, type Neighbourhood } from "./neighbourhood.ts";
+import { NB_V1, NEIGHBOURHOOD, applyOperator, buildNeighbourhood, drawAssaySubset, genomeHash, strHash, strataKey, type Allocation, type Edit, type Neighbourhood } from "./neighbourhood.ts";
+import { allocFor, excludeSet, type Panel, type SlotSpec } from "./panel.ts";
 import { ASSAY, AssayCache, SCENARIO_IDS, responses, sum, tau, type Scenario } from "./scenarios.ts";
 
 export const STUDY_VERSION = 1;
@@ -21,7 +22,10 @@ export const ALLOC_M3: Allocation = {
 export const ALLOC_CONTROL: Allocation = { "single24/w1": 2, "single24/w2": 2, "single24/b1": 1, "single24/b2": 1, "single24/physics": 1, "multi2/multi": 1 };
 
 /** Candidate order per slot (sparse, dense), fixed before data. */
-export const SLOTS: { slot: "sparse" | "dense"; clusters: number[] }[] = [{ slot: "sparse", clusters: [4, 10] }, { slot: "dense", clusters: [16, 9] }];
+export const SLOTS: SlotSpec[] = [{ slot: "sparse", clusters: [4, 10] }, { slot: "dense", clusters: [16, 9] }];
+
+/** The PR136 panel: today's constants. Every panel-taking function defaults to it and must then reproduce PR136 byte for byte. */
+export const PANEL_V1: Panel = { id: "v1", nb: NB_V1, seeds: ASSAY.seeds, allocM3: ALLOC_M3, allocControl: ALLOC_CONTROL, slots: SLOTS, nullPrefix: "", exclude: {} };
 
 /** Decision thresholds, stated before data and not tuned afterwards. */
 export const RULE = {
@@ -118,9 +122,12 @@ export function outcomeOf(a: AssayRecord, g: Pick<GenomeRecord, "tau">): Outcome
 
 // ---- Study ------------------------------------------------------------------------------------------------
 
-interface Prepared { rec: GenomeRecord; start: StartGenome; nb: Neighbourhood; base: Probe; rows: Row[]; strata: Record<string, { population: number; chosen: number }>; descs: Descriptor[] }
+interface Prepared { rec: GenomeRecord; start: StartGenome; nb: Neighbourhood; base: Probe; rows: Row[]; strata: Record<string, { population: number; chosen: number }>; generated: Record<string, number>; descs: Descriptor[] }
+/** Frozen assay set: per start genome the [edit id, genome hash] pairs, in draw order. */
+export type FrozenChoice = Record<string, [string, string][]>;
+const canonical2 = (x: unknown): string => JSON.stringify(x);
 
-const baselineOf = (c: AssayCache, w: Uint32Array): Baseline => ({ lg: responses(c, w, "light-growth"), dp: responses(c, w, "dark-persistence"), dt: responses(c, w, "dim-transfer") });
+export const baselineOf = (c: AssayCache, w: Uint32Array, seeds: readonly number[] = ASSAY.seeds): Baseline => ({ lg: responses(c, w, "light-growth", seeds), dp: responses(c, w, "dark-persistence", seeds), dt: responses(c, w, "dim-transfer", seeds) });
 const tauOf = (b: Baseline, gen: Baseline): [number, number, number] => [tau(b.lg, gen.lg), tau(b.dp, gen.dp), tau(b.dt, gen.dt)];
 
 export function qualify(b: Baseline): GenomeRecord["qualification"] {
@@ -131,29 +138,33 @@ export function qualify(b: Baseline): GenomeRecord["qualification"] {
   return { pass: reasons.length === 0, minLightGrowth: minLg, minLightOverDark: minGap, reasons };
 }
 
-function record(s: StartGenome, b: Baseline, gen: Baseline, votes: boolean): GenomeRecord {
+export function record(s: StartGenome, b: Baseline, gen: Baseline, votes: boolean): GenomeRecord {
   return {
     id: s.id, label: s.label, role: s.role, cluster: s.cluster ?? null, hex: wordsHex(s.words), hash: genomeHash(s.words),
     nonzero: nonzeroCounts(s.words), baseline: b, tau: tauOf(b, gen), qualification: qualify(b), votes,
   };
 }
 
-function prepare(s: StartGenome, rec: GenomeRecord, alloc: Allocation, cache: AssayCache, probes: Map<string, Probe>): Prepared {
-  const nb = buildNeighbourhood(s.words, s.id);
-  const base = probeGenome(s.words);
-  const probeOf = (hash: string, w: Uint32Array): Probe => { let p = probes.get(hash); if (!p) probes.set(hash, (p = probeGenome(w))); return p; };
-  const { chosen, strata } = drawAssaySubset(nb, alloc);
+/** Edit probes are not cached (each is 420 kB and edits rarely repeat); the base probe is. */
+const probeOf = (probes: Map<string, Probe>, hash: string, w: Uint32Array, keep: boolean): Probe => { const p = probes.get(hash); if (p) return p; const q = probeGenome(w); if (keep) probes.set(hash, q); return q; };
+
+function prepare(s: StartGenome, rec: GenomeRecord, alloc: Allocation, cache: AssayCache, probes: Map<string, Probe>, panel: Panel, frozen?: FrozenChoice): Prepared {
+  const nb = buildNeighbourhood(s.words, s.id, undefined, panel.nb);
+  const base = probeOf(probes, genomeHash(s.words), s.words, true);
+  const { chosen, strata, generated } = drawAssaySubset(nb, alloc, panel.nb.salt, excludeSet(panel, s.id));
+  const want = frozen?.[s.id];
+  if (want && canonical2(want) !== canonical2(chosen.map((i) => [nb.edits[i].id, nb.edits[i].hash]))) throw new Error(`${s.id}: the drawn assay set differs from the frozen one (stopping before any mutant assay)`);
   const chosenSet = new Set(chosen);
   const baseSums: [number, number, number] = [sum(rec.baseline.lg), sum(rec.baseline.dp), sum(rec.baseline.dt)];
   const descs: Descriptor[] = [];
   const rows = nb.edits.map((e, i): Row => {
-    const d = describeEdit(e, s.words, nb.words[i], base, probeOf(e.hash, nb.words[i]));
+    const d = describeEdit(e, s.words, nb.words[i], base, probeOf(probes, e.hash, nb.words[i], false));
     descs.push(d);
     let assay: AssayRecord | null = null;
     if (chosenSet.has(i)) {
       const w = nb.words[i];
-      const sums = SCENARIO_IDS.map((sc) => sum(responses(cache, w, sc))) as [number, number, number];
-      const r0 = cache.get(w, "light-growth", ASSAY.seeds[0]);
+      const sums = SCENARIO_IDS.map((sc) => sum(responses(cache, w, sc, panel.seeds))) as [number, number, number];
+      const r0 = cache.get(w, "light-growth", panel.seeds[0]);
       assay = { sums, dev: sums.map((v, k) => v - baseSums[k]) as [number, number, number], stocks: { B0: r0.B0, B1: r0.B1, P0: r0.P0, P1: r0.P1, E0: r0.E0, E1: r0.E1 } };
     }
     return {
@@ -165,20 +176,19 @@ function prepare(s: StartGenome, rec: GenomeRecord, alloc: Allocation, cache: As
       assayed: assay !== null, assay,
     };
   });
-  return { rec, start: s, nb, base, rows, strata, descs };
+  return { rec, start: s, nb, base, rows, strata, generated, descs };
 }
 
 /** Breadth of the single-locus w1/b1 edits of a degree-matched null genome, same loci and signs (the neighbourhood is keyed on the real genome id). */
-function nullBreadths(s: StartGenome, probes: Map<string, Probe>): number[] {
+function nullBreadths(s: StartGenome, probes: Map<string, Probe>, panel: Panel): number[] {
   const out: number[] = [];
   for (let r = 0; r < RULE.nullReplicates; r++) {
-    const nw = degreeMatchedNull(s.words, strHash(`${s.id}:null:${r}`));
-    const nb = buildNeighbourhood(nw, s.id);
+    const nw = degreeMatchedNull(s.words, strHash(`${panel.nullPrefix}${s.id}:null:${r}`));
+    const nb = buildNeighbourhood(nw, s.id, undefined, panel.nb);
     const base = probeGenome(nw);
     nb.edits.forEach((e, i) => {
       if (e.cls !== "genuine" || e.k !== 1 || (e.kind !== "w1" && e.kind !== "b1")) return;
-      let p = probes.get(e.hash);
-      if (!p) probes.set(e.hash, (p = probeGenome(nb.words[i])));
+      const p = probeOf(probes, e.hash, nb.words[i], false);
       out.push(describeEdit(e, nw, nb.words[i], base, p).breadth);
     });
   }
@@ -196,17 +206,17 @@ export interface FixtureRow {
   passes: boolean;
 }
 
-function fixtureRow(id: string, label: string, builtOn: string, expect: string, neutral: boolean, base: Uint32Array, variant: Uint32Array, cache: AssayCache, probes: Map<string, Probe>): FixtureRow {
+function fixtureRow(id: string, label: string, builtOn: string, expect: string, neutral: boolean, base: Uint32Array, variant: Uint32Array, cache: AssayCache, probes: Map<string, Probe>, seeds: readonly number[] = ASSAY.seeds): FixtureRow {
   const pb = probes.get(genomeHash(base)) ?? (probes.set(genomeHash(base), probeGenome(base)), probes.get(genomeHash(base))!);
   const pv = probes.get(genomeHash(variant)) ?? (probes.set(genomeHash(variant), probeGenome(variant)), probes.get(genomeHash(variant))!);
   const diff = describeProbes(pb, pv);
   let identical = true;
   const dev = SCENARIO_IDS.map((sc) => {
-    for (const seed of ASSAY.seeds) {
+    for (const seed of seeds) {
       const a = cache.get(base, sc, seed), b = cache.get(variant, sc, seed);
       if (a.B1 !== b.B1 || a.P1 !== b.P1 || a.E1 !== b.E1 || a.A1 !== b.A1 || a.C1 !== b.C1) identical = false;
     }
-    return sum(responses(cache, variant, sc)) - sum(responses(cache, base, sc));
+    return sum(responses(cache, variant, sc, seeds)) - sum(responses(cache, base, sc, seeds));
   }) as [number, number, number];
   const passes = neutral ? identical && diff.totalChanged === 0 && dev.every((d) => d === 0) : diff.totalChanged > 0;
   return {
@@ -221,6 +231,10 @@ export interface SensitivityRecord { edit: string; dev: number; tau: number; pas
 export interface CandidateRecord { slot: string; cluster: number; id: string; baseline: Baseline; qualification: GenomeRecord["qualification"]; chosen: boolean }
 
 export interface Study {
+  /** Absent for the PR136 panel, so its payload is unchanged. */
+  panel?: Panel;
+  /** Genuine non-duplicate edits per stratum before the eligibility exclusion (only recorded for panels that exclude). */
+  generated?: Record<string, Record<string, number>>;
   genomes: GenomeRecord[];
   candidates: CandidateRecord[];
   rows: Row[];
@@ -231,25 +245,22 @@ export interface Study {
   assayRuns: number;
 }
 
-export interface StudyOptions { onProgress?: (msg: string) => void; clusters?: typeof SLOTS }
+export interface StudyOptions { onProgress?: (msg: string) => void; clusters?: typeof SLOTS; panel?: Panel; frozen?: FrozenChoice }
 
-/** The whole deterministic study: qualification, neighbourhoods, probes, assays, fixtures, sensitivity check. */
-export function runStudy(opts: StudyOptions = {}): Study {
-  const say = opts.onProgress ?? (() => {});
-  const cache = new AssayCache();
-  const probes = new Map<string, Probe>();
+/** Qualification only (baselines, gate, candidate choice): no neighbourhood, probe or mutant assay. */
+export function qualifyStarts(panel: Panel, cache: AssayCache, say: (m: string) => void = () => {}, clustersOverride?: typeof SLOTS) {
   const gen = generalistStart();
-  const genBase = baselineOf(cache, gen.words);
+  const genBase = baselineOf(cache, gen.words, panel.seeds);
   say(`generalist baseline ${JSON.stringify(genBase)}`);
   const genRec = record(gen, genBase, genBase, false);
   const genomes: GenomeRecord[] = [genRec];
   const candidates: CandidateRecord[] = [];
   const chosenStarts: StartGenome[] = [];
-  for (const { slot, clusters } of opts.clusters ?? SLOTS) {
+  for (const { slot, clusters } of clustersOverride ?? panel.slots) {
     let picked = false;
     for (const cluster of clusters) {
       const s = m3Start(cluster, slot === "sparse" ? "m3-sparse" : "m3-dense");
-      const b = baselineOf(cache, s.words);
+      const b = baselineOf(cache, s.words, panel.seeds);
       const q = qualify(b);
       const take = q.pass && !picked;
       candidates.push({ slot, cluster, id: s.id, baseline: b, qualification: q, chosen: take });
@@ -257,41 +268,53 @@ export function runStudy(opts: StudyOptions = {}): Study {
       if (take) { picked = true; chosenStarts.push(s); genomes.push(record(s, b, genBase, true)); break; }
     }
   }
+  return { gen, genBase, genRec, genomes, candidates, chosenStarts };
+}
+
+/** The whole deterministic study: qualification, neighbourhoods, probes, assays, fixtures, sensitivity check. */
+export function runStudy(opts: StudyOptions = {}): Study {
+  const say = opts.onProgress ?? (() => {});
+  const panel = opts.panel ?? PANEL_V1;
+  const cache = new AssayCache();
+  const probes = new Map<string, Probe>();
+  const { gen, genBase, genRec, genomes, candidates, chosenStarts } = qualifyStarts(panel, cache, say, opts.clusters);
   const rows: Row[] = [];
   const strata: Study["strata"] = {};
   const nullBreadth: Study["nullBreadth"] = {};
+  const generated: NonNullable<Study["generated"]> = {};
   const prepared: Prepared[] = [];
   for (const [s, rec] of [[gen, genRec] as const, ...chosenStarts.map((s) => [s, genomes.find((g) => g.id === s.id)!] as const)]) {
     say(`neighbourhood and assays: ${s.id}`);
-    const p = prepare(s, rec, s.role === "control" ? ALLOC_CONTROL : ALLOC_M3, cache, probes);
+    const p = prepare(s, rec, allocFor(panel, s.id, s.role === "control"), cache, probes, panel, opts.frozen);
     prepared.push(p);
     rows.push(...p.rows);
     strata[s.id] = p.strata;
-    const v = nullBreadths(s, probes);
+    generated[s.id] = p.generated;
+    const v = nullBreadths(s, probes, panel);
     nullBreadth[s.id] = { values: v, median2: median2(v) };
   }
   // Fixtures: engineered controllers with known history, never in any rate.
   say("fixtures");
   const fixtures: FixtureRow[] = [];
   const gw = gen.words;
-  fixtures.push(fixtureRow("generalist-hidden-permutation", "Swap hidden units 0 and 1 of the generalist", GENERALIST_ID, "same function, many bytes differ", true, gw, permuteHidden(gw, 0, 1), cache, probes));
+  fixtures.push(fixtureRow("generalist-hidden-permutation", "Swap hidden units 0 and 1 of the generalist", GENERALIST_ID, "same function, many bytes differ", true, gw, permuteHidden(gw, 0, 1), cache, probes, panel.seeds));
   const dead = deadHidden(gw)[0];
   const deadEdit = (() => { const wb = weightsOf(gw); wb[0 * NN_H + dead] = 24; return withWeights(gw, wb); })();
-  fixtures.push(fixtureRow("generalist-dead-hidden-edit", `Set an input weight of dead hidden unit ${dead} (its W2 row is all zero)`, GENERALIST_ID, "a nonzero byte edit with zero function change", true, gw, deadEdit, cache, probes));
+  fixtures.push(fixtureRow("generalist-dead-hidden-edit", `Set an input weight of dead hidden unit ${dead} (its W2 row is all zero)`, GENERALIST_ID, "a nonzero byte edit with zero function change", true, gw, deadEdit, cache, probes, panel.seeds));
   const clamp = buildClampEdit(gw);
-  fixtures.push(fixtureRow("generalist-clamp-edit", "Push the energy-per-biomass weight (+127) a further +24 with the real operator", GENERALIST_ID, "an edit is minted, the genome is unchanged", true, gw, clamp, cache, probes));
-  fixtures.push(fixtureRow("generalist-shuffled-sensor-labels", "Swap the W1 rows of the polymer (P) and light sensors", GENERALIST_ID, "a different controller (negative fixture, not an ecological intervention)", false, gw, permuteSensors(gw, 3, 5), cache, probes));
-  fixtures.push(fixtureRow("generalist-localised-edit", "w2 h1->photo lowered by 24 (the documented photosynthesis weight)", GENERALIST_ID, "moves photosynthesis only, within the light sensor's reach", false, gw, localised(gw), cache, probes));
+  fixtures.push(fixtureRow("generalist-clamp-edit", "Push the energy-per-biomass weight (+127) a further +24 with the real operator", GENERALIST_ID, "an edit is minted, the genome is unchanged", true, gw, clamp, cache, probes, panel.seeds));
+  fixtures.push(fixtureRow("generalist-shuffled-sensor-labels", "Swap the W1 rows of the polymer (P) and light sensors", GENERALIST_ID, "a different controller (negative fixture, not an ecological intervention)", false, gw, permuteSensors(gw, 3, 5), cache, probes, panel.seeds));
+  fixtures.push(fixtureRow("generalist-localised-edit", "w2 h1->photo lowered by 24 (the documented photosynthesis weight)", GENERALIST_ID, "moves photosynthesis only, within the light sensor's reach", false, gw, localised(gw), cache, probes, panel.seeds));
   for (const p of prepared) {
     if (p.rec.role === "control") continue;
     const pair = widestPermutation(p.start.words);
-    if (pair) fixtures.push(fixtureRow(`${p.rec.id}-hidden-permutation`, `Swap hidden units ${pair[0]} and ${pair[1]} of ${p.rec.label}`, p.rec.id, "same function, many bytes differ", true, p.start.words, permuteHidden(p.start.words, pair[0], pair[1]), cache, probes));
+    if (pair) fixtures.push(fixtureRow(`${p.rec.id}-hidden-permutation`, `Swap hidden units ${pair[0]} and ${pair[1]} of ${p.rec.label}`, p.rec.id, "same function, many bytes differ", true, p.start.words, permuteHidden(p.start.words, pair[0], pair[1]), cache, probes, panel.seeds));
   }
   // Sensitivity: zeroing w2 h1->photo on the generalist must remove light growth by more than tau.
   const zeroed = zeroSlot(gw, GENERALIST_ROLES.photoFromH1);
-  const dev = sum(responses(cache, zeroed, "light-growth")) - sum(genBase.lg);
+  const dev = sum(responses(cache, zeroed, "light-growth", panel.seeds)) - sum(genBase.lg);
   const sensitivity: SensitivityRecord = { edit: "generalist: zero w2 h1->photo", dev, tau: genRec.tau[EP.lg], passes: dev < -genRec.tau[EP.lg] };
-  return { genomes, candidates, rows, strata, fixtures, sensitivity, nullBreadth, assayRuns: cache.runs };
+  return { ...(panel.id === PANEL_V1.id ? {} : { panel, generated }), genomes, candidates, rows, strata, fixtures, sensitivity, nullBreadth, assayRuns: cache.runs };
 }
 
 function buildClampEdit(w: Uint32Array): Uint32Array { const x = w.slice(); applyOperator(x, GENERALIST_ROLES.epbToH0, 24); return x; }
@@ -436,6 +459,11 @@ export interface Payload {
   neutralControlsOk: boolean;
   readouts: GenomeReadout[];
   verdict: Verdict;
+  /** Present for panels other than PR136's: the panel record, eligibility lists included. */
+  panel?: Panel;
+  /** Present with `panel`: genuine non-duplicate edits per stratum before exclusion (population in `strata` is the eligible count). */
+  generated?: Record<string, Record<string, number>>;
+  freezeSha256?: string;
   integritySha256?: string;
 }
 
@@ -453,11 +481,16 @@ export function assertIntegers(x: unknown, path = "$"): void {
   else if (x && typeof x === "object") for (const [k, v] of Object.entries(x)) assertIntegers(v, `${path}.${k}`);
 }
 
-export const protocolRecord = (): Record<string, unknown> => ({
-  neighbourhood: NEIGHBOURHOOD, assay: ASSAY, allocationM3: ALLOC_M3, allocationControl: ALLOC_CONTROL, slots: SLOTS, rule: RULE,
-  descriptors: { breadthFloorPermille: BREADTH_FLOOR_PERMILLE, participationDelta: PARTICIPATION_DELTA },
-  tau: "max(ceil(5% of the genome's own baseline sum), 3 x seeds x the larger cross-seed spread of the genome's or the generalist's baseline); baselines only",
-});
+const TAU_TEXT = "max(ceil(5% of the genome's own baseline sum), 3 x seeds x the larger cross-seed spread of the genome's or the generalist's baseline); baselines only";
+export const protocolRecord = (panel: Panel = PANEL_V1): Record<string, unknown> => {
+  const descriptors = { breadthFloorPermille: BREADTH_FLOOR_PERMILLE, participationDelta: PARTICIPATION_DELTA };
+  if (panel.id === PANEL_V1.id) return { neighbourhood: NEIGHBOURHOOD, assay: ASSAY, allocationM3: ALLOC_M3, allocationControl: ALLOC_CONTROL, slots: SLOTS, rule: RULE, descriptors, tau: TAU_TEXT };
+  return {
+    panel: panel.id,
+    neighbourhood: { ...NEIGHBOURHOOD, salt: panel.nb.salt, singleSlots: panel.nb.singleSlots, drawsPerMulti: panel.nb.drawsPerMulti, multiEqualCount: panel.nb.secondary ? NEIGHBOURHOOD.multiEqualCount : [] },
+    assay: { ...ASSAY, seeds: panel.seeds }, allocationByGenome: panel.allocByGenome ?? {}, allocationControl: panel.allocControl, slots: panel.slots, nullPrefix: panel.nullPrefix, rule: RULE, descriptors, tau: TAU_TEXT,
+  };
+};
 
 export function buildPayload(study: Study): Payload {
   const nullM2 = (id: string) => study.nullBreadth[id]?.median2 ?? 0;
@@ -472,10 +505,11 @@ export function buildPayload(study: Study): Payload {
     kind: "controller-locality-evidence",
     version: STUDY_VERSION,
     statements: [...STATEMENTS],
-    protocol: protocolRecord(),
+    protocol: protocolRecord(study.panel ?? PANEL_V1),
     grid: { points: GRID_POINTS, actuators: NN_O, outputValues: OUTPUT_VALUES, sensors: NN_I },
     genomes: study.genomes, candidates: study.candidates, strata: study.strata, rows: study.rows, fixtures: study.fixtures,
     sensitivity: study.sensitivity, nullBreadth: study.nullBreadth, neutralControlsOk, readouts, verdict,
+    ...(study.panel ? { panel: study.panel, generated: study.generated } : {}),
   };
   assertIntegers(payload);
   return payload;
