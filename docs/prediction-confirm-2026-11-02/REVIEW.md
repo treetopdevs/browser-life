@@ -47,3 +47,10 @@ Follow-up review of the fixes (`review-sol-fixes.txt`, Codex gpt-6.1-sol xhigh):
 ## Result review (2026-11-02)
 
 Codex gpt-6.1-sol xhigh read-only (`review-sol-result.txt`). No P1/P2 and no flaw in the run; ledger scores, both intervals, digests and the source closure at the freeze commit reproduce, and NEGATIVE follows from rule 4b. Two P3 reporting findings, both fixed in `RESULT.md` only (outcome files and reading untouched): the full list of 73 failures is now in RESULT.md; the "operation kind alone" wording is limited to `v0Rules` and `fixedRule`. Unprovable from artifacts alone: that no other attempt occurred (attested; none was made).
+
+## Implementation review findings 2 and 3 (dispositions added 2026-11-02, after the run, in answer to PR review)
+
+These are findings 2 and 3 of `review-sol-impl.txt` (not the numbered source-review table above). They were not dispositioned before the freeze; stated here without changing any outcome file.
+
+- Impl 2 (P2, a clean HEAD does not bind execution to the freeze commit's code): accepted limitation, not enforced by the gate. The gate checks the three frozen documents, a clean closure and an empty output directory, so changed code committed later would still pass it. What bounds this run: `meta.json` records `gitSha` 1a69e9e8 (the freeze commit), `gitDirty: false` and `sourceClosureSha256` 7dc7f9b9...; the post-run Codex review (`review-sol-result.txt`) recomputed that closure over 74 source files and found it equal to the freeze commit. Binding by a frozen closure digest would have needed a new amendment and was not done.
+- Impl 3 (P2, untracked or ignored executable files can escape the gate): `closureStatus` inherited `status.showUntrackedFiles`. Fixed after the run by passing `--untracked-files=all` (tools/predict.ts); this is a gate-hardening change only and touches no scoring, outcome or reading. For the run itself the same Codex closure recomputation found no divergence from the freeze commit. Ignored files inside the closure are still not checked; accepted limitation.

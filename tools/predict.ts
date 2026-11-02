@@ -38,7 +38,7 @@ const CLOSURE_PATHS = ["tools", "packages", "experiments/prediction-envelope", "
 /** `git status --porcelain` lines over the executable closure; sampled BEFORE any output is written (outputs may live inside the closure paths). */
 function closureStatus(): string[] {
   try {
-    return execFileSync("git", ["status", "--porcelain", "--", ...CLOSURE_PATHS], { cwd: root, encoding: "utf8" }).split("\n").filter((l) => l !== "");
+    return execFileSync("git", ["status", "--porcelain", "--untracked-files=all", "--", ...CLOSURE_PATHS], { cwd: root, encoding: "utf8" }).split("\n").filter((l) => l !== "");
   } catch {
     return ["(git status unavailable)"];
   }

@@ -39,11 +39,12 @@ describe("fresh families", () => {
   it("the helper catches reuse of a v0 seed, a v0 variant seed, a v0 id and the v0 salt", () => {
     const bad = structuredClone(confirm);
     bad.families[0].seed = 5003;
-    bad.families[1].seed = 5003 + 7919 - 7919 + 7919;
+    bad.families[1].seed = 5003 + 7919; // a v0 qualification-variant seed (12922)
     bad.families[2].id = "f05";
     bad.salt = v0.salt;
     const problems = disjointnessProblems(bad, v0, v0Recipes).join("\n");
     expect(problems).toMatch(/seed 5003/);
+    expect(problems).toMatch(/seed 12922 \(family c01\) is a v0 seed/);
     expect(problems).toMatch(/id f05/);
     expect(problems).toMatch(/salt/);
   });
