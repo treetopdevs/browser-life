@@ -45,13 +45,19 @@
 <article><h3>D5 — Previous run's log merged</h3>
 <p>The monitor's first poll merged PR149 (the 1 November log's D16) at <code>0bdd7a70</code> under the peer rule (head unchanged for about 10 hours, both image checks green). PR130, PR69 and PR60 are drafts on the exclusion list.</p></article>
 
+<article><h3>D6 — S1 walk-through: every surface works locally; next slices</h3>
+<p>S1 (PR151) ran all seven surfaces on this machine at 1280 and 375 px and wrote <code>docs/prototypes-2026-11-02.md</code> (49 verdict rows, 16 screenshots, a test that the page's verdicts and evidence agree). Verdict: all seven surfaces work locally. A Deno island and a browser island ran the same segment to the same digest; <code>/selftest.html</code> passed 30 of 30; the garden ran with food on under <code>bin/garden-dev</code>. Three small fixes were made during the walk (soup page, two e2e specs). Three follow-ups were listed, not fixed: F1 five library pages lack an icon link (favicon 404), F2 <code>bin/garden-dev</code> ignores a SIGINT sent from outside, F3 bare <code>pnpm dev</code> logs a 502 on <code>/status/</code> and <code>/garden/</code>. Sol xhigh plan review found 2 P1s (port flags ignored by <code>pnpm dev --</code>, undercounted surfaces), both fixed before the walk.</p>
+<p>Next: <strong>S4</strong> fixes F1–F3. <strong>S6</strong> takes the archipelago's deferred "picked runs on islands" (<a href="archipelago-breed-2026-10-18.md">breed note</a>, Not built): a picked breeder run becomes distributable when its picks are a fixed, content-addressed pick log stored by the coordinator, so a hand-picked lineage from the lab can be run and verified across islands. Live hand picks and model pickers stay out. This was chosen over evolution-game items (hail, shell-respecting wound) because those touch intervention semantics and the gene direction waits on the user. I07 destruction/reconstruction follows when I03 or I06 finishes, to keep load bounded (load average 38 at this point).</p></article>
+
 <h2>Slices</h2>
 <table>
 <tr><th>Slice</th><th>Branch</th><th>PR</th><th>State</th></tr>
 <tr><td>Log</td><td><code>claude/backlog-run-2026-11-02-log</code></td><td>—</td><td>This file</td></tr>
-<tr><td>S1 all surfaces</td><td><code>claude/s1-surfaces-1102</code></td><td>—</td><td>Workflow running (D3)</td></tr>
+<tr><td>S1 all surfaces</td><td><code>claude/s1-surfaces-1102</code></td><td>#151</td><td>Open; all surfaces work (D6)</td></tr>
 <tr><td>S2 I03 archive tournament</td><td><code>claude/i03-archive-tournament</code></td><td>—</td><td>Workflow running (D3)</td></tr>
 <tr><td>S3 I06 free-energy matched</td><td><code>claude/i06-free-energy-matched</code></td><td>—</td><td>Workflow running (D3)</td></tr>
+<tr><td>S4 dev polish F1–F3</td><td><code>claude/s4-dev-polish</code></td><td>—</td><td>Workflow running (D6)</td></tr>
+<tr><td>S6 picked runs on islands</td><td><code>claude/archipelago-picked-runs</code></td><td>—</td><td>Workflow running (D6)</td></tr>
 </table>
 </body>
 </html>
