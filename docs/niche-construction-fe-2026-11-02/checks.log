@@ -1,0 +1,4 @@
+rung fe --check ok
+rung fe --replay-check ok (53 s)
+--check ok
+--replay-check ok (87 s) (within the 300 s target)

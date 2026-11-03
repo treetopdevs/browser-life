@@ -94,3 +94,62 @@ export function worldConfig(seed: number, p: Protocol = PROTOCOL): WorldConfig {
 export function protocolHash(registryDigest: string, p: Protocol = PROTOCOL): string {
   return sha256HexJS(new TextEncoder().encode(canonicalJSON({ protocol: p, registryDigest })));
 }
+
+// ---------------------------------------------------------------------------
+// Second rung (I06b): free-energy-matched comparators, replicated readout, dose-ladder positive control.
+// docs/niche-construction-fe-2026-11-02/PLAN.md. A second protocol object: PROTOCOL above is untouched, so the first rung's sealed
+// evidence verifies byte for byte. Integers and strings only.
+
+/** The four gating contrasts of the second rung: inoc2 replaces the first rung's inoc. */
+export const GATING_FE = ["builder", "poly", "space", "inoc2"] as const;
+export type GatingFe = (typeof GATING_FE)[number];
+
+export const PROTOCOL_FE = {
+  ...PROTOCOL,
+  id: "niche-fe-v1",
+  question: "builder->receiver dependency edge, second rung: free-energy-matched comparators, replicated readout, ordinary-placement positive control",
+  /** Stage-2 replicate sims per arm (block seed + k * stride, k = 0..R-1); Y is the integer sum over them. At most 4: the replicate-noise control needs a disjoint second set inside the reserved offsets 0..7. */
+  R: 4,
+  replicateStride: 1000,
+  /** Largest offset index reserved in the registry (R = 8 would use all of them for the primary readout). */
+  maxOffsetIndex: 7,
+  /** Replicates used by the fixtures (unit scale, cheap). */
+  fixtureR: 2,
+  /** Field arm viable (receiver B above zero) in at least R - 1 of R replicates counts the block; at least this many of the fresh blocks. */
+  viableBlocksMin: 14,
+  seedRange: { first: 8_601_001, last: 8_608_999 },
+  devSeeds: [8_601_001, 8_601_002, 8_601_003, 8_601_004, 8_601_005, 8_601_006, 8_601_007, 8_601_008] as readonly number[],
+  devReplicateSeeds: [8_601_201, 8_601_202, 8_601_203, 8_601_204] as readonly number[],
+  wallSeeds: [8_601_301, 8_601_302, 8_601_303, 8_601_304, 8_601_305, 8_601_306, 8_601_307, 8_601_308] as readonly number[],
+  fixtureSeeds: [8_601_401, 8_601_402, 8_601_403, 8_601_404, 8_601_405, 8_601_406, 8_601_407, 8_601_408] as readonly number[],
+  freshSeeds: [8_601_501, 8_601_502, 8_601_503, 8_601_504, 8_601_505, 8_601_506, 8_601_507, 8_601_508, 8_601_509, 8_601_510, 8_601_511, 8_601_512, 8_601_513, 8_601_514, 8_601_515, 8_601_516] as readonly number[],
+  /** Per-candidate delta from the dev replicate-noise control (summed-R units); filled in by --calibrate, then frozen here. */
+  delta: { "0": 1152, "4": 1031, "9": 1169 } as Readonly<Record<string, number>>,
+  /** Positive-control dose ladder: total hand-built polymer, ascending. Qualifying doses are at most the candidate's ceiling (2 x the dev median builder polymer at T1). */
+  doses: [60, 120, 240, 600, 1200] as readonly number[],
+  /** Wall pass rule on dev: at least this many of the wall seeds positive on each of the four gating contrasts, and the median at least delta_c. */
+  wallPassMin: 7,
+  /** G-NOISE: delta_c at most 1/noiseDivisor of the limiting contrast's median effect at the qualifying dose. */
+  noiseDivisor: 2,
+  /** Frozen wording of the power statement (verified exactly in tests; never computed with floats in the payload). */
+  powerStatement:
+    "With three candidates running, the first Holm rejection needs at least 13 of 16 blocks positive (p = 697/65,536; 12 if only one candidate runs). A contrast whose true per-block positive probability is 0.75 passes that single threshold about 40.5% of the time, 0.85 about 79%, 0.90 about 93%, 0.95 about 99%; four contrasts, delta and viability can only lower the pass rate. A negative is therefore a failure to detect a consistent benefit under these rules (a sign test on D > 0, the median at least delta, four contrasts and viability), not an exclusion bound on the effect size and not evidence that there is no benefit.",
+};
+export type ProtocolFe = typeof PROTOCOL_FE;
+
+/** Every seed that can run in this rung: block, replicate (primary and noise-control offsets), wall, fixture. Sorted, unique. */
+export function enumerateSeedsFe(p: ProtocolFe = PROTOCOL_FE): number[] {
+  const out = new Set<number>();
+  const offs = (n: number, s: number) => {
+    for (let k = 0; k < n; k++) out.add(s + k * p.replicateStride);
+  };
+  for (const s of [...p.devSeeds, ...p.freshSeeds, ...p.wallSeeds]) offs(p.R, s);
+  for (const s of p.fixtureSeeds) offs(p.fixtureR, s);
+  for (const s of p.devReplicateSeeds) offs(2 * p.R, s);
+  return [...out].sort((a, b) => a - b);
+}
+
+/** SHA-256 of the canonical second-rung protocol, the registry digest it was checked against, and the enumerated seed list. */
+export function protocolHashFe(registryDigest: string, p: ProtocolFe = PROTOCOL_FE): string {
+  return sha256HexJS(new TextEncoder().encode(canonicalJSON({ protocol: p, registryDigest, seeds: enumerateSeedsFe(p) })));
+}
