@@ -195,7 +195,10 @@ interface ShotRow { file: string; route: string; viewport: string; width: number
 
 function pngWidth(file: string): number {
   const b = readFileSync(file);
-  expect(b.subarray(1, 4).toString("latin1"), `${file} is a PNG`).toBe("PNG");
+  // Full 8-byte signature, then the first chunk must be IHDR (length 13) before its width field is trusted.
+  expect(b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), `${file} has the PNG signature`).toBe(true);
+  expect(b.readUInt32BE(8), `${file} IHDR length`).toBe(13);
+  expect(b.subarray(12, 16).toString("latin1"), `${file} first chunk is IHDR`).toBe("IHDR");
   return b.readUInt32BE(16);
 }
 
@@ -293,6 +296,45 @@ export function sweepProblems(sweep: unknown, rows: WalkRow[]): string[] {
   return out;
 }
 
+interface SelftestRow { w: number; done: boolean; error: string | null; results: { name: string; ok: boolean }[] }
+
+/** Problems with the recorded /selftest.html result (PLAN rule: non-empty results, every case ok, window.__golden.error unset). */
+export function selftestProblems(record: unknown, rows: WalkRow[]): string[] {
+  const row = rows.find((r) => r.route === "/selftest.html");
+  if (!row || row.verdict !== "works") return [];
+  const list = (record as { rows?: SelftestRow[] } | null)?.rows;
+  if (!row.evidence.includes("evidence/selftest.json")) return [`${row.id}: works without evidence/selftest.json`];
+  if (!Array.isArray(list)) return ["selftest.json has no rows"];
+  const out: string[] = [];
+  for (const w of [1280, 375]) {
+    const g = list.find((x) => x?.w === w);
+    if (!g) { out.push(`${row.id}: no self-test record at ${w}`); continue; }
+    if (g.done !== true) out.push(`${row.id}: self-test not done at ${w}`);
+    if (g.error != null) out.push(`${row.id}: self-test error at ${w}: ${g.error}`);
+    if (!Array.isArray(g.results) || g.results.length === 0) out.push(`${row.id}: no self-test results at ${w}`);
+    else for (const c of g.results) if (c?.ok !== true) out.push(`${row.id}: case ${c?.name} failed at ${w}`);
+  }
+  return out;
+}
+
+interface FirstLoadRow { w: number; r: string; iconLinks: number; errors: string[] }
+
+/** Rows that claim a favicon 404 must have it in the fresh-profile first-load record at both widths, with no icon link. */
+export function firstLoadProblems(record: unknown, rows: WalkRow[]): string[] {
+  const list = (record as { rows?: FirstLoadRow[] } | null)?.rows;
+  if (!Array.isArray(list)) return ["first-load.json has no rows"];
+  const out: string[] = [];
+  for (const r of rows.filter((x) => /favicon\.ico and logs a 404/.test(x.assertion))) {
+    if (!r.evidence.includes("evidence/first-load.json")) out.push(`${r.id}: favicon claim without evidence/first-load.json`);
+    for (const w of [1280, 375]) {
+      const e = list.find((x) => x?.w === w && x.r === r.route);
+      if (!e) out.push(`${r.id}: no first-load row for ${r.route} at ${w}`);
+      else if (e.iconLinks !== 0 || !e.errors?.some((m) => /404/.test(m))) out.push(`${r.id}: first load at ${w} does not show the favicon 404`);
+    }
+  }
+  return out;
+}
+
 describe("walkthrough", () => {
   const rows = parseWalk(WALK);
   const manifest = JSON.parse(readFileSync(join(SLICE, "shots.json"), "utf8")) as ShotRow[];
@@ -344,6 +386,26 @@ describe("walkthrough", () => {
     expect(sweepProblems(s200, rows).join()).toMatch(/W09: works but status 200/);
     const dup = [...sweep, { ...sweep.find((e: SweepRow) => e.r === "/worlds/" && e.w === 1280), status: 500, errors: ["x"] }];
     expect(sweepProblems(dup, rows).join()).toMatch(/W03: 2 sweep rows/);
+  });
+
+  it("the self-test row is backed by a recorded window.__golden: non-empty, all cases ok, no error", () => {
+    const rec = JSON.parse(readFileSync(join(SLICE, "evidence/selftest.json"), "utf8"));
+    expect(selftestProblems(rec, rows)).toEqual([]);
+    const one = (patch: Partial<SelftestRow>) => ({ rows: rec.rows.map((g: SelftestRow) => (g.w === 375 ? { ...g, ...patch } : g)) });
+    expect(selftestProblems(one({ results: [] }), rows).join()).toMatch(/no self-test results at 375/);
+    expect(selftestProblems(one({ error: "adapter lost" }), rows).join()).toMatch(/self-test error at 375/);
+    expect(selftestProblems(one({ results: [{ name: "c1", ok: false }] }), rows).join()).toMatch(/case c1 failed/);
+    expect(selftestProblems({ rows: rec.rows.filter((g: SelftestRow) => g.w !== 1280) }, rows).join()).toMatch(/no self-test record at 1280/);
+    const stripped = rows.map((r) => (r.route === "/selftest.html" ? { ...r, evidence: "evidence/sweep.json" } : r));
+    expect(selftestProblems(rec, stripped).join()).toMatch(/without evidence\/selftest.json/);
+  });
+
+  it("every favicon-404 claim is backed by a fresh-profile first load at both widths", () => {
+    const rec = JSON.parse(readFileSync(join(SLICE, "evidence/first-load.json"), "utf8"));
+    expect(rows.filter((r) => /favicon\.ico and logs a 404/.test(r.assertion)).length).toBe(5);
+    expect(firstLoadProblems(rec, rows)).toEqual([]);
+    const clean = { rows: rec.rows.map((e: FirstLoadRow) => (e.r === "/development/" && e.w === 375 ? { ...e, errors: [] } : e)) };
+    expect(firstLoadProblems(clean, rows).join()).toMatch(/W24: first load at 375/);
   });
 
   it("the frozen inventory covers every Vite input and every playground destination", () => {

@@ -50,3 +50,14 @@ Checks rerun: `pnpm vitest run tools/test/prototypes-status.test.ts` (12 passed)
 | P3 all ten skips attributed to the not-found spec | Fixed: nine not-found guards plus one public-routes build check, in md, html and W49 |
 
 12 tests pass after the fixes; `pnpm typecheck` clean.
+
+## CodeRabbit dispositions (PR #151)
+
+| Thread | Disposition | Where |
+|---|---|---|
+| Minor: set `RUNS` before the notebook command | Fixed: the fenced command now starts with `RUNS=~/develop/browser-life/runs`, in both twins and in the command table; the fresh-clone note stays | md and html section 5 and command table |
+| Minor: W24, W25, W29, W30 claim a favicon 404 that sweep.json does not show | Verified, verdicts kept, evidence added. The sweep reused one browser, so Chrome asked for `/favicon.ico` once, on its first page (W16 at 1280). A fresh Chrome process and profile per page and width (Vite on :5311) logs "Failed to load resource ... 404" on all five icon-less pages at 1280 and 375, and none on three pages with an icon link (`/particles/`, `/boundaries/`, `/matter/`). The five rows now cite `evidence/first-load.json` and say why the sweep shows it once; F1's steps point at it. A test requires every favicon-404 row to be backed by that record at both widths | walkthrough W16, W24, W25, W29, W30; evidence/first-load.json; F1 in both twins |
+| Minor: `pngWidth` checked only bytes 1-3 | Fixed: full 8-byte signature, IHDR length 13 and chunk type `IHDR` before reading the width | tools/test/prototypes-status.test.ts |
+| Major: W15 could be works without a validated self-test | Fixed: `/selftest.html` was re-run at 1280 and 375 (fresh context, :5311) and `window.__golden` recorded in `evidence/selftest.json` (done, no error, 30 of 30 ok, adapter apple metal-3, no console errors). W15 cites it, and `selftestProblems` fails a works W15 without that file, without a record at either width, with an empty result set, a failing case or an error; negative cases added | evidence/selftest.json; walkthrough W15; tools/test/prototypes-status.test.ts |
+
+Checks: `pnpm vitest run tools/test/prototypes-status.test.ts` (14 passed), `pnpm typecheck` clean.

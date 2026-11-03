@@ -203,6 +203,7 @@ runs reproduced their record, and the neutral run rang 0 times, as it should.
 - The offline notebook needs the neutral corpus under `runs/` (in the main checkout only; absent from a fresh clone):
 
 ```bash
+RUNS=~/develop/browser-life/runs
 deno run -A --no-lock tools/notebook.ts $RUNS/replay-calib/gradient-m3/neutral/seed-1001 --base $RUNS --out /tmp/s1-notebook --date 2026-11-02
 ```
 
@@ -281,7 +282,7 @@ Larger or non-local things found by the walk, each with a repro. None was fixed 
 
 | ID | Surface | Repro | Observed | Expected | Suspected file |
 |---|---|---|---|---|---|
-| F1 | Lab library | `pnpm dev --port 5301 --strictPort`, open `/playground/` in a fresh Chrome profile with the console open; `curl -s -o /dev/null -w '%{http_code}' localhost:5301/favicon.ico` prints 404 | console error "Failed to load resource ... 404" on first load of five pages | no console error | add `<link rel="icon" href="/favicon.svg" type="image/svg+xml">` to `apps/lab/playground/index.html`, `development/`, `hungry-shapes/`, `ecosystem/` and `ecosystem/archive/` |
+| F1 | Lab library | `pnpm dev --port 5301 --strictPort`, open any of the five pages in a fresh Chrome profile with the console open (`evidence/first-load.json`); `curl -s -o /dev/null -w '%{http_code}' localhost:5301/favicon.ico` prints 404 | console error "Failed to load resource ... 404" on first load of five pages | no console error | add `<link rel="icon" href="/favicon.svg" type="image/svg+xml">` to `apps/lab/playground/index.html`, `development/`, `hungry-shapes/`, `ecosystem/` and `ecosystem/archive/` |
 | F2 | Garden launcher | start `bin/garden-dev` under `nohup sh -c ... &`, then `pkill -INT -f bin/garden-dev` | launcher, coordinator, Vite and both islands kept running 8 seconds later; `pkill -TERM` stopped them | Ctrl-C stops everything | `bin/garden-dev` signal handling; not reproduced from an interactive terminal |
 | F3 | Public site | bare `pnpm dev`, open `/status/` or `/garden/` | console 502 from the dev proxy; page shows its unavailable state | none under the dev server, or a documented note | `apps/lab/vite.config.ts` proxy; low priority |
 
@@ -339,6 +340,7 @@ The default-port forms are a documented translation of the port-qualified comman
 | `GARDEN_FOOD=1 LAB_PORT=5301 PORT=6301 GARDEN_DAWN_MS=5000 GARDEN_DATA_DIR=/tmp/s1-garden bin/garden-dev` | `GARDEN_FOOD=1 bin/garden-dev` | Ran |
 | `curl -sS -X POST -H 'content-type: application/json' -d '{"kind":"stone","x":128,"y":128,"r":8}' http://127.0.0.1:6301/api/public/gardens/commons/letters` | same against `:4000` | Ran (HTTP 201) |
 | `curl -sS -X POST -H 'content-type: application/json' -d '{}' http://127.0.0.1:6301/api/public/gardens/commons/food/hands` | same against `:4000` | Ran (HTTP 201, counted) |
+| `RUNS=~/develop/browser-life/runs` | your corpus directory | Ran |
 | `deno run -A --no-lock tools/notebook.ts $RUNS/replay-calib/gradient-m3/neutral/seed-1001 --base $RUNS --out /tmp/s1-notebook --date 2026-11-02` | same | Ran; needs data (the corpus in the main checkout's `runs/`) |
 | `mkdir -p /tmp/s1` | same | Ran |
 | `deno run -A --no-lock tools/run.ts --experiment s1-walk --preset spots --conditions treatment --seeds 1 --steps 3000 --census 100 --lineage-obs --out /tmp/s1-runs` | same | Ran |

@@ -228,7 +228,8 @@ curl -sS -X POST -H 'content-type: application/json' -d '{}' http://127.0.0.1:63
 <li><a href="http://localhost:5301/lab/?world=gradient-m3&amp;seed=1">http://localhost:5301/lab/?world=gradient-m3&amp;seed=1</a>, speed 9, Play until the step counter passes 15,000.</li>
 <li>The offline notebook needs the neutral corpus under <code>runs/</code> (in the main checkout only; absent from a fresh clone):</li>
 </ul>
-<pre class="bash" tabindex="0"><code>deno run -A --no-lock tools/notebook.ts $RUNS/replay-calib/gradient-m3/neutral/seed-1001 --base $RUNS --out /tmp/s1-notebook --date 2026-11-02</code></pre>
+<pre class="bash" tabindex="0"><code>RUNS=~/develop/browser-life/runs
+deno run -A --no-lock tools/notebook.ts $RUNS/replay-calib/gradient-m3/neutral/seed-1001 --base $RUNS --out /tmp/s1-notebook --date 2026-11-02</code></pre>
 <p>where <code>RUNS</code> is <code>~/develop/browser-life/runs</code>. A committed example page is at <a href="examples/field-notebook-2026-10-17-gradient-m3-neutral-seed-15.html">field-notebook-2026-10-17-gradient-m3-neutral-seed-15.html</a>.</p>
 <p><strong>Not built.</strong> The proposer bench has never run (<a href="naturalist-bench-v0-2026-10-18.md">bench</a>). Notes stop at the first wound or feed, and a ring is not proof of emergence.</p>
 <p><strong>Waits on you.</strong> The bench approval (item 5), paid calls (item 4) and the draft <a href="https://github.com/treetopdevs/browser-life/pull/69">#69</a> (item 6).</p>
@@ -261,7 +262,7 @@ deno run -A --no-lock tools/report-html.ts lineage /tmp/s1/dossier.json --out /t
 <div class="tablewrap"><table>
 <thead><tr><th>ID</th><th>Surface</th><th>Repro</th><th>Observed</th><th>Expected</th><th>Suspected file</th></tr></thead>
 <tbody>
-<tr><td>F1</td><td>Lab library</td><td><code>pnpm dev --port 5301 --strictPort</code>, open <code>/playground/</code> in a fresh Chrome profile with the console open; <code>curl -s -o /dev/null -w '%{http_code}' localhost:5301/favicon.ico</code> prints 404</td><td>console error "Failed to load resource ... 404" on first load of five pages</td><td>no console error</td><td>add <code>&lt;link rel="icon" href="/favicon.svg" type="image/svg+xml"&gt;</code> to <code>apps/lab/playground/index.html</code>, <code>development/</code>, <code>hungry-shapes/</code>, <code>ecosystem/</code> and <code>ecosystem/archive/</code></td></tr>
+<tr><td>F1</td><td>Lab library</td><td><code>pnpm dev --port 5301 --strictPort</code>, open any of the five pages in a fresh Chrome profile with the console open (<code>evidence/first-load.json</code>); <code>curl -s -o /dev/null -w '%{http_code}' localhost:5301/favicon.ico</code> prints 404</td><td>console error "Failed to load resource ... 404" on first load of five pages</td><td>no console error</td><td>add <code>&lt;link rel="icon" href="/favicon.svg" type="image/svg+xml"&gt;</code> to <code>apps/lab/playground/index.html</code>, <code>development/</code>, <code>hungry-shapes/</code>, <code>ecosystem/</code> and <code>ecosystem/archive/</code></td></tr>
 <tr><td>F2</td><td>Garden launcher</td><td>start <code>bin/garden-dev</code> under <code>nohup sh -c ... &amp;</code>, then <code>pkill -INT -f bin/garden-dev</code></td><td>launcher, coordinator, Vite and both islands kept running 8 seconds later; <code>pkill -TERM</code> stopped them</td><td>Ctrl-C stops everything</td><td><code>bin/garden-dev</code> signal handling; not reproduced from an interactive terminal</td></tr>
 <tr><td>F3</td><td>Public site</td><td>bare <code>pnpm dev</code>, open <code>/status/</code> or <code>/garden/</code></td><td>console 502 from the dev proxy; page shows its unavailable state</td><td>none under the dev server, or a documented note</td><td><code>apps/lab/vite.config.ts</code> proxy; low priority</td></tr>
 </tbody></table></div>
@@ -311,6 +312,7 @@ deno run -A --no-lock tools/report-html.ts lineage /tmp/s1/dossier.json --out /t
 <tr><td><code>GARDEN_FOOD=1 LAB_PORT=5301 PORT=6301 GARDEN_DAWN_MS=5000 GARDEN_DATA_DIR=/tmp/s1-garden bin/garden-dev</code></td><td><code>GARDEN_FOOD=1 bin/garden-dev</code></td><td>Ran</td></tr>
 <tr><td><code>curl -sS -X POST -H 'content-type: application/json' -d '{"kind":"stone","x":128,"y":128,"r":8}' http://127.0.0.1:6301/api/public/gardens/commons/letters</code></td><td>same against <code>:4000</code></td><td>Ran (HTTP 201)</td></tr>
 <tr><td><code>curl -sS -X POST -H 'content-type: application/json' -d '{}' http://127.0.0.1:6301/api/public/gardens/commons/food/hands</code></td><td>same against <code>:4000</code></td><td>Ran (HTTP 201, counted)</td></tr>
+<tr><td><code>RUNS=~/develop/browser-life/runs</code></td><td>your corpus directory</td><td>Ran</td></tr>
 <tr><td><code>deno run -A --no-lock tools/notebook.ts $RUNS/replay-calib/gradient-m3/neutral/seed-1001 --base $RUNS --out /tmp/s1-notebook --date 2026-11-02</code></td><td>same</td><td>Ran; needs data (the corpus in the main checkout's <code>runs/</code>)</td></tr>
 <tr><td><code>mkdir -p /tmp/s1</code></td><td>same</td><td>Ran</td></tr>
 <tr><td><code>deno run -A --no-lock tools/run.ts --experiment s1-walk --preset spots --conditions treatment --seeds 1 --steps 3000 --census 100 --lineage-obs --out /tmp/s1-runs</code></td><td>same</td><td>Ran</td></tr>
