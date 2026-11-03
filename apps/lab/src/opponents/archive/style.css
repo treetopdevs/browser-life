@@ -1,0 +1,8 @@
+@import '../style.css';
+.controls.one{grid-template-columns:minmax(0,420px)}
+figure{margin:12px 0 0}
+#hist{width:100%;max-width:640px;height:auto;background:#0e181d;border:1px solid #34484e;border-radius:8px}
+#hist rect.bar{fill:#4f7f8f}#hist rect.obs{fill:#e0b35c}
+#hist text{fill:#c2d0cd;font-size:9px}
+td.informative{white-space:normal}
+@media(max-width:760px){.controls.one{grid-template-columns:1fr}}

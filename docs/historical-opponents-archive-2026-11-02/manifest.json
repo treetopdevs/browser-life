@@ -1,0 +1,211 @@
+{
+ "kind": "historical-opponents-archive-manifest",
+ "payloadFileSha256": "55427c6dfef1efb372f60629c3fc6ebfd4676dfbc51d2bfaa12462d60543ecce",
+ "integritySha256": "d3d1b27f6ba1d258f3f14103490a597b867e3146a14e0d5e16aad8c06f81757b",
+ "archiveSha256": "bfa22d33941f0726c10fc27a54479122193480bbb28cb06be5bc1fb236d6ae21",
+ "config": {
+  "kind": "historical-opponents-archive-config",
+  "version": 1,
+  "arena": {
+   "tile": 32,
+   "radius": 3,
+   "steps": 300
+  },
+  "bins": 5,
+  "minViableBins": 4,
+  "sources": [
+   {
+    "name": "bootstrap-m3",
+    "short": "m3"
+   },
+   {
+    "name": "bootstrap-200",
+    "short": "b200"
+   },
+   {
+    "name": "bootstrap-div",
+    "short": "div"
+   }
+  ],
+  "screen": {
+   "seeds": [
+    901,
+    902,
+    903
+   ],
+   "mask": "m01"
+  },
+  "seeds": [
+   1001,
+   1002,
+   1003,
+   1004,
+   1005,
+   1006,
+   1007,
+   1008,
+   1009,
+   1010
+  ],
+  "reserveSeeds": [
+   2001,
+   2002,
+   2003,
+   2004,
+   2005,
+   2006,
+   2007,
+   2008,
+   2009,
+   2010
+  ],
+  "searchSeeds": [
+   1,
+   300
+  ],
+  "weakenPercent": 50,
+  "rDirMax": 0.05,
+  "chain": {
+   "percents": [
+    80,
+    60,
+    40,
+    0
+   ]
+  },
+  "scrambled": [
+   "F3",
+   "F2",
+   "G",
+   "F1",
+   "W"
+  ],
+  "effectTarget": 0.075,
+  "depletion": {
+   "lightBase": 0,
+   "lightAmp": 0,
+   "kBDecay": 600,
+   "kELeak": 1000
+  },
+  "verdictTableVersion": 1
+ },
+ "constants": {
+  "floorDiv": 16,
+  "edgeMinBlocks": 9,
+  "edgeMinOffset": 0.05,
+  "familySize": 10,
+  "g2MeanMax": 0.4,
+  "completeFraction": 0.8,
+  "checkpoints": [
+   75,
+   150,
+   225,
+   300
+  ],
+  "plant": {
+   "biomass": 256,
+   "energy": 512,
+   "nutrient": 256
+  },
+  "ruleVersion": 1
+ },
+ "schedule": {
+  "jobs": 1360,
+  "contests": 860,
+  "solo": 480,
+  "depletion": 20
+ },
+ "verdict": {
+  "m3": "insensitive-or-biased",
+  "b200": "insensitive-or-biased",
+  "div": "ordered-not-temporal"
+ },
+ "freeze": {
+  "commit": "2a012b9fb29641351e7ead0c83fb05f316858fc8",
+  "inventory": {
+   "packages/metrics/src/archive-tournament/evidence.ts": "a480611d3407ce62f3810026f854d1d90664f19b2ff03e36d9d51625415a72b6",
+   "packages/metrics/src/archive-tournament/index.ts": "5e7ab584ac744dbb7e86acb5f48035868b15c6c3cba54c51541aa9259978a6fa",
+   "packages/metrics/src/opponents/arena.ts": "1256e4c97e12e3060dacb0b69e94a84ee4809c7f9e32311543b1e87b4bd0c807",
+   "packages/metrics/src/opponents/evidence.ts": "abca5e53cb55cdd763f9872f1a7015a9e8221602c2ae8616811598e3ea593abc",
+   "packages/metrics/src/opponents/panel.ts": "2ef87b4a19ce165b701c2b40084081bfb148ef9d8cf91154d3d26a95b3bbadc6",
+   "packages/metrics/src/opponents/payoff.ts": "228927871524d9d90468dc8e1a5307669e57d8593cef65624d1d3a052242882b",
+   "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+   "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+   "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+   "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+   "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+   "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+   "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+   "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+   "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+   "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+   "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+   "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+   "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+   "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+   "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+   "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+   "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+   "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+   "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+   "packages/metrics/src/stats.ts": "4bb88c4ad8acbc11592249b4a14f481d9a01db68a38ae9e10f6e9cb244e0ba26",
+   "docs/historical-opponents-archive-2026-11-02/PLAN.md": "11b5e90eb7905c78451b71b089cec239023058cdb4a38554d20c1e43a831221a",
+   "docs/historical-opponents-archive-2026-11-02/chain-calibration.json": "673e462299d9da3c52f223676cfab5cd3b67b31212dc6f4c01707089590527bf",
+   "tools/opponents/archive.ts": "e0a457efec849af838767e8ec9452c4a6e82cda5c48ed1b42ef70f5a8da9aa0f",
+   "tools/opponents/archive-config.json": "8666302acca25017654338a5d003929c7864f87c5150b764895aba93bcb34cd3",
+   "tools/opponents/assay.ts": "3927396960bf6e673a8bdc61a8e86400d15420d3e48e692a6666febbae300f4f",
+   "tools/opponents/boot.ts": "52fa1bb823d2a6558fdbbdf9104f11aead23f473c69bb578832b88e34d06e170",
+   "tools/opponents/worker.ts": "51d67fb160da31d395ff57a487fe40eea46ca482cd37d70927e1aa51e5ddc4a0",
+   "tools/opponents/config.json": "9c214e6fb9117b46c717ee25858140af7218c08f63f2f88ecec34e6bcf3b4e7f",
+   "docs/historical-opponents-archive-2026-11-02/archive.json": "bfa22d33941f0726c10fc27a54479122193480bbb28cb06be5bc1fb236d6ae21",
+   "docs/historical-opponents-2026-11-01/evidence.json": "35927826d34144c440f627e09cb045645b39d66ddf323c31db9ed0c49f30a56c"
+  }
+ },
+ "sources": {
+  "packages/metrics/src/archive-tournament/evidence.ts": "a480611d3407ce62f3810026f854d1d90664f19b2ff03e36d9d51625415a72b6",
+  "packages/metrics/src/archive-tournament/index.ts": "5e7ab584ac744dbb7e86acb5f48035868b15c6c3cba54c51541aa9259978a6fa",
+  "packages/metrics/src/opponents/arena.ts": "1256e4c97e12e3060dacb0b69e94a84ee4809c7f9e32311543b1e87b4bd0c807",
+  "packages/metrics/src/opponents/evidence.ts": "abca5e53cb55cdd763f9872f1a7015a9e8221602c2ae8616811598e3ea593abc",
+  "packages/metrics/src/opponents/panel.ts": "2ef87b4a19ce165b701c2b40084081bfb148ef9d8cf91154d3d26a95b3bbadc6",
+  "packages/metrics/src/opponents/payoff.ts": "228927871524d9d90468dc8e1a5307669e57d8593cef65624d1d3a052242882b",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "packages/metrics/src/stats.ts": "4bb88c4ad8acbc11592249b4a14f481d9a01db68a38ae9e10f6e9cb244e0ba26",
+  "tools/opponents/archive.ts": "e0a457efec849af838767e8ec9452c4a6e82cda5c48ed1b42ef70f5a8da9aa0f",
+  "tools/opponents/archive-config.json": "8666302acca25017654338a5d003929c7864f87c5150b764895aba93bcb34cd3",
+  "tools/opponents/assay.ts": "3927396960bf6e673a8bdc61a8e86400d15420d3e48e692a6666febbae300f4f",
+  "tools/opponents/worker.ts": "51d67fb160da31d395ff57a487fe40eea46ca482cd37d70927e1aa51e5ddc4a0",
+  "tools/opponents/boot.ts": "52fa1bb823d2a6558fdbbdf9104f11aead23f473c69bb578832b88e34d06e170",
+  "tools/opponents/config.json": "9c214e6fb9117b46c717ee25858140af7218c08f63f2f88ecec34e6bcf3b4e7f"
+ },
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "node": "v24.2.0",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-02T23:45:29.192Z",
+  "cpuSeconds": 2347
+ }
+}

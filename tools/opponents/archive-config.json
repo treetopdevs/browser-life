@@ -1,0 +1,86 @@
+{
+ "kind": "historical-opponents-archive-config",
+ "version": 1,
+ "arena": {
+  "tile": 32,
+  "radius": 3,
+  "steps": 300
+ },
+ "bins": 5,
+ "minViableBins": 4,
+ "sources": [
+  {
+   "name": "bootstrap-m3",
+   "short": "m3"
+  },
+  {
+   "name": "bootstrap-200",
+   "short": "b200"
+  },
+  {
+   "name": "bootstrap-div",
+   "short": "div"
+  }
+ ],
+ "screen": {
+  "seeds": [
+   901,
+   902,
+   903
+  ],
+  "mask": "m01"
+ },
+ "seeds": [
+  1001,
+  1002,
+  1003,
+  1004,
+  1005,
+  1006,
+  1007,
+  1008,
+  1009,
+  1010
+ ],
+ "reserveSeeds": [
+  2001,
+  2002,
+  2003,
+  2004,
+  2005,
+  2006,
+  2007,
+  2008,
+  2009,
+  2010
+ ],
+ "searchSeeds": [
+  1,
+  300
+ ],
+ "weakenPercent": 50,
+ "rDirMax": 0.05,
+ "chain": {
+  "percents": [
+   80,
+   60,
+   40,
+   0
+  ]
+ },
+ "scrambled": [
+  "F3",
+  "F2",
+  "G",
+  "F1",
+  "W"
+ ],
+ "effectTarget": 0.075,
+ "depletion": {
+  "lightBase": 0,
+  "lightAmp": 0,
+  "kBDecay": 600,
+  "kELeak": 1000
+ },
+ "verdictTableVersion": 1
+}

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: do surviving organisms from three search runs beat their earlier selves, cycle, or show nothing beyond the nulls?">
+  <title>Historical opponents, archive tournament · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the results</a>
+  <header><a href="/opponents/">← First rung</a><span>Local experiment / historical opponents, archive tournament</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Second rung: do later survivors beat earlier ones?</p>
+      <h1>Does an archive of search survivors beat its own past?</h1>
+      <p>Three searches each kept one best surviving organism per cell. We took five of them per search, spread over the search's own timeline, and played every later one against every earlier one in the first rung's small contest arena. We then ask whether the later ones win more than a shuffled timeline would say, whether the wins go in circles, or whether there is nothing beyond what shuffling gives.</p>
+      <p class="disclosure">CPU only, no GPU evidence, not the M3 environment. Local experiment, kept off the public site (noindex). A descriptive tournament of related survivors: the "time" is the search's batch number, the archive holds final survivors and not snapshots taken along the way, and the three searches are related, not independent. There is no significance claim and no pooled number.</p>
+      <p id="verdict" class="verdict" role="status">Loading the saved evidence.</p>
+    </section>
+
+    <section class="observer" aria-labelledby="src-heading">
+      <h2 id="src-heading">Pick a search</h2>
+      <div class="controls one">
+        <label for="source">Search<select id="source"></select></label>
+      </div>
+      <p id="srchelp" class="muted"></p>
+      <div class="scroll" tabindex="0" role="region" aria-label="Later-versus-earlier payoff matrix, scrolls sideways on narrow screens">
+        <table id="matrix"><caption id="mcap"></caption><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section class="observer" aria-labelledby="null-heading">
+      <h2 id="null-heading">The directional statistic against shuffled timelines</h2>
+      <p id="nulltext"></p>
+      <figure>
+        <svg id="hist" role="img" aria-labelledby="histcap" viewBox="0 0 480 160" preserveAspectRatio="xMidYMid meet"></svg>
+        <figcaption id="histcap" class="muted"></figcaption>
+      </figure>
+    </section>
+
+    <section aria-labelledby="controls-heading">
+      <h2 id="controls-heading">The control strip</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Control table">
+        <table id="controls"><caption>Each instrument control, what it must show, what it showed, and whether it passed.</caption><thead><tr><th scope="col">Control</th><th scope="col">Must show</th><th scope="col">Showed</th><th scope="col">Passed</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section aria-labelledby="naive-heading">
+      <h2 id="naive-heading">Where a naive metric is fooled</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Naive versus sealed table">
+        <table id="naive"><caption>The naive metric is the fraction of later-versus-earlier pairs where the later one holds more than half. The sealed label is what the frozen rules say. Synthetic fixtures are marked synthetic.</caption><thead><tr><th scope="col">Case</th><th scope="col">Kind</th><th scope="col">Naive: later wins</th><th scope="col">Sealed label</th><th scope="col">Rank against shuffled timelines</th><th scope="col">Cycle</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">What this does not show</h2>
+      <ul>
+        <li>Archive time is the search's batch number, not ecological time and not an evaluation count. The archive is the final surviving set, so later survivors were bred from earlier ones and are not independent.</li>
+        <li>The rank against shuffled timelines is a rank, not a p-value: the survivors are related and not exchangeable. Nothing here is called significant, and the three searches are not replications of one another.</li>
+        <li>The searches rewarded survival, recovery and light dependence, not winning contests. A contest result is biomass share at step 300 on a small tile with a different light and chemistry than the searches used.</li>
+        <li>"Nothing beyond the null" means none detected at this resolution. Ten seed blocks give wide intervals.</li>
+        <li>No fixture reaches the top label: the first rung's aligned panel and the planted chain both missed the cutoff on the growing-alone residual rank (0.09 and 0.29, against 0.05), so they are labelled vigour-only and a real "directional-rank" would be unvalidated.</li>
+        <li>The cycle and vigour-only fixtures are synthetic. The weakened copy of an archive organism is descriptive only.</li>
+      </ul>
+      <p class="muted">CPU only, no GPU evidence, not on the public site. No score here selected anything.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/opponents/archive/page.ts"></script>
+</body>
+</html>

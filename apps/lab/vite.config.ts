@@ -154,6 +154,7 @@ export default defineConfig({
   build: {
     target: "es2023",
     rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/opponents/archive/")) return "opponents-archive";
       if (id.includes("/src/vision-screen/")) return "vision-screen-core";
       if (id.includes("/src/ecosystem/model.ts")) return "ecosystem-model";
       if (id.includes("/docs/creative-prototypes/ecosystem-archive/source/")) return "ecosystemArchiveData";
@@ -198,6 +199,7 @@ export default defineConfig({
       movingLight: r("./moving-light/index.html"),
       controllerLocality: r("./controller-locality/index.html"),
       opponents: r("./opponents/index.html"),
+      opponentsArchive: r("./opponents/archive/index.html"),
       ecosystem: r("./ecosystem/index.html"),
       ecosystemArchive: r("./ecosystem/archive/index.html"),
       playground: r("./playground/index.html"),
