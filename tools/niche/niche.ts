@@ -32,7 +32,7 @@ const runtimeNote = (seconds: number): string => (seconds > RUNTIME_TARGET_SECON
 const SRC_DIR = "packages/runner/src/niche/";
 
 let hooked = false;
-function registerAliases(): void {
+export function registerAliases(): void {
   if (hooked || process.env.VITEST) return;
   hooked = true;
   try {
@@ -68,7 +68,7 @@ export const sha256 = async (text: string | Uint8Array): Promise<string> => {
  * when this slice froze, so a later slice reserving its own seeds does not invalidate this evidence. Collisions with those reservations
  * are still checked against the live registry below. A further slice adds its owner prefix here (or scopes its own digest to its own reservations, as I08 does).
  */
-const LATER_SLICE_OWNERS = ["i08 moving light"];
+const LATER_SLICE_OWNERS = ["i08 moving light", "i06b free-energy-matched"];
 export const registryDigest = async (root = REPO): Promise<string> => {
   const text = readFileSync(`${root}experiments/discovery/seed-registry.json`, "utf8");
   return sha256(text.split("\n").filter((line) => !LATER_SLICE_OWNERS.some((o) => line.includes(`"owner": "${o}`))).join("\n"));
@@ -168,6 +168,12 @@ async function bench(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  // Second rung (I06b, docs/niche-construction-fe-2026-11-02): every mode below also exists under --rung fe, in tools/niche/fe.ts.
+  const rungAt = process.argv.indexOf("--rung");
+  if (rungAt >= 0) {
+    if (process.argv[rungAt + 1] !== "fe") throw new Error("--rung takes fe (the second rung); omit it for the first rung");
+    return (await import("./fe.ts")).mainFe(process.argv.filter((_, i) => i < 2 || (i !== rungAt && i !== rungAt + 1)), { sha256, registerAliases, sourceFiles });
+  }
   const mode = process.argv[2];
   if (mode === "--bench") return bench();
   if (mode === "--calibrate") {
