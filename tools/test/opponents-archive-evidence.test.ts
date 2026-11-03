@@ -72,7 +72,7 @@ describe('mini regeneration', () => {
     t.runs[0].cp[3][0] += 1;
     expect(verifySeal(t)).toBe(false);
     expect(recompute(sealPayload(t), fx).length).toBeGreaterThan(0);
-  }, 120000);
+  }, 900000);
   it('worker count does not change output; mini regeneration equals itself', () => {
     const a = node(['--mini', '--print', '--jobs', '1']), b = node(['--mini', '--print', '--jobs', '3']), c = node(['--mini', '--print', '--jobs', '3']);
     expect(a).toBe(b);

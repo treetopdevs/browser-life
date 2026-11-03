@@ -35,3 +35,19 @@ Raw: `/tmp/i03-freeze-review.out` (final message), `/tmp/i03-freeze-review.raw`;
 | 6 | P2 | Mini test asserted `assayOk` with a 3-member chain (floor 1/6) | Fixed: mini chain has four members; the test checks the machinery only. |
 | 7 | P2 | Pre-freeze tests used reserved scoring seeds 1001/1002 | Fixed: test-only seeds 7001/7002. Disclosure: the first version of the mini and arena tests (G vs 80%-weakened G, twin F1) ran with seeds 1001 and 1002 at 60 steps before this fix, and one full mini run used them (60-step mini, not 300-step scoring runs); the outputs were only checked for crashes and were not read as outcomes. |
 | 8 | P3 | Amendment overstated calibration (six of seven at 1/24) | Fixed in PLAN.md. |
+
+## Final review (Sol 6.1 xhigh, read-only, after scoring, 2026-11-02)
+
+Raw: `/tmp/i03-final-review.out`. No P1. Freeze intact (39 inventory files identical to 2a012b9f), `--check` with RUNS and the first-rung checker pass. P2 page text overstated the residual ("explained by vigour"): fixed (cutoff wording). P2 descriptive weakened-copy row showed a fabricated pass: fixed (`n/a (descriptive)` plus a caught column; e2e asserts it). P3 largest b200 offset 0.415 not 0.37: fixed in EVIDENCE.md. P3 fixture count (five pure plus chain): fixed.
+
+## Source review dispositions
+
+No P1 or P2 findings, so no follow-up Codex review was run.
+
+| Finding | Reviewer | Disposition | Evidence |
+|---|---|---|---|
+| Source-switch e2e passes with stale results (P3, tests/e2e/opponents-archive.spec.ts) | sol | Fixed. The spec now loops over all three sources (m3, b200, div) and asserts, per source, the label text, matrix column and row headers, observed D, residual-free rank, and the first-column payoff against evidence.json. | Removing the `change` listener in page.ts makes the spec fail (toHaveText on matrix headers); restored, it passes. |
+| Dead `${ex ? '' : ''}` and missing excluded count in uninformative cells (P3, render.ts) | claude | Fixed. Uninformative text now ends with the excluded count ("N of M blocks excluded"). | apps/lab/test/opponents-archive-render.test.ts asserts "7 of 10 blocks excluded" for an uninformative cell; vitest passes. |
+| Ungrammatical b200 offset sentence in EVIDENCE.md (P3) | claude | Fixed. Reworded to "offset 0.415 exceeds the mean twin place effect 0.093". The numeric claims were otherwise verified by the reviewer. | EVIDENCE.md line 21; archive evidence test (tools/test/opponents-archive-evidence.test.ts) still passes. |
+
+Checks rerun: opponents-archive-render and opponents-archive-evidence vitest, pnpm typecheck, Playwright opponents-archive spec (chrome, port 5331).
