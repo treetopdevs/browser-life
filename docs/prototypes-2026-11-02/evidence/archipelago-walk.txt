@@ -1,0 +1,17 @@
+Create (bin/dev on LAB_PORT=5301 PORT=6301, BL_DATA_DIR=/tmp/s1-coord-data):
+  curl -sS -X POST -H 'content-type: application/json' http://127.0.0.1:6301/api/experiments -d '{"experiment":"s1-walk-1102","presetId":"spots","conditions":["treatment"],"seeds":[1],"steps":40,"segmentSteps":20,"censusEvery":10,"verifyFraction":1.0}'
+  -> HTTP 200 {"segments":2}
+Island 1: deno run -A --no-lock tools/island.ts --coordinator http://localhost:6301 --tasks 1 --label s1-walk   (exit 0; see island-1-run.log)
+Island 2 (a second island, so independent verification WAS exercised): same command with --tasks 1 --label s1-walk2 (exit 0; island-2-verify.log)
+Segment state after both (GET /api/experiments/s1-walk-1102):
+  index 0  status verified  digest 06e7413bbff0dd2a  verifiedBy "wgpu 0 Apple M1 Max"  observationsVerified true
+  index 1  status pending   (not run: --tasks 1 each)
+Note: both islands ran on one machine and one GPU type, so this is verification on the same device type, not a cross-hardware check.
+Status page http://localhost:6301/index.html lists s1-walk-1102 (shots 07-*). Site /status/ on :5301 renders its aggregate counts.
+
+Browser island (second bin/dev session, fresh scratch dir /tmp/s1-coord-data, experiment s1-walk-browser, same body as above):
+  /island.html on :5301 (Join pressed by the script; its URL field defaulted to http://localhost:5301, the dev proxy to :6301)
+  Log: "joined as isl-S6Ex_iOCFvaN ... run s1-walk-browser/spots/treatment/seed-1 #0 (20 steps from t=0) run complete: 06e7413bbff0dd2a -> done ... #1 ... run complete: 0c3f2c99fe7117ab -> done"
+  Console errors: 0. Segment 0 digest 06e7413bbff0dd2a is the SAME digest the Deno island (native wgpu) produced for the same spec above:
+  a browser GPU run and a native one agree on that segment. Both segments "done", unverified (one island only: no second island in this session).
+  The site /status/ page with the coordinator up: 0 console errors, aggregate counts rendered.

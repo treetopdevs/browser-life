@@ -1,0 +1,155 @@
+{
+ "base": "http://localhost:5311",
+ "date": "2026-11-03T00:39:38.271Z",
+ "method": "Playwright chromium channel chrome, new browser process with a fresh temporary profile per page and width, goto + 3 s settle; console type=error and HTTP>=400 responses recorded (the S1 sweep reused one browser, so Chrome asked for /favicon.ico once, on its first page); vite apps/lab --port 5311 --strictPort",
+ "rows": [
+  {
+   "w": 1280,
+   "r": "/playground/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/development/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/hungry-shapes/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/ecosystem/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/ecosystem/archive/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/particles/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/boundaries/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  },
+  {
+   "w": 1280,
+   "r": "/matter/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/playground/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/development/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/hungry-shapes/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/ecosystem/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/ecosystem/archive/",
+   "status": 200,
+   "iconLinks": 0,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/particles/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/boundaries/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  },
+  {
+   "w": 375,
+   "r": "/matter/",
+   "status": 200,
+   "iconLinks": 1,
+   "errors": [],
+   "failed": []
+  }
+ ]
+}

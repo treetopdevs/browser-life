@@ -1,0 +1,7 @@
+garden token: none
+joined as isl-HmQxPfVB0YJZ
+run s1-walk-1102/spots/treatment/seed-1 #0 (20 steps from t=0)
+  run complete: 06e7413bbff0dd2a → done
+left island: registration removed and unfinished work released
+island finished 1 tasks
+timeout 600 deno run -A --no-lock tools/island.ts --coordinator http://localhost:6301 --tasks 1    0.40s user 0.17s system 40% cpu 1.409 total

@@ -794,6 +794,8 @@ function orderProblems(stops: Focused[]): string[] {
 const SKIP: Record<string, { link: string; target: string; header: string } | null> = {
   "/lab/": { link: ".skip-link", target: "#lab-main", header: "header.top" },
   [POND]: { link: ".skip-link", target: "#lab-main", header: "header.top" },
+  // The soup page's skip link goes past the intro to the soup itself (its own #soup-main), not to <main>.
+  "/soup/": { link: ".skip", target: "#soup-main", header: ".site-header" },
   // One short page whose `<main>` is the first thing in it: nothing to skip.
   "/island.html": null,
 };

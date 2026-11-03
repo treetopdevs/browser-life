@@ -1,0 +1,12 @@
+  gradient-m3: 3000 censuses (7 s)
+  gradient-m3: 4000 censuses (9 s)
+  gradient-m3: 5000 censuses (11 s)
+  gradient-m3: 6000 censuses (13 s)
+  gradient-m3: 7000 censuses (15 s)
+  gradient-m3: 8000 censuses (17 s)
+  gradient-m3: 9000 censuses (18 s)
+  gradient-m3: 10000 censuses (20 s)
+  gradient-m3: all 40 envelope runs reproduce their record D and rings
+  replay-calib/gradient-m3/neutral/seed-1001: D 3.5094581409059447 (record 3.5094581409059447, equal); 0 ring(s) above Z* 7.0429124518134785
+2 files in /tmp/s1-notebook; 20 s
+deno run -A --no-lock tools/notebook.ts  --base $RUNS --out /tmp/s1-notebook   21.94s user 1.04s system 110% cpu 20.706 total

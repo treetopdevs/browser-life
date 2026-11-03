@@ -1,0 +1,10 @@
+Acceptance gates, IMPLEMENT stage (PATH with nvm node 24.2.0; load average high from parallel slices, so pnpm test used --maxWorkers=2)
+pnpm typecheck                                              exit 0
+pnpm vitest run tools/test/prototypes-status.test.ts        11 passed (11)
+pnpm test --maxWorkers=2                                    264 files passed, 11 skipped; 4717 tests passed, 288 skipped; exit 0
+git diff --exit-code origin/main -- packages/schema packages/sim-ref packages/sim-gpu tools/opponents tools/niche experiments/preregistration.md experiments/FROZEN deno.lock pnpm-lock.yaml package.json    exit 0
+git status --porcelain | grep -v docs/prototypes-2026-1     only the three fixed files and tools/test/prototypes-status.test.ts
+Playwright (BL_E2E_PORT=5311, chrome): see playwright-summary.txt; fixed specs rerun green (lab-worlds 6/6, public-a11y -g soup 5/5)
+HTML twin rendered from file:// at 1280 and 375, light and dark: no horizontal scroll, 0 console errors, 0 external requests, 16 of 16 images load
+mix precommit: not run (no coordinator code changed). Codex review: left to the review stage (REVIEW.md).
+Ports 5301, 6301, 5311 free at the end (lsof).

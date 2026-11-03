@@ -1,0 +1,9 @@
+Spec runs (BL_E2E_PORT=5311, --project=chrome --workers=1, native Chrome with WebGPU flags):
+ run A  lab-pond-keeper (v0, v1, v2, v3), lab-naturalist-actions, lab-naturalist, lab-worlds, lab-lineage, public-routes, public-not-found, public-site: 31 passed, 10 skipped, 1 failed
+        (lab-worlds "Worlds page lists every world": #worlds-jump had 8 links, the test still said 7; fixed in the test, rerun: 6 of 6 lab-worlds passed)
+ run B  playground, particles, boundaries, development, hungry-shapes, matter, currents, spatial, ecosystem (+archive), public-garden, public-a11y: 150 passed, 6 skipped, 4 failed
+        (the 4 were /soup/ axe (aria-label on a role-less div) and keyboard (skip link goes to #soup-main); fixed: role="group" on both legends, SKIP entry in the spec;
+         rerun of public-a11y -g soup: 5 of 5 passed)
+ run C  particle-picker, particle-oases, particle-seasons, particle-bonds, particle-motifs, vision-screen: 22 passed (playwright-particles.txt)
+ public-routes' build check is skipped when apps/lab/dist is absent (no pnpm build was run).
+The files playwright-lab-specs.txt and playwright-page-specs.txt are the raw check lines of runs A and B before the fixes.

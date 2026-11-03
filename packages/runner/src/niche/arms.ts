@@ -23,7 +23,7 @@ import {
 } from "./transfer.ts";
 
 export const ARM_IDS = ["a", "b", "c", "cP", "cNP", "nb", "ab", "d0", "d1E", "d1B"] as const;
-export type ArmId = (typeof ARM_IDS)[number] | "rb" | "rnb";
+export type ArmId = (typeof ARM_IDS)[number] | "rb" | "rnb" | "fU" | "fS" | "fB";
 
 export interface PreArm {
   id: ArmId;

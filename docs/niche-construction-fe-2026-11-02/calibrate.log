@@ -1,0 +1,15 @@
+(node:29903) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[73s] cluster 0: delta 1152, builder P median x2 200
+[142s] cluster 4: delta 1031, builder P median x2 204
+[220s] cluster 9: delta 1169, builder P median x2 169
+[276s] dose 60: builder 4/8 med 0, poly 4/8 med 0, space 4/8 med 3, inoc2 4/8 med 0
+[331s] dose 120: builder 4/8 med -2.5, poly 4/8 med -2.5, space 6/8 med 27.5, inoc2 4/8 med -2.5
+[382s] dose 240: builder 5/8 med 1.5, poly 5/8 med 1.5, space 7/8 med 29.5, inoc2 5/8 med 1.5
+[433s] dose 600: builder 1/8 med -172, poly 1/8 med -172, space 2/8 med -101.5, inoc2 1/8 med -172
+[487s] dose 1200: builder 0/8 med -190, poly 0/8 med -194.5, space 3/8 med -126.5, inoc2 0/8 med -190
+cluster 0: not qualified delta 1152 ceiling 200 minDetectableDose null qualifyingDose null: W1 is not detected at any ladder dose up to 1200 (passing needs 7 of 8 seeds positive on all four contrasts and median >= delta 1152)
+cluster 4: not qualified delta 1031 ceiling 204 minDetectableDose null qualifyingDose null: W1 is not detected at any ladder dose up to 1200 (passing needs 7 of 8 seeds positive on all four contrasts and median >= delta 1031)
+cluster 9: not qualified delta 1169 ceiling 169 minDetectableDose null qualifyingDose null: W1 is not detected at any ladder dose up to 1200 (passing needs 7 of 8 seeds positive on all four contrasts and median >= delta 1169)
+W2: unavailable (ordinary placement refuses a polymer floor under the receiver: only 0 common placeable cells (< 12))
+wrote calibration.json (dev only). Copy the deltas into PROTOCOL_FE.delta, then --freeze.
