@@ -161,10 +161,15 @@ for (const mode of ["empty", "trusted-peer", "untrusted-peer"] as const) {
         }
       });
     }
-    it("keeps garden and garden APIs private", async () => {
-      for (const route of ["/garden", "/garden/", "/api/garden/test", "/api/gardens/test", "/api/public/gardens/test"]) {
-        expect((await fetch(origin + route)).status, route).toBe(404);
+    it("forwards garden APIs to the coordinator and redirects /garden", async () => {
+      for (const route of ["/api/garden/test", "/api/gardens/test", "/api/public/gardens/test"]) {
+        const res = await fetch(origin + route);
+        expect(res.status, route).toBe(200);
+        expect((await res.json()).path, route).toBe(route);
       }
+      const res = await fetch(origin + "/garden?x=1", { redirect: "manual" });
+      expect(res.status).toBe(308);
+      expect(res.headers.get("location")).toBe("/garden/?x=1");
     });
   });
 }
