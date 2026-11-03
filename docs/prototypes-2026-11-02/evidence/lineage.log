@@ -1,0 +1,9 @@
+s1-walk/spots/treatment/seed-1  (treatment)
+subject 0:1: founder 0; 10,022 cells (26.9%) at step 3,000 by rule top; alive at the final census
+root 0:1 (initial world); depth 0; 1 of 1 ancestors verified against genomes.tsv
+
+step       locus             change      expression    outputs moved (max |Δ|)                    child peak
+
+offspring (exact): 142 children, 31 reached a census, 147 descendants
+tracker births (inferred): 6 fission, 163 budding
+gap: per-lineage free energy, mass history and experienced environment are not recorded in run bundles (docs/lineage-inspector.md §6.5)

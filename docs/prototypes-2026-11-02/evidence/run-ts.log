@@ -1,0 +1,4 @@
+run s1-walk/spots/treatment/seed-1 (3000 steps)
+  t=2000 ind=159 lin=27 fis=8 bud=314 mut=342 act.sig=0 883 st/s
+  done: 871 st/s, 288 individuals, 37 lineages, conservation exact
+deno run -A --no-lock tools/run.ts --experiment s1-walk --preset spots    1    1.09s user 0.52s system 39% cpu 4.100 total

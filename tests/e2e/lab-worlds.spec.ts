@@ -115,7 +115,8 @@ test("the Worlds page lists every world with a link into the lab", async ({ page
   await expect(page.locator("#worlds-count")).toHaveText(String(worlds.length));
   const hrefs = await page.locator("#worlds-root .world-card a.button").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).getAttribute("href")));
   for (const href of hrefs) expect(href).toMatch(/^\/lab\/\?world=[a-z0-9-]+$/);
-  await expect(page.locator("#worlds-jump a")).toHaveCount(7);
+  // Start here, the lab's six families and "A different chemistry" (the soup page, added by feff1c1b): 8 links, not the 7 before it.
+  await expect(page.locator("#worlds-jump a")).toHaveCount(8);
   await page.locator('#worlds-jump a[href="#sun"]').click();
   await expect(page.locator("#sun .family-head h2")).toHaveText("A moving sun");
   // The page shares the lab's register: no config key reaches the reader outside the folded technical description.
