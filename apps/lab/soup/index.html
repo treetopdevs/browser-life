@@ -51,11 +51,11 @@
             <div class="jar-glass">
               <canvas id="world" width="1920" height="1080" tabindex="0" role="img" aria-label="The program soup, one square per program. In the family view, programs with the same instructions share a colour; in the byte view each program is an 8 by 8 block of its bytes. Click a square, or focus the grid and use the arrow keys (Shift for steps of 10), to inspect it.">Canvas unavailable. The counts below still update.</canvas>
             </div>
-            <div id="legend-families" class="legend" aria-label="Family colours">
+            <div id="legend-families" class="legend" role="group" aria-label="Family colours">
               <span><i class="sw-family"></i>A family: at least 3 programs with the same 6 or more instructions (data bytes ignored), one colour each</span>
               <span><i class="sw-loner"></i>Everything else: fewer than 3 copies, or fewer than 6 instructions</span>
             </div>
-            <div id="legend-bytes" class="legend" aria-label="Byte colours" hidden>
+            <div id="legend-bytes" class="legend" role="group" aria-label="Byte colours" hidden>
               <span><i class="sw-loop"></i>Loop <code>[ ]</code></span>
               <span><i class="sw-edit"></i>Copy or change <code>. , + -</code></span>
               <span><i class="sw-move"></i>Move a head <code>&lt; &gt; { }</code></span>
