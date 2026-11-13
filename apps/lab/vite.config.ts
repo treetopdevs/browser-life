@@ -194,6 +194,7 @@ export default defineConfig({
       spatial: r("./spatial/index.html"),
       soup: r("./soup/index.html"),
       predictability: r("./predictability/index.html"),
+      mycelium: r("./mycelium/index.html"),
       assembly: r("./assembly/index.html"),
       niche: r("./niche/index.html"),
       movingLight: r("./moving-light/index.html"),

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
+  <meta name="description" content="A local experiment: particles that each carry a small neural controller, eating, laying trail and splitting in a world where matter is conserved exactly.">
+  <title>Mycelium world · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the world</a>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world, rung R0 (R1 and R2 results below)</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Neural particles over a conserved field</p>
+      <h1>Particles that eat, lay trail and split</h1>
+      <p>Each dot is a particle with a body of matter, a store of energy and its own small neural controller (the same 160-byte controller the research jars use). It senses the nutrient, waste and trail around it, then decides how to move, how much to eat, how much trail to lay and whether to split. A child takes half its parent's matter and energy and, in the inherit arm, a copy of its controller that sometimes mutates. Light turning waste back into nutrient is the only energy coming in.</p>
+      <p class="disclosure">CPU only: this page runs the reference implementation (rung R0), and this page does not use the GPU. A WebGPU port (rung R1) matched the reference bit for bit in a local test on one Mac, which says the port is faithful and says nothing about evolution. Local experiment, kept off the public site. Matter is conserved exactly and energy is booked exactly on every step (the two residuals below stay at 0). It does not yet show that anything evolves.</p>
+    </section>
+
+    <section class="observer" aria-labelledby="controls-heading">
+      <h2 id="controls-heading">Plant a world</h2>
+      <div class="controls">
+        <label for="heredity">Children get<select id="heredity">
+          <option value="inherit" selected>their parent's controller, sometimes mutated (the experiment)</option>
+          <option value="frozen">an exact copy, never mutated (only the founders compete)</option>
+          <option value="blocked">a brand-new random controller (heredity blocked: the control)</option>
+        </select></label>
+        <label for="light">Light<select id="light">
+          <option value="uniform" selected>even everywhere</option>
+          <option value="gradient">dim in the west, bright in the east (a smaller population lasts)</option>
+        </select></label>
+        <label for="seed">Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="1"></label>
+        <button id="plant" type="button">Plant</button>
+      </div>
+      <div class="controls transport">
+        <button id="play" type="button" aria-pressed="false">Play</button>
+        <button id="step" type="button">One step</button>
+        <label for="pace">Speed<select id="pace">
+          <option value="1">1 step per frame · watch each move</option>
+          <option value="4" selected>4 steps per frame · steady</option>
+          <option value="max">as fast as this CPU goes</option>
+        </select></label>
+        <label for="view">Show<select id="view">
+          <option value="all" selected>everything: nutrient green, trail violet, particles by family</option>
+          <option value="trail">trail only: where particles have been laying matter</option>
+          <option value="families">particles only, coloured by family</option>
+        </select></label>
+      </div>
+      <p id="status" class="muted" role="status">Planting.</p>
+    </section>
+
+    <section class="world-section" aria-label="The world and its numbers">
+      <div class="world-frame">
+        <canvas id="world" width="512" height="512" role="img" aria-label="The mycelium world seen from above. Green is dissolved nutrient, violet is trail, and each coloured dot is a particle; particles of one family (identical controllers) share a colour.">Canvas unavailable. The numbers still update.</canvas>
+      </div>
+      <div class="readouts">
+        <dl id="numbers">
+          <div><dt>Step</dt><dd id="r-step">0</dd></div>
+          <div><dt>Particles</dt><dd id="r-n">0</dd></div>
+          <div><dt>Families alive</dt><dd id="r-g">0</dd></div>
+          <div><dt>Births, last 100 steps</dt><dd id="r-b">0</dd></div>
+          <div><dt>Deaths, last 100 steps</dt><dd id="r-d">0</dd></div>
+          <div><dt>Matter residual</dt><dd id="r-m">0</dd></div>
+          <div><dt>Energy residual</dt><dd id="r-e">0</dd></div>
+          <div><dt>Time per step</dt><dd id="r-t">–</dd></div>
+        </dl>
+        <canvas id="history" width="480" height="140" role="img" aria-label="Particles (light line) and families alive (violet line) over the run.">History chart.</canvas>
+        <p class="muted legend"><span class="sw sw-n"></span>particles <span class="sw sw-g"></span>families alive</p>
+      </div>
+    </section>
+
+    <section class="caption" aria-labelledby="caption-heading">
+      <h2 id="caption-heading">Why this is not yet evidence of evolution</h2>
+      <ul>
+        <li>A family here is a set of particles with identical controllers. A mutation always starts a new family, so the family count measures mutation and survival together, not adaptation.</li>
+        <li>A crowd of particles, or a web of trail, is not an organism. Nothing groups particles into individuals yet.</li>
+        <li>The evidence would be a difference between the inherit arm and the blocked arm, beyond the noise between seeds, on readouts fixed in advance. Rung R2 tried to set that up on five practice seeds and it came out measurement-limited: the inherit arm varies so much from seed to seed that none of the four readouts could separate it from the blocked arm, or even respond to a doubling of light. The real comparison on fresh seeds was therefore never run, and this says nothing either way about whether heredity matters here.</li>
+        <li>Trail-following alone makes network shapes, so a hard-coded trail follower is a null this world still has to beat. The follower is built and runs, but because the comparison with it was never run, it has not been beaten.</li>
+        <li>The default numbers (upkeep, light, sizes) were tuned by hand so a population lasts. They are choices, not findings.</li>
+      </ul>
+      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md. This page is CPU only, deterministic integer arithmetic, not on the public site.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/mycelium/page.ts"></script>
+</body>
+</html>

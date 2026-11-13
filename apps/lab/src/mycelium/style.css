@@ -1,0 +1,25 @@
+@import '../particles/style.css';
+.disclosure{padding:12px 15px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.65}
+.observer{padding:16px;margin:20px 0;border:1px solid #35484e;border-radius:10px;background:#111f25;display:grid;gap:14px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:14px;align-items:end}
+.controls.transport{grid-template-columns:auto auto minmax(0,1fr) minmax(0,1fr)}
+.controls label{display:grid;gap:5px;color:#c2d0cd;font-size:13px;margin:0;min-width:0}
+.controls select,.controls input{width:100%}
+.world-section{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+.world-frame{border:1px solid #34484e;border-radius:10px;background:#08151c;padding:8px}
+#world{display:block;width:100%;height:auto;aspect-ratio:1;image-rendering:pixelated;border-radius:6px}
+.readouts{display:grid;gap:12px;min-width:0}
+#numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+#numbers div{border:1px solid #2b3e43;border-radius:8px;padding:8px 10px;background:#101e24}
+#numbers dt{color:#8fa3a0;font-size:12px}
+#numbers dd{margin:2px 0 0;font-size:18px;color:#e9f1ec;font-variant-numeric:tabular-nums}
+#history{display:block;width:100%;height:auto;border:1px solid #2b3e43;border-radius:8px;background:#0b171d}
+.legend{font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sw{display:inline-block;width:14px;height:3px;border-radius:2px}
+.sw-n{background:#dfe9e4}.sw-g{background:#c79be6}
+.caption{margin:28px 0 48px;padding:16px;border:1px solid #7b6744;border-radius:10px;background:#221f19}
+.caption h2{margin-top:0;color:#f2dfb7}
+.caption li{margin:7px 0;line-height:1.6;color:#e3d7bd;font-size:14px}
+.skip{position:absolute;left:-10000px}.skip:focus{left:10px;top:10px;z-index:10;background:#fff;color:#000;padding:10px}
+@media(max-width:860px){.world-section{grid-template-columns:1fr}}
+@media(max-width:760px){.controls,.controls.transport{grid-template-columns:1fr}}
