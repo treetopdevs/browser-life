@@ -17,15 +17,15 @@
         <a class="site-brand" href="/"
           aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="2.6" rx="1.3"/><path class="bm-jar" d="M8 14.5h16a3 3 0 0 1 3 3V26a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-8.5a3 3 0 0 1 3-3z"/><circle class="bm-life" cx="10.5" cy="25.6" r="1.5"/><circle class="bm-life" cx="15.6" cy="23.2" r="2.1"/><circle class="bm-life" cx="21.3" cy="20.4" r="2.7"/></svg><span>Cadence<span class="brand-light"> Garden</span></span></a>
         <nav class="site-nav"
-          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/research/" aria-current="page">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/story/">Story</a><a href="/research/" aria-current="page">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
       </div>
     </header>
     <main id="main">
       <section class="page-intro shell">
-        <p class="eyebrow">The journal · updated <time datetime="2026-10-28">28 Oct 2026</time></p>
+        <p class="eyebrow">The journal · updated <time datetime="2026-11-14">14 Nov 2026</time></p>
         <h1>Chasing the signs of life.</h1>
         <p
-          class="lede">Sun-followers, comet-like blobs, worms and labyrinths: the promising moments are shaping the next experiments. We’re looking for what makes those behaviours possible, then trying to amplify them. This journal keeps three things apart: what we saw, what we measured, and what we hope.</p>
+          class="lede">Sun-followers, comet-like blobs, worms and labyrinths: the promising moments are shaping the next experiments. We’re looking for what makes those behaviours possible, then trying to amplify them. This journal keeps three things apart: what we saw, what we measured, and what we hope. New here? <a href="/story/">The story so far</a> tells these results in order, and <a href="/experiments/">the experiments index</a> lists every one with its sources.</p>
       </section>
       <section class="shell prose-grid">
         <div class="aside-label">The direction</div>
@@ -234,16 +234,160 @@
             <p class="fine">Exploratory: one to three seeds per design, each with an exact repeat, screens whose rules were written before running. Passing says a world stayed alive and visibly changing, not that it evolves anything. Whether motion helps is not shown, and neither is that it doesn’t.</p>
           </div>
         </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 23 Oct</span>
+          <h2>A thin 3D world: no setting fits</h2>
+          <div>
+            <p>A 3D line asked whether a thin slab of 256 × 256 × 8 cells could hold a sparse living world that also shades its own floor. The slab ran fast enough (a median of 234.5 steps a second against a gate of 100), so a fixed grid of 60 settings was run on three seeds each: 180 runs of 50,000 steps. A setting had to end, on all three seeds, with 1% to 50% of cells living and light at the floor between 5% and 80% of the light at the top. None did. Life either stayed sparse or died out, or covered most of the slab, and strong shade came only where life covered most of each column.</p>
+            <p class="fine">Exploratory: one fixed grid, three seeds per setting, one founding recipe. It says nothing about every possible slab; nutrient per cell was held fixed. The speed benchmark before it read “stop” under its own pre-stated rule and was then re-ruled to go, at a smaller kernel radius, after the data were seen. The planned 300,000-step check never ran. Matter and energy balanced exactly in all 180 runs. The 3D line is now closed (rung 1b).</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 24 Oct</span>
+          <h2>Can we measure how far a kick spreads?</h2>
+          <div>
+            <p>A second 3D idea was to give the slab a small kick and measure how far the damage spreads, then call a world ordered, critical or chaotic. The meters first had to pass a ground-truth gate: a control with flow and motility switched off had to read as ordered. On three development seeds it did not, because in dense worlds the control still spread the kick, so the idea was closed instead of changing constants and rerunning. On the same seeds, a one-voxel kick in the slab’s nearest-to-target world reached 93% to 99% of the living blocks within 1,000 steps, about as far as in our 2D worlds (86% to 96%).</p>
+            <p class="fine">The doc’s label: STAGE0-CLOSED (the first gate failed and the rerun was declined). A development pilot on seeds 9001 to 9003; the rule was never frozen, and the held-out gate and the 96-job sweep never ran. This is a result about the instrument, not about the worlds. The control kept the transport blur and chemistry running, so what carries the spread is not separated.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 24 Oct</span>
+          <h2>Rock, paper, scissors on a slab</h2>
+          <div>
+            <p>Cyclic competition is three kinds that each eat one other kind in a ring. Mixing them too fast breaks the ring. A plain grid model passed its registered check against a published mixing threshold. On our slab, the registered pilot stopped at its first gate: no starting setup gave the five usable settings it needed, so no killing was tested there. Two later explorations at 256 × 256 × 4 for 200,000 steps found that one way of killing a loser lost a kind in all three seeds, and the other, which leaves the loser’s cell vacant, kept all three kinds alive in two of three seeds.</p>
+            <p class="fine">The doc’s labels: LAT-PASS (the plain grid model, registered); GATE-0-STOP (the slab pilot, registered); EXPLORATION-NO-HORIZON (a first exploration could not set a run length); EXPLORATION-2-NO-CONFIRM and EXPLORATION-2-PERSISTS (the two kills). The explorations are not a pass of the registered gate, and the record itself says pilot numbers are not to be quoted as results, so only verdicts appear here. Three seeds per job. The mutation and kernel-shape runs were not run.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 31 Oct</span>
+          <h2>Programs that learn to copy themselves</h2>
+          <div>
+            <p>Program soup is a different world from the jar: a port of a published program soup (cubff), in which 131,072 programs of 64 bytes are repeatedly paired up, run as code and split apart, with random mutation. From random bytes, self-copying programs took over in 3 of 8 well-mixed soups (seeds 2, 6 and 8) and in one of our two seeds on the paper’s 240 × 135 grid, at about step 16,961. The other grid seed’s apparent transition was a short blip with every program still distinct, so we do not count it. After takeover, the leading copier kept changing in all four soups (at least four lasting changes each, where the rule asked for three), but 16-seed races between leaders settled only 19 of 63 pairings, and improvement is not shown. See <a href="/soup/">the program soup page</a>.</p>
+            <p class="fine">The doc’s headline: “Copiers keep replacing each other; improvement not shown.” In 2 of the 4 soups the first leader lost every race that settled; of the 19 settled races, 15 went to the later leader. Four soups, one rule set; races are well-mixed and last 512 epochs, and a copy test score of 64 of 64 is a finite test, not 64 births. The races ran on the CPU, but the long soups that produced the leaders ran on a GPU we later found can silently drop work, so their histories are not exact cubff runs. Our port matches the published compressed sizes for the first 257 epochs; the takeover epochs are reported, not independently re-run. The first run was marked provisional because a marker control failed; the rerun’s controls were all unresolved. A follow-up asking whether later leaders do better against copiers from other soups (the Red Queen test) has its rules frozen (1 Nov), and its document reports no result.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 31 Oct</span>
+          <h2>Can an image model see a takeover?</h2>
+          <div>
+            <p>A published method scores how open-ended a simulation is by embedding its frames with an image model (CLIP) and measuring how unlike each frame is from every earlier one. Before trusting it on the garden, we tried it on the soup, where the answer is known: one grid seed has a clear copier takeover and the other is the no-copier control. The rules were fixed before any frame was scored. By them it passed: the largest novelty in the takeover window, 0.034 at step 17,536, was above every earlier frame and every frame of the control (0.021 at most), about 600 steps after the copy test first finds a copier.</p>
+            <p class="fine">One takeover and one control, byte-view frames only, so this says it can see this event, not how often. With the colours permuted it still passed, but by a ratio of only 1.08, and the control’s entropy blip also raised novelty (within 8% of the takeover peak). So a rise means “something visibly changed”, not “life happened”. Each program is under one pixel wide to the model. The doc’s label: PASS, with a thin margin under recolouring; it allows a later step on garden runs only with a recoloured arm and a null that has structure but no biology.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 1 Nov</span>
+          <h2>A map of behaviours</h2>
+          <div>
+            <p>A behaviour atlas keeps one example of each distinct kind of behaviour, instead of only the single best. The tool now runs end to end. It has two held-out survival tests (a moving sun, and half the food), and a calibration on 48 genomes, 47 of which survived, set its bins; those 47 fill 14 distinct cells. A first comparison of the atlas against a random pick and a mass-and-speed pick ran, but in both histories every arm had a member that passed each test, so the main readout could not tell them apart.</p>
+            <p class="fine">Exploratory engineering (I01). Two histories and 64 evaluations per arm say nothing about which arm is better, and the doc says so. The held-out tests were chosen to avoid re-measuring what the arms select on; a pilot with a registered threshold has not been run.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 1 Nov</span>
+          <h2>Which “how predictable” scores are fooled?</h2>
+          <div>
+            <p>Simple predictors that learn from past frames were run on fixed test movies, to find which cheap readouts can be fooled. Life-rule worlds and gliders were labelled exact, because the predictor learned the rule itself. Random bits were labelled noise-like: hard to predict, but not alive. A movie with nine copies of one glider had exactly nine times the errors of one glider, so error count alone shows no new structure. A 32 × 32 clip of our own ecology was labelled partial. See <a href="/predictability/">the predictability page</a>.</p>
+            <p class="fine">A check of the measures, not of the worlds: small CPU fixtures with fixed predictors, none of it about whether any ecology is alive or open-ended. The check for whether rankings flip with resolution is nearly vacuous on these fixtures, as the doc says.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state negative">Negative · 2 Nov</span>
+          <h2>Can we predict what a nudge will do?</h2>
+          <div>
+            <p>A naturalist could earn credibility by predicting the result of an experiment before it runs. We built a test: feed, drain or sham-disturb a small CPU world at a fork, and compare predictions with what happened. A first look at the harness was exploratory. A held-out run followed, on 20 fresh families, with its rules frozen and committed beforehand; its 16 test families gave 96 cases. The trend rule was wrong on 73 of 96 cases and scored worse than always guessing “no change” (probability score 0.690 against 0.553, lower is better; the difference interval sits wholly above zero).</p>
+            <p class="fine">The doc’s reading: NEGATIVE, for this one rule on these 32 × 32 CPU fixture worlds (I02). Its score did not separate from a control that shuffles the evidence (0.683), so there is no sign it used its evidence. 57 of 96 outcomes were “none”. Nothing here is about any model, GPU world or the naturalist, and not that no evidence-using rule could work. Intervals are descriptive at this size, and the exploratory numbers are not merged with the held-out ones.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 2 Nov</span>
+          <h2>Better than the past, or just different?</h2>
+          <div>
+            <p>To tell improvement from turnover, genomes compete in small CPU arenas. A first check found the arena could see a deliberately weakened copy (it lost to the original in all 10 blocks) and stayed quiet for identical genomes. Then an archive tournament, with rules frozen and pushed before scoring, pitted old and new genomes from three archives. Two archives were labelled insensitive-or-biased, because a position control (which side a genome starts on) shifted results more than its target. The third showed a strength order that does not follow search time. No cycles were found. See <a href="/opponents/">the opponents page</a> and <a href="/opponents/archive/">the archive tournament</a>.</p>
+            <p class="fine">The doc’s answer: nothing shows improvement against the past under the frozen rules. This is not a finding of no improvement: in the two masked archives a control failed, and one of them looked strongly later-beats-earlier (90% by the naive measure) until it did. The first check is exploratory, as its thresholds were not committed before its outcomes. CPU only; one replay check covered a quarter of the jobs (322 of 1,360). (I03)</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 2 Nov</span>
+          <h2>Do small edits to a controller stay local?</h2>
+          <div>
+            <p>If a controller’s edits are tangled together, fixing one trait could break another. For two founder genomes we made small edits and measured the effect in tiny CPU worlds. Most edits were viable, but few improved anything: 1 of 24 assayed edits per genome in the first pass, and 3 and 4 of 192 in a frozen larger run. The rule needed at least five improving edits to say anything about side effects. It got none, so it reads inconclusive.</p>
+            <p class="fine">The doc’s label: inconclusive (underpowered), in both rungs. No harm to other behaviours was seen, but with so few improving edits that is not evidence of low harm. The advisory “no-go” on a separate controller design means this slice gives no reason to open one, not evidence against one. Two genomes, one edit operator, CPU only. (I05) See <a href="/controller-locality/">the controller locality page</a>.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 2 Nov</span>
+          <h2>Can one body’s building help another?</h2>
+          <div>
+            <p>Niche construction asks whether what one kind of cell builds helps a different kind that arrives later. Builders with a polymer-building gene shaped a field, and a receiver was placed in it and compared with controls. The test could not decide. Builders leave a median of 84.5 to 103.5 polymer, while the test’s own noise floor was 291 to 404, and a hand-built wall at builder scale was not detected. A second rung matched the controls’ free energy; a hand-built wall was undetectable at every dose tried, so no builder was run.</p>
+            <p class="fine">The doc’s label: unsupported-measurement for all three builder candidates, in both rungs. Not “no benefit”: a first-pass headline of “no causal benefit detected” was withdrawn. Eight fresh blocks per candidate in the first rung; mutation off; one receiver genome; CPU only. It says nothing against niche construction. (I06) See <a href="/niche/">the niche page</a>.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 2 Nov</span>
+          <h2>Can a measure see repeated building blocks?</h2>
+          <div>
+            <p>An assembly observer tries to tell a designed hierarchy of reused shapes from random shapes that are merely duplicated. In sealed tests, two readouts separated a hand-built 12-cell hierarchy from random duplicated motifs across all four test grid cells. A naive copies-times-cost score failed: duplicated random motifs scored higher than the hierarchy every time. On three ecology clips, the object counts moved by a factor of two or more with the segmentation settings, so nothing was read from them. See <a href="/assembly/">the assembly page</a>.</p>
+            <p class="fine">Exploratory (I07). The hierarchy is our own fixture, so this shows the readout tracks that construction, and one of the readouts depends on shape cost, not on copy count. Of the four test grid cells, one is independent evidence. A sealed sentence saying no score selected anything was false and was corrected in a dated amendment. The clip findings are descriptive only.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 2 Nov</span>
+          <h2>Do bodies that cluster follow the sun better?</h2>
+          <div>
+            <p>A first rung asked whether a group of sensing bodies gets more from a moving sun than the same bodies spread out. The test could not decide: the noise floor of its capture contrast (1,429,742 parts per million of the energy fed in) was above its frozen limit of 500,000, though the sensor did track the sun. The eight fresh blocks were still run and read as description only. Under a wandering sun, grouping helped the sensing bodies more than it helped a twin that cannot use the signal in 8 of 8 blocks, but measured against blind drifters that head the same way it did so in only 4 of 8, with a negative median.</p>
+            <p class="fine">The doc’s label: unsupported-measurement. Not “no benefit”. Eight blocks, CPU only, mutation off. The fresh blocks had been read once before fixes made after a review; the label depends on the calibration alone, and the numbers regenerated identically. Not tested: a westward turn, a live reversal on a displayed world, or a sharper geometry (the fresh seeds are used up). (I08) See <a href="/moving-light/">the moving light page</a>.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">Open · 13 Nov</span>
+          <h2>A world of particles with tiny brains</h2>
+          <div>
+            <p>The mycelium world is a wrap-around grid in which particles each carry a 160-byte neural controller, eat, lay a chemical trail and split. A child copies its parent’s controller, with occasional mutation. Matter and energy balance exactly, and the GPU version matches the CPU reference bit for bit on 69 test cases, on one Mac. The first question was whether inheriting a controller matters, compared with giving each child a fresh random one. Two designs could not answer it: in 100 practice runs, inheriting worlds mostly lost their trail before the measuring window, and the confirmation was never run.</p>
+            <p class="fine">The doc’s label for both: MEASUREMENT-LIMITED. Not a fail, and not evidence about heredity either way. The first design used five practice seeds and kept no readout. In the second, the structure readout could be measured in 1 of 20 seeds where 8 were needed. Nothing in the world declares an individual. See <a href="/mycelium/">the mycelium page</a>.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">Exploratory · 14 Nov</span>
+          <h2>Trail: purged, kept, but not used</h2>
+          <div>
+            <p>When laying trail is only a cost, inheriting controllers stopped laying it: in 15 of 16 inheriting runs, late deposit was below every random-controller run’s, and costlier laying meant a larger drop. A toll rule, which makes moving cheap for a particle that lays trail, kept trail in 15 of 16 inheriting worlds, against 0 of 16 without it. But the controllers did not follow it: on four readouts, every interval sat inside a margin set beforehand, and in the median run 99.6% of particles laid exactly the one unit that earns the discount. A last screen lets nutrient flow along connected trail, and it lost its trail too, but almost no trail was laid there to test.</p>
+            <p class="fine">The docs’ labels: PASS (purge supported), TOLL-ONLY, and PURGED (a conduit screen, an exploration: 4 seeds per cell, no noise floor). Sixteen runs per arm on one Mac; rules were fixed by hash before the confirmation runs but kept local and uncommitted, so we do not call them registered. It is a direction test, not a measurement of selection. Not shown: that nothing reads the trail (use of the trail’s level is untested), or that a connected trail that already existed would not pay; the conduit screen cannot say. Nothing here shows that anything evolves.</p>
+          </div>
+        </article>
       </section>
       <section class="shell prose-grid">
         <div class="aside-label">Day by day</div>
         <div class="prose">
           <h2>How we got here</h2>
           <ol class="log" role="list">
+            <li><time datetime="2026-11-14">14 Nov</time><span>Everything in the open: the experiment pages that were kept off this site are now public, with <a href="/story/">a story page</a> that tells the results in order and <a href="/experiments/">an index</a> of every one. The pages are explorations to look at, not evidence.</span></li>
+            <li><time datetime="2026-11-14">14 Nov</time><span>The mycelium world’s trail questions: inheriting controllers stop laying trail that is only a cost (supported, 16 runs per arm); a toll rule keeps the trail but the controllers do not follow it; a nutrient conduit screen loses its trail too, and almost never operated. Nothing here shows anything evolves.</span></li>
+            <li><time datetime="2026-11-14">14 Nov</time><span>A viewer, not a result: <a href="/food-bands/">Food bands</a> runs ten of the food-schedule screens live and draws the food band.</span></li>
+            <li><time datetime="2026-11-14">14 Nov</time><span>A viewer, not a result: the 18 food result pages that showed nothing now replay on a local checkout, after one command that restores and checks 73 saved replay files.</span></li>
+            <li><time datetime="2026-11-14">14 Nov</time><span>A viewer, not a result: <a href="/slab/">the slab viewer</a> runs the 3D cyclic-competition and ecology kernels live, for looking only.</span></li>
+            <li><time datetime="2026-11-14">14 Nov</time><span>A viewer, not a result: the regime-meters page gets figures of the development pilot’s damage spread and the slab’s calibration grid, in which 0 of 60 settings qualify.</span></li>
+            <li><time datetime="2026-11-13">13 Nov</time><span>A mycelium world of particles with tiny neural controllers, <a href="/mycelium/">with its own page</a>: matter and energy balance exactly, and its GPU port matches the CPU bit for bit. Two attempts to test whether heredity matters are measurement-limited; a trail-use screen follows.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>An archive tournament for historical opponents, rules frozen before scoring: nothing shows improvement against the past, and in two of three archives a position control failed, so this is not a finding of no improvement.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>A held-out test of predicting what a feed, drain or sham will do, rules frozen and committed first: the trend rule scores worse than always guessing “no change”. Negative for that rule.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>Controller locality, powered up to 192 assayed edits per genome: 3 and 4 improving edits, short of the 5 the rule needs, so still inconclusive.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>Niche construction, second rung with free-energy-matched controls: the assay cannot see a hand-built wall at any tested dose, so no builder was run. Unsupported-measurement, not a negative.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>An assembly observer separates a designed hierarchy from random duplicated motifs, where a naive copies-times-cost score is fooled; clips from the ecology are too segmentation-dependent to read.</span></li>
+            <li><time datetime="2026-11-02">2 Nov</time><span>A moving-light test of whether grouped sensing bodies follow the sun better: the noise floor is above the limit set beforehand, so it cannot decide. Unsupported-measurement, not “no benefit”.</span></li>
+            <li><time datetime="2026-11-01">1 Nov</time><span>First rungs of three of the next questions: an arena for historical opponents that sees a weakened copy; controller edits that rarely improve anything; and a niche-construction test whose assay is too noisy to decide.</span></li>
+            <li><time datetime="2026-11-01">1 Nov</time><span>A behaviour atlas of distinct behaviours is built and smoke-tested (its main readout saturates), and a predictability atlas finds which cheap “how predictable” scores random bits and duplicated motifs fool.</span></li>
+            <li><time datetime="2026-11-01">1 Nov</time><span>The program soup’s post-takeover test is read out: copiers keep replacing each other in all four soups, and improvement is not shown. The GPU the long soups ran on is found to silently drop work, so their histories are not exact.</span></li>
+            <li><time datetime="2026-11-01">1 Nov</time><span>A Red Queen test for copiers, asking whether later leaders do better against copiers from other soups, has its rules frozen. No result is reported yet.</span></li>
+            <li><time datetime="2026-11-01">1 Nov</time><span>A research plan, <em>What to grow next</em>, is written: planning, not results. It proposes a museum of distinct behaviours, a naturalist that earns credibility by predicting experiments, and historical opponents to tell improvement from turnover.</span></li>
+            <li><time datetime="2026-10-31">31 Oct</time><span>A CLIP image model is tried as a takeover observer on the soup: it passes its rules by a thin margin, and also reacts to the no-copier blip.</span></li>
+            <li><time datetime="2026-10-31">31 Oct</time><span>Program soup arrives: <a href="/soup/">a page</a> where random programs learn to copy themselves, and, in the code, a shared soup for the archipelago (not deployed) and a plan for tape genomes in the jar.</span></li>
             <li><time datetime="2026-10-28">28 Oct</time><span>Food-band experiments in a small prototype world: even food, a moving band and a fixed band all stay alive and changing on every seed tried; food alternating between two bands passed once and did not recur on a second seed.</span></li>
             <li><time datetime="2026-10-27">27 Oct</time><span>A batch of creative prototypes lands in the lab’s code, kept off the public site: particle worlds, travelling oases, seasons, bonds, developmental shapes, aquariums, 3D particles, an ecosystem library and Hungry shapes.</span></li>
+            <li><time datetime="2026-10-24">24 Oct</time><span>Cyclic competition on the slab: a plain grid model passes its registered check, the slab pilot stops at its first gate, and two later explorations give mixed readings (one way of killing a loser holds all three kinds in 2 of 3 seeds).</span></li>
+            <li><time datetime="2026-10-24">24 Oct</time><span>The regime meters for the 3D slab fail their first ground-truth gate on development seeds, and the idea is closed instead of rerun.</span></li>
             <li><time datetime="2026-10-24">24 Oct</time><span>A recovery test, fixed before it ran, finds no edge for a mutant that had looked better at regrowing: 28 of 32 each, and it stops as planned.</span></li>
             <li><time datetime="2026-10-24">24 Oct</time><span>In the code: a membrane view in the lab; Try buttons on field notes tied to what they actually did; Pond keeper’s donor picker ranks ponds by shell share; islands leave cleanly and back off when refused; the coordinator counts refusals.</span></li>
+            <li><time datetime="2026-10-23">23 Oct</time><span>The 3D slab’s calibration grid, fixed beforehand, finds no setting among 60 that is both sparse and shaded: the slab rung stops there.</span></li>
+            <li><time datetime="2026-10-22">22 Oct</time><span>A speed benchmark for a 3D version of the jar’s neighbour pass reads stop under its pre-stated rule; on 23 Oct it is re-ruled to go at a smaller kernel radius, a decision made after seeing the data.</span></li>
             <li><time datetime="2026-10-22">22 Oct</time><span>A shell rule, where held polymer lets a wounded cell survive, and two screens for a world that rewards building: neither passes. Pond keeper v3 brings wounds and shells to the breeder as weather.</span></li>
             <li><time datetime="2026-10-21">21 Oct</time><span>A third gene experiment, a build gene that must build, reads unclear: the paying gene ends at or under 1% of cells, on average over the last stretch, whether it builds or not, while a free copy drifts to 41% in one seed of three.</span></li>
             <li><time datetime="2026-10-18">18 Oct</time><span>The sun letter, in the code: a logged change to the light for a span of steps, which scales the world’s light settings to half or three quarters, or, where a world’s light allows, to a quarter or a half more (on most worlds it can only dim, and none yet takes the brightest), after which the world’s own light returns. Matter stays closed and a replay is exact: in runs on our machines, in a Sun tool in the lab beside Wound, Feed and Drain, and in the shared garden as a letter that shines for one garden day; such a day goes only to islands that say they can replay a sun. The big storm takes the two dimmer settings. A keeper can found a garden without sun letters; by default it takes them. No garden is planted, and its page stays unlinked.</span></li>
