@@ -63,6 +63,8 @@ describe("experiments ledger", () => {
     expect(() => fill(`${open("tally")}\n`)).toThrow(/never closed/);
     expect(() => fill(`${open("tally")}${close("tally")}${open("tally")}${close("tally")}`)).toThrow(/twice/);
     expect(() => fill(`${open("nope")}${close("nope")}`)).toThrow(/unknown/);
+    expect(() => fill(`<!-- GENERATED:ledger:bad_name -->stale<!-- /GENERATED:ledger:bad_name -->`)).toThrow(/malformed/);
+    expect(() => fill(`<!--GENERATED:ledger:tally-->stale<!-- /GENERATED:ledger:tally -->`)).toThrow(/malformed/);
   });
 
   it("every row matches a journal card: same heading, label, date and chip colour", () => {

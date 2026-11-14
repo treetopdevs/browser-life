@@ -81,6 +81,10 @@ export function blocks(): Record<string, string> {
 export function markers(html: string): string[] {
   const names: string[] = [];
   let open: string | null = null;
+  // Any comment that mentions the marker prefix must be a well-formed marker, so a typo cannot hide a stale block.
+  for (const m of html.matchAll(/<!--[^>]*GENERATED:ledger[^>]*-->/g)) {
+    if (!/^<!-- \/?GENERATED:ledger:[a-z0-9-]+ -->$/.test(m[0])) throw new Error(`malformed ledger marker ${m[0]}`);
+  }
   for (const m of html.matchAll(/<!-- (\/?)GENERATED:ledger:([a-z0-9-]+) -->/g)) {
     const [, slash, name] = m;
     if (!slash) {
