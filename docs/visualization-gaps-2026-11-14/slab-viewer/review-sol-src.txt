@@ -1,0 +1,27 @@
+**P1 — must fix**
+
+None found.
+
+**P2 — should fix**
+
+- **Stale readbacks publish after a restart.** [page.ts:140](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:140) awaits `sim.frame()` and publishes without rechecking generation. Switching world during that await paints the previous world under the new controls. Reproduced in memory: selected ecology, published cyclic step 100. Capture generation and simulator identity; reject superseded frames and errors after each await.
+
+- **Radio changes destroy keyboard focus.** [page.ts:212](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:212) replaces the radio inputs when world, rule, setting, size or start changes. Arrow-key selection therefore removes the focused element and interrupts group navigation. Preserve the inputs or restore equivalent focus. The keyboard test only tabs through controls and operates Play, so it misses this.
+
+- **The layer oracle can pass with duplicated or reversed layers.** [slab.spec.ts:104](/Users/nicholas/develop/browser-life-viz-slab-viewer/tests/e2e/slab.spec.ts:104) compares samples whose coordinates vary with `z`. Four identical layer arrays still produced 30 “different layer” samples in my reproduction. Additionally, the ecology oracle reads the same processed frame used for rendering, allowing an adapter-wide layer reversal to agree with itself. Compare identical coordinates across depth and independently check original readback buffers using asymmetric markers.
+
+- **Ordinary E2E runs overwrite recorded evidence.** [slab.spec.ts:365](/Users/nicholas/develop/browser-life-viz-slab-viewer/tests/e2e/slab.spec.ts:365) unconditionally replaces ten PNGs under `docs/`. A partially failed rerun leaves mixed captures while EVIDENCE.md remains unchanged. Send routine captures to test output; require an explicit recording operation to replace evidence.
+
+**P3 — nit**
+
+- **Layer description stays stale after depth changes.** [page.ts:83](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:83): select ecology layer 7, then cyclic. The slider and state become 3, but the description still says 7. Reproduced in memory. Update `#layer-out` when clamping.
+
+- **Ecology guidance overgeneralizes the default outcome.** [page.ts:282](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:282) promises a full carpet around step 15,000 even for “Sparse corner,” “Half living,” and unrecorded tuples. Qualify this statement with the default recorded setting and seed.
+
+Clean areas: indexing, projections, hand-over splitting, successful readback copy/unmap paths, and scope showed no additional defects.
+
+Privacy: no public-link, robots, sitemap or social-meta leak found. In-memory default production build emitted no slab assets; opt-in emitted the expected page/JS/CSS. Caddy adaptation passed.
+
+Pins: spike SHA-256 matched `761ea02a…140cc7`; current FROZEN hashes validated. All 372 tracked `experiments/` and `packages/` files matched base `7bb61be2` byte-for-byte; protected-path diff statistics were empty. No forbidden replay/video/archive additions.
+
+Verification: both typechecks and the CPU picture-pin reproduction passed. Vitest was blocked before running tests by sandbox denial of scratch-directory creation; E2E was not rerun. All ten supplied screenshots were inspected and support their recorded visual descriptions. No files changed.

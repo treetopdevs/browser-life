@@ -4,6 +4,9 @@
   # Keep the shared garden private, including named gardens and keeper APIs.
   @private_garden path_regexp private_garden (?i)^/(garden(?:/|$)|api/(?:public/)?gardens?(?:/|$))
   respond @private_garden 404
+  # The slab viewer is a private exploration page: never served from the site.
+  @private_slab path_regexp private_slab (?i)^/slab(?:/|$)
+  respond @private_slab 404
 
   @api path /api/*
   reverse_proxy @api coordinator:4000 {
