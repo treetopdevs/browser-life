@@ -1,0 +1,10 @@
+vitest tools/test after restore (full run)
+numTotalTestSuites 671 numTotalTests 2813 passed 2768 failed 6 pending/skipped 39
+failed files:
+  tools/test/food-band-foothold-replication.test.ts: 6
+    - food-band foothold assay gates and CLI checks the pinned historical artifact raw, index, and parsed-data digests :: Error: Pinned input changed: package.json
+    - food-band foothold assay gates and CLI rejects malformed frame, snapshot, tick rows, and stale pins :: AssertionError: expected [Function] to not throw an error but 'Error: Pinned input changed: package.…' was thrown
+    - complete rehashed evidence rejection accepts the synthetic structural fixture without stepping :: AssertionError: expected [Function] to not throw an error but 'Error: Pinned input changed: package.…' was thrown
+    - complete rehashed evidence rejection rejects fictitious initialization energy after every affected digest is recomputed :: Error: Pinned input changed: package.json
+    - complete rehashed evidence rejection rejects impossible cells at an unsampled tick after rehashing :: Error: Pinned input changed: package.json
+    - complete rehashed evidence rejection rejects parents born later or dead before offspring after rehashing :: Error: Pinned input changed: package.json

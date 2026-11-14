@@ -1,0 +1,1154 @@
+{
+  "verdict": "READY",
+  "reasons": [],
+  "codeHash": "f538f101d3ae53391a04630121d06f9c86ea2aafa425a6134eb9ed5240693a2a",
+  "protocolSha256": "e0541d1370592f515cd60242aaa32403e80f25d497e37b44c977032262a13fa4",
+  "problems": [],
+  "guardTrips": [],
+  "realDev": {
+    "label": "INCONCLUSIVE",
+    "tests": [
+      {
+        "id": "D1",
+        "what": "late deposit rate dL, inherit against blocked (default cost)",
+        "n": [
+          20,
+          20
+        ],
+        "effect": 1,
+        "p": 0.0000049999750001249995,
+        "adjusted": 0.000014999925000374999,
+        "reject": true,
+        "floor": 0.5,
+        "verdict": "SUPPORT"
+      },
+      {
+        "id": "D2",
+        "what": "change score g = (dL - dE)/(dL + dE), inherit against blocked (default cost)",
+        "n": [
+          20,
+          20
+        ],
+        "effect": 0.925,
+        "p": 0.0000049999750001249995,
+        "adjusted": 0.000014999925000374999,
+        "reject": true,
+        "floor": 0.5,
+        "verdict": "SUPPORT"
+      },
+      {
+        "id": "D3",
+        "what": "dose: normalised early deposit falls as the deposit cost rises (1, 2, 4)",
+        "n": [
+          10,
+          20,
+          10
+        ],
+        "effect": 0.29,
+        "p": 0.09836950815245923,
+        "adjusted": 0.09836950815245923,
+        "reject": false,
+        "floor": 0.25,
+        "verdict": "NULL"
+      }
+    ],
+    "tmConcordance": {
+      "delta": -1,
+      "ok": true
+    },
+    "frozen": {
+      "deltaVsBlocked": -1,
+      "pVsBlocked": 0.0000049999750001249995,
+      "deltaInheritVsFrozen": 0.2849999999999999,
+      "pInheritVsFrozen": 0.18043909780451098,
+      "deltaInheritVsBlocked": -1,
+      "pInheritVsBlocked": 0.0000049999750001249995,
+      "reading": "FROZEN-LOW",
+      "inheritBelowFrozen": false,
+      "purgePresent": true,
+      "interpretation": "FROZEN-SUFFICES"
+    }
+  },
+  "attainability": {
+    "plantFolds": [
+      1.5,
+      2,
+      3,
+      4
+    ],
+    "reps": 100,
+    "requiredFold": 4,
+    "requiredRate": 0.8,
+    "planted": {
+      "2": {
+        "PASS": 0.95,
+        "FAIL": 0,
+        "INCONCLUSIVE": 0.05
+      },
+      "3": {
+        "PASS": 1,
+        "FAIL": 0,
+        "INCONCLUSIVE": 0
+      },
+      "4": {
+        "PASS": 1,
+        "FAIL": 0,
+        "INCONCLUSIVE": 0
+      },
+      "1.5": {
+        "PASS": 0.24,
+        "FAIL": 0,
+        "INCONCLUSIVE": 0.76
+      }
+    },
+    "flipped": {
+      "label": "FAIL",
+      "tests": [
+        {
+          "id": "D1",
+          "what": "late deposit rate dL, inherit against blocked (default cost)",
+          "n": [
+            20,
+            20
+          ],
+          "effect": -1,
+          "p": 0.0000049999750001249995,
+          "adjusted": 0.000014999925000374999,
+          "reject": true,
+          "floor": 0.5,
+          "verdict": "CONTRADICT"
+        },
+        {
+          "id": "D2",
+          "what": "change score g = (dL - dE)/(dL + dE), inherit against blocked (default cost)",
+          "n": [
+            20,
+            20
+          ],
+          "effect": -0.925,
+          "p": 0.0000049999750001249995,
+          "adjusted": 0.000014999925000374999,
+          "reject": true,
+          "floor": 0.5,
+          "verdict": "CONTRADICT"
+        },
+        {
+          "id": "D3",
+          "what": "dose: normalised early deposit falls as the deposit cost rises (1, 2, 4)",
+          "n": [
+            10,
+            20,
+            10
+          ],
+          "effect": -0.29,
+          "p": 0.09836950815245923,
+          "adjusted": 0.09836950815245923,
+          "reject": false,
+          "floor": 0.25,
+          "verdict": "NULL"
+        }
+      ]
+    },
+    "null": {
+      "PASS": 0,
+      "FAIL": 0.01,
+      "INCONCLUSIVE": 0.99
+    }
+  },
+  "runs": [
+    {
+      "arm": "inherit",
+      "slot": 2001,
+      "dE": 0.020286985874364612,
+      "dL": 0,
+      "tmE": 2.5289641528081312,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2002,
+      "dE": 0.027786131773964336,
+      "dL": 0.00002636527191888418,
+      "tmE": 3.1655402189594826,
+      "tmL": 0.0017886115296631116,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2003,
+      "dE": 0.018760095262799634,
+      "dL": 0.0008001105955954021,
+      "tmE": 2.1539486041035354,
+      "tmL": 0.07636619989636942,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2004,
+      "dE": 0.05000741999231142,
+      "dL": 0,
+      "tmE": 5.465947124688521,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2005,
+      "dE": 0.07286309283957218,
+      "dL": 0,
+      "tmE": 7.3323406088832686,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2006,
+      "dE": 0.013649322586568684,
+      "dL": 0.000001893939393939394,
+      "tmE": 1.6449319321918232,
+      "tmL": 0.00043768006589408047,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2007,
+      "dE": 0.03244638511364683,
+      "dL": 0,
+      "tmE": 3.602688552301115,
+      "tmL": 4.6082949308755763e-7,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2008,
+      "dE": 0.09685852649290934,
+      "dL": 0.000010163045275825868,
+      "tmE": 9.919687807973643,
+      "tmL": 0.000995256675053249,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2009,
+      "dE": 0.07763615250786533,
+      "dL": 0.000002080299563137092,
+      "tmE": 8.020028621330727,
+      "tmL": 0.0003282761045288331,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2010,
+      "dE": 0.024954280606956914,
+      "dL": 0.0019677104389807577,
+      "tmE": 3.065116684445671,
+      "tmL": 0.1861371211758651,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2011,
+      "dE": 0.03343191431493169,
+      "dL": 0.0002146193000737368,
+      "tmE": 3.7793232500717657,
+      "tmL": 0.021275963829719514,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2012,
+      "dE": 0.05183049781783148,
+      "dL": 0.014516221524985473,
+      "tmE": 5.309437190412852,
+      "tmL": 1.4453327899392059,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2013,
+      "dE": 0.028781990375595423,
+      "dL": 0,
+      "tmE": 3.3155416150996384,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2014,
+      "dE": 0.019975381694762064,
+      "dL": 0.0004723245605334304,
+      "tmE": 2.415455552111372,
+      "tmL": 0.04138433031012572,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2015,
+      "dE": 0.05486436333157274,
+      "dL": 0,
+      "tmE": 6.159945787276103,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2016,
+      "dE": 0.055834511455469325,
+      "dL": 0.0006703755574910367,
+      "tmE": 5.901794511561739,
+      "tmL": 0.06463928878860631,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2017,
+      "dE": 0.06195839401377098,
+      "dL": 0,
+      "tmE": 6.5717483576410265,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2018,
+      "dE": 0.029464738982456475,
+      "dL": 0,
+      "tmE": 3.548198845805164,
+      "tmL": 0.00020640706570766338,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2019,
+      "dE": 0.018329825886054443,
+      "dL": 0,
+      "tmE": 2.2051770115889395,
+      "tmL": 0.00000856106250850052,
+      "guard": false
+    },
+    {
+      "arm": "inherit",
+      "slot": 2020,
+      "dE": 0.10838219994255938,
+      "dL": 0.0025647692124076468,
+      "tmE": 10.758319164418278,
+      "tmL": 0.25851544860494446,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2001,
+      "dE": 0.07859199429407877,
+      "dL": 0.023991376055586554,
+      "tmE": 7.969520178853815,
+      "tmL": 2.3935644915683643,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2002,
+      "dE": 0.07708719591275431,
+      "dL": 0.020728500611928852,
+      "tmE": 7.654672521202372,
+      "tmL": 2.0597616591441126,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2003,
+      "dE": 0.08291272079208376,
+      "dL": 0.023413772994285195,
+      "tmE": 8.344054727529215,
+      "tmL": 2.3244096647495933,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2004,
+      "dE": 0.07635238722847681,
+      "dL": 0.020587334085993954,
+      "tmE": 7.81935108008133,
+      "tmL": 2.050193684357354,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2005,
+      "dE": 0.07883994421842117,
+      "dL": 0.02301130319807863,
+      "tmE": 7.916833120434656,
+      "tmL": 2.2772409336371275,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2006,
+      "dE": 0.08032049648538944,
+      "dL": 0.02340299040514908,
+      "tmE": 8.063290821368492,
+      "tmL": 2.313698963512439,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2007,
+      "dE": 0.07752157869971299,
+      "dL": 0.01986375225237904,
+      "tmE": 7.858756828106255,
+      "tmL": 1.9712140945333632,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2008,
+      "dE": 0.08355698479335615,
+      "dL": 0.02248563418003283,
+      "tmE": 8.488013191106695,
+      "tmL": 2.2220565842029965,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2009,
+      "dE": 0.07840819567307972,
+      "dL": 0.020385562590987498,
+      "tmE": 8.006194388986492,
+      "tmL": 2.034267733594899,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2010,
+      "dE": 0.07765327575536403,
+      "dL": 0.020648814024863002,
+      "tmE": 7.897125062885963,
+      "tmL": 2.0372715957676752,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2011,
+      "dE": 0.07706454148987846,
+      "dL": 0.02319062170464191,
+      "tmE": 7.947321691790494,
+      "tmL": 2.3034643791790095,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2012,
+      "dE": 0.07082804556575498,
+      "dL": 0.019446346117083194,
+      "tmE": 7.365056307109642,
+      "tmL": 1.9117952673730163,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2013,
+      "dE": 0.07799100117070598,
+      "dL": 0.02162090637779145,
+      "tmE": 7.852856921113673,
+      "tmL": 2.1353482346066457,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2014,
+      "dE": 0.07644765668363475,
+      "dL": 0.017860542448063566,
+      "tmE": 7.850223693743519,
+      "tmL": 1.76114187332545,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2015,
+      "dE": 0.0751100078713615,
+      "dL": 0.020778731478643807,
+      "tmE": 7.693198354655437,
+      "tmL": 2.076953722505223,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2016,
+      "dE": 0.0753116129973371,
+      "dL": 0.019858992638324115,
+      "tmE": 7.803438361356613,
+      "tmL": 1.9654862160882953,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2017,
+      "dE": 0.08132687282965573,
+      "dL": 0.021816222273103453,
+      "tmE": 8.172412794546197,
+      "tmL": 2.158108572944016,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2018,
+      "dE": 0.07806954149919514,
+      "dL": 0.020460396019391133,
+      "tmE": 7.851614189262071,
+      "tmL": 2.01694753505927,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2019,
+      "dE": 0.0725289292526993,
+      "dL": 0.019508319463129777,
+      "tmE": 7.395262955396606,
+      "tmL": 1.9162017149586974,
+      "guard": false
+    },
+    {
+      "arm": "blocked",
+      "slot": 2020,
+      "dE": 0.07777478608629536,
+      "dL": 0.02069724371765521,
+      "tmE": 8.009867984962959,
+      "tmL": 2.034772200292098,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2001,
+      "dE": 0.04123129725828209,
+      "dL": 0,
+      "tmE": 4.245071765161625,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2002,
+      "dE": 0.02851173106749293,
+      "dL": 0,
+      "tmE": 3.277261007846101,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2003,
+      "dE": 0.04229715724384028,
+      "dL": 0,
+      "tmE": 4.321225449975999,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2004,
+      "dE": 0.04638862757014918,
+      "dL": 0.000025683657818167123,
+      "tmE": 5.133582804947107,
+      "tmL": 0.002338973669951887,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2005,
+      "dE": 0.07017693736636416,
+      "dL": 0,
+      "tmE": 7.34114258425335,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2006,
+      "dE": 0.06218279741256395,
+      "dL": 0.0001597936824204714,
+      "tmE": 6.486485599914013,
+      "tmL": 0.01781152194472065,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2007,
+      "dE": 0.06420490256268561,
+      "dL": 0.0005324864424788679,
+      "tmE": 6.717025918886385,
+      "tmL": 0.049533608743577415,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2008,
+      "dE": 0.047653283716799125,
+      "dL": 0,
+      "tmE": 5.222072570703279,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2009,
+      "dE": 0.09008204203901421,
+      "dL": 0,
+      "tmE": 9.48301190961575,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "frozen",
+      "slot": 2010,
+      "dE": 0.03013793561358995,
+      "dL": 0,
+      "tmE": 3.3708832900385852,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2001,
+      "dE": 0.08047851447840816,
+      "dL": 0,
+      "tmE": 8.202495005775768,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2002,
+      "dE": 0.058566845951383395,
+      "dL": 0,
+      "tmE": 6.225313981159742,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2003,
+      "dE": 0.04908093891459631,
+      "dL": 0,
+      "tmE": 5.363054992592652,
+      "tmL": 0.0001190038135486577,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2004,
+      "dE": 0.11023650704116661,
+      "dL": 0.07657406391483851,
+      "tmE": 11.29064567447469,
+      "tmL": 7.597507306781492,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2005,
+      "dE": 0.0756789483041453,
+      "dL": 0.3929676588718264,
+      "tmE": 7.88120915224237,
+      "tmL": 38.40152957092627,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2006,
+      "dE": 0.03388176799555002,
+      "dL": 0.000001644736842105263,
+      "tmE": 3.872893275347061,
+      "tmL": 0.00012644675480066154,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2007,
+      "dE": 0.2761356858599758,
+      "dL": 0.01372504495444683,
+      "tmE": 25.807189470197137,
+      "tmL": 1.3544760644970568,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2008,
+      "dE": 0.14200251961328925,
+      "dL": 0.2480761144623849,
+      "tmE": 14.065651890388976,
+      "tmL": 24.338607829235958,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2009,
+      "dE": 0.13219490633768916,
+      "dL": 0.2592243150550156,
+      "tmE": 12.926019684472651,
+      "tmL": 25.621881107109584,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c1",
+      "slot": 2010,
+      "dE": 0.10707347195225454,
+      "dL": 0.005189227646434626,
+      "tmE": 10.681242206854337,
+      "tmL": 0.5271328323398405,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2001,
+      "dE": 0.010002602047646417,
+      "dL": 0,
+      "tmE": 1.3084697658189748,
+      "tmL": 0.0000031158185116419127,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2002,
+      "dE": 0.010007100026174283,
+      "dL": 0.00010072906013078531,
+      "tmE": 1.42611006346462,
+      "tmL": 0.012489809029810573,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2003,
+      "dE": 0.017114907789406275,
+      "dL": 0,
+      "tmE": 2.084342277988863,
+      "tmL": 0.000001257163757051936,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2004,
+      "dE": 0.011264021475849581,
+      "dL": 0,
+      "tmE": 1.4912404515967577,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2005,
+      "dE": 0.02288556762283949,
+      "dL": 0.007198326179503207,
+      "tmE": 2.465318341991781,
+      "tmL": 0.7071596736250442,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2006,
+      "dE": 0.009630485501055833,
+      "dL": 0,
+      "tmE": 1.318617107963518,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2007,
+      "dE": 0.011509233347685775,
+      "dL": 0.00018613291999018404,
+      "tmE": 1.6972365567218588,
+      "tmL": 0.019044776372682398,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2008,
+      "dE": 0.023911438664939846,
+      "dL": 0.0021970747803107126,
+      "tmE": 2.7627075480988283,
+      "tmL": 0.21539695309652404,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2009,
+      "dE": 0.008271888971172524,
+      "dL": 0,
+      "tmE": 1.0960179578992884,
+      "tmL": 0,
+      "guard": false
+    },
+    {
+      "arm": "inherit-c4",
+      "slot": 2010,
+      "dE": 0.010265405343436134,
+      "dL": 0.00002660227413738771,
+      "tmE": 1.4120093606011155,
+      "tmL": 0.004198503393501213,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2001,
+      "dE": 0.15845754784599467,
+      "dL": 0.1112463405327118,
+      "tmE": 15.234877306827254,
+      "tmL": 11.035621813460487,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2002,
+      "dE": 0.14783526712322206,
+      "dL": 0.11559306706338028,
+      "tmE": 14.476050140581119,
+      "tmL": 11.455950979191215,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2003,
+      "dE": 0.15375073738130346,
+      "dL": 0.11282411842772473,
+      "tmE": 14.941199593072424,
+      "tmL": 11.184773547587545,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2004,
+      "dE": 0.15339260113955017,
+      "dL": 0.11673602439886067,
+      "tmE": 14.720200313410915,
+      "tmL": 11.56534243486448,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2005,
+      "dE": 0.14676205824158045,
+      "dL": 0.12070398741509246,
+      "tmE": 14.206511405381995,
+      "tmL": 11.951736290247053,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2006,
+      "dE": 0.14451888455160233,
+      "dL": 0.11485225187313006,
+      "tmE": 14.014401802266068,
+      "tmL": 11.383203798156025,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2007,
+      "dE": 0.150819594765451,
+      "dL": 0.11881459346266622,
+      "tmE": 14.56551131124927,
+      "tmL": 11.788615698308952,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2008,
+      "dE": 0.14756558681769888,
+      "dL": 0.10824243764228182,
+      "tmE": 14.317801721796846,
+      "tmL": 10.72911515894126,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2009,
+      "dE": 0.15578896795318603,
+      "dL": 0.11066748714814746,
+      "tmE": 15.077903745503239,
+      "tmL": 10.956643033289836,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c1",
+      "slot": 2010,
+      "dE": 0.1501260545632339,
+      "dL": 0.11835879048585024,
+      "tmE": 14.55861277288189,
+      "tmL": 11.719411071199065,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2001,
+      "dE": 0.032869300772092054,
+      "dL": 0.006501076759455719,
+      "tmE": 3.5761806689027718,
+      "tmL": 0.6454780255485028,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2002,
+      "dE": 0.03171764832041337,
+      "dL": 0.006604803754836742,
+      "tmE": 3.449314826635559,
+      "tmL": 0.655039471100053,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2003,
+      "dE": 0.03218708219571266,
+      "dL": 0.007380459454458655,
+      "tmE": 3.3547654530401676,
+      "tmL": 0.7387200365120022,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2004,
+      "dE": 0.03369697559114605,
+      "dL": 0.0063698487781700605,
+      "tmE": 3.56773003789032,
+      "tmL": 0.6496722522795705,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2005,
+      "dE": 0.03487815630483949,
+      "dL": 0.0061152819244035365,
+      "tmE": 3.637821089636741,
+      "tmL": 0.6095998223260642,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2006,
+      "dE": 0.033321920707802995,
+      "dL": 0.0063962972588775535,
+      "tmE": 3.48013113808924,
+      "tmL": 0.6292390120101391,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2007,
+      "dE": 0.030999016626880684,
+      "dL": 0.006033328037861785,
+      "tmE": 3.3937675644479244,
+      "tmL": 0.6061825086237741,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2008,
+      "dE": 0.031839628257888476,
+      "dL": 0.0067347695161162815,
+      "tmE": 3.572263701497507,
+      "tmL": 0.6572911488918872,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2009,
+      "dE": 0.03201888779075782,
+      "dL": 0.0061661048756826995,
+      "tmE": 3.513619809527139,
+      "tmL": 0.619221707627577,
+      "guard": false
+    },
+    {
+      "arm": "blocked-c4",
+      "slot": 2010,
+      "dE": 0.0338740648919766,
+      "dL": 0.006733153328524023,
+      "tmE": 3.5894378814653707,
+      "tmL": 0.6719592555644374,
+      "guard": false
+    }
+  ],
+  "fileShas": {
+    "r2b/inherit/2001": "2a3279761a4532f264884291d4b131ef9a296772fcc8df34da5cff9bf0f1b277",
+    "r2b/inherit/2002": "58f460fccb602e51c27585fd3c42dee0d1c52e911f409f86cfafff3355e68c3e",
+    "r2b/inherit/2003": "511735777a02714068778698332e7477bf8f0565fff373de0dcbea799b268017",
+    "r2b/inherit/2004": "cdb4b5b6000b8e55689d303d9346e276d2a21ef4c5210865efe3048ea84fd480",
+    "r2b/inherit/2005": "0014be28f208a1550d0f1b1e7bf5f12d3cbf61f3dfd1f11791d362ee462e3320",
+    "r2b/inherit/2006": "76560f8656e9e89e6325ad3e107f2935d152ce6b71a499795d5683704535d6df",
+    "r2b/inherit/2007": "85848d867265884b3ced7d7b3247eaf73d9aa96343452596cad43d27517f7fe1",
+    "r2b/inherit/2008": "104eb39c6ab62dfc131c594e6397649da01d3c9a4dc4f7b5794a6b34661fb61d",
+    "r2b/inherit/2009": "2190db2810570d5b7ef798d33b7fd05eaa2134a86a9e2111e35cd0305f57452a",
+    "r2b/inherit/2010": "5e3ddffc963d75903d25f87d085be00b2b4a32589529d84804d4a457eb180dec",
+    "r2b/inherit/2011": "7829dd40afd1def8b23332dcf0dbe12f09689cbf317767052ffbc96393c1a977",
+    "r2b/inherit/2012": "a43b8e1a4107f80bd2f105c51924edbd1ab3e3c314a8af7fb52c095b279db1b8",
+    "r2b/inherit/2013": "66800757d0f4a077d3602d920365050fde7ed4d72350a5f83b4674e408ae7ed8",
+    "r2b/inherit/2014": "eafbbbf8fa99c242609e26e5503b2b1ee9e7e90e4450c533150f96d7f0d00a77",
+    "r2b/inherit/2015": "6a72d03e5e22c01c5f9e7b66dee922dbbc5f565d4d00219e79bb507e9ceaa6ae",
+    "r2b/inherit/2016": "9468fb53df8d9a5c8106562604a7303a38aae2b8db3f3edcf47ecb9980b921bf",
+    "r2b/inherit/2017": "a43a485afe7ac85b3b02afd57987078856d1e8d37c476f4ef428dae0b0803d42",
+    "r2b/inherit/2018": "1e02cbb972561cf987a520cf4d0574c774e748e1878da8494a43d6def9e77e07",
+    "r2b/inherit/2019": "7cea02e5c6faa6ad4c7ea53cba72eea2af855c266224dc8d5b6b4428914c5051",
+    "r2b/inherit/2020": "b1240eff31e0a49c97076c027b2aa950e4aba1954fdd15ec0006709f03aa4424",
+    "r2b/blocked/2001": "0f53961e071422956e32f7dced67653b723ff7898e98f6a5f1cea5c1c7fafd78",
+    "r2b/blocked/2002": "9d40ee94c19ccfb94ea1f53ffd660f3f835127c3e8659e0e804769f257719f22",
+    "r2b/blocked/2003": "0a4705b34f62565a2c923245227927f79cedc90e150cb4fb668b0432adb0fefb",
+    "r2b/blocked/2004": "9e061923348bf68efb439c7ecabd30f04baf2f086d2ce58ebcbe9431ffd8d9ad",
+    "r2b/blocked/2005": "04e997abad71052f0fef67a0441d1f4552289674415f8ca9a243b69ecc84f4eb",
+    "r2b/blocked/2006": "548d26a96337c3813faa6c932270c4244dfb5c074d52a3eeac860dc41b1f43db",
+    "r2b/blocked/2007": "9f6be65f0fb017ecfcb1555462f05b13258bd0df158a75d9f8343e8021f443bd",
+    "r2b/blocked/2008": "b24a7a5206bf4515d6d5f3e1106ffcc07c650ff2c113d8f83f227939c97abbc5",
+    "r2b/blocked/2009": "741cd096dd572462077585dddec8d298afcc34f72d15ccc5836f2247d65b4342",
+    "r2b/blocked/2010": "1c3973d7f28413bd4407598ea61f3143e5cb32cb3c7d21b4d434353427f8271f",
+    "r2b/blocked/2011": "251754a544ff868daee4a75e7f42c6a1fe2979832d8981ae187929b5e1b3dc22",
+    "r2b/blocked/2012": "9855ef0a06f1a25e008edfb117858ffa1a235e6bf2a4be5a6d64ea38c294616d",
+    "r2b/blocked/2013": "db05b6dad0c80af0d9984312a01257e93eb6602f8ada25d9132553b91f5d5f6d",
+    "r2b/blocked/2014": "d7291fd2a01c5e7555aca0c21afcab64cab9c625001eb1b97fd4358a7a73eddb",
+    "r2b/blocked/2015": "f71bcbfc94c096ed528e8341ddefc76decd2251bbc26b53ae5f734b8044c43e5",
+    "r2b/blocked/2016": "2acb42abaa541ae7c62e5e3bc8a38677db8d428c244c730978d02517f470ea8a",
+    "r2b/blocked/2017": "9eb9d7ee8f11145f129543f7f7a61f98076816cb46654e2a84a43b9ff6bd579c",
+    "r2b/blocked/2018": "8e7d76f31523a2fa8088025af29508f40f62ffe9eff63850d91e6a28ff28e7a6",
+    "r2b/blocked/2019": "2f5b5bb3f8c2e1cc98c6fd8d79cd7cb464a9c5134bc0d7e6a99c44b4c0634bb0",
+    "r2b/blocked/2020": "4c9f3fdcc0d17b7affb31db82b673139f43ac6381a58b6b9283aeb80886a6fe4",
+    "dev/frozen/2001": "a9a8d091c378075bb2695ee6e1818d5fe31706e8451739279a36ebed372838f9",
+    "dev/frozen/2002": "22e72b9bab9c697d63f196fa64b4793d8428f33edf2c9aab5e14de0817a062b5",
+    "dev/frozen/2003": "f6a601a0c40c044843b0bc46659c3fa5d9ed4987384c7eccbdb6239a526b1bf1",
+    "dev/frozen/2004": "8694b7588ae80d56e0638e29f5bd8b2fbfce05cf5d5fa48b508b34527cec5e4b",
+    "dev/frozen/2005": "9d0897ad4755f87c7e9e34d46c8ec7e57152c0b991eed24183b37b5250996652",
+    "dev/frozen/2006": "1bf7d17f838ad9bd406b1a88a69f0f3ba04f7eca12b73cb68f71eaba5e106e31",
+    "dev/frozen/2007": "9ca57cecbf8a6455ef9dd16bcfab7e01716bc914ab2633650e0619c5d471ebe8",
+    "dev/frozen/2008": "951ec9107191ecafdf46a11f339000d3ba8ead9feb9ac3bf04771fb231768603",
+    "dev/frozen/2009": "7c7467b546603aa2441652e7006fa4799e79332a8b3857ccce5fdb490bae0fe4",
+    "dev/frozen/2010": "f24cb30d600355104e05cfe14a9df5af68c6cc94ea7ea495d22b0eceb7ca2715",
+    "dev/inherit-c1/2001": "03a4077fa84dee1e41fe24dd403082beb6f3ca5b0742e9dcdddb3e6b51963b93",
+    "dev/inherit-c1/2002": "b2f0fb11fd6fdb8d97f9eebeeeb0f4a4edc7aa050bd7fadc3b02b462c4a088e9",
+    "dev/inherit-c1/2003": "21bafe74e6994bfa35751392ab49cffa777ac636f47e703988403f497e27b511",
+    "dev/inherit-c1/2004": "6478d6e21bcc047e06d3517242c55a2fdc47c4e7abee68c4947f271227fa2315",
+    "dev/inherit-c1/2005": "244231f47b759cc139adf574d8c91586af24a939d30814b505d41698505301d9",
+    "dev/inherit-c1/2006": "3934be042c2998bf00f83cecded56032d7d2d61d8bd8787755767d6ea5b319ab",
+    "dev/inherit-c1/2007": "c8cca41c7c35fa5e6192de4cb9b4fe8b1faee56441986c80287226d9077839af",
+    "dev/inherit-c1/2008": "76e3c08f04477f49c8a843af4548b485446f7f26adf93dffd18cd60c8f1629b5",
+    "dev/inherit-c1/2009": "383ed16a4c72d85d9c38f42f30af2c468200be0e7e83c693c1a6a7d5e9cc0124",
+    "dev/inherit-c1/2010": "1885556895d00e4dcddc7655966530be9130bd9919383b47b17221f6220465a1",
+    "dev/inherit-c4/2001": "171388fe7b41b4eadac42f9acdbda4bb4f387b97db56607f0889f5d29c18221e",
+    "dev/inherit-c4/2002": "37b949fad2de6371ff959c577f3164a4bed502a0e15aadea412e73a8aa22feaa",
+    "dev/inherit-c4/2003": "81f29038d6f4fb29516523126280f8a6a4486ee703bdd9679ae8c4a6a83515df",
+    "dev/inherit-c4/2004": "f8afa5915a7f49df6fc56778f15034747d7c716a8fd680819555274c303eba87",
+    "dev/inherit-c4/2005": "35963af5c98e16cbbc6c08207337a03d6a7756923df036cf29bdb9b998f448df",
+    "dev/inherit-c4/2006": "0a56aec3be58bc6d6ffdf755bffbe453af145bf3d35eac743a118bebd607e33b",
+    "dev/inherit-c4/2007": "9558ccdb49a77be3a19c2a4ac9f2660104c3f50f911cd5e535320615320c28f6",
+    "dev/inherit-c4/2008": "90ad485b976637f6ae7f2091a367716360870630757312a159449df8a6f531da",
+    "dev/inherit-c4/2009": "022f68fc63bb0b3b3b3a0d39d689c5ad3cfaa2956be3d62a5794faab4da6d2d1",
+    "dev/inherit-c4/2010": "4852e5f0cd3fc2432ede175fe1f7e18614152aeb358ddc7e7ee4c2ccc3e0fa03",
+    "dev/blocked-c1/2001": "496169a877aa8f2348f80852c82ed13d157946122419b34c6c966aea4f9db405",
+    "dev/blocked-c1/2002": "a1960074087d6e5937bd7257ff6f5f2a666e5717e5d976408595b7d8a0b3d52a",
+    "dev/blocked-c1/2003": "b97929de16c8c1e1bc577f5962148fc33ced9c7209695708474e603643d0f185",
+    "dev/blocked-c1/2004": "0a4ee27c18c70852b014509bc1d676898cc63378c49a0a7926f70fa583590a1d",
+    "dev/blocked-c1/2005": "d5190e78eb8884018540708ae07176c8fa62a026530a0a2fc8f8042865b8a67b",
+    "dev/blocked-c1/2006": "4d391be45020e20e1fb784ed97ab1257918d4ed5a66647722139d3a4f990b1c9",
+    "dev/blocked-c1/2007": "52009c2090eb5c9c5519e2a534eef5651ccc9b1a22d5eba697c3217c69f4e5c6",
+    "dev/blocked-c1/2008": "ff1cd4df90e157ca70513986a8266d8a7ef269f9309626215c0f255794561d1d",
+    "dev/blocked-c1/2009": "9a7972e6827baeb223cbbc3763e03bcde68516854ec1bb5755c4bc933167c91b",
+    "dev/blocked-c1/2010": "61771dcd3d26002f8c389e48f1988f82ffdd49aae4dd66bf74f582dde7d1d95b",
+    "dev/blocked-c4/2001": "9c602294c4b23c5a772357288e9fe1be17def77db354a79fd4d29a93a786de10",
+    "dev/blocked-c4/2002": "86305ca9c162459f7ec1f6ed9c32cf00713eb033e9804368687c2f5da92e4d47",
+    "dev/blocked-c4/2003": "5e2572ef5218e4b583cc19e1dc01b65b9dc18ab37c7d2bee24ecb79aae59b67e",
+    "dev/blocked-c4/2004": "f3e1c7d22cda0d2d9b919d4660000e9df5b95a77df64cac4649dddd2a243f1f2",
+    "dev/blocked-c4/2005": "e98bf7b163d36153ae39801b1e684a194e9507d7023dfef3e198f2fa070f2e87",
+    "dev/blocked-c4/2006": "d3d39e85159b549d5826cfcf92f7b55faeea224fbab57f505043985f631bba90",
+    "dev/blocked-c4/2007": "91489acdf43f59f77ca2819b237af5ff409d03c5a1b8a2ce04ee839707a68012",
+    "dev/blocked-c4/2008": "1ec7d3bc94e1473f7901e49800ed22d96d3477406a8edea993ecb7501bba8ade",
+    "dev/blocked-c4/2009": "609c2c0b74da40ac86d3c489527d717644a9c425fd17b2d31b3404b51181ea40",
+    "dev/blocked-c4/2010": "f1eeff66f34fa39507acafa4bb45eb4e642ad01c7b9c744a0436449672938a27"
+  },
+  "digests": {
+    "r2b/inherit/2001": "9c5f3913b295d045",
+    "r2b/inherit/2002": "d27f81e8ad3a99b6",
+    "r2b/inherit/2003": "207b8de61820e994",
+    "r2b/inherit/2004": "e401b70d909e99d1",
+    "r2b/inherit/2005": "fa9a91d1bbb7389b",
+    "r2b/inherit/2006": "81dc2ddb0b04c552",
+    "r2b/inherit/2007": "aba77a680d3e88a1",
+    "r2b/inherit/2008": "a7eeebc61e5a66b2",
+    "r2b/inherit/2009": "c396a960b3dd174f",
+    "r2b/inherit/2010": "49391226703dda66",
+    "r2b/inherit/2011": "b191a91464cce373",
+    "r2b/inherit/2012": "a84b795797a47e10",
+    "r2b/inherit/2013": "906c3e201901223c",
+    "r2b/inherit/2014": "6670f427be48fb48",
+    "r2b/inherit/2015": "d4217301911e6aeb",
+    "r2b/inherit/2016": "2a03b612267c6c84",
+    "r2b/inherit/2017": "c0a81dd1d16e596d",
+    "r2b/inherit/2018": "d1dfb70b010e5593",
+    "r2b/inherit/2019": "949bf9c14b8639a6",
+    "r2b/inherit/2020": "728d4cb6f728c37a",
+    "r2b/blocked/2001": "2164390f6a8899b8",
+    "r2b/blocked/2002": "53d9dde9947dfa22",
+    "r2b/blocked/2003": "ea237550d267eabb",
+    "r2b/blocked/2004": "ab01bfbfbc0c4916",
+    "r2b/blocked/2005": "b12157e017546fe9",
+    "r2b/blocked/2006": "baac6a31175a7174",
+    "r2b/blocked/2007": "49b917292dc3217a",
+    "r2b/blocked/2008": "871a935979fbf20f",
+    "r2b/blocked/2009": "4cc2958c973b858e",
+    "r2b/blocked/2010": "ad7736c1dc7bafad",
+    "r2b/blocked/2011": "0701cd76493050cd",
+    "r2b/blocked/2012": "54dc5a1ea6e91ff3",
+    "r2b/blocked/2013": "7808ef5df9743ea7",
+    "r2b/blocked/2014": "228af561c4155e16",
+    "r2b/blocked/2015": "5986ae6bc31fa2d4",
+    "r2b/blocked/2016": "488d8598d27ec840",
+    "r2b/blocked/2017": "6b8d488f45445c1b",
+    "r2b/blocked/2018": "e83e220a35b3f17a",
+    "r2b/blocked/2019": "0a508adc7c2ddcb0",
+    "r2b/blocked/2020": "67bb456f0351b1d7",
+    "dev/frozen/2001": "c9a15a52082debb4",
+    "dev/frozen/2002": "082df8d33ddbf091",
+    "dev/frozen/2003": "0b3b70d916ac601e",
+    "dev/frozen/2004": "3adbc9381b83498b",
+    "dev/frozen/2005": "6a0328971bd2b021",
+    "dev/frozen/2006": "a85a6f49e7aeb815",
+    "dev/frozen/2007": "2a7e441ed324c3aa",
+    "dev/frozen/2008": "30535e431ca0d6a2",
+    "dev/frozen/2009": "fbb1ab8d2fc90ca1",
+    "dev/frozen/2010": "7c39969235be88b9",
+    "dev/inherit-c1/2001": "90ee9cbb03073563",
+    "dev/inherit-c1/2002": "6c23f49781e3ab00",
+    "dev/inherit-c1/2003": "4115929167a075e9",
+    "dev/inherit-c1/2004": "a276bbf13c71ab3b",
+    "dev/inherit-c1/2005": "06fbae77f3d6169a",
+    "dev/inherit-c1/2006": "e2bbe8279c7c10cd",
+    "dev/inherit-c1/2007": "83922c3168cd064a",
+    "dev/inherit-c1/2008": "cd54725a2fa8e2f3",
+    "dev/inherit-c1/2009": "125066869c0d77b7",
+    "dev/inherit-c1/2010": "41f97c603d7b96f5",
+    "dev/inherit-c4/2001": "9aa1d0a78b491906",
+    "dev/inherit-c4/2002": "55ced2e83652c2ef",
+    "dev/inherit-c4/2003": "1252f5aa94f797c5",
+    "dev/inherit-c4/2004": "1c519e491bbec115",
+    "dev/inherit-c4/2005": "38418aab200d7e97",
+    "dev/inherit-c4/2006": "1d9283f99e0ef0dd",
+    "dev/inherit-c4/2007": "ab154af491974e98",
+    "dev/inherit-c4/2008": "1d9e03f471bfbe61",
+    "dev/inherit-c4/2009": "85f25433e75d311c",
+    "dev/inherit-c4/2010": "170d863674d80fc4",
+    "dev/blocked-c1/2001": "9a4ea4704f663dc0",
+    "dev/blocked-c1/2002": "c9e49ee321308d30",
+    "dev/blocked-c1/2003": "59cf7cbcfbd684fa",
+    "dev/blocked-c1/2004": "3449c0de6d8fc845",
+    "dev/blocked-c1/2005": "ab40840b6aa12fd8",
+    "dev/blocked-c1/2006": "697507370cce206c",
+    "dev/blocked-c1/2007": "785e1aafc60db96c",
+    "dev/blocked-c1/2008": "fec62dd9f198cf0c",
+    "dev/blocked-c1/2009": "e50f8af983770228",
+    "dev/blocked-c1/2010": "82b57345cc9b4d39",
+    "dev/blocked-c4/2001": "69503057fccab9e0",
+    "dev/blocked-c4/2002": "89d55e86699a1888",
+    "dev/blocked-c4/2003": "c9e18b1770143705",
+    "dev/blocked-c4/2004": "d6ed744ff0242e95",
+    "dev/blocked-c4/2005": "d8a99cd8235b83b7",
+    "dev/blocked-c4/2006": "882d4faa4769661d",
+    "dev/blocked-c4/2007": "48b5a1fb85dc2cc0",
+    "dev/blocked-c4/2008": "08419eade06b2b9d",
+    "dev/blocked-c4/2009": "216520ec096d602f",
+    "dev/blocked-c4/2010": "0d449cf0623293ca"
+  }
+}
