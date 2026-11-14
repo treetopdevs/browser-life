@@ -9,7 +9,7 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to the world</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world: R0 reference, R1 GPU port, R2 and R2b measurement-limited</span></header>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world: R0 reference, R1 GPU port, R2 and R2b measurement-limited, R3 purge supported, R4 toll-only</span></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">Neural particles over a conserved field</p>
@@ -23,7 +23,7 @@
         <p><strong>Local experiment, kept off the public site. Nothing here shows that anything evolves.</strong></p>
         <details>
           <summary>What was checked, and what was not</summary>
-          <p>Matter is conserved exactly and energy is booked exactly; the two residuals below stay at 0. This page runs the world on your GPU through WebGPU when it can, and on the CPU reference (rung R0, one 128 × 128 size) when it cannot or when you choose it. The GPU port (rung R1) matched the CPU reference bit for bit in a local test on one Mac, which says the port is faithful, not that it has been checked on other GPUs, and says nothing about evolution. The two residuals are checked by the CPU engine after every step, and by the GPU engine from a full read-back about twice a second and after every brush stroke. Rung R2, the test of whether heredity matters, came out measurement-limited on five practice seeds, and so did its redesign, R2b, on twenty practice seeds run for 100,000 steps on the GPU: the confirmation was never run, so nothing here shows that anything evolves, and nothing here shows that it does not.</p>
+          <p>Matter is conserved exactly and energy is booked exactly; the two residuals below stay at 0. This page runs the world on your GPU through WebGPU when it can, and on the CPU reference (rung R0, one 128 × 128 size) when it cannot or when you choose it. The GPU port (rung R1) matched the CPU reference bit for bit in a local test on one Mac, which says the port is faithful, not that it has been checked on other GPUs, and says nothing about evolution. The two residuals are checked by the CPU engine after every step, and by the GPU engine from a full read-back about twice a second and after every brush stroke. Rung R2, the test of whether heredity matters, came out measurement-limited on five practice seeds, and so did its redesign, R2b, on twenty practice seeds run for 100,000 steps on the GPU: the confirmation was never run, so nothing here shows that anything evolves, and nothing here shows that it does not. Two later tests asked about trail, on fresh seeds and with the rules fixed in advance. R3 found that when trail is only a cost, inheritance purges it (supported, with a dose response), which says trail is not kept for free. R4 gave trail a reward, a cheaper move for particles that lay it (the toll road), and the trail was kept in 15 of 16 worlds, but the particles only paid the smallest toll and did not follow the trail (result: toll-only). A further exploration, the conduit rule, which lets nutrient flow faster along connected trail, lost its trail in inherited worlds too; it was a screen on 4 seeds per cell, not a test, and in those worlds almost no trail was laid, so it cannot say whether a trail that already existed would pay. None of this shows that anything evolves.</p>
         </details>
       </div>
     </section>
@@ -140,9 +140,16 @@
           <option value="uniform" selected>even everywhere</option>
           <option value="gradient">dim in the west, bright in the east (a smaller population lasts)</option>
         </select></label>
+        <label for="trailrule">Trail rule<select id="trailrule">
+          <option value="none" selected data-short="none">none: laying trail is only a cost (the world the earlier tests ran)</option>
+          <option value="toll" data-short="toll road">toll road: cheaper movement on trail for particles that lay it</option>
+          <option value="conduit8" data-short="conduit, medium">conduit, medium: nutrient flows faster along connected trail</option>
+          <option value="conduit128" data-short="conduit, strong">conduit, strong: the same, at the strongest setting</option>
+        </select></label>
         <label for="seed">Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="1"></label>
         <button id="plant" type="button">Plant</button>
       </div>
+      <p id="rule-help" class="muted help"></p>
       <p id="engine-help" class="muted help"></p>
       <p id="size-help" class="muted help"></p>
     </section>
@@ -161,9 +168,10 @@
         <li>The evidence would be a difference between the inherit arm and the blocked arm, beyond the noise between seeds, on readouts fixed in advance. Rung R2 tried to set that up on five practice seeds and it came out measurement-limited: the inherit arm varies so much from seed to seed that none of the four readouts could separate it from the blocked arm, or even respond to a doubling of light. The real comparison on fresh seeds was therefore never run, and this says nothing either way about whether heredity matters here. A redesigned test, R2b, used twenty practice seeds and 100,000 steps and was also measurement-limited: in most inherit worlds the trail had faded to little or nothing by step 50,000, so the trail-following comparison could not be set up and the structure readout could not be measured. Its confirmation was not run. One thing it did see, as a description and not a test: every heredity-blocked world kept far more trail than every inherit world. That is a different kind of population, not proof that heredity is the cause.</li>
         <li>Trail-following alone makes network shapes, so a hard-coded trail follower is a null this world still has to beat. The follower is built and runs in both the CPU reference and the GPU port, though this page does not offer it. Because the comparison with it could not be set up in R2b, it has not been beaten.</li>
         <li>The default numbers (upkeep, light, sizes) were tuned by hand on the 128 × 128 world so a population lasts. They are choices, not findings, and the larger worlds are less tested than the small one.</li>
+        <li>The trail rules (toll road, conduit) are optional extra rules, chosen when you plant. A world planted with one is a different experiment from the plain one, and nothing counted in R2 or R2b used them. R3 (purge) and R4 (toll-only) were run on fresh seeds with rules fixed in advance; the conduit screen was not pre-registered and only says a registered test on it is not warranted yet.</li>
         <li>Wounding and scraping are done by hand. They keep the books exact, but a world that has been brushed is a different experiment from one that has not, and nothing counted in R2 was brushed.</li>
       </ul>
-      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md and docs/mycelium-r2b-2026-11-13/RESULT.md. Deterministic integer arithmetic on both engines; not on the public site.</p>
+      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md, docs/mycelium-r2b-2026-11-13/RESULT.md, docs/mycelium-r3-2026-11-13/RESULT.md, docs/mycelium-r4-2026-11-14/RESULT.md and docs/mycelium-conduit-2026-11-14/SCREEN.md (line report: docs/mycelium-line-2026-11-14/report.html). Deterministic integer arithmetic on both engines; not on the public site.</p>
     </section>
   </main>
   <script type="module" src="/src/mycelium/page.ts"></script>

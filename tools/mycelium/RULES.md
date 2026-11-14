@@ -102,6 +102,30 @@ The saving is energy the particle simply does not pay: the term is booked to hea
 
 Bounds: `min(P0, 256) · td ≤ 2^16` (saturating `P0` first, since a cell can hold 2^31); `raw ≤ 254 · 2^12 < 2^20`; `raw · (256 − f) < 2^28`.
 
+## Trail conduit (exploratory, optional `trailConduit`)
+
+Two optional config keys let trail carry nutrient. Both are absent from `defaultConfig()` and never inserted by `createWorld`, so every existing config, header and digest (including the pinned `9a5461c07ef6fcde`) is unchanged. Design, selection argument and screen: `docs/mycelium-conduit-2026-11-14/`. The rule was added after the R2 to R4 freezes; those rungs stay reproducible at their commits (R2b `edc25af9`, R3 `eef9c043`, R4 `88bd3002`), so the kernel hashes recorded in their freezes no longer match the working tree.
+
+- `trailConduit` `g`: integer 0..255. Absent means no conduit. Requires `diffA <= 128`.
+- `trailConduitCap` `q`: integer 1..255, valid only with `trailConduit`; absent means 255.
+
+In phase 8, in the species-A diffusion only (species C is untouched), the send from cell `k` toward neighbour `nb(d)` uses a per-edge rate in place of `diffA`:
+
+```
+x   = min(P[k], P[nb], q)            // end-of-step trail: after this step's deposits and decay
+ext = (x * g) >> 4                   // floor, no draw
+Dd  = min(diffA + ext, 128)
+sent[4k+d] = diffOut(A[k], d, Dd, base, 0)   // same portion split, same draw slot as the keyless rule
+```
+
+`Dd` depends only on the unordered pair of cells, so conductance is the same from both ends. An edge conducts above the base rate only if both end cells hold trail. `g = 0`, or no trail, gives `Dd = diffA` on every edge: the same sends and draws as the keyless rule, so the state bytes equal the keyless run's (only the config header differs). The cap of 128 (not 256) keeps the checkerboard mode of the diffusion from oscillating (eigenvalue `1 - 8 Dd / 1024` is 0 at 128, -1 at 256). With the key present and `diffA = 0` the base is zero but trail-linked edges still conduct, so the diffusion step is not skipped: the CPU guard is `diffA == 0 and no trailConduit`, the GPU dispatch is guarded the same way.
+
+Matter and energy: A only moves between cells through `sent` and `gather`, so `ΣA + ΣC + ΣP + ΣM` is constant and `ΣE + eA·ΣA` still changes by exactly `lightIn − heat`. No counter, `totals` field, state array or checkpoint header field is added; the only checkpoint change is the two keys in the config header when present, so `FORMAT` stays 1 and every old checkpoint decodes unchanged. Each cell's four sends sum to at most its amount (`4·Dd <= 512`, each send at most its portion), so nothing underflows.
+
+Bounds: `x <= q <= 255` and `g <= 255` give `x·g <= 65,025 < 2^16`; `Dd <= 128`, `4·Dd <= 512 < 2^22` (inside the diffusion bound). A cell can hold 2^31 trail, so the min is taken before the multiply; the multiply never sees a raw P.
+
+On the GPU `send()` takes a flag (on for species A when keyed, off for C). `k_light` (decay) runs before `k_send_a`, and the diffusion dispatches do not write P, so `k_send_a` reads a settled P with no race. No new buffer, dispatch or draw slot. The CPU exports `conduitRate(De, g, q, pk, pn)`, which observers use; `probeLesion(s, zeroInputs)` is an observer-only variant of `probe` that sets the listed inputs to 0 after sensing (`step` never passes any).
+
 ## Randomness
 
 All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
@@ -117,6 +141,7 @@ All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
 - **Total matter ≤ 2^31.** This bounds every field cell and every sum of cells, so u32 never wraps.
 - **The contended grant `r · A`.** `r ≤ 253` (since `maxEat ≤ 255`), and contention means `A < R ≤ 253 · n`. With `maxParticles ≤ 2^16`, `r · A < 253² · 2^16 < 2^32`. **Raising the particle cap above 65,536 needs a different division.**
 - **Diffusion** uses `mulFrac(portion, 4d, 10)` with `4d ≤ 1024 < 2^22`, and its result never exceeds the portion. **Turnover** uses `mulFrac(M, 2^(16−k), 16)` with `1 ≤ k ≤ 16` and `M ≤ 2^16`. The gradient light product `light · (column + 1) ≤ 2^12 · 2^9`.
+- **Trail conduit** (optional): `min(P[k], P[nb], q) · g <= 255 · 255 < 2^16` and `Dd <= 128`, so `4·Dd <= 512`; see "Trail conduit".
 - **Trail decay** uses `mulFrac` with `pDecay < 2^16`.
 - **Products in phase 5.** `|MX| + |MY| ≤ 254` and `moveCost ≤ 2^12`. Also `dep · depositCost ≤ 255 · 2^12`, `g · eA ≤ 253 · 255`, and `E ≤ 2^24`.
 - **Positions** are below `512 · 256 = 2^17`.

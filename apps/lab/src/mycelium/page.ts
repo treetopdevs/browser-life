@@ -82,10 +82,35 @@ function exclusive<T>(fn: () => Promise<T>): Promise<T> {
 const SIZES = [128, 256, 512] as const;
 
 /** The config for a world size: the 128 world is defaultConfig itself; bigger worlds keep the density of founders and the room per cell. */
-function sizeConfig(size: number, seed: number, heredity: Heredity, lightPattern: LightPattern): MyceliumConfig {
+function sizeConfig(size: number, seed: number, heredity: Heredity, lightPattern: LightPattern, trailRule: TrailRule = 'none'): MyceliumConfig {
   const area = (size / 128) ** 2;
-  return defaultConfig({ seed, heredity, lightPattern, width: size, height: size, founders: Math.round(1024 * area), maxParticles: Math.min(1 << 16, Math.round(8192 * area)) });
+  return defaultConfig({ seed, heredity, lightPattern, width: size, height: size, founders: Math.round(1024 * area), maxParticles: Math.min(1 << 16, Math.round(8192 * area)), ...TRAIL_RULES[trailRule].delta });
 }
+
+// ---- trail rules ------------------------------------------------------------------------------------------------------------
+// Optional rule variants, each a handful of optional config keys that are absent from the default world, so 'none' is the world the
+// earlier rungs ran. Each runs identically on both engines (tools/mycelium/RULES.md; parity cases in tests/deno/mycelium_gpu.ts).
+
+type TrailRule = 'none' | 'toll' | 'conduit8' | 'conduit128';
+
+const TRAIL_RULES: Record<TrailRule, { delta: Partial<MyceliumConfig>; help: string }> = {
+  none: {
+    delta: {},
+    help: 'The world the earlier tests ran. Laying trail only costs the particle energy and matter, and nothing rewards it. In the R3 test, inheritance purged this kind of trail: particles that lay less out-reproduce those that lay more, so the trail fades. That is a directional test on fresh seeds, not a measure of selection.',
+  },
+  toll: {
+    delta: { moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: 'toll' },
+    help: 'Moving costs six times the usual energy, but a particle that is laying trail pays much less for moving over ground that already holds a little trail (the discount is complete at 4 units). This does keep trail (15 of 16 inherited worlds in the R4 test), but the particles only pay the smallest toll and do not follow the trail: it is kept, and nothing was found using it. Run it to see a carpet of trail that goes nowhere.',
+  },
+  conduit8: {
+    delta: { trailConduit: 8 },
+    help: 'Nutrient spreads faster between two neighbouring cells when both hold trail, so a connected trail acts like a pipe. Medium strength. In the conduit screen (an exploration, 4 seeds per cell, not a test) inherited worlds with it lost their trail in 3 of 4 worlds and held 0.16 per particle in the fourth, as worlds without it do. Nobody laid enough trail for the pipe to matter, so the screen could not say whether a trail that already existed would pay. Expect a world that looks like the plain one.',
+  },
+  conduit128: {
+    delta: { trailConduit: 128 },
+    help: 'The same pipe at the strongest setting: two neighbouring cells holding about 11 units of trail each already spread nutrient as fast as the rules allow. In the same screen it also lost its trail in 3 of 4 worlds and the fourth held 0.44 per particle. Nothing was found that it helps; the strength is yours to vary.',
+  },
+};
 
 const SIZE_NOTES: Record<number, string> = {
   128: 'The size the default numbers were tuned on, and the cheapest: it runs smoothly even on a weak GPU or on the CPU.',
@@ -193,7 +218,8 @@ async function plant(note = ''): Promise<void> {
       if (!d.device) { useGpu = false; why = `${d.why} Using the CPU reference instead.`; }
     }
     const size = useGpu ? Number(sizeSel.value) : 128;
-    const config = sizeConfig(size, seed, el<HTMLSelectElement>('heredity').value as Heredity, el<HTMLSelectElement>('light').value as LightPattern);
+    const rule = el<HTMLSelectElement>('trailrule').value as TrailRule;
+    const config = sizeConfig(size, seed, el<HTMLSelectElement>('heredity').value as Heredity, el<HTMLSelectElement>('light').value as LightPattern, rule);
     const wasGpu = engine === 'gpu';
     if (useGpu) {
       let next: GpuMycelium | null = null;
@@ -218,7 +244,7 @@ async function plant(note = ''): Promise<void> {
       // Reuse the 2D painter only while its own canvas is still the one on the page. A switch to the GPU that failed
       // has already replaced the canvas (and a canvas that was offered to WebGPU can no longer give a 2D context).
       if (!cpuRenderer || cpuRenderer.canvas !== worldCanvas || !cpuRenderer.canvas.isConnected) cpuRenderer = new CpuRenderer(freshCanvas());
-      world = createWorld(sizeConfig(128, seed, config.heredity, config.lightPattern));
+      world = createWorld(sizeConfig(128, seed, config.heredity, config.lightPattern, rule));
       engine = 'cpu';
       engineSel.value = 'cpu';
       sizeSel.value = '128';
@@ -238,7 +264,7 @@ async function plant(note = ''): Promise<void> {
     if (engine === 'gpu') { snap = await gpu!.read(); } else snap = null;
     onSnapshot(engine === 'gpu' ? snap! : world!, true);
     render();
-    setText('status', `Planted ${fmt(cfg.founders)} founders with random controllers on seed ${seed}. Most founders die; watch which families spread.`);
+    setText('status', `Planted ${fmt(cfg.founders)} founders with random controllers on seed ${seed}${rule === 'none' ? '' : `, trail rule: ${ruleSel.selectedOptions[0]?.dataset.short ?? rule}`}. Most founders die; watch which families spread.`);
     document.body.dataset.ready = '1';
   }).catch((e) => { setText('status', `Could not plant: ${e instanceof Error ? e.message : String(e)}`); });
 }
@@ -819,6 +845,10 @@ engineSel.addEventListener('change', () => {
   sizeHelp();
 });
 sizeSel.addEventListener('change', sizeHelp);
+const ruleSel = el<HTMLSelectElement>('trailrule');
+const ruleHelp = () => setText('rule-help', TRAIL_RULES[ruleSel.value as TrailRule]?.help ?? '');
+ruleSel.addEventListener('change', ruleHelp);
+ruleHelp();
 el('colour').addEventListener('change', () => { describeColour(); requestRender(); });
 for (const id of ['layer-nutrient', 'layer-trail', 'layer-waste', 'layer-particles']) el(id).addEventListener('change', requestRender);
 el('zoom-in').addEventListener('click', () => zoomCentre(ZOOM_STEP));

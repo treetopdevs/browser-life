@@ -150,6 +150,87 @@ function trailCases(): Case[] {
     },
   ];
 }
+/**
+ * Trail conduit (optional trailConduit and trailConduitCap, docs/mycelium-conduit-2026-11-14/DESIGN.md): several strengths and caps,
+ * every heredity arm and the physarum null, the toll discount switched on at the same time, uniform and gradient light, diffA 0 (the skip
+ * guard) to 128 (the largest the key allows), trail far above the cap everywhere and in a checkerboard (min before multiply), and a keyless
+ * baseline for each. g = 0 must equal the keyless dynamics; every other case must differ from its baseline (not vacuous).
+ */
+function conduitCases(): Case[] {
+  const w = { width: 64, height: 64, founders: 600, maxParticles: 3000 };
+  const base = defaultConfig(w);
+  const cs = ["births", "deaths", "contended"] as const;
+  const dense = { width: 16, height: 16, founders: 300, maxParticles: 1500 };
+  const phys = (over: Partial<MyceliumConfig> = {}) => defaultConfig({ ...dense, controller: "physarum", heredity: "frozen", physarumDeposit: 768, ...over });
+  const cond = (name: string, over: Partial<MyceliumConfig>, steps: number, seg: number, extra: Partial<Case> = {}, baseOver: Partial<MyceliumConfig> = {}): Case => {
+    const { trailConduit: _g, trailConduitCap: _q, ...rest } = over;
+    return { name: `conduit, ${name}`, cfg: defaultConfig({ ...w, ...over }), steps, seg, must: [...cs], vs: { cfg: defaultConfig({ ...w, ...rest, ...baseOver }), same: false }, ...extra };
+  };
+  return [
+    { name: "conduit strength 0 equals the keyless dynamics", cfg: defaultConfig({ ...w, trailConduit: 0 }), steps: 400, seg: 100, must: [...cs], vs: { cfg: base, same: true } },
+    { name: "conduit strength 0, cap 7 equals the keyless dynamics", cfg: defaultConfig({ ...w, trailConduit: 0, trailConduitCap: 7 }), steps: 300, seg: 100, must: [...cs], vs: { cfg: base, same: true } },
+    cond("g 1 (inherit)", { trailConduit: 1 }, 600, 100, { must: [...cs, "mutations"] }),
+    cond("g 8 (inherit)", { trailConduit: 8 }, 800, 100, { must: [...cs, "mutations"] }),
+    cond("g 255 (inherit)", { trailConduit: 255 }, 800, 100, { must: [...cs, "mutations"] }),
+    cond("g 16, cap 1 (ext 1 at most)", { trailConduit: 16, trailConduitCap: 1 }, 500, 100),
+    cond("g 255, cap 1", { trailConduit: 255, trailConduitCap: 1 }, 500, 100),
+    cond("g 32, cap 44", { trailConduit: 32, trailConduitCap: 44 }, 500, 100),
+    cond("g 255, cap 255 (blocked)", { trailConduit: 255, heredity: "blocked" }, 500, 100),
+    cond("g 32 (frozen)", { trailConduit: 32, heredity: "frozen" }, 500, 100),
+    cond("g 32, gradient light", { trailConduit: 32, lightPattern: "gradient" }, 600, 100, { must: [...cs, "mutations"] }),
+    cond("g 8, toll discount on (moveCost 12, td 64)", { trailConduit: 8, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, 600, 100, { must: [...cs, "mutations"] }),
+    cond("g 8, public discount on (moveCost 12, td 256)", { trailConduit: 8, moveCost: 12, trailMoveDiscount: 256 }, 400, 100),
+    cond("diffA 0 (the skip guard), g 32", { trailConduit: 32, diffA: 0 }, 600, 100, { must: ["births", "deaths"] }),
+    cond("diffA 1, g 32", { trailConduit: 32, diffA: 1 }, 400, 100, { must: ["births", "deaths"] }),
+    // At diffA 128 every edge is already at the 128 cap, so the conduit changes nothing: equal to keyless diffA 128.
+    { name: "conduit, diffA 128 (the limit) is inert: equals keyless diffA 128", cfg: defaultConfig({ ...w, trailConduit: 255, diffA: 128 }), steps: 400, seg: 100, must: ["births", "deaths"], vs: { cfg: defaultConfig({ ...w, diffA: 128 }), same: true } },
+    cond("diffA 100, g 255 (Dd caps at 128)", { trailConduit: 255, diffA: 100, diffC: 256 }, 400, 100, { must: ["births", "deaths"] }),
+    {
+      name: "conduit, physarum dense world (g 32)", cfg: phys({ trailConduit: 32 }), steps: 400, seg: 50, must: ["births", "deaths"],
+      vs: { cfg: phys(), same: false },
+    },
+    {
+      name: "conduit, physarum dense world (g 255, cap 20, toll 256)", cfg: phys({ trailConduit: 255, trailConduitCap: 20, moveCost: 12, trailMoveDiscount: 256, trailDiscountMode: "toll" }), steps: 400, seg: 50, must: ["births", "deaths"],
+      vs: { cfg: phys({ moveCost: 12, trailMoveDiscount: 256, trailDiscountMode: "toll" }), same: false },
+    },
+    {
+      // Trail near 2^31 per cell: min(P[k], P[nb], q) is taken before the multiply, so a raw P never overflows (255 * 255 < 2^16).
+      name: "conduit saturates (trail 2^30 per cell, g 255)",
+      cfg: defaultConfig({ ...w, trailConduit: 255 }), steps: 300, seg: 100, must: ["births", "deaths"],
+      tweak: (s) => { s.P.fill(2 ** 30); }, vs: { cfg: defaultConfig(w), same: false },
+    },
+    {
+      // Checkerboard of huge and zero trail: no edge has both ends above 0, so Dd = De everywhere (the conduit is inert), and the
+      // CPU and GPU must agree on the min over a huge and a zero end. The trail then decays and spreads, so the rule switches on mid-run.
+      name: "conduit, checkerboard of trail 2^31-1 and 0 (min before multiply)",
+      cfg: defaultConfig({ ...w, trailConduit: 255, pDecay: 0 }), steps: 200, seg: 50, must: ["births", "deaths"],
+      tweak: (s) => { for (let k = 0; k < s.P.length; k++) s.P[k] = (((k % 64) + Math.floor(k / 64)) & 1) ? 0 : 0x7fffffff; },
+      vs: { cfg: defaultConfig({ ...w, pDecay: 0 }), same: false },
+    },
+    {
+      // A stripe of trail: a corridor conducts, bare cells beside it do not. The 64x64 torus wraps the stripe's ends.
+      name: "conduit, horizontal trail stripe (corridor, wrapped edges)",
+      cfg: defaultConfig({ ...w, trailConduit: 64, pDecay: 0, maxEat: 0, upkeep: 0 }), steps: 200, seg: 50, must: [],
+      tweak: (s) => { for (let x = 0; x < 64; x++) { s.P[10 * 64 + x] = 200; s.A[10 * 64 + x] = x === 0 ? 5000 : 0; } },
+      vs: { cfg: defaultConfig({ ...w, pDecay: 0, maxEat: 0, upkeep: 0 }), same: false },
+    },
+    {
+      name: "conduit, 100x60 odd size, gradient, g 100, cap 50",
+      cfg: defaultConfig({ width: 100, height: 60, founders: 200, maxParticles: 300, lightPattern: "gradient", trailConduit: 100, trailConduitCap: 50 }), steps: 400, seg: 100, must: ["births", "deaths"],
+      vs: { cfg: defaultConfig({ width: 100, height: 60, founders: 200, maxParticles: 300, lightPattern: "gradient" }), same: false },
+    },
+    {
+      name: "conduit, 256x256, 4096 founders, g 16",
+      cfg: defaultConfig({ width: 256, height: 256, founders: 4096, maxParticles: 16384, trailConduit: 16 }), steps: 1500, seg: 500, must: [...cs, "mutations"],
+      vs: { cfg: defaultConfig({ width: 256, height: 256, founders: 4096, maxParticles: 16384 }), same: false },
+    },
+    {
+      name: "conduit, 512x512 at the 65536 cap, g 32",
+      cfg: defaultConfig({ width: 512, height: 512, maxParticles: 65536, founders: 32768, upkeep: 3, light: 2, trailConduit: 32 }), steps: 80, seg: 20, must: [...cs, "mutations"],
+      vs: { cfg: defaultConfig({ width: 512, height: 512, maxParticles: 65536, founders: 32768, upkeep: 3, light: 2 }), same: false },
+    },
+  ];
+}
 const smallWorld = { width: 32, height: 32, founders: 64, maxParticles: 256 };
 const cases: Case[] = [
   {
@@ -217,6 +298,7 @@ const cases: Case[] = [
   },
   ...r2bCases(),
   ...trailCases(),
+  ...conduitCases(),
   { name: "default 128x128", cfg: defaultConfig(), steps: 2000, seg: 250, must: [...base, "mutations"] },
   { name: "inherit", cfg: defaultConfig({ heredity: "inherit" }), steps: 500, seg: 100, must: [...base, "mutations"] },
   { name: "frozen", cfg: defaultConfig({ heredity: "frozen" }), steps: 500, seg: 100, must: [...base] },
@@ -459,7 +541,8 @@ async function runGuards(): Promise<Row> {
   // The Physarum null runs on the GPU now (R2b); the bad config values still stop at createWorld, never at the shader.
   {
     for (const bad of [{ physarumDeposit: 100 }, { controller: "physarum" as const, heredity: "frozen" as const, physarumDeposit: 769 }, { blindTrailGradient: 1 as unknown as boolean },
-      { trailMoveDiscount: 257 }, { trailMoveDiscount: -1 }, { trailMoveDiscount: 1.5 }, { trailDiscountMode: "toll" as const }, { trailMoveDiscount: 5, trailDiscountMode: "private" as unknown as "toll" }]) {
+      { trailMoveDiscount: 257 }, { trailMoveDiscount: -1 }, { trailMoveDiscount: 1.5 }, { trailDiscountMode: "toll" as const }, { trailMoveDiscount: 5, trailDiscountMode: "private" as unknown as "toll" },
+      { trailConduit: 256 }, { trailConduit: -1 }, { trailConduit: 1.5 }, { trailConduitCap: 5 }, { trailConduit: 8, trailConduitCap: 0 }, { trailConduit: 8, trailConduitCap: 256 }, { trailConduit: 8, diffA: 129 }]) {
       let threw = false;
       try { createWorld(defaultConfig({ ...smallWorld, ...bad })); } catch { threw = true; }
       if (!threw) fail(`config ${JSON.stringify(bad)} was accepted`);
@@ -481,6 +564,8 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
     [{ controller: "physarum", heredity: "frozen", physarumDeposit: 100 }, ", physarumDeposit 100"],
     [{ blindTrailGradient: true }, ", blindTrailGradient"],
     [{ moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", trailMoveDiscount 64 toll"],
+    [{ trailConduit: 32, trailConduitCap: 60 }, ", trailConduit 32 cap 60"],
+    [{ trailConduit: 8, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", trailConduit 8 with toll"],
   ];
   for (const [over, label] of variants) {
     rows.push(await runResume(over, label));

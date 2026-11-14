@@ -151,6 +151,35 @@ test('GPU engine: plays, zooms, inspects, wounds and scrapes, and the books stay
   expect(errors).toEqual([]);
 });
 
+test('trail rules: each option is explained and plants a world whose books stay closed, on the GPU and on the CPU', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/mycelium/');
+  await ready(page);
+  const engine = page.locator('#engine-now');
+  const help = page.locator('#rule-help');
+  await expect(page.locator('#trailrule')).toHaveValue('none');
+  await expect(help).toContainText('R3 test');
+  const expected: Record<string, RegExp> = { toll: /R4 test/, conduit8: /conduit screen/, conduit128: /strongest setting/ };
+  for (const engineName of ['gpu', 'cpu'] as const) {
+    await page.locator('#engine').selectOption(engineName);
+    await expect(engine).toHaveAttribute('data-engine', 'gpu'); // the line describes the running world until Plant
+    for (const rule of ['toll', 'conduit8', 'conduit128'] as const) {
+      await page.locator('#trailrule').selectOption(rule);
+      await expect(help).toContainText(expected[rule]!);
+      if (engineName === 'gpu') await page.locator('#size').selectOption('128');
+      await page.getByRole('button', { name: 'Plant', exact: true }).click();
+      await expect(engine).toHaveAttribute('data-engine', engineName);
+      await expect(page.locator('#status')).toContainText('trail rule:');
+      await expect.poll(() => num(page, 'r-n')).toBeGreaterThan(100);
+      await playUntil(page, 40);
+      await expectBooksClosed(page);
+    }
+    await page.locator('#trailrule').selectOption('none');
+  }
+  expect(await page.evaluate(() => document.body.dataset.gpuError ?? '')).toBe('');
+  expect(errors).toEqual([]);
+});
+
 test('CPU reference engine: the fallback path stays at 128 x 128 and works the same way', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/mycelium/');

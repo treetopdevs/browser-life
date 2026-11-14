@@ -30,6 +30,20 @@ export type ControllerKind = "neural" | "physarum";
 export type TrailDiscountMode = "public" | "toll";
 /** Largest trailMoveDiscount; 256 means one unit of trail under a particle makes its movement free. */
 export const TRAIL_DISCOUNT_MAX = 256;
+/** Largest trailConduit (g) and trailConduitCap (q); x * g <= 65,025 stays below 2^16. */
+export const CONDUIT_MAX = 255;
+/** The per-edge A diffusion rate never exceeds this (1/1024 per direction): 4 * 128 = 512, eigenvalue of the checkerboard mode 0. */
+export const CONDUIT_DD_MAX = 128;
+
+/**
+ * The conduit rule's per-edge A diffusion rate (RULES.md, "Trail conduit"): both end cells' trail, capped at q, scaled by g/16
+ * and added to the base rate De, at most 128. The min is taken before the multiply, so a raw trail value (up to 2^31) never multiplies.
+ * Symmetric in (pk, pn). Exported so observers and tests use the rule's own arithmetic.
+ */
+export function conduitRate(De: number, g: number, q: number, pk: number, pn: number): number {
+  const x = Math.min(pk, pn, q);
+  return Math.min(De + ((x * g) >>> 4), CONDUIT_DD_MAX);
+}
 
 export interface MyceliumConfig {
   rule: typeof RULE_ID;
@@ -100,6 +114,14 @@ export interface MyceliumConfig {
   trailMoveDiscount?: number;
   /** Optional, only with trailMoveDiscount. "toll": f = 0 unless the particle's deposit request is positive. Absent means "public". */
   trailDiscountMode?: TrailDiscountMode;
+  /**
+   * Optional (conduit, exploratory; docs/mycelium-conduit-2026-11-14/DESIGN.md). Integer 0..255. Phase 8, species A only: the A diffusion
+   * rate across an edge whose two cells both hold end-of-step trail is Dd = min(diffA + ((min(P[k], P[nb], q) * g) >> 4), 128) in place of
+   * diffA (RULES.md, "Trail conduit"). Requires diffA <= 128. Absent means no conduit. defaultConfig() never sets it.
+   */
+  trailConduit?: number;
+  /** Optional, only with trailConduit. Integer 1..255: the trail amount at which an edge's conductance stops rising. Absent means 255. */
+  trailConduitCap?: number;
   /** Chance a birth mutates (inherit arm), in 1/65536; a mutation changes mutCount weights by up to ±mutStep. */
   mutRate: number;
   mutCount: number;
@@ -234,6 +256,14 @@ export function validateConfig(c: MyceliumConfig): string[] {
   if (c.trailDiscountMode !== undefined) {
     if (c.trailDiscountMode !== "public" && c.trailDiscountMode !== "toll") bad.push("trailDiscountMode must be public or toll");
     if (c.trailMoveDiscount === undefined) bad.push("trailDiscountMode requires trailMoveDiscount");
+  }
+  if (c.trailConduit !== undefined) {
+    if (!Number.isInteger(c.trailConduit) || c.trailConduit < 0 || c.trailConduit > CONDUIT_MAX) bad.push(`trailConduit must be an integer in [0, ${CONDUIT_MAX}]`);
+    if (c.diffA > CONDUIT_DD_MAX) bad.push(`trailConduit requires diffA <= ${CONDUIT_DD_MAX}`);
+  }
+  if (c.trailConduitCap !== undefined) {
+    if (!Number.isInteger(c.trailConduitCap) || c.trailConduitCap < 1 || c.trailConduitCap > CONDUIT_MAX) bad.push(`trailConduitCap must be an integer in [1, ${CONDUIT_MAX}]`);
+    if (c.trailConduit === undefined) bad.push("trailConduitCap requires trailConduit");
   }
   // Total matter bounds every field cell and every sum of them (RULES.md, "Bounds").
   const total = c.width * c.height * c.nutrient0 + c.founders * c.founderMatter;
@@ -373,7 +403,7 @@ function binParticles(s: MyceliumState): { cell: Uint32Array; D: Uint32Array } {
  * NN_O outputs of each particle in slot order. step() and probe() both call this, so a probe sees exactly
  * what the next step would act on. It reads s.step (the physarum draws are keyed on it) and changes nothing.
  */
-function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array): Int32Array {
+function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array, zeroInputs: readonly number[] = []): Int32Array {
   const c = s.config;
   const W = c.width, H = c.height;
   const n = s.n;
@@ -399,6 +429,8 @@ function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array): Int
     xin[7] = sat(E[i] >>> c.energyShift);
     xin[8] = sat(M[i] >>> c.massShift);
     xin[9] = sat(D[ci] * 16);
+    // Observer-only lesion (probeLesion): inputs set to 0 after the sensors are built. step() never passes any.
+    for (const z of zeroInputs) xin[z] = 0;
     if (physarum) {
       physarumThink(xin, pbase(c.seed, s.step, s.id[i]), o, c.physarumDeposit);
     } else {
@@ -438,6 +470,12 @@ function physarumThink(xin: Int32Array, pb: number, o: Int32Array, deposit: numb
 export function probe(s: MyceliumState): Int32Array {
   const { cell, D } = binParticles(s);
   return senseAndThink(s, cell, D);
+}
+
+/** probe() with the listed input indices set to 0 after the sensors are built (an in-situ lesion for observers; never used by step()). */
+export function probeLesion(s: MyceliumState, zeroInputs: readonly number[]): Int32Array {
+  const { cell, D } = binParticles(s);
+  return senseAndThink(s, cell, D, zeroInputs);
 }
 
 /** Advance one step in place and return what happened in it. */
@@ -610,7 +648,7 @@ export function step(s: MyceliumState): StepStats {
     }
   }
   const dseed = (fseed ^ DIFF_SALT) >>> 0;
-  diffuse(A, W, H, c.diffA, dseed, s.step, 0);
+  diffuse(A, W, H, c.diffA, dseed, s.step, 0, c.trailConduit === undefined ? undefined : { P, g: c.trailConduit, q: c.trailConduitCap ?? CONDUIT_MAX });
   diffuse(C, W, H, c.diffC, dseed, s.step, 1);
 
   s.step++;
@@ -627,13 +665,20 @@ export function step(s: MyceliumState): StepStats {
  * rounded, so even a cell holding one unit can move it. Directions: 0 east, 1 west, 2 south, 3 north;
  * d ^ 1 is the opposite direction. `sp` keeps the A and C draws apart.
  */
-function diffuse(f: Uint32Array, W: number, H: number, De: number, dseed: number, step: number, sp: number): void {
-  if (De === 0) return;
+function diffuse(f: Uint32Array, W: number, H: number, De: number, dseed: number, step: number, sp: number, conduit?: { P: Uint32Array; g: number; q: number }): void {
+  if (De === 0 && !conduit) return;
   const N = W * H;
   const sent = new Uint32Array(4 * N);
   for (let k = 0; k < N; k++) {
     const base = cellBase(dseed, step, k);
-    for (let d = 0; d < 4; d++) sent[4 * k + d] = diffOut(f[k], d, De, base, sp);
+    if (conduit) {
+      // Trail conduit: the per-edge rate depends on the trail of both end cells (end-of-step P, after this step's deposits and decay).
+      const cx = k % W, cy = (k / W) | 0;
+      const nbs = [cy * W + ((cx + 1) % W), cy * W + ((cx + W - 1) % W), ((cy + 1) % H) * W + cx, ((cy + H - 1) % H) * W + cx];
+      for (let d = 0; d < 4; d++) sent[4 * k + d] = diffOut(f[k], d, conduitRate(De, conduit.g, conduit.q, conduit.P[k], conduit.P[nbs[d]]), base, sp);
+    } else {
+      for (let d = 0; d < 4; d++) sent[4 * k + d] = diffOut(f[k], d, De, base, sp);
+    }
   }
   for (let k = 0; k < N; k++) {
     const cx = k % W, cy = (k / W) | 0;

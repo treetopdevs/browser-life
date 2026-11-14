@@ -61,6 +61,7 @@ function wgsl(c: MyceliumConfig): string {
     PDECAY: c.pDecay, DIFFA: c.diffA, DIFFC: c.diffC, HER: c.heredity === "inherit" ? 0 : c.heredity === "frozen" ? 1 : 2,
     PHYS: c.controller === "physarum" ? 1 : 0, PDEP_SET: c.physarumDeposit === undefined ? 0 : 1, PDEP: c.physarumDeposit ?? 0, BLIND: c.blindTrailGradient === true ? 1 : 0,
     TD_SET: c.trailMoveDiscount === undefined ? 0 : 1, TD: c.trailMoveDiscount ?? 0, TOLL: c.trailDiscountMode === "toll" ? 1 : 0,
+    CG_SET: c.trailConduit === undefined ? 0 : 1, CG: c.trailConduit ?? 0, CQ: c.trailConduitCap ?? 255,
     MUTRATE: c.mutRate, MUTCOUNT: c.mutCount, MUTSTEP: c.mutStep, SPAN: c.weightSpan, SSHIFT: c.sensorShift, ESHIFT: c.energyShift, MSHIFT: c.massShift,
     NN_BYTES, W1_OFF, B1_OFF, W2_OFF, B2_OFF, GW: GENOME_WORDS,
     C_N: C.n, C_NEXTID: C.nextId, C_NEXTGID: C.nextGid, C_STEP: C.step, C_ERR: C.err, C_SURV: C.surv, C_WANTT: C.wantTotal, C_NEWG: C.newGids, C_STEPHI: C.stepHi, C_CUT: C.cut,
@@ -531,14 +532,23 @@ fn k_light(@builtin(global_invocation_id) g: vec3<u32>, @builtin(local_invocatio
 }
 
 // Diffusion: each cell's four sends (the kernel's diffOut) go to a scratch plane, then every cell gathers.
-fn send(f0: u32, De: u32, sp: u32, k: u32) {
+// conduit: species A with trailConduit set. The per-edge rate is min(De + (min(P[k], P[nb], CQ) * CG >> 4), 128), the same on both ends of an edge.
+fn send(f0: u32, De: u32, sp: u32, k: u32, conduit: bool) {
   let base = cell_base(DSEED, ld(C_STEP), k);
   let q = atomicLoad(&fld[f0 + k]);
   let rot = base >> 30u;
+  let cx = k % W;
+  let cy = k / W;
+  var nbs = array<u32, 4>(cy * W + (cx + 1u) % W, cy * W + (cx + W - 1u) % W, ((cy + 1u) % H) * W + cx, ((cy + H - 1u) % H) * W + cx);
   for (var d = 0u; d < 4u; d++) {
     var portion = q >> 2u;
     if (((d + rot) & 3u) < (q & 3u)) { portion += 1u; }
-    atomicStore(&fld[F_SENT + 4u * k + d], mul_frac(portion, De * 4u, 10u, draw(base, 1u + d * 3u + sp)));
+    var dd = De;
+    if (conduit) {
+      let pm = min(min(atomicLoad(&fld[F_P + k]), atomicLoad(&fld[F_P + nbs[d]])), CQ);
+      dd = min(De + ((pm * CG) >> 4u), 128u);
+    }
+    atomicStore(&fld[F_SENT + 4u * k + d], mul_frac(portion, dd * 4u, 10u, draw(base, 1u + d * 3u + sp)));
   }
 }
 fn gather(f0: u32, k: u32) {
@@ -553,11 +563,11 @@ fn gather(f0: u32, k: u32) {
   atomicStore(&fld[f0 + k], atomicLoad(&fld[f0 + k]) - out + inflow);
 }
 @compute @workgroup_size(256)
-fn k_send_a(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send(F_A, DIFFA, 0u, g.x); } }
+fn k_send_a(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send(F_A, DIFFA, 0u, g.x, CG_SET != 0u); } }
 @compute @workgroup_size(256)
 fn k_gather_a(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { gather(F_A, g.x); } }
 @compute @workgroup_size(256)
-fn k_send_c(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send(F_C, DIFFC, 1u, g.x); } }
+fn k_send_c(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send(F_C, DIFFC, 1u, g.x, false); } }
 @compute @workgroup_size(256)
 fn k_gather_c(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { gather(F_C, g.x); } }
 
@@ -705,7 +715,7 @@ export class GpuMycelium {
         run("k_compact", pg);
         run("k_scan_n", pg); run("k_top_n", 1); run("k_assign_gid", pg); run("k_trim", pg);
         run("k_light", cg);
-        if (c.diffA > 0) { run("k_send_a", cg); run("k_gather_a", cg); }
+        if (c.diffA > 0 || c.trailConduit !== undefined) { run("k_send_a", cg); run("k_gather_a", cg); }
         if (c.diffC > 0) { run("k_send_c", cg); run("k_gather_c", cg); }
         run("k_finish", 1);
         this.cur ^= 1;

@@ -36,6 +36,30 @@ it('page text carries the caption and the truthful engine statement', () => {
   expect(html).toContain('heredity blocked');
 });
 
+it('page offers the trail rules, explained, with current and truthful results', () => {
+  const html = read('apps/lab/mycelium/index.html');
+  const page = read('apps/lab/src/mycelium/page.ts');
+  expect(html).toContain('id="trailrule"');
+  for (const v of ['none', 'toll', 'conduit8', 'conduit128']) expect(html).toContain(`<option value="${v}"`);
+  expect(html).toContain('id="rule-help"');
+  // each option is wired to the optional config keys on both engines (sizeConfig feeds GPU and CPU alike)
+  expect(page).toContain("trailMoveDiscount: 64, trailDiscountMode: 'toll'");
+  expect(page).toContain('trailConduit: 8');
+  expect(page).toContain('trailConduit: 128');
+  expect(page).toContain("sizeConfig(128, seed, config.heredity, config.lightPattern, rule)");
+  // results stay current: R3 supported, R4 toll-only, conduit screen exploratory only
+  expect(html).toContain('R3 found that when trail is only a cost, inheritance purges it');
+  expect(html).toContain('toll-only');
+  expect(html).toContain('not a test');
+  expect(html).toContain('docs/mycelium-r3-2026-11-13/RESULT.md');
+  expect(html).toContain('docs/mycelium-r4-2026-11-14/RESULT.md');
+  expect(html).toContain('docs/mycelium-conduit-2026-11-14/SCREEN.md');
+  expect(html).toContain('None of this shows that anything evolves');
+  // the default option is the plain world, so existing behaviour and digests are unchanged
+  expect(html).toMatch(/<option value="none" selected/);
+  expect(page).toContain('none: {\n    delta: {},');
+});
+
 it('no public page links to the private route', () => {
   for (const page of ['apps/lab/index.html', 'apps/lab/worlds/index.html', 'apps/lab/lab/index.html', 'apps/lab/research/index.html']) {
     expect(read(page)).not.toContain('/mycelium/');
