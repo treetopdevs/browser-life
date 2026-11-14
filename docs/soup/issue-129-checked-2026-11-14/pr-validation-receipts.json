@@ -1,0 +1,50 @@
+[
+  {
+    "path": "runs/issue-129-pr-2026-11-14/claude-review.txt",
+    "sha256": "e6ca5187550c4dabe06d5d567022c412e25e4fb3aa247d392750e0d3faa1cabb"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/claude-followup.txt",
+    "sha256": "eb3f78a690c519ebcb74d0ffcf139e4dabe4fe04a3bebf421cc7dcd7b077ae5f"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/sol-review.txt",
+    "sha256": "08df302d91ce6ee97ea331a636d98ea1c6490ad6aa4ab65387a99106869ddacb"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/sol-followup.txt",
+    "sha256": "e359d3c801e299fad3919bee434b59439b4684267fd6647a2cd0f670fb2e772d"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/commit-gate.txt",
+    "sha256": "348f24e4cb4c35229ab5ccef470dffbaa824b492510e0961291d015790029544"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/gpu-final.log",
+    "sha256": "007a0d29f917bceca25e2216d93138fbb1e7ce890fa52bfc36ceee1a33100e68"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/python-final.log",
+    "sha256": "112f03f3fffe6c0ff3b6c08f638fe9beeeadc487abc23975b2b5b73c0cb66cb0"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/evidence-fixes.log",
+    "sha256": "d39706bf358517f17fad79b0ea1cee3ea493b259e796d9b7e948836d300d4688"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/lock-fixes.log",
+    "sha256": "f893509d3a5d247713f17a987c7e565f6d68cf898cdf3093708887a05a6470b7"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/deno-final.log",
+    "sha256": "f84a9b37d1390e168157a3e5d6aaefc6186159b0060c744a3933bf5b13630691"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/typecheck-final.log",
+    "sha256": "29c5ee0f6b0b20dbb259b99d01276198c3d28190090706394608d4deda6d2c0b"
+  },
+  {
+    "path": "runs/issue-129-pr-2026-11-14/vitest-final.log",
+    "sha256": "6a0d82db11ab1992dcd8c211f60c72b456f0b59be5ffe24ad95c54c0b7805848"
+  }
+]

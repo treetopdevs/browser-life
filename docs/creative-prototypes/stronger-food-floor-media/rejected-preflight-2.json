@@ -1,0 +1,13 @@
+{
+  "kind": "saved-capture-preflight-rejection",
+  "reason": "Page screenshot without fullPage trimmed document-coordinate clip against viewport; rejected before numbered frames",
+  "pngDimensions": {
+    "width": 1384,
+    "height": 471
+  },
+  "pngSha256": "9e1e01bcbd4584cb7c11f832857faa85d5b2cbb076a9d7b897cf227994e6a3cf",
+  "captureHtmlSha256": "f2d162d04e728c8f287c1a7171832e0297694bbcfb4c0d2e65cf77f34d34dfa9",
+  "numberedFramesCaptured": 0,
+  "simulationRerun": false,
+  "repair": "Use fullPage:true with exact existing outward-even document clip on preflight and all frames"
+}

@@ -1,0 +1,7 @@
+No P1. Two findings:
+
+- **P2 — Queued `runTo` can still paint a superseded world (debug only).** [page.ts:332](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:332) captures generation and simulator **inside** the queued callback. On `/slab/?debug`, hold a read, queue `runTo(6200)`, switch to ecology, then release the read. The callback captures the new generation with the old cyclic simulator; its guards pass, publishing cyclic pictures and census under ecology controls. An in-memory harness using the extracted code reproduced `eco:cyclic@6200`, then `eco:eco@0`. Capture generation before enqueueing and reject stale work on entry. The [new test](/Users/nicholas/develop/browser-life-viz-slab-viewer/tests/e2e/slab.spec.ts:393) switches after execution begins, missing this case.
+
+- **P3 — The banner falsely guarantees recorded starting points.** [index.html:30](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/slab/index.html:30) says “Every starting point below comes from a committed record.” Choose “Kill on from step 0,” ecology at 128×128×8, or an arbitrary seed: the page offers an unrecorded start while retaining that guarantee. Qualify the banner to cover the recorded presets.
+
+No additional defects found in indexing, hand-over, normal-use debug gating, resource ownership, or production packaging. Pinned paths are unchanged. No files changed; no builds or browser tests ran.

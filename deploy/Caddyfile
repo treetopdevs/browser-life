@@ -12,6 +12,10 @@
 :80 {
   encode zstd gzip
 
+  # The slab viewer is a private exploration page: never served from the site.
+  @private_slab path_regexp private_slab (?i)^/slab(?:/|$)
+  respond @private_slab 404
+
   # Creative particle prototype is local-only until separately approved for release.
   @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
   respond @private_particles 404

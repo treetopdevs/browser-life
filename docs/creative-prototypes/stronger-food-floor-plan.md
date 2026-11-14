@@ -1,0 +1,51 @@
+# Stronger food floor: one gated seed 1202
+
+28 October 2026. New worktree from reviewed local delivery8767d3cf. User authorizes stronger food floor, radius8, independent Codex Sol6.1 High reviews, seed1202 with3000gate before6000, animations/log/commits. NO PR, push, merge or deployment.
+
+## Evidence and smallest change
+
+Uniform food retained two families through9000 in three seeds. Split bands and a96-unit floor passed short screens but did not reliably retain three families. Floor1202 lost a band/families by6000; floor1203 separately recovered. With pulseadvance769, seed1202 ended6000 with5bodies/onefamily/emptyband despite cumulative coverage of all bandtiles. Wider radius32 then retained allthreefamilies at3000 but became extinct4279. That valid failure stays frozen; do not combine its wider radius with this change. Returning to radius8 defines this experiment relative to known radius8/schedule769, not a two-parameter causal comparison with radius32.
+
+Test a larger guaranteed allocation to both bands during their minority phase: floor96→192 per band and bonus576→384, total768 unchanged. Majority/minority supply becomes576/192 instead of672/96. This reduces the alternating bonus by one-third and doubles minority supply. Earlier cumulative floor coverage also changes, so this is not an isolated intensity mechanism. It may sustain local footholds or simply flatten interesting dynamics; no survival guarantee. The baseline is a selected known failure, not an unbiased seed draw. No new baseline outcome.
+
+## Frozen rule
+
+Copy frozen apps/lab/src/food-schedule-769/model.ts SHA2560b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6 into NEW apps/lab/src/stronger-food-floor/model.ts. Add mode stronger-food-floor; preserve every oldmode/state/environment projection exactly. RULES remain unchanged including birthPlacementRadius8. Do not import radius32 behavior.
+
+World96×96, band0columns0–23, band1columns48–71, each2304tiles. Initialfood20everywhere, retainedfood, cap40. Every5ticks offer768 units. For p=tick/5−1, majority=floor(p/100)%2. No pulse0. Global slots j0..191 feedband0,192..383 feedband1,384..767 feedmajority. For every slot use unchanged sorted-band rank=((p*769+j)*2053+1202%2304)%2304 and increasingj application order. No reset at switches or3000. Newenvironment truthfully reports floorPerBand192, alternatingBudget384, pulseAdvance769; oldmodes unchanged. Offered460800 at3000 and921600 at6000, equal bands over complete seasons. Accepted/overflow can differ.
+
+All biology, founders, reserves, growth/reproduction, mutation, energy accounting, body/population/history/lineage caps unchanged. Oldradius8 first-free16 placement untouched. No family protection, food sensing, rescue, diffusion or immigration.
+
+Pure enumeration before biology must confirm each of1200pulses is576/192 or192/576,192floor slots/band,384bonus, no duplicate physical targets withinpulse, torus/band bounds, exact boundary switches and unchanged totalbudget. New floor reaches2304/band by600pulses and1200; oldfloor2079/band at600 and2304 at1200. Complete supply2304/band atbothhorizons inboth. Pure enumeration also finds complete-supply full coverage first at pulses195/197 (ticks975/985) under192 versus99/103 (495/515) under96; full floor coverage first at581stpulse (2905) versus677th (3385). Redistribution changes early total reach and revisit timing as well as minority allocation. These are cumulative visits, not guaranteed accessiblefood. Pin actual coverage in tests; no outcomes to choose parameters.
+
+## Schedule and integrity
+
+Seed1202 only, mutation enabled, one novel primary plus independently initialized exact repeat from zero. Repeat is reproducibility, not another trial. Known769 seed1202 is the predetermined control/reference, not a new outcome. Run its standalone check-only before reservation. Preserve ALL prior source/evidence/receipt/media bytes.
+
+Pin historical raw `food-schedule-769-seed-1202.json` SHA256 `b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823`, dataSha256 `ffa8cd2c9ab820e5524f874afae874800694b47d0526a84688e7ad7e71e03840`, index `food-schedule-769-index-1202.json` SHA256 `92de28e2a95ed0d8b20e049834bce89a38b469d3eaa61ac798fd36b420c5027f`. Use its own schema `hungry-shapes-food-schedule-769-arm`, validator and gate/receipt bindings, not older floor wrapper. Pin source dependencies and historical inputs using bytes before launch.
+
+Commit independently reviewed plan first. Implement and validate pure helpers/fixtures/init only, no biology. Independent implementation review and source commit before launch. Node24.2.0 darwin/arm64. Tracked launcher reserves one durable exclusive intent and sticky attempt before constructing worlds. Inside the reservation, run copied model OLD schedule-769 mode once through6000 and exactly match all6000rows,301samples/frames,13snapshots, state/lineage/final projection against known record. No normalization, new baseline artifact or new control claim. Write durable regression proof before constructing either new-mode world. Mismatch invalid/sticky. No required ignored-file dependencies.
+
+One attempt only, zero valid-failure retries, no extra seeds, parameter sweeps or automatic extension. Invariant/accounting/toroidal connectivity/caps/history/frame/lineage/repeat/source/runtime failure stops invalid and retains partial evidence. Genuine24MiB artifact/10000lineage limit is inconclusive; no quiet capacity changes. Assay repair needs separately reviewed retry authorization. Actual extinction stops at its true tick; no invented later evidence.
+
+## New goal-aligned gates, frozen before outcomes
+
+Use the SAME persistence screen frozen in the preceding dispersal plan, not the older seasonal screen. Mandatory majority gain20/minority loss20 is removed because it can penalize keeping both bands occupied. Report all old seasonal numerical deltas and body-only observations descriptively; never call a new-screen pass an old-screen pass.
+
+For H=3000 use windows1501–2000,2001–2500,2501–3000 and body ages1500/2000/2500/3000. For H=6000 use4501–5000,5001–5500,5501–6000 and4500/5000/5500/6000. Require ALL:
+
+1. Alive atH; at least TWO founder families at BOTH H−500 andH. Positive births AND deaths in EACH full late500-tick window, and at most99 cap48 ticks per window.
+2. At least10 occupied body tiles in EACH band at BOTH H−500 andH. Count body tiles, not food or bodies. Multiple families are required globally, not in each band; report per-band family representation separately without implying functional species.
+3. Parent body-only review of H−500→H confirms visible occupied structure expansion, clearance or rearrangement IN EACH band. Merely different IDs/colors/food/outlines do not count. Either band visually unchanged or uncertain fails. Review all four late ages and report each adjacent interval, but only own final500 change in BOTH bands is mandatory. Review explicitly not blind. No mandatory opposite-direction seasonal motion.
+
+All3000 gates earn continuation ONLY. At3000 both SAME live worlds pause before3001; no reconstruction from snapshots (RNG closure absent). Save immutable full151samples/frames,3000rows,7snapshots plus repeat proof and source/plan/run/intent hashes. Parent writes exact SHA-bound receipt with all intervals, separate per-band final-change judgments and pass/fail. Independent evidence review and commit gate artifact/receipt before continuation. Runner verifies committed clean receipt/artifact, pinned executable inputs and unchanged live states, then durably records authorization and continues SAME objects/arrays. Missing/malformed/stale/uncommitted approval cannot advance.60minute wait timeout/process loss is inconclusive, not permission to reconstruct/retry. Numeric failure ends at3000 without waiting for continuation; still report parent visual observations. False/uncertain manual decision stops validly.
+
+Once authorized, continue to actual extinction or6000 even if a family/band disappears earlier; no hidden biological early gate. All6000 gates yield Promising for separately planned replication; otherwise Valid Stop. No automatic extra work. Missing unreached biological ages/windows fails; missing due to assay is invalid.
+
+## Evidence and delivery
+
+Retain every tick,20-tick frames/samples plus actualterminal, full0/every500 snapshots plus actualterminal, complete lineage/history, exact primary/repeat comparisons. Report all executed500 windows including population min/mean/max/end, families, births/deaths/cap, bands, offered/accepted/overflow/remainingfood; whole/tail trough, final500mean, firstabsent family sample20tick resolution. Preserve3000artifact bytes after continuation. Report band-family representation at retained late snapshots. The stronger floor is engineered environmental allocation, not learned migration or adaptation. No claim of reliable superiority, durable coexistence or causation from one selected known-failure seed.
+
+Descriptive recolonization means a band has zero occupied tiles at a retained sample and later positive occupancy, at20tick resolution; do not infer migration or family rescue. No new birth event log required; do not infer exact birth positions from frames that miss events. Record no causal dispersal mechanism claim without event evidence.
+
+Parent receipt precedes optional diagnostics (none required), independent evidence review/commit precedes saved-data capture. New `stronger-food-floor` companion compares new trajectory with known769 at equal ages/scales, includes charts/family counts and honest gate labels. Capture only saveddata, fixedviewport/even-dimension preflight, archive exact captureHTML, inspect first/finalframes and full decode; add animation/editorial/log, actual/media tests and independent final review before deliverycommit. Required core tests cover old-mode initialization parity and radius8, pure1200-pulse allocation/target/coverage/boundary fixtures, strict newgate decision receipts, actual waiting barrier and sourcebindings, artifact corruption and earlyterminal handling. Browsertests cover synthetic corruption plus actual data/video/mobile. Typecheck/build and focused checks. Record test failures/repairs separately from biological attempts. Stop after this one outcome. NO PR, push, merge or deployment.

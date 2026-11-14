@@ -1,0 +1,39 @@
+{
+  "url": "http://127.0.0.1:5666/docs/creative-prototypes/stronger-food-floor.html",
+  "viewport": {
+    "width": 1760,
+    "height": 1440
+  },
+  "coordinateSpace": "document",
+  "contentBounds": {
+    "x": 188,
+    "y": 969.78125,
+    "width": 1384,
+    "height": 965.5,
+    "scrollX": 0,
+    "scrollY": 495
+  },
+  "clip": {
+    "x": 188,
+    "y": 969,
+    "width": 1384,
+    "height": 968
+  },
+  "dimensions": {
+    "width": 1384,
+    "height": 968
+  },
+  "canvasSizes": [
+    {
+      "width": 659,
+      "height": 659
+    },
+    {
+      "width": 659,
+      "height": 659
+    }
+  ],
+  "rawSha256": "fca948c8e43bdc1b778570bb772a9ad33c11deeffe94f1b6ff6991bdfdf37cec",
+  "htmlSha256": "f2d162d04e728c8f287c1a7171832e0297694bbcfb4c0d2e65cf77f34d34dfa9",
+  "pngSha256": "8bab832bd60ee36c63e24fce91dc4bcac867c77d68c284b0cf5b817ce68d1b65"
+}
