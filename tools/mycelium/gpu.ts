@@ -59,6 +59,7 @@ function wgsl(c: MyceliumConfig): string {
     MASSUPK: 1 << (16 - c.massUpkeepShift), MAXDEP: c.maxDeposit, DEPCOST: c.depositCost, EXCK: 1 << (16 - c.excreteShift),
     SPLITE: c.splitEnergy, SPLITM: c.splitMatter, EMAX: c.energyMax, LIGHT: c.light, LGRAD: c.lightPattern === "gradient" ? 1 : 0,
     PDECAY: c.pDecay, DIFFA: c.diffA, DIFFC: c.diffC, HER: c.heredity === "inherit" ? 0 : c.heredity === "frozen" ? 1 : 2,
+    PHYS: c.controller === "physarum" ? 1 : 0, PDEP_SET: c.physarumDeposit === undefined ? 0 : 1, PDEP: c.physarumDeposit ?? 0, BLIND: c.blindTrailGradient === true ? 1 : 0,
     MUTRATE: c.mutRate, MUTCOUNT: c.mutCount, MUTSTEP: c.mutStep, SPAN: c.weightSpan, SSHIFT: c.sensorShift, ESHIFT: c.energyShift, MSHIFT: c.massShift,
     NN_BYTES, W1_OFF, B1_OFF, W2_OFF, B2_OFF, GW: GENOME_WORDS,
     C_N: C.n, C_NEXTID: C.nextId, C_NEXTGID: C.nextGid, C_STEP: C.step, C_ERR: C.err, C_SURV: C.surv, C_WANTT: C.wantTotal, C_NEWG: C.newGids, C_STEPHI: C.stepHi, C_CUT: C.cut,
@@ -175,18 +176,47 @@ fn k_think(@builtin(global_invocation_id) g: vec3<u32>) {
   xin[7] = sat(pc[P_E + i] >> ESHIFT);
   xin[8] = sat(m0 >> MSHIFT);
   xin[9] = sat(atomicLoad(&fld[F_D + ci]) * 16u);
-  for (var q = 0u; q < GW; q++) { gw[q] = pc[P_GEN + i * GW + q]; }
-  var hh: array<i32, 8>;
-  for (var j = 0u; j < 8u; j++) {
-    var acc = wb(B1_OFF + j) * 128;
-    for (var k = 0u; k < 10u; k++) { acc += wb(W1_OFF + k * 8u + j) * xin[k]; }
-    hh[j] = clamp(acc / 128, 0, 127);
-  }
+  if (BLIND == 1u) { xin[3] = 0; xin[4] = 0; }
   var o: array<i32, 5>;
-  for (var k = 0u; k < 5u; k++) {
-    var acc = wb(B2_OFF + k) * 128;
-    for (var j = 0u; j < 8u; j++) { acc += wb(W2_OFF + j * 8u + k) * hh[j]; }
-    o[k] = clamp(acc / 128, -127, 127);
+  if (PHYS == 1u) {
+    // The R2 null (world.ts physarumThink): up the trail gradient at half speed plus a small random turn, or a wander
+    // where there is no trail. The genome is carried and never read. R2b: DEPOSIT = 32 * u with u from physarumDeposit.
+    let pbp = pbase(ld(C_STEP), pc[P_ID + i]);
+    let gx = xin[3];
+    let gy = xin[4];
+    let gm = max(abs(gx), abs(gy));
+    var bx = 0;
+    var by = 0;
+    if (gm > 0) {
+      bx = (gx * 64) / gm;
+      by = (gy * 64) / gm;
+    } else {
+      bx = i32(draw(pbp, 62u) % 129u) - 64;
+      by = i32(draw(pbp, 63u) % 129u) - 64;
+    }
+    o[0] = clamp(bx + i32(draw(pbp, 60u) % 33u) - 16, -127, 127);
+    o[1] = clamp(by + i32(draw(pbp, 61u) % 33u) - 16, -127, 127);
+    o[2] = 127;
+    o[3] = 32;
+    if (PDEP_SET == 1u) {
+      var pu = PDEP >> 8u;
+      if ((draw(pbp, 64u) % 256u) < (PDEP & 255u)) { pu += 1u; }
+      o[3] = i32(32u * pu);
+    }
+    o[4] = 127;
+  } else {
+    for (var q = 0u; q < GW; q++) { gw[q] = pc[P_GEN + i * GW + q]; }
+    var hh: array<i32, 8>;
+    for (var j = 0u; j < 8u; j++) {
+      var acc = wb(B1_OFF + j) * 128;
+      for (var k = 0u; k < 10u; k++) { acc += wb(W1_OFF + k * 8u + j) * xin[k]; }
+      hh[j] = clamp(acc / 128, 0, 127);
+    }
+    for (var k = 0u; k < 5u; k++) {
+      var acc = wb(B2_OFF + k) * 128;
+      for (var j = 0u; j < 8u; j++) { acc += wb(W2_OFF + j * 8u + k) * hh[j]; }
+      o[k] = clamp(acc / 128, -127, 127);
+    }
   }
   tmp[T_MX + i] = bitcast<u32>(o[0]);
   tmp[T_MY + i] = bitcast<u32>(o[1]);
@@ -582,8 +612,6 @@ export class GpuMycelium {
   private energy0 = 0;
 
   private constructor(readonly device: GPUDevice, config: MyceliumConfig) {
-    // The Physarum null (R2) is CPU-only by protocol; ignoring the key would silently run the neural rule.
-    if (config.controller !== undefined && config.controller !== "neural") throw new Error(`GpuMycelium does not implement controller "${config.controller}"; run it on the CPU reference`);
     this.config = { ...config };
     const L = this.L = layouts(config);
     const d = device;
@@ -675,6 +703,21 @@ export class GpuMycelium {
       this.device.queue.submit([enc.finish()]);
       done += batch;
     }
+  }
+
+  /**
+   * Read-only handles for a renderer (the lab page): the GPU buffers and their word offsets. Nothing here writes or
+   * changes the simulation. `cur` is the index in `parts` of the buffer holding the current state and flips with every
+   * queued step, so read it when encoding a frame. A reader's first word of `ctl` is the live particle count.
+   */
+  get view() {
+    const { N, cap, F, P } = this.L;
+    return {
+      ctl: this.ctl, fld: this.fld, parts: this.parts, cur: this.cur,
+      N, cap, ctlN: C.n, ctlStep: C.step, ctlStepHi: C.stepHi,
+      field: { A: F.A, C: F.C, P: F.P },
+      planes: { id: P.ID, parent: P.PAR, gid: P.GID, x: P.X, y: P.Y, M: P.M, E: P.E, age: P.AGE },
+    };
   }
 
   /** Resolves when everything queued so far has finished. */

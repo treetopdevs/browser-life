@@ -9,18 +9,128 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to the world</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world, rung R0 (R1 and R2 results below)</span></header>
+  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world: R0 reference, R1 GPU port, R2 and R2b measurement-limited</span></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">Neural particles over a conserved field</p>
       <h1>Particles that eat, lay trail and split</h1>
-      <p>Each dot is a particle with a body of matter, a store of energy and its own small neural controller (the same 160-byte controller the research jars use). It senses the nutrient, waste and trail around it, then decides how to move, how much to eat, how much trail to lay and whether to split. A child takes half its parent's matter and energy and, in the inherit arm, a copy of its controller that sometimes mutates. Light turning waste back into nutrient is the only energy coming in.</p>
-      <p class="disclosure">CPU only: this page runs the reference implementation (rung R0), and this page does not use the GPU. A WebGPU port (rung R1) matched the reference bit for bit in a local test on one Mac, which says the port is faithful and says nothing about evolution. Local experiment, kept off the public site. Matter is conserved exactly and energy is booked exactly on every step (the two residuals below stay at 0). It does not yet show that anything evolves.</p>
+      <details class="how" open>
+        <summary>What the particles do</summary>
+        <p>Each dot is a particle with a body of matter, a store of energy and its own small neural controller (the same 160-byte controller the research jars use). It senses the nutrient, waste and trail around it, then decides how to move, how much to eat, how much trail to lay and whether to split. A child takes half its parent's matter and energy and, in the inherit arm, a copy of its controller that sometimes mutates. Light turning waste back into nutrient is the only energy coming in.</p>
+      </details>
+      <p class="engine-now" id="engine-now" data-engine="" role="status">Starting.</p>
+      <div class="disclosure">
+        <p><strong>Local experiment, kept off the public site. Nothing here shows that anything evolves.</strong></p>
+        <details>
+          <summary>What was checked, and what was not</summary>
+          <p>Matter is conserved exactly and energy is booked exactly; the two residuals below stay at 0. This page runs the world on your GPU through WebGPU when it can, and on the CPU reference (rung R0, one 128 × 128 size) when it cannot or when you choose it. The GPU port (rung R1) matched the CPU reference bit for bit in a local test on one Mac, which says the port is faithful, not that it has been checked on other GPUs, and says nothing about evolution. The two residuals are checked by the CPU engine after every step, and by the GPU engine from a full read-back about twice a second and after every brush stroke. Rung R2, the test of whether heredity matters, came out measurement-limited on five practice seeds, and so did its redesign, R2b, on twenty practice seeds run for 100,000 steps on the GPU: the confirmation was never run, so nothing here shows that anything evolves, and nothing here shows that it does not.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="runbar" aria-label="Run the world">
+      <div class="controls transport">
+        <button id="play" type="button" aria-pressed="false">Play</button>
+        <button id="step" type="button">One step</button>
+        <label for="pace">Speed<select id="pace"></select></label>
+      </div>
+      <p id="status" class="muted" role="status">Planting.</p>
+    </section>
+
+
+    <section class="world-section" aria-label="The world and its numbers">
+      <div class="world-col">
+        <div class="world-frame">
+          <div class="stage" id="stage" tabindex="0" role="group" aria-label="The mycelium world, seen from above. Plus and minus zoom, arrow keys move the view, 0 fits the whole world, Enter uses the chosen tool at the middle of the view. Scroll or pinch to zoom, drag to move.">
+            <canvas id="overlay" aria-hidden="true"></canvas>
+          </div>
+          <div class="toolbar" role="toolbar" aria-label="View">
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button id="fit" type="button">Fit</button>
+            <span id="zoom-level" class="muted" aria-live="off">Zoom 1.0×</span>
+          </div>
+          <p class="muted help">Scroll or pinch to zoom, drag to move the view. The rules wrap around at the edges of the world; the picture does not.</p>
+        </div>
+
+        <fieldset class="tools">
+          <legend>What a click does</legend>
+          <label class="tool"><input type="radio" name="tool" value="inspect" checked><span><strong>Inspect</strong>: click a particle to read its id, family, parent, age, matter and energy.</span></label>
+          <label class="tool"><input type="radio" name="tool" value="wound"><span><strong>Wound</strong>: click to remove every particle inside the circle, as if a blade had passed. Their bodies become waste where they stood and their stored energy is booked as heat, so the ledgers still balance. Use it to see whether a family recovers.</span></label>
+          <label class="tool"><input type="radio" name="tool" value="scrape"><span><strong>Scrape trail</strong>: click to wipe the trail inside the circle. It turns into waste, so no matter is lost. Use it to see how much the particles lean on the paths they laid.</span></label>
+          <div class="radius">
+            <label for="radius">Brush radius: <output id="radius-out">6</output> cells</label>
+            <input id="radius" type="range" min="1" max="40" step="1" value="6">
+            <button id="apply-centre" type="button" disabled>Use the tool at the middle of the view</button>
+          </div>
+          <p class="muted help">There is no feed brush on purpose: adding food would add matter, and this world is closed in matter. After a brush, a run no longer follows from its seed alone; every stroke is written in the log below.</p>
+        </fieldset>
+      </div>
+
+      <div class="readouts">
+        <dl id="numbers">
+          <div><dt>Step</dt><dd id="r-step">0</dd></div>
+          <div><dt>Particles</dt><dd id="r-n">0</dd></div>
+          <div><dt>Families alive</dt><dd id="r-g">0</dd></div>
+          <div><dt>Births per 100 steps</dt><dd id="r-b">0</dd></div>
+          <div><dt>Deaths per 100 steps</dt><dd id="r-d">0</dd></div>
+          <div><dt>Births refused per 100 steps</dt><dd id="r-f">0</dd></div>
+          <div><dt>Matter residual</dt><dd id="r-m">0</dd></div>
+          <div><dt>Energy residual</dt><dd id="r-e">0</dd></div>
+          <div><dt>Time per step</dt><dd id="r-t">–</dd></div>
+        </dl>
+        <p id="audit-note" class="muted help"></p>
+        <p class="muted help">Births refused are splits the rules turned down because the world had no room left for the child (or ran out of ids). If this stays above 0 the population is at its cap, so a flat particle count says nothing about how well it would otherwise reproduce. Particles removed by a wound are not counted as deaths here; they are in the interventions log.</p>
+        <canvas id="history" width="480" height="140" role="img" aria-label="Particles (light line) and families alive (violet line) over the run.">History chart.</canvas>
+        <p class="muted legend"><span class="sw sw-n"></span>particles <span class="sw sw-g"></span>families alive</p>
+
+        <div class="look">
+          <h2>What you see</h2>
+          <div class="controls look-controls">
+            <label for="colour">Colour particles by<select id="colour">
+              <option value="family" selected>family: one colour per identical controller</option>
+              <option value="energy">energy: how much each one is storing</option>
+              <option value="age">age: steps since it was born</option>
+              <option value="body">body size: how much matter it holds</option>
+            </select></label>
+          </div>
+          <p id="colour-help" class="muted help"></p>
+          <fieldset class="layers">
+            <legend>Show</legend>
+            <label><input type="checkbox" id="layer-nutrient" checked><span class="sw-box" id="sw-nutrient"></span>nutrient <small>(dissolved food)</small></label>
+            <label><input type="checkbox" id="layer-trail" checked><span class="sw-box" id="sw-trail"></span>trail <small>(laid by particles)</small></label>
+            <label><input type="checkbox" id="layer-waste"><span class="sw-box" id="sw-waste"></span>waste <small>(dissolved leftovers)</small></label>
+            <label><input type="checkbox" id="layer-particles" checked><span class="sw-box sw-dots"></span>particles</label>
+          </fieldset>
+          <div id="legend" class="legend-box" aria-live="off"></div>
+        </div>
+
+        <p id="i-announce" class="sr-only" role="status"></p>
+        <div class="inspect" id="inspect">
+          <h2>Inspect</h2>
+          <p id="i-note" class="muted help">Choose Inspect above and click a particle.</p>
+          <dl id="i-list">
+            <div><dt>Particle id</dt><dd id="i-id">–</dd></div>
+            <div><dt>Family</dt><dd id="i-fam">–</dd></div>
+            <div><dt>Parent id</dt><dd id="i-par">–</dd></div>
+            <div><dt>Age</dt><dd id="i-age">–</dd></div>
+            <div><dt>Matter</dt><dd id="i-m">–</dd></div>
+            <div><dt>Energy</dt><dd id="i-e">–</dd></div>
+            <div><dt>Family size now</dt><dd id="i-count">–</dd></div>
+            <div><dt>Place</dt><dd id="i-pos">–</dd></div>
+          </dl>
+        </div>
+      </div>
     </section>
 
     <section class="observer" aria-labelledby="controls-heading">
-      <h2 id="controls-heading">Plant a world</h2>
+      <h2 id="controls-heading">Plant a new world</h2>
       <div class="controls">
+        <label for="engine">Run on<select id="engine">
+          <option value="gpu" selected>your GPU (WebGPU): fast, and the only way to get the bigger worlds</option>
+          <option value="cpu">the CPU reference: slower, one 128 × 128 size, the specification itself</option>
+        </select></label>
+        <label for="size">World size<select id="size"></select></label>
         <label for="heredity">Children get<select id="heredity">
           <option value="inherit" selected>their parent's controller, sometimes mutated (the experiment)</option>
           <option value="frozen">an exact copy, never mutated (only the founders compete)</option>
@@ -33,41 +143,14 @@
         <label for="seed">Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="1"></label>
         <button id="plant" type="button">Plant</button>
       </div>
-      <div class="controls transport">
-        <button id="play" type="button" aria-pressed="false">Play</button>
-        <button id="step" type="button">One step</button>
-        <label for="pace">Speed<select id="pace">
-          <option value="1">1 step per frame · watch each move</option>
-          <option value="4" selected>4 steps per frame · steady</option>
-          <option value="max">as fast as this CPU goes</option>
-        </select></label>
-        <label for="view">Show<select id="view">
-          <option value="all" selected>everything: nutrient green, trail violet, particles by family</option>
-          <option value="trail">trail only: where particles have been laying matter</option>
-          <option value="families">particles only, coloured by family</option>
-        </select></label>
-      </div>
-      <p id="status" class="muted" role="status">Planting.</p>
+      <p id="engine-help" class="muted help"></p>
+      <p id="size-help" class="muted help"></p>
     </section>
 
-    <section class="world-section" aria-label="The world and its numbers">
-      <div class="world-frame">
-        <canvas id="world" width="512" height="512" role="img" aria-label="The mycelium world seen from above. Green is dissolved nutrient, violet is trail, and each coloured dot is a particle; particles of one family (identical controllers) share a colour.">Canvas unavailable. The numbers still update.</canvas>
-      </div>
-      <div class="readouts">
-        <dl id="numbers">
-          <div><dt>Step</dt><dd id="r-step">0</dd></div>
-          <div><dt>Particles</dt><dd id="r-n">0</dd></div>
-          <div><dt>Families alive</dt><dd id="r-g">0</dd></div>
-          <div><dt>Births, last 100 steps</dt><dd id="r-b">0</dd></div>
-          <div><dt>Deaths, last 100 steps</dt><dd id="r-d">0</dd></div>
-          <div><dt>Matter residual</dt><dd id="r-m">0</dd></div>
-          <div><dt>Energy residual</dt><dd id="r-e">0</dd></div>
-          <div><dt>Time per step</dt><dd id="r-t">–</dd></div>
-        </dl>
-        <canvas id="history" width="480" height="140" role="img" aria-label="Particles (light line) and families alive (violet line) over the run.">History chart.</canvas>
-        <p class="muted legend"><span class="sw sw-n"></span>particles <span class="sw sw-g"></span>families alive</p>
-      </div>
+    <section class="log-section" aria-labelledby="log-heading">
+      <h2 id="log-heading">Interventions</h2>
+      <p id="log-note" class="muted help">No interventions yet: this run follows its seed and the rules alone.</p>
+      <ol id="log" class="log"></ol>
     </section>
 
     <section class="caption" aria-labelledby="caption-heading">
@@ -75,11 +158,12 @@
       <ul>
         <li>A family here is a set of particles with identical controllers. A mutation always starts a new family, so the family count measures mutation and survival together, not adaptation.</li>
         <li>A crowd of particles, or a web of trail, is not an organism. Nothing groups particles into individuals yet.</li>
-        <li>The evidence would be a difference between the inherit arm and the blocked arm, beyond the noise between seeds, on readouts fixed in advance. Rung R2 tried to set that up on five practice seeds and it came out measurement-limited: the inherit arm varies so much from seed to seed that none of the four readouts could separate it from the blocked arm, or even respond to a doubling of light. The real comparison on fresh seeds was therefore never run, and this says nothing either way about whether heredity matters here.</li>
-        <li>Trail-following alone makes network shapes, so a hard-coded trail follower is a null this world still has to beat. The follower is built and runs, but because the comparison with it was never run, it has not been beaten.</li>
-        <li>The default numbers (upkeep, light, sizes) were tuned by hand so a population lasts. They are choices, not findings.</li>
+        <li>The evidence would be a difference between the inherit arm and the blocked arm, beyond the noise between seeds, on readouts fixed in advance. Rung R2 tried to set that up on five practice seeds and it came out measurement-limited: the inherit arm varies so much from seed to seed that none of the four readouts could separate it from the blocked arm, or even respond to a doubling of light. The real comparison on fresh seeds was therefore never run, and this says nothing either way about whether heredity matters here. A redesigned test, R2b, used twenty practice seeds and 100,000 steps and was also measurement-limited: in most inherit worlds the trail had faded to little or nothing by step 50,000, so the trail-following comparison could not be set up and the structure readout could not be measured. Its confirmation was not run. One thing it did see, as a description and not a test: every heredity-blocked world kept far more trail than every inherit world. That is a different kind of population, not proof that heredity is the cause.</li>
+        <li>Trail-following alone makes network shapes, so a hard-coded trail follower is a null this world still has to beat. The follower is built and runs in both the CPU reference and the GPU port, though this page does not offer it. Because the comparison with it could not be set up in R2b, it has not been beaten.</li>
+        <li>The default numbers (upkeep, light, sizes) were tuned by hand on the 128 × 128 world so a population lasts. They are choices, not findings, and the larger worlds are less tested than the small one.</li>
+        <li>Wounding and scraping are done by hand. They keep the books exact, but a world that has been brushed is a different experiment from one that has not, and nothing counted in R2 was brushed.</li>
       </ul>
-      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md. This page is CPU only, deterministic integer arithmetic, not on the public site.</p>
+      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md and docs/mycelium-r2b-2026-11-13/RESULT.md. Deterministic integer arithmetic on both engines; not on the public site.</p>
     </section>
   </main>
   <script type="module" src="/src/mycelium/page.ts"></script>

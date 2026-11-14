@@ -5,6 +5,7 @@
 //     [--seed 1] [--heredity inherit|frozen|blocked] [--light uniform|gradient] [--json]
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { FRESH_MIN } from "./r2-protocol.ts";
+import { embargoReason } from "./r2b-seeds.ts";
 import { createWorld, defaultConfig, energyTotal, type Heredity, type LightPattern, liveGenotypes, matterTotal, stateDigest, step } from "./world.ts";
 
 const a = parseArgs(Deno.args, { string: ["steps", "every", "size", "max", "founders", "seed", "heredity", "light"], boolean: ["json"] });
@@ -12,6 +13,13 @@ const a = parseArgs(Deno.args, { string: ["steps", "every", "size", "max", "foun
 // they run only through r2.ts --phase confirm, so an unlogged look at one cannot happen from here.
 if (a.seed !== undefined && !(Number(a.seed) < FRESH_MIN)) {
   console.error(`seed ${a.seed} is refused: seeds of ${FRESH_MIN} and above are reserved for the R2 confirmation (tools/mycelium/r2.ts)`);
+  Deno.exit(2);
+}
+// R2b's dev, matching and confirmation worlds (slots 2001-2020 and 5001-5016 plus every arm's offset) and R2's own seeds run only through their
+// own runners, which log them; this tool is unlogged, so an ad-hoc look at one would escape the seed log's embargo check.
+const embargo = a.seed === undefined ? null : embargoReason(Number(a.seed), { r2b: true, r2: true });
+if (embargo) {
+  console.error(`seed ${a.seed} is refused: ${embargo}`);
   Deno.exit(2);
 }
 const steps = Number(a.steps ?? 2000), every = Number(a.every ?? 200), size = Number(a.size ?? 128);

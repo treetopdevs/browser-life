@@ -1,0 +1,12 @@
+{
+  "T": 0,
+  "source": "none",
+  "v0": 0,
+  "rounds": [],
+  "v": null,
+  "converged": false,
+  "ratio": null,
+  "limited": true,
+  "reason": "median d 0.000001987119478538243 is under 1/16 and only 0 seeds are trail-on (need 4)",
+  "final": true
+}

@@ -22,6 +22,8 @@ export const SENSORS = ["nutrient", "waste", "trail", "trail east-west", "trail 
 /** How a child's controller relates to its parent's: the experimental arm. */
 export type Heredity = "inherit" | "frozen" | "blocked";
 export type LightPattern = "uniform" | "gradient";
+/** Largest physarumDeposit (1/256 matter per particle-step): 3 units a step, so DEPOSIT = 96 stays below the 127 output ceiling. */
+export const PHYSARUM_DEPOSIT_MAX = 768;
 /** What phase 3 (Think) runs. Absent from a config means "neural"; "physarum" is the R2 null (RULES.md). */
 export type ControllerKind = "neural" | "physarum";
 
@@ -75,6 +77,17 @@ export interface MyceliumConfig {
    * and requires heredity "frozen". defaultConfig() never sets it, so every existing config encodes the same.
    */
   controller?: ControllerKind;
+  /**
+   * Optional (R2b). Only with controller "physarum": the null's deposit, in 1/256 matter per particle-step (0..768).
+   * Each step a particle deposits u = (v >> 8) + [draw(pb, 64) % 256 < (v & 255)] units (DEPOSIT = 32 * u). Absent means
+   * DEPOSIT = 32 (the R2 null, one unit per step) and no slot-64 draw. defaultConfig() never sets it.
+   */
+  physarumDeposit?: number;
+  /**
+   * Optional (R2b positive control). true forces the two trail-gradient inputs (3 and 4) to 0 in the sense phase for every
+   * particle; the controller still runs on the other eight inputs. Absent means false. defaultConfig() never sets it.
+   */
+  blindTrailGradient?: boolean;
   /** Chance a birth mutates (inherit arm), in 1/65536; a mutation changes mutCount weights by up to ±mutStep. */
   mutRate: number;
   mutCount: number;
@@ -198,6 +211,11 @@ export function validateConfig(c: MyceliumConfig): string[] {
     if (c.controller !== "neural" && c.controller !== "physarum") bad.push("controller must be neural or physarum");
     else if (c.controller === "physarum" && c.heredity !== "frozen") bad.push("controller physarum requires heredity frozen");
   }
+  if (c.physarumDeposit !== undefined) {
+    if (!Number.isInteger(c.physarumDeposit) || c.physarumDeposit < 0 || c.physarumDeposit > PHYSARUM_DEPOSIT_MAX) bad.push(`physarumDeposit must be an integer in [0, ${PHYSARUM_DEPOSIT_MAX}]`);
+    if (c.controller !== "physarum") bad.push("physarumDeposit requires controller physarum");
+  }
+  if (c.blindTrailGradient !== undefined && typeof c.blindTrailGradient !== "boolean") bad.push("blindTrailGradient must be a boolean");
   // Total matter bounds every field cell and every sum of them (RULES.md, "Bounds").
   const total = c.width * c.height * c.nutrient0 + c.founders * c.founderMatter;
   if (total > 2 ** 31) bad.push("initial matter must not exceed 2^31");
@@ -245,7 +263,7 @@ export const ID_MAX = 0xfffffffe;
 const PARTICLE_SALT = 0x6d796331;
 const FOUNDER_STEP = 0xffffffff;
 const pbase = (seed: number, step: number, id: number) => cellBase((seed ^ PARTICLE_SALT) >>> 0, step, id);
-const RND = { DX: 0, DY: 1, MUT: 2, MUT_SLOT: 3, MUT_DELTA: 40, TURN_X: 60, TURN_Y: 61, WANDER_X: 62, WANDER_Y: 63, UPKEEP: 90, EXCRETE: 91, WEIGHT: 100 } as const;
+const RND = { DX: 0, DY: 1, MUT: 2, MUT_SLOT: 3, MUT_DELTA: 40, TURN_X: 60, TURN_Y: 61, WANDER_X: 62, WANDER_Y: 63, PHYS_DEPOSIT: 64, UPKEEP: 90, EXCRETE: 91, WEIGHT: 100 } as const;
 /** Field streams: decay and light keyed on (seed, step, cell); diffusion on its own salted stream. */
 const FIELD = { DECAY: 0, LIGHT: 1 } as const;
 const DIFF_SALT = 0x64696666;
@@ -346,6 +364,7 @@ function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array): Int
   const sh = c.sensorShift;
   const wb = new Int8Array(NN_BYTES);
   const physarum = c.controller === "physarum";
+  const blind = c.blindTrailGradient === true;
   for (let i = 0; i < n; i++) {
     const ci = cell[i];
     const cx = ci % W, cy = (ci / W) | 0;
@@ -354,15 +373,15 @@ function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array): Int
     xin[0] = sat(A[ci] >>> sh);
     xin[1] = sat(C[ci] >>> sh);
     xin[2] = sat(P[ci] >>> sh);
-    xin[3] = clampi(sat(P[e] >>> sh) - sat(P[w] >>> sh), -127, 127);
-    xin[4] = clampi(sat(P[so] >>> sh) - sat(P[no] >>> sh), -127, 127);
+    xin[3] = blind ? 0 : clampi(sat(P[e] >>> sh) - sat(P[w] >>> sh), -127, 127);
+    xin[4] = blind ? 0 : clampi(sat(P[so] >>> sh) - sat(P[no] >>> sh), -127, 127);
     xin[5] = clampi(sat(A[e] >>> sh) - sat(A[w] >>> sh), -127, 127);
     xin[6] = clampi(sat(A[so] >>> sh) - sat(A[no] >>> sh), -127, 127);
     xin[7] = sat(E[i] >>> c.energyShift);
     xin[8] = sat(M[i] >>> c.massShift);
     xin[9] = sat(D[ci] * 16);
     if (physarum) {
-      physarumThink(xin, pbase(c.seed, s.step, s.id[i]), o);
+      physarumThink(xin, pbase(c.seed, s.step, s.id[i]), o, c.physarumDeposit);
     } else {
       wb.set(s.genome.subarray(i * NN_BYTES, (i + 1) * NN_BYTES));
       controllerForward(wb, xin, h, o);
@@ -373,7 +392,7 @@ function senseAndThink(s: MyceliumState, cell: Uint32Array, D: Uint32Array): Int
 }
 
 /** The R2 null controller (RULES.md, "Physarum null"): fixed outputs, up the trail gradient at half speed plus a small random turn. */
-function physarumThink(xin: Int32Array, pb: number, o: Int32Array): void {
+function physarumThink(xin: Int32Array, pb: number, o: Int32Array, deposit: number | undefined): void {
   const gx = xin[3], gy = xin[4];
   const m = Math.max(gx < 0 ? -gx : gx, gy < 0 ? -gy : gy);
   let bx: number, by: number;
@@ -388,7 +407,8 @@ function physarumThink(xin: Int32Array, pb: number, o: Int32Array): void {
   o[OUT.MX] = clampi(bx + (draw(pb, RND.TURN_X) % 33) - 16, -127, 127);
   o[OUT.MY] = clampi(by + (draw(pb, RND.TURN_Y) % 33) - 16, -127, 127);
   o[OUT.EAT] = 127;
-  o[OUT.DEPOSIT] = 32;
+  // R2b: a matched deposit in 1/256 unit per step, stochastically rounded; absent keeps the R2 null (32, no draw).
+  o[OUT.DEPOSIT] = deposit === undefined ? 32 : 32 * ((deposit >>> 8) + ((draw(pb, RND.PHYS_DEPOSIT) % 256) < (deposit & 255) ? 1 : 0));
   o[OUT.SPLIT] = 127;
 }
 

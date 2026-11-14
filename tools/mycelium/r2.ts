@@ -22,6 +22,7 @@ import { createWorld, energyTotal, matterTotal, RULE_ID, stateDigest, step } fro
 import { PROTOCOL_WINDOW, R2Observer, smokeWindow } from "./observe.ts";
 import { ARMS, armConfig, parseFrozen, checkCalibrationForConfirm, checkCalibrationProvenance, CONTROLS, DEV_SEEDS, gateConfirmBatch, gateRun, isArm, pendingConfirm, type Phase, type SeedLogEntry } from "./r2-protocol.ts";
 import { CALIBRATION_PATH, codeHash, readFrozen, SEED_LOG_PATH, verifyFrozen } from "./r2-freeze.ts";
+import { embargoReason } from "./r2b-seeds.ts";
 
 const LOG_PATH = SEED_LOG_PATH;
 
@@ -56,6 +57,9 @@ async function thetaFromCalibration(): Promise<number> {
 
 async function runOne(phase: Phase, arm: string, seed: number, steps: number, out: string, thetaArg: number | null): Promise<void> {
   if (!isArm(arm)) throw new Error(`unknown arm ${arm}`);
+  // R2b's worlds (dev, matching and confirmation, every arm offset) run only through r2b.ts, which logs them. R2's own seeds stay under its own gate.
+  const embargo = embargoReason(seed, { r2b: true, r2: false });
+  if (embargo) throw new Error(`refused: ${embargo}`);
   let seriesExists = false;
   try { await Deno.stat(`${out}/${arm}/seed-${seed}/series.json`); seriesExists = true; } catch (e) { if (!(e instanceof Deno.errors.NotFound)) throw e; }
   const problems = gateRun({ phase, arm, seed, steps, seriesExists }, await readLog());

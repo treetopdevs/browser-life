@@ -61,6 +61,11 @@ interface Case {
   big?: boolean;
   /** Extra requirement on the finished CPU run and its largest single-step lightIn / heat; returns a complaint or null. */
   check?: (cpu: MyceliumState, maxStep: { lightIn: number; heat: number }) => string | null;
+  /**
+   * R2b: a baseline config run on the CPU for the same steps. `same: true` requires every field of the final state to equal
+   * the case's (a key that must not change the dynamics), `same: false` requires some field to differ (the case is not vacuous).
+   */
+  vs?: { cfg: MyceliumConfig; same: boolean };
 }
 
 /** Second-layer bias of output k in the controller's int8 layout (W1, B1, W2, B2). */
@@ -81,6 +86,28 @@ function make(c: Case): MyceliumState {
 interface Row { name: string; ok: boolean; steps: number; n: number; cpuMs: number; gpuMs: number; digest: string; note: string; totals: string }
 
 const base = ["births", "deaths", "contended"] as const;
+/** R2b keys on the GPU: the physarum null (absent key and several physarumDeposit values) and blindTrailGradient, each against its own baseline. */
+function r2bCases(): Case[] {
+  const w = { width: 64, height: 64, founders: 600, maxParticles: 3000 };
+  const phys = (over: Partial<MyceliumConfig> = {}) => defaultConfig({ ...w, controller: "physarum", heredity: "frozen", ...over });
+  const cases: Case[] = [
+    { name: "physarum null, physarumDeposit absent (R2)", cfg: phys(), steps: 600, seg: 100, must: [...base] },
+    // 256 = exactly one unit per step and no draw: the same dynamics as the absent key (only the config header differs).
+    { name: "physarumDeposit 256 equals the R2 null", cfg: phys({ physarumDeposit: 256 }), steps: 400, seg: 100, must: [...base], vs: { cfg: phys(), same: true } },
+    { name: "physarumDeposit 0 (no trail laid)", cfg: phys({ physarumDeposit: 0 }), steps: 400, seg: 100, must: ["births", "deaths"], vs: { cfg: phys(), same: false } },
+    { name: "physarumDeposit 100 (fractional)", cfg: phys({ physarumDeposit: 100 }), steps: 600, seg: 100, must: [...base], vs: { cfg: phys(), same: false } },
+    { name: "physarumDeposit 300 (1 + fraction)", cfg: phys({ physarumDeposit: 300 }), steps: 600, seg: 100, must: [...base], vs: { cfg: phys(), same: false } },
+    { name: "physarumDeposit 768 (three units)", cfg: phys({ physarumDeposit: 768 }), steps: 400, seg: 100, must: ["births", "deaths"], vs: { cfg: phys(), same: false } },
+    {
+      name: "blindTrailGradient on inherit",
+      cfg: defaultConfig({ ...w, blindTrailGradient: true }), steps: 800, seg: 100, must: [...base, "mutations"],
+      vs: { cfg: defaultConfig(w), same: false },
+    },
+    { name: "blindTrailGradient on blocked", cfg: defaultConfig({ ...w, heredity: "blocked", blindTrailGradient: true }), steps: 400, seg: 100, must: [...base] },
+    { name: "blindTrailGradient on physarum (wander only)", cfg: phys({ physarumDeposit: 100, blindTrailGradient: true }), steps: 400, seg: 100, must: ["births", "deaths"], vs: { cfg: phys({ physarumDeposit: 100 }), same: false } },
+  ];
+  return cases;
+}
 const smallWorld = { width: 32, height: 32, founders: 64, maxParticles: 256 };
 const cases: Case[] = [
   {
@@ -146,6 +173,7 @@ const cases: Case[] = [
     tweak: (s) => { setOut(s, { 2: 127, 4: 127, 0: 40 }); s.x.fill(0); s.y.fill(0); s.A[0] = 253 * 3000 - 1; },
     steps: 80, seg: 10, must: ["contended", "births"],
   },
+  ...r2bCases(),
   { name: "default 128x128", cfg: defaultConfig(), steps: 2000, seg: 250, must: [...base, "mutations"] },
   { name: "inherit", cfg: defaultConfig({ heredity: "inherit" }), steps: 500, seg: 100, must: [...base, "mutations"] },
   { name: "frozen", cfg: defaultConfig({ heredity: "frozen" }), steps: 500, seg: 100, must: [...base] },
@@ -205,6 +233,13 @@ async function runCase(c: Case): Promise<Row> {
     }
   }
   if (ok && c.check) { const bad = c.check(cpu, { lightIn: bigLight, heat: bigHeat }); if (bad) { ok = false; note = bad; } }
+  if (ok && c.vs) {
+    const base = createWorld(c.vs.cfg);
+    for (let t = 0; t < c.steps; t++) step(base);
+    const d = firstDiff(cpu, base);
+    if (c.vs.same && d) { ok = false; note = `expected the same dynamics as the baseline config, but ${d}`; }
+    if (!c.vs.same && !d) { ok = false; note = "the key changed nothing against its baseline config (vacuous case)"; }
+  }
   const g = ok ? await gpu.read() : null;
   gpu.destroy();
   return {
@@ -214,8 +249,8 @@ async function runCase(c: Case): Promise<Row> {
 }
 
 /** GPU state read back mid-run, encoded, decoded, uploaded and continued must equal the continuous CPU run. */
-async function runResume(): Promise<Row> {
-  const cfg = defaultConfig({ width: 96, height: 96, founders: 800, maxParticles: 3000 });
+async function runResume(over: Partial<MyceliumConfig> = {}, label = ""): Promise<Row> {
+  const cfg = defaultConfig({ width: 96, height: 96, founders: 800, maxParticles: 3000, ...over });
   const total = 700, cut = 301; // odd cut: the live particle buffer is the second of the ping-pong pair
   const cpu = createWorld(cfg);
   const t0 = performance.now();
@@ -249,7 +284,7 @@ async function runResume(): Promise<Row> {
   if (!(cpu.totals.births > 0 && cpu.totals.deaths > 0)) { ok = false; note += " resume case exercised nothing"; }
   gpuA.destroy(); gpuB.destroy(); gpuC.destroy();
   return {
-    name: `resume at step ${cut} of ${total}`, ok, steps: total, n: cpu.n, cpuMs: cpuMs / total, gpuMs: gpuMs / (total - cut) / 3, digest: stateDigest(cpu), note,
+    name: `resume at step ${cut} of ${total}${label}`, ok, steps: total, n: cpu.n, cpuMs: cpuMs / total, gpuMs: gpuMs / (total - cut) / 3, digest: stateDigest(cpu), note,
     totals: `births ${cpu.totals.births} deaths ${cpu.totals.deaths}`,
   };
 }
@@ -378,12 +413,13 @@ async function runGuards(): Promise<Row> {
     if (!await throws(() => gb.upload(beyond))) fail("step counter: uploading a step beyond 2^53 did not throw");
     gb.destroy();
   }
-  // The Physarum null (R2) is CPU-only: the GPU must refuse it rather than run the neural rule under its name.
+  // The Physarum null runs on the GPU now (R2b); the bad config values still stop at createWorld, never at the shader.
   {
-    const phys = createWorld(defaultConfig({ ...smallWorld, controller: "physarum", heredity: "frozen" }));
-    let msg = "";
-    try { (await GpuMycelium.create(dev, phys)).destroy(); } catch (e) { msg = (e as Error).message; }
-    if (!/physarum/.test(msg)) fail(`controller physarum: GpuMycelium.create did not refuse it (${msg || "no error"})`);
+    for (const bad of [{ physarumDeposit: 100 }, { controller: "physarum" as const, heredity: "frozen" as const, physarumDeposit: 769 }, { blindTrailGradient: 1 as unknown as boolean }]) {
+      let threw = false;
+      try { createWorld(defaultConfig({ ...smallWorld, ...bad })); } catch { threw = true; }
+      if (!threw) fail(`config ${JSON.stringify(bad)} was accepted`);
+    }
   }
   return { name: "ledger bound raises like the CPU; genotype-id refusal and steps past 2^32 equal the CPU", ok, steps: 0, n: 0, cpuMs: 0, gpuMs: 0, digest: "-", note, totals: "" };
 }
@@ -396,9 +432,16 @@ for (const c of cases) {
   console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
 }
 if (!only.length || only.some((s) => "resume".includes(s))) {
-  rows.push(await runResume());
-  const r = rows.at(-1)!;
-  console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
+  const variants: [Partial<MyceliumConfig>, string][] = [
+    [{}, ""],
+    [{ controller: "physarum", heredity: "frozen", physarumDeposit: 100 }, ", physarumDeposit 100"],
+    [{ blindTrailGradient: true }, ", blindTrailGradient"],
+  ];
+  for (const [over, label] of variants) {
+    rows.push(await runResume(over, label));
+    const r = rows.at(-1)!;
+    console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
+  }
 }
 
 if (!only.length || only.some((s) => "guards".includes(s))) {

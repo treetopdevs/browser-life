@@ -71,7 +71,7 @@ Every phase reads the state as the previous phase left it. Phases 2–5 are orde
 - **frozen**: an exact copy with no mutation. It is the control for selection among founders only.
 - **blocked**: fresh random weights. This is the heredity-blocked twin.
 
-## Physarum null (rung R2, CPU only)
+## Physarum null (rung R2; on the GPU and with a matched deposit since R2b)
 
 An optional config key `controller: "neural" | "physarum"` selects what phase 3 (Think) runs. Absent means `"neural"`. `defaultConfig()` never sets it and `createWorld` never inserts it, so the `encode` header of every existing config, and every pinned digest, is unchanged. `validateConfig` accepts only those two values, and `"physarum"` requires `heredity: "frozen"` (the genome is carried and never read, and no mutation draw is made). Phases 1, 2 and 4-8 are unchanged, so the founders, the light and the arithmetic of eating, upkeep, moving, depositing and splitting are the same. The realised behaviour is not matched: the null deposits one unit in every particle at every step, always eats at full output and always splits when it can, so its trail mass, population and clustering differ from the neural arms by construction (PROTOCOL.md section 2).
 
@@ -81,7 +81,11 @@ With `pb` the particle's stream for this step, `gx = xin[3]` and `gy = xin[4]` (
 - If `m > 0`: `bx = trunc(gx · 64 / m)`, `by = trunc(gy · 64 / m)` (up the gradient at half speed). Otherwise `bx = draw(pb, 62) mod 129 − 64`, `by = draw(pb, 63) mod 129 − 64` (no trail here: wander).
 - `MX = clamp(bx + draw(pb, 60) mod 33 − 16, ±127)`, `MY = clamp(by + draw(pb, 61) mod 33 − 16, ±127)`.
 
-The constants 64, 16, 32 and 127 are fixed by the R2 protocol (`docs/mycelium-r2-2026-11-13/PROTOCOL.md`) and not tuned. Products: `|gx| · 64 ≤ 8128`. `tools/mycelium/gpu.ts` throws on `controller: "physarum"`; it is not ported, so R2 does not depend on R1 parity.
+The constants 64, 16, 32 and 127 are fixed by the R2 protocol (`docs/mycelium-r2-2026-11-13/PROTOCOL.md`) and not tuned. Products: `|gx| · 64 ≤ 8128`. R2b ported the null to `tools/mycelium/gpu.ts` (the same `k_think` stage, with the genome neither read nor needed); `tests/deno/mycelium_gpu.ts` compares it with the CPU bit for bit, resume included.
+
+**Matched deposit (R2b, optional `physarumDeposit`).** An integer `v` in 0..768, in 1/256 matter per particle-step, valid only with `controller: "physarum"`, absent from `defaultConfig()` and never inserted by `createWorld`. Present, each particle draws once at slot 64 and `DEPOSIT = 32 · u` with `u = (v >> 8) + [draw(pb, 64) mod 256 < (v & 255)]`, so `(maxDeposit · DEPOSIT) >> 7` is `u` units at the default `maxDeposit` 4 (0 to 3), and the expected deposit is `v / 256`. Absent, `DEPOSIT = 32` and nothing is drawn, so the R2 null and every earlier digest are unchanged. `v = 256` gives the same dynamics as the absent key (only the config header differs).
+
+**Sensor blinding (R2b positive control, optional `blindTrailGradient`).** A boolean, absent from `defaultConfig()`. `true` sets inputs 3 and 4 (the trail gradients) to 0 in the sense phase of every particle, in the heritable network and in the physarum rule alike (a blind physarum particle always wanders); the other eight inputs are unchanged and the controller keeps evolving.
 
 `probe(state)` (exported from `world.ts`) returns every live particle's NN_O outputs for the next step without changing the state. `step` and `probe` call the same bin and sense-and-think functions.
 
@@ -91,7 +95,7 @@ All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
 
 - **Particle streams** use `seed' = seed XOR 0x6d796331` and key = particle id. Founders use step `0xffffffff`.
 - **The field stream** uses `seed' = seed` and key = cell.
-- **Slots:** 0 DX, 1 DY, 2 mutate?, 3+j mutation slot, 40+j mutation delta, 60 and 61 physarum turn (x, y), 62 and 63 physarum wander (x, y), 90 upkeep rounding, 91 excretion rounding, 100+b weight byte.
+- **Slots:** 0 DX, 1 DY, 2 mutate?, 3+j mutation slot, 40+j mutation delta, 60 and 61 physarum turn (x, y), 62 and 63 physarum wander (x, y), 64 physarum deposit rounding (R2b, only with `physarumDeposit`), 90 upkeep rounding, 91 excretion rounding, 100+b weight byte.
 
 ## Bounds
 
@@ -108,7 +112,7 @@ All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
 
 ## R1 (GPU)
 
-`tools/mycelium/gpu.ts` is the WGSL port of this rule set. The rules do not change: `tests/deno/mycelium_gpu.ts` runs CPU and GPU side by side and requires equal `stateDigest` (the digest of the whole checkpoint encoding) at every checkpoint, for the three arms, both light patterns, a 256 × 256 world, a 512 × 512 world at the 65,536 cap with refusals, a mid-run readback → `encode` → `decode` → upload resume, and a step whose `lightIn` and `heat` each pass 2^32, a workgroup whose heat sum is exactly 2^32 (the workgroup carry), particle-id and genotype-id exhaustion (the cut falls inside a step, in every heredity arm), hot cells with 65,536 requesters (the `r · A` bound), steps across 2^32, and the 2^50 ledger bound (landing on it, and passing it). A resume check runs both ping-pong sides after the object has stepped past the checkpoint, so the upload must overwrite live state. A name filter that matches no case fails the script. There is no floating point in the step.
+`tools/mycelium/gpu.ts` is the WGSL port of this rule set. The rules do not change: `tests/deno/mycelium_gpu.ts` runs CPU and GPU side by side and requires equal `stateDigest` (the digest of the whole checkpoint encoding) at every checkpoint, for the three arms, the physarum null (key absent and `physarumDeposit` 0, 100, 256, 300, 768), `blindTrailGradient` on each arm, both light patterns, a 256 × 256 world, a 512 × 512 world at the 65,536 cap with refusals, a mid-run readback → `encode` → `decode` → upload resume, and a step whose `lightIn` and `heat` each pass 2^32, a workgroup whose heat sum is exactly 2^32 (the workgroup carry), particle-id and genotype-id exhaustion (the cut falls inside a step, in every heredity arm), hot cells with 65,536 requesters (the `r · A` bound), steps across 2^32, and the 2^50 ledger bound (landing on it, and passing it). A resume check runs both ping-pong sides after the object has stepped past the checkpoint, so the upload must overwrite live state. A name filter that matches no case fails the script. There is no floating point in the step.
 
 **Layout.** Everything is a u32 or i32 with WGSL wrapping semantics. Five storage buffers: `ctl` (scalars `n`, `nextId`, `nextGid`, `step` (low word) and `stepHi`, an error word, the genotype-id cut, per-step counters, cumulative totals), `fld` (A, C, P, then the per-step cell scratch D, R, taken, then the diffusion scratch), two particle buffers (eight u32 planes plus 40 genome words per slot, ping-ponged each step) and `tmp` (per-step particle scratch). Every kernel is dispatched for `maxParticles` (or all cells) threads and returns when `i ≥ n`, with `n` read from `ctl`, so `step(k)` queues k steps with no CPU writes between them. The config is baked into the shader as consts.
 
