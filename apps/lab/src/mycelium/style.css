@@ -1,0 +1,78 @@
+@import '../particles/style.css';
+.intro>.disclosure{padding:12px 15px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.65;max-width:none}
+.disclosure p{margin:0 0 6px;max-width:none}
+.disclosure details p{margin:8px 0 0}
+.disclosure summary,.how summary{cursor:pointer;color:#f2c978;min-height:24px}
+.how{margin:8px 0;font-size:14px;line-height:1.6;color:#c2d0cd}
+.how p{margin:8px 0 0;max-width:none}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.engine-now{margin:14px 0 10px;padding:9px 13px;border-left:4px solid #9fe4c4;background:#13262c;border-radius:0 8px 8px 0;font-size:14px;line-height:1.55;color:#e9f1ec;max-width:none}
+.engine-now[data-engine="cpu"]{border-left-color:#f2c978}
+.intro{padding:28px 0 8px}
+.runbar{display:grid;gap:8px;margin:12px 0 16px;padding:12px 16px;border:1px solid #35484e;border-radius:10px;background:#111f25}
+.runbar #status{margin:0}
+.observer{padding:16px;margin:20px 0;border:1px solid #35484e;border-radius:10px;background:#111f25;display:grid;gap:14px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;align-items:end}
+.controls.transport{grid-template-columns:auto auto minmax(0,380px)}
+.controls label{display:grid;gap:5px;color:#c2d0cd;font-size:13px;margin:0;min-width:0}
+.controls select,.controls input{width:100%}
+.help{margin:0;line-height:1.6}
+.world-section{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+.world-col{display:grid;gap:14px;min-width:0}
+.world-frame{border:1px solid #34484e;border-radius:10px;background:#08151c;padding:8px;display:grid;gap:8px}
+.stage{position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;touch-action:none;cursor:crosshair;background:#04090c;user-select:none}
+.stage:focus-visible{outline:3px solid #f2c978;outline-offset:2px}
+.stage.grab{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage #overlay{pointer-events:none}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar button{min-width:44px}
+.tools{margin:0;padding:12px 14px;border:1px solid #35484e;border-radius:10px;background:#111f25;display:grid;gap:10px}
+.tools legend{padding:0 6px;color:#c2d0cd;font-size:13px}
+.tool{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:13px;line-height:1.55;color:#c2d0cd;cursor:pointer}
+.tool input{width:18px;min-height:18px;height:18px;margin-top:2px;flex:none;accent-color:#a6e8c7}
+.tool strong{color:#e9f1ec}
+.radius{display:grid;grid-template-columns:auto minmax(120px,1fr);gap:8px 12px;align-items:center}
+.radius label{margin:0;font-size:13px;color:#c2d0cd}
+.radius input[type=range]{min-height:30px;padding:0}
+.radius button{grid-column:1/-1}
+.readouts{display:grid;gap:12px;min-width:0}
+#numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+#numbers div{border:1px solid #2b3e43;border-radius:8px;padding:8px 10px;background:#101e24}
+#numbers dt{color:#8fa3a0;font-size:12px}
+#numbers dd{margin:2px 0 0;font-size:18px;color:#e9f1ec;font-variant-numeric:tabular-nums}
+#history{display:block;width:100%;height:auto;border:1px solid #2b3e43;border-radius:8px;background:#0b171d}
+.legend{font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sw{display:inline-block;width:14px;height:3px;border-radius:2px}
+.sw-n{background:#dfe9e4}.sw-g{background:#c79be6}
+.look,.inspect{border:1px solid #2b3e43;border-radius:10px;padding:12px 14px;background:#101e24;display:grid;gap:10px}
+.look h2,.inspect h2{margin:0;font-size:15px}
+.look-controls{grid-template-columns:1fr}
+.layers{margin:0;padding:0;border:0;display:flex;flex-wrap:wrap;gap:6px 16px}
+.layers legend{padding:0;margin-bottom:6px;font-size:13px;color:#c2d0cd}
+.layers label{display:flex;gap:7px;align-items:center;margin:0;font-size:13px;color:#d6e2de}
+.layers small{color:#8fa3a0}
+.layers input{width:18px;min-height:18px;height:18px;accent-color:#a6e8c7}
+.sw-box{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid #56717b}
+.sw-dots{background:radial-gradient(circle at 30% 35%,#f4a361 0 2px,transparent 2.5px),radial-gradient(circle at 70% 65%,#7ad0f0 0 2px,transparent 2.5px),#04090c}
+.legend-box{display:grid;gap:8px;font-size:12px;color:#c2d0cd;line-height:1.5}
+.legend-box .bar{height:12px;border-radius:6px;border:1px solid #2b3e43}
+.legend-box .ticks{display:flex;justify-content:space-between;color:#8fa3a0;font-variant-numeric:tabular-nums}
+.legend-box ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.legend-box li{display:flex;gap:8px;align-items:center}
+.legend-box .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.inspect dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;margin:0}
+.inspect dl div{border-bottom:1px solid #22343a;padding:3px 0}
+.inspect dt{color:#8fa3a0;font-size:12px}
+.inspect dd{margin:1px 0 0;font-size:15px;color:#e9f1ec;font-variant-numeric:tabular-nums;display:flex;gap:6px;align-items:center}
+.log-section{margin:24px 0;padding:14px 16px;border:1px solid #35484e;border-radius:10px;background:#111f25}
+.log-section h2{margin-top:0}
+.log{margin:8px 0 0;padding:0 0 0 22px;display:grid;gap:5px;font-size:13px;line-height:1.55;color:#d6e2de;font-variant-numeric:tabular-nums;max-height:260px;overflow:auto}
+.log b{color:#f2c978;font-weight:600}
+.caption{margin:28px 0 48px;padding:16px;border:1px solid #7b6744;border-radius:10px;background:#221f19}
+.caption h2{margin-top:0;color:#f2dfb7}
+.caption li{margin:7px 0;line-height:1.6;color:#e3d7bd;font-size:14px}
+.skip{position:absolute;left:-10000px}.skip:focus{left:10px;top:10px;z-index:10;background:#fff;color:#000;padding:10px}
+@media(max-width:860px){.world-section{grid-template-columns:1fr}}
+@media(max-width:760px){.controls{grid-template-columns:1fr}.controls.transport{grid-template-columns:auto auto minmax(0,1fr);gap:8px}.intro{padding:10px 0 4px}.intro h1{margin:6px 0 8px;font-size:28px}.engine-now{margin:8px 0;padding:7px 11px;font-size:13px;line-height:1.45}.intro>.disclosure{padding:8px 12px}.runbar{margin:8px 0 12px}}
+@media(pointer:coarse){.tool,.layers label{min-height:44px;align-items:center}.disclosure summary,.how summary{min-height:44px;display:flex;align-items:center}}
