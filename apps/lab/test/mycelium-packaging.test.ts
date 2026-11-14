@@ -98,6 +98,12 @@ it('pinch keeps the world point under the fingers midpoint', () => {
   // factor 1 is a plain two-finger drag
   const drag = pinchView(v0, W, css, 1, prev, next);
   expect(toWorld(drag, W, css, next.x, next.y).x).toBeCloseTo(anchor.x, 6);
+
+  // Zooming out near an edge: the anchor still lands under the new midpoint when that centre is in bounds.
+  const edge = { z: 4, cx: 32, cy: 128 };
+  const a2 = toWorld(edge, W, css, 540, 300);
+  const v2 = pinchView(edge, W, css, 0.8, { x: 540, y: 300 }, { x: 420, y: 300 });
+  expect(toWorld(v2, W, css, 420, 300).x).toBeCloseTo(a2.x, 6);
 });
 
 it('inspect picks by the distance the picture shows, with no wrap at the edges', () => {

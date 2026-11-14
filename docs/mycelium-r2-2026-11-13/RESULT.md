@@ -76,7 +76,7 @@ Only a dated `## Amendment` in `PROTOCOL.md` (new Freeze 1, re-run pass 1 and de
 
 ## Amendments and deviations
 
-- **Protocol amendments: none.** `PROTOCOL.md` and every file `code_hash` covers still match the hashes recorded in `FROZEN` (Freeze 1), checked again after this write-up's edits (`code_hash` 8055819d...). `CALIBRATION.json` was written after Freeze 1 and is not itself frozen (Freeze 2 never happened); it reproduces exactly from the stored runs by re-running `r2-analyze.ts calibrate`.
+- **Protocol amendments: none.** `PROTOCOL.md` and every file `code_hash` covers matched the hashes recorded in `FROZEN` (Freeze 1) when this was written, checked again after this write-up's edits (`code_hash` 8055819d...). Later commits changed covered files; see "Reproducing this result" at the end. `CALIBRATION.json` was written after Freeze 1 and is not itself frozen (Freeze 2 never happened); it reproduces exactly from the stored runs by re-running `r2-analyze.ts calibrate`.
 - **RULES.md not edited.** The task asked for status lines in `tools/mycelium/RULES.md` to be updated. `RULES.md` is inside `code_hash` (PROTOCOL section 10), so editing it would make `r2-analyze.ts` refuse the frozen calibration and break the provenance chain of the R2 result. Status therefore lives here, in `tools/mycelium/STATUS.md` (not covered by the hash) and on the page. RULES.md still says the inherit-versus-blocked comparison "belongs to rung R2"; read it together with this file. Its "Not in R0" list is still correct.
 - **No `ANALYSIS.md`.** The analyst's attempt to write one was refused by the harness and was not worked around. Its content is the "numbers" and "integrity checks" sections above.
 - The analyst's GPU spot-check is not applicable: R2 runs on the CPU only (PROTOCOL section 3), and the physarum arm is not ported to WGSL (`gpu.ts` throws on it).
@@ -117,3 +117,7 @@ It found no divergence in the frozen hashes or evidence calculations, no change 
 2. P2, `RESULT.md`: said `CALIBRATION.json` was byte-identical to Freeze 1, which has no such baseline. Fixed above.
 3. P3, `observe.ts` line 34, frozen: `smokeWindow()` accepts step counts that are multiples of 100 but halves them for burn-in, which must be a multiple of 100, so `--phase smoke --steps 500` (also 700, 900, ...) fails with `invalid R2 window`. Smoke runs only; no R2 result is affected. Open (editing `observe.ts` would break the freeze).
 4. P3, `RESULT.md` and `CALIBRATION.md`: said every floor exceeds every observed contrast, which is false for inherit-minus-physarum on R2. Fixed in both.
+
+## Reproducing this result (note added 14 Nov 2026, when the line landed on main)
+
+`FROZEN` covers `tools/mycelium/world.ts`, `gpu.ts` and `RULES.md`. The later trail-conduit commit (`3e4a51a1`) changed all three, so at the tip of the branch, and on main, the freeze check refuses to run. Check out commit `c0966c4c` to re-run or re-analyse: every file `FROZEN` covers matches its recorded hash there (checked 14 Nov 2026). The recorded hashes are unchanged, and nothing in this result was re-derived.
