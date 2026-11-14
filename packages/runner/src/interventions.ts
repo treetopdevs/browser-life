@@ -22,7 +22,7 @@
 //     the observer carries it (`ObserverState.sun`), so a checkpoint alone says which sun governs its next step.
 //
 // Nothing here touches a simulation except through `InterventionSim`, so the pieces test without a GPU.
-import { FEED_MAX, FeedRefusedError, MAX_STEP, SUN_PERCENTS, SUN_SPAN_MAX, cellCount, clampLesionRadius, feedError, sunError, sunLight, worldW, type FeedResult, type LightParams, type WorldConfig } from "@bl/schema";
+import { FEED_MAX, FeedRefusedError, MAX_STEP, SUN_PERCENTS, SUN_SPAN_MAX, cellCount, clampLesionRadius, feedError, isSlab, sunError, sunLight, worldW, type FeedResult, type LightParams, type WorldConfig } from "@bl/schema";
 import { picksFromManifest, pressureEntriesError, pressureLogError, type PickEntry, type PressureEntry } from "./picks.ts";
 
 /**
@@ -168,6 +168,9 @@ export function validateInterventions(list: unknown): string[] {
 export function interventionsError(spec: { interventions?: readonly ScheduledIntervention[] }, cfg: WorldConfig, _startStep: number): string | null {
   const list = spec.interventions;
   if (!Array.isArray(list)) return null;
+  // First: the x/y checks below are 2D, and a slab has layers they know nothing of.
+  // (An empty list is refused too: it would still write interventions.jsonl, which a slab bundle declares absent.)
+  if (isSlab(cfg)) return "interventions are not defined for a slab";
   const W = worldW(cfg), H = cellCount(cfg) / W;
   for (let i = 0; i < list.length; i++) {
     const e = list[i];

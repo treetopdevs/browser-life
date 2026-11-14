@@ -1,4 +1,4 @@
-import { cellCount, type WorldConfig } from "./config.ts";
+import { cellCount, genomeChannels, type WorldConfig } from "./config.ts";
 import { CH, G, GENOME_CHANNELS } from "./layout.ts";
 import type { WorldState } from "./world.ts";
 
@@ -66,16 +66,16 @@ export function digestWords(words: Uint32Array, h1 = 0x811c9dc5, h2 = 0x01000193
  * Genome words of empty cells (lineage 0:0) are never read by the rules and
  * may hold stale data; the canonical form zeroes them.
  */
-export function canonicalGenome(genome: Uint32Array): Uint32Array {
-  const n = genome.length / GENOME_CHANNELS;
+export function canonicalGenome(genome: Uint32Array, channels = GENOME_CHANNELS): Uint32Array {
+  const n = genome.length / channels;
   let dirty = false;
   for (let i = 0; i < n && !dirty; i++)
     if ((genome[G.LIN_HI * n + i] | genome[G.LIN_LO * n + i]) === 0)
-      for (let g = 2; g < GENOME_CHANNELS; g++) if (genome[g * n + i] !== 0) { dirty = true; break; }
+      for (let g = 2; g < channels; g++) if (genome[g * n + i] !== 0) { dirty = true; break; }
   if (!dirty) return genome;
   const out = genome.slice();
   for (let i = 0; i < n; i++)
-    if ((out[G.LIN_HI * n + i] | out[G.LIN_LO * n + i]) === 0) for (let g = 2; g < GENOME_CHANNELS; g++) out[g * n + i] = 0;
+    if ((out[G.LIN_HI * n + i] | out[G.LIN_LO * n + i]) === 0) for (let g = 2; g < channels; g++) out[g * n + i] = 0;
   return out;
 }
 
@@ -94,7 +94,7 @@ function stateHashWords(s: WorldState): [number, number] {
   let [a, b] = digestWords(Uint32Array.of(cfg.length, ...cfgWords));
   [a, b] = digestWords(Uint32Array.of(s.step, ...u64Words(s.lightIn), ...u64Words(s.heatOut), ...s.flux.flatMap(u64Words)), a, b);
   [a, b] = digestWords(s.cells, a, b);
-  [a, b] = digestWords(canonicalGenome(s.genome), a, b);
+  [a, b] = digestWords(canonicalGenome(s.genome, genomeChannels(s.cfg)), a, b);
   return [a, b];
 }
 

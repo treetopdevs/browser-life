@@ -1,0 +1,18 @@
+import { parseLayers, seedStats, ratDecimal, rat, InputError, LAYERS_HEADER } from "../../tools/lib/slab-readout.ts";
+const mf = { summary: { steps: 300000 }, spec: { censusEvery: 1000, deepEvery: 1 }, cfg: { tileD: 8, tileW: 256, tileH: 256 } };
+const mk = (f: (st: number, z: number) => string[], extra = "") => LAYERS_HEADER + "\n" + [...Array(10).keys()].flatMap((k) => [...Array(8).keys()].map((z) => [291000 + 1000 * k, z, ...f(291000 + 1000 * k, z), 0].join("\t"))).join("\n") + "\n" + extra;
+const t = (name: string, fn: () => unknown) => { try { console.log(name, "->", fn()); } catch (e) { console.log(name, "-> THROWS", (e as Error).name, (e as Error).message.slice(0, 120)); } };
+t("huge 1e30", () => { const s = seedStats(mk(() => ["1" + "0".repeat(30), "1", "1", "1"]), mf); return s.D && ratDecimal(s.D); });
+t("CRLF", () => seedStats(mk(() => ["1", "1", "1", "1"]).replace(/\n/g, "\r\n"), mf).D);
+t("dup outside window", () => seedStats(mk(() => ["1", "1", "1", "1"], "5000\t0\t1\t1\t1\t1\t0\n5000\t0\t1\t1\t1\t1\t0\n"), mf).D?.n);
+t("row for z=8 outside window", () => seedStats(mk(() => ["1", "1", "1", "1"], "5000\t8\t1\t1\t1\t1\t0\n"), mf).D?.n);
+t("leading zeros z", () => seedStats(mk(() => ["1", "1", "1", "1"], "5000\t00\t1\t1\t1\t1\t0\n5000\t0\t1\t1\t1\t1\t0\n"), mf).D?.n);
+t("blank line at end x2", () => seedStats(mk(() => ["1", "1", "1", "1"]) + "\n", mf).D);
+t("all zero", () => seedStats(mk(() => ["0", "0", "0", "0"]), mf).D);
+t("only bottom zero", () => seedStats(mk((_s, z) => (z >= 6 ? ["0", "0", "0", "0"] : ["1", "1", "1", "1"])), mf).D);
+t("ratDecimal -1/3", () => ratDecimal(rat(-1n, 3n)));
+t("ratDecimal 1/2 d6 -> ", () => ratDecimal(rat(1n, 2000000n)));
+t("ratDecimal -1/2e6", () => ratDecimal(rat(-1n, 2000000n)));
+t("steps string", () => seedStats(mk(() => ["1", "1", "1", "1"]), { ...mf, summary: { steps: "300000" } }).D);
+t("tileW missing", () => seedStats(mk(() => ["1", "1", "1", "1"]), { ...mf, cfg: { tileD: 8 } }).all.fields);
+void parseLayers; void InputError;

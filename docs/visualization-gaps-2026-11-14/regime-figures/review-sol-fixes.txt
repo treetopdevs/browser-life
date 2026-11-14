@@ -1,0 +1,10 @@
+- **P3 — Valueless `--stage0-damage` is silently accepted.** [regime-html.ts:1422](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-html.ts:1422)  
+  The checks inspect `kv`, but bare `--stage0-damage` enters `flags`. With `--synthetic --quick`, it returns 0; adding `--stage0-figures` silently uses the default damage file. Reject this form as missing `FILE`.
+
+- **P3 — The page comparison masks an unflagged-banner regression.** [regime-readout.test.ts:1297](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/test/regime-readout.test.ts:1297)  
+  Removing `&& withStage0` from the new banner branch changes unflagged output, yet every page-comparison assertion still passes: the test replaces the flagged banner with the current unflagged banner. Pin the original unflagged banner or output independently.
+
+- **P3 — Numeric rejection tests pass with the finite-decimal guard removed.** [regime-stage0-figures.test.ts:163](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/test/regime-stage0-figures.test.ts:163)  
+  The overflow decimal targets `living_fraction`, whose range check still throws after removing `Number.isFinite`. I verified every assertion in this test remains green while an overflowing `lightRatio7to0` becomes `Infinity`. Exercise overflow in `lightRatio7to0` or `stepsPerSec` directly.
+
+No P1/P2 findings. Current unflagged `buildPage` output matched `HEAD` for all three labels in memory. No files changed.

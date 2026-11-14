@@ -14,7 +14,7 @@
 // quanta to each cell; draining (a negative amount) removes up to that many
 // from each cell and stops at zero.
 import { CH } from "./layout.ts";
-import { MATTER_MAX, cellCount, clampLesionRadius, worldW, type WorldConfig } from "./config.ts";
+import { MATTER_MAX, cellCount, clampLesionRadius, isSlab, worldW, type WorldConfig } from "./config.ts";
 import { totalsOf } from "./accounting.ts";
 import type { WorldState } from "./world.ts";
 
@@ -49,6 +49,8 @@ export function feedError(cfg: WorldConfig, amount: number, radius: number): str
   // A non-finite radius would clamp to NaN, feed nothing, and be logged as null: a log that replays differently.
   if (!Number.isFinite(radius)) return `feed radius must be a finite number, got ${radius}`;
   if (!Number.isInteger(amount) || amount === 0 || Math.abs(amount) > FEED_MAX) return `feed amount must be a non-zero integer within ±${FEED_MAX} per cell, got ${amount}`;
+  // A slab's cells are tileW x tileH x tileD: this disc, drawn on W x (n / W) rows, would land in an arbitrary layer.
+  if (isSlab(cfg)) return "feeding is not defined for the slab (rung 1b v1): the disc is a 2D shape";
   // Each pond's matter is fixed by its cycle and checked against the history's start (PondContext).
   if (cfg.pondPeriod !== undefined) return "feeding is not defined for pond worlds: the pond cycle fixes each pond's matter";
   return null;

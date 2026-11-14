@@ -1,0 +1,107 @@
+kernel asserts ok: {"3d R=3":{"count":92,"sum":9624},"3d R=4":{"count":250,"sum":22710},"3d R=5":{"count":460,"sum":44436},"2d R=3":{"count":24,"sum":2964},"2d R=4":{"count":44,"sum":5212},"2d R=9":{"count":224,"sum":26352}}
+adapter: 0 /  / 0 / Apple M3 Pro | timestamps: true | wg storage: 32768 | max invocations: 1024
+16^3 R=3 wg4 b2: 4096 cells exact (132 distinct U values)
+16^3 R=3 wg4 b2 split: 4096 cells exact (132 distinct U values)
+16^3 R=4 wg4 b2 split: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg4 b2 split: 2048 cells exact (130 distinct U values)
+16x16x8 R=4 wg4 b2 split: 2048 cells exact (131 distinct U values)
+32^3 R=4 wg4 b2 split: 32768 cells exact (132 distinct U values)
+32^3 R=3 wg4 b2 split4: 32768 cells exact (132 distinct U values)
+16^3 R=4 wg4 b2: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg4 b2: 2048 cells exact (130 distinct U values)
+16x16x8 R=4 wg4 b2: 2048 cells exact (131 distinct U values)
+16^3 R=3 wg4 b1: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg8,8,4 b1: 2048 cells exact (130 distinct U values)
+32^3 R=4 wg4 b2: 32768 cells exact (132 distinct U values)
+2D generalist world: 5208/65536 cells with lineage
+variant: 2D R=9 256^2 (A real GpuSim pass) [profile hook pair 0 of 5 in a live step]
+variant: 2D R=9 256^2 (B isolated, generalist) [affinityShader(cfg) unmodified, isolated]
+variant: 2D R=9 256^2 (B isolated, all alive) [affinityShader(cfg) unmodified, isolated]
+variant: 3D 64^3 R=4 [tile 16384 B, 64 thr, 8x8x8 wg]
+variant: 3D 64^3 R=3 [tile 10976 B, 64 thr, 8x8x8 wg]
+variant: 3D slab 256x256x8 R=3 [tile 10976 B, 64 thr, 32x32x1 wg]
+variant: 3D slab 256x256x8 R=4 [tile 16384 B, 64 thr, 32x32x1 wg]
+variant: 3D 64^3 R=4 split [tile 16384 B, 64 thr, 8x8x8 wg]
+variant: 3D 64^3 R=3 split [tile 10976 B, 64 thr, 8x8x8 wg]
+variant: 3D slab 256x256x8 R=3 split [tile 10976 B, 64 thr, 32x32x1 wg]
+variant: 3D slab 256x256x8 R=4 split [tile 16384 B, 64 thr, 32x32x1 wg]
+variant: 27-source transport stub 64^3
+sweep skipped: []
+batch sizes: 2D R=9 256^2 (A real GpuSim pass)=200, 2D R=9 256^2 (B isolated, generalist)=200, sweep 64^3 R=3 wg4x4x4 b1=200, sweep 64^3 R=3 wg8x4x4 b1=200, sweep 64^3 R=3 wg8x8x4 b1=200, sweep 64^3 R=3 wg8x8x2 b1=200, sweep 64^3 R=3 wg16x4x4 b1=93, sweep 64^3 R=3 wg16x8x2 b1=76, sweep 64^3 R=3 wg16x16x1 b1=45, sweep 64^3 R=3 wg4x4x4 b2=99, sweep 64^3 R=3 wg8x4x2 b2=85, sweep 64^3 R=3 wg8x8x8 b1 split=200, sweep 64^3 R=4 wg4x4x4 b1=165, sweep 64^3 R=4 wg8x4x4 b1=39, sweep 64^3 R=4 wg8x8x4 b1=41, sweep 64^3 R=4 wg8x8x2 b1=35, sweep 64^3 R=4 wg16x4x4 b1=30, sweep 64^3 R=4 wg16x8x2 b1=26, sweep 64^3 R=4 wg16x16x1 b1=13, sweep 64^3 R=4 wg4x4x4 b2=46, sweep 64^3 R=4 wg8x4x2 b2=31, sweep 64^3 R=4 wg8x8x8 b1 split=84
+sweep T2 = 98.8 us (A 115.4, B 98.8, using B by the 10% rule)
+| variant | tile B | median us | p90/p10 | Gtap/s | ratio vs T2 | predicted bar |
+|---|---|---|---|---|---|---|
+| sweep 64^3 R=3 wg4x4x4 b1 | tile 4000 B, 64 thr, 16x16x16 wg | 141.3 | 1.01 | 170.6 | 1.43 | 1.64 |
+| sweep 64^3 R=3 wg8x4x4 b1 | tile 5600 B, 128 thr, 8x16x16 wg | 115.5 | 1.01 | 208.8 | 1.17 | 1.64 |
+| sweep 64^3 R=3 wg8x8x4 b1 | tile 7840 B, 256 thr, 8x8x16 wg | 107.6 | 1.02 | 224.1 | 1.09 | 1.64 |
+| sweep 64^3 R=3 wg8x8x2 b1 | tile 6272 B, 128 thr, 8x8x32 wg | 123.5 | 1.01 | 195.2 | 1.25 | 1.64 |
+| sweep 64^3 R=3 wg16x4x4 b1 | tile 8800 B, 256 thr, 4x16x16 wg | 1278.9 | 1.00 | 18.9 | 12.95 | 1.64 |
+| sweep 64^3 R=3 wg16x8x2 b1 | tile 9856 B, 256 thr, 4x8x32 wg | 1573.4 | 1.05 | 15.3 | 15.93 | 1.64 |
+| sweep 64^3 R=3 wg16x16x1 b1 | tile 13552 B, 256 thr, 4x4x64 wg | 2663.1 | 1.06 | 9.1 | 26.97 | 1.64 |
+| sweep 64^3 R=3 wg4x4x4 b2 | tile 10976 B, 64 thr, 8x8x8 wg | 1198.5 | 1.01 | 20.1 | 12.14 | 1.64 |
+| sweep 64^3 R=3 wg8x4x2 b2 | tile 12320 B, 64 thr, 4x8x16 wg | 1351.4 | 1.07 | 17.8 | 13.69 | 1.64 |
+| sweep 64^3 R=3 wg8x8x8 b1 split | tile 10976 B, 512 thr, 8x8x8 wg | 175.9 | 1.03 | 137.1 | 1.78 | 1.64 |
+| sweep 64^3 R=4 wg4x4x4 b1 | tile 6912 B, 64 thr, 16x16x16 wg | 722.0 | 1.01 | 90.8 | 7.31 | 4.46 |
+| sweep 64^3 R=4 wg8x4x4 b1 | tile 9216 B, 128 thr, 8x16x16 wg | 3095.9 | 1.05 | 21.2 | 31.35 | 4.46 |
+| sweep 64^3 R=4 wg8x8x4 b1 | tile 12288 B, 256 thr, 8x8x16 wg | 2841.3 | 1.08 | 23.1 | 28.77 | 4.46 |
+| sweep 64^3 R=4 wg8x8x2 b1 | tile 10240 B, 128 thr, 8x8x32 wg | 3387.8 | 1.03 | 19.3 | 34.31 | 4.46 |
+| sweep 64^3 R=4 wg16x4x4 b1 | tile 13824 B, 256 thr, 4x16x16 wg | 3941.4 | 1.17 | 16.6 | 39.91 | 4.46 |
+| sweep 64^3 R=4 wg16x8x2 b1 | tile 15360 B, 256 thr, 4x8x32 wg | 4279.2 | 1.17 | 15.3 | 43.33 | 4.46 |
+| sweep 64^3 R=4 wg16x16x1 b1 | tile 20736 B, 256 thr, 4x4x64 wg | 8977.3 | 1.16 | 7.3 | 90.91 | 4.46 |
+| sweep 64^3 R=4 wg4x4x4 b2 | tile 16384 B, 64 thr, 8x8x8 wg | 2656.4 | 1.14 | 24.7 | 26.90 | 4.46 |
+| sweep 64^3 R=4 wg8x4x2 b2 | tile 18432 B, 64 thr, 4x8x16 wg | 3776.9 | 1.07 | 17.4 | 38.25 | 4.46 |
+| sweep 64^3 R=4 wg8x8x8 b1 split | tile 16384 B, 512 thr, 8x8x8 wg | 1438.5 | 1.10 | 45.6 | 14.57 | 4.46 |
+
+timing method: timestamp, trials 15, iters 200
+batch sizes: 2D R=9 256^2 (A real GpuSim pass)=200, 2D R=9 256^2 (B isolated, generalist)=200, 2D R=9 256^2 (B isolated, all alive)=200, 3D 64^3 R=4=41, 3D 64^3 R=3=100, 3D slab 256x256x8 R=3=55, 3D slab 256x256x8 R=4=22, 3D 64^3 R=4 split=107, 3D 64^3 R=3 split=200, 3D slab 256x256x8 R=3 split=200, 3D slab 256x256x8 R=4 split=55, 27-source transport stub 64^3=200
+batch sizes: 2D R=9 256^2 (B isolated, generalist)=200, 2D R=9 256^2 (B isolated, all alive)=200, 3D 64^3 R=4=38, 3D 64^3 R=3=82, 3D slab 256x256x8 R=3=49, 3D slab 256x256x8 R=4=19, 3D 64^3 R=4 split=81, 3D 64^3 R=3 split=200, 3D slab 256x256x8 R=3 split=143, 3D slab 256x256x8 R=4 split=42, 27-source transport stub 64^3=200
+
+| variant | taps | cells | median us | min | p10 | p90 | p90/p10 | Gtap/s | ratio vs T2 | predicted | wall-clock us (ratio) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2D R=9 256^2 (A real GpuSim pass) | 224 | 65536 | 113.7 | 110.2 | 111.0 | 116.7 | 1.05 | 129.1 | 1.15 | 1.00 |  |
+| 2D R=9 256^2 (B isolated, generalist) | 224 | 65536 | 98.8 | 98.0 | 98.2 | 99.3 | 1.01 | 148.5 | 1.00 | 1.00 | 172.3 (1.00 vs B) |
+| 2D R=9 256^2 (B isolated, all alive) | 224 | 65536 | 99.4 | 98.6 | 98.6 | 100.1 | 1.02 | 147.8 | 1.01 | 1.00 | 175.0 (1.02 vs B) |
+| 3D 64^3 R=4 | 250 | 262144 | 2859.9 | 2554.9 | 2558.8 | 2931.5 | 1.15 | 22.9 | 28.94 | 4.46 | 3111.2 (18.06 vs B) |
+| 3D 64^3 R=3 | 92 | 262144 | 1195.1 | 1189.8 | 1190.3 | 1199.9 | 1.01 | 20.2 | 12.09 | 1.64 | 1372.6 (7.97 vs B) |
+| 3D slab 256x256x8 R=3 | 92 | 524288 | 2168.6 | 2153.8 | 2154.0 | 2213.2 | 1.03 | 22.2 | 21.94 | 3.29 | 2487.4 (14.44 vs B) |
+| 3D slab 256x256x8 R=4 | 250 | 524288 | 5386.0 | 5345.4 | 5363.7 | 5935.9 | 1.11 | 24.3 | 54.50 | 8.93 | 6201.5 (36.00 vs B) |
+| 3D 64^3 R=4 split | 250 | 262144 | 1116.8 | 1103.4 | 1105.3 | 1142.0 | 1.03 | 58.7 | 11.30 | 4.46 | 1297.8 (7.53 vs B) |
+| 3D 64^3 R=3 split | 92 | 262144 | 242.0 | 241.2 | 241.5 | 244.6 | 1.01 | 99.7 | 2.45 | 1.64 | 319.2 (1.85 vs B) |
+| 3D slab 256x256x8 R=3 split | 92 | 524288 | 475.8 | 471.2 | 473.4 | 486.1 | 1.03 | 101.4 | 4.81 | 3.29 | 587.8 (3.41 vs B) |
+| 3D slab 256x256x8 R=4 split | 250 | 524288 | 2175.7 | 2130.4 | 2146.6 | 2258.4 | 1.05 | 60.2 | 22.01 | 8.93 | 2581.3 (14.99 vs B) |
+| 27-source transport stub 64^3 | 27 | 262144 | 103.5 | 103.3 | 103.3 | 103.6 | 1.00 | 68.4 | 1.05 | 0.48 | 171.3 (0.99 vs B) |
+
+[single declaration] T2 = 98.8 us (B isolated: A and B disagree by more than 10%)
+64^3 R=4: ratio 28.94 vs bar 4.5 -> fail (margin -84%)
+64^3 R=3: ratio 12.09 vs bar 1.6 -> fail (margin -87%)
+slab R=3: ratio 21.94 vs bar 3.3 -> fail (margin -85%)
+slab R=4: ratio 54.50 vs bar 8.9 -> fail (margin -84%)
+VERDICT [single declaration]: STOP
+
+[split declarations] T2 = 98.8 us (B isolated: A and B disagree by more than 10%)
+64^3 R=4: ratio 11.30 vs bar 4.5 -> fail (margin -60%)
+64^3 R=3: ratio 2.45 vs bar 1.6 -> fail (margin -35%)
+slab R=3: ratio 4.81 vs bar 3.3 -> fail (margin -31%)
+slab R=4: ratio 22.01 vs bar 8.9 -> fail (margin -60%)
+VERDICT [split declarations]: STOP
+A vs B: 113.7 vs 98.8 us, B/A = 0.869 (cross-check bar 10%; T2 = B)
+real 2D pass medians (us): affinity 114.8  flow 12.1  transport 193.2  react 263.4  tick 3.1
+27-source stub 64^3 103.5 us vs real 2D transport 256^2 193.2 us: ratio 0.54 (cell ratio 4.0)
+
+ablations (fail or near miss)
+batch sizes: 3D 64^3 R=4 split=96, 3D 64^3 R=3 split=200, abl 64^3 R=4 split halo-only=200, abl 64^3 R=3 split halo-only=200, abl 64^3 R=4 split 1024w (4 decl)=69, abl 64^3 R=4 split 512w (8 decl)=52, abl 64^3 R=4 block1 wg4=166, abl 64^3 R=3 block1 wg4=200, abl 64^3 R=4 wg8,8,4 block1 (256 thr)=126, abl 64^3 R=3 wg8,8,4 block1 (256 thr)=200, 3D 64^3 R=4=42, 3D 64^3 R=3=100
+| variant | taps | cells | median us | min | p10 | p90 | p90/p10 | Gtap/s | ratio vs T2 | predicted | wall-clock us (ratio) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 3D 64^3 R=4 split | 250 | 262144 | 1109.4 | 1095.7 | 1101.3 | 1125.8 | 1.02 | 59.1 | 11.23 | 4.46 |  |
+| 3D 64^3 R=3 split | 92 | 262144 | 243.9 | 239.4 | 240.7 | 247.3 | 1.03 | 98.9 | 2.47 | 1.64 |  |
+| abl 64^3 R=4 split halo-only | 250 | 262144 | 161.4 | 156.7 | 157.1 | 164.8 | 1.05 | 406.0 | 1.63 | 4.46 |  |
+| abl 64^3 R=3 split halo-only | 92 | 262144 | 107.0 | 104.3 | 104.6 | 114.9 | 1.10 | 225.4 | 1.08 | 1.64 |  |
+| abl 64^3 R=4 split 1024w (4 decl) | 250 | 262144 | 1719.4 | 1694.3 | 1698.4 | 1736.5 | 1.02 | 38.1 | 17.40 | 4.46 |  |
+| abl 64^3 R=4 split 512w (8 decl) | 250 | 262144 | 2264.1 | 2199.8 | 2234.0 | 2355.7 | 1.05 | 28.9 | 22.91 | 4.46 |  |
+| abl 64^3 R=4 block1 wg4 | 250 | 262144 | 719.1 | 718.3 | 718.5 | 720.1 | 1.00 | 91.1 | 7.28 | 4.46 |  |
+| abl 64^3 R=3 block1 wg4 | 92 | 262144 | 140.7 | 139.6 | 140.2 | 142.1 | 1.01 | 171.4 | 1.42 | 1.64 |  |
+| abl 64^3 R=4 wg8,8,4 block1 (256 thr) | 250 | 262144 | 944.9 | 937.0 | 937.5 | 957.9 | 1.02 | 69.4 | 9.56 | 4.46 |  |
+| abl 64^3 R=3 wg8,8,4 block1 (256 thr) | 92 | 262144 | 107.0 | 106.4 | 106.6 | 107.8 | 1.01 | 225.4 | 1.08 | 1.64 |  |
+| 3D 64^3 R=4 | 250 | 262144 | 2887.7 | 2876.9 | 2880.0 | 2903.6 | 1.01 | 22.7 | 29.22 | 4.46 |  |
+| 3D 64^3 R=3 | 92 | 262144 | 1191.4 | 1181.9 | 1182.6 | 1195.7 | 1.01 | 20.2 | 12.05 | 1.64 |  |
+timing validity: {"timestampBatches":704,"fallbackBatches":0,"fallbackNames":[],"droppedSamples":2}

@@ -1,0 +1,25 @@
+1. **P2 — Invalid counts can become zero marks or hang rendering.** [regime-stage0-figures.ts:26](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-stage0-figures.ts:26)  
+   Numeric parsing accepts negative values and overflow to `Infinity`. Changing `S_30` to `-1` succeeds and plots it on the zero strip. A 400-digit count becomes `Infinity`, making the decade-grid loop nonterminating. Reject nonfinite, unsafe and negative counts before plotting.
+
+2. **P2 — Incomplete calibration grids receive a final pick outcome.** [regime-stage0-figures.ts:240](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-stage0-figures.ts:240)  
+   An `--m4` file containing the header and first three rows produces “none qualifies,” while captions still claim 180 rows and 60 settings. `m4-pick.ts` instead reports “not final (grid incomplete).” Duplicate seeds also pass completeness checks: replacing one seed 103 with 101 leaves 180 counted rows but only 179 plotted stripes. Validate the complete, unique grid before publishing an outcome.
+
+3. **P2 — Adding real pilot data makes the synthetic banner false.** [regime-html.ts:1379](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-html.ts:1379)  
+   The flagged page retains “Every number, class and outcome on this page was generated … No run produced it,” directly above the real pilot section. This contradicts that section’s provenance. Conditionally scope the banner to the synthetic sections while preserving unflagged output.
+
+4. **P2 — Recomputed qualifying data retains descriptions saying nothing qualifies.** [regime-stage0-figures.ts:207](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-stage0-figures.ts:207)  
+   With a complete input where one setting’s three seeds have living fraction `.25` and light ratio `.5`, the visible summary correctly reports “1 of 60 settings qualify.” All three accessible SVG descriptions still say “No cell meets the pick rule”; the outcome paragraph also retains `PICK: none qualifies`. Derive these descriptions from the supplied data.
+
+5. **P2 — The refusal regression test can pass when the refusal breaks.** [regime-readout.test.ts:1302](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/test/regime-readout.test.ts:1302)  
+   The temporary root contains frozen-rule/results fixtures but neither Stage 0 TSV. If hash validation incorrectly accepts the results, the later missing-file check still returns exit 2 without writing a page, satisfying both assertions. Supply valid TSV fixtures and assert the hash-refusal reason.
+
+6. **P3 — Published hardware provenance contradicts the committed data.** [regime-stage0-figures.ts:276](/Users/nicholas/develop/browser-life-viz-regime-figures/experiments/3d-slab/regime-stage0-figures.ts:276)  
+   The caption says calibration ran “on one Apple M3 Pro.” The TSV records **101 Apple M3 Pro runs and 79 Apple M1 Max runs**. Correct the caption.
+
+Reproductions ran in memory; no files were changed or PNG contents opened.
+
+**FINDINGS SUMMARY**
+
+- **P2 (5):** numeric validation, incomplete grids, contradictory synthetic banner, stale pick descriptions, masked refusal test.
+- **P3 (1):** incorrect hardware provenance.
+

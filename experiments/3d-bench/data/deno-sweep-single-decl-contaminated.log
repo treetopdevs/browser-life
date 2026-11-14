@@ -1,0 +1,42 @@
+kernel asserts ok: {"3d R=3":{"count":92,"sum":9624},"3d R=4":{"count":250,"sum":22710},"3d R=5":{"count":460,"sum":44436},"2d R=3":{"count":24,"sum":2964},"2d R=4":{"count":44,"sum":5212},"2d R=9":{"count":224,"sum":26352}}
+adapter: 0 /  / 0 / Apple M1 Max | timestamps: true | wg storage: 16384 | max invocations: 256
+16^3 R=3 wg4 b2: 4096 cells exact (132 distinct U values)
+16^3 R=4 wg4 b2: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg4 b2: 2048 cells exact (130 distinct U values)
+16x16x8 R=4 wg4 b2: 2048 cells exact (131 distinct U values)
+16^3 R=3 wg4 b1: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg8,8,4 b1: 2048 cells exact (130 distinct U values)
+32^3 R=4 wg4 b2: 32768 cells exact (132 distinct U values)
+2D generalist world: 5208/65536 cells with lineage
+variant: 2D R=9 256^2 (A real GpuSim pass) [profile hook pair 0 of 5 in a live step]
+variant: 2D R=9 256^2 (B isolated, generalist) [affinityShader(cfg) unmodified, isolated]
+variant: 2D R=9 256^2 (B isolated, all alive) [affinityShader(cfg) unmodified, isolated]
+variant: 3D 64^3 R=4 [tile 16384 B, 64 thr, 8x8x8 wg]
+variant: 3D 64^3 R=3 [tile 10976 B, 64 thr, 8x8x8 wg]
+variant: 3D slab 256x256x8 R=3 [tile 10976 B, 64 thr, 32x32x1 wg]
+variant: 3D slab 256x256x8 R=4 [tile 16384 B, 64 thr, 32x32x1 wg]
+variant: 27-source transport stub 64^3
+sweep skipped: [
+  "R=4 wg16x16x1 b1: Error: sweep 32^3 R=4 wg16x16x1 b1: tile 20736 B > workgroup storage limit 16384",
+  "R=4 wg8x4x2 b2: Error: sweep 32^3 R=4 wg8x4x2 b2: tile 18432 B > workgroup storage limit 16384"
+]
+batch sizes: 2D R=9 256^2 (A real GpuSim pass)=200, sweep 64^3 R=3 wg4x4x4 b1=200, sweep 64^3 R=3 wg8x4x4 b1=200, sweep 64^3 R=3 wg8x8x4 b1=200, sweep 64^3 R=3 wg8x8x2 b1=200, sweep 64^3 R=3 wg16x4x4 b1=5, sweep 64^3 R=3 wg16x8x2 b1=5, sweep 64^3 R=3 wg16x16x1 b1=5, sweep 64^3 R=3 wg4x4x4 b2=28, sweep 64^3 R=3 wg8x4x2 b2=14, sweep 64^3 R=4 wg4x4x4 b1=74, sweep 64^3 R=4 wg8x4x4 b1=5, sweep 64^3 R=4 wg8x8x4 b1=5, sweep 64^3 R=4 wg8x8x2 b1=5, sweep 64^3 R=4 wg16x4x4 b1=5, sweep 64^3 R=4 wg16x8x2 b1=5, sweep 64^3 R=4 wg4x4x4 b2=7
+sweep T2 = 84.4 us
+| variant | tile B | median us | p90/p10 | Gtap/s | ratio vs T2 | predicted bar |
+|---|---|---|---|---|---|---|
+| sweep 64^3 R=3 wg4x4x4 b1 | tile 4000 B, 64 thr, 16x16x16 wg | 317.4 | 1.59 | 76.0 | 3.76 | 1.64 |
+| sweep 64^3 R=3 wg8x4x4 b1 | tile 5600 B, 128 thr, 8x16x16 wg | 204.6 | 1.68 | 117.9 | 2.43 | 1.64 |
+| sweep 64^3 R=3 wg8x8x4 b1 | tile 7840 B, 256 thr, 8x8x16 wg | 168.2 | 1.86 | 143.4 | 1.99 | 1.64 |
+| sweep 64^3 R=3 wg8x8x2 b1 | tile 6272 B, 128 thr, 8x8x32 wg | 243.9 | 1.63 | 98.9 | 2.89 | 1.64 |
+| sweep 64^3 R=3 wg16x4x4 b1 | tile 8800 B, 256 thr, 4x16x16 wg | 15974.0 | 1.45 | 1.5 | 189.37 | 1.64 |
+| sweep 64^3 R=3 wg16x8x2 b1 | tile 9856 B, 256 thr, 4x8x32 wg | 16962.0 | 1.17 | 1.4 | 201.08 | 1.64 |
+| sweep 64^3 R=3 wg16x16x1 b1 | tile 13552 B, 256 thr, 4x4x64 wg | 23352.2 | 1.20 | 1.0 | 276.83 | 1.64 |
+| sweep 64^3 R=3 wg4x4x4 b2 | tile 10976 B, 64 thr, 8x8x8 wg | 4464.9 | 1.06 | 5.4 | 52.93 | 1.64 |
+| sweep 64^3 R=3 wg8x4x2 b2 | tile 12320 B, 64 thr, 4x8x16 wg | 6105.4 | 1.08 | 4.0 | 72.38 | 1.64 |
+| sweep 64^3 R=4 wg4x4x4 b1 | tile 6912 B, 64 thr, 16x16x16 wg | 2162.7 | 1.40 | 30.3 | 25.64 | 4.46 |
+| sweep 64^3 R=4 wg8x4x4 b1 | tile 9216 B, 128 thr, 8x16x16 wg | 24420.8 | 1.27 | 2.7 | 289.50 | 4.46 |
+| sweep 64^3 R=4 wg8x8x4 b1 | tile 12288 B, 256 thr, 8x8x16 wg | 24277.5 | 1.14 | 2.7 | 287.80 | 4.46 |
+| sweep 64^3 R=4 wg8x8x2 b1 | tile 10240 B, 128 thr, 8x8x32 wg | 24982.8 | 1.11 | 2.6 | 296.16 | 4.46 |
+| sweep 64^3 R=4 wg16x4x4 b1 | tile 13824 B, 256 thr, 4x16x16 wg | 28387.5 | 1.24 | 2.3 | 336.53 | 4.46 |
+| sweep 64^3 R=4 wg16x8x2 b1 | tile 15360 B, 256 thr, 4x8x32 wg | 32205.4 | 1.16 | 2.0 | 381.79 | 4.46 |
+| sweep 64^3 R=4 wg4x4x4 b2 | tile 16384 B, 64 thr, 8x8x8 wg | 8970.8 | 1.14 | 7.3 | 106.35 | 4.46 |
