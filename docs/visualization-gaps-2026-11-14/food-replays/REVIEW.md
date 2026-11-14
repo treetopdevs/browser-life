@@ -46,3 +46,14 @@ Open after this round: only item 15 (pre-existing pin failures, deferred with th
 | P3 exclusion test discards subprocess results | Fixed. Both runs must exit 0 and all four files must hold the right bytes before visibility is checked. | test "adds the restored paths to the exclude file once ..." |
 
 Nothing else open from this round. Final checks: restore-artifacts.test.ts 27 passed, `pnpm typecheck` clean, real `restore.sh --check` 73/73 and a re-run copied 0.
+
+## Final review after commit (`review-sol-final.txt`, Sol 6.1 xhigh)
+
+| Finding | Disposition |
+|---|---|
+| P2: a `.gitignore` `!` rule can re-include a restored path | Fixed: after writing the exclude block the tool asks git which paths are ignored and stops before copying if any is not; test added |
+| P2: non-canonical manifest paths bypass the tracked-file refusal | Fixed: paths with empty, `.` or `..` segments are rejected; test added |
+| P2: wrong default source with a separate git directory | Fixed: the main checkout comes from `git worktree list`; a bare main falls back to TARGET/runs |
+| P2: `git show` could lazy-fetch in a partial clone, even in `--dry-run` | Fixed: `GIT_NO_LAZY_FETCH=1` |
+| P3: `--source -h` swallowed the help flag | Fixed: any value starting with `-` is a usage error; test added |
+| P3: the preservation test compared HEAD with itself | Fixed: pinned byte length and SHA-256 of the file as it was on main |

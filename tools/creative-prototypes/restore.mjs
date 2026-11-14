@@ -5,7 +5,7 @@
 //
 // TARGET        checkout to restore into (default: the checkout this script lives in).
 // --source      runs directory holding food-line-101-119/ and creative-prototypes-85-100/, each mirroring repo paths
-//               (default $BL_RUNS_DIR, else runs/ of the main checkout that owns TARGET's .git). Read only, never written.
+//               (default $BL_RUNS_DIR, else runs/ of the main checkout, the first entry of `git worktree list`). Read only, never written.
 // --check       verify only: change nothing, exit non-zero unless every file is present and matches.
 // --dry-run     print what would be copied, from where, and what would be refused; change nothing.
 // --force       replace an existing file whose hash or size differs (only with a verified replacement).
@@ -19,7 +19,7 @@
 // Order per file: already correct -> report; else copy from source dirs; else `git show <commit>:<path>` (local objects only,
 // no fetch). Every byte is hashed and size-checked before a temp file is renamed into place; a mismatch leaves nothing behind.
 // Exit 0 only when every listed file is verified.
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { randomBytes } from "node:crypto";
 import { constants as FS, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -44,7 +44,7 @@ export function parseArtifacts(markdown, firstTableCommit = FIRST_TABLE_COMMIT) 
     const m = ROW.exec(line);
     if (!m) throw new Error(`unparseable table row: ${line}`);
     const [, path, size, sha256, commit] = m;
-    if (path.startsWith("/") || path.split("/").includes("..")) throw new Error(`unsafe path: ${path}`);
+    if (path.startsWith("/") || path.split("/").some((seg) => seg === "" || seg === "." || seg === "..")) throw new Error(`unsafe or non-canonical path: ${path}`); // git reports canonical paths, so the tracked-file check needs them too
     out.push({ path, size: Number(size), sha256, commit: commit ?? firstTableCommit, table: commit ? 2 : 1 });
   }
   if (out.length === 0) throw new Error("no table rows found");
@@ -64,7 +64,7 @@ function lstatOrNull(p) {
 
 function gitShow(target, commit, path) {
   try {
-    return execFileSync("git", ["show", `${commit}:${path}`], { cwd: target, maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "pipe"] });
+    return execFileSync("git", ["show", `${commit}:${path}`], { cwd: target, maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, GIT_NO_LAZY_FETCH: "1" } }); // local objects only: a partial clone must not fetch
   } catch (err) {
     const msg = String(err.stderr ?? err.message).trim().split("\n")[0];
     return { error: `git show ${commit}:${path} failed (${msg}); if the commit is absent run: git fetch origin <branch>` };
@@ -130,6 +130,20 @@ function trackedPaths(target, paths) {
   }
 }
 
+/** Paths git would still stage after the exclude block is written (a .gitignore `!` rule re-includes them). Only for the default exclude file. */
+function notIgnored(target, paths) {
+  const r = spawnSync("git", ["check-ignore", "-v", "-n", "--no-index", "--stdin"], { cwd: target, input: paths.join("\n") + "\n", encoding: "utf8", maxBuffer: 1 << 26 });
+  if (r.status !== 0 && r.status !== 1) throw new PreflightError(`cannot ask git which paths are ignored in ${target}: ${String(r.stderr).trim().split("\n")[0]}; nothing was copied.`);
+  const bad = [];
+  for (const line of r.stdout.split("\n")) {
+    if (!line) continue;
+    const tab = line.indexOf("\t");
+    const [, , , pattern = ""] = line.slice(0, tab).match(/^(.*?):(\d*):(.*)$/) ?? [];
+    if (pattern === "" || pattern.startsWith("!")) bad.push(line.slice(tab + 1));
+  }
+  return bad;
+}
+
 /** Core: returns { rows, ok, verified, total, bytes, excludeFile }. Writes nothing in check/dryRun. */
 export function restore(opts) {
   const target = resolve(opts.target);
@@ -143,6 +157,10 @@ export function restore(opts) {
   if (!readOnly) {
     excludeFile = resolveExcludeFile(target, opts.excludeFile);
     writeExcludeBlock(excludeFile, entries.map((e) => e.path));
+    if (!opts.excludeFile) { // the default exclude file is the one git reads: confirm git really ignores every path
+      const open = notIgnored(target, entries.map((e) => e.path).filter((p) => !tracked.has(p)));
+      if (open.length) throw new PreflightError(`git would still stage ${open.length} restored path(s) (a .gitignore rule re-includes them), first: ${open[0]}; nothing was copied.`);
+    }
   }
   const rows = [];
   let verified = 0;
@@ -201,7 +219,7 @@ export function writeExcludeBlock(file, paths) {
 
 export function main(argv, log = console.log) {
   const o = { target: join(dirname(fileURLToPath(import.meta.url)), "../.."), source: process.env.BL_RUNS_DIR };
-  const val = (i, f) => { if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) throw new Error(`${f} needs a value`); return argv[i + 1]; };
+  const val = (i, f) => { if (i + 1 >= argv.length || argv[i + 1].startsWith("-")) throw new Error(`${f} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--check") o.check = true;
@@ -216,10 +234,13 @@ export function main(argv, log = console.log) {
     else if (a.startsWith("--")) throw new Error(`unknown flag ${a}`);
     else o.target = a;
   }
-  // Default source: runs/ of the main checkout (the one that owns the shared .git directory), which is where the copies were left.
+  // Default source: runs/ of the main checkout (the first entry of `git worktree list`), which is where the copies were left.
   if (!o.source) {
-    try { o.source = join(dirname(resolve(o.target, execFileSync("git", ["rev-parse", "--git-common-dir"], { cwd: o.target, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim())), "runs"); }
-    catch { o.source = join(o.target, "runs"); }
+    o.source = join(o.target, "runs");
+    try {
+      const lines = execFileSync("git", ["worktree", "list", "--porcelain"], { cwd: o.target, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).split("\n");
+      if (lines[0]?.startsWith("worktree ") && lines[1] !== "bare") o.source = join(lines[0].slice("worktree ".length), "runs");
+    } catch { /* not a git checkout: keep TARGET/runs */ }
   }
   let r;
   try {

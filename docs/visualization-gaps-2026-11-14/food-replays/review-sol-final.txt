@@ -1,0 +1,17 @@
+No P1 found. Four P2 and two P3 findings:
+
+- **P2 — Exclusions can be overridden.** [restore.mjs:145](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:145): a target `.gitignore` rule such as `!/docs/creative-prototypes/uniform-food-seed-1201.json` overrides `info/exclude`. Restoration can succeed while the large file remains stageable through ordinary `git add -A`. The tool never checks Git’s effective ignore decision.
+
+- **P2 — Noncanonical manifest paths bypass tracked-file refusal.** [restore.mjs:153](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:153): `--artifacts` accepts `docs/cp/./a.json`, but Git returns `docs/cp/a.json`. The raw-string comparison misses the tracked file. Consequently, `--force` can overwrite tracked content, or a tracked-but-deleted file can be restored without force and remain stageable.
+
+- **P2 — Separate Git directories produce the wrong default source.** [restore.mjs:221](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:221): TARGET `/work/main` with `--separate-git-dir=/metadata/project.git` selects `/metadata/runs`, instead of `/work/main/runs`. Restoration fails when files exist only in the documented source. Linked worktrees inherit this error; bare-backed worktrees also lack the assumed main-checkout layout.
+
+- **P2 — Dry-run can fetch and write Git objects.** [restore.mjs:67](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:67): plain `git show` can lazy-fetch missing blobs in a partial/promisor clone, including during `--dry-run`. Neither `--no-lazy-fetch` nor `GIT_NO_LAZY_FETCH=1` is set. This contradicts “change nothing” and the appended documentation’s “local objects only; it never fetches.”
+
+- **P3 — Missing values still swallow `-h`.** [restore.mjs:204](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:204): `restore.sh --source -h` consumes the supported help flag as a directory. It proceeds with restoration through Git fallback and exclusion updates instead of displaying help or reporting a usage error.
+
+- **P3 — The preservation test compares committed content with itself.** [restore-artifacts.test.ts:341](/Users/nicholas/develop/browser-life-viz-food-replays/tools/test/restore-artifacts.test.ts:341): committing an alteration to an existing table hash or historical prose makes both operands change together. The test passes on a clean checkout and cannot enforce append-only preservation against the branch baseline.
+
+All four stated follow-up fixes hold in the current code. Ordinary and relative common-directory resolution, `BL_RUNS_DIR`, and explicit-source precedence behaved correctly in probes.
+
+Read-only inspection and short Git/in-memory probes only; no test suite run or files changed.

@@ -337,9 +337,32 @@ describe("real ARTIFACTS.md", () => {
     const mod: any = await import(/* @vite-ignore */ modPath);
     expect(() => mod.parseArtifacts("| `x` | notanumber | `abc` |")).toThrow(/unparseable/);
   });
-  it("tables and prose are byte-identical to HEAD (only appended text may differ)", () => {
-    const g = spawnSync("git", ["show", "HEAD:docs/creative-prototypes/ARTIFACTS.md"], { cwd: REPO, maxBuffer: 1 << 24 });
-    expect(g.status, String(g.stderr)).toBe(0);
-    expect(md.startsWith(g.stdout.toString())).toBe(true);
+  it("the tables and prose that were on main before this tool are unchanged (pinned bytes; only appended text may differ)", () => {
+    // Length and SHA-256 of docs/creative-prototypes/ARTIFACTS.md at origin/main 9d91709a, before the "Restoring with one command" section.
+    const ORIGINAL_BYTES = 15483;
+    const ORIGINAL_SHA256 = "52318dceff6cad391094528120074901014caa2667cd576ead91acb5761fadee";
+    const bytes = readFileSync(join(REPO, "docs/creative-prototypes/ARTIFACTS.md"));
+    expect(sha(bytes.subarray(0, ORIGINAL_BYTES))).toBe(ORIGINAL_SHA256);
+  });
+  it("rejects a non-canonical path, which the tracked-file check could not match", async () => {
+    const mod: any = await import(/* @vite-ignore */ modPath);
+    for (const p of ["docs/cp/./a.json", "docs//a.json", "./a.json", "docs/../a.json"]) expect(() => mod.parseArtifacts(`| \`${p}\` | 3 | \`${"a".repeat(64)}\` |`), p).toThrow(/unsafe|unparseable/);
+  });
+});
+
+describe("restore.mjs, git's own view", () => {
+  it("stops before copying when a .gitignore rule re-includes a restored path", () => {
+    addD();
+    writeFileSync(join(target, ".gitignore"), `!/${A.path}\n`);
+    const r = runDefaultExclude(target);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/would still stage 1 restored path/);
+    expect(existsSync(join(target, A.path))).toBe(false);
+    expect(existsSync(join(target, B.path))).toBe(false);
+  });
+  it("treats -h after --source as a missing value, not a directory", () => {
+    const r = spawnSync("node", [SCRIPT, target, "--source", "-h"], { encoding: "utf8" });
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/--source needs a value/);
   });
 });
