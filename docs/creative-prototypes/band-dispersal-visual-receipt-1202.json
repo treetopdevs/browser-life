@@ -1,0 +1,44 @@
+{
+  "seed": 1202,
+  "planSha256": "7c01b2c948c2d134eb9e6483db26c0a64e2529f6d0ecc1fbe5a62193d5480254",
+  "artifactSha256": "a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60",
+  "ownChange": {
+    "from": 5500,
+    "to": 6000,
+    "bands": [
+      {
+        "band": 0,
+        "pass": false,
+        "observation": "Not blind: band 0 has no observed 5500 or6000 frame because actual extinction occurred at4279. The required final500 structural-change evidence is unavailable and cannot pass."
+      },
+      {
+        "band": 1,
+        "pass": false,
+        "observation": "Not blind: band 1 has no observed 5500 or6000 frame because actual extinction occurred at4279. The required final500 structural-change evidence is unavailable and cannot pass."
+      }
+    ],
+    "pass": false
+  },
+  "seasonalChanges": [
+    {
+      "from": 4500,
+      "to": 5000,
+      "pass": false,
+      "observation": "Not blind: both requested ages follow actual extinction at4279. No body frames exist for this interval, so no seasonal expansion or retreat is claimed."
+    },
+    {
+      "from": 5000,
+      "to": 5500,
+      "pass": false,
+      "observation": "Not blind: both requested ages follow actual extinction at4279. No body frames exist for this interval, so no seasonal expansion or retreat is claimed."
+    },
+    {
+      "from": 5500,
+      "to": 6000,
+      "pass": false,
+      "observation": "Not blind: both requested ages follow actual extinction at4279. No body frames exist for this interval, so no seasonal expansion or retreat is claimed."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T22:37:50.129366+00:00"
+}

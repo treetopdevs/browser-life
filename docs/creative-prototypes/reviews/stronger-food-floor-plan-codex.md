@@ -1,0 +1,3 @@
+# Independent Codex Sol6.1 High plan review
+
+28 October2026. Read-only reviewer /root/next_rule_review, gpt-6.1-sol/high. CLEAR after correcting576→384 bonus reduction wording from half to one-third. Pure enumeration verifies1200pulse uniqueness, budgets, coverage and earlycoverage/revisit confounds. Radius8 and769 baseline isolation, precise192/192/384 allocation, same persistence gates including99cap ticks, single seed/exactrepeat/live3000barrier and stop handling match user scope. No edits or biology by reviewer.24MiB cap remains runtime inconclusive bound; no quiet capacity increase. No PR/merge/deploy.

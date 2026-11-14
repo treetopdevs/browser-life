@@ -131,3 +131,31 @@ tools/creative-prototypes/restore.sh /path/to/other/checkout
 It refuses to overwrite a file whose hash differs unless you pass `--force`, and a second run changes nothing. It also lists the restored paths in a marked block of the checkout's `info/exclude` (for a worktree, the main checkout's shared `.git/info/exclude`) so they are not staged by accident. These files must still never be committed.
 
 Two things to know before running it in a worktree. First, `git rev-parse --git-path info/exclude` is the main checkout's shared `.git/info/exclude`, so the block is a small edit to a file every worktree reads, and the anchored paths are hidden in all of them. Second, the block is written before any file is copied, and it also hides the `.restore-tmp-*` working directories. To undo the hiding run `tools/creative-prototypes/restore.sh --unexclude`; it removes only the marked block. A checkout that tracks any of these paths in its index is refused, because an exclude rule cannot keep tracked files out of a commit. `--help` lists every flag.
+
+# Band dispersal and stronger food floor
+
+The last two food-band experiments, band dispersal (radius-32 offspring placement) and stronger food floor (doubled per-band floor), were brought onto main the same way: their two final replays, two 3000-tick gate replays and two videos, about 27 MB, are kept out of git.
+
+Without them:
+
+- `band-dispersal.html` and `stronger-food-floor.html` in this folder still load their tracked index files, but report the replay as missing when they fetch it, and their videos do not play.
+- Both `tools/<experiment>/explore.ts` modules hash pinned inputs when imported, and those include three files from the Food-band table above (`food-schedule-769-seed-1202.json`, `food-schedule-769-gate-3000-seed-1202.json`, `food-floor-longevity-replication-seed-1202.json`). Each replay's `provenance.sourceSha256` also pins its own unit-test file, so `tools/test/band-dispersal.test.ts` and `tools/test/stronger-food-floor.test.ts` are kept byte for byte and left out by `vitest.config.ts` while those three are missing, as `food-schedule-769.test.ts` is. `tests/e2e/band-dispersal.spec.ts` and `stronger-food-floor.spec.ts` are not pinned; they skip as a whole without those three and `food-band-foothold-seed-1202.json`.
+- `--check` in both `explore.ts` modules, each `launch.sh` (its preflight runs `tools/food-schedule-769/explore.ts --check`) and `tools/stronger-food-floor/capture-video.mjs` need the files below and the Food-band ones restored.
+
+Every file is in git history on `codex/stronger-food-floor` (`1ce5bbc7`). The Food-band one-liner above reads to the end of this file, so it restores these six too and now needs this fetch as well; run `git fetch origin codex/stronger-food-floor` before it. `tools/creative-prototypes/restore.sh` finds these only in git (they are not in its `runs/` source directories), so fetch first. From the repository root:
+
+```bash
+git fetch origin codex/stronger-food-floor
+sed -n '/^# Band dispersal and stronger food floor/,$p' docs/creative-prototypes/ARTIFACTS.md | grep '^| `' | while IFS='|' read -r _ file _ _ commit _; do f=$(echo "$file" | tr -d ' `'); c=$(echo "$commit" | tr -d ' `'); mkdir -p "$(dirname "$f")"; git show "$c:$f" > "$f"; done
+```
+
+Then compare with the hashes below using `shasum -a 256`.
+
+| Path | Bytes | SHA-256 | Commit |
+|---|---|---|---|
+| `docs/creative-prototypes/band-dispersal-gate-3000-seed-1202.json` | 4903422 | `31901a98852c6f418ed7870ca2ef558e522a203618fa30597a5ac3111bf7ca4d` | `8579a7f4` |
+| `docs/creative-prototypes/band-dispersal-media/seed-1202.mp4` | 2023782 | `c20cc56c19bc51ba938f6f99aea5aa48434806b4acdb786b60fbdbc93e6e7798` | `8767d3cf` |
+| `docs/creative-prototypes/band-dispersal-seed-1202.json` | 6758709 | `a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60` | `1d041f9b` |
+| `docs/creative-prototypes/stronger-food-floor-gate-3000-seed-1202.json` | 5109815 | `bf43f3b0eaa95beb5d24cd577a981b7acc6ab3a230d04b519a0b371c5b01404b` | `b3814421` |
+| `docs/creative-prototypes/stronger-food-floor-media/seed-1202.mp4` | 2110433 | `8b10e5353d54c9eeb6e9a5d428f4f1cee8b1ac325ddf8e16eda44d44d07a15cc` | `1ce5bbc7` |
+| `docs/creative-prototypes/stronger-food-floor-seed-1202.json` | 6507650 | `fca948c8e43bdc1b778570bb772a9ad33c11deeffe94f1b6ff6991bdfdf37cec` | `4af78424` |
