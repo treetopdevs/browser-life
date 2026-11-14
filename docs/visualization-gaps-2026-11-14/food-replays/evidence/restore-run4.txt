@@ -1,0 +1,19 @@
+$ rm docs/creative-prototypes/uniform-food-seed-1201.json
+$ tools/creative-prototypes/restore.sh --check   (exit status shown below)
+MISSING       docs/creative-prototypes/uniform-food-seed-1201.json
+ok            docs/creative-prototypes/uniform-food-seed-1202.json  (already present)
+ok            docs/creative-prototypes/uniform-food-seed-1203.json  (already present)
+copied 0, already ok 72, would copy 0, missing 1, mismatch 0, refused 0; 0 bytes written
+exclude file: not touched
+RESULT: 72/73 verified
+exit 1
+$ tools/creative-prototypes/restore.sh
+copied        docs/creative-prototypes/uniform-food-seed-1201.json  (from source food-line-101-119)
+ok            docs/creative-prototypes/uniform-food-seed-1202.json  (already present)
+ok            docs/creative-prototypes/uniform-food-seed-1203.json  (already present)
+copied 1, already ok 72, would copy 0, missing 0, mismatch 0, refused 0; 9465669 bytes written
+exclude file: /Users/nicholas/develop/browser-life/.git/info/exclude
+RESULT: 73/73 verified
+exit 0
+$ find docs apps -name '.restore-tmp-*' | wc -l
+       0

@@ -19,17 +19,20 @@ const C = { path: "docs/cp/c.json", data: Buffer.from("charlie") };
 const D = { path: "docs/cp/d.json", data: Buffer.from("delta") };
 
 let root: string, target: string, source: string, excl: string, artifacts: string;
-const git = (...a: string[]) => execFileSync("git", a, { cwd: target, stdio: ["ignore", "pipe", "pipe"] }).toString();
+// Git reads its repository location from these variables before it looks at cwd (they are set inside hooks and by some
+// wrappers), so every child process gets an environment without them: the fixture must never touch the caller's repository.
+const ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_(DIR|WORK_TREE|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|COMMON_DIR|NAMESPACE|PREFIX|CEILING_DIRECTORIES|CONFIG|CONFIG_PARAMETERS|CONFIG_COUNT)$/.test(k) && !/^GIT_CONFIG_(KEY|VALUE)_\d+$/.test(k)));
+const git = (...a: string[]) => execFileSync("git", a, { cwd: target, env: ENV, stdio: ["ignore", "pipe", "pipe"] }).toString();
 
 function table(entries: { path: string; data: Buffer; commit?: string }[], withCommit: boolean) {
   return entries.map((e) => `| \`${e.path}\` | ${e.data.length} | \`${sha(e.data)}\`${withCommit ? ` | \`${e.commit}\`` : ""} |`).join("\n");
 }
 function run(...args: string[]) {
-  const r = spawnSync("node", [SCRIPT, target, "--source", source, "--artifacts", artifacts, "--exclude-file", excl, "--first-table-commit", firstCommit, ...args], { encoding: "utf8" });
+  const r = spawnSync("node", [SCRIPT, target, "--source", source, "--artifacts", artifacts, "--exclude-file", excl, "--first-table-commit", firstCommit, ...args], { encoding: "utf8", env: ENV });
   return { code: r.status, out: r.stdout + r.stderr };
 }
 function runDefaultExclude(cwdTarget: string, ...args: string[]) {
-  const r = spawnSync("node", [SCRIPT, cwdTarget, "--source", source, "--artifacts", artifacts, "--first-table-commit", firstCommit, ...args], { encoding: "utf8" });
+  const r = spawnSync("node", [SCRIPT, cwdTarget, "--source", source, "--artifacts", artifacts, "--first-table-commit", firstCommit, ...args], { encoding: "utf8", env: ENV });
   return { code: r.status, out: r.stdout + r.stderr };
 }
 let firstCommit = "";
@@ -148,7 +151,7 @@ describe("restore.mjs", () => {
     const r = run();
     expect(r.code).not.toBe(0);
     expect(r.out).toMatch(/REFUSED\s+docs\/cp\/a\.json/);
-    const bad = spawnSync("node", [SCRIPT, target, "--source", "--dry-run"], { encoding: "utf8" });
+    const bad = spawnSync("node", [SCRIPT, target, "--source", "--dry-run"], { encoding: "utf8", env: ENV });
     expect(bad.status).toBe(2);
     expect(bad.stderr).toContain("--source needs a value");
   });
@@ -232,7 +235,7 @@ describe("restore.mjs", () => {
   it("writes the exclude block before copying: an unwritable exclude file stops the run with nothing copied", () => {
     addD();
     const dirAsExclude = join(root, "exclude-is-a-dir"); mkdirSync(dirAsExclude);
-    const r = spawnSync("node", [SCRIPT, target, "--source", source, "--artifacts", artifacts, "--exclude-file", dirAsExclude, "--first-table-commit", firstCommit], { encoding: "utf8" });
+    const r = spawnSync("node", [SCRIPT, target, "--source", source, "--artifacts", artifacts, "--exclude-file", dirAsExclude, "--first-table-commit", firstCommit], { encoding: "utf8", env: ENV });
     expect(r.status).not.toBe(0);
     for (const e of [A, B, C, D]) expect(existsSync(join(target, e.path))).toBe(false);
     expect(tmpLeft()).toEqual([]);
@@ -258,14 +261,14 @@ describe("restore.mjs", () => {
     expect(shared).toContain(`/${A.path}`);
     expect(shared).toContain(".restore-tmp-*");
     expect(r.out).toContain(join(target, ".git/info/exclude"));
-    expect(execFileSync("git", ["status", "--porcelain"], { cwd: wt }).toString()).toBe("");
+    expect(execFileSync("git", ["status", "--porcelain"], { cwd: wt, env: ENV }).toString()).toBe("");
     // --unexclude takes the block out again and leaves unrelated lines alone.
     const u = runDefaultExclude(wt, "--unexclude");
     expect(u.code).toBe(0);
     const after = readFileSync(join(target, ".git/info/exclude"), "utf8");
     expect(after).not.toContain("restore.sh");
     expect(after).not.toContain(`/${A.path}`);
-    expect(execFileSync("git", ["status", "--porcelain"], { cwd: wt }).toString()).toContain("docs/");
+    expect(execFileSync("git", ["status", "--porcelain"], { cwd: wt, env: ENV }).toString()).toContain("docs/");
   });
 
   it("second run is idempotent", () => {
@@ -361,7 +364,7 @@ describe("restore.mjs, git's own view", () => {
     expect(existsSync(join(target, B.path))).toBe(false);
   });
   it("treats -h after --source as a missing value, not a directory", () => {
-    const r = spawnSync("node", [SCRIPT, target, "--source", "-h"], { encoding: "utf8" });
+    const r = spawnSync("node", [SCRIPT, target, "--source", "-h"], { encoding: "utf8", env: ENV });
     expect(r.status).toBe(2);
     expect(r.stderr).toMatch(/--source needs a value/);
   });

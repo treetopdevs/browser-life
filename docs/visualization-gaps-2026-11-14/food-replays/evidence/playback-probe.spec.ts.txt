@@ -23,6 +23,9 @@ test(name+' '+vw, async({page})=>{
   if(err) console.log('ERR',await page.locator('#error-detail').innerText().catch(()=>''));
   const scrub=page.locator('#scrub'); const v0=await scrub.inputValue();
   await page.locator('#play').click(); await page.waitForTimeout(1500);
+  // playback alone must move the scrubber, before any manual jump (otherwise the jump below would hide a stuck player)
+  const vPlay=await scrub.inputValue(); console.log(name,vw,'after play',v0,'->',vPlay);
+  expect(Number(vPlay)).toBeGreaterThan(Number(v0));
   if(jump) await page.locator('[data-jump-tick="'+jump+'"]').click(); else { const mx=await scrub.getAttribute('max'); await scrub.fill(String(Math.floor(Number(mx)/2))); }
   await page.waitForTimeout(500);
   const v1=await scrub.inputValue();

@@ -33,8 +33,8 @@ Round 1, Sol 6.1 xhigh, read-only: REVIEW.md (top). Round 2 source review plus C
 
 ## FIX-stage re-runs
 - restore-artifacts.test.ts 27 passed; `pnpm typecheck` clean.
-- Real: `restore.sh --check` 73/73, `restore.sh` 73/73 (copied 0), one file deleted and restored through the new path (copied from source, verified), no `.restore-tmp-*` anywhere under docs/ or apps/ (evidence/restore-run3.txt). The exclude block now also holds `.restore-tmp-*`.
-- Playback probe 6 passed (evidence/playback.txt). The throwaway spec was copied to tests/e2e/zz-tmp-playback.spec.ts for the run and removed.
+- Real: `restore.sh --check` 73/73, `restore.sh` 73/73 (copied 0), no `.restore-tmp-*` anywhere under docs/ or apps/ (evidence/restore-run3.txt). The delete-and-restore through the copy path is recorded separately in evidence/restore-run4.txt (re-run after review: one file removed, `--check` reports 72/73 and exits 1, the restore copies 1 and verifies 73/73). The exclude block now also holds `.restore-tmp-*`.
+- Playback probe 6 passed (evidence/playback.txt). After review the probe also asserts that the scrubber advances from play alone, before any manual jump; re-run: 6 passed. The throwaway spec was copied to tests/e2e/zz-tmp-playback.spec.ts for the run and removed.
 
 ## Files for the coordinator to stage (explicit paths, no globs over docs/creative-prototypes)
 ```

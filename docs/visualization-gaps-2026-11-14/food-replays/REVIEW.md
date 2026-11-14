@@ -1,14 +1,18 @@
-- **P1 — Existing files can be overwritten without `--force`.** [restore.mjs:49](tools/creative-prototypes/restore.mjs:49) treats read failures as absence. An unreadable file in a writable directory, or a dangling symlink, reaches the unconditional rename at line 68 and is replaced. A file created between the initial check and rename is also overwritten.
+## Round 1 findings (historical, all fixed)
 
-- **P2 — Missing option values swallow safety flags.** [restore.mjs:137](tools/creative-prototypes/restore.mjs:137): `--source --dry-run` consumes `--dry-run` as the directory value, then performs actual restoration through git fallback. `--source --check` similarly loses verification-only mode.
+Codex Sol 6.1 (xhigh) reviewed the first version of the script. The five findings below are kept as written; file and line references are to that first version, not the current source. All five were fixed in the FIX stage: the dispositions and the tests that cover them are in the sections that follow, and nothing here is open.
 
-- **P2 — Symlinked destination directories allow writes outside TARGET.** [restore.mjs:63](tools/creative-prototypes/restore.mjs:63) follows parent-directory symlinks without checking containment. Linking an artifact directory into the runs cache lets restoration modify the supposedly read-only source directory.
+- **P1 — Existing files can be overwritten without `--force`.** `restore.mjs:49` treats read failures as absence. An unreadable file in a writable directory, or a dangling symlink, reaches the unconditional rename at line 68 and is replaced. A file created between the initial check and rename is also overwritten.
 
-- **P2 — Exclude updates can destroy existing rules.** [restore.mjs:132](tools/creative-prototypes/restore.mjs:132) truncates the shared `info/exclude` directly. Disk exhaustion or interruption can leave it incomplete, losing unrelated exclusions and exposing artifacts to staging. No write-failure test covers this.
+- **P2 — Missing option values swallow safety flags.** `restore.mjs:137`: `--source --dry-run` consumes `--dry-run` as the directory value, then performs actual restoration through git fallback. `--source --check` similarly loses verification-only mode.
 
-- **P3 — Git-fallback content assertion skips its key fixture.** [restore-artifacts.test.ts:65](tools/test/restore-artifacts.test.ts:65) accepts arbitrary content for C through `|| e === C`. C is the second-table git-only fixture; the separate fallback test also checks output rather than restored bytes.
+- **P2 — Symlinked destination directories allow writes outside TARGET.** `restore.mjs:63` follows parent-directory symlinks without checking containment. Linking an artifact directory into the runs cache lets restoration modify the supposedly read-only source directory.
 
-Static review only; no files changed or tests run.
+- **P2 — Exclude updates can destroy existing rules.** `restore.mjs:132` truncates the shared `info/exclude` directly. Disk exhaustion or interruption can leave it incomplete, losing unrelated exclusions and exposing artifacts to staging. No write-failure test covers this.
+
+- **P3 — Git-fallback content assertion skips its key fixture.** `restore-artifacts.test.ts:65` accepts arbitrary content for C through `|| e === C`. C is the second-table git-only fixture; the separate fallback test also checks output rather than restored bytes.
+
+Static review only; no files changed or tests run. (Reviewer's note, round 1.)
 
 ## Source review dispositions
 
