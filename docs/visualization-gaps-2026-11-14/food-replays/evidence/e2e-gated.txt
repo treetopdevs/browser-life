@@ -28,8 +28,8 @@ Running 14 tests using 5 workers
       32 | test('missing outcome does not invent a trial',async({page})=>{await install(page);await expect(page.locator('#empty-state')).toBeVisible();await expect(page.locator('#replay')).toBeHidden();});
       33 | test('pending 3000 gate stops timeline and labels every new-rule tick novel',async({page})=>{await install(page,fixture());await ready(page);await page.getByRole('button',{name:'3,000',exact:true}).click();await expect(page.locator('#alternating-population')).toHaveText('34');await expect(page.locator('#baseline-population')).toHaveText('34');await expect(page.getByRole('button',{name:'6,000',exact:true})).toBeDisabled();await expect(page.locator('#phase-label')).toContainText('New-rule observations');await expect(page.locator('#recovery-rows')).toContainText('not-reached');await expect(page.locator('#visual-gate')).toHaveText('Pending parent review');});
       34 | for(const[name,mutate]of Object.entries({
-        at ready (/Users/nicholas/develop/browser-life-viz-food-replays/tests/e2e/food-schedule-769.spec.ts:31:203)
-        at /Users/nicholas/develop/browser-life-viz-food-replays/tests/e2e/food-schedule-769.spec.ts:49:265
+        at ready (tests/e2e/food-schedule-769.spec.ts:31:203)
+        at tests/e2e/food-schedule-769.spec.ts:49:265
 
     Error Context: test-results/food-schedule-769-actual-s-af1b2-me-and-parent-decision-load-chrome/error-context.md
 
@@ -44,8 +44,8 @@ Running 14 tests using 5 workers
       32 | test('missing outcome does not invent a trial',async({page})=>{await install(page);await expect(page.locator('#empty-state')).toBeVisible();await expect(page.locator('#replay')).toBeHidden();});
       33 | test('pending 3000 gate stops timeline and labels every new-rule tick novel',async({page})=>{await install(page,fixture());await ready(page);await page.getByRole('button',{name:'3,000',exact:true}).click();await expect(page.locator('#alternating-population')).toHaveText('34');await expect(page.locator('#baseline-population')).toHaveText('34');await expect(page.getByRole('button',{name:'6,000',exact:true})).toBeDisabled();await expect(page.locator('#phase-label')).toContainText('New-rule observations');await expect(page.locator('#recovery-rows')).toContainText('not-reached');await expect(page.locator('#visual-gate')).toHaveText('Pending parent review');});
       34 | for(const[name,mutate]of Object.entries({
-        at ready (/Users/nicholas/develop/browser-life-viz-food-replays/tests/e2e/food-schedule-769.spec.ts:31:203)
-        at /Users/nicholas/develop/browser-life-viz-food-replays/tests/e2e/food-schedule-769.spec.ts:50:192
+        at ready (tests/e2e/food-schedule-769.spec.ts:31:203)
+        at tests/e2e/food-schedule-769.spec.ts:50:192
 
     Error Context: test-results/food-schedule-769-actual-a-b4e5e-inal-mobile-page-passes-axe-chrome/error-context.md
 

@@ -1,12 +1,12 @@
-- **P1 — Existing files can be overwritten without `--force`.** [restore.mjs:49](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:49) treats read failures as absence. An unreadable file in a writable directory, or a dangling symlink, reaches the unconditional rename at line 68 and is replaced. A file created between the initial check and rename is also overwritten.
+- **P1 — Existing files can be overwritten without `--force`.** [restore.mjs:49](tools/creative-prototypes/restore.mjs:49) treats read failures as absence. An unreadable file in a writable directory, or a dangling symlink, reaches the unconditional rename at line 68 and is replaced. A file created between the initial check and rename is also overwritten.
 
-- **P2 — Missing option values swallow safety flags.** [restore.mjs:137](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:137): `--source --dry-run` consumes `--dry-run` as the directory value, then performs actual restoration through git fallback. `--source --check` similarly loses verification-only mode.
+- **P2 — Missing option values swallow safety flags.** [restore.mjs:137](tools/creative-prototypes/restore.mjs:137): `--source --dry-run` consumes `--dry-run` as the directory value, then performs actual restoration through git fallback. `--source --check` similarly loses verification-only mode.
 
-- **P2 — Symlinked destination directories allow writes outside TARGET.** [restore.mjs:63](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:63) follows parent-directory symlinks without checking containment. Linking an artifact directory into the runs cache lets restoration modify the supposedly read-only source directory.
+- **P2 — Symlinked destination directories allow writes outside TARGET.** [restore.mjs:63](tools/creative-prototypes/restore.mjs:63) follows parent-directory symlinks without checking containment. Linking an artifact directory into the runs cache lets restoration modify the supposedly read-only source directory.
 
-- **P2 — Exclude updates can destroy existing rules.** [restore.mjs:132](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:132) truncates the shared `info/exclude` directly. Disk exhaustion or interruption can leave it incomplete, losing unrelated exclusions and exposing artifacts to staging. No write-failure test covers this.
+- **P2 — Exclude updates can destroy existing rules.** [restore.mjs:132](tools/creative-prototypes/restore.mjs:132) truncates the shared `info/exclude` directly. Disk exhaustion or interruption can leave it incomplete, losing unrelated exclusions and exposing artifacts to staging. No write-failure test covers this.
 
-- **P3 — Git-fallback content assertion skips its key fixture.** [restore-artifacts.test.ts:65](/Users/nicholas/develop/browser-life-viz-food-replays/tools/test/restore-artifacts.test.ts:65) accepts arbitrary content for C through `|| e === C`. C is the second-table git-only fixture; the separate fallback test also checks output rather than restored bytes.
+- **P3 — Git-fallback content assertion skips its key fixture.** [restore-artifacts.test.ts:65](tools/test/restore-artifacts.test.ts:65) accepts arbitrary content for C through `|| e === C`. C is the second-table git-only fixture; the separate fallback test also checks output rather than restored bytes.
 
 Static review only; no files changed or tests run.
 
