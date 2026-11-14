@@ -68,6 +68,7 @@ import {
   type ShapeKernel,
   type WorldConfig,
   type WorldState,
+  isSlab,
 } from "@bl/schema";
 
 export const MOT_ZERO = 128 | (128 << 8);
@@ -107,6 +108,7 @@ export class RefSim {
   readonly roles: Uint32Array;
 
   constructor(state: WorldState) {
+    if (isSlab(state.cfg)) throw new Error("RefSim runs the 2D rules: a slab config (tileD set) needs the slab simulator");
     const errs = validateState(state);
     if (errs.length) throw new Error(`invalid state: ${errs.join("; ")}`);
     this.state = state;

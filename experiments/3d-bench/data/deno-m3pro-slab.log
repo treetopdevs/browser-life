@@ -1,0 +1,41 @@
+kernel asserts ok: {"3d R=3":{"count":92,"sum":9624},"3d R=4":{"count":250,"sum":22710},"3d R=5":{"count":460,"sum":44436},"2d R=3":{"count":24,"sum":2964},"2d R=4":{"count":44,"sum":5212},"2d R=9":{"count":224,"sum":26352}}
+adapter: 0 /  / 0 / Apple M3 Pro | timestamps: true | wg storage: 32768 | max invocations: 1024
+16^3 R=3 wg4 b2: 4096 cells exact (132 distinct U values)
+16^3 R=3 wg4 b2 split: 4096 cells exact (132 distinct U values)
+16^3 R=4 wg4 b2 split: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg4 b2 split: 2048 cells exact (130 distinct U values)
+16x16x8 R=4 wg4 b2 split: 2048 cells exact (131 distinct U values)
+32^3 R=4 wg4 b2 split: 32768 cells exact (132 distinct U values)
+32^3 R=3 wg4 b2 split4: 32768 cells exact (132 distinct U values)
+16^3 R=4 wg4 b2: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg4 b2: 2048 cells exact (130 distinct U values)
+16x16x8 R=4 wg4 b2: 2048 cells exact (131 distinct U values)
+16^3 R=3 wg4 b1: 4096 cells exact (132 distinct U values)
+16x16x8 R=3 wg8,8,4 b1: 2048 cells exact (130 distinct U values)
+32^3 R=4 wg4 b2: 32768 cells exact (132 distinct U values)
+2D generalist world: 5208/65536 cells with lineage
+variant: 2D R=9 256^2 (A real GpuSim pass) [profile hook pair 0 of 5 in a live step]
+variant: 2D R=9 256^2 (B isolated, generalist) [affinityShader(cfg) unmodified, isolated]
+variant: 2D R=9 256^2 (B isolated, all alive) [affinityShader(cfg) unmodified, isolated]
+variant: 3D 64^3 R=4 [tile 16384 B, 64 thr, 8x8x8 wg]
+variant: 3D 64^3 R=3 [tile 10976 B, 64 thr, 8x8x8 wg]
+variant: 3D slab 256x256x8 R=3 [tile 10976 B, 64 thr, 32x32x1 wg]
+variant: 3D slab 256x256x8 R=4 [tile 16384 B, 64 thr, 32x32x1 wg]
+variant: 3D 64^3 R=4 split [tile 16384 B, 64 thr, 8x8x8 wg]
+variant: 3D 64^3 R=3 split [tile 10976 B, 64 thr, 8x8x8 wg]
+variant: 3D slab 256x256x8 R=3 split [tile 10976 B, 64 thr, 32x32x1 wg]
+variant: 3D slab 256x256x8 R=4 split [tile 16384 B, 64 thr, 32x32x1 wg]
+variant: 27-source transport stub 64^3
+timestamp batch rejected, using wall time: Error: 2D R=9 256^2 (B isolated, generalist): 1/50 zero or negative durations
+batch sizes: 2D R=9 256^2 (A real GpuSim pass)=200, 2D R=9 256^2 (B isolated, generalist)=200, slab 256x256x8 R=3 wg8x8x4 b1=200, slab 256x256x8 R=3 wg8x4x4 b1=200, slab 256x256x8 R=3 wg4x4x4 b1=200, slab 256x256x8 R=3 wg8x8x2 b1=200, slab 256x256x8 R=3 wg16x8x2 b1=40, slab 256x256x8 R=3 wg8x8x8 b1 split=200, 64^3 R=3 wg8x8x4 b1 (re-ruled shape)=200
+timestamp batch rejected, using wall time: Error: 2D R=9 256^2 (B isolated, generalist): 1/200 zero or negative durations
+slab sweep T2 = 97.9 us (A 112.5, B 97.9, using B)
+| variant | median us | p90/p10 | ratio vs T2 | predicted bar |
+|---|---|---|---|---|
+| slab 256x256x8 R=3 wg8x8x4 b1 | 216.7 | 1.05 | 2.21 | 3.29 |
+| slab 256x256x8 R=3 wg8x4x4 b1 | 230.1 | 1.05 | 2.35 | 3.29 |
+| slab 256x256x8 R=3 wg4x4x4 b1 | 278.7 | 1.02 | 2.85 | 3.29 |
+| slab 256x256x8 R=3 wg8x8x2 b1 | 246.1 | 1.06 | 2.51 | 3.29 |
+| slab 256x256x8 R=3 wg16x8x2 b1 | 2967.7 | 1.01 | 30.30 | 3.29 |
+| slab 256x256x8 R=3 wg8x8x8 b1 split | 343.7 | 1.02 | 3.51 | 3.29 |
+| 64^3 R=3 wg8x8x4 b1 (re-ruled shape) | 107.8 | 1.03 | 1.10 | 1.64 |

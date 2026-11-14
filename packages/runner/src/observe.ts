@@ -4,8 +4,8 @@
 // observe through `observeCensus`, at the same simulation-step boundaries, so
 // a checkpoint's observer section means the same thing whichever wrote it.
 
-import type { WorldConfig } from "@bl/schema";
-import { ActivityTracker, Tracker, b64, blockSymbols, census, tileDistance2, unb64, type Census, type LifeEvent } from "@bl/metrics";
+import { isSlab, type WorldConfig } from "@bl/schema";
+import { ActivityTracker, Tracker, b64, blockSymbols, census, census3, tileDistance2, unb64, type Census, type LifeEvent } from "@bl/metrics";
 import type { ObserverSettings, ObserverState } from "./runner.ts";
 
 /** Live form of `ObserverState`. */
@@ -65,6 +65,29 @@ export function serializeObservers(obs: Observers, step: number, settings: Obser
   };
 }
 
+/**
+ * What a slab bundle (a run whose config has `tileD`) leaves out, written to its manifest as `absentMetrics`. Each is
+ * defined only for the 2D plane: block symbols of a flattened layer stack, 2D rim and core, an x/y-only distance for
+ * budding attribution, and 44-word genomes; the mechanisms (tiles, ponds, exchange, scheduled interventions) are
+ * outside the slab. `slabSpecError` (runner.ts) refuses the opt-in ones. See docs/3d-rung1b-m5-plan.md section 3.
+ */
+export const SLAB_ABSENT_METRICS = [
+  "patternEntropy",
+  "temporalMI",
+  "patternCompression",
+  "morphology",
+  "buddings",
+  "species.tsv",
+  "profiles.tsv",
+  "genomes.tsv",
+  "births.tsv",
+  "migrations.tsv",
+  "exchanges.tsv",
+  "ponds.tsv",
+  "cells.tsv",
+  "interventions.jsonl",
+] as const;
+
 export interface CensusObservation {
   census: Census;
   /** Tracker events of this census (fissions carry parent/children ids). */
@@ -90,11 +113,14 @@ export function observeCensus(
   newMutations: number,
 ): CensusObservation {
   obs.mutations += newMutations;
-  const c = census({ cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
+  // A slab has its own 6-connected census, no budding attribution (tileDistance2 is x/y only) and no block symbols
+  // (they flatten the layers into one tall image); `prevSym` then stays null, so the observer serialises as before.
+  const slab = isSlab(cfg);
+  const c = (slab ? census3 : census)({ cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
   const events = obs.tracker.update(c);
   const life: object[] = [];
   for (const e of events) {
-    if (e.kind !== "birth") {
+    if (slab || e.kind !== "birth") {
       life.push(e);
       continue;
     }
@@ -119,9 +145,9 @@ export function observeCensus(
     } else life.push(e);
   }
   const act = obs.activity.update(c.step, c.lineages.map((l) => [l.key, l.cells] as [string, number]));
-  const sym = blockSymbols(cfg, snap.cells);
+  const sym = slab ? new Uint8Array(0) : blockSymbols(cfg, snap.cells);
   const prevSym = obs.prevSym;
-  obs.prevSym = sym;
+  if (!slab) obs.prevSym = sym;
   obs.censusIdx++;
   // Keep observing through extinction: the observation window is not truncated.
   const becameExtinct = c.livingCells === 0 && !obs.extinct;

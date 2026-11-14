@@ -16,9 +16,17 @@
 // writes the state before each listed boundary's cycle to checkpoints/b<NNN>-pre.blck, with its hash
 // in the manifest (RunSpec.preCycleCheckpoints); without it the bundle is as before.
 //
-// --override sets RunSpec.overrides from a comma list of key=integer, the keys mutRate and pondDeath only: the
-// transition hunt's D3 runs (--override mutRate=0) and G1 fallback (e = 1, --override pondDeath=65536, for the
-// conditions pond-nat and pond-shuf, whose own pondDeath it replaces). Without it the spec has no overrides.
+// --override sets RunSpec.overrides from a comma list of key=integer, the keys mutRate, pondDeath, defaultMu, defaultSigma and
+// lightK only: the transition hunt's D3 runs (--override mutRate=0) and G1 fallback (e = 1, --override pondDeath=65536, for the
+// conditions pond-nat and pond-shuf, whose own pondDeath it replaces), and the slab check's three parameters (defaultMu,
+// defaultSigma, lightK; lightK only with a slab preset). Without it the spec has no overrides.
+//
+// Slab preset (--preset slab-spots, rung 1b; docs/3d-rung1b-m5-plan.md): a 256 x 256 x 8 world on GpuSim3. One whole history from step 0
+// with a bundle of its own: besides the usual files, layers.tsv (step, z, photo, grow, decomp, resp, saturated: the role buffer's
+// sums per layer, at every deep census) and a manifest with `layers` and `absentMetrics` (what a slab bundle leaves out). Refused with
+// exit 2: --lineage-obs, species census, --pre-cycle, --branch-from, --picker/--picks-from, --lesion/--feed/--sun/--interventions,
+// --start-from. A slab checkpoint is about 120 MB, so --checkpoint is for forensics only. Run the check with tools/slab-screen.ts and
+// read it with tools/slab-readout.ts.
 // --branch-from DIR --branch-boundary B (both, with --conditions pond-nat or pond-shuf) starts each run from the
 // pre-cycle checkpoint of boundary B in the bundle at DIR (its manifest's preCycleCheckpoints entry, whose hash the
 // file must match) and applies that boundary's transform under the run's own seed first (RunSpec.branch, the hunt's
@@ -130,9 +138,9 @@
 //                                     look identical).
 //                                     Without these flags nothing here changes.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { PRESETS, RULE_VERSION, initWorld, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
+import { PRESETS, RULE_VERSION, cellCount, genomeChannels, initWorld, isSlab, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
 import { join as joinPath } from "node:path";
-import { requestDevice } from "@bl/sim-gpu";
+import { requestDeviceFor } from "@bl/sim-gpu";
 import {
   INTERVENTIONS_FILE,
   InterventionError,
@@ -156,6 +164,7 @@ import {
   runExperiment,
   runId,
   sameCompletedRun,
+  slabSpecError,
   sameConfig,
   specConfig,
   validateInterventions,
@@ -570,6 +579,13 @@ for (const spec of specs) {
     console.error(`invalid spec for ${runId(spec)}: ${branchBad}`);
     Deno.exit(2);
   }
+  // A slab (preset slab-spots) is one whole history from step 0; its refusals are named before any GPU work, like a branch's.
+  const slabBad = slabSpecError(spec, cfg, { branchFrom: source?.state, start: startFrom?.state, observer: startFrom?.observer });
+  if (slabBad) {
+    console.error(`invalid spec for ${runId(spec)}: ${slabBad}`);
+    Deno.exit(2);
+  }
+  if (isSlab(cfg) && spec.checkpointEvery > 0) console.warn(`warning: each checkpoint of a slab is about ${Math.round((cellCount(cfg) * (7 + genomeChannels(cfg)) * 4) / 1e6)} MB; --checkpoint is for forensics only`);
   const preCycleBad = preCycleError(spec, cfg, source?.state.step ?? 0); // every run here starts from its preset at step 0, or a branch from its source's step
   if (preCycleBad) {
     console.error(`invalid spec for ${runId(spec)}: ${preCycleBad}`);
@@ -622,7 +638,7 @@ if (specs[0].picked) {
     if (taken) die(taken);
   }
 }
-const device = await requestDevice(navigator.gpu, specConfig(specs[0]));
+const device = await requestDeviceFor(navigator.gpu, specConfig(specs[0]));
 for (const spec of specs) {
   const dir = `${a.out}/${runId(spec)}`;
   // A fork claims its directory with a mkdir that fails when it exists (atomic), so a run that appeared there after its start checks, or a

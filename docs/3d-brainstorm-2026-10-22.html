@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A 3D Cadence Garden</title>
+<meta name="description" content="Visual companion to docs/3d-brainstorm-2026-10-22.md: two kinds of 3D, why depth under light could matter, what the code assumes is flat, the bound that breaks, kernel and memory costs, where three.js fits, and a staged path with stop checks.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --field: oklch(12% 0.01 160);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; overflow-wrap: anywhere; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 0; border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+section { margin: 40px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+h2 .idx { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); margin-right: 8px; font-size: 15px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 16px; overflow-x: auto; }
+figure + figure, figure + .cards, .cards + figure, .cards + .cards { margin-top: 14px; }
+figcaption { font-size: 13px; color: var(--soft); margin-top: 10px; max-width: 80ch; }
+/* A wide diagram keeps its text legible on a phone: the figure scrolls sideways, the page never does. */
+svg.diagram { width: 100%; height: auto; display: block; font-family: var(--sans); min-width: 640px; }
+svg text { fill: var(--text); }
+svg .muted { fill: var(--muted); }
+svg .soft { fill: var(--soft); }
+svg .mono { font-family: var(--mono); }
+svg .box { fill: var(--raised); stroke: var(--line); stroke-width: 1; }
+svg .box.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .box.plain { fill: var(--surface); }
+svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+svg .arrow.lit { stroke: var(--sun-ink); }
+svg .later { stroke-dasharray: 4 4; }
+svg .grid { stroke: var(--line-soft); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .sun { fill: var(--sun); }
+svg .sun-ink { fill: var(--sun-ink); }
+svg .life { fill: var(--life-fill); }
+svg .ink { fill: var(--text); }
+svg .node { fill: var(--surface); stroke: var(--text); stroke-width: 1.5; }
+svg .node.lit { fill: var(--sun); stroke: var(--sun-ink); }
+svg .node.ghost { fill: none; stroke: var(--muted); stroke-dasharray: 3 3; }
+svg .seg { stroke: var(--text); stroke-width: 2; }
+svg .seg.ghost { stroke: var(--muted); stroke-dasharray: 4 4; }
+svg .letter { fill: var(--sun-soft); stroke: var(--sun-ink); stroke-width: 1; }
+svg .wound { fill: var(--muted); }
+svg .stone { fill: var(--sun-ink); }
+svg .far { fill: var(--raised); stroke: var(--line); }
+svg .near { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .bar { fill: var(--raised); stroke: var(--line); }
+svg .bar.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+.cards > *, .grid2 > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card p + p { margin-top: 6px; }
+.card .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/1 var(--mono); margin-right: 8px; vertical-align: -5px; }
+.card.lit { border-color: var(--sun-ink); }
+.card.lit .n { background: var(--sun); color: oklch(23% 0.022 80); }
+.card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sun-ink); margin-bottom: 6px; }
+.card .tag.plain { color: var(--soft); }
+/* The honesty surface, as the garden page might show it. Numbers are invented and say so. */
+.garden { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px 20px; max-width: 520px; margin: 0; }
+.garden .name { font-size: 20px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+.garden .count { font: 700 32px/1.1 var(--mono); font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+.garden .count small { font: 600 13px var(--sans); color: var(--muted); margin-left: 8px; }
+.garden dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 14px; }
+.garden dt { color: var(--soft); }
+.garden dd { margin: 0; }
+.garden dd.lit { color: var(--sun-ink); font-weight: 600; }
+.garden .mock { font-size: 12px; color: var(--soft); margin: 12px 0 0; }
+table { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+th, td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (max-width: 640px) { body { font-size: 14px; } figure { padding: 12px; } }
+svg .water { fill: oklch(70% 0.06 220 / .14); stroke: var(--line); }
+svg .glass { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+svg .ray { stroke: var(--sun-ink); stroke-width: 1.5; fill: none; }
+svg .bad { stroke: var(--error); stroke-width: 1.5; fill: none; }
+svg text.bad-t { fill: var(--error); }
+svg .waste { fill: var(--muted); }
+svg .cell { fill: var(--surface); stroke: var(--line); }
+svg .cell.src { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .cell.dst { fill: var(--sun); stroke: var(--sun-ink); }
+svg .limit { stroke: var(--error); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.rungs { display: grid; gap: 12px; }
+.rung { display: grid; grid-template-columns: 56px 1fr; gap: 14px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.rung.lit { border-color: var(--sun-ink); }
+.rung .k { font: 800 22px/1 var(--mono); color: var(--sun-ink); padding-top: 2px; }
+.rung h3 { margin: 0 0 2px; font-size: 16px; }
+.rung .cost { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); margin: 0 0 6px; }
+.rung p { margin: 0; color: var(--muted); font-size: 14px; }
+.rung .check { margin-top: 8px; padding: 8px 10px; border-radius: var(--radius); background: var(--raised); color: var(--text); font-size: 13.5px; }
+.rung .check b { color: var(--sun-ink); }
+.verdict { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+.yes { color: var(--life); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Brainstorm · 22 October 2026</p>
+    <h1>A 3D Cadence Garden</h1>
+    <p class="lede"><strong>Possible, in two sizes.</strong> A 3D view of today's flat world takes days and changes no physics. A real 3D world, a jar lit from above, is a new rule line and takes weeks. Visual companion to <a href="3d-brainstorm-2026-10-22.md">3d-brainstorm-2026-10-22.md</a>.</p>
+    <ul class="chips"><li class="chip note">Exploratory, not a plan</li><li class="chip">No code ran in 3D</li><li class="chip">RULE_VERSION 1 untouched</li><li class="chip">Costs computed from today's code</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme" aria-pressed="false">Night</button>
+</header>
+
+<section id="two">
+  <h2><span class="idx">1</span>Two different things called 3D</h2>
+  <p class="sub">They look alike in a screenshot and cost very different amounts. The first only changes how the world is drawn. The second changes the world.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 300" role="img" aria-label="Left: the flat world drawn as an orbitable landscape, with hills of biomass. Right: a glass jar holding a volume of water, the sun above, light fading with depth, green life near the top and sediment at the bottom.">
+      <!-- left: landscape -->
+      <text x="40" y="30" font-weight="700" font-size="16">A 3D view of the flat world</text>
+      <text x="40" y="50" class="muted" font-size="13">Days · no physics change · same buffers</text>
+      <g transform="translate(60,90)">
+        <polygon points="0,110 200,40 400,110 200,180" class="box plain"/>
+        <path d="M70,110 q30,-60 60,-8 q20,-40 40,-2" class="life" stroke="var(--life)" stroke-width="1"/>
+        <path d="M200,140 q25,-70 55,-10 q15,-30 35,0" class="life" stroke="var(--life)" stroke-width="1"/>
+        <path d="M140,75 q20,-40 45,-4" fill="var(--sun-soft)" stroke="var(--sun-ink)" stroke-width="1"/>
+        <path d="M260,95 q10,-25 30,2" fill="var(--sun-soft)" stroke="var(--sun-ink)" stroke-width="1"/>
+        <path d="M330,160 a90,30 0 0 0 40,-60" class="arrow"/>
+        <polygon points="368,102 372,94 376,104" class="ink"/>
+        <text x="300" y="195" class="soft" font-size="12">orbit camera</text>
+        <text x="0" y="200" class="soft" font-size="12">height = biomass + membrane, colour = lineage</text>
+      </g>
+      <!-- right: jar -->
+      <text x="560" y="30" font-weight="700" font-size="16">A 3D world: the jar</text>
+      <text x="560" y="50" class="muted" font-size="13">Weeks · new rule line · light from above</text>
+      <g transform="translate(640,70)">
+        <circle cx="120" cy="0" r="14" class="sun"/>
+        <path d="M120,18 v20 M95,20 l-8,16 M145,20 l8,16" class="ray"/>
+        <rect x="40" y="48" width="160" height="176" class="water"/>
+        <rect x="40" y="48" width="160" height="40" fill="var(--sun)" opacity=".28"/>
+        <rect x="40" y="88" width="160" height="40" fill="var(--sun)" opacity=".14"/>
+        <rect x="40" y="128" width="160" height="40" fill="var(--sun)" opacity=".05"/>
+        <ellipse cx="80" cy="66" rx="22" ry="9" class="life"/><ellipse cx="135" cy="62" rx="26" ry="10" class="life"/><ellipse cx="178" cy="70" rx="14" ry="7" class="life"/>
+        <ellipse cx="100" cy="122" rx="14" ry="8" fill="var(--sun-soft)" stroke="var(--sun-ink)"/><ellipse cx="160" cy="140" rx="12" ry="7" fill="var(--sun-soft)" stroke="var(--sun-ink)"/>
+        <rect x="40" y="206" width="160" height="18" class="waste" opacity=".55"/>
+        <path d="M40,40 v184 q0,10 10,10 h140 q10,0 10,-10 v-184" class="glass"/>
+        <text x="214" y="70" class="soft" font-size="12">bright</text>
+        <text x="214" y="150" class="soft" font-size="12">shaded</text>
+        <text x="214" y="219" class="soft" font-size="12">sediment</text>
+      </g>
+    </svg>
+    <figcaption>Diagrams, not data. Both sides could share one three.js scene; only the right side needs new physics.</figcaption>
+  </figure>
+</section>
+
+<section id="why">
+  <h2><span class="idx">2</span>Why depth could matter, not just look good</h2>
+  <p class="sub">A flat world fakes one thing a volume gets for free: light coming from above and being used up on the way down. Everything below follows from that, as hypotheses with checks, not promises.</p>
+  <div class="cards">
+    <div class="card lit"><span class="tag">The core bet</span><h3>Shade</h3><p>Each layer absorbs light in proportion to the biomass and membrane in it. Whatever grows above takes light from whatever is below. In 2D the light map is fixed and nothing can shade anything.</p></div>
+    <div class="card"><span class="tag plain">Hypothesis</span><h3>Layers nobody asked for</h3><p>Light users near the top, decomposers below where dead matter collects. In 2D every role shares one surface. Stratification is something we can see and measure: roles by depth.</p></div>
+    <div class="card"><span class="tag plain">Optional rule</span><h3>Sinking and a floor</h3><p>A small downward pull on bound matter makes sediment. Recycling turns it back into nutrient, which must diffuse up to the light. A nutrient loop with a length, like a lake's.</p></div>
+    <div class="card"><span class="tag plain">Hypothesis</span><h3>Insides</h3><p>In 3D a membrane can close around a volume completely. Biomass inside a shell of polymer is a compartment, closer to a cell than any 2D ring. The ownership and cells sandboxes wanted exactly that.</p></div>
+    <div class="card"><span class="tag plain">Brand</span><h3>The jar, literally</h3><p>The garden is already a sealed jar with a sun. This is that jar as a glass cylinder you can turn, green near the surface and dark below.</p></div>
+  </div>
+</section>
+
+<section id="flat">
+  <h2><span class="idx">3</span>What today's code assumes is flat</h2>
+  <p class="sub">The genome layout and every neighbourhood change, so a 3D world cannot be a new optional setting on RULE_VERSION 1. It is its own rule line, like the game kernel: a new CPU reference, a new GPU twin and new golden pins. The shader isn't the expensive part. Keeping the two equal bit for bit is.</p>
+  <figure>
+    <table>
+      <thead><tr><th>Piece</th><th>2D today</th><th>3D needs</th></tr></thead>
+      <tbody>
+        <tr><td>Affinity kernel</td><td>Ring of radius 9, 224 taps</td><td>A shell: 250 taps at radius 4, 2,552 at radius 9</td></tr>
+        <tr><td>Kernel tile in workgroup memory</td><td>34² words</td><td>(8 + 2R)³ words: 10.7 KiB at R 3, exactly the 16 KiB limit at R 4</td></tr>
+        <tr><td>Flow gradients</td><td>Sobel 3×3</td><td>Sobel 3×3×3, plus a z component</td></tr>
+        <tr><td>Transport</td><td>At most 9 sources per cell</td><td>At most 27 (section 4)</td></tr>
+        <tr><td>Diffusion</td><td>4 directions, quarter portions</td><td>6 directions, sixth portions</td></tr>
+        <tr><td>Controller</td><td>10 → 8 → 8; SGX, SGY in; MX, MY out</td><td>11 → 8 → 9 with SGZ and MZ; genome 44 → about 49 words</td></tr>
+        <tr><td>Light</td><td>A 2D field per cell</td><td>A scan down each column from the top</td></tr>
+        <tr><td>Lesions, feeds, sun, ponds, migration</td><td>Discs, x positions, 2D tiles</td><td>Spheres, columns, 3D tiles</td></tr>
+        <tr><td>Census, tracker</td><td>2D connected components</td><td>6- or 26-connected components</td></tr>
+        <tr><td>Checkpoints, lineage inspector, coordinator, renderer</td><td>2D layout</td><td>A third dimension in every reader</td></tr>
+      </tbody>
+    </table>
+  </figure>
+</section>
+
+<section id="bounds">
+  <h2><span class="idx">4</span>Two arithmetic bounds break</h2>
+  <p class="sub">The rules prove nothing overflows a 32-bit word. Two steps of that proof assume a flat world, and both have fixes the new rule line is free to choose.</p>
+  <div class="cards">
+    <div class="card lit"><span class="tag">Bound 1 · drawn below</span><h3>Energy arriving from neighbours</h3><p>After transport a cell's energy is at most 9 × 2²⁸, because at most nine cells send to it. In 3D, 27 do, and 27 × 2²⁸ overflows. Fix: halve the energy cap per cell to 2²⁷.</p></div>
+    <div class="card lit"><span class="tag">Bound 2</span><h3>The share each neighbour gets</h3><p>A share is <code>floor(q·w/D²)</code>, exact while <code>(q mod D²)·w</code> fits 32 bits, true in 2D because D² ≤ 2¹⁴. In 3D the overlap is a volume: at the default spread, 511,999 × 262,144 ≈ 1.3 × 10¹¹. Lowering the energy cap does not help. Fix: three nested per-axis shares, each inside today's proven bound; the source keeps the remainder, so conservation stays exact.</p></div>
+  </div>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 230" role="img" aria-label="Left: a 3 by 3 grid, the centre receiving from 9 cells; 9 times 2 to the 28 fits under 2 to the 32. Right: a 3 by 3 by 3 cube, the centre receiving from 27 cells; 27 times 2 to the 28 does not fit, 27 times 2 to the 27 does.">
+      <g transform="translate(60,40)">
+        <g id="g2">
+          <rect x="0" y="0" width="40" height="40" class="cell src"/><rect x="40" y="0" width="40" height="40" class="cell src"/><rect x="80" y="0" width="40" height="40" class="cell src"/>
+          <rect x="0" y="40" width="40" height="40" class="cell src"/><rect x="40" y="40" width="40" height="40" class="cell dst"/><rect x="80" y="40" width="40" height="40" class="cell src"/>
+          <rect x="0" y="80" width="40" height="40" class="cell src"/><rect x="40" y="80" width="40" height="40" class="cell src"/><rect x="80" y="80" width="40" height="40" class="cell src"/>
+        </g>
+        <text x="150" y="40" font-weight="700" font-size="15">2D: 9 sources</text>
+        <text x="150" y="64" class="mono" font-size="13">9 × 2²⁸ ≈ 2.4 × 10⁹</text>
+        <text x="150" y="86" class="muted" font-size="13">fits under 2³² ≈ 4.3 × 10⁹</text>
+      </g>
+      <g transform="translate(540,30)">
+        <g opacity=".45" transform="translate(36,-24)"><rect x="0" y="0" width="120" height="120" class="cell src"/><path d="M40,0 v120 M80,0 v120 M0,40 h120 M0,80 h120" class="grid"/></g>
+        <g opacity=".7" transform="translate(18,-12)"><rect x="0" y="0" width="120" height="120" class="cell src"/><path d="M40,0 v120 M80,0 v120 M0,40 h120 M0,80 h120" class="grid"/></g>
+        <g transform="translate(0,0)"><rect x="0" y="0" width="120" height="120" class="cell src"/><path d="M40,0 v120 M80,0 v120 M0,40 h120 M0,80 h120" class="grid"/></g>
+        <rect x="58" y="28" width="40" height="40" class="cell dst" opacity=".85"/>
+        <text x="190" y="40" font-weight="700" font-size="15">3D: 27 sources</text>
+        <text x="190" y="64" class="mono bad-t" font-size="13">27 × 2²⁸ ≈ 7.2 × 10⁹ overflows</text>
+        <text x="190" y="88" class="mono" font-size="13">27 × 2²⁷ ≈ 3.6 × 10⁹ fits</text>
+        <text x="190" y="110" class="muted" font-size="13">fix: halve the energy cap per cell</text>
+      </g>
+      <text x="60" y="200" class="soft" font-size="12">The other bounds (total matter, the multiply limits, the 64-bit heat ledger) don't depend on neighbour count and carry over.</text>
+      <text x="60" y="218" class="soft" font-size="12">The adhesion bound is redone for the larger 3D Sobel weights.</text>
+    </svg>
+  </figure>
+</section>
+
+<section id="cost">
+  <h2><span class="idx">5</span>What it costs to run</h2>
+  <p class="sub">Today: 65,536 cells × 224 kernel taps per step, at about 2,000 steps a second on the Mac. The bars show kernel work per step against that. Tap counts are exact, from the repo's kernel rule extended to 3D; speeds are estimates until rung 1a measures them.</p>
+  <figure>
+    <svg class="diagram" id="bars" viewBox="0 0 1000 360" role="img" aria-label="Kernel work per step relative to today, for nine world sizes. A 64 cubed jar at radius 3 is 1.6 times today, at radius 4 is 4.5 times, at radius 9 is 45.6 times. 128 cubed at radius 4 is 35.7 times."></svg>
+    <figcaption>The other passes (flow, transport, react) scale with cell count, not taps. Rough reading: <strong>a 64³ jar at radius 3–4 runs at a few hundred steps a second</strong>, fast enough to watch it evolve; 128³ runs at tens, lovely to watch and slow to evolve. Radius 9 in 3D needs a different convolution (a ring built from separable integer blurs), a research item.</figcaption>
+  </figure>
+  <figure>
+    <svg class="diagram" id="mem" viewBox="0 0 1000 250" role="img" aria-label="GPU memory by world size, with the largest single buffer against the 128 MiB default binding limit. 64 cubed fits; 96 and 128 cubed exceed the limit."></svg>
+    <figcaption>Each cell holds 106 words today, most of it two copies of its 44-word genome. Up to 64³ or the 8-deep slab fits WebGPU's default limits, so it runs on any WebGPU device. Above the line it depends on the device: the sim already requests the adapter's own maximum, so 96³ may run on the Mac while phones refuse it. The portable fix is to store genomes once per lineage in a table that cells point to. Genomes are already immutable per lineage, but the GPU would need a deterministic allocator, so that waits for rung 3.</figcaption>
+  </figure>
+</section>
+
+<section id="draw">
+  <h2><span class="idx">6</span>Drawing it, and where three.js fits</h2>
+  <p class="sub">Today's renderer draws straight from the simulation's buffers with no copy. A 3D view must keep that. three.js r186 can share the simulation's GPU device and can wrap an existing GPU texture with no copy, but it has no public way to read a raw GPU buffer. So the bridge is a tiny pack pass.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 250" role="img" aria-label="Simulation buffers feed a small pack compute pass that writes a texture; three.js reads the texture through ExternalTexture and draws the scene. Crossed-out paths: reading the raw buffer (no public API) and copying to the CPU each frame (too slow).">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+      <rect x="30" y="80" width="190" height="70" rx="8" class="box"/>
+      <text x="125" y="108" text-anchor="middle" font-weight="700">Simulation buffers</text>
+      <text x="125" y="128" text-anchor="middle" class="muted" font-size="12">cells, genomes · one device</text>
+      <rect x="290" y="80" width="170" height="70" rx="8" class="box lit"/>
+      <text x="375" y="108" text-anchor="middle" font-weight="700">Pack pass</text>
+      <text x="375" y="128" text-anchor="middle" class="muted" font-size="12">one compute pass / frame</text>
+      <rect x="530" y="80" width="170" height="70" rx="8" class="box"/>
+      <text x="615" y="108" text-anchor="middle" font-weight="700">GPU texture</text>
+      <text x="615" y="128" text-anchor="middle" class="muted" font-size="12">256² height · or 64³, 1 MB</text>
+      <rect x="770" y="80" width="200" height="70" rx="8" class="box lit"/>
+      <text x="870" y="108" text-anchor="middle" font-weight="700">three.js scene</text>
+      <text x="870" y="128" text-anchor="middle" class="muted" font-size="12">ExternalTexture · camera, jar, fog</text>
+      <path d="M220,115 H286" class="arrow" marker-end="url(#ah)"/>
+      <path d="M460,115 H526" class="arrow" marker-end="url(#ah)"/>
+      <path d="M700,115 H766" class="arrow" marker-end="url(#ah)"/>
+      <path d="M125,150 V200 H870 V154" class="bad" stroke-dasharray="5 4"/>
+      <text x="300" y="222" class="bad-t" font-size="12">✕ raw buffer into three.js: no public API</text>
+      <path d="M125,80 V40 H330" class="bad" stroke-dasharray="5 4"/>
+      <text x="340" y="44" class="bad-t" font-size="12">✕ copy to the CPU every frame: costs more than the step</text>
+    </svg>
+  </figure>
+  <div class="cards">
+    <div class="card lit"><span class="tag">Rung 0</span><h3>Use three.js</h3><p>An orbit camera, lighting, shadows, fog and a glass jar come for free, and the pack pass gives a supported, copy-free path. Works in the lab's worker with an OffscreenCanvas.</p></div>
+    <div class="card"><span class="tag plain">The volume</span><h3>three.js first, with a fallback</h3><p>Raymarch a 3D texture, as three.js's own 128³ and 200³ volume examples do. Whether its texture wrapper takes a 3D texture is unverified; if it doesn't, write the raymarch as one more WGSL pass beside today's renderer.</p></div>
+    <div class="card"><span class="tag plain">Not this</span><h3>Cubes or CPU meshes</h3><p>262,144 instanced cubes looks like Minecraft, not life. three.js's marching-cubes addon runs on the CPU and would need a readback every frame.</p></div>
+  </div>
+</section>
+
+<section id="path">
+  <h2><span class="idx">7</span>A staged path, each rung with a stop check</h2>
+  <p class="sub">Each check is written before its run, as everywhere in this repo. Nothing from rung 1 on touches RULE_VERSION 1.</p>
+  <div class="rungs">
+    <div class="rung lit"><div class="k">0</div><div><h3>A 3D view of the flat world</h3><p class="cost">Days · no physics change</p><p>A lab view mode: the world as a landscape you can orbit. Height from biomass and membrane, colour from lineage, nutrient and waste as tinted ground, light as the sky.</p><p class="check"><b>Check:</b> is it easier or more fun to read than the flat view? If not, stop; nothing else depended on it.</p></div></div>
+    <div class="rung"><div class="k">1a</div><div><h3>A 3D kernel benchmark</h3><p class="cost">A day or two · throwaway code</p><p>Time today's 2D affinity pass alone. Then a 64³ affinity pass at R 3 and R 4, plus a trivial 27-source transport, in the lab and in Deno.</p><p class="check"><b>Check:</b> 3D affinity at 64³, R 4 takes at most 4.5× today's affinity pass (the tap ratio). If not, try R 3 or the slab; if neither keeps its ratio, stop.</p></div></div>
+    <div class="rung"><div class="k">1b</div><div><h3>The slab: a shallow pond</h3><p class="cost">One to two weeks · first real 3D rule line</p><p>256 × 256 × 8, light from the top fading layer by layer. CPU reference, WGSL twin, golden cases, exact conservation, energy cap 2²⁷, nested per-axis shares, sixth-portion diffusion, 3D Sobel, MZ and SGZ, optional sinking.</p><p class="check"><b>Check:</b> D = photosynthesis share of all role activity (photo, grow, decomp, resp, summed over the 10 censuses ending at step 300,000) in the top two layers minus the bottom two; no activity in either counts as a fail. An evolving seed passes if D beats the 3 <code>neutral</code> seeds' mean by more than their range. That is role sorting beyond what the light imposes. 3 of 3 pass: go. 0 of 3: pause. 1–2 of 3: 3 more seeds per arm, go only if 5 of 6 pass.</p></div></div>
+    <div class="rung"><div class="k">2</div><div><h3>The jar</h3><p class="cost">Two to four weeks after 1b</p><p>64³ (or 64² × 32), the volume renderer, the 3D census, spherical lesions, the sun as dimmable light from above.</p><p class="check"><b>Check:</b> the stratification readout, exactly as in 1b. A compartment check (closed polymer shells more often than a matched 2D run) counts only once a dated note fixes "closed", its denominator, the matched run, the threshold and mixed outcomes, before any run.</p></div></div>
+    <div class="rung"><div class="k">3</div><div><h3>Big worlds and shared gardens</h3><p class="cost">Open-ended</p><p>The genome table, 128³, the separable ring kernel, and the archipelago and garden in 3D: checkpoints, islands, stitching, coordinator capabilities.</p><p class="check"><b>Check:</b> start only if rung 2 shows something a 2D world does not.</p></div></div>
+  </div>
+</section>
+
+<section id="hard">
+  <h2><span class="idx">8</span>What stays hard, and what this does not show</h2>
+  <div class="grid2">
+    <div class="cards">
+      <div class="card"><h3>Two implementations</h3><p>Every 3D rule exists in TypeScript and WGSL and must match bit for bit on every GPU. The 2D line took weeks of golden-case work; 3D repeats it.</p></div>
+      <div class="card"><h3>Seeing inside</h3><p>A full volume is murky. Slices, depth fog, isosurfaces and "peel the top layer" are not optional.</p></div>
+      <div class="card"><h3>Touching it</h3><p>Feeding, wounding and picking a lineage need a 3D cursor: a ray and a depth. A design problem, not just code.</p></div>
+      <div class="card"><h3>Phones</h3><p>A 64³ jar is about 111 MB of GPU memory and several times today's work. Many phones will want the flat view or a smaller jar.</p></div>
+    </div>
+    <div class="card">
+      <h3>Not shown</h3>
+      <p>No 3D code ran. Speeds are estimates scaled from today's 2D speed; rung 1a measures them.</p>
+      <p>Nothing here shows a 3D world evolves anything a 2D world does not. Stratification and compartments are hypotheses with checks.</p>
+      <p>Memory figures assume today's per-cell genome copies and double buffers.</p>
+      <p>three.js facts are from r186's source and docs, checked 22 October 2026. Its 3D external-texture path is unverified, and no frame rates were measured.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Written from <code>docs/rules.md</code>, <code>packages/schema/src/layout.ts</code>, <code>packages/schema/src/kernel.ts</code>, <code>packages/sim-ref/src/step.ts</code>, <code>packages/sim-gpu/src/shaders.ts</code>, <code>gpu-sim.ts</code> and <code>renderer.ts</code>, the measured 2D speeds in earlier notes, and a research pass on three.js r186 and the WebGPU spec. Sections 1, 2 and 6 are diagrams, not data. Section 5's tap counts are exact; its speeds are estimates.
+</footer>
+
+</div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const apply = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    btn.textContent = dark ? "Day" : "Night";
+    btn.setAttribute("aria-pressed", String(dark));
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch {}
+  apply(saved === "dark" || saved === "light" ? saved : null);
+  btn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("bl-theme", next); } catch {}
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) apply(null); });
+
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, text) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
+
+  // Section 5, kernel work: exact non-zero taps from buildKernel's rule (packages/schema/src/kernel.ts)
+  // extended to 3D; cells relative to today's 256².
+  const TODAY = 65536 * 224;
+  const worlds = [
+    ["256² at R 9 (today)", 65536, 224, "today"],
+    ["64³ at R 3", 262144, 92, "pick"],
+    ["Slab 256×256×8 at R 3", 524288, 92, "pick"],
+    ["64³ at R 4", 262144, 250, "pick"],
+    ["64³ at R 5", 262144, 460, ""],
+    ["Slab 256×256×8 at R 4", 524288, 250, ""],
+    ["96³ at R 4", 884736, 250, ""],
+    ["128³ at R 4", 2097152, 250, ""],
+    ["64³ at R 9", 262144, 2552, "bad"],
+  ];
+  const bars = document.getElementById("bars");
+  const X0 = 230, W = 500, max = Math.max(...worlds.map(([, c, t]) => c * t / TODAY));
+  worlds.forEach(([label, cells, taps, kind], i) => {
+    const y = 20 + i * 36, r = cells * taps / TODAY, w = Math.max(3, r / max * W);
+    bars.appendChild(el("text", { x: X0 - 12, y: y + 17, "text-anchor": "end", "font-size": 13, class: kind === "today" ? "" : "muted", "font-weight": kind === "today" ? 700 : 400 }, label));
+    bars.appendChild(el("rect", { x: X0, y, width: w, height: 24, rx: 4, class: kind === "pick" || kind === "today" ? "bar lit" : "bar" }));
+    bars.appendChild(el("text", { x: X0 + w + 8, y: y + 17, "font-size": 13, class: "mono" + (kind === "bad" ? " bad-t" : "") }, `${r.toFixed(1)}×  ·  ${taps} taps`));
+  });
+  bars.appendChild(el("text", { x: X0, y: 352, "font-size": 12, class: "soft" }, "Highlighted: the sizes this note recommends starting from."));
+
+  // Section 5, memory: 106 words per cell (7 channels ×2, genome 44 ×2, U, displacement, 2 role words);
+  // the largest single buffer is one genome copy, 44 words per cell, against the 128 MiB default binding limit.
+  const MB = 1e6, LIMIT = 128 * 1024 * 1024;
+  const mem = [["256² (today)", 65536], ["64³", 262144], ["Slab 256×256×8", 524288], ["96³", 884736], ["128³", 2097152]];
+  const svg = document.getElementById("mem");
+  const MX0 = 230, MW = 500, mmax = 2097152 * 176;
+  mem.forEach(([label, cells], i) => {
+    const y = 20 + i * 38, g = cells * 176, tot = cells * 424, w = g / mmax * MW, over = g > LIMIT;
+    svg.appendChild(el("text", { x: MX0 - 12, y: y + 17, "text-anchor": "end", "font-size": 13, class: i ? "muted" : "", "font-weight": i ? 400 : 700 }, label));
+    svg.appendChild(el("rect", { x: MX0, y, width: Math.max(3, w), height: 24, rx: 4, class: over ? "bar" : "bar lit" }));
+    svg.appendChild(el("text", { x: MX0 + Math.max(3, w) + 8, y: y + 17, "font-size": 13, class: "mono" + (over ? " bad-t" : "") }, `${(g / MB).toFixed(0)} MB largest · ${(tot / MB).toFixed(0)} MB total`));
+  });
+  const lx = MX0 + LIMIT / mmax * MW;
+  svg.appendChild(el("line", { x1: lx, y1: 10, x2: lx, y2: 210, class: "limit" }));
+  svg.appendChild(el("text", { x: lx + 6, y: 232, "font-size": 12, class: "bad-t" }, "128 MiB default binding limit"));
+})();
+</script>
+</body>
+</html>
