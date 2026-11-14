@@ -1,0 +1,488 @@
+<meta charset="utf-8">
+<title>Toward Neural Mycelia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~68ch) with wide figures; lab-notebook feel, hyphal violet accent, chlorophyll for "exists here". */
+:root {
+  --bg: #f3f4f1;
+  --panel: #e7e9e3;
+  --fg: #1d2420;
+  --muted: #5a645d;
+  --rule: #c9cec6;
+  --accent: #7a3fa0;       /* proposed / the bet */
+  --accent-soft: #ead9f3;
+  --grow: #2f7a4a;         /* exists here */
+  --grow-soft: #d6ebdc;
+  --warn: #a35c12;         /* unverified */
+  --warn-soft: #f4e3cc;
+  --stop: #a3322b;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141815; --panel: #1d231f; --fg: #e3e8e2; --muted: #9aa69d; --rule: #343c36;
+    --accent: #c79be6; --accent-soft: #33243f; --grow: #6fcf94; --grow-soft: #1c3325;
+    --warn: #e7a65c; --warn-soft: #3a2a17; --stop: #f08a80; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141815; --panel: #1d231f; --fg: #e3e8e2; --muted: #9aa69d; --rule: #343c36;
+  --accent: #c79be6; --accent-soft: #33243f; --grow: #6fcf94; --grow-soft: #1c3325;
+  --warn: #e7a65c; --warn-soft: #3a2a17; --stop: #f08a80; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.55rem; font-weight: 700; margin-top: 20px; }
+h3 { font-size: 1.12rem; font-weight: 700; }
+p { margin: 0; }
+section { display: flex; flex-direction: column; gap: 14px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.callout { background: var(--panel); border-radius: 6px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.callout.bet { background: var(--accent-soft); }
+ul, ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: 0.72rem; padding: 1px 7px; border-radius: 99px; white-space: nowrap; vertical-align: 1px; }
+.t-fetched { background: var(--grow-soft); color: var(--grow); }
+.t-snippet { background: var(--panel); color: var(--muted); border: 1px solid var(--rule); }
+.t-relayed { background: var(--warn-soft); color: var(--warn); }
+.t-here { background: var(--grow-soft); color: var(--grow); }
+.t-new { background: var(--accent-soft); color: var(--accent); }
+.t-closed { background: var(--panel); color: var(--stop); border: 1px solid var(--rule); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+figure svg { width: 100%; height: auto; display: block; color: var(--fg); font-family: var(--f-body); }
+.figwrap { overflow-x: auto; background: var(--panel); border-radius: 6px; padding: 12px; }
+.figwrap svg { min-width: 620px; }
+figcaption { font-size: 0.9rem; color: var(--muted); max-width: 68ch; }
+.ideas { display: flex; flex-direction: column; gap: 18px; }
+.idea { border-top: 1px solid var(--rule); padding-top: 14px; display: grid; grid-template-columns: 3.2rem 1fr; gap: 4px 14px; }
+.idea .rank { font-family: var(--f-display); font-size: 1.9rem; font-weight: 700; color: var(--accent); line-height: 1; }
+.idea.ext .rank { color: var(--grow); }
+.idea > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.idea dl { display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 12px; margin: 0; font-size: 0.93rem; }
+.idea dt { font-family: var(--f-mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding-top: 3px; }
+.idea dd { margin: 0; min-width: 0; }
+@media (max-width: 560px) {
+  .idea { grid-template-columns: 1fr; }
+  .idea dl { grid-template-columns: 1fr; }
+  .idea dt { padding-top: 6px; }
+}
+.svg-muted { fill: var(--muted); }
+.svg-panel { fill: var(--bg); }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; width: 100%; }
+@media (prefers-reduced-motion: no-preference) { a { transition: color .15s; } }
+</style>
+
+<main>
+<header style="display:flex;flex-direction:column;gap:12px">
+  <p class="eyebrow">browser-life · research note · 13 Nov 2026 · planning only, nothing built or run</p>
+  <h1>Toward neural mycelia</h1>
+  <p class="lede prose">What Fraser Price's demo shows, what is open source nearby, and which extensions would bring Cadence Garden closer to it without giving up the exact ledger.</p>
+</header>
+
+<section class="callout bet prose" style="max-width:none">
+  <h3>The short answer</h3>
+  <p>Build one new world: <strong>neural particles over the conserved field</strong>. Each particle is an integer packet of matter and energy that carries a genotype id. The genotypes live in a shared pool, so controllers can grow from 160 bytes to several kilobytes within browser memory limits, provided the number of distinct living genotypes stays bounded. That has to be measured. Bonds, oscillation and learning come later as separate tests. Each stage has to beat a heredity-blocked twin and a hard-coded trail-follower, and each has a stop rule.</p>
+</section>
+
+<section class="prose">
+  <h2>Three facts first</h2>
+  <ol>
+    <li><strong>The "neural particle layer" in the pasted chat does not exist.</strong> Neither this checkout nor <code>origin/main</code> has <code>neural-model.ts</code> or a <code>/particles/neural/</code> page. The particle playground on main is the older three-family CPU toy, with a ceiling of 240 particles and inherited attraction rules.</li>
+    <li><strong>Very little about Fraser's system can be verified.</strong> The 7 Nov 2026 post reads "the neural mycelia are in bloom". From his other public posts: he calls them "my naturally selected particle sims", oscillations "consistently emerge in/dominate" them, and one is a "sentient mold entropy harvester". The GitHub account the chat matched to him (<code>fraserprice</code>, display name Fraser Price, 35 repos) holds LLM-inference work and nothing on artificial life. I could not confirm it is the same person. The ~300k particles, the 1–30k parameters per net and the September thread all come from the pasted chat. I could not check them because X shows logged-out readers only recent posts.</li>
+    <li><strong>The closest open analogue is ALIEN, not the two repos the chat named.</strong> ALIEN (BSD-3, CUDA, active this week) has particles that bond into creatures, a neural net in each cell, construction from a genome and an energy budget that never creates energy. Pandora is the only nearby source already on WebGPU, and it is a good model for binning millions of particles.</li>
+  </ol>
+  <p class="muted">Evidence tiers used below: <span class="tag t-fetched">fetched</span> means I read the primary page or paper. <span class="tag t-snippet">snippet</span> means search results only. <span class="tag t-relayed">relayed</span> means the claim came from the pasted chat and was not verified.</p>
+</section>
+
+<section>
+  <h2>Where everything sits</h2>
+  <figure>
+    <div class="figwrap">
+    <svg viewBox="0 0 780 440" role="img" aria-label="Map of artificial-life systems by substrate (grid, moving-mass field, particles) and by where change comes from (designed, externally optimised, in-world selection). Fraser's demo, ALIEN and the proposed Mycelium world sit in the particles plus in-world selection corner. Cadence Garden's kernel sits at grid/moving-field with in-world selection.">
+      <defs>
+        <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+      </defs>
+      <!-- bands -->
+      <rect x="150" y="30" width="620" height="120" fill="var(--grow-soft)" opacity="0.55"/>
+      <rect x="150" y="150" width="620" height="120" fill="var(--bg)" opacity="0.6"/>
+      <rect x="150" y="270" width="620" height="120" fill="var(--bg)" opacity="0.25"/>
+      <line x1="150" y1="150" x2="770" y2="150" stroke="var(--rule)"/>
+      <line x1="150" y1="270" x2="770" y2="270" stroke="var(--rule)"/>
+      <line x1="356" y1="30" x2="356" y2="390" stroke="var(--rule)" stroke-dasharray="3 4"/>
+      <line x1="563" y1="30" x2="563" y2="390" stroke="var(--rule)" stroke-dasharray="3 4"/>
+      <!-- y labels -->
+      <g font-size="12" fill="currentColor" text-anchor="end">
+        <text x="140" y="80" font-weight="600">In-world</text><text x="140" y="96" font-weight="600">selection</text><text x="140" y="112" class="svg-muted" style="fill:var(--muted)">heredity inside</text>
+        <text x="140" y="203" font-weight="600">Trained or</text><text x="140" y="219" font-weight="600">fitness-scored</text>
+        <text x="140" y="323" font-weight="600">Designed or</text><text x="140" y="339" font-weight="600">rule search</text>
+      </g>
+      <!-- x labels -->
+      <g font-size="12" fill="currentColor" text-anchor="middle" font-weight="600">
+        <text x="253" y="412">Grid cells</text>
+        <text x="460" y="412">Field with moving mass</text>
+        <text x="666" y="412">Free particles</text>
+      </g>
+      <text x="460" y="432" font-size="11" text-anchor="middle" style="fill:var(--muted)">substrate →</text>
+      <!-- target zone -->
+      <ellipse cx="672" cy="82" rx="92" ry="36" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/>
+      <!-- points: in-world -->
+      <g font-size="11.5">
+        <circle cx="190" cy="74" r="5" fill="currentColor"/><text x="200" y="78" fill="currentColor">Biomaker CA</text>
+        <circle cx="372" cy="62" r="7" fill="var(--grow)"/><text x="384" y="58" fill="var(--grow)" font-weight="600">Cadence Garden</text><text x="384" y="72" fill="var(--grow)">kernel (exact ledger)</text>
+        <circle cx="400" cy="118" r="5" fill="currentColor"/><text x="410" y="122" fill="currentColor">Flow-Lenia, local params</text>
+        <circle cx="606" cy="70" r="5" fill="currentColor"/><text x="616" y="66" fill="currentColor">ALIEN</text>
+        <circle cx="722" cy="100" r="5" fill="none" stroke="var(--warn)" stroke-width="2"/><text x="722" y="132" fill="var(--warn)" text-anchor="middle">Fraser</text><text x="722" y="145" fill="var(--warn)" text-anchor="middle" font-size="10.5">(unverified)</text>
+        <circle cx="620" cy="134" r="6" fill="var(--grow)"/><text x="584" y="146" fill="var(--grow)" text-anchor="end">our /particles/ toy</text>
+        <text x="672" y="42" fill="var(--accent)" font-weight="600" text-anchor="middle">Mycelium world (proposed)</text>
+        <path d="M626,128 Q650,112 670,94" fill="none" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#m1)"/>
+      </g>
+      <!-- trained -->
+      <g font-size="11.5" fill="currentColor">
+        <circle cx="180" cy="186" r="5" fill="currentColor"/><text x="190" y="190">PD-NCA (learns live)</text>
+        <circle cx="200" cy="222" r="5" fill="currentColor"/><text x="210" y="226">Sakana digital-ecosystem</text>
+        <circle cx="180" cy="252" r="5" fill="currentColor"/><text x="190" y="256">Growing NCA</text>
+        <circle cx="392" cy="200" r="5" fill="currentColor"/><text x="402" y="204">PBT-NCA (worlds)</text>
+        <circle cx="392" cy="240" r="5" fill="currentColor"/><text x="402" y="244">MSPD search</text>
+        <circle cx="600" cy="186" r="5" fill="currentColor"/><text x="610" y="190">Microcosmos (NEAT)</text>
+        <circle cx="600" cy="232" r="5" fill="currentColor"/><text x="610" y="236">neuroparticles2 (GA)</text>
+      </g>
+      <!-- designed -->
+      <g font-size="11.5" fill="currentColor">
+        <circle cx="200" cy="310" r="5" fill="currentColor"/><text x="210" y="314">Lenia</text>
+        <circle cx="400" cy="330" r="5" fill="currentColor"/><text x="410" y="334">Primordia (5 worlds)</text>
+        <circle cx="600" cy="300" r="5" fill="currentColor"/><text x="610" y="304">Particle Life</text>
+        <circle cx="600" cy="350" r="5" fill="currentColor"/><text x="610" y="354">Particle Lenia / Pandora</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption>The demo sits in the top-right corner: free particles whose controllers change only through selection inside the world. Our kernel already has in-world heredity, but on a grid. Our particle toy is in the right column, but its "genome" is a few attraction weights. The dashed ellipse marks the proposed world. Most of the well-known open systems (NCA, Lenia, Particle Life) are trained or designed. They teach mechanics, but none of them evolves on its own.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Sources, and what each one teaches</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Source</th><th>What it is</th><th>Lesson for us</th><th>Licence · tier</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://x.com/fraserpricee/status/2119218879088021661">Fraser Price, "neural mycelia"</a></td><td>Video posts of "naturally selected particle sims". No code.</td><td>The goal is legible here: particles with nets, selection only, energy harvesting, persistent oscillations.</td><td>none · <span class="tag t-fetched">fetched</span> posts, <span class="tag t-relayed">relayed</span> scale</td></tr>
+      <tr><td><a href="https://github.com/chrxh/alien">ALIEN</a></td><td>CUDA particle engine. Bonded cells, a net per cell, genomes that construct offspring cell by cell, conserved energy. A demo reportedly won the ALIFE 2024 virtual creatures competition (snippet only).</td><td>The closest working design. Bonds are the source of individuality, and energy is never created.</td><td>BSD-3 · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://pajouheshgar.github.io/blog/posts/pandora-artificial-life">Pandora</a> (Particle Lenia)</td><td>Particle Lenia with millions of particles in WebGPU, plus a per-particle state vector.</td><td>Binning in three passes (count, prefix sum, scatter) on a Morton grid gives roughly O(N) cost. This is the browser pattern to copy.</td><td>no licence file · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2506.08569">Flow-Lenia, <i>Artificial Life</i> 31(2), 2025</a></td><td>Parameters travel with mass. When flows meet, the incoming mass weights a softmax draw, or an argmax in the deterministic variant. Mutation "beams" hit 10×10 patches.</td><td>The authors chose patch mutations because single-cell mutants get swamped (a design rationale, not a measured comparison). On 5 seeds the dissipative variant had the least diversity, and the food variant plateaued sooner. "Species = exact parameter point" overcounts.</td><td>— · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://pub.sakana.ai/pdnca/">Petri Dish NCA</a> · <a href="https://github.com/SakanaAI/digital-ecosystem">digital-ecosystem</a></td><td>Competing NCAs trained by gradient during the run. Attack and defence vectors, soft competition.</td><td>Without learning the system settles. With learning it cycles. This is the reason to test plasticity during life (N1).</td><td>PD-NCA: no licence file · ecosystem: Apache-2.0 · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2604.11248">PBT-NCA</a> · <a href="https://arxiv.org/abs/2606.17091">MSPD</a></td><td>Search across many worlds with novelty and diversity objectives. MSPD scores how heterogeneous local laws are across scales.</td><td>Searching for worlds works, but it is design and not evolution. MSPD is a candidate observer that needs our nulls before we trust it.</td><td>— · <span class="tag t-fetched">fetched</span> abstracts</td></tr>
+      <tr><td><a href="https://arxiv.org/html/2607.02954">Microcosmos</a></td><td>Filament bodies in a lattice-Boltzmann fluid. NEAT and MAP-Elites controllers, 500k particles, linear scaling.</td><td>Swimming needs non-reciprocal strokes, so motion has real physical cost. Birth and death are still future work there.</td><td>no licence file · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://github.com/skulitom/primordia">Primordia</a></td><td>Rust and wgpu lab with Physarum, Particle Life, Lenia, Gray-Scott and a coupled world.</td><td>"Explore" searches parameters. There is no heredity, so the useful parts are rendering and presets.</td><td>MIT · <span class="tag t-fetched">fetched</span></td></tr>
+      <tr><td><a href="https://uwe-repository.worktribe.com/output/980579">Physarum agents (Jones, <i>Artificial Life</i> 16(2), 2010)</a></td><td>Simple agents sense a trail ahead, turn toward it and deposit more. They form networks that minimise, contract and repair damage. No nets, no evolution.</td><td>Mycelium-like networks come cheaply from trail-following alone. That makes a hard-coded Physarum agent the null every neural "mycelium" has to beat.</td><td>— · <span class="tag t-snippet">abstract via search</span></td></tr>
+      <tr><td>Biomaker CA · Particle Lenia · <a href="https://github.com/xcontcom/neuroparticles2">neuroparticles2</a></td><td>Plants with evolved metabolism (JAX). Energy-descent particles. CA-driven particles evolved by a GA.</td><td>Background only.</td><td><span class="tag t-snippet">snippet</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>What already exists here</h2>
+  <p class="prose">An idea that repeats a closed line has to say what is different. These lines bear on the shortlist:</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Line</th><th>State</th><th>Bearing</th></tr></thead>
+    <tbody>
+      <tr><td>Research kernel: Flow-Lenia-style reintegration, int8 controller with 10 inputs, 8 hidden and 8 outputs (160 bytes, <code>layout.ts</code>), conserved matter</td><td><span class="tag t-here">on main</span></td><td>The ledger, PRNG and replay conventions carry over to particles unchanged.</td></tr>
+      <tr><td><code>/particles/</code> toy plus bonds, motifs, oases, seasons, picker and 3D slices</td><td><span class="tag t-here">on main</span></td><td>Its renderer and pages can be reused. Its model has no field, nets or ledger.</td></tr>
+      <tr><td>Lesions, feeds and drains in the lab and headless; wounds</td><td><span class="tag t-here">on main</span></td><td>This is the "kill brush". Port it to the new world instead of building it again.</td></tr>
+      <tr><td>I09 conservative particle ecology, I10 NCA tissue</td><td><span class="tag t-new">planned, unbuilt</span></td><td>The 1 Nov run started no second world. This note revises I09 (see below).</td></tr>
+      <tr><td>I05 controller locality</td><td><span class="tag t-closed">inconclusive ×2</span></td><td>No representation limit has been found yet. The capacity test in X2 asks a different question: whether size matters at all.</td></tr>
+      <tr><td>I12 program genomes</td><td><span class="tag t-closed">not justified yet</span></td><td>Leave it. Bigger nets are the cheaper test.</td></tr>
+      <tr><td>Ownership and declared-cell sandboxes</td><td><span class="tag t-closed">no arm promising</span></td><td>Those arms <em>declared</em> cell membership. In X3, bonds are an evolved output.</td></tr>
+      <tr><td>BFF soup, I03 historical opponents, I07 assembly observer, I14 predictability atlas</td><td><span class="tag t-here">merged</span></td><td>These observers can run on particle bundles once an adapter exists.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>Extend what we have</h2>
+  <div class="ideas">
+
+    <article class="idea ext"><div class="rank">X1</div><div>
+      <h3>Mycelium world: neural particles over the conserved field</h3>
+      <p class="prose">Particles hold integer matter and energy, a fixed-point position and a genotype id. Each step they read field channels and gradients, run their controller, then move, eat, deposit, split or die. Matter crosses between particle and field only through exact transfers. A split divides the integers and gives the remainder to the parent. Death returns everything to the field cell underneath. The field is modelled on the kernel's: nutrient A, waste C and signal S diffuse as they do today. Biomass B, energy E and the genome, which the kernel moves by reintegration, move onto particles instead. Polymer P becomes the trail particles deposit and sense. This is a new rule set with its own identifier, not a mode of the existing one.</p>
+      <dl>
+        <dt>Sources</dt><dd>Fraser (goal), ALIEN (conserved energy), Pandora (binning), Flow-Lenia (mass carries heredity)</dd>
+        <dt>New vs I09</dt><dd>I09 began with inert particles and attraction rules. This version starts with controllers and coupling to the field, because a world without either repeats what the toy already shows.</dd>
+        <dt>First rung</dt><dd>A CPU reference with 4k particles on a 256² field. Conservation residual exactly 0, and a segmented replay that matches a continuous one byte for byte. Then GPU parity at 64k particles.</dd>
+        <dt>Controls</dt><dd>A heredity-blocked twin (children get fresh random weights), a frozen twin (no mutation), shuffled sensors, and a hard-coded Physarum trail-follower with the same energy budget</dd>
+        <dt>Gate setup</dt><dd>I06, I06b and I08 all ended "measurement-limited", so set these up before any comparison: freeze the readouts, measure a replicate noise floor and pass a positive control. The blocked twin must stay populated, or a difference only means alive versus extinct.</dd>
+        <dt>Stop if</dt><dd>On 3 seeds, cluster lifetime, I14 predictability and the period spectrum don't separate the selected world from its heredity-blocked twin by more than the noise floor. Also stop if the Physarum null produces the same network shapes.</dd>
+      </dl>
+    </div></article>
+
+    <article class="idea ext"><div class="rank">X2</div><div>
+      <h3>Genotype pool and a capacity ladder</h3>
+      <p class="prose">Particles store a 4-byte genotype id. Weights live once in a pool with a parent id and a refcount, and mutation copies a genotype only when it changes it. A full pool makes a birth's mutation fail, and the failure is counted. That rule blocks new variation exactly when diversity peaks, so the pool only works if distinct living genotypes stay well under its size, which in turn caps the mutation rate. Plain i32 arithmetic already keeps GPU and CPU identical. WGSL's packed int8 dot product (the <code>packed_4x8_integer_dot_product</code> language feature) is an optional speed-up to check in each browser. The parent links also give the lineage inspector exact ancestry at no cost.</p>
+      <dl>
+        <dt>First measure</dt><dd>The count of distinct living genotypes over time at the chosen mutation rate, before any pool size is fixed</dd>
+        <dt>Question</dt><dd>The pasted chat says Fraser's nets carry 1–30k parameters (unverified). Whether net size matters is testable in either case: run arms at 160 B, 1 KiB and 4 KiB per genotype, matched on compute, with larger nets thinking every k steps.</dd>
+        <dt>Stop if</dt><dd>The arms do not differ on X1's readouts. If they don't, keep 160 B and move on to X3.</dd>
+      </dl>
+    </div></article>
+
+    <article class="idea ext"><div class="rank">X3</div><div>
+      <h3>Bonds that carry energy (the mycelium itself)</h3>
+      <p class="prose">One controller output asks for a bond to a neighbour. Bonded particles share energy and matter through exact integer flows. When two lineages within genotype distance d touch, they may fuse. Bonded clusters are counted as the inferred organisms, and no cell identity is declared.</p>
+      <dl>
+        <dt>Sources</dt><dd>ALIEN cell networks, our bonds toy, Fraser's hyphae</dd>
+        <dt>Readout</dt><dd>Bond rate, cluster size distribution, energy moved per bond, and whether bonding is heritable when compared with the heredity-blocked twin</dd>
+        <dt>Stop if</dt><dd>Bonding is equal in the selected and blocked worlds, which would make it physics rather than biology.</dd>
+      </dl>
+    </div></article>
+
+    <article class="idea ext"><div class="rank">X4</div><div>
+      <h3>An oscillation observer, usable now on the grid kernel</h3>
+      <p class="prose">Fraser reports that oscillations dominate his selected worlds. Add a per-region period spectrum (autocorrelation of biomass and energy) and test the I14 periodic fixtures against it. Then ask whether oscillation is <em>selected</em>, meaning stronger than in a heredity-blocked twin, or just the dynamics' default. This is small and needs no new world.</p>
+    </div></article>
+
+    <article class="idea ext"><div class="rank">X5</div><div>
+      <h3>Watchability: port the existing tools, then add colour by genotype</h3>
+      <p class="prose">Colour each particle by a hash of its genotype id, with a lineage mode from the pool. Add free zoom and pan, and show population and steps per second. The lesion and feed brushes already exist and only need porting. Pandora's state-to-RGB mapping is a good second colour mode. Do this after X1's GPU rung so the look follows the physics and not the other way round.</p>
+    </div></article>
+  </div>
+</section>
+
+<section>
+  <h2>One step of the Mycelium world</h2>
+  <figure>
+    <div class="figwrap">
+    <svg viewBox="0 0 780 360" role="img" aria-label="Step loop: bin particles by cell, sense, think via genotype pool, act, settle the ledger with exact transfers, process births and deaths, then run the existing field step and loop. Stores: particle buffer, genotype pool, field grid.">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <g font-size="12.5" fill="currentColor" text-anchor="middle">
+        <!-- top row -->
+        <rect x="20" y="30" width="160" height="58" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="100" y="54" font-weight="600">1 Bin</text><text x="100" y="72" font-size="11" style="fill:var(--muted)">count · prefix · scatter</text>
+        <rect x="215" y="30" width="160" height="58" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="295" y="54" font-weight="600">2 Sense</text><text x="295" y="72" font-size="11" style="fill:var(--muted)">field + gradients</text>
+        <rect x="410" y="30" width="160" height="58" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="490" y="54" font-weight="600">3 Think</text><text x="490" y="72" font-size="11" style="fill:var(--muted)">int8 MLP from pool</text>
+        <rect x="605" y="30" width="160" height="58" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="685" y="54" font-weight="600">4 Act</text><text x="685" y="72" font-size="11" style="fill:var(--muted)">move eat deposit bond split</text>
+        <!-- bottom row -->
+        <rect x="605" y="140" width="160" height="58" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.8"/>
+        <text x="685" y="164" font-weight="600" fill="var(--accent)">5 Settle ledger</text><text x="685" y="182" font-size="11" fill="var(--accent)">exact transfers, Δ = 0</text>
+        <rect x="410" y="140" width="160" height="58" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.8"/>
+        <text x="490" y="164" font-weight="600" fill="var(--accent)">6 Births · deaths</text><text x="490" y="182" font-size="11" fill="var(--accent)">split with remainder</text>
+        <rect x="215" y="140" width="160" height="58" rx="6" fill="var(--grow-soft)" stroke="var(--grow)" stroke-width="1.5"/>
+        <text x="295" y="164" font-weight="600" fill="var(--grow)">7 Field step</text><text x="295" y="182" font-size="11" fill="var(--grow)">existing kernel chemistry</text>
+        <!-- arrows -->
+        <line x1="180" y1="59" x2="213" y2="59" stroke="currentColor" marker-end="url(#a2)"/>
+        <line x1="375" y1="59" x2="408" y2="59" stroke="currentColor" marker-end="url(#a2)"/>
+        <line x1="570" y1="59" x2="603" y2="59" stroke="currentColor" marker-end="url(#a2)"/>
+        <line x1="685" y1="88" x2="685" y2="138" stroke="currentColor" marker-end="url(#a2)"/>
+        <text x="696" y="118" font-size="11" text-anchor="start" style="fill:var(--muted)">requests</text>
+        <line x1="605" y1="169" x2="572" y2="169" stroke="currentColor" marker-end="url(#a2)"/>
+        <line x1="410" y1="169" x2="377" y2="169" stroke="currentColor" marker-end="url(#a2)"/>
+        <path d="M215,169 L100,169 L100,90" fill="none" stroke="currentColor" marker-end="url(#a2)"/>
+        <text x="150" y="160" font-size="11" style="fill:var(--muted)">next step</text>
+        <!-- stores -->
+        <line x1="20" y1="232" x2="765" y2="232" stroke="var(--rule)" stroke-dasharray="3 4"/>
+        <text x="20" y="252" font-size="11" text-anchor="start" style="fill:var(--muted)" font-family="var(--f-mono)">GPU STORAGE</text>
+        <rect x="20" y="264" width="230" height="74" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="135" y="286" font-weight="600">Particle buffer</text>
+        <text x="135" y="304" font-size="11" style="fill:var(--muted)">pos · matter · energy · genotype id</text>
+        <text x="135" y="322" font-size="11" style="fill:var(--muted)">written by 4, 5, 6</text>
+        <rect x="275" y="264" width="230" height="74" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="390" y="286" font-weight="600">Genotype pool</text>
+        <text x="390" y="304" font-size="11" style="fill:var(--muted)">weights · parent id · refcount</text>
+        <text x="390" y="322" font-size="11" style="fill:var(--muted)">read by 3 · copy-on-mutate in 6</text>
+        <rect x="530" y="264" width="235" height="74" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="647" y="286" font-weight="600">Field grid</text>
+        <text x="647" y="304" font-size="11" style="fill:var(--muted)">A B C P S E channels</text>
+        <text x="647" y="322" font-size="11" style="fill:var(--muted)">read by 2 · written by 5, 7</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption>Steps 1–4 only propose: they read state and write requests. Steps 5 and 6 are the only places matter or energy changes hands, in a fixed order by cell and then particle id. Every random draw comes from the counter-based PRNG keyed on seed, step and particle id, so a segmented run can replay a continuous one exactly. This is what lets the world run on the archipelago later.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Why the genotype pool matters</h2>
+  <figure>
+    <div class="figwrap">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Log-scale memory bars at 300,000 particles: current 176-byte genomes 53 MB; pooled 16,384 genotypes of 4 KiB 67 MB; dense 4 KiB per particle 1.2 GB; dense 10k params per particle 3.0 GB. WebGPU default storage-binding limit is 128 MiB.">
+      <g font-size="12" fill="currentColor">
+        <!-- axis: x0=230, 160px per decade, 10MB..10GB -->
+        <line x1="230" y1="250" x2="710" y2="250" stroke="currentColor"/>
+        <g text-anchor="middle" font-size="11" style="fill:var(--muted)">
+          <line x1="230" y1="250" x2="230" y2="256" stroke="currentColor"/><text x="230" y="272">10 MB</text>
+          <line x1="390" y1="250" x2="390" y2="256" stroke="currentColor"/><text x="390" y="272">100 MB</text>
+          <line x1="550" y1="250" x2="550" y2="256" stroke="currentColor"/><text x="550" y="272">1 GB</text>
+          <line x1="710" y1="250" x2="710" y2="256" stroke="currentColor"/><text x="710" y="272">10 GB</text>
+        </g>
+        <text x="470" y="292" font-size="11" text-anchor="middle" style="fill:var(--muted)">weight memory at 300,000 particles (log scale)</text>
+        <!-- limit at 134.2MB -> 230+160*1.1278=410.4 -->
+        <line x1="410" y1="20" x2="410" y2="250" stroke="var(--stop)" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="416" y="32" font-size="11" fill="var(--stop)">WebGPU default binding limit, 128 MiB</text>
+        <!-- bars -->
+        <g text-anchor="end">
+          <text x="220" y="66">Today: 176 B genome each</text>
+          <text x="220" y="116" font-weight="600" fill="var(--accent)">Pool: 16k × 4 KiB</text>
+          <text x="220" y="166">Dense: 4 KiB each</text>
+          <text x="220" y="216">Dense: 10k params each</text>
+        </g>
+        <rect x="230" y="50" width="116" height="22" fill="var(--grow)"/>
+        <text x="352" y="66">53 MB</text>
+        <rect x="230" y="100" width="132" height="22" fill="var(--accent)"/>
+        <text x="368" y="116" fill="var(--accent)" font-weight="600">67 MB</text>
+        <rect x="230" y="150" width="333" height="22" fill="currentColor" opacity="0.55"/>
+        <text x="569" y="166">1.2 GB</text>
+        <rect x="230" y="200" width="396" height="22" fill="currentColor" opacity="0.55"/>
+        <text x="632" y="216">3.0 GB</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption>Giving every particle its own large net, as the pasted chat estimated for Fraser's demo, needs gigabytes. That is far past the 128 MiB storage binding that WebGPU guarantees by default. Some adapters allow more, but a public browser world can't count on it. With clonal growth most particles share a genotype, so a pool can hold large nets for 300k particles under the default limit. This assumes no more than about 16k distinct genotypes are alive at once. That number is the first thing R3 measures. Compute is the other ceiling: 300k particles × 4k weights is about 1.2 billion int8 multiply-adds per step if every particle thinks every step. Larger arms therefore think every k steps.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>New areas worth opening</h2>
+  <div class="ideas">
+    <article class="idea"><div class="rank">N1</div><div>
+      <h3>Learning during life, in integers</h3>
+      <p class="prose">PD-NCA found that learning during the run turns a settling system into a cycling one. Our version would be an integer Hebbian update, Δw = (η · pre · post) &gt;&gt; s, with η heritable. Compare two arms: weights reset at birth (Baldwinian) and learned weights inherited (Lamarckian). Both use integer arithmetic, so replay and the ledger still hold.</p>
+      <dl><dt>Stop if</dt><dd>The η &gt; 0 arms match η = 0 on X1's readouts.</dd><dt>When</dt><dd>After X1 R2. On the grid kernel this needs a <code>RULE_VERSION</code> fork, so try it in the particle world first.</dd></dl>
+    </div></article>
+    <article class="idea"><div class="rank">N2</div><div>
+      <h3>World search on the archipelago</h3>
+      <p class="prose">PBT-NCA and ASAL search over whole worlds. Our islands could each run a Mycelium world while the coordinator proposes configurations. Label this as design and not evolution, use only descriptors that passed calibration (I14, I07), and treat MSPD as a candidate observer that first has to beat our nulls.</p>
+      <dl><dt>Caution</dt><dd>The 1 Nov report warned against "more novelty" as a single objective, and the I01 D1 descriptor failed calibration. This comes after X1–X3.</dd></dl>
+    </div></article>
+    <article class="idea"><div class="rank">N3</div><div>
+      <h3>Bodies that must swim</h3>
+      <p class="prose">Microcosmos couples filament bodies to a lattice-Boltzmann fluid. At low Reynolds number only non-reciprocal strokes move a body, so movement gets a real cost and a real reward. The cheap version is overdamped motion in X1, where velocity is proportional to force and drag costs energy. A full fluid is a separate, large line, so park it.</p>
+    </div></article>
+  </div>
+</section>
+
+<section>
+  <h2>Order of work</h2>
+  <figure>
+    <div class="figwrap">
+    <svg viewBox="0 0 780 420" role="img" aria-label="Rung ladder: R0 CPU reference and ledger tests, R1 GPU parity at 64k, R2 heredity-blocked control gate, R3 genotype pool and capacity ladder, R4 bonds, R5 plasticity. X4 oscillation observer can start now in parallel; X5 viewer after R1.">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <g font-size="12" fill="currentColor">
+        <text x="30" y="22" font-size="11" style="fill:var(--muted)" font-family="var(--f-mono)">MAIN LINE</text>
+        <text x="520" y="22" font-size="11" style="fill:var(--muted)" font-family="var(--f-mono)">SIDE TRACKS</text>
+        <!-- main rungs: x 30..330, y step 62 -->
+        <rect x="30" y="34" width="300" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="44" y="61"><tspan font-weight="600">R0</tspan>  CPU reference · ledger Δ = 0 · replay</text>
+        <rect x="30" y="96" width="300" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="44" y="123"><tspan font-weight="600">R1</tspan>  GPU parity at 64k particles</text>
+        <rect x="30" y="158" width="300" height="44" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.8"/>
+        <text x="44" y="176" fill="var(--accent)"><tspan font-weight="600">R2</tspan>  beats heredity-blocked twin</text>
+        <text x="44" y="193" fill="var(--accent)" font-size="11">and Physarum null, above noise floor?</text>
+        <rect x="30" y="220" width="300" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="44" y="247"><tspan font-weight="600">R3</tspan>  genotype pool · capacity ladder (X2)</text>
+        <rect x="30" y="282" width="300" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="44" y="309"><tspan font-weight="600">R4</tspan>  bonds that carry energy (X3)</text>
+        <rect x="30" y="344" width="300" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="44" y="371"><tspan font-weight="600">R5</tspan>  learning during life (N1)</text>
+        <g stroke="currentColor">
+          <line x1="180" y1="78" x2="180" y2="94" marker-end="url(#a3)"/>
+          <line x1="180" y1="140" x2="180" y2="156" marker-end="url(#a3)"/>
+          <line x1="180" y1="202" x2="180" y2="218" marker-end="url(#a3)"/>
+          <line x1="180" y1="264" x2="180" y2="280" marker-end="url(#a3)"/>
+          <line x1="180" y1="326" x2="180" y2="342" marker-end="url(#a3)"/>
+        </g>
+        <text x="190" y="214" font-size="11" fill="var(--accent)">yes</text>
+        <!-- stop branch from R2 -->
+        <line x1="330" y1="180" x2="400" y2="180" stroke="var(--stop)" marker-end="url(#a3)"/>
+        <text x="338" y="172" font-size="11" fill="var(--stop)">no, 3 seeds</text>
+        <rect x="404" y="160" width="96" height="40" rx="6" fill="none" stroke="var(--stop)" stroke-dasharray="4 3"/>
+        <text x="452" y="185" font-size="12" text-anchor="middle" fill="var(--stop)" font-weight="600">stop · write up</text>
+        <!-- side tracks -->
+        <rect x="520" y="34" width="240" height="44" rx="6" fill="var(--grow-soft)" stroke="var(--grow)"/>
+        <text x="534" y="54" fill="var(--grow)"><tspan font-weight="600">X4</tspan>  oscillation observer</text>
+        <text x="534" y="70" font-size="11" fill="var(--grow)">grid kernel, can start now</text>
+        <rect x="520" y="96" width="240" height="44" rx="6" fill="var(--bg)" stroke="currentColor"/>
+        <text x="534" y="116"><tspan font-weight="600">X5</tspan>  viewer, colour, brushes</text>
+        <text x="534" y="132" font-size="11" style="fill:var(--muted)">after R1</text>
+        <line x1="330" y1="118" x2="518" y2="118" stroke="currentColor" stroke-dasharray="3 3" marker-end="url(#a3)"/>
+        <path d="M520,64 L508,64 L508,148 L318,148 L318,155" fill="none" stroke="var(--grow)" stroke-dasharray="3 3" marker-end="url(#a3)"/>
+        <text x="410" y="142" font-size="11" fill="var(--grow)" text-anchor="middle">X4 feeds R2 readouts</text>
+        <rect x="520" y="282" width="240" height="44" rx="6" fill="var(--bg)" stroke="currentColor" stroke-dasharray="4 3"/>
+        <text x="534" y="302"><tspan font-weight="600">N2</tspan>  world search on islands</text>
+        <text x="534" y="318" font-size="11" style="fill:var(--muted)">after R4, labelled as design</text>
+        <line x1="330" y1="304" x2="518" y2="304" stroke="currentColor" stroke-dasharray="3 3" marker-end="url(#a3)"/>
+      </g>
+    </svg>
+    </div>
+    <figcaption>R2 is the gate that matters. Until the selected world beats its heredity-blocked twin, more particles, bigger nets and better colours only make a prettier screensaver. X4 is cheap and separate from the rest, and it gives R2 one of its readouts.</figcaption>
+  </figure>
+</section>
+
+<section class="prose">
+  <h2>Changes to the 1 November programme</h2>
+  <ul>
+    <li><strong>I09</strong> becomes X1. The first rung changes from inert labelled particles to neural particles coupled to the field. Its ledger rules, determinism rules and "an aggregate is not a reproducer" caution stay as written.</li>
+    <li><strong>I10</strong> (trained NCA tissue) stays parked. PD-NCA's result enters through N1 as learning during life, without external training.</li>
+    <li><strong>I12</strong> stays parked. X2's capacity ladder is the cheaper way to ask whether the controller is the bottleneck.</li>
+  </ul>
+  <h3>Smaller lessons for the grid kernel</h3>
+  <ul>
+    <li>Flow-Lenia used patch mutations (10×10 beams) because its authors expected single-cell mutants to be swamped. Our kernel mutates per cell in the react pass, so a patch-mutation arm is a cheap thing to try. Any change goes behind an optional config key, so existing hashes don't move.</li>
+    <li>In Flow-Lenia (5 seeds), dissipation gave the least diversity and added food plateaued sooner. Treat that as a weak hint for the open-garden ideas (sun, food, meteor), not a finding.</li>
+  </ul>
+</section>
+
+<section class="prose">
+  <h2>Corrections to the pasted chat</h2>
+  <ul>
+    <li>"I've added a neural particle layer": not present anywhere in the repo.</li>
+    <li>The controller shape (10 → 8 → 8, int8) and the playground description (three families, 240-particle ceiling) are correct.</li>
+    <li>digital-ecosystem trains by backprop during the run, so it is learning, not evolution. Primordia's "explore" searches parameters and has no heredity.</li>
+    <li>The 3 GB figure is arithmetically right for 300k × 10k int8. The 300k and 10k themselves are unverified.</li>
+    <li>It missed ALIEN, Pandora, the Flow-Lenia journal paper, PD-NCA, PBT-NCA and Microcosmos.</li>
+  </ul>
+</section>
+
+<section class="callout prose" style="max-width:none">
+  <h3>Decisions for you</h3>
+  <ol>
+    <li>Start X1 R0 as a new local world line (CPU, free, no physics change to the kernel)?</li>
+    <li>Should the world live under <code>/particles/</code> as a creative world, or in the lab beside the research worlds?</li>
+    <li>Whether to ask Fraser directly about scale and design. This is outward-facing, so it is your call.</li>
+  </ol>
+</section>
+
+<hr>
+<footer class="muted prose" style="font-size:0.85rem;display:flex;flex-direction:column;gap:6px">
+  <p>Read on 13 Nov 2026. Fraser's posts were read through a logged-out browser, so older posts and replies were not visible. Licences come from the GitHub API, where "no licence file" means the code can be read but not copied. Repo facts were taken from <code>origin/main</code> at 9d91709a. This note proposes; nothing here was built or run.</p>
+  <p>Sources: <a href="https://x.com/fraserpricee">@fraserpricee</a> · <a href="https://github.com/fraserprice">github.com/fraserprice</a> · <a href="https://github.com/chrxh/alien">ALIEN</a> · <a href="https://github.com/TheDevilWillBeBee/Pandora">Pandora</a> · <a href="https://arxiv.org/abs/2506.08569">Flow-Lenia (2025)</a> · <a href="https://arxiv.org/abs/2212.07906">Flow-Lenia (2023)</a> · <a href="https://pub.sakana.ai/pdnca/">PD-NCA</a> · <a href="https://github.com/SakanaAI/digital-ecosystem">digital-ecosystem</a> · <a href="https://arxiv.org/abs/2604.11248">PBT-NCA</a> · <a href="https://arxiv.org/abs/2606.17091">MSPD</a> · <a href="https://arxiv.org/html/2607.02954">Microcosmos</a> · <a href="https://github.com/skulitom/primordia">Primordia</a> · <a href="https://arxiv.org/abs/2307.09320">Biomaker CA</a> · <a href="https://google-research.github.io/self-organising-systems/particle-lenia/">Particle Lenia</a> · <a href="https://github.com/xcontcom/neuroparticles2">neuroparticles2</a> · <a href="https://distill.pub/2020/growing-ca/">Growing NCA</a></p>
+</footer>
+</main>

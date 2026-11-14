@@ -1,0 +1,19 @@
+R3 confirmation
+
+arm            n    median dE   median dL   median tmE  median tmL  guard
+inherit        16       0.0349     8.24e-7      3.9109     1.79e-4  0
+blocked        16       0.0766      0.0199      7.7916      1.9763  0
+frozen         16       0.0526           0      5.7277           0  0
+inherit-c1     16       0.1094     5.81e-5     10.9928      0.0057  0
+inherit-c4     16       0.0108     8.31e-7      1.4919     4.86e-5  0
+blocked-c1     16       0.1502      0.1155     14.5396     11.4288  0
+blocked-c4     16       0.0325      0.0064      3.5356      0.6331  0
+
+D1  n 16/16  effect +0.875 (floor 0.5)  p 2.00e-6  Holm 6.00e-6  rejects  SUPPORT  late deposit rate dL, inherit against blocked (default cost)
+D2  n 16/16  effect +0.883 (floor 0.5)  p 4.00e-6  Holm 8.00e-6  rejects  SUPPORT  change score g = (dL - dE)/(dL + dE), inherit against blocked (default cost)
+D3  n 16/16/16  effect +0.500 (floor 0.25)  p 1.98e-4  Holm 1.98e-4  rejects  SUPPORT  dose: normalised early deposit falls as the deposit cost rises (1, 2, 4)
+C1 trail-mass concordance: Cliff's delta tmL inherit vs blocked -0.875 (needs <= -0.33): met
+D4 frozen (descriptive, not in the label): delta(frozen vs blocked, dL) -1.000 p 1.00e-6 -> FROZEN-LOW; delta(inherit vs frozen) 0.313 p 0.084057, inherit below frozen: false, inherit vs blocked delta -0.875 p 2.00e-6; READING FROZEN-SUFFICES
+guard: 0 tripped run(s)
+LABEL PASS  (D1, D2 and D3 are all supported and C1 holds)
+wrote /Users/nicholas/develop/browser-life-mycelium/docs/mycelium-r3-2026-11-13/RESULT.json

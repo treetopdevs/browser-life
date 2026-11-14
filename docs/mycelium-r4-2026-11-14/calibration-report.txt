@@ -1,0 +1,67 @@
+R4 calibration (dev data only)
+
+arm        n  kept  med tmL   med n  med d    med ALIGN  med ACUTE  med OCC   med req1  med sat   guard
+inherit    20   17     99.02  4086.186   1.000     -0.087     -0.003     1.054     0.992    1.000   0
+blocked    20   20     94.19  3521.192   0.952     -0.146    2.47e-4     1.078     0.885    0.999   0
+physarum   20   20     98.87  2538.878   0.998      0.993      0.994     7.169     1.000    1.000   0
+blind      20   18     98.93  4095.256   0.999     -0.089          0     1.044     0.995    1.000   0
+keyless    20    0      0.00  5306.525       -          -          -         -         -        -   0
+
+Fixed margins: ALIGN 0.1623, OCC 0.9188, ACUTE 0.1491, SENS 0.01387
+
+Rules on the real dev data (20 runs per arm; reported; gates S, G, MATCH and the floor are required for READY, the label is not gated):
+runs in the toll state (late trail per particle >= 10): inherit 17/20, blocked 20/20, physarum 20/20, blind 18/20, keyless 0/20
+gate S (at least 8 in-state runs in inherit, blind, physarum): met
+fixed margins (0.15 x dev anchor): ALIGN 0.1623, OCC 0.9188, ACUTE 0.1491, SENS 0.01387
+anchor of this dataset (physarum minus blind, in-state): ALIGN span 1.082 (delta 1.000), OCC span 6.126 (delta 1.000), physarum acute effect 0.994, SENS 0.0925; gate G: met
+ALIGN shift 0.0081  95% CI [-0.0143, 0.0335]  margin 0.1623  delta +0.163  p 0.423539  Holm 0.847078  keeps  EQUIV
+OCC   shift 5.76e-4  95% CI [-0.0210, 0.0258]  margin 0.9188  delta +0.013  p 0.961029  Holm 0.961029  keeps  EQUIV
+ACUTE shift -0.0030  95% CI [-0.0110, 0.0015]  margin 0.1491  EQUIV
+SENS  shift 0.0037  95% CI [0.0028, 0.0053]  margin 0.0139  EQUIV
+floor (inherit in-state medians): req1 0.992 (>= 0.8), req2p 0.004 (<= 0.1), sat 1.000 (>= 0.9): met
+retention: inherit 17/20, blind 18/20, Fisher p 1.0000
+match: inherit median d 1.0001, physarum 0.9980, ratio 0.9979, within 10%: true
+secondary lesion contrasts, inherit against blind among in-state runs (descriptive, not in the label): n delta -0.046 p 0.8323; turn delta 0.065 p 0.7569; age delta -0.039 p 0.8578; d delta -0.059 p 0.7818; tmL delta -0.072 p 0.7322; speed delta 0.020 p 0.9351
+guard: 0 tripped run(s)
+LABEL TOLL-ONLY  (every endpoint is provably within the margin of no use, the state sits at the floor, and no retention difference is detected (ALIGN EQUIV, OCC EQUIV, ACUTE EQUIV, SENS EQUIV))
+
+Attainability of FUNCTIONAL on real data (the physarum runs also entered as the inherit arm):
+runs in the toll state (late trail per particle >= 10): inherit 20/20, blocked 20/20, physarum 20/20, blind 18/20, keyless 0/20
+gate S (at least 8 in-state runs in inherit, blind, physarum): met
+fixed margins (0.15 x dev anchor): ALIGN 0.1623, OCC 0.9188, ACUTE 0.1491, SENS 0.01387
+anchor of this dataset (physarum minus blind, in-state): ALIGN span 1.082 (delta 1.000), OCC span 6.126 (delta 1.000), physarum acute effect 0.994, SENS 0.0925; gate G: met
+ALIGN shift 1.0823  95% CI [1.0711, 1.1058]  margin 0.1623  delta +1.000  p 5.96e-11  Holm 1.19e-10  rejects  USE
+OCC   shift 6.1182  95% CI [6.0746, 6.1528]  margin 0.9188  delta +1.000  p 5.96e-11  Holm 1.19e-10  rejects  USE
+ACUTE shift 0.9938  95% CI [0.9933, 0.9945]  margin 0.1491  USE
+SENS  shift 0.0925  95% CI [0.0922, 0.0927]  margin 0.0139  USE
+floor (inherit in-state medians): req1 1.000 (>= 0.8), req2p 0 (<= 0.1), sat 1.000 (>= 0.9): met
+retention: inherit 20/20, blind 18/20, Fisher p 0.4872
+match: inherit median d 0.9980, physarum 0.9980, ratio 1.0000, within 10%: true
+secondary lesion contrasts, inherit against blind among in-state runs (descriptive, not in the label): n delta -1.000 p 5.96e-11; turn delta -0.222 p 0.2514; age delta 0.111 p 0.5728; d delta -0.400 p 0.0355; tmL delta -0.444 p 0.0188; speed delta -0.444 p 0.0188
+guard: 0 tripped run(s)
+LABEL FUNCTIONAL  (ALIGN, OCC, ACUTE and SENS all show use, each with a 95% interval above its margin (ALIGN USE, OCC USE, ACUTE USE, SENS USE))
+
+Planted use (n = 16 per arm resampled from the dev pools, 100 replicates, 10000 bootstraps, 100000 permutations), fixed margins
+  lambda 0: FUNCTIONAL 0.00, TOLL-ONLY 0.99, MINOR-USE 0.00, INCONCLUSIVE 0.01
+  lambda 0.05: FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.96, INCONCLUSIVE 0.04
+  lambda 0.075: FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.95, INCONCLUSIVE 0.05
+  lambda 0.1: FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.93, INCONCLUSIVE 0.07
+  lambda 0.2: FUNCTIONAL 0.94, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 0.06
+  lambda 0.3: FUNCTIONAL 1.00, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 0.00
+  lambda 0.5: FUNCTIONAL 1.00, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 0.00
+Endpoints with their true value at f x their own margin (every endpoint at once; 'above' = the interval is above the margin, 'below' = provably inside it):
+  f 0: FUNCTIONAL 0.00, TOLL-ONLY 0.96, MINOR-USE 0.00, INCONCLUSIVE 0.04; above ALIGN 0.00, OCC 0.00, ACUTE 0.00, SENS 0.00; below ALIGN 0.99, OCC 1.00, ACUTE 1.00, SENS 1.00
+  f 0.5: FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.92, INCONCLUSIVE 0.08; above ALIGN 0.00, OCC 0.00, ACUTE 0.00, SENS 0.00; below ALIGN 0.95, OCC 1.00, ACUTE 1.00, SENS 1.00
+  f 1: FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 1.00; above ALIGN 0.04, OCC 0.02, ACUTE 0.02, SENS 0.07; below ALIGN 0.00, OCC 0.04, ACUTE 0.10, SENS 0.06
+  f 2: FUNCTIONAL 0.99, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 0.01; above ALIGN 0.99, OCC 1.00, ACUTE 1.00, SENS 1.00; below ALIGN 0.00, OCC 0.00, ACUTE 0.00, SENS 0.00
+Small sample (exactly 8 runs in the toll state in each of inherit, blind and physarum by construction; reported, not gated):
+  lambda 0: FUNCTIONAL 0.00, TOLL-ONLY 0.94, MINOR-USE 0.00, INCONCLUSIVE 0.06
+  lambda 0.5: FUNCTIONAL 1.00, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 0.00
+  every endpoint at the margin (f 1): FUNCTIONAL 0.00, TOLL-ONLY 0.00, MINOR-USE 0.00, INCONCLUSIVE 1.00; above ALIGN 0.04, OCC 0.01, ACUTE 0.06, SENS 0.03; below ALIGN 0.03, OCC 0.00, ACUTE 0.08, SENS 0.02
+
+Label permutation (inherit and blind dev readouts pooled and dealt at random, n = 16, 100 deals; checks U1 and U2 only): FUNCTIONAL 0.00, TOLL-ONLY 0.97, MINOR-USE 0.00, INCONCLUSIVE 0.03
+
+integrity problems: 0
+guard trips among dev runs: none
+VERDICT READY
+wrote /Users/nicholas/develop/browser-life-mycelium-trail/docs/mycelium-r4-2026-11-14/CALIBRATION.json
