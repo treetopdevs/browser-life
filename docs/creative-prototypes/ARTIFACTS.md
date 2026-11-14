@@ -116,3 +116,18 @@ Then compare with the hashes below using `shasum -a 256`. A copy also sits in th
 | `docs/creative-prototypes/uniform-food-seed-1201.json` | 9465669 | `af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850` | `8c84eed5` |
 | `docs/creative-prototypes/uniform-food-seed-1202.json` | 9460791 | `9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7` | `8c84eed5` |
 | `docs/creative-prototypes/uniform-food-seed-1203.json` | 9407129 | `96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae` | `8c84eed5` |
+
+# Restoring with one command
+
+`tools/creative-prototypes/restore.sh` restores every file in both tables above. It copies from the `runs/` directory of the main checkout (`food-line-101-119/` and `creative-prototypes-85-100/`; set `BL_RUNS_DIR` or pass `--source` elsewhere), falls back to `git show <commit>:<path>` for anything missing there (local objects only; it never fetches), and checks every byte count and SHA-256 against the tables before a file is put in place. It exits non-zero if any file is missing or differs.
+
+```bash
+tools/creative-prototypes/restore.sh --dry-run   # what would be copied, from where
+tools/creative-prototypes/restore.sh             # copy, verify, hide the files from git
+tools/creative-prototypes/restore.sh --check     # verify only, change nothing
+tools/creative-prototypes/restore.sh /path/to/other/checkout
+```
+
+It refuses to overwrite a file whose hash differs unless you pass `--force`, and a second run changes nothing. It also lists the restored paths in a marked block of the checkout's `info/exclude` (for a worktree, the main checkout's shared `.git/info/exclude`) so they are not staged by accident. These files must still never be committed.
+
+Two things to know before running it in a worktree. First, `git rev-parse --git-path info/exclude` is the main checkout's shared `.git/info/exclude`, so the block is a small edit to a file every worktree reads, and the anchored paths are hidden in all of them. Second, the block is written before any file is copied, and it also hides the `.restore-tmp-*` working directories. To undo the hiding run `tools/creative-prototypes/restore.sh --unexclude`; it removes only the marked block. A checkout that tracks any of these paths in its index is refused, because an exclude rule cannot keep tracked files out of a commit. `--help` lists every flag.

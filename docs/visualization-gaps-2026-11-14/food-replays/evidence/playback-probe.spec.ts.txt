@@ -1,0 +1,44 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync,existsSync,statSync} from 'node:fs';
+import {resolve} from 'node:path';
+const BASE='http://localhost:'+(process.env.BL_E2E_PORT||'5174')+'/docs/creative-prototypes/';
+const OUT='/private/tmp/claude-501/-Users-nicholas-develop-browser-life/e28381b7-b46a-475c-85b9-2de9973e0770/scratchpad/food-replays/';
+for (const [name,jump,pop,tickSel,json] of [['moving-food',1500,'#moving-population','#moving-tick','moving-food-moving-band-seed-1201.json'],['uniform-food',null,'#metric-population','#metric-tick','uniform-food-seed-1201.json'],['food-band-longevity',5500,'#moving-population','#moving-tick','food-band-longevity-moving-band-seed-1201.json']] as const)
+for (const [vw,vh] of [[1280,1600],[375,1400]] as const)
+test(name+' '+vw, async({page})=>{
+  test.setTimeout(120000);
+  await page.setViewportSize({width:vw,height:vh});
+  await page.route('**/*', async route=>{
+    const u=new URL(route.request().url()); if(!/^\/(docs|tools|apps|packages|package\.json|pnpm-lock\.yaml)/.test(u.pathname)) return route.continue();
+    const f=resolve(u.pathname.slice(1)); if(!existsSync(f)||statSync(f).isDirectory()) return route.fulfill({status:404,body:'no'});
+    const ext=f.split('.').pop()!; const ct:Record<string,string>={html:'text/html; charset=utf-8',css:'text/css',js:'text/javascript',json:'application/json',mp4:'video/mp4',png:'image/png'}[ext]||'application/octet-stream';
+    return route.fulfill({contentType:ct,body:readFileSync(f)});});
+  await page.goto(BASE+name+'.html');
+  await expect(page.locator('#source-status')).toHaveAttribute('data-kind','ready',{timeout:60000});
+  const kind=await page.locator('#source-status').getAttribute('data-kind');
+  const stText=await page.locator('#source-status').innerText();
+  const unavailable=await page.locator('#empty-state').isVisible();
+  const err=await page.locator('#error-state').isVisible();
+  console.log(name,vw,'source',kind,JSON.stringify(stText.slice(0,160)),'empty',unavailable,'error',err);
+  if(err) console.log('ERR',await page.locator('#error-detail').innerText().catch(()=>''));
+  const scrub=page.locator('#scrub'); const v0=await scrub.inputValue();
+  await page.locator('#play').click(); await page.waitForTimeout(1500);
+  if(jump) await page.locator('[data-jump-tick="'+jump+'"]').click(); else { const mx=await scrub.getAttribute('max'); await scrub.fill(String(Math.floor(Number(mx)/2))); }
+  await page.waitForTimeout(500);
+  const v1=await scrub.inputValue();
+  const vid=await page.evaluate(()=>{const v=document.querySelector('video');return v?{src:v.currentSrc,ready:v.readyState,err:v.error&&v.error.code,dur:v.duration}:null});
+  const popText=(await page.locator(pop).innerText()).replace(/[^0-9]/g,''); const tickText=(await page.locator(tickSel).innerText()).replace(/[^0-9]/g,'');
+  console.log(name,vw,'scrub',v0,'->',v1,'tick',tickText,'pop',popText,'video',JSON.stringify(vid));
+  expect(unavailable).toBe(false); expect(err).toBe(false);
+  expect(Number(v1)).toBeGreaterThan(Number(v0));
+  // population readout must equal the recorded census at the displayed tick
+  const rec=JSON.parse(readFileSync(resolve('docs/creative-prototypes/'+json),'utf8'));
+  const tk=Number(tickText);
+  const s=(rec.samples||[]).find((x:any)=>x.tick===tk); const row=(rec.tickRows||[]).find((x:any)=>x.tick===tk);
+  const recorded=s?.census?.population ?? row?.population;
+  console.log(name,vw,'recorded census population at tick',tk,'=',recorded);
+  expect(recorded).toBeDefined(); expect(Number(popText)).toBe(recorded);
+  // paired videos: actually play and check the clock moves
+  if(vid){ const t=await page.evaluate(async()=>{const v=document.querySelector('video')!; v.muted=true; await v.play(); await new Promise(r=>setTimeout(r,1500)); return {t:v.currentTime,err:v.error&&v.error.code}; }); console.log(name,vw,'video currentTime',t.t); expect(t.err).toBeNull(); expect(t.t).toBeGreaterThan(0); }
+  await page.screenshot({path:OUT+name+'-'+vw+'.png',fullPage:false});
+});

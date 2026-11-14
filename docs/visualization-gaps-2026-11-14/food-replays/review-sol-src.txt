@@ -1,0 +1,17 @@
+- **P1 — Temp-file symlinks can corrupt pinned files.** [restore.mjs:71](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:71): preplanting `<dest>.restore-tmp-<pid>` as a symlink to `model.ts` or the source cache causes truncation before verification. The readback can pass. The exclude writer repeats this at line 142.
+
+- **P1 — Overwrite without `--force` remains possible.** [restore.mjs:74](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:74): a file created after the presence check is unconditionally replaced by `renameSync`.
+
+- **P2 — Interrupted restores expose large files to staging.** [restore.mjs:120](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:120): exclusions are installed after copying. Interruption or exclude-write failure leaves restored files stageable through `git add -A`. Interrupted temp files are also unignored.
+
+- **P2 — Tracked artifacts bypass exclusion protection.** [restore.mjs:124](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:124): no index preflight exists. An older checkout tracking the artifacts can report success, although `info/exclude` cannot prevent their staging or commitment.
+
+- **P2 — Containment rejection happens after filesystem changes.** [restore.mjs:67](/Users/nicholas/develop/browser-life-viz-food-replays/tools/creative-prototypes/restore.mjs:67): with `TARGET/docs` symlinked outside the checkout, recursive `mkdirSync` creates external descendants before the containment check rejects the copy.
+
+- **P2 — Playback tests can pass broken playback.** [playback-probe.spec.ts.txt:17](/Users/nicholas/develop/browser-life-viz-food-replays/docs/visualization-gaps-2026-11-14/food-replays/evidence/playback-probe.spec.ts.txt:17): accepts `ready|error` and merely logs scrub, population and media state. It never asserts video advancement or census equality as PLAN requires. EVIDENCE’s “6 passed” therefore does not prove the playback gate.
+
+- **P3 — Integrity tests silently ignore failed checks.** [restore-artifacts.test.ts:208](/Users/nicholas/develop/browser-life-viz-food-replays/tools/test/restore-artifacts.test.ts:208): missing fallback commits still pass because subprocess status is discarded. At line 224, failed `git show` also silently passes the byte-stability test.
+
+- **P3 — Full-suite evidence is not retained.** [EVIDENCE.md:16](/Users/nicholas/develop/browser-life-viz-food-replays/docs/visualization-gaps-2026-11-14/food-replays/EVIDENCE.md:16): totals and pin failures cannot be checked against the supplied log, which only points to scratch JSON. Required before/after Vitest accounting is incomplete.
+
+Currently: all 73 paths are untracked and ignored; nothing staged. No pinned-file edits, privacy changes, or scope creep found. Static review only; no tests run or replay payloads read.

@@ -1,0 +1,46 @@
+(node:6857) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[0m[1m[31merror[0m: Uncaught (in promise) Error: usage: deno run -A tools/report-html.ts <track> <input...> --out <file.html> [--force] [--status REAL|PILOT|SMOKE]
+known tracks: nullcal, individuality, anticipation, biogeography, lineage
+  if (!trackArg) throw new Error(usage());
+[0m[31m                       ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m156[0m:[0m[33m24[0m)
+    at [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m7[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: unknown track "not-a-track" -- known tracks: nullcal, individuality, anticipation, biogeography, lineage
+usage: deno run -A tools/report-html.ts <track> <input...> --out <file.html> [--force] [--status REAL|PILOT|SMOKE]
+known tracks: nullcal, individuality, anticipation, biogeography, lineage
+    throw new Error(`unknown track "${trackArg}" -- known tracks: ${TRACK_NAMES.join(", ")}\n${usage()}`);
+[0m[31m          ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m158[0m:[0m[33m11[0m)
+    at [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m7[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: anticipation takes 2 input file(s) (results, manifest), got 1: [/var/folders/23/g72t27fx1wxgd8d5xlynnv940000gn/T/report-html-cli-jnYJY5/report.json]
+usage: deno run -A tools/report-html.ts <track> <input...> --out <file.html> [--force] [--status REAL|PILOT|SMOKE]
+known tracks: nullcal, individuality, anticipation, biogeography, lineage
+    throw new Error(
+[0m[31m          ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m164[0m:[0m[33m11[0m)
+    at [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m7[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: /var/folders/23/g72t27fx1wxgd8d5xlynnv940000gn/T/report-html-cli-Wbx4nx/bad.json: not valid JSON (Unexpected token 'o', "not json" is not valid JSON)
+      throw new Error(`${p}: not valid JSON (${(e as Error).message})`);
+[0m[31m            ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m191[0m:[0m[33m13[0m)
+    at async [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m1[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: --status must be one of REAL, PILOT, SMOKE, got "weird"
+      throw new Error(`--status must be one of ${DATA_STATUSES.join(", ")}, got "${a.status}"`);
+[0m[31m            ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m200[0m:[0m[33m13[0m)
+    at async [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m1[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: --out /var/folders/23/g72t27fx1wxgd8d5xlynnv940000gn/T/report-html-cli-XL6rqK/existing.html already exists -- pass --force to overwrite it
+      throw new Error(`--out ${out} already exists -- pass --force to overwrite it`);
+[0m[31m            ^[0m
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m175[0m:[0m[33m13[0m)
+    at async [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m1[0m
+[0m[1m[31merror[0m: Uncaught (in promise) Error: nullcal: missing "config" object
+  if (!isRecord(data.config)) throw new Error('nullcal: missing "config" object');
+[0m[31m                                    ^[0m
+    at [0m[1m[3mModule.validate[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/lib/report-html/nullcal.ts[0m:[0m[33m111[0m:[0m[33m37[0m)
+    at [0m[1m[3mmain[0m ([0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m208[0m:[0m[33m12[0m)
+    at async [0m[2m[38;5;245mfile:///Users/nicholas/develop/browser-life-viz-food-replays/[0m[0m[36mtools/report-html.ts[0m:[0m[33m250[0m:[0m[33m1[0m
+(node:48088) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to /private/tmp/claude-501/-Users-nicholas-develop-browser-life/e28381b7-b46a-475c-85b9-2de9973e0770/scratchpad/food-replays/vitest.json
