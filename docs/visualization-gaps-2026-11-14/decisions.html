@@ -36,9 +36,9 @@ ul{margin:0;padding-left:22px}
 <h2>Slices</h2>
 <div class="tw"><table>
 <tr><th>Slice</th><th>Branch</th><th>Status</th><th>PR</th></tr>
-<tr><td class="id">log</td><td><code>claude/viz-gaps-log</code></td><td><span class="tag run">open</span></td><td>pending</td></tr>
-<tr><td class="id">food-replays</td><td><code>claude/viz-food-replays</code></td><td><span class="tag run">in progress</span></td><td>—</td></tr>
-<tr><td class="id">food-live</td><td><code>claude/viz-food-live</code></td><td><span class="tag wait">queued</span></td><td>—</td></tr>
+<tr><td class="id">log</td><td><code>claude/viz-gaps-log</code></td><td><span class="tag run">open, checks pass</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/156">#156</a></td></tr>
+<tr><td class="id">food-replays</td><td><code>claude/viz-food-replays</code></td><td><span class="tag done">done, PR open</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/157">#157</a></td></tr>
+<tr><td class="id">food-live</td><td><code>claude/viz-food-live</code></td><td><span class="tag run">in progress</span></td><td>—</td></tr>
 <tr><td class="id">regime-figures</td><td><code>claude/viz-regime-figures</code> (off <code>claude/3d-regime-meters</code>)</td><td><span class="tag done">done, committed locally</span> <code>53df4fc8</code></td><td>local only, see D8</td></tr>
 <tr><td class="id">slab-viewer</td><td><code>claude/viz-slab-viewer</code> (off <code>claude/3d-cyclic-rps</code>)</td><td><span class="tag run">in progress</span></td><td>local only, see D8</td></tr>
 </table></div>
@@ -46,6 +46,7 @@ ul{margin:0;padding-left:22px}
 <h2>Waiting on you</h2>
 <div class="card"><ul>
 <li><span class="tag ask">D8</span> May the two local 3D branches be pushed to the public repo so the 3D slices can have PRs? Until you say yes they stay as local commits.</li>
+<li><span class="tag ask">D17</span> Eight tests on main fail once the replay files are present (their pinned <code>package.json</code> hash is stale). Re-baselining a frozen pin is yours to approve; I left them.</li>
 <li><span class="tag ask">D3</span> Merging. I open PRs and keep them green; I do not merge.</li>
 </ul></div>
 
@@ -67,10 +68,14 @@ ul{margin:0;padding-left:22px}
 <tr><td class="id">D13</td><td class="when">11-14</td><td>regime-figures: the new section sits behind an opt-in build flag (<code>--stage0-figures</code>) and carries its own "pilot numbers, not results" banner. Without the flag the page builds byte-identical to before.</td><td>The committed page is the synthetic one; real pilot numbers must not inherit its "generated" label, and the builder's label and refusal rules must not change.</td></tr>
 <tr><td class="id">D14</td><td class="when">11-14</td><td>regime-figures corrects three things the plan got wrong: the damage table is 18 jobs on two rungs (36 rows), the unit-kick twin was recorded only at step 30 (drawn as one marker, no line), and the qualifying threshold comes from the rung 1b pick rule (1–50% living and a 5–80% light ratio).</td><td>Found by reading the data files; the figure shows only recorded values and joins nothing that was not measured.</td></tr>
 <tr><td class="id">D15</td><td class="when">11-14</td><td>slab-viewer and regime-figures ran in parallel with food-replays instead of strictly in D1's order.</td><td>They live on different branches and cannot collide; food-live still waits for food-replays' restore script.</td></tr>
+<tr><td class="id">D16</td><td class="when">11-14</td><td>food-replays: the restore tool is a Node script behind a thin <code>restore.sh</code>, not pure shell. It hides restored files through the local git exclude file, which for a worktree is the main checkout's shared <code>.git/info/exclude</code>; <code>--unexclude</code> removes the block. Its default source is the main checkout's <code>runs/</code>, derived from git, not a fixed path.</td><td>It needs table parsing, streaming hashes over 370 MB and atomic writes, and the tests import the same functions. The shared exclude file is the only place that reliably stops an accidental <code>git add</code> in every worktree. A fixed home-directory path does not belong in a public tool.</td></tr>
+<tr><td class="id">D17</td><td class="when">11-14</td><td>Not fixed: with replays present, 6 tests in <code>food-band-foothold-replication.test.ts</code> and 2 env-gated tests in <code>food-schedule-769.spec.ts</code> fail with "Pinned input changed: package.json".</td><td><code>package.json</code> gained a line after those runs were recorded, so this is the same on main; the missing files had hidden it. The fix is re-baselining a frozen pin in a finished experiment, which is out of bounds for this run.</td></tr>
+<tr><td class="id">D18</td><td class="when">11-14</td><td>food-live does not depend on PR #157 in code. The replay files were restored into its worktree with the script from the other branch; its tests skip cleanly when replays are absent.</td><td>Keeps the two PRs independently reviewable (D4).</td></tr>
 </table></div>
 
 <h2>Results so far</h2>
 <div class="card"><ul>
+<li><strong>food-replays</strong> (<a href="https://github.com/treetopdevs/browser-life/pull/157">#157</a>): one command restores and verifies all 73 files (the plan said 58; the earlier prototypes' 15 are included). Food e2e went from 116 passed / 162 skipped to 264 passed / 14 skipped, 0 failed. Three viewers were checked playing in a real browser, with the population readout matching the recorded census. Sol xhigh ran on the source and on the fixes; all P1/P2 fixed.</li>
 <li><strong>regime-figures</strong> (local commit <code>53df4fc8</code>): the regime-meters page now shows damage spread in eight panels and the calibration grid in three. Recomputed from the 180 calibration rows: 0 of 60 settings qualify. Sol xhigh found 11 issues (none P1); all fixed, follow-up review clean of P1/P2. 158 tests pass; rebuild is byte-identical.</li>
 </ul></div>
 
