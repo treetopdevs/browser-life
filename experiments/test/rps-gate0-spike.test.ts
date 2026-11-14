@@ -2,6 +2,7 @@
 // GPU), the worlds, the rungs, the job tables, the planner, the command line, the SHA-256 recipe, and the meter job on the CPU
 // reference. The GPU is exercised by the rehearsal (gate0.ts --rehearsal), not here. Nothing here is a result.
 
+import { reactShader3 as nativeReactShader3 } from "../../packages/sim-gpu/src/shaders3d.ts";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -953,8 +954,8 @@ describe("D16: the copy and the packages", () => {
     }
   });
 
-  it("the shipped shader text carries no RPS constants: the spike patches the text at run time and never writes it (the check that Part A changed no kernel, schema or shader file is the git diff, not this test)", () => {
-    const shaders = fs.readFileSync(path.join(ROOT, "packages", "sim-gpu", "src", "shaders3d.ts"), "utf8");
+  it("Amendment 3: key-absent generated shader still carries no RPS constants", () => {
+    const shaders = nativeReactShader3(jobConfig("S0", [128, 128, 4], 16, 401));
     expect(shaders).not.toContain("RPS_RATE");
     expect(shaders).not.toContain("RND_RPS_KILL");
   });

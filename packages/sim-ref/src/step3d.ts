@@ -545,6 +545,20 @@ export class RefSim3 {
             S = POOL_MAX3;
           }
 
+          // Gather predation from post-transport faces; vacancy before controller and passive reactions.
+          if (living && c.rpsTypes !== undefined && c.rpsRate! > 0) {
+            const type = (genome[G.PARAM1 * n + i] >>> 8) & 255;
+            let ndom = 0;
+            for (const [dx, dy, dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]) {
+              const j = this.nb3(xx, yy, zz, dx, dy, dz);
+              if (j !== OUTSIDE && cells[CH.B * n + j] >= c.rpsMin! && ((cells[CH.MOT * n + j] >>> (24 + type)) & 1)) ndom++;
+            }
+            if (ndom > 0 && (draw(base, 40) & 0xffff) < Math.min(65536, c.rpsRate! * ndom)) {
+              heat += B * (c.eB - c.eC) + P * (c.eP - c.eC) + E;
+              C += B + P; B = 0; P = 0; E = 0;
+            }
+          }
+
           if (living && B > 0) {
             const ref = this.refWords;
             for (let b = 0; b < NN_BYTES3; b++) {
@@ -669,7 +683,8 @@ export class RefSim3 {
           out[CH.P * n + i] = P;
           out[CH.E * n + i] = E;
           out[CH.S * n + i] = S;
-          out[CH.MOT * n + i] = mot;
+          out[CH.MOT * n + i] = c.rpsTypes === undefined ? mot :
+            (mot | (this.living(genome, i) ? ((genome[G.PARAM1 * n + i] >>> 16) & 255) << 24 : 0)) >>> 0;
           lightTotal += BigInt(lightIn);
           heatAcc += heat;
           if (heatAcc > 2 ** 50) {
