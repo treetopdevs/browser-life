@@ -323,12 +323,12 @@ describe("restore.mjs", () => {
 
 describe("real ARTIFACTS.md", () => {
   const md = readFileSync(join(REPO, "docs/creative-prototypes/ARTIFACTS.md"), "utf8");
-  it("parses 15 + 58 rows with 64-hex hashes and well-formed commit ids", async () => {
+  it("parses 15 + 64 rows (58 food-band, 6 band dispersal and stronger food floor) with 64-hex hashes and well-formed commit ids", async () => {
     const mod: any = await import(/* @vite-ignore */ modPath);
     const rows = mod.parseArtifacts(md);
     expect(rows.filter((r: any) => r.table === 1)).toHaveLength(15);
-    expect(rows.filter((r: any) => r.table === 2)).toHaveLength(58);
-    expect(new Set(rows.map((r: any) => r.path)).size).toBe(73);
+    expect(rows.filter((r: any) => r.table === 2)).toHaveLength(64);
+    expect(new Set(rows.map((r: any) => r.path)).size).toBe(79);
     for (const r of rows) { expect(r.sha256).toMatch(/^[0-9a-f]{64}$/); expect(Number.isInteger(r.size)).toBe(true); }
     for (const c of new Set(rows.map((r: any) => r.commit as string))) expect(c).toMatch(/^[0-9a-f]{7,40}$/);
   });

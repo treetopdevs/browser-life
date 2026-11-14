@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "attemptCount": 1,
+  "newOutcomeArms": 1,
+  "intentSha256": "7b2aa8bb52010b3906b5dfef39b48962a6c809363e0c41da106b62e5ceda3a43",
+  "reservation": {
+    "schemaVersion": 1,
+    "status": "reserved",
+    "runId": "20261027T223345Z-18474",
+    "attemptDir": "run-20261027T223345Z-18474",
+    "intentSha256": "7b2aa8bb52010b3906b5dfef39b48962a6c809363e0c41da106b62e5ceda3a43"
+  },
+  "intent": {
+    "schemaVersion": 1,
+    "status": "intent-recorded-before-launch",
+    "runId": "20261027T223345Z-18474",
+    "gitHead": "55904ee260636ddbb7b4c61800e7bea3a5bd6e02",
+    "prelaunchUtc": "2026-10-27T22:33:45.170Z",
+    "seed": 1202,
+    "mode": "band-dispersal",
+    "maxTick": 6000,
+    "gateTick": 3000,
+    "sourceSha256": {
+      "docs/creative-prototypes/food-schedule-769-plan.md": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+      "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+      "apps/lab/src/food-schedule-769/model.ts": "0b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6",
+      "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
+      "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
+      "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+      "docs/creative-prototypes/food-floor-longevity-replication-index-1202.json": "666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19",
+      "docs/creative-prototypes/food-floor-longevity-replication-validation.md": "4a57bf9ebb50736dc6109e4c4b4dc8b9a6f8f01d13017e71fafc9f9bfb0a1095",
+      "tools/food-schedule-769/launch.sh": "eddc4386e6da5c16ddb54d94cc68413fc74009e334d03323ac84fe3070669010",
+      "docs/creative-prototypes/band-dispersal-plan.md": "7c01b2c948c2d134eb9e6483db26c0a64e2529f6d0ecc1fbe5a62193d5480254",
+      "apps/lab/src/band-dispersal/model.ts": "66a02e4f9ef9e5195ceb74ee7048045cbfa86f9bd79ffc7de1cc11d18792b40b",
+      "tools/band-dispersal/launch.sh": "22f44c4975c50981de1bd1916ef96390cd046f29623c56f7f34601a100d495e1",
+      "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d",
+      "docs/creative-prototypes/food-schedule-769-seed-1202.json": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+      "docs/creative-prototypes/food-schedule-769-index-1202.json": "92de28e2a95ed0d8b20e049834bce89a38b469d3eaa61ac798fd36b420c5027f",
+      "docs/creative-prototypes/food-schedule-769-gate-3000-seed-1202.json": "12c11952eeb15c61f86a7fd32fb04d12cd5bf4c9fd3991b4352988a869ee0a9e",
+      "docs/creative-prototypes/food-schedule-769-gate-3000-visual-receipt-1202.json": "fc86101ebb3b4410edf665f18b15bf14c7642ec29211b46274aded42fad3f67d",
+      "package.json": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+      "pnpm-lock.yaml": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+      "tools/test/band-dispersal.test.ts": "780dc58f801557d4a1914647b9ea59ff1fef92bd3e1e889e49b8df7412e973b5",
+      "tools/band-dispersal/explore.ts": "8f33d52676403831c5390cdf1c599bd15923deb5097fc87b41a7d3e83ad12b74"
+    },
+    "nodeVersion": "24.2.0",
+    "environment": {
+      "NODE_NO_WARNINGS": "1"
+    },
+    "packageJsonSha256": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpmLockSha256": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "command": [
+      "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+      "--experimental-strip-types",
+      "tools/band-dispersal/explore.ts",
+      "--write",
+      "--seed",
+      "1202",
+      "--attempt-dir",
+      "/Users/nicholas/.codex/worktrees/band-persistence/browser-life/runs/band-dispersal/attempts/run-20261027T223345Z-18474"
+    ]
+  },
+  "result": {
+    "status": "completed",
+    "classification": "completed",
+    "exitStatus": 0,
+    "finishedUtc": "2026-10-27T22:36:39.750Z",
+    "stdout": "stdout.log",
+    "stderr": "stderr.log"
+  },
+  "localAttemptDirectory": "runs/band-dispersal/attempts/run-20261027T223345Z-18474",
+  "regressionVerified": {
+    "status": "verified",
+    "seed": 1202,
+    "mode": "schedule-769",
+    "throughTick": 6000,
+    "normalization": "none",
+    "comparedSamples": 301,
+    "comparedFrames": 301,
+    "comparedTickRows": 6000,
+    "comparedSnapshots": 13,
+    "artifactSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823"
+  },
+  "gate3000": {
+    "status": "passed",
+    "artifactSha256": "31901a98852c6f418ed7870ca2ef558e522a203618fa30597a5ac3111bf7ca4d",
+    "receiptSha256": "2b3f564f3b5a3ee52e6b74a030275cef3a22b77f0419389de969f656a0ef26be",
+    "receiptCommit": "8579a7f4c22789d619d86f50ec588dcc969d5e30"
+  },
+  "retainedCounts": {
+    "samples": 215,
+    "frames": 215,
+    "tickRows": 4279,
+    "snapshots": 10
+  },
+  "lineageCount": 489,
+  "repeat": {
+    "verified": true,
+    "comparedThroughTick": 4279,
+    "stateChecks": 215,
+    "frameChecks": 215
+  },
+  "files": {
+    "attempt-status.json": "d2a465fd0ef4b74c37b628496a3b6a5c6381b3d376c76784be3e27b6c447d50a",
+    "candidate-evidence.json": "a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60",
+    "gate-decision.json": "3963cc072a203f3c16eee6a17d0a5a0f240d06cdefacc91a2cf31969eaffd614",
+    "gate-pass.json": "8734cf3702c0e98b1cf4b27def7dc8f1deb7ec647f27fadd9f4ff6edcebab467",
+    "gate-ready.json": "c180413409e2f748819721807594de142532f3039215e171d0f58db17f77f36a",
+    "intent.json": "7b2aa8bb52010b3906b5dfef39b48962a6c809363e0c41da106b62e5ceda3a43",
+    "regression-verified.json": "b0d8b21b91b9b5afe1a286ae6b4be022aaf8aba20d224651ff597f546b7a8801",
+    "result.json": "8b0ef989a478c54fd657471e4335d00b4829c043bab1117be534a5b101dc07cd",
+    "runner-start.json": "35702d634dcee346a96054cf9d4b6c848106cfc6208e321991f58efb3b08f5b9",
+    "samples.jsonl": "c016d279b9497002dedafb815f6c9278b17c9fefbdfd8c4ac307518e610e96f0",
+    "snapshots.jsonl": "324681738abc149678f1013ecd4f0909f9cc4ae1948c12f3508345ebb4d40b17",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "f4d110253b99b811f14563f76984000d0e783c9489dcfa06422c53dc0bddf886",
+    "ticks.jsonl": "67b747555941790595d8a0aff4663abb0ee95cda4e4a79ff4443620c519e5805"
+  },
+  "artifactSha256": "a78227422bbbcabf339d25fa8efc69c43acde9faeeadfeb8f512ceec36f57a60",
+  "visualReceiptSha256": "ca3f34df4e985656e2bd4a521edd4d29582f8b0eaa3b8fbab3baddcb5e78103f"
+}
