@@ -1,0 +1,64 @@
+// Headless Mycelium world run (CPU reference, rung R0). Prints a census line every --every steps and
+// checks the matter and energy ledgers after every step; exits non-zero on any residual.
+//
+//   deno run -A --no-lock tools/mycelium/run.ts --steps 2000 --every 200 [--size 128] [--max 8192] [--founders 1024]
+//     [--seed 1] [--heredity inherit|frozen|blocked] [--light uniform|gradient] [--json]
+//     [--move-cost 2] [--trail-discount 0..256 [--discount-mode public|toll]]   (optional trail-use rule, RULES.md)
+//     [--conduit 0..255 [--conduit-cap 1..255]] [--diff-a 0..128]               (optional trail conduit rule, RULES.md)
+import { parseArgs } from "jsr:@std/cli@1/parse-args";
+import { FRESH_MIN } from "./r2-protocol.ts";
+import { embargoReason } from "./r2b-seeds.ts";
+import { createWorld, defaultConfig, energyTotal, type Heredity, type LightPattern, liveGenotypes, matterTotal, stateDigest, step, type TrailDiscountMode } from "./world.ts";
+
+const a = parseArgs(Deno.args, { string: ["steps", "every", "size", "max", "founders", "seed", "heredity", "light", "move-cost", "trail-discount", "discount-mode", "conduit", "conduit-cap", "diff-a"], boolean: ["json"] });
+// Seeds of 9001 and above are the R2 confirmation's fresh seeds (docs/mycelium-r2-2026-11-13/PROTOCOL.md section 5):
+// they run only through r2.ts --phase confirm, so an unlogged look at one cannot happen from here.
+if (a.seed !== undefined && !(Number(a.seed) < FRESH_MIN)) {
+  console.error(`seed ${a.seed} is refused: seeds of ${FRESH_MIN} and above are reserved for the R2 confirmation (tools/mycelium/r2.ts)`);
+  Deno.exit(2);
+}
+// R2b's dev, matching and confirmation worlds (slots 2001-2020 and 5001-5016 plus every arm's offset) and R2's own seeds run only through their
+// own runners, which log them; this tool is unlogged, so an ad-hoc look at one would escape the seed log's embargo check.
+const embargo = a.seed === undefined ? null : embargoReason(Number(a.seed), { r2b: true, r2: true });
+if (embargo) {
+  console.error(`seed ${a.seed} is refused: ${embargo}`);
+  Deno.exit(2);
+}
+const steps = Number(a.steps ?? 2000), every = Number(a.every ?? 200), size = Number(a.size ?? 128);
+const over = {
+  width: size, height: size,
+  ...(a.max ? { maxParticles: Number(a.max) } : {}),
+  ...(a.founders ? { founders: Number(a.founders) } : {}),
+  ...(a.seed ? { seed: Number(a.seed) } : {}),
+  ...(a.heredity ? { heredity: a.heredity as Heredity } : {}),
+  ...(a.light ? { lightPattern: a.light as LightPattern } : {}),
+  ...(a["move-cost"] ? { moveCost: Number(a["move-cost"]) } : {}),
+  ...(a["trail-discount"] ? { trailMoveDiscount: Number(a["trail-discount"]) } : {}),
+  ...(a["discount-mode"] ? { trailDiscountMode: a["discount-mode"] as TrailDiscountMode } : {}),
+  ...(a.conduit !== undefined ? { trailConduit: Number(a.conduit) } : {}),
+  ...(a["conduit-cap"] ? { trailConduitCap: Number(a["conduit-cap"]) } : {}),
+  ...(a["diff-a"] !== undefined ? { diffA: Number(a["diff-a"]) } : {}),
+};
+const s = createWorld(defaultConfig(over));
+let births = 0, deaths = 0, refused = 0, contended = 0, mutations = 0;
+const t0 = performance.now();
+const rows: unknown[] = [];
+for (let t = 1; t <= steps; t++) {
+  const st = step(s);
+  births += st.births; deaths += st.deaths; refused += st.refused; contended += st.contended; mutations += st.mutations;
+  const dm = matterTotal(s) - s.matter0;
+  const de = energyTotal(s) - (s.energy0 + s.totals.lightIn - s.totals.heat);
+  if (dm !== 0 || de !== 0) {
+    console.error(`ledger residual at step ${s.step}: matter ${dm}, energy ${de}`);
+    Deno.exit(1);
+  }
+  if (t % every === 0 || t === steps) {
+    const row = { step: s.step, particles: s.n, genotypes: liveGenotypes(s), births, deaths, refused, contended, mutations, msPerStep: +((performance.now() - t0) / t).toFixed(2) };
+    rows.push(row);
+    if (!a.json) console.log(Object.entries(row).map(([k, v]) => `${k}=${v}`).join(" "));
+    births = deaths = refused = contended = mutations = 0;
+  }
+}
+const summary = { config: s.config, digest: stateDigest(s), matterResidual: 0, energyResidual: 0, rows };
+if (a.json) console.log(JSON.stringify(summary));
+else console.log(`digest=${summary.digest} ledger residuals 0 on all ${steps} steps`);

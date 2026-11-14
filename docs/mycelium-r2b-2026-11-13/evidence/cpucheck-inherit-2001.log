@@ -1,0 +1,11 @@
+cpu-check inherit 2001: step 10000/100000
+cpu-check inherit 2001: step 20000/100000
+cpu-check inherit 2001: step 30000/100000
+cpu-check inherit 2001: step 40000/100000
+cpu-check inherit 2001: step 50000/100000
+cpu-check inherit 2001: step 60000/100000
+cpu-check inherit 2001: step 70000/100000
+cpu-check inherit 2001: step 80000/100000
+cpu-check inherit 2001: step 90000/100000
+cpu-check inherit 2001: step 100000/100000
+cpu-check inherit seed 2001: 100000 steps, CPU digest equals GPU digest 9c5f3913b295d045

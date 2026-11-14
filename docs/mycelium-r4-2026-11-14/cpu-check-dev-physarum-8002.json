@@ -1,0 +1,9 @@
+{
+  "arm": "physarum",
+  "seed": 8002,
+  "steps": 100000,
+  "cpuDigest": "31875a75785809b9",
+  "gpuDigest": "31875a75785809b9",
+  "equal": true,
+  "codeHash": "4243ccc2374e31b053b60f8b4d7f1e99b6097e99ac9ba58cafdb325e1d8f017f"
+}

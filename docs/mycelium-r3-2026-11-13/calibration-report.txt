@@ -1,0 +1,41 @@
+R3 calibration (dev data only)
+
+arm            n    median dE   median dL   median tmE  median tmL  guard
+inherit        20       0.0329     1.99e-6      3.6910     3.83e-4  0
+blocked        20       0.0777      0.0207      7.8779      2.0550  0
+frozen         10       0.0470           0      5.1778           0  0
+inherit-c1     10       0.0938      0.0095      9.4419      0.9408  0
+inherit-c4     10       0.0108     1.33e-5      1.4587      0.0021  0
+blocked-c1     10       0.1505      0.1152     14.5621     11.4196  0
+blocked-c4     10       0.0325      0.0064      3.5407      0.6476  0
+
+Rules on the real dev data (reported, not a gate; dev sample sizes, 20 + 20 at the default cost and 10 per other arm):
+D1  n 20/20  effect +1.000 (floor 0.5)  p 5.00e-6  Holm 1.50e-5  rejects  SUPPORT  late deposit rate dL, inherit against blocked (default cost)
+D2  n 20/20  effect +0.925 (floor 0.5)  p 5.00e-6  Holm 1.50e-5  rejects  SUPPORT  change score g = (dL - dE)/(dL + dE), inherit against blocked (default cost)
+D3  n 10/20/10  effect +0.290 (floor 0.25)  p 0.098370  Holm 0.098370  keeps  NULL  dose: normalised early deposit falls as the deposit cost rises (1, 2, 4)
+C1 trail-mass concordance: Cliff's delta tmL inherit vs blocked -1.000 (needs <= -0.33): met
+D4 frozen (descriptive, not in the label): delta(frozen vs blocked, dL) -1.000 p 5.00e-6 -> FROZEN-LOW; delta(inherit vs frozen) 0.285 p 0.180439, inherit below frozen: false, inherit vs blocked delta -1.000 p 5.00e-6; READING FROZEN-SUFFICES
+guard: 0 tripped run(s)
+LABEL INCONCLUSIVE  (not supported: D3)
+
+Attainability of PASS (planted dose response, n = 16 per arm resampled from R2b's dev pools, 100 replicates, 20,000 permutations):
+  1.5-fold per cost doubling: PASS 0.24, FAIL 0.00, INCONCLUSIVE 0.76
+  2-fold per cost doubling: PASS 0.95, FAIL 0.00, INCONCLUSIVE 0.05
+  3-fold per cost doubling: PASS 1.00, FAIL 0.00, INCONCLUSIVE 0.00
+  4-fold per cost doubling: PASS 1.00, FAIL 0.00, INCONCLUSIVE 0.00
+
+Attainability of FAIL (dev data with inherit and blocked swapped at every cost):
+D1  n 20/20  effect -1.000 (floor 0.5)  p 5.00e-6  Holm 1.50e-5  rejects  CONTRADICT  late deposit rate dL, inherit against blocked (default cost)
+D2  n 20/20  effect -0.925 (floor 0.5)  p 5.00e-6  Holm 1.50e-5  rejects  CONTRADICT  change score g = (dL - dE)/(dL + dE), inherit against blocked (default cost)
+D3  n 10/20/10  effect -0.290 (floor 0.25)  p 0.098370  Holm 0.098370  keeps  NULL  dose: normalised early deposit falls as the deposit cost rises (1, 2, 4)
+C1 trail-mass concordance: Cliff's delta tmL inherit vs blocked 1.000 (needs <= -0.33): not met
+D4 frozen (descriptive, not in the label): delta(frozen vs blocked, dL) -0.285 p 0.180189 -> FROZEN-NOT-LOW; delta(inherit vs frozen) 1.000 p 5.00e-6, inherit below frozen: false, inherit vs blocked delta 1.000 p 5.00e-6; READING NO-PURGE
+guard: 0 tripped run(s)
+LABEL FAIL  (contradicted: D1, D2)
+
+Null (inherit and blocked readouts pooled and dealt back at random at each cost, 100 deals): PASS 0.00, FAIL 0.01, INCONCLUSIVE 0.99
+
+integrity problems: 0
+guard trips among dev runs: none
+VERDICT READY
+wrote /Users/nicholas/develop/browser-life-mycelium/docs/mycelium-r3-2026-11-13/CALIBRATION.json
