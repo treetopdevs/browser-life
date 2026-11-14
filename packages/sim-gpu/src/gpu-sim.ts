@@ -26,6 +26,7 @@ import {
   worldW,
   type WorldConfig,
   type WorldState,
+  isSlab,
 } from "@bl/schema";
 import { STATS, STATS_WORDS, WG, affinityBlock, affinityShader, flowShader, lesionShader, reactShader, statsShader, tickShader, transportShader } from "./shaders.ts";
 
@@ -242,6 +243,7 @@ export class GpuSim {
   }
 
   static async create(device: GPUDevice, state: WorldState): Promise<GpuSim> {
+    if (isSlab(state.cfg)) throw new Error("GpuSim runs the 2D rules: a slab config (tileD set) needs the slab simulator");
     const errs = validateState(state);
     if (errs.length) throw new Error(`invalid state: ${errs.join("; ")}`);
     const cfg = state.cfg;
@@ -271,6 +273,7 @@ export class GpuSim {
   }
 
   upload(state: WorldState): void {
+    if (isSlab(state.cfg)) throw new Error("GpuSim runs the 2D rules: a slab config (tileD set) needs the slab simulator");
     const errs = validateState(state);
     if (errs.length) throw new Error(`invalid state: ${errs.join("; ")}`);
     const q = this.device.queue;

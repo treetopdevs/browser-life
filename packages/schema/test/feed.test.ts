@@ -12,6 +12,7 @@ import {
   defaultConfig,
   fedMatter,
   feedError,
+  allocState3,
   founderGenome,
   ledgerResidual,
   stateHash,
@@ -91,6 +92,14 @@ describe("applyFeed", () => {
     const again = applyFeed(s, 12, 12, 0, -FEED_MAX);
     expect(again.matter).toBe(0);
     expect(A(s, 12, 12)).toBe(0);
+  });
+
+  it("refuses a slab state, changing nothing (a disc on n / W rows would land in an arbitrary layer)", () => {
+    const cfg = defaultConfig({ tileW: 8, tileH: 8, tileD: 4, kernelRadius: 3, lightK: 1024, lightMode: "uniform" });
+    expect(feedError(cfg, 5, 1)).toMatch(/slab/);
+    const s = allocState3(cfg), h = stateHash(s);
+    expect(() => applyFeed(s, 3, 20, 1, 5)).toThrow(/slab/);
+    expect(stateHash(s)).toBe(h);
   });
 
   it("refuses bad amounts, pond worlds and a feed past MATTER_MAX, changing nothing", () => {

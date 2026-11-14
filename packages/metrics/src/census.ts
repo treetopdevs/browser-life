@@ -13,6 +13,8 @@ export interface Component {
   /** Centroid in world coordinates (torus-aware within the tile). */
   cx: number;
   cy: number;
+  /** Slab censuses only (census3): the mass-weighted mean layer. Absent from a 2D census, so its serialised individuals are unchanged. */
+  cz?: number;
   tile: number;
   /** Most common lineage key among the component's cells. */
   lineage: string;

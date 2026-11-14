@@ -2,11 +2,13 @@ import { canonicalConfig, digestWords } from "./accounting.ts";
 import { cellCount, defaultConfig, type WorldConfig } from "./config.ts";
 import { M3_FOUNDER_SET, M3_FOUNDERS, founderGenome } from "./founders.ts";
 import { generalistGenome } from "./genome.ts";
+import { generalistGenome3 } from "./genome3.ts";
 import { lowbias32 } from "./int.ts";
 import { B1_OFF, B2_OFF, CH, IN, NN_H, NN_O, OUT, W1_OFF, W2_OFF } from "./layout.ts";
+import { slabSpotsWorld } from "./world3.ts";
 import { buildWorld, generalistWorld, m3World, soupWorld, tiledWorld, validateState, type Founder, type WorldState } from "./world.ts";
 
-export type InitKind = "generalist" | "soup" | "m3" | "ponds" | "followers" | "motile" | "motile-drift" | "sensing" | "three-way";
+export type InitKind = "generalist" | "soup" | "m3" | "ponds" | "followers" | "motile" | "motile-drift" | "sensing" | "three-way" | "slab-spots";
 
 export interface InitParams {
   kind: InitKind;
@@ -351,6 +353,30 @@ export const PRESETS: Preset[] = [
   },
 ];
 
+/**
+ * Slab presets (rung 1b, docs/3d-rung1b-plan-2026-10-23.md): kept out of `PRESETS`, which is the lab's catalogue, the
+ * coordinator's list and the 2D pins (a slab handed to the 2D lab worker would be run as a 2D world). Only the headless
+ * runner resolves them (`presetById`).
+ *
+ * slab-spots is the 256 x 256 x 8 slab, light 240 at the surface (uniform, seasons off), founded from eight balls of the
+ * neutral generalist. `defaultMu`, `defaultSigma` and `lightK` here are the M3 timing gate's placeholders; the check's
+ * real values are chosen by M4 and passed to every run as overrides, so this entry never has to move after that choice.
+ */
+export const SLAB_PRESETS: Preset[] = [
+  {
+    id: "slab-spots",
+    name: "Slab spots",
+    description: "Eight generalist balls in a 256 x 256 x 8 slab lit from the surface: the rung 1b depth check's world (headless runs only).",
+    cfg: { tileW: 256, tileH: 256, tileD: 8, kernelRadius: 3, lightK: 1024, defaultMu: 60, defaultSigma: 20, lightMode: "uniform", lightBase: 40, lightAmp: 200 },
+    init: { kind: "slab-spots", founders: 8, nutrient: 32, biomass: 64 },
+  },
+];
+
+/** A preset of the lab's catalogue (`PRESETS`) or a slab preset (`SLAB_PRESETS`) by id. */
+export function presetById(id: string): Preset | undefined {
+  return PRESETS.find((p) => p.id === id) ?? SLAB_PRESETS.find((p) => p.id === id);
+}
+
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
   return defaultConfig({ ...p.cfg, seed, ...extra });
 }
@@ -461,6 +487,8 @@ function foundingWorld(cfg: WorldConfig, init: InitParams): WorldState {
       return motileWorld(cfg, false, init.founders, init.nutrient, init.biomass);
     case "motile-drift":
       return motileWorld(cfg, true, init.founders, init.nutrient, init.biomass);
+    case "slab-spots":
+      return slabSpotsWorld(cfg, generalistGenome3(cfg.defaultMu, cfg.defaultSigma), init.founders, init.nutrient, init.biomass);
     default:
       return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
   }

@@ -1,5 +1,6 @@
 export * from "./render.ts";
 export * from "./census.ts";
+export * from "./census3.ts";
 export * from "./tracker.ts";
 export * from "./activity.ts";
 export * from "./ecology.ts";
@@ -12,3 +13,5 @@ export * from "./individuality.ts";
 export * from "./capabilities.ts";
 export * from "./firsts.ts";
 export * from "./families.ts";
+export * from "./regime3.ts";
+export * from "./census-rps.ts";

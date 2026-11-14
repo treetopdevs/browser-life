@@ -1,5 +1,5 @@
-import { SCHEMA_VERSION, RULE_VERSION, defaultConfig, validateConfig, cellCount, type WorldConfig } from "./config.ts";
-import { CELL_CHANNELS, FLUX_COUNT, GENOME_CHANNELS } from "./layout.ts";
+import { SCHEMA_VERSION, RULE_VERSION, defaultConfig, validateConfig, cellCount, genomeChannels, type WorldConfig } from "./config.ts";
+import { CELL_CHANNELS, FLUX_COUNT } from "./layout.ts";
 import { canonicalGenome, digestWords } from "./accounting.ts";
 import { validateState, type WorldState } from "./world.ts";
 
@@ -52,7 +52,7 @@ export function encodeCheckpoint(s: WorldState, observer: unknown = {}): Uint8Ar
   out.set(s.cells, p);
   p += s.cells.length;
   out[p++] = s.genome.length;
-  out.set(canonicalGenome(s.genome), p);
+  out.set(canonicalGenome(s.genome, genomeChannels(s.cfg)), p);
   p += s.genome.length;
   out[p++] = obsBytes.length;
   new Uint8Array(out.buffer, p * 4, obsBytes.length).set(obsBytes);
@@ -116,7 +116,7 @@ export function decodeCheckpoint(bytes: Uint8Array): { state: WorldState; observ
   if (cellsLen !== n * CELL_CHANNELS) throw new Error("checkpoint: cell size mismatch");
   const cells = w.slice(take(cellsLen), p);
   const genomeLen = word();
-  if (genomeLen !== n * GENOME_CHANNELS) throw new Error("checkpoint: genome size mismatch");
+  if (genomeLen !== n * genomeChannels(cfg)) throw new Error("checkpoint: genome size mismatch");
   const genome = w.slice(take(genomeLen), p);
   const obsLen = word();
   const obsAt = take(Math.ceil(obsLen / 4));
