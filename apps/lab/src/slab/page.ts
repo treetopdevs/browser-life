@@ -329,11 +329,15 @@ function debugHooks() {
     step: () => sim?.step ?? -1,
     state: () => ({ world: S.world, cyc: S.cyc, eco: S.eco }),
     /** Advances to exactly `n` steps in batches of 100 (cutting at the hand-over), then draws. */
-    runTo: (n: number) => exclusive(async () => {
-      const g = gen, s = sim;
-      while (s && s.step < n && current(g, s)) await s.advance(Math.min(100, n - s.step));
-      if (current(g, s)) await showFrame();
-    }),
+    runTo: (n: number) => {
+      const asked = gen; // captured when asked, not when the queue reaches it: a world change in between makes this a no-op
+      return exclusive(async () => {
+        if (asked !== gen) return;
+        const g = gen, s = sim;
+        while (s && s.step < n && current(g, s)) await s.advance(Math.min(100, n - s.step));
+        if (current(g, s)) await showFrame();
+      });
+    },
     /** Holds every read open after the readback finishes, until `releaseReads`; `held()` counts reads waiting. */
     holdReads: () => { readGate = new Promise<void>((r) => { releaseGate = r; }); held = 0; },
     releaseReads: () => { releaseGate?.(); readGate = null; releaseGate = null; },

@@ -53,3 +53,10 @@ No P1. Four findings, all accepted and fixed; the stale-frame fixes were each mu
 | F2 | P2 | The `runTo` debug hook keeps advancing the old simulator and then calls `showFrame()`, which captures the new generation with the old simulator | Fixed. `runTo` captures generation and simulator at the start, stops advancing once superseded and paints only if still current. New e2e "a run-to in flight when the world is switched..." (crosses the 6,000-step hand-over); fails with the guards removed. |
 | F3 | P2 | The mid-read test depended on a 40 ms timer, so it could pass with the guards disabled | Fixed. Debug-only `holdReads`/`releaseReads`/`held` hold a read open after its readback finishes; the test waits until `held() === 1` before switching world, so supersession is always exercised. Fails with `current()` forced true. |
 | F4 | P3 | `reference()` ignored "Kill on from step 0" (always used burn-in settings) | Fixed. With the burn-in off the reference uses the run settings throughout. New e2e "kill on from step 0..." compares 300 steps of live labels with the reference. |
+
+## Final review after commit (`review-sol-final.txt`, Sol 6.1 xhigh)
+
+| Finding | Disposition |
+|---|---|
+| P2: a run-to still waiting in the queue could paint the old world after a world switch (debug hook only) | Fixed: generation captured when asked; new e2e test fails without the fix |
+| P3: banner said every starting point is recorded | Fixed: banner now names which choices are recorded and which are not |

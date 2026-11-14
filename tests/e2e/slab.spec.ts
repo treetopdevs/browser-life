@@ -402,6 +402,22 @@ test("a run-to in flight when the world is switched never paints the old simulat
   expect(draws).toContain("eco:eco@0");
 });
 
+test("a run-to still waiting in the queue when the world is switched does nothing", async ({ page }) => {
+  await open(page);
+  await rebuilt(page);
+  // Hold a read open so the run-to is queued behind it, then switch the world before the queue reaches it.
+  await page.evaluate(() => { (window as Any).__slab.holdReads(); document.getElementById("step100")!.click(); });
+  await page.waitForFunction(() => (window as Any).__slab.held() === 1, null, { timeout: 60_000 });
+  await page.evaluate(() => { void (window as Any).__slab.runTo(6200); });
+  await radio(page, /Slab ecology/).click();
+  await page.evaluate(() => (window as Any).__slab.releaseReads());
+  await rebuilt(page);
+  await page.waitForTimeout(500);
+  const draws: string[] = await page.evaluate(() => (window as Any).__slab.draws());
+  expect(draws.filter((d) => d.startsWith("eco:cyclic")), draws.join(" ")).toEqual([]);
+  expect(draws).toContain("eco:eco@0");
+});
+
 test("kill on from step 0: the live labels equal a direct run with the kill on throughout", async ({ page }) => {
   await open(page);
   await radio(page, /^128 by 128 by 4 /).click();
