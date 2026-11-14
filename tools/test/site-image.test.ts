@@ -301,16 +301,17 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(asset.body).toBe(full.body);
   });
 
-  it("serves the garden page and passes every garden API to the coordinator", async () => {
+  it("serves the garden page and keeps every garden API closed", async () => {
     const page = await raw(origin, "/garden/");
     expect(page.status).toBe(200);
     expect(titleOf(page.body)).toBe("The shared garden · Cadence Garden");
     expect((await raw(origin, "/garden")).status).toBe(308);
-    // Opening the garden is the coordinator's decision (BL_GARDEN_SCHEDULING, the island token), not the proxy's.
-    for (const path of ["/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/gardens"]) {
-      const res = await raw(origin, path);
-      expect(res.status, path).toBe(200);
-      expect(echo(res).path, path).toBe(path);
+    const paths = [
+      "/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/public/gardens/commons/checkpoints/abc",
+      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test", "/api/public/garden%2fletters", "/API/PUBLIC/GARDEN",
+    ];
+    for (const path of paths) {
+      for (const method of ["GET", "HEAD", "POST"]) expect((await raw(origin, path, { method })).status, `${method} ${path}`).toBe(404);
     }
   });
 

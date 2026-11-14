@@ -215,13 +215,28 @@ test.describe("Caddy", () => {
     }
   });
 
-  test("Caddy: the garden page is served like any other page", async () => {
+  test("Caddy: the garden page is served, and every garden API stays closed", async () => {
     for (const path of ["/garden/", "/garden/index.html"]) {
       const res = await raw(base, path);
       expect(res.status, path).toBe(200);
       expect(res.body, path).toContain("<title>The shared garden · Cadence Garden</title>");
     }
     expect((await raw(base, "/garden")).status).toBe(308);
+    const paths = [
+      "/api/public/garden", "/api/public/garden/letters",
+      "/api/public/garden/food/hands", "/api/public/garden/meteor/hands",
+      "/api/public/gardens/commons", "/api/public/gardens/commons/letters",
+      "/api/public/gardens/commons/checkpoints/abc",
+      "/api/gardens", "/api/gardens/commons/days/0/requeue",
+      "/api/gardens/commons/letters/1/drop", "/api/public/garden%2fletters",
+      "/api/public/x/../gardens/commons", "/API/PUBLIC/GARDEN",
+    ];
+    for (const path of paths) {
+      for (const method of ["GET", "HEAD", "POST"]) {
+        const res = await raw(base, path, { method });
+        expect(res.status, `${method} ${path}`).toBe(404);
+      }
+    }
   });
 
   test("Caddy: real pages, world copies, assets, robots and sitemap answer 200", async ({ request }) => {

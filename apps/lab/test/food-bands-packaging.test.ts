@@ -77,9 +77,12 @@ describe('food-bands is a public exploration page: the built image', () => {
     expect(files.some(p => /^assets\/food-bands-model-food-schedule-769.*\.js$/.test(p))).toBe(true);
   });
 
-  it('the replay route is dev-only: no built file names the replay folder or the dev route', () => {
-    const offenders = walk(outDir).filter(f => /\.(js|css|html)$/.test(f)).filter(f => /food-bands-replays/.test(readFileSync(f, 'utf8'))).map(f => relative(outDir, f));
-    expect(offenders).toEqual([]);
+  it('recordings are not packaged: the built page asks for them under /docs/, which the image does not serve', () => {
+    // The page probes /docs/creative-prototypes/<file>; fetchRecording (food-bands-replay-check.test.ts) reads the
+    // image's HTML 404 as "not available here" and the comparison stays hidden.
+    const built = walk(outDir).filter(f => /\.js$/.test(f)).filter(f => readFileSync(f, 'utf8').includes('/docs/creative-prototypes/')).map(f => relative(outDir, f));
+    expect(built.some(f => /food-?bands/i.test(f)), 'the page still names the recordings folder').toBe(true);
+    expect(existsSync(join(outDir, 'docs'))).toBe(false);
   });
 
   it('no remaining file references a removed one (static and dynamic imports, preload lists, stylesheets)', () => {

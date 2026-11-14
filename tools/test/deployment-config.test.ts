@@ -161,12 +161,10 @@ for (const mode of ["empty", "trusted-peer", "untrusted-peer"] as const) {
         }
       });
     }
-    it("passes garden APIs to the coordinator like any other /api route", async () => {
-      // Whether a garden is open is the coordinator's decision (BL_GARDEN_SCHEDULING, the island and admin tokens), not the proxy's.
-      for (const route of ["/api/garden/test", "/api/gardens/test", "/api/public/gardens/test"]) {
-        const res = await fetch(origin + route);
-        expect(res.status, route).toBe(200);
-        expect((await res.json()).path, route).toBe(route);
+    it("keeps garden APIs closed", async () => {
+      // The page is public (it is a static file); the API stays closed until the garden opens.
+      for (const route of ["/api/garden/test", "/api/gardens/test", "/api/public/garden", "/api/public/gardens/test", "/API/PUBLIC/GARDEN/letters"]) {
+        expect((await fetch(origin + route)).status, route).toBe(404);
       }
     });
   });

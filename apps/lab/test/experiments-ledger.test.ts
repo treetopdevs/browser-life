@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CHAPTERS, ENTRIES, PLAYTHINGS } from "../src/experiments/ledger.ts";
-import { STATE_CLASS, blocks, fill } from "../src/experiments/render.ts";
+import { STATE_CLASS, blocks, fill, markers } from "../src/experiments/render.ts";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 const lab = `${root}apps/lab/`;
@@ -25,14 +25,44 @@ describe("experiments ledger", () => {
       const path = `${lab}${page}`;
       const html = readFileSync(path, "utf8");
       const next = fill(html);
-      if (process.env.BL_WRITE_LEDGER === "1" && next !== html) writeFileSync(path, next);
+      if (process.env.BL_WRITE_LEDGER === "1") {
+        if (next !== html) writeFileSync(path, next);
+        continue;
+      }
       expect(next === html, `${page} is stale: run BL_WRITE_LEDGER=1 pnpm vitest run apps/lab/test/experiments-ledger.test.ts`).toBe(true);
     }
   });
 
-  it("every block is used, and the story has one list per chapter", () => {
-    const used = new Set(PAGES.flatMap((p) => [...readFileSync(`${lab}${p}`, "utf8").matchAll(/<!-- GENERATED:ledger:([a-z0-9-]+) -->/g)].map((m) => m[1])));
-    expect([...used].sort()).toEqual(Object.keys(blocks()).sort());
+  it("every block is on a page, holds its rendered rows, and the story has one list per chapter", () => {
+    const all = blocks();
+    const used = PAGES.flatMap((p) => markers(readFileSync(`${lab}${p}`, "utf8")));
+    expect([...used].sort()).toEqual(Object.keys(all).sort());
+    expect(markers(readFileSync(`${lab}story/index.html`, "utf8"))).toEqual(CHAPTERS.map((c) => `chapter-${c.n}`));
+    for (const page of PAGES) {
+      const html = readFileSync(`${lab}${page}`, "utf8");
+      for (const name of markers(html)) expect(html, `${page}: block ${name} is not filled`).toContain(all[name]);
+    }
+    // The pages really carry the rows: every journal heading is printed on the index, and each chapter's on the story.
+    const index = readFileSync(`${lab}experiments/index.html`, "utf8");
+    const story = readFileSync(`${lab}story/index.html`, "utf8");
+    for (const e of ENTRIES) {
+      expect(text(index), e.card).toContain(e.card);
+      expect(text(story), e.card).toContain(e.card);
+    }
+  });
+
+  it("fill replaces empty blocks and refuses malformed markers", () => {
+    const open = (n: string) => `<!-- GENERATED:ledger:${n} -->`;
+    const close = (n: string) => `<!-- /GENERATED:ledger:${n} -->`;
+    const empty = `  ${open("tally")}\n  ${close("tally")}`;
+    expect(fill(empty)).toContain(blocks().tally);
+    expect(fill(fill(empty))).toBe(fill(empty));
+    expect(fill(`${open("tally")}stale${close("tally")}`)).not.toContain("stale");
+    expect(() => fill(`${open("tally")}\n${close("index")}`)).toThrow(/closes/);
+    expect(() => fill(`${open("tally")}\n${open("index")}\n${close("index")}\n${close("tally")}`)).toThrow(/inside/);
+    expect(() => fill(`${open("tally")}\n`)).toThrow(/never closed/);
+    expect(() => fill(`${open("tally")}${close("tally")}${open("tally")}${close("tally")}`)).toThrow(/twice/);
+    expect(() => fill(`${open("nope")}${close("nope")}`)).toThrow(/unknown/);
   });
 
   it("every row matches a journal card: same heading, label, date and chip colour", () => {

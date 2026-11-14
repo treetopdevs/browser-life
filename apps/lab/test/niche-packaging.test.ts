@@ -39,7 +39,7 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
       const text = readFileSync(join(dir, f), 'utf8');
       for (const m of text.matchAll(/(?:\.\/|\/?assets\/)([A-Za-z0-9_.-]+\.(?:js|css))/g)) {
         const target = `assets/${m[1]}`;
-        if (all.includes(target) && !kept.has(target)) dangling.push(`${f} -> ${target}`);
+        if (!kept.has(target) && (all.includes(target) || f.endsWith('.html'))) dangling.push(`${f} -> ${target}`);
       }
     }
     expect(dangling).toEqual([]);

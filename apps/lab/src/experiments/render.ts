@@ -77,12 +77,40 @@ export function blocks(): Record<string, string> {
   return out;
 }
 
-/** Replace each `<!-- GENERATED:ledger:<name> -->…<!-- /GENERATED:ledger:<name> -->` block in a page. */
+/** The names of the generated blocks a page opens, in order. Throws on unbalanced, nested or repeated markers. */
+export function markers(html: string): string[] {
+  const names: string[] = [];
+  let open: string | null = null;
+  for (const m of html.matchAll(/<!-- (\/?)GENERATED:ledger:([a-z0-9-]+) -->/g)) {
+    const [, slash, name] = m;
+    if (!slash) {
+      if (open !== null) throw new Error(`ledger block ${name} opens inside ${open}`);
+      if (names.includes(name)) throw new Error(`ledger block ${name} appears twice`);
+      open = name;
+      names.push(name);
+    } else {
+      if (open !== name) throw new Error(`ledger block ${name} closes but ${open ?? "nothing"} is open`);
+      open = null;
+    }
+  }
+  if (open !== null) throw new Error(`ledger block ${open} is never closed`);
+  return names;
+}
+
+/**
+ * Replace the body of each `<!-- GENERATED:ledger:<name> -->…<!-- /GENERATED:ledger:<name> -->` block in a page,
+ * empty or not. Throws on malformed markers or an unknown block name, so a stale page cannot pass unchanged.
+ */
 export function fill(html: string): string {
   const all = blocks();
-  return html.replace(/(<!-- GENERATED:ledger:([a-z0-9-]+) -->\n)[\s\S]*?(\n[ \t]*<!-- \/GENERATED:ledger:\2 -->)/g, (whole, open: string, name: string, close: string) => {
+  const names = markers(html);
+  let filled = 0;
+  const out = html.replace(/([ \t]*)<!-- GENERATED:ledger:([a-z0-9-]+) -->[\s\S]*?<!-- \/GENERATED:ledger:\2 -->/g, (_whole, indent: string, name: string) => {
     const body = all[name];
     if (body === undefined) throw new Error(`unknown ledger block ${name}`);
-    return `${open}${body}${close}`;
+    filled++;
+    return `${indent}<!-- GENERATED:ledger:${name} -->\n${body}\n${indent}<!-- /GENERATED:ledger:${name} -->`;
   });
+  if (filled !== names.length) throw new Error(`filled ${filled} of ${names.length} ledger blocks`);
+  return out;
 }
