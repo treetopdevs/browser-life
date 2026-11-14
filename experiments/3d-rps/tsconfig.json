@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "types": ["@webgpu/types", "vite/client", "node"] },
+  "include": ["./**/*.ts", "../test/rps-*.ts", "../test/rmf-lattice.test.ts", "../../packages/metrics/test/census-rps.test.ts"],
+  "exclude": ["./rmf-worker.ts"]
+}

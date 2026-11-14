@@ -1,0 +1,26 @@
+761ea02a49f23e19ef2212487464bc15170cbcff036c1e6c7ebc799006140cc7
+
+SHA-256 of the Gate-0 spike (rule draft 3.0, Code; D16): the SHA-256 of the sorted per-file listing printed by
+  (cd experiments/3d-rps/gate0-spike && git ls-files | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)
+This value was taken on the working tree over exactly the 14 files listed below (git ls-files -co --exclude-standard, the files not yet committed),
+BEFORE the files were committed. The spike holds only what Gate 0 uses: no review scratch script, no out/ directory, no snapshot.
+After the commit, rerun the recipe above on the committed files, after the last change to the spike and before the first Gate-0 job:
+if the committed set is the listed one it gives this value, and that value goes in the Gate-0 record (rule draft 8.5) with the revision
+of the tree the spike patches (packages/sim-gpu/src/shaders3d.ts) and of packages/metrics/src/census-rps.ts. `gate0.ts --hash`
+reproduces the recipe on the working tree and compares it with the first line here.
+
+The listing that was hashed (sorted with LC_ALL=C; `<sha256 of the file>  <path>`; the first line of this file is the SHA-256 of exactly these lines):
+cc08d9cd2609cc965b020844defa181f5b048497942ae7e98fb9ee7f64c337b6  README.md
+d2854ae93646c2f3dce8f893b2c2a76230b71bd78793674e4dda8ad146c24c20  adapter.ts
+0016e693a83f2604bbcd3e81797e91927a9822bd4012be241ec422a98fda3475  cli.ts
+4c08c46f56e33d3cc1c4e05414a432032cefae5f5edbd0729e973b30f5abf708  driver.ts
+38adbf1acf090d29f1731aa0e77b4268cbc092c987e887692f426444266c3f2a  explore.ts
+83726995d8922998aaff35c4aef302e2b7cfe707bcaa3515de39e4b921efb5eb  gate0.ts
+71d30c8cc920febb80d999504e0fc0ee934d9d89b8d010e54dc8b36fbf1eda0e  gpu-sim3-rps.ts
+0e6a50ee664e868e016f9fea199e474f2191a8bff9aaee401b6164565b6496ca  jobs.ts
+3b3c0b15304d72af8e409e75def0f915773955e5cb4a4659d5b70dc6a55d051d  lib.ts
+6f2a2f1d334babc8ef36a95401b9c79a7925613f708b76ba9a0f4f4bafdab982  plan.ts
+97a7e45d4ce320eb74732837908e17c1dbf7b3a345a9c0fb54f2c99d18d13b18  rehearsal.ts
+b2260b7ebd61a94e018cb48c3d634600e6f7d25b3c5590e3e1338b448eb5b021  rungs.ts
+51ec5241c0b34d50ce9eb374fce11581e09a8934684d09e8d04bfdbdd8a025c7  shaders3d-rps.ts
+923fffdbf6593449aba769933ce12505601b42d476c6f8e76c23ec57727eff3b  world.ts
