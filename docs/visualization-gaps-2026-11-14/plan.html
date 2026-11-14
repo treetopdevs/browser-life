@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Visualization gaps: plans</title>
+<style>
+:root{
+  --bg:var(--background,#fbf8f1);--fg:var(--foreground,#1d2a2e);--mut:var(--muted-foreground,#5d6b6e);
+  --line:var(--border,#dcd6c8);--panel:var(--card,#fffdf8);--code:var(--code-background,#f1ece0);
+  --sun:var(--warning,#8a5207);--leaf:var(--success,#1f6a49);--sky:var(--info,#2a609a);--stop:var(--destructive,#a53b26);
+  --r:var(--radius,10px);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:var(--background,#101b21);--fg:var(--foreground,#edf5f0);--mut:var(--muted-foreground,#9fb0ad);
+  --line:var(--border,#2a3a41);--panel:var(--card,#16242b);--code:var(--code-background,#1c2c34);
+  --sun:var(--warning,#f2be78);--leaf:var(--success,#91e1c0);--sky:var(--info,#8fc0f0);--stop:var(--destructive,#f09a86);
+}}
+*{box-sizing:border-box}
+body{margin:0;color:var(--fg);font:16px/1.55 var(--font-sans,system-ui,-apple-system,"Segoe UI",sans-serif)}
+body.standalone{background:var(--bg);padding:32px 16px 64px}
+main{max-width:860px;margin:0 auto}
+h1{font-size:30px;line-height:1.15;margin:0 0 8px;letter-spacing:-.01em}
+h2{font-size:21px;margin:0 0 4px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:20px 0 6px;font-weight:650}
+p{margin:0 0 10px}
+ul,ol{margin:0 0 10px;padding-left:22px}
+li{margin:3px 0}
+code{font:13px var(--font-mono,ui-monospace,Menlo,monospace);background:var(--code);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.lede{color:var(--mut);margin-bottom:22px}
+.status{display:inline-block;font-size:12px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--sun);color:var(--sun);border-radius:99px;padding:2px 10px;margin-bottom:12px}
+.order{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 28px;padding:0;list-style:none;counter-reset:n}
+.order li{counter-increment:n;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:12px;margin:0}
+.order li::before{content:counter(n);display:block;font-size:12px;color:var(--mut);font-weight:650}
+.order a{color:inherit;font-weight:650;text-decoration:none;font-family:var(--font-mono,ui-monospace,Menlo,monospace);font-size:14px}
+.order small{display:block;color:var(--mut);font-size:12.5px;line-height:1.35;margin-top:4px}
+.size{display:inline-block;font-size:11.5px;font-weight:650;border-radius:5px;padding:1px 6px;margin-top:6px;border:1px solid currentColor}
+.s{color:var(--leaf)}.m{color:var(--sky)}.l{color:var(--sun)}
+section{border-top:1px solid var(--line);padding:26px 0 6px}
+.key{font:650 13px var(--font-mono,ui-monospace,Menlo,monospace);color:var(--mut)}
+.see{border-left:3px solid var(--leaf);padding:2px 0 2px 14px;margin:10px 0 14px}
+.note{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin:0 0 14px}
+.fix{border-color:var(--stop)}
+.fix strong{color:var(--stop)}
+.decide{border:1px dashed var(--sun);border-radius:var(--r);padding:12px 16px;margin:12px 0}
+.decide h3{margin-top:0;color:var(--sun)}
+.tw{overflow-x:auto;margin:0 0 12px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mut);font-weight:650}
+figure{margin:14px 0 16px}
+figcaption{font-size:12.5px;color:var(--mut);margin-top:6px}
+.mock{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px}
+svg{display:block;width:100%;height:auto}
+svg text{font:11px var(--font-sans,system-ui,sans-serif);fill:var(--mut)}
+.w{fill:var(--code);stroke:var(--line)}
+@media (max-width:640px){.order{grid-template-columns:1fr 1fr}h1{font-size:25px}}
+</style>
+</head>
+<body class="standalone">
+<main>
+<span class="status">Plans as proposed · see the decision log for what was decided and built</span>
+<h1>Four plans to make every simulation visible</h1>
+<p class="lede">2026-11-14 · source of truth is <code>PLAN.md</code> beside this file. Each plan runs in its own fresh worktree; this checkout is on another branch with staged work and is left alone.</p>
+
+<div class="note"><p style="margin:0"><strong>Where this stands.</strong> These are the plans as first proposed on 2026-11-14. <a href="decisions.html" style="color:inherit">decisions.html</a> records every choice made since and overrides this page where they differ: one page with a picker and no lab link for food-live (D7), 3D slices local only (D8), cyclic competition first in the slab viewer (D10), and corrections found while building (D14, D19, D20).</p></div>
+
+<ol class="order">
+  <li><a href="#food-replays">food-replays</a><small>18 result pages that load but play nothing</small><span class="size s">Small · no code</span></li>
+  <li><a href="#food-live">food-live</a><small>One page that runs any food schedule</small><span class="size m">Medium</span></li>
+  <li><a href="#regime-figures">regime-figures</a><small>Figures on the regime-meters page</small><span class="size s">Small</span></li>
+  <li><a href="#slab-viewer">slab-viewer</a><small>See the 3D slab world for the first time</small><span class="size l">Large</span></li>
+</ol>
+
+<div class="note fix">
+  <p><strong>Correction to my first answer.</strong> I said the food-schedule family had only static reports. It has 18 replay players in <code>docs/creative-prototypes/</code>, 13 of them paired side by side, each with its own browser test. They show nothing because 58 replay files (about 304 MB) were kept out of git. A copy is already in this checkout under <code>runs/food-line-101-119/</code>.</p>
+  <p style="margin:0">Also narrower than I said: uniform-food is World B on <code>/hungry-shapes/</code> but stops at tick 3,000 where the screen ran 6,000; and the cyclic-competition companion page already runs its lattice live, so the 3D gap is only the GPU slab.</p>
+</div>
+
+<div class="note">
+  <h3 style="margin-top:0">Rules every plan follows</h3>
+  <ul style="margin:0">
+    <li><strong>Frozen files stay untouched:</strong> hash-pinned <code>model.ts</code> copies, the frozen cyclic-competition files, golden pins. New page code only.</li>
+    <li><strong>Live views are not evidence:</strong> labelled exploration, default to the screen's own seed and horizon, write nothing into result folders.</li>
+    <li><strong>New pages are private:</strong> same checklist as <code>/hungry-shapes/</code> (kept out of the site image, Caddy matcher, noindex, packaging test, e2e with axe).</li>
+    <li><strong>Controls explain themselves:</strong> every choice says what differs and why it matters.</li>
+    <li><strong>Gates:</strong> typecheck, vitest, Playwright on its own port, Codex review (Sol 6.1 High) before any commit.</li>
+  </ul>
+</div>
+
+<section id="food-replays">
+  <span class="key">food-replays</span>
+  <h2>Make the 18 existing viewers play</h2>
+  <p class="see">Every food result page plays its recorded replay (in 13 of the 18, two worlds side by side), with a shared scrubber, jump-to-tick buttons and the 15-second clip. Today they say the evidence is unavailable.</p>
+  <h3>Steps</h3>
+  <ol>
+    <li>Fresh worktree from <code>origin/main</code>.</li>
+    <li>Copy from <code>runs/food-line-101-119/</code> (290 MB) and <code>runs/creative-prototypes-85-100/</code> (67 MB) to the paths listed in <code>ARTIFACTS.md</code>; fall back to its <code>git show</code> command for anything missing.</li>
+    <li>Verify every SHA-256 against the tables in <code>ARTIFACTS.md</code>. A mismatch stops the plan.</li>
+    <li>Open each page from the lab dev server; run the food e2e specs, which stop skipping once the files exist.</li>
+  </ol>
+  <h3>Deliverable and gate</h3>
+  <p><code>tools/creative-prototypes/restore.sh</code> (copy, verify, report). Restored files stay untracked. Gate: all hashes match, food specs pass instead of skip.</p>
+  <div class="decide"><h3>Decision</h3><p style="margin:0">None. Safe to run on a yes.</p></div>
+</section>
+
+<section id="food-live">
+  <span class="key">food-live</span>
+  <h2>One page that runs any food schedule</h2>
+  <p class="see">A private page <code>/food-bands/</code>. Pick a screen; two matched worlds run from that screen's seed, with the food targets drawn as they move: the band sliding east, the split columns, the alternating side lighting each pulse, the foothold floor. The horizon follows the screen: 3,000, 6,000 or 9,000 ticks.</p>
+  <figure class="mock">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sketch of the food-bands page: a screen picker above two world canvases, each with a population strip.">
+      <rect class="w" x="0" y="0" width="760" height="44" rx="8"/>
+      <text x="14" y="27" style="font-weight:650;fill:var(--fg)">Screen: Split band vs stationary band</text>
+      <text x="300" y="27">same budget, one wide band or two narrow ones</text>
+      <text x="604" y="27">Seed 1202 · Tick 1,450 / 3,000</text>
+      <g>
+        <rect class="w" x="0" y="56" width="372" height="190" rx="8"/>
+        <rect x="0" y="56" width="186" height="190" fill="var(--leaf)" opacity=".18"/>
+        <text x="12" y="74" style="fill:var(--fg)">Stationary band · 48 columns</text>
+        <g fill="var(--leaf)"><rect x="40" y="110" width="26" height="8"/><rect x="48" y="118" width="8" height="22"/><rect x="110" y="160" width="20" height="8"/><rect x="118" y="168" width="8" height="18"/></g>
+        <g fill="var(--sun)"><rect x="80" y="196" width="24" height="8"/><rect x="150" y="96" width="8" height="26"/></g>
+        <rect class="w" x="0" y="254" width="372" height="40" rx="6"/>
+        <polyline points="8,286 80,276 160,268 240,270 320,262 364,264" fill="none" stroke="var(--leaf)" stroke-width="2"/>
+      </g>
+      <g>
+        <rect class="w" x="388" y="56" width="372" height="190" rx="8"/>
+        <rect x="388" y="56" width="93" height="190" fill="var(--leaf)" opacity=".18"/>
+        <rect x="574" y="56" width="93" height="190" fill="var(--leaf)" opacity=".18"/>
+        <text x="400" y="74" style="fill:var(--fg)">Split band · 2 × 24 columns</text>
+        <g fill="var(--leaf)"><rect x="410" y="130" width="22" height="8"/><rect x="418" y="138" width="8" height="20"/></g>
+        <g fill="var(--sky)"><rect x="600" y="110" width="26" height="8"/><rect x="608" y="118" width="8" height="24"/><rect x="630" y="186" width="18" height="8"/></g>
+        <rect class="w" x="388" y="254" width="372" height="40" rx="6"/>
+        <polyline points="396,286 470,280 550,282 630,274 700,278 752,270" fill="none" stroke="var(--sky)" stroke-width="2"/>
+      </g>
+    </svg>
+    <figcaption>Layout sketch, not real data. Shaded columns are where food is offered this pulse; shapes are bodies coloured by founding family; the strip below is population over time.</figcaption>
+  </figure>
+  <div class="tw"><table>
+    <tr><th>Screen</th><th>Tool directories</th><th>Model the screen ran</th><th>Horizon</th><th>Seeds</th></tr>
+    <tr><td>Uniform food</td><td><code>uniform-food</code></td><td><code>hungry-shapes</code></td><td>6,000</td><td>1201</td></tr>
+    <tr><td>Uniform endurance</td><td><code>uniform-endurance</code></td><td><code>uniform-endurance</code></td><td>9,000</td><td>1201</td></tr>
+    <tr><td>Moving band</td><td><code>moving-food, -replication</code></td><td><code>moving-food</code></td><td>3,000</td><td>1201–1203</td></tr>
+    <tr><td>Stationary band</td><td><code>stationary-food, -replication</code></td><td><code>stationary-food</code></td><td>3,000</td><td>1201–1203</td></tr>
+    <tr><td>Band longevity</td><td><code>food-band-longevity, -replication</code></td><td><code>stationary-food</code></td><td>6,000</td><td>1201–1203</td></tr>
+    <tr><td>Split band</td><td><code>split-food, -replication</code></td><td><code>split-food</code></td><td>3,000</td><td>1202, 1203</td></tr>
+    <tr><td>Alternating band</td><td><code>alternating-food, -replication</code></td><td><code>alternating-food</code></td><td>3,000</td><td>1202, 1203</td></tr>
+    <tr><td>Foothold band</td><td><code>food-band-foothold, -replication</code></td><td><code>food-band-foothold</code></td><td>3,000</td><td>1202, 1203</td></tr>
+    <tr><td>Food floor</td><td><code>food-floor-replication</code></td><td><code>food-band-foothold</code></td><td>3,000</td><td>1203</td></tr>
+    <tr><td>Floor longevity</td><td><code>food-floor-longevity, -replication</code></td><td><code>food-band-foothold</code></td><td>6,000</td><td>1202, 1203</td></tr>
+    <tr><td>Schedule 769</td><td><code>food-schedule-769</code></td><td><code>food-schedule-769</code></td><td>6,000 (gate at 3,000)</td><td>1202</td></tr>
+  </table></div>
+  <p style="font-size:13.5px;color:var(--mut)">All 18 food tool directories map to these 11 screens. Model, horizon and seeds are from a scan of each <code>tools/&lt;screen&gt;/explore.ts</code>; step 1 re-reads them, and reads the compared arms, from the same files.</p>
+  <h3>Design</h3>
+  <ul>
+    <li><strong>Which model runs.</strong> The eight models are a copy chain, and the newest claims the older modes are preserved. A parity test checks that claim per screen, mode and seed (state equal at ticks 0, 500 and the screen's own final tick). Pass: the page uses only the newest model. Any failure: that screen loads its own model. Uniform food always runs on the hungry-shapes model. No model file is edited either way.</li>
+    <li><strong>Known wrinkle.</strong> Uniform endurance changed food allocation under the same mode name hungry-shapes uses. The page shows them as different arms.</li>
+    <li><strong>Drawing.</strong> New <code>render.ts</code> written from the hungry-shapes drawing code; band overlay from each model's own geometry helpers.</li>
+    <li><strong>Built-in replay check.</strong> With <code>food-replays</code> done, "compare with the recorded run" shows whether the live census matches the recording tick for tick.</li>
+  </ul>
+  <h3>Files</h3>
+  <p>New: <code>apps/lab/food-bands/index.html</code>, <code>apps/lab/src/food-bands/{page,render,screens}.ts</code>, three tests (parity, packaging, e2e). Edited: <code>vite.config.ts</code>, <code>Dockerfile.site</code>, <code>deploy/Caddyfile</code>.</p>
+  <h3>Gate</h3>
+  <p>Parity passes or the fallback is in place; live census equals a recorded one for at least one replay per screen; gates green.</p>
+  <div class="decide"><h3>Decisions</h3><ul style="margin:0">
+    <li>One page with a screen picker (recommended) or one page per screen.</li>
+    <li>Link it from the lab's experiments list, or leave it reachable by URL only.</li>
+  </ul></div>
+</section>
+
+<section id="regime-figures">
+  <span class="key">regime-figures</span>
+  <h2>Put pictures on the regime-meters page</h2>
+  <p class="see"><code>docs/3d-regime-meters-map.html</code> gains two figures for the closed Stage 0 run: how far damage spreads after a kick (steps 30, 100 and 1,000, for the S twin, the frozen F pair and the unit-kick U twin), and the rung 1b calibration grid with the "none qualifies" line marked.</p>
+  <figure class="mock">
+    <svg viewBox="0 0 760 170" role="img" aria-label="Sketch of small-multiple damage charts beside a calibration heat grid.">
+      <g>
+        <text x="0" y="12" style="fill:var(--fg)">Damaged blocks after the kick, per rung</text>
+        <g transform="translate(0,22)"><rect class="w" width="140" height="130" rx="6"/><polyline points="14,110 70,70 126,22" fill="none" stroke="var(--stop)" stroke-width="2"/><polyline points="14,118 70,108 126,64" fill="none" stroke="var(--sky)" stroke-width="2"/><polyline points="14,116 70,112 126,100" fill="none" stroke="var(--mut)" stroke-width="2"/></g>
+        <g transform="translate(152,22)"><rect class="w" width="140" height="130" rx="6"/><polyline points="14,112 70,92 126,54" fill="none" stroke="var(--stop)" stroke-width="2"/><polyline points="14,118 70,112 126,90" fill="none" stroke="var(--sky)" stroke-width="2"/><polyline points="14,118 70,116 126,110" fill="none" stroke="var(--mut)" stroke-width="2"/></g>
+        <g transform="translate(304,22)"><rect class="w" width="140" height="130" rx="6"/><polyline points="14,114 70,104 126,88" fill="none" stroke="var(--stop)" stroke-width="2"/><polyline points="14,118 70,116 126,108" fill="none" stroke="var(--sky)" stroke-width="2"/><polyline points="14,119 70,118 126,116" fill="none" stroke="var(--mut)" stroke-width="2"/></g>
+        <text x="0" y="166">S twin</text><rect x="42" y="159" width="14" height="3" fill="var(--stop)"/>
+        <text x="70" y="166">F pair</text><rect x="110" y="159" width="14" height="3" fill="var(--sky)"/>
+        <text x="138" y="166">U twin</text><rect x="180" y="159" width="14" height="3" fill="var(--mut)"/>
+      </g>
+      <g transform="translate(480,0)">
+        <text x="0" y="12" style="fill:var(--fg)">Calibration: living fraction</text>
+        <g transform="translate(0,22)" fill="var(--leaf)">
+          <rect width="62" height="38" opacity=".08"/><rect x="66" width="62" height="38" opacity=".14"/><rect x="132" width="62" height="38" opacity=".10"/><rect x="198" width="62" height="38" opacity=".06"/>
+          <rect y="42" width="62" height="38" opacity=".12"/><rect x="66" y="42" width="62" height="38" opacity=".30"/><rect x="132" y="42" width="62" height="38" opacity=".22"/><rect x="198" y="42" width="62" height="38" opacity=".09"/>
+          <rect y="84" width="62" height="38" opacity=".07"/><rect x="66" y="84" width="62" height="38" opacity=".18"/><rect x="132" y="84" width="62" height="38" opacity=".12"/><rect x="198" y="84" width="62" height="38" opacity=".05"/>
+        </g>
+        <text x="0" y="160">mu →   sigma ↓   one grid per light setting</text>
+      </g>
+    </svg>
+    <figcaption>Layout sketch, not real data. Real values come from <code>regime-stage0-run1-damage.tsv</code> (36 jobs) and <code>m4-results.tsv</code>.</figcaption>
+  </figure>
+  <h3>Steps</h3>
+  <ol start="0">
+    <li>Find <code>runs/regime/regime-results.json</code>, the builder's input. It is not in this checkout and the work Mac did not answer today. If it cannot be found, draw both figures straight from the two committed TSVs.</li>
+    <li>Read <code>regime-html.ts</code> and the reader's JSON; confirm whether the damage table reaches the page as data today.</li>
+    <li>Add inline SVG small multiples (log step axis, three series) and the heat grid, light and dark.</li>
+    <li>Keep the builder's labels. It refuses a "result" label without a frozen rule, and this candidate closed before one: the figures go in as pilot/closed.</li>
+    <li>Rebuild; extend <code>regime-readout.test.ts</code> to cover the new sections.</li>
+  </ol>
+  <p>No world pictures here: no capture images were saved. Those come from <code>slab-viewer</code>.</p>
+  <div class="decide"><h3>Decision</h3><p style="margin:0">The branch <code>claude/3d-regime-meters</code> is local and unpushed. The figures can land there now; whether that branch ever reaches main is yours.</p></div>
+</section>
+
+<section id="slab-viewer">
+  <span class="key">slab-viewer</span>
+  <h2>See the 3D world</h2>
+  <p class="see">A private page <code>/slab/</code>. The slab is only four cells deep, so it is drawn as it is: four layer tiles and one larger top-down view that combines them, with a slider to isolate a layer. Two worlds: the slab ecology from rung 1b, and cyclic competition (three types that beat each other in a ring).</p>
+  <figure class="mock">
+    <svg viewBox="0 0 760 290" role="img" aria-label="Sketch of the slab viewer: a large top-down view on the left and four layer tiles on the right, with a census strip below.">
+      <rect class="w" x="0" y="0" width="330" height="250" rx="8"/>
+      <text x="12" y="18" style="fill:var(--fg)">Top-down · all four layers combined</text>
+      <g opacity=".85">
+        <path d="M30 210 C 80 120, 150 190, 200 90 S 300 60, 310 40 L310 240 L30 240Z" fill="var(--stop)" opacity=".45"/>
+        <path d="M20 60 C 90 40, 120 130, 190 100 S 250 190, 320 150 L320 30 L20 30Z" fill="var(--sky)" opacity=".45"/>
+        <path d="M20 70 C 70 110, 60 170, 30 205 L20 240Z" fill="var(--sun)" opacity=".55"/>
+      </g>
+      <g>
+        <g transform="translate(346,0)"><rect class="w" width="200" height="121" rx="8"/><text x="10" y="18" style="fill:var(--fg)">z = 0</text><path d="M10 100 C 60 60, 110 90, 190 40 L190 111 L10 111Z" fill="var(--stop)" opacity=".45"/><path d="M10 40 C 70 30, 120 70, 190 30 L190 24 L10 24Z" fill="var(--sky)" opacity=".45"/></g>
+        <g transform="translate(560,0)"><rect class="w" width="200" height="121" rx="8"/><text x="10" y="18" style="fill:var(--fg)">z = 1</text><path d="M10 104 C 70 70, 120 96, 190 52 L190 111 L10 111Z" fill="var(--stop)" opacity=".45"/><path d="M10 48 C 70 36, 130 76, 190 40 L190 24 L10 24Z" fill="var(--sky)" opacity=".45"/></g>
+        <g transform="translate(346,129)"><rect class="w" width="200" height="121" rx="8"/><text x="10" y="18" style="fill:var(--fg)">z = 2</text><path d="M10 106 C 80 84, 130 100, 190 66 L190 111 L10 111Z" fill="var(--stop)" opacity=".45"/><path d="M10 56 C 80 44, 130 84, 190 52 L190 24 L10 24Z" fill="var(--sky)" opacity=".45"/></g>
+        <g transform="translate(560,129)"><rect class="w" width="200" height="121" rx="8"/><text x="10" y="18" style="fill:var(--fg)">z = 3</text><path d="M10 108 C 80 96, 130 104, 190 80 L190 111 L10 111Z" fill="var(--stop)" opacity=".45"/><path d="M10 64 C 80 52, 130 92, 190 64 L190 24 L10 24Z" fill="var(--sky)" opacity=".45"/></g>
+      </g>
+      <rect class="w" x="0" y="258" width="760" height="32" rx="6"/>
+      <text x="12" y="278">Step 12,400 · type shares 34 / 31 / 29 % · empty 6 % · living fraction per layer</text>
+    </svg>
+    <figcaption>Layout sketch, not real data. Colours are the three competing types; the layer tiles show whether fronts are flat or tilted through depth.</figcaption>
+  </figure>
+  <div class="note"><p style="margin:0"><strong>Set expectations.</strong> Neither world passed its gate. Calibration found no ecology setting that qualifies (living fraction around 0.001 in the sampled row), so that view may be nearly empty; cyclic competition stopped at Gate 0. The viewer shows what these worlds do, which may be little.</p></div>
+  <h3>Design</h3>
+  <ul>
+    <li><strong>No volume renderer.</strong> Depth is 4; tiles plus a projection show everything.</li>
+    <li><strong>Read back first, draw on GPU only if needed.</strong> 128 × 128 × 4 is 65,536 cells. The first version uses the existing cell readback and a 2D canvas: no new shader, and the picture is provably the simulated state. A direct GPU render pass comes only if that is too slow at 256 × 256 × 4.</li>
+    <li><strong>Simulators are imported, never edited:</strong> <code>gpu-sim3.ts</code> for the ecology, the hash-pinned <code>gpu-sim3-rps.ts</code> and <code>world.ts</code> for cyclic competition.</li>
+    <li><strong>Picture check.</strong> A CPU test runs a tiny 8 × 8 × 4 state through the colour mapping and pins the output, so layer order and wrap direction cannot silently flip.</li>
+  </ul>
+  <h3>Steps</h3>
+  <ol start="0">
+    <li><strong>Spike, half a day at most:</strong> create the real 3D kernel in Chrome from a lab page, step it, read cells back. If it fails, stop and report.</li>
+    <li>Colour mapping and layer layout as pure functions, with the pinned test.</li>
+    <li>Page with the ecology world and a census strip.</li>
+    <li>Add cyclic competition. No registered operating point exists (Gate 0 ended in GATE-0-STOP), so the default is a recorded exploration setting from <code>GATE0-EXPLORATION-2.md</code>, labelled as exploration.</li>
+    <li>Private-page checklist, e2e with WebGPU flags, gates, Codex review.</li>
+    <li>Optional: GPU render pass; a "twin difference" view showing where a perturbed twin diverges (the regime meter, live).</li>
+  </ol>
+  <h3>Gate</h3>
+  <p>Spike passes; pinned picture test; e2e shows non-blank canvases and a moving step counter; frame pacing recorded at 128 and 256.</p>
+  <div class="decide"><h3>Decisions</h3><ul style="margin:0">
+    <li><strong>Base and landing.</strong> Both 3D branches are local, unpushed and forked from main at <code>3f44c319</code>. Build on <code>claude/3d-cyclic-rps</code> (recommended: it has both simulators) and leave landing for later, or rebase the 3D line onto main first (much larger; not worth it for a viewer alone).</li>
+    <li><strong>First world,</strong> if only one: cyclic competition is the more watchable; the ecology is what the 3D line was about.</li>
+    <li>The 3D line is closed at rung 1b. This is for looking, not for reopening it.</li>
+  </ul></div>
+</section>
+
+<section>
+  <h3 style="margin-top:0">Survey limit</h3>
+  <p>Checked <code>origin/main</code> at <code>9d91709a</code> and five side branches (3D regime meters, 3D cyclic competition, RPS invasion control, mycelium, membrane view). The other ~35 worktrees and branches were not checked, so a simulation that lives only there is not covered.</p>
+</section>
+</main>
+</body>
+</html>

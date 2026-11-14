@@ -1,0 +1,33 @@
+
+Running 6 tests using 1 worker
+
+moving-food 1280 source ready "Both seed 1,201 arms verified · paused at tick 0." empty false error false
+moving-food 1280 scrub 0 -> 76 tick 1520 pop 48 video {"src":"http://localhost:5262/docs/creative-prototypes/moving-food-media/seed-1201-paired.mp4","ready":0,"err":null,"dur":null}
+moving-food 1280 recorded census population at tick 1520 = 48
+moving-food 1280 video currentTime 1.5036
+  ✓  1 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › moving-food 1280 (4.5s)
+moving-food 375 source ready "Both seed 1,201 arms verified · paused at tick 0." empty false error false
+moving-food 375 scrub 0 -> 76 tick 1520 pop 48 video {"src":"http://localhost:5262/docs/creative-prototypes/moving-food-media/seed-1201-paired.mp4","ready":0,"err":null,"dur":null}
+moving-food 375 recorded census population at tick 1520 = 48
+moving-food 375 video currentTime 1.5032
+  ✓  2 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › moving-food 375 (4.1s)
+uniform-food 1280 source ready "Seed 1,201 verified · 301 exact saved frames · paused." empty false error false
+uniform-food 1280 scrub 0 -> 151 tick 3020 pop 37 video null
+uniform-food 1280 recorded census population at tick 3020 = 37
+  ✓  3 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › uniform-food 1280 (2.6s)
+uniform-food 375 source ready "Seed 1,201 verified · 301 exact saved frames · paused." empty false error false
+uniform-food 375 scrub 0 -> 151 tick 3020 pop 37 video null
+uniform-food 375 recorded census population at tick 3020 = 37
+  ✓  4 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › uniform-food 375 (2.5s)
+food-band-longevity 1280 source ready "Both seed-1201 arms verified with SHA-matched visual receipt · paused at tick 0." empty false error false
+food-band-longevity 1280 scrub 0 -> 276 tick 5520 pop 39 video {"src":"http://localhost:5262/docs/creative-prototypes/food-band-longevity-media/seed-1201-paired.mp4","ready":4,"err":null,"dur":30.1}
+food-band-longevity 1280 recorded census population at tick 5520 = 39
+food-band-longevity 1280 video currentTime 1.5029
+  ✓  5 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › food-band-longevity 1280 (4.4s)
+food-band-longevity 375 source ready "Both seed-1201 arms verified with SHA-matched visual receipt · paused at tick 0." empty false error false
+food-band-longevity 375 scrub 0 -> 276 tick 5520 pop 39 video {"src":"http://localhost:5262/docs/creative-prototypes/food-band-longevity-media/seed-1201-paired.mp4","ready":4,"err":null,"dur":30.1}
+food-band-longevity 375 recorded census population at tick 5520 = 39
+food-band-longevity 375 video currentTime 1.5017
+  ✓  6 [chrome] › tests/e2e/zz-tmp-playback.spec.ts:8:1 › food-band-longevity 375 (4.3s)
+
+  6 passed (24.7s)
