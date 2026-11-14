@@ -1,0 +1,17 @@
+/* Lists generated from the experiments ledger, on /story/ and /experiments/. Tokens come from site.css. */
+.ledger { margin: 22px 0 0; padding: 0; list-style: none; }
+.ledger li { display: grid; grid-template-columns: minmax(150px, 190px) minmax(0, 1fr); gap: 8px 18px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); }
+.ledger li:last-child { border-bottom: 1px solid var(--line); }
+.ledger li > p { grid-column: 2; margin: 0; max-width: 62ch; font-size: 1rem; }
+.ledger strong { color: var(--text); }
+.ledger strong::after { content: " · "; color: var(--soft); font-weight: 400; }
+.ledger .ledger-sources { color: var(--soft); font-size: .875rem; overflow-wrap: anywhere; }
+.ledger.playthings li { grid-template-columns: 1fr; }
+.ledger.playthings li > p { grid-column: 1; }
+.ledger-tally { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chapter-jump { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 22px 0 0; padding: 0; list-style: none; }
+.story-next { color: var(--soft); }
+@media (max-width: 640px) {
+  .ledger li { grid-template-columns: 1fr; }
+  .ledger li > p { grid-column: 1; }
+}

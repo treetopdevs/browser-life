@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <meta name="description" content="Seven weeks of artificial-life experiments, told as the questions we asked in order: what came back, what we asked next, and what we still can’t tell." />
+    <title>The story so far: seven questions · Cadence Garden</title>
+    <link rel="canonical" href="https://cadence.garden/story/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <link rel="stylesheet" href="/src/experiments/ledger.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="3" rx="1.5"/><path class="bm-jar" d="M7.5 15h17a2 2 0 0 1 2 2v8a5 5 0 0 1-5 5h-11a5 5 0 0 1-5-5v-8a2 2 0 0 1 2-2z"/></svg><span>Cadence Garden</span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/story/">Story</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">The story so far · 27 Sep to 14 Nov 2026</p>
+        <h1>What would it take to see life here?</h1>
+        <p
+          class="lede">Seven weeks of experiments in a garden of sealed worlds, told as the questions we asked, in the order we had to ask them. Most of the answers so far are “no” or “we can’t tell yet”. This page is about why each one sent us to the next question.</p>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">Before you start</div>
+        <div class="prose">
+          <h2>How to read this</h2>
+          <p>We are learning in public, so this page shows the misses as plainly as the hits. Every result carries a label. <strong>Confirmed</strong> is kept for tests whose rules were frozen before their data. <strong>Negative</strong> means a test with pre-stated rules came back no. <strong>Measured</strong> and <strong>Exploratory</strong> are real numbers from a few seeds, with no claim beyond them. <strong>Open</strong> and <strong>Unclear</strong> mean the test could not tell, which is different from a no.</p>
+          <p>Each chapter ends with its results. The full write-up of every one is in <a href="/research/">the journal</a>, and <a href="/experiments/">the experiments index</a> lists them all with their sources. Nothing here is evidence of open-ended evolution, the kind that keeps producing new things without end. That is the thing we are looking for, not a thing we have found.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-1">
+        <div class="aside-label">1 · The jar</div>
+        <div class="prose">
+          <h2>Can rules this simple grow something that mends itself?</h2>
+          <p>Every world here is a sealed jar: a grid of cells holding nutrient, biomass, membrane and waste. Light comes in; nothing else does. All the arithmetic is in whole numbers, so the lab can check at every step that not one unit of matter was made or lost, and replay any run bit for bit.</p>
+          <p>The program never says where an organism begins or ends. There is no “organism” in the code and no “reproduce” instruction. Bodies, births and families are things we count afterwards, from what the cells did. That choice matters for everything below.</p>
+          <p>The first question was modest: can such a world hold a pattern that grows back after we cut it? A search found seeds that regrow after a wound removes about 30% of a body, and that die when the light is switched off. Twelve of them became the founders for everything in the next chapter.</p>
+          <!-- GENERATED:ledger:chapter-1 -->
+          <!-- /GENERATED:ledger:chapter-1 -->
+          <p class="story-next">Things that mend themselves are a start. The harder question is what they do when left alone for a long time.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-2">
+        <div class="aside-label">2 · The long run</div>
+        <div class="prose">
+          <h2>Left alone, does it keep evolving?</h2>
+          <p>We wrote the test down first, then ran it: 170 runs of a million steps each, with the founders from chapter 1, in two worlds. Every run kept its matter exactly. The milestone was not met. Runs with mutation did show more new adaptive activity than both controls in one of the two worlds. But a second test failed in both: neutral runs, where mutations change nothing about behaviour, also counted as “growing”. If the null looks like the treatment, the treatment has not shown anything.</p>
+          <p>Looking closer told us where it stalls. Genomes are copied faithfully, but mutation rarely changes what a genome does: the mutants of only 1 of the 12 founders reliably took up a new role, where a broader sample of genomes did so 11 times in 24. The way we had chosen founders was a bottleneck. Evolved lines had also lost the founders’ knack for regrowing.</p>
+          <p>Two later checks closed side doors. A search for habitats that keep themselves going found none in its 24 pilot cases. And one mutant that had seemed to regrow better than its founder, tested again with fresh rules, tied it exactly: 28 recoveries in 32 trials each.</p>
+          <!-- GENERATED:ledger:chapter-2 -->
+          <!-- /GENERATED:ledger:chapter-2 -->
+          <p class="story-next">A null that “grows” is a problem with the ruler as much as with the world. So the next question was about the ruler.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-3">
+        <div class="aside-label">3 · The instruments</div>
+        <div class="prose">
+          <h2>Were our instruments seeing what we thought?</h2>
+          <p>Often, no. Our tracker credits each birth to a nearby parent. When we checked directly, in 135 of 200 sampled births the credited parent had contributed no copied material. A tracked birth is not, by itself, evidence that anything reproduced. That qualifies every result built on tracked births, including some of our own.</p>
+          <p>The scores we used for activity, novelty and ecological role fared no better: none of the four met every validation requirement, and three flagged too many neutral runs. Three newer measures, read from the family tree of mutations, failed as well. In one world every one of them ranked the neutral runs as more “selective” than the real ones.</p>
+          <p>The habit this taught us: before pointing a measure at a world, point it at something where the answer is known. A movie with nine copies of one glider should not score as nine times more interesting than one glider; a cheap error count says it is. A naive score for “built from reused parts” rated duplicated random shapes above a hand-built hierarchy every time.</p>
+          <!-- GENERATED:ledger:chapter-3 -->
+          <!-- /GENERATED:ledger:chapter-3 -->
+          <p class="story-next">While the instruments were being repaired, we tried a blunter approach: stop waiting for evolution and push.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-4">
+        <div class="aside-label">4 · A hand on the dial</div>
+        <div class="prose">
+          <h2>Can we turn it up by hand?</h2>
+          <p>Yes, when we do the selecting. We split a world into ponds, and at each cycle cleared them and reseeded from a small fragment of a successful pond, following experiments that impose a life cycle on groups of microbes. Then we put it through a registered test: rules frozen first, 24 histories per arm. Both primary hypotheses were confirmed. Worlds that had lived under the cycle founded new ponds from fragments more often than the controls did, and still did 200,000 steps after the cycle stopped. It is the one result here that earned the word. The catch is in the first sentence: the life cycle is ours. Whether ponds can select themselves is prepared and has not run.</p>
+          <p>Then we gave genomes a gene they could gain. The first, decomposition, swept to about 99% of living cells in all three seeds. It paid for its lineage and not for the world: those worlds ended as a thin decomposing film. A second gene, for building, taught us about controls instead. A copy that cost the same and did nothing reached about half the living cells in two of three control seeds, so the real gene’s one good seed said nothing. Forcing carriers to build did not help. Looking for a world where building pays took seven worlds and 103 runs, and none passed.</p>
+          <p>A lot of what we see in these chapters is something taking over. Taking over is easy. It is not the same as getting better, and it is often bad for the world it happens in.</p>
+          <!-- GENERATED:ledger:chapter-4 -->
+          <!-- /GENERATED:ledger:chapter-4 -->
+          <p class="story-next">Watching all of this by eye does not scale, and eyes are easy to fool. Could something else watch?</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-5">
+        <div class="aside-label">5 · A second pair of eyes</div>
+        <div class="prose">
+          <h2>Can a machine notice for us?</h2>
+          <p>Not yet. We want a naturalist in the garden: something that rings a bell when a world does something worth a look. The first bell was plain code that scores how far a run has strayed from neutral runs of the same world. It rang on 30 of 70 neutral runs, where its bar allowed at most 2. It was ringing on drift. A second version, with its two noisiest signals removed, rang on none of 70 new neutral runs. But given twin worlds that differ by one deliberate wound, it rang on 4 of 10 for the largest wound, where its rule needed 8 of 10. It can tell kinds of run apart. It cannot yet hear something happen inside one.</p>
+          <p>We tried an image model on a case where we knew the answer, a takeover in the program soup from the next chapter. It passed, thinly, and it also reacted to a blip in the control. A rise in its score means “something visibly changed”, not “life happened”.</p>
+          <p>And we asked whether a simple rule could predict what a nudge would do to a world before we tried it. On held-out cases it was wrong 73 times in 96, worse than always guessing “no change”.</p>
+          <!-- GENERATED:ledger:chapter-5 -->
+          <!-- /GENERATED:ledger:chapter-5 -->
+          <p class="story-next">If the jar will not keep evolving and we cannot yet hear it when it does something, maybe the jar is the wrong shape.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-6">
+        <div class="aside-label">6 · Other worlds</div>
+        <div class="prose">
+          <h2>Is it the world’s fault?</h2>
+          <p>So we built other worlds, each small enough to answer one question, and most of them are on this site to run.</p>
+          <p><strong>Food.</strong> In a prototype world of bodies run by small programs, we changed only how food arrives. Even food kept three seeds alive and changing. A band of food that moves and one that stays put both passed, so the screen could not tell them apart. Alternating bands gave a seasonal pattern once, and not again on the next seed. <a href="/food-bands/">Run the food screens</a>.</p>
+          <p><strong>Depth.</strong> A thin 3D slab was meant to hold a sparse living world that shades its own floor. Sixty settings on three seeds each: none qualified. Life stayed sparse, died out, or carpeted the slab. We closed that line. A side idea, three kinds that eat each other in a ring, stopped at its first gate. <a href="/slab/">See both slabs</a>.</p>
+          <p><strong>Programs.</strong> In a soup of random 64-byte programs that run each other, self-copiers arose and took over in 3 of 8 well-mixed soups. After takeover the leading copier keeps being replaced. Races between leaders settled only 19 of 63 pairings, so whether the replacements are improvements is not shown. <a href="/soup/">Watch the soup</a>.</p>
+          <p><strong>Brains.</strong> In the mycelium world, particles carry small neural controllers, lay a chemical trail and split. Whether inheriting a controller matters could not be measured. A sharper question could: when laying trail only costs, inheritance drops it, and a toll rule that makes moving cheaper for trail-layers keeps it. But the controllers pay the toll without following the trail. <a href="/mycelium/">Open the mycelium world</a>.</p>
+          <p><strong>Company.</strong> <a href="/garden/">The shared garden</a> is one big stormy world meant to be grown in turns by whoever is tending it. For it we asked how long a visitor’s mark stays findable in a storm. Our measure saturated, so that answer is unclear.</p>
+          <!-- GENERATED:ledger:chapter-6 -->
+          <!-- /GENERATED:ledger:chapter-6 -->
+          <p class="story-next">New worlds gave us new things to watch and the same difficulty: telling “changing” from “improving”. Time to ask more carefully.</p>
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="chapter-7">
+        <div class="aside-label">7 · Sharper questions</div>
+        <div class="prose">
+          <h2>What exactly are we asking?</h2>
+          <p>On 1 November we stopped and wrote a plan: fourteen ideas, each one a narrower question with its own controls. The first small tests of eight of them ran over the next two days, on small worlds, with rules written before the data wherever we could.</p>
+          <p>Most came back with the same answer, and it was not yes or no. It was: this test cannot tell. Do later genomes beat earlier ones? Nothing shows improvement against the past, and that is not a finding of no improvement, because two of three archives failed a control. One of them looked strongly like progress until the control showed which side a genome starts on mattered more. Do small edits to a controller stay local? Too few edits improved anything to say. Does what one body builds help another? The effect we were looking for is smaller than the test’s own noise. Do bodies that cluster follow a moving sun better? Same: the noise floor was above the limit we had set.</p>
+          <p>That sounds like failure and we do not read it that way. Each of these tests checked itself against a known answer before we looked at the real one, and stopped when the check failed. In September we would have read those numbers as results.</p>
+          <!-- GENERATED:ledger:chapter-7 -->
+          <!-- /GENERATED:ledger:chapter-7 -->
+        </div>
+      </section>
+
+      <section class="shell prose-grid" id="now">
+        <div class="aside-label">Where that leaves us</div>
+        <div class="prose">
+          <h2>What we think now</h2>
+          <p>These are readings of the results above, not results themselves.</p>
+          <ul>
+            <li><strong>The bookkeeping holds.</strong> Exact conservation and bit-for-bit replay have held in every registered run. It is why a negative here can be trusted as a negative.</li>
+            <li><strong>Selection we impose works. Selection the world imposes on itself is not shown.</strong> The pond cycle is our one confirmed result, and the cycle is ours.</li>
+            <li><strong>Taking over is cheap.</strong> A gene, a copier or a family sweeps a world readily. None of our tests has yet shown a sweep that is an improvement.</li>
+            <li><strong>Measurement is the bottleneck.</strong> More of our tests have ended at “cannot tell” than at “no”. Tests now check themselves against a known answer first.</li>
+          </ul>
+          <h2>What is next</h2>
+          <ul>
+            <li>The soup’s next test asks whether later copiers do better against copiers they have never met. Its rules are frozen and it has not run.</li>
+            <li>Ponds that select themselves, with our hand off the ranking: prepared, not run.</li>
+            <li>A third bell, with its rule fixed in advance and tested on new twins.</li>
+            <li>Tests with enough power to answer chapter 7’s questions, now that we know how big the noise is.</li>
+          </ul>
+          <div
+            class="actions"><a class="button primary" href="/lab/">Open the lab →</a><a class="button quiet" href="/experiments/">All experiments</a><a class="button quiet" href="/research/">The journal</a></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Cadence Garden</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/theme.ts"></script>
+  </body>
+</html>
