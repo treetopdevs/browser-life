@@ -1,0 +1,49 @@
+# Mycelium R4 FROZEN. Freeze 1, 2026-11-14T06:21:17Z. Format and rules: PROTOCOL.md section 9.
+# frozen_at: 2026-11-14T06:21:17Z
+# base_commit: e5b43f690d25fefd7fe32a52c599887fb452a539 (informational; the hashes below do not depend on git)
+# deno: 2.9.8, v8 15.0.245.2-rusty, typescript 6.0.3 (informational)
+protocol_sha256: 7514c449ccfcc4aefb2b0f85722c8ea628da9b0811c592f6eb3502db911da269
+code_hash: 4243ccc2374e31b053b60f8b4d7f1e99b6097e99ac9ba58cafdb325e1d8f017f
+# per-file SHA-256 of everything code_hash covers (shasum -a 256 format); r4.ts and r4-analyze.ts verify each line
+cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a  deno.json
+aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4  packages/schema/src/accounting.ts
+5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71  packages/schema/src/checkpoint.ts
+7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9  packages/schema/src/config.ts
+44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2  packages/schema/src/discovery.ts
+a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3  packages/schema/src/exchange.ts
+33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d  packages/schema/src/feed.ts
+db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436  packages/schema/src/founders.ts
+76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185  packages/schema/src/genetics.ts
+f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba  packages/schema/src/genome.ts
+657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628  packages/schema/src/index.ts
+08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790  packages/schema/src/int.ts
+9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798  packages/schema/src/kernel.ts
+56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558  packages/schema/src/layout.ts
+31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f  packages/schema/src/migration.ts
+93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872  packages/schema/src/ponds.ts
+fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e  packages/schema/src/presets.ts
+380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2  packages/schema/src/sun.ts
+1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680  packages/schema/src/world.ts
+d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb  packages/sim-ref/src/cells.ts
+a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb  packages/sim-ref/src/index.ts
+4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb  packages/sim-ref/src/step.ts
+fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf  packages/sim-ref/src/sun.ts
+89a9114b35e3af9c7786977375b4e3c1a0f9956478f80f2a625823b257f6227b  tools/mycelium/RULES.md
+09126acfdf1614df9c6b5adaae6345e94a452bf5fb5375285ade7a962e512330  tools/mycelium/gpu.ts
+ce8189d199e2313548525d79cad5bf6bee24fc438ae1acc71bdb95079fcff00b  tools/mycelium/observe-r2b.ts
+120393a828cd068206e30487edcab6d0dfd61be0ae693fcdadc30f9820c49cc2  tools/mycelium/observe-r4.ts
+8cef375db86b3b79101c31dbcaf6fb5a1498821e88d9b6aff3b8e76dcfde60ff  tools/mycelium/observe.ts
+706b4eee985f8b7a2f9db05b6913629f6bf9c580dfd823398a6958c9d84ef9ef  tools/mycelium/r2-freeze.ts
+5ec6f484ef3171727656e6894e56d6f57add167537708353480422e2e9709037  tools/mycelium/r2-protocol.ts
+740751139ecd8f7c587af2d74908fc120c7ffba931b046e0d74c97f22e548b1f  tools/mycelium/r2b-protocol.ts
+0050ff140faba1d369f644ffe82cfbf22ba76588445c0497711c630f989d9cbe  tools/mycelium/r2b-seeds.ts
+1058dfdc36e3963c8d765148412006ff14d8b1039b155313ec839b5df56f082e  tools/mycelium/r2b-stats.ts
+4b72efec09cd83c5d8a4edae77f8959a96147a468bb06cdbbf11fbd2fe91c15d  tools/mycelium/r4-analyze.ts
+64737b7e89932d6558cfea2e0e715d139c27329a457a3ddfd3d2efffc9fd35fd  tools/mycelium/r4-decide.ts
+fc72734a6203b60a32bdcb3bf899d25b4e6ef50b886465cab3c5b20f8ffcb536  tools/mycelium/r4-freeze.ts
+b818476df4e86d3048ff746b09f3bec9bd4c8ab45c5196b371ef5efadd120041  tools/mycelium/r4-protocol.ts
+5f30fa1fd529a3c1b92e40b2a3af3ef5c73955279c0a650c870684a7e968270f  tools/mycelium/r4-seeds.ts
+1dfef0e3239e957518f5582ac4d07fc139f16d89e734be587166d0a7b332a2e6  tools/mycelium/r4.ts
+42f4bade799f82eee5df2c5bed410dede03e721348d8ffc32c62584f35c80242  tools/mycelium/world.ts
+# Freeze 2, 2026-11-14T07:59:20Z: appended after calibration, before any confirmation run. Nothing above this line changes.
+calibration_sha256: 290d9d9a31595cfb9de580a0dc3d1d593b1b83d7beef697b36e81cd7c17f5e69
