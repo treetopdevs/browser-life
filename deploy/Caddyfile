@@ -20,6 +20,10 @@
   @private_boundaries path_regexp private_boundaries (?i)^/boundaries(?:/|$)
   respond @private_boundaries 404
 
+  # Food bands runs the food-schedule screens live and stays a local exploration page.
+  @private_food_bands path_regexp private_food_bands (?i)^/food-bands(?:/|$)
+  respond @private_food_bands 404
+
   # Developmental bodies are another local creative prototype.
   # Hungry shapes remains a local prototype.
   @private_hungry path_regexp private_hungry (?i)^/hungry-shapes(?:/|$)

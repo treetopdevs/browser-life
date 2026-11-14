@@ -17,6 +17,7 @@
     { "first": 8501001, "last": 8501999, "owner": "discovery-calibration" },
     { "first": 8502000, "last": 8599999, "owner": "discovery (reserved for calibration, discovery and confirmation namespaces)" },
     { "first": 8600001, "last": 8600999, "owner": "i06 niche construction (docs/niche-construction-2026-11-01: dev 8600001-8600004, replicates 8600201-8600204, wall controls 8600301-8600308, fixtures 8600401-8600408, first-pass fresh 8600101-8600108 (observed, superseded), amended fresh 8600501-8600508)" },
+    { "first": 8601001, "last": 8608999, "owner": "i06b free-energy-matched (docs/niche-construction-fe-2026-11-02: block seeds 8601001-8601999 and replicate sims at block seed + k*1000 for k 0..7 up to 8608999; dev 8601001-8601008, replicate noise 8601201-8601204, wall controls 8601301-8601308, fixtures 8601401-8601408, fresh 8601501-8601516)" },
     { "first": 8700001, "last": 8700999, "owner": "i08 moving light (docs/moving-light-2026-11-02: dev 8700001-8700004, replicate noise 8700201-8700204, fixtures 8700401-8700408, fresh confirmation 8700501-8700508)" },
     { "first": 20261002, "last": 20261002, "owner": "sandbox workspaces" },
     { "first": 29092028, "last": 29092028, "owner": "foundations workspace" },

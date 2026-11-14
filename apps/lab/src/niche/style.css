@@ -30,3 +30,13 @@ thead th{color:#aebbb8;font-weight:500;border-top:0}
 .skip{position:absolute;left:20px;top:-100px;padding:12px;background:#14232a;z-index:10}.skip:focus{top:15px}
 :focus-visible{outline:3px solid #f2c978;outline-offset:4px}
 @media(max-width:690px){th,td{padding:7px 8px}tbody th{min-width:140px}}
+
+.rung2{margin:32px 0;padding:18px 16px;border:1px solid #3a5158;border-radius:12px;background:#0f1b21}
+.rung2 h3{margin:22px 0 8px;font-size:15px;color:#dce7e2}
+.edges-fe{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.edge-fe{padding:10px 12px;border:1px solid #34484e;border-radius:8px;background:#101e24;font-size:13px;line-height:1.6}
+.edge-fe.edge-supported strong{color:#9fe4c4}.edge-fe.edge-unsupported strong{color:#f2c978}.edge-fe.edge-unavailable strong{color:#c2d0cd}
+.verdict-stop{margin:8px 0;padding:10px 12px;border:1px solid #7b6744;border-radius:8px;background:#2b281f;color:#f2dfb7;font-size:13px;line-height:1.6}
+.bar span.bar-noise{background:#c9a24f}.bar span.bar-effect{background:#4f8f7b}
+td .bar{min-width:120px;margin:3px 0}
+.muted{color:#9cadaa;font-size:12px}

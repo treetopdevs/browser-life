@@ -18,6 +18,54 @@
       <p class="disclosure">Exploratory, CPU only, no GPU evidence, mutation off. A local experiment, kept off the public site. A negative here means "no causal benefit detected in this small panel, horizon and field", not that a second link is impossible.</p>
     </section>
 
+    <section class="rung2" id="rung2" aria-labelledby="r2-heading">
+      <p class="eyebrow">Second rung: free-energy-matched</p>
+      <h2 id="r2-heading">Same question, with fairer comparators and a better-powered readout</h2>
+      <p>The first rung could not tell whether a negative came from the field or from the receiver-alone controls holding more free energy (for one block, 22,169 against 9,917, at equal total energy). This rung adds comparators that match the field's free energy exactly, sums each arm over several replicate runs to push the noise floor down, and asks whether a hand-built polymer wall of a realistic dose can be seen at all before any fresh builder block is run.</p>
+      <p class="disclosure">Exploratory, CPU only, no GPU evidence, mutation off. Local, kept off the public site. A negative would only mean a consistent benefit was not detected under these rules, not that there is no benefit and not that a second link is impossible.</p>
+      <div class="verdict" id="r2-verdict" aria-live="polite"></div>
+      <h3>Edge per candidate</h3>
+      <ul class="edges-fe" id="r2-edges"></ul>
+      <div class="table-section">
+        <h3>Free energy and total energy before the inoculum is placed</h3>
+        <div class="scroll" tabindex="0" role="region" aria-label="Free energy table, scrolls sideways on narrow screens">
+          <table><caption>Lattice free energy E and total energy (including the receiver reserve) for one block, measured before the inoculum is placed. The total-matched receiver-alone controls hold far more free energy than the field arm; the new comparators hold exactly the field's free energy and carry a signed construction gap in total energy, reported here and never entered in a ledger.</caption>
+            <thead><tr><th scope="col">Arm</th><th scope="col">Free energy E</th><th scope="col">Total energy</th><th scope="col">Gap to the field arm</th></tr></thead>
+            <tbody id="r2-free"></tbody></table>
+        </div>
+      </div>
+      <div class="table-section">
+        <h3>Noise floor against the effect it must detect</h3>
+        <div class="scroll" tabindex="0" role="region" aria-label="Noise table, scrolls sideways on narrow screens">
+          <table><caption>delta is the replicate-noise floor of the summed readout. The effect is the wall control's median on its weakest contrast at the dose that qualified the candidate, or at the smallest dose that was detected. When the wall was not detected at any dose, the row shows the dose with the highest weakest-contrast median instead and says so (best dose shown); that is not a detected effect. The noise bar is delta; the effect bar is the wall effect, on one scale per row.</caption>
+            <thead><tr><th scope="col">Candidate</th><th scope="col">delta</th><th scope="col">Wall effect (weakest contrast)</th><th scope="col">Floor, then effect</th></tr></thead>
+            <tbody id="r2-noise"></tbody></table>
+        </div>
+      </div>
+      <div class="table-section">
+        <h3>Positive control: the dose ladder</h3>
+        <div class="scroll" tabindex="0" role="region" aria-label="Dose ladder table, scrolls sideways on narrow screens">
+          <table><caption>A hand-built polymer ring around the inoculum under the ordinary placement rule, through all four contrasts, at rising total polymer. A wall passes when each contrast is positive in at least seven of eight seeds and its median clears delta. A candidate qualifies only when both hold: a passing dose is within the ceiling, which is twice the median polymer its dev builders actually leave, and the noise gate holds (G-NOISE: the weakest contrast's median is at least twice delta).</caption>
+            <thead><tr><th scope="col">Wall</th><th scope="col">Seeds positive per contrast</th><th scope="col">Weakest contrast median</th><th scope="col">Against the ceilings</th></tr></thead>
+            <tbody id="r2-ladder"></tbody></table>
+        </div>
+        <div class="scroll" tabindex="0" role="region" aria-label="Qualification table, scrolls sideways on narrow screens">
+          <table><caption>Whether the positive control qualified each builder candidate.</caption>
+            <thead><tr><th scope="col">Candidate</th><th scope="col">Realistic ceiling (polymer)</th><th scope="col">Minimum detectable dose</th><th scope="col">Qualification</th><th scope="col">Why</th></tr></thead>
+            <tbody id="r2-qual"></tbody></table>
+        </div>
+      </div>
+      <div class="table-section">
+        <h3>Can the old inoculum comparator be fooled? far-field-energy</h3>
+        <div class="scroll" tabindex="0" role="region" aria-label="Far-field table, scrolls sideways on narrow screens">
+          <table><caption>far-field-energy is a field that differs from its controls only by extra free energy laid outside the inoculum footprint and halo, no polymer. The first rung's inoculum contrast reads it as a benefit; the free-energy-matched contrast does not. The full gate rejects it on the polymer, space and free-energy-matched inoculum contrasts (the polymer ablation contrast at 0 of 8 is one reason), so the claim is about the inoculum contrast alone.</caption>
+            <thead><tr><th scope="col">Fixture</th><th scope="col">Naive metric says</th><th scope="col">First-rung inoculum contrast</th><th scope="col">Free-energy-matched contrast</th><th scope="col">Full gate</th></tr></thead>
+            <tbody id="r2-far"></tbody></table>
+        </div>
+      </div>
+      <ul class="limits" id="r2-limits"></ul>
+    </section>
+
     <section class="verdict" id="verdict" aria-labelledby="verdict-heading" aria-live="polite">
       <h2 id="verdict-heading">What the pre-stated rules say</h2>
     </section>

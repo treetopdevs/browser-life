@@ -1,0 +1,62 @@
+Baseline rung-1 `--check` passes. I ran one in-memory far-field fixture probe; no files were changed.
+
+1. **P1 — The pure-energy fixture cannot make the existing gate return `supported`.**  
+   [PLAN:19](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:19) requires this, but [ablation only converts P to C](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/transfer.ts:156). With no polymer, `b` and `ab` remain identical, so [`D_poly = 0`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/assay.ts:158). My far-field probe produced identical endpoint hashes and Y=475 for both arms. Artificially constructing the other contrasts would no longer test the real gate.  
+   **Fix:** test whether the old **inoculum contrast** is fooled, while explicitly recording that the complete old gate rejects it. A full-gate trap needs a separately specified, polymer-bearing confound.
+
+2. **P1 — The credit direction rule is reversed.**  
+   [PLAN:42–47](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:42) defines `credit = energy(b) − energy(f)`. Consequently, positive credit means the comparator contains **less** total energy; negative credit means **more**. The eligibility rule and named test assert the opposite, potentially excluding a stronger comparator from the maximum.  
+   A credit can represent documented energy removal; a negative credit represents energy input. Merely defining it as the balancing difference makes zero residual an accounting identity, not proof of budget preservation.  
+   **Fix:** correct the signs, specify admissible conversion/source operations, and distinguish physical conservation from comparator budget mismatch.
+
+3. **P1 — The promised unchanged transfer audit cannot recognize the credit.**  
+   [PLAN:27](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:27) reuses `transfer.ts` unchanged, but [`Audit` and `residuals`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/transfer.ts:16) contain no credit term. [`runArm`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/assay.ts:65) calls that audit at every census. Adding a property in `freeEnergy.ts` does not change the invariant; nonzero-credit arms fail it.  
+   **Fix:** explicitly plan a versioned audit extension or adapter, including transfer snapshots and census checks, with unchanged rung-1 serialization.
+
+4. **P1 — G7 contradicts the source-manifest checks.**  
+   The plan changes existing niche sources and adds three modules while forbidding changes anywhere in the rung-1 documentation directory ([PLAN:90–128](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:90)). But [`sourceFiles`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/tools/niche/niche.ts:77) includes every niche `.ts` file, and [`checkSaved`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/tools/niche/niche.ts:144) rejects both changed hashes and newly added files. Unchanged simulation behavior cannot satisfy this check.  
+   **Fix:** permit a narrowly documented rung-1 **manifest-only re-pin**, preserving evidence/calibration/lock bytes, as the [I08 precedent](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-2026-11-01/REVIEW.md:100) actually did. Amend the protected-path gate accordingly.
+
+5. **P1 — The positive control still exercises a placement the real assay forbids.**  
+   [PLAN:59](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:59) lets W2 qualify measurement adequacy. [`wallGateBlock` uses `allowP: true`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/fixtures.ts:129), whereas real [`placeAll` defaults to false](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/arms.ts:169). Injury protection depends on [polymer at the injured cell](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/sim-ref/src/step.ts:668). Increasing replication or lowering the wall dose does not remove that mechanism mismatch.  
+   **Fix:** require an end-to-end positive control using ordinary placement for usable negatives. Keep allowP W2 as a diagnostic.
+
+6. **P2 — fB immediately breaks free-energy matching.**  
+   [PLAN:44](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:44) copies E from `b`, then applies the old biomass debit. [`matchedControls`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/arms.ts:124) removes `(eB−eA)*dB` from lattice E; [`moveToReserve`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/transfer.ts:111) puts none of that into reserve E. Thus fB loses exactly that much free energy, including after placement.  
+   **Fix:** construct fB jointly under explicit E, matter and energy constraints; assert its free-E equality before and after placement.
+
+7. **P2 — Most replicate seeds are outside the reservation.**  
+   The base range and listed sub-ranges in [PLAN:78](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:78) have **no collisions** with the [current registry](//Users/nicholas/develop/browser-life-i06-free-energy-matched/experiments/discovery/seed-registry.json:19). However, the offsets at [PLAN:51](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:51) produce fresh seeds through **8,604,516**, or **8,608,516** at R=8—outside 8,601,001–8,601,999. The current [collision scan checks explicit base lists](//Users/nicholas/develop/browser-life-i06-free-energy-matched/tools/niche/niche.ts:133).  
+   **Fix:** reserve, enumerate, hash and collision-check every derived seed, including the disjoint noise ensembles and R=8 expansion.
+
+8. **P2 — `free-gap-replay` reverses the observed confound.**  
+   [PLAN:71](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:71) says d0 had *less* free E. The actual [rung-1 record](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-2026-11-01/EVIDENCE.md:25) says d0 had **22,169**, versus **9,917** in `b`, with equal total energy. A reversed fixture does not replay the defect this slice claims to close.  
+   **Fix:** reproduce the recorded direction and bound inventories, then assert that matching removes d0’s excess E without manufacturing energy.
+
+9. **P2 — The stopped outcome cannot produce its promised artifacts.**  
+   [PLAN:123](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:123) skips `--write` when G3/G-NOISE fails, yet subsequent checks, the page and stopped-payload tests require `evidence.json` and `manifest.json`. The existing [`freshReport`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/evidence.ts:138) already supports sealing a stopped result without running fresh seeds. Artifact-dependent tests also appear before initial generation at line 119.  
+   **Fix:** always write a sealed stopped payload; gate only the fresh simulation. Run artifact verification after generation.
+
+10. **P2 — G3 and G-NOISE do not define one reproducible qualification rule.**  
+    [PLAN:55–59](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:55) leaves “positive-control median effect” undefined across four contrasts, two walls and candidate-specific deltas. Existing [`wallReport`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/evidence.ts:63) measures one contrast using a fixed reserve-based floor. Also, “dose 120 **or**…” permits 120 even when new dev polymer makes the realistic ceiling below 120, contradicting the [named dose test](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:106).  
+    **Fix:** define qualification per candidate, using summed-R units, the limiting gating contrast, explicit wall-test thresholds, and doses strictly within that candidate’s ceiling.
+
+11. **P2 — The noise gate does not establish statistical power.**  
+    The stated sign-test probabilities are correct, but the first Holm rejection requires **k≥13**, with p=697/65,536. At a true positive-block probability of 0.75, one contrast passes that threshold only **40.5%** of the time; requiring four contrasts, delta and survival cannot improve that probability. [G-NOISE](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:55) measures conditional Stage-2 variation, not the entire block-level detection probability used by the [decision](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/decision.ts:100).  
+    **Fix:** predeclare a detectable effect/consistency target and evaluate the complete gate’s power, or explicitly restrict the interpretation of “usable negative.”
+
+12. **P2 — The reused freeze mechanism does not enforce the claimed freeze.**  
+    G4 requires committed, pushed implementation rules before fresh execution, but the existing [`--freeze` lock](//Users/nicholas/develop/browser-life-i06-free-energy-matched/tools/niche/niche.ts:182) binds protocol data and calibration, not implementation hashes or a commit. [`--replay-check`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/tools/niche/niche.ts:154) calls generation without validating any lock first. The [planned timestamp test](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:109) cannot prove commit/push ordering.  
+    **Fix:** bind implementation hashes and the freeze commit, and validate the frozen inputs before **every** path capable of executing fresh seeds.
+
+13. **P2 — The survival rule cannot support a causal survival claim.**  
+    [PLAN:13](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:13) asks whether conditioning raises survival relative to controls. Lines 51/84 only require survival in `b`; they never contrast survival between arms. A no-survival-effect world can pass that condition perfectly—as [every rung-1 arm already did](//Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-2026-11-01/EVIDENCE.md:19).  
+    **Fix:** add a paired survival-benefit estimand, or describe survival solely as a viability requirement and claim only a biomass-inventory benefit.
+
+14. **P2 — The overall two-hour budget omits dominant work.**  
+    [PLAN:130](/Users/nicholas/develop/browser-life-i06-free-energy-matched/docs/niche-construction-fe-2026-11-02/PLAN.md:130) correctly computes **4,280 steps/block** and about **12.7 minutes** for 48 fresh blocks at 3.7 ms/step. But the wall ladder alone needs approximately `2 walls × 4 doses × 8 seeds × 12 arms × 4 replicates × 80` = **245,760 steps / 15.2 minutes**. That excludes dev candidates, noise ensembles, builder scaling, fixtures and repeated calibration during [`buildPayload`](//Users/nicholas/develop/browser-life-i06-free-energy-matched/packages/runner/src/niche/evidence.ts:259). Calibration + write + replay approaches **107 minutes** before fixtures, tests, reviews or load penalties.  
+    **Fix:** enumerate the complete workload, benchmark it before freeze, reuse frozen calibration during generation, and defer optional dose-response/UI work if necessary.
+
+Shared Stage-1 histories are appropriate paired blocks here: summing R replicates does not inflate n when the sign test still uses 16 blocks. Absolute T1 alignment is also supported by the existing implementation. Founder scaling can use the existing protocol field without adding WorldConfig keys.
+
+**Verdict:** revise before implementation. The impossible fixture, credit rules, audit contract, manifest conflict and positive-control mismatch currently block the claimed validity and acceptance gates.

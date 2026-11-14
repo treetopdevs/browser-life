@@ -1,0 +1,16 @@
+Command: GARDEN_FOOD=1 LAB_PORT=5301 PORT=6301 GARDEN_DAWN_MS=5000 GARDEN_DATA_DIR=/tmp/s1-garden bin/garden-dev
+  (PATH had a no-lock deno shim first; git status afterwards showed no change to package.json, pnpm-lock.yaml or deno.lock)
+Launcher output: Founded garden 'commons' on spots: {"days":365,"garden":"commons"}
+                 Collective food: enabled at founding (default: 5 distinct networks in one dawn, at most once every 7 garden days).
+Public view (GET /api/public/gardens/commons): food.enabled true, food.asks 5, food.everyDays 7, contract garden-v1, state growing.
+STATE 1  food enabled:           true (public view)
+STATE 2  request accepted:       curl -X POST .../api/public/gardens/commons/food/hands -d '{}' -> HTTP 201 {"counted":true, "food":{"hands":1,"asks":5,...}}
+STATE 3  collective actually fed: NO. 1 of 5 networks asked; one machine cannot meet the five-network threshold. food.foods stayed [].
+Stone by curl: POST .../letters {"kind":"stone","x":128,"y":128,"r":8} -> HTTP 201, ltr-1 waiting, landsAtStep 4096.
+  Day 1 (steps 2048-4096) was then released, run by island dev-1 and replayed by island dev-2: segment status "verified",
+  verification "same-device-type", letters ["ltr-1"], landedIn 5bfb9c2a059c6395.
+Stone through the page (/garden/ at 1280): x=60 y=70 -> "Posted as ltr-2. It is public now, lands at step 34,816 (end of day 16), and counts once a second island replays that day."
+"Add my hand" through the page: refused, "The garden is not taking hands from this network just now: it takes at most 3 letters and hands an hour from one network, together" (a budget rule, not a fault; this walk had already posted two letters and a hand from this machine).
+Days observed: tip reached day 5 (10,240 steps), 4 days done. Per-day status was recorded for day 1 only (verified, above); the other days were not individually inspected. (Corrected in the fix stage: this line earlier said every day was verified.)
+Teardown observation: `pkill -INT -f bin/garden-dev` (launcher started under nohup in a subshell) left the launcher, coordinator, Vite and both islands running 8+ s; SIGTERM stopped them. Not reproduced from an interactive terminal.
+Console on /garden/ (1280 and 375): 0 errors with the coordinator running; under `pnpm dev` alone it logs a 502 (the dev proxy has no coordinator) and shows its unavailable state.

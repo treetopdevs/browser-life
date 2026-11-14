@@ -1,3 +1,4 @@
+> Superseded by the status of 2 November 2026: [prototypes-2026-11-02.md](prototypes-2026-11-02.md) ([HTML](prototypes-2026-11-02.html)).
 # Prototype status, 18 October 2026
 
 What each app in this repo does today, how to try it on your own machine, what is not built, and what waits on you.

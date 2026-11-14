@@ -1,0 +1,6 @@
+/soup/ actions, fix stage 2 Nov 2026. pnpm dev --port 5301 --strictPort, Chrome with WebGPU flags, throwaway Playwright script (not committed).
+Sequence per width: load, wait 1.5 s, One step, Play for 3 s (aria-pressed true), pause, click the grid centre, Plant copiers here.
+1280: Step 0 -> 1 (One step) -> 45 (Play 3 s); Inspect opened on square 121, 68; status "Paused · planted 25 copiers around 121, 68"; console errors 0.
+ 375: Step 0 -> 1 (One step) -> 49 (Play 3 s); Inspect opened on square 120, 68; status "Paused · planted 25 copiers around 120, 68"; console errors 0.
+Different programs: 32,400 at the moment of inspecting (grid 180 by 180).
+Note: a first attempt clicked via page.mouse at a stale bounding box (the page had scrolled) and so inspected nothing; locator.click() on the canvas (which scrolls it into view) worked. Test-script artefact, not a page fault.

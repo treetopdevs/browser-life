@@ -10,13 +10,19 @@
   "steps": 60320
  },
  "sources": {
-  "packages/runner/src/niche/arms.ts": "e8be7a27bfb8243666b4077ef1af5207d06a5d426478c6946216de1e649a0035",
+  "packages/runner/src/niche/arms.ts": "a47dfef796fdc2ab72061414274bc9cc52a97463637d0ab1256befa61844588f",
   "packages/runner/src/niche/assay.ts": "85165d5b1976d0e356a591b2356b3598e527f4432ed8bf370bcea034944127be",
   "packages/runner/src/niche/decision.ts": "1c15ea31742d0404900fdf98349cc6f5b17c4d742e2f4406bd7793b9e2991976",
+  "packages/runner/src/niche/decisionFe.ts": "d4a7c1dbf9a6dbaf3677fba8d78b4ed05faed3446927afa32ca294548e97f428",
+  "packages/runner/src/niche/dose.ts": "54e9b711d412b6a811c411056023d7908ef4d57bbc06297d86f77af8836c816c",
   "packages/runner/src/niche/evidence.ts": "ebbd9a5203f582d26ab589e93d051092f4bfc0fe9fff9c0320ab27c179d9fa43",
+  "packages/runner/src/niche/evidenceFe.ts": "d582390dc623227a1b2328191dd82ac6707560385566267ec2091fcbe12233da",
   "packages/runner/src/niche/fixtures.ts": "4f3d6e549a6fdebafeb94596d018758d144a71d5d6752ff084321940e0448282",
-  "packages/runner/src/niche/index.ts": "3cf89c1500dd1ca9d37aa371261f5d1c645e2b766ac966efec4fd3f12361c8e0",
-  "packages/runner/src/niche/protocol.ts": "4df2401540d73486373aa13f6dc2f74f2b69d28bf15ac426e5997c07816d634e",
+  "packages/runner/src/niche/fixturesFe.ts": "0f07d687a7ecd751d14f7dd5e3a63a047047a87ee6b353173dff06f9da28bb29",
+  "packages/runner/src/niche/freeEnergy.ts": "af94cb9805d01063e1cf6c5b8d7b0de1c63dada6e97e62873d292243578e61fb",
+  "packages/runner/src/niche/index.ts": "1b74ea3643ddec21011ebd693d92ce08aae0a5ee66c565b988446c110ec2b15a",
+  "packages/runner/src/niche/protocol.ts": "e320fa92db5680e2de21b98ada84e85f640a8acb4b81822d594ad946f093b519",
+  "packages/runner/src/niche/replicate.ts": "5f1748c4e5b058ad136d3468575627b9e70503cb5298cfc0b0154c88ed5d14ee",
   "packages/runner/src/niche/transfer.ts": "e279476dd9a22e590f7279dbc6469045fffa63246ed9c99678adce6961e82202",
   "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
   "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
@@ -40,7 +46,7 @@
   "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
   "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
   "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
-  "tools/niche/niche.ts": "bd752dce431b7775b409fe1919df245eaaad798bda9ea4776c8bb6343c15e6f1"
+  "tools/niche/niche.ts": "48683d9d6a8fa27269596e0a719f29278f6ea52baaae6640b9c56a4d8418cf58"
  },
  "provenance": {
   "note": "not replayed; excluded from the deterministic payload",

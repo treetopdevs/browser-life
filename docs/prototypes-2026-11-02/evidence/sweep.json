@@ -1,0 +1,808 @@
+[
+ {
+  "w": 1280,
+  "r": "/",
+  "status": 200,
+  "title": "Cadence Garden \u00b7 Artificial life you can grow in your browser",
+  "h1": "Grow something surprising.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/research/",
+  "status": 200,
+  "title": "Journal: notes from an artificial-life garden \u00b7 Cadence Garden",
+  "h1": "Chasing the signs of life.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/worlds/",
+  "status": 200,
+  "title": "The worlds: artificial-life jars to explore \u00b7 Cadence Garden",
+  "h1": "Every jar, and what it asks.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/how-it-works/",
+  "status": 200,
+  "title": "How the artificial life works \u00b7 Cadence Garden",
+  "h1": "A sealed jar under a lamp.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/about/",
+  "status": 200,
+  "title": "About \u00b7 Cadence Garden",
+  "h1": "For the joy of strange life.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/participate/",
+  "status": 200,
+  "title": "Join in \u00b7 Cadence Garden",
+  "h1": "Follow your curiosity.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/status/",
+  "status": 200,
+  "title": "Status \u00b7 Cadence Garden",
+  "h1": "What\u2019s running right now.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/privacy/",
+  "status": 200,
+  "title": "Privacy \u00b7 Cadence Garden",
+  "h1": "Your world stays yours.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/garden/",
+  "status": 200,
+  "title": "The shared garden \u00b7 Cadence Garden",
+  "h1": "One world, grown in turns.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/lab/",
+  "status": 200,
+  "title": "The lab: grow an artificial-life world \u00b7 Cadence Garden",
+  "h1": "Even light",
+  "hscroll": false,
+  "canvases": 7,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/selftest.html",
+  "status": 200,
+  "title": "GPU self-test \u00b7 Cadence Garden",
+  "h1": "Does this GPU agree with the CPU?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/playground/",
+  "status": 200,
+  "title": "Prototype library \u00b7 Cadence Garden",
+  "h1": "Prototype library",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/",
+  "status": 200,
+  "title": "Particle playground \u00b7 Cadence Garden",
+  "h1": "Little lives, moving together.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/picker/",
+  "status": 200,
+  "title": "World picker \u00b7 Cadence Garden",
+  "h1": "Three worlds. Your next direction.",
+  "hscroll": false,
+  "canvases": 3,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/oases/",
+  "status": 200,
+  "title": "Travelling oases \u00b7 Cadence Garden",
+  "h1": "Can a group keep up with an oasis?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/seasons/",
+  "status": 200,
+  "title": "Seasonal food patches \u00b7 Cadence Garden",
+  "h1": "Can a family survive the lean season?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/bonds/",
+  "status": 200,
+  "title": "Bonded particle shapes \u00b7 Cadence Garden",
+  "h1": "Can breakable bonds make lasting shapes?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/particles/motifs/",
+  "status": 200,
+  "title": "Motif gallery \u00b7 Cadence Garden",
+  "h1": "What happens when familiar rules meet?",
+  "hscroll": false,
+  "canvases": 24,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/boundaries/",
+  "status": 200,
+  "title": "Boundary fields \u00b7 Cadence Garden",
+  "h1": "Boundaries in a changing field",
+  "hscroll": false,
+  "canvases": 8,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/development/",
+  "status": 200,
+  "title": "Growing families \u00b7 Cadence Garden",
+  "h1": "How do simple instructions grow a body?",
+  "hscroll": false,
+  "canvases": 4,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/hungry-shapes/",
+  "status": 200,
+  "title": "Hungry shapes \u00b7 Cadence Garden",
+  "h1": "When food gets scarce, where can shapes grow?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/matter/",
+  "status": 200,
+  "title": "A counted aquarium \u00b7 Cadence Garden",
+  "h1": "Where does the matter go?",
+  "hscroll": false,
+  "canvases": 12,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/currents/",
+  "status": 200,
+  "title": "Nutrient currents \u00b7 Cadence Garden",
+  "h1": "Can a nutrient conveyor keep the growth zone supplied?",
+  "hscroll": false,
+  "canvases": 16,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/spatial/",
+  "status": 200,
+  "title": "Spatial particle worlds \u00b7 Cadence Garden",
+  "h1": "Life in three dimensions",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/soup/",
+  "status": 200,
+  "title": "Program soup \u00b7 Cadence Garden",
+  "h1": "Programs that learn to copy themselves.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/predictability/",
+  "status": 200,
+  "title": "Predictability atlas \u00b7 Cadence Garden",
+  "h1": "The same observer, nine movies and one ecology",
+  "hscroll": false,
+  "canvases": 10,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/assembly/",
+  "status": 200,
+  "title": "Assembly observer \u00b7 Cadence Garden",
+  "h1": "Does copying a random motif look like building something?",
+  "hscroll": false,
+  "canvases": 13,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/niche/",
+  "status": 200,
+  "title": "Does a builder open a niche? \u00b7 Cadence Garden",
+  "h1": "Does what a builder leaves behind help a receiver?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/moving-light/",
+  "status": 200,
+  "title": "Does a group find the moving sun? \u00b7 Cadence Garden",
+  "h1": "Does a group find the moving sun better than the same bodies alone?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/controller-locality/",
+  "status": 200,
+  "title": "Controller locality \u00b7 Cadence Garden",
+  "h1": "What does one small edit to a controller change?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/opponents/",
+  "status": 200,
+  "title": "Historical opponents, first rung \u00b7 Cadence Garden",
+  "h1": "Can a head-to-head contest tell a few known organisms apart?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/ecosystem/",
+  "status": 200,
+  "title": "Evolving ecosystem \u00b7 Cadence Garden",
+  "h1": "A little world.A changing balance.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/ecosystem/archive/",
+  "status": 200,
+  "title": "Recorded worlds \u00b7 Cadence Garden",
+  "h1": "Three paths throughthe same world.",
+  "hscroll": false,
+  "canvases": 9,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/vision-screen/",
+  "status": 200,
+  "title": "Vision screen \u00b7 Cadence Garden",
+  "h1": "Vision screen",
+  "hscroll": false,
+  "canvases": 7,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/island.html",
+  "status": 200,
+  "title": "Island \u00b7 Cadence Garden",
+  "h1": "This browser as an island",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 1280,
+  "r": "/no-such-page/",
+  "status": 404,
+  "title": "Page not found \u00b7 Cadence Garden",
+  "h1": "Nothing is growing here.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/",
+  "status": 200,
+  "title": "Cadence Garden \u00b7 Artificial life you can grow in your browser",
+  "h1": "Grow something surprising.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/research/",
+  "status": 200,
+  "title": "Journal: notes from an artificial-life garden \u00b7 Cadence Garden",
+  "h1": "Chasing the signs of life.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/worlds/",
+  "status": 200,
+  "title": "The worlds: artificial-life jars to explore \u00b7 Cadence Garden",
+  "h1": "Every jar, and what it asks.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/how-it-works/",
+  "status": 200,
+  "title": "How the artificial life works \u00b7 Cadence Garden",
+  "h1": "A sealed jar under a lamp.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/about/",
+  "status": 200,
+  "title": "About \u00b7 Cadence Garden",
+  "h1": "For the joy of strange life.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/participate/",
+  "status": 200,
+  "title": "Join in \u00b7 Cadence Garden",
+  "h1": "Follow your curiosity.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/status/",
+  "status": 200,
+  "title": "Status \u00b7 Cadence Garden",
+  "h1": "What\u2019s running right now.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/privacy/",
+  "status": 200,
+  "title": "Privacy \u00b7 Cadence Garden",
+  "h1": "Your world stays yours.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/garden/",
+  "status": 200,
+  "title": "The shared garden \u00b7 Cadence Garden",
+  "h1": "One world, grown in turns.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+  ],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/lab/",
+  "status": 200,
+  "title": "The lab: grow an artificial-life world \u00b7 Cadence Garden",
+  "h1": "Even light",
+  "hscroll": false,
+  "canvases": 7,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/selftest.html",
+  "status": 200,
+  "title": "GPU self-test \u00b7 Cadence Garden",
+  "h1": "Does this GPU agree with the CPU?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/playground/",
+  "status": 200,
+  "title": "Prototype library \u00b7 Cadence Garden",
+  "h1": "Prototype library",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/",
+  "status": 200,
+  "title": "Particle playground \u00b7 Cadence Garden",
+  "h1": "Little lives, moving together.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/picker/",
+  "status": 200,
+  "title": "World picker \u00b7 Cadence Garden",
+  "h1": "Three worlds. Your next direction.",
+  "hscroll": false,
+  "canvases": 3,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/oases/",
+  "status": 200,
+  "title": "Travelling oases \u00b7 Cadence Garden",
+  "h1": "Can a group keep up with an oasis?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/seasons/",
+  "status": 200,
+  "title": "Seasonal food patches \u00b7 Cadence Garden",
+  "h1": "Can a family survive the lean season?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/bonds/",
+  "status": 200,
+  "title": "Bonded particle shapes \u00b7 Cadence Garden",
+  "h1": "Can breakable bonds make lasting shapes?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/particles/motifs/",
+  "status": 200,
+  "title": "Motif gallery \u00b7 Cadence Garden",
+  "h1": "What happens when familiar rules meet?",
+  "hscroll": false,
+  "canvases": 24,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/boundaries/",
+  "status": 200,
+  "title": "Boundary fields \u00b7 Cadence Garden",
+  "h1": "Boundaries in a changing field",
+  "hscroll": false,
+  "canvases": 8,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/development/",
+  "status": 200,
+  "title": "Growing families \u00b7 Cadence Garden",
+  "h1": "How do simple instructions grow a body?",
+  "hscroll": false,
+  "canvases": 4,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/hungry-shapes/",
+  "status": 200,
+  "title": "Hungry shapes \u00b7 Cadence Garden",
+  "h1": "When food gets scarce, where can shapes grow?",
+  "hscroll": false,
+  "canvases": 6,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/matter/",
+  "status": 200,
+  "title": "A counted aquarium \u00b7 Cadence Garden",
+  "h1": "Where does the matter go?",
+  "hscroll": false,
+  "canvases": 12,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/currents/",
+  "status": 200,
+  "title": "Nutrient currents \u00b7 Cadence Garden",
+  "h1": "Can a nutrient conveyor keep the growth zone supplied?",
+  "hscroll": false,
+  "canvases": 16,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/spatial/",
+  "status": 200,
+  "title": "Spatial particle worlds \u00b7 Cadence Garden",
+  "h1": "Life in three dimensions",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/soup/",
+  "status": 200,
+  "title": "Program soup \u00b7 Cadence Garden",
+  "h1": "Programs that learn to copy themselves.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/predictability/",
+  "status": 200,
+  "title": "Predictability atlas \u00b7 Cadence Garden",
+  "h1": "The same observer, nine movies and one ecology",
+  "hscroll": false,
+  "canvases": 10,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/assembly/",
+  "status": 200,
+  "title": "Assembly observer \u00b7 Cadence Garden",
+  "h1": "Does copying a random motif look like building something?",
+  "hscroll": false,
+  "canvases": 13,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/niche/",
+  "status": 200,
+  "title": "Does a builder open a niche? \u00b7 Cadence Garden",
+  "h1": "Does what a builder leaves behind help a receiver?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/moving-light/",
+  "status": 200,
+  "title": "Does a group find the moving sun? \u00b7 Cadence Garden",
+  "h1": "Does a group find the moving sun better than the same bodies alone?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/controller-locality/",
+  "status": 200,
+  "title": "Controller locality \u00b7 Cadence Garden",
+  "h1": "What does one small edit to a controller change?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/opponents/",
+  "status": 200,
+  "title": "Historical opponents, first rung \u00b7 Cadence Garden",
+  "h1": "Can a head-to-head contest tell a few known organisms apart?",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/ecosystem/",
+  "status": 200,
+  "title": "Evolving ecosystem \u00b7 Cadence Garden",
+  "h1": "A little world.A changing balance.",
+  "hscroll": false,
+  "canvases": 2,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/ecosystem/archive/",
+  "status": 200,
+  "title": "Recorded worlds \u00b7 Cadence Garden",
+  "h1": "Three paths throughthe same world.",
+  "hscroll": false,
+  "canvases": 9,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/vision-screen/",
+  "status": 200,
+  "title": "Vision screen \u00b7 Cadence Garden",
+  "h1": "Vision screen",
+  "hscroll": false,
+  "canvases": 7,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/island.html",
+  "status": 200,
+  "title": "Island \u00b7 Cadence Garden",
+  "h1": "This browser as an island",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [],
+  "ext": []
+ },
+ {
+  "w": 375,
+  "r": "/no-such-page/",
+  "status": 404,
+  "title": "Page not found \u00b7 Cadence Garden",
+  "h1": "Nothing is growing here.",
+  "hscroll": false,
+  "canvases": 0,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "ext": []
+ }
+]
