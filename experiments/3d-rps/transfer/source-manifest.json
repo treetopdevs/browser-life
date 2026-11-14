@@ -1,0 +1,20 @@
+{
+  "base": "7bb61be2014621b020968e6b60b8246b33990e04",
+  "sha256": {
+    "experiments/3d-rps/transfer/check.ts": "6be570cf7f460729bc4c4badd77392f45b91b9fff35d552018aa26e9562f34a9",
+    "experiments/3d-rps/transfer/edges-result.json": "14fad3196a8756bbf0f2ecb326b704abb1c7e2573213062a63b23200803c08be",
+    "experiments/3d-rps/transfer/edges.ts": "80669170325a13371111a4fd777951bb1c9f944dfe4933f0ec546b5eabd225d8",
+    "experiments/3d-rps/transfer/large-baseline.json": "f355caf9c42eba996f7feeaf54b9a02dd28391602f45a69ef62657b8409f0993",
+    "experiments/3d-rps/transfer/large-baseline.kernel.json": "f355caf9c42eba996f7feeaf54b9a02dd28391602f45a69ef62657b8409f0993",
+    "experiments/3d-rps/transfer/legacy-gpu-golden.txt": "d7009c393c644efddd62970a24c5e6f5c49266a78b46d6caed3c4890b5f1dfd8",
+    "experiments/3d-rps/transfer/small-baseline.json": "6da0c5ba383a41720ee3ab36edee178489aa4e3f7c32ea2b0678f4537d73f0cc",
+    "experiments/3d-rps/transfer/small-baseline.kernel.json": "6da0c5ba383a41720ee3ab36edee178489aa4e3f7c32ea2b0678f4537d73f0cc",
+    "experiments/test/rps-gate0-spike.test.ts": "3131241aeed4759de59d0afaa953f7420107ebb5a195f4943d8d55d35d94283d",
+    "experiments/test/rps-transfer.test.ts": "f8e13a5e658e872de1d553790143dcb9aa4f45e9a3ada6dc3d2dbb11533da794",
+    "packages/schema/src/config.ts": "2bc8bdda12db6a50648de5bcb16812d7769cf1f62f47e12024d5e46b169c7fe0",
+    "packages/schema/src/genome3.ts": "376fe3ebb32397b7cafd9339309d6360b038afe522fa9df52749f1caf462f0cd",
+    "packages/schema/src/world.ts": "ecba3cb274729104be28af27caf96858a7853079c976819d07d2916864119c08",
+    "packages/sim-gpu/src/shaders3d.ts": "44e6429822b9b42a4080f2e7b9988b9b01178464b34267f91594f62209476d5b",
+    "packages/sim-ref/src/step3d.ts": "cb42ab0a1c65220278ea2437492d3391d8204542bd67db6e7dfe7a31651b9e6c"
+  }
+}

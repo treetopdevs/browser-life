@@ -534,8 +534,27 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 export function reactShader3(c: WorldConfig): string {
+  const rps = c.rpsTypes !== undefined;
+  const rpsConstants = rps ? `const RPS_RATE = ${c.rpsRate}u;\nconst RPS_MIN = ${c.rpsMin}u;\nconst RND_RPS_KILL = 40u;\n` : "";
+  const vacancy = rps ? `    if (living && RPS_RATE > 0u) {
+      let t_own = (genome[G_PARAM1 + i] >> 8u) & 0xffu;
+      var ndom = 0u;
+      for (var dd = 0u; dd < 6u; dd++) {
+        var ddx = 0; var ddy = 0; var ddz = 0;
+        if (dd == 0u) { ddx = 1; } else if (dd == 1u) { ddx = -1; } else if (dd == 2u) { ddy = 1; } else if (dd == 3u) { ddy = -1; } else if (dd == 4u) { ddz = 1; } else { ddz = -1; }
+        let jn = nb3(x, y, z, ddx, ddy, ddz);
+        if (jn == OUTSIDE) { continue; }
+        if (cells[CH_B + jn] >= RPS_MIN && ((cells[CH_MOT + jn] >> (24u + t_own)) & 1u) == 1u) { ndom += 1u; }
+      }
+      if (ndom > 0u && (draw(base, RND_RPS_KILL) & 0xffffu) < min(65536u, RPS_RATE * ndom)) {
+        hadd(B * (E_B - E_C)); hadd(P * (E_P - E_C)); hadd(E);
+        C += B + P; B = 0u; P = 0u; E = 0u;
+      }
+    }
+` : "";
+
   return /* wgsl */ `${prelude3(c)}
-@group(0) @binding(0) var<storage, read> cells: array<u32>;
+${rpsConstants}@group(0) @binding(0) var<storage, read> cells: array<u32>;
 @group(0) @binding(1) var<storage, read_write> genome: array<u32>;
 @group(0) @binding(2) var<storage, read> U: array<i32>;
 @group(0) @binding(3) var<storage, read_write> cellsOut: array<u32>;
@@ -644,7 +663,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (E > POOL_MAX3) { hadd(E - POOL_MAX3); E = POOL_MAX3; }
     if (S > POOL_MAX3) { hadd(S - POOL_MAX3); S = POOL_MAX3; }
 
-    if (living && B > 0u) {
+${vacancy}    if (living && B > 0u) {
       var words: array<u32, ${NN_WORDS3}>;
       if (NEUTRAL) {
         words = REF_W;
@@ -788,7 +807,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     cellsOut[CH_P + i] = P;
     cellsOut[CH_E + i] = E;
     cellsOut[CH_S + i] = S;
-    cellsOut[CH_MOT + i] = mot;
+${rps ? `    var mm = 0u;
+    if ((genome[G_LIN_HI + i] | genome[G_LIN_LO + i]) != 0u) { mm = (genome[G_PARAM1 + i] >> 16u) & 0xffu; }
+    cellsOut[CH_MOT + i] = mot | (mm << 24u);` : "    cellsOut[CH_MOT + i] = mot;"}
     roles[i * 2u] = min(F[FX_PHOTO], 0xffffu) | (min(F[FX_GROW], 0xffffu) << 16u);
     roles[i * 2u + 1u] = min(F[FX_DECOMP], 0xffffu) | (min(F[FX_RESP], 0xffffu) << 16u);
   }

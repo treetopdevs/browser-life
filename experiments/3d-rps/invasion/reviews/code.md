@@ -1,0 +1,9 @@
+Four blockers remain:
+
+- **Missing source manifest.** [run.ts:15](../../../../experiments/3d-rps/invasion/run.ts#L15) requires `MANIFEST.json`, which is absent. The runner cannot start, and manifest/source failures occur before the `try` that records `TECHNICAL-STOP`. Freeze the reviewed source manifest and bring preflight failures into recorded stop handling.
+
+- **Validation does not establish inheritance or census arithmetic.** [validate.ts:19](../../../../experiments/3d-rps/invasion/validate.ts#L19) compares arms but never requires a marker to transfer to another cell; common marker loss could pass. [rps-invasion.test.ts:22](../../../../experiments/test/rps-invasion.test.ts#L22) supplies frequencies independently of counts. Add deterministic inheritance assertions for both markers and known-count census fixtures covering neutral-marker exclusion from parents and zero denominators.
+
+- **Intermediate evidence is lost on failure, and intermediate hashes are missing.** [run.ts:57](../../../../experiments/3d-rps/invasion/run.ts#L57) retains censuses only in memory until the arm finishes. A later failure discards earlier censuses; successful runs also omit the promised intermediate state hashes. Persist census counts and hashes incrementally, with active arm/step information in failure records.
+
+- **The 90-minute cap is not enforced during GPU waits.** [run.ts:32](../../../../experiments/3d-rps/invasion/run.ts#L32) queues 1,000 steps before unbounded readback waits. Device creation is also unbounded. The process can exceed the deadline indefinitely before reaching `limit()`. Add deadline handling that terminates GPU work and records `INCOMPLETE`.

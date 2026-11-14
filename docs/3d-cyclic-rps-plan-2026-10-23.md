@@ -1126,3 +1126,41 @@ persistence at 256 x 256 x 4 (the shape of 3.0's horizon rung) with the operatin
 then both kill forms' confirmation if `h0` is defined, one label of A2.4 per form (EXPLORATION-2-NO-HORIZON, -NO-CONFIRM, -PERSISTS). Also
 an exploration, not a registered result. Tooling: `gate0.ts --exploration-2 --out=<dir>` and `readout.ts gate0-exploration-2 --jobs <dir>`
 (usage in the spike README); the record is `GATE0-EXPLORATION-2.md` (A2.5).
+
+
+## 14. 2026-10-25: Amendment 3, vacancy-only kernel transfer
+
+The user authorized continuing Candidate 9. Amendment 3 narrows Part B to the
+mutation-disabled vacancy rule, with optional schema support and CPU/GPU twins.
+It does not reopen Gate 0, fit a new mobility grid or build the original mutation
+programme. The original branch and copied work-Mac records remain untouched.
+
+The engineering gate passed: three small rate cases, six large matched replay
+cases through burn-in and 2000 run steps, fifteen hand-oracle boundary fixtures,
+inert-key equivalence and all 43 legacy CPU/GPU golden hashes. See
+`experiments/3d-rps/TRANSFER-RECORD.md` for exact evidence and the independent
+review. The next proposal is held-out ecological replication at the fixed A2
+operating point, before considering mutable dominance. No new ecological
+replication, mutation campaign, merge or deployment is included in this slice.
+
+
+## 15. 2026-10-25: Amendment 4, one selectable advantage
+
+The user authorized changing the next question from another persistence sweep to
+a rare-invasion positive control. The original section 4.4 already predicts the
+immune clone: change type 0 to unused type 3 while keeping prey mask 2. No mutation
+operator is added. The paired neutral introduction changes only the lineage mark.
+
+`experiments/3d-rps/invasion/PLAN.md` fixes four independent seeds, two marker
+checks, 10000 run steps, a final-persistence requirement and an initial predation
+exposure gate. The engineering controls establish direct protection, neutral
+replay and predation-off equivalence. The result will distinguish competitive
+replacement from ecosystem survival; no automatic extension or mutation campaign.
+
+Amendment 4 completed: **SELECTION-LEAD**, 4/4 seeds under both IDs. All sixteen
+fixed-horizon runs and the twenty-checkpoint audit passed. Immune final-window
+ancestor-group share was 5.7–32.1%, versus 0–0.21% for neutral controls. All founding
+types persisted in both treatments; ecosystem survival improvement and spontaneous
+mutation-driven evolution remain unproven. See `experiments/3d-rps/invasion/RESULTS.md`
+and its committed readouts. No automatic extension; propose fresh-seed confirmation
+before a separate mutation amendment.

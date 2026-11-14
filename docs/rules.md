@@ -85,3 +85,26 @@ Bounds the slab relies on (`validateState` enforces the state side: matter ≤ `
 | `LIN_LO` | `< N ≤ 2^24` | slab lineage ids are `(step + 1, cell)` with no namespace |
 
 `E` and `S` are re-capped at exactly the 2D sites (cell load, after respiration, after decomposition, after emission), with the excess exported as heat, so the invariant `E, S ≤ 2^27` holds after every step. `packages/sim-ref/test/step3d.test.ts` checks exact conservation over 200 random slabs, the walls, the light column and the neutral arm; `step3d-ops.test.ts` checks the hand examples and the z-mirror symmetry of the deterministic operators.
+
+
+### Optional slab vacancy predation (Candidate 9, Amendment 3)
+
+The experimental slab configuration requires `rpsTypes` (3..8), `rpsRate` (0..16384),
+`rpsMin` (1..255) and `rpsKill: "vacancy"` together, with `mutRate: 0`. Absent keys
+leave all existing physics and serialization unchanged. PARAM1 bytes 1 and 2 encode
+an inherited type and beats-mask; the mask is mirrored in MOT bits 24..31. The top
+PARAM1 byte stays reserved. This slice provides no type or edge mutation.
+
+After transport and pool caps, before the controller and passive reactions, each
+living victim counts its six face neighbours whose biomass reaches `rpsMin` and
+whose mirror mask beats its type. x/y wrap; missing z faces do not count. Draw slot
+40 kills with probability `min(65536, rpsRate * ndom) / 65536`. A victim with B=0
+and P>0 is eligible. The vacancy moves all B+P to C and exports B(eB-eC)+P(eP-eC)+E
+as heat; B, P and E become zero. It books no reaction flux. Subsequent abiotic
+reaction sees the resulting C. A and S are untouched by the kill itself. Clearing
+lineage also clears the mirror; otherwise the inherited mask is retained.
+
+Matter stays in the cell. Each GPU heat term fits the existing bounds and is added
+separately to the 64-bit accumulator. The CPU sums in exact integer range. This is
+an opt-in research implementation, not evidence of adaptive evolution or a public
+preset; see `experiments/3d-rps/RULES.md`, Amendment 3.
