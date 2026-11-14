@@ -51,7 +51,7 @@ A note on `dL = 0`: d is a next-step probe taken every 500 steps, not an accumul
 
 ## What this shows
 
-- In this world and these rules, three things line up that a mere baseline difference would not: (1) the inherit arm loses nearly all of its deposit and trail (D1), replicating R2b on fresh worlds; (2) it loses a larger share of its own deposit over the run than the blocked arm does (D2); (3) the loss is larger and faster the more laying costs (D3), against a blocked baseline at each cost that carries the mechanical effect of the cost itself.
+- In this world and these rules, three things line up that a mere baseline difference would not: (1) the inherit arm loses nearly all of its deposit and trail (D1), replicating R2b on fresh worlds; (2) it loses a larger share of its own deposit over the run than the blocked arm does (D2); (3) the early-window inherit-to-blocked deposit ratio falls as the laying cost rises (D3), against a blocked baseline at each cost that carries the mechanical effect of the cost itself.
 - The frozen arm shows that the low deposit does not need mutation: with only the 1,024 random founders competing, 13 of 16 runs have zero late-window deposit probes. That fits selection on the controllers that happen to be around; it does not separate selection from drift among founder lineages.
 
 ## What this does not show
@@ -92,3 +92,6 @@ Texts in the session scratchpad (`sol1-review.txt` ... `sol3-review.txt`, final 
 | 3 | P2 x4 in `rederive.py` (bit-equal sums, D3 undefined, guard rule, frozen reading) | Fixed (outside the hash); the script now gives bit-equal readouts |
 | final | P1 "no late deposit" overstated (dL is a probe every 500 steps); P2 frozen "no drift" and "selection suffices"; P2 dose/calibration scale comparison; P2 "smooth, faster, not a switch"; P2 calibration permutation counts undisclosed; P3 "every number" | All corrected in this file and STATUS.md (wording and disclosure only; the PASS, the numbers and every hashed file are unchanged). Sol also re-ran the confirmation analysis, the Python re-derivation (0 of 560 mismatches) and the calibration resamples, recomputed all 39 manifest hashes and the code, protocol and calibration hashes (match), and found no hashed file or protocol change after Freeze 1, Freeze 2 (02:59:13Z) before the first confirmation entry (02:59:19Z), and no embargoed slot in the log |
 
+## Reproducing this result (note added 14 Nov 2026, when the line landed on main)
+
+`FROZEN` covers `tools/mycelium/world.ts`, `gpu.ts` and `RULES.md`. The later trail-conduit commit (`3e4a51a1`) changed all three, so at the tip of the branch, and on main, the freeze check refuses to run. Check out commit `eef9c043` to re-run or re-analyse: every file `FROZEN` covers matches its recorded hash there (checked 14 Nov 2026). The recorded hashes are unchanged, and nothing in this result was re-derived.

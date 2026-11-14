@@ -1,0 +1,403 @@
+{
+  "schema": 1,
+  "verifiedAt": "2026-11-14T17:52:14.994713+00:00",
+  "scope": "Supplemental derivation index; the frozen run-summary and archives are unchanged. Paths are acquisition locations, not portable download URLs.",
+  "receiptProducer": {
+    "revision": "e53bb283f6314c86d53b314237b01da4f1da5b8e",
+    "path": "tools/soup-receipt.ts",
+    "sha256": "107ad9748bf2d1a0ef94e2c2b5009cc3ad270ab0941cee0a823f35528feb2268",
+    "basis": "Tracked and unmodified at run time; not included in the frozen supervisor source list or result archive. Recovered from Git. Historical per-receipt encoder identity was not recorded; no retroactive attestation."
+  },
+  "fields": {
+    "sequentialOrderVerified": {
+      "receipt": {
+        "path": "runs/issue-129-checked-2026-11-14/ensemble/manifest.json",
+        "sha256": "857e0ca88e66ea9d239099326ac7c7fa7aaf2900ec7bb778723415d9f94ef0e7"
+      },
+      "rule": "Seeds 2,1,3,4 in that order; every finish <= next start; all exitCode 0",
+      "intervals": [
+        {
+          "seed": 2,
+          "started": "2026-11-14T16:15:31.880975+00:00",
+          "finished": "2026-11-14T16:33:11.957616+00:00",
+          "exitCode": 0
+        },
+        {
+          "seed": 1,
+          "started": "2026-11-14T16:33:18.795371+00:00",
+          "finished": "2026-11-14T16:50:37.648073+00:00",
+          "exitCode": 0
+        },
+        {
+          "seed": 3,
+          "started": "2026-11-14T16:50:42.124776+00:00",
+          "finished": "2026-11-14T17:07:18.060392+00:00",
+          "exitCode": 0
+        },
+        {
+          "seed": 4,
+          "started": "2026-11-14T17:07:20.360483+00:00",
+          "finished": "2026-11-14T17:23:34.595931+00:00",
+          "exitCode": 0
+        }
+      ]
+    },
+    "allInitialHashesMatchPriorReceipts": {
+      "receipt": {
+        "path": "runs/issue-129-checked-2026-11-14/ensemble/manifest.json",
+        "sha256": "857e0ca88e66ea9d239099326ac7c7fa7aaf2900ec7bb778723415d9f94ef0e7"
+      },
+      "rule": "All runs initialStateMatchesPriorRepeat true; startingStateSha256 in each invocation is the comparison input"
+    },
+    "priorRepeatComparison": {
+      "receipt": {
+        "path": "runs/issue-129-checked-2026-11-14/seed-2-prior-repeat-comparison.json",
+        "sha256": "e3599c8d0e40bf23f76f2e4252120295940f5fa521f1af070effe1aed8a3a2cd"
+      }
+    },
+    "all67OriginalFilesStillMatchArchive": {
+      "inventory": {
+        "path": "docs/soup/issue-129-2026-11-14/archive-manifest.json",
+        "sha256": "e5d205bb3bd3e646b71795783ea6923deb4ac2c945c0f911aa2f557caf4aead4"
+      },
+      "rule": "Rehash every inventory source and compare SHA-256",
+      "rechecked": [
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-16384.bin",
+          "sha256": "b988b15ce4b827370888d2e27b03d0b00ba20f4566eaaf7d4ccb8f61ce97985b",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-11585-transition.bin",
+          "sha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-12609.bin",
+          "sha256": "d150da8b297eecb0da1e10432c420c4e9e890dc8e5cb395b563c20cc99ed43be",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-45056.bin",
+          "sha256": "763925641dd57d7a5b49d045ee4f4aad6d34ec7d66c88af41c1d79f7c6da69c9",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-16384.bin",
+          "sha256": "b8c34807d6e050d4af4c4d1ba5d3ea244fb1ea48268fc85a2cb04a59dd698cc7",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-16384.bin",
+          "sha256": "65190809c3645468a0a162d5c2a6a248647994acd964b8839e653a73d058bfc1",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/params.json",
+          "sha256": "78995e952a8f3ca6b671787a6534adab082b4b69e88d2e2b39429082d5224807",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/log.csv",
+          "sha256": "7c79f9025173c7bea03253466932272bb7395ca3776da71648eb52ac0f2f5e1d",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/params.json",
+          "sha256": "83159df482ffce646d5edcfaaca361dbbe0d6d021047070bcc903e0cefa9c580",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/log.csv",
+          "sha256": "3c09803882f25c860c56ec87f3301b69d4aa3f5e367f55474bf79b6c2faf0fc0",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/transition.json",
+          "sha256": "b9a067aee2c91e93001019e6eddbe48f3f4e2f3c4ab0391f7045721e782f1721",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/params.json",
+          "sha256": "705add454996f3777260a8c7be7e72da05f804314c2f37c86e6d9d54e99873d9",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/log.csv",
+          "sha256": "821ce9fbf65155cfa95234330568025457a74c1fc34c009a2cd49a740e3841cc",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/params.json",
+          "sha256": "8a77c3074efcee40aee363dba4d2d93018d000311f5c7898e6fa6cb95635a139",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/log.csv",
+          "sha256": "f6a3571ef399f33711e643160ed0f03814c6917a2c6e03b6118fc848e297f89d",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-params.json",
+          "sha256": "8a77c3074efcee40aee363dba4d2d93018d000311f5c7898e6fa6cb95635a139",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-log.csv",
+          "sha256": "7c79f9025173c7bea03253466932272bb7395ca3776da71648eb52ac0f2f5e1d",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-11585-transition.json",
+          "sha256": "cb8002f9c7c453b1d0e1b47d14eb6ed0504b9bd6e25f81d4da744407834f1585",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-params.json",
+          "sha256": "78995e952a8f3ca6b671787a6534adab082b4b69e88d2e2b39429082d5224807",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-log.csv",
+          "sha256": "3c09803882f25c860c56ec87f3301b69d4aa3f5e367f55474bf79b6c2faf0fc0",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-params.json",
+          "sha256": "83159df482ffce646d5edcfaaca361dbbe0d6d021047070bcc903e0cefa9c580",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-transition.json",
+          "sha256": "b9a067aee2c91e93001019e6eddbe48f3f4e2f3c4ab0391f7045721e782f1721",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-log.csv",
+          "sha256": "821ce9fbf65155cfa95234330568025457a74c1fc34c009a2cd49a740e3841cc",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-45056.json",
+          "sha256": "d62245162ad50923e1e5cc144f4cfa43d00e8cfabc1cc5596d616d16864efc9b",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-16384.json",
+          "sha256": "e5095dc35f6696819019ff20e1a3c4af8dade26e6ad5d25440cde9a50e623575",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/inventory.json",
+          "sha256": "be5f3b312d981a6af9a80a6117687c9e5eb0e523a752ed1a11542ddde7336842",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-16384.json",
+          "sha256": "3a16c801021fae7be99137c27b1b9369959954c96d7eecb4f44a17559894a060",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-12609.json",
+          "sha256": "ea248f8917874f5a0eeda6f957e205cb42410b37d50b5c2157a9cb931826ee23",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-log.csv",
+          "sha256": "f6a3571ef399f33711e643160ed0f03814c6917a2c6e03b6118fc848e297f89d",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-16384.json",
+          "sha256": "8bc8e33a691be13d64b95198cc00fed2879e3e1123063182ff6f05b17f5479b4",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-params.json",
+          "sha256": "705add454996f3777260a8c7be7e72da05f804314c2f37c86e6d9d54e99873d9",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/early-log-comparison.json",
+          "sha256": "54e3bad6c28a1bbe0d46c363f89303a7c9b12b544c3b97a998262dbcd4c9dc39",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/initial-state-hashes.json",
+          "sha256": "6e03f106fb4926a64906440acb82b77527804b5dba73e87a28268a931b6e5de7",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/supervisor.pid",
+          "sha256": "350a3031a177a3a0ec1a31f42671241bb4276b920323ff8e86ca2a50b3363e55",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/repeat.py",
+          "sha256": "8b3e9f5c722e9fe84739ed5b7ae1e91f0ffa11c91a54c00b6dc704848fbad7f8",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/supervisor.log",
+          "sha256": "65f0b75e0594b49d119d64c3c1b76c8c8e212068b06e5f1c704fe11822057221",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/manifest.json",
+          "sha256": "c98482f08a1dca79d1e326155fe17f0855a9150e097452fd228f27e8ced44f16",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2.stdout.log",
+          "sha256": "0170a27dd5c9a50b3fcfdb157592a499690b73037333dda6a9e5ac8711790e25",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/historical-evidence.zip",
+          "sha256": "9863fb195d5a6afa9437262e84ac68dda9bc319341f2fd2fb8cd90015aaf1140",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/historical-evidence.zip.sha256",
+          "sha256": "526d90e2ad1a1c294f999ee692f468d0fc0d98f04636a6f47fb711bfe412828a",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12288.bin",
+          "sha256": "abe65af2bb33ae24bd0868552e968c50a395134ec029441afa2f3a23c2cc6bfb",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/log.csv",
+          "sha256": "0a2ccfb42412dba6dabed683a74f760adf94a5b77d99a56c44f8758acaaa5d63",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-11585-transition.bin.receipt.json",
+          "sha256": "21d0df6eecc8d773c045749cb168baa7bd1bea954a5ab6efb4188f1f3cac7f08",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/params.json",
+          "sha256": "6cfd12b10728dbe3e0601d0126db200446327ef2a0c8954fe14ecbd20b4673b3",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-11585-transition.bin",
+          "sha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12609.bin.receipt.json",
+          "sha256": "14ac6d78b40b0e4a5562d91c4d0c2eeeb85564315a32f935f5a4586bfe5d208f",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12609.bin",
+          "sha256": "3f21d457212eebbbc08b80435b34a1e2e25ba7655654b891ce8c08226d3c50be",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-4096.bin",
+          "sha256": "22d78806c11c104e83719cce900e30ddc27b5a4fc519d1721d93d2ef9a9a7bd3",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-8192.bin",
+          "sha256": "6833b799d304620979b9e3af975c28c83371f4131cef3e9a38a40cd0f025f3ff",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/transition.json",
+          "sha256": "4566680bff75db027b12b5bb8ec2cd5d3faaca848b6961d86acb4b5746a7b7db",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/stdout.txt",
+          "sha256": "254cc16fa8932388c0236ed47b9eede3d124c296f8c69561b32fade611b8715c",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/stdout.txt",
+          "sha256": "4461d14c7277e90ae5534c626464066b1f46c3c14645bc35c47dce985dd8c1b2",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/stdout-evo.txt",
+          "sha256": "9f922eeb92c660fa89d293e60f52a7cbcc6fded8273284f32eb307d3b3a53049",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/stdout.txt",
+          "sha256": "28b90abfc112de5cae59ac31ee50fa209a99d8abaa1add96600f1a40b812b08c",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/stdout.txt",
+          "sha256": "9290dee7537ebf8ff060a535d7f66b959f650a5d78f8614481c2c0e85389d500",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-4096.bin",
+          "sha256": "22d78806c11c104e83719cce900e30ddc27b5a4fc519d1721d93d2ef9a9a7bd3",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-8192.bin",
+          "sha256": "6833b799d304620979b9e3af975c28c83371f4131cef3e9a38a40cd0f025f3ff",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-12288.bin",
+          "sha256": "bc283ae31debd1e57128e5b21fc2e4881e62145196f4bca57abe2b63813b1319",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-4096.bin",
+          "sha256": "779a8bad4483b54dba8c5cbe94306689cfdf37bde5e8dc48d3dd642d495fd383",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-8192.bin",
+          "sha256": "898e979e4487eeec355c44d926e10c895ae5bf8b3aaddbabc822a90fb4253c20",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-12288.bin",
+          "sha256": "f40c778ac1e24fbfd65326dce96b5d3f066219c69ecfdb85c3da42191743e435",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-4096.bin",
+          "sha256": "be61cdd8f24f5596e1e44e221446e29996209e3cf063a0f6d8ed1f50c619f5af",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-8192.bin",
+          "sha256": "a0f9b99d6cae36bae26ba0feb04c990540d21e736d9cf714e47df9c5161c2c7a",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-12288.bin",
+          "sha256": "0ef53100cef6812777b7ec6cd137f68f0fdb53c7aa518d9c285dc81f39d5be1f",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-4096.bin",
+          "sha256": "bf4f1e2bc25099e9512058cc8108998c9aea4fcb6634556537b763c5bc9622f2",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-8192.bin",
+          "sha256": "386d2e3ea65ffae2fa493c43c8750620fba1fdb0077e2f7a1a43df2448f79726",
+          "matchesInventory": true
+        },
+        {
+          "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-12288.bin",
+          "sha256": "7fd586f8ea6cc1ef73f0595aa2507e9293520a0de555f773c605911888ed11c4",
+          "matchesInventory": true
+        }
+      ]
+    }
+  }
+}

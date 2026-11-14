@@ -188,11 +188,19 @@ export function validateState(s: WorldState): string[] {
   const seen = new Map<string, number>();
   for (let i = 0; i < n && errs.length === 0; i++) {
     const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
+    if (s.cfg.rpsTypes !== undefined) {
+      const p1 = s.genome[G.PARAM1 * n + i], type = (p1 >>> 8) & 255, mask = (p1 >>> 16) & 255;
+      const living = (hi | lo) !== 0, mirror = s.cells[CH.MOT * n + i] >>> 24;
+      if (living && (type >= s.cfg.rpsTypes || (mask & ~((1 << s.cfg.rpsTypes) - 1)) || (mask & (1 << type)))) errs.push(`invalid RPS type/mask at cell ${i}`);
+      if (mirror !== (living ? mask : 0)) errs.push(`invalid RPS mirror at cell ${i}`);
+      if (!living && (s.cells[CH.B * n + i] !== 0 || s.cells[CH.P * n + i] !== 0)) errs.push(`RPS bound matter without lineage at cell ${i}`);
+      if (errs.length) break;
+    }
     if ((hi | lo) === 0) continue;
     if (slab) {
       // PARAM1 bytes 1..3 (rings, genes) and the padding bytes of the last weight word are undefined in a slab and must stay 0.
       const padMask = NN_PAD3 === 0 ? 0 : (0xffffffff << (8 * (4 - NN_PAD3))) >>> 0;
-      if ((s.genome[G.PARAM1 * n + i] >>> 8) !== 0 || (s.genome[(gc - 1) * n + i] & padMask) !== 0) {
+      if ((s.genome[G.PARAM1 * n + i] >>> (s.cfg.rpsTypes === undefined ? 8 : 24)) !== 0 || (s.genome[(gc - 1) * n + i] & padMask) !== 0) {
         errs.push(`lineage ${hi}:${lo} at cell ${i} has nonzero reserved genome bytes`);
         break;
       }

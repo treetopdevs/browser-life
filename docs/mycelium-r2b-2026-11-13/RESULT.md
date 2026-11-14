@@ -117,3 +117,7 @@ No other P1 or P2.
 ## Verification run for this write-up
 
 Command results (typecheck, full suite, GPU parity, Playwright) are in the session's final report. The Sol text is in the session scratchpad (`r2b-final-sol.txt`).
+
+## Reproducing this result (note added 14 Nov 2026, when the line landed on main)
+
+`FROZEN` covers `tools/mycelium/world.ts`, `gpu.ts` and `RULES.md`. The later trail-conduit commit (`3e4a51a1`) changed all three, so at the tip of the branch, and on main, the freeze check refuses to run. Check out commit `edc25af9` to re-run or re-analyse: every file `FROZEN` covers matches its recorded hash there (checked 14 Nov 2026). The recorded hashes are unchanged, and nothing in this result was re-derived.

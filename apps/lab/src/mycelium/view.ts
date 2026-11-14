@@ -52,5 +52,10 @@ export function panBy(v: View, world: number, css: number, dx: number, dy: numbe
 
 /** A two-finger gesture: zoom by `factor` about the fingers' previous midpoint, then move that point to the new midpoint, so each finger stays on the world point it started on. */
 export function pinchView(v: View, world: number, css: number, factor: number, prev: { x: number; y: number }, next: { x: number; y: number }): View {
-  return panBy(zoomAt(v, world, css, factor, prev.x, prev.y), world, css, next.x - prev.x, next.y - prev.y);
+  // Solve for the centre that puts the anchor (the world point under the previous midpoint) under the new midpoint,
+  // then clamp once: clamping between the zoom and the move would lose the anchor near an edge.
+  const anchor = toWorld(v, world, css, prev.x, prev.y);
+  const z = Math.min(maxZoom(world, css), Math.max(1, v.z * factor));
+  const s = scaleOf({ z, cx: v.cx, cy: v.cy }, world, css);
+  return clampView({ z, cx: anchor.x - (next.x - css / 2) / s, cy: anchor.y - (next.y - css / 2) / s }, world, css);
 }

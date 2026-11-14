@@ -3,7 +3,7 @@
 // CPU still does the per-epoch shuffle (Soup.prepare), so the GPU soup equals
 // the CPU soup byte for byte; tests/deno/soup_gpu.ts compares them. That holds
 // only for work the GPU actually runs: it can silently drop work under
-// contention, so Deno tools step with stepChecked/advance (which redo a short
+// contention, so the experiment CLI uses stepChecked/advance (which redo a short
 // batch) and take the one-process lock in tools/soup/device.ts.
 import { type Lang, Soup, type SoupParams, STEPS, TAPE } from "./bff.ts";
 
@@ -141,7 +141,21 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
 }
 `;
 
+// Error scopes belong to a device, so checked/read operations cannot overlap
+// even when callers have separate soups on that device.
+const busyDevices = new WeakSet<GPUDevice>();
+
 export class GpuSoup {
+  private busy = false;
+  private unusable = false;
+  private assertIdle(): void {
+    if (this.unusable) throw new Error("GPU soup instance is unusable after destruction or GPU error");
+    if (this.busy || busyDevices.has(this.device)) throw new Error("GPU soup operation in progress");
+  }
+  private async exclusive<T>(work: () => Promise<T>): Promise<T> {
+    this.assertIdle(); this.busy = true; busyDevices.add(this.device);
+    try { return await work(); } finally { this.busy = false; busyDevices.delete(this.device); }
+  }
   readonly cpu: Soup; // holds seed, epoch and the shuffle; programs are synced on read()
   private readonly progs: GPUBuffer;
   private readonly orderBuf: GPUBuffer;
@@ -169,25 +183,53 @@ export class GpuSoup {
 
   /** Builds a GpuSoup and throws if the shader or pipeline failed validation (WebGPU otherwise fails silently). */
   static async create(device: GPUDevice, p: SoupParams): Promise<GpuSoup> {
-    device.pushErrorScope("validation");
-    const g = new GpuSoup(device, p);
-    const err = await device.popErrorScope();
-    if (err) throw new Error(`soup shader: ${err.message}`);
-    return g;
+    if (busyDevices.has(device)) throw new Error("GPU soup operation in progress");
+    // Pop synchronously before yielding: creation errors cannot consume another
+    // soup's scopes. Validate OOM/internal errors as well as shader validation.
+    for (const filter of ["validation", "out-of-memory", "internal"] as GPUErrorFilter[]) device.pushErrorScope(filter);
+    let g: GpuSoup | undefined, problem: unknown;
+    try { g = new GpuSoup(device, p); } catch (error) { problem = error; }
+    const scopes = [device.popErrorScope(), device.popErrorScope(), device.popErrorScope()];
+    for (const result of await Promise.allSettled(scopes)) {
+      if (result.status === "rejected") problem ??= result.reason;
+      else if (result.value) problem ??= new Error(`soup shader: ${result.value.message}`);
+    }
+    if (problem !== undefined) { g?.destroy(); throw problem; }
+    return g!;
   }
 
   get epoch(): number { return this.cpu.epoch; }
 
   /** Frees the GPU buffers; the soup cannot step afterwards. */
   destroy(): void {
+    if (this.busy || busyDevices.has(this.device)) throw new Error("GPU soup operation in progress");
+    this.unusable = true;
     for (const b of [this.progs, this.orderBuf, this.params, this.opsBuf]) b.destroy();
   }
 
   /** Sends the CPU soup's programs to the GPU (after construction, plant() or a load). */
-  upload(): void { this.device.queue.writeBuffer(this.progs, 0, this.cpu.programs); }
+  upload(): void { this.assertIdle(); this.uploadState(); }
+  /** Validate and settle a starting/resumed checkpoint before attesting its bytes. */
+  uploadChecked(): Promise<void> {
+    return this.exclusive(() => this.gpuErrors(async () => {
+      if (this.pendingEpochs) throw new Error("read pending unchecked work before upload");
+      const before = this.cpu.programs.slice();
+      this.uploadState();
+      await this.device.queue.onSubmittedWorkDone();
+      await this.verifyUpload(before);
+    }));
+  }
+  private uploadState(): void {
+    if (this.unusable) throw new Error("GPU soup instance is unusable");
+    try { this.device.queue.writeBuffer(this.progs, 0, this.cpu.programs); }
+    catch (error) { this.unusable = true; throw error; }
+  }
 
   /** Queues `n` epochs. Returns once they are submitted, not finished. */
-  step(n = 1): void {
+  step(n = 1): void { this.assertIdle(); this.submit(n); }
+  private submit(n: number): void {
+    if (this.unusable) throw new Error("GPU soup instance is unusable");
+    try {
     const q = this.device.queue;
     for (let k = 0; k < n; k++) {
       const { order, eh, el, active } = this.cpu.prepare();
@@ -201,20 +243,28 @@ export class GpuSoup {
       pass.end();
       q.submit([enc.finish()]);
       this.cpu.epoch++;
+      this.pendingEpochs++;
       this.cpu.runs += active;
     }
+    } catch (error) { this.unusable = true; throw error; }
   }
 
   /** Pairs finished in the epochs since the last read() (set by read()). */
   lastDone = 0;
+  private pendingEpochs = 0;
+  readonly integrity = { checkedEpochs: 0, acceptedBatches: 0, rejectedBatches: 0, completedPairs: 0 };
+  onIncompleteBatch?: (event: { epoch: number; epochs: number; attempt: number; expectedPairs: number; completedPairs: number }) => void;
   /** Tests only: the next this many read()s report one pair short, as if the GPU had dropped work. */
   dropForTest = 0;
 
   /** Waits for queued work, copies programs into cpu.programs, and returns instructions executed since the last read. */
-  async read(): Promise<number> {
+  read(): Promise<number> { return this.exclusive(() => this.readback()); }
+  private async readback(): Promise<number> {
+    let staging: GPUBuffer | undefined, opsStaging: GPUBuffer | undefined;
+    try {
     const d = this.device;
-    const staging = d.createBuffer({ size: this.cpu.num * TAPE, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
-    const opsStaging = d.createBuffer({ size: 16, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    staging = d.createBuffer({ size: this.cpu.num * TAPE, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    opsStaging = d.createBuffer({ size: 16, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
     const enc = d.createCommandEncoder();
     enc.copyBufferToBuffer(this.progs, 0, staging, 0, this.cpu.num * TAPE);
     enc.copyBufferToBuffer(this.opsBuf, 0, opsStaging, 0, 16);
@@ -225,9 +275,22 @@ export class GpuSoup {
     const o = new Uint32Array(opsStaging.getMappedRange());
     const ops = o[0] + o[1] * 2 ** 32;
     this.lastDone = o[2];
+    this.pendingEpochs = 0;
     if (this.dropForTest > 0) { this.dropForTest--; this.lastDone--; }
-    staging.destroy(); opsStaging.destroy();
     return ops;
+    } catch (error) { this.unusable = true; throw error; }
+    finally { staging?.destroy(); opsStaging?.destroy(); }
+  }
+
+  /** Verify uploads independently of the pair-completion counter. */
+  private async verifyUpload(before: Uint8Array): Promise<void> {
+    const drops = this.dropForTest; this.dropForTest = 0;
+    try {
+      const ops = await this.readback();
+      if (ops !== 0 || this.lastDone !== 0 || this.cpu.programs.some((v, i) => v !== before[i])) {
+        throw new Error("GPU soup: checkpoint upload readback mismatch");
+      }
+    } finally { this.dropForTest = drops; this.cpu.programs.set(before); }
   }
 
   /**
@@ -237,25 +300,69 @@ export class GpuSoup {
    * then the batch is undone from cpu.programs (the state before it) and run
    * again, up to `tries` times. Returns instructions executed and retries used.
    */
-  async stepChecked(n: number, tries = 20): Promise<{ ops: number; retries: number }> {
+  stepChecked(n: number, tries = 20): Promise<{ ops: number; retries: number }> {
+    return this.exclusive(() => this.checked(n, tries));
+  }
+  // Error scopes cover WebGPU validation/OOM/internal failures that do not
+  // throw JS exceptions. This CLI owns its GPUDevice during checked execution.
+  private async gpuErrors<T>(work: () => Promise<T>): Promise<T> {
+    for (const filter of ["validation", "out-of-memory", "internal"] as GPUErrorFilter[]) this.device.pushErrorScope(filter);
+    let value: T | undefined, problem: unknown;
+    try { value = await work(); } catch (error) { problem = error; }
+    for (let i = 0; i < 3; i++) {
+      try {
+        const error = await this.device.popErrorScope();
+        if (error) problem ??= new Error(`GPU soup: ${error.message}`);
+      } catch (error) { problem ??= error; }
+    }
+    if (problem !== undefined) { this.unusable = true; throw problem; }
+    return value as T;
+  }
+  private async checked(n: number, tries: number): Promise<{ ops: number; retries: number }> {
+    if (!Number.isSafeInteger(n) || n < 0 || n * (this.cpu.num / 2) > 0xffffffff) throw new Error("checked epoch count must fit the u32 completion counter");
+    if (!Number.isSafeInteger(tries) || tries < 1) throw new Error("tries must be a positive integer");
+    if (this.pendingEpochs) throw new Error("read pending unchecked work before checked stepping");
+    if (n === 0) return { ops: 0, retries: 0 };
     const before = this.cpu.programs.slice(), epoch = this.cpu.epoch, runs = this.cpu.runs;
     for (let t = 0; t < tries; t++) {
-      this.step(n);
-      const ops = await this.read();
-      if (this.lastDone === n * (this.cpu.num / 2)) return { ops, retries: t };
+      let ops: number;
+      try { ops = await this.gpuErrors(async () => { this.submit(n); return await this.readback(); }); }
+      catch (error) {
+        this.cpu.programs.set(before); this.cpu.epoch = epoch; this.cpu.runs = runs;
+        this.unusable = true; // GPU state is unknown; never resume this instance
+        throw error;
+      }
+      if (this.lastDone === n * (this.cpu.num / 2)) {
+        this.integrity.checkedEpochs += n; this.integrity.acceptedBatches++;
+        this.integrity.completedPairs += this.lastDone;
+        return { ops, retries: t };
+      }
+      this.integrity.rejectedBatches++;
+      const event = { epoch, epochs: n, attempt: t + 1, expectedPairs: n * (this.cpu.num / 2), completedPairs: this.lastDone };
       this.cpu.programs.set(before); this.cpu.epoch = epoch; this.cpu.runs = runs;
-      this.upload();
+      try {
+        this.onIncompleteBatch?.(event);
+        await this.gpuErrors(async () => {
+          this.uploadState();
+          await this.device.queue.onSubmittedWorkDone();
+          await this.verifyUpload(before);
+        });
+      } catch (error) { this.unusable = true; throw error; }
     }
     throw new Error(`GPU soup: ${n} epochs from ${epoch} dropped work ${tries} times`);
   }
 
   /** stepChecked over `n` epochs in batches of at most `batch`; returns instructions executed and retries used. */
-  async advance(n: number, batch = 64): Promise<{ ops: number; retries: number }> {
+  advance(n: number, batch = 64): Promise<{ ops: number; retries: number }> {
+    return this.exclusive(async () => {
+    if (!Number.isSafeInteger(n) || n < 0) throw new Error("epochs must be a non-negative integer");
+    if (!Number.isSafeInteger(batch) || batch < 1 || batch * (this.cpu.num / 2) > 0xffffffff) throw new Error("batch must be positive and fit the completion counter");
     let ops = 0, retries = 0;
     for (let left = n; left > 0; left -= batch) {
-      const r = await this.stepChecked(Math.min(batch, left));
+      const r = await this.checked(Math.min(batch, left), 20);
       ops += r.ops; retries += r.retries;
     }
     return { ops, retries };
+    });
   }
 }

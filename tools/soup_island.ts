@@ -21,7 +21,8 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION } from "@bl/schema";
 import { type Lang, Soup, type SoupParams } from "./soup/bff.ts";
-import { GpuSoup, soupDevice } from "./soup/gpu.ts";
+import { GpuSoup } from "./soup/gpu.ts";
+import { soupDevice } from "./soup/device.ts";
 import { decodeSnapshot, encodeSnapshot, resumeGpuSoup, resumeSoup, sha256Hex } from "./soup/snapshot.ts";
 
 /** A task from POST /api/soup/next (Coordinator.Soup's `task/3`). */

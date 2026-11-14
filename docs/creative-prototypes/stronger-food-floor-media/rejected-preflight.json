@@ -1,0 +1,13 @@
+{
+  "kind": "saved-capture-preflight-rejection",
+  "reason": "Element screenshot rounded fractional bounds to odd height; rejected before numbered frames",
+  "pngDimensions": {
+    "width": 1384,
+    "height": 967
+  },
+  "pngSha256": "1c568d806f258928b1f0c68cfb2a3489394c85b29632a18f7c082ad35589e99f",
+  "captureHtmlSha256": "f2d162d04e728c8f287c1a7171832e0297694bbcfb4c0d2e65cf77f34d34dfa9",
+  "numberedFramesCaptured": 0,
+  "simulationRerun": false,
+  "repair": "Outward integer even document rectangle containing the complete world panels; no resize or content crop"
+}

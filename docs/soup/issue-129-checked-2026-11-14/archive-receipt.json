@@ -1,0 +1,9 @@
+{
+  "sha256": "72d448b2fd6ddb8e8dde8f088f8000523824eb181801f5aaa123ce20235d06e6",
+  "files": 156,
+  "verification": "all archived members and originals rehashed",
+  "publication": "local only; not immutable remote storage",
+  "archivePath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/result-archive/originals.zip",
+  "archiveBytes": 125172097,
+  "manifestSha256": "4ad5514257aeb9d6ae47e8f7436c0c0d547299014768af87eeadc967133f9c24"
+}

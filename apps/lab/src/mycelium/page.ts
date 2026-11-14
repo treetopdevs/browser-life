@@ -66,6 +66,8 @@ let hover: { x: number; y: number } | null = null;
 
 interface Inspected { id: number; gid: number; parent: number; age: number; M: number; E: number; x: number; y: number; step: number; alive: boolean; family: number }
 let inspected: Inspected | null = null;
+let inspectSeq = 0; // each click's request number: a readback that finishes after a newer click is dropped
+let planting = 0; // Plant calls queued or running (they can overlap): Play waits until every one is done
 
 /** Serialises plant, brush strokes and single steps; frames do not queue steps while one is waiting or running. */
 let chain: Promise<unknown> = Promise.resolve();
@@ -206,6 +208,12 @@ function freshCanvas(): HTMLCanvasElement {
 }
 
 async function plant(note = ''): Promise<void> {
+  planting++;
+  play.disabled = true;
+  try { await plantNow(note); } finally { if (--planting === 0) play.disabled = false; }
+}
+
+async function plantNow(note: string): Promise<void> {
   await exclusive(async () => {
     stop();
     stateGen++;
@@ -578,6 +586,7 @@ function refreshInspected(s: MyceliumState): void {
 /** Reads back only the particle planes and the counters (no genomes, no field) and inspects the particle nearest a world point. */
 async function inspectAt(wx: number, wy: number): Promise<void> {
   if (!cfg) return;
+  const req = ++inspectSeq;
   const reach = Math.max(1, 16 / scaleOf(view, cfg.width, cssSize()));
   const miss = 'No particle near that click. Click closer to one, or zoom in.';
   if (engine === 'cpu' && world) {
@@ -596,7 +605,7 @@ async function inspectAt(wx: number, wy: number): Promise<void> {
     await Promise.all([sc.mapAsync(GPUMapMode.READ), sp.mapAsync(GPUMapMode.READ)]);
     const ctl = new Uint32Array(sc.getMappedRange().slice(0)), part = new Uint32Array(sp.getMappedRange().slice(0));
     sc.destroy(); sp.destroy();
-    if (sim !== gpu) return;
+    if (sim !== gpu || req !== inspectSeq) return;
     const n = ctl[v.ctlN], stepNow = ctl[v.ctlStepHi] * 2 ** 32 + ctl[v.ctlStep];
     const pl = (off: number) => part.subarray(off, off + n);
     const X = pl(v.planes.x), Y = pl(v.planes.y), G = pl(v.planes.gid);
@@ -730,7 +739,7 @@ function frameGpu(gen: number): void {
 }
 
 function start(): void {
-  if (running || !cfg) return;
+  if (running || !cfg || planting > 0) return;
   if ((engine === 'cpu' ? world?.n : snap?.n) === 0) return;
   running = true;
   const gen = ++loopGen;
