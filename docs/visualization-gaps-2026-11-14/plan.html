@@ -9,7 +9,7 @@
 :root{
   --bg:var(--background,#fbf8f1);--fg:var(--foreground,#1d2a2e);--mut:var(--muted-foreground,#5d6b6e);
   --line:var(--border,#dcd6c8);--panel:var(--card,#fffdf8);--code:var(--code-background,#f1ece0);
-  --sun:var(--warning,#c9821c);--leaf:var(--success,#2f8a63);--sky:var(--info,#3a78b8);--stop:var(--destructive,#b4452f);
+  --sun:var(--warning,#8a5207);--leaf:var(--success,#1f6a49);--sky:var(--info,#2a609a);--stop:var(--destructive,#a53b26);
   --r:var(--radius,10px);
 }
 @media (prefers-color-scheme:dark){:root{
@@ -60,9 +60,11 @@ svg text{font:11px var(--font-sans,system-ui,sans-serif);fill:var(--mut)}
 </head>
 <body class="standalone">
 <main>
-<span class="status">Proposed · nothing built</span>
+<span class="status">Plans as proposed · see the decision log for what was decided and built</span>
 <h1>Four plans to make every simulation visible</h1>
 <p class="lede">2026-11-14 · source of truth is <code>PLAN.md</code> beside this file. Each plan runs in its own fresh worktree; this checkout is on another branch with staged work and is left alone.</p>
+
+<div class="note"><p style="margin:0"><strong>Where this stands.</strong> These are the plans as first proposed on 2026-11-14. <a href="decisions.html" style="color:inherit">decisions.html</a> records every choice made since and overrides this page where they differ: one page with a picker and no lab link for food-live (D7), 3D slices local only (D8), cyclic competition first in the slab viewer (D10), and corrections found while building (D14, D19, D20).</p></div>
 
 <ol class="order">
   <li><a href="#food-replays">food-replays</a><small>18 result pages that load but play nothing</small><span class="size s">Small · no code</span></li>

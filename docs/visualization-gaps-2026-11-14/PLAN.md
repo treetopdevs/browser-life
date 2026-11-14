@@ -1,6 +1,8 @@
 # Visualization gaps: plans
 
-2026-11-14. Status: **proposed, nothing built**. Review page: `plan.html` in this folder (this file is the source; keep them in step).
+2026-11-14. These are the plans **as first proposed**. Review page: `plan.html` in this folder (this file is its source; keep them in step).
+
+**What overrides this file.** `decisions.html` in this folder records every choice made since, and wins where it differs: one page with a picker and no lab link for `food-live` (D7), 3D slices local only (D8), cyclic competition first in `slab-viewer` (D10), and corrections found while building (D14, D19, D20). Each slice also has its own reviewed `PLAN.md` in a subfolder on its branch.
 
 Four plans close every gap found in the survey. They are named by key, not number, so they can be handed to agents without ambiguity.
 
