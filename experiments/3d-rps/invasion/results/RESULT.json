@@ -1,0 +1,91 @@
+{
+  "label": "SELECTION-LEAD",
+  "independentSeeds": 4,
+  "pairs": [
+    {
+      "seed": 1101,
+      "marker": 4,
+      "initial": 0.009995281730363306,
+      "immuneMean": 0.05679560178435652,
+      "neutralMean": 0,
+      "pass": true
+    },
+    {
+      "seed": 1101,
+      "marker": 5,
+      "initial": 0.009995281730363306,
+      "immuneMean": 0.05679560178435652,
+      "neutralMean": 0,
+      "pass": true
+    },
+    {
+      "seed": 1102,
+      "marker": 4,
+      "initial": 0.009994128009395186,
+      "immuneMean": 0.3209903072768701,
+      "neutralMean": 0,
+      "pass": true
+    },
+    {
+      "seed": 1102,
+      "marker": 5,
+      "initial": 0.009994128009395186,
+      "immuneMean": 0.3209903072768701,
+      "neutralMean": 0,
+      "pass": true
+    },
+    {
+      "seed": 1103,
+      "marker": 4,
+      "initial": 0.009996005802098005,
+      "immuneMean": 0.20690905867844198,
+      "neutralMean": 0.0021243360094244253,
+      "pass": true
+    },
+    {
+      "seed": 1103,
+      "marker": 5,
+      "initial": 0.009996005802098005,
+      "immuneMean": 0.20690905867844198,
+      "neutralMean": 0.0021243360094244253,
+      "pass": true
+    },
+    {
+      "seed": 1104,
+      "marker": 4,
+      "initial": 0.009996364958197019,
+      "immuneMean": 0.06941763850448791,
+      "neutralMean": 0,
+      "pass": true
+    },
+    {
+      "seed": 1104,
+      "marker": 5,
+      "initial": 0.009996364958197019,
+      "immuneMean": 0.06941763850448791,
+      "neutralMean": 0,
+      "pass": true
+    }
+  ],
+  "seeds": [
+    {
+      "seed": 1101,
+      "pass": true
+    },
+    {
+      "seed": 1102,
+      "pass": true
+    },
+    {
+      "seed": 1103,
+      "pass": true
+    },
+    {
+      "seed": 1104,
+      "pass": true
+    }
+  ],
+  "wallSeconds": 798.335,
+  "bytesBeforeResult": 1174606941,
+  "manifestSha256": "36b0892bf1eb379f5f316d0ebfb0e4b7c70d289b9a6e7adbd4c8f340c91310e0"
+}
