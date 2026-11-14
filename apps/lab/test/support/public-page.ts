@@ -1,16 +1,15 @@
 // What "a public page" means for the packaging tests: a Vite input, not removed by Dockerfile.site, not answered 404
 // by Caddy, open to search engines (no noindex), with a canonical link, listed in the sitemap and redirected to its slash.
-// The shared garden is the one page still held back; its own tests say so.
+// No page is held back: the shared garden's page and public routes are served like any other.
 import { readFileSync } from 'node:fs';
 import { expect } from 'vitest';
 
 const read = (path: string) => readFileSync(new URL(`../../../../${path}`, import.meta.url), 'utf8');
 
-/** The tokens of the Dockerfile.site `rm -rf` that follows the build. */
+/** The tokens of any `rm -rf` that follows the build in Dockerfile.site. Today there is none: the image ships the whole build. */
 export function removedByImage(): string[] {
   const rm = read('Dockerfile.site').match(/&& rm -rf (.+)/)?.[1];
-  expect(rm, 'Dockerfile.site has an rm -rf after the build').toBeTruthy();
-  return rm!.trim().split(/\s+/);
+  return (rm ?? '').trim().split(/\s+/).filter(Boolean);
 }
 
 /**
@@ -27,7 +26,7 @@ export function expectPublicPage(dir: string, viteEntry: string, chunks: string[
   const caddy = read('deploy/Caddyfile');
   const escaped = dir.replace(/[.+?^${}()|[\]\\/-]/g, '\\$&');
   expect(caddy, `Caddy answers 404 for ${dir}`).not.toMatch(new RegExp(`\\^/${escaped}\\(\\?:`));
-  expect(caddy.match(/@private_\w+/g)?.filter((m) => m !== '@private_garden') ?? [], 'only the garden is held back').toEqual([]);
+  expect(caddy.match(/@private_\w+/g) ?? [], 'no page is held back').toEqual([]);
   expect(caddy).toContain(`redir /${dir} /${dir}/{?query} 308`);
 
   const html = read(`apps/lab/${dir}/index.html`);

@@ -23,11 +23,10 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
   try {
     execFileSync('npx', ['vite', 'build', '--outDir', dir, '--emptyOutDir', '--logLevel', 'error'], { cwd: fileURLToPath(new URL('..', import.meta.url)), stdio: 'pipe' });
     const rm = read('Dockerfile.site').match(/&& rm -rf (.+)/)?.[1];
-    expect(rm).toBeTruthy();
     const files = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(join(d, e.name)) : [join(d, e.name)]);
     const all = files(dir).map((f) => relative(dir, f));
     const removed = new Set<string>();
-    for (const token of rm!.split(/\s+/)) {
+    for (const token of (rm ?? '').split(/\s+/).filter(Boolean)) {
       const rel = token.replace(/^apps\/lab\/dist\//, '');
       const re = new RegExp(`^${rel.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}(/.*)?$`);
       for (const f of all) if (re.test(f)) removed.add(f);

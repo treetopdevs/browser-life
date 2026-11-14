@@ -54,8 +54,8 @@ const ids = Object.keys(cards);
 const TITLE = "<title>Page not found · Cadence Garden</title>";
 const titleOf = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
 const metaOf = (html: string, key: string) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
-// The experiment pages are public too (only the garden is held back): each is packaged, served with its assets and indexable.
-const EXPERIMENT_PAGES = ["/story/", "/experiments/", "/slab/", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/boundaries/", "/development/", "/hungry-shapes/", "/food-bands/", "/matter/", "/currents/", "/spatial/", "/predictability/", "/mycelium/", "/assembly/", "/niche/", "/moving-light/", "/controller-locality/", "/opponents/", "/opponents/archive/", "/ecosystem/", "/ecosystem/archive/", "/playground/", "/vision-screen/"];
+// The experiment pages are public too (the shared garden’s page among them): each is packaged, served with its assets and indexable.
+const EXPERIMENT_PAGES = ["/story/", "/experiments/", "/garden/", "/slab/", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/boundaries/", "/development/", "/hungry-shapes/", "/food-bands/", "/matter/", "/currents/", "/spatial/", "/predictability/", "/mycelium/", "/assembly/", "/niche/", "/moving-light/", "/controller-locality/", "/opponents/", "/opponents/archive/", "/ecosystem/", "/ecosystem/archive/", "/playground/", "/vision-screen/"];
 const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/", "/soup/", ...EXPERIMENT_PAGES];
 
 // What the synthetic coordinator says; the site must pass these through untouched.
@@ -194,7 +194,7 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(must(["exec", site, "cat", "/etc/caddy/Caddyfile"])).toBe(readFileSync(repo("deploy/Caddyfile"), "utf8"));
   });
 
-  it("packages the lab files and the media and leaves the garden out", () => {
+  it("packages the lab files, the media and every page", () => {
     const files = new Set(must(["exec", site, "find", "/srv"]).split("\n").filter(Boolean));
     expect(files.has("/srv/lab/index.html"), "packaged lab content: /srv/lab/index.html is missing from the image").toBe(true);
     const wanted = [
@@ -202,7 +202,6 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
       ...ids.flatMap((world) => [`/srv/lab/world/${world}/index.html`, `/srv/worlds/world/${world}/index.html`, `/srv/og/worlds/${world}.jpg`]),
     ];
     expect(wanted.filter((file) => !files.has(file)), "packaged files missing from the image").toEqual([]);
-    expect([...files].filter((file) => file === "/srv/garden" || file.startsWith("/srv/garden/")), "the garden is not packaged").toEqual([]);
   });
 
   it("serves every page with the styles and scripts it names", async () => {
@@ -302,14 +301,16 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(asset.body).toBe(full.body);
   });
 
-  it("keeps the garden page and every garden API private", async () => {
-    const paths = [
-      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html", "/garden%2findex.html", "//garden/", "/x/../garden/",
-      "/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/public/gardens/commons/checkpoints/abc",
-      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test", "/api/public/garden%2fletters", "/API/PUBLIC/GARDEN",
-    ];
-    for (const path of paths) {
-      for (const method of ["GET", "HEAD", "POST"]) expect((await raw(origin, path, { method })).status, `${method} ${path}`).toBe(404);
+  it("serves the garden page and passes every garden API to the coordinator", async () => {
+    const page = await raw(origin, "/garden/");
+    expect(page.status).toBe(200);
+    expect(titleOf(page.body)).toBe("The shared garden · Cadence Garden");
+    expect((await raw(origin, "/garden")).status).toBe(308);
+    // Opening the garden is the coordinator's decision (BL_GARDEN_SCHEDULING, the island token), not the proxy's.
+    for (const path of ["/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/gardens"]) {
+      const res = await raw(origin, path);
+      expect(res.status, path).toBe(200);
+      expect(echo(res).path, path).toBe(path);
     }
   });
 

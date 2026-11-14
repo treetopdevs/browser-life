@@ -914,11 +914,11 @@ describe("meteor (docs/garden-meteor-2026-10-18.md)", () => {
   });
 });
 
-describe("the page is hidden", () => {
-  it("has no canonical link, says noindex, is not in the sitemap and loads its module", () => {
-    expect(pageMeta(gardenHtml)).toBeNull();
-    expect(gardenHtml).toMatch(/<meta name="robots" content="noindex" \/>/);
-    expect(sitemap).not.toMatch(/\/garden\//);
+describe("the page is public", () => {
+  it("has a canonical link, no noindex, is in the sitemap and loads its module", () => {
+    expect(pageMeta(gardenHtml)?.canonical).toBe("https://cadence.garden/garden/");
+    expect(gardenHtml).not.toMatch(/noindex/);
+    expect(sitemap).toMatch(/<loc>https:\/\/cadence\.garden\/garden\/<\/loc>/);
     expect(gardenHtml).toMatch(/<script type="module" src="\/garden\/main\.ts"><\/script>/);
     expect(gardenHtml).not.toMatch(/aria-current/);
     // The prediction panel says the answer can be worked out ahead (the note's third amendment, item 5).

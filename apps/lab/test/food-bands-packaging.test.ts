@@ -20,10 +20,10 @@ describe('food-bands is a public exploration page: configuration', () => {
     expect(vite).toMatch(/name: "food-bands-replays",\s+apply: "serve"/);
   });
 
-  it('Dockerfile.site keeps the page and every asset glob, and only the garden is held back', () => {
+  it('Dockerfile.site keeps the page and every asset glob, and removes nothing from the build', () => {
     const docker = read('Dockerfile.site');
     for (const path of ['apps/lab/dist/food-bands', 'apps/lab/dist/assets/foodBands*.js', 'apps/lab/dist/assets/foodBands*.css', 'apps/lab/dist/assets/food-bands*.js', 'apps/lab/dist/assets/food-bands*.css', 'apps/lab/dist/hungry-shapes']) expect(docker).not.toContain(path);
-    expect(docker).toContain('rm -rf apps/lab/dist/garden');
+    expect(docker).not.toContain('rm -rf');
   });
 
   it('is public: Caddy does not answer 404 for /food-bands, the page is indexable, linked by canonical and in the sitemap', () => {
@@ -63,7 +63,7 @@ describe('food-bands is a public exploration page: the built image', () => {
     await build({ root: join(root, 'apps/lab'), configFile: join(root, 'apps/lab/vite.config.ts'), logLevel: 'silent', build: { outDir, emptyOutDir: true } });
     // Apply exactly the Dockerfile.site rm line to the scratch build.
     const docker = read('Dockerfile.site');
-    const line = docker.split('\n').find(l => l.includes('rm -rf apps/lab/dist/garden'))!;
+    const line = docker.split('\n').find(l => l.includes('rm -rf')) ?? '';
     const paths = line.split(/\s+/).filter(p => p.startsWith('apps/lab/dist/'));
     for (const p of paths) for (const target of expand(p, outDir)) { if (existsSync(target)) { removed.add(relative(outDir, target)); rmSync(target, { recursive: true, force: true }); } }
   }, 280_000);
