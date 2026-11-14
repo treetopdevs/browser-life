@@ -42,6 +42,6 @@ test(name+' '+vw, async({page})=>{
   console.log(name,vw,'recorded census population at tick',tk,'=',recorded);
   expect(recorded).toBeDefined(); expect(Number(popText)).toBe(recorded);
   // paired videos: actually play and check the clock moves
-  if(vid){ const t=await page.evaluate(async()=>{const v=document.querySelector('video')!; v.muted=true; await v.play(); await new Promise(r=>setTimeout(r,1500)); return {t:v.currentTime,err:v.error&&v.error.code}; }); console.log(name,vw,'video currentTime',t.t); expect(t.err).toBeNull(); expect(t.t).toBeGreaterThan(0); }
+  if(vid){ const t=await page.evaluate(async()=>{const v=document.querySelector('video')!; v.muted=true; const t0=v.currentTime; await v.play(); await new Promise(r=>setTimeout(r,1500)); return {t0,t:v.currentTime,err:v.error&&v.error.code}; }); console.log(name,vw,'video currentTime',t.t0,'->',t.t); expect(t.err).toBeNull(); expect(t.t).toBeGreaterThan(t.t0); }
   await page.screenshot({path:OUT+name+'-'+vw+'.png',fullPage:false});
 });
