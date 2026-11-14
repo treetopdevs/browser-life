@@ -33,7 +33,8 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { selfRep, DEFAULT_MUTATION, type Grid, type Lang, MAX_NUM, show, Soup, TAPE } from "./soup/bff.ts";
 import { drawGrid, encodePng } from "./soup/png.ts";
-import { GpuSoup, soupDevice } from "./soup/gpu.ts";
+import { soupDevice } from "./soup/device.ts";
+import { GpuSoup } from "./soup/gpu.ts";
 import { brotliSizeC, census, stats } from "./soup/stats.ts";
 
 const a = parseArgs(Deno.args, {
@@ -143,7 +144,7 @@ while (soup.epoch < maxEpochs && !stopBeforeRun) {
   // with e % every == 0, labelled e + 1), a snapshot, or the end.
   let t = soup.epoch + 1;
   while ((t - 1) % every !== 0 && t % save !== 0 && !framed(t) && t < maxEpochs) t++;
-  if (gpu) { gpu.step(t - soup.epoch); ops += await gpu.read(); }
+  if (gpu) { const r = await gpu.advance(t - soup.epoch); ops += r.ops; if (r.retries) console.error(`epoch ${soup.epoch}: GPU dropped work, ${r.retries} batch(es) redone`); }
   else { while (soup.epoch < t) soup.step(); ops += soup.ops; soup.ops = 0; }
   if ((t - 1) % every === 0 || t === maxEpochs) {
     const st = await stats(soup.programs);
