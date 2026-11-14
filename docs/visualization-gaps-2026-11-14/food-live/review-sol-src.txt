@@ -1,0 +1,13 @@
+- **P2 — [replay-check.ts:154](apps/lab/src/food-bands/replay-check.ts:154):** Without `crypto.subtle` (HTTP LAN origin), missing or corrupt `stateSha256` reports `identical` with `intact: true`. Integrity verification silently succeeds.
+
+- **P2 — [replay-check.ts:230](apps/lab/src/food-bands/replay-check.ts:230):** Partial results discard detected digest failures. Corrupt the shorter foothold recording’s hash: the UI gives no integrity warning, and the partial-recording test still passes.
+
+- **P2 — [replay-check.ts:83](apps/lab/src/food-bands/replay-check.ts:83):** `finalTick` is never bounded by `maxTick` or the expected horizon. An in-memory recording with `maxTick=20`, `finalTick=40`, expected horizon 20 returned `identical`.
+
+- **P2 — [page.ts:438](apps/lab/src/food-bands/page.ts:438):** After reporting an invalid recording, the displayed-frame check parses it again without validation. At tick 20, JSON `null` or `frames: {}` causes an uncaught exception.
+
+- **P3 — [page.ts:237](apps/lab/src/food-bands/page.ts:237):** Accounting rows come only from the first arm. On `alternating-food`, the split arm’s 12 rows suppress the alternating arm’s six additional per-band counters.
+
+- **P3 — [REVIEW.md:31](docs/visualization-gaps-2026-11-14/food-live/REVIEW.md:31):** “All 41 real recordings still identical” contradicts EVIDENCE.md’s 40 identical plus one partial, overstating completed verification.
+
+Verdict: request changes; no P1 found. No files changed.
