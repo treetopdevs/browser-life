@@ -1,0 +1,5 @@
+No P1/P2 correctness issues found in the requested recent fixes.
+
+Source inspection and in-memory probes covered integrity states, finalTick bounds, seed parsing and transitions, accounting-row unions, malformed frames, and wrap boundaries.
+
+Browser e2e tests were not rerun. No files changed.

@@ -3,11 +3,15 @@ import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { WORLD_LINK_PAGES, withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
+import { SCREENS } from "./src/food-bands/screens.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
 // port, which would make /api proxy to itself. bin/dev sets COORDINATOR_PORT.
 const coordinatorUrl = `http://localhost:${process.env.COORDINATOR_PORT ?? "4000"}`;
+
+// Model copies the private /food-bands/ page can load (hungry-shapes keeps its own chunk name below).
+const FOOD_BANDS_MODELS = ["uniform-endurance", "moving-food", "stationary-food", "split-food", "alternating-food", "food-band-foothold", "food-schedule-769"];
 
 const alias = {
   "@bl/schema": r("../../packages/schema/src/index.ts"),
@@ -132,6 +136,30 @@ export default defineConfig({
       }
     },
   }, {
+    // Dev only (`apply: "serve"`, so it never exists in `vite build`): /food-bands/ can compare a live run with the
+    // recorded replay files that docs/creative-prototypes/ARTIFACTS.md keeps out of git. Only the file names the screens
+    // table lists are served, read-only, from that one folder; an absent file answers 404.
+    name: "food-bands-replays",
+    apply: "serve",
+    configureServer(server) {
+      const allowed = new Set(SCREENS.flatMap((s) => s.arms.flatMap((a) => Object.values(a.replays).flat())));
+      const folder = r("../../docs/creative-prototypes/");
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? "").split("?")[0] ?? "";
+        const match = /^\/docs\/creative-prototypes\/([A-Za-z0-9._-]+\.json)$/.exec(path);
+        if (!match) return next();
+        const name = match[1]!;
+        const file = join(folder, name);
+        if ((req.method !== "GET" && req.method !== "HEAD") || !allowed.has(name) || !existsSync(file)) {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }).end("not found");
+          return;
+        }
+        const body = readFileSync(file);
+        res.writeHead(200, { "Content-Type": "application/json", "Content-Length": body.length, "Cache-Control": "no-store" });
+        res.end(req.method === "HEAD" ? undefined : body);
+      });
+    },
+  }, {
     name: "not-found",
     configureServer(server) {
       const handle = notFound(server.config.root, () => server.transformIndexHtml("/404.html", readFileSync(join(server.config.root, "404.html"), "utf8")));
@@ -162,6 +190,7 @@ export default defineConfig({
       if (id.includes("/src/currents/model.ts")) return "currents-model";
       if (id.includes("/src/matter/model.ts")) return "matter-model";
       if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
+      for (const key of FOOD_BANDS_MODELS) if (id.includes(`/src/${key}/model.ts`)) return `food-bands-model-${key}`;
       if (id.includes("/src/development/model.ts")) return "development-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
@@ -189,6 +218,7 @@ export default defineConfig({
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
       hungryShapes: r("./hungry-shapes/index.html"),
+      foodBands: r("./food-bands/index.html"),
       matter: r("./matter/index.html"),
       currents: r("./currents/index.html"),
       spatial: r("./spatial/index.html"),
