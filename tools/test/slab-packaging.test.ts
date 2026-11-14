@@ -1,8 +1,7 @@
-// The private slab viewer stays out of the site: noindex, no canonical link, not in the sitemap or the nav, not built by
-// default, removed from the site image, answered 404 by Caddy. Here rather than in apps/lab/test because it needs Node's
-// file system and processes (see site-build.test.ts).
+// The slab viewer is a public exploration page: indexable, with a canonical link and a sitemap entry, always built,
+// kept by the site image, and served by Caddy. Here rather than in apps/lab/test because it needs Node's file system and
+// processes (see site-build.test.ts).
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { connect } from "node:net";
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -17,88 +16,70 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSyn
 
 describe("source of the page", () => {
   const html = read("apps/lab/slab/index.html");
-  it("has noindex, no canonical link, no og tags, and is not in sitemap.xml or robots.txt", () => {
-    expect(html).toMatch(/<meta name="robots" content="noindex" \/>/);
-    expect(html).not.toMatch(/rel="canonical"/);
-    expect(html).not.toMatch(/property="og:/);
-    expect(pageMeta(html)).toBeNull();
-    expect(withSocialMeta(html)).toBe(html);
-    expect(read("apps/lab/public/sitemap.xml")).not.toMatch(/slab/i);
+  it("is open to search engines, has a canonical link and tags derived from it, and is in sitemap.xml", () => {
+    expect(html).not.toMatch(/name="robots"/);
+    expect(html).toContain('<link rel="canonical" href="https://cadence.garden/slab/" />');
+    expect(pageMeta(html)?.canonical).toBe("https://cadence.garden/slab/");
+    expect(withSocialMeta(html)).toMatch(/property="og:title"/);
+    expect(read("apps/lab/public/sitemap.xml")).toContain("<loc>https://cadence.garden/slab/</loc>");
     expect(read("apps/lab/public/robots.txt")).not.toMatch(/slab/i);
   });
-  it("is not linked from any other page", () => {
-    const pages = ["index.html", "lab", "worlds", "how-it-works", "research", "about", "privacy", "participate", "status", "garden"];
-    for (const p of pages) {
-      const f = p.endsWith(".html") ? p : `${p}/index.html`;
-      expect(read(`apps/lab/${f}`), f).not.toMatch(/href="\/slab/);
-    }
+  it("says it is an exploration, not a result, and no longer says it is private", () => {
+    expect(html).toContain("Exploration, not a result");
+    expect(html).not.toMatch(/Private page|Private viewer|private exploratory/i);
   });
-  it("vite.config.ts adds the slab input only on request; Dockerfile.site removes dist/slab; the Caddyfile answers 404", () => {
-    expect(read("apps/lab/vite.config.ts")).toMatch(/BL_BUILD_SLAB === "1" \? \{ slab: r\("\.\/slab\/index\.html"\) \}/);
-    expect(read("Dockerfile.site")).toMatch(/rm -rf apps\/lab\/dist\/garden apps\/lab\/dist\/slab/);
-    expect(read("deploy/Caddyfile")).toMatch(/@private_slab path_regexp private_slab \(\?i\)\^\/slab\(\?:\/\|\$\)\n\s+respond @private_slab 404/);
+  it("vite.config.ts always builds the slab input; Dockerfile.site keeps dist/slab; the Caddyfile does not answer 404", () => {
+    const vite = read("apps/lab/vite.config.ts");
+    expect(vite).toContain('slab: r("./slab/index.html")');
+    expect(vite).not.toContain("BL_BUILD_SLAB");
+    expect(read("Dockerfile.site")).not.toMatch(/dist\/slab/);
+    expect(read("deploy/Caddyfile")).not.toMatch(/private_slab/);
+    expect(read("deploy/Caddyfile")).toContain("redir /slab /slab/{?query} 308");
   });
 });
 
 const dirs: string[] = [];
 afterAll(() => { for (const d of dirs) rmSync(d, { recursive: true, force: true }); });
-async function buildInto(slab: boolean): Promise<string> {
+async function buildInto(): Promise<string> {
   const dir = mkdtempSync(join(tmpdir(), "bl-slab-"));
   dirs.push(dir);
-  const before = process.env.BL_BUILD_SLAB;
-  if (slab) process.env.BL_BUILD_SLAB = "1"; else delete process.env.BL_BUILD_SLAB;
-  try {
-    await build({ configFile: repo("apps/lab/vite.config.ts"), root: repo("apps/lab"), logLevel: "silent", build: { outDir: dir, emptyOutDir: true } });
-  } finally {
-    if (before === undefined) delete process.env.BL_BUILD_SLAB; else process.env.BL_BUILD_SLAB = before;
-  }
+  await build({ configFile: repo("apps/lab/vite.config.ts"), root: repo("apps/lab"), logLevel: "silent", build: { outDir: dir, emptyOutDir: true } });
   return dir;
 }
 
 describe("builds", () => {
-  it("a default production build contains no slab page or slab-only asset; a build with BL_BUILD_SLAB=1 does build the page", async () => {
-    const plain = await buildInto(false);
-    const files = walk(plain);
-    expect(files.filter((f) => /slab/i.test(f.slice(plain.length)))).toEqual([]);
-    for (const f of files.filter((x) => /\.(html|js|css)$/.test(x))) expect(readFileSync(f, "utf8"), f).not.toMatch(/slab-app|__slab/);
-    const withSlab = await buildInto(true);
-    expect(existsSync(join(withSlab, "slab", "index.html"))).toBe(true);
-    expect(readFileSync(join(withSlab, "slab", "index.html"), "utf8")).toContain("noindex");
-    expect(walk(withSlab).some((f) => f.endsWith(".js") && /slab-app|__slab/.test(readFileSync(f, "utf8")) )).toBe(true);
+  it("a default production build contains the slab page and its script, and the page names no file the build lacks", async () => {
+    const built = await buildInto();
+    const files = walk(built);
+    expect(existsSync(join(built, "slab", "index.html"))).toBe(true);
+    const page = readFileSync(join(built, "slab", "index.html"), "utf8");
+    expect(page).not.toContain("noindex");
+    expect(page).toContain('rel="canonical" href="https://cadence.garden/slab/"');
+    expect(files.some((f) => f.endsWith(".js") && /slab-app|__slab/.test(readFileSync(f, "utf8")))).toBe(true);
+    for (const [, url] of page.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)) expect(existsSync(join(built, url!)), url).toBe(true);
   }, 240_000);
 });
 
 const caddy = spawnSync("caddy", ["version"]).status === 0;
-/** A raw HTTP/1.1 request, so the path reaches the server exactly as written (fetch would normalise dots and escapes). */
-function rawStatus(port: number, path: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const s = connect(port, "127.0.0.1", () => s.write(`GET ${path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n`));
-    let buf = "";
-    s.on("data", (d) => { buf += d.toString("latin1"); });
-    s.on("close", () => { const m = /^HTTP\/1\.1 (\d{3})/.exec(buf); m ? resolve(Number(m[1])) : reject(new Error(`no status for ${path}: ${buf.slice(0, 80)}`)); });
-    s.on("error", reject);
-  });
-}
-
 describe.skipIf(!caddy)("served through deploy/Caddyfile", () => {
-  it("answers 404 for /slab, /slab/, /SLAB/index.html and raw dot-segment, doubled-slash and escaped spellings, and still serves the lab", async () => {
+  it("serves /slab/ with 200, sends /slab to /slab/, and still serves the lab", async () => {
     const root = mkdtempSync(join(tmpdir(), "bl-slab-caddy-"));
     dirs.push(root);
-    const site = await buildInto(true); // even a build that contains the page must not serve it
+    const site = await buildInto();
     const port = 20_000 + Math.floor(Math.random() * 2000);
     const config = read("deploy/Caddyfile").replace(/^:80 \{/m, `:${port} {`).replace("root * /srv", `root * ${site}`);
+    // Caddy allows one global block: the Caddyfile opens with its own, so admin off goes inside it.
+    expect(config.startsWith("{\n")).toBe(true);
     const file = join(root, "Caddyfile");
-    writeFileSync(file, `{\n  admin off\n}\n${config}`);
+    writeFileSync(file, config.replace(/^\{/, "{\n  admin off"));
     const adapted = spawnSync("caddy", ["adapt", "--config", file, "--adapter", "caddyfile"]);
     expect(adapted.status).toBe(0);
-    const server: ChildProcess = spawn("caddy", ["run", "--config", file, "--adapter", "caddyfile"], { stdio: "ignore" });
+    const server: ChildProcess = spawn("caddy", ["run", "--config", file, "--adapter", "caddyfile"], { env: { ...process.env, BL_TRUSTED_PROXY_CIDRS: "" }, stdio: "ignore" });
     try {
       for (let i = 0; i < 100; i++) { try { await fetch(`http://127.0.0.1:${port}/`); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
-      for (const path of ["/slab", "/slab/", "/slab/index.html", "/SLAB/index.html"]) {
-        const res = await fetch(`http://127.0.0.1:${port}${path}`, { redirect: "manual" });
-        expect(res.status, path).toBe(404);
-      }
-      for (const path of ["//slab/", "/%73lab/", "/./slab/", "/slab/../slab/", "/x/../slab/", "/Slab/"]) expect(await rawStatus(port, path), path).toBe(404);
+      const bare = await fetch(`http://127.0.0.1:${port}/slab`, { redirect: "manual" });
+      expect([bare.status, bare.headers.get("location")]).toEqual([308, "/slab/"]);
+      for (const path of ["/slab/", "/slab/index.html"]) expect((await fetch(`http://127.0.0.1:${port}${path}`, { redirect: "manual" })).status, path).toBe(200);
       expect((await fetch(`http://127.0.0.1:${port}/lab/`)).status).toBe(200);
     } finally { server.kill(); }
   }, 240_000);

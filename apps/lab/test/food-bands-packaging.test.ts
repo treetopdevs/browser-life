@@ -3,12 +3,13 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { expectPublicPage } from './support/public-page.ts';
 import { build } from 'vite';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
 
-describe('food-bands stays a local-only page: configuration', () => {
+describe('food-bands is a public exploration page: configuration', () => {
   it('has its own Vite input and chunk names, leaving the hungry-shapes chunk contract alone', () => {
     const vite = read('apps/lab/vite.config.ts');
     expect(vite).toContain('foodBands: r("./food-bands/index.html")');
@@ -19,29 +20,17 @@ describe('food-bands stays a local-only page: configuration', () => {
     expect(vite).toMatch(/name: "food-bands-replays",\s+apply: "serve"/);
   });
 
-  it('Dockerfile.site removes the page and every asset glob', () => {
+  it('Dockerfile.site keeps the page and every asset glob, and only the garden is held back', () => {
     const docker = read('Dockerfile.site');
-    for (const path of ['apps/lab/dist/food-bands', 'apps/lab/dist/assets/foodBands*.js', 'apps/lab/dist/assets/foodBands*.css', 'apps/lab/dist/assets/food-bands*.js', 'apps/lab/dist/assets/food-bands*.css']) expect(docker).toContain(path);
-    // the older private pages are still removed
-    expect(docker).toContain('apps/lab/dist/hungry-shapes');
+    for (const path of ['apps/lab/dist/food-bands', 'apps/lab/dist/assets/foodBands*.js', 'apps/lab/dist/assets/foodBands*.css', 'apps/lab/dist/assets/food-bands*.js', 'apps/lab/dist/assets/food-bands*.css', 'apps/lab/dist/hungry-shapes']) expect(docker).not.toContain(path);
+    expect(docker).toContain('rm -rf apps/lab/dist/garden');
   });
 
-  it('Caddy answers 404 for /food-bands in any case, with or without a path, and only for it', () => {
-    const caddy = read('deploy/Caddyfile');
-    const pattern = caddy.match(/@private_food_bands path_regexp private_food_bands (.+)/)?.[1];
-    expect(pattern).toBe('(?i)^/food-bands(?:/|$)');
-    expect(caddy).toContain('respond @private_food_bands 404');
-    const matcher = new RegExp(pattern!.replace('(?i)', ''), 'i');
-    for (const path of ['/food-bands', '/food-bands/', '/FOOD-BANDS/index.html', '/food-bands/x']) expect(matcher.test(path), path).toBe(true);
-    for (const path of ['/food-bands-other', '/lab/', '/']) expect(matcher.test(path), path).toBe(false);
-  });
-
-  it('the page is noindex and is not linked from the lab list, the playground or the sitemap', () => {
-    expect(read('apps/lab/food-bands/index.html')).toMatch(/<meta name="robots" content="noindex, nofollow"/);
-    for (const file of ['apps/lab/playground/index.html', 'apps/lab/lab/index.html', 'apps/lab/public/sitemap.xml', 'tests/e2e/playground.spec.ts']) {
-      if (existsSync(join(root, file))) expect(read(file), file).not.toContain('food-bands');
-    }
-    expect(read('tests/e2e/public-routes.spec.ts')).toMatch(/const DIAGNOSTIC = \[[^\]]*"\/food-bands\/"/);
+  it('is public: Caddy does not answer 404 for /food-bands, the page is indexable, linked by canonical and in the sitemap', () => {
+    expectPublicPage('food-bands', 'foodBands: r("./food-bands/index.html")', ['foodBands', 'food-bands']);
+    expect(read('apps/lab/food-bands/index.html')).not.toContain('noindex');
+    // it is still not a lab-list or library page, and the public-routes spec lists it as a normal public page
+    expect(read('tests/e2e/public-routes.spec.ts')).not.toMatch(/const DIAGNOSTIC = \[[^\]]*"\/food-bands\/"/);
   });
 
   it('writes no file by itself: the only download is behind a button click', () => {
@@ -66,7 +55,7 @@ function walk(dir: string): string[] {
   return readdirSync(dir).flatMap(name => { const p = join(dir, name); return statSync(p).isDirectory() ? walk(p) : [p]; });
 }
 
-describe('food-bands stays a local-only page: the built image', () => {
+describe('food-bands is a public exploration page: the built image', () => {
   let outDir = '';
   const removed = new Set<string>();
   beforeAll(async () => {
@@ -80,18 +69,16 @@ describe('food-bands stays a local-only page: the built image', () => {
   }, 280_000);
   afterAll(() => { if (outDir) rmSync(outDir, { recursive: true, force: true }); });
 
-  it('the build contains the page and its named chunks before the rm line runs', () => {
-    expect([...removed].some(p => p === 'food-bands')).toBe(true);
-    expect([...removed].some(p => /^assets\/foodBands.*\.js$/.test(p))).toBe(true);
-    expect([...removed].some(p => /^assets\/food-bands-model-food-schedule-769.*\.js$/.test(p))).toBe(true);
+  it('the build contains the page and its named chunks, and the rm line leaves them in place', () => {
+    expect(existsSync(join(outDir, 'food-bands/index.html'))).toBe(true);
+    expect([...removed].some(p => /food-?bands/i.test(p))).toBe(false);
+    const files = walk(outDir).map(f => relative(outDir, f));
+    expect(files.some(p => /^assets\/foodBands.*\.js$/.test(p))).toBe(true);
+    expect(files.some(p => /^assets\/food-bands-model-food-schedule-769.*\.js$/.test(p))).toBe(true);
   });
 
-  it('nothing food-bands remains after the rm line: no file name, no marker text, no page', () => {
-    expect(existsSync(join(outDir, 'food-bands'))).toBe(false);
-    const files = walk(outDir);
-    expect(files.map(f => relative(outDir, f)).filter(f => /food-?bands/i.test(f))).toEqual([]);
-    const marker = /food-bands|foodBands|food-bands-exploration-observation/;
-    const offenders = files.filter(f => /\.(js|css|html|json|xml|txt|map)$/.test(f)).filter(f => marker.test(readFileSync(f, 'utf8'))).map(f => relative(outDir, f));
+  it('the replay route is dev-only: no built file names the replay folder or the dev route', () => {
+    const offenders = walk(outDir).filter(f => /\.(js|css|html)$/.test(f)).filter(f => /food-bands-replays/.test(readFileSync(f, 'utf8'))).map(f => relative(outDir, f));
     expect(offenders).toEqual([]);
   });
 

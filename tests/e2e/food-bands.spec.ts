@@ -47,7 +47,7 @@ test('opens paused with the first screen and no console errors', async ({ page }
   await expect(page.locator('#status')).toContainText('Paused');
   await expect(page.locator('#tick')).toHaveText('0');
   await expect(page.getByText('Exploration, not evidence').first()).toBeVisible();
-  await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', /noindex/);
+  await expect(page.locator('meta[name=robots]')).toHaveCount(0);
   // every choice says what differs: no bare titles
   for (const text of await page.locator('#screen-choices .choice-text').allTextContents()) expect(text.length).toBeGreaterThan(60);
   expect(errors).toEqual([]);

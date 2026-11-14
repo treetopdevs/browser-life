@@ -4,24 +4,17 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
+import { expectPublicPage } from './support/public-page.ts';
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
-it('keeps the opponents prototype outside the deployed site', () => {
-  expect(read('apps/lab/vite.config.ts')).toContain('opponents: r("./opponents/index.html")');
-  const docker = read('Dockerfile.site');
-  for (const path of ['apps/lab/dist/opponents', 'apps/lab/dist/assets/opponents-*.js', 'apps/lab/dist/assets/opponents-*.css']) expect(docker).toContain(path);
-  const source = read('deploy/Caddyfile').match(/@private_opponents path_regexp private_opponents (.+)/)?.[1];
-  expect(source).toBe('(?i)^/opponents(?:/|$)');
-  expect(read('deploy/Caddyfile')).toMatch(/respond @private_opponents 404/);
-  const route = new RegExp(source!.replace('(?i)', ''), 'i');
-  for (const path of ['/opponents', '/opponents/', '/OPPONENTS/index.html']) expect(route.test(path)).toBe(true);
-  expect(route.test('/opponents-other')).toBe(false);
+it('ships the opponents page with the site: built, kept by the image, served, indexable and in the sitemap', () => {
+  expectPublicPage('opponents', 'opponents: r("./opponents/index.html")', ['opponents-']);
 });
 it('page text carries the caption and the CPU-only statement', () => {
   const html = read('apps/lab/opponents/index.html');
   expect(html).toContain('What this does not show');
   expect(html).toContain('CPU only');
   expect(html).toContain('no GPU evidence');
-  expect(html).toContain('noindex');
+  expect(html).not.toContain('noindex');
   expect(html).toContain('synthetic');
   expect(html).toMatch(/<table id="matrix">[\s\S]*<caption/);
 });
@@ -39,8 +32,9 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
       const re = new RegExp(`^${rel.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}(/.*)?$`);
       for (const f of all) if (re.test(f)) removed.add(f);
     }
-    expect([...removed].some((f) => f.startsWith('opponents/'))).toBe(true);
-    expect([...removed].some((f) => /^assets\/opponents-.*\.js$/.test(f))).toBe(true);
+    expect([...removed].some((f) => f.startsWith('opponents/'))).toBe(false);
+    expect(all).toContain('opponents/index.html');
+    expect([...removed].some((f) => /^assets\/opponents-.*\.js$/.test(f))).toBe(false);
     const kept = new Set(all.filter((f) => !removed.has(f)));
     const dangling: string[] = [];
     for (const f of kept) {
@@ -53,5 +47,6 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
     }
     expect(dangling).toEqual([]);
     expect(kept.has('lab/index.html')).toBe(true);
+    expect(kept.has('opponents/index.html')).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }, 180_000);

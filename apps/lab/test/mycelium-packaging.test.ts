@@ -1,20 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { nearestParticle } from '../src/mycelium/pick.ts';
+import { expectPublicPage } from './support/public-page.ts';
 import { fitView, pinchView, toWorld, zoomAt } from '../src/mycelium/view.ts';
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
 
-it('keeps the mycelium world outside the deployed site', () => {
-  expect(read('apps/lab/vite.config.ts')).toContain('mycelium: r("./mycelium/index.html")');
-  const docker = read('Dockerfile.site');
-  for (const path of ['apps/lab/dist/mycelium', 'apps/lab/dist/assets/mycelium-*.js', 'apps/lab/dist/assets/mycelium-*.css']) expect(docker).toContain(path);
-  const caddy = read('deploy/Caddyfile');
-  const source = caddy.match(/@private_mycelium path_regexp private_mycelium (.+)/)?.[1];
-  expect(source).toBe('(?i)^/mycelium(?:/|$)');
-  expect(caddy).toMatch(/respond @private_mycelium 404/);
-  const route = new RegExp(source!.replace('(?i)', ''), 'i');
-  for (const path of ['/mycelium', '/mycelium/', '/MYCELIUM/index.html']) expect(route.test(path)).toBe(true);
-  expect(route.test('/mycelium-other')).toBe(false);
+it('ships the mycelium world with the site: built, kept by the image, served, indexable and in the sitemap', () => {
+  expectPublicPage('mycelium', 'mycelium: r("./mycelium/index.html")', ['mycelium-']);
 });
 
 it('page text carries the caption and the truthful engine statement', () => {
@@ -32,7 +24,8 @@ it('page text carries the caption and the truthful engine statement', () => {
   expect(html).toContain('docs/mycelium-r2b-2026-11-13/RESULT.md');
   expect(html).toContain('id="engine-now"');
   expect(html).toContain('measurement-limited');
-  expect(html).toContain('noindex');
+  expect(html).not.toContain('noindex');
+  expect(html).not.toContain('kept off the public site');
   expect(html).toContain('heredity blocked');
 });
 
@@ -60,10 +53,9 @@ it('page offers the trail rules, explained, with current and truthful results', 
   expect(page).toContain('none: {\n    delta: {},');
 });
 
-it('no public page links to the private route', () => {
-  for (const page of ['apps/lab/index.html', 'apps/lab/worlds/index.html', 'apps/lab/lab/index.html', 'apps/lab/research/index.html']) {
-    expect(read(page)).not.toContain('/mycelium/');
-  }
+it('the world is linked from the public journal or story', () => {
+  const linked = ['apps/lab/research/index.html', 'apps/lab/story/index.html'].filter((page) => read(page).includes('href="/mycelium/"'));
+  expect(linked.length).toBeGreaterThan(0);
 });
 
 it('inspect panel is not a live region; selection and death go through one small status region', () => {

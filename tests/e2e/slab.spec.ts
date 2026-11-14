@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// The private slab viewer (/slab/) in real Chrome with WebGPU: real kernels, real readbacks, real canvases.
+// The slab viewer (/slab/) in real Chrome with WebGPU: real kernels, real readbacks, real canvases.
 // Run: BL_E2E_PORT=5266 npx playwright test tests/e2e/slab.spec.ts --workers=1
 // Debug hooks (`?debug=1` only) expose the last raw snapshot, a run-to-step and an independent reference run; they are
 // read-only views for these tests and exist nowhere else.

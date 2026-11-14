@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
-  <meta name="description" content="A local experiment: what each small edit to a creature's controller changes, and whether useful edits cost something else.">
+<meta name="theme-color" content="#101b21">
+  <meta name="description" content="What does one small edit to a creature's controller change, and does an edit that helps one thing cost another? Three controllers, a fixed set of edits.">
   <title>Controller locality · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/controller-locality/" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the mutation-effect matrix</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / controller locality</span></header>
+  <header><a href="/lab/">← Lab</a><span>Experiment / controller locality</span></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">A mutation-effect matrix</p>
       <h1>What does one small edit to a controller change?</h1>
       <p>Each creature carries a tiny neural controller of 160 small whole-number weights. For three starting controllers we edit it a little in a fixed set of ways and ask two things: which of its eight actions does the edit move, and does an edit that helps one thing cost another?</p>
-      <p class="disclosure">CPU only: deterministic integer simulator and probe, no GPU evidence. Exploratory, bounded to the tested genomes, this one-step operator and three short tiny-world assays. Local experiment, kept off the public site. It is not a finding about evolved creatures in general, and it does not say whether anything here is alive.</p>
+      <p class="disclosure">CPU only: deterministic integer simulator and probe, no GPU evidence. Exploratory, bounded to the tested genomes, this one-step operator and three short tiny-world assays. An exploration page, not evidence. It is not a finding about evolved creatures in general, and it does not say whether anything here is alive.</p>
     </section>
 
     <section aria-labelledby="summary-heading">
@@ -72,7 +73,7 @@
         <li>Counts describe the sampled edits of each controller. They are not rates over all possible mutations, and controllers are never pooled.</li>
         <li>The rule that turns the counts into a recommendation was written before the outcomes were computed; the horizon, viability floor and margin were calibrated with the M3 baselines visible, and the plan's preferred dense genome failed both calibrated criteria. The recommendation is advice for a later plan, not authorisation for a new architecture.</li>
       </ul>
-      <p class="muted">CPU only, deterministic integer evidence, no GPU evidence, not on the public site. Evidence seal: <span class="seal" id="seal"></span></p>
+      <p class="muted">CPU only, deterministic integer evidence, no GPU evidence, an exploration page. Evidence seal: <span class="seal" id="seal"></span></p>
     </section>
   </main>
   <script type="module" src="/src/controller-locality/page.ts"></script>
