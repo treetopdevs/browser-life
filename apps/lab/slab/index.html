@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <!-- A private exploratory route: no canonical link, so no social tags; noindex; not in the sitemap or the nav; not in the site build. -->
+    <meta name="robots" content="noindex" />
+    <meta name="description" content="Private viewer for the 3D slab worlds: cyclic competition and the slab ecology, one tile per layer and a top-down view." />
+    <title>Slab viewer · Cadence Garden</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <link rel="stylesheet" href="/src/slab/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="2.6" rx="1.3"/><path class="bm-jar" d="M8 14.5h16a3 3 0 0 1 3 3V26a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-8.5a3 3 0 0 1 3-3z"/><circle class="bm-life" cx="10.5" cy="25.6" r="1.5"/><circle class="bm-life" cx="15.6" cy="23.2" r="2.1"/><circle class="bm-life" cx="21.3" cy="20.4" r="2.7"/></svg><span>Cadence<span class="brand-light"> Garden</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">Private page · exploration, not a result</p>
+        <h1>The slab worlds, live.</h1>
+        <p class="lede">Two thin three-dimensional worlds run on your graphics card: three types that each beat the next in a ring, and the main ecology on a slab. You see one tile per layer (layer 0 is the surface, where light enters) and a top-down view of all layers. Neither world passed its gate; this page is for looking, not for evidence.</p>
+        <p class="slab-banner" role="note"><strong>Exploration, not a result.</strong> Every starting point below comes from a committed record and is named on the page. There is no registered setting: cyclic competition stopped at Gate 0, and the ecology calibration found no setting that qualified.</p>
+      </section>
+      <section class="shell slab-section" id="slab-app">
+        <p class="status-message" id="slab-message" role="status" aria-live="polite" hidden></p>
+        <div id="slab-body">
+          <div class="slab-controls">
+            <fieldset class="slab-group" id="g-world"><legend>World</legend><div class="slab-options" id="o-world"></div></fieldset>
+            <fieldset class="slab-group" id="g-kill"><legend>Rule of the ring</legend><div class="slab-options" id="o-kill"></div></fieldset>
+            <fieldset class="slab-group" id="g-eco"><legend>Ecology setting</legend><div class="slab-options" id="o-eco"></div></fieldset>
+            <fieldset class="slab-group" id="g-size"><legend>Size</legend><div class="slab-options" id="o-size"></div></fieldset>
+            <fieldset class="slab-group" id="g-burn"><legend>Start</legend><div class="slab-options" id="o-burn"></div></fieldset>
+            <div class="slab-group" id="g-seed">
+              <label for="seed" class="slab-legend">Seed</label>
+              <div class="slab-seedrow"><input id="seed" type="number" min="0" max="999999" step="1" inputmode="numeric" aria-describedby="seed-help" /><span id="seed-quick"></span></div>
+              <p class="fine" id="seed-help">The number that picks the starting pattern. Changing it restarts the run from step 0. Seeds marked recorded were run in the committed records; any other seed is not recorded.</p>
+            </div>
+            <fieldset class="slab-group" id="g-pace"><legend>Pace</legend><div class="slab-options" id="o-pace"></div></fieldset>
+            <fieldset class="slab-group" id="g-view"><legend>View</legend><div class="slab-options" id="o-view"></div>
+              <label for="layer" class="slab-legend">Layer to show (when one layer is chosen)</label>
+              <input id="layer" type="range" min="0" max="3" step="1" value="0" aria-describedby="layer-help" />
+              <p class="fine" id="layer-help">Layer <output id="layer-out">0</output>: 0 is the surface. Moves the large view to that layer and outlines its tile.</p>
+            </fieldset>
+          </div>
+          <div class="slab-transport" role="group" aria-label="Run controls">
+            <button type="button" class="button primary" id="play" aria-describedby="play-help">Play</button>
+            <button type="button" class="button" id="step1" aria-describedby="step-help">Step +1</button>
+            <button type="button" class="button" id="step100" aria-describedby="step-help">Step +100</button>
+            <p class="fine" id="play-help">Play runs the world and draws a new picture after each batch of steps (see Pace). Pause stops it where it is.</p>
+            <p class="fine" id="step-help">Step runs exactly that many steps and draws the result, even while paused. Changing the world, setting, size, seed or start restarts the run from step 0.</p>
+          </div>
+          <p class="slab-status" id="status" role="status" aria-live="off">Starting…</p>
+          <p class="slab-provenance" id="provenance"></p>
+          <div class="slab-views">
+            <figure class="slab-big">
+              <canvas id="combined" aria-label="Combined top-down view" role="img"></canvas>
+              <figcaption id="combined-cap" class="fine"></figcaption>
+            </figure>
+            <div class="slab-tiles" id="tiles"></div>
+          </div>
+          <section class="slab-census" aria-labelledby="h-census">
+            <h2 id="h-census">Census</h2>
+            <p id="census" class="slab-census-line"></p>
+            <p class="fine" id="census-help"></p>
+          </section>
+        </div>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">Reading the pictures</div>
+        <div class="prose" id="notes"></div>
+      </section>
+      <script type="module" src="/src/slab/page.ts"></script>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Cadence Garden</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/theme.ts"></script>
+  </body>
+</html>

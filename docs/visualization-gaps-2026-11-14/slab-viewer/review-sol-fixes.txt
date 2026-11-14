@@ -1,0 +1,13 @@
+No P1 findings.
+
+- **P2 — Cached redraws bypass stale-frame guards.** [page.ts:285](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:285), [page.ts:392](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:392): switch worlds during an in-flight read, then change View or Layer before the queued rebuild starts. `last` still holds the superseded frame, and these handlers call `draw(last)` directly. Reproduced `eco:cyclic@0` under ecology controls.
+
+- **P2 — `runTo()` can paint a superseded simulator.** [page.ts:326](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:326): switch to ecology while cyclic `runTo(6200)` awaits the 6,000-step hand-over. The hook continues advancing the old simulator, then calls `showFrame()`, which captures the **new generation alongside the old simulator**; both guard checks pass. Reproduced `eco:cyclic@6200`, followed by `eco:eco@0`.
+
+- **P2 — The mid-read regression test can pass with the guards disabled.** [slab.spec.ts:377](/Users/nicholas/develop/browser-life-viz-slab-viewer/tests/e2e/slab.spec.ts:377): the 40 ms timer does not establish that a read is pending. If readback finishes first, the old implementation paints before selection changes and passes every assertion. An in-memory mutation check passed with guards disabled and a 1 ms read, but failed with an 80 ms read. Hold/release a read explicitly so the test always exercises supersession.
+
+- **P3 — `reference()` ignores “Kill on from step 0.”** [page.ts:359](/Users/nicholas/develop/browser-life-viz-slab-viewer/apps/lab/src/slab/page.ts:359): with `burnIn: false`, `reference(600)` still applies `"burn"` settings, running all 600 steps with rate zero. The live adapter starts with `"run"` settings, so the new reference path is an incorrect oracle for that offered start option.
+
+No additional findings in focus restoration, seed validation, layer clamping, the corrected calibration text, or raw socket requests. The other new assertions discriminate their reported failures. No unconditional `docs/` evidence writes remain in the reviewed code; recording requires `BL_RECORD_EVIDENCE=1`.
+
+Typecheck passed. Deterministic in-memory checks confirmed ordinary stale-error suppression and delivery of the replacement world’s first frame; no guard deadlock found. Browser/GPU and native screen-reader checks were not run. No files changed.

@@ -167,6 +167,8 @@ export default defineConfig({
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
+      // The private slab viewer is built only on request (BL_BUILD_SLAB=1, the packaging test), never into the site image.
+      ...(process.env.BL_BUILD_SLAB === "1" ? { slab: r("./slab/index.html") } : {}),
     } },
   },
 });
