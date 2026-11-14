@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Visualization gaps: decision log</title>
+<style>
+:root{--bg:#fbf8f1;--fg:#1d2a2e;--mut:#5d6b6e;--line:#dcd6c8;--panel:#fffdf8;--code:#f1ece0;--sun:#a8650c;--leaf:#237451;--stop:#a53b26}
+@media (prefers-color-scheme:dark){:root{--bg:#101b21;--fg:#edf5f0;--mut:#9fb0ad;--line:#2a3a41;--panel:#16242b;--code:#1c2c34;--sun:#f2be78;--leaf:#91e1c0;--stop:#f09a86}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 16px 64px}
+main{max-width:860px;margin:0 auto}
+h1{font-size:28px;line-height:1.15;margin:0 0 8px}
+h2{font-size:19px;margin:30px 0 10px}
+p{margin:0 0 10px}
+.lede{color:var(--mut)}
+code{font:13px ui-monospace,Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mut)}
+td.id{font:650 13px ui-monospace,Menlo,monospace;white-space:nowrap}
+td.when{white-space:nowrap;color:var(--mut);font-size:13px}
+.tag{display:inline-block;font-size:11.5px;font-weight:650;border:1px solid currentColor;border-radius:5px;padding:0 6px}
+.done{color:var(--leaf)}.run{color:var(--sun)}.wait{color:var(--mut)}.ask{color:var(--stop)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:14px 16px;margin:0 0 12px}
+ul{margin:0;padding-left:22px}
+</style>
+</head>
+<body>
+<main>
+<h1>Visualization gaps: decision log</h1>
+<p class="lede">Running log for the work in <code>PLAN.md</code> (same folder). Every decision I made on your behalf is here with its reason, newest status at the top. Started 2026-11-14 from <code>origin/main</code> <code>9d91709a</code>.</p>
+
+<h2>Slices</h2>
+<div class="tw"><table>
+<tr><th>Slice</th><th>Branch</th><th>Status</th><th>PR</th></tr>
+<tr><td class="id">log</td><td><code>claude/viz-gaps-log</code></td><td><span class="tag done">merged last, with this update</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/156">#156</a></td></tr>
+<tr><td class="id">food-replays</td><td><code>claude/viz-food-replays</code></td><td><span class="tag done">merged</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/157">#157</a></td></tr>
+<tr><td class="id">food-live</td><td><code>claude/viz-food-live</code></td><td><span class="tag done">merged</span> <code>e53bb283</code></td><td><a href="https://github.com/treetopdevs/browser-life/pull/158">#158</a></td></tr>
+<tr><td class="id">regime-figures</td><td><code>claude/viz-regime-figures</code> (off <code>claude/3d-regime-meters</code>)</td><td><span class="tag run">PR open, stacked on the pushed 3D branch</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/159">#159</a></td></tr>
+<tr><td class="id">slab-viewer</td><td><code>claude/viz-slab-viewer</code> (off <code>claude/3d-cyclic-rps</code>)</td><td><span class="tag run">PR open, stacked on the pushed 3D branch</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/160">#160</a></td></tr>
+<tr><td class="id">pin-restore</td><td><code>claude/viz-pin-restore</code></td><td><span class="tag run">PR open, not merged</span></td><td><a href="https://github.com/treetopdevs/browser-life/pull/161">#161</a></td></tr>
+</table></div>
+
+<h2>Waiting on you</h2>
+<div class="card"><ul>
+<li><span class="tag ask">D25</span> Merge <a href="https://github.com/treetopdevs/browser-life/pull/161">#161</a> (the pin fix)? It removes the <code>locality:check</code> script line from <code>package.json</code>, which was not what I had described to you, so it waits for your yes.</li>
+<li><span class="tag ask">D24</span> Merge <a href="https://github.com/treetopdevs/browser-life/pull/159">#159</a> and <a href="https://github.com/treetopdevs/browser-life/pull/160">#160</a>? They target the two 3D branches, not main; the 3D line itself is closed and 200 commits behind main.</li>
+</ul></div>
+
+<h2>Decisions</h2>
+<div class="tw"><table>
+<tr><th>Id</th><th>When</th><th>Decision</th><th>Why</th></tr>
+<tr><td class="id">D1</td><td class="when">11-14</td><td>Slice order: food-replays, food-live, regime-figures, slab-viewer.</td><td>Cheapest and most certain first; the only slice needing new rendering goes last.</td></tr>
+<tr><td class="id">D2</td><td class="when">11-14</td><td>Codex reviews run on Sol 6.1 at <strong>xhigh</strong> for this run.</td><td>You asked for xhigh here; it overrides the standing High for this run only.</td></tr>
+<tr><td class="id">D3</td><td class="when">11-14</td><td>No merges. Commit, push, open PRs, fix what CI and reviews flag.</td><td>You asked for commits, PRs and autofix; merge authority from the 2 Nov run was for that run only.</td></tr>
+<tr><td class="id">D4</td><td class="when">11-14</td><td>Each food slice branches from <code>origin/main</code>; slices are not stacked.</td><td>Without merges, a stack would leave later PRs unreviewable. The restore script takes a target directory so other worktrees can use it.</td></tr>
+<tr><td class="id">D5</td><td class="when">11-14</td><td>Only the main session commits and pushes. Workflow agents never run git writes or any jj command.</td><td>Past subagents committed through jj despite a "never commit" instruction.</td></tr>
+<tr><td class="id">D6</td><td class="when">11-14</td><td>Restored replay files (about 304 MB) are added to each worktree's local exclude list and never staged; every commit is staged by explicit path.</td><td>Those paths are not git-ignored on main, so a broad <code>git add</code> would commit them.</td></tr>
+<tr><td class="id">D7</td><td class="when">11-14</td><td>food-live: one page <code>/food-bands/</code> with a screen picker, reachable by URL only (not linked from the lab list).</td><td>Eleven screens share one model family and one renderer; eleven pages would be eleven copies. A private prototype does not need a public link.</td></tr>
+<tr><td class="id">D8</td><td class="when">11-14</td><td>3D slices (regime-figures, slab-viewer) are committed locally on new branches off the 3D branches; no push, no PR.</td><td>A PR would publish two long local-only branches to a public repo. "Open PRs" does not clearly cover that, so it waits for your yes.</td></tr>
+<tr><td class="id">D9</td><td class="when">11-14</td><td>regime-figures draws from the two committed TSVs if <code>regime-results.json</code> cannot be found.</td><td>The builder's input is not in this checkout and the work Mac did not answer.</td></tr>
+<tr><td class="id">D10</td><td class="when">11-14</td><td>slab-viewer builds on <code>claude/3d-cyclic-rps</code>, cyclic competition first, defaulting to a recorded exploration setting.</td><td>That branch has both simulators; Gate 0 stopped, so no registered operating point exists; the cyclic world is the more watchable.</td></tr>
+<tr><td class="id">D11</td><td class="when">11-14</td><td>food-replays skips the separate plan-review stage; one xhigh review of the diff.</td><td>It is a shell script plus hash checks. The larger slices keep plan review.</td></tr>
+<tr><td class="id">D12</td><td class="when">11-14</td><td>"Autofix" is read as: link each PR to this thread, check it between slices, watch when no other work is left, and push fixes for failing checks or review comments.</td><td>That is what it meant in your earlier sessions here.</td></tr>
+<tr><td class="id">D13</td><td class="when">11-14</td><td>regime-figures: the new section sits behind an opt-in build flag (<code>--stage0-figures</code>) and carries its own "pilot numbers, not results" banner. Without the flag the page builds byte-identical to before.</td><td>The committed page is the synthetic one; real pilot numbers must not inherit its "generated" label, and the builder's label and refusal rules must not change.</td></tr>
+<tr><td class="id">D14</td><td class="when">11-14</td><td>regime-figures corrects three things the plan got wrong: the damage table is 18 jobs on two rungs (36 rows), the unit-kick twin was recorded only at step 30 (drawn as one marker, no line), and the qualifying threshold comes from the rung 1b pick rule (1–50% living and a 5–80% light ratio).</td><td>Found by reading the data files; the figure shows only recorded values and joins nothing that was not measured.</td></tr>
+<tr><td class="id">D15</td><td class="when">11-14</td><td>slab-viewer and regime-figures ran in parallel with food-replays instead of strictly in D1's order.</td><td>They live on different branches and cannot collide; food-live still waits for food-replays' restore script.</td></tr>
+<tr><td class="id">D16</td><td class="when">11-14</td><td>food-replays: the restore tool is a Node script behind a thin <code>restore.sh</code>, not pure shell. It hides restored files through the local git exclude file, which for a worktree is the main checkout's shared <code>.git/info/exclude</code>; <code>--unexclude</code> removes the block. Its default source is the main checkout's <code>runs/</code>, derived from git, not a fixed path.</td><td>It needs table parsing, streaming hashes over 370 MB and atomic writes, and the tests import the same functions. The shared exclude file is the only place that reliably stops an accidental <code>git add</code> in every worktree. A fixed home-directory path does not belong in a public tool.</td></tr>
+<tr><td class="id">D17</td><td class="when">11-14</td><td>Not fixed: with replays present, 6 tests in <code>food-band-foothold-replication.test.ts</code> and 2 env-gated tests in <code>food-schedule-769.spec.ts</code> fail with "Pinned input changed: package.json".</td><td><code>package.json</code> gained a line after those runs were recorded, so this is the same on main; the missing files had hidden it. The fix is re-baselining a frozen pin in a finished experiment, which is out of bounds for this run.</td></tr>
+<tr><td class="id">D18</td><td class="when">11-14</td><td>food-live does not depend on PR #157 in code. The replay files were restored into its worktree with the script from the other branch; its tests skip cleanly when replays are absent.</td><td>Keeps the two PRs independently reviewable (D4).</td></tr>
+<tr><td class="id">D19</td><td class="when">11-14</td><td>slab-viewer: starts cyclic competition from recorded exploration job <code>g2-confirm-V-sp8-r64-s401</code> (vacancy kill, 256 by 256 by 4, kill off for the first 6,000 steps) and the ecology from calibration run <code>mu40-s20-k1024-seed101</code>. The ecology slab is drawn as 8 layers, not 4. The page builds only with <code>BL_BUILD_SLAB=1</code> and follows that branch's <code>/garden/</code> private-page pattern.</td><td>The plan was wrong about depth and about the ecology being nearly empty: most settings end as a full carpet. A build flag keeps slab bundles out of a site build entirely; that branch has no hungry-shapes packaging test to copy.</td></tr>
+<tr><td class="id">D20</td><td class="when">11-14</td><td>food-live: ten screens, not eleven. Nine run on the newest model copy and uniform-food on the hungry-shapes copy. Recorded replays are served by a dev-only allowlisted route. One line was added to <code>tools/test/prototypes-status.test.ts</code> to list the new page.</td><td><code>food-floor-replication</code> repeats the foothold replication's arms and seed. The parity test showed the newest copy reproduces every older screen. The dev server did not serve <code>docs/creative-prototypes/</code>. The inventory test fails on any unlisted page.</td></tr>
+<tr><td class="id">D21</td><td class="when">11-14</td><td>Review-bot comments on #156 fixed: darker label colours in the light theme of <code>plan.html</code>, and both plan files now say that this log overrides them.</td><td>Both comments were correct.</td></tr>
+<tr><td class="id">D22</td><td class="when">11-14</td><td>Ran one more Sol xhigh pass on food-replays and slab-viewer after they were committed, and fixed what it found (no P1; five P2, three P3 across both).</td><td>Their last fixes had gone in without a review, and the project rule is review before commit. Fixed: the restore tool now stops if a <code>.gitignore</code> rule would make a restored file stageable, rejects paths git would report differently, never fetches, and finds the main checkout through <code>git worktree list</code>; the slab page's debug run-to can no longer paint a replaced world, and its banner no longer says every starting point is recorded.</td></tr>
+<tr><td class="id">D23</td><td class="when">11-14</td><td>Checked food-live in a clean checkout with no replay files: typecheck clean, full suite 4,938 passed, 331 skipped, 0 failed.</td><td>The PR claims its tests skip cleanly without replays; that had only been run with them present.</td></tr>
+<tr><td class="id">D24</td><td class="when">11-14</td><td>You said yes to pushing. Pushed <code>claude/3d-regime-meters</code>, <code>claude/3d-cyclic-rps</code> and the two slice branches; opened <a href="https://github.com/treetopdevs/browser-life/pull/159">#159</a> and <a href="https://github.com/treetopdevs/browser-life/pull/160">#160</a>, each against its 3D parent branch. Supersedes D8.</td><td>Against main each diff would be the whole 3D line; stacked, it is the slice only. Before pushing I checked the commits for the local <code>ci-deploy</code> change, private addresses, logins, keys and large files: none (home-directory paths in review notes are the same kind already on main).</td></tr>
+<tr><td class="id">D25</td><td class="when">11-14</td><td>Stale pin (D17): instead of moving the pin, <code>package.json</code> goes back to the pinned bytes by removing the one <code>locality:check</code> script line, plus a guard test that fails in any checkout when <code>package.json</code> or <code>pnpm-lock.yaml</code> drift. <a href="https://github.com/treetopdevs/browser-life/pull/161">#161</a>, not merged.</td><td>The runner holding the pin is itself hash-pinned by recorded evidence, so editing it only moves the failure. Nothing runs that script; the tool still runs by its command. With replays present the 6 unit tests and 2 gated browser tests pass; Sol xhigh found nothing. Cost: any later change to those two files (a dependency bump included) breaks the food replay checks again, now loudly.</td></tr>
+<tr><td class="id">D26</td><td class="when">11-14</td><td>You said to merge. Merged #158, then updated #157 onto the new main and merged it once its checks passed, then this log (#156) last. Merge commits, branches kept. Supersedes D3 for these three only.</td><td>Each PR had only been checked against the old main; updating #157 first ran CI on the combination. #159 to #161 are new since your yes, so they wait.</td></tr>
+<tr><td class="id">D27</td><td class="when">11-14</td><td>Review bot on #157: the hourly limit had lapsed, so a plain re-request ran for free (no paid on-demand review). Five comments, all fixed: test subprocesses no longer inherit git's repository-location variables; round-1 findings marked historical; the delete-and-restore run recorded as its own evidence file; the playback probe now asserts that play alone moves the scrubber (6 passed).</td><td>All five were correct.</td></tr>
+</table></div>
+
+<h2>Results so far</h2>
+<div class="card"><ul>
+<li><strong>food-live</strong> (<a href="https://github.com/treetopdevs/browser-life/pull/158">#158</a>): <code>/food-bands/</code> runs ten food screens live with the food band and last pulse drawn. Live runs match the recordings: 41 screen, arm and seed checks, 40 identical over the full horizon and 1 identical over the 3,000 ticks its recording covers. 197 unit tests and 42 browser tests pass. Sol xhigh on plan, source and fixes; follow-up found no P1/P2.</li>
+<li><strong>slab-viewer</strong> (<a href="https://github.com/treetopdevs/browser-life/pull/160">#160</a>): <code>/slab/</code> runs both real 3D kernels in Chrome. Cyclic competition shows three-colour domains with empty cells in the middle layers; the ecology starts as eight small colonies and fills in. About 270 to 330 steps a second at 256 by 256 by 4. 135 unit tests and 24 browser tests pass on my rerun; the full suite on the branch passes (4,644 tests, 0 failed). Sol xhigh on plan, source and fixes.</li>
+<li><strong>food-replays</strong> (<a href="https://github.com/treetopdevs/browser-life/pull/157">#157</a>): one command restores and verifies all 73 files (the plan said 58; the earlier prototypes' 15 are included). Food e2e went from 116 passed / 162 skipped to 264 passed / 14 skipped, 0 failed. Three viewers were checked playing in a real browser, with the population readout matching the recorded census. Sol xhigh ran on the source and on the fixes; all P1/P2 fixed.</li>
+<li><strong>regime-figures</strong> (<a href="https://github.com/treetopdevs/browser-life/pull/159">#159</a>): the regime-meters page now shows damage spread in eight panels and the calibration grid in three. Recomputed from the 180 calibration rows: 0 of 60 settings qualify. Sol xhigh found 11 issues (none P1); all fixed, follow-up review clean of P1/P2. 158 tests pass; rebuild is byte-identical.</li>
+</ul></div>
+
+<h2>Out of bounds for this run</h2>
+<div class="card"><ul>
+<li>Deploys, the local <code>ci-deploy</code> branch, paid model or API calls, AWS.</li>
+<li>Any change to dynamics: golden pins, <code>RULE_VERSION</code>, hash-pinned <code>model.ts</code> copies, frozen experiment files.</li>
+<li>PRs #60, #69, #130 and anything in other sessions' worktrees.</li>
+<li>Reopening the closed 3D line; the viewer is for looking only.</li>
+</ul></div>
+</main>
+</body>
+</html>
