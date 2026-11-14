@@ -11,8 +11,6 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { isStandalone, sitemapRoutes } from "./experiment-pages.ts";
 import { METRICS_VERSION } from "@bl/schema";
 import { chromium, expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
 test.describe.configure({ mode: "parallel" });
