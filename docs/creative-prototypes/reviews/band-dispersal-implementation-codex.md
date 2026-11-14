@@ -1,0 +1,5 @@
+# Independent Codex Sol 6.1 High implementation review
+
+27 October 2026. Read-only `/root/next_rule_review`, gpt-6.1-sol/high. CLEAR for source commit and the single scheduled attempt. Inspected isolated model, runner/launcher, core fixtures, viewer/E2E, body capture, decision-log section and saved-data assembly/video helpers. Effective32 and legacy8 projections/RNG order correct; numeric plus both-band manual receipt excludes seasonal score; committed live3000 barrier precedes3001; exact old769 regression precedes novel worlds. Early terminal, immutable prefix, source/accounting bindings present. No biology executed by reviewer.
+
+Resolved before freeze: corrected model immediate-source header/biology wording and generated-report labels. Added all-seasonal-numerical-and-visual-false fixture demonstrating continuation when persistence and both-band change pass. All26 pure core tests pass after fixture. Parent typecheck/build and18 synthetic browser checks passed. Actual/media checks remain pending until outcome. Minor media-only suggestion to bind JS/CSS at capture start and end assigned before later saved-data capture.

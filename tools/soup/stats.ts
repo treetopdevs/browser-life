@@ -1,6 +1,6 @@
 // Soup measurements. higherEntropy follows cubff: Shannon entropy of the byte
 // histogram (bits/byte) minus brotli quality-2, window-24 compressed bits per
-// byte. A jump in it marks the arrival of self-replicators. The program census
+// byte. A jump is a threshold event, not evidence of replication. The program census
 // (distinct programs, most common program) is a second signal that does not
 // depend on the compressor.
 import { brotliCompressSync, constants } from "node:zlib";
@@ -13,12 +13,20 @@ export { byteEntropy, census, type Census } from "./census.ts";
 
 const BROTLI_CLI = ["/opt/homebrew/bin/brotli", "/usr/local/bin/brotli", "/usr/bin/brotli"];
 
+/** The same executable used by stats(), or null for the node:zlib fallback. */
+export function brotliExecutable(): string | null {
+  // deno-lint-ignore no-explicit-any
+  const D = (globalThis as any).Deno;
+  if (!D) return null;
+  return BROTLI_CLI.find((p) => { try { return D.statSync(p).isFile; } catch { return false; } }) ?? null;
+}
+
 /** C brotli size via the CLI (quality 2, window 24, as cubff), or null when no CLI is installed. */
-export async function brotliSizeC(data: Uint8Array): Promise<number | null> {
+export async function brotliSizeC(data: Uint8Array, executable?: string | null): Promise<number | null> {
   // deno-lint-ignore no-explicit-any
   const D = (globalThis as any).Deno;
   if (!D) return brotliSize(data);
-  const bin = BROTLI_CLI.find((p) => { try { return D.statSync(p).isFile; } catch { return false; } });
+  const bin = executable === undefined ? brotliExecutable() : executable;
   if (!bin) return null;
   const child = new D.Command(bin, { args: ["-q", "2", "-w", "24", "-c"], stdin: "piped", stdout: "piped" }).spawn();
   const pending = child.output(); // read while writing, or the pipe fills and deadlocks
@@ -43,8 +51,8 @@ export function brotliSize(data: Uint8Array): number {
 
 export interface Stats { brotli: number; h0: number; higherEntropy: number }
 
-export async function stats(programs: Uint8Array): Promise<Stats> {
-  const brotli = (await brotliSizeC(programs)) ?? brotliSize(programs);
+export async function stats(programs: Uint8Array, executable?: string | null): Promise<Stats> {
+  const brotli = (await brotliSizeC(programs, executable)) ?? brotliSize(programs);
   const h0 = byteEntropy(programs);
   return { brotli, h0, higherEntropy: h0 - (brotli * 8) / programs.length };
 }

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-body-only-band-dispersal-comparison",
+  "seed": 1202,
+  "artifact": {
+    "path": "docs/creative-prototypes/band-dispersal-gate-3000-seed-1202.json",
+    "rawSha256": "31901a98852c6f418ed7870ca2ef558e522a203618fa30597a5ac3111bf7ca4d",
+    "dataSha256": "ca5442c18cf4dc5046296b209b7a6a875af9a1f31b8cf3735c6eb7c7dd393fd8"
+  },
+  "planSha256": "7c01b2c948c2d134eb9e6483db26c0a64e2529f6d0ecc1fbe5a62193d5480254",
+  "sourceSha256": {
+    "docs/creative-prototypes/food-schedule-769-plan.md": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "apps/lab/src/food-schedule-769/model.ts": "0b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6",
+    "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
+    "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
+    "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "docs/creative-prototypes/food-floor-longevity-replication-index-1202.json": "666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19",
+    "docs/creative-prototypes/food-floor-longevity-replication-validation.md": "4a57bf9ebb50736dc6109e4c4b4dc8b9a6f8f01d13017e71fafc9f9bfb0a1095",
+    "tools/food-schedule-769/launch.sh": "eddc4386e6da5c16ddb54d94cc68413fc74009e334d03323ac84fe3070669010",
+    "docs/creative-prototypes/band-dispersal-plan.md": "7c01b2c948c2d134eb9e6483db26c0a64e2529f6d0ecc1fbe5a62193d5480254",
+    "apps/lab/src/band-dispersal/model.ts": "66a02e4f9ef9e5195ceb74ee7048045cbfa86f9bd79ffc7de1cc11d18792b40b",
+    "tools/band-dispersal/launch.sh": "22f44c4975c50981de1bd1916ef96390cd046f29623c56f7f34601a100d495e1",
+    "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d",
+    "docs/creative-prototypes/food-schedule-769-seed-1202.json": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+    "docs/creative-prototypes/food-schedule-769-index-1202.json": "92de28e2a95ed0d8b20e049834bce89a38b469d3eaa61ac798fd36b420c5027f",
+    "docs/creative-prototypes/food-schedule-769-gate-3000-seed-1202.json": "12c11952eeb15c61f86a7fd32fb04d12cd5bf4c9fd3991b4352988a869ee0a9e",
+    "docs/creative-prototypes/food-schedule-769-gate-3000-visual-receipt-1202.json": "fc86101ebb3b4410edf665f18b15bf14c7642ec29211b46274aded42fad3f67d",
+    "package.json": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpm-lock.yaml": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "tools/test/band-dispersal.test.ts": "780dc58f801557d4a1914647b9ea59ff1fef92bd3e1e889e49b8df7412e973b5",
+    "tools/band-dispersal/explore.ts": "8f33d52676403831c5390cdf1c599bd15923deb5097fc87b41a7d3e83ad12b74"
+  },
+  "requestedAges": [
+    1500,
+    2000,
+    2500,
+    3000
+  ],
+  "exactSavedAges": [
+    1500,
+    2000,
+    2500,
+    3000
+  ],
+  "frameSha256": [
+    "4118a9d1ffc81c2ee2efb2c28d72b37e52993e51529a6ef2426bc5fd86c20e63",
+    "0a26321e79219cebd4951c8af0b9b8f9244317cefb86cf642c5c0a76c52f64fa",
+    "0ef48fa634d6b5869b0e9e61ec9c645d4b4305e49b011827033750650a027f69",
+    "1544e0e3c73e800bbc2cc4c3c8f78da922cf30ac3adb7b84ffcd879fd80919dc"
+  ],
+  "bodyOnly": true,
+  "familyColors": false,
+  "food": false,
+  "bandOutlines": false,
+  "noSimulation": true,
+  "viewport": {
+    "width": 1024,
+    "height": 1180
+  },
+  "png": {
+    "path": "docs/creative-prototypes/band-dispersal-media/gate-3000-body.png",
+    "sha256": "826e722123c206fa888127e52df00d0b8354e714400d3e3d11437f15de7365ed",
+    "width": 1024,
+    "height": 1180
+  }
+}

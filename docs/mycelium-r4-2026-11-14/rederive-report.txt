@@ -1,0 +1,34 @@
+readout mismatches against the stored values (bit equality): 0 of 1520
+inherit   n 16 kept 15  median tmL 99.021  in-state: n 3920.8 d 0.99954 align -0.087151 acute -0.0032129 occ 1.0295 req1 0.9962 sat 1
+blocked   n 16 kept 16  median tmL 94.131  in-state: n 3525.7 d 0.95051 align -0.1459 acute 0.00023383 occ 1.0778 req1 0.88387 sat 0.99929
+physarum  n 16 kept 16  median tmL 98.873  in-state: n 2544.3 d 0.99811 align 0.99331 acute 0.99384 occ 7.1557 req1 1 sat 1
+blind     n 16 kept 13  median tmL 98.94  in-state: n 3943.1 d 0.99983 align -0.11521 acute 0 occ 1.0646 req1 0.99765 sat 0.99994
+keyless   n 16 kept 0  median tmL 0.00011143  in-state: n - d - align - acute - occ - req1 - sat -
+margins re-derived from the dev runs: {'align': 0.16234711, 'occ': 0.91882548, 'acute': 0.14906507, 'sens': 0.01387145} match CALIBRATION.json
+counts (kept/n): {'inherit': (15, 16), 'blocked': (16, 16), 'physarum': (16, 16), 'blind': (13, 16), 'keyless': (0, 16)}; gate S True; gate G True; Fisher p 0.599555061179099; match {'inheritD': 0.9995352221060678, 'physarumD': 0.998112374502572, 'inBand': True}
+anchor: {'spanAlign': 1.108521, 'spanOcc': 6.091132, 'acute': 0.993836, 'sens': 0.092375, 'deltaAlign': 1.0, 'deltaOcc': 1.0}
+ALIGN shift +0.01388 CI [-0.00303, +0.03896] margin 0.16235 delta 0.3333333333333333 p 0.14233537808716165 Holm 0.15982218974546342 EQUIV
+OCC   shift -0.02248 CI [-0.05456, +0.00508] margin 0.91883 delta -0.39487179487179486 p 0.07991109487273171 Holm 0.15982218974546342 EQUIV
+ACUTE shift -0.00321 CI [-0.00733, -0.00180] margin 0.14907 delta None p None Holm None EQUIV
+SENS  shift +0.00313 CI [+0.00244, +0.00402] margin 0.01387 delta None p None Holm None EQUIV
+floor: {'req1': 0.9961958331045169, 'req2p': 0.0029091076665721644, 'sat': 0.9999975680933852, 'ok': True}
+guard-flagged runs: 0; label without them: None
+LABEL TOLL-ONLY
+gate S TS True PY True OK; gate G TS True PY True OK
+counts inherit: TS {'n': 16, 'kept': 15} PY (15, 16) OK
+counts blocked: TS {'n': 16, 'kept': 16} PY (16, 16) OK
+counts physarum: TS {'n': 16, 'kept': 16} PY (16, 16) OK
+counts blind: TS {'n': 16, 'kept': 13} PY (13, 16) OK
+counts keyless: TS {'n': 16, 'kept': 0} PY (0, 16) OK
+Fisher p TS 0.599555 PY 0.599555 OK
+match: inherit d TS 0.999535 PY 0.999535; physarum d TS 0.998112 PY 0.998112; in band TS True PY True OK
+anchor: TS {spanAlign: 1.10852, spanOcc: 6.09113, acute: 0.993836, sens: 0.0923746, deltaAlign: 1, deltaOcc: 1} OK
+ALIGN: shift diff 0.0e+00, delta diff 5.6e-17, CI end diff 0.0007321 (allowed 0.0063), p diff 0.0e+00, Holm diff 0.0e+00, reject TS False PY False, status TS EQUIV PY EQUIV OK
+OCC: shift diff 0.0e+00, delta diff 5.6e-17, CI end diff 0 (allowed 0.00894), p diff 0.0e+00, Holm diff 0.0e+00, reject TS False PY False, status TS EQUIV PY EQUIV OK
+ACUTE: shift diff 0.0e+00, delta diff 0.0e+00, CI end diff 0 (allowed 0.000828), p diff 0.0e+00, Holm diff 0.0e+00, reject TS False PY False, status TS EQUIV PY EQUIV OK
+MISMATCH: SENS
+SENS: shift diff 0.0e+00, delta diff 0.0e+00, CI end diff 0.0002465 (allowed 0.000237), p diff 0.0e+00, Holm diff 0.0e+00, reject TS False PY False, status TS EQUIV PY EQUIV DIFFERS
+floor: TS req1 0.996196 req2p 0.00290911 sat 0.999998 ok True; PY req1 0.996196 req2p 0.00290911 sat 0.999998 ok True OK
+guard: flagged TS 0 PY 0, identities equal; label without TS None PY None; sensitive TS False PY False OK
+label TS TOLL-ONLY PY TOLL-ONLY  OK
+DISAGREEMENT (1): SENS

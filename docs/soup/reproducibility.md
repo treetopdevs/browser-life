@@ -66,3 +66,28 @@ deno eval 'import { Soup } from "./tools/soup/bff.ts"; const s = new Soup({num:1
 ```
 
 The Sol 6.1 High read-only review found no implementation defects; its documentation finding about extra checkpoint capture is addressed above.
+
+## 2026-11-14 continuation
+
+See [issue #129 evidence and run preparation](issue-129-2026-11-14/README.md)
+for the recovered failed repeat, checksummed archive, provenance unknowns and
+prepared commands. Statements above about artifacts not being found and no full
+repeat being performed describe the 2026-10-31 audit only. Use `--evidence` in a
+new directory to retain provenance and the actual census before the first
+sampled threshold crossing. Full-run reproducibility and GPU integrity remain
+unresolved.
+
+## Checked full repeats — later on 2026-11-14
+
+The [checked GPU run report](issue-129-checked-2026-11-14/README.md) records the
+completed sequential 2,1,3,4 runs after integrating and validating completion
+checks from c30ba828. A live completion-count deficit was detected; the batch was rolled back and
+its retry passed the completion check. Seeds 3 and 4 match their historical checkpoints and sampled series;
+seeds 2 and 1 retain explicit mismatches. Exact historical provenance and
+population replication claims remain unresolved; the original records above
+are preserved as dated audit history.
+
+The earlier `--save 2048` examples above are historical audit commands. For the
+2026-11-14 checked protocol, use `tools/soup-repeat.py`: it pins the archive and
+uses `--frozen --evidence --save 4096`. See the dated report for the distinction
+between the frozen runs and later review fixes.

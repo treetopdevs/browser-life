@@ -88,7 +88,8 @@ describe.skipIf(!caddy)("served through deploy/Caddyfile", () => {
     const port = 20_000 + Math.floor(Math.random() * 2000);
     const config = read("deploy/Caddyfile").replace(/^:80 \{/m, `:${port} {`).replace("root * /srv", `root * ${site}`);
     const file = join(root, "Caddyfile");
-    writeFileSync(file, `{\n  admin off\n}\n${config}`);
+    // The Caddyfile may open with its own global options block (trusted proxies); add `admin off` to it rather than a second one.
+    writeFileSync(file, config.startsWith("{\n") ? config.replace(/^\{/, "{\n  admin off") : `{\n  admin off\n}\n${config}`);
     const adapted = spawnSync("caddy", ["adapt", "--config", file, "--adapter", "caddyfile"]);
     expect(adapted.status).toBe(0);
     const server: ChildProcess = spawn("caddy", ["run", "--config", file, "--adapter", "caddyfile"], { stdio: "ignore" });

@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/cli@1": "1.0.32",
+    "jsr:@std/cli@1.0.32": "1.0.32",
     "jsr:@std/streams@1": "1.2.0"
   },
   "jsr": {

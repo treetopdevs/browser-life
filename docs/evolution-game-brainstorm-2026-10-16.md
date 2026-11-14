@@ -1384,6 +1384,42 @@ of fixation and the arms' other differences; four P3 figure corrections: the con
 shares, the cost window, the growth share and the collapse pools; all eight taken, the tables
 unchanged).
 
+### Film collapse: repeatable or a one-off? (2026-10-30)
+
+The look the readout asked for. Files: `runs/evolution-game/film-collapse/` (rule.md, anatomy.md, tables.md,
+readout.md; gitignored). The rule (what a film is, what counts as a collapse, and how many collapses mean what) was
+written and hashed before any run: a film is decomposition carriers at 90% or more of living cells by 200,000; a
+collapse is living cells below 25% of a rolling reference at two censuses running; seed 1 prompted the question, so
+the reading uses the other films, with 5 or more collapses of 8 meaning the film's usual fate, 0 or 1 meaning chance,
+and 2 to 4 recurring.
+
+**Anatomy of seed 1 (no new runs).** At 150,000 the E pool, the S pool, the number of individuals and lineage
+71603's share left their 100,000–145,000 ranges together while cells and photosynthesis were still inside theirs;
+photosynthesis and cells followed at 155,000 and cells fell unambiguously at 160,000 (onset 160,000, collapse
+185,000 by the rule). Starvation stayed inside its settled range until 175,000. 71603 and the four lineages that
+displaced it all carry decomposition only, and their photosynthesis per cell overlaps 71603's (one, 142747, ran higher
+at a few censuses): the film thinned out together, and no lineage with a clearly better rate took over. Null seed 1
+matches this run only through 10,000 and differs from 15,000; by 100,000–145,000 it differs in every series that later
+moved (top lineage 19–42% against 74–87%, E 1.4–2.2 million against 1.1–1.2 million, about twice the individuals), so
+it is a contrast on the same founders, not a matched control.
+
+**Replication.** The treat arm, seeds 1–9, to 400,000 steps (seeds 1–3 rerun from step 0; each equals its 16 October
+bundle at all 40 censuses through 200,000, so the kernel changes since then leave this world untouched; conservation
+exact on all nine; GPU golden passes). Eight runs make a film; seed 9 fixes decomposition only at about 350,000 and is
+not scored. **One collapse in eight films (seed 1), none in the seven others**, over 1.7 million film-steps. By the
+pre-stated rule that is **chance**: the film is a stable state over 400,000 steps in seven of seven seeds, and the 95%
+upper bound from 0 of 7 is about 35% per film over the roughly 240,000 steps each was watched.
+
+**What the 25% line hides.** Seed 2 came close, by a path close to seed 1's: one lineage swept to 75% of cells at
+270,000, the E pool fell from 1.7 to 0.6 million while cells held, then cells fell to 29% of the reference at
+315,000 and recovered. Unlike seed 1, starvation rose. It was under 30% at that one census only (36% at 310,000), so
+only a line at 36% or higher would count it, and even then the count among the seven scored films would be 1 of 7,
+still chance by the rule. The
+two deepest dips belong to the two films whose top lineage reached 75% or more, and the third deepest (seed 5, 46%)
+followed that film's own dominance peak: eight films suggest a monoculture is what fails, not the film as such, and
+this run does not test it. The collapse is also not an end state: seed 1 regrew by 225,000 and from 265,000 held
+32,000–48,000 cells with about 500–630 individuals and an E pool of 2.3–2.9 million, like the films that never collapsed.
+
 ## Gene v2: a gene that does (2026-10-17)
 
 Gene v1's readout closed CONFOUNDED and left the next version's shape as a design decision:
