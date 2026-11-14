@@ -39,8 +39,8 @@ ul{margin:0;padding-left:22px}
 <tr><td class="id">log</td><td><code>claude/viz-gaps-log</code></td><td><span class="tag run">open</span></td><td>pending</td></tr>
 <tr><td class="id">food-replays</td><td><code>claude/viz-food-replays</code></td><td><span class="tag run">in progress</span></td><td>—</td></tr>
 <tr><td class="id">food-live</td><td><code>claude/viz-food-live</code></td><td><span class="tag wait">queued</span></td><td>—</td></tr>
-<tr><td class="id">regime-figures</td><td>from <code>claude/3d-regime-meters</code></td><td><span class="tag wait">queued</span></td><td>local only, see D8</td></tr>
-<tr><td class="id">slab-viewer</td><td>from <code>claude/3d-cyclic-rps</code></td><td><span class="tag wait">queued</span></td><td>local only, see D8</td></tr>
+<tr><td class="id">regime-figures</td><td><code>claude/viz-regime-figures</code> (off <code>claude/3d-regime-meters</code>)</td><td><span class="tag done">done, committed locally</span> <code>53df4fc8</code></td><td>local only, see D8</td></tr>
+<tr><td class="id">slab-viewer</td><td><code>claude/viz-slab-viewer</code> (off <code>claude/3d-cyclic-rps</code>)</td><td><span class="tag run">in progress</span></td><td>local only, see D8</td></tr>
 </table></div>
 
 <h2>Waiting on you</h2>
@@ -64,7 +64,15 @@ ul{margin:0;padding-left:22px}
 <tr><td class="id">D10</td><td class="when">11-14</td><td>slab-viewer builds on <code>claude/3d-cyclic-rps</code>, cyclic competition first, defaulting to a recorded exploration setting.</td><td>That branch has both simulators; Gate 0 stopped, so no registered operating point exists; the cyclic world is the more watchable.</td></tr>
 <tr><td class="id">D11</td><td class="when">11-14</td><td>food-replays skips the separate plan-review stage; one xhigh review of the diff.</td><td>It is a shell script plus hash checks. The larger slices keep plan review.</td></tr>
 <tr><td class="id">D12</td><td class="when">11-14</td><td>"Autofix" is read as: link each PR to this thread, check it between slices, watch when no other work is left, and push fixes for failing checks or review comments.</td><td>That is what it meant in your earlier sessions here.</td></tr>
+<tr><td class="id">D13</td><td class="when">11-14</td><td>regime-figures: the new section sits behind an opt-in build flag (<code>--stage0-figures</code>) and carries its own "pilot numbers, not results" banner. Without the flag the page builds byte-identical to before.</td><td>The committed page is the synthetic one; real pilot numbers must not inherit its "generated" label, and the builder's label and refusal rules must not change.</td></tr>
+<tr><td class="id">D14</td><td class="when">11-14</td><td>regime-figures corrects three things the plan got wrong: the damage table is 18 jobs on two rungs (36 rows), the unit-kick twin was recorded only at step 30 (drawn as one marker, no line), and the qualifying threshold comes from the rung 1b pick rule (1–50% living and a 5–80% light ratio).</td><td>Found by reading the data files; the figure shows only recorded values and joins nothing that was not measured.</td></tr>
+<tr><td class="id">D15</td><td class="when">11-14</td><td>slab-viewer and regime-figures ran in parallel with food-replays instead of strictly in D1's order.</td><td>They live on different branches and cannot collide; food-live still waits for food-replays' restore script.</td></tr>
 </table></div>
+
+<h2>Results so far</h2>
+<div class="card"><ul>
+<li><strong>regime-figures</strong> (local commit <code>53df4fc8</code>): the regime-meters page now shows damage spread in eight panels and the calibration grid in three. Recomputed from the 180 calibration rows: 0 of 60 settings qualify. Sol xhigh found 11 issues (none P1); all fixed, follow-up review clean of P1/P2. 158 tests pass; rebuild is byte-identical.</li>
+</ul></div>
 
 <h2>Out of bounds for this run</h2>
 <div class="card"><ul>
