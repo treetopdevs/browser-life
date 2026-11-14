@@ -89,6 +89,19 @@ The constants 64, 16, 32 and 127 are fixed by the R2 protocol (`docs/mycelium-r2
 
 `probe(state)` (exported from `world.ts`) returns every live particle's NN_O outputs for the next step without changing the state. `step` and `probe` call the same bin and sense-and-think functions.
 
+## Trail use (exploratory, optional `trailMoveDiscount`)
+
+Two optional config keys give trail a physical use. Both are absent from `defaultConfig()` and never inserted by `createWorld`, so every existing config, header and digest is unchanged. Design, free-rider reasoning and the screen: `docs/mycelium-trail-use-2026-11-13/`.
+
+- `trailMoveDiscount` `td`: integer 0..256. Absent means no discount.
+- `trailDiscountMode`: `"public"` or `"toll"`, valid only with `trailMoveDiscount`; absent means `"public"`.
+
+In phase 5, the movement term of the cost changes from `((|MX| + |MY|) · moveCost) >> 7` to `(raw · (256 − f)) >> 15`, with `raw = (|MX| + |MY|) · moveCost` and `f = min(min(P0, 256) · td, 256)`, where `P0` is the trail in the particle's own cell at the START of the step (the value sensing reads, taken before any deposit of this step). Mode `"toll"` sets `f = 0` for a particle whose deposit request `(maxDeposit · relu(DEPOSIT)) >> 7` is 0 (the request, not the realised deposit, which the energy left after the cost can cap at 0). `f = 0` gives `raw >> 7` exactly, so `td = 0` has the dynamics of the absent key. Rounding is a floor and draws nothing.
+
+The saving is energy the particle simply does not pay: the term is booked to heat as paid, so `ΣE + eA·ΣA` still changes by exactly `lightIn − heat`. Matter is untouched and no counter, `totals` field or header field is added. On the GPU `k_think` computes `f` into a scratch plane (`k_live` adds trail in the same dispatch, so reading it there would race); the CPU computes it between phases 3 and 4.
+
+Bounds: `min(P0, 256) · td ≤ 2^16` (saturating `P0` first, since a cell can hold 2^31); `raw ≤ 254 · 2^12 < 2^20`; `raw · (256 − f) < 2^28`.
+
 ## Randomness
 
 All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:

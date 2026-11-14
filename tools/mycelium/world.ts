@@ -26,6 +26,10 @@ export type LightPattern = "uniform" | "gradient";
 export const PHYSARUM_DEPOSIT_MAX = 768;
 /** What phase 3 (Think) runs. Absent from a config means "neural"; "physarum" is the R2 null (RULES.md). */
 export type ControllerKind = "neural" | "physarum";
+/** Who may take the trail movement discount: every particle ("public") or only a particle that requests a deposit this step ("toll"). */
+export type TrailDiscountMode = "public" | "toll";
+/** Largest trailMoveDiscount; 256 means one unit of trail under a particle makes its movement free. */
+export const TRAIL_DISCOUNT_MAX = 256;
 
 export interface MyceliumConfig {
   rule: typeof RULE_ID;
@@ -88,6 +92,14 @@ export interface MyceliumConfig {
    * particle; the controller still runs on the other eight inputs. Absent means false. defaultConfig() never sets it.
    */
   blindTrailGradient?: boolean;
+  /**
+   * Optional (trail use, exploratory). Integer 0..256. The movement term of the cost shrinks with the start-of-step trail in the
+   * particle's own cell: f = min(min(P, 256) * trailMoveDiscount, 256), term = ((|MX|+|MY|) * moveCost * (256 - f)) >> 15
+   * (f = 0 is today's `>> 7`). Absent means no discount. defaultConfig() never sets it.
+   */
+  trailMoveDiscount?: number;
+  /** Optional, only with trailMoveDiscount. "toll": f = 0 unless the particle's deposit request is positive. Absent means "public". */
+  trailDiscountMode?: TrailDiscountMode;
   /** Chance a birth mutates (inherit arm), in 1/65536; a mutation changes mutCount weights by up to ±mutStep. */
   mutRate: number;
   mutCount: number;
@@ -216,6 +228,13 @@ export function validateConfig(c: MyceliumConfig): string[] {
     if (c.controller !== "physarum") bad.push("physarumDeposit requires controller physarum");
   }
   if (c.blindTrailGradient !== undefined && typeof c.blindTrailGradient !== "boolean") bad.push("blindTrailGradient must be a boolean");
+  if (c.trailMoveDiscount !== undefined && (!Number.isInteger(c.trailMoveDiscount) || c.trailMoveDiscount < 0 || c.trailMoveDiscount > TRAIL_DISCOUNT_MAX)) {
+    bad.push(`trailMoveDiscount must be an integer in [0, ${TRAIL_DISCOUNT_MAX}]`);
+  }
+  if (c.trailDiscountMode !== undefined) {
+    if (c.trailDiscountMode !== "public" && c.trailDiscountMode !== "toll") bad.push("trailDiscountMode must be public or toll");
+    if (c.trailMoveDiscount === undefined) bad.push("trailDiscountMode requires trailMoveDiscount");
+  }
   // Total matter bounds every field cell and every sum of them (RULES.md, "Bounds").
   const total = c.width * c.height * c.nutrient0 + c.founders * c.founderMatter;
   if (total > 2 ** 31) bad.push("initial matter must not exceed 2^31");
@@ -436,6 +455,19 @@ export function step(s: MyceliumState): StepStats {
   // 2-3. Sense start-of-step state and think. Pure per particle (shared with probe()).
   const out = senseAndThink(s, cell, D);
 
+  // Trail use (optional): each particle's discount factor f, from the START-of-step trail in its cell. Computed here, before phase 5
+  // adds any deposit, so it is order-free (the GPU computes it in k_think for the same reason).
+  let disc: Uint32Array | null = null;
+  if (c.trailMoveDiscount !== undefined) {
+    disc = new Uint32Array(n);
+    const toll = c.trailDiscountMode === "toll";
+    for (let i = 0; i < n; i++) {
+      const req = (c.maxDeposit * relu(out[i * NN_O + OUT.DEPOSIT])) >>> 7;
+      if (toll && req === 0) continue;
+      disc[i] = Math.min(Math.min(P[cell[i]], 256) * c.trailMoveDiscount, 256);
+    }
+  }
+
   // 4. Eat: requests summed per cell; a contended cell shares its nutrient pro rata, rounding down,
   // and the remainder stays in the field. maxEat * 127 < 2^15, so every request fits in 16 bits.
   const req = new Uint32Array(n);
@@ -473,7 +505,9 @@ export function step(s: MyceliumState): StepStats {
     if (en > c.energyMax) { st.heat += en - c.energyMax; en = c.energyMax; }
     const mx = out[oi + OUT.MX], my = out[oi + OUT.MY];
     const pb = pbase(c.seed, s.step, s.id[i]);
-    const cost = c.upkeep + (((mx < 0 ? -mx : mx) + (my < 0 ? -my : my)) * c.moveCost >>> 7) + shrFrac(m, c.massUpkeepShift, draw(pb, RND.UPKEEP));
+    const raw = ((mx < 0 ? -mx : mx) + (my < 0 ? -my : my)) * c.moveCost;
+    const move = disc === null ? raw >>> 7 : (raw * (256 - disc[i])) >>> 15;
+    const cost = c.upkeep + move + shrFrac(m, c.massUpkeepShift, draw(pb, RND.UPKEEP));
     if (en < cost) {
       st.heat += en; C[ci] += m; st.deaths++;
       continue;

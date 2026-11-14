@@ -3,12 +3,13 @@
 //
 //   deno run -A --no-lock tools/mycelium/run.ts --steps 2000 --every 200 [--size 128] [--max 8192] [--founders 1024]
 //     [--seed 1] [--heredity inherit|frozen|blocked] [--light uniform|gradient] [--json]
+//     [--move-cost 2] [--trail-discount 0..256 [--discount-mode public|toll]]   (optional trail-use rule, RULES.md)
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { FRESH_MIN } from "./r2-protocol.ts";
 import { embargoReason } from "./r2b-seeds.ts";
-import { createWorld, defaultConfig, energyTotal, type Heredity, type LightPattern, liveGenotypes, matterTotal, stateDigest, step } from "./world.ts";
+import { createWorld, defaultConfig, energyTotal, type Heredity, type LightPattern, liveGenotypes, matterTotal, stateDigest, step, type TrailDiscountMode } from "./world.ts";
 
-const a = parseArgs(Deno.args, { string: ["steps", "every", "size", "max", "founders", "seed", "heredity", "light"], boolean: ["json"] });
+const a = parseArgs(Deno.args, { string: ["steps", "every", "size", "max", "founders", "seed", "heredity", "light", "move-cost", "trail-discount", "discount-mode"], boolean: ["json"] });
 // Seeds of 9001 and above are the R2 confirmation's fresh seeds (docs/mycelium-r2-2026-11-13/PROTOCOL.md section 5):
 // they run only through r2.ts --phase confirm, so an unlogged look at one cannot happen from here.
 if (a.seed !== undefined && !(Number(a.seed) < FRESH_MIN)) {
@@ -30,6 +31,9 @@ const over = {
   ...(a.seed ? { seed: Number(a.seed) } : {}),
   ...(a.heredity ? { heredity: a.heredity as Heredity } : {}),
   ...(a.light ? { lightPattern: a.light as LightPattern } : {}),
+  ...(a["move-cost"] ? { moveCost: Number(a["move-cost"]) } : {}),
+  ...(a["trail-discount"] ? { trailMoveDiscount: Number(a["trail-discount"]) } : {}),
+  ...(a["discount-mode"] ? { trailDiscountMode: a["discount-mode"] as TrailDiscountMode } : {}),
 };
 const s = createWorld(defaultConfig(over));
 let births = 0, deaths = 0, refused = 0, contended = 0, mutations = 0;

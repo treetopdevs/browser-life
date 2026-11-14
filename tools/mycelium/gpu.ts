@@ -42,7 +42,7 @@ function layouts(c: MyceliumConfig) {
   // Per-step particle scratch: planes of cap words, then three block-offset arrays of 256.
   const T = {
     CELL: 0, REQ: cap, GRANT: 2 * cap, MX: 3 * cap, MY: 4 * cap, DREQ: 5 * cap, SPL: 6 * cap, ALIVE: 7 * cap, WANTS: 8 * cap, NOVEL: 9 * cap,
-    LA: 10 * cap, LW: 11 * cap, LN: 12 * cap, BA: 13 * cap, BW: 13 * cap + 256, BN: 13 * cap + 512, words: 13 * cap + 768,
+    LA: 10 * cap, LW: 11 * cap, LN: 12 * cap, BA: 13 * cap, BW: 13 * cap + 256, BN: 13 * cap + 512, DISC: 13 * cap + 768, words: 14 * cap + 768,
   };
   return { N, cap, F, P, T };
 }
@@ -60,6 +60,7 @@ function wgsl(c: MyceliumConfig): string {
     SPLITE: c.splitEnergy, SPLITM: c.splitMatter, EMAX: c.energyMax, LIGHT: c.light, LGRAD: c.lightPattern === "gradient" ? 1 : 0,
     PDECAY: c.pDecay, DIFFA: c.diffA, DIFFC: c.diffC, HER: c.heredity === "inherit" ? 0 : c.heredity === "frozen" ? 1 : 2,
     PHYS: c.controller === "physarum" ? 1 : 0, PDEP_SET: c.physarumDeposit === undefined ? 0 : 1, PDEP: c.physarumDeposit ?? 0, BLIND: c.blindTrailGradient === true ? 1 : 0,
+    TD_SET: c.trailMoveDiscount === undefined ? 0 : 1, TD: c.trailMoveDiscount ?? 0, TOLL: c.trailDiscountMode === "toll" ? 1 : 0,
     MUTRATE: c.mutRate, MUTCOUNT: c.mutCount, MUTSTEP: c.mutStep, SPAN: c.weightSpan, SSHIFT: c.sensorShift, ESHIFT: c.energyShift, MSHIFT: c.massShift,
     NN_BYTES, W1_OFF, B1_OFF, W2_OFF, B2_OFF, GW: GENOME_WORDS,
     C_N: C.n, C_NEXTID: C.nextId, C_NEXTGID: C.nextGid, C_STEP: C.step, C_ERR: C.err, C_SURV: C.surv, C_WANTT: C.wantTotal, C_NEWG: C.newGids, C_STEPHI: C.stepHi, C_CUT: C.cut,
@@ -68,7 +69,7 @@ function wgsl(c: MyceliumConfig): string {
     F_A: F.A, F_C: F.C, F_P: F.P, F_D: F.D, F_R: F.R, F_TK: F.TK, F_SENT: F.SENT,
     P_ID: P.ID, P_PAR: P.PAR, P_GID: P.GID, P_X: P.X, P_Y: P.Y, P_M: P.M, P_E: P.E, P_AGE: P.AGE, P_GEN: P.GEN,
     T_CELL: T.CELL, T_REQ: T.REQ, T_GRANT: T.GRANT, T_MX: T.MX, T_MY: T.MY, T_DREQ: T.DREQ, T_SPL: T.SPL, T_ALIVE: T.ALIVE, T_WANTS: T.WANTS,
-    T_NOVEL: T.NOVEL, T_LA: T.LA, T_LW: T.LW, T_LN: T.LN, T_BA: T.BA, T_BW: T.BW, T_BN: T.BN,
+    T_NOVEL: T.NOVEL, T_LA: T.LA, T_LW: T.LW, T_LN: T.LN, T_BA: T.BA, T_BW: T.BW, T_BN: T.BN, T_DISC: T.DISC,
   };
   const head = Object.entries(consts).map(([k, v]) => `const ${k} = ${u(v)};`).join("\n");
   return `${head}\n${BODY}`;
@@ -225,7 +226,15 @@ fn k_think(@builtin(global_invocation_id) g: vec3<u32>) {
   let r = min((MAXEAT * u32(max(o[2], 0))) >> 7u, room);
   tmp[T_REQ + i] = r;
   if (r > 0u) { atomicAdd(&fld[F_R + ci], r); }
-  tmp[T_DREQ + i] = (MAXDEP * u32(max(o[3], 0))) >> 7u;
+  let dreq = (MAXDEP * u32(max(o[3], 0))) >> 7u;
+  tmp[T_DREQ + i] = dreq;
+  // Trail use (optional): the discount factor from the START-of-step trail in this cell. k_live adds trail in the same
+  // dispatch, so it is read and stored here, where the field is untouched.
+  if (TD_SET == 1u) {
+    var f = 0u;
+    if (TOLL == 0u || dreq > 0u) { f = min(min(atomicLoad(&fld[F_P + ci]), 256u) * TD, 256u); }
+    tmp[T_DISC + i] = f;
+  }
   tmp[T_SPL + i] = select(0u, 1u, o[4] > 0);
 }
 
@@ -274,7 +283,9 @@ fn live_one(i: u32) -> vec2<u32> {
   let mx = bitcast<i32>(tmp[T_MX + i]);
   let my = bitcast<i32>(tmp[T_MY + i]);
   let pb = pbase(ld(C_STEP), pc[P_ID + i]);
-  let cost = UPKEEP + (((u32(abs(mx)) + u32(abs(my))) * MOVECOST) >> 7u) + mul_frac(m, MASSUPK, 16u, draw(pb, 90u));
+  var mv = ((u32(abs(mx)) + u32(abs(my))) * MOVECOST) >> 7u;
+  if (TD_SET == 1u) { mv = (((u32(abs(mx)) + u32(abs(my))) * MOVECOST) * (256u - tmp[T_DISC + i])) >> 15u; }
+  let cost = UPKEEP + mv + mul_frac(m, MASSUPK, 16u, draw(pb, 90u));
   if (en < cost) {
     heat += en;
     atomicAdd(&fld[F_C + ci], m);

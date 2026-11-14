@@ -108,6 +108,48 @@ function r2bCases(): Case[] {
   ];
   return cases;
 }
+/**
+ * Trail use (optional trailMoveDiscount and trailDiscountMode): several strengths, both modes, the physarum null in a dense world (many
+ * particles per cell, trail laid every step, so a live-P read would show), saturation, moveCost 4096, a toll request whose deposit is capped
+ * at zero by energy, and a keyless baseline for each. Each case that sets a key must differ from its baseline (not vacuous), td 0 must equal it.
+ */
+function trailCases(): Case[] {
+  const w = { width: 64, height: 64, founders: 600, maxParticles: 3000 };
+  const base = defaultConfig(w);
+  const cs = ["births", "deaths", "contended"] as const;
+  const dense = { width: 16, height: 16, founders: 300, maxParticles: 1500 };
+  const phys = (over: Partial<MyceliumConfig> = {}) => defaultConfig({ ...dense, controller: "physarum", heredity: "frozen", physarumDeposit: 768, ...over });
+  return [
+    { name: "trail discount, public, strength 32 (inherit)", cfg: defaultConfig({ ...w, trailMoveDiscount: 32 }), steps: 800, seg: 100, must: [...cs, "mutations"], vs: { cfg: base, same: false } },
+    { name: "trail discount, public, strength 256 (inherit, moveCost 12)", cfg: defaultConfig({ ...w, moveCost: 12, trailMoveDiscount: 256 }), steps: 800, seg: 100, must: [...cs, "mutations"], vs: { cfg: defaultConfig({ ...w, moveCost: 12 }), same: false } },
+    { name: "trail discount, toll, strength 64 (inherit, moveCost 12)", cfg: defaultConfig({ ...w, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }), steps: 800, seg: 100, must: [...cs, "mutations"], vs: { cfg: defaultConfig({ ...w, moveCost: 12, trailMoveDiscount: 64 }), same: false } },
+    { name: "trail discount, toll, strength 256 (blocked, moveCost 12)", cfg: defaultConfig({ ...w, heredity: "blocked", moveCost: 12, trailMoveDiscount: 256, trailDiscountMode: "toll" }), steps: 500, seg: 100, must: [...cs], vs: { cfg: defaultConfig({ ...w, heredity: "blocked", moveCost: 12 }), same: false } },
+    { name: "trail discount, explicit public mode, strength 128", cfg: defaultConfig({ ...w, moveCost: 8, trailMoveDiscount: 128, trailDiscountMode: "public" }), steps: 500, seg: 100, must: [...cs], vs: { cfg: defaultConfig({ ...w, moveCost: 8 }), same: false } },
+    { name: "trail discount strength 0 equals the keyless dynamics", cfg: defaultConfig({ ...w, trailMoveDiscount: 0, trailDiscountMode: "toll" }), steps: 400, seg: 100, must: [...cs], vs: { cfg: base, same: true } },
+    { name: "trail discount, physarum dense world (public, 64)", cfg: phys({ moveCost: 12, trailMoveDiscount: 64 }), steps: 400, seg: 50, must: ["births", "deaths"], vs: { cfg: phys({ moveCost: 12 }), same: false } },
+    { name: "trail discount, physarum dense world (toll, 256)", cfg: phys({ moveCost: 12, trailMoveDiscount: 256, trailDiscountMode: "toll" }), steps: 400, seg: 50, must: ["births", "deaths"], vs: { cfg: phys({ moveCost: 12 }), same: false } },
+    {
+      // Trail far above the saturation point (256) everywhere: f is capped, the product never overflows.
+      name: "trail discount saturates (trail 10^6 per cell, strength 1)",
+      cfg: defaultConfig({ ...w, moveCost: 12, trailMoveDiscount: 1 }), steps: 300, seg: 100, must: ["births", "deaths"],
+      tweak: (s) => { s.P.fill(1_000_000); }, vs: { cfg: defaultConfig({ ...w, moveCost: 12 }), same: false },
+    },
+    {
+      // moveCost at its maximum, full outputs: raw = 254 * 4096, the largest product of the rule.
+      name: "trail discount at moveCost 4096 (largest product)",
+      cfg: defaultConfig({ ...w, moveCost: 4096, upkeep: 0, founderEnergy: 4096, trailMoveDiscount: 100 }), steps: 200, seg: 50, must: ["deaths"],
+      tweak: (s) => { setOut(s, { 0: 127, 1: -127, 2: 127 }); s.P.fill(2); }, vs: { cfg: defaultConfig({ ...w, moveCost: 4096, upkeep: 0, founderEnergy: 4096 }), same: false },
+    },
+    {
+      // Toll: the deposit request is positive but depositCost 4096 exceeds the energy left, so no unit is laid; the discount is still taken (documented edge).
+      name: "trail discount, toll with the deposit capped to zero by energy",
+      cfg: defaultConfig({ ...w, moveCost: 12, maxEat: 0, depositCost: 4096, founderEnergy: 600, trailMoveDiscount: 64, trailDiscountMode: "toll" }), steps: 300, seg: 100, must: ["deaths"],
+      tweak: (s) => { setOut(s, { 0: 60, 1: 60, 2: 127, 3: 127 }); s.P.fill(50); },
+      vs: { cfg: defaultConfig({ ...w, moveCost: 12, maxEat: 0, depositCost: 4096, founderEnergy: 600 }), same: false },
+      check: (cpu) => (cpu.P.every((v, i) => v <= 50 || i < 0) ? null : "trail grew, so a deposit was paid for (the case is meant to lay none)"),
+    },
+  ];
+}
 const smallWorld = { width: 32, height: 32, founders: 64, maxParticles: 256 };
 const cases: Case[] = [
   {
@@ -174,6 +216,7 @@ const cases: Case[] = [
     steps: 80, seg: 10, must: ["contended", "births"],
   },
   ...r2bCases(),
+  ...trailCases(),
   { name: "default 128x128", cfg: defaultConfig(), steps: 2000, seg: 250, must: [...base, "mutations"] },
   { name: "inherit", cfg: defaultConfig({ heredity: "inherit" }), steps: 500, seg: 100, must: [...base, "mutations"] },
   { name: "frozen", cfg: defaultConfig({ heredity: "frozen" }), steps: 500, seg: 100, must: [...base] },
@@ -234,7 +277,7 @@ async function runCase(c: Case): Promise<Row> {
   }
   if (ok && c.check) { const bad = c.check(cpu, { lightIn: bigLight, heat: bigHeat }); if (bad) { ok = false; note = bad; } }
   if (ok && c.vs) {
-    const base = createWorld(c.vs.cfg);
+    const base = make({ ...c, cfg: c.vs.cfg }); // same tweak, baseline config
     for (let t = 0; t < c.steps; t++) step(base);
     const d = firstDiff(cpu, base);
     if (c.vs.same && d) { ok = false; note = `expected the same dynamics as the baseline config, but ${d}`; }
@@ -415,7 +458,8 @@ async function runGuards(): Promise<Row> {
   }
   // The Physarum null runs on the GPU now (R2b); the bad config values still stop at createWorld, never at the shader.
   {
-    for (const bad of [{ physarumDeposit: 100 }, { controller: "physarum" as const, heredity: "frozen" as const, physarumDeposit: 769 }, { blindTrailGradient: 1 as unknown as boolean }]) {
+    for (const bad of [{ physarumDeposit: 100 }, { controller: "physarum" as const, heredity: "frozen" as const, physarumDeposit: 769 }, { blindTrailGradient: 1 as unknown as boolean },
+      { trailMoveDiscount: 257 }, { trailMoveDiscount: -1 }, { trailMoveDiscount: 1.5 }, { trailDiscountMode: "toll" as const }, { trailMoveDiscount: 5, trailDiscountMode: "private" as unknown as "toll" }]) {
       let threw = false;
       try { createWorld(defaultConfig({ ...smallWorld, ...bad })); } catch { threw = true; }
       if (!threw) fail(`config ${JSON.stringify(bad)} was accepted`);
@@ -436,6 +480,7 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
     [{}, ""],
     [{ controller: "physarum", heredity: "frozen", physarumDeposit: 100 }, ", physarumDeposit 100"],
     [{ blindTrailGradient: true }, ", blindTrailGradient"],
+    [{ moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", trailMoveDiscount 64 toll"],
   ];
   for (const [over, label] of variants) {
     rows.push(await runResume(over, label));
