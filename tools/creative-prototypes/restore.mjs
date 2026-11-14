@@ -5,7 +5,7 @@
 //
 // TARGET        checkout to restore into (default: the checkout this script lives in).
 // --source      runs directory holding food-line-101-119/ and creative-prototypes-85-100/, each mirroring repo paths
-//               (default $BL_RUNS_DIR or /Users/nicholas/develop/browser-life/runs). Read only, never written.
+//               (default $BL_RUNS_DIR, else runs/ of the main checkout that owns TARGET's .git). Read only, never written.
 // --check       verify only: change nothing, exit non-zero unless every file is present and matches.
 // --dry-run     print what would be copied, from where, and what would be refused; change nothing.
 // --force       replace an existing file whose hash or size differs (only with a verified replacement).
@@ -200,7 +200,7 @@ export function writeExcludeBlock(file, paths) {
 }
 
 export function main(argv, log = console.log) {
-  const o = { target: join(dirname(fileURLToPath(import.meta.url)), "../.."), source: process.env.BL_RUNS_DIR ?? "/Users/nicholas/develop/browser-life/runs" };
+  const o = { target: join(dirname(fileURLToPath(import.meta.url)), "../.."), source: process.env.BL_RUNS_DIR };
   const val = (i, f) => { if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) throw new Error(`${f} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -215,6 +215,11 @@ export function main(argv, log = console.log) {
     else if (a === "--first-table-commit") o.firstTableCommit = val(i++, a);
     else if (a.startsWith("--")) throw new Error(`unknown flag ${a}`);
     else o.target = a;
+  }
+  // Default source: runs/ of the main checkout (the one that owns the shared .git directory), which is where the copies were left.
+  if (!o.source) {
+    try { o.source = join(dirname(resolve(o.target, execFileSync("git", ["rev-parse", "--git-common-dir"], { cwd: o.target, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim())), "runs"); }
+    catch { o.source = join(o.target, "runs"); }
   }
   let r;
   try {
