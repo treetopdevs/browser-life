@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "comparisonScope": [
+    {
+      "seed": 2,
+      "checkedEndpoint": 12609,
+      "historicalRowsBeyondCheckedEndpoint": 507,
+      "comparisonPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/comparison.json"
+    },
+    {
+      "seed": 1,
+      "checkedEndpoint": 16384,
+      "historicalRowsBeyondCheckedEndpoint": 0,
+      "comparisonPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/comparison.json"
+    },
+    {
+      "seed": 3,
+      "checkedEndpoint": 16384,
+      "historicalRowsBeyondCheckedEndpoint": 0,
+      "comparisonPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/comparison.json"
+    },
+    {
+      "seed": 4,
+      "checkedEndpoint": 16384,
+      "historicalRowsBeyondCheckedEndpoint": 0,
+      "comparisonPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/comparison.json"
+    }
+  ],
+  "topProgramAssayReceipts": [
+    {
+      "seed": 2,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-12609.bin.receipt.json",
+      "receiptSha256": "ed5307110a8131c0bba43e00ccc814e809f62dfdf4f04e565450ff2b7d7eb551",
+      "snapshotSha256": "3f21d457212eebbbc08b80435b34a1e2e25ba7655654b891ce8c08226d3c50be",
+      "topSelfRep": 64,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    },
+    {
+      "seed": 2,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11585-transition.bin.receipt.json",
+      "receiptSha256": "f332d48d1c048df24297b46c1658a21a532f236f97f4b1ebc1d593f1462da53e",
+      "snapshotSha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+      "topSelfRep": 0,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    },
+    {
+      "seed": 2,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11521-pre-transition.bin.receipt.json",
+      "receiptSha256": "ee4fa13cc9e1cd6ab2707e5269c9391aecaf63de7d8bb1ba10905814ff7afee8",
+      "snapshotSha256": "b1c42110e3c590d6997530fc23384169bc57cd5c7614b6618dd7c391d10daa9b",
+      "topSelfRep": 0,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    },
+    {
+      "seed": 1,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-16384.bin.receipt.json",
+      "receiptSha256": "85460622d26d0b294303f5bb0563d69e33c6ac430df85b23b07bb73c8292eed0",
+      "snapshotSha256": "b05f6da38519bd741cff63bccf280c89fe0d7c5dd3741fc7fb94422427ed977c",
+      "topSelfRep": 0,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    },
+    {
+      "seed": 3,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-16384.bin.receipt.json",
+      "receiptSha256": "b16e9b2a69160550329d1d540d57d304ecf3cc7e40f1f72044de0581208f77e3",
+      "snapshotSha256": "b8c34807d6e050d4af4c4d1ba5d3ea244fb1ea48268fc85a2cb04a59dd698cc7",
+      "topSelfRep": 0,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    },
+    {
+      "seed": 4,
+      "path": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-16384.bin.receipt.json",
+      "receiptSha256": "ebbcbb6520813fc28081d10fa7d566694b2952d88ab9549bb3392a7baa6ea71d",
+      "snapshotSha256": "65190809c3645468a0a162d5c2a6a248647994acd964b8839e653a73d058bfc1",
+      "topSelfRep": 0,
+      "num": 131072,
+      "caveat": "Record source revision and compressor identity separately; this receipt does not establish ancestry or population replication."
+    }
+  ],
+  "caveat": "These are direct receipts from tools/soup-receipt.ts, not an independent interpreter implementation or population-wide assay."
+}

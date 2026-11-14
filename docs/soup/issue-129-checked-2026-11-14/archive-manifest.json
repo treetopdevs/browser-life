@@ -1,0 +1,938 @@
+[
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/docs/soup/issue-129-checked-2026-11-14/run-summary.json",
+    "sha256": "32699ec9cc44a853990757bc57b69ca94c67aa4548cdf5c750d4840310d4d4c8",
+    "member": "originals/0000/run-summary.json",
+    "bytes": 13755
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/.soup-evidence",
+    "sha256": "ca1cd807a8b4ba770ba3b9f44148abd154cc15897642b8b5268cf6e9f482e906",
+    "member": "originals/0001/.soup-evidence",
+    "bytes": 31
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/.soup-output.lock",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "member": "originals/0002/.soup-output.lock",
+    "bytes": 0
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/completion.json",
+    "sha256": "010c3ee4bc2346ae0460ed5662b6ace2b5024ca18a03d1fe9a80927a951f5d45",
+    "member": "originals/0003/completion.json",
+    "bytes": 400
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/invocation.json",
+    "sha256": "b6648e638b3a015a585d23645e49a426e04b70d717e7600dd95fe0052e10548e",
+    "member": "originals/0004/invocation.json",
+    "bytes": 4915
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/log.csv",
+    "sha256": "208b1bb357224a02fb988745b10eea8644225c75cf585d7bc35c7ed2b0c98ad0",
+    "member": "originals/0005/log.csv",
+    "bytes": 966
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/params.json",
+    "sha256": "8892197c84fca9f663435ea7b81b8cd2afdebf65a2a6a1b82ef55b2333a4c269",
+    "member": "originals/0006/params.json",
+    "bytes": 278
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/soup-10.bin",
+    "sha256": "c5f54bbe1099b2442cd8d954ab91171051d2c98a79eaa3d5b626d6e75aa3829e",
+    "member": "originals/0007/soup-10.bin",
+    "bytes": 32768
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/soup-20.bin",
+    "sha256": "c67f95e2379acfbba37d50b76c528037af8e3c72a926ba3738729b28b49c29a6",
+    "member": "originals/0008/soup-20.bin",
+    "bytes": 32768
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/source.patch",
+    "sha256": "fb0d7e03e3f2649e13b754775fb852ebdfc15394d4fc1ff11b2588152856813d",
+    "member": "originals/0009/source.patch",
+    "bytes": 23849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/deno.json",
+    "sha256": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+    "member": "originals/0010/deno.json",
+    "bytes": 564
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/deno.lock",
+    "sha256": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+    "member": "originals/0011/deno.lock",
+    "bytes": 774
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/bff.ts",
+    "sha256": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+    "member": "originals/0012/bff.ts",
+    "bytes": 14297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/census.ts",
+    "sha256": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+    "member": "originals/0013/census.ts",
+    "bytes": 1035
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/device.ts",
+    "sha256": "feb1d772acadeafd60c08267d68ca52336de6913d32bce193cb40b024f51e23f",
+    "member": "originals/0014/device.ts",
+    "bytes": 1949
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/evidence.ts",
+    "sha256": "6afe3e2db41dcc6f5e2989cd8acebee903178d830ea02c11b640ddbb6043c3c1",
+    "member": "originals/0015/evidence.ts",
+    "bytes": 6063
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/gpu.ts",
+    "sha256": "147b274acdb6000bacfd75c56f1de5a4fcb81cc2fe328f05e04a7d6fab2e9ff9",
+    "member": "originals/0016/gpu.ts",
+    "bytes": 15114
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/png.ts",
+    "sha256": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+    "member": "originals/0017/png.ts",
+    "bytes": 3668
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/snapshot.ts",
+    "sha256": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+    "member": "originals/0018/snapshot.ts",
+    "bytes": 5660
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup/stats.ts",
+    "sha256": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f",
+    "member": "originals/0019/stats.ts",
+    "bytes": 2701
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke/sources/tools/soup.ts",
+    "sha256": "793f883e7dddfd360e29f98d2751dca01b68646d293365451c375edf6dadf570",
+    "member": "originals/0020/soup.ts",
+    "bytes": 13908
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/checked-smoke.stdout",
+    "sha256": "434b9b8267809598efa9e4fe12df17e00b3095a3357cf7114441d7aef29eab0d",
+    "member": "originals/0021/checked-smoke.stdout",
+    "bytes": 1170
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/closure-review.txt",
+    "sha256": "be3cde49fc20e8bc8da4cfb5ed7c7b24c75370c60c2f370518ed7dc3cdca6c64",
+    "member": "originals/0022/closure-review.txt",
+    "bytes": 3092
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/manifest.json",
+    "sha256": "857e0ca88e66ea9d239099326ac7c7fa7aaf2900ec7bb778723415d9f94ef0e7",
+    "member": "originals/0023/manifest.json",
+    "bytes": 7858
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/.soup-evidence",
+    "sha256": "ca1cd807a8b4ba770ba3b9f44148abd154cc15897642b8b5268cf6e9f482e906",
+    "member": "originals/0024/.soup-evidence",
+    "bytes": 31
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/.soup-output.lock",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "member": "originals/0025/.soup-output.lock",
+    "bytes": 0
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/comparison.json",
+    "sha256": "048a7e4a7ea0b3b746b2e4d023a0638a340c48030b214c9f6db97668eaf42ed3",
+    "member": "originals/0026/comparison.json",
+    "bytes": 108506
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/completion.json",
+    "sha256": "739e1e4364bd669fcd265cb70cfe035d3acb1edf325a2a2be824341eba597170",
+    "member": "originals/0027/completion.json",
+    "bytes": 413
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/invocation.json",
+    "sha256": "64c3f8f67be593e917341123d1fc3e92838c7bd48316b2cef3bea9c78c066754",
+    "member": "originals/0028/invocation.json",
+    "bytes": 5178
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/log.csv",
+    "sha256": "dcb6fe9e332f59815332e6ec8025e26540b81b484595ce972fe44132eb160f71",
+    "member": "originals/0029/log.csv",
+    "bytes": 14782
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/params.json",
+    "sha256": "c3a2c1a6505e30efd761c2111dfaeecc4fa92721870afa624a90d9bda8c480ae",
+    "member": "originals/0030/params.json",
+    "bytes": 285
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-12288.bin",
+    "sha256": "af856139c6f6e980c5eb6f3a5d4f5406072db34c81c05a2ab3ffeb61c83407e4",
+    "member": "originals/0031/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-12288.bin.receipt.json",
+    "sha256": "c6e02d348a120b42e19c7665083449b99de7141c54272ee55c494fa981bb8eca",
+    "member": "originals/0032/soup-12288.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-16384.bin",
+    "sha256": "b05f6da38519bd741cff63bccf280c89fe0d7c5dd3741fc7fb94422427ed977c",
+    "member": "originals/0033/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-16384.bin.receipt.json",
+    "sha256": "85460622d26d0b294303f5bb0563d69e33c6ac430df85b23b07bb73c8292eed0",
+    "member": "originals/0034/soup-16384.bin.receipt.json",
+    "bytes": 839
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-4096.bin",
+    "sha256": "779a8bad4483b54dba8c5cbe94306689cfdf37bde5e8dc48d3dd642d495fd383",
+    "member": "originals/0035/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-4096.bin.receipt.json",
+    "sha256": "2cead02329cc7c077578006c057c195ed6700558dabbd1d883208e7e1f385ce6",
+    "member": "originals/0036/soup-4096.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-8192.bin",
+    "sha256": "ec69e279665e0159068627dc17e1824af6c7470eaa96b31dcc60226d738a2372",
+    "member": "originals/0037/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/soup-8192.bin.receipt.json",
+    "sha256": "14caebc6fa83f89bc772b19660a688448bdfde005f204b74c99950156b16ec40",
+    "member": "originals/0038/soup-8192.bin.receipt.json",
+    "bytes": 837
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/source.patch",
+    "sha256": "fb0d7e03e3f2649e13b754775fb852ebdfc15394d4fc1ff11b2588152856813d",
+    "member": "originals/0039/source.patch",
+    "bytes": 23849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/deno.json",
+    "sha256": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+    "member": "originals/0040/deno.json",
+    "bytes": 564
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/deno.lock",
+    "sha256": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+    "member": "originals/0041/deno.lock",
+    "bytes": 774
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/bff.ts",
+    "sha256": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+    "member": "originals/0042/bff.ts",
+    "bytes": 14297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/census.ts",
+    "sha256": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+    "member": "originals/0043/census.ts",
+    "bytes": 1035
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/device.ts",
+    "sha256": "feb1d772acadeafd60c08267d68ca52336de6913d32bce193cb40b024f51e23f",
+    "member": "originals/0044/device.ts",
+    "bytes": 1949
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/evidence.ts",
+    "sha256": "6afe3e2db41dcc6f5e2989cd8acebee903178d830ea02c11b640ddbb6043c3c1",
+    "member": "originals/0045/evidence.ts",
+    "bytes": 6063
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/gpu.ts",
+    "sha256": "147b274acdb6000bacfd75c56f1de5a4fcb81cc2fe328f05e04a7d6fab2e9ff9",
+    "member": "originals/0046/gpu.ts",
+    "bytes": 15114
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/png.ts",
+    "sha256": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+    "member": "originals/0047/png.ts",
+    "bytes": 3668
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/snapshot.ts",
+    "sha256": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+    "member": "originals/0048/snapshot.ts",
+    "bytes": 5660
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup/stats.ts",
+    "sha256": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f",
+    "member": "originals/0049/stats.ts",
+    "bytes": 2701
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1/sources/tools/soup.ts",
+    "sha256": "793f883e7dddfd360e29f98d2751dca01b68646d293365451c375edf6dadf570",
+    "member": "originals/0050/soup.ts",
+    "bytes": 13908
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-1.stdout.log",
+    "sha256": "3c18a6fd740ead63fed5c5f271fdc6b2514db40d1c8b80f7d3b2340361e6e3aa",
+    "member": "originals/0051/seed-1.stdout.log",
+    "bytes": 16787
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/.soup-evidence",
+    "sha256": "ca1cd807a8b4ba770ba3b9f44148abd154cc15897642b8b5268cf6e9f482e906",
+    "member": "originals/0052/.soup-evidence",
+    "bytes": 31
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/.soup-output.lock",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "member": "originals/0053/.soup-output.lock",
+    "bytes": 0
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/comparison.json",
+    "sha256": "e94944054d5a52cdd7973110aab1e8bffb9630cf5aebd325148e2318aea18d9b",
+    "member": "originals/0054/comparison.json",
+    "bytes": 9470
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/completion.json",
+    "sha256": "a9d8ac5200f932e5fe857b47e1f1232e34a60d1962dc24debbe876de53493653",
+    "member": "originals/0055/completion.json",
+    "bytes": 425
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/gpu-retries.jsonl",
+    "sha256": "674359968d39c5fd0ce2567e3e49c4cd5e7d4850d0729eae3a551c22e369fc05",
+    "member": "originals/0056/gpu-retries.jsonl",
+    "bytes": 89
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/invocation.json",
+    "sha256": "2596bf00d16f39f0b83763a4555c859d71cef496d7d612389c97e5f784d1f554",
+    "member": "originals/0057/invocation.json",
+    "bytes": 5178
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/log.csv",
+    "sha256": "7c5e655f008684334f47b6ed588744618c892dd41c3cb23be51ace2ec20af66e",
+    "member": "originals/0058/log.csv",
+    "bytes": 11356
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/params.json",
+    "sha256": "6cfd12b10728dbe3e0601d0126db200446327ef2a0c8954fe14ecbd20b4673b3",
+    "member": "originals/0059/params.json",
+    "bytes": 285
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11521-pre-transition.bin",
+    "sha256": "b1c42110e3c590d6997530fc23384169bc57cd5c7614b6618dd7c391d10daa9b",
+    "member": "originals/0060/soup-11521-pre-transition.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11521-pre-transition.bin.receipt.json",
+    "sha256": "ee4fa13cc9e1cd6ab2707e5269c9391aecaf63de7d8bb1ba10905814ff7afee8",
+    "member": "originals/0061/soup-11521-pre-transition.bin.receipt.json",
+    "bytes": 853
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11585-transition.bin",
+    "sha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+    "member": "originals/0062/soup-11585-transition.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-11585-transition.bin.receipt.json",
+    "sha256": "f332d48d1c048df24297b46c1658a21a532f236f97f4b1ebc1d593f1462da53e",
+    "member": "originals/0063/soup-11585-transition.bin.receipt.json",
+    "bytes": 848
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-12288.bin",
+    "sha256": "abe65af2bb33ae24bd0868552e968c50a395134ec029441afa2f3a23c2cc6bfb",
+    "member": "originals/0064/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-12288.bin.receipt.json",
+    "sha256": "7c49036c74c4a23d3344631b46352bd6771a75b933c24a9208d0d4ad0751c644",
+    "member": "originals/0065/soup-12288.bin.receipt.json",
+    "bytes": 839
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-12609.bin",
+    "sha256": "3f21d457212eebbbc08b80435b34a1e2e25ba7655654b891ce8c08226d3c50be",
+    "member": "originals/0066/soup-12609.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-12609.bin.receipt.json",
+    "sha256": "ed5307110a8131c0bba43e00ccc814e809f62dfdf4f04e565450ff2b7d7eb551",
+    "member": "originals/0067/soup-12609.bin.receipt.json",
+    "bytes": 840
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-4096.bin",
+    "sha256": "22d78806c11c104e83719cce900e30ddc27b5a4fc519d1721d93d2ef9a9a7bd3",
+    "member": "originals/0068/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-4096.bin.receipt.json",
+    "sha256": "cce6910dc6d66640138721dfc06b99f0ea63aadcfcafd2ca493fd554bdedc1bb",
+    "member": "originals/0069/soup-4096.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-8192.bin",
+    "sha256": "6833b799d304620979b9e3af975c28c83371f4131cef3e9a38a40cd0f025f3ff",
+    "member": "originals/0070/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/soup-8192.bin.receipt.json",
+    "sha256": "3f10740da8db99ccfb0cf7647fb8c71524303e39de61eee580b20c3fff454124",
+    "member": "originals/0071/soup-8192.bin.receipt.json",
+    "bytes": 835
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/source.patch",
+    "sha256": "fb0d7e03e3f2649e13b754775fb852ebdfc15394d4fc1ff11b2588152856813d",
+    "member": "originals/0072/source.patch",
+    "bytes": 23849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/deno.json",
+    "sha256": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+    "member": "originals/0073/deno.json",
+    "bytes": 564
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/deno.lock",
+    "sha256": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+    "member": "originals/0074/deno.lock",
+    "bytes": 774
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/bff.ts",
+    "sha256": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+    "member": "originals/0075/bff.ts",
+    "bytes": 14297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/census.ts",
+    "sha256": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+    "member": "originals/0076/census.ts",
+    "bytes": 1035
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/device.ts",
+    "sha256": "feb1d772acadeafd60c08267d68ca52336de6913d32bce193cb40b024f51e23f",
+    "member": "originals/0077/device.ts",
+    "bytes": 1949
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/evidence.ts",
+    "sha256": "6afe3e2db41dcc6f5e2989cd8acebee903178d830ea02c11b640ddbb6043c3c1",
+    "member": "originals/0078/evidence.ts",
+    "bytes": 6063
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/gpu.ts",
+    "sha256": "147b274acdb6000bacfd75c56f1de5a4fcb81cc2fe328f05e04a7d6fab2e9ff9",
+    "member": "originals/0079/gpu.ts",
+    "bytes": 15114
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/png.ts",
+    "sha256": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+    "member": "originals/0080/png.ts",
+    "bytes": 3668
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/snapshot.ts",
+    "sha256": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+    "member": "originals/0081/snapshot.ts",
+    "bytes": 5660
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup/stats.ts",
+    "sha256": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f",
+    "member": "originals/0082/stats.ts",
+    "bytes": 2701
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/sources/tools/soup.ts",
+    "sha256": "793f883e7dddfd360e29f98d2751dca01b68646d293365451c375edf6dadf570",
+    "member": "originals/0083/soup.ts",
+    "bytes": 13908
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2/transition.json",
+    "sha256": "b4d13ff81744f806889424b1ae9a53f66747340c088760751ec43d869be7c137",
+    "member": "originals/0084/transition.json",
+    "bytes": 382
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-2.stdout.log",
+    "sha256": "615f1788429416c15b0709b401932c624437020edeaf838ed16ce13e35774270",
+    "member": "originals/0085/seed-2.stdout.log",
+    "bytes": 13179
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/.soup-evidence",
+    "sha256": "ca1cd807a8b4ba770ba3b9f44148abd154cc15897642b8b5268cf6e9f482e906",
+    "member": "originals/0086/.soup-evidence",
+    "bytes": 31
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/.soup-output.lock",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "member": "originals/0087/.soup-output.lock",
+    "bytes": 0
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/comparison.json",
+    "sha256": "f141b8ef7aeae21442a9c840d61384f3865a3d17665e463ca819e16b8e844b42",
+    "member": "originals/0088/comparison.json",
+    "bytes": 1440
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/completion.json",
+    "sha256": "ac01d02f96943e7489c9e0b2427ec271aad6273234d00329bafe1027c19ec2a6",
+    "member": "originals/0089/completion.json",
+    "bytes": 413
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/invocation.json",
+    "sha256": "cd32eb1645819ec2d1892fa86eb9be912b0dfc36b6e345fb366796a8f4942aed",
+    "member": "originals/0090/invocation.json",
+    "bytes": 5178
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/log.csv",
+    "sha256": "bbdb2604850f98b0fc801b2a345f5365ccfe155c9338bf911d5d2c7ef43a8b8f",
+    "member": "originals/0091/log.csv",
+    "bytes": 14769
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/params.json",
+    "sha256": "8138af141fc5c3d02d473d6059a75ac40dba72be026c17bc903f4ab8fa82e5d5",
+    "member": "originals/0092/params.json",
+    "bytes": 285
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-12288.bin",
+    "sha256": "0ef53100cef6812777b7ec6cd137f68f0fdb53c7aa518d9c285dc81f39d5be1f",
+    "member": "originals/0093/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-12288.bin.receipt.json",
+    "sha256": "1d74b5130dd449575d2367b0cbe83118703e7966421576934d8bf58daddf8cf2",
+    "member": "originals/0094/soup-12288.bin.receipt.json",
+    "bytes": 839
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-16384.bin",
+    "sha256": "b8c34807d6e050d4af4c4d1ba5d3ea244fb1ea48268fc85a2cb04a59dd698cc7",
+    "member": "originals/0095/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-16384.bin.receipt.json",
+    "sha256": "b16e9b2a69160550329d1d540d57d304ecf3cc7e40f1f72044de0581208f77e3",
+    "member": "originals/0096/soup-16384.bin.receipt.json",
+    "bytes": 839
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-4096.bin",
+    "sha256": "be61cdd8f24f5596e1e44e221446e29996209e3cf063a0f6d8ed1f50c619f5af",
+    "member": "originals/0097/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-4096.bin.receipt.json",
+    "sha256": "4b4fece3ae80e44c7cbb936c94aa1c1e8c8645cf1693cb6d262bddf0482ed70e",
+    "member": "originals/0098/soup-4096.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-8192.bin",
+    "sha256": "a0f9b99d6cae36bae26ba0feb04c990540d21e736d9cf714e47df9c5161c2c7a",
+    "member": "originals/0099/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/soup-8192.bin.receipt.json",
+    "sha256": "f57d65415074eb78a7a68e6e523520423d08a81c955ecff1c8f1f7495575f374",
+    "member": "originals/0100/soup-8192.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/source.patch",
+    "sha256": "fb0d7e03e3f2649e13b754775fb852ebdfc15394d4fc1ff11b2588152856813d",
+    "member": "originals/0101/source.patch",
+    "bytes": 23849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/deno.json",
+    "sha256": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+    "member": "originals/0102/deno.json",
+    "bytes": 564
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/deno.lock",
+    "sha256": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+    "member": "originals/0103/deno.lock",
+    "bytes": 774
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/bff.ts",
+    "sha256": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+    "member": "originals/0104/bff.ts",
+    "bytes": 14297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/census.ts",
+    "sha256": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+    "member": "originals/0105/census.ts",
+    "bytes": 1035
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/device.ts",
+    "sha256": "feb1d772acadeafd60c08267d68ca52336de6913d32bce193cb40b024f51e23f",
+    "member": "originals/0106/device.ts",
+    "bytes": 1949
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/evidence.ts",
+    "sha256": "6afe3e2db41dcc6f5e2989cd8acebee903178d830ea02c11b640ddbb6043c3c1",
+    "member": "originals/0107/evidence.ts",
+    "bytes": 6063
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/gpu.ts",
+    "sha256": "147b274acdb6000bacfd75c56f1de5a4fcb81cc2fe328f05e04a7d6fab2e9ff9",
+    "member": "originals/0108/gpu.ts",
+    "bytes": 15114
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/png.ts",
+    "sha256": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+    "member": "originals/0109/png.ts",
+    "bytes": 3668
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/snapshot.ts",
+    "sha256": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+    "member": "originals/0110/snapshot.ts",
+    "bytes": 5660
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup/stats.ts",
+    "sha256": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f",
+    "member": "originals/0111/stats.ts",
+    "bytes": 2701
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3/sources/tools/soup.ts",
+    "sha256": "793f883e7dddfd360e29f98d2751dca01b68646d293365451c375edf6dadf570",
+    "member": "originals/0112/soup.ts",
+    "bytes": 13908
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-3.stdout.log",
+    "sha256": "234e4e8b21e56686f032fcc81350593f5ae4ddf5388912cb4580b387651f872d",
+    "member": "originals/0113/seed-3.stdout.log",
+    "bytes": 16775
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/.soup-evidence",
+    "sha256": "ca1cd807a8b4ba770ba3b9f44148abd154cc15897642b8b5268cf6e9f482e906",
+    "member": "originals/0114/.soup-evidence",
+    "bytes": 31
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/.soup-output.lock",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "member": "originals/0115/.soup-output.lock",
+    "bytes": 0
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/comparison.json",
+    "sha256": "be23cf2248074bb8792f55360dcb10e3a2eead6b72cb3ffdd147e6f980150f85",
+    "member": "originals/0116/comparison.json",
+    "bytes": 1440
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/completion.json",
+    "sha256": "fdf0e3598a7db3e7f6868a44bc4053eda9029df877afc9a9fea8b8066214af28",
+    "member": "originals/0117/completion.json",
+    "bytes": 413
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/invocation.json",
+    "sha256": "eae6df1ee6fb3a20759018d7c3d220cea5405de786b7ca5daafaa4bebdb0cce3",
+    "member": "originals/0118/invocation.json",
+    "bytes": 5178
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/log.csv",
+    "sha256": "bd5bcfbde0f81be86e169860171df66bd02a4deb0bf021db19ebd2bbe104a306",
+    "member": "originals/0119/log.csv",
+    "bytes": 14767
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/params.json",
+    "sha256": "9a6161eb081ee44d0285da816e4d70e253d73374f16c1c0736294fbf92cfc1b2",
+    "member": "originals/0120/params.json",
+    "bytes": 285
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-12288.bin",
+    "sha256": "7fd586f8ea6cc1ef73f0595aa2507e9293520a0de555f773c605911888ed11c4",
+    "member": "originals/0121/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-12288.bin.receipt.json",
+    "sha256": "e370b2c5514d37e531f50f4c9f139a0a13939db2329a8abf7aa8a14f8f82b33c",
+    "member": "originals/0122/soup-12288.bin.receipt.json",
+    "bytes": 839
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-16384.bin",
+    "sha256": "65190809c3645468a0a162d5c2a6a248647994acd964b8839e653a73d058bfc1",
+    "member": "originals/0123/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-16384.bin.receipt.json",
+    "sha256": "ebbcbb6520813fc28081d10fa7d566694b2952d88ab9549bb3392a7baa6ea71d",
+    "member": "originals/0124/soup-16384.bin.receipt.json",
+    "bytes": 838
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-4096.bin",
+    "sha256": "bf4f1e2bc25099e9512058cc8108998c9aea4fcb6634556537b763c5bc9622f2",
+    "member": "originals/0125/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-4096.bin.receipt.json",
+    "sha256": "1bc53998ae2f4bfeb301072d9014a86b6d8a66cf074875bfccb2c4ae0814ce92",
+    "member": "originals/0126/soup-4096.bin.receipt.json",
+    "bytes": 837
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-8192.bin",
+    "sha256": "386d2e3ea65ffae2fa493c43c8750620fba1fdb0077e2f7a1a43df2448f79726",
+    "member": "originals/0127/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/soup-8192.bin.receipt.json",
+    "sha256": "8fe856d12af5a011163b28aee46d23f830d6d8f388a00dc2f45c29253a4a8e78",
+    "member": "originals/0128/soup-8192.bin.receipt.json",
+    "bytes": 837
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/source.patch",
+    "sha256": "fb0d7e03e3f2649e13b754775fb852ebdfc15394d4fc1ff11b2588152856813d",
+    "member": "originals/0129/source.patch",
+    "bytes": 23849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/deno.json",
+    "sha256": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+    "member": "originals/0130/deno.json",
+    "bytes": 564
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/deno.lock",
+    "sha256": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+    "member": "originals/0131/deno.lock",
+    "bytes": 774
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/bff.ts",
+    "sha256": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+    "member": "originals/0132/bff.ts",
+    "bytes": 14297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/census.ts",
+    "sha256": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+    "member": "originals/0133/census.ts",
+    "bytes": 1035
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/device.ts",
+    "sha256": "feb1d772acadeafd60c08267d68ca52336de6913d32bce193cb40b024f51e23f",
+    "member": "originals/0134/device.ts",
+    "bytes": 1949
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/evidence.ts",
+    "sha256": "6afe3e2db41dcc6f5e2989cd8acebee903178d830ea02c11b640ddbb6043c3c1",
+    "member": "originals/0135/evidence.ts",
+    "bytes": 6063
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/gpu.ts",
+    "sha256": "147b274acdb6000bacfd75c56f1de5a4fcb81cc2fe328f05e04a7d6fab2e9ff9",
+    "member": "originals/0136/gpu.ts",
+    "bytes": 15114
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/png.ts",
+    "sha256": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+    "member": "originals/0137/png.ts",
+    "bytes": 3668
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/snapshot.ts",
+    "sha256": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+    "member": "originals/0138/snapshot.ts",
+    "bytes": 5660
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup/stats.ts",
+    "sha256": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f",
+    "member": "originals/0139/stats.ts",
+    "bytes": 2701
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4/sources/tools/soup.ts",
+    "sha256": "793f883e7dddfd360e29f98d2751dca01b68646d293365451c375edf6dadf570",
+    "member": "originals/0140/soup.ts",
+    "bytes": 13908
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/ensemble/seed-4.stdout.log",
+    "sha256": "2f349a6d65527f3e13a526725dd18a21c35eb806e716e82670c45604b8de7cce",
+    "member": "originals/0141/seed-4.stdout.log",
+    "bytes": 16771
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/gpu-review.txt",
+    "sha256": "7256636076b301f8cc5e730fb1585200edad603b879ea220ba251df0d40fdbfe",
+    "member": "originals/0142/gpu-review.txt",
+    "bytes": 2985
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/gpu-validation-closure.log",
+    "sha256": "650cf535a04bdcc2e178bc84293c06d5868c9a088ac311c23bf691e50a79fabd",
+    "member": "originals/0143/gpu-validation-closure.log",
+    "bytes": 586
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/launch-review.txt",
+    "sha256": "313e545b359fb2a6e17b8df2312e32dc1db63aa3cc85c9272aac5f01eb6e8b17",
+    "member": "originals/0144/launch-review.txt",
+    "bytes": 935
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/lock-validation-closure.log",
+    "sha256": "f893509d3a5d247713f17a987c7e565f6d68cf898cdf3093708887a05a6470b7",
+    "member": "originals/0145/lock-validation-closure.log",
+    "bytes": 78
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/seed-2-prior-repeat-comparison.json",
+    "sha256": "e3599c8d0e40bf23f76f2e4252120295940f5fa521f1af070effe1aed8a3a2cd",
+    "member": "originals/0146/seed-2-prior-repeat-comparison.json",
+    "bytes": 1555
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-checked-2026-11-14/supervisor.log",
+    "sha256": "a779055a02f941aca2b5213224370fef515de84b5a5138856079ba9f8e1c2599",
+    "member": "originals/0147/supervisor.log",
+    "bytes": 158
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tests/deno/soup_evidence.ts",
+    "sha256": "1b60488f6ed03abb828ea53515cf0159cde5b93925de5df7ba8882b91b4c9c46",
+    "member": "originals/0148/soup_evidence.ts",
+    "bytes": 4488
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tests/deno/soup_gpu.ts",
+    "sha256": "91693000e04ada6b28a4b89c9b4f3e18b1d378dcba2a3d163a2b72818b3931f9",
+    "member": "originals/0149/soup_gpu.ts",
+    "bytes": 5398
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tests/deno/soup_lock.ts",
+    "sha256": "ec513f5d6ddcda3806e70bcc0d637e79aeeeefe44774b298e0b9135bf47a7ffb",
+    "member": "originals/0150/soup_lock.ts",
+    "bytes": 3205
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tools/soup-archive.py",
+    "sha256": "df98342034035c7ae7d51e6daa5d8b65b4b9c7493ebc971132626a50d27831fb",
+    "member": "originals/0151/soup-archive.py",
+    "bytes": 2835
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tools/soup-repeat.py",
+    "sha256": "9a1acf57de9f6967c0e17984385ffdacb7cbe3cc55fd9d8baa1a01ec8693b29c",
+    "member": "originals/0152/soup-repeat.py",
+    "bytes": 9824
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tools/soup_island.ts",
+    "sha256": "d9b95faf2228f41af0430933a62739334cfdd03a7f2b60f7895e9766070a0414",
+    "member": "originals/0153/soup_island.ts",
+    "bytes": 10712
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tools/test/soup_archive_test.py",
+    "sha256": "b723abad55f883d81a4f2ac659ba9abfcb339d43471c6e3eb4a35d9de4f3446d",
+    "member": "originals/0154/soup_archive_test.py",
+    "bytes": 2596
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-129/tools/test/soup_repeat_test.py",
+    "sha256": "348a45e88ca116e2ba941445669fc832e1ab8790dc1e689bb48078262129b90d",
+    "member": "originals/0155/soup_repeat_test.py",
+    "bytes": 2918
+  }
+]

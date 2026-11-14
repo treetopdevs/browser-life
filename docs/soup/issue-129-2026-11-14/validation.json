@@ -1,0 +1,109 @@
+{
+  "gpuSmoke": {
+    "num": 512,
+    "epochs": 20,
+    "seed": 2,
+    "matchesCpu": true,
+    "sha256": "c67f95e2379acfbba37d50b76c528037af8e3c72a926ba3738729b28b49c29a6",
+    "runtime": {
+      "deno": "2.9.8",
+      "v8": "15.0.245.2-rusty",
+      "typescript": "6.0.3"
+    },
+    "adapter": {
+      "vendor": "0",
+      "architecture": "",
+      "device": "0",
+      "description": "Apple M1 Max"
+    },
+    "compressor": {
+      "implementation": "/opt/homebrew/Cellar/brotli/1.2.1/bin/brotli",
+      "version": "brotli 1.2.1",
+      "executableSha256": "ff1c3ef8df5ce0fab17d906a8f34fe2746acf352c4edfbf6661367bfd800e650",
+      "encoderFiles": {
+        "/opt/homebrew/Cellar/brotli/1.2.1/bin/brotli": "ff1c3ef8df5ce0fab17d906a8f34fe2746acf352c4edfbf6661367bfd800e650",
+        "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlienc.1.2.1.dylib": "ea03250efa13ab1f3af962f09e4c00add9a5fb7c5164c8cb91fc4568f89e03e7",
+        "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlidec.1.2.1.dylib": "9552b5224a03b01c179e72f810b2859bf49d36cd32ad3af7880618edfa13b5bf",
+        "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlicommon.1.2.1.dylib": "1422180cea6ccf23875d18b0b043d49d43566c750af0b123c21c8eb97cf0c7c9"
+      },
+      "encoderLinks": {
+        "/opt/homebrew/Cellar/brotli/1.2.1/bin/../lib/libbrotlienc.1.dylib": "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlienc.1.2.1.dylib",
+        "/opt/homebrew/Cellar/brotli/1.2.1/bin/../lib/libbrotlidec.1.dylib": "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlidec.1.2.1.dylib",
+        "/opt/homebrew/Cellar/brotli/1.2.1/bin/../lib/libbrotlicommon.1.dylib": "/opt/homebrew/Cellar/brotli/1.2.1/lib/libbrotlicommon.1.2.1.dylib"
+      },
+      "linkedLibraries": "/opt/homebrew/Cellar/brotli/1.2.1/bin/brotli:\n\t@rpath/libbrotlienc.1.dylib (compatibility version 1.0.0, current version 1.2.1)\n\t@rpath/libbrotlidec.1.dylib (compatibility version 1.0.0, current version 1.2.1)\n\t@rpath/libbrotlicommon.1.dylib (compatibility version 1.0.0, current version 1.2.1)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)\n",
+      "unresolvedLibraries": [
+        "/usr/lib/libSystem.B.dylib"
+      ],
+      "dependencyCaveat": "System libraries and unresolved links are not hashed; version and runtime are recorded. Use a stationary environment.",
+      "quality": 2,
+      "window": 24
+    },
+    "receipts": {
+      "cpu": {
+        "invocationPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/cpu-closure-smoke/invocation.json",
+        "invocationSha256": "61be8d6e75f12c2c7be6591d5cc41738a0f93310fabc0273109a1fb9743d07bb",
+        "completionPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/cpu-closure-smoke/completion.json",
+        "revision": "e53bb283f6314c86d53b314237b01da4f1da5b8e",
+        "sources": {
+          "deno.json": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+          "deno.lock": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+          "tools/soup.ts": "57b18ffe22f3b5ead850a6228933863b9ad60908b39f5520916a7c7dda53eb30",
+          "tools/soup/bff.ts": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+          "tools/soup/census.ts": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+          "tools/soup/evidence.ts": "4096af6dd1958214f0cfec428673496500f0d017b2802572d49b9fa7e7ce8b0b",
+          "tools/soup/gpu.ts": "29f36fa0600cbc39ec678105bce59213677269a0d0963556b5ffd1c6fec010b6",
+          "tools/soup/png.ts": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+          "tools/soup/snapshot.ts": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+          "tools/soup/stats.ts": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f"
+        },
+        "launcherCommand": "deno run --frozen -A tools/soup.ts --cpu --seed 2 --num-log2 9 --epochs 20 --every 1 --save 10 --transition 100 --evidence --out runs/issue-129-2026-11-14/cpu-closure-smoke",
+        "finalStateSha256": "c67f95e2379acfbba37d50b76c528037af8e3c72a926ba3738729b28b49c29a6"
+      },
+      "gpu": {
+        "invocationPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/gpu-closure-smoke/invocation.json",
+        "invocationSha256": "dace35d8e6534e30f7072a0e4dcac2c88dd2535b20e4128ad5db747ca7d4226e",
+        "completionPath": "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/gpu-closure-smoke/completion.json",
+        "revision": "e53bb283f6314c86d53b314237b01da4f1da5b8e",
+        "sources": {
+          "deno.json": "cdb7a46311510da1bbbe749156fffcd50a0f6d2914f3b7a57c94a105915ab52a",
+          "deno.lock": "5b6f3dc1a05bde8126de9ea35e33b81a488a717d85981390a8b6e0c122376118",
+          "tools/soup.ts": "57b18ffe22f3b5ead850a6228933863b9ad60908b39f5520916a7c7dda53eb30",
+          "tools/soup/bff.ts": "765c8f2ff051b8c49a760f9686de3ac20c3ca9b0ef66d0d4291669970999fe3f",
+          "tools/soup/census.ts": "c0be7085e3c9afaaa302503a4730ff1d9785f0caa20da3a1f370458245dcd12c",
+          "tools/soup/evidence.ts": "4096af6dd1958214f0cfec428673496500f0d017b2802572d49b9fa7e7ce8b0b",
+          "tools/soup/gpu.ts": "29f36fa0600cbc39ec678105bce59213677269a0d0963556b5ffd1c6fec010b6",
+          "tools/soup/png.ts": "5aaa021941fe2477052d560c567f514201678526f4adc821f4182417a69a3467",
+          "tools/soup/snapshot.ts": "628860b34ab83c4dba04c33071b4872bc98f1898bab095600b54f6fce763fe1a",
+          "tools/soup/stats.ts": "e6dff485310724be7ca829668d448da313a87b4d60b2246c59a1609ed8ac0e0f"
+        },
+        "launcherCommand": "deno run --frozen -A tools/soup.ts --seed 2 --num-log2 9 --epochs 20 --every 1 --save 10 --transition 100 --evidence --out runs/issue-129-2026-11-14/gpu-closure-smoke",
+        "finalStateSha256": "c67f95e2379acfbba37d50b76c528037af8e3c72a926ba3738729b28b49c29a6"
+      }
+    }
+  },
+  "gpuGolden": "three 4096-program, 40-epoch cases pass: noheads, heads, grid; not full-run integrity proof",
+  "archive": {
+    "sha256": "f69d4c6084931ef7c37ed0deeee85238f45ceb51ece268926bbdd34b200e3603",
+    "files": 67,
+    "verification": "all archived members and originals rehashed",
+    "publication": "local only; not immutable remote storage"
+  },
+  "priorArchive": {
+    "path": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/historical-evidence.zip",
+    "sha256": "9863fb195d5a6afa9437262e84ac68dda9bc319341f2fd2fb8cd90015aaf1140",
+    "sidecarMatches": true,
+    "zipCrcPass": true
+  },
+  "review": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "mode": "read-only",
+    "reports": [
+      "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/review.txt",
+      "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/review-followup.txt",
+      "/Users/nicholas/develop/browser-life-soup-129/runs/issue-129-2026-11-14/review-final.txt"
+    ],
+    "resolution": "Reported defects addressed. Final lstat/NotFound-only marker handling was implemented as recommended and tested with a dangling-symlink regression; no claim of a subsequent clean review."
+  }
+}
