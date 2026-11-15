@@ -28,6 +28,13 @@ export const PHYSARUM_DEPOSIT_MAX = 768;
 export type ControllerKind = "neural" | "physarum";
 /** Who may take the trail movement discount: every particle ("public") or only a particle that requests a deposit this step ("toll"). */
 export type TrailDiscountMode = "public" | "toll";
+/** Shape of the pre-laid trail (bootstrap line, exploratory): "carpet" is every cell, and the meaning of an absent pattern. */
+export type TrailInitPattern = "carpet" | "rows" | "cols" | "lattice" | "patches";
+export const TRAIL_INIT_PATTERNS: readonly TrailInitPattern[] = ["carpet", "rows", "cols", "lattice", "patches"];
+/** Pitch used when trailInitPattern is not carpet and trailInitPitch is absent. */
+export const TRAIL_INIT_PITCH_DEFAULT = 8;
+/** What a cell owner tag is taken from: the particle id ("id", individual) or the genotype id ("gid", clone). */
+export type TrailOwnerMode = "id" | "gid";
 /** Largest trailMoveDiscount; 256 means one unit of trail under a particle makes its movement free. */
 export const TRAIL_DISCOUNT_MAX = 256;
 /** Largest trailConduit (g) and trailConduitCap (q); x * g <= 65,025 stays below 2^16. */
@@ -44,6 +51,54 @@ export function conduitRate(De: number, g: number, q: number, pk: number, pn: nu
   const x = Math.min(pk, pn, q);
   return Math.min(De + ((x * g) >>> 4), CONDUIT_DD_MAX);
 }
+
+/**
+ * The owner conduit's per-edge A diffusion rate (RULES.md, "Owner conduit"): only an edge whose two cells carry the same nonzero owner
+ * tag conducts, by min(Q_k, Q_nb, q) * g >> 4 above the base rate, at most 128. The min is taken before the multiply. Symmetric.
+ */
+export function ownerRate(De: number, g: number, q: number, zk: number, zn: number, qk: number, qn: number): number {
+  if (zk === 0 || zk !== zn) return De;
+  return Math.min(De + ((Math.min(qk, qn, q) * g) >>> 4), CONDUIT_DD_MAX);
+}
+
+/**
+ * Phase 5's claim resolution for owner worlds (RULES.md, "Owner conduit"). Candidates are the actual deposits (dep > 0) laid on cells whose
+ * owner was 0 at the start of the step. Two passes of max, never a packed compare: W1[cell] = the largest dep, then W2[cell] = the largest
+ * tag among candidates with dep == W1. Every candidate whose tag equals W2 adds its dep to Q (same-clan depositors all count), and the
+ * cell takes owner W2. Exported so tests exercise it directly; step() calls it with the lists it built.
+ */
+export function resolveClaims(Z: Uint32Array, Q: Uint32Array, N: number, cell: readonly number[], dep: readonly number[], tag: readonly number[]): void {
+  const W1 = new Uint32Array(N), W2 = new Uint32Array(N);
+  for (let j = 0; j < cell.length; j++) if (dep[j] > W1[cell[j]]) W1[cell[j]] = dep[j];
+  for (let j = 0; j < cell.length; j++) if (dep[j] === W1[cell[j]] && tag[j] > W2[cell[j]]) W2[cell[j]] = tag[j];
+  for (let j = 0; j < cell.length; j++) if (tag[j] === W2[cell[j]]) Q[cell[j]] += dep[j];
+  for (let j = 0; j < cell.length; j++) if (Z[cell[j]] === 0) Z[cell[j]] = W2[cell[j]];
+}
+
+/** The cell index of cell i shifted by (+s, +s) on the torus (the "ghost" controls read the field there). */
+export function shiftCell(i: number, s: number, W: number, H: number): number {
+  const x = i % W, y = (i / W) | 0;
+  return ((y + s) % H) * W + ((x + s) % W);
+}
+
+/**
+ * Whether the cell at (x, y) is laid by the pre-laid trail pattern (bootstrap DESIGN.md, section 4.1): a pure function of the
+ * cell, no draw. Absent pattern means carpet. h = pitch >> 1.
+ */
+export function laidCell(c: Pick<MyceliumConfig, "trailInitPattern" | "trailInitPitch">, x: number, y: number): boolean {
+  const pattern = c.trailInitPattern ?? "carpet";
+  const pitch = c.trailInitPitch ?? TRAIL_INIT_PITCH_DEFAULT;
+  switch (pattern) {
+    case "carpet": return true;
+    case "rows": return y % pitch === 0;
+    case "cols": return x % pitch === 0;
+    case "lattice": return y % pitch === 0 || x % pitch === 0;
+    case "patches": { const h = pitch >> 1; return x % pitch < h && y % pitch < h; }
+  }
+}
+
+/** The owner tag of an id or genotype id: exactly v + 1 (u32, 1..0xffffffff), 0 meaning "no owner". Not a hash, so tags never collide. */
+export const ownerTag = (v: number): number => v + 1;
 
 export interface MyceliumConfig {
   rule: typeof RULE_ID;
@@ -122,6 +177,32 @@ export interface MyceliumConfig {
   trailConduit?: number;
   /** Optional, only with trailConduit. Integer 1..255: the trail amount at which an edge's conductance stops rising. Absent means 255. */
   trailConduitCap?: number;
+  /**
+   * Optional (bootstrap P, exploratory; docs/mycelium-bootstrap-2026-11-14/DESIGN.md). Integer 1..255. createWorld moves
+   * min(trailInit, A) from A to P on every laid cell before matter0 and energy0 are taken. Absent means nothing is laid.
+   */
+  trailInit?: number;
+  /** Optional, only with trailInit. Absent means "carpet". */
+  trailInitPattern?: TrailInitPattern;
+  /** Optional, only with trailInit and a pattern other than carpet. Integer 2..64; absent means 8. */
+  trailInitPitch?: number;
+  /**
+   * Optional (bootstrap F). Integer 1..255 (the ceiling F). The energy price of a deposit is waived for the first units laid on a
+   * cell whose start-of-step trail is below F; the room is shared pro rata among the cell's depositors (RULES.md, "Free first layer").
+   */
+  trailFreeLayer?: number;
+  /** Optional (bootstrap F control), only with trailConduit. Integer 1..min(W,H)-1: the conduit reads P at the cells displaced by (+s, +s). */
+  trailConduitGhost?: number;
+  /** Optional (bootstrap O). Cells carry the owner tag and owned trail of the lineage that laid them (RULES.md, "Owner conduit"). */
+  trailOwner?: TrailOwnerMode;
+  /** Optional (bootstrap O), only with trailOwner. Integer 1..255 (theta): a cell owned by a stranger with Q >= theta refuses my eating. */
+  ownerDefend?: number;
+  /** Optional (bootstrap O), only with trailOwner. Integer 0..255 (g): same-owner edges conduct A by min(Q, Q, cap) * g >> 4. Requires diffA <= 128; excludes trailConduit. */
+  ownerConduit?: number;
+  /** Optional, only with ownerConduit. Integer 1..255; absent means 255. */
+  ownerConduitCap?: number;
+  /** Optional (bootstrap O control), only with ownerConduit. Integer 1..min(W,H)-1: Z and Q are read at the cells displaced by (+s, +s). */
+  ownerGhost?: number;
   /** Chance a birth mutates (inherit arm), in 1/65536; a mutation changes mutCount weights by up to ±mutStep. */
   mutRate: number;
   mutCount: number;
@@ -182,6 +263,9 @@ export interface Totals {
   refused: number;
   contended: number;
   mutations: number;
+  /** Only with trailFreeLayer: cumulative deposited units that cost no energy, and that did. */
+  freeUnits?: number;
+  paidUnits?: number;
 }
 
 export interface MyceliumState {
@@ -191,6 +275,9 @@ export interface MyceliumState {
   A: Uint32Array;
   C: Uint32Array;
   P: Uint32Array;
+  /** Only with trailOwner: per-cell owner tag (0 = none) and owned trail (a label on part of P; Q <= P, Z == 0 iff Q == 0). */
+  Z?: Uint32Array;
+  Q?: Uint32Array;
   /** Live particle count; particle arrays have capacity maxParticles and slot order is id order. */
   n: number;
   id: Uint32Array;
@@ -265,6 +352,43 @@ export function validateConfig(c: MyceliumConfig): string[] {
     if (!Number.isInteger(c.trailConduitCap) || c.trailConduitCap < 1 || c.trailConduitCap > CONDUIT_MAX) bad.push(`trailConduitCap must be an integer in [1, ${CONDUIT_MAX}]`);
     if (c.trailConduit === undefined) bad.push("trailConduitCap requires trailConduit");
   }
+  // Bootstrap keys (docs/mycelium-bootstrap-2026-11-14/DESIGN.md): every "requires" and "excludes" rule lives here.
+  const isInt = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
+  const shiftMax = Math.min(c.width, c.height) - 1;
+  if (c.trailInit !== undefined && !isInt(c.trailInit, 1, 255)) bad.push("trailInit must be an integer in [1, 255]");
+  if (c.trailInitPattern !== undefined) {
+    if (!TRAIL_INIT_PATTERNS.includes(c.trailInitPattern)) bad.push("trailInitPattern must be carpet, rows, cols, lattice or patches");
+    if (c.trailInit === undefined) bad.push("trailInitPattern requires trailInit");
+  }
+  if (c.trailInitPitch !== undefined) {
+    if (!isInt(c.trailInitPitch, 2, 64)) bad.push("trailInitPitch must be an integer in [2, 64]");
+    if (c.trailInit === undefined) bad.push("trailInitPitch requires trailInit");
+    else if (c.trailInitPattern === undefined || c.trailInitPattern === "carpet") bad.push("trailInitPitch requires a trailInitPattern other than carpet");
+  }
+  if (c.trailFreeLayer !== undefined && !isInt(c.trailFreeLayer, 1, 255)) bad.push("trailFreeLayer must be an integer in [1, 255]");
+  if (c.trailConduitGhost !== undefined) {
+    if (!isInt(c.trailConduitGhost, 1, shiftMax)) bad.push(`trailConduitGhost must be an integer in [1, ${shiftMax}]`);
+    if (c.trailConduit === undefined) bad.push("trailConduitGhost requires trailConduit");
+  }
+  if (c.trailOwner !== undefined && c.trailOwner !== "id" && c.trailOwner !== "gid") bad.push("trailOwner must be id or gid");
+  if (c.ownerDefend !== undefined) {
+    if (!isInt(c.ownerDefend, 1, 255)) bad.push("ownerDefend must be an integer in [1, 255]");
+    if (c.trailOwner === undefined) bad.push("ownerDefend requires trailOwner");
+  }
+  if (c.ownerConduit !== undefined) {
+    if (!isInt(c.ownerConduit, 0, CONDUIT_MAX)) bad.push(`ownerConduit must be an integer in [0, ${CONDUIT_MAX}]`);
+    if (c.trailOwner === undefined) bad.push("ownerConduit requires trailOwner");
+    if (c.diffA > CONDUIT_DD_MAX) bad.push(`ownerConduit requires diffA <= ${CONDUIT_DD_MAX}`);
+    if (c.trailConduit !== undefined) bad.push("ownerConduit excludes trailConduit");
+  }
+  if (c.ownerConduitCap !== undefined) {
+    if (!isInt(c.ownerConduitCap, 1, CONDUIT_MAX)) bad.push(`ownerConduitCap must be an integer in [1, ${CONDUIT_MAX}]`);
+    if (c.ownerConduit === undefined) bad.push("ownerConduitCap requires ownerConduit");
+  }
+  if (c.ownerGhost !== undefined) {
+    if (!isInt(c.ownerGhost, 1, shiftMax)) bad.push(`ownerGhost must be an integer in [1, ${shiftMax}]`);
+    if (c.ownerConduit === undefined) bad.push("ownerGhost requires ownerConduit");
+  }
   // Total matter bounds every field cell and every sum of them (RULES.md, "Bounds").
   const total = c.width * c.height * c.nutrient0 + c.founders * c.founderMatter;
   if (total > 2 ** 31) bad.push("initial matter must not exceed 2^31");
@@ -291,6 +415,24 @@ export function validateState(s: MyceliumState): string[] {
   for (let i = 0; i < s.n; i++) {
     if (s.id[i] >= s.nextId) bad.push(`particle id ${s.id[i]} not below nextId`);
     if (s.gid[i] >= s.nextGid) bad.push(`genotype id ${s.gid[i]} not below nextGid`);
+  }
+  const hasF = c.trailFreeLayer !== undefined;
+  for (const k of ["freeUnits", "paidUnits"] as const) {
+    const v = s.totals[k];
+    if (hasF ? !Number.isInteger(v) || (v as number) < 0 || (v as number) > LEDGER_MAX : v !== undefined) bad.push(`totals.${k} must be ${hasF ? "an integer in [0, 2^50]" : "absent without trailFreeLayer"}`);
+  }
+  if (c.trailOwner === undefined) {
+    if (s.Z !== undefined || s.Q !== undefined) bad.push("Z and Q require trailOwner");
+  } else if (!s.Z || !s.Q || s.Z.length !== s.A.length || s.Q.length !== s.A.length) {
+    bad.push("trailOwner requires Z and Q planes");
+  } else {
+    const limit = c.trailOwner === "id" ? s.nextId : s.nextGid;
+    for (let k = 0; k < s.Z.length; k++) {
+      if (s.Q[k] > s.P[k]) bad.push(`cell ${k}: owned trail ${s.Q[k]} above trail ${s.P[k]}`);
+      if ((s.Z[k] === 0) !== (s.Q[k] === 0)) bad.push(`cell ${k}: owner tag and owned trail disagree`);
+      if (s.Z[k] > limit) bad.push(`cell ${k}: owner tag ${s.Z[k]} beyond the ids issued`);
+      if (bad.length > 20) break;
+    }
   }
   const m = matterTotal(s);
   if (m !== s.matter0) bad.push(`matter residual ${m - s.matter0}`);
@@ -342,6 +484,8 @@ export function createWorld(config: MyceliumConfig): MyceliumState {
     nextId: 0, nextGid: 0, matter0: 0, energy0: 0,
     totals: { lightIn: 0, heat: 0, births: 0, deaths: 0, refused: 0, contended: 0, mutations: 0 },
   };
+  if (c.trailFreeLayer !== undefined) { s.totals.freeUnits = 0; s.totals.paidUnits = 0; }
+  if (c.trailOwner !== undefined) { s.Z = new Uint32Array(N); s.Q = new Uint32Array(N); }
   for (let i = 0; i < c.founders; i++) {
     const base = pbase(c.seed, FOUNDER_STEP, i);
     s.id[i] = i; s.parent[i] = 0xffffffff; s.gid[i] = i;
@@ -351,6 +495,14 @@ export function createWorld(config: MyceliumConfig): MyceliumState {
     randomWeights(s.genome, i * NN_BYTES, base, c.weightSpan);
   }
   s.n = c.founders; s.nextId = c.founders; s.nextGid = c.founders;
+  // Pre-laid trail: A moves to P inside each laid cell, so matter is unchanged and the energy anchor (taken after) pays eA per unit.
+  if (c.trailInit !== undefined) {
+    for (let i = 0; i < N; i++) {
+      if (!laidCell(c, i % c.width, (i / c.width) | 0)) continue;
+      const t = Math.min(c.trailInit, s.A[i]);
+      s.A[i] -= t; s.P[i] += t;
+    }
+  }
   s.matter0 = matterTotal(s);
   s.energy0 = energyTotal(s);
   return s;
@@ -380,6 +532,8 @@ export interface StepStats {
   refused: number;
   contended: number;
   mutations: number;
+  freeUnits?: number;
+  paidUnits?: number;
 }
 
 const sat = (v: number) => (v > 127 ? 127 : v);
@@ -506,13 +660,41 @@ export function step(s: MyceliumState): StepStats {
     }
   }
 
+  // Free first layer (optional): per-cell sum S of the particles' deposit requests and the shared free room, both from START-of-step
+  // trail (phase 5 adds deposits afterwards), then each particle's free share fr (DESIGN.md 5.1; the GPU computes S in k_think).
+  const F = c.trailFreeLayer;
+  let fr: Uint32Array | null = null;
+  if (F !== undefined) {
+    fr = new Uint32Array(n);
+    const S = new Uint32Array(N);
+    for (let i = 0; i < n; i++) S[cell[i]] += (c.maxDeposit * relu(out[i * NN_O + OUT.DEPOSIT])) >>> 7;
+    for (let i = 0; i < n; i++) {
+      const ci = cell[i];
+      const dreq = (c.maxDeposit * relu(out[i * NN_O + OUT.DEPOSIT])) >>> 7;
+      const room = P[ci] >= F ? 0 : F - P[ci];
+      fr[i] = S[ci] <= room ? dreq : divu(dreq * room, S[ci]);
+    }
+  }
+
+  // Owner conduit (optional): every particle's tag is read at the start of the step; Z and Q are not written until after phase 5's loop.
+  const ownerMode = c.trailOwner;
+  const Z = s.Z, Q = s.Q;
+  if (ownerMode !== undefined && (!Z || !Q)) throw new Error("trailOwner requires the Z and Q planes");
+  const tagOf = (i: number) => ownerTag(ownerMode === "gid" ? s.gid[i] : s.id[i]);
+  const theta = c.ownerDefend;
+
   // 4. Eat: requests summed per cell; a contended cell shares its nutrient pro rata, rounding down,
   // and the remainder stays in the field. maxEat * 127 < 2^15, so every request fits in 16 bits.
   const req = new Uint32Array(n);
   const R = new Uint32Array(N);
   for (let i = 0; i < n; i++) {
     const room = c.bodyMax > M[i] ? c.bodyMax - M[i] : 0;
-    const r = Math.min((c.maxEat * relu(out[i * NN_O + OUT.EAT])) >>> 7, room);
+    let r = Math.min((c.maxEat * relu(out[i * NN_O + OUT.EAT])) >>> 7, room);
+    // Eating gate: zeroed BEFORE the request is stored or summed, so the cell's R and every grant exclude it.
+    if (theta !== undefined) {
+      const z = Z![cell[i]];
+      if (z !== 0 && z !== tagOf(i) && Q![cell[i]] >= theta) r = 0;
+    }
     req[i] = r;
     R[cell[i]] += r;
   }
@@ -534,6 +716,9 @@ export function step(s: MyceliumState): StepStats {
   // 5. Metabolism, trail, turnover, death and movement. Field writes are commutative additions.
   const alive = new Uint8Array(n);
   const wants = new Uint8Array(n);
+  // Owner claims: candidates (cell, actual deposit, tag) on cells with no owner at the start of the step, resolved after the loop.
+  const candCell: number[] = [], candDep: number[] = [], candTag: number[] = [];
+  let freeSum = 0, paidSum = 0;
   for (let i = 0; i < n; i++) {
     const ci = cell[i];
     const oi = i * NN_O;
@@ -552,9 +737,25 @@ export function step(s: MyceliumState): StepStats {
     }
     en -= cost; st.heat += cost;
     let dep = Math.min((c.maxDeposit * relu(out[oi + OUT.DEPOSIT])) >>> 7, m);
-    if (dep * c.depositCost > en) dep = divu(en, c.depositCost);
-    en -= dep * c.depositCost; st.heat += dep * c.depositCost;
+    if (fr === null) {
+      if (dep * c.depositCost > en) dep = divu(en, c.depositCost);
+      en -= dep * c.depositCost; st.heat += dep * c.depositCost;
+    } else {
+      // Free first layer: the free units pay nothing (the energy stays in the particle); only the paid rest is clipped by en.
+      const free = Math.min(fr[i], dep);
+      let paid = dep - free;
+      if (paid * c.depositCost > en) paid = divu(en, c.depositCost);
+      dep = free + paid;
+      en -= paid * c.depositCost; st.heat += paid * c.depositCost;
+      freeSum += free; paidSum += paid;
+    }
     m -= dep; P[ci] += dep;
+    if (ownerMode !== undefined && dep > 0) {
+      const t = tagOf(i);
+      const z = Z![ci];
+      if (z === t) Q![ci] += dep;
+      else if (z === 0) { candCell.push(ci); candDep.push(dep); candTag.push(t); }
+    }
     const ex = shrFrac(m, c.excreteShift, draw(pb, RND.EXCRETE));
     m -= ex; C[ci] += ex;
     if (m === 0) {
@@ -568,6 +769,8 @@ export function step(s: MyceliumState): StepStats {
     alive[i] = 1;
     wants[i] = out[oi + OUT.SPLIT] > 0 && en >= c.splitEnergy && m >= c.splitMatter ? 1 : 0;
   }
+
+  if (ownerMode !== undefined) resolveClaims(Z!, Q!, N, candCell, candDep, candTag);
 
   // 6. Compact survivors in slot order, remembering where each parent went.
   let k = 0;
@@ -645,10 +848,17 @@ export function step(s: MyceliumState): StepStats {
     if (P[cIdx] > 0 && c.pDecay > 0) {
       const dec = Math.min(P[cIdx], mulFrac(P[cIdx], c.pDecay, 16, draw(fb, FIELD.DECAY)));
       P[cIdx] -= dec; C[cIdx] += dec;
+      // Owned trail decays with the same draw; it can never exceed P (RULES.md), and a cell whose Q reaches 0 has no owner.
+      if (Q !== undefined && Q[cIdx] > 0) {
+        Q[cIdx] -= Math.min(Q[cIdx], mulFrac(Q[cIdx], c.pDecay, 16, draw(fb, FIELD.DECAY)));
+        if (Q[cIdx] === 0) Z![cIdx] = 0;
+      }
     }
   }
   const dseed = (fseed ^ DIFF_SALT) >>> 0;
-  diffuse(A, W, H, c.diffA, dseed, s.step, 0, c.trailConduit === undefined ? undefined : { P, g: c.trailConduit, q: c.trailConduitCap ?? CONDUIT_MAX });
+  diffuse(A, W, H, c.diffA, dseed, s.step, 0,
+    c.trailConduit === undefined ? undefined : { P, g: c.trailConduit, q: c.trailConduitCap ?? CONDUIT_MAX, shift: c.trailConduitGhost },
+    c.ownerConduit === undefined ? undefined : { Z: Z!, Q: Q!, g: c.ownerConduit, q: c.ownerConduitCap ?? CONDUIT_MAX, shift: c.ownerGhost });
   diffuse(C, W, H, c.diffC, dseed, s.step, 1);
 
   s.step++;
@@ -656,6 +866,11 @@ export function step(s: MyceliumState): StepStats {
   if (t.lightIn + st.lightIn > LEDGER_MAX || t.heat + st.heat > LEDGER_MAX) throw new Error(`ledger counters passed 2^50 at step ${s.step}; the run is over`);
   t.lightIn += st.lightIn; t.heat += st.heat; t.births += st.births; t.deaths += st.deaths;
   t.refused += st.refused; t.contended += st.contended; t.mutations += st.mutations;
+  if (F !== undefined) {
+    if (t.freeUnits! + freeSum > LEDGER_MAX || t.paidUnits! + paidSum > LEDGER_MAX) throw new Error(`free-layer counters passed 2^50 at step ${s.step}; the run is over`);
+    t.freeUnits! += freeSum; t.paidUnits! += paidSum;
+    st.freeUnits = freeSum; st.paidUnits = paidSum;
+  }
   return st;
 }
 
@@ -665,8 +880,12 @@ export function step(s: MyceliumState): StepStats {
  * rounded, so even a cell holding one unit can move it. Directions: 0 east, 1 west, 2 south, 3 north;
  * d ^ 1 is the opposite direction. `sp` keeps the A and C draws apart.
  */
-function diffuse(f: Uint32Array, W: number, H: number, De: number, dseed: number, step: number, sp: number, conduit?: { P: Uint32Array; g: number; q: number }): void {
-  if (De === 0 && !conduit) return;
+function diffuse(
+  f: Uint32Array, W: number, H: number, De: number, dseed: number, step: number, sp: number,
+  conduit?: { P: Uint32Array; g: number; q: number; shift?: number },
+  owner?: { Z: Uint32Array; Q: Uint32Array; g: number; q: number; shift?: number },
+): void {
+  if (De === 0 && !conduit && !owner) return;
   const N = W * H;
   const sent = new Uint32Array(4 * N);
   for (let k = 0; k < N; k++) {
@@ -675,7 +894,22 @@ function diffuse(f: Uint32Array, W: number, H: number, De: number, dseed: number
       // Trail conduit: the per-edge rate depends on the trail of both end cells (end-of-step P, after this step's deposits and decay).
       const cx = k % W, cy = (k / W) | 0;
       const nbs = [cy * W + ((cx + 1) % W), cy * W + ((cx + W - 1) % W), ((cy + 1) % H) * W + cx, ((cy + H - 1) % H) * W + cx];
-      for (let d = 0; d < 4; d++) sent[4 * k + d] = diffOut(f[k], d, conduitRate(De, conduit.g, conduit.q, conduit.P[k], conduit.P[nbs[d]]), base, sp);
+      const gs = conduit.shift;
+      for (let d = 0; d < 4; d++) {
+        const pk = gs === undefined ? conduit.P[k] : conduit.P[shiftCell(k, gs, W, H)];
+        const pn = gs === undefined ? conduit.P[nbs[d]] : conduit.P[shiftCell(nbs[d], gs, W, H)];
+        sent[4 * k + d] = diffOut(f[k], d, conduitRate(De, conduit.g, conduit.q, pk, pn), base, sp);
+      }
+    } else if (owner) {
+      // Owner conduit: an edge conducts only between two cells with the same nonzero owner, by the smaller owned amount (capped).
+      const cx = k % W, cy = (k / W) | 0;
+      const nbs = [cy * W + ((cx + 1) % W), cy * W + ((cx + W - 1) % W), ((cy + 1) % H) * W + cx, ((cy + H - 1) % H) * W + cx];
+      const gs = owner.shift;
+      for (let d = 0; d < 4; d++) {
+        const a = gs === undefined ? k : shiftCell(k, gs, W, H);
+        const b = gs === undefined ? nbs[d] : shiftCell(nbs[d], gs, W, H);
+        sent[4 * k + d] = diffOut(f[k], d, ownerRate(De, owner.g, owner.q, owner.Z[a], owner.Z[b], owner.Q[a], owner.Q[b]), base, sp);
+      }
     } else {
       for (let d = 0; d < 4; d++) sent[4 * k + d] = diffOut(f[k], d, De, base, sp);
     }
@@ -704,7 +938,8 @@ export function encode(s: MyceliumState): Uint8Array {
   }));
   const pad = (4 - (header.length % 4)) % 4;
   const N = s.A.length, n = s.n;
-  const words = 2 + 3 * N + 8 * n;
+  const owner = s.config.trailOwner !== undefined;
+  const words = 2 + 3 * N + 8 * n + (owner ? 2 * N : 0);
   const bytes = new Uint8Array(4 * words + header.length + pad + n * NN_BYTES);
   const dv = new DataView(bytes.buffer);
   dv.setUint32(0, MAGIC, true);
@@ -715,6 +950,8 @@ export function encode(s: MyceliumState): Uint8Array {
   put(s.A, N); put(s.C, N); put(s.P, N);
   for (const a of [s.id, s.parent, s.gid, s.x, s.y, s.M, s.E, s.age]) put(a, n);
   bytes.set(new Uint8Array(s.genome.buffer, s.genome.byteOffset, n * NN_BYTES), off);
+  // Owner planes (only with trailOwner): Z then Q, after the genome, so keyless bytes are unchanged. n * 160 is a multiple of 4.
+  if (owner) { off += n * NN_BYTES; put(s.Z!, N); put(s.Q!, N); }
   return bytes;
 }
 
@@ -733,6 +970,8 @@ export function decode(bytes: Uint8Array): MyceliumState {
   get(s.A, N); get(s.C, N); get(s.P, N);
   for (const a of [s.id, s.parent, s.gid, s.x, s.y, s.M, s.E, s.age]) get(a, s.n);
   s.genome.set(new Int8Array(bytes.buffer, bytes.byteOffset + off, s.n * NN_BYTES));
+  off += s.n * NN_BYTES;
+  if (c.trailOwner !== undefined) { get(s.Z!, N); get(s.Q!, N); }
   const bad = validateState(s);
   if (bad.length) throw new Error(`invalid mycelium checkpoint: ${bad.slice(0, 3).join("; ")}`);
   return s;
@@ -740,12 +979,15 @@ export function decode(bytes: Uint8Array): MyceliumState {
 
 function createEmpty(c: MyceliumConfig): MyceliumState {
   const N = c.width * c.height, cap = c.maxParticles;
-  return {
+  const s: MyceliumState = {
     config: { ...c }, step: 0, A: new Uint32Array(N), C: new Uint32Array(N), P: new Uint32Array(N), n: 0,
     id: new Uint32Array(cap), parent: new Uint32Array(cap), gid: new Uint32Array(cap), x: new Uint32Array(cap), y: new Uint32Array(cap),
     M: new Uint32Array(cap), E: new Uint32Array(cap), age: new Uint32Array(cap), genome: new Int8Array(cap * NN_BYTES),
     nextId: 0, nextGid: 0, matter0: 0, energy0: 0, totals: { lightIn: 0, heat: 0, births: 0, deaths: 0, refused: 0, contended: 0, mutations: 0 },
   };
+  if (c.trailFreeLayer !== undefined) { s.totals.freeUnits = 0; s.totals.paidUnits = 0; }
+  if (c.trailOwner !== undefined) { s.Z = new Uint32Array(N); s.Q = new Uint32Array(N); }
+  return s;
 }
 
 /** 64-bit digest (two FNV-1a lanes) of the encoded state. */

@@ -126,6 +126,80 @@ Bounds: `x <= q <= 255` and `g <= 255` give `x·g <= 65,025 < 2^16`; `Dd <= 128`
 
 On the GPU `send()` takes a flag (on for species A when keyed, off for C). `k_light` (decay) runs before `k_send_a`, and the diffusion dispatches do not write P, so `k_send_a` reads a settled P with no race. No new buffer, dispatch or draw slot. The CPU exports `conduitRate(De, g, q, pk, pn)`, which observers use; `probeLesion(s, zeroInputs)` is an observer-only variant of `probe` that sets the listed inputs to 0 after sensing (`step` never passes any).
 
+## Bootstrap keys (exploratory; docs/mycelium-bootstrap-2026-11-14/)
+
+Ten optional config keys in three families, added after the R2 to R4 and conduit freezes (so the kernel hashes recorded there no longer match the working tree). All are absent from `defaultConfig()` and never inserted by `createWorld`; with every key absent, `encode` output, `stateDigest` (the pinned `9a5461c07ef6fcde`), the config header and the dynamics are those of the conduit line. Every "requires" and "excludes" rule below lives in `validateConfig`. No key adds a draw slot. Both ledgers close with residual exactly 0 on every step. The CPU port is `tools/mycelium/world.ts`; the WGSL port is in `tools/mycelium/gpu.ts` (kernels `k_fl_clear`, `k_own_clear`, `k_claim_a`/`b`/`c`, `k_send_ax`) and is checked bit for bit against the CPU by the appended `bootstrap` cases of `tests/deno/mycelium_gpu.ts` (all of them match at the last gate).
+
+### Pre-laid trail (P): `trailInit`, `trailInitPattern`, `trailInitPitch`
+
+- `trailInit` `v`: integer 1..255. Absent means nothing is laid.
+- `trailInitPattern`: `"carpet"` (also what absent means), `"rows"`, `"cols"`, `"lattice"`, `"patches"`; only with `trailInit`.
+- `trailInitPitch`: integer 2..64, absent means 8; only with `trailInit` and a pattern other than carpet (carpet or absent pattern with a pitch is rejected).
+
+Geometry is a pure function of the cell, `x = i % W`, `y = (i / W) | 0`, `h = pitch >> 1`, no draw: carpet every cell; rows `y % pitch == 0`; cols `x % pitch == 0`; lattice rows or cols; patches `x % pitch < h && y % pitch < h`. `laidCell(c, x, y)` is exported.
+
+`createWorld`, after the founders and before `matter0` and `energy0` are taken: on each laid cell `t = min(trailInit, A[i]); A[i] -= t; P[i] += t`. Matter: A moves to P inside one cell, so `A + P` per cell and `matterTotal` equal the unlaid world's. Energy: `energyTotal` falls by `eA · Σt` and `energy0` is taken after the move, so `ΣE + eA·ΣA = energy0 + lightIn − heat` holds from step 0. It is an energy tax, not a subsidy. No counter, state array, `FORMAT` or encode word changes; P is already serialised and the keys travel in the header. Bounds: `P <= nutrient0 <= 2^31/N`, so the conduit product `min(P,P,q) · g <= 255 · 255` is untouched.
+
+### Free first layer (F): `trailFreeLayer`, `trailConduitGhost`
+
+- `trailFreeLayer` `F`: integer 1..255. Absent means every deposit costs `depositCost` per unit as before.
+- `trailConduitGhost` `s`: integer 1..min(W, H) − 1; only with `trailConduit`.
+
+Start-of-step quantities (phase 5 adds deposits afterwards, so the snapshot is order-free; the GPU computes `S` in `k_think` and `room` in a kernel right after it):
+
+```
+dreq_i  = (maxDeposit * relu(DEPOSIT)) >> 7             // <= 253, the same request the toll and the deposit use
+S[c]    = sum of dreq_i over every particle starting in cell c        // all particles, including ones that die before depositing
+room[c] = P0[c] >= F ? 0 : F - P0[c]                    // compare before subtract; 0..F
+fr_i    = S[c] <= room[c] ? dreq_i : divu(dreq_i * room[c], S[c])     // floor
+```
+
+Phase 5, after the upkeep check, in place of the keyless deposit lines:
+
+```
+dep0 = min(dreq_i, m)                  // m = matter after eating
+free = min(fr_i, dep0)
+paid = dep0 - free
+if (paid * depositCost > en) paid = divu(en, depositCost)     // only paid units are clipped by the energy left
+dep  = free + paid
+en  -= paid * depositCost;  heat += paid * depositCost        // free units pay and heat nothing
+m   -= dep;  P[ci] += dep;  freeSum += free;  paidSum += paid
+```
+
+Total free units on a cell never exceed `room[c]` (the shares floor), so free units never push P above F; paid units may. A particle that dies before depositing leaves its share unused, not redistributed. With `F` absent, or `room` 0, the arithmetic is the keyless arithmetic. Ledger: the waived `free · depositCost` is neither added to `heat` nor removed from `E`; both sides of the energy identity move by the same amount and nothing is created. Matter is M to P as before. Counters: `totals.freeUnits` and `totals.paidUnits` (cumulative exact integers, at most 2^50) exist only when the key is present (created in `createWorld` and `createEmpty`, in the header and the digest only for F worlds); `StepStats` carries the per-step `freeUnits`, `paidUnits` only then. Bounds: `dreq · room <= 253 · 255 < 2^16`; `S <= 253 · 2^16 < 2^24`; no raw P is multiplied; `paid · depositCost <= 253 · 2^12 < 2^20`. Compatible with `trailMoveDiscount` (the toll reads the request, not the realised deposit).
+
+Ghost: when `trailConduitGhost` is `s`, the conduit rate of the edge `k -> nb` reads P at `shiftCell(k, s)` and `shiftCell(nb, s)` in place of `k` and `nb`, where `shiftCell(i, s, W, H) = ((y + s) % H) · W + ((x + s) % W)` (a torus translation, exported). Same matter arithmetic, same draws; a translation permutes cells, so the mean conduction is unchanged and the rate is still symmetric per edge. It is a null only for aperiodic trail: on a periodic road a shift that is a multiple of the pitch maps the road onto itself.
+
+### Owner conduit (O): `trailOwner`, `ownerDefend`, `ownerConduit`, `ownerConduitCap`, `ownerGhost`
+
+- `trailOwner`: `"id"` (individual) or `"gid"` (clone, genotype id). Absent means none of the O rules and no planes.
+- `ownerDefend` `theta`: integer 1..255, only with `trailOwner`.
+- `ownerConduit` `g`: integer 0..255, only with `trailOwner`, requires `diffA <= 128`, excludes `trailConduit` (the public conduit may be used beside `trailOwner` and `ownerDefend`, not beside `ownerConduit`).
+- `ownerConduitCap` `q`: integer 1..255, only with `ownerConduit`; absent means 255.
+- `ownerGhost` `s`: integer 1..min(W, H) − 1, only with `ownerConduit`.
+
+State (only with `trailOwner`): `Z[cell]` u32 owner tag (0 = none) and `Q[cell]` u32 owned trail, a label on part of P. Invariants (`validateState`): `Q <= P`; `Z == 0` iff `Q == 0`; `Z - 1 < nextId` (`"id"`) or `< nextGid` (`"gid"`), i.e. the tag names an id that was issued. The tag of a particle is `ownerTag(v) = v + 1` (exact u32, 1..0xffffffff, with `v` the id or gid read at the start of the step): not a hash, so tags never collide (a 24-bit hash did, inside the legal id range). `Z`, `Q` and the claim scratch are labels: `matterTotal` and `energyTotal` do not read them.
+
+Phase 4 (eating gate), start-of-step `Z`, `Q`: `if (Z[ci] != 0 && Z[ci] != t && Q[ci] >= theta) r = 0`. **`r` is zeroed before it is stored in `req` and added to `R`**: the cell's R then excludes it and `req` is 0, which is exactly a particle that asked for nothing. Gating only the sum would let `k_grant` hand out `r` from an `R <= A` that excluded the particle and A would underflow (a test builds that cell).
+
+Phase 5 (deposit and claim), after the deposit lines (`dep` is the actual deposit, after any energy clip; a particle that dies before depositing deposits 0), with `z = Z[ci]` at the start of the step (`Z` is not written until after the loop): `dep == 0`: nothing. `z == t`: `Q[ci] += dep`. `z == 0`: the particle is a claim candidate. `z != 0 && z != t`: the deposit adds to P only. After the loop (`resolveClaims`, exported): pass 1 `W1[ci] = max(dep)` over candidates; pass 2 `W2[ci] = max(tag)` over candidates with `dep == W1[ci]`; every candidate whose tag equals `W2[ci]` does `Q[ci] += dep` (same-clan depositors all count, whatever their own deposit); every cell with a candidate takes `Z[ci] = W2[ci]`. Two passes of `max`, never a packed `dep << 24 | tag` (signed in JS at `dep >= 128`, so CPU and GPU would disagree). A zero deposit never claims, so `Z != 0` implies `Q > 0`.
+
+Phase 8 (decay), inside the existing `P > 0 && pDecay > 0` branch and with the same draw as P: `Q -= min(Q, mulFrac(Q, pDecay, 16, draw))`, and `Z = 0` when `Q` reaches 0. `Q <= P` survives because `mulFrac(q, k, 16, r)` is non-decreasing in `q` and rises by at most 1 per unit of `q` (`k < 2^16`), so `q − f(q)` is non-decreasing; a property test checks it over random cells.
+
+Phase 8 (owner conduit), species A only, end-of-step `Z`, `Q` (after decay): per directed edge `k -> nb`
+```
+Dd = (Z[k] != 0 && Z[k] == Z[nb]) ? min(De + ((min(Q[k], Q[nb], q) * g) >> 4), 128) : De
+```
+with the same `diffOut`, draw slot and symmetry argument as the public conduit (`ownerRate(De, g, q, zk, zn, qk, qn)`, exported). The min is taken before the multiply. `g = 0` gives `Dd = De` everywhere. The diffusion skip becomes: skip only if `diffA == 0` and neither conduit key is present.
+
+`ownerGhost` `s`: `Z` and `Q` are read at `shiftCell(k, s)` and `shiftCell(nb, s)` for the edge (owner placement and amount both displaced; the eating gate stays real). The validity check (correlation of the real and displaced edge-conductance maps) is an observer's job, not the kernel's.
+
+Dead owners: no takeover rule; a cell's owner changes only when its `Q` reaches 0. Passive plane: `trailOwner` alone (no defend, no conduit) leaves A, C, P, every particle field and every total byte-identical to the keyless run; only the header and `Z`, `Q` differ.
+
+Checkpoint: with `trailOwner`, `encode` appends `Z` then `Q` (N u32 words each, little endian) after the genome bytes (`FORMAT` stays 1; keyless bytes are identical) and `decode` reads them when the header config has the key.
+
+Bounds: tag `<= 0xffffffff`; `min(Q, Q, q) · g <= 255 · 255 < 2^16`; `Dd <= 128`, `4 · Dd <= 512`; the compares (`Q >= theta`, tag equality, `dep` and tag `max`) multiply nothing.
+
 ## Randomness
 
 All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
@@ -142,6 +216,7 @@ All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
 - **The contended grant `r · A`.** `r ≤ 253` (since `maxEat ≤ 255`), and contention means `A < R ≤ 253 · n`. With `maxParticles ≤ 2^16`, `r · A < 253² · 2^16 < 2^32`. **Raising the particle cap above 65,536 needs a different division.**
 - **Diffusion** uses `mulFrac(portion, 4d, 10)` with `4d ≤ 1024 < 2^22`, and its result never exceeds the portion. **Turnover** uses `mulFrac(M, 2^(16−k), 16)` with `1 ≤ k ≤ 16` and `M ≤ 2^16`. The gradient light product `light · (column + 1) ≤ 2^12 · 2^9`.
 - **Trail conduit** (optional): `min(P[k], P[nb], q) · g <= 255 · 255 < 2^16` and `Dd <= 128`, so `4·Dd <= 512`; see "Trail conduit".
+- **Bootstrap keys** (optional): see "Bootstrap keys" for the free-layer products (`dreq · room < 2^16`, `S < 2^24`, `paid · depositCost < 2^20`), the owner tag (exact `v + 1 <= 0xffffffff`) and the owner conduit product (`< 2^16`).
 - **Trail decay** uses `mulFrac` with `pDecay < 2^16`.
 - **Products in phase 5.** `|MX| + |MY| ≤ 254` and `moveCost ≤ 2^12`. Also `dep · depositCost ≤ 255 · 2^12`, `g · eA ≤ 253 · 255`, and `E ≤ 2^24`.
 - **Positions** are below `512 · 256 = 2^17`.
@@ -203,7 +278,7 @@ These values are choices that make the world run. They are not findings about it
 
 ## Checkpoints
 
-`encode` writes a JSON header (format 1, config, step, counters and ledger anchors), then A, C and P, the eight u32 particle arrays and the live weights. `decode` validates the result. `stateDigest` is two FNV-1a lanes over those bytes.
+`encode` writes a JSON header (format 1, config, step, counters and ledger anchors), then A, C and P, the eight u32 particle arrays and the live weights (and, only with `trailOwner`, the owner planes Z and Q; see "Bootstrap keys"). `decode` validates the result. `stateDigest` is two FNV-1a lanes over those bytes.
 
 A run resumed from a checkpoint equals the continuous run byte for byte. `tools/test/mycelium.test.ts` checks this at several cut points.
 

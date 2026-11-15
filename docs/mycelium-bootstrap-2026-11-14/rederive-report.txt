@@ -1,0 +1,403 @@
+====================================================================================================
+1. FILES, LOG, LEDGERS, LENGTHS, SEEDS, CONFIGS
+====================================================================================================
+1.1 json files {'sizing': 114, 'main': 464, 'r7': 4} (total 582), claim files {'sizing': 114, 'main': 464, 'r7': 4} (total 582)   [SCREEN: 582 = sizing 114, main 464, R7 4]
+1.1 log lines 1738
+    log lines per out dir: {'runs/mycelium-bootstrap/smoke-t': 18, 'runs/mycelium-bootstrap/smoke-d': 2, 'runs/mycelium-bootstrap/smoke-f': 46, 'runs/mycelium-bootstrap/smoke-o': 84, 'runs/mycelium-bootstrap/smoke-T': 70, 'runs/mycelium-bootstrap/smoke-D0': 6, 'runs/mycelium-bootstrap/smoke-D': 24, 'runs/mycelium-bootstrap/smoke-B': 8, 'runs/mycelium-bootstrap/smoke-S1': 4, 'runs/mycelium-bootstrap/smoke-S2': 40, 'runs/mycelium-bootstrap/smoke-S3': 10, 'runs/mycelium-bootstrap/smoke-S4': 8, 'runs/mycelium-bootstrap/smoke-F': 38, 'runs/mycelium-bootstrap/smoke-O': 84, 'runs/mycelium-bootstrap/smoke-R7': 8, 'runs/mycelium-bootstrap/smoke-sz': 124, 'runs/mycelium-bootstrap/sizing': 228, 'runs/mycelium-bootstrap/r7': 8, 'runs/mycelium-bootstrap/main': 928}
+    out dirs named in the log that do not exist on disk (16): ['smoke-B', 'smoke-D', 'smoke-D0', 'smoke-F', 'smoke-O', 'smoke-R7', 'smoke-S1', 'smoke-S2', 'smoke-S3', 'smoke-S4', 'smoke-T', 'smoke-d', 'smoke-f', 'smoke-o', 'smoke-sz', 'smoke-t']
+    -> the 1,738-line log holds 1,156 lines of smoke, stand-in and aborted-sizing runs that have no run file; only main/sizing/r7 lines are matched to files.
+1.2 log lines in the three real out dirs: 1164 (started 582, finished 582, other 0)
+    duplicate (out,id,state) lines: 0
+    started without finished: 0; finished without started: 0
+    run files without a finished line (orphan files): 0; finished lines without a run file: 0
+    finished lines with ledgerBadChecks, branchErrors or intakeIdentity != exact: 0
+    failed/other-state lines: 0
+    smoke-flagged lines inside the real out dirs: 8 (R7 timing: 8)
+    finished non-smoke per series: {'S1': 8, 'S2': 40, 'S3': 10, 'S4': 16, 'S2d': 40, 'T': 208, 'F': 152, 'D0': 24, 'O': 80}  SCREEN: S1 8, S2 40, S2d 40, S3 10, S4 16; T 208, D0 24, F 152 (88+64), O 80; R7 4
+    R7 finished lines in r7/: 4
+1.3 log summary fields (ledgerChecks, bad, minN, steps, branchVariants, lateN, lateTM) vs run files: 0 mismatches
+1.4 ledger checks (sum of stored ledgerChecks) 319179 [SCREEN 319,179], bad 0; branch variants 872 [SCREEN 872], of which relax-* 24; variant ledgerBad sum 0; variants with error 0; branchErrors sum 0
+  DISCREPANCY: 24 of the 872 branch variants are relax-* (5,000-step relaxation of on, C-off, both-off at the late checkpoint, DESIGN 8); SCREEN reports no relaxation result and branchPairs() skips them
+1.5 snap-interval identities over 391819 consecutive-read pairs (main snaps and every branch variant): dn = births-deaths, light in whole units, intake >= 0 integer, counters monotone -> 0 violations
+1.6 run length / schedule problems (steps, last snap, branch at, branch length 2000, 81-read grid): 0 []
+    runs whose stored minN exceeds the minimum n over all stored reads: 0 []
+    runs with minN < 100: 0 []; branch variants ending below 100 particles: 0
+1.7 world seed = slot + heredity offset and config.seed = worldSeed: 0 violations []
+    run slot inside the screen block of its series (S 8209-8216, T 8217-8224, D 8233-8240, F 8249-8256, O 8265-8272, SMOKE 8281-8284): 0 outside []
+    runs on held slots: 0
+    sizing slots [8209, 8210, 8211, 8212]; main slots [8217, 8218, 8219]..[8270, 8271, 8272] ; overlap between sizing and main slots: []
+1.8 smoke / stand-in / out-of-tree 'started' lines: 291; of those on a T/D/F/O screen or held slot or its heredity images: 0
+    smoke runs by (series, slot): {('B', 8284): 4, ('D', 8282): 1, ('D', 8283): 1, ('D', 8284): 11, ('D0', 8284): 3, ('F', 8282): 4, ('F', 8283): 19, ('F', 8284): 19, ('O', 8283): 42, ('O', 8284): 42, ('R7', 8281): 8, ('S1', 8281): 2, ('S1', 8282): 2, ('S1', 8284): 2, ('S2', 8281): 20, ('S2', 8282): 20, ('S2', 8284): 20, ('S3', 8281): 5, ('S3', 8282): 5, ('S3', 8284): 5, ('S4', 8281): 4, ('S4', 8282): 4, ('S4', 8284): 4, ('T', 8281): 9, ('T', 8283): 9, ('T', 8284): 26}
+1.9 world seeds actually used 87 (range 8209-8872); derived null seeds actually used 112; whole table: 304 world, 608 derived
+    vs R2b worlds                                              (   216 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs R2 seeds                                                (    10 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs R3 worlds                                               (   162 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs NOT_R3 8001-8099                                        (    99 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs R4 worlds                                               (   180 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs conduit screen worlds                                   (    32 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs shaping range 200011-240013                             ( 40003 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs run-log mycelium-conduit-2026-11-14                     (    16 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs run-log mycelium-trail-use-2026-11-13                   (     8 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    vs comment in r4-seeds: 8001-8004, 108001-108004           (     8 seeds): used world 0, used derived 0; whole table world 0, derived 0
+    derived seed equal to a used world seed: 0; derived seeds shared by two rows: 0 (set size 112 vs 2 x 56 branching worlds)
+    NOT rebuilt (cannot be, without the other tools' internals): seeds used by runs that never went into a run-log (the shaping scratch range is covered as the stated range 200011-240013); seeds in earlier lines' smoke runs that have no log. Earlier run-logs read: mycelium-conduit-2026-11-14, mycelium-bootstrap-2026-11-14, mycelium-trail-use-2026-11-13
+1.10 sizing-frozen: v=32 gR=15 diffA=44 diffAF=40 t0=400 tAlive={'1': 350, '2': 276, '3': 200} Fstar=16 Fg={'lo': 1, 'mid': 1, 'hi': 2} theta={'lo': 2, 'mid': 4, 'hi': 8}
+1.10 stored config == default + my expected delta + light + heredity + seed, over 464 main runs: 0 mismatches
+     the log's own `over` field vs my expected delta: 0 mismatches
+    delta keys vs base differ for F.DIFF.inherit.8249: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8250: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8251: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8252: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8253: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8254: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8255: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+    delta keys vs base differ for F.DIFF.inherit.8256: ['trailFreeLayer'] vs expected ['diffA', 'trailFreeLayer']
+     config keys that differ from the keyless base of the same slot equal the arm's delta keys exactly: 8 exceptions (inherit/blocked F and O arms)
+     keyless / off arms carrying a key outside defaultConfig (besides the road): 0
+1.11 'same world' pairs (identical config up to inert keys) must have byte-equal reads:
+     T-16-lo vs T-16-mid: 8 of 8 slots have identical snaps (full read sequence)
+     DIFF vs FREE-16: 8 of 8 slots have identical snaps (full read sequence)
+     T-P vs T-base: 8 of 8 slots have identical snaps (full read sequence)
+1.12 stored late.boot.tm vs mean of bootSeries.tm over (steps/2, steps]: 0 mismatches []
+
+====================================================================================================
+2. SERIES T (pre-laid trail), recomputed from reads; compared with the SCREEN pair table
+====================================================================================================
+2.1 primary windows PW(q) = (t0=400, min(t_alive(q), 1000)]: t_alive {'1': 350, '2': 276, '3': 200} -> lengths q1: 0, q2: 0, q3: 0; threshold 150 steps -> UNREADABLE for every q (label rule 1)
+    rows-G.off main runs, last read with median laid-edge x_e >= 1, per seed: [371, 370, 375, 359, 354, 377, 365, 345]  median 367.5
+    rows-G.off main runs, last read with median laid-edge x_e >= 2, per seed: [277, 278, 276, 274, 270, 282, 276, 272]  median 276.0
+    rows-G.off main runs, last read with median laid-edge x_e >= 3, per seed: [231, 234, 234, 233, 227, 229, 232, 231]  median 231.5
+    rows-G.on-P2 (conduit on) median laid-edge x_e by step (median over seeds): {10: 28.0, 100: 11.0, 200: 4.0, 276: 1.5, 300: 1.0, 350: 1.0, 400: 0.0}
+2.2 pair table (medians over 8 seeds of on-minus-off relative differences, per-seed PAY/DAMP/HARM counts), recomputed; '=' means the SCREEN row matches to the printed digit
+    = rows-G.on-P1 vs rows-G.off         (   0, 300] 8 | 0.1% | -1.2% | -1.2% | 0.1% | 0.1% | 0/8 | 0/8 | 0/8 | 0
+    = rows-G.on-P1 vs rows-G.off         ( 300,1000] 8 | 0.3% | -1.5% | -0.6% | 0.3% | 0.6% | 0/8 | 1/8 | 0/8 | 0
+    = rows-G.on-P1 vs rows-G.off         (1000,3000] 8 | 0.8% | -2.9% | -2.9% | -3.3% | 1.2% | 0/8 | 4/8 | 5/8 | 0
+    = rows-G vs rows-G.off               (   0, 300] 8 | 0.1% | -1.1% | -2.8% | 1.4% | 0.1% | 0/8 | 1/8 | 0/8 | 0
+    = rows-G vs rows-G.off               ( 300,1000] 8 | 0.1% | -2.1% | -1.4% | 1.4% | 0.6% | 0/8 | 0/8 | 0/8 | 0
+    = rows-G vs rows-G.off               (1000,3000] 8 | 0.5% | -3.1% | -3.0% | 1.5% | 1.2% | 0/8 | 4/8 | 1/8 | 0
+    = rows-G.on-P3 vs rows-G.off         (   0, 300] 8 | 0.2% | -0.2% | -1.8% | 2.5% | 0.1% | 0/8 | 0/8 | 0/8 | 0
+    = rows-G.on-P3 vs rows-G.off         ( 300,1000] 8 | 0.1% | -3.1% | -1.1% | 1.3% | 0.6% | 0/8 | 2/8 | 0/8 | 0
+    = rows-G.on-P3 vs rows-G.off         (1000,3000] 8 | 0.5% | -0.7% | -0.8% | -0.9% | 1.2% | 0/8 | 3/8 | 2/8 | 0
+    = rows-G.on-R vs rows-G.off          (   0, 300] 8 | -0.2% | -1.1% | -0.5% | 0.1% | 0.1% | 0/8 | 0/8 | 0/8 | 0
+    = rows-G.on-R vs rows-G.off          ( 300,1000] 8 | 0.3% | -0.3% | -0.0% | -1.4% | 0.6% | 0/8 | 1/8 | 0/8 | 0
+    = rows-G.on-R vs rows-G.off          (1000,3000] 8 | 0.2% | -0.2% | -0.1% | -0.5% | 1.2% | 0/8 | 2/8 | 3/8 | 0
+    = rows-G.diffA vs rows-G.off         (   0, 300] 8 | 0.0% | -0.5% | -0.3% | 1.9% | 0.1% | 0/8 | 1/8 | 0/8 | 0
+    = rows-G.diffA vs rows-G.off         ( 300,1000] 8 | -0.0% | -1.6% | 0.7% | 0.2% | 0.6% | 0/8 | 1/8 | 0/8 | 0
+    = rows-G.diffA vs rows-G.off         (1000,3000] 8 | 0.7% | -3.9% | -4.0% | 0.4% | 1.2% | 0/8 | 3/8 | 2/8 | 0
+    = carpet-U vs carpet-U.off           (   0, 300] 8 | 0.1% | -1.6% | -4.0% | 9.0% | 0.0% | 0/8 | 3/8 | 0/8 | 0
+    = carpet-U vs carpet-U.off           ( 300,1000] 8 | 0.1% | -3.7% | -1.5% | 1.6% | 0.0% | 0/8 | 4/8 | 0/8 | 0
+    = carpet-U vs carpet-U.off           (1000,3000] 8 | -0.4% | -3.7% | -3.5% | -0.9% | 0.0% | 0/8 | 3/8 | 1/8 | 0
+    = carpet-G vs carpet-G.off           (   0, 300] 8 | 0.5% | -2.1% | -4.3% | 8.4% | 0.0% | 0/8 | 2/8 | 0/8 | 0
+    = carpet-G vs carpet-G.off           ( 300,1000] 8 | 0.0% | -4.5% | -3.8% | 0.9% | 0.4% | 0/8 | 6/8 | 0/8 | 0
+    = carpet-G vs carpet-G.off           (1000,3000] 8 | -0.1% | -2.0% | -1.9% | -0.5% | 2.1% | 0/8 | 2/8 | 3/8 | 0
+    = cols-G vs cols-G.off               (   0, 300] 8 | 0.1% | -1.1% | 0.3% | 0.5% | 0.2% | 0/8 | 0/8 | 0/8 | 0
+    = cols-G vs cols-G.off               ( 300,1000] 8 | 0.6% | -2.2% | -2.2% | 0.7% | 0.8% | 0/8 | 2/8 | 1/8 | 0
+    = cols-G vs cols-G.off               (1000,3000] 8 | -0.1% | -5.5% | -6.2% | 0.3% | 5.2% | 0/8 | 0/8 | 0/8 | 8
+    = lat-G vs lat-G.off                 (   0, 300] 8 | 0.3% | -0.3% | -1.6% | 2.2% | - | - | - | - | -
+    = lat-G vs lat-G.off                 ( 300,1000] 8 | 0.2% | -2.4% | -1.9% | 0.8% | - | - | - | - | -
+    = lat-G vs lat-G.off                 (1000,3000] 8 | 0.1% | -2.2% | -3.3% | -0.2% | - | - | - | - | -
+    = pat-G vs pat-G.off                 (   0, 300] 8 | 0.1% | -0.8% | -0.3% | 2.3% | - | - | - | - | -
+    = pat-G vs pat-G.off                 ( 300,1000] 8 | -0.1% | -2.5% | -1.8% | 1.4% | - | - | - | - | -
+    = pat-G vs pat-G.off                 (1000,3000] 8 | -0.2% | -4.5% | -3.8% | 2.4% | - | - | - | - | -
+    = rows-U vs rows-U.off               (   0, 300] 8 | 0.0% | -0.1% | -0.4% | 2.2% | - | - | - | - | -
+    = rows-U vs rows-U.off               ( 300,1000] 8 | -0.2% | -1.9% | -1.3% | 1.4% | - | - | - | - | -
+    = rows-U vs rows-U.off               (1000,3000] 8 | -0.9% | 2.2% | 3.0% | 0.7% | - | - | - | - | -
+    = phys-rows-G vs phys-rows-G.off     (   0, 300] 8 | 0.5% | -2.9% | -4.2% | 4.0% | - | - | - | - | -
+    = phys-rows-G vs phys-rows-G.off     ( 300,1000] 8 | 0.0% | -4.5% | -3.1% | 1.6% | - | - | - | - | -
+    = phys-rows-G vs phys-rows-G.off     (1000,3000] 8 | 0.1% | -4.7% | -5.2% | 1.5% | - | - | - | - | -
+    T pair rows: 36, differing from SCREEN: 0
+2.3 mechanism check in T: rows-G.on-P2, mean Dd over all directed edges at q=2 vs diffA 40 (conduit adds Dd = min(ext, ...) on laid edges), median over seeds
+    step    10: median meanDd2 42.22  (diffA 40; twin diffA 44), median xflux -0.25, median share of particles on laid cells 0.126 (laid-area share of a pitch-8 rows road: 0.125)
+    step   100: median meanDd2 43.82  (diffA 40; twin diffA 44), median xflux -0.29, median share of particles on laid cells 0.116 (laid-area share of a pitch-8 rows road: 0.125)
+    step   200: median meanDd2 45.22  (diffA 40; twin diffA 44), median xflux -0.08, median share of particles on laid cells 0.122 (laid-area share of a pitch-8 rows road: 0.125)
+    step   300: median meanDd2 45.68  (diffA 40; twin diffA 44), median xflux -0.49, median share of particles on laid cells 0.120 (laid-area share of a pitch-8 rows road: 0.125)
+    step   400: median meanDd2 45.61  (diffA 40; twin diffA 44), median xflux -0.22, median share of particles on laid cells 0.117 (laid-area share of a pitch-8 rows road: 0.125)
+    step  1000: median meanDd2 45.34  (diffA 40; twin diffA 44), median xflux -0.17, median share of particles on laid cells 0.122 (laid-area share of a pitch-8 rows road: 0.125)
+    step  3000: median meanDd2 42.62  (diffA 40; twin diffA 44), median xflux -0.02, median share of particles on laid cells 0.125 (laid-area share of a pitch-8 rows road: 0.125)
+    founder die-off in T rows-G.off: median n by step {0: 1024.0, 100: 1535.5, 200: 1890.0, 300: 2022.0, 400: 2069.0, 1000: 2037.0, 3000: 1576.5}
+    n over time is not flat until after t0 = 400 (SCREEN deviation 1: R1 found no settle in uniform light by step 400, gradient settles at 300)
+2.4 pairs with no butterfly twin (lat-G, pat-G, rows-U, phys-rows-G) have no noise floor and no verdict in the SCREEN table ('-'); re-applying judge() with the rows-G butterfly noise floor of the same window as a stand-in:
+    lat-G vs lat-G.off               (   0, 300] per-seed rel_i max +0.7% min +0.0%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    lat-G vs lat-G.off               ( 300,1000] per-seed rel_i max +1.4% min -0.8%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    lat-G vs lat-G.off               (1000,3000] per-seed rel_i max +2.0% min -2.5%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    pat-G vs pat-G.off               (   0, 300] per-seed rel_i max +0.3% min -0.3%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    pat-G vs pat-G.off               ( 300,1000] per-seed rel_i max +0.7% min -1.3%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    pat-G vs pat-G.off               (1000,3000] per-seed rel_i max +2.6% min -5.4%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    rows-U vs rows-U.off             (   0, 300] per-seed rel_i max +0.3% min -0.2%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    rows-U vs rows-U.off             ( 300,1000] per-seed rel_i max +0.5% min -1.0%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    rows-U vs rows-U.off             (1000,3000] per-seed rel_i max +1.5% min -3.8%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    phys-rows-G vs phys-rows-G.off   (   0, 300] per-seed rel_i max +0.5% min +0.2%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    phys-rows-G vs phys-rows-G.off   ( 300,1000] per-seed rel_i max +0.2% min -0.2%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    phys-rows-G vs phys-rows-G.off   (1000,3000] per-seed rel_i max +0.3% min -0.0%; PAY under rows-G nf: 0/8 (thr_i 0.030)
+    cols-G (1000,3000]: nf_i +5.2%, thr_i 0.105 > 0.10 -> all 8 seeds unresolved (counted 'not passing'); its per-seed rel_i max is +1.8%
+  WEAK: SCREEN says 0 of 8 seeds pass PAY 'in any of them' for 208 T runs: for lat-G, pat-G, rows-U, phys-rows-G there is no noise floor so PAY is undefined there (printed '-'), and cols-G (1000,3000] is unresolved in 8 of 8; the 0/8 claim is only a verdict in the rows-G, carpet and cols W1/W2 pairs. The per-seed rel_i of the pairs without a floor are all under the 3 percent floor, so the descriptive reading holds, but it is not a PAY count.
+2.5 rows-G P2 (0,300]: per-seed rel_i +0.2% +0.1% -0.3% +0.1% +0.7% -0.0% +0.1% +0.4%; nf_i +0.1%; thr_i 0.030
+2.5 rows-G P2 (300,1000]: per-seed rel_i -0.0% +0.0% +0.3% +0.6% -0.7% -0.0% +0.5% +0.4%; nf_i +0.6%; thr_i 0.030
+2.5 rows-G P2 (1000,3000]: per-seed rel_i +0.7% -0.2% -0.0% +1.8% +0.3% +1.7% +0.3% +1.1%; nf_i +1.2%; thr_i 0.030
+
+2.6 butterfly twins (the noise floor of T and D0): does bf differ from off, and when?
+    T rows-G.bf vs rows-G.off: first read where (n, births, deaths, sumP) differ, per slot: [142, 103, 122, -1, 165, -1, 163, 132] ('-1' = identical on every read)
+    T carpet-U.bf vs carpet-U.off: first read where (n, births, deaths, sumP) differ, per slot: [-1, -1, -1, -1, -1, -1, -1, -1] ('-1' = identical on every read)
+    T carpet-G.bf vs carpet-G.off: first read where (n, births, deaths, sumP) differ, per slot: [79, 152, 152, -1, 200, -1, 216, 57] ('-1' = identical on every read)
+    T cols-G.bf vs cols-G.off: first read where (n, births, deaths, sumP) differ, per slot: [45, -1, 118, 144, 110, -1, 203, 127] ('-1' = identical on every read)
+    D0 rows-G.bf vs rows-G.off first differing read per slot: [200, -1, -1, 200, 150, -1, 50, 250]
+    butterfly twins that never differ from off in n, births, deaths or trail over the whole run (so contribute exactly 0 to the noise floor): {'rows-G.bf': 2, 'carpet-U.bf': 8, 'carpet-G.bf': 2, 'cols-G.bf': 2, 'D0 rows-G.bf': 3}
+  WEAK: The butterfly noise floor is soft: of the 8 twins per arm, {'rows-G.bf': 2, 'carpet-U.bf': 8, 'carpet-G.bf': 2, 'cols-G.bf': 2, 'D0 rows-G.bf': 3} never depart from their off run in n, births, deaths or trail (whole 3,000 or 5,000 steps), carpet-U's floor is exactly 0 (a 3 percent floor only), and the D0 births/deaths/population floors (5.0 / 4.6 / 2.4 percent) come from the 5 twins that did diverge. The T and D0 noise floors are maxima over few, partly degenerate pairs.
+    the butterfly moves one nutrient unit A->C at the lowest-index cell with A > 0 at step 0 (bootstrap-screen.ts butterfly(): read from the runner source to learn the perturbation only).
+    carpet-U (0,300] noise floor nf (max over 8 butterfly pairs of |rel|): i +0.000% b +0.000% d +0.000% N +0.000%
+    carpet-U (300,1000] noise floor nf (max over 8 butterfly pairs of |rel|): i +0.000% b +0.000% d +0.000% N +0.000%
+    carpet-U (1000,3000] noise floor nf (max over 8 butterfly pairs of |rel|): i +0.000% b +0.000% d +0.000% N +0.000%
+    carpet-G (0,300] noise floor nf (max over 8 butterfly pairs of |rel|): i +0.049% b +0.289% d +1.485% N +0.165%
+    carpet-G (300,1000] noise floor nf (max over 8 butterfly pairs of |rel|): i +0.439% b +2.612% d +4.114% N +2.412%
+    carpet-G (1000,3000] noise floor nf (max over 8 butterfly pairs of |rel|): i +2.098% b +7.255% d +7.847% N +6.640%
+
+====================================================================================================
+3. D0 (durable road, rows-G P2, window (400, 2400])
+====================================================================================================
+3.1 per-seed rel_i -0.3% +1.8% -0.8% +0.2% +0.6% +0.6% -1.5% +0.2% | thr_i 0.030 (SCREEN: -0.3% 1.8% -0.8% 0.2% 0.6% 0.6% -1.5% 0.2%, thr_i 0.030)
+    per-seed PAY [False, False, False, False, False, False, False, False] DAMP [True, True, True, True, True, False, True, True] HARM [False, False, False, False, False, False, False, False]
+    vote PAY N ; DAMP count 7 / 8
+    medians on-minus-off: intake +0.2% births -10.7% deaths -9.4% pop +3.1% ; SCREEN +0.2 / -10.7 / -9.4 / +3.1
+    per-seed births -5.8% -10.4% -3.4% -14.9% -11.3% -0.7% -14.9% -10.9%
+    per-seed deaths -6.0% -9.6% -3.3% -15.0% -10.4% -3.2% -14.3% -9.2%
+    per-seed pop    +4.7% +1.6% +2.2% +4.0% +0.3% +5.5% +7.1% -0.6%
+3.2 D0 noise floors from the 8 butterfly twins (max |rel|): intake +0.65%, births +5.01%, deaths +4.62%, population +2.43%, turnover +4.81%; effect sizes b/d/N: -10.7% -9.4% +3.1%
+    per-seed butterfly-vs-off |rel| births +4.8% +0.0% +0.0% -0.7% -4.0% +0.0% -5.0% +1.9% | deaths +4.1% +0.0% +0.0% -1.6% -2.6% +0.0% -4.6% +2.7% | pop +1.1% +0.0% +0.0% +2.4% -1.8% +0.0% +2.3% -2.4%
+    median |butterfly-vs-off| births +1.3%, deaths +2.1%, pop +1.4%; the DAMP rule's fixed 3 percent is inside the births/deaths butterfly noise (+5.0%, +4.6%)
+    on vs bf (a second control per seed) births -10.1% -10.4% -3.4% -14.3% -7.7% -0.7% -10.4% -12.6% | deaths -9.7% -9.6% -3.3% -13.6% -8.0% -3.2% -10.2% -11.6%
+3.3 per capita vs total (the PAY rule reads intake per particle-step):
+    per seed total-intake on/off-1: +4.4% +3.4% +1.3% +4.1% +0.9% +6.2% +5.5% -0.4% ; median +3.8%
+    per seed mean-pop on/off-1:     +4.7% +1.6% +2.2% +4.0% +0.3% +5.5% +7.1% -0.6% ; median +3.1%
+    intake / light-supply (units) on:  1.023 1.024 1.017 1.020 1.026 1.022 1.021 1.026 ; off: 1.024 1.023 1.019 1.019 1.028 1.020 1.023 1.030
+    -> over the window the world eats about 1.023 of the light supply; total intake is +3.8% higher with the conduit on, population +3.1% higher; per capita +0.2%
+    window-start population n(400) on vs off per seed: 1778/1740 1915/1803 2048/2027 2131/2140 1775/1740 1845/1775 1826/1780 2007/1880; end n(2400) 1608/1535 1353/1309 1562/1546 1561/1494 1440/1492 1613/1258 1692/1717 1098/1070
+3.4 D0 on, step 400: median meanDd2 51.3 (diffA 40), median laid-edge x_e 22.0, share of ALL edges with x_e >= 2 1.000
+3.4 D0 on, step 1000: median meanDd2 61.1 (diffA 40), median laid-edge x_e 15.0, share of ALL edges with x_e >= 2 1.000
+3.4 D0 on, step 2000: median meanDd2 66.0 (diffA 40), median laid-edge x_e 9.0, share of ALL edges with x_e >= 2 0.987
+3.4 D0 on, step 2400: median meanDd2 66.1 (diffA 40), median laid-edge x_e 7.0, share of ALL edges with x_e >= 2 0.961
+    D0 off at 1000: share of all edges with x_e >= 2: 1.000 (trail is present nearly everywhere at pDecay 66: the 'road' is a trail carpet, so conduit-on raises Dd over almost every edge, not only on the laid rows)
+  WEAK: D0 'durable road': at pDecay 66 the whole world fills with trail (share of edges with x_e >= 2 is ~0.98 at step 2000), so D0 tests a conduit on a trail carpet, not on a road versus off-road; 'onLaid' stays at the laid-area share 0.12 (particles do not follow the road), so a road/off-road contrast the T design wanted was never present in D0.
+3.5 when does the D0 population advantage appear? n(on)/n(off)-1 per seed at selected reads (the window starts at 400):
+    step   100: +0.4% +1.8% +1.8% +3.1% -0.1% +2.0% +2.1% +0.2%   median +1.8%
+    step   200: +3.2% -0.3% +0.8% -0.4% +4.1% +3.1% +1.3% +2.8%   median +2.1%
+    step   300: +2.7% +0.5% +2.2% -4.5% +3.7% +3.7% -2.6% +5.6%   median +2.4%
+    step   400: +2.2% +6.2% +1.0% -0.4% +2.0% +3.9% +2.6% +6.8%   median +2.4%
+    step  1000: +5.9% +0.9% -0.9% +8.8% +0.3% +6.1% +7.5% +0.4%   median +3.4%
+    step  2400: +4.8% +3.4% +1.0% +4.5% -3.5% +28.2% -1.5% +2.6%   median +3.0%
+    step  5000: -15.1% +4.4% -1.3% +2.3% +13.0% -16.7% -12.7% +11.4%   median +0.5%
+    light supply (lightIn/eA) in the window, on/off-1 per seed: +4.4% +3.2% +1.6% +4.0% +1.1% +6.0% +5.7% -0.1% ; median +3.6%
+    -> part of the +3.8% total intake is carried in at the window start (a larger population at step 400), which the window cannot separate from a rate effect.
+  WEAK: D0 'same food intake' is per particle-step. Total intake over the window is +3.8% (median; 5 of 8 seeds above +3%) with the conduit on and the light supply drawn +3.6%, population +3.1% (butterfly noise on population is up to 2.4%, and 3 of the 8 D0 butterfly twins never diverge from off at all, so that floor is itself soft), births and deaths -10.7 / -9.4% (butterfly noise up to 5.0 / 4.6%, fixed DAMP threshold 3%). The DESIGN's PAY is per capita, so V(PAY-D0) = N holds as defined, but the one-line summary 'intake +0.2 percent ... the same food intake' is the per-capita number; the total and the population shift are of the size of the butterfly noise and cannot be called either way, while the turnover drop (5 of 8 seeds beyond the largest butterfly difference) is the clearest effect.
+
+====================================================================================================
+4. SERIES F (free first layer) and the F label, recomputed
+====================================================================================================
+4.x F per-arm table (19 arm x heredity rows): 0 rows differ from SCREEN
+4.x O per-arm table (10 arm x heredity rows): 0 rows differ from SCREEN
+4.1 stored late.boot.tmAbove vs second-half mean of bootSeries.tmAbove: 0 mismatches
+4.2 K/S/NB/L per slot (T-16-mid vs FREE-16, late = (50000,100000]): S S S S L S S L   [SCREEN: S S S S L S S L]
+    per-slot treated TM / TMabove, FREE-ONLY TM / TMabove (late mean per particle):
+      slot 8249: T-16-mid TM 55.98 above 5.772 | FREE-16 TM 59.24 above 6.684 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8250: T-16-mid TM 43.89 above 2.326 | FREE-16 TM 55.48 above 5.390 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8251: T-16-mid TM 51.14 above 3.222 | FREE-16 TM 54.02 above 4.154 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8252: T-16-mid TM 9.79 above 0.004 | FREE-16 TM 42.05 above 4.032 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8253: T-16-mid TM 0.10 above 0.000 | FREE-16 TM 31.18 above 2.035 | class L | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8254: T-16-mid TM 19.52 above 1.940 | FREE-16 TM 37.34 above 1.238 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8255: T-16-mid TM 13.59 above 0.177 | FREE-16 TM 31.06 above 1.027 | class S | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+      slot 8256: T-16-mid TM 0.00 above 0.000 | FREE-16 TM 35.28 above 0.725 | class L | K needs treated above >= 0.1 AND FREE-ONLY above <= half of it
+4.3 label margin: S in 6 of 8 (rule: S >= 6); L in 2. K needs treated TMabove >= 2 x FREE-ONLY's: ratio treated/FREE-ONLY above-layer per slot: 0.86 0.43 0.78 0.00 0.00 1.57 0.17 0.00
+    median above-layer: treated 1.058 FREE-ONLY 3.033 ; seeds with treated above-layer > FREE-ONLY: 1 of 8; ratios >= 2: 0
+    total trail per particle, treated 56.0 43.9 51.1 9.8 0.1 19.5 13.6 0.0 ; FREE-ONLY 59.2 55.5 54.0 42.0 31.2 37.3 31.1 35.3 ; treated higher in 0 of 8 seeds
+    -> FREE-ONLY itself is class S in every seed that kept trail, so K (needs treated above-layer >= 2 x FREE-ONLY's) and the S label are decided by the free layer alone: FREE-ONLY TM >= 0.1 in 8 of 8 seeds and above-layer >= 0.1 in 8 of 8
+  WEAK: F label SUBSIDY-ONLY is decided by the free layer, not by the conduit: the conduit contributes a few units of trail at most, FREE-ONLY already holds above-layer trail (median 3.03 per particle), so K (treated >= 2 x FREE-ONLY) cannot be reached by an inert conduit and S (total trail >= 0.1) is satisfied by the layer itself. The label is therefore not evidence about the conduit; the SCREEN says so for the strength, not for the label.
+    L slot 8253: treated TM at 500,5000,10000,25000,50000,75000,100000 = 20.59 29.35 7.14 2.35 0.39 0.06 0.04 ; FREE-16 same slot 21.07 30.61 33.35 34.35 44.50 28.25 15.07
+    L slot 8256: treated TM at 500,5000,10000,25000,50000,75000,100000 = 8.08 8.94 11.34 0.10 0.00 0.00 0.00 ; FREE-16 same slot 7.95 9.51 19.61 15.40 23.70 37.63 42.21
+4.5 stationarity of TM in the late window (50k-100k): mean over (50k,75k] and (75k,100k] per seed, treated and FREE-ONLY
+    T-16-mid  54.1->57.9 41.4->46.4 51.1->51.2 7.3->12.3 0.2->0.0 24.5->14.6 13.4->13.8 0.0->0.0 ; median drift 0.26
+    FREE-16   60.2->58.3 54.0->57.0 53.8->54.3 43.5->40.6 43.0->19.4 36.1->38.5 24.9->37.2 31.2->39.3 ; median drift 1.46
+    base      0.1->0.0 13.0->10.2 0.5->0.2 0.0->0.0 0.0->0.0 0.0->0.0 0.0->0.0 0.0->0.0 ; median drift -0.00
+4.6 treated minus FREE-ONLY, paired by slot (late window), sign counts and spread; FREE-ONLY itself across seeds:
+    TM per particle        treated-FREE per slot: -3.26 -11.6 -2.89 -32.3 -31.1 -17.8 -17.5 -35.3 ; positive in 0/8 ; FREE-ONLY across seeds: min 31.1 median 39.7 max 59.2
+    TM above layer         treated-FREE per slot: -0.912 -3.06 -0.932 -4.03 -2.04 +0.701 -0.85 -0.725 ; positive in 1/8 ; FREE-ONLY across seeds: min 0.725 median 3.03 max 6.68
+    mean population        treated-FREE per slot: +53 +478 +49 -320 -157 +1.1e+03 +13.7 +642 ; positive in 6/8 ; FREE-ONLY across seeds: min 4.2e+03 median 4.43e+03 max 5.13e+03
+    births per 1000 p-s    treated-FREE per slot: -0.0295 +1.28 +0.0175 -2.71 -0.191 +0.793 +0.133 -0.00943 ; positive in 4/8 ; FREE-ONLY across seeds: min 0.197 median 0.478 max 3.05
+    intake per p-s         treated-FREE per slot: -0.0107 -0.229 -0.0165 +0.2 +0.253 -0.336 +0.114 -0.153 ; positive in 3/8 ; FREE-ONLY across seeds: min 2.08 median 2.33 max 2.47
+    (there is no 100,000-step twin of an F run: seed-to-seed spread of FREE-ONLY TM is the only noise at that horizon, min 31.1 max 59.2 per particle)
+4.7 first read at which T-16-mid departs from FREE-16 (same slot): conduit g=1 inert would give none
+    T-16-mid vs FREE-16     : [100, 100, 100, 100, 100, 100, 100, 100]
+    GHOST vs T-16-mid       : [100, 100, 100, 100, 100, 100, 100, 100]
+    COND vs base            : [100, 100, 100, 100, 100, 100, 100, 100]
+    T-16-hi vs T-16-mid     : [100, 100, 100, 100, 100, 100, 100, 100]
+    T-4-mid vs FREE-4       : [100, 100, 100, 100, 100, 100, 100, 100]
+    toll-C vs toll-base     : [100, 100, 100, 100, 100, 100, 100, 100]
+    toll-FC vs toll-C       : [100, 100, 100, 100, 100, 100, 100, 100]
+    T-16-mid vs FREE-16 (blocked): [100, 200, 200, 200, 100, 100, 100, 100]
+4.8 did the F conduit operate? (conduitSeries, late window median over reads then over seeds; eff = realised extra Dd in units, headroom 88)
+    T-16-mid              /inherit : effP10 0.00, effP50 0.00, effP90 0.00, csat 0.00, xP50 2.12, xP90 8.48, pcP50 4.33
+        max over seeds of late-mean effP90: 1.00 units of Dd (diffA 40, headroom 88)
+    T-16-mid              /blocked : effP10 0.00, effP50 0.00, effP90 0.00, csat 0.00, xP50 5.93, xP90 11.00, pcP50 8.00
+        max over seeds of late-mean effP90: 0.00 units of Dd (diffA 40, headroom 88)
+    T-16-hi               /inherit : effP10 0.00, effP50 0.79, effP90 1.38, csat 0.00, xP50 9.02, xP90 14.15, pcP50 11.32
+        max over seeds of late-mean effP90: 2.20 units of Dd (diffA 40, headroom 88)
+    anchor-phys-T-16-mid  /physarum: effP10 0.00, effP50 0.00, effP90 7.00, csat 0.00, xP50 0.41, xP90 115.70, pcP50 112.70
+        max over seeds of late-mean effP90: 7.00 units of Dd (diffA 40, headroom 88)
+    anchor-blind-T-16-mid /blind   : effP10 0.00, effP50 1.00, effP90 2.00, csat 0.00, xP50 19.00, xP90 38.12, pcP50 31.12
+        max over seeds of late-mean effP90: 2.00 units of Dd (diffA 40, headroom 88)
+    COND                  /inherit : effP10 0.00, effP50 0.00, effP90 0.00, csat 0.00, xP50 0.00, xP90 0.00, pcP50 0.00
+        max over seeds of late-mean effP90: 0.00 units of Dd (diffA 40, headroom 88)
+  WEAK: F conduit at g = 1 is a floor result: eff p90 in the late window is about <= 1 unit of Dd (of 88 headroom) in the treated arms; every F conduit row (T-16-mid, GHOST, T-16-lo/hi, anchors, branches 'noconduit/ghost') compares an essentially inert conduit with none, so 'on-minus-off 0.0% / 0 of 8 PAY / 0 DAMP' at F, including the physarum and blind anchors, is a floor result (anchors: eff p50 0 to 1, p90 7 for physarum and 2 for blind) and does not belong beside D0 (mean Dd +11 to +26 units on every edge) or the O anchors as evidence about a working conduit. The SCREEN says the F conduit never operated, but still lists the F anchor row in the 'Does it pay on existing trail' table next to rows where it did.
+4.9 paired late-window TM per particle across F arms that differ only by a tiny conduit (g = 1 or 2), same slot, and exact sign / permutation tests:
+    T-16-mid /inherit  vs FREE-16  /inherit : median TM 16.6 vs 39.7; per-slot higher in 0, lower in 8; sign p 0.008; permutation p (unpaired means) 0.0564
+    T-16-mid /blocked  vs FREE-16  /blocked : median TM 28.8 vs 28.8; per-slot higher in 5, lower in 3; sign p 0.727; permutation p (unpaired means) 0.9422
+    GHOST    /inherit  vs FREE-16  /inherit : median TM 33.2 vs 39.7; per-slot higher in 0, lower in 8; sign p 0.008; permutation p (unpaired means) 0.1145
+    T-16-hi  /inherit  vs FREE-16  /inherit : median TM 40.1 vs 39.7; per-slot higher in 2, lower in 6; sign p 0.289; permutation p (unpaired means) 0.4157
+    T-4-mid  /inherit  vs FREE-4   /inherit : median TM 1.3 vs 2.2; per-slot higher in 5, lower in 3; sign p 0.727; permutation p (unpaired means) 0.6103
+    COND     /inherit  vs base     /inherit : median TM 0.0 vs 0.0; per-slot higher in 3, lower in 3; sign p 1.000; permutation p (unpaired means) 0.8336
+    toll-C   /inherit  vs toll-base/inherit : median TM 101.5 vs 99.4; per-slot higher in 6, lower in 2; sign p 0.289; permutation p (unpaired means) 0.2511
+    toll-FC  /inherit  vs toll-base/inherit : median TM 99.0 vs 99.4; per-slot higher in 2, lower in 6; sign p 0.289; permutation p (unpaired means) 0.4525
+    GHOST    /inherit  vs T-16-mid /inherit : median TM 33.2 vs 16.6; per-slot higher in 6, lower in 2; sign p 0.289; permutation p (unpaired means) 0.5218
+    -> SCREEN: 'Trail count differences between T-16-mid and FREE-16 (16.6 against 39.7) are within the seed-to-seed spread of identical-configuration worlds (0 to 59)'. The spread of FREE-ONLY alone is 31.1 to 59.2 per particle (blocked 28.3 to 29.1); the '0' comes from the treated arm itself, so the sentence compares the treated arm's range with its own difference. Paired, the treated arm is lower in every seed.
+  WEAK: SCREEN dismisses the T-16-mid vs FREE-16 trail difference (16.6 vs 39.7 per particle) as 'within the seed-to-seed spread of identical-configuration worlds (0 to 59)', but FREE-ONLY alone spans 31 to 59 (blocked 28 to 29) and the 0 belongs to the treated arm. Paired by slot the treated arm (g = 1, effective rate about 0) has less trail in 8 of 8 seeds (two-sided exact sign p = 0.008; GHOST, same g, also 8 of 8) and loses it entirely in 2, but the unpaired permutation test is only p = 0.056 and no multiplicity is controlled; blocked T-16-mid equals FREE-16 blocked (28.77 vs 28.76) and g = 2 (T-16-hi) is not lower, so it is suggestive, not shown. The point for the reading: 'an inert conduit changes nothing' is not what the data say (every F treated arm departs from its FREE-ONLY twin by the first read, step 100), the L count (2 of 8) and the 'S 6 of 8' margin come from exactly these two seeds, and the sentence in SCREEN does not support 'not a conduit effect'.
+
+====================================================================================================
+5. BRANCH PAIRS (2,000-step continuations from identical state), recomputed from the stored branch reads
+====================================================================================================
+5.1 branch rows recomputed: 90 (arm, heredity, checkpoint, variant) cells; SCREEN prints 90; cells whose counts (pairs, PAY, PAY whole+last, DAMP, HARM, unresolved) differ, or a median differs by more than 0.1 point: 0; median entries that differ by one printed digit (<= 0.1 point) from my recomputation: 67 of 360 (rounding-level, the scratch script that made them is not in the repo, so the cause is not known; no reading depends on it)
+    SCREEN rows with no matching cell in the files: 0
+5.2 over all 720 per-seed branch pairs (all variants incl. null and nofree): PAY 0, HARM 5, unresolved 6
+5.3 branch noise floors (max |on-nullA|, |nullA-nullB|, |on-nullB| over the whole 2,000-step window), median over seeds, per run set (a few):
+    GHOST                    inherit  @100000: nf_i +0.24%  nf_b +2.84%  nf_d +1.99%  nf_N +0.24%
+    GHOST                    inherit  @ 50000: nf_i +0.22%  nf_b +2.85%  nf_d +2.41%  nf_N +0.38%
+    T-16-mid                 blocked  @100000: nf_i +0.21%  nf_b +3.33%  nf_d +3.31%  nf_N +0.23%
+    T-16-mid                 blocked  @ 50000: nf_i +0.14%  nf_b +2.32%  nf_d +2.87%  nf_N +0.16%
+    T-16-mid                 inherit  @100000: nf_i +0.08%  nf_b +1.43%  nf_d +2.16%  nf_N +0.16%
+    T-16-mid                 inherit  @ 50000: nf_i +0.23%  nf_b +2.68%  nf_d +3.62%  nf_N +0.26%
+    T-EC                     inherit  @100000: nf_i +0.03%  nf_b +1.14%  nf_d +1.26%  nf_N +0.15%
+    T-EC                     inherit  @ 60000: nf_i +0.08%  nf_b +1.13%  nf_d +1.25%  nf_N +0.21%
+    anchor-blind-EC          blind    @ 20000: nf_i +0.04%  nf_b +0.84%  nf_d +0.88%  nf_N +0.08%
+    anchor-blind-EC          blind    @ 30000: nf_i +0.03%  nf_b +0.96%  nf_d +0.89%  nf_N +0.09%
+    anchor-blind-T-16-mid    blind    @ 20000: nf_i +0.06%  nf_b +1.15%  nf_d +1.02%  nf_N +0.08%
+    anchor-blind-T-16-mid    blind    @ 40000: nf_i +0.03%  nf_b +0.54%  nf_d +0.43%  nf_N +0.05%
+    anchor-phys-EC           physarum @ 20000: nf_i +0.03%  nf_b +1.59%  nf_d +1.68%  nf_N +0.03%
+    anchor-phys-EC           physarum @ 30000: nf_i +0.04%  nf_b +1.37%  nf_d +1.53%  nf_N +0.05%
+    anchor-phys-T-16-mid     physarum @ 20000: nf_i +0.04%  nf_b +1.68%  nf_d +1.43%  nf_N +0.07%
+    anchor-phys-T-16-mid     physarum @ 40000: nf_i +0.04%  nf_b +1.26%  nf_d +1.43%  nf_N +0.05%
+5.4 direction check from raw counts, T-EC inherit, checkpoint 100000, 2,000-step branch: births and deaths in the whole window
+    on     : median births   18896 deaths   18880 mean pop    3935
+    eoff   : median births   15392 deaths   15454 mean pop    3915
+    coff   : median births   18414 deaths   18591 mean pop    3868
+    both   : median births   15106 deaths   15230 mean pop    3864
+    cpub   : median births   18666 deaths   18742 mean pop    3906
+    oghost : median births   19154 deaths   19178 mean pop    3928
+    births with enclosure on 18896 vs enclosure off 15392: the table's on-minus-eoff is positive because the world WITH enclosure has MORE births (the rule E raises turnover); SCREEN's prose 'switching enclosure off raises births and deaths ... (enclosure lowers turnover)' states the opposite.
+  DISCREPANCY: SCREEN prose (O section): 'switching enclosure off raises births and deaths by 18 to 24 percent (enclosure lowers turnover ...)' is reversed: raw branch counts show births and deaths are HIGHER with enclosure on (table values on-minus-eoff are +18 to +24%), so enclosure raises turnover; the same sign convention makes 'conduit off lowers deaths and births by 6 to 7 percent' (anchors) reversed too: on-minus-coff is -6 to -7%, i.e. switching the conduit off raises turnover
+    physarum anchor @30000: births on 5706, conduit-off 6128 -> switching the conduit off RAISES births by 7.4% (SCREEN prose: 'conduit off lowers deaths and births by 6 to 7 percent')
+
+====================================================================================================
+6. PER-CAPITA VERSUS TOTAL INTAKE IN BRANCH PAIRS, CROSS-FLUX, DOSE ROWS, ANCHOR VERDICT, CONTROLS INSIDE THE RANGE
+====================================================================================================
+6.1 per-capita intake (the PAY quantity) versus total intake and population, on minus variant, whole 2,000-step window, per seed (counts of seeds with total intake >= +3%):
+    T-EC                   inherit  @ 60000 on-coff     : per-capita +0.08% | total intake +2.78% (seeds >= +3%: 4/8; per seed -0.1% -0.1% +9.0% +2.0% +3.1% +2.5% +3.0% +3.3%) | mean pop +2.60% (>= +3%: 3/8) | total-intake null-branch floor +0.21%
+    T-EC                   inherit  @100000 on-coff     : per-capita +0.07% | total intake +3.20% (seeds >= +3%: 5/8; per seed +3.3% -0.1% +7.8% +1.3% +3.1% +2.7% +3.3% +3.6%) | mean pop +3.04% (>= +3%: 4/8) | total-intake null-branch floor +0.10%
+    T-EC                   inherit  @100000 on-cpub     : per-capita +0.02% | total intake +1.45% (seeds >= +3%: 0/8; per seed +1.5% -0.1% +2.6% +1.0% +1.4% +1.3% +1.8% +1.7%) | mean pop +1.48% (>= +3%: 0/8) | total-intake null-branch floor +0.10%
+    anchor-blind-EC        blind    @ 30000 on-coff     : per-capita +0.09% | total intake +2.22% (seeds >= +3%: 0/8; per seed +2.3% +2.2% +2.2% +2.2% +2.2% +2.1% +2.3% +2.2%) | mean pop +2.14% (>= +3%: 0/8) | total-intake null-branch floor +0.07%
+    anchor-phys-EC         physarum @ 30000 on-coff     : per-capita +0.08% | total intake -0.03% (seeds >= +3%: 0/8; per seed +0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0%) | mean pop -0.10% (>= +3%: 0/8) | total-intake null-branch floor +0.02%
+    anchor-phys-T-16-mid   physarum @ 40000 on-noconduit: per-capita -0.01% | total intake -0.01% (seeds >= +3%: 0/8; per seed -0.0% -0.0% +0.0% -0.0% -0.0% +0.0% -0.0% +0.0%) | mean pop -0.00% (>= +3%: 0/8) | total-intake null-branch floor +0.03%
+    anchor-blind-T-16-mid  blind    @ 40000 on-noconduit: per-capita +0.02% | total intake +0.11% (seeds >= +3%: 0/8; per seed +0.1% +0.1% +0.1% +0.1% +0.1% +0.1% +0.1% +0.1%) | mean pop +0.08% (>= +3%: 0/8) | total-intake null-branch floor +0.03%
+    T-16-mid               inherit  @100000 on-noconduit: per-capita -0.04% | total intake -0.00% (seeds >= +3%: 0/8; per seed -0.1% +0.1% -0.0% -0.0% +0.0% +0.0% -0.0% +0.0%) | mean pop +0.01% (>= +3%: 0/8) | total-intake null-branch floor +0.08%
+    T-16-mid               inherit  @100000 on-nofree   : per-capita -5.16% | total intake -0.63% (seeds >= +3%: 0/8; per seed -0.9% -0.3% +0.1% -1.7% -0.1% -2.8% -2.0% +0.0%) | mean pop +3.49% (>= +3%: 5/8) | total-intake null-branch floor +0.08%
+  WEAK: PAY is per particle-step. In the O evolving runs the owner conduit (on versus coff) leaves per-capita intake at +0.1% but raises mean population by +3.0% (null-branch floor on population 0.15 to 0.2%) and total intake by about +3%; the SCREEN reports the population number but reads the row as 'no payment'. On the blind O anchor the same shift is +2.2% in total intake and +2.1% in population in 8 of 8 seeds against a null floor of 0.07% (6.1), and the physarum anchor shows none. A conduit that helps by feeding more bodies at the same per-body intake fails the per-capita rule by construction; it is a real effect of a different kind (O is unlabelled, so no label changes, but 'intake never rises' is a per-capita statement).
+6.2 cross-flux, the MECH readout: SCREEN says 'the road conducts (cross-flux and meanDd rise)'. xflux is the expected extra flux across the mid-column in the direction of the gradient; mean over the window, median over seeds:
+    T rows-G P2, (0,300]      : xflux on 0.10 0.04 0.26 0.08 0.33 -0.01 0.01 -0.19 (median 0.06) ; off median 0.19
+    T rows-G P2, (300,1000]   : xflux on 0.33 -0.35 0.52 -0.10 -0.25 -0.06 -0.05 0.04 (median -0.05) ; off median -0.05
+    D0 rows-G P2, (400,2400]  : xflux on -0.23 0.12 -0.36 0.16 -0.68 -0.11 -0.62 -0.13 (median -0.18) ; off median -0.45
+    T cols-G P2, (0,300]      : xflux on 0.15 0.49 0.72 0.38 0.11 0.30 0.21 0.36 (median 0.33) ; off median 0.44
+  WEAK: The SCREEN's D0 reading 'the road conducts (cross-flux and meanDd rise)': meanDd rises (the conduit raises the mean diffusion constant by +11 to +26 units of 40), but the stored cross-flux readout xflux is about zero or negative in T and D0 (see 6.2), so the MECH predicate would not hold and 'cross-flux rises' is not what the stored series shows.
+6.3 dose rows K counts: FREE-4, T-4-mid, T-16-lo (= T-16-mid), T-16-hi against their FREE-ONLY partner (SCREEN: K 0, 1, 0, 0 of 8; FREE-4 keeps 2.2, T-4-mid 1.3):
+    FREE-4    vs FREE-4  : [('S', 5), ('NB', 3)]  K=0  median TM 2.15, TMabove 0.121; max TMabove 1.840
+    T-4-mid   vs FREE-4  : [('S', 3), ('K', 2), ('NB', 2), ('L', 1)]  K=2  median TM 1.26, TMabove 0.674; max TMabove 4.919
+    T-16-lo   vs FREE-16 : [('S', 6), ('L', 2)]  K=0  median TM 16.55, TMabove 1.058; max TMabove 5.772
+    T-16-mid  vs FREE-16 : [('S', 6), ('L', 2)]  K=0  median TM 16.55, TMabove 1.058; max TMabove 5.772
+    T-16-hi   vs FREE-16 : [('S', 7), ('L', 1)]  K=0  median TM 40.08, TMabove 1.995; max TMabove 6.549
+6.4 anchor verdict (a) re-applied: for each anchor run PAY(on vs noconduit) and PAY(on vs ghost) at both checkpoints, whole and last:
+    anchor-phys-T-16-mid    : (a) PAY in 0/8, (a-damp) in 0/8, unresolved 0  -> verdict MIXED (SCREEN: MIXED, 0 pay 0 damp)
+    anchor-blind-T-16-mid   : (a) PAY in 0/8, (a-damp) in 0/8, unresolved 0  -> verdict MIXED (SCREEN: MIXED, 0 pay 0 damp)
+    F anchor 2,000-step pairs: conduit eff p50 0-1, p90 2-7 of 88 headroom (see 4.8); the branch nf_i is 0.03-0.06%, so the pair can see a change of about 0.1% in intake: a floor result for 'does an effective conduit pay', a sharp result for 'does a g=1 conduit change anything' (it changes births/deaths by up to 1%).
+6.5 controls inside the treatment range: DAMP counts of the null branches (nullA, nullB) against real variants, per run set:
+    null branches: 32 cells, DAMP count distribution [(0, 23), (1, 7), (2, 2)] (max 2 of 8)
+    real conduit-off style variants: 36 cells, DAMP distribution [(0, 18), (1, 4), (2, 3), (3, 2), (4, 1), (7, 1), (8, 7)]
+    T-EC coff @100000: DAMP 2/8; same cell's nullA DAMP 0/8, nullB 0/8 -> the 'DAMP 1 to 2 of 8' for the owner conduit in evolving worlds is the null-branch level
+    T-EC coff @60000: DAMP 1/8; same cell's nullA DAMP 0/8, nullB 0/8 -> the 'DAMP 1 to 2 of 8' for the owner conduit in evolving worlds is the null-branch level
+  WEAK: DAMP counts of 1 to 2 of 8 (owner conduit off in the evolving T-EC runs; GHOST and T-16-mid branches) are the same size as the null branches' own DAMP counts (0 to 2 of 8 for nullA and nullB with no change at all), because the DAMP threshold is a fixed 3 percent on turnover while the branch births/deaths noise is 1 to 3.6 percent; only the anchors' conduit-off rows (turnover -6 to -7% against null floors of about 1%, 8 of 8) rise clearly out of that floor.
+6.6 survivor conditioning in the F branch tests: trail per particle at the checkpoint of each T-16-mid inherit run (a branch where no trail exists tests a conduit on nothing):
+    @50000: TM per particle per seed 50.2 44.0 55.7 5.0 0.4 24.4 11.4 0.0 ; seeds with TM < 1: 2, < 10: 3
+    @100000: TM per particle per seed 58.0 48.6 47.8 13.4 0.0 11.0 14.8 0.0 ; seeds with TM < 1: 2, < 10: 2
+    ghostCorr per slot and checkpoint (T-16-mid inherit): 8249@50000:-0.09 8249@100000:-0.01 8250@50000:-0.02 8250@100000:0.03 8251@50000:-0.12 8251@100000:-0.04 8252@50000:0.01 8252@100000:-0.02 8253@50000:-0.0 8253@100000:0.01 8254@50000:-0.02 8254@100000:-0.05 8255@50000:0.02 8255@100000:-0.0 8256@50000:None 8256@100000:None
+
+====================================================================================================
+7. SCREEN PROSE CHECKED AGAINST ITS OWN TABLE AND THE RAW RUNS; SCOPE
+====================================================================================================
+7.1 'median rel_i on-minus-off is between -0.9 and +0.8 percent ... at every strength and window': recomputed range of the 36 medians -0.9% to +0.8%
+7.2 'Births and deaths both fall 1 to 5 percent': births medians range -5.5% to +2.2%, deaths -6.2% to +3.0%; rows where either median does not fall by at least 1 point: 13 of 36; rows where either rises: [('rows-G.diffA vs rows-G.off', 300, 1000, '-1.6%', '+0.7%'), ('cols-G vs cols-G.off', 0, 300, '-1.1%', '+0.3%'), ('rows-U vs rows-U.off', 1000, 3000, '+2.2%', '+3.0%')]; rows beyond 5 points: [('cols-G vs cols-G.off', 1000, 3000, '-5.5%', '-6.2%'), ('phys-rows-G vs phys-rows-G.off', 1000, 3000, '-4.7%', '-5.2%')]
+7.3 'population stays within +/- 2 percent in G' (gradient rows other than the carpet): rows outside: [('rows-G.on-P1 vs rows-G.off', 1000, 3000, '-3.3%'), ('rows-G.on-P3 vs rows-G.off', 0, 300, '+2.5%'), ('lat-G vs lat-G.off', 0, 300, '+2.2%'), ('pat-G vs pat-G.off', 0, 300, '+2.3%'), ('pat-G vs pat-G.off', 1000, 3000, '+2.4%'), ('phys-rows-G vs phys-rows-G.off', 0, 300, '+4.0%')]
+  DISCREPANCY: SCREEN prose 'Births and deaths both fall 1 to 5 percent' (T section) does not describe its own table: medians run from -5.5% to +2.2% (births) and -6.2% to +3.0% (deaths), rows-U W3 rises (+2.2% / +3.0%), cols-G W3 and phys-rows-G W3 pass 5 points, and several rows are near 0
+  DISCREPANCY: SCREEN prose 'population stays within +/- 2 percent in G' is violated by its own table: rows-G.on-P1 vs rows-G.off 1000 3000 -3.3%; rows-G.on-P3 vs rows-G.off 0 300 +2.5%; lat-G vs lat-G.off 0 300 +2.2%; pat-G vs pat-G.off 0 300 +2.3%; pat-G vs pat-G.off 1000 3000 +2.4%; phys-rows-G vs phys-rows-G.off 0 300 +4.0%
+7.4 per-seed extremes of rel_i over the 36 pair-windows x 8 seeds: lowest -5.4% (pat-G vs pat-G.off (1000,3000] seed 8217), highest +4.9% (rows-G.on-P1 vs rows-G.off (1000,3000] seed 8217); seed-pairs with rel_i >= +3%: 6; <= -3%: 2
+    -> 'within 0.9 percent of conduit-off on intake in every pair and window' is a statement about the 8-seed medians, not about runs
+    the 6 seed-pairs at or above +3% intake (they fail a safeguard, so none is a PAY, but 'intake never rises by the 3 percent floor in any pair' is true of medians only):
+      rows-G.diffA vs rows-G.off (1000,3000] seed 8222: rel_i +3.5% births -5.5% deaths -5.6% pop -3.3%
+      carpet-U vs carpet-U.off (1000,3000] seed 8217: rel_i +3.9% births -11.0% deaths -10.3% pop -2.1%
+      rows-G.on-P3 vs rows-G.off (1000,3000] seed 8222: rel_i +4.0% births -14.2% deaths -11.8% pop -10.4%
+      rows-G.on-R vs rows-G.off (1000,3000] seed 8222: rel_i +4.3% births -7.1% deaths -6.4% pop -6.0%
+      carpet-G vs carpet-G.off (1000,3000] seed 8217: rel_i +4.5% births -12.4% deaths -11.6% pop -1.2%
+      rows-G.on-P1 vs rows-G.off (1000,3000] seed 8217: rel_i +4.9% births -2.0% deaths -1.0% pop -3.7%
+7.4b F label predicates re-applied to stored late aggregates (conduit and r4 census values are stored, the per-particle readouts are not): (b) import, H and G of (c), (f) controls
+    (b) import true in 4/8 (None 2), H true in 1/8, G true in 8/8   [SCREEN: (b) 4/8, H 1/8, G 8/8]
+    (f) GHOST kept 7/8, DIFF kept 8/8  [SCREEN: 7/8 and 8/8]; (b)(c)(f) are not used by the label (S in 6 of 8 matches rule 2 before they are reached)
+7.5 distinct world seeds in the whole run-log: 101 (SCREEN: '101 distinct world seeds logged after the screen, 0 not in the table'); in the real out dirs: 87
+7.6 scope: D0 is one pattern (rows), one strength (plateau q = 2, ext 31), one decay (pDecay 66), one light (gradient), inherit only, 8 seeds, 2,000 steps:  {'pattern': ['rows'], 'pDecay': [66], 'cap': [2], 'light': ['gradient']}
+  WEAK: D0 is the only place where the conduit is both operating (mean Dd +11 to +26 units over every edge) and the window is long (2,000 steps): one trail pattern (rows), one plateau strength (q 2), one decay (pDecay 66), gradient light, inherit heredity. A flat per-capita intake there says that this conduit on this carpet does not raise per-body intake; it does not extend to other patterns, strengths, decays or the unlit-uniform world where F and O live.
+  WEAK: T windows: the road is alive (median laid-edge x_e >= 1 with the conduit on) only up to about step 300 (rows-G P2 on: median x_e 28 at step 10, 4 at 200, 1 at 300, 0 at 400), so W2 (300,1000] and W3 (1000,3000] read a dead road with the conduit having nothing to act on; those two windows carry no information on whether a road pays (the SCREEN does say T is unreadable, but its descriptive table and paragraph still present all three windows as evidence). Only W1 (0,300], inside the founder die-off/growth transient (n 1024 to 2022), reads a live road, and it shows +0.1% intake with a butterfly floor of 0.1%.
+  WEAK: F evolving rows are survivor-conditioned in two seeds (L: no trail at all) and a third seed (TM 5 to 13) in the T-16-mid inherit branches (6.6): in 2 to 3 of 8 pairs the conduit-off branch compares nothing with nothing. The SCREEN says anchors carry the 'pays' reading, but the anchors carry the weakest conduit (eff p90 2 to 7 units).
+
+====================================================================================================
+8. SIZING RULES R1, R2, R3 re-derived from the sizing run files (the frozen sizing is what every main command used)
+====================================================================================================
+8.1 R1 base0-U (4 seeds): median |n(t)-n(t-100)|/n(t-100) on 50-step block means: t150: 0.477, t200: 0.302, t250: 0.279, t300: 0.178, t350: 0.125, t400: 0.114 -> first multiple of 50 under 5%: None  [SCREEN: U none by 400 (fallback 400), G 300]
+8.1 R1 base0-G (4 seeds): median |n(t)-n(t-100)|/n(t-100) on 50-step block means: t150: 0.338, t200: 0.162, t250: 0.114, t300: 0.025, t350: 0.032, t400: 0.014 -> first multiple of 50 under 5%: 300  [SCREEN: U none by 400 (fallback 400), G 300]
+8.2 R2: share of laid cells with A >= 8 at step 10, median over the 2 seeds, S2 runs (default decay, gradient light):
+    rows    : v16: 1.00, v24: 1.00, v32: 1.00, v48: 1.00 -> v_p 48
+    cols    : v16: 1.00, v24: 1.00, v32: 1.00, v48: 0.99 -> v_p 48
+    lattice : v16: 1.00, v24: 1.00, v32: 1.00, v48: 0.99 -> v_p 48
+    patches : v16: 1.00, v24: 0.99, v32: 0.99, v48: 0.47 -> v_p 32
+    carpet  : v16: 1.00, v24: 0.99, v32: 0.98, v48: 0.01 -> v_p 32
+    v = min over patterns = 32 [frozen v = 32]
+8.3 R3: last read with median laid-edge x_e >= q, S2 rows-v32 (2 seeds, default decay), reads every 50 plus 10: 
+    q = 1: per seed [350, 350] (frozen 350; main-run per-step reads give [371, 370, 375, 359, 354, 377, 365, 345])
+    q = 2: per seed [276, 276] (frozen 276; main-run per-step reads give [277, 278, 276, 274, 270, 282, 276, 272])
+    q = 3: per seed [200, 200] (frozen 200; main-run per-step reads give [231, 234, 234, 233, 227, 229, 232, 231])
+  WEAK: Sizing t_alive for q = 3 is 200 in the frozen sizing (reads on a 50-step grid, 2 seeds) while the 8 main rows-G.off runs read every step to 400 and give 227 to 234; for q = 1 and 2 the two agree (350 vs 345-377, 276 vs 270-282). It does not change any label (PW empty either way) but the frozen t_alive is a coarse, 2-seed number.
+
+====================================================================================================
+SUMMARY
+====================================================================================================
+discrepancies collected: 4
+  D1. 24 of the 872 branch variants are relax-* (5,000-step relaxation of on, C-off, both-off at the late checkpoint, DESIGN 8); SCREEN reports no relaxation result and branchPairs() skips them
+  D2. SCREEN prose (O section): 'switching enclosure off raises births and deaths by 18 to 24 percent (enclosure lowers turnover ...)' is reversed: raw branch counts show births and deaths are HIGHER with enclosure on (table values on-minus-eoff are +18 to +24%), so enclosure raises turnover; the same sign convention makes 'conduit off lowers deaths and births by 6 to 7 percent' (anchors) reversed too: on-minus-coff is -6 to -7%, i.e. switching the conduit off raises turnover
+  D3. SCREEN prose 'Births and deaths both fall 1 to 5 percent' (T section) does not describe its own table: medians run from -5.5% to +2.2% (births) and -6.2% to +3.0% (deaths), rows-U W3 rises (+2.2% / +3.0%), cols-G W3 and phys-rows-G W3 pass 5 points, and several rows are near 0
+  D4. SCREEN prose 'population stays within +/- 2 percent in G' is violated by its own table: rows-G.on-P1 vs rows-G.off 1000 3000 -3.3%; rows-G.on-P3 vs rows-G.off 0 300 +2.5%; lat-G vs lat-G.off 0 300 +2.2%; pat-G vs pat-G.off 0 300 +2.3%; pat-G vs pat-G.off 1000 3000 +2.4%; phys-rows-G vs phys-rows-G.off 0 300 +4.0%
+places the reading is weaker than the headline: 14
+  W1. SCREEN says 0 of 8 seeds pass PAY 'in any of them' for 208 T runs: for lat-G, pat-G, rows-U, phys-rows-G there is no noise floor so PAY is undefined there (printed '-'), and cols-G (1000,3000] is unresolved in 8 of 8; the 0/8 claim is only a verdict in the rows-G, carpet and cols W1/W2 pairs. The per-seed rel_i of the pairs without a floor are all under the 3 percent floor, so the descriptive reading holds, but it is not a PAY count.
+  W2. The butterfly noise floor is soft: of the 8 twins per arm, {'rows-G.bf': 2, 'carpet-U.bf': 8, 'carpet-G.bf': 2, 'cols-G.bf': 2, 'D0 rows-G.bf': 3} never depart from their off run in n, births, deaths or trail (whole 3,000 or 5,000 steps), carpet-U's floor is exactly 0 (a 3 percent floor only), and the D0 births/deaths/population floors (5.0 / 4.6 / 2.4 percent) come from the 5 twins that did diverge. The T and D0 noise floors are maxima over few, partly degenerate pairs.
+  W3. D0 'durable road': at pDecay 66 the whole world fills with trail (share of edges with x_e >= 2 is ~0.98 at step 2000), so D0 tests a conduit on a trail carpet, not on a road versus off-road; 'onLaid' stays at the laid-area share 0.12 (particles do not follow the road), so a road/off-road contrast the T design wanted was never present in D0.
+  W4. D0 'same food intake' is per particle-step. Total intake over the window is +3.8% (median; 5 of 8 seeds above +3%) with the conduit on and the light supply drawn +3.6%, population +3.1% (butterfly noise on population is up to 2.4%, and 3 of the 8 D0 butterfly twins never diverge from off at all, so that floor is itself soft), births and deaths -10.7 / -9.4% (butterfly noise up to 5.0 / 4.6%, fixed DAMP threshold 3%). The DESIGN's PAY is per capita, so V(PAY-D0) = N holds as defined, but the one-line summary 'intake +0.2 percent ... the same food intake' is the per-capita number; the total and the population shift are of the size of the butterfly noise and cannot be called either way, while the turnover drop (5 of 8 seeds beyond the largest butterfly difference) is the clearest effect.
+  W5. F label SUBSIDY-ONLY is decided by the free layer, not by the conduit: the conduit contributes a few units of trail at most, FREE-ONLY already holds above-layer trail (median 3.03 per particle), so K (treated >= 2 x FREE-ONLY) cannot be reached by an inert conduit and S (total trail >= 0.1) is satisfied by the layer itself. The label is therefore not evidence about the conduit; the SCREEN says so for the strength, not for the label.
+  W6. F conduit at g = 1 is a floor result: eff p90 in the late window is about <= 1 unit of Dd (of 88 headroom) in the treated arms; every F conduit row (T-16-mid, GHOST, T-16-lo/hi, anchors, branches 'noconduit/ghost') compares an essentially inert conduit with none, so 'on-minus-off 0.0% / 0 of 8 PAY / 0 DAMP' at F, including the physarum and blind anchors, is a floor result (anchors: eff p50 0 to 1, p90 7 for physarum and 2 for blind) and does not belong beside D0 (mean Dd +11 to +26 units on every edge) or the O anchors as evidence about a working conduit. The SCREEN says the F conduit never operated, but still lists the F anchor row in the 'Does it pay on existing trail' table next to rows where it did.
+  W7. SCREEN dismisses the T-16-mid vs FREE-16 trail difference (16.6 vs 39.7 per particle) as 'within the seed-to-seed spread of identical-configuration worlds (0 to 59)', but FREE-ONLY alone spans 31 to 59 (blocked 28 to 29) and the 0 belongs to the treated arm. Paired by slot the treated arm (g = 1, effective rate about 0) has less trail in 8 of 8 seeds (two-sided exact sign p = 0.008; GHOST, same g, also 8 of 8) and loses it entirely in 2, but the unpaired permutation test is only p = 0.056 and no multiplicity is controlled; blocked T-16-mid equals FREE-16 blocked (28.77 vs 28.76) and g = 2 (T-16-hi) is not lower, so it is suggestive, not shown. The point for the reading: 'an inert conduit changes nothing' is not what the data say (every F treated arm departs from its FREE-ONLY twin by the first read, step 100), the L count (2 of 8) and the 'S 6 of 8' margin come from exactly these two seeds, and the sentence in SCREEN does not support 'not a conduit effect'.
+  W8. PAY is per particle-step. In the O evolving runs the owner conduit (on versus coff) leaves per-capita intake at +0.1% but raises mean population by +3.0% (null-branch floor on population 0.15 to 0.2%) and total intake by about +3%; the SCREEN reports the population number but reads the row as 'no payment'. On the blind O anchor the same shift is +2.2% in total intake and +2.1% in population in 8 of 8 seeds against a null floor of 0.07% (6.1), and the physarum anchor shows none. A conduit that helps by feeding more bodies at the same per-body intake fails the per-capita rule by construction; it is a real effect of a different kind (O is unlabelled, so no label changes, but 'intake never rises' is a per-capita statement).
+  W9. The SCREEN's D0 reading 'the road conducts (cross-flux and meanDd rise)': meanDd rises (the conduit raises the mean diffusion constant by +11 to +26 units of 40), but the stored cross-flux readout xflux is about zero or negative in T and D0 (see 6.2), so the MECH predicate would not hold and 'cross-flux rises' is not what the stored series shows.
+  W10. DAMP counts of 1 to 2 of 8 (owner conduit off in the evolving T-EC runs; GHOST and T-16-mid branches) are the same size as the null branches' own DAMP counts (0 to 2 of 8 for nullA and nullB with no change at all), because the DAMP threshold is a fixed 3 percent on turnover while the branch births/deaths noise is 1 to 3.6 percent; only the anchors' conduit-off rows (turnover -6 to -7% against null floors of about 1%, 8 of 8) rise clearly out of that floor.
+  W11. D0 is the only place where the conduit is both operating (mean Dd +11 to +26 units over every edge) and the window is long (2,000 steps): one trail pattern (rows), one plateau strength (q 2), one decay (pDecay 66), gradient light, inherit heredity. A flat per-capita intake there says that this conduit on this carpet does not raise per-body intake; it does not extend to other patterns, strengths, decays or the unlit-uniform world where F and O live.
+  W12. T windows: the road is alive (median laid-edge x_e >= 1 with the conduit on) only up to about step 300 (rows-G P2 on: median x_e 28 at step 10, 4 at 200, 1 at 300, 0 at 400), so W2 (300,1000] and W3 (1000,3000] read a dead road with the conduit having nothing to act on; those two windows carry no information on whether a road pays (the SCREEN does say T is unreadable, but its descriptive table and paragraph still present all three windows as evidence). Only W1 (0,300], inside the founder die-off/growth transient (n 1024 to 2022), reads a live road, and it shows +0.1% intake with a butterfly floor of 0.1%.
+  W13. F evolving rows are survivor-conditioned in two seeds (L: no trail at all) and a third seed (TM 5 to 13) in the T-16-mid inherit branches (6.6): in 2 to 3 of 8 pairs the conduit-off branch compares nothing with nothing. The SCREEN says anchors carry the 'pays' reading, but the anchors carry the weakest conduit (eff p90 2 to 7 units).
+  W14. Sizing t_alive for q = 3 is 200 in the frozen sizing (reads on a 50-step grid, 2 seeds) while the 8 main rows-G.off runs read every step to 400 and give 227 to 234; for q = 1 and 2 the two agree (350 vs 345-377, 276 vs 270-282). It does not change any label (PW empty either way) but the frozen t_alive is a coarse, 2-seed number.
