@@ -540,8 +540,8 @@ describe("arms and run counts match the design", () => {
     expect(count("B")).toBe(32);
     expect(count("F")).toBe(88);
     expect(count("F", { extras: true })).toBe(88 + 64);
-    expect(count("O")).toBe(80);
-    expect(count("O", { extras: true })).toBe(80 + 88);
+    expect(count("O")).toBe(88);                                   // the design's 80 plus the owner addendum's report arm T-C-pas (8)
+    expect(count("O", { extras: true })).toBe(88 + 88);
     expect(count("S2")).toBe(40);
     expect(armsOf("T", sz).length).toBe(26);
   });
@@ -904,9 +904,9 @@ describe("sizing from the pilots, and the gates", () => {
     expect(unmeasuredNeeds(PROVISIONAL, rows("S3")).sort()).toEqual(["Fg"]);       // the treated pilot arm needs the sized strength; FREE-ONLY does not
     expect(unmeasuredNeeds(PROVISIONAL, rows("T")).sort()).toEqual(["diffA", "gR", "t0", "tAlive", "v"]);
     expect(unmeasuredNeeds({ ...PROVISIONAL, measured: ["v", "gR", "diffA", "t0", "tAlive"] }, rows("T"))).toEqual([]);
-    expect(unmeasuredNeeds({ ...PROVISIONAL, measured: ["v", "gR", "diffA", "t0", "tAlive"] }, rows("O")).sort()).toEqual(["gCpub", "gOwner", "theta"]);
+    expect(unmeasuredNeeds({ ...PROVISIONAL, measured: ["v", "gR", "diffA", "t0", "tAlive"] }, rows("O")).sort()).toEqual(["gCpub", "gOwner", "gPassive", "theta"]);
     expect(armNeeds("F", "base")).toEqual(["Fstar", "Fg", "diffAF"]);
-    expect(SIZING_FIELDS.length).toBe(11);
+    expect(SIZING_FIELDS.length).toBe(12);   // 11 of the design plus gPassive (owner addendum)
   });
   it("the read schedule includes every window edge", () => {
     const dense = schedule("dense", 3000, [276, 3000]);
@@ -1245,7 +1245,15 @@ describe("review round 2 (14 Nov 2026): each test fails on the code before its f
       n: 8, e: Array(8).fill(true), kEC, kE: Array(8).fill(false), payECvsCoff: "Y", payAll: "Y", harmOrDamp: false,
       b: bcd, c: bcd, d: bcd, H: Array(8).fill(false), G: Array(8).fill(false), f: true, g: true, payCpub: "N", stopRule: false, extras: true,
     });
-    expect(labelO(o(on(0, 5), on(2, 7))).label).toBe("KEPT-BY-PRESENCE-ONLY");        // old code: KEPT-AND-USED
+    // Four seeds pass the conjunction and four fail it: the joint vote reads I, which is unresolved (owner addendum review), never a negative-on-use label.
+    expect(labelO(o(on(0, 5), on(2, 7))).label).toBe("INCONCLUSIVE");                 // first code: KEPT-AND-USED
+    expect(labelO(o(on(0, 5), on(6, 7))).label).toBe("KEPT-BY-PRESENCE-ONLY");        // six seeds fail the conjunction: a real failure
+    // PAYALL per slot joins the same conjunction: PAYALL on 1-6 with K, (b), (c), (d) on 3-8 leaves four seeds.
+    expect(labelO({ ...o(on(2, 7), on(2, 7)), payAllS: on(0, 5) }).label).toBe("INCONCLUSIVE");
+    expect(labelO({ ...o(on(2, 7), on(2, 7)), payAllS: on(2, 7) }).label).toBe("KEPT-AND-USED");
+    expect(labelO({ ...o(on(2, 7), on(2, 7)), payAll: "I" }).label).toBe("INCONCLUSIVE");
+    // (c) unread on every seed is unresolved, not "the conduit pays and is not used".
+    expect(labelO({ ...o(on(0, 7), on(0, 7)), c: Array(8).fill(null) }).label).toBe("INCONCLUSIVE");
     expect(labelO(o(on(2, 7), on(2, 7))).label).toBe("KEPT-AND-USED");
     // The sponge too: K and d with (H and not G) on different seeds is not OWNER-STATIC-SPONGE.
     const sp = (kEC: boolean[], dh: boolean[]): OInputs => ({ ...o(kEC, Array(8).fill(false)), d: dh, H: dh, G: Array(8).fill(false) });
