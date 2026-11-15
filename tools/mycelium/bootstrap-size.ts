@@ -2,7 +2,9 @@
 // R5 and R6 (the F and O pilots, S3 and S4) are pure rules in observe-bootstrap.ts; their inputs come from the pilot runs and are not assembled here.
 import { aliveAndWindow, chooseV, colWindow, DEF_THETAS, freeCeiling, freeStrengths, gRising, settleT0, thetaR6 } from "./observe-bootstrap.ts";
 import type { RunFile } from "./bootstrap-analyze.ts";
-import { armsOf, PATTERNS, PROVISIONAL, S2_VALUES } from "./bootstrap-arms.ts";
+import { armsOf, PATTERNS, PROVISIONAL, S2_VALUES, type Sizing } from "./bootstrap-arms.ts";
+import { histMedian, matchCpubFromHists, meanEffFromHist, ownerGFromX } from "./observe-owner.ts";
+import { ownerGStrengths } from "./observe-bootstrap.ts";
 
 /** The steps a sizing arm is defined to run (arm lengths do not depend on the sizing values); null for an arm the tables do not know. */
 const pilotSteps = (r: RunFile): number | null => armsOf(r.series, PROVISIONAL).find((a) => a.id === r.armId)?.steps ?? null;
@@ -114,4 +116,45 @@ export function sizeFromS(allRows: readonly RunFile[]): SizeResult {
   } else L.push(`R6: ${p4.length ? `only ${p4.length} S4 pass-toll-gid runs (need ${S_SEEDS.S4}); not measured` : "no S4 pass-toll-gid runs"}`);
   L.push(`measured: ${measured.join(", ") || "nothing"}. Not measurable here: gOwner, gCpub (owner-edge readouts, step 3c).`);
   return { lines: L, sizing: out };
+}
+
+// ---- owner addendum (docs/mycelium-bootstrap-owner-2026-11-15/DESIGN.md section 2): O1, O2, O3 from the S5 runs ---------------------
+
+/** Seeds of each S5 arm. A rule is applied only when both arms are complete at their defined length and carry the late edge histograms. */
+export const S5_SEEDS = 4;
+
+export interface OwnerSizeResult { lines: string[]; sizing: Record<string, unknown> | null; measured: string[] }
+
+/** A sizing run is territorial when at least this share of its directed edges (late window) joins two cells of one owner: the state the owner conduit has edges in. */
+export const TERRITORY_MIN = 0.25;
+
+export function sizeOwner(allRows: readonly RunFile[], sz: Sizing, series: "S5" | "S5L" = "S5L"): OwnerSizeResult {
+  const L: string[] = [];
+  const ok = (r: RunFile) => r.series === series && r.heredity === "inherit" && !r.smoke && r.steps === pilotSteps(r) && !!r.ownerHist && r.ownerHist.censuses > 0 && !r.ledgerBadChecks;
+  const pass = allRows.filter((r) => ok(r) && r.armId === "pass").sort((a, b) => a.slot - b.slot), E = allRows.filter((r) => ok(r) && r.armId === "E").sort((a, b) => a.slot - b.slot);
+  if (pass.length !== S5_SEEDS || E.length !== S5_SEEDS) return { lines: [`owner sizing: needs ${S5_SEEDS} finished ${series} runs per arm with edge histograms (pass ${pass.length}, E ${E.length}); nothing sized`], sizing: null, measured: [] };
+  if (E.some((r) => r.config.ownerDefend !== sz.theta.mid)) return { lines: [`owner sizing: the ${series} E runs were not made at theta mid ${sz.theta.mid}; nothing sized`], sizing: null, measured: [] };
+  const De = E[0].config.diffA;
+  const xs = (rs: RunFile[]) => rs.map((r) => histMedian(r.ownerHist!.own));
+  const same = (rs: RunFile[]) => rs.map((r) => r.ownerHist!.own.reduce((t, v) => t + v, 0) / r.ownerHist!.edges);
+  const f2 = (v: number | null) => (v === null ? "-" : v.toFixed(3));
+  // SIZING.md deviation 2: the gated world settles in one of two states. O1 and O3 read the territorial runs (same-owner share at least TERRITORY_MIN);
+  // with fewer than two of them the rule falls back to every run, flagged.
+  const terr = E.filter((r) => r.ownerHist!.own.reduce((t, v) => t + v, 0) / r.ownerHist!.edges >= TERRITORY_MIN);
+  const fallback = terr.length < 2, Eu = fallback ? E : terr;
+  const all1 = ownerGFromX(xs(E));
+  const o1 = ownerGFromX(xs(Eu)), o2 = ownerGFromX(xs(pass));
+  const g = ownerGStrengths(o1.g);
+  L.push(`O1 (E worlds, theta ${sz.theta.mid}, pilot ${series}): per-run median same-owner x ${xs(E).join(", ")} (same-owner share of directed edges ${same(E).map(f2).join(", ")}); territorial runs ${terr.length} of ${E.length}${fallback ? " (fewer than 2: every run is used, FLAGGED)" : ""}`);
+  L.push(`O1: median x over ${fallback ? "all" : "the territorial"} runs ${o1.x ?? "-"} -> gOwner lo/mid/hi ${g.lo}/${g.mid}/${g.hi}${o1.noBiteLikely ? " (NO-BITE-LIKELY: no same-owner edge)" : ""}; the median over every run (${all1.x ?? "-"}) would give ${all1.g}`);
+  L.push(`O2 (passive worlds): per-run median same-owner x ${xs(pass).join(", ")} (same-owner share ${same(pass).map(f2).join(", ")}); median ${o2.x ?? "-"} -> gPassive ${o2.g}${o2.noBiteLikely ? " (NO-BITE-LIKELY)" : ""}`);
+  const m = matchCpubFromHists(Eu.map((r) => r.ownerHist!), g.mid, De);
+  L.push(`O3 (the same runs as O1): mean owner extra rate at g ${g.mid} per run ${Eu.map((r) => meanEffFromHist(r.ownerHist!.own, r.ownerHist!.edges, g.mid, De).toFixed(3)).join(", ")} (base diffA ${De} subtracted)`);
+  L.push(`O3: median ratio public/owner by g': ${m.perG.map((p) => `${p.g}:${f2(p.ratio)}`).join(" ")} -> gCpub ${m.g} (ratio ${f2(m.ratio)})${m.void ? " VOID: no grid value within 10 percent; the C-pub control fails (g)" : ""}`);
+  const xAtMed = o1.x === null ? null : Math.min(De + ((Math.round(o1.x) * g.mid) >> 4), 128) - De;
+  L.push(`extra rate at the median x and gOwner.mid: ${xAtMed ?? "-"} of headroom ${128 - De} (band 9 to 53)`);
+  return {
+    lines: L, measured: ["gOwner", "gPassive", "gCpub"],
+    sizing: { gOwner: g, gPassive: o2.g, gCpub: m.g, ...(m.void ? { cpubVoid: true } : {}), ownerSizing: { pilot: series, territorialRuns: terr.length, fallbackAllRuns: fallback, xAllRuns: all1.x, gAllRuns: all1.g, xE: o1.x, xPassive: o2.x, cpubRatio: m.ratio, noBiteLikely: o1.noBiteLikely, note: "docs/mycelium-bootstrap-owner-2026-11-15/DESIGN.md section 2" } },
+  };
 }

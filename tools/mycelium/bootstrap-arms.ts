@@ -21,13 +21,17 @@ export interface Sizing {
   Fstar: number; Fg: { lo: number; mid: number; hi: number };
   /** R6: theta lo/mid/hi (stricter defence = higher theta) and owner conduit g lo/mid/hi, and the matched public g' (C-pub). */
   theta: { lo: number; mid: number; hi: number }; gOwner: { lo: number; mid: number; hi: number }; gCpub: number;
+  /** Owner addendum O2 (docs/mycelium-bootstrap-owner-2026-11-15): the owner strength sized on passive worlds, used only by the report arm T-C-pas. */
+  gPassive: number;
+  /** Owner addendum O3: the public strength could not be matched within 10 percent on the sizing states (the C-pub control is void, (g) fails). */
+  cpubVoid?: boolean;
   /** S0.4 stop rule fired (under 50 percent of occupied cells owned in the toll substrate): O is not run and not labelled. */
   ownerStopRule?: boolean;
 }
-export const SIZING_FIELDS = ["t0", "v", "gR", "tAlive", "diffA", "diffAF", "Fstar", "Fg", "theta", "gOwner", "gCpub"] as const;
+export const SIZING_FIELDS = ["t0", "v", "gR", "tAlive", "diffA", "diffAF", "Fstar", "Fg", "theta", "gOwner", "gCpub", "gPassive"] as const;
 export const PROVISIONAL: Sizing = {
   measured: [], provisional: true, t0: 200, v: 32, gR: 15, tAlive: { 1: 345, 2: 276, 3: 236 }, diffA: 56, diffAF: 56,
-  Fstar: 16, Fg: { lo: 15, mid: 30, hi: 60 }, theta: { lo: 2, mid: 8, hi: 32 }, gOwner: { lo: 4, mid: 16, hi: 64 }, gCpub: 8,
+  Fstar: 16, Fg: { lo: 15, mid: 30, hi: 60 }, theta: { lo: 2, mid: 8, hi: 32 }, gOwner: { lo: 4, mid: 16, hi: 64 }, gCpub: 8, gPassive: 255,
 };
 
 export type ReadMode = "dense" | "road" | "std";
@@ -106,6 +110,12 @@ function sArms(series: string, sz: Sizing): ArmDef[] {
       s({ id: `pass-toll-${tag}`, series, steps: 20000, light: "U", hered: INH, over: { ...TOLL, trailOwner: tag as "id" | "gid" }, reads: "std" }),
       s({ id: `pass-notoll-${tag}`, series, steps: 20000, light: "U", hered: INH, over: { trailOwner: tag as "id" | "gid" }, reads: "std" }),
     ]);
+    // Owner addendum, section 2: passive and gated (theta mid) toll worlds whose edge histograms size gOwner, gPassive and gCpub.
+    // S5L is the same pair at the main run length (owner SIZING.md deviation 1: at 20,000 steps the gated world's territories are still forming).
+    case "S5": case "S5L": { const steps = series === "S5L" ? 100000 : 20000; return [
+      s({ id: "pass", series, steps, light: "U", hered: INH, over: { ...TOLL, trailOwner: "gid" }, reads: "std" }),
+      s({ id: "E", series, steps, light: "U", hered: INH, over: { ...TOLL, trailOwner: "gid", ownerDefend: sz.theta.mid }, reads: "std" }),
+    ]; }
     default: throw new Error(`unknown sizing series ${series}`);
   }
 }
@@ -198,15 +208,19 @@ function oArms(sz: Sizing): ArmDef[] {
   const EC = own({ ownerDefend: th.mid, ownerConduit: go.mid });
   const ecBranch: BranchPlan = { at: [60000, 100000], variants: [...O_VARIANTS, "relax-on", "relax-coff", "relax-both"] };
   const anchorBranch: BranchPlan = { at: [20000, 30000], variants: O_ANCHOR_VARIANTS };
+  const doseBranch: BranchPlan = { at: [60000, 100000], variants: O_VARIANTS };
   return [
     mk("T-P", INH, own({}), "passive"), mk("T-E", INH, own({ ownerDefend: th.mid }), "E"), mk("T-C", INH, own({ ownerConduit: go.mid }), "C"),
+    // Owner addendum O2 (report only): conduit only, at the strength sized on passive worlds, so the conduit-only question is asked where it bites.
+    mk("T-C-pas", INH, own({ ownerConduit: sz.gPassive }), "Cpas"),
     mk("T-EC", INH, EC, "EC", { branch: ecBranch }), mk("T-EC-ghost", INH, { ...EC, ownerGhost: 64 }, "ECghost"),
     mk("T-C-pub", INH, own({ ownerDefend: th.mid, trailConduit: sz.gCpub }), "Cpub"),
     mk("T-base", INH, { ...TOLL }, "tbase"), mk("N-base", INH, {}, "nbase"),
     mk("anchor-phys-EC", ["physarum"], EC, "anchor", { steps: 30000, branch: anchorBranch }), mk("anchor-blind-EC", ["blind"], EC, "anchor", { steps: 30000, branch: anchorBranch }),
     // Extras (gated).
     mk("T-EC-thLo", INH, own({ ownerDefend: th.lo, ownerConduit: go.mid }), "thLo", { gated: "extras" }), mk("T-EC-thHi", INH, own({ ownerDefend: th.hi, ownerConduit: go.mid }), "thHi", { gated: "extras" }),
-    mk("T-EC-gLo", INH, own({ ownerDefend: th.mid, ownerConduit: go.lo }), "gLo", { gated: "extras" }), mk("T-EC-gHi", INH, own({ ownerDefend: th.mid, ownerConduit: go.hi }), "gHi", { gated: "extras" }),
+    // Owner addendum: the two g dose arms branch too (no relaxations), so PAY is read at three strengths (report only).
+    mk("T-EC-gLo", INH, own({ ownerDefend: th.mid, ownerConduit: go.lo }), "gLo", { gated: "extras", branch: doseBranch }), mk("T-EC-gHi", INH, own({ ownerDefend: th.mid, ownerConduit: go.hi }), "gHi", { gated: "extras", branch: doseBranch }),
     mk("T-EC-lowmut", INH, { ...EC, mutRate: 4096 }, "lowmut", { gated: "extras" }), mk("T-EC-id", INH, { ...EC, trailOwner: "id" }, "ECid", { gated: "extras" }),
     mk("blk-id-T-P", ["blocked"], { ...TOLL, trailOwner: "id" }, "blkP", { gated: "extras" }), mk("blk-id-T-EC", ["blocked"], { ...EC, trailOwner: "id" }, "blkEC", { gated: "extras" }),
     mk("N-P", INH, { trailOwner: "gid" }, "nP", { gated: "extras" }), mk("N-E", INH, { trailOwner: "gid", ownerDefend: th.mid }, "nE", { gated: "extras" }),
@@ -227,13 +241,14 @@ function r7Arms(sz: Sizing): ArmDef[] {
 export function armNeeds(series: string, armId: string): string[] {
   switch (series) {
     case "S1": case "S2": case "S2d": case "S4": return [];
+    case "S5": case "S5L": return armId === "E" ? ["theta"] : [];
     case "S3": return armId.startsWith("T-") ? ["Fg"] : [];
     case "T": return ["v", "gR", "diffA", "t0", "tAlive"];
     case "D0": return ["v", "t0"];
     case "D": return ["v", "gR", "diffA", "t0"];
     case "B": return ["v", "gR", "Fstar"];
     case "F": return ["Fstar", "Fg", "diffAF"];
-    case "O": return ["theta", "gOwner", "gCpub"];
+    case "O": return armId === "T-C-pas" ? ["gPassive"] : ["theta", "gOwner", "gCpub"];
     case "R7": return [];
     default: return [...SIZING_FIELDS];
   }
@@ -251,12 +266,12 @@ export function schedule(mode: ReadMode, steps: number, extra: readonly number[]
   return [...set].sort((a, b) => a - b);
 }
 
-export const SERIES_IDS = ["S1", "S2", "S2d", "S3", "S4", "T", "D0", "D", "B", "F", "O", "R7"] as const;
+export const SERIES_IDS = ["S1", "S2", "S2d", "S3", "S4", "S5", "S5L", "T", "D0", "D", "B", "F", "O", "R7"] as const;
 export type SeriesId = (typeof SERIES_IDS)[number];
 
 export function armsOf(series: string, sz: Sizing): ArmDef[] {
   switch (series) {
-    case "S1": case "S2": case "S2d": case "S3": case "S4": return sArms(series, sz);
+    case "S1": case "S2": case "S2d": case "S3": case "S4": case "S5": case "S5L": return sArms(series, sz);
     case "T": return tArms(sz);
     case "D0": return d0Arms(sz);
     case "D": return dArms(sz);
@@ -273,7 +288,7 @@ export function slotsForArm(base: number, a: ArmDef, held: boolean): number[] {
   if (a.slotSeries === "SMOKE") return slotsOf(base, "SMOKE", "smoke");
   if (a.slotSeries === "S") {
     const all = slotsOf(base, "S", "screen");
-    return a.series === "S1" || a.series === "S4" ? all.slice(0, 4) : all.slice(0, 2);
+    return a.series === "S1" || a.series === "S4" || a.series === "S5" || a.series === "S5L" ? all.slice(0, 4) : all.slice(0, 2);
   }
   return [...slotsOf(base, a.slotSeries, "screen"), ...(held ? slotsOf(base, a.slotSeries, "held") : [])];
 }

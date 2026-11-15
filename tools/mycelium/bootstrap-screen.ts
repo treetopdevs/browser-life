@@ -33,8 +33,9 @@ import {
   BRANCH_LEN, branchCheckpoints, expandRuns, PROVISIONAL, rateFromLog, RELAX_LEN, resumeProblem, runSummary, schedule, SERIES_IDS, SIZING_FIELDS, sizingStamp, specConfig, unmeasuredNeeds, variantState,
   type RunSpec, type Sizing,
 } from "./bootstrap-arms.ts";
-import { analyzeD, analyzeD0, analyzeF, analyzeT, branchTable, fmt, identityProblems, labelRows, runTable, type BranchFile, type BranchSideFile, type RunFile } from "./bootstrap-analyze.ts";
-import { sizeFromS } from "./bootstrap-size.ts";
+import { addHist, edgeHists, HIST_N, OWNER_KEYS, ownerEdgeCensus } from "./observe-owner.ts";
+import { analyzeD, analyzeD0, analyzeF, analyzeO, analyzeT, branchTable, fmt, identityProblems, labelRows, runTable, type BranchFile, type BranchSideFile, type RunFile } from "./bootstrap-analyze.ts";
+import { sizeFromS, sizeOwner } from "./bootstrap-size.ts";
 import { auditTable, BASE_CANDIDATES, BOOT_BASE, proposeBase, type RegisteredSet, slotsOf, tableRows } from "./bootstrap-seeds.ts";
 import { FRESH_MIN } from "./r2-protocol.ts";
 import { embargoReason, R2_SEEDS, R2B_WORLD_SEEDS } from "./r2b-seeds.ts";
@@ -128,6 +129,10 @@ async function runOne(device: GPUDevice, r: RunSpec, sz: Sizing, o: Opts): Promi
   const r4 = new R4Observer();
   const cser: ConduitSeries = emptyConduit();
   const boot: ColSeries = emptyCols(BOOT_KEYS);
+  // Owner worlds (owner addendum, section 3): the owned-edge census at the arm's own strength, or the sized gOwner.mid as a hypothetical, and the late edge histograms.
+  const own: ColSeries | null = cfg.trailOwner !== undefined ? emptyCols(OWNER_KEYS) : null;
+  const ownG = cfg.ownerConduit ?? sz.gOwner.mid, ownQ = cfg.ownerConduitCap ?? 255;
+  const ownerHist = { own: new Array<number>(HIST_N).fill(0), pub: new Array<number>(HIST_N).fill(0), edges: 0, censuses: 0 };
   const road: ColSeries | null = cfg.trailInit !== undefined ? emptyCols(ROAD_KEYS) : null;
   const useG = cfg.trailConduit ?? HYP_C.g, useQ = cfg.trailConduitCap ?? HYP_C.q;
   const fluxG = cfg.trailConduit ?? HYP_T.g, fluxQ = cfg.trailConduit !== undefined ? (cfg.trailConduitCap ?? 255) : HYP_T.q;
@@ -156,6 +161,10 @@ async function runOne(device: GPUDevice, r: RunSpec, sz: Sizing, o: Opts): Promi
     const heavy = t % 500 === 0;
     if (heavy) {
       r4.heavy(observerView(s)); pushConduit(cser, t, conduitCensus(s, useG, useQ));
+      if (own && s.Z) {
+        pushCols(own, t, ownerEdgeCensus(s, ownG, ownQ) as unknown as Record<string, number | null>);
+        if (t > steps / 2) { const h = edgeHists(s); ownerHist.own = addHist(ownerHist.own, h.own); ownerHist.pub = addHist(ownerHist.pub, h.pub); ownerHist.edges += h.edges; ownerHist.censuses++; }
+      }
       const tm = tmSplit(s, F), oc = s.Z ? ownerCensus(s) : null;
       const dc = s.Z ? defenceCurve(s, DEF_THETAS) : null;
       pushCols(boot, t, {
@@ -199,13 +208,13 @@ async function runOne(device: GPUDevice, r: RunSpec, sz: Sizing, o: Opts): Promi
   if (tp) throw Object.assign(new Error(`intake identity: ${tp}`), { fatal: true });
   const ser = r4.series();
   const lo = steps / 2;
-  const win = (a: number, b: number) => ({ runValues: runValues(ser, a, b, null), r4: r4WindowMeans(ser, a, b), conduit: conduitWindow(cser, a, b), boot: colWindow(boot, a, b) });
+  const win = (a: number, b: number) => ({ runValues: runValues(ser, a, b, null), r4: r4WindowMeans(ser, a, b), conduit: conduitWindow(cser, a, b), boot: colWindow(boot, a, b), owner: own ? colWindow(own, a, b) : null });
   return {
     id: r.runId, series: r.series, armId: r.id, heredity: r.hered1, slot: r.slot, worldSeed: cfg.seed, steps, smoke: o.smoke,
     branchAt, branchLen: o.branchSteps, branchGrid: o.branchGrid, branchErrors, sizing: sizingStamp(sz, r.series),
     config: cfg as unknown as RunFile["config"], ledgerChecks: checks, ledgerBadChecks: residual, minN, snaps, telescope: tp,
     roadSeries: road, bootSeries: boot, late: win(lo, steps), early: { runValues: runValues(ser, 10_000, 20_000, null) },
-    conduitSeries: cser, branches,
+    conduitSeries: cser, branches, ownerSeries: own, ownerHist: own ? ownerHist : null, ownerG: own ? ownG : null,
     // The census series stay in the file so any window can be re-read; r4 is the R2b-plus-R4 series.
     r4Series: ser,
   } as unknown as RunFile & { ledgerBadChecks: number };
@@ -247,7 +256,7 @@ export async function measuredRate(logPath: string, series?: string): Promise<{ 
 if (import.meta.main) {
   const a = parseArgs(Deno.args, {
     string: ["out", "steps", "jobs", "slots", "only", "log", "series", "sizing", "base", "branch-steps", "branch-grid", "rate"],
-    boolean: ["table", "label", "audit", "propose", "size", "count", "dry", "no-branch", "reclaim", "smoke", "extras", "held", "no-gate"],
+    boolean: ["table", "label", "audit", "propose", "size", "size-owner", "count", "dry", "no-branch", "reclaim", "smoke", "extras", "held", "no-gate"],
   });
   const logPath = a.log ?? BOOT_LOG;
   const base = Number(a.base ?? BOOT_BASE);
@@ -283,9 +292,22 @@ if (import.meta.main) {
     console.log(`total: ${allRuns} runs, ${allHours.toFixed(2)} h${allUnmeasured ? " (some series have no measured rate)" : ""}, gate ${PROJECTION_MAX_HOURS} h`);
     Deno.exit(0);
   }
-  if (a.table || a.label || a.size) {
+  if (a.table || a.label || a.size || a["size-owner"]) {
     if (!a.out) { console.error("--out <dir> is required"); Deno.exit(2); }
     const rows = await loadRows(a.out, a.label ? undefined : series);   // a label reads every series (T needs D0's vote); the table filters by --series
+    if (a["size-owner"]) {
+      // Owner addendum, section 2: gOwner, gPassive and gCpub from the S5 runs in --out, added to the sizing given by --sizing (that file is never rewritten).
+      if (!a.sizing) { console.error("--size-owner needs --sizing <the frozen sizing file of the first screen>"); Deno.exit(2); }
+      // The sizing pilot is S5L (owner SIZING.md deviation 1); the 20,000-step S5 runs are a recorded first pilot and size nothing.
+      const r = sizeOwner(await loadRows(a.out, "S5L"), sz, "S5L");
+      console.log(r.lines.join("\n"));
+      if (!r.sizing) Deno.exit(1);
+      const base0 = JSON.parse(await Deno.readTextFile(a.sizing));
+      const file = `${a.out}/sizing-owner.json`;
+      await Deno.writeTextFile(file, JSON.stringify({ ...base0, ...r.sizing, measured: [...new Set([...(base0.measured ?? []), ...r.measured])] }, null, 1) + "\n");
+      console.log(`\nwrote ${file}`);
+      Deno.exit(0);
+    }
     if (a.size) {
       const all = await loadRows(a.out, undefined);
       const r = sizeFromS(all);
@@ -310,7 +332,7 @@ if (import.meta.main) {
     console.log(analyzeT(lr.rows, sz, lr.rows.some((r) => r.series === "D0") ? d0.vote : null).lines.join("\n")); console.log(`\n${d0.lines.join("\n")}`);
     console.log(`\n${analyzeD(lr.rows, sz).lines.join("\n")}`);
     console.log(`\n${analyzeF(lr.rows, sz).lines.join("\n")}`);
-    console.log(`\nO: the owner-edge readouts (b)(c)(d) of DESIGN 9.5 (observe-owner.ts) are not built in this step: no O label is issued here.${sz.ownerStopRule ? " The S0.4 stop rule fired (under 50 percent of occupied cells owned in the toll substrate): O is INCOMPLETE, not run." : ""} K, owner census and the PAYALL branch pairs are in the tables.`);
+    console.log(`\n${analyzeO(lr.rows, sz).lines.join("\n")}`);
     console.log(bad.length ? `\nIntake identity FAILED:\n${bad.join("\n")}` : "\nIntake identity exact for every run.");
     Deno.exit(bad.length ? 2 : 0);
   }
@@ -318,7 +340,7 @@ if (import.meta.main) {
   if (!series) { console.error("--series is required"); Deno.exit(2); }
   if (!a.out) { console.error("--out <dir> is required"); Deno.exit(2); }
   const out = a.out;
-  const sizingFree = ["S1", "S2", "S2d", "S4", "R7"].includes(series);
+  const sizingFree = ["S1", "S2", "S2d", "S4", "S5", "S5L", "R7"].includes(series);
   let todo = expandRuns(series, sz, base, { held: a.held, extras: a.extras });
   if (a.slots) {
     const want = a.slots.split(",").map(Number), allowed = new Set(tableRows(base).map((r) => r.slot));

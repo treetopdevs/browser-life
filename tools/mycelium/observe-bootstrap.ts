@@ -569,13 +569,15 @@ export interface OInputs {
   /** (e) territory sanity per slot. */
   e: (boolean | null)[];
   /** K per slot for T-EC, and for T-E. */
-  kEC: boolean[]; kE: boolean[];
+  kEC: (boolean | null)[]; kE: (boolean | null)[];
   payECvsCoff: Vote; payAll: Vote;
+  /** PAYALL per slot (owner addendum review): when given, every joint vote includes it on the same seed (DESIGN 10, joint votes). */
+  payAllS?: (boolean | null)[];
   /** HARM or DAMP seen in the PAYALL comparisons (for KEPT-UNPAID). */
   harmOrDamp: boolean;
   b: (boolean | null)[]; c: (boolean | null)[]; d: (boolean | null)[]; H: (boolean | null)[]; G: (boolean | null)[];
   /** (f) dose, (g) C-pub control (void or unmatched makes it false). */
-  f: boolean; g: boolean;
+  f: boolean | null; g: boolean;
   payCpub: Vote;
   /** The S0.4 stop rule fired (the toll world has no existing trail to defend): O was not run. */
   stopRule: boolean;
@@ -589,18 +591,23 @@ export function labelO(i: OInputs): LabelOut {
   if (vK === "N") return { label: "PURGED", note: null };
   if (vK === "I") return { label: "INCONCLUSIVE", note: null };
   if (!i.extras) return { label: "INCOMPLETE", note: "not run: the O extras (dose arms, blocked-id, no-toll) a K=Y label requires" };
-  if (i.kE.filter(Boolean).length >= k && i.payECvsCoff === "N") return { label: "ENCLOSURE-ONLY", note: "exclusion is the whole effect: a land claim" };
+  // ENCLOSURE-ONLY needs T-EC and T-E kept on the same seeds (DESIGN 10, joint votes).
+  if (vote(joint(i.kEC, i.kE)) === "Y" && i.payECvsCoff === "N") return { label: "ENCLOSURE-ONLY", note: "exclusion is the whole effect: a land claim" };
   if (i.payAll === "N" && i.harmOrDamp) return { label: "KEPT-UNPAID", note: null };
-  const eVote = nT(i.e) >= k, dVote = nT(i.d) >= k, bVote = nT(i.b) >= k;
-  // Same-seed conjunctions: K (T-EC) is part of every joint vote, and (d) with (H and not G) is one conjunction for the sponge.
+  // Same-seed conjunctions: K (T-EC), (e), and PAYALL when given per slot, are part of every joint vote; (d) with (H and not G) is one conjunction for the sponge.
+  const base = i.payAllS ? [i.kEC, i.e, i.payAllS] : [i.kEC, i.e];
   const hNoGSeed = i.H.map((h, j) => (h === true && i.G[j] === false ? true : h === null || i.G[j] === null ? null : false));
-  const kdH = nT(joint(i.kEC, i.d, hNoGSeed));
-  if (i.payAll === "Y" && kdH >= k && eVote && i.f && i.g) return { label: "OWNER-STATIC-SPONGE", note: null };
-  const bcd = nT(joint(i.kEC, i.b, i.c, i.d));
-  if (i.payAll === "Y" && bcd >= k && eVote && i.f && i.g) return { label: "KEPT-AND-USED", note: i.payCpub === "Y" ? "OWNER-SPECIFIC" : null };
-  if (i.payAll === "Y" && bVote && dVote && eVote && i.f && i.g && nT(i.c) < k) return { label: "CONDUIT-PAYS-NOT-USED", note: null };
-  const why = [i.payAll !== "Y" && "PAYALL", bcd < k && "joint (b)(c)(d)", !eVote && "(e)", !i.f && "(f) dose", !i.g && "(g) C-pub control"].filter(Boolean).join(", ");
-  return { label: "KEPT-BY-PRESENCE-ONLY", note: `failing: ${why}` };
+  const vE = vote(i.e), vSp = vote(joint(...base, i.d, hNoGSeed));
+  const vBCD = vote(joint(...base, i.b, i.c, i.d)), vBD = vote(joint(...base, i.b, i.d)), vC = vote(i.c);
+  const rest = i.payAll === "Y" && vE === "Y" && i.f === true && i.g;
+  if (rest && vSp === "Y") return { label: "OWNER-STATIC-SPONGE", note: null };
+  if (rest && vBCD === "Y") return { label: "KEPT-AND-USED", note: i.payCpub === "Y" ? "OWNER-SPECIFIC" : null };
+  if (rest && vBD === "Y" && vC === "N") return { label: "CONDUIT-PAYS-NOT-USED", note: null };
+  // A negative label needs a definite failure (a vote of N, or a control that fails). A headline predicate that only reads I, or is unread, is unresolved (DESIGN 10).
+  const failing = [i.payAll === "N" && "PAYALL", vBCD === "N" && "joint (b)(c)(d)", vE === "N" && "(e)", i.f === false && "(f) dose", !i.g && "(g) C-pub control"].filter(Boolean);
+  const open = [i.payAll === "I" && "PAYALL", vBCD === "I" && `joint (b)(c)(d) with K, (e)${i.payAllS ? " and PAYALL" : ""} on the same seeds`, vC === "I" && "(c)", vE === "I" && "(e)", i.f === null && "(f) dose"].filter(Boolean);
+  if (failing.length) return { label: "KEPT-BY-PRESENCE-ONLY", note: `failing: ${failing.join(", ")}${open.length ? `; unresolved: ${open.join(", ")}` : ""}` };
+  return { label: "INCONCLUSIVE", note: `unresolved: ${open.join(", ")}` };
 }
 
 /** The bootstrap labels evaluated for the no-toll substrate: BOOTSTRAPS if N-EC has K in at least 6 of 8 with N-E also read, else FLOOR. */

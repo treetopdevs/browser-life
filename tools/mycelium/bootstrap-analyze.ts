@@ -5,9 +5,11 @@
 // INCOMPLETE, never a silent negative.
 import {
   aliveAndWindow, colWindow, intakesOf, joint, judge, labelD, labelF, labelT, need, noiseFloor, type ColSeries, type DInputs, type NoiseFloor, type Rels,
-  relsOf, type Snap, telescopeProblem, vote, type Vote, type Verdict, windowSide, branchWindows, ratesOf, type LabelOut, half, atMost,
+  relsOf, type Snap, telescopeProblem, vote, type Vote, type Verdict, windowSide, branchWindows, ratesOf, type LabelOut, half, atMost, labelO, noTollLabel, EFF_BAND,
 } from "./observe-bootstrap.ts";
-import { armsOf, branchCheckpoints, lowDoseF, type Sizing } from "./bootstrap-arms.ts";
+import { cpubRealisedVoid, meanEffFromHist, realisedCpubRatio } from "./observe-owner.ts";
+import { armsOf, branchCheckpoints, lowDoseF, runConfig, type Sizing } from "./bootstrap-arms.ts";
+import type { Heredity } from "./bootstrap-seeds.ts";
 
 export interface BranchSideFile { snaps: Snap[]; ledgerBad: number; nEnd: number; ghostCorr?: number | null; error?: string }
 export interface BranchFile { at: number; len: number; variants: Record<string, BranchSideFile> }
@@ -16,13 +18,15 @@ export interface RunFile {
   /** Planned branch checkpoints (written by the runner); older files fall back to the arm definition. */
   branchAt?: number[]; branchLen?: number; branchGrid?: number; branchErrors?: number; sizing?: string;
   id: string; series: string; armId: string; heredity: string; slot: number; worldSeed: number; steps: number; seconds?: number; smoke?: boolean;
-  config: { eA: number; diffA: number; trailFreeLayer?: number; trailConduit?: number; trailConduitCap?: number; trailOwner?: string; [k: string]: unknown };
+  config: { eA: number; diffA: number; trailFreeLayer?: number; trailConduit?: number; trailConduitCap?: number; trailOwner?: string; ownerDefend?: number; ownerConduit?: number; [k: string]: unknown };
   ledgerChecks: number; ledgerBadChecks: number; minN: number;
   snaps: Snap[]; telescope: string | null;
   roadSeries: ColSeries | null; bootSeries: ColSeries;
-  late: { runValues: Record<string, number | null>; r4: Record<string, number> | null; conduit: Record<string, number | null>; boot: Record<string, number | null> };
+  late: { runValues: Record<string, number | null>; r4: Record<string, number> | null; conduit: Record<string, number | null>; boot: Record<string, number | null>; owner?: Record<string, number | null> | null };
   early?: { runValues: Record<string, number | null> };
   conduitSeries?: { step: number[]; cols: Record<string, (number | null)[]> };
+  /** Owner worlds made after the owner addendum: the owned-edge census series, the pooled late edge histograms and the strength the census used. */
+  ownerSeries?: ColSeries | null; ownerHist?: { own: number[]; pub: number[]; edges: number; censuses: number } | null; ownerG?: number | null;
   branches: BranchFile[];
 }
 
@@ -312,19 +316,21 @@ export function payOnTrail(r: RunFile, versus: readonly string[], planned: reado
   return unres || planned.length < MIN_CHECKPOINTS ? null : true;
 }
 
-/** (a-damp) for one run: DAMP(on vs noconduit) at every planned checkpoint, whole and last window; null when a checkpoint is missing or unresolved. */
-export function dampOnTrail(r: RunFile, planned: readonly number[] | null): boolean | null {
+/** DAMP or HARM of `on` against one variant at every planned checkpoint, whole and last window; null when a checkpoint or the comparator is missing or unresolved. */
+export function flagOnTrail(r: RunFile, variant: string, flag: "damp" | "harm", planned: readonly number[] | null): boolean | null {
   if (!planned || !planned.length) return null;
   let unres = false;
   for (const at of planned) {
     const b = r.branches.find((x) => x.at === at);
     if (!b) { unres = true; continue; }
-    const p = branchPairs(b, r.config.eA).find((x) => x.variant === "noconduit");
+    const p = branchPairs(b, r.config.eA).find((x) => x.variant === variant);
     if (!p) { unres = true; continue; }
-    for (const x of [p.whole, p.last]) { if (x.damp === null) unres = true; else if (!x.damp) return false; }
+    for (const x of [p.whole, p.last]) { if (x[flag] === null) unres = true; else if (!x[flag]) return false; }
   }
   return unres || planned.length < MIN_CHECKPOINTS ? null : true;
 }
+/** (a-damp) for one run: DAMP(on vs noconduit) at every planned checkpoint, whole and last window; null when a checkpoint is missing or unresolved. */
+export const dampOnTrail = (r: RunFile, planned: readonly number[] | null): boolean | null => flagOnTrail(r, "noconduit", "damp", planned);
 
 export function branchTable(rows: readonly RunFile[]): string[] {
   const L: string[] = ["| run | checkpoint | variant | PAY (whole / last) | DAMP | HARM | rel i / N / d / b (whole) | thr_i | unresolved |", "|---|---|---|---|---|---|---|---|---|"];
@@ -442,6 +448,177 @@ export function analyzeF(rows: readonly RunFile[], sz: Sizing): FReport {
   L.push(`**F label (${T}): ${label.label}**${label.note ? ` (${label.note})` : ""}`);
   void half;
   return { lines: L, label };
+}
+
+// ---- series O (owner addendum: docs/mycelium-bootstrap-owner-2026-11-15/DESIGN.md sections 3 and 4) -----------------------------
+
+/** The O extras a K = Y label needs (dose arms, low mutation, the "id" pair, blocked-id, no-toll), as [arm, heredity]. */
+export const O_EXTRA_ARMS: readonly (readonly [string, string])[] = [
+  ["T-EC-thLo", "inherit"], ["T-EC-thHi", "inherit"], ["T-EC-gLo", "inherit"], ["T-EC-gHi", "inherit"], ["T-EC-lowmut", "inherit"], ["T-EC-id", "inherit"],
+  ["blk-id-T-P", "blocked"], ["blk-id-T-EC", "blocked"], ["N-P", "inherit"], ["N-E", "inherit"], ["N-EC", "inherit"],
+];
+/** CONDUIT-IDLE: a T-EC slot operates when at least this share of the directed edges out of occupied cells has a positive owner extra rate (late window). */
+export const LIVE_MIN = 0.25;
+const K_MIN = 0.1;
+
+/** K of an owner arm against the same slot's passive run: late trail per particle at least 0.1 and at least half the passive arm's. null = unread (extinct or missing). */
+export function keptO(r: RunFile | undefined, passive: RunFile | undefined): boolean | null {
+  // A run that went extinct at any read is unread: its window mean keeps the trail of the censuses before the extinction (colWindow drops the nulls).
+  const dead = (x: RunFile | undefined) => !x || x.minN === 0;
+  const tm = dead(r) ? null : r!.late.boot.tm ?? null, pt = dead(passive) ? null : passive!.late.boot.tm ?? null;
+  if (tm === null) return null;
+  if (tm < K_MIN) return false;
+  return pt === null ? null : tm >= 0.5 * pt;
+}
+
+/** Share of a run's late heavy censuses in which both the layer and non-layer groups reached the minimum size on the owner census; null without one. */
+export function ownerImportCoverage(r: RunFile): number | null {
+  const cs = r.ownerSeries; if (!cs || !cs.cols.impLayer || !cs.cols.impNon) return null;
+  const lo = r.steps / 2; let all = 0, ok = 0;
+  for (let i = 0; i < cs.step.length; i++) if (cs.step[i] > lo && cs.step[i] <= r.steps) { all++; if (cs.cols.impLayer[i] !== null && cs.cols.impNon[i] !== null) ok++; }
+  return all ? ok / all : null;
+}
+
+export interface OReport { lines: string[]; label: LabelOut | null; qualifiers: string[] }
+export function analyzeO(rows: readonly RunFile[], sz: Sizing): OReport {
+  const L: string[] = [], Q: string[] = [];
+  // Only rows made at this sizing's strengths enter: a file whose config differs from its arm's definition (an old stand-in run) is left out, as if not run.
+  // Equality is of the whole config (Sol round 2): the file's config must be exactly what the arm, heredity and seed build, so no unregistered key rides along.
+  const defs = new Map(armsOf("O", sz).map((a) => [a.id, a]));
+  const canon = (c: unknown): string => JSON.stringify(Object.entries(JSON.parse(JSON.stringify(c)) as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  const sized = (r: RunFile): boolean => {
+    const def = defs.get(r.armId); if (!def) return false;
+    return canon(r.config) === canon(runConfig(def.over, def.light, r.heredity as Heredity, r.worldSeed));
+  };
+  const A = (arm: string, h = "inherit") => new Map([...armMap(rows, "O", arm, h)].filter(([, r]) => sized(r)));
+  const unsized = rows.filter((r) => !r.smoke && r.series === "O" && !sized(r)).length;
+  if (armMap(rows, "O", "T-EC").size && !A("T-EC").size) { const lb = incomplete(["T-EC was not run at the sized theta and gOwner (stand-in files)"]); return { lines: [`O: ${lb.note}`, `**O label (T-EC): ${lb.label}**`], label: lb, qualifiers: [] }; }
+  const ec = A("T-EC"), pas = A("T-P"), eArm = A("T-E"), cpub = A("T-C-pub"), ghost = A("T-EC-ghost"), tbase = A("T-base");
+  if (!ec.size) return { lines: ["O: not run"], label: null, qualifiers: [] };
+  const slots = [...ec.keys()].sort((a, b) => a - b), n = slots.length;
+  const fail = (why: string[]): OReport => { const lb = incomplete(why); return { lines: [`O (labelled at T-EC, ${n} inherit slots): ${lb.note}`, `**O label (T-EC): ${lb.label}**`], label: lb, qualifiers: [] }; };
+  if (sz.ownerStopRule) { const lb = labelO({ n, e: [], kEC: [], kE: [], payECvsCoff: "I", payAll: "I", harmOrDamp: false, b: [], c: [], d: [], H: [], G: [], f: false, g: false, payCpub: "I", stopRule: true, extras: false }); return { lines: [`**O label (T-EC): ${lb.label}** (${lb.note})`], label: lb, qualifiers: [] }; }
+  const unmeasured = ["theta", "gOwner", "gCpub"].filter((k) => !sz.measured.includes(k));
+  if (unmeasured.length) return fail([`the sizing did not measure ${unmeasured.join(", ")} (stand-in strengths)`]);
+  if (slots.some((s) => !ec.get(s)!.late.owner || !ec.get(s)!.ownerHist)) return fail(["the T-EC run files carry no owned-edge readouts (made before the owner addendum)"]);
+  const miss: string[] = [];
+  const cp = cohortProblem(n); if (cp) miss.push(cp);
+  if (unsized) L.push(`NOTE: ${unsized} O rows are not at this sizing's strengths and were left out`);
+  for (const [name, m] of [["T-P", pas], ["T-E", eArm], ["T-C-pub", cpub], ["T-EC-ghost", ghost]] as const) if (slots.some((s) => !m.has(s))) miss.push(`${name} missing for some slots`);
+  if (miss.length) return fail(miss);
+  const E = (s: number) => ec.get(s)!, own = (s: number) => E(s).late.owner!;
+  const nT = (x: (boolean | null)[]) => x.filter((y) => y === true).length;
+  const cnt = (x: (boolean | null)[]) => `${nT(x)}/${n}${x.some((y) => y === null) ? ` (${x.filter((y) => y === null).length} unread)` : ""}`;
+  const medOf = (xs: (number | null | undefined)[]) => med(xs.filter((x): x is number => x != null));
+
+  // K and territory sanity.
+  const kEC = slots.map((s) => keptO(E(s), pas.get(s))), kE = slots.map((s) => keptO(eArm.get(s), pas.get(s))), kCpub = slots.map((s) => keptO(cpub.get(s), pas.get(s)));
+  const ePred = slots.map((s) => {
+    const nE = E(s).late.runValues.meanN, nP = pas.get(s)!.late.runValues.meanN, o = E(s).late.boot.own, op = E(s).late.boot.open;
+    if (nE == null || nP == null) return null;
+    if (nE < 0.5 * nP) return false;
+    return o == null || op == null ? null : o + op >= 0.5;
+  });
+  L.push(`O (labelled at T-EC, theta ${sz.theta.mid}, owner g ${sz.gOwner.mid}, public g' ${sz.gCpub}; ${n} inherit slots)`);
+  L.push(`K (trail kept, at least half the passive arm's): T-EC ${cnt(kEC)}, T-E ${cnt(kE)}, T-C-pub ${cnt(kCpub)}; (e) territory sanity ${cnt(ePred)}`);
+
+  // Qualifiers (never change the label).
+  const pasKept = slots.map((s) => { const t = pas.get(s)!.late.boot.tm; return t == null ? null : t >= K_MIN; });
+  if (nT(pasKept) >= need(n)) Q.push(`TOLL-HELD: the passive arm keeps trail in ${nT(pasKept)}/${n} slots, so a "kept" is most likely the toll's doing; T-E and T-C-pub are then expected to be kept too, which fails (g)`);
+  const live = slots.map((s) => { const v = own(s).live; return v == null ? null : v >= LIVE_MIN; });
+  if (nT(live) < need(n)) Q.push(`CONDUIT-IDLE: the owner conduit has a positive extra rate on at least ${LIVE_MIN} of occupied-cell edges in only ${nT(live)}/${n} slots; in the others a PAY of N is not evidence about a working conduit`);
+  const effMed = medOf(slots.map((s) => own(s).effP50));
+  const inBand = effMed !== null && effMed >= EFF_BAND[0] && effMed <= EFF_BAND[1];
+  if (!inBand) Q.push(`OUT-OF-BAND: median late owner extra rate on occupied-cell edges is ${fmt(effMed, 1)} (band ${EFF_BAND[0]} to ${EFF_BAND[1]})`);
+  L.push(`operating: live share (median) ${fmt(medOf(slots.map((s) => own(s).live)))}, same-owner share of occupied-cell edges ${fmt(medOf(slots.map((s) => own(s).sameOcc)))}, median extra rate ${fmt(effMed, 1)}, same-owner x p50 ${fmt(medOf(slots.map((s) => own(s).xP50)), 1)}, csat ${fmt(medOf(slots.map((s) => own(s).csat)))}`);
+
+  // PAY votes over the branches.
+  const pay = (vs: readonly string[]) => slots.map((s) => payOnTrail(E(s), vs, plannedAt(E(s), sz)));
+  const pCoff = pay(["coff"]), pEoff = pay(["eoff"]), pBoth = pay(["both"]), pGhost = pay(["oghost"]), pAll = pay(["coff", "eoff", "both", "oghost"]), pCpub = pay(["cpub"]);
+  const hd = slots.map((s) => {
+    const pl = plannedAt(E(s), sz);
+    const fl = [flagOnTrail(E(s), "coff", "damp", pl), ...["coff", "eoff", "both", "oghost"].map((v) => flagOnTrail(E(s), v, "harm", pl))];
+    return fl.some((x) => x === true) ? true : fl.some((x) => x === null) ? null : false;
+  });
+  const harmOrDamp = nT(hd) >= half(n);
+  const opAll = slots.map((_, j) => (live[j] === true ? pAll[j] : null)).filter((_, j) => live[j] === true), opCoff = slots.map((_, j) => pCoff[j]).filter((_, j) => live[j] === true);
+  L.push(`PAY at both checkpoints (whole and last 1,000): vs conduit off ${cnt(pCoff)}, vs enclosure off ${cnt(pEoff)}, vs both off ${cnt(pBoth)}, vs owner ghost ${cnt(pGhost)}; PAYALL ${cnt(pAll)}; vs public conduit ${cnt(pCpub)}; DAMP or HARM ${cnt(hd)}`);
+  L.push(`among the ${opAll.length} operating slots (report only): PAY vs conduit off ${nT(opCoff)}/${opCoff.length}, PAYALL ${nT(opAll)}/${opAll.length}`);
+
+  // (b), (d) on the owner census; (c) within "id".
+  const bPred = slots.map((s) => { const c = own(s); if (c.impLayer == null || c.impNon == null) return null; const cov = ownerImportCoverage(E(s)); if (cov === null || cov < 0.5) return null; return c.impLayer > 0 && c.impLayer > c.impNon; });
+  const dPred = slots.map((s) => { const c = own(s).csat; return c == null ? null : c <= 0.5; });
+  const idEC = A("T-EC-id"), blkEC = A("blk-id-T-EC", "blocked");
+  // The acute branch needs the whole physarum anchor cohort (one read anchor per slot): a partial cohort's median is not the threshold.
+  const physRuns = slots.map((s) => A("anchor-phys-EC", "physarum").get(s)?.late.r4?.acute);
+  const physAcute = physRuns.every((x) => x != null) ? med(physRuns as number[]) : null;
+  const hPred = slots.map((s) => {
+    const t = idEC.get(s), b = blkEC.get(s); if (!t || !b || !t.late.owner || !b.late.owner) return null;
+    const c = t.late.owner, cb = b.late.owner, lc = t.late.conduit, lb = b.late.conduit;
+    const i = c.occx == null || c.occxShift == null || cb.occx == null || cb.occxShift == null ? null : (c.occx - c.occxShift) - (cb.occx - cb.occxShift) > 0.25;
+    const sens = (x: number | null | undefined, y: number | null | undefined) => (x == null || y == null ? null : x >= 0.005 && x >= 2 * y);
+    const lv = sens(lc.sensLevel, lb.sensLevel), nu = sens(lc.sensNut, lb.sensNut);
+    const ii = lv === true || nu === true ? true : lv === null && nu === null ? null : false;
+    const ac = b.late.r4?.acute, on = t.late.r4?.acute;
+    const iii = ac == null || on == null || physAcute === null ? null : physAcute > 0 && on - ac >= 0.5 * physAcute;
+    return [i, ii, iii].some((x) => x === true) ? true : [i, ii, iii].some((x) => x === null) ? null : false;
+  });
+  const gPred = slots.map((s) => { const t = idEC.get(s)?.late.r4, b = blkEC.get(s)?.late.r4; if (!t || !b) return null; return t.speed >= 0.05 && t.speed >= 0.5 * b.speed; });
+  const cPred = joint(hPred, gPred);
+  L.push(`(b) import, layers above non-layers on the owner rate ${cnt(bPred)}; (c) behaviour, read within "id" (T-EC-id against blocked-id): H ${cnt(hPred)}, G ${cnt(gPred)}; (d) csat at most 0.5 ${cnt(dPred)}`);
+  L.push(`owner import (report only): OWN ${fmt(medOf(slots.map((s) => own(s).impOwn)), 4)}, not OWN ${fmt(medOf(slots.map((s) => own(s).impOther)), 4)}, all ${fmt(medOf(slots.map((s) => own(s).impAll)), 4)} per particle (median over slots)`);
+
+  // Extras and (f) dose.
+  const extras = O_EXTRA_ARMS.every(([arm, h]) => slots.every((s) => A(arm, h).has(s)));
+  // A dose median needs every slot read and alive: an arm with unread slots gives no median (and (f) does not hold).
+  const mTm = (arm: string) => { const m = A(arm); const v = slots.map((s) => (m.get(s) && m.get(s)!.minN > 0 ? m.get(s)!.late.boot.tm : null)); return v.every((x) => x != null) ? med(v as number[]) : null; };
+  const mid = mTm("T-EC"), le = (x: number | null) => x !== null && mid !== null && x <= mid, near = (x: number | null) => x !== null && mid !== null && Math.abs(x - mid) <= 0.2 * mid;
+  // (f) is unread (null), not failed, when a dose median is missing: the label then cannot rest a negative on it.
+  const doseM = ["T-EC-thLo", "T-EC-gLo", "T-EC-thHi", "T-EC-gHi"].map(mTm);
+  const f: boolean | null = !extras || mid === null || doseM.some((x) => x === null) ? null : le(doseM[0]) && le(doseM[1]) && near(doseM[2]) && near(doseM[3]);
+  L.push(`(f) dose, median late trail per particle: thLo ${fmt(doseM[0], 1)}, gLo ${fmt(doseM[1], 1)}, mid ${fmt(mid, 1)}, thHi ${fmt(doseM[2], 1)}, gHi ${fmt(doseM[3], 1)} -> ${extras ? (f === null ? "unread (a dose arm with an unread slot gives no median)" : f ? "holds" : "does not hold") : "not evaluated: extras missing"}`);
+  for (const arm of ["T-EC-gLo", "T-EC-gHi"]) {
+    const rs = slots.map((s) => A(arm).get(s)).filter((r): r is RunFile => !!r && r.branches.length > 0);
+    if (rs.length) L.push(`PAY by dose (report only), ${arm} (g ${rs[0].config.ownerConduit}): vs conduit off ${rs.filter((r) => payOnTrail(r, ["coff"], plannedAt(r, sz)) === true).length}/${rs.length}, PAYALL ${rs.filter((r) => payOnTrail(r, ["coff", "eoff", "both", "oghost"], plannedAt(r, sz)) === true).length}/${rs.length}, live share ${fmt(medOf(rs.map((r) => r.late.owner?.live)))}, eff p50 ${fmt(medOf(rs.map((r) => r.late.owner?.effP50)), 1)}, csat ${fmt(medOf(rs.map((r) => r.late.owner?.csat)))}`);
+  }
+
+  // (g) the matched public conduit: void (sizing or realised) fails it; otherwise it must keep in at most a quarter of the slots.
+  const ratios = slots.map((s) => {
+    const c = cpub.get(s)!, e = E(s);
+    if (!c.ownerHist || !e.ownerHist || c.config.trailConduit === undefined || e.config.ownerConduit === undefined) return null;
+    return realisedCpubRatio(meanEffFromHist(c.ownerHist.pub, c.ownerHist.edges, c.config.trailConduit, c.config.diffA), meanEffFromHist(e.ownerHist.own, e.ownerHist.edges, e.config.ownerConduit, e.config.diffA));
+  });
+  const cpubVoid = !!sz.cpubVoid || cpubRealisedVoid(ratios);
+  const cpubKept = kCpub.filter((x) => x !== false).length;   // an unread control counts as kept: it never helps its own predicate
+  const g = !cpubVoid && cpubKept <= atMost(n);
+  L.push(`(g) public conduit at matched mean extra rate: realised ratio public/owner (median over slots) ${fmt(medOf(ratios))}${cpubVoid ? " VOID" : ""}; kept ${cpubKept}/${n} -> ${g ? "holds" : "does not hold"}`);
+
+  // Report-only rows.
+  const same = slots.filter((s) => tbase.has(s) && JSON.stringify(tbase.get(s)!.snaps) === JSON.stringify(pas.get(s)!.snaps)).length;
+  L.push(`passive planes: T-P equals T-base (identical totals at every read) in ${same}/${slots.filter((s) => tbase.has(s)).length} slots`);
+  const ghostK = slots.map((s) => keptO(ghost.get(s), pas.get(s))), ghostVoid = slots.filter((s) => mainGhostVoid(ghost.get(s)!.late.boot.ownerGhostCorr)).length;
+  L.push(`T-EC-ghost (main arm; its owner census reads the real map, not the displaced one the rule used): kept ${cnt(ghostK)}, void by correlation in ${ghostVoid}/${n}`);
+  const rowOf = (arm: string, h = "inherit") => { const m = A(arm, h); if (!m.size) return null; const rs = [...m.values()]; return `${arm}${h === "inherit" ? "" : ` (${h})`}: n ${fmt(medOf(rs.map((r) => r.late.runValues.meanN)), 0)}, trail ${fmt(medOf(rs.map((r) => r.late.boot.tm)), 1)}, same-owner ${fmt(medOf(rs.map((r) => r.late.boot.sameEdge)))}, live ${fmt(medOf(rs.map((r) => r.late.owner?.live)))}, eff p50 ${fmt(medOf(rs.map((r) => r.late.owner?.effP50)), 1)} (${rs.length} runs)`; };
+  const armRows = [["T-base"], ["N-base"], ["T-P"], ["T-E"], ["T-C"], ["T-C-pas"], ["T-EC"], ["T-EC-ghost"], ["T-C-pub"], ...O_EXTRA_ARMS].map(([a, h]) => rowOf(a, h ?? "inherit")).filter((x): x is string => x !== null);
+  L.push("arm medians (late window): " + armRows.join("; "));
+  const cpas = A("T-C-pas"), cArm = A("T-C");
+  if (cpas.size) L.push(`conduit only at the passive-sized strength (T-C-pas, g ${sz.gPassive}; report only): kept ${[...cpas.keys()].filter((s) => keptO(cpas.get(s), pas.get(s)) === true).length}/${cpas.size}, T-C at gOwner.mid kept ${[...cArm.keys()].filter((s) => keptO(cArm.get(s), pas.get(s)) === true).length}/${cArm.size}`);
+  for (const [arm, h] of [["anchor-phys-EC", "physarum"], ["anchor-blind-EC", "blind"]] as const) {
+    const rs = [...A(arm, h).values()]; if (!rs.length) { L.push(`${arm}: not run`); continue; }
+    const k = need(rs.length), c = (p: (r: RunFile) => boolean | null) => rs.filter((r) => p(r) === true).length;
+    const pays = c((r) => payOnTrail(r, ["both", "coff"], plannedAt(r, sz))), damps = c((r) => flagOnTrail(r, "coff", "damp", plannedAt(r, sz))), harms = c((r) => flagOnTrail(r, "coff", "harm", plannedAt(r, sz)));
+    L.push(`${arm}: ${pays >= k ? "ANCHOR-PAYS" : damps >= k ? "ANCHOR-DAMPS" : harms >= k ? "ANCHOR-HARMS" : "ANCHOR-FLAT"} (pay ${pays}, damp ${damps}, harm ${harms} of ${rs.length})`);
+  }
+  const nEC = A("N-EC"), nE = A("N-E");
+  if (nEC.size) {
+    const kN = slots.map((s) => { const t = nEC.get(s)?.late.boot.tm; return t != null && t >= K_MIN; });
+    L.push(`no-toll substrate: ${noTollLabel(kN, slots.every((s) => nE.get(s)?.late.boot.tm != null))} (N-EC keeps trail in ${kN.filter(Boolean).length}/${n})`);
+  }
+
+  const label = labelO({ n, e: ePred, kEC, kE, payECvsCoff: vote(pCoff), payAll: vote(pAll), payAllS: pAll, harmOrDamp, b: bPred, c: cPred, d: dPred, H: hPred, G: gPred, f, g, payCpub: vote(pCpub), stopRule: false, extras });
+  for (const q of Q) L.push(`qualifier ${q}`);
+  L.push(`**O label (T-EC): ${label.label}**${label.note ? ` (${label.note})` : ""}${Q.length ? ` [${Q.map((q) => q.split(":")[0]).join(", ")}]` : ""}`);
+  return { lines: L, label, qualifiers: Q.map((q) => q.split(":")[0]) };
 }
 
 // ---- tables -----------------------------------------------------------------------------------------------------------
