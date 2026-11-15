@@ -730,6 +730,10 @@ describe("analyzeT on synthetic runs", () => {
     const shortTwin = build(130, 100, 100, 100, 5, -1).map((r) => (r.armId === "rows-G.bf" && r.slot === 8 ? { ...r, snaps: r.snaps.filter((x) => x.step < 300) } : r));
     expect(analyzeT(shortTwin, fakeSz, null).inputs!.payRows).not.toBe("Y");                 // old code: Y from 7 twins
   });
+  it("CodeRabbit: 16 on rows with only 8 off rows are not a complete cohort of 8", () => {
+    const sixteen = build(130, 100, 100, 100, 5, -1, 16).filter((r) => !(r.armId === "rows-G.off" && r.slot > 8));
+    expect(analyzeT(sixteen, fakeSz, null).label!.label).toBe("INCOMPLETE");               // old code: a final label from the 8 paired slots
+  });
   it("the same gain on the orthogonal columns is a uniform pump, not a network", () => {
     expect(analyzeT(build(130, 130, 100, 100, 5, 5), fakeSz, null).label!.label).toBe("UNIFORM-PUMP");
   });
@@ -869,6 +873,7 @@ describe("sizing from the pilots, and the gates", () => {
   const withLate = (series: string, arm: string, slot: number, late: Partial<RunFile["late"]>): RunFile => {
     const r = mkRun(series, arm, slot, { steps: 1000 });
     r.late = { runValues: {}, r4: null, conduit: {}, boot: {}, ...late } as RunFile["late"];
+    r.steps = 20_000;   // the S3 and S4 pilots are 20,000-step arms; only the stored length matters to the sizing rules (the late values are set above)
     return r;
   };
   it("R5 and R6 and the F diffA are assembled from S3 and S4 runs", () => {
@@ -888,6 +893,9 @@ describe("sizing from the pilots, and the gates", () => {
     const carpet = rows.map((r) => (r.armId === "free16" ? withLate("S3", "free16", r.slot, { conduit: { pcP50: 70 }, boot: { xMedOcc: 10 } }) : r.armId === "pass-toll-gid" ? withLate("S4", "pass-toll-gid", r.slot, { boot: { ownedOccupied: 0.3, def1: 0.9 } }) : r));
     const z2 = sizeFromS(carpet);
     expect(z2.sizing.Fstar).toBe(8); expect(z2.sizing.ownerStopRule).toBe(true);
+    // CodeRabbit: pilots run with a shorter --steps have a different late window; they are left out and mark nothing measured.
+    const shortened = sizeFromS(rows.map((r) => ({ ...r, steps: 1000 })));
+    expect(shortened.sizing.measured).toEqual([]); expect(shortened.lines.join("\n")).toMatch(/shortened pilot/);
   });
   it("a real run is refused unless the sizing measured every field its arms are built from", () => {
     const rows = (series: string) => expandRuns(series, PROVISIONAL, BOOT_BASE);
@@ -939,6 +947,11 @@ describe("review round", () => {
     const one = withBranches([payingBranch(50_000)]);
     expect(payOnTrail(one, ["noconduit", "ghost"], [50_000, 100_000])).toBeNull();          // 100,000 missing: old code returned true from one checkpoint
     expect(payOnTrail(withBranches([payingBranch(50_000), payingBranch(100_000)]), ["noconduit", "ghost"], [50_000, 100_000])).toBe(true);
+    // CodeRabbit: a checkpoint whose comparator variant is absent is unresolved, not a failed comparison.
+    const noGhost = (at: number): BranchFile => { const b = payingBranch(at); delete (b.variants as Record<string, unknown>).ghost; return b; };
+    expect(payOnTrail(withBranches([noGhost(50_000), noGhost(100_000)]), ["noconduit", "ghost"], [50_000, 100_000])).toBeNull();   // old code: false
+    const noOff = (at: number): BranchFile => { const b = payingBranch(at); delete (b.variants as Record<string, unknown>).noconduit; return b; };
+    expect(dampOnTrail(withBranches([noOff(50_000), noOff(100_000)]), [50_000, 100_000])).toBeNull();
     expect(payOnTrail(one, ["noconduit", "ghost"], null)).toBeNull();
     expect(payOnTrail(withBranches([]), ["noconduit"], [50_000])).toBeNull();
     const failing: BranchFile = { ...payingBranch(50_000), variants: { ...payingBranch(50_000).variants, noconduit: sideOf(880, 40) } };
@@ -1165,6 +1178,8 @@ describe("review round", () => {
     const line = (o: Record<string, unknown>) => JSON.stringify({ state: "finished", series: "T", seconds: 100, plannedSteps: 10_000, jobs: 1, ...o });
     const txt = [line({ seconds: 100 }), line({ smoke: true, seconds: 1 }), line({ standIn: true, seconds: 1 }), line({ ledgerBadChecks: 2, seconds: 1 }), line({ series: "R7", smoke: true, seconds: 300 }), line({ plannedSteps: 100, seconds: 1 })].join("\n");
     expect(rateFromLog(txt, "T")!.rate).toBeCloseTo(10, 9);                    // only the clean T line: 100 s per 10,000 steps = 10 s per 1000
+    // CodeRabbit: lines logged at different --jobs are each divided by their own concurrency (100 s at jobs 1 and 300 s at jobs 3 are both 10 s per 1000).
+    expect(rateFromLog([line({}), line({ seconds: 300, jobs: 3 })].join("\n"), "T")!.rate).toBeCloseTo(10, 9);   // old code: 6.67
     expect(rateFromLog(txt, "T")!.lines).toBe(1);
     expect(rateFromLog(txt, "O")!.lines).toBe(2);                              // no O line: the clean T line and the R7 smoke
     expect(rateFromLog(line({ smoke: true }), "T")).toBeNull();

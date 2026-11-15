@@ -26,6 +26,12 @@ def disc(s):
     P("  DISCREPANCY:", s)
 
 
+def disc_hist(s):
+    """A discrepancy against the first draft of SCREEN.md whose prose has since been corrected (see its Skeptic check section)."""
+    DISC.append("[first draft, since corrected] " + s)
+    P("  DISCREPANCY (first draft of SCREEN.md, since corrected):", s)
+
+
 def weak(s):
     WEAK.append(s)
     P("  WEAK:", s)
@@ -1224,7 +1230,7 @@ on_b = med([window(next(x for x in get('O','T-EC','inherit',s)['branches'] if x[
 eo_b = med([window(next(x for x in get('O','T-EC','inherit',s)['branches'] if x['at']==100000)['variants']['eoff']['snaps'],0,2000,4)['births'] for s in SCREEN_SLOTS['O']])
 P(f"    births with enclosure on {on_b:.0f} vs enclosure off {eo_b:.0f}: the table's on-minus-eoff is positive because the world WITH enclosure has MORE births (the rule E raises turnover); SCREEN's prose 'switching enclosure off raises births and deaths ... (enclosure lowers turnover)' states the opposite.")
 if on_b > eo_b:
-    disc("SCREEN prose (O section): 'switching enclosure off raises births and deaths by 18 to 24 percent (enclosure lowers turnover ...)' is reversed: raw branch counts show births and deaths are HIGHER with enclosure on (table values on-minus-eoff are +18 to +24%), so enclosure raises turnover; the same sign convention makes 'conduit off lowers deaths and births by 6 to 7 percent' (anchors) reversed too: on-minus-coff is -6 to -7%, i.e. switching the conduit off raises turnover")
+    disc_hist("SCREEN prose (O section): 'switching enclosure off raises births and deaths by 18 to 24 percent (enclosure lowers turnover ...)' is reversed: raw branch counts show births and deaths are HIGHER with enclosure on (table values on-minus-eoff are +18 to +24%), so enclosure raises turnover; the same sign convention makes 'conduit off lowers deaths and births by 6 to 7 percent' (anchors) reversed too: on-minus-coff is -6 to -7%, i.e. switching the conduit off raises turnover")
 # coff check
 on_b = med([window(next(x for x in get('O','anchor-phys-EC','physarum',s)['branches'] if x['at']==30000)['variants']['on']['snaps'],0,2000,4)['births'] for s in SCREEN_SLOTS['O']])
 co_b = med([window(next(x for x in get('O','anchor-phys-EC','physarum',s)['branches'] if x['at']==30000)['variants']['coff']['snaps'],0,2000,4)['births'] for s in SCREEN_SLOTS['O']])
@@ -1344,8 +1350,8 @@ P(f"7.2 'Births and deaths both fall 1 to 5 percent': births medians range {pc(m
 Gn = [(k, v["N"]) for k, v in meds.items() if ("-G" in k[0] or k[0].startswith("rows-G")) and not k[0].startswith("carpet")]
 out_n = [(k[0], k[1], k[2], pc(n)) for k, n in Gn if abs(n) > 0.02]
 P(f"7.3 'population stays within +/- 2 percent in G' (gradient rows other than the carpet): rows outside: {out_n}")
-disc("SCREEN prose 'Births and deaths both fall 1 to 5 percent' (T section) does not describe its own table: medians run from %s to %s (births) and %s to %s (deaths), rows-U W3 rises (+2.2%% / +3.0%%), cols-G W3 and phys-rows-G W3 pass 5 points, and several rows are near 0" % (pc(min(x[1] for x in bd)), pc(max(x[1] for x in bd)), pc(min(x[2] for x in bd)), pc(max(x[2] for x in bd))))
-disc("SCREEN prose 'population stays within +/- 2 percent in G' is violated by its own table: " + "; ".join(f"{a} {b} {c} {d}" for a, b, c, d in out_n))
+disc_hist("SCREEN prose 'Births and deaths both fall 1 to 5 percent' (T section) does not describe its own table: medians run from %s to %s (births) and %s to %s (deaths), rows-U W3 rises (+2.2%% / +3.0%%), cols-G W3 and phys-rows-G W3 pass 5 points, and several rows are near 0" % (pc(min(x[1] for x in bd)), pc(max(x[1] for x in bd)), pc(min(x[2] for x in bd)), pc(max(x[2] for x in bd))))
+disc_hist("SCREEN prose 'population stays within +/- 2 percent in G' is violated by its own table: " + "; ".join(f"{a} {b} {c} {d}" for a, b, c, d in out_n))
 # per-seed extremes of rel_i over all T pairs
 ext = []
 for k, v in TRES.items():
@@ -1386,8 +1392,14 @@ for s_ in FSL:
 P(f"    (b) import true in {sum(1 for x_ in bpred if x_)}/8 (None {sum(1 for x_ in bpred if x_ is None)}), H true in {sum(1 for x_ in hpred if x_)}/8, G true in {sum(1 for x_ in gpred if x_)}/8   [SCREEN: (b) 4/8, H 1/8, G 8/8]")
 if (sum(1 for x_ in bpred if x_), sum(1 for x_ in hpred if x_), sum(1 for x_ in gpred if x_)) != (4, 1, 8):
     disc(f"F predicates re-applied to stored values give (b) {sum(1 for x_ in bpred if x_)}, H {sum(1 for x_ in hpred if x_)}, G {sum(1 for x_ in gpred if x_)}; SCREEN prints 4, 1, 8")
-gk = sum(1 for s_ in FSL if (get("F", "GHOST", "inherit", s_)["late"]["boot"]["tmAbove"] or 1e9) >= 0.1 or get("F", "GHOST", "inherit", s_)["late"]["boot"]["ghostCorr"] is None or get("F", "GHOST", "inherit", s_)["late"]["boot"]["ghostCorr"] > 0.5)
-dk = sum(1 for s_ in FSL if (get("F", "DIFF", "inherit", s_)["late"]["boot"]["tmAbove"] or 1e9) >= 0.1)
+def _tm_above(arm, s_):
+    """Late trail above the free layer; a missing reading counts as kept (never helps the control), a measured 0.0 stays 0.0."""
+    v = get("F", arm, "inherit", s_)["late"]["boot"]["tmAbove"]
+    return 1e9 if v is None else v
+
+
+gk = sum(1 for s_ in FSL if _tm_above("GHOST", s_) >= 0.1 or get("F", "GHOST", "inherit", s_)["late"]["boot"]["ghostCorr"] is None or get("F", "GHOST", "inherit", s_)["late"]["boot"]["ghostCorr"] > 0.5)
+dk = sum(1 for s_ in FSL if _tm_above("DIFF", s_) >= 0.1)
 P(f"    (f) GHOST kept {gk}/8, DIFF kept {dk}/8  [SCREEN: 7/8 and 8/8]; (b)(c)(f) are not used by the label (S in 6 of 8 matches rule 2 before they are reached)")
 # log distinct seeds
 log_seeds = {x["worldSeed"] for x in LOG if "worldSeed" in x}

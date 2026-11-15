@@ -265,6 +265,8 @@ if (import.meta.main) {
   if (series && !a.count && !(SERIES_IDS as readonly string[]).includes(series)) { console.error(`--series must be one of ${SERIES_IDS.join(", ")}`); Deno.exit(2); }
   const o: Opts = { branchSteps: Number(a["branch-steps"] ?? BRANCH_LEN), branchGrid: Number(a["branch-grid"] ?? 25), noBranch: !!a["no-branch"], steps: a.steps ? Number(a.steps) : null, smoke: !!a.smoke || series === "R7" };
   if (!Number.isInteger(o.branchSteps) || !Number.isInteger(o.branchGrid) || o.branchSteps % o.branchGrid !== 0 || o.branchSteps < o.branchGrid) { console.error("--branch-steps must be a multiple of --branch-grid"); Deno.exit(2); }
+  // The last-half window [len/2, len] needs a read at len/2 (windowSide needs both endpoints): a grid that skips it could never give a last-half verdict.
+  if (o.branchSteps % 2 !== 0 || (o.branchSteps / 2) % o.branchGrid !== 0) { console.error("--branch-steps / 2 must be a multiple of --branch-grid (the last-half window needs a read at its start)"); Deno.exit(2); }
   if (o.steps !== null && (!Number.isInteger(o.steps) || o.steps < 100 || o.steps % 100 !== 0)) { console.error("--steps must be a multiple of 100"); Deno.exit(2); }
   if (a.count) {
     if (!series) { console.error("--series is required (a comma list is allowed with --count)"); Deno.exit(2); }

@@ -161,7 +161,9 @@ export function analyzeT(rows: readonly RunFile[], sz: Sizing, d0Vote: Vote | nu
     readable: p2Readable, payRows: perStrength.P2.payRows, payCarpet, dampRows: perStrength.P2.dampRows, grad, payDiffA, mech, payD0: d0Vote ?? "I",
   } satisfies import("./observe-bootstrap.ts").TInputs;
   const missing: string[] = [];
-  const cp = cohortProblem(p2.slots.length); if (cp) missing.push(cp);
+  // The cohort is every rows-G.on-P2 slot, before pairing: an extension with 16 on rows and 8 off rows is not a complete cohort of 8.
+  const cp = cohortProblem(onP2.size); if (cp) missing.push(cp);
+  if ([...onP2.keys()].some((s) => !rowsG.off.has(s))) missing.push(`rows-G off missing for some of the ${onP2.size} on slots`);
   const need8 = (name: string, m: Map<number, RunFile>) => { if (p2!.slots.some((s) => !m.has(s))) missing.push(`${name} missing for some of the ${p2!.slots.length} slots`); };
   need8("rows-G butterfly twin", rowsG.bf); need8("carpet-G on", carpetG.on); need8("carpet-G off", carpetG.off); need8("carpet-G butterfly twin", carpetG.bf);
   need8("cols-G on", colsG.on); need8("cols-G off", colsG.off); need8("cols-G butterfly twin", colsG.bf); need8("diffA-matched twin", armMap(rows, "T", "rows-G.diffA"));
@@ -303,7 +305,7 @@ export function payOnTrail(r: RunFile, versus: readonly string[], planned: reado
     const ps = branchPairs(b, r.config.eA);
     for (const v of versus) {
       const p = ps.find((x) => x.variant === v);
-      if (!p) return false;
+      if (!p) { unres = true; continue; }   // no comparator at this checkpoint: unresolved, not a failed comparison
       for (const x of [p.whole, p.last]) { if (x.pay === null) unres = true; else if (!x.pay) return false; }
     }
   }
@@ -318,7 +320,7 @@ export function dampOnTrail(r: RunFile, planned: readonly number[] | null): bool
     const b = r.branches.find((x) => x.at === at);
     if (!b) { unres = true; continue; }
     const p = branchPairs(b, r.config.eA).find((x) => x.variant === "noconduit");
-    if (!p) return false;
+    if (!p) { unres = true; continue; }
     for (const x of [p.whole, p.last]) { if (x.damp === null) unres = true; else if (!x.damp) return false; }
   }
   return unres || planned.length < MIN_CHECKPOINTS ? null : true;
@@ -409,9 +411,11 @@ export function analyzeF(rows: readonly RunFile[], sz: Sizing): FReport {
   // An unread control (null trail) counts as kept: a control that could not be read never helps its own predicate.
   const keptCtl = (r: RunFile) => (r.late.boot.tmAbove ?? Infinity) >= 0.1;
   // A GHOST arm whose displaced field correlates above 0.5 with the real one (or has no correlation report) is a void control: it counts as kept, never as a pass.
-  const ghostK = [...ghost.values()].filter((r) => keptCtl(r) || mainGhostVoid(r.late.boot.ghostCorr)).length, diffK = [...diff.values()].filter(keptCtl).length;
-  const f = ghost.size > 0 && diff.size > 0 && ghostK <= atMost(ghost.size) && diffK <= atMost(diff.size);
-  L.push(`(f) controls: GHOST kept ${ghostK}/${ghost.size}, DIFF kept ${diffK}/${diff.size} -> ${f ? "holds" : "does not hold or arms missing"}`);
+  // Counted over the treated slots only (every one has both controls, checked above): held or extension controls on other slots never dilute the limit.
+  const ghostS = slots.map((s) => ghost.get(s)!), diffS = slots.map((s) => diff.get(s)!);
+  const ghostK = ghostS.filter((r) => keptCtl(r) || mainGhostVoid(r.late.boot.ghostCorr)).length, diffK = diffS.filter(keptCtl).length;
+  const f = slots.length > 0 && ghostK <= atMost(slots.length) && diffK <= atMost(slots.length);
+  L.push(`(f) controls: GHOST kept ${ghostK}/${slots.length}, DIFF kept ${diffK}/${slots.length} -> ${f ? "holds" : "does not hold or arms missing"}`);
   // Anchors (DESIGN 9.4): the verdict needs the full anchor cohort, one physarum and one blind run per treated slot. A partial cohort is INCOMPLETE: need(1) = 1
   // would otherwise let a single finished pair read YES, the gate of KEPT-AND-PAYS.
   const anchorOf = (arm: string, h: string) => [...armMap(rows, "F", arm, h).entries()].sort((x, y) => x[0] - y[0]).map((x) => x[1]);

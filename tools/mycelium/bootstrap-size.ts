@@ -2,7 +2,10 @@
 // R5 and R6 (the F and O pilots, S3 and S4) are pure rules in observe-bootstrap.ts; their inputs come from the pilot runs and are not assembled here.
 import { aliveAndWindow, chooseV, colWindow, DEF_THETAS, freeCeiling, freeStrengths, gRising, settleT0, thetaR6 } from "./observe-bootstrap.ts";
 import type { RunFile } from "./bootstrap-analyze.ts";
-import { PATTERNS, S2_VALUES } from "./bootstrap-arms.ts";
+import { armsOf, PATTERNS, PROVISIONAL, S2_VALUES } from "./bootstrap-arms.ts";
+
+/** The steps a sizing arm is defined to run (arm lengths do not depend on the sizing values); null for an arm the tables do not know. */
+const pilotSteps = (r: RunFile): number | null => armsOf(r.series, PROVISIONAL).find((a) => a.id === r.armId)?.steps ?? null;
 
 const med = (a: readonly number[]): number | null => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s.length % 2 ? s[s.length >> 1] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 
@@ -12,8 +15,11 @@ export interface SizeResult { lines: string[]; sizing: Record<string, unknown> }
 export const S_SEEDS = { S1: 4, S2: 2, S3: 2, S4: 4 } as const;
 
 export function sizeFromS(allRows: readonly RunFile[]): SizeResult {
-  const rows = allRows.filter((r) => !r.smoke);
+  // A pilot run with a shorter --steps has a different late window: it is not a measurement and never marks a sizing field measured.
+  const short = allRows.filter((r) => !r.smoke && /^S/.test(r.series) && (pilotSteps(r) ?? 0) > r.steps);
+  const rows = allRows.filter((r) => !r.smoke && !short.includes(r));
   const L: string[] = [];
+  if (short.length) L.push(`${short.length} shortened pilot run(s) left out (run with fewer steps than the arm defines): ${short.slice(0, 6).map((r) => r.id).join(", ")}${short.length > 6 ? ", ..." : ""}`);
   const out: Record<string, unknown> = { measured: [] as string[], note: "R1 to R6 from the S runs present; gOwner and gCpub need the owner-edge readouts (step 3c) and are never measured here; the S3 'moved once if median eff is outside 9 to 53' step is not applied" };
   const measured = out.measured as string[];
   // R1 on S1 (keyless, U and G).

@@ -351,7 +351,7 @@ export function runSummary(c: { failures: number; fatal: number; skippedClaims: 
 }
 
 /**
- * Wall seconds per 1,000 planned steps from the finished lines of a run-log text: sum(seconds) / sum(plannedSteps) / jobs. Smoke lines count only for
+ * Wall seconds per 1,000 planned steps from the finished lines of a run-log text: sum(seconds / jobs) / sum(plannedSteps), each line by its own jobs. Smoke lines count only for
  * series R7 (the designated timing smoke), lines made with stand-in sizing for the run's own arm never count, lines with residuals or under 2,000
  * planned steps never count. Only lines of `series` count when any exist, else all remaining lines. null with none.
  */
@@ -369,8 +369,9 @@ export function rateFromLog(txt: string, series?: string): { rate: number; lines
   const use = same.length ? same : fin;
   if (!use.length) return null;
   const jobs = Math.max(...use.map((x) => x.jobs));
-  const sec = use.reduce((t, x) => t + x.seconds, 0), st = use.reduce((t, x) => t + x.planned, 0);
-  return { rate: (1000 * sec) / st / jobs, lines: use.length, basis: `${same.length ? `series ${series}` : "all series (none for this one yet)"}, ${use.length} finished lines, ${jobs} concurrent jobs` };
+  // Each line's seconds are divided by its own concurrency: lines logged at different --jobs values would otherwise all be divided by the largest.
+  const sec = use.reduce((t, x) => t + x.seconds / x.jobs, 0), st = use.reduce((t, x) => t + x.planned, 0);
+  return { rate: (1000 * sec) / st, lines: use.length, basis: `${same.length ? `series ${series}` : "all series (none for this one yet)"}, ${use.length} finished lines, ${jobs} concurrent jobs` };
 }
 
 /** The world seeds a run list can use, with the two derived null seeds of each run that branches (for the logs and tests). */
