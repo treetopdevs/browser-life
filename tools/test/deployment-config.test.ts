@@ -161,8 +161,9 @@ for (const mode of ["empty", "trusted-peer", "untrusted-peer"] as const) {
         }
       });
     }
-    it("keeps garden and garden APIs private", async () => {
-      for (const route of ["/garden", "/garden/", "/api/garden/test", "/api/gardens/test", "/api/public/gardens/test"]) {
+    it("keeps garden APIs closed", async () => {
+      // The page is public (it is a static file); the API stays closed until the garden opens.
+      for (const route of ["/api/garden/test", "/api/gardens/test", "/api/public/garden", "/api/public/gardens/test", "/API/PUBLIC/GARDEN/letters"]) {
         expect((await fetch(origin + route)).status, route).toBe(404);
       }
     });

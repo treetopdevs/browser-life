@@ -112,9 +112,11 @@ The named `coordinator_data` volume contains the queue and checkpoints, and `dis
 
 ## Opening the shared garden
 
-The commons is not founded, and `/garden/` stays unlinked and `noindex` until it is. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
+The commons is not founded. Since 14 November 2026 `/garden/` is a public, indexed page. Caddy still answers 404 for every garden API route (`@private_garden_api`), because the coordinator’s letter, hand and checkpoint routes do not check `BL_GARDEN_SCHEDULING`; opening the garden means removing that matcher as well as the steps below. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
 
 ## Site and lab release, garden held private — 19 October 2026
+
+Superseded on 14 November 2026 for the page only (see “Opening the shared garden” above): the page ships and is indexed; the API block and the scheduling switch described here are unchanged.
 
 The site image removes `/garden/` from the built files. Caddy returns 404 for
 `/garden`, its descendants, and singular/plural garden API routes (public and

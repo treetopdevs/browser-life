@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
-  <meta name="description" content="A local experiment: particles that each carry a small neural controller, eating, laying trail and splitting in a world where matter is conserved exactly.">
+<meta name="theme-color" content="#101b21">
+  <meta name="description" content="Particles with small neural controllers eat, lay trail and split in a world where matter is conserved exactly. An exploration, not evidence.">
   <title>Mycelium world · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/mycelium/" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the world</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / mycelium world: R0 reference, R1 GPU port, R2 and R2b measurement-limited, R3 purge supported, R4 toll-only</span></header>
+  <header><a href="/lab/">← Lab</a><span>Experiment / mycelium world: R0 reference, R1 GPU port, R2 and R2b measurement-limited, R3 purge supported, R4 toll-only</span></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">Neural particles over a conserved field</p>
@@ -20,7 +21,7 @@
       </details>
       <p class="engine-now" id="engine-now" data-engine="" role="status">Starting.</p>
       <div class="disclosure">
-        <p><strong>Local experiment, kept off the public site. Nothing here shows that anything evolves.</strong></p>
+        <p><strong>An exploration page. Nothing here shows that anything evolves.</strong></p>
         <details>
           <summary>What was checked, and what was not</summary>
           <p>Matter is conserved exactly and energy is booked exactly; the two residuals below stay at 0. This page runs the world on your GPU through WebGPU when it can, and on the CPU reference (rung R0, one 128 × 128 size) when it cannot or when you choose it. The GPU port (rung R1) matched the CPU reference bit for bit in a local test on one Mac, which says the port is faithful, not that it has been checked on other GPUs, and says nothing about evolution. The two residuals are checked by the CPU engine after every step, and by the GPU engine from a full read-back about twice a second and after every brush stroke. Rung R2, the test of whether heredity matters, came out measurement-limited on five practice seeds, and so did its redesign, R2b, on twenty practice seeds run for 100,000 steps on the GPU: the confirmation was never run, so nothing here shows that anything evolves, and nothing here shows that it does not. Two later tests asked about trail, on fresh seeds and with the rules fixed in advance. R3 found that when trail is only a cost, inheritance purges it (supported, with a dose response), which says trail is not kept for free. R4 gave trail a reward, a cheaper move for particles that lay it (the toll road), and the trail was kept in 15 of 16 worlds, but the particles only paid the smallest toll and did not follow the trail (result: toll-only). A further exploration, the conduit rule, which lets nutrient flow faster along connected trail, lost its trail in inherited worlds too; it was a screen on 4 seeds per cell, not a test, and in those worlds almost no trail was laid, so it cannot say whether a trail that already existed would pay. None of this shows that anything evolves.</p>
@@ -171,7 +172,7 @@
         <li>The trail rules (toll road, conduit) are optional extra rules, chosen when you plant. A world planted with one is a different experiment from the plain one, and nothing counted in R2 or R2b used them. R3 (purge) and R4 (toll-only) were run on fresh seeds with rules fixed in advance; the conduit screen was not pre-registered and only says a registered test on it is not warranted yet.</li>
         <li>Wounding and scraping are done by hand. They keep the books exact, but a world that has been brushed is a different experiment from one that has not, and nothing counted in R2 was brushed.</li>
       </ul>
-      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md, docs/mycelium-r2b-2026-11-13/RESULT.md, docs/mycelium-r3-2026-11-13/RESULT.md, docs/mycelium-r4-2026-11-14/RESULT.md and docs/mycelium-conduit-2026-11-14/SCREEN.md (line report: docs/mycelium-line-2026-11-14/report.html). Deterministic integer arithmetic on both engines; not on the public site.</p>
+      <p class="muted">Rules: tools/mycelium/RULES.md. Results and status: docs/mycelium-r2-2026-11-13/RESULT.md, docs/mycelium-r2b-2026-11-13/RESULT.md, docs/mycelium-r3-2026-11-13/RESULT.md, docs/mycelium-r4-2026-11-14/RESULT.md and docs/mycelium-conduit-2026-11-14/SCREEN.md (line report: docs/mycelium-line-2026-11-14/report.html). Deterministic integer arithmetic on both engines; an exploration page.</p>
     </section>
   </main>
   <script type="module" src="/src/mycelium/page.ts"></script>

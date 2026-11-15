@@ -2,7 +2,7 @@
 // (node:fs for the build check below; the reference brings @types/node globals into the whole tsc program.)
 // Release checks for the public routes (docs/release-checks-2026-10-18.md, section 4): every page the sitemap lists
 // exists, answers 200, names itself with a canonical link and og:url equal to its <loc>, and is not noindex; robots.txt
-// allows crawling and names the sitemap; the diagnostic pages are noindex and unlisted. The first tests ask the dev
+// allows crawling and names the sitemap; the two diagnostic pages are noindex and unlisted (every experiment page is public, listed and indexable, the shared garden’s page included). The first tests ask the dev
 // server (Playwright's webServer); the last reads the production build in apps/lab/dist, so run `pnpm build` first.
 // Without a build that test skips, saying why, so a plain `npx playwright test` in a clean checkout stays green; with
 // BL_REQUIRE_BUILD_CHECK=1 a missing build fails instead. A build whose robots.txt or sitemap.xml differs from
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 const ORIGIN = "https://cadence.garden";
 const DIST = fileURLToPath(new URL("../../apps/lab/dist/", import.meta.url));
 const PUBLIC = fileURLToPath(new URL("../../apps/lab/public/", import.meta.url));
-const DIAGNOSTIC = ["/selftest.html", "/island.html", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/boundaries/", "/development/", "/hungry-shapes/", "/food-bands/", "/matter/", "/currents/", "/spatial/", "/ecosystem/", "/ecosystem/archive/", "/playground/", "/vision-screen/"];
+const DIAGNOSTIC = ["/selftest.html", "/island.html"];
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const withoutComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");

@@ -4,23 +4,15 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
+import { expectPublicPage } from './support/public-page.ts';
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
-it('keeps the moving-light prototype outside the deployed site', () => {
-  expect(read('apps/lab/vite.config.ts')).toContain('movingLight: r("./moving-light/index.html")');
-  const docker = read('Dockerfile.site');
-  for (const path of ['apps/lab/dist/moving-light', 'apps/lab/dist/assets/movingLight-*.js', 'apps/lab/dist/assets/movingLight-*.css']) expect(docker).toContain(path);
-  const source = read('deploy/Caddyfile').match(/@private_moving_light path_regexp private_moving_light (.+)/)?.[1];
-  expect(source).toBe('(?i)^/moving-light(?:/|$)');
-  expect(read('deploy/Caddyfile')).toMatch(/respond @private_moving_light 404/);
-  const route = new RegExp(source!.replace('(?i)', ''), 'i');
-  for (const path of ['/moving-light', '/moving-light/', '/MOVING-LIGHT/index.html']) expect(route.test(path)).toBe(true);
-  expect(route.test('/moving-light-other')).toBe(false);
-  expect(route.test('/movinglight')).toBe(false);
+it('ships the moving-light page with the site: built, kept by the image, served, indexable and in the sitemap', () => {
+  expectPublicPage('moving-light', 'movingLight: r("./moving-light/index.html")', ['movingLight-']);
 });
-it('page text carries the caption, the CPU-only statement and noindex', () => {
+it('page text carries the caption and the CPU-only statement', () => {
   const html = read('apps/lab/moving-light/index.html');
   expect(html).toContain('Exploratory, CPU only, no GPU evidence');
-  expect(html).toContain('noindex');
+  expect(html).not.toContain('noindex');
   expect(html).toContain('no interaction benefit detected');
   expect(html).toContain('not a change made to a running world');
   expect(html).toMatch(/<table>[\s\S]*<caption>/);
@@ -30,17 +22,17 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
   try {
     execFileSync('npx', ['vite', 'build', '--outDir', dir, '--emptyOutDir', '--logLevel', 'error'], { cwd: fileURLToPath(new URL('..', import.meta.url)), stdio: 'pipe' });
     const rm = read('Dockerfile.site').match(/&& rm -rf (.+)/)?.[1];
-    expect(rm).toBeTruthy();
     const files = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(join(d, e.name)) : [join(d, e.name)]);
     const all = files(dir).map((f) => relative(dir, f));
     const removed = new Set<string>();
-    for (const token of rm!.split(/\s+/)) {
+    for (const token of (rm ?? '').split(/\s+/).filter(Boolean)) {
       const rel = token.replace(/^apps\/lab\/dist\//, '');
       const re = new RegExp(`^${rel.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}(/.*)?$`);
       for (const f of all) if (re.test(f)) removed.add(f);
     }
-    expect([...removed].some((f) => f.startsWith('moving-light/'))).toBe(true);
-    expect([...removed].some((f) => /^assets\/movingLight-.*\.js$/.test(f))).toBe(true);
+    expect([...removed].some((f) => f.startsWith('moving-light/'))).toBe(false);
+    expect(all).toContain('moving-light/index.html');
+    expect([...removed].some((f) => /^assets\/movingLight-.*\.js$/.test(f))).toBe(false);
     const kept = new Set(all.filter((f) => !removed.has(f)));
     const dangling: string[] = [];
     for (const f of kept) {
@@ -48,10 +40,11 @@ it('the site image keeps a self-contained asset graph after the Dockerfile delet
       const text = readFileSync(join(dir, f), 'utf8');
       for (const m of text.matchAll(/(?:\.\/|\/?assets\/)([A-Za-z0-9_.-]+\.(?:js|css))/g)) {
         const target = `assets/${m[1]}`;
-        if (all.includes(target) && !kept.has(target)) dangling.push(`${f} -> ${target}`);
+        if (!kept.has(target) && (all.includes(target) || f.endsWith('.html'))) dangling.push(`${f} -> ${target}`);
       }
     }
     expect(dangling).toEqual([]);
     expect(kept.has('lab/index.html')).toBe(true);
+    expect(kept.has('moving-light/index.html')).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

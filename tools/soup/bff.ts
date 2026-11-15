@@ -139,7 +139,10 @@ export interface SoupParams { num: number; seed: number; lang?: Lang; mutation?:
 
 /** Neighbour lists in make_2d_pattern.py order, as CSR: neighbours of i are list[start[i] .. start[i+1]). */
 export function gridNeighbours(g: Grid): { start: Uint32Array; list: Uint32Array } {
-  const r = g.radius ?? 2, n = g.width * g.height;
+  const n = g.width * g.height;
+  // Offsets past the grid's extent add no neighbours, so capping keeps the same lists in the same order
+  // while bounding the loops (a malformed snapshot or flag could otherwise pass a huge radius).
+  const r = Math.min(g.radius ?? 2, Math.max(g.width, g.height) - 1);
   const start = new Uint32Array(n + 1), list: number[] = [];
   for (let i = 0; i < g.height; i++) {
     for (let j = 0; j < g.width; j++) {
@@ -181,6 +184,8 @@ export class Soup {
     this.num = p.num;
     this.lang = p.lang ?? "noheads";
     this.mutation = p.mutation ?? DEFAULT_MUTATION;
+    // A rate out of 2^30 (cubff compares a 30-bit draw against it); outside [0, 2^30] the u32 kernels misbehave.
+    if (!Number.isInteger(this.mutation) || this.mutation < 0 || this.mutation > 2 ** 30) throw new Error("mutation must be an integer in [0, 2^30]");
     this.programs = new Uint8Array(p.num * TAPE);
     this.order = new Uint32Array(p.num);
     this.grid = p.grid ?? null;

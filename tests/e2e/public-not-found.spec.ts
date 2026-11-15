@@ -215,10 +215,14 @@ test.describe("Caddy", () => {
     }
   });
 
-  test("Caddy: the garden page and every garden API stay private", async () => {
+  test("Caddy: the garden page is served, and every garden API stays closed", async () => {
+    for (const path of ["/garden/", "/garden/index.html"]) {
+      const res = await raw(base, path);
+      expect(res.status, path).toBe(200);
+      expect(res.body, path).toContain("<title>The shared garden · Cadence Garden</title>");
+    }
+    expect((await raw(base, "/garden")).status).toBe(308);
     const paths = [
-      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html",
-      "/garden%2findex.html", "//garden/", "/x/../garden/",
       "/api/public/garden", "/api/public/garden/letters",
       "/api/public/garden/food/hands", "/api/public/garden/meteor/hands",
       "/api/public/gardens/commons", "/api/public/gardens/commons/letters",

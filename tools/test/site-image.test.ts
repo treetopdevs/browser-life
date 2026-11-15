@@ -54,7 +54,9 @@ const ids = Object.keys(cards);
 const TITLE = "<title>Page not found · Cadence Garden</title>";
 const titleOf = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
 const metaOf = (html: string, key: string) => new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html)?.[1];
-const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/", "/soup/"];
+// The experiment pages are public too (the shared garden’s page among them): each is packaged, served with its assets and indexable.
+const EXPERIMENT_PAGES = ["/story/", "/experiments/", "/garden/", "/slab/", "/particles/", "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/boundaries/", "/development/", "/hungry-shapes/", "/food-bands/", "/matter/", "/currents/", "/spatial/", "/predictability/", "/mycelium/", "/assembly/", "/niche/", "/moving-light/", "/controller-locality/", "/opponents/", "/opponents/archive/", "/ecosystem/", "/ecosystem/archive/", "/playground/", "/vision-screen/"];
+const PAGES = ["/", "/lab/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/participate/", "/status/", "/privacy/", "/soup/", ...EXPERIMENT_PAGES];
 
 // What the synthetic coordinator says; the site must pass these through untouched.
 const NOT_FOUND = "upstream-not-found";
@@ -192,15 +194,14 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(must(["exec", site, "cat", "/etc/caddy/Caddyfile"])).toBe(readFileSync(repo("deploy/Caddyfile"), "utf8"));
   });
 
-  it("packages the lab files and the media and leaves the garden out", () => {
+  it("packages the lab files and the media, with every page", () => {
     const files = new Set(must(["exec", site, "find", "/srv"]).split("\n").filter(Boolean));
     expect(files.has("/srv/lab/index.html"), "packaged lab content: /srv/lab/index.html is missing from the image").toBe(true);
     const wanted = [
-      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/soup/index.html", "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
+      "/srv/index.html", "/srv/404.html", "/srv/worlds/index.html", "/srv/soup/index.html", ...EXPERIMENT_PAGES.map((p) => `/srv${p}index.html`), "/srv/robots.txt", "/srv/sitemap.xml", "/srv/site.webmanifest", "/srv/favicon.svg",
       ...ids.flatMap((world) => [`/srv/lab/world/${world}/index.html`, `/srv/worlds/world/${world}/index.html`, `/srv/og/worlds/${world}.jpg`]),
     ];
     expect(wanted.filter((file) => !files.has(file)), "packaged files missing from the image").toEqual([]);
-    expect([...files].filter((file) => file === "/srv/garden" || file.startsWith("/srv/garden/")), "the garden is not packaged").toEqual([]);
   });
 
   it("serves every page with the styles and scripts it names", async () => {
@@ -211,6 +212,7 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
       expect(res.headers["content-type"], path).toMatch(/^text\/html/);
       expect(titleOf(res.body), path).toBeTruthy();
       expect(res.body, path).not.toContain(TITLE);
+      if (EXPERIMENT_PAGES.includes(path)) expect(res.body, `${path} is open to search engines`).not.toMatch(/<meta name="robots"[^>]*noindex/);
       for (const [, url] of res.body.matchAll(/\s(?:src|href)="(\/[^"]*)"/g)) {
         const clean = url.split(/[?#]/)[0];
         if (!url.startsWith("//") && /\.(?:css|js|mjs)$/.test(clean)) assets.add(clean);
@@ -299,9 +301,12 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(asset.body).toBe(full.body);
   });
 
-  it("keeps the garden page and every garden API private", async () => {
+  it("serves the garden page and keeps every garden API closed", async () => {
+    const page = await raw(origin, "/garden/");
+    expect(page.status).toBe(200);
+    expect(titleOf(page.body)).toBe("The shared garden · Cadence Garden");
+    expect((await raw(origin, "/garden")).status).toBe(308);
     const paths = [
-      "/garden", "/garden/", "/garden/index.html", "/GARDEN/index.html", "/garden%2findex.html", "//garden/", "/x/../garden/",
       "/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/public/gardens/commons/checkpoints/abc",
       "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test", "/api/public/garden%2fletters", "/API/PUBLIC/GARDEN",
     ];

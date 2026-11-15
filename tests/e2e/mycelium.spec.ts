@@ -1,4 +1,4 @@
-// The private Mycelium page (/mycelium/): runs the world on the GPU when WebGPU starts (the CPU reference otherwise),
+// The Mycelium page (/mycelium/): runs the world on the GPU when WebGPU starts (the CPU reference otherwise),
 // plays, zooms, inspects, wounds and scrapes, and the two ledger residuals read 0 afterwards. Fails on any page
 // error, console error or GPU error the page surfaces.
 import { expect, test, type Page } from '@playwright/test';

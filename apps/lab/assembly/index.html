@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex"><meta name="theme-color" content="#101b21">
-  <meta name="description" content="A local experiment: an assembly-inspired construction-length observer run on matched calibration objects.">
+<meta name="theme-color" content="#101b21">
+  <meta name="description" content="Does copying a random motif look like building something? An assembly-inspired observer is checked on matched objects of 240 cells.">
   <title>Assembly observer · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/assembly/" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the observer</a>
-  <header><a href="/lab/">← Lab</a><span>Local experiment / assembly observer</span></header>
+  <header><a href="/lab/">← Lab</a><span>Experiment / assembly observer</span></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">An observer calibration</p>
       <h1>Does copying a random motif look like building something?</h1>
       <p>Each picture is a 64 by 64 patch with exactly 240 occupied cells. A small, openly assembly-inspired grammar says how cheaply each object can be built from single cells when finished pieces can be reused. Construction length, copy count and persistence are read apart, next to simple baselines (cell count, compressed size). The test that matters is the pair <strong>hier-12</strong> (a hand-built nested shape) against <strong>random-dup-12</strong> (a random shape of the same size, copied the same number of times).</p>
-      <p class="disclosure">CPU only: deterministic integer fixtures, no GPU evidence. Local experiment, kept off the public site. Values are the construction length under this grammar: exact for objects up to 10 cells, otherwise an upper bound from a bounded search. The 12-cell comparison objects are above that line, so their costs are upper bounds, and the 12-cell random shapes were picked by those bounds (see the note under the verdicts). It is not the published assembly index and it does not say whether anything here is alive.</p>
+      <p class="disclosure">CPU only: deterministic integer fixtures, no GPU evidence. An exploration page, not evidence. Values are the construction length under this grammar: exact for objects up to 10 cells, otherwise an upper bound from a bounded search. The 12-cell comparison objects are above that line, so their costs are upper bounds, and the 12-cell random shapes were picked by those bounds (see the note under the verdicts). It is not the published assembly index and it does not say whether anything here is alive.</p>
       <p id="status" class="muted" role="status">Drawing the patches from the saved evidence and checking each against its saved hash.</p>
     </section>
 
@@ -56,7 +57,7 @@
         <li>Construction lengths above 10 cells are upper bounds from a heuristic search, never an exact index. Compression is a baseline, not an assembly index.</li>
         <li>Destruction and reconstruction interventions are a later rung and have not been done. No evolving-world clip is a positive case.</li>
       </ul>
-      <p class="muted">CPU only, deterministic integer fixtures, no GPU evidence, not on the public site. No score selected which worlds or clips were shown; the negative-class motifs are picked by construction-length score (best of 256 candidates).</p>
+      <p class="muted">CPU only, deterministic integer fixtures, no GPU evidence, an exploration page. No score selected which worlds or clips were shown; the negative-class motifs are picked by construction-length score (best of 256 candidates).</p>
     </section>
   </main>
   <script type="module" src="/src/assembly/page.ts"></script>
