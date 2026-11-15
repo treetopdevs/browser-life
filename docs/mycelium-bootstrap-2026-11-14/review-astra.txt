@@ -1,0 +1,15 @@
+Found **four P2 issues and one P3**. No P1 findings.
+
+1. **P2 — One checkpoint can still earn the full F label.** [bootstrap-analyze.ts:283](tools/mycelium/bootstrap-analyze.ts:283) trusts the stored branch plan. `--steps 1000` creates just one checkpoint without marking the run smoke. With eight slots, passing predicates and normal 2,000-step branches, `analyzeF` returns **KEPT-AND-PAYS** despite DESIGN requiring two checkpoints. Reproduced against the actual analyzer using synthetic rows. The round 2 branch-length guard does not catch this.
+
+2. **P2 — An unreadable butterfly control lowers the noise floor.** [bootstrap-analyze.ts:51](tools/mycelium/bootstrap-analyze.ts:51) omits unusable butterfly windows but still judges every on/off pair. Reproduction: eight pairs with intake +4%, unchanged safeguards, seven butterfly twins identical to off, and the eighth missing step 2400. Result: **PAY Y**, accompanied by “butterfly twins available for 7 of 8 slots.” The missing control should leave the cohort noise floor unresolved. This is reachable by running that butterfly with a shorter `--steps`.
+
+3. **P2 — Missing comparison flux satisfies MECH.** [bootstrap-analyze.ts:153](tools/mycelium/bootstrap-analyze.ts:153) explicitly accepts `fCols === null`. Supply otherwise complete, passing T comparisons with positive rows flux but unavailable cols flux: MECH passes, allowing **TRANSIENT** without demonstrating flux above cols. Missing comparison data must not satisfy that predicate.
+
+4. **P2 — SCREEN retains unsupported universal claims.** [SCREEN.md:85](docs/mycelium-bootstrap-2026-11-14/SCREEN.md:85) says intake never rose and turnover always damped; [line 89](docs/mycelium-bootstrap-2026-11-14/SCREEN.md:89) denies any defined pair reaching +3% intake. Recomputing rows-G P1, seed 8217, window `(1000,3000]` gives **intake +4.8754%, population −3.6529%**. PAY fails the population safeguard, not the intake threshold. “No qualifying PAY” is supported; these stronger statements are not.
+
+5. **P3 — Invalid worker count silently drops every pending run.** [bootstrap-screen.ts:345](tools/mycelium/bootstrap-screen.ts:345) accepts `--jobs 0` or a nonnumeric value. At [line 391](tools/mycelium/bootstrap-screen.ts:391), zero workers execute, yet the summary reports **“all ledgers exact, intake identity exact” and exit 0**. Validate a positive integer worker count.
+
+No additional defect found in matter/energy closure, arithmetic bounds, CPU/WGSL implementation correspondence, owner claims, upload/readback/checkpoint handling, seed-table collision logic, resume comparisons, branch config stripping, or threshold scaling. I found no weakening of original cases through `firstDiff`, nor vacuous assertions in the reviewed tests. O remains explicitly unsized and unlabelled.
+
+Read-only checks reproduced **`9a5461c07ef6fcde`** and passed **5,400 CPU per-step validations**, including checkpoint round-trips. Native GPU parity was inspected but **not rerun**. No files were edited.
