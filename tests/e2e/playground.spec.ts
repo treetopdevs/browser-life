@@ -6,7 +6,8 @@ test("prototype directory lists all routes with plain status labels", async ({ p
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/playground/");
   await expect(page).toHaveTitle("Prototype library · Cadence Garden");
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://cadence.garden/playground/");
   await expect(page.getByText("Supply, selection, and inherited traits are engineered", { exact: false })).toBeVisible();
 
   const cards = page.locator(".card");

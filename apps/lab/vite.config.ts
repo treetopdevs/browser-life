@@ -10,7 +10,7 @@ const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // port, which would make /api proxy to itself. bin/dev sets COORDINATOR_PORT.
 const coordinatorUrl = `http://localhost:${process.env.COORDINATOR_PORT ?? "4000"}`;
 
-// Model copies the private /food-bands/ page can load (hungry-shapes keeps its own chunk name below).
+// Model copies the /food-bands/ page can load (hungry-shapes keeps its own chunk name below).
 const FOOD_BANDS_MODELS = ["uniform-endurance", "moving-food", "stationary-food", "split-food", "alternating-food", "food-band-foothold", "food-schedule-769"];
 
 const alias = {
@@ -204,6 +204,8 @@ export default defineConfig({
       worlds: r("./worlds/index.html"),
       howItWorks: r("./how-it-works/index.html"),
       research: r("./research/index.html"),
+      story: r("./story/index.html"),
+      experiments: r("./experiments/index.html"),
       about: r("./about/index.html"),
       privacy: r("./privacy/index.html"),
       participate: r("./participate/index.html"),
@@ -238,8 +240,7 @@ export default defineConfig({
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
-      // The private slab viewer is built only on request (BL_BUILD_SLAB=1, the packaging test), never into the site image.
-      ...(process.env.BL_BUILD_SLAB === "1" ? { slab: r("./slab/index.html") } : {}),
+      slab: r("./slab/index.html"),
     } },
   },
 });

@@ -12,65 +12,6 @@
 :80 {
   encode zstd gzip
 
-  # The slab viewer is a private exploration page: never served from the site.
-  @private_slab path_regexp private_slab (?i)^/slab(?:/|$)
-  respond @private_slab 404
-
-  # Creative particle prototype is local-only until separately approved for release.
-  @private_particles path_regexp private_particles (?i)^/particles(?:/|$)
-  respond @private_particles 404
-
-  # Standalone field prototype remains local-only.
-  @private_boundaries path_regexp private_boundaries (?i)^/boundaries(?:/|$)
-  respond @private_boundaries 404
-
-  # Food bands runs the food-schedule screens live and stays a local exploration page.
-  @private_food_bands path_regexp private_food_bands (?i)^/food-bands(?:/|$)
-  respond @private_food_bands 404
-
-  # Developmental bodies are another local creative prototype.
-  # Hungry shapes remains a local prototype.
-  @private_hungry path_regexp private_hungry (?i)^/hungry-shapes(?:/|$)
-  respond @private_hungry 404
-  @private_development path_regexp private_development (?i)^/development(?:/|$)
-  respond @private_development 404
-
-  # Counted matter aquarium remains a local creative prototype.
-  @private_matter path_regexp private_matter (?i)^/matter(?:/|$)
-  respond @private_matter 404
-
-  # Selective nutrient-current toy and sampled replay stay local.
-  @private_currents path_regexp private_currents (?i)^/currents(?:/|$)
-  respond @private_currents 404
-
-  # Volumetric particle playground stays local.
-  @private_spatial path_regexp private_spatial (?i)^/spatial(?:/|$)
-  respond @private_spatial 404
-  @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
-  respond @private_predictability 404
-  @private_mycelium path_regexp private_mycelium (?i)^/mycelium(?:/|$)
-  respond @private_mycelium 404
-  @private_assembly path_regexp private_assembly (?i)^/assembly(?:/|$)
-  respond @private_assembly 404
-  @private_niche path_regexp private_niche (?i)^/niche(?:/|$)
-  respond @private_niche 404
-  @private_moving_light path_regexp private_moving_light (?i)^/moving-light(?:/|$)
-  respond @private_moving_light 404
-  @private_controller_locality path_regexp private_controller_locality (?i)^/controller-locality(?:/|$)
-  respond @private_controller_locality 404
-  @private_opponents path_regexp private_opponents (?i)^/opponents(?:/|$)
-  respond @private_opponents 404
-
-  # Reunited creative ecosystem and local prototype directory.
-  @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
-  respond @private_ecosystem 404
-  @private_playground path_regexp private_playground (?i)^/playground(?:/|$)
-  respond @private_playground 404
-
-  # Local vision calibration gallery.
-  @private_vision_screen path_regexp private_vision_screen (?i)^/vision-screen(?:/|$)
-  respond @private_vision_screen 404
-
   @api path /api/*
   # The coordinator reads the right-most X-Forwarded-For entry (BL_TRUST_FORWARDED_FOR), so each proxy block
   # replaces the header with the one resolved client address. Never forward the client's own chain.
@@ -99,8 +40,36 @@
   redir /participate /participate/{?query} 308
   redir /status /status/{?query} 308
   redir /privacy /privacy/{?query} 308
-  redir /garden /garden/{?query} 308
   redir /soup /soup/{?query} 308
+  redir /garden /garden/{?query} 308
+  redir /story /story/{?query} 308
+  redir /experiments /experiments/{?query} 308
+  redir /slab /slab/{?query} 308
+  redir /particles /particles/{?query} 308
+  redir /particles/picker /particles/picker/{?query} 308
+  redir /particles/oases /particles/oases/{?query} 308
+  redir /particles/seasons /particles/seasons/{?query} 308
+  redir /particles/bonds /particles/bonds/{?query} 308
+  redir /particles/motifs /particles/motifs/{?query} 308
+  redir /boundaries /boundaries/{?query} 308
+  redir /development /development/{?query} 308
+  redir /hungry-shapes /hungry-shapes/{?query} 308
+  redir /food-bands /food-bands/{?query} 308
+  redir /matter /matter/{?query} 308
+  redir /currents /currents/{?query} 308
+  redir /spatial /spatial/{?query} 308
+  redir /predictability /predictability/{?query} 308
+  redir /mycelium /mycelium/{?query} 308
+  redir /assembly /assembly/{?query} 308
+  redir /niche /niche/{?query} 308
+  redir /moving-light /moving-light/{?query} 308
+  redir /controller-locality /controller-locality/{?query} 308
+  redir /opponents /opponents/{?query} 308
+  redir /opponents/archive /opponents/archive/{?query} 308
+  redir /ecosystem /ecosystem/{?query} 308
+  redir /ecosystem/archive /ecosystem/archive/{?query} 308
+  redir /playground /playground/{?query} 308
+  redir /vision-screen /vision-screen/{?query} 308
 
   # A link that names a world (/lab/?world=<id> plants it, /worlds/?world=<id> shows its card) previews as that
   # world: the build writes a copy of each page per world, differing only in its title, description and card, at

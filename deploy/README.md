@@ -112,17 +112,18 @@ The named `coordinator_data` volume contains the queue and checkpoints, and `dis
 
 ## Opening the shared garden
 
-The opening-day change (#60) links `/garden/` in the nav, indexes it (canonical link and sitemap entry) and lifts the release hold below, so merging it is the opening: deploy it together with the founding, not before. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
+Since 14 November 2026 `/garden/` is a public, indexed page. The opening-day change (#60) links it in the nav and removes `@private_garden_api`, the Caddy matcher that answers 404 for every garden API route, so merging it is the opening: deploy it together with the founding, not before. The coordinator’s letter, hand and checkpoint routes do not check `BL_GARDEN_SCHEDULING`, so once this change is deployed they answer for any garden in the volume whatever that switch says. `docs/garden-opening-2026-10-18.md` is the checklist: every decision and step, with its recommended default, its evidence and its status. The deploy-side items are there: the proxy settings above (`BL_GARDEN_ISLAND_TOKEN` is the one setting not yet in `compose.dokploy.yaml`), a full deploy of both images, the volume backup and the rollback levers. The founding is `bin/garden-found --coordinator https://cadence.garden`, which is a dry run that sends nothing. With `--apply --confirm-coordinator https://cadence.garden` it founds the commons with exactly the checklist's parameters, after a typed confirmation. It reads the admin token from `BL_ADMIN_TOKEN` only, never prints it, and reports an existing commons instead of founding again. None of this is done by the scripts here or by CI.
 
 ## Garden hold lifted on opening day
 
 The 19 October release held the garden private: the site image deleted `/garden/` from the built files and Caddy
-answered 404 for `/garden`, its descendants and every garden API route before proxying. The opening-day change
-removes both, so the page is served like the others and the garden APIs reach the coordinator like any `/api/*`
-route. Scheduling is still a separate, deliberate switch: Compose keeps `BL_GARDEN_SCHEDULING=off`, under which no
-garden day advances at dawn or is assigned for running or verification (existing days included), and generic segment
-checkpoint and observation downloads refuse garden artifacts. Ordinary experiments remain eligible. The operator sets
-it to `on` after the founding, as a step of the garden-opening checklist. Local development keeps scheduling enabled
-unless explicitly disabled. To close the garden again, revert the opening-day change and set the switch to `off`.
+answered 404 for `/garden`, its descendants and every garden API route before proxying. On 14 November 2026 the page
+hold was lifted (the page ships and is indexed) and only the API matcher was kept. The opening-day change removes that
+matcher, so the garden APIs reach the coordinator like any `/api/*` route. Scheduling is still a separate, deliberate
+switch: Compose keeps `BL_GARDEN_SCHEDULING=off`, under which no garden day advances at dawn or is assigned for running
+or verification (existing days included), and generic segment checkpoint and observation downloads refuse garden
+artifacts. Ordinary experiments remain eligible. The operator sets it to `on` after the founding, as a step of the
+garden-opening checklist. Local development keeps scheduling enabled unless explicitly disabled. To close the garden
+again, revert the opening-day change (which restores the API matcher) and set the switch to `off`.
 
 The gate prints each test invocation ID and captures container logs before cleanup. CI failure reports are printed before scratch removal. Normal test hooks clean up local runs, but forced termination can bypass them; for a killed local run, list containers/networks using the exact printed `bl.site-image.invocation=<id>` label and remove only those resources. The hosted workflow also has a bounded always-run cleanup step scoped to its run label. Failed Docker queries make cleanup fail; they do not count as an empty resource list. Images are retained for inspection (hosted runner disposal removes them); this job is not configured for a persistent self-hosted runner. Base-image digest logging is best-effort, while the tested built image ID is always required.

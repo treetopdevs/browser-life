@@ -942,14 +942,15 @@ describe("the page is public and linked", () => {
   /** A page's words: tags and scripts gone, entities and spacing left as they are. */
   const words = (html: string) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
   const SITE = ["../index.html", "../404.html", "../about/index.html", "../garden/index.html", "../how-it-works/index.html",
-    "../participate/index.html", "../privacy/index.html", "../research/index.html", "../status/index.html", "../worlds/index.html"];
+    "../participate/index.html", "../privacy/index.html", "../research/index.html", "../status/index.html", "../worlds/index.html",
+    "../story/index.html", "../experiments/index.html", "../soup/index.html", "../slab/index.html"];
 
   it("every site header and footer links to the shared garden, and so does the lab's bench header", () => {
     expect(Object.keys(pages)).toEqual(expect.arrayContaining(SITE));
     for (const p of SITE) {
       const header = navOf(pages[p], "Primary");
       expect(header, `${p} has the site header`).toBeDefined();
-      expect(hrefs(header!), p).toEqual(["/", "/lab/", "/worlds/", "/garden/", "/how-it-works/", "/research/", "/participate/", "/status/"]);
+      expect(hrefs(header!), p).toEqual(["/", "/lab/", "/worlds/", "/garden/", "/how-it-works/", "/story/", "/research/", "/participate/", "/status/"]);
       const footer = footerOf(pages[p]);
       expect(footer, `${p} has the site footer`).toBeDefined();
       expect(hrefs(footer!), p).toEqual(["/garden/", "/about/", "/privacy/", "https://github.com/treetopdevs/browser-life"]);
@@ -982,12 +983,13 @@ describe("the page is public and linked", () => {
   });
 
   it("no current page still speaks of the garden as closed or to come", () => {
-    // Every sentence that names the garden or the commons, on every page but the journal, whose dated entries say
+    // Every sentence that names the garden or the commons, on every page but the journal and the experiments index, whose dated entries say
     // what was true on their day ("its page stays unlinked", 17 Oct), and in the world notes.
     const closed = /not (?:yet )?open|not open yet|closed|coming soon|future|direction|someday|horizon|planned|unlinked|hidden|noindex|not founded|no garden is planted|nothing on this site links/i;
     const sentences = (text: string) => text.split(/(?<=[.!?:;])\s+/).filter((s) => /garden|commons/i.test(s));
     for (const [p, html] of Object.entries(pages)) {
-      if (p === "../research/index.html" || !SITE.includes(p)) continue;
+      // The experiments index is a dated record too: its rows name results and their docs (garden-stone-horizon-…).
+      if (p === "../research/index.html" || p === "../experiments/index.html" || !SITE.includes(p)) continue;
       for (const s of sentences(words(html))) expect(s, p).not.toMatch(closed);
     }
     const noteSentences = sentences(WORLD_NOTES["wild-storm-large"].seen.text);

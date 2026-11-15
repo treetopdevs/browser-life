@@ -167,11 +167,11 @@ it('escapes text from the payload', () => {
   expect(verdictFeHtml(ev)).not.toContain('<img');
 });
 
-it('the page carries the second-rung section, caption, noindex and no new route', () => {
+it('the page carries the second-rung section, caption, no noindex and no new route', () => {
   const html = read('apps/lab/niche/index.html');
   expect(html).toContain('Second rung: free-energy-matched');
   expect(html).toContain('Exploratory, CPU only, no GPU evidence');
-  expect(html).toContain('noindex');
+  expect(html).not.toContain('noindex');
   expect(html).toMatch(/<table><caption>/);
   const packaging = read('apps/lab/vite.config.ts');
   expect(packaging.match(/niche:/g)).toHaveLength(1);

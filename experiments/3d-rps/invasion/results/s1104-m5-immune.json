@@ -1,0 +1,200 @@
+{
+  "seed": 1104,
+  "marker": 5,
+  "immune": true,
+  "rows": [
+    {
+      "step": 6000,
+      "marked": 880,
+      "parent": 87152,
+      "living": 262144,
+      "markedMass": 25183,
+      "types": [
+        87152,
+        94239,
+        79873,
+        880,
+        0
+      ],
+      "exposed": 385,
+      "frequency": 0.009996364958197019,
+      "globalShare": 0.00335693359375
+    },
+    {
+      "step": 7000,
+      "marked": 1460,
+      "parent": 85710,
+      "living": 242735,
+      "markedMass": 37867,
+      "types": [
+        85710,
+        83021,
+        72544,
+        1460,
+        0
+      ],
+      "exposed": 776,
+      "frequency": 0.016748881495927497,
+      "globalShare": 0.0060147897913362305
+    },
+    {
+      "step": 8000,
+      "marked": 1292,
+      "parent": 92201,
+      "living": 245034,
+      "markedMass": 32629,
+      "types": [
+        92201,
+        83717,
+        67824,
+        1292,
+        0
+      ],
+      "exposed": 678,
+      "frequency": 0.013819216411923888,
+      "globalShare": 0.005272737660896039
+    },
+    {
+      "step": 9000,
+      "marked": 2483,
+      "parent": 100264,
+      "living": 245911,
+      "markedMass": 68658,
+      "types": [
+        100264,
+        78694,
+        64470,
+        2483,
+        0
+      ],
+      "exposed": 1215,
+      "frequency": 0.024166155702842907,
+      "globalShare": 0.010097148968529264
+    },
+    {
+      "step": 10000,
+      "marked": 3190,
+      "parent": 108569,
+      "living": 247120,
+      "markedMass": 87109,
+      "types": [
+        108569,
+        71789,
+        63572,
+        3190,
+        0
+      ],
+      "exposed": 1464,
+      "frequency": 0.028543562487137502,
+      "globalShare": 0.01290870831984461
+    },
+    {
+      "step": 11000,
+      "marked": 2935,
+      "parent": 116654,
+      "living": 249914,
+      "markedMass": 81496,
+      "types": [
+        116654,
+        65802,
+        64523,
+        2935,
+        0
+      ],
+      "exposed": 1427,
+      "frequency": 0.02454239102258569,
+      "globalShare": 0.011744039949742711
+    },
+    {
+      "step": 12000,
+      "marked": 3355,
+      "parent": 116953,
+      "living": 252359,
+      "markedMass": 92513,
+      "types": [
+        116953,
+        57279,
+        74772,
+        3355,
+        0
+      ],
+      "exposed": 1664,
+      "frequency": 0.027886757322871297,
+      "globalShare": 0.013294552601650822
+    },
+    {
+      "step": 13000,
+      "marked": 4674,
+      "parent": 114336,
+      "living": 253437,
+      "markedMass": 124823,
+      "types": [
+        114336,
+        51383,
+        83044,
+        4674,
+        0
+      ],
+      "exposed": 2265,
+      "frequency": 0.0392740105873456,
+      "globalShare": 0.018442453154038283
+    },
+    {
+      "step": 14000,
+      "marked": 5330,
+      "parent": 108263,
+      "living": 255742,
+      "markedMass": 145197,
+      "types": [
+        108263,
+        45887,
+        96262,
+        5330,
+        0
+      ],
+      "exposed": 2497,
+      "frequency": 0.046921905399100294,
+      "globalShare": 0.02084131663942567
+    },
+    {
+      "step": 15000,
+      "marked": 8045,
+      "parent": 100116,
+      "living": 255884,
+      "markedMass": 221090,
+      "types": [
+        100116,
+        40808,
+        106915,
+        8045,
+        0
+      ],
+      "exposed": 3894,
+      "frequency": 0.07437985965366445,
+      "globalShare": 0.031440027512466585
+    },
+    {
+      "step": 16000,
+      "marked": 8446,
+      "parent": 88689,
+      "living": 255508,
+      "markedMass": 232257,
+      "types": [
+        88689,
+        37076,
+        121297,
+        8446,
+        0
+      ],
+      "exposed": 4678,
+      "frequency": 0.08695115046069903,
+      "globalShare": 0.03305571645506207
+    }
+  ],
+  "inputHash": "b99546b1104444f0",
+  "outputHash": "8e7a27469f7d83798f61c7396af9c49414b3f967bf43472e7017edad4394d02f",
+  "endStateHash": "8c5d37e78370b113",
+  "burnHash": "24c41b241aa715b1af1fd1d730bfaf165b56e1e2df3320908a60fb73d0e2e60a",
+  "conserved": true,
+  "mutationEvents": 0
+}

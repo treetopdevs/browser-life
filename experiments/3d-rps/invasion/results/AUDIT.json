@@ -1,0 +1,195 @@
+{
+  "verified": true,
+  "checkpointCount": 20,
+  "bytes": 1174608827,
+  "decision": {
+    "label": "SELECTION-LEAD",
+    "independentSeeds": 4,
+    "pairs": [
+      {
+        "seed": 1101,
+        "marker": 4,
+        "initial": 0.009995281730363306,
+        "immuneMean": 0.05679560178435652,
+        "neutralMean": 0,
+        "pass": true
+      },
+      {
+        "seed": 1101,
+        "marker": 5,
+        "initial": 0.009995281730363306,
+        "immuneMean": 0.05679560178435652,
+        "neutralMean": 0,
+        "pass": true
+      },
+      {
+        "seed": 1102,
+        "marker": 4,
+        "initial": 0.009994128009395186,
+        "immuneMean": 0.3209903072768701,
+        "neutralMean": 0,
+        "pass": true
+      },
+      {
+        "seed": 1102,
+        "marker": 5,
+        "initial": 0.009994128009395186,
+        "immuneMean": 0.3209903072768701,
+        "neutralMean": 0,
+        "pass": true
+      },
+      {
+        "seed": 1103,
+        "marker": 4,
+        "initial": 0.009996005802098005,
+        "immuneMean": 0.20690905867844198,
+        "neutralMean": 0.0021243360094244253,
+        "pass": true
+      },
+      {
+        "seed": 1103,
+        "marker": 5,
+        "initial": 0.009996005802098005,
+        "immuneMean": 0.20690905867844198,
+        "neutralMean": 0.0021243360094244253,
+        "pass": true
+      },
+      {
+        "seed": 1104,
+        "marker": 4,
+        "initial": 0.009996364958197019,
+        "immuneMean": 0.06941763850448791,
+        "neutralMean": 0,
+        "pass": true
+      },
+      {
+        "seed": 1104,
+        "marker": 5,
+        "initial": 0.009996364958197019,
+        "immuneMean": 0.06941763850448791,
+        "neutralMean": 0,
+        "pass": true
+      }
+    ],
+    "seeds": [
+      {
+        "seed": 1101,
+        "pass": true
+      },
+      {
+        "seed": 1102,
+        "pass": true
+      },
+      {
+        "seed": 1103,
+        "pass": true
+      },
+      {
+        "seed": 1104,
+        "pass": true
+      }
+    ]
+  },
+  "checks": [
+    {
+      "file": "s1101-m4-immune.blck",
+      "sha256": "20f2ea19c657cdfb2e5021c23631095e5db932b0f600c3c88adccb9f34919054",
+      "stateHash": "2bf2476aa0d6c10d"
+    },
+    {
+      "file": "s1101-m4-neutral.blck",
+      "sha256": "52cedf703c5efed0b932caf10087562551f6787f879a957b316fce368c2a37b5",
+      "stateHash": "b41b764d9fffa179"
+    },
+    {
+      "file": "s1101-m5-immune.blck",
+      "sha256": "0d95f3d1cda67409a29766e2f8be13c713ed157b8fcb308b993fd57fcf56e04c",
+      "stateHash": "b047ddbcd935dcea"
+    },
+    {
+      "file": "s1101-m5-neutral.blck",
+      "sha256": "52cedf703c5efed0b932caf10087562551f6787f879a957b316fce368c2a37b5",
+      "stateHash": "b41b764d9fffa179"
+    },
+    {
+      "file": "s1102-m4-immune.blck",
+      "sha256": "2fb6a223170a3ca1ae863bfd844be26ce30aa53e1d114b995b8c3ee08689117f",
+      "stateHash": "7edc3db4b57f961a"
+    },
+    {
+      "file": "s1102-m4-neutral.blck",
+      "sha256": "ddb06f65793337ff866f149b34d7c2bf8adc3437b8d139165d7179b7cf0bc287",
+      "stateHash": "8f70dcab92a80afc"
+    },
+    {
+      "file": "s1102-m5-immune.blck",
+      "sha256": "1119ea1f4a8b620e5318663f17a40c86d60c02de498db10ad5026cf8b93ab662",
+      "stateHash": "cf62f117c04624bd"
+    },
+    {
+      "file": "s1102-m5-neutral.blck",
+      "sha256": "ddb06f65793337ff866f149b34d7c2bf8adc3437b8d139165d7179b7cf0bc287",
+      "stateHash": "8f70dcab92a80afc"
+    },
+    {
+      "file": "s1103-m4-immune.blck",
+      "sha256": "a3510c237ad109224f72a6fe086469ea263b335311f63c0303ad98d8dcf09c84",
+      "stateHash": "4e28d88e609d03cc"
+    },
+    {
+      "file": "s1103-m4-neutral.blck",
+      "sha256": "cf88094c33f13c37d44e1851c1d7e1cedec5705792187f8393c1505f5ccf7cc5",
+      "stateHash": "70c1c198f420d3ae"
+    },
+    {
+      "file": "s1103-m5-immune.blck",
+      "sha256": "032c32d096ae11239ad31af358125ea39dfebbe00cfb867635cdeaef7dd68ec1",
+      "stateHash": "b7df9dbc03e4b2bd"
+    },
+    {
+      "file": "s1103-m5-neutral.blck",
+      "sha256": "b0ab76ae9d22ba6e14eb26054ac129a84ca9210e269ab2ae0880afc787ac8bb3",
+      "stateHash": "ade0538e7ff45c1f"
+    },
+    {
+      "file": "s1104-m4-immune.blck",
+      "sha256": "05249e35b7dc27e0475185a81243fd266f16d38631f4cc639aa95a474ebdd2c1",
+      "stateHash": "78386ecd3ef0eef0"
+    },
+    {
+      "file": "s1104-m4-neutral.blck",
+      "sha256": "cb34b0a402c5a600c87c4356b0c6c117758c7fbd36e02e81949f9cc6c47dd1c0",
+      "stateHash": "4296f6a1f9804f88"
+    },
+    {
+      "file": "s1104-m5-immune.blck",
+      "sha256": "8e7a27469f7d83798f61c7396af9c49414b3f967bf43472e7017edad4394d02f",
+      "stateHash": "8c5d37e78370b113"
+    },
+    {
+      "file": "s1104-m5-neutral.blck",
+      "sha256": "cb34b0a402c5a600c87c4356b0c6c117758c7fbd36e02e81949f9cc6c47dd1c0",
+      "stateHash": "4296f6a1f9804f88"
+    },
+    {
+      "file": "seed-1101-burn.blck",
+      "sha256": "c0b7bc0d1177dacd12cf3092d8d8c92bb7cd76495066ef689a5f47649d35a38a",
+      "stateHash": "29e811f7c967ab7d"
+    },
+    {
+      "file": "seed-1102-burn.blck",
+      "sha256": "2623f6b264dabefb5cfc73201c4e440e1ae4d72526d34ce587549f67036fda8c",
+      "stateHash": "c4142a0ddae78592"
+    },
+    {
+      "file": "seed-1103-burn.blck",
+      "sha256": "ff577b6ced93b71394da513066259ec9366057ea26a2c93b94396c890d10f385",
+      "stateHash": "e45b50ad0ba9825a"
+    },
+    {
+      "file": "seed-1104-burn.blck",
+      "sha256": "24c41b241aa715b1af1fd1d730bfaf165b56e1e2df3320908a60fb73d0e2e60a",
+      "stateHash": "fe691529f62309a5"
+    }
+  ]
+}

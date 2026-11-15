@@ -8,10 +8,9 @@
 // at t=500, reduced motion, and what a visitor sees without WebGPU. Run it with
 // `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`.
 import { AxeBuilder } from "@axe-core/playwright";
+import { isStandalone, sitemapRoutes } from "./experiment-pages.ts";
 import { METRICS_VERSION } from "@bl/schema";
 import { chromium, expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
 test.describe.configure({ mode: "parallel" });
@@ -20,9 +19,13 @@ test.describe.configure({ mode: "parallel" });
 test.skip(({ browserName }) => browserName !== "chromium", "accessibility release checks are Chrome-only (see criterion 5)");
 
 const FIXTURE = contractFixture as Record<string, any>;
-const SITEMAP = fileURLToPath(new URL("../../apps/lab/public/sitemap.xml", import.meta.url));
-/** Every page the sitemap lists, as paths (the shared garden among them). */
-const ROUTES = [...readFileSync(SITEMAP, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
+/**
+ * Every page the sitemap lists that wears the site's shell (shared header, day and night colours, site.css), as paths;
+ * the shared garden is among them. The standalone experiment pages have their own single-theme shell, so the criteria
+ * here (two colour schemes, the site's skip link and smooth scroll) do not describe them: experiment-pages-a11y.spec.ts
+ * checks those, and experiment-pages.ts says which pages they are.
+ */
+const ROUTES = sitemapRoutes().filter((route) => !isStandalone(route));
 /** What an unknown path answers: the not-found page, with 404 (criterion 6). */
 const NOT_FOUND = "/no-such-page/";
 /** The island page is where Join in sends people; it is unlisted (noindex) but public. So is the not-found page. */

@@ -215,12 +215,15 @@ test.describe("Caddy", () => {
     }
   });
 
-  // Opening day lifts the 19 Oct hold: the page is served like the others, and every garden API reaches Phoenix,
+  // Opening day lifts the API hold kept on 14 Nov: the page was already served, and now every garden API reaches Phoenix,
   // which keeps its own rules (scheduling stays on compose's BL_GARDEN_SCHEDULING, off until the operator turns it on).
   test("Caddy: the garden page is served and every garden API reaches Phoenix", async () => {
-    const page = await raw(base, "/garden/");
-    expect(page.status, "/garden/").toBe(200);
-    expect(page.body, "/garden/").not.toContain(TITLE);
+    for (const path of ["/garden/", "/garden/index.html"]) {
+      const res = await raw(base, path);
+      expect(res.status, path).toBe(200);
+      expect(res.body, path).toContain("<title>The shared garden · Cadence Garden</title>");
+    }
+    expect((await raw(base, "/garden")).status).toBe(308);
     const paths = [
       "/api/public/garden", "/api/public/garden/letters",
       "/api/public/garden/food/hands", "/api/public/garden/meteor/hands",
