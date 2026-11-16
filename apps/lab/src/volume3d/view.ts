@@ -75,8 +75,13 @@ export class VolumeView {
   /** Packs a frame and writes it to the textures. */
   upload(f: Frame, opts: PackOptions) {
     if (!this.device) return;
-    this.packed = packFrame(f, opts, this.packed);
-    const p = this.packed;
+    this.uploadPacked(packFrame(f, opts, this.packed));
+  }
+
+  /** Writes textures a page packed itself (another world's packer, with the same channels; pack.ts is the slab's). */
+  uploadPacked(p: Packed) {
+    if (!this.device) return;
+    this.packed = p;
     const fresh = !this.dims || this.dims.W !== p.dims.W || this.dims.H !== p.dims.H || this.dims.D !== p.dims.D;
     if (fresh) this.makeTextures(p.dims);
     const [w, h, d] = texSize(p.dims);

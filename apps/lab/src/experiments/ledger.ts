@@ -198,6 +198,7 @@ export const PLAYTHINGS: Plaything[] = [
   { href: "/soup/", title: "Program soup", blurb: "A grid of tiny programs that run each other. Watch for self-copiers." },
   { href: "/mycelium/", title: "Mycelium world", blurb: "Particles with small neural controllers that eat, lay trail and split." },
   { href: "/slab/", title: "Slab viewer", blurb: "The two thin 3D worlds, drawn layer by layer. Neither passed its gate." },
+  { href: "/mycelium3d/", title: "Mycelium in a jar", blurb: "The mycelium world in 3D, lit from the top, drawn as a volume you can turn. New and under exploration; no results yet." },
   { href: "/garden/", title: "The shared garden", blurb: "One world meant to be grown in turns by whoever is tending it. Its page is here; the garden itself is not open yet." },
   { href: "/ecosystem/", title: "Evolving ecosystem", blurb: "An engineered toy ecosystem of five families, with an archive of saved runs." },
   { href: "/food-bands/", title: "Food bands", blurb: "Run the food-delivery screens live, side by side, with the food drawn as it moves." },

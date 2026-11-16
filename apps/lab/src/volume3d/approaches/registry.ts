@@ -2,7 +2,8 @@
 import type { Approach, ApproachModule } from "../contract.ts";
 
 export interface ApproachEntry {
-  id: "raymarch" | "slices" | "points";
+  /** The stock renderers below, or a page's own (passed to VolumeView with the menu it offers). */
+  id: "raymarch" | "slices" | "points" | (string & {});
   title: string;
   /** Plain words for the option text: what this look shows and why you would pick it. */
   text: string;
