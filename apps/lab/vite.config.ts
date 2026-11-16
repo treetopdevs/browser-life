@@ -241,6 +241,7 @@ export default defineConfig({
       island: r("./island.html"),
       notFound: r("./404.html"),
       slab: r("./slab/index.html"),
+      mycelium3d: r("./mycelium3d/index.html"),
     } },
   },
 });

@@ -1,7 +1,7 @@
 // Slab founding and validation (rung 1b). The slab state is the same WorldState shape as 2D: channel-major,
 // cell index z * W * H + y * W + x, a genome buffer of GENOME_CHANNELS3 words per cell. Nothing here steps it.
 import { cellCount, isSlab, maxPackableRaw, packLineageLo, validateConfig, worldW, worldH, type WorldConfig } from "./config.ts";
-import { CELL_CHANNELS, CH, FLUX_COUNT } from "./layout.ts";
+import { CELL_CHANNELS, CH, FLUX_COUNT, G } from "./layout.ts";
 import { GENOME_CHANNELS3, MOT_ZERO3 } from "./layout3d.ts";
 import { encodeGenome3, type Genome3 } from "./genome3.ts";
 import { draw, lowbias32 } from "./int.ts";
@@ -79,6 +79,8 @@ export function buildWorld3(cfg: WorldConfig, spec: InitSpec3): WorldState {
           s.cells[CH.B * n + i] += noise;
           s.cells[CH.E * n + i] += Math.floor((f.energy * noise) / Math.max(1, f.biomass));
           for (let g = 0; g < GENOME_CHANNELS3; g++) s.genome[g * n + i] = words[g];
+          // The vacancy kill's mirror (docs/3d-cyclic-rps-plan-2026-10-23.md 4.4): MOT bits 24..31 of a living cell hold its beats-mask.
+          if (cfg.rpsTypes !== undefined) s.cells[CH.MOT * n + i] = (MOT_ZERO3 | (((words[G.PARAM1] >>> 16) & 0xff) << 24)) >>> 0;
         }
       }
     }
@@ -94,18 +96,33 @@ export function validateState3(s: WorldState): string[] {
   return validateState(s);
 }
 
+/** Founding options of `slab-spots` (InitParams.surface, InitParams.rpsCycle); absent, the founding is as it always was. */
+export interface SlabSpotsOptions {
+  /** Founders' z drawn in 0..surface-1 instead of 0..D-1 (x, y and the biomass noise unchanged). */
+  surface?: number;
+  /** Founder f gets RPS type f mod rpsCycle and the cyclic mask 1 << ((t + 1) mod rpsCycle), with the MOT mirror set. */
+  rpsCycle?: number;
+}
+
 /**
  * The `slab-spots` founding: `count` balls of radius 3 at seeded random (x, y, z), nutrient and biomass as the
  * 2D `spots` world. Placement is keyed on lowbias32(seed * 313 + i); 313 is a new salt, distinct from the 2D worlds'.
  */
-export function slabSpotsWorld(cfg: WorldConfig, genome: Genome3, count = 8, nutrient = 32, biomass = 64): WorldState {
+export function slabSpotsWorld(cfg: WorldConfig, genome: Genome3, count = 8, nutrient = 32, biomass = 64, opt: SlabSpotsOptions = {}): WorldState {
   const W = worldW(cfg);
   const H = worldH(cfg);
   const D = cfg.tileD ?? 1;
+  const zRange = opt.surface ?? D;
+  if (!Number.isInteger(zRange) || zRange < 1 || zRange > D) throw new Error(`slab-spots: surface must be an integer in 1..${D}, got ${opt.surface}`);
+  const K0 = opt.rpsCycle;
+  if (K0 !== undefined && (cfg.rpsTypes === undefined || !Number.isInteger(K0) || K0 < 3 || K0 > cfg.rpsTypes))
+    throw new Error(`slab-spots: rpsCycle needs the vacancy keys and an integer in 3..rpsTypes, got ${K0}`);
   const founders: Founder3[] = [];
   for (let i = 0; i < count; i++) {
     const h = lowbias32(cfg.seed * 313 + i);
-    founders.push({ x: h % W, y: (h >>> 12) % H, z: draw(h, 7) % D, radius: 3, genome, biomass, energy: 2 * biomass });
+    const t = K0 === undefined ? undefined : i % K0;
+    const g = t === undefined ? genome : { ...genome, rpsType: t, rpsMask: 1 << ((t + 1) % K0!) };
+    founders.push({ x: h % W, y: (h >>> 12) % H, z: draw(h, 7) % zRange, radius: 3, genome: g, biomass, energy: 2 * biomass });
   }
   return buildWorld3(cfg, { nutrient, founders });
 }

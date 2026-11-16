@@ -1,0 +1,94 @@
+/* The 3D mycelium page. Site tokens and site.css classes only, as the slab viewer. */
+.m3-intro { padding-block: clamp(32px, 5vw, 64px) 28px; }
+.m3-banner { margin: 16px 0 0; padding: 10px 14px; max-width: 72ch; border-left: 3px solid var(--sun); background: var(--surface); color: var(--text); }
+.m3-how { margin: 14px 0 0; max-width: 80ch; color: var(--muted); }
+.m3-how summary { cursor: pointer; min-height: 32px; font-weight: 600; color: var(--text); }
+.m3-how p { margin: 6px 0 0; }
+.m3-engine { margin: 16px 0 0; padding: 9px 13px; max-width: 80ch; border-left: 3px solid var(--line); background: var(--surface); color: var(--text); overflow-wrap: anywhere; }
+.m3-engine[data-engine="cpu"] { border-left-color: var(--sun); }
+.m3-section { padding-block: 24px; }
+.m3-transport { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.m3-transport .button { min-height: 44px; min-width: 6em; }
+.m3-inline { display: grid; gap: 4px; font-weight: 600; color: var(--text); font-size: .9375rem; }
+.m3-status { margin: 12px 0 16px; font: 500 .9375rem var(--mono); color: var(--text); overflow-wrap: anywhere; }
+.m3-world { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.m3-view { min-width: 0; }
+.m3-fig { margin: 0; }
+.m3-fig[hidden] { display: none; }
+.m3-fig canvas { display: block; width: 100%; aspect-ratio: 4 / 3; max-height: 78vh; background: #090d11; border: 1px solid var(--line); border-radius: 4px; touch-action: none; cursor: grab; }
+#side-canvas { aspect-ratio: auto; height: auto; image-rendering: pixelated; cursor: default; }
+.m3-fig canvas:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.m3-fig figcaption { margin-top: 4px; max-width: 80ch; }
+.m3-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px; align-items: start; margin-top: 16px; }
+.m3-controls[hidden] { display: none; }
+.m3-group { min-width: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.m3-group legend, .m3-legend { padding: 0 4px; font-weight: 700; color: var(--text); font-size: .9375rem; }
+.m3-legend { display: block; margin: 0 0 6px; padding: 0; }
+.m3-sub { margin-top: 12px; }
+.m3-options { display: grid; gap: 8px; }
+.m3-opt { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 10px; align-items: start; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); cursor: pointer; }
+.m3-opt:has(input:checked) { border-color: var(--text); background: var(--raised); }
+.m3-opt:has(input:focus-visible) { outline: 2px solid var(--text); outline-offset: 2px; }
+.m3-opt input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--sun); }
+.m3-opt .t { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.m3-opt .d { grid-column: 2; margin: 2px 0 0; color: var(--muted); font-size: .875rem; overflow-wrap: anywhere; }
+.m3-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.m3-controls .button { min-height: 44px; }
+.m3-controls .button[aria-pressed="true"] { border-color: var(--text); background: var(--raised); }
+.m3-controls input[type=range] { width: 100%; margin: 4px 0; }
+.m3-controls p.fine { margin: 2px 0 10px; }
+.m3-check { display: flex; gap: 8px; align-items: center; min-height: 32px; margin-top: 8px; font-weight: 600; color: var(--text); }
+.m3-check input { width: 18px; height: 18px; accent-color: var(--sun); }
+#g-look summary { cursor: pointer; min-height: 32px; }
+.m3-params { display: grid; gap: 4px; margin-top: 8px; }
+.m3-params label { font-weight: 600; color: var(--text); }
+.m3-params .check { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.m3-params .check input { width: 18px; height: 18px; accent-color: var(--sun); }
+.m3-controls input:focus-visible, .m3-params select:focus-visible, .m3-field select:focus-visible, .m3-field input:focus-visible, .m3-transport select:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.m3-census { min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.m3-census h2 { margin: 0 0 10px; font-size: 1.25rem; }
+.m3-h3 { margin: 16px 0 6px; font-size: 1rem; }
+.m3-numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.m3-numbers div { padding: 6px 9px; border: 1px solid var(--line-soft); border-radius: var(--radius); }
+.m3-numbers dt { color: var(--muted); font-size: .8125rem; }
+.m3-numbers dd { margin: 2px 0 0; font: 600 1.0625rem var(--mono); color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.m3-table-wrap { max-width: 100%; }
+.m3-depth { width: 100%; border-collapse: collapse; font: 500 .8125rem var(--mono); font-variant-numeric: tabular-nums; color: var(--text); }
+.m3-depth caption { text-align: left; font: 600 .8125rem var(--sans, inherit); color: var(--muted); padding-bottom: 4px; }
+.m3-depth th, .m3-depth td { padding: 4px 3px; text-align: right; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+.m3-depth thead th { white-space: normal; overflow-wrap: anywhere; font-size: .75rem; }
+.m3-depth th:first-child, .m3-depth td:first-child { text-align: left; }
+.m3-depth th { color: var(--muted); font-weight: 600; }
+.m3-plant h2 { margin: 0 0 8px; font-size: 1.5rem; }
+.m3-plant-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; margin: 14px 0 16px; }
+.m3-field { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.m3-field label { font-weight: 700; color: var(--text); }
+.m3-field select, .m3-field input, .m3-transport select { min-height: 44px; max-width: 100%; padding: 6px 10px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+.m3-field select, .m3-field input { width: 100%; }
+.m3-field p.fine { margin: 0; }
+.m3-plant .button { min-height: 44px; min-width: 8em; }
+.m3-tools { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.m3-tools-h { margin: 0 0 4px; font-size: 1.125rem; }
+.m3-tools p.fine { margin: 2px 0 10px; }
+.m3-tool-pick { margin: 0; padding: 0; border: 0; min-width: 0; }
+.m3-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 8px; }
+.m3-brush { margin-top: 12px; }
+.m3-brush[hidden] { display: none; }
+.m3-brush-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.m3-brush input[type=range] { width: 100%; margin: 4px 0; }
+.m3-brush input[type=range]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.m3-brush .m3-field { margin-top: 4px; }
+.m3-brush .m3-field[hidden] { display: none; }
+.m3-readout { margin: 10px 0; padding: 8px 10px; border-left: 3px solid var(--line); background: var(--raised); color: var(--text); font-size: .9375rem; overflow-wrap: anywhere; }
+.m3-readout[data-hidden="1"] { border-left-color: var(--sun); }
+.m3-brush .button { min-height: 44px; min-width: 8em; }
+.m3-report { margin: 10px 0 0; color: var(--text); font-size: .9375rem; overflow-wrap: anywhere; }
+.m3-report:empty { display: none; }
+.m3-fig canvas[data-tool="wound"], .m3-fig canvas[data-tool="feed"] { cursor: crosshair; }
+@media (max-width: 900px) {
+  .m3-world { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .m3-fig canvas { aspect-ratio: 1 / 1; }
+  .m3-transport select { width: 100%; }
+}

@@ -34,7 +34,28 @@
 .slab-census h2 { margin: 0 0 8px; font-size: 1.25rem; }
 .slab-census-line { margin: 0 0 6px; font: 500 .9375rem var(--mono); color: var(--text); display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .slab-swatch { display: inline-block; width: .85em; height: .85em; margin-right: 6px; border: 1px solid var(--control-line); vertical-align: -1px; }
+.slab-sublegend { margin-top: 12px; }
+.slab-volume { margin-top: 8px; }
+.slab-volume[hidden], .slab-views[hidden], #layers-only[hidden] { display: none; }
+.slab-volume-title { margin: 0 0 8px; font-size: 1.25rem; }
+.slab-volume-fig { margin: 0; }
+.slab-volume-fig canvas { display: block; width: 100%; aspect-ratio: 16 / 10; max-height: 78vh; background: #090d11; border: 1px solid var(--line); border-radius: 4px; cursor: grab; touch-action: none; }
+.slab-volume-fig canvas:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.slab-volume-fig figcaption { margin-top: 4px; max-width: 80ch; }
+.slab-volume-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start; margin-top: 16px; }
+.slab-volume-controls .button { min-height: 44px; }
+.slab-volume-controls .button[aria-pressed="true"] { border-color: var(--text); background: var(--raised); }
+.slab-volume-controls input[type=range] { width: 100%; margin: 4px 0; }
+.slab-volume-controls input[type=range]:focus-visible, .slab-params select:focus-visible, .slab-params input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.slab-volume-controls p.fine { margin: 2px 0 10px; }
+#g-look summary { cursor: pointer; min-height: 32px; }
+.slab-params { display: grid; gap: 4px; margin-top: 8px; }
+.slab-params label { font-weight: 600; color: var(--text); }
+.slab-params select { min-height: 44px; max-width: 100%; padding: 6px 10px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; }
+.slab-params .check { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.slab-params .check input { width: 18px; height: 18px; accent-color: var(--sun); }
 @media (max-width: 760px) {
+  .slab-volume-fig canvas { aspect-ratio: 1 / 1; }
   .slab-views { grid-template-columns: minmax(0, 1fr); }
   .slab-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

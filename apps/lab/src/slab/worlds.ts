@@ -2,7 +2,7 @@
 // settings setter and founding (imported, never copied or patched); the slab ecology uses the stock GpuSim3 of @bl/sim-gpu.
 // `RPS` in the spike's shaders is module state baked into the shader text when a simulator is created, so at most one
 // patched simulator exists at a time: the page destroys the old one before creating the next.
-import { CH, G, initWorld, presetById, type WorldConfig } from "@bl/schema";
+import { CH, G, initWorld, type WorldConfig } from "@bl/schema";
 import { GpuSim3 as StockSim3 } from "@bl/sim-gpu";
 import { rpsLabels } from "@bl/metrics";
 import { applySettings, SUBMIT_STEPS } from "../../../../experiments/3d-rps/gate0-spike/adapter.ts";
@@ -10,7 +10,7 @@ import { GpuSim3 as RpsSim3, requestDevice3 } from "../../../../experiments/3d-r
 import { jobConfig, mixParams } from "../../../../experiments/3d-rps/gate0-spike/rungs.ts";
 import { rpsMix } from "../../../../experiments/3d-rps/gate0-spike/world.ts";
 import type { CyclicChoice, EcoChoice } from "./settings.ts";
-import { BURN_IN, SPREAD, cyclicSettings, ecoConfig } from "./settings.ts";
+import { BURN_IN, SPREAD, cyclicSettings, ecoConfig, ecoInit } from "./settings.ts";
 import type { CyclicFrame, EcoFrame, Frame } from "./render.ts";
 
 export interface WorldSim {
@@ -84,7 +84,7 @@ export async function createEco(device: GPUDevice, choice: EcoChoice): Promise<W
   const cfg: WorldConfig = ecoConfig(choice);
   const dims = { W: cfg.tileW, H: cfg.tileH, D: cfg.tileD! };
   const n = dims.W * dims.H * dims.D;
-  const state = initWorld(cfg, presetById("slab-spots")!.init);
+  const state = initWorld(cfg, ecoInit(choice));
   const sim = await StockSim3.create(device, state);
   return {
     get step() { return sim.step; },

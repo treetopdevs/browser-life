@@ -28,6 +28,12 @@ export interface WorldConfig {
   rpsRate?: number;
   rpsMin?: number;
   rpsKill?: "vacancy";
+  /**
+   * Share of mutation events (in 1/65536, 0..65536) sent to the RPS type operator instead of the controller mutation
+   * (docs/rules.md, "Optional slab levers"). Only with the four vacancy keys; it lifts their `mutRate 0` requirement.
+   * Absent: the vacancy kill is mutation-free as before.
+   */
+  rpsMutate?: number;
   ruleVersion: number;
   seed: number;
   /** One tile is an independent torus; tiles let many small worlds share one dispatch. */
@@ -412,14 +418,30 @@ export interface WorldConfig {
   geneDrive?: number;
   /**
    * The slab (rung 1b, docs/3d-rung1b-plan-2026-10-23.md): present, the world is one tileW x tileH tile that is
-   * `tileD` layers deep (x and y wrap, z is closed), run by the slab rules (RefSim3 / GpuSim3) with the
+   * `tileD` layers deep (a multiple of 4 up to 32, or 64 for the jar; x and y wrap, z is closed), run by the slab rules (RefSim3 / GpuSim3) with the
    * 49-word genome of layout3d.ts. Absent from `defaultConfig()`, so every 2D config hashes as before.
    * Set together with `lightK`; `validateSlab` lists what a slab cannot combine with.
    */
   tileD?: number;
   /** Slab light shading half-saturation: T(m) = floor(256 * lightK / (lightK + m)) per layer. Slab only; set with `tileD`. */
   lightK?: number;
+  /**
+   * Slab levers (step A2 of docs/3d-expansion-plan-2026-11-15.md; docs/rules.md, "Optional slab levers"), all optional and
+   * absent from `defaultConfig()`. `sinkShift` (1..16): each step a cell above the floor sends `C / 2^sinkShift` of its waste
+   * (stochastic rounding) to the cell below. `floorDecay` (0..65535, /65536): floor waste decays to nutrient, the energy
+   * difference leaving as heat. `upwellPeriod` (1..2^31-1) with `upwellShift` (1..16): every `upwellPeriod` steps each cell
+   * exchanges `1 / 2^upwellShift` of its A and kept C with its mirror cell `(x, y, D - 1 - z)`.
+   */
+  sinkShift?: number;
+  floorDecay?: number;
+  upwellPeriod?: number;
+  upwellShift?: number;
 }
+
+/** Draw slots of the slab levers and of `rpsMutate` (docs/3d-rung1b-step-spec.md section 17); drawn only when their key is set. */
+export const RND3_LEVER = { RPS_FLIP: 41, SINK: 42, FLOOR: 43, UPWELL_A: 44, UPWELL_C: 45 } as const;
+/** Within an `rpsMutate` event, the share (in 1/256 of `which & 0xff`) that flips a mask bit; the rest relabel the type. */
+export const RPS_EDGE_SHARE = 128;
 
 /**
  * The named gene sets of WorldConfig.genes: "decomp" has one gene, decomposition (GENE_BIT.DECOMP);
@@ -717,7 +739,7 @@ export function validateConfig(c: WorldConfig): string[] {
     ["pondK", POND_K_RANGE],
     ["pondDeath", POND_DEATH_RANGE],
     ["pondExport", POND_EXPORT_RANGE],
-    ["tileD", [4, 32] as Range],
+    ["tileD", [4, 64] as Range],
     ["lightK", [1, 65536] as Range],
   ] as const) {
     const v = c[key];
@@ -776,6 +798,21 @@ export function validateConfig(c: WorldConfig): string[] {
   errs.push(...validateGenes(c));
   errs.push(...validateSlab(c));
   errs.push(...validateRps(c));
+  errs.push(...validateLevers(c));
+  return errs;
+}
+
+/** The slab levers (WorldConfig.sinkShift ...): slab only, integer ranges, the two upwelling keys together. */
+function validateLevers(c: WorldConfig): string[] {
+  const errs: string[] = [];
+  const keys = [["sinkShift", 1, 16], ["floorDecay", 0, 65535], ["upwellPeriod", 1, 2 ** 31 - 1], ["upwellShift", 1, 16]] as const;
+  for (const [key, lo, hi] of keys) {
+    const v = c[key];
+    if (v === undefined) continue;
+    if (!isSlab(c)) errs.push(`${key} is a slab lever (tileD set)`);
+    if (typeof v !== "number" || !Number.isInteger(v) || v < lo || v > hi) errs.push(`${key} must be an integer in ${lo}..${hi}`);
+  }
+  if ((c.upwellPeriod === undefined) !== (c.upwellShift === undefined)) errs.push("upwellPeriod and upwellShift are set together");
   return errs;
 }
 
@@ -795,6 +832,9 @@ function validateSlab(c: WorldConfig): string[] {
   if (c.tileD === undefined || c.lightK === undefined) return ["tileD and lightK are set together"];
   const errs: string[] = [];
   if (c.tileD % 4 !== 0) errs.push("tileD must be a multiple of 4");
+  // The jar (docs/3d-rung2-plan-2026-10-23.md): 64 is allowed beside 4..32. Every slab bound is per cell or per
+  // neighbourhood, and the light pass walks a column one layer at a time, so none depends on D (docs/rules.md, the slab).
+  if (c.tileD > 32 && c.tileD !== 64) errs.push("tileD above 32 must be 64 (the jar)");
   if (c.tilesX !== 1 || c.tilesY !== 1) errs.push("a slab (tileD set) is one tile: tilesX and tilesY must be 1");
   if (c.kernelRadius !== 3) errs.push("a slab (tileD set) needs kernelRadius 3");
   if (c.lightMode !== "uniform" && c.lightMode !== "gradient") errs.push("a slab (tileD set) needs lightMode uniform or gradient");
@@ -910,10 +950,13 @@ export function validateRps(c: WorldConfig): string[] {
   const errors: string[] = [];
   if (extra.rpsFlip !== undefined || extra.rpsEdge !== undefined) errors.push("rpsFlip and rpsEdge are unsupported in the vacancy transfer");
   const keys = [c.rpsTypes, c.rpsRate, c.rpsMin, c.rpsKill];
-  if (keys.every(v => v === undefined)) return errors;
+  if (keys.every(v => v === undefined)) return c.rpsMutate === undefined ? errors : [...errors, "rpsMutate is set only with the vacancy keys"];
   if (keys.some(v => v === undefined)) errors.push("rpsTypes, rpsRate, rpsMin and rpsKill are set together");
   if (!isSlab(c)) errors.push("RPS requires a slab");
-  if (c.mutRate !== 0) errors.push("RPS transfer requires mutRate 0");
+  // rpsMutate (docs/rules.md, "Optional slab levers") is the one key that lifts the transfer's mutation-off rule.
+  if (c.rpsMutate === undefined && c.mutRate !== 0) errors.push("RPS transfer requires mutRate 0");
+  if (c.rpsMutate !== undefined && (typeof c.rpsMutate !== "number" || !Number.isInteger(c.rpsMutate) || c.rpsMutate < 0 || c.rpsMutate > 65536))
+    errors.push("rpsMutate must be an integer in 0..65536");
   if (c.rpsKill !== "vacancy") errors.push("rpsKill must be vacancy");
   for (const [key, max] of [["rpsTypes", 8], ["rpsRate", 16384], ["rpsMin", 255]] as const) {
     const v = c[key], min = key === "rpsTypes" ? 3 : key === "rpsMin" ? 1 : 0;
