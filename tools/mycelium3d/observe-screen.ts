@@ -12,13 +12,17 @@
 //     number of owned cells and the median Q over them, the number of distinct owners and the largest owner's share of owned cells
 //     (so one owner's carpet is not read as many territories);
 //   - the mean light of the floor layer alone (the floor group G8 averages its D / 8 layers);
-//   - side (x by z, summed over y) and top (x by y, summed over z) projections of particle count and of trail.
+//   - side (x by z, summed over y) and top (x by y, summed over z) projections of particle count and of trail (and, with bonds, of
+//     particles in bodies);
+//   - with bonds: the bond count, bodies (connected components of the bond graph with two or more particles: count, largest,
+//     mean size, rings, a size histogram), bodies and their members by depth group, mean age of bonded and free particles, and the
+//     share of particles whose BOND output is positive (probe). Bond survival between read-backs is in `bondSurvival`.
 // Net upward transport of matter by particles is in `transport` (below says what it counts and what it misses).
-import { defaultConfig, lightPlane, type Mycelium3dConfig, type Mycelium3dState, POS_SHIFT } from "./world.ts";
+import { BOND_NONE, defaultConfig, lightPlane, type Mycelium3dConfig, type Mycelium3dState, NN_O3, OUT, POS_SHIFT, probe, slotOfId } from "./world.ts";
 import { encodePng } from "../lib/png.ts";
 
 /** Bumped whenever a readout's definition changes, so a stored result is never reused across definitions. */
-export const READOUT_VERSION = 5;
+export const READOUT_VERSION = 6;
 export const GROUPS = 8;
 
 // ---- the grid ----------------------------------------------------------------------------------------------------
@@ -28,7 +32,8 @@ export type TrailArm = "none" | "toll" | "owner" | "move12" | "ownertoll";
  * One arm. `owner` replaces OWNER (the owner keys) for the owner arms; `wasteShade` adds the dark-floor key. The first screen's
  * settings carry neither, so their configs are unchanged.
  */
-export interface Setting { id: string; sink: number | null; trail: TrailArm; lightK: number; wasteShade?: number; owner?: OwnerKeys }
+export interface Setting { id: string; sink: number | null; trail: TrailArm; lightK: number; wasteShade?: number; owner?: OwnerKeys; bonds?: BondKeys }
+export type BondKeys = Required<Pick<Mycelium3dConfig, "bondBreak">> & Partial<Pick<Mycelium3dConfig, "bondCost" | "bondChild">>;
 export type OwnerKeys = Required<Pick<Mycelium3dConfig, "trailOwner">> & Partial<Pick<Mycelium3dConfig, "ownerDefend" | "ownerConduit" | "ownerConduitCap">>;
 export const SINKS: readonly (number | null)[] = [null, 6, 4];
 export const TRAILS: readonly TrailArm[] = ["none", "toll", "owner"];
@@ -51,6 +56,7 @@ export function screenConfig(st: Setting, seed: number): Mycelium3dConfig {
   if (st.trail === "toll" || st.trail === "ownertoll") Object.assign(over, TOLL);
   if (st.trail === "move12") over.moveCost = TOLL.moveCost;
   if (st.trail === "owner" || st.trail === "ownertoll") Object.assign(over, st.owner ?? OWNER);
+  if (st.bonds) Object.assign(over, st.bonds);
   return defaultConfig(over);
 }
 
@@ -90,12 +96,47 @@ export const SCREEN2: readonly Setting[] = [
   ownerSetting(6, OWNER3D, "owner", WASTE_SHADE),
   { id: `sink6.none.ws${WASTE_SHADE}.k64`, sink: 6, trail: "none", lightK: 64, wasteShade: WASTE_SHADE },
 ];
+// ---- the bodies screen: bonds (16 Nov 2026) ---------------------------------------------------------------------------
+
+const bondLabel = (b: BondKeys) => `bonds.b${b.bondBreak}.c${b.bondCost ?? 0}${b.bondChild ? ".child" : ""}`;
+const bondSetting = (b: BondKeys, trail: "none" | "toll" = "none", wasteShade?: number): Setting => ({
+  id: `sink6.${trail}.${bondLabel(b)}${wasteShade === undefined ? "" : `.ws${wasteShade}`}.k64`, sink: 6, trail, lightK: 64, bonds: b,
+  ...(wasteShade === undefined ? {} : { wasteShade }),
+});
+/**
+ * Bond sizing pilots at the bodies screen's substrate (sink 6, lightK 64), on the pilot seeds: break 256 / 512 / 1024 at cost 1 and 4,
+ * and children bonded at each break with cost 1; then a diagnostic added after those (bonding was purged in all of them): no upkeep
+ * (cost 0, the key absent) at break 512, with and without children.
+ */
+export const BOND_PILOTS: readonly Setting[] = [
+  ...[256, 512, 1024].flatMap((b) => [1, 4].map((c) => bondSetting({ bondBreak: b, bondCost: c }))),
+  ...[256, 512, 1024].map((b) => bondSetting({ bondBreak: b, bondCost: 1, bondChild: true })),
+  bondSetting({ bondBreak: 512 }), bondSetting({ bondBreak: 512, bondChild: true }),
+];
+/**
+ * The bond keys the bodies screen uses, set from the pilots by the rule stated before them: the non-child setting with the most
+ * bonded particles in the late window (seed mean), ties within 10% to the smaller break and then the lower cost
+ * (experiments/mycelium3d/bonds-screen-2026-11-16.md).
+ */
+export const BONDS3D: BondKeys = { bondBreak: 1024, bondCost: 1 };
+/** The bodies screen: five arms at sink 6, lightK 64, and a sixth, diagnostic one without the upkeep (cost 0, the key absent). */
+export const BODIES: readonly Setting[] = [
+  { id: "sink6.none.k64", sink: 6, trail: "none", lightK: 64 },
+  bondSetting(BONDS3D),
+  bondSetting({ ...BONDS3D, bondChild: true }),
+  bondSetting(BONDS3D, "toll"),
+  bondSetting(BONDS3D, "none", WASTE_SHADE),
+  bondSetting({ bondBreak: BONDS3D.bondBreak }),
+];
+
 export interface Grid { settings: readonly Setting[]; seeds: readonly number[]; title: string }
 export const GRIDS: Record<string, Grid> = {
   first: { settings: SETTINGS, seeds: SEEDS, title: "3D MYCELIUM TRAIL SCREEN" },
   "owner-pilots": { settings: OWNER_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM OWNER SIZING PILOTS" },
   "shade-pilots": { settings: SHADE_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM WASTE-SHADE PROBE" },
   "owner-darkfloor": { settings: SCREEN2, seeds: SCREEN2_SEEDS, title: "3D MYCELIUM OWNER / DARK-FLOOR SCREEN" },
+  "bond-pilots": { settings: BOND_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM BOND SIZING PILOTS" },
+  bodies: { settings: BODIES, seeds: SCREEN2_SEEDS, title: "3D MYCELIUM BODIES (BONDS) SCREEN" },
 };
 
 /** What a stored run must match to be reused: the readout definitions, the config and every cadence. */
@@ -256,6 +297,111 @@ export function ownerEdges(Z: ArrayLike<number>, Q: ArrayLike<number>, W: number
   };
 }
 
+// ---- bonds and bodies --------------------------------------------------------------------------------------------
+
+type Bonded = Pick<Mycelium3dState, "n" | "id" | "bond0" | "bond1">;
+/** Body size classes of the histogram: 2, 3, 4-7, 8-15, 16 and more. */
+export const BODY_SIZES = ["2", "3", "4-7", "8-15", "16+"] as const;
+const sizeClass = (k: number) => (k <= 3 ? k - 2 : k < 8 ? 2 : k < 16 ? 3 : 4);
+
+export interface BondReadout {
+  /** Bonds (edges of the graph), and particles holding at least one. */
+  bonds: number;
+  bonded: number;
+  /** Bodies: connected components with two or more particles. */
+  bodies: number;
+  largest: number;
+  meanSize: number;
+  /** Bodies in which every member holds two bonds (a closed ring). */
+  rings: number;
+  sizeHist: number[];
+  /** Per depth group: particles in bodies, and bodies by the group of their mean layer. */
+  inBodiesByGroup: number[];
+  bodiesByGroup: number[];
+  /** Mean body size by group (by mean layer), NaN where a group has none. */
+  meanSizeByGroup: number[];
+  /** Mean age of particles in bodies and of free ones (NaN when none). */
+  ageBonded: number;
+  ageFree: number;
+  /** Share of particles whose BOND output is positive on the next step (probe), 0 with no particles. */
+  want: number;
+}
+
+/** The bond graph of a state with bond slots: bonds, bodies and where they are. Reads state, changes nothing. */
+export function bondReadout(s: Mycelium3dState): BondReadout {
+  const c = s.config, D = c.depth, n = s.n;
+  const b0 = s.bond0!, b1 = s.bond1!;
+  const seen = new Uint8Array(n), queue = new Int32Array(n);
+  const out: BondReadout = {
+    bonds: 0, bonded: 0, bodies: 0, largest: 0, meanSize: NaN, rings: 0, sizeHist: new Array(BODY_SIZES.length).fill(0),
+    inBodiesByGroup: new Array(GROUPS).fill(0), bodiesByGroup: new Array(GROUPS).fill(0), meanSizeByGroup: new Array(GROUPS).fill(NaN),
+    ageBonded: NaN, ageFree: NaN, want: 0,
+  };
+  const sizeSum = new Array(GROUPS).fill(0);
+  let members = 0, ageB = 0, ageF = 0, nFree = 0;
+  for (let i = 0; i < n; i++) {
+    const deg = (b0[i] !== BOND_NONE ? 1 : 0) + (b1[i] !== BOND_NONE ? 1 : 0);
+    out.bonds += deg;
+    if (deg === 0) { ageF += s.age[i]; nFree++; continue; }
+    out.bonded++; ageB += s.age[i];
+    if (seen[i]) continue;
+    let head = 0, tail = 0, zSum = 0, ring = true;
+    seen[i] = 1; queue[tail++] = i;
+    while (head < tail) {
+      const k = queue[head++];
+      zSum += s.z[k] >>> POS_SHIFT;
+      if (b1[k] === BOND_NONE) ring = false;
+      for (const p of [b0[k], b1[k]]) {
+        if (p === BOND_NONE) continue;
+        const j = slotOfId(s.id, n, p);
+        if (j >= 0 && !seen[j]) { seen[j] = 1; queue[tail++] = j; }
+      }
+    }
+    const g = groupOf(Math.floor(zSum / tail), D);
+    out.bodies++; members += tail; out.largest = Math.max(out.largest, tail);
+    if (ring) out.rings++;
+    out.sizeHist[sizeClass(tail)]++;
+    out.bodiesByGroup[g]++; sizeSum[g] += tail;
+    for (let q = 0; q < tail; q++) out.inBodiesByGroup[groupOf(s.z[queue[q]] >>> POS_SHIFT, D)]++;
+  }
+  out.bonds /= 2;
+  out.meanSize = out.bodies ? members / out.bodies : NaN;
+  for (let g = 0; g < GROUPS; g++) if (out.bodiesByGroup[g]) out.meanSizeByGroup[g] = sizeSum[g] / out.bodiesByGroup[g];
+  out.ageBonded = out.bonded ? ageB / out.bonded : NaN;
+  out.ageFree = nFree ? ageF / nFree : NaN;
+  if (n) {
+    const o = probe(s);
+    let w = 0;
+    for (let i = 0; i < n; i++) if (o[i * NN_O3 + OUT.BOND] > 0) w++;
+    out.want = w / n;
+  }
+  return out;
+}
+
+export interface Survival { bonds: number; bothAlive: number; kept: number }
+export const emptySurvival = (): Survival => ({ bonds: 0, bothAlive: 0, kept: 0 });
+
+/**
+ * Bonds at the earlier read-back that are still there at the later one, added to `acc`: `bonds` counts every bond of `before`,
+ * `bothAlive` those whose two particles are alive at `after`, `kept` those still bonded at `after` (the same pair; a bond that
+ * broke and formed again in between counts as kept). Both states hold bond slots; ids are matched by binary search.
+ */
+export function bondSurvival(acc: Survival, before: Bonded, after: Bonded): Survival {
+  const a0 = before.bond0!, a1 = before.bond1!, c0 = after.bond0!, c1 = after.bond1!;
+  for (let i = 0; i < before.n; i++) {
+    const me = before.id[i];
+    for (const p of [a0[i], a1[i]]) {
+      if (p === BOND_NONE || p < me) continue; // each bond once, from its smaller id
+      acc.bonds++;
+      const ja = slotOfId(after.id, after.n, me), jb = slotOfId(after.id, after.n, p);
+      if (ja < 0 || jb < 0) continue;
+      acc.bothAlive++;
+      if (c0[ja] === p || c1[ja] === p) acc.kept++;
+    }
+  }
+  return acc;
+}
+
 // ---- readout by depth --------------------------------------------------------------------------------------------
 
 export interface Group { particles: number; M: number; A: number; C: number; P: number; light: number; trailCells: number; occupied: number; occupiedTrail: number }
@@ -276,6 +422,8 @@ export interface Readout {
   /** Over every trail component, not only the largest. */
   spans: Spans;
   owner: OwnerEdges | null;
+  /** Only with bonds. */
+  bonds: BondReadout | null;
 }
 
 /** Group index of layer z: GROUPS equal slabs of D / GROUPS layers (D must be a multiple of GROUPS). */
@@ -314,6 +462,7 @@ export function readout(s: Mycelium3dState): Readout {
     comp: largestComponent(s.P, W, H, D), compAboveFloor: largestComponent(s.P, W, H, D, 1, D - 1),
     spans: componentSpans(s.P, W, H, D),
     owner: s.Z && s.Q ? ownerEdges(s.Z, s.Q, W, H, D) : null,
+    bonds: s.bond0 && s.bond1 ? bondReadout(s) : null,
   };
 }
 
@@ -341,22 +490,29 @@ export function fieldFlux(l: Pick<Layers, "A" | "C" | "P">, c: Pick<Mycelium3dCo
 
 // ---- projections and pictures ------------------------------------------------------------------------------------
 
-export interface Projections { W: number; H: number; D: number; sideParticles: number[]; sideTrail: number[]; topParticles: number[]; topTrail: number[] }
+export interface Projections {
+  W: number; H: number; D: number; sideParticles: number[]; sideTrail: number[]; topParticles: number[]; topTrail: number[];
+  /** Only with bonds: particles holding a bond, side and top. */
+  sideBonded?: number[]; topBonded?: number[];
+}
 
 /** Side views are D rows of W (row 0 the surface), summed over y; top views H rows of W, summed over z. */
 export function projections(s: Mycelium3dState): Projections {
   const c = s.config, W = c.width, H = c.height, D = c.depth, WH = W * H;
   const sp = new Array(W * D).fill(0), st = new Array(W * D).fill(0), tp = new Array(W * H).fill(0), tt = new Array(W * H).fill(0);
+  const bonds = s.bond0 !== undefined;
+  const sb = bonds ? new Array(W * D).fill(0) : [], tb = bonds ? new Array(W * H).fill(0) : [];
   for (let i = 0; i < s.n; i++) {
     const x = s.x[i] >>> POS_SHIFT, y = s.y[i] >>> POS_SHIFT, z = s.z[i] >>> POS_SHIFT;
     sp[z * W + x]++; tp[y * W + x]++;
+    if (bonds && s.bond0![i] !== BOND_NONE) { sb[z * W + x]++; tb[y * W + x]++; }
   }
   for (let k = 0; k < WH * D; k++) {
     if (!s.P[k]) continue;
     const x = k % W, y = ((k / W) | 0) % H, z = (k / WH) | 0;
     st[z * W + x] += s.P[k]; tt[y * W + x] += s.P[k];
   }
-  return { W, H, D, sideParticles: sp, sideTrail: st, topParticles: tp, topTrail: tt };
+  return { W, H, D, sideParticles: sp, sideTrail: st, topParticles: tp, topTrail: tt, ...(bonds ? { sideBonded: sb, topBonded: tb } : {}) };
 }
 
 type RGB = readonly [number, number, number];

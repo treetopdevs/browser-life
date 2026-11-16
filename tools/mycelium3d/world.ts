@@ -28,8 +28,11 @@ export const NN_WEIGHTS3 = B2_OFF3 + NN_O3; // 193
 /** Bytes per genome record: 49 u32 words, the last 3 bytes padding and always 0. */
 export const NN_BYTES3 = 196;
 
-/** Controller outputs this rule reads. 5..7 are reserved, as in 2D. */
-export const OUT = { MX: 0, MY: 1, EAT: 2, DEPOSIT: 3, SPLIT: 4, MZ: 8 } as const;
+/** Controller outputs this rule reads. BOND (5) is read only with bondBreak; 6 and 7 are reserved, as in 2D. */
+export const OUT = { MX: 0, MY: 1, EAT: 2, DEPOSIT: 3, SPLIT: 4, BOND: 5, MZ: 8 } as const;
+/** An empty bond slot. Ids end at ID_MAX = 0xfffffffe, so this is never an id. */
+export const BOND_NONE = 0xffffffff;
+export const BOND_BREAK_MAX = 1024;
 /** Controller inputs, in order. */
 export const SENSORS = [
   "nutrient", "waste", "trail", "trail east-west", "trail south-north", "nutrient east-west", "nutrient south-north", "energy", "body",
@@ -157,6 +160,12 @@ export interface Mycelium3dConfig {
   ownerConduit?: number;
   ownerConduitCap?: number;
   ownerGhost?: number;
+  /** Optional. Integer 1..1024 (position units): turns bonds on; a bond breaks when its partners end a step farther apart (RULES.md, "Bonds"). */
+  bondBreak?: number;
+  /** Optional, requires bondBreak. Integer 0..4096: energy each partner pays per bond per step, as heat (absent means 0). */
+  bondCost?: number;
+  /** Optional, requires bondBreak. A child is born bonded to its parent when the parent has a free bond slot. */
+  bondChild?: true;
   mutRate: number;
   mutCount: number;
   mutStep: number;
@@ -229,6 +238,9 @@ export interface Mycelium3dState {
   /** Only with trailOwner: owner tag and owned trail per cell. */
   Z?: Uint32Array;
   Q?: Uint32Array;
+  /** Only with bondBreak: each particle's two bond slots (partner id or BOND_NONE; canonical: one bond in bond0, two in increasing id order), slot order. */
+  bond0?: Uint32Array;
+  bond1?: Uint32Array;
   n: number;
   id: Uint32Array;
   parent: Uint32Array;
@@ -256,7 +268,7 @@ const INT_KEYS: (keyof Mycelium3dConfig)[] = [
 /** Every key a config may carry; anything else (including the 2D keys not ported) is rejected. */
 const KNOWN_KEYS = new Set<string>([
   "rule", "lightPattern", "heredity", ...INT_KEYS, "sinkShift", "wasteShade", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap",
-  "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost",
+  "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost", "bondBreak", "bondCost", "bondChild",
 ]);
 
 /** Ranges that keep every product in step() below 2^32; RULES.md derives each one. Returns problems, empty when valid. */
@@ -325,8 +337,43 @@ export function validateConfig(c: Mycelium3dConfig): string[] {
     if (!isInt(c.ownerGhost, 1, shiftMax)) bad.push(`ownerGhost must be an integer in [1, ${shiftMax}]`);
     if (c.ownerConduit === undefined) bad.push("ownerGhost requires ownerConduit");
   }
+  if (c.bondBreak !== undefined && !isInt(c.bondBreak, 1, BOND_BREAK_MAX)) bad.push(`bondBreak must be an integer in [1, ${BOND_BREAK_MAX}]`);
+  if (c.bondCost !== undefined) {
+    if (!isInt(c.bondCost, 0, 1 << 12)) bad.push("bondCost must be an integer in [0, 4096]");
+    if (c.bondBreak === undefined) bad.push("bondCost requires bondBreak");
+  }
+  if (c.bondChild !== undefined) {
+    if (c.bondChild !== true) bad.push("bondChild must be true or absent");
+    if (c.bondBreak === undefined) bad.push("bondChild requires bondBreak");
+  }
   const total = c.width * c.height * c.depth * c.nutrient0 + c.founders * c.founderMatter;
   if (total > 2 ** 31) bad.push("initial matter must not exceed 2^31");
+  return bad;
+}
+
+/** Slot of particle `id` among the first n slots (slot order is id order), or -1. */
+export function slotOfId(ids: Uint32Array, n: number, id: number): number {
+  let lo = 0, hi = n;
+  while (lo < hi) { const m = (lo + hi) >>> 1; if (ids[m] < id) lo = m + 1; else hi = m; }
+  return lo < n && ids[lo] === id ? lo : -1;
+}
+
+/** The bond graph's invariants (RULES.md, "Bonds"): canonical slots, no self or repeated bond, a live partner, symmetric. */
+function bondProblems(s: Mycelium3dState): string[] {
+  const bad: string[] = [];
+  const b0 = s.bond0!, b1 = s.bond1!;
+  for (let i = 0; i < s.n && bad.length < 20; i++) {
+    const a = b0[i], b = b1[i], me = s.id[i];
+    if (a === BOND_NONE && b !== BOND_NONE) { bad.push(`particle ${me}: bond in slot 1 with slot 0 empty`); continue; }
+    if (b !== BOND_NONE && !(a < b)) { bad.push(`particle ${me}: bond slots not in increasing id order`); continue; }
+    for (const p of [a, b]) {
+      if (p === BOND_NONE) continue;
+      if (p === me) { bad.push(`particle ${me} is bonded to itself`); continue; }
+      const j = slotOfId(s.id, s.n, p);
+      if (j < 0) bad.push(`particle ${me} is bonded to ${p}, which is not alive`);
+      else if (b0[j] !== me && b1[j] !== me) bad.push(`particle ${me} is bonded to ${p}, which does not name it back`);
+    }
+  }
   return bad;
 }
 
@@ -373,6 +420,13 @@ export function validateState(s: Mycelium3dState): string[] {
       if (s.Z[k] > limit) bad.push(`cell ${k}: owner tag ${s.Z[k]} beyond the ids issued`);
     }
   }
+  if (c.bondBreak === undefined) {
+    if (s.bond0 !== undefined || s.bond1 !== undefined) bad.push("bond slots require bondBreak");
+  } else if (!s.bond0 || !s.bond1 || s.bond0.length < s.n || s.bond1.length < s.n) {
+    bad.push("bondBreak requires the bond0 and bond1 slots");
+  } else {
+    bad.push(...bondProblems(s).slice(0, 20 - Math.min(bad.length, 20)));
+  }
   // Every amount is a u32, so with the total at most 2^31 every cell and every sum of cells is too (RULES.md, "Bounds").
   const m = matterTotal(s);
   if (m > MATTER_MAX) bad.push(`total matter ${m} above 2^31`);
@@ -408,6 +462,7 @@ function createEmpty(c: Mycelium3dConfig): Mycelium3dState {
     nextId: 0, nextGid: 0, matter0: 0, energy0: 0, totals: { lightIn: 0, heat: 0, births: 0, deaths: 0, refused: 0, contended: 0, mutations: 0 },
   };
   if (c.trailOwner !== undefined) { s.Z = new Uint32Array(N); s.Q = new Uint32Array(N); }
+  if (c.bondBreak !== undefined) { s.bond0 = new Uint32Array(cap).fill(BOND_NONE); s.bond1 = new Uint32Array(cap).fill(BOND_NONE); }
   return s;
 }
 
@@ -456,7 +511,14 @@ export interface StepStats {
   refused: number;
   contended: number;
   mutations: number;
+  /** Only with bondBreak, on the CPU only (not in totals): what the bond passes did this step. */
+  bonds?: BondStats;
 }
+/**
+ * Bond events of one step, each bond counted once: proposals made, bonds formed, released because a partner died (counted at the
+ * survivor) or because an end let go (BOND < 0), stretched apart, and children born bonded.
+ */
+export interface BondStats { proposals: number; formed: number; partnerDied: number; letGo: number; stretched: number; childBonds: number }
 
 const sat = (v: number) => (v > 127 ? 127 : v);
 const relu = (v: number) => (v > 0 ? v : 0);
@@ -632,6 +694,12 @@ export function step(s: Mycelium3dState): StepStats {
   }
 
   // 5. Metabolism, trail, turnover, death and movement. Field writes are commutative additions into the start cell.
+  // With bonds the move waits for phase 5b, and the cost carries the upkeep of the bonds held at the start of the step.
+  const bonded = c.bondBreak !== undefined;
+  const B0 = s.bond0, B1 = s.bond1;
+  if (bonded && (!B0 || !B1)) throw new Error("bondBreak requires the bond0 and bond1 slots");
+  const bondCost = c.bondCost ?? 0;
+  const dd = bonded ? new Int32Array(3 * n) : null;
   const alive = new Uint8Array(n);
   const wants = new Uint8Array(n);
   const candCell: number[] = [], candDep: number[] = [], candTag: number[] = [];
@@ -646,7 +714,8 @@ export function step(s: Mycelium3dState): StepStats {
     const pb = pbase(c.seed, s.step, s.id[i]);
     const raw = ((mx < 0 ? -mx : mx) + (my < 0 ? -my : my) + (mz < 0 ? -mz : mz)) * c.moveCost;
     const move = disc === null ? raw >>> 7 : (raw * (256 - disc[i])) >>> 15;
-    const cost = c.upkeep + move + shrFrac(m, c.massUpkeepShift, draw(pb, RND.UPKEEP));
+    let cost = c.upkeep + move + shrFrac(m, c.massUpkeepShift, draw(pb, RND.UPKEEP));
+    if (bonded) cost += bondCost * ((B0![i] !== BOND_NONE ? 1 : 0) + (B1![i] !== BOND_NONE ? 1 : 0));
     if (en < cost) {
       st.heat += en; C[ci] += m; st.deaths++;
       continue;
@@ -669,15 +738,23 @@ export function step(s: Mycelium3dState): StepStats {
       continue;
     }
     M[i] = m; E[i] = en;
-    x[i] = (x[i] + spanX + divi(mx * c.speed, 128)) % spanX;
-    y[i] = (y[i] + spanY + divi(my * c.speed, 128)) % spanY;
-    z[i] = clampi(z[i] + divi(mz * c.speed, 128), 0, zMax);
+    if (dd) {
+      dd[3 * i] = divi(mx * c.speed, 128); dd[3 * i + 1] = divi(my * c.speed, 128); dd[3 * i + 2] = divi(mz * c.speed, 128);
+    } else {
+      x[i] = (x[i] + spanX + divi(mx * c.speed, 128)) % spanX;
+      y[i] = (y[i] + spanY + divi(my * c.speed, 128)) % spanY;
+      z[i] = clampi(z[i] + divi(mz * c.speed, 128), 0, zMax);
+    }
     s.age[i]++;
     alive[i] = 1;
     wants[i] = out[oi + OUT.SPLIT] > 0 && en >= c.splitEnergy && m >= c.splitMatter ? 1 : 0;
   }
 
   if (ownerMode !== undefined) resolveClaims(Z!, Q!, N, candCell, candDep, candTag);
+
+  // 5b. Bonds: release, propose, accept, move, stretch (RULES.md, "Bonds"). Positions are still the start-of-step ones.
+  const bs = bonded ? bondPhase(s, out, cell, alive, dd!) : null;
+  if (bs) st.bonds = bs.stats;
 
   // 6. Compact survivors in slot order.
   let k = 0;
@@ -689,6 +766,8 @@ export function step(s: Mycelium3dState): StepStats {
       x[k] = x[i]; y[k] = y[i]; z[k] = z[i]; M[k] = M[i]; E[k] = E[i]; s.age[k] = s.age[i];
       s.genome.copyWithin(k * NN_BYTES3, i * NN_BYTES3, (i + 1) * NN_BYTES3);
     }
+    // Bond slots come from phase 5b's arrays (indexed by the old slot), so the copy order does not matter.
+    if (bs) { B0![k] = bs.b0[i]; B1![k] = bs.b1[i]; }
     newSlot[i] = k++;
   }
   const survivors = k;
@@ -711,6 +790,15 @@ export function step(s: Mycelium3dState): StepStats {
     y[q] = (y[p] + spanY + (draw(base, RND.DY) & 255) - 128) % spanY;
     z[q] = clampi(z[p] + (draw(base, RND.DZ) & 255) - 128, 0, zMax);
     M[q] = cm; E[q] = ce; s.age[q] = 0;
+    if (bonded) {
+      B0![q] = BOND_NONE; B1![q] = BOND_NONE;
+      // bondChild: a parent with a free slot takes the child (the largest id alive, so it goes last in the parent's slots).
+      if (c.bondChild && B1![p] === BOND_NONE) {
+        if (B0![p] === BOND_NONE) B0![p] = s.id[q]; else B1![p] = s.id[q];
+        B0![q] = pid;
+        st.bonds!.childBonds++;
+      }
+    }
     let novel = false;
     if (c.heredity === "blocked") {
       randomWeights(s.genome, q * NN_BYTES3, base, c.weightSpan);
@@ -793,6 +881,101 @@ export function step(s: Mycelium3dState): StepStats {
   return st;
 }
 
+/** |a - b| on a ring of `span` positions (the minimum image). */
+const ringDist = (a: number, b: number, span: number) => { const d = a > b ? a - b : b - a; return d > span - d ? span - d : d; };
+
+/**
+ * Phase 5b (RULES.md, "Bonds"), on the start-of-step slots: release, propose, accept, move, stretch. Moves every survivor (the
+ * move phase 5 left out) and returns each slot's bonds after the step, in canonical order, for the compaction to carry.
+ */
+function bondPhase(s: Mycelium3dState, out: Int32Array, cell: Uint32Array, alive: Uint8Array, dd: Int32Array) {
+  const c = s.config;
+  const W = c.width, H = c.height, D = c.depth, n = s.n;
+  const spanX = W << POS_SHIFT, spanY = H << POS_SHIFT, zMax = (D << POS_SHIFT) - 1;
+  const { x, y, z, id } = s;
+  const B0 = s.bond0!, B1 = s.bond1!;
+  const R = c.bondBreak!;
+  const stats: BondStats = { proposals: 0, formed: 0, partnerDied: 0, letGo: 0, stretched: 0, childBonds: 0 };
+  const want = (i: number) => out[i * NN_O3 + OUT.BOND];
+  // Working bonds (ids, canonical) and the partners' slots, per start-of-step slot.
+  const b0 = new Uint32Array(n).fill(BOND_NONE), b1 = new Uint32Array(n).fill(BOND_NONE);
+  const s0 = new Int32Array(n).fill(-1), s1 = new Int32Array(n).fill(-1);
+  const keep = (i: number, pid: number, j: number) => {
+    if (b0[i] === BOND_NONE) { b0[i] = pid; s0[i] = j; } else { b1[i] = pid; s1[i] = j; }
+  };
+  // 1. Release: a partner that died, or either end letting go (BOND < 0). Kept bonds keep their order.
+  for (let i = 0; i < n; i++) {
+    if (!alive[i]) continue;
+    for (const pid of [B0[i], B1[i]]) {
+      if (pid === BOND_NONE) continue;
+      const j = slotOfId(id, n, pid);
+      if (alive[j] && want(i) >= 0 && want(j) >= 0) keep(i, pid, j);
+      else if (!alive[j]) stats.partnerDied++;
+      else if (i < j) stats.letGo++; // once per bond, at the smaller slot
+    }
+  }
+  // 2. Propose: per-cell lists in any order; the choice is the minimum (d^2, id), so the order does not matter.
+  const N = W * H * D;
+  const head = new Int32Array(N).fill(-1), next = new Int32Array(n);
+  for (let i = 0; i < n; i++) { next[i] = head[cell[i]]; head[cell[i]] = i; }
+  const free = (i: number) => b1[i] === BOND_NONE;
+  const prop = new Int32Array(n).fill(-1);
+  const nb = new Int32Array(6);
+  for (let i = 0; i < n; i++) {
+    if (!alive[i] || want(i) <= 0 || !free(i)) continue;
+    neighbours6(cell[i], W, H, D, nb);
+    let best = -1, bd = 0;
+    for (let q = 0; q < 7; q++) {
+      const cc = q === 0 ? cell[i] : nb[q - 1];
+      if (cc < 0) continue;
+      for (let j = head[cc]; j >= 0; j = next[j]) {
+        if (j === i || !alive[j] || want(j) <= 0 || !free(j) || b0[i] === id[j]) continue;
+        const dx = ringDist(x[i], x[j], spanX), dy = ringDist(y[i], y[j], spanY), dz = z[i] > z[j] ? z[i] - z[j] : z[j] - z[i];
+        const d2 = dx * dx + dy * dy + dz * dz;
+        // Slot order is id order, so the smaller slot is the smaller id.
+        if (best < 0 || d2 < bd || (d2 === bd && j < best)) { best = j; bd = d2; }
+      }
+    }
+    prop[i] = best;
+    if (best >= 0) stats.proposals++;
+  }
+  // 3. Accept: mutual proposals only, a matching, so each particle gains at most one bond.
+  for (let i = 0; i < n; i++) {
+    const j = prop[i];
+    if (j < 0 || prop[j] !== i) continue;
+    const pid = id[j];
+    if (b0[i] === BOND_NONE) { b0[i] = pid; s0[i] = j; }
+    else if (pid > b0[i]) { b1[i] = pid; s1[i] = j; }
+    else { b1[i] = b0[i]; s1[i] = s0[i]; b0[i] = pid; s0[i] = j; }
+    if (i < j) stats.formed++;
+  }
+  // 4. Move: the displacement is the truncated mean of the intended ones over the particle and its partners.
+  for (let i = 0; i < n; i++) {
+    if (!alive[i]) continue;
+    let sx = dd[3 * i], sy = dd[3 * i + 1], sz = dd[3 * i + 2], k = 1;
+    for (const j of [s0[i], s1[i]]) {
+      if (j < 0) continue;
+      sx += dd[3 * j]; sy += dd[3 * j + 1]; sz += dd[3 * j + 2]; k++;
+    }
+    x[i] = (x[i] + spanX + divi(sx, k)) % spanX;
+    y[i] = (y[i] + spanY + divi(sy, k)) % spanY;
+    z[i] = clampi(z[i] + divi(sz, k), 0, zMax);
+  }
+  // 5. Stretch: per axis first, so the squares stay below 2^22.
+  for (let i = 0; i < n; i++) {
+    if (!alive[i]) continue;
+    const pa = b0[i], pb = b1[i], ja = s0[i], jb = s1[i];
+    b0[i] = BOND_NONE; b1[i] = BOND_NONE;
+    for (const [pid, j] of [[pa, ja], [pb, jb]]) {
+      if (pid === BOND_NONE) continue;
+      const dx = ringDist(x[i], x[j], spanX), dy = ringDist(y[i], y[j], spanY), dz = z[i] > z[j] ? z[i] - z[j] : z[j] - z[i];
+      if (dx > R || dy > R || dz > R || dx * dx + dy * dy + dz * dz > R * R) { if (i < j) stats.stretched++; continue; }
+      if (b0[i] === BOND_NONE) b0[i] = pid; else b1[i] = pid;
+    }
+  }
+  return { b0, b1, stats };
+}
+
 /** The six face neighbours of cell k (0 +x, 1 -x, 2 +y, 3 -y, 4 +z down, 5 -z up), -1 outside the volume in z. */
 function neighbours6(k: number, W: number, H: number, D: number, out: Int32Array): void {
   const WH = W * H;
@@ -869,7 +1052,8 @@ export function encode(s: Mycelium3dState): Uint8Array {
   const pad = (4 - (header.length % 4)) % 4;
   const N = s.A.length, n = s.n;
   const owner = s.config.trailOwner !== undefined;
-  const words = 2 + 3 * N + PLANES.length * n + (owner ? 2 * N : 0);
+  const bonds = s.config.bondBreak !== undefined;
+  const words = 2 + 3 * N + PLANES.length * n + (owner ? 2 * N : 0) + (bonds ? 2 * n : 0);
   const bytes = new Uint8Array(4 * words + header.length + pad + n * NN_BYTES3);
   const dv = new DataView(bytes.buffer);
   dv.setUint32(0, MAGIC, true);
@@ -882,6 +1066,7 @@ export function encode(s: Mycelium3dState): Uint8Array {
   bytes.set(new Uint8Array(s.genome.buffer, s.genome.byteOffset, n * NN_BYTES3), off);
   off += n * NN_BYTES3;
   if (owner) { put(s.Z!, N); put(s.Q!, N); }
+  if (bonds) { put(s.bond0!, n); put(s.bond1!, n); }
   return bytes;
 }
 
@@ -899,7 +1084,7 @@ export function decode(bytes: Uint8Array): Mycelium3dState {
   if (!(Number.isInteger(s.n) && s.n >= 0 && s.n <= c.maxParticles)) throw new Error("invalid mycelium3d checkpoint: particle count out of range");
   let off = 8 + hl + ((4 - (hl % 4)) % 4);
   const N = c.width * c.height * c.depth;
-  const need = off + 4 * (3 * N + PLANES.length * s.n + (c.trailOwner !== undefined ? 2 * N : 0)) + s.n * NN_BYTES3;
+  const need = off + 4 * (3 * N + PLANES.length * s.n + (c.trailOwner !== undefined ? 2 * N : 0) + (c.bondBreak !== undefined ? 2 * s.n : 0)) + s.n * NN_BYTES3;
   if (bytes.byteLength !== need) throw new Error(`invalid mycelium3d checkpoint: ${bytes.byteLength} bytes; expected ${need}`);
   const get = (a: Uint32Array, len: number) => { for (let i = 0; i < len; i++, off += 4) a[i] = dv.getUint32(off, true); };
   get(s.A, N); get(s.C, N); get(s.P, N);
@@ -907,6 +1092,7 @@ export function decode(bytes: Uint8Array): Mycelium3dState {
   s.genome.set(new Int8Array(bytes.buffer, bytes.byteOffset + off, s.n * NN_BYTES3));
   off += s.n * NN_BYTES3;
   if (c.trailOwner !== undefined) { get(s.Z!, N); get(s.Q!, N); }
+  if (c.bondBreak !== undefined) { get(s.bond0!, s.n); get(s.bond1!, s.n); }
   const bad = validateState(s);
   if (bad.length) throw new Error(`invalid mycelium3d checkpoint: ${bad.slice(0, 3).join("; ")}`);
   return s;

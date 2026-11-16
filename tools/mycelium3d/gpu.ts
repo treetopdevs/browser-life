@@ -14,11 +14,12 @@
 // into the shader as a const, so a GpuMycelium3d is tied to one config; upload(state) takes any state with the same
 // config (resume). What differs from 2D: 3D binning with the per-cell body matter, the light plane (one thread per
 // column, top to bottom), 13 -> 8 -> 9 with MZ, the z clamp, the optional sinking (sends to scratch, then applied),
-// and six-face diffusion with diffOut6 (a missing z face sends 0).
+// and six-face diffusion with diffOut6 (a missing z face sends 0). With bondBreak: per-cell particle lists, and the bond passes
+// (release, propose, accept, move, stretch) as separate dispatches, since each reads what its partners wrote in the one before.
 import { RND3 } from "@bl/schema";
 import {
-  B1_OFF3, B2_OFF3, createWorld, ID_MAX, LEDGER_MAX, MCAP, type Mycelium3dConfig, type Mycelium3dState, NN_BYTES3, NN_WEIGHTS3, POS_SHIFT, STEP_MAX,
-  type Totals, W1_OFF3, W2_OFF3,
+  B1_OFF3, B2_OFF3, BOND_NONE, createWorld, ID_MAX, LEDGER_MAX, MCAP, type Mycelium3dConfig, type Mycelium3dState, NN_BYTES3, NN_WEIGHTS3, OUT,
+  POS_SHIFT, STEP_MAX, type Totals, W1_OFF3, W2_OFF3,
 } from "./world.ts";
 
 const WG = 256;
@@ -38,17 +39,18 @@ const PLANES = ["id", "parent", "gid", "x", "y", "z", "M", "E", "age"] as const;
 
 /**
  * The field buffer's plane offsets in words. The persistent planes come first and are read back in one copy: A, C, P,
- * then (only with trailOwner) Z and Q. Then per-step scratch: CROWD, MB, R, TK (cleared each step, adjacent), the light
- * plane I, SENT (six words per cell: diffusion sends, and the sinking sends before them) and, with trailOwner, the claim
- * scratch W1, W2 (cleared each step, adjacent).
+ * then (only with trailOwner) Z and Q. Then per-step scratch: CROWD, MB, R, TK and, with bondBreak, HEAD (the per-cell particle
+ * lists' heads, slot + 1, 0 for none) (cleared each step, adjacent), the light plane I, SENT (six words per cell: diffusion sends,
+ * and the sinking sends before them) and, with trailOwner, the claim scratch W1, W2 (cleared each step, adjacent).
  */
-export function fieldLayout3d(c: Pick<Mycelium3dConfig, "width" | "height" | "depth" | "trailOwner">) {
+export function fieldLayout3d(c: Pick<Mycelium3dConfig, "width" | "height" | "depth" | "trailOwner" | "bondBreak">) {
   const N = c.width * c.height * c.depth;
   const own = c.trailOwner !== undefined;
-  const F = { A: 0, C: N, P: 2 * N, Z: 0, Q: 0, persist: 3 * N, CROWD: 0, MB: 0, R: 0, TK: 0, I: 0, SENT: 0, W1: 0, W2: 0, words: 0 };
+  const F = { A: 0, C: N, P: 2 * N, Z: 0, Q: 0, persist: 3 * N, CROWD: 0, MB: 0, R: 0, TK: 0, HEAD: 0, clear: 4 * N, I: 0, SENT: 0, W1: 0, W2: 0, words: 0 };
   let w = 3 * N;
   if (own) { F.Z = w; F.Q = w + N; w += 2 * N; F.persist = w; }
   F.CROWD = w; F.MB = w + N; F.R = w + 2 * N; F.TK = w + 3 * N; w += 4 * N;
+  if (c.bondBreak !== undefined) { F.HEAD = w; w += N; F.clear = 5 * N; }
   F.I = w; w += N;
   F.SENT = w; w += 6 * N;
   if (own) { F.W1 = w; F.W2 = w + N; w += 2 * N; }
@@ -59,16 +61,23 @@ export function fieldLayout3d(c: Pick<Mycelium3dConfig, "width" | "height" | "de
 function layouts(c: Mycelium3dConfig) {
   const N = c.width * c.height * c.depth, cap = c.maxParticles;
   const F = fieldLayout3d(c);
-  // Particle buffer (one of two, ping-ponged): nine u32 planes of cap in checkpoint order, then genome words (49 per slot).
-  const P = { ID: 0, PAR: cap, GID: 2 * cap, X: 3 * cap, Y: 4 * cap, Z: 5 * cap, M: 6 * cap, E: 7 * cap, AGE: 8 * cap, GEN: 9 * cap, words: (9 + GENOME_WORDS) * cap };
-  // Per-step particle scratch: planes of cap words, three block-offset arrays of 256, then DISC and (only with trailOwner) CDEP.
+  // Particle buffer (one of two, ping-ponged): nine u32 planes of cap in checkpoint order, then genome words (49 per slot), then
+  // (only with bondBreak) the two bond-slot planes.
+  const P = { ID: 0, PAR: cap, GID: 2 * cap, X: 3 * cap, Y: 4 * cap, Z: 5 * cap, M: 6 * cap, E: 7 * cap, AGE: 8 * cap, GEN: 9 * cap, B0: 0, B1: 0, words: (9 + GENOME_WORDS) * cap };
+  if (c.bondBreak !== undefined) { P.B0 = P.words; P.B1 = P.words + cap; P.words += 2 * cap; }
+  // Per-step particle scratch: planes of cap words, three block-offset arrays of 256, then DISC, (only with trailOwner) CDEP and
+  // (only with bondBreak) the bond scratch: the BOND output, the next slot in the cell list (+ 1), the working bonds BB0, BB1 (ids),
+  // their partners' slots S0, S1 and the proposal PROP (a slot, or NONE).
   const names = ["CELL", "REQ", "GRANT", "MX", "MY", "MZ", "DREQ", "SPL", "ALIVE", "WANTS", "NOVEL", "LA", "LW", "LN"] as const;
-  const T = Object.fromEntries(names.map((k, i) => [k, i * cap])) as Record<(typeof names)[number] | "BA" | "BW" | "BN" | "DISC" | "CDEP" | "words", number>;
+  const bondNames = ["BOND", "NEXT", "BB0", "BB1", "S0", "S1", "PROP"] as const;
+  const T = Object.fromEntries(names.map((k, i) => [k, i * cap])) as Record<(typeof names)[number] | (typeof bondNames)[number] | "BA" | "BW" | "BN" | "DISC" | "CDEP" | "words", number>;
   let w = names.length * cap;
   T.BA = w; T.BW = w + 256; T.BN = w + 512; w += 768;
   T.DISC = w; w += cap;
   T.CDEP = 0;
   if (c.trailOwner !== undefined) { T.CDEP = w; w += cap; }
+  for (const k of bondNames) T[k] = 0;
+  if (c.bondBreak !== undefined) for (const k of bondNames) { T[k] = w; w += cap; }
   T.words = w;
   return { N, cap, F, P, T };
 }
@@ -103,6 +112,9 @@ function wgsl(c: Mycelium3dConfig): string {
     FL_DECAY: 0, FL_LIGHT: 1, FL_SINK_C: 2, FL_SINK_P: 3, RND_DIFF: RND3.DIFF, RND_DIFF_ROT: RND3.DIFF_ROT,
     C_N: C.n, C_NEXTID: C.nextId, C_NEXTGID: C.nextGid, C_STEP: C.step, C_ERR: C.err, C_SURV: C.surv, C_WANTT: C.wantTotal, C_NEWG: C.newGids, C_STEPHI: C.stepHi, C_CUT: C.cut,
     S_LIGHT: C.stat, S_HEAT: C.stat + 2, S_BIRTHS: C.stat + 4, S_DEATHS: C.stat + 6, S_REFUSED: C.stat + 8, S_CONTENDED: C.stat + 10, S_MUT: C.stat + 12,
+    BOND_SET: c.bondBreak === undefined ? 0 : 1, BREAK: c.bondBreak ?? 0, BCOST: c.bondCost ?? 0, BCHILD: c.bondChild ? 1 : 0, O_BOND: OUT.BOND, NONE: BOND_NONE,
+    F_HEAD: F.HEAD, F_CLEAR: F.clear, P_B0: P.B0, P_B1: P.B1,
+    T_BOND: T.BOND, T_NEXT: T.NEXT, T_BB0: T.BB0, T_BB1: T.BB1, T_S0: T.S0, T_S1: T.S1, T_PROP: T.PROP,
     TOT0: C.tot, ID_MAX_V: ID_MAX, ERR_LEDGER, ERR_STEP, ERR_COUNT, LEDGER_HI: Math.floor(LEDGER_MAX / 2 ** 32),
     // The last step a state may start from is 2^53 - 2 (world.ts: step refuses at STEP_MAX = 2^53 - 1).
     STEP_LAST_HI: Math.floor((STEP_MAX - 1) / 2 ** 32), STEP_LAST_LO: (STEP_MAX - 1) % 2 ** 32,
@@ -176,11 +188,11 @@ fn w_add(v: u32) {
   if (o + v < o) { atomicAdd(&w_hi, 1u); }
 }
 
-// Per-step cell scratch: CROWD, MB, R, TK are adjacent.
+// Per-step cell scratch: CROWD, MB, R, TK (and with bonds HEAD) are adjacent; F_CLEAR words in all.
 @compute @workgroup_size(256)
 fn k_clear(@builtin(global_invocation_id) g: vec3<u32>, @builtin(num_workgroups) nw: vec3<u32>) {
   let k = cidx(g, nw);
-  if (k < 4u * N) { atomicStore(&fld[F_CROWD + k], 0u); }
+  if (k < F_CLEAR) { atomicStore(&fld[F_CROWD + k], 0u); }
 }
 // The owner claim scratch (W1, W2 are adjacent).
 @compute @workgroup_size(256)
@@ -220,6 +232,8 @@ fn k_bin(@builtin(global_invocation_id) g: vec3<u32>) {
   tmp[T_CELL + i] = ci;
   atomicAdd(&fld[F_CROWD + ci], 1u);
   atomicAdd(&fld[F_MB + ci], pc[P_M + i]);
+  // Bonds: push this slot onto its cell's list (slot + 1; 0 ends the list). The order is arbitrary; the proposal does not depend on it.
+  if (BOND_SET == 1u) { tmp[T_NEXT + i] = atomicExchange(&fld[F_HEAD + ci], i + 1u); }
 }
 
 // 1b. The light plane, one thread per column, top to bottom, from start-of-step P, the binned M and, with wasteShade, C >> WSHIFT
@@ -287,7 +301,7 @@ fn k_think(@builtin(global_invocation_id) g: vec3<u32>) {
   }
   var o: array<i32, 9>;
   for (var k = 0u; k < 9u; k++) {
-    if (k >= 5u && k < 8u) { continue; } // outputs 5..7 are reserved
+    if (k >= 5u && k < 8u && !(BOND_SET == 1u && k == O_BOND)) { continue; } // outputs 6, 7 are reserved (and 5 without bonds)
     var acc = wb(B2_OFF + k) * 128;
     for (var j = 0u; j < 8u; j++) { acc += wb(W2_OFF + j * 9u + k) * hh[j]; }
     o[k] = clamp(acc / 128, -127, 127);
@@ -295,6 +309,7 @@ fn k_think(@builtin(global_invocation_id) g: vec3<u32>) {
   tmp[T_MX + i] = bitcast<u32>(o[0]);
   tmp[T_MY + i] = bitcast<u32>(o[1]);
   tmp[T_MZ + i] = bitcast<u32>(o[8]);
+  if (BOND_SET == 1u) { tmp[T_BOND + i] = bitcast<u32>(o[O_BOND]); }
   var room = 0u;
   if (BODYMAX > m0) { room = BODYMAX - m0; }
   var r = min((MAXEAT * u32(max(o[2], 0))) >> 7u, room);
@@ -367,7 +382,9 @@ fn live_one(i: u32) -> vec2<u32> {
   let raw = (u32(abs(mx)) + u32(abs(my)) + u32(abs(mz))) * MOVECOST;
   var mv = raw >> 7u;
   if (TD_SET == 1u) { mv = (raw * (256u - tmp[T_DISC + i])) >> 15u; }
-  let cost = UPKEEP + mv + mul_frac(m, MASSUPK, 16u, draw(pb, R_UPKEEP));
+  var cost = UPKEEP + mv + mul_frac(m, MASSUPK, 16u, draw(pb, R_UPKEEP));
+  // Bond upkeep on the bonds held at the start of the step.
+  if (BOND_SET == 1u) { cost += BCOST * (select(0u, 1u, pc[P_B0 + i] != NONE) + select(0u, 1u, pc[P_B1 + i] != NONE)); }
   if (en < cost) {
     heat += en;
     atomicAdd(&fld[F_C + ci], m);
@@ -396,12 +413,15 @@ fn live_one(i: u32) -> vec2<u32> {
   }
   pc[P_M + i] = m;
   pc[P_E + i] = en;
-  let dx = (mx * i32(SPEED)) / 128;
-  let dy = (my * i32(SPEED)) / 128;
-  let dz = (mz * i32(SPEED)) / 128;
-  pc[P_X + i] = u32(i32(pc[P_X + i] + SPANX) + dx) % SPANX;
-  pc[P_Y + i] = u32(i32(pc[P_Y + i] + SPANY) + dy) % SPANY;
-  pc[P_Z + i] = u32(clamp(i32(pc[P_Z + i]) + dz, 0, i32(ZMAX)));
+  // With bonds the move waits for k_bond_move (partners' moves are averaged in).
+  if (BOND_SET == 0u) {
+    let dx = (mx * i32(SPEED)) / 128;
+    let dy = (my * i32(SPEED)) / 128;
+    let dz = (mz * i32(SPEED)) / 128;
+    pc[P_X + i] = u32(i32(pc[P_X + i] + SPANX) + dx) % SPANX;
+    pc[P_Y + i] = u32(i32(pc[P_Y + i] + SPANY) + dy) % SPANY;
+    pc[P_Z + i] = u32(clamp(i32(pc[P_Z + i]) + dz, 0, i32(ZMAX)));
+  }
   pc[P_AGE + i] = pc[P_AGE + i] + 1u;
   tmp[T_ALIVE + i] = 1u;
   if (tmp[T_SPL + i] != 0u && en >= SPLITE && m >= SPLITM) { tmp[T_WANTS + i] = 1u; }
@@ -447,6 +467,143 @@ fn k_claim_c(@builtin(global_invocation_id) g: vec3<u32>) {
   let d = tmp[T_CDEP + i];
   let ci = tmp[T_CELL + i];
   if (d > 0u && own_tag(i) == fl(F_W2 + ci)) { atomicAdd(&fld[F_Q + ci], d); }
+}
+
+// 5b. Bonds (RULES.md, "Bonds"), on the start-of-step slots in pc, one dispatch per pass. Partners are named by id; their slot
+// is found by binary search over the start-of-step ids (slot order is id order).
+fn slot_of(id: u32) -> u32 {
+  var lo = 0u;
+  var hi = ld(C_N);
+  loop {
+    if (lo >= hi) { break; }
+    let m = (lo + hi) >> 1u;
+    if (pc[P_ID + m] < id) { lo = m + 1u; } else { hi = m; }
+  }
+  return lo;
+}
+fn bwant(i: u32) -> i32 { return bitcast<i32>(tmp[T_BOND + i]); }
+// |a - b| on a ring of span positions (the minimum image).
+fn ring(a: u32, b: u32, span: u32) -> u32 {
+  let d = select(b - a, a - b, a > b);
+  return min(d, span - d);
+}
+fn zdist(a: u32, b: u32) -> u32 { return select(b - a, a - b, a > b); }
+
+// 1. Release: drop a bond whose partner died, or when either end lets go (BOND < 0). Writes BB0, BB1 (ids) and S0, S1 (slots).
+@compute @workgroup_size(256)
+fn k_bond_release(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  var a = NONE;
+  var b = NONE;
+  var sa = NONE;
+  var sb = NONE;
+  if (tmp[T_ALIVE + i] != 0u) {
+    for (var q = 0u; q < 2u; q++) {
+      let pid = pc[select(P_B0, P_B1, q == 1u) + i];
+      if (pid == NONE) { continue; }
+      let j = slot_of(pid);
+      if (tmp[T_ALIVE + j] != 0u && bwant(i) >= 0 && bwant(j) >= 0) {
+        if (a == NONE) { a = pid; sa = j; } else { b = pid; sb = j; }
+      }
+    }
+  }
+  tmp[T_BB0 + i] = a;
+  tmp[T_BB1 + i] = b;
+  tmp[T_S0 + i] = sa;
+  tmp[T_S1 + i] = sb;
+}
+
+// 2. Propose: the nearest eligible particle in this cell or a face neighbour, by (d^2, slot); the list order does not matter.
+@compute @workgroup_size(256)
+fn k_bond_propose(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  var best = NONE;
+  var bd = 0u;
+  if (tmp[T_ALIVE + i] != 0u && bwant(i) > 0 && tmp[T_BB1 + i] == NONE) {
+    let ci = tmp[T_CELL + i];
+    let mine = tmp[T_BB0 + i];
+    let xi = pc[P_X + i];
+    let yi = pc[P_Y + i];
+    let zi = pc[P_Z + i];
+    for (var q = 0u; q < 7u; q++) {
+      var cc = ci;
+      if (q > 0u) { cc = nb6(ci, q - 1u); }
+      if (cc == OUT) { continue; }
+      var e = fl(F_HEAD + cc);
+      loop {
+        if (e == 0u) { break; }
+        let j = e - 1u;
+        e = tmp[T_NEXT + j];
+        if (j == i || tmp[T_ALIVE + j] == 0u || bwant(j) <= 0 || tmp[T_BB1 + j] != NONE || mine == pc[P_ID + j]) { continue; }
+        let dx = ring(xi, pc[P_X + j], SPANX);
+        let dy = ring(yi, pc[P_Y + j], SPANY);
+        let dz = zdist(zi, pc[P_Z + j]);
+        let d2 = dx * dx + dy * dy + dz * dz;
+        if (best == NONE || d2 < bd || (d2 == bd && j < best)) { best = j; bd = d2; }
+      }
+    }
+  }
+  tmp[T_PROP + i] = best;
+}
+
+// 3. Accept: a mutual proposal forms a bond (a matching, so at most one per particle per step); canonical order kept.
+@compute @workgroup_size(256)
+fn k_bond_accept(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  let j = tmp[T_PROP + i];
+  if (j == NONE || tmp[T_PROP + j] != i) { return; }
+  let pid = pc[P_ID + j];
+  let a = tmp[T_BB0 + i];
+  if (a == NONE) { tmp[T_BB0 + i] = pid; tmp[T_S0 + i] = j; }
+  else if (pid > a) { tmp[T_BB1 + i] = pid; tmp[T_S1 + i] = j; }
+  else { tmp[T_BB1 + i] = a; tmp[T_S1 + i] = tmp[T_S0 + i]; tmp[T_BB0 + i] = pid; tmp[T_S0 + i] = j; }
+}
+
+// 4. Move: the truncated mean of the intended displacements over the particle and its partners (i32 / truncates, as divi).
+fn disp(i: u32, plane: u32) -> i32 { return (bitcast<i32>(tmp[plane + i]) * i32(SPEED)) / 128; }
+@compute @workgroup_size(256)
+fn k_bond_move(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N) || tmp[T_ALIVE + i] == 0u) { return; }
+  var sx = disp(i, T_MX);
+  var sy = disp(i, T_MY);
+  var sz = disp(i, T_MZ);
+  var k = 1;
+  for (var q = 0u; q < 2u; q++) {
+    let j = tmp[select(T_S0, T_S1, q == 1u) + i];
+    if (j == NONE) { continue; }
+    sx += disp(j, T_MX);
+    sy += disp(j, T_MY);
+    sz += disp(j, T_MZ);
+    k += 1;
+  }
+  pc[P_X + i] = u32(i32(pc[P_X + i] + SPANX) + sx / k) % SPANX;
+  pc[P_Y + i] = u32(i32(pc[P_Y + i] + SPANY) + sy / k) % SPANY;
+  pc[P_Z + i] = u32(clamp(i32(pc[P_Z + i]) + sz / k, 0, i32(ZMAX)));
+}
+
+// 5. Stretch: drop a bond whose partners are now farther apart than BREAK (per axis first, so the squares stay below 2^22).
+@compute @workgroup_size(256)
+fn k_bond_stretch(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N) || tmp[T_ALIVE + i] == 0u) { return; }
+  var a = NONE;
+  var b = NONE;
+  for (var q = 0u; q < 2u; q++) {
+    let pid = tmp[select(T_BB0, T_BB1, q == 1u) + i];
+    if (pid == NONE) { continue; }
+    let j = tmp[select(T_S0, T_S1, q == 1u) + i];
+    let dx = ring(pc[P_X + i], pc[P_X + j], SPANX);
+    let dy = ring(pc[P_Y + i], pc[P_Y + j], SPANY);
+    let dz = zdist(pc[P_Z + i], pc[P_Z + j]);
+    if (dx > BREAK || dy > BREAK || dz > BREAK || dx * dx + dy * dy + dz * dz > BREAK * BREAK) { continue; }
+    if (a == NONE) { a = pid; } else { b = pid; }
+  }
+  tmp[T_BB0 + i] = a;
+  tmp[T_BB1 + i] = b;
 }
 
 // 6-7. Scans over slot order: block-local exclusive prefix, then a prefix over the (at most 256) block totals.
@@ -536,6 +693,10 @@ fn k_compact(@builtin(global_invocation_id) g: vec3<u32>) {
     pw[q] = wv;
     gw[q] = wv;
   }
+  // Bonds after phase 5b (only with bondBreak); a parent with a free slot may take its child below.
+  var pb0 = NONE;
+  var pb1 = NONE;
+  if (BOND_SET == 1u) { pb0 = tmp[T_BB0 + i]; pb1 = tmp[T_BB1 + i]; }
   var accepted = false;
   var rank = 0u;
   if (tmp[T_WANTS + i] != 0u) {
@@ -558,6 +719,17 @@ fn k_compact(@builtin(global_invocation_id) g: vec3<u32>) {
     pn[P_E + qs] = ce;
     pn[P_AGE + qs] = 0u;
     pn[P_GID + qs] = gidP;
+    if (BOND_SET == 1u) {
+      var c0 = NONE;
+      // bondChild: the child (the largest id alive) goes last in the parent's slots. k_trim undoes it if the child is cut.
+      if (BCHILD == 1u && pb1 == NONE) {
+        let cid = ld(C_NEXTID) + rank;
+        if (pb0 == NONE) { pb0 = cid; } else { pb1 = cid; }
+        c0 = pid;
+      }
+      pn[P_B0 + qs] = c0;
+      pn[P_B1 + qs] = NONE;
+    }
     var novel = false;
     if (HER == 2u) {
       // Blocked: all 193 weight bytes redrawn, the padding stays 0; always a new genotype.
@@ -592,6 +764,7 @@ fn k_compact(@builtin(global_invocation_id) g: vec3<u32>) {
   pn[P_E + p] = eP;
   pn[P_AGE + p] = pc[P_AGE + i];
   for (var q = 0u; q < GW; q++) { pn[P_GEN + p * GW + q] = pw[q]; }
+  if (BOND_SET == 1u) { pn[P_B0 + p] = pb0; pn[P_B1 + p] = pb1; }
 }
 
 // Children whose controller differs from the parent's take the next genotype ids, in birth order.
@@ -607,7 +780,7 @@ fn k_assign_gid(@builtin(global_invocation_id) g: vec3<u32>) {
   }
 }
 
-// Parents whose child was cut by the genotype-id limit keep their whole body and energy.
+// Parents whose child was cut by the genotype-id limit keep their whole body and energy, and their bonds without the child.
 @compute @workgroup_size(256)
 fn k_trim(@builtin(global_invocation_id) g: vec3<u32>) {
   let i = g.x;
@@ -617,6 +790,7 @@ fn k_trim(@builtin(global_invocation_id) g: vec3<u32>) {
   let p = tmp[T_LA + i] + tmp[T_BA + (i >> 8u)];
   pn[P_M + p] = pc[P_M + i];
   pn[P_E + p] = pc[P_E + i];
+  if (BOND_SET == 1u) { pn[P_B0 + p] = tmp[T_BB0 + i]; pn[P_B1 + p] = tmp[T_BB1 + i]; }
 }
 
 // 8.1 Field: light (from the start-of-step plane) turns waste into nutrient, trail decays to waste.
@@ -846,7 +1020,7 @@ export class GpuMycelium3d {
       const layout = d.createPipelineLayout({ bindGroupLayouts: [bgl] });
       const module = d.createShaderModule({ code: wgsl(config) });
       for (const name of ["k_clear", "k_own_clear", "k_begin", "k_bin", "k_shade", "k_think", "k_grant", "k_apply_eat", "k_live", "k_claim_a", "k_claim_b", "k_claim_c",
-        "k_scan_aw", "k_top_aw", "k_compact", "k_scan_n", "k_top_n", "k_assign_gid", "k_trim", "k_light", "k_sink_send", "k_sink_apply",
+        "k_bond_release", "k_bond_propose", "k_bond_accept", "k_bond_move", "k_bond_stretch", "k_scan_aw", "k_top_aw", "k_compact", "k_scan_n", "k_top_n", "k_assign_gid", "k_trim", "k_light", "k_sink_send", "k_sink_apply",
         "k_send_a", "k_gather_a", "k_send_c", "k_gather_c", "k_finish"]) {
         this.pl[name] = d.createComputePipeline({ layout, compute: { module, entryPoint: name } });
       }
@@ -926,6 +1100,11 @@ export class GpuMycelium3d {
     if (s.n > 0) {
       PLANES.forEach((k, j) => { const a = s[k]; q.writeBuffer(buf, j * cap * 4, new Uint32Array(a.buffer as ArrayBuffer, a.byteOffset, s.n)); });
       q.writeBuffer(buf, P.GEN * 4, new Uint8Array(s.genome.buffer as ArrayBuffer, s.genome.byteOffset, s.n * NN_BYTES3));
+      if (this.config.bondBreak !== undefined) {
+        if (!s.bond0 || !s.bond1) throw new Error("GpuMycelium3d.upload: bondBreak needs the bond0 and bond1 slots");
+        q.writeBuffer(buf, P.B0 * 4, new Uint32Array(s.bond0.buffer as ArrayBuffer, s.bond0.byteOffset, s.n));
+        q.writeBuffer(buf, P.B1 * 4, new Uint32Array(s.bond1.buffer as ArrayBuffer, s.bond1.byteOffset, s.n));
+      }
     }
     this.matter0 = s.matter0; this.energy0 = s.energy0;
   }
@@ -944,11 +1123,12 @@ export class GpuMycelium3d {
       for (let b = 0; b < batch; b++) {
         pass.setBindGroup(0, this.bgs[this.cur]);
         const run = (name: string, x: number, y = 1) => { pass.setPipeline(this.pl[name]); pass.dispatchWorkgroups(x, y); };
-        run("k_clear", ...grid(4 * N));
+        run("k_clear", ...grid(this.L.F.clear));
         if (c.trailOwner !== undefined) run("k_own_clear", ...grid(2 * N));
         run("k_begin", 1);
         run("k_bin", pg); run("k_shade", Math.ceil(WH / WG)); run("k_think", pg); run("k_grant", pg); run("k_apply_eat", ...cg); run("k_live", pg);
         if (c.trailOwner !== undefined) { run("k_claim_a", pg); run("k_claim_b", pg); run("k_claim_c", pg); }
+        if (c.bondBreak !== undefined) { for (const k of ["k_bond_release", "k_bond_propose", "k_bond_accept", "k_bond_move", "k_bond_stretch"]) run(k, pg); }
         run("k_scan_aw", pg, 2); run("k_top_aw", 2);
         run("k_compact", pg);
         run("k_scan_n", pg); run("k_top_n", 1); run("k_assign_gid", pg); run("k_trim", pg);
@@ -979,6 +1159,8 @@ export class GpuMycelium3d {
       N, cap, ctlN: C.n, ctlStep: C.step, ctlStepHi: C.stepHi,
       field: { A: F.A, C: F.C, P: F.P, I: F.I },
       planes: { id: P.ID, parent: P.PAR, gid: P.GID, x: P.X, y: P.Y, z: P.Z, M: P.M, E: P.E, age: P.AGE },
+      /** Only with bondBreak: the bond-slot planes (partner id, or 0xffffffff for none). */
+      bonds: this.config.bondBreak === undefined ? null : { b0: P.B0, b1: P.B1 },
     };
   }
 
@@ -1023,6 +1205,11 @@ export class GpuMycelium3d {
       genome, nextId: ctl[C.nextId], nextGid: ctl[C.nextGid], matter0, energy0, totals,
     };
     if (config.trailOwner !== undefined) { state.Z = fld.slice(F.Z, F.Z + N); state.Q = fld.slice(F.Q, F.Q + N); }
+    if (config.bondBreak !== undefined) {
+      // Slots past n are 0xffffffff, as createEmpty leaves them.
+      state.bond0 = new Uint32Array(cap).fill(BOND_NONE); state.bond1 = new Uint32Array(cap).fill(BOND_NONE);
+      state.bond0.set(part.subarray(P.B0, P.B0 + n)); state.bond1.set(part.subarray(P.B1, P.B1 + n));
+    }
     return state;
   }
 }

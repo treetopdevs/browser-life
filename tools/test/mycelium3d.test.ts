@@ -1,11 +1,11 @@
 // Mycelium in a volume R0 (tools/mycelium3d/world.ts): exact ledgers on every step with and without sinking,
 // the toll, the conduits and waste shading; determinism; byte-equal replay from checkpoints; the lift of 2D genomes; sinking;
-// shading; config and checkpoint validation.
+// shading; config and checkpoint validation; bonds (forming, moving together, breaking, upkeep, children, validation).
 import { describe, expect, it } from "vitest";
 import { cellBase, draw, mulFrac, NN_BYTES, NN_H, NN_I, NN_O } from "@bl/schema";
 import { controllerForward, diffOut6 } from "@bl/sim-ref";
 import {
-  B2_OFF3, censusByDepth, controllerForward13, createWorld, decode, defaultConfig, encode, energyTotal, liftMyceliumGenome, lightPlane, matterTotal,
+  B2_OFF3, BOND_NONE, type BondStats, censusByDepth, controllerForward13, createWorld, decode, defaultConfig, encode, energyTotal, liftMyceliumGenome, lightPlane, matterTotal,
   LEDGER_MAX, type Mycelium3dConfig, NN_BYTES3, STEP_MAX, NN_H3, NN_I3, NN_O3, NN_WEIGHTS3, OUT, POS_SHIFT, probe, stateDigest, step, validateConfig, validateState,
 } from "../mycelium3d/world.ts";
 
@@ -38,6 +38,8 @@ const LEVERS: [string, Partial<Mycelium3dConfig>][] = [
   ["conduit ghost + gradient light", { trailConduit: 16, trailConduitGhost: 5, lightPattern: "gradient" }],
   ["sinking + waste shading", { sinkShift: 5, wasteShade: 1 }],
   ["waste shading 0 + sinking + owner gate + owner conduit", { wasteShade: 0, sinkShift: 6, trailOwner: "id", ownerDefend: 1, ownerConduit: 120 }],
+  ["bonds, cost 1", { bondBreak: 512, bondCost: 1 }],
+  ["bonds + children + sinking + waste shading + toll + owner gate", { bondBreak: 300, bondCost: 2, bondChild: true, sinkShift: 6, wasteShade: 2, trailMoveDiscount: 64, trailDiscountMode: "toll", trailOwner: "gid", ownerDefend: 4 }],
 ];
 
 describe("mycelium3d R0 ledgers", () => {
@@ -103,7 +105,7 @@ describe("mycelium3d R0 determinism and replay", () => {
     expect(stateDigest(c)).not.toBe(stateDigest(a));
   });
 
-  for (const [name, over] of [["no keys", {}], ["sinking + toll + conduit", LEVERS[4][1]], ["owner gate + owner conduit + sinking", LEVERS[5][1]], ["sinking + waste shading", LEVERS[7][1]]] as const) {
+  for (const [name, over] of [["no keys", {}], ["sinking + toll + conduit", LEVERS[4][1]], ["owner gate + owner conduit + sinking", LEVERS[5][1]], ["sinking + waste shading", LEVERS[7][1]], ["bonds + children + levers", LEVERS[10][1]]] as const) {
     it(`${name}: a run resumed from a checkpoint equals the continuous run byte for byte at every cut`, () => {
       const end = 400;
       const cont = createWorld(small(over));
@@ -340,7 +342,7 @@ describe("mycelium3d R0 bounds and validation", () => {
   });
 
   it("leaves every optional key out of defaultConfig", () => {
-    for (const k of ["sinkShift", "wasteShade", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap", "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost"]) {
+    for (const k of ["sinkShift", "wasteShade", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap", "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost", "bondBreak", "bondCost", "bondChild"]) {
       expect(k in defaultConfig()).toBe(false);
     }
   });
@@ -495,4 +497,212 @@ describe("mycelium3d R0 state and counter validation (Sol review)", () => {
     expect(() => step(b)).toThrow(/deaths/);
     expect(Buffer.from(encode(b)).equals(Buffer.from(was))).toBe(true);
   });
+});
+
+describe("mycelium3d bonds (RULES.md, \"Bonds\")", () => {
+  /** A frozen world of k particles with hand-set biases and positions (in cell units * 256 + offset); nothing else lives. */
+  function hand(over: Partial<Mycelium3dConfig>, ps: { at: [number, number, number]; bias: Partial<Record<keyof typeof OUT, number>>; E?: number }[]) {
+    const s = createWorld(small({ founders: ps.length, heredity: "frozen", maxEat: 0, nutrient0: 0, bondBreak: 512, ...over }));
+    ps.forEach((p, i) => {
+      [s.x[i], s.y[i], s.z[i]] = p.at;
+      biasGenome(s, i, { SPLIT: -127, ...p.bias });
+      if (p.E !== undefined) s.E[i] = p.E;
+    });
+    rebase(s);
+    return s;
+  }
+  const bondsOf = (s: ReturnType<typeof createWorld>, id: number) => {
+    const i = Array.from(s.id.subarray(0, s.n)).indexOf(id);
+    return [s.bond0![i], s.bond1![i]].filter((v) => v !== BOND_NONE);
+  };
+  const C = (cx: number, off = 128) => cx * 256 + off;
+
+  it("pins the digests of the rule without bonds (taken before the keys existed)", () => {
+    const run = (c: Mycelium3dConfig, n: number) => { const s = createWorld(c); for (let t = 0; t < n; t++) step(s); return stateDigest(s); };
+    expect(stateDigest(createWorld(defaultConfig()))).toBe("37009aeb1f320267");
+    expect(run(defaultConfig(), 300)).toBe("42497bc3b7d17849");
+    expect(run(small(), 600)).toBe("8c0fe6ebf03b3d21");
+    expect(run(small({ sinkShift: 6, wasteShade: 2, trailMoveDiscount: 64, trailDiscountMode: "toll", trailOwner: "gid", ownerDefend: 4, ownerConduit: 16 }), 600)).toBe("0d853a9a2c7927b7");
+    expect("bond0" in createWorld(defaultConfig())).toBe(false);
+  }, LONG);
+
+  it("forms mutual-nearest pairs only: a chain, then a ring of three, never across a diagonal", () => {
+    // A and B share a cell; C is in the east face neighbour; D sits diagonally from everyone's cells and never bonds.
+    const s = hand({ speed: 0 }, [
+      { at: [C(3, 100), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(3, 150), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(4, 40), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(6), C(5), C(1)], bias: { BOND: 127 } },
+    ]);
+    const stats: BondStats[] = [];
+    stats.push(step(s).bonds!);
+    expect([bondsOf(s, 0), bondsOf(s, 1), bondsOf(s, 2)]).toEqual([[1], [0], []]); // C proposed B, B proposed A
+    expect([stats[0].proposals, stats[0].formed]).toEqual([3, 1]);
+    stats.push(step(s).bonds!);
+    expect([bondsOf(s, 0), bondsOf(s, 1), bondsOf(s, 2)]).toEqual([[1], [0, 2], [1]]); // B and C now mutual; A's proposal (C) unanswered
+    stats.push(step(s).bonds!);
+    expect([bondsOf(s, 0), bondsOf(s, 1), bondsOf(s, 2)]).toEqual([[1, 2], [0, 2], [0, 1]]); // A and C close the ring
+    step(s);
+    expect(bondsOf(s, 3)).toEqual([]);
+    expect(validateState(s)).toEqual([]);
+  });
+
+  it("breaks a tie in distance by the smaller id", () => {
+    // P sits exactly between Q (id 1) and R (id 2), 64 units each way; Q and R are 128 apart, so both propose P.
+    const s = hand({ speed: 0 }, [
+      { at: [C(3), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(3, 64), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(3, 192), C(3), C(1)], bias: { BOND: 127 } },
+    ]);
+    step(s);
+    expect([bondsOf(s, 0), bondsOf(s, 1), bondsOf(s, 2)]).toEqual([[1], [0], []]);
+  });
+
+  it("only particles that want a bond (BOND > 0) and have a free slot are proposed to", () => {
+    const s = hand({ speed: 0 }, [
+      { at: [C(3, 100), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(3, 110), C(3), C(1)], bias: { BOND: 0 } },
+      { at: [C(3, 200), C(3), C(1)], bias: { BOND: 5 } },
+    ]);
+    step(s);
+    expect([bondsOf(s, 0), bondsOf(s, 1), bondsOf(s, 2)]).toEqual([[2], [], [0]]);
+  });
+
+  it("moves a bonded pair by the truncated mean of their moves, and a chain's middle by the mean of three", () => {
+    // BOND 0 holds the bonds without forming new ones (with BOND > 0 the chain's free ends would close a ring first).
+    const s = hand({ speed: 128 }, [
+      { at: [C(3), C(3), C(1)], bias: { MX: 100, MY: -21 } },
+      { at: [C(3, 200), C(3), C(1)], bias: { MX: -21, MY: 0 } },
+      { at: [C(9), C(9), C(1)], bias: { MX: 100 } },
+      { at: [C(9, 100), C(9), C(1)], bias: { MX: 0 } },
+      { at: [C(9, 200), C(9), C(1)], bias: { MX: -50 } },
+    ]);
+    // Bonds set by hand: pair 0-1, chain 2-3-4.
+    const set = (i: number, b: number[]) => { s.bond0![i] = b[0] ?? BOND_NONE; s.bond1![i] = b[1] ?? BOND_NONE; };
+    set(0, [1]); set(1, [0]); set(2, [3]); set(3, [2, 4]); set(4, [3]);
+    expect(validateState(s)).toEqual([]);
+    const x0 = Array.from(s.x.subarray(0, 5)), y0 = Array.from(s.y.subarray(0, 5));
+    step(s);
+    // Pair: x (100 - 21) / 2 = 39 (truncated), y (-21 + 0) / 2 = -10 (truncated toward zero), the same for both.
+    expect([s.x[0] - x0[0], s.x[1] - x0[1], s.y[0] - y0[0], s.y[1] - y0[1]]).toEqual([39, 39, -10, -10]);
+    // Chain: ends (100 + 0) / 2 = 50 and (-50 + 0) / 2 = -25, middle (100 + 0 - 50) / 3 = 16.
+    expect([s.x[2] - x0[2], s.x[3] - x0[3], s.x[4] - x0[4]]).toEqual([50, 16, -25]);
+  });
+
+  it("breaks a bond when it stretches past bondBreak, when either end lets go, and when a partner dies", () => {
+    const set = (s: ReturnType<typeof createWorld>, i: number, b: number[]) => { s.bond0![i] = b[0] ?? BOND_NONE; s.bond1![i] = b[1] ?? BOND_NONE; };
+    // Stretch: chain 0-1-2 spaced 50, ends pull apart: 0 moves +63, 1 by 0, 2 by -63, so 0-1 and 1-2 are 113 apart > 100.
+    const a = hand({ speed: 128, bondBreak: 100 }, [
+      { at: [C(3, 100), C(3), C(1)], bias: { MX: 127 } },
+      { at: [C(3, 50), C(3), C(1)], bias: {} },
+      { at: [C(3, 0), C(3), C(1)], bias: { MX: -127 } },
+    ]);
+    set(a, 0, [1]); set(a, 1, [0, 2]); set(a, 2, [1]);
+    const sa = step(a).bonds!;
+    expect(sa.stretched).toBe(2);
+    expect([bondsOf(a, 0), bondsOf(a, 1), bondsOf(a, 2)]).toEqual([[], [], []]);
+    // Let go: one end's BOND is negative; a zero output keeps the bond.
+    const b = hand({ speed: 0 }, [
+      { at: [C(3), C(3), C(1)], bias: { BOND: -1 } },
+      { at: [C(3, 10), C(3), C(1)], bias: { BOND: 127 } },
+      { at: [C(7), C(7), C(1)], bias: { BOND: 0 } },
+      { at: [C(7, 10), C(7), C(1)], bias: { BOND: 0 } },
+    ]);
+    set(b, 0, [1]); set(b, 1, [0]); set(b, 2, [3]); set(b, 3, [2]);
+    const sb = step(b).bonds!;
+    expect(sb.letGo).toBe(1);
+    expect([bondsOf(b, 0), bondsOf(b, 1), bondsOf(b, 2), bondsOf(b, 3)]).toEqual([[], [], [3], [2]]);
+    // Death: particle 0 has no energy for its upkeep and dies; its partner keeps no bond to it.
+    const d = hand({ speed: 0 }, [
+      { at: [C(3), C(3), C(1)], bias: { BOND: 127 }, E: 1 },
+      { at: [C(3, 10), C(3), C(1)], bias: { BOND: 127 } },
+    ]);
+    set(d, 0, [1]); set(d, 1, [0]);
+    rebase(d);
+    const sd = step(d).bonds!;
+    expect([d.n, sd.partnerDied, bondsOf(d, 1)]).toEqual([1, 1, []]);
+    for (const s of [a, b, d]) expect(validateState(s)).toEqual([]);
+  });
+
+  it("charges bondCost per bond held, as heat, and the ledger stays exact", () => {
+    const twin = (bonded: boolean) => {
+      const s = hand({ speed: 0, bondCost: 7 }, [
+        { at: [C(3), C(3), C(1)], bias: { BOND: 127 } },
+        { at: [C(3, 10), C(3), C(1)], bias: { BOND: 127 } },
+        { at: [C(3, 20), C(3), C(1)], bias: { BOND: 127 } },
+      ]);
+      if (bonded) { s.bond0![0] = 1; s.bond0![1] = 0; s.bond1![1] = 2; s.bond0![2] = 1; }
+      return s;
+    };
+    const free = twin(false), held = twin(true);
+    const e0 = Array.from(held.E.subarray(0, 3));
+    const hf = step(free).heat, hh = step(held).heat;
+    // Upkeep and mass terms are the same for both (same draws); the bonded ones pay 7 per bond held at the start of the step.
+    expect([e0[0] - held.E[0] - (e0[0] - free.E[0]), e0[1] - held.E[1] - (e0[1] - free.E[1]), e0[2] - held.E[2] - (e0[2] - free.E[2])]).toEqual([7, 14, 7]);
+    expect(hh - hf).toBe(28);
+    for (const s of [free, held]) expect(energyTotal(s)).toBe(s.energy0 + s.totals.lightIn - s.totals.heat);
+  });
+
+  it("bondChild: a child is born bonded to a parent with a free slot, and free when the parent is full", () => {
+    const set = (s: ReturnType<typeof createWorld>, i: number, b: number[]) => { s.bond0![i] = b[0] ?? BOND_NONE; s.bond1![i] = b[1] ?? BOND_NONE; };
+    const s = hand({ speed: 0, bondChild: true, splitEnergy: 0, splitMatter: 2 }, [
+      { at: [C(3), C(3), C(1)], bias: { BOND: 127, SPLIT: 127 } }, // alone: its child bonds to it
+      { at: [C(8), C(8), C(1)], bias: { BOND: 127 } },
+      { at: [C(8, 50), C(8), C(1)], bias: { BOND: 127, SPLIT: 127 } }, // the middle of a chain: full, its child is free
+      { at: [C(8, 100), C(8), C(1)], bias: { BOND: 127 } },
+    ]);
+    set(s, 1, [2]); set(s, 2, [1, 3]); set(s, 3, [2]);
+    const st = step(s);
+    expect(st.births).toBe(2);
+    expect(st.bonds!.childBonds).toBe(1);
+    // Children take ids 4 (of particle 0) and 5 (of particle 2).
+    expect([bondsOf(s, 0), bondsOf(s, 4), bondsOf(s, 2), bondsOf(s, 5)]).toEqual([[4], [0], [1, 3], []]);
+    expect(validateState(s)).toEqual([]);
+    // Without bondChild the same split leaves the child free.
+    const t = hand({ speed: 0, splitEnergy: 0, splitMatter: 2 }, [{ at: [C(3), C(3), C(1)], bias: { BOND: -1, SPLIT: 127 } }]);
+    step(t);
+    expect([t.n, bondsOf(t, 0), bondsOf(t, 1)]).toEqual([2, [], []]);
+  });
+
+  it("with BOND never positive, bonds on equals the keyless world (no upkeep, the R0 move)", () => {
+    const mk = (over: Partial<Mycelium3dConfig>) => {
+      const s = createWorld(small({ heredity: "frozen", ...over }));
+      for (let i = 0; i < s.n; i++) biasGenome(s, i, { BOND: -5, EAT: 40 + (i % 7) * 10, MX: (i % 9) * 25 - 100, MZ: (i % 4) * 40 - 60, SPLIT: 127 });
+      for (let t = 0; t < 200; t++) step(s);
+      return s;
+    };
+    const on = mk({ bondBreak: 512, bondCost: 50 }), off = mk({});
+    for (const k of ["A", "C", "P", "x", "y", "z", "M", "E", "id"] as const) expect(Buffer.from(on[k].buffer).equals(Buffer.from(off[k].buffer))).toBe(true);
+  });
+
+  it("validates the keys and the bond graph, and round-trips the slots through a checkpoint", () => {
+    for (const v of [1, 1024]) expect(validateConfig(defaultConfig({ bondBreak: v }))).toEqual([]);
+    for (const v of [0, 1025, 2.5]) expect(validateConfig(defaultConfig({ bondBreak: v }))).toContain("bondBreak must be an integer in [1, 1024]");
+    expect(validateConfig(defaultConfig({ bondCost: 1 }))).toContain("bondCost requires bondBreak");
+    expect(validateConfig(defaultConfig({ bondBreak: 9, bondCost: 4097 }))).toContain("bondCost must be an integer in [0, 4096]");
+    expect(validateConfig(defaultConfig({ bondChild: true }))).toContain("bondChild requires bondBreak");
+    expect(validateConfig({ ...defaultConfig({ bondBreak: 9 }), bondChild: false } as unknown as Mycelium3dConfig)).toContain("bondChild must be true or absent");
+    const s = createWorld(small({ bondBreak: 400, bondChild: true }));
+    for (let t = 0; t < 300; t++) step(s);
+    expect(validateState(s)).toEqual([]);
+    let bonded = 0;
+    for (let i = 0; i < s.n; i++) bonded += s.bond0![i] !== BOND_NONE ? 1 : 0;
+    expect(bonded).toBeGreaterThan(0);
+    const bytes = encode(s);
+    expect(Buffer.from(encode(decode(bytes))).equals(Buffer.from(bytes))).toBe(true);
+    // Tampering: find a bonded particle i with partner j.
+    const i = Array.from(s.bond0!.subarray(0, s.n)).findIndex((v) => v !== BOND_NONE);
+    const fresh = () => decode(bytes);
+    const asym = fresh(); { const j = Array.from(asym.id.subarray(0, asym.n)).indexOf(asym.bond0![i]); if (asym.bond0![j] === asym.id[i]) { asym.bond0![j] = asym.bond1![j]; asym.bond1![j] = BOND_NONE; } else asym.bond1![j] = BOND_NONE; }
+    expect(validateState(asym).join()).toMatch(/does not name it back/);
+    const self = fresh(); self.bond0![i] = self.id[i]; self.bond1![i] = BOND_NONE;
+    expect(validateState(self).join()).toMatch(/bonded to itself|does not name it back/);
+    const dead = fresh(); dead.bond0![i] = dead.nextId + 5; dead.bond1![i] = BOND_NONE;
+    expect(validateState(dead).join()).toMatch(/not alive/);
+    const order = fresh(); order.bond1![i] = order.bond0![i]; order.bond0![i] = BOND_NONE;
+    expect(validateState(order).join()).toMatch(/slot 0 empty/);
+    const keyless = fresh(); keyless.config = { ...keyless.config }; delete keyless.config.bondBreak; delete keyless.config.bondChild;
+    expect(validateState(keyless)).toContain("bond slots require bondBreak");
+    expect(() => decode(bytes.subarray(0, bytes.length - 4))).toThrow(/bytes/);
+  }, LONG);
 });

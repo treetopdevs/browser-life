@@ -8,7 +8,7 @@
 //
 // Needs a real GPU (native WebGPU). Exits non-zero on any mismatch or if a case fails to exercise its paths.
 import {
-  B2_OFF3, createWorld, decode, defaultConfig, encode, energyTotal, ID_MAX, LEDGER_MAX, matterTotal, type Mycelium3dConfig, type Mycelium3dState, NN_BYTES3,
+  B2_OFF3, BOND_NONE, type BondStats, createWorld, decode, defaultConfig, encode, energyTotal, ID_MAX, LEDGER_MAX, matterTotal, type Mycelium3dConfig, type Mycelium3dState, NN_BYTES3,
   OUT, POS_SHIFT, stateDigest, step, STEP_MAX, validateState,
 } from "../../tools/mycelium3d/world.ts";
 import { GpuMycelium3d, mycelium3dDevice } from "../../tools/mycelium3d/gpu.ts";
@@ -41,6 +41,11 @@ function firstDiff(a: Mycelium3dState, b: Mycelium3dState, baseline = false): st
   }
   for (const k of ["id", "parent", "gid", "x", "y", "z", "M", "E", "age"] as const) {
     for (let i = 0; i < a.n; i++) if (a[k][i] !== b[k][i]) return `${k}[${i}]: cpu ${a[k][i]} gpu ${b[k][i]} (cpu id ${a.id[i]})`;
+  }
+  for (const k of ["bond0", "bond1"] as const) {
+    const x = a[k], y = b[k];
+    if (!baseline && !x !== !y) return `${k}: cpu ${x ? "has" : "lacks"} the slots, gpu ${y ? "has" : "lacks"} them`;
+    if (x && y) for (let i = 0; i < a.n; i++) if (x[i] !== y[i]) return `${k}[${i}]: cpu ${x[i]} gpu ${y[i]} (cpu id ${a.id[i]})`;
   }
   for (let i = 0; i < a.n * NN_BYTES3; i++) {
     if (a.genome[i] !== b.genome[i]) return `genome slot ${Math.floor(i / NN_BYTES3)} byte ${i % NN_BYTES3}: cpu ${a.genome[i]} gpu ${b.genome[i]}`;
@@ -77,6 +82,8 @@ interface Case {
   check?: (cpu: Mycelium3dState, maxStep: { lightIn: number; heat: number }) => string | null;
   /** A baseline config run on the CPU for the same steps: `same: true` requires the same final state, `same: false` a different one (the key is not vacuous). */
   vs?: { cfg: Mycelium3dConfig; same: boolean };
+  /** Bond events the CPU run must show (summed StepStats.bonds above zero), so a bond case cannot pass vacuously. */
+  bonds?: (keyof BondStats)[];
 }
 
 /** Sets controller output biases (the same for every particle) to fixed values. */
@@ -300,11 +307,100 @@ const cases: Case[] = [
     steps: 200, seg: 10, must: ["births", "refused"],
   },
   { name: "steps across 2^32", cfg: defaultConfig(mid), tweak: (s) => { s.step = 2 ** 32 - 30; }, steps: 80, seg: 10, must: [...cs] },
+  ...bondCases(),
   largeVolume(),
   {
     name: "64x64x8, 4096 founders", cfg: defaultConfig({ width: 64, height: 64, depth: 8, founders: 4096, maxParticles: 16384, sinkShift: 6 }), steps: 600, seg: 200, must: [...cs, "mutations"],
   },
 ];
+
+/** Bonds (RULES.md, "Bonds"): shapes, levers, contested proposals, bonded deaths, children bonded at birth, id limits, per step. */
+function bondCases(): Case[] {
+  const B = { bondBreak: 512, bondCost: 1 } as const;
+  const BC = { ...B, bondChild: true } as const;
+  const DROP = ["bondBreak", "bondCost", "bondChild"];
+  const evolve: (keyof BondStats)[] = ["proposals", "formed", "partnerDied", "letGo", "stretched"];
+  const kids: (keyof BondStats)[] = [...evolve, "childBonds"];
+  /** Every particle wants to bond and stays put; positions spread over a 2 x 2 x 1 block of cells, with some exact duplicates (id tie-breaks). */
+  const crowd = (s: Mycelium3dState, k: number, extra: (i: number) => Record<number, number> = () => ({})) => {
+    setOutEach(s, (i) => ({ [OUT.BOND]: 127, ...extra(i) }));
+    for (let i = 0; i < k; i++) {
+      const j = i % 7 === 3 ? i - 1 : i; // every seventh particle sits exactly on the one before it
+      s.x[i] = (3 << POS_SHIFT) + ((j * 97) % 512); s.y[i] = (3 << POS_SHIFT) + ((j * 61) % 512); s.z[i] = (1 << POS_SHIFT) + ((j * 29) % 256);
+    }
+  };
+  const bondsNow = (cpu: Mycelium3dState) => { let b = 0; for (let i = 0; i < cpu.n; i++) b += cpu.bond0![i] !== BOND_NONE ? 1 : 0; return b; };
+  return [
+    // ---- shapes ----
+    lever("bonds: 8x8x4, 40 founders", { width: 8, height: 8, depth: 4, founders: 40, maxParticles: 300, ...B }, DROP, { steps: 600, seg: 50, must: ["births", "deaths"], bonds: ["proposals", "formed", "partnerDied", "letGo"] }, {}),
+    lever("bonds: 16x16x8, cost 1", { ...B }, DROP, { steps: 800, must: [...cs, "mutations"], bonds: evolve, walls: true }),
+    lever("bonds + children: 13x9x5 odd shape, gradient light, break 300", { width: 13, height: 9, depth: 5, founders: 150, maxParticles: 777, lightPattern: "gradient", ...BC, bondBreak: 300 }, DROP,
+      { steps: 700, must: [...cs, "mutations"], bonds: kids }, {}),
+    lever("bonds + children: D = 1 (16x16x1)", { width: 16, height: 16, depth: 1, founders: 100, maxParticles: 800, ...BC }, DROP, { steps: 600, bonds: kids }, {}),
+    lever("bonds + children: default 32x32x16", { ...BC }, DROP, { steps: 1000, seg: 250, must: [...cs, "mutations"], bonds: kids, walls: true }, {}),
+    lever("bonds + children: 32x32x16, sinkShift 6, lightK 64", { ...BC, sinkShift: 6 }, DROP, { steps: 800, seg: 200, must: [...cs, "mutations"], bonds: kids }, {}),
+    // ---- with the levers ----
+    lever("bonds + children with sinkShift 6, wasteShade 2, toll", { ...BC, sinkShift: 6, wasteShade: 2, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, DROP, { steps: 600, bonds: kids }),
+    lever("bonds + children with owner gate + conduit (gid), sinkShift 4", { ...BC, sinkShift: 4, trailOwner: "gid", ownerDefend: 4, ownerConduit: 64, maxDeposit: 12 }, DROP,
+      { steps: 600, bonds: kids, check: claimed }),
+    // The largest upkeep: a bond costs about all of a particle's energy, so both ends die together (no survivor sees a partner die).
+    lever("bonds, cost 4096, blocked heredity", { bondBreak: 700, bondCost: 4096, heredity: "blocked" }, DROP, { steps: 400, bonds: ["proposals", "formed"] }),
+    lever("bonds, break 1 (almost every bond stretches at once), speed 256", { bondBreak: 1, speed: 256 }, DROP, { steps: 400, bonds: ["proposals", "formed", "stretched"] }),
+    {
+      // Nobody ever wants a bond (BOND -127, frozen): the move is the R0 move and the cost has no upkeep, so it equals the keyless run.
+      name: "bonds on, BOND always negative, equals keyless", cfg: defaultConfig({ ...mid, ...B, heredity: "frozen" }), steps: 300, seg: 100, must: ["births", "deaths"],
+      tweak: (s) => setOutEach(s, (i) => ({ [OUT.BOND]: -127, [OUT.EAT]: 60 + (i % 5) * 10, [OUT.SPLIT]: 127, [OUT.MX]: (i % 9) * 25 - 100, [OUT.MZ]: (i % 4) * 40 - 60 })),
+      vs: { cfg: defaultConfig({ ...mid, heredity: "frozen" }), same: true },
+    },
+    // ---- contested proposals ----
+    {
+      // 600 particles in four cells, all wanting a bond, none moving or eating: most proposals go unanswered; duplicates exercise the id tie-break.
+      name: "bonds: 600 particles contest in four cells (frozen)", cfg: defaultConfig({ ...mid, ...B, founders: 600, heredity: "frozen", speed: 0, maxEat: 0 }), steps: 40, seg: 1, must: [],
+      tweak: (s) => crowd(s, 600), bonds: ["proposals", "formed"],
+      check: (cpu) => (bondsNow(cpu) > 200 ? null : `only ${bondsNow(cpu)} bonded particles`),
+    },
+    {
+      // The same crowd moving: one half drifts east, the other west, and some let go (BOND negative on every fifth), so bonds form, stretch and release.
+      name: "bonds: a moving contested crowd, break 200 (frozen)", cfg: defaultConfig({ ...mid, bondBreak: 200, founders: 500, heredity: "frozen", maxEat: 0, founderEnergy: 4000 }), steps: 60, seg: 1, must: [],
+      tweak: (s) => crowd(s, 500, (i): Record<number, number> => ({ [OUT.MX]: i % 2 ? 90 : -90, [OUT.MZ]: (i % 3) * 50 - 50, [OUT.BOND]: i % 5 === 0 ? -40 : 127 })),
+      bonds: ["proposals", "formed", "stretched"],
+    },
+    // ---- deaths of bonded partners ----
+    {
+      // Everyone bonds at once, then dies one by one (energies spread, no eating): partners die under bonds still held.
+      name: "bonds: bonded partners die one by one (frozen)", cfg: defaultConfig({ ...mid, ...B, founders: 400, heredity: "frozen", maxEat: 0, speed: 64 }), steps: 120, seg: 1, must: ["deaths"],
+      tweak: (s) => { crowd(s, 400, (i) => ({ [OUT.MX]: (i % 3) * 40 - 40 })); for (let i = 0; i < s.n; i++) s.E[i] = 30 + ((i * 37) % 600); },
+      bonds: ["formed", "partnerDied"],
+    },
+    // ---- children bonded at birth ----
+    {
+      // Frozen splitters that want bonds: chains grow at their ends by division; z walls clamp both partners.
+      name: "bonds + children: frozen splitters build chains", cfg: defaultConfig({ width: 8, height: 8, depth: 4, founders: 60, maxParticles: 3000, heredity: "frozen", splitEnergy: 0, splitMatter: 2, founderEnergy: 4000, ...BC, bondBreak: 400 }),
+      steps: 80, seg: 1, must: ["births", "refused"],
+      tweak: (s) => setOutEach(s, (i) => ({ [OUT.EAT]: 127, [OUT.SPLIT]: 127, [OUT.BOND]: 100, [OUT.MZ]: i % 2 ? 127 : -127, [OUT.MX]: (i % 5) * 20 - 40 })),
+      bonds: ["childBonds", "formed"],
+    },
+    {
+      name: "bonds + children: cap 257 reached (refused births)", cfg: defaultConfig({ ...mid, founders: 200, maxParticles: 257, ...BC }), steps: 400, seg: 50, must: [...cs, "refused"],
+      bonds: ["childBonds", "formed"],
+    },
+    {
+      // The genotype-id limit cuts children after k_compact placed them: k_trim must give the parent its bonds back without the child.
+      name: "bonds + children: nextGid 40 below the limit, half the children novel", cfg: defaultConfig({ ...mid, mutRate: 30000, ...BC }), tweak: (s) => { s.nextGid = ID_MAX - 40; },
+      steps: 300, seg: 10, must: ["births", "refused", "mutations"], bonds: ["childBonds"],
+      check: (s) => (s.nextGid === ID_MAX + 1 ? null : `genotype ids did not run out (nextGid ${s.nextGid})`),
+    },
+    {
+      name: "bonds + children: nextId 15 below the limit", cfg: defaultConfig({ ...mid, ...BC }), tweak: (s) => { s.nextId = 0xfffffff0; },
+      steps: 300, seg: 25, must: ["births", "refused"], bonds: ["childBonds"], check: (s) => (s.nextId === ID_MAX + 1 ? null : `ids did not run out (nextId ${s.nextId})`),
+    },
+    // ---- per step ----
+    { name: "per step: bonds + children, 16x16x8", cfg: defaultConfig({ ...mid, ...BC }), steps: 250, seg: 1, must: [...cs], bonds: kids },
+    { name: "per step: bonds + children, sinkShift 6, toll, owner gate (gid)", cfg: defaultConfig({ ...mid, ...BC, sinkShift: 6, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", trailOwner: "gid", ownerDefend: 8, maxDeposit: 12 }),
+      steps: 200, seg: 1, must: [...cs], bonds: kids, check: claimed },
+    { name: "per step: bonds, break 128, speed 256, wasteShade 1", cfg: defaultConfig({ ...mid, bondBreak: 128, speed: 256, wasteShade: 1, sinkShift: 5 }), steps: 200, seg: 1, must: [...cs], bonds: evolve },
+  ];
+}
 
 /**
  * A large volume, a few steps: above 8,388,608 cells (32,768 workgroups of 256) every cell kernel runs on a grid of several
@@ -330,6 +426,7 @@ async function runCase(c: Case): Promise<Row> {
   let cpuMs = 0, gpuMs = 0, note = "", ok = true, bigLight = 0, bigHeat = 0;
   const zMax = (c.cfg.depth << POS_SHIFT) - 1;
   let top = false, floor = false, moved = false;
+  const bsum: Record<string, number> = {};
   const z0 = new Map<number, number>();
   for (let i = 0; i < cpu.n; i++) z0.set(cpu.id[i], cpu.z[i] >>> POS_SHIFT);
   // Step 0: the upload itself.
@@ -343,6 +440,7 @@ async function runCase(c: Case): Promise<Row> {
     for (let j = 0; j < k; j++) {
       const st = step(cpu);
       bigLight = Math.max(bigLight, st.lightIn); bigHeat = Math.max(bigHeat, st.heat);
+      if (st.bonds) for (const [k, v] of Object.entries(st.bonds)) bsum[k] = (bsum[k] ?? 0) + v;
       if (c.walls) {
         for (let i = 0; i < cpu.n; i++) {
           const z = cpu.z[i];
@@ -370,6 +468,7 @@ async function runCase(c: Case): Promise<Row> {
   }
   const t = cpu.totals;
   if (ok) for (const m of c.must) if (!(t[m] > 0)) { ok = false; note = `case did not exercise ${m}`; }
+  if (ok && c.bonds) for (const m of c.bonds) if (!(bsum[m] > 0)) { ok = false; note = `case did not exercise bond event ${m}`; }
   if (ok && c.walls && !(top && floor && moved)) { ok = false; note = `z walls not exercised (surface ${top}, floor ${floor}, layer change ${moved})`; }
   if (ok && c.check) { const bad = c.check(cpu, { lightIn: bigLight, heat: bigHeat }); if (bad) { ok = false; note = bad; } }
   if (ok && c.vs) {
@@ -382,7 +481,8 @@ async function runCase(c: Case): Promise<Row> {
   gpu.destroy();
   return {
     name: c.name, ok, steps: c.steps, n: cpu.n, cpuMs: cpuMs / c.steps, gpuMs: gpuMs / c.steps, digest: stateDigest(cpu), note,
-    totals: `births ${t.births} deaths ${t.deaths} refused ${t.refused} contended ${t.contended} mutations ${t.mutations} lightIn ${t.lightIn}`,
+    totals: `births ${t.births} deaths ${t.deaths} refused ${t.refused} contended ${t.contended} mutations ${t.mutations} lightIn ${t.lightIn}` +
+      (c.cfg.bondBreak === undefined ? "" : `; bonds ${Object.entries(bsum).map(([k, v]) => `${k} ${v}`).join(" ")}`),
   };
 }
 
@@ -434,6 +534,7 @@ async function runResume(over: Partial<Mycelium3dConfig>, label: string): Promis
   }
   if (!(cpu.totals.births > 0 && cpu.totals.deaths > 0)) { ok = false; note += " resume case exercised nothing"; }
   if (cfg.trailOwner !== undefined && !cpu.Q!.some((v) => v > 0)) { ok = false; note += " no owned trail at the end"; }
+  if (cfg.bondBreak !== undefined && !cpu.bond0!.subarray(0, cpu.n).some((v) => v !== BOND_NONE)) { ok = false; note += " no bond at the end"; }
   gpuA.destroy(); gpuB.destroy(); gpuC.destroy();
   return {
     name: `resume at step ${cut} of ${total}${label}`, ok, steps: total, n: cpu.n, cpuMs: cpuMs / total, gpuMs: gpuMs / (total - cut) / 3, digest: stateDigest(cpu), note,
@@ -571,6 +672,8 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
     [{ sinkShift: 6, wasteShade: 2, trailOwner: "gid", ownerDefend: 2, ownerConduit: 120, maxDeposit: 12 }, ", sinkShift 6 + wasteShade 2 + owner gate and conduit (gid)"],
     [{ sinkShift: 3, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", trailConduit: 32, trailConduitCap: 60, trailConduitGhost: 3 }, ", sinkShift 3 + toll + trail conduit ghost"],
     [{ width: 13, height: 9, depth: 5, founders: 150, maxParticles: 777, lightPattern: "gradient", trailOwner: "id", ownerConduit: 64, ownerGhost: 4, maxDeposit: 12 }, ", 13x9x5 owner conduit ghost (id)"],
+    [{ sinkShift: 6, bondBreak: 512, bondCost: 1, bondChild: true }, ", sinkShift 6 + bonds + children"],
+    [{ sinkShift: 6, wasteShade: 2, bondBreak: 300, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", sinkShift 6 + wasteShade 2 + toll + bonds (break 300)"],
   ];
   for (const [over, label] of variants) {
     rows.push(await runResume(over, label));

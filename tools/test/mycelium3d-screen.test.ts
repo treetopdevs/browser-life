@@ -1,11 +1,12 @@
 // The 3D mycelium screen's pure readouts (tools/mycelium3d/observe-screen.ts): the 36-run grid validates, upward transport on a tiny
 // synthetic pair of states (sign, id matching, what it misses), the largest 6-connected trail component (wrap in x and y, closed z),
-// owner edges, the readout by depth against the world's totals, the projections, and the fingerprint.
+// owner edges, the readout by depth against the world's totals, the projections, the fingerprint, and the bond readouts (bodies, survival).
 import { describe, expect, it } from "vitest";
-import { createWorld, defaultConfig, lightPlane, matterTotal, type Mycelium3dState, POS_SHIFT, step, validateConfig } from "../mycelium3d/world.ts";
+import { BOND_NONE, createWorld, defaultConfig, lightPlane, matterTotal, type Mycelium3dState, POS_SHIFT, step, validateConfig, validateState } from "../mycelium3d/world.ts";
 import {
   addTransport, componentSpans, contactSheet, drawText, emptyTransport, fieldFlux, fingerprint, GROUPS, groupOf, largestComponent, logT, ownerEdges, projections, readout,
   GRIDS, OWNER3D, PILOT_SEEDS, SCREEN2, SCREEN2_SEEDS, screenConfig, SEEDS, SETTINGS, sharedMax, textWidth, WASTE_SHADE,
+  BODIES, BONDS3D, bondReadout, bondSurvival, emptySurvival,
 } from "../mycelium3d/observe-screen.ts";
 
 const L = 1 << POS_SHIFT;
@@ -222,5 +223,70 @@ describe("readout and projections on a small real world", () => {
     expect(img[(4 * 20 + 0) * 3]).toBe(255);
     expect(textWidth("AB", 2)).toBe(14);
     expect(() => drawText(img, 20, 15, 8, "WWW", 2, [1, 1, 1])).not.toThrow();
+  });
+});
+
+describe("bonds and bodies", () => {
+  it("sets the bodies screen's six arms as stated, all at sink 6 and lightK 64", () => {
+    expect(BODIES.length).toBe(6);
+    const cs = BODIES.map((st) => screenConfig(st, 11));
+    for (const c of cs) expect([c.sinkShift, c.lightK, c.width, c.height, c.depth, c.founders]).toEqual([6, 64, 64, 64, 32, 8192]);
+    const [off, on, child, toll, ws, free] = cs;
+    expect([free.bondBreak, "bondCost" in free, "bondChild" in free]).toEqual([BONDS3D.bondBreak, false, false]);
+    expect(["bondBreak" in off, "bondCost" in off, "bondChild" in off]).toEqual([false, false, false]);
+    for (const c of [on, child, toll, ws]) expect([c.bondBreak, c.bondCost]).toEqual([BONDS3D.bondBreak, BONDS3D.bondCost]);
+    expect([on.bondChild, child.bondChild, toll.bondChild, ws.bondChild]).toEqual([undefined, true, undefined, undefined]);
+    expect([toll.moveCost, toll.trailMoveDiscount, toll.trailDiscountMode, "trailMoveDiscount" in on]).toEqual([12, 64, "toll", false]);
+    expect([ws.wasteShade, "wasteShade" in on, "trailOwner" in ws]).toEqual([WASTE_SHADE, false, false]);
+    expect(GRIDS.bodies.seeds).toBe(SCREEN2_SEEDS);
+  });
+
+  /** Ten particles in a hand-made graph: a ring 0-1-2, a chain 3-4-5-6, a pair 7-8, and 9 free. */
+  function graph(): Mycelium3dState {
+    const s = createWorld(defaultConfig({ width: 16, height: 16, depth: 8, founders: 10, maxParticles: 64, bondBreak: 512 }));
+    const set = (i: number, b: number[]) => { s.bond0![i] = b[0] ?? BOND_NONE; s.bond1![i] = b[1] ?? BOND_NONE; };
+    set(0, [1, 2]); set(1, [0, 2]); set(2, [0, 1]); set(3, [4]); set(4, [3, 5]); set(5, [4, 6]); set(6, [5]); set(7, [8]); set(8, [7]);
+    for (let i = 0; i < 10; i++) { s.z[i] = (i < 3 ? 0 : i < 7 ? 7 : 3) * L + 10; s.age[i] = i * 10; }
+    return s;
+  }
+  it("counts bonds, bodies, rings and sizes, by depth, and the ages of bonded and free particles", () => {
+    const s = graph();
+    expect(validateState(s)).toEqual([]);
+    const b = bondReadout(s);
+    expect([b.bonds, b.bonded, b.bodies, b.largest, b.rings]).toEqual([3 + 3 + 1, 9, 3, 4, 1]);
+    expect(b.meanSize).toBeCloseTo(3, 9);
+    expect(b.sizeHist).toEqual([1, 1, 1, 0, 0]); // the pair, the ring of 3, the chain of 4
+    expect(b.bodiesByGroup).toEqual([1, 0, 0, 1, 0, 0, 0, 1]); // layers 0, 3 and 7 of a depth-8 world
+    expect(b.inBodiesByGroup).toEqual([3, 0, 0, 2, 0, 0, 0, 4]);
+    expect([b.meanSizeByGroup[0], b.meanSizeByGroup[3], b.meanSizeByGroup[7]]).toEqual([3, 2, 4]);
+    expect(Number.isNaN(b.meanSizeByGroup[1])).toBe(true);
+    expect([b.ageBonded, b.ageFree]).toEqual([(0 + 10 + 20 + 30 + 40 + 50 + 60 + 70 + 80) / 9, 90]);
+    expect(b.want).toBeGreaterThanOrEqual(0);
+    expect(b.want).toBeLessThanOrEqual(1);
+  });
+  it("bond survival counts each bond once, kept only when the same pair is still bonded, and leaves out the dead", () => {
+    const before = graph();
+    const after = graph();
+    // After: the ring loses 0-2 (0 and 2 keep 1), particle 8 dies (slot order compacted), 3-4 breaks.
+    const set = (s: Mycelium3dState, i: number, b: number[]) => { s.bond0![i] = b[0] ?? BOND_NONE; s.bond1![i] = b[1] ?? BOND_NONE; };
+    set(after, 0, [1]); set(after, 2, [1]); set(after, 3, []); set(after, 4, [5]);
+    after.id[8] = 9; set(after, 8, []); set(after, 7, []); after.n = 9;
+    const sv = bondSurvival(emptySurvival(), before, after);
+    expect(sv).toEqual({ bonds: 7, bothAlive: 6, kept: 4 }); // kept: 0-1, 1-2, 4-5, 5-6; 7-8 has a dead end
+  });
+  it("a real bonded world reads the same bonds the state holds and projects its bonded particles", () => {
+    const s = createWorld(defaultConfig({ width: 16, height: 16, depth: 8, founders: 256, maxParticles: 2048, bondBreak: 512, bondChild: true }));
+    for (let t = 0; t < 120; t++) step(s);
+    let held = 0, bonded = 0;
+    for (let i = 0; i < s.n; i++) { const d = (s.bond0![i] !== BOND_NONE ? 1 : 0) + (s.bond1![i] !== BOND_NONE ? 1 : 0); held += d; bonded += d ? 1 : 0; }
+    const r = readout(s);
+    expect([r.bonds!.bonds, r.bonds!.bonded]).toEqual([held / 2, bonded]);
+    expect(r.bonds!.inBodiesByGroup.reduce((a, v) => a + v, 0)).toBe(bonded);
+    expect(r.bonds!.sizeHist.reduce((a, v) => a + v, 0)).toBe(r.bonds!.bodies);
+    const p = projections(s);
+    expect(p.sideBonded!.reduce((a, v) => a + v, 0)).toBe(bonded);
+    expect(p.topBonded!.reduce((a, v) => a + v, 0)).toBe(bonded);
+    expect(readout(createWorld(defaultConfig({ width: 16, height: 16, depth: 8, founders: 10 }))).bonds).toBeNull();
+    expect(bondSurvival(emptySurvival(), s, s)).toEqual({ bonds: held / 2, bothAlive: held / 2, kept: held / 2 });
   });
 });

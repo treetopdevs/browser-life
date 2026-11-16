@@ -4,11 +4,14 @@
 //   first            sinking x trail rule x light depth (experiments/mycelium3d/trail-screen-2026-11-15.md), seeds 1, 2;
 //   owner-pilots     owner gate / conduit sizing at sink 6, lightK 64, seeds 21, 22;
 //   shade-pilots     the wasteShade probe at sink 6, lightK 64, seeds 21, 22;
-//   owner-darkfloor  the second screen, six arms, seeds 11 to 14 (experiments/mycelium3d/owner-darkfloor-screen-2026-11-16.md).
+//   owner-darkfloor  the second screen, six arms, seeds 11 to 14 (experiments/mycelium3d/owner-darkfloor-screen-2026-11-16.md);
+//   bond-pilots      bond sizing (break, cost, children) at sink 6, lightK 64, seeds 21, 22;
+//   bodies           the bonds screen, five arms, seeds 11 to 14 (experiments/mycelium3d/bonds-screen-2026-11-16.md).
 //
 //   deno run -A --no-lock tools/mycelium3d/screen.ts [--grid first] [--out runs/mycelium3d-screen] [--steps 50000] [--every 2000] [--move-every 20]
 //        [--jobs 1|2] [--seeds 1,2] [--only <id-substring>] [--log <out>/run-log.jsonl] [--reclaim]
-//   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --render     (PNGs and the contact sheet from finished runs, no GPU)
+//   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --render     (PNGs and the contact sheet from finished runs, no GPU;
+//        with bonds also contact-sheet-bodies.png, particles | particles in bodies)
 //   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --table      (markdown tables of finished runs, no GPU)
 //
 // Every run reads the full state back every --move-every steps: it checks the step count and both ledger residuals (any residual
@@ -19,8 +22,8 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { GpuMycelium3d, mycelium3dDevice } from "./gpu.ts";
 import {
-  addTransport, contactSheet, emptyTransport, fieldFlux, fingerprint, GRIDS, GROUPS, type Projections, projections, readout, type Readout,
-  screenConfig, type Setting, sharedMax, tilePng, type Transport,
+  addTransport, BODY_SIZES, bondSurvival, contactSheet, emptySurvival, emptyTransport, fieldFlux, fingerprint, GRIDS, GROUPS, type Projections, projections, readout,
+  type Readout, screenConfig, type Setting, sharedMax, type Survival, tilePng, type Transport,
 } from "./observe-screen.ts";
 import { createWorld, energyTotal, liveGenotypes, matterTotal, type Mycelium3dState, validateState } from "./world.ts";
 
@@ -60,7 +63,7 @@ async function loadRows(): Promise<Row[]> {
 
 const residuals = (s: Mycelium3dState) => ({ matter: matterTotal(s) - s.matter0, energy: energyTotal(s) - (s.energy0 + s.totals.lightIn - s.totals.heat) });
 
-interface Window { step: number; transport: Transport; births: number; deaths: number; particleSteps: number; nMax: number; refused: number }
+interface Window { step: number; transport: Transport; births: number; deaths: number; particleSteps: number; nMax: number; refused: number; survival: Survival }
 
 async function runOne(device: GPUDevice, st: Setting, seed: number): Promise<Row> {
   const cfg = screenConfig(st, seed);
@@ -68,7 +71,8 @@ async function runOne(device: GPUDevice, st: Setting, seed: number): Promise<Row
   const gpu = await GpuMycelium3d.create(device, s0);
   const rows: Readout[] = [], windows: (Window & { genotypes: number })[] = [];
   let prev: Mycelium3dState = s0, checks = 0, nMax = s0.n, nMin = s0.n, last: Mycelium3dState = s0;
-  let win: Window = { step: 0, transport: emptyTransport(), births: 0, deaths: 0, particleSteps: 0, nMax: 0, refused: 0 };
+  const bonds = cfg.bondBreak !== undefined;
+  let win: Window = { step: 0, transport: emptyTransport(), births: 0, deaths: 0, particleSteps: 0, nMax: 0, refused: 0, survival: emptySurvival() };
   try {
     for (let t = moveEvery; t <= steps; t += moveEvery) {
       gpu.step(moveEvery);
@@ -78,6 +82,7 @@ async function runOne(device: GPUDevice, st: Setting, seed: number): Promise<Row
       checks++;
       if (r.matter !== 0 || r.energy !== 0) throw Object.assign(new Error(`ledger residual at step ${t}: matter ${r.matter}, energy ${r.energy}`), { residual: true, step: t });
       addTransport(win.transport, prev, s);
+      if (bonds) bondSurvival(win.survival, prev, s);
       win.births += s.totals.births - prev.totals.births; win.deaths += s.totals.deaths - prev.totals.deaths;
       win.refused += s.totals.refused - prev.totals.refused;
       // Particle-steps over the interval, approximated by the trapezoid of the counts at its two ends.
@@ -89,7 +94,7 @@ async function runOne(device: GPUDevice, st: Setting, seed: number): Promise<Row
         if (bad.length) throw Object.assign(new Error(`validateState at step ${t}: ${bad.slice(0, 3).join("; ")}`), { residual: true, step: t });
         rows.push(readout(s));
         windows.push({ ...win, step: t, genotypes: liveGenotypes(s) });
-        win = { step: t, transport: emptyTransport(), births: 0, deaths: 0, particleSteps: 0, nMax: 0, refused: 0 };
+        win = { step: t, transport: emptyTransport(), births: 0, deaths: 0, particleSteps: 0, nMax: 0, refused: 0, survival: emptySurvival() };
       }
       prev = s; last = s;
     }
@@ -144,7 +149,29 @@ function lateSummary(r: Row) {
     lightFloorLayer: mean(ro.map((x) => x.floorLight)),
     owners: ro[0]?.owner ? mean(ro.map((x) => x.owner!.owners)) : NaN, topOwner: ro[0]?.owner ? mean(ro.map((x) => x.owner!.topOwnerShare)) : NaN,
     sameShareFinal: fin.owner ? fin.owner.sameShare : NaN,
+    ...bondSummary(r, ro, wi, fin),
     D,
+  };
+}
+
+/** Late-window bond readouts (NaN without bonds). Survival is per --move-every steps, over bonds whose two particles both lived. */
+function bondSummary(r: Row, ro: Readout[], wi: Row[], fin: Readout) {
+  // A readout with no bodies has no mean size or bonded age (NaN, stored as null): those readouts are left out, not counted as 0.
+  const b = (f: (x: NonNullable<Readout["bonds"]>) => number) => (ro[0]?.bonds ? mean(ro.map((x) => f(x.bonds!)).filter((v) => typeof v === "number" && Number.isFinite(v))) : NaN);
+  const sv = wi.reduce((a, w) => ({ both: a.both + (w.survival?.bothAlive ?? 0), kept: a.kept + (w.survival?.kept ?? 0), all: a.all + (w.survival?.bonds ?? 0) }), { both: 0, kept: 0, all: 0 });
+  const keep = sv.both ? sv.kept / sv.both : NaN;
+  return {
+    bonds: b((x) => x.bonds), bondedShare: ro[0]?.bonds ? mean(ro.map((x) => (x.n ? x.bonds!.bonded / x.n : 0))) : NaN,
+    bodies: b((x) => x.bodies), largestBody: b((x) => x.largest), largestBodyMax: ro[0]?.bonds ? Math.max(...ro.map((x) => x.bonds!.largest)) : NaN,
+    meanBody: b((x) => x.meanSize), rings: b((x) => x.rings),
+    hist: BODY_SIZES.map((_, k) => b((x) => x.sizeHist[k])),
+    bigBodies: b((x) => x.sizeHist[2] + x.sizeHist[3] + x.sizeHist[4]),
+    keep, keepAll: sv.all ? sv.kept / sv.all : NaN,
+    // Mean bond lifetime implied by the per-interval survival among bonds whose ends both lived: interval / (1 - keep). It cannot
+    // fall below the interval itself, so a value near --move-every means "most bonds last less than one interval", not a measured life.
+    bondLife: Number.isFinite(keep) && keep < 1 ? r.moveEvery / (1 - keep) : NaN,
+    ageBonded: b((x) => x.ageBonded), ageFree: b((x) => x.ageFree), want: b((x) => x.want), wantFinal: fin.bonds ? fin.bonds.want : NaN,
+    bodiesTop: b((x) => x.bodiesByGroup[0]), bodiesFloor: b((x) => x.bodiesByGroup[GROUPS - 1]),
   };
 }
 
@@ -160,6 +187,12 @@ function printTables(rows: Row[]): void {
     ["light floor layer /256", (x) => x.lightFloorLayer, 1],
     ["same-owner edge share", (x) => x.sameShare, 3], ["same-owner share (final)", (x) => x.sameShareFinal, 3], ["median min(Q,Q)", (x) => x.minQ, 1],
     ["owned cells", (x) => x.ownedCells, 0], ["distinct owners", (x) => x.owners, 0], ["largest owner's share of owned cells", (x) => x.topOwner, 3], ["median Q (owned cells)", (x) => x.medianQ, 1], ["conduit extra rate at median edge", (x) => x.extraRate, 0],
+    ["bonds", (x) => x.bonds, 0], ["share of particles bonded", (x) => x.bondedShare, 3], ["bodies (2+)", (x) => x.bodies, 0], ["largest body", (x) => x.largestBody, 1],
+    ["largest body (max over late reads)", (x) => x.largestBodyMax, 0], ["mean body size", (x) => x.meanBody, 2], ["rings", (x) => x.rings, 1],
+    ...BODY_SIZES.map((name, k) => [`bodies of ${name}`, (x: ReturnType<typeof lateSummary>) => x.hist[k], 1] as [string, (x: ReturnType<typeof lateSummary>) => number, number]),
+    ["bond kept over one read interval (both ends alive)", (x) => x.keep, 3], ["bond kept (all bonds)", (x) => x.keepAll, 3], ["implied bond life (steps)", (x) => x.bondLife, 0],
+    ["mean age, bonded", (x) => x.ageBonded, 0], ["mean age, free", (x) => x.ageFree, 0], ["share wanting a bond (BOND > 0)", (x) => x.want, 3], ["share wanting (final)", (x) => x.wantFinal, 3],
+    ["bodies in G1", (x) => x.bodiesTop, 1], ["bodies in G8", (x) => x.bodiesFloor, 1],
   ];
   const by = (st: Setting) => seeds.map((sd) => rows.find((r) => r.id === `${st.id}.s${sd}`)).filter((r): r is Row => !!r);
   const present = SETTINGS.filter((st) => by(st).length);
@@ -176,8 +209,17 @@ function printTables(rows: Row[]): void {
   for (const st of present) {
     const rs = by(st);
     const g = (k: string, i: number) => mean(rs.map((r) => mean(r.readouts.filter((x: Readout) => x.step > r.steps / 2).map((x: Readout) => (x.groups[i] as any)[k]))));
-    console.log(`#### ${st.id}\n\n| group | particles | M | A | C | P | light /256 |\n|---|---|---|---|---|---|---|`);
-    for (let i = 0; i < GROUPS; i++) console.log(`| G${i + 1} | ${["particles", "M", "A", "C", "P", "light"].map((k) => fmt(g(k, i))).join(" | ")} |`);
+    const bonded = rs.every((r) => r.readouts[0]?.bonds);
+    const gb = (f: (b: NonNullable<Readout["bonds"]>) => number) => mean(rs.map((r) => mean(r.readouts.filter((x: Readout) => x.step > r.steps / 2).map((x: Readout) => f(x.bonds!)))));
+    const bh = bonded ? " in bodies | bodies | mean body size |" : "";
+    console.log(`#### ${st.id}\n\n| group | particles | M | A | C | P | light /256 |${bh}\n|---|---|---|---|---|---|---|${bonded ? "---|---|---|" : ""}`);
+    for (let i = 0; i < GROUPS; i++) {
+      const bc = bonded ? ` ${fmt(gb((b) => b.inBodiesByGroup[i]))} | ${fmt(gb((b) => b.bodiesByGroup[i]), 1)} | ${fmt(mean(rs.map((r) => {
+        const v = r.readouts.filter((x: Readout) => x.step > r.steps / 2).map((x: Readout) => x.bonds!.meanSizeByGroup[i]).filter((v: number) => Number.isFinite(v));
+        return v.length ? mean(v) : NaN;
+      }).filter((v) => Number.isFinite(v))), 2)} |` : "";
+      console.log(`| G${i + 1} | ${["particles", "M", "A", "C", "P", "light"].map((k) => fmt(g(k, i))).join(" | ")} |${bc}`);
+    }
     console.log("");
   }
   console.log("\n| run | seconds | ledger reads (residual 0) | n min / max | refused | final step |");
@@ -190,7 +232,8 @@ function printTables(rows: Row[]): void {
 const label = (r: Row) => {
   const st = SETTINGS.find((x) => r.id === `${x.id}.s${r.config.seed}`)!;
   const own = st.owner ? ` ${st.owner.trailOwner.toUpperCase()} T${st.owner.ownerDefend ?? "-"} G${st.owner.ownerConduit ?? "-"}` : "";
-  return `SINK ${st.sink ?? "OFF"} ${st.trail.toUpperCase()}${own}${st.wasteShade === undefined ? "" : ` WS${st.wasteShade}`} K${st.lightK} S${r.config.seed}`;
+  const bond = st.bonds ? ` B${st.bonds.bondBreak} C${st.bonds.bondCost ?? 0}${st.bonds.bondChild ? " CHILD" : ""}` : "";
+  return `SINK ${st.sink ?? "OFF"} ${st.trail.toUpperCase()}${own}${bond}${st.wasteShade === undefined ? "" : ` WS${st.wasteShade}`} K${st.lightK} S${r.config.seed}`;
 };
 async function render(rows: Row[]): Promise<void> {
   await Deno.mkdir(`${out}/png`, { recursive: true });
@@ -202,8 +245,23 @@ async function render(rows: Row[]): Promise<void> {
     `SIDE VIEWS BELOW (X BY Z, SUMMED OVER Y, SURFACE UP). LEFT ORANGE = PARTICLES, RIGHT GREEN = TRAIL. LOG SCALE SHARED BY ALL TILES:`,
     `PARTICLES MAX ${mx.particles} SIDE / ${mx.topParticles} TOP, TRAIL MAX ${mx.trail} SIDE / ${mx.topTrail} TOP. BLACK = NONE.`,
   ];
-  await Deno.writeFile(`${out}/contact-sheet.png`, await contactSheet(order.map((r) => ({ p: r.projections, label: label(r) })), mx, seeds.length === 2 ? 4 : seeds.length, header));
+  const cols = seeds.length === 2 ? 4 : seeds.length;
+  await Deno.writeFile(`${out}/contact-sheet.png`, await contactSheet(order.map((r) => ({ p: r.projections, label: label(r) })), mx, cols, header));
   console.error(`wrote ${order.length} tiles to ${out}/png and ${out}/contact-sheet.png`);
+  // With bonds: the same tiles with the trail panels replaced by particles in bodies (a run without bonds shows black there).
+  if (SETTINGS.some((st) => st.bonds)) {
+    const W = order[0].projections.W, H = order[0].projections.H, D = order[0].projections.D;
+    const swap = (p: Projections): Projections => ({ ...p, sideTrail: p.sideBonded ?? new Array(W * D).fill(0), topTrail: p.topBonded ?? new Array(W * H).fill(0) });
+    const bp = order.map((r) => swap(r.projections));
+    const bm = sharedMax(bp);
+    const bh = [
+      `${grid.title}, STEP ${order[0].steps}. 64 X 64 X 32, 8192 FOUNDERS. EACH TILE: TOP VIEWS ABOVE (X BY Y, SUMMED OVER Z),`,
+      `SIDE VIEWS BELOW (X BY Z, SUMMED OVER Y, SURFACE UP). LEFT ORANGE = ALL PARTICLES, RIGHT GREEN = PARTICLES HOLDING A BOND. LOG SCALE`,
+      `SHARED BY ALL TILES: PARTICLES MAX ${bm.particles} SIDE / ${bm.topParticles} TOP, BONDED MAX ${bm.trail} SIDE / ${bm.topTrail} TOP. BLACK = NONE.`,
+    ];
+    await Deno.writeFile(`${out}/contact-sheet-bodies.png`, await contactSheet(order.map((r, i) => ({ p: bp[i], label: label(r) })), bm, cols, bh));
+    console.error(`wrote ${out}/contact-sheet-bodies.png`);
+  }
 }
 
 // ---- main --------------------------------------------------------------------------------------------------------
@@ -243,7 +301,8 @@ const worker = async () => {
       await Deno.rename(`${path(id)}.tmp`, path(id));
       const fin: Readout = res.readouts.at(-1);
       await log({ id, state: "finished", seconds, ledgerChecks: res.ledgerChecks, ledgerResidual: 0, n: fin.n, trail: fin.trailMass, comp: fin.comp.size });
-      console.error(`${id} done in ${seconds}s: ${res.ledgerChecks} ledger reads exact, n ${fin.n}, trail ${fin.trailMass}, largest component ${fin.comp.size} (z ${fin.comp.zMin}-${fin.comp.zMax})`);
+      const bodies = fin.bonds ? `, bonds ${fin.bonds.bonds}, bodies ${fin.bonds.bodies} (largest ${fin.bonds.largest})` : "";
+      console.error(`${id} done in ${seconds}s: ${res.ledgerChecks} ledger reads exact, n ${fin.n}, trail ${fin.trailMass}, largest component ${fin.comp.size} (z ${fin.comp.zMin}-${fin.comp.zMax})${bodies}`);
     } catch (e) {
       failures++;
       try { await Deno.remove(claim); } catch { /* none */ }

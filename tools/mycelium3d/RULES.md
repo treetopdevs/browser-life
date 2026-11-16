@@ -1,6 +1,6 @@
 # Mycelium in a volume: rules, rung R0
 
-Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. The WGSL twin `tools/mycelium3d/gpu.ts` matches it bit for bit (`tests/deno/mycelium3d_gpu.ts`, 79 cases). At the guard limits the CPU throws before the step and keeps its state; the GPU runs the step and `read()` throws, as in the 2D twin, so that state is not usable. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
+Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. The WGSL twin `tools/mycelium3d/gpu.ts` matches it bit for bit (`tests/deno/mycelium3d_gpu.ts`, 102 cases). At the guard limits the CPU throws before the step and keeps its state; the GPU runs the step and `read()` throws, as in the 2D twin, so that state is not usable. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
 
 This rule set copies the 2D mycelium world (`tools/mycelium/RULES.md`, rule `mycelium-r0`) and changes only what is listed here. It is a separate rule set: it does not import `tools/mycelium/` (the small pure helpers `conduitRate`, `ownerRate`, `resolveClaims`, `ownerTag` and `shiftCell` are copied, so this rule does not move when the 2D one does), and the research kernel's `RULE_VERSION` and golden pins are untouched. From the kernel it reuses the integer helpers and counter-based PRNG (`@bl/schema` `int.ts`) and the slab's six-way diffusion split (`diffOut6` in `@bl/sim-ref`, `packages/sim-ref/src/step3d.ts`).
 
@@ -19,7 +19,8 @@ This rule set copies the 2D mycelium world (`tools/mycelium/RULES.md`, rule `myc
 - matter `M` (always at least 1 while alive);
 - energy `E` (at most `energyMax`);
 - an age;
-- a controller of 13 inputs, 8 hidden units and 9 outputs: 193 int8 weights, stored in a 196-byte record (49 u32 words) whose last 3 bytes are padding and always 0.
+- a controller of 13 inputs, 8 hidden units and 9 outputs: 193 int8 weights, stored in a 196-byte record (49 u32 words) whose last 3 bytes are padding and always 0;
+- only with `bondBreak` (below, "Bonds"): two bond slots, each a partner id or `NONE` (0xffffffff).
 
 Slot order equals id order.
 
@@ -45,14 +46,16 @@ Every phase reads the state as the previous phase left it. Phases 2–5 are orde
    - 10: the trail gradient down − up, `sat(P_down >> sensorShift) − sat(P_up >> sensorShift)`, clamped to ±127. Down is layer `z + 1`, up is layer `z − 1`: +z minus −z, as east − west is +x minus −x, and the slab's below − above. A neighbour outside the volume reads the cell's own value (the slab's rule), so at the surface the input is `sat(P_down) − sat(P_here)`, and with `D = 1` it is always 0.
    - 11: the nutrient gradient down − up, the same way.
    - 12: the light here, `floor(I · 127 / (light << 8))`, 0 when `light` is 0. It is 127 under an unshaded surface (in the gradient pattern, only the east column reaches 127).
-3. **Think.** Run the 13 → 8 → 9 controller (below). The outputs read are 0 MX, 1 MY, 2 EAT, 3 DEPOSIT, 4 SPLIT and 8 MZ. Outputs 5–7 are reserved.
+3. **Think.** Run the 13 → 8 → 9 controller (below). The outputs read are 0 MX, 1 MY, 2 EAT, 3 DEPOSIT, 4 SPLIT and 8 MZ, and, only with `bondBreak`, 5 BOND. Outputs 6 and 7 are reserved (5 too without bonds).
 4. **Eat.** As in 2D, per 3D cell (including the eating gate when `ownerDefend` is set).
 5. **Live.** As in 2D, with two changes:
    - the movement term is `((|MX| + |MY| + |MZ|) · moveCost) >> 7` (and the toll form below takes `raw = (|MX| + |MY| + |MZ|) · moveCost`). MZ is paid in full even when the clamp at a wall stops the motion;
    - the move adds `trunc(MX · speed / 128)` to x and `trunc(MY · speed / 128)` to y, wrapping, and `trunc(MZ · speed / 128)` to z, clamped to `[0, D · 256 − 1]`. Positive MZ moves down, toward the floor (z grows), as positive MX moves east. With the z inputs written down − up, the sign relation is the same on all three axes: a positive weight from input 10 (or 11) to MZ steers toward more trail (or nutrient), as a positive weight from input 3 to MX steers toward trail to the east.
 
    All field writes in this phase are to the 3D cell the particle started the step in.
-6. **Compact.** Survivors keep their slot order.
+
+   With `bondBreak` set, the cost also carries the bond upkeep, and the move is not made here: phase 5b makes it ("Bonds").
+6. **Compact.** Survivors keep their slot order (and, with bonds, their bond slots: partners are named by id, which compaction does not change).
 7. **Births.** As in 2D. The child is placed within ±128 units of the parent on each of the three axes from the parent's draws: x and y wrap, `z = clamp(z_parent + (draw(DZ) & 255) − 128, 0, D · 256 − 1)`.
 8. **Field**, in this order:
    1. **Light and decay**, per cell: `L = (I >> 8) + [draw(field, LIGHT) & 255 < (I & 255)]`, then light converts `min(C, L)` waste into nutrient, and `lightIn` grows by `eA` per unit. Trail decays to waste by `mulFrac(P, pDecay, 16, draw(field, DECAY))` (and owned trail with the same draw, as in 2D).
@@ -75,6 +78,40 @@ o[k] = clamp(divi(128 · B2[k] + Σ_j W2[j][k] · h[j], 128), −127, 127)
 **Lift.** `liftMyceliumGenome(g2)` takes a 2D genome (160 bytes, 10 → 8 → 8) and returns the 3D record: `W1[i][j]` for `i < 10`, `B1`, `W2[j][k]` for `k < 8` and `B2[k]` for `k < 8` are copied by (i, j) and (j, k), never by byte offset; rows 10–12 of `W1`, column 8 of `W2`, `B2[8]` and the padding are 0. A lifted net's hidden units ignore inputs 10–12, its outputs 0–7 equal the 2D net's on inputs 0–9, and its MZ is 0, so it moves only in x and y.
 
 **Founders** and **blocked** children draw all 193 weight bytes uniformly in `[−weightSpan, weightSpan]` at slots `100 + b`; padding stays 0. A blocked child always gets a new genotype id, even in the (very unlikely) case that its redraw equals its parent's weights byte for byte; no comparison is made. This is the exception to "a child whose controller differs gets a new id", and it is the 2D rule's behaviour too. **Mutation** picks weight byte `draw(MUT_SLOT + j) % 193`; the padding is never mutated.
+
+## Bonds (optional `bondBreak`, `bondCost`, `bondChild`)
+
+Bodies that hold together: a particle can bond to a neighbour, bonded particles move as one, and a bond breaks when the partners drift apart, when either dies or when either lets go. All three keys are absent from `defaultConfig()`; without `bondBreak` nothing below runs, no bond slot exists and the checkpoint has no bond bytes, so every digest is the rule without bonds.
+
+- `bondBreak` R, an integer in 1..1024 (position units, 256 per cell): turns bonds on, and is the distance beyond which a bond breaks.
+- `bondCost` u, an integer in 0..4096 (requires `bondBreak`; absent means 0): energy each partner pays per bond per step, as heat.
+- `bondChild` `true` (requires `bondBreak`): a child is born bonded to its parent when the parent has a free slot (below).
+
+**What a bond is.** Each particle has two bond slots `b0`, `b1`, each a partner id or `NONE` = 0xffffffff (ids end at 0xfffffffe, so `NONE` is never an id). The order is canonical: a single bond sits in `b0`, and two bonds sit in increasing id order (`b0 < b1`). Bonds are symmetric (if a names b, b names a), never to oneself, never twice to one partner, and always to a live particle at the start of a step; `validateState` checks all of it. The bond graph has degree at most 2, so a body (a connected component of the graph) is a chain or a ring.
+
+*Why two.* One bond per particle gives pairs and nothing larger. Two is the least that lets a body grow without limit (a chain), and with `bondChild` a chain grows at its ends by division. More than two would let bodies branch, but then the move rule below (an average over neighbours) would drag a hub through several directions at once, and the graph check stays simpler with chains and rings. It is a choice, not a finding.
+
+**The control.** Output 5, BOND, which this rule reads only with `bondBreak` (it was reserved). BOND > 0 means "I want to bond", BOND < 0 means "let go", 0 neither. A lifted 2D genome (`liftMyceliumGenome`) is still copied exactly; its column 5 was reserved and never selected in 2D, so in a lifted world with bonds on, those unselected weights drive bonding.
+
+**No new inputs.** The controller cannot sense "I am bonded" or "my partner's energy". Two inputs would need two W1 rows (16 bytes), and the record has 3 bytes of padding, so the record would grow. That moves the weight count (`% 193` mutation slots, founder slots `100 + b`) and every digest of the rule without bonds, unless the record size depended on the config, which would double the controller paths in the CPU, the WGSL, the lift and the page. Left out for now: a bond is felt only through its effects (a shared move, the upkeep, and crowding input 9, since partners usually share a cell).
+
+**Where it runs in a step.** Inside phase 5 and between phases 5 and 6, all on slot order of the start of the step (before compaction):
+
+5. **Live.** As above, with the bond upkeep added to the cost: `cost = upkeep + move + mass + u · d0`, with `d0` the particle's bonds at the start of the step (0, 1 or 2). It is paid as heat like the rest of the cost; a particle that cannot pay it dies as before. The movement cost is still on the particle's own outputs MX, MY, MZ. The position is not changed here.
+5b. **Bonds**, in five passes, each reading what the passes before it left:
+   1. **Release.** Each surviving particle drops a bond when its partner died in phase 5, or when its own BOND or its partner's BOND is negative. Both ends evaluate the same condition, so both drop it. (A particle that died has no bonds left to keep.)
+   2. **Propose.** A surviving particle with BOND > 0 and a free slot (fewer than 2 bonds after the release) proposes to its nearest *eligible* particle: one that survived, has BOND > 0 and a free slot, is not itself, is not already its partner, and whose start-of-step cell is the proposer's own cell or one of its six face neighbours (x and y wrap, z closed). Distance is between start-of-step positions, `d² = dx² + dy² + dz²` with dx and dy the wrapped (minimum-image) differences; the nearest is the smallest `(d², id)`, so ties go to the smaller id. Every particle proposes at most once.
+   3. **Accept.** A bond forms between i and j exactly when i proposed j and j proposed i. Since each particle proposes once, these mutual pairs are a matching: no particle forms two bonds in one step, and no conflict needs resolving. Each gains one bond in its free slot (canonical order restored). This narrows "bond to the nearest unbonded particle": the target must want a bond too, and "unbonded" means "has a free slot".
+   4. **Move.** Each surviving particle's intended displacement is the R0 one, `(divi(MX · speed, 128), divi(MY · speed, 128), divi(MZ · speed, 128))`. With its partners after the accept, `k = 1 + bonds`, it moves by `divi(own + Σ partners, k)` on each axis (truncation toward zero, so no direction is favoured), then x and y wrap and z is clamped to `[0, D · 256 − 1]` as in R0. A bonded pair gets one displacement and moves as one (until a wall clamps one of them). In a chain of three or more the ends average over two and the middles over three, so a chain bends and stretches; it is not rigid.
+   5. **Stretch.** Each surviving particle drops a bond whose partner is now farther than R: with the wrapped differences after the move and clamp, the bond breaks if `|dx| > R` or `|dy| > R` or `|dz| > R` or `dx² + dy² + dz² > R²`. The per-axis test comes first, so the squares are taken only when each |d| ≤ R ≤ 1024 (`d² ≤ 3 · 2^20 < 2^22`); a minimum-image difference can be up to 2^16, whose square would not fit a u32. Symmetric, so both ends drop it. A bond formed this step is tested too.
+6. **Compact.** Bond slots move with their particle.
+7. **Births.** Without `bondChild` a child has no bonds. With it, a child born in this step (accepted, not refused) is bonded to its parent exactly when the parent holds fewer than 2 bonds after pass 5: the parent gains the child's id (the largest id alive, so it goes last), the child's `b0` is the parent's id. A parent in the middle of a chain is full, so its child is born free; a parent at an end, or alone, is not. A body therefore grows at its ends by division, like a hypha at its tip. The child sits within ±128 units of the parent on each axis, inside any `R ≥ 222`; the stretch test sees the new bond from the next step.
+
+**Ledger.** Bonds move no matter and take no draw. The upkeep is energy paid as heat inside phase 5's cost, so `ΣE + eA·ΣA` still changes by exactly `lightIn − heat`. `totals` keeps its seven counters; bonds are counted by the observers from the state.
+
+**Determinism and the GPU.** The release, the stretch and the move are per particle with symmetric conditions. The proposal is a minimum over a total order `(d², id)`, so it does not depend on the order in which candidates are visited; the WGSL twin walks per-cell lists built with `atomicExchange` in any order and reaches the same pairs. Partner ids are found in the start-of-step id array by binary search (slot order is id order).
+
+**Bounds.** Upkeep `u · 2 ≤ 2^13` adds to a cost already below 2^16 plus the mass term, all below `energyMax ≤ 2^24` before the comparison. Proposal distances are under two cells on one axis and one cell on the others after the minimum image, so `d² < 3 · 2^18`. The stretch test is bounded above. The proposal walk is quadratic in the particles of a cell; that is a speed cost, not an arithmetic one.
 
 ## Sinking (optional `sinkShift`)
 
@@ -190,7 +227,7 @@ Sinking piles waste on the floor and starves the surface of the waste light need
 
 ## Checkpoints
 
-`encode` writes the magic `BLM3`, a JSON header (format 1, config, step, counters and ledger anchors), then A, C and P, the nine u32 particle arrays (id, parent, gid, x, y, z, M, E, age), the live genome records (196 bytes each) and, only with `trailOwner`, the owner planes Z and Q. `decode` validates the result. `stateDigest` is two FNV-1a lanes over those bytes. A run resumed from a checkpoint equals the continuous run byte for byte (`tools/test/mycelium3d.test.ts`).
+`encode` writes the magic `BLM3`, a JSON header (format 1, config, step, counters and ledger anchors), then A, C and P, the nine u32 particle arrays (id, parent, gid, x, y, z, M, E, age), the live genome records (196 bytes each), only with `trailOwner` the owner planes Z and Q, and only with `bondBreak` the two bond-slot arrays (`b0`, `b1`, a u32 per live particle each). `decode` validates the result. `stateDigest` is two FNV-1a lanes over those bytes. A run resumed from a checkpoint equals the continuous run byte for byte (`tools/test/mycelium3d.test.ts`).
 
 ## Not in R0
 
