@@ -300,3 +300,7 @@ Late window, steps 25,000 to 50,000. Each cell is "seed mean (11 / 12 / 13 / 14)
 - The 20k pilot process was stopped by a 30-minute background time limit after 56 of 60 runs. The 4 remaining runs were taken with `--reclaim`. Finished runs are not rerun (fingerprint check), so this changes no result.
 - The first start of this screen was stopped after 6 minutes, to add the owner-count readout (`READOUT_VERSION` 5). It was restarted in a fresh directory, and nothing from the stopped start is used.
 - `wasteShade` 2 was chosen on a no-rule world at 20k steps.
+
+## Follow-up
+
+The toll's surface-to-floor trail was rerun on twelve fresh seeds the same day: one of them spans by a bar fixed beforehand (`leads-screen-2026-11-16.md`).

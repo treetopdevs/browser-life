@@ -6,13 +6,16 @@
 //   shade-pilots     the wasteShade probe at sink 6, lightK 64, seeds 21, 22;
 //   owner-darkfloor  the second screen, six arms, seeds 11 to 14 (experiments/mycelium3d/owner-darkfloor-screen-2026-11-16.md);
 //   bond-pilots      bond sizing (break, cost, children) at sink 6, lightK 64, seeds 21, 22;
-//   bodies           the bonds screen, five arms, seeds 11 to 14 (experiments/mycelium3d/bonds-screen-2026-11-16.md).
+//   bodies           the bonds screen, five arms, seeds 11 to 14 (experiments/mycelium3d/bonds-screen-2026-11-16.md);
+//   leads            the two lone-seed leads on seeds 31 to 42 (experiments/mycelium3d/leads-screen-2026-11-16.md).
 //
 //   deno run -A --no-lock tools/mycelium3d/screen.ts [--grid first] [--out runs/mycelium3d-screen] [--steps 50000] [--every 2000] [--move-every 20]
 //        [--jobs 1|2] [--seeds 1,2] [--only <id-substring>] [--log <out>/run-log.jsonl] [--reclaim]
 //   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --render     (PNGs and the contact sheet from finished runs, no GPU;
 //        with bonds also contact-sheet-bodies.png, particles | particles in bodies)
 //   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --table      (markdown tables of finished runs, no GPU)
+//   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --leads [--grid leads]   (per-seed tally against LEADS_BARS of
+//        finished runs, no GPU; the grid defaults to leads here and names the arm ids to look for)
 //
 // Every run reads the full state back every --move-every steps: it checks the step count and both ledger residuals (any residual
 // aborts the run, logs it as failed and the process exits 1) and adds to the upward transport. Every --every steps it also runs
@@ -22,7 +25,7 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { GpuMycelium3d, mycelium3dDevice } from "./gpu.ts";
 import {
-  addTransport, BODY_SIZES, bondSurvival, contactSheet, emptySurvival, emptyTransport, fieldFlux, fingerprint, GRIDS, GROUPS, type Projections, projections, readout,
+  addTransport, BODY_SIZES, bondSurvival, contactSheet, emptySurvival, emptyTransport, fieldFlux, fingerprint, GRIDS, GROUPS, LEADS_BARS, type LeadsRun, leadsTally, type Projections, projections, readout,
   type Readout, screenConfig, type Setting, sharedMax, type Survival, tilePng, type Transport,
 } from "./observe-screen.ts";
 import { createWorld, energyTotal, liveGenotypes, matterTotal, type Mycelium3dState, validateState } from "./world.ts";
@@ -30,7 +33,7 @@ import { createWorld, energyTotal, liveGenotypes, matterTotal, type Mycelium3dSt
 const NUMS = ["steps", "every", "move-every", "jobs"];
 const fail = (msg: string): never => { console.error(msg); Deno.exit(2); };
 const a = parseArgs(Deno.args, {
-  string: ["out", "seeds", "only", "log", "grid", ...NUMS], boolean: ["render", "table", "reclaim"],
+  string: ["out", "seeds", "only", "log", "grid", ...NUMS], boolean: ["render", "table", "reclaim", "leads"],
   unknown: (f) => fail(f.startsWith("-") ? `unknown flag ${f}` : `unexpected argument ${f}`),
 });
 if (a._.length) fail(`unexpected argument ${a._[0]}`);
@@ -40,7 +43,7 @@ const num = (k: string, dflt: number): number => {
   if (typeof v !== "string" || !/^[0-9]+$/.test(v) || !Number.isSafeInteger(Number(v))) return fail(`--${k} must be a non-negative integer, got ${JSON.stringify(v)}`);
   return Number(v);
 };
-const gridName = a.grid ?? "first";
+const gridName = a.grid ?? (a.leads ? "leads" : "first");
 const grid = (typeof gridName === "string" && Object.hasOwn(GRIDS, gridName) ? GRIDS[gridName] : undefined) ?? fail(`--grid must be one of ${Object.keys(GRIDS).join(", ")}`);
 const SETTINGS = grid.settings;
 const out = a.out ?? "runs/mycelium3d-screen";
@@ -227,6 +230,37 @@ function printTables(rows: Row[]): void {
   for (const r of [...rows].sort((x, y) => (x.id < y.id ? -1 : 1))) console.log(`| ${r.id} | ${fmt(r.seconds, 1)} | ${r.ledgerChecks} | ${r.nMin} / ${r.nMax} | ${r.refused} | ${r.readouts.at(-1).step} |`);
 }
 
+// ---- leads tally -------------------------------------------------------------------------------------------------
+
+/** One row per seed per arm against LEADS_BARS, then a line per arm; a run whose late window is not complete aborts the tally. */
+function printLeads(rows: Row[]): void {
+  const late = `(${fmt(LEADS_BARS.lateFrom)}, steps]`;
+  console.log(`Leads tally, ${grid.title}: late window = readouts with step in ${late}. Keeps bodies = share of particles bonded >= ${LEADS_BARS.bondedShare} at every late readout; spans = a G1-to-G8 trail component in at least ${LEADS_BARS.spanShare} of the late readouts. Net lift is matter-layers per 1,000 steps by particles.\n`);
+  for (const st of SETTINGS) {
+    const rs = seeds.map((sd) => rows.find((r) => r.id === `${st.id}.s${sd}`)).filter((r): r is Row => !!r);
+    if (!rs.length) continue;
+    const ts = rs.map((r) => {
+      try { return { seed: r.config.seed as number, t: leadsTally(r as LeadsRun) }; } catch (e) { return fail(`${r.id}: ${(e as Error).message}`); }
+    });
+    const bonded = ts.some((x) => x.t.keepsBodies !== null);
+    console.log(`#### ${st.id}\n`);
+    console.log("| seed | particles | bonded share min / mean / max | keeps bodies | largest body (max) | bodies 2+ | closed rings | late reads with G1-G8 trail | spans | trail P | net lift /1k steps |");
+    console.log("|---|---|---|---|---|---|---|---|---|---|---|");
+    for (const { seed, t } of ts) {
+      const yn = (v: boolean | null) => (v === null ? "-" : v ? "yes" : "no");
+      const share = t.keepsBodies === null ? "-" : `${fmt(t.bondedMin, 4)} / ${fmt(t.bondedMean, 4)} / ${fmt(t.bondedMax, 4)}`;
+      console.log(`| ${seed} | ${fmt(t.particlesMean)} | ${share} | ${yn(t.keepsBodies)} | ${fmt(t.largestBodyMax)} | ${fmt(t.bodiesMean, 1)} | ${fmt(t.ringsMean, 1)} | ${t.spanReads} of ${t.late} | ${yn(t.spans)} | ${fmt(t.trailMean)} | ${fmt(t.netUpMean)} |`);
+    }
+    const list = (f: (t: ReturnType<typeof leadsTally>) => boolean) => {
+      const k = ts.filter((x) => f(x.t)).map((x) => x.seed);
+      return `${k.length} of ${ts.length} seeds (${k.length ? k.join(", ") : "none"})`;
+    };
+    console.log("");
+    if (bonded) console.log(`- keeps bodies: ${list((t) => t.keepsBodies === true)}`);
+    console.log(`- spans: ${list((t) => t.spans)}\n`);
+  }
+}
+
 // ---- pictures ----------------------------------------------------------------------------------------------------
 
 const label = (r: Row) => {
@@ -267,6 +301,7 @@ async function render(rows: Row[]): Promise<void> {
 // ---- main --------------------------------------------------------------------------------------------------------
 
 if (a.table) { printTables(await loadRows()); Deno.exit(0); }
+if (a.leads) { printLeads(await loadRows()); Deno.exit(0); }
 if (a.render) { await render(await loadRows()); Deno.exit(0); }
 await Deno.mkdir(`${out}/runs`, { recursive: true });
 const path = (id: string) => `${out}/runs/${id}.json`;

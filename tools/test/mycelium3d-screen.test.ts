@@ -1,12 +1,13 @@
 // The 3D mycelium screen's pure readouts (tools/mycelium3d/observe-screen.ts): the 36-run grid validates, upward transport on a tiny
 // synthetic pair of states (sign, id matching, what it misses), the largest 6-connected trail component (wrap in x and y, closed z),
-// owner edges, the readout by depth against the world's totals, the projections, the fingerprint, and the bond readouts (bodies, survival).
+// owner edges, the readout by depth against the world's totals, the projections, the fingerprint, the bond readouts (bodies, survival),
+// and the leads tally against its bars.
 import { describe, expect, it } from "vitest";
 import { BOND_NONE, createWorld, defaultConfig, lightPlane, matterTotal, type Mycelium3dState, POS_SHIFT, step, validateConfig, validateState } from "../mycelium3d/world.ts";
 import {
   addTransport, componentSpans, contactSheet, drawText, emptyTransport, fieldFlux, fingerprint, GROUPS, groupOf, largestComponent, logT, ownerEdges, projections, readout,
   GRIDS, OWNER3D, PILOT_SEEDS, SCREEN2, SCREEN2_SEEDS, screenConfig, SEEDS, SETTINGS, sharedMax, textWidth, WASTE_SHADE,
-  BODIES, BONDS3D, bondReadout, bondSurvival, emptySurvival,
+  BODIES, BONDS3D, bondReadout, bondSurvival, emptySurvival, LEADS_BARS, leadsTally, type LeadsReadout,
 } from "../mycelium3d/observe-screen.ts";
 
 const L = 1 << POS_SHIFT;
@@ -288,5 +289,51 @@ describe("bonds and bodies", () => {
     expect(p.topBonded!.reduce((a, v) => a + v, 0)).toBe(bonded);
     expect(readout(createWorld(defaultConfig({ width: 16, height: 16, depth: 8, founders: 10 }))).bonds).toBeNull();
     expect(bondSurvival(emptySurvival(), s, s)).toEqual({ bonds: held / 2, bothAlive: held / 2, kept: held / 2 });
+  });
+});
+
+describe("leadsTally", () => {
+  // 50,000 steps read every 2,000: the late window (25,000, 50,000] holds 13 readouts, 26,000 to 50,000.
+  const run = (shares: (number | null)[], spanAt: (i: number) => boolean, windows = false) => {
+    const readouts: LeadsReadout[] = Array.from({ length: 25 }, (_, i) => {
+      // The 12 early readouts (step <= 25,000) have no one bonded and a spanning component: neither may count.
+      const late = i >= 12, share = late ? shares[i - 12] : shares[0] === null ? null : 0;
+      return {
+        step: 2000 * (i + 1), n: 1000, trailMass: 10 * i, spans: { topToFloorGroups: !late || spanAt(i - 12) ? 1 : 0 },
+        bonds: share === null ? null : { bonded: Math.round(share * 1000), largest: i, bodies: 2 * i, rings: 1 },
+      };
+    });
+    return { steps: 50000, every: 2000, readouts, ...(windows ? { windows: readouts.map((x) => ({ step: x.step, transport: { net: x.step > 25000 ? 4000 : 999999 } })) } : {}) };
+  };
+  const all = (v: number | null) => new Array(13).fill(v);
+  it("keeps bodies at exactly the bar at every late readout, and not with one late readout below it", () => {
+    const t = leadsTally(run(all(0.25), () => false, true), LEADS_BARS);
+    expect([t.late, t.keepsBodies, t.bondedMin, t.bondedMax]).toEqual([13, true, 0.25, 0.25]);
+    expect([t.largestBodyMax, t.bodiesMean, t.ringsMean, t.particlesMean, t.trailMean, t.netUpMean]).toEqual([24, 36, 1, 1000, 180, 2000]);
+    expect([t.spanReads, t.spans]).toEqual([0, false]);
+    const one = all(0.9); one[6] = 0.249;
+    expect(leadsTally(run(one, () => false)).keepsBodies).toBe(false);
+  });
+  it("spans on 7 of 13 late readouts, not on 6", () => {
+    const six = leadsTally(run(all(null), (i) => i < 6)), seven = leadsTally(run(all(null), (i) => i >= 6));
+    expect([six.spanReads, six.spans]).toEqual([6, false]);
+    expect([seven.spanReads, seven.spans]).toEqual([7, true]);
+  });
+  it("has keepsBodies null and NaN bond numbers without bonds, and NaN net lift without windows", () => {
+    const t = leadsTally(run(all(null), () => true));
+    expect(t.keepsBodies).toBeNull();
+    expect([t.bondedMean, t.largestBodyMax, t.netUpMean].every(Number.isNaN)).toBe(true);
+    expect(t.spans).toBe(true);
+  });
+  it("throws on a partial or gapped late window, on missing spans, and on bonds in only some late readouts", () => {
+    const short = run(all(0.5), () => false);
+    expect(() => leadsTally({ ...short, readouts: short.readouts.slice(0, 24) })).toThrow(/late window/);
+    expect(() => leadsTally({ ...short, readouts: short.readouts.filter((x) => x.step !== 40000) })).toThrow(/late window/);
+    expect(() => leadsTally({ ...short, steps: 24000, readouts: short.readouts.slice(0, 12) })).toThrow(/must exceed/);
+    const noSpans = run(all(0.5), () => false);
+    delete (noSpans.readouts[20] as Partial<LeadsReadout>).spans;
+    expect(() => leadsTally(noSpans)).toThrow(/spans/);
+    const mixed = all(0.5); mixed[3] = null;
+    expect(() => leadsTally(run(mixed, () => false))).toThrow(/bonds in 12 of 13/);
   });
 });

@@ -283,3 +283,6 @@ By eye (bodies sheet):
 
 - **The `/mycelium3d/` page option** (`apps/lab/src/mycelium3d/settings.ts`) and drawing bonds as links. These need a page control, the URL key, a new link pass in the renderer and an e2e run. The GPU was booked by the screen, and with bodies purged under upkeep there would be little to see. The world and GPU twin support it: `GpuMycelium3d.view.bonds` exposes the bond-slot planes for a renderer. It is left as a follow-up.
 
+## Follow-up
+
+The cost-0 lead was rerun on twelve fresh seeds the same day: none kept bodies by a bar fixed beforehand (`leads-screen-2026-11-16.md`). The `/mycelium3d/` page now has the Bonds option and draws bonds as links, so the "Not done" item above is done.

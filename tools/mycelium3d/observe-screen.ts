@@ -129,6 +129,68 @@ export const BODIES: readonly Setting[] = [
   bondSetting({ bondBreak: BONDS3D.bondBreak }),
 ];
 
+// ---- the leads screen: the two lone-seed leads on fresh seeds (16 Nov 2026) --------------------------------------------
+
+/** Twelve fresh seeds: 1, 2, 11 to 14, 21 and 22 are spent on the earlier screens and pilots. */
+export const LEADS_SEEDS: readonly number[] = [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42];
+/**
+ * The two arms that showed a lead on a minority of seeds, unchanged: bonds without the upkeep (the bodies screen's diagnostic arm,
+ * 1 of 4 seeds kept bodies) and the toll alone (screen 2, a surface-to-floor trail component late on 2 of 4 seeds). The bars are
+ * LEADS_BARS, written before the runs (experiments/mycelium3d/leads-screen-2026-11-16.md).
+ */
+export const LEADS: readonly Setting[] = [bondSetting({ bondBreak: BONDS3D.bondBreak }), { id: "sink6.toll.k64", sink: 6, trail: "toll", lightK: 64 }];
+/** Late window (lateFrom, steps]; a seed keeps bodies at share >= bondedShare in EVERY late readout; it spans when at least spanShare of its late readouts have a G1-to-G8 trail component. */
+export const LEADS_BARS = { lateFrom: 25000, bondedShare: 0.25, spanShare: 0.5 } as const;
+
+/** The parts of a readout the leads tally reads (a full Readout fits). */
+export interface LeadsReadout {
+  step: number; n: number; trailMass: number; spans: Pick<Spans, "topToFloorGroups">;
+  bonds: Pick<BondReadout, "bonded" | "largest" | "bodies" | "rings"> | null;
+}
+export interface LeadsRun { steps: number; every: number; readouts: readonly LeadsReadout[]; windows?: readonly { step: number; transport: Pick<Transport, "net"> }[] }
+export interface LeadsTally {
+  late: number;
+  /** Share of particles bonded over the late readouts (NaN without bonds); keepsBodies is null without bonds. */
+  bondedMin: number; bondedMean: number; bondedMax: number; keepsBodies: boolean | null;
+  /** Late readouts with a G1-to-G8 trail component, and whether that is at least spanShare of them. */
+  spanReads: number; spans: boolean;
+  largestBodyMax: number; bodiesMean: number; ringsMean: number; particlesMean: number; trailMean: number;
+  /** Net matter lifted by particles per 1,000 steps (matter-layers), late window mean; NaN without windows. */
+  netUpMean: number;
+}
+
+/**
+ * One seed against the leads bars, over the late readouts (lateFrom, steps]. Throws unless the late window holds exactly one readout
+ * at every multiple of `every` in it, so a partial run is never tallied, and when bonds are present in some late readouts but not others.
+ */
+export function leadsTally(run: LeadsRun, bars: { lateFrom: number; bondedShare: number; spanShare: number } = LEADS_BARS): LeadsTally {
+  const { steps, every } = run;
+  if (!(every > 0) || !(steps > bars.lateFrom)) throw new Error(`leadsTally: steps ${steps} must exceed lateFrom ${bars.lateFrom} (every ${every})`);
+  const want: number[] = [];
+  for (let t = (Math.floor(bars.lateFrom / every) + 1) * every; t <= steps; t += every) want.push(t);
+  const ro = run.readouts.filter((x) => x.step > bars.lateFrom);
+  if (ro.length !== want.length || ro.some((x, i) => x.step !== want[i])) {
+    throw new Error(`leadsTally: late window (${bars.lateFrom}, ${steps}] has readouts at [${ro.map((x) => x.step).join(", ")}], expected ${want.length} at every ${every}`);
+  }
+  for (const x of ro) if (typeof x.spans?.topToFloorGroups !== "number") throw new Error(`leadsTally: readout at step ${x.step} has no spans.topToFloorGroups`);
+  const withBonds = ro.filter((x) => x.bonds).length;
+  if (withBonds !== 0 && withBonds !== ro.length) throw new Error(`leadsTally: bonds in ${withBonds} of ${ro.length} late readouts`);
+  const avg = (v: number[]) => (v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN);
+  const bonded = withBonds ? ro.map((x) => (x.n ? x.bonds!.bonded / x.n : 0)) : [];
+  const spanReads = ro.filter((x) => x.spans.topToFloorGroups >= 1).length;
+  const wi = (run.windows ?? []).filter((w) => w.step > bars.lateFrom);
+  return {
+    late: ro.length,
+    bondedMin: withBonds ? Math.min(...bonded) : NaN, bondedMean: avg(bonded), bondedMax: withBonds ? Math.max(...bonded) : NaN,
+    keepsBodies: withBonds ? bonded.every((v) => v >= bars.bondedShare) : null,
+    spanReads, spans: spanReads / ro.length >= bars.spanShare,
+    largestBodyMax: withBonds ? Math.max(...ro.map((x) => x.bonds!.largest)) : NaN,
+    bodiesMean: withBonds ? avg(ro.map((x) => x.bonds!.bodies)) : NaN, ringsMean: withBonds ? avg(ro.map((x) => x.bonds!.rings)) : NaN,
+    particlesMean: avg(ro.map((x) => x.n)), trailMean: avg(ro.map((x) => x.trailMass)),
+    netUpMean: avg(wi.map((w) => (1000 * w.transport.net) / every)),
+  };
+}
+
 export interface Grid { settings: readonly Setting[]; seeds: readonly number[]; title: string }
 export const GRIDS: Record<string, Grid> = {
   first: { settings: SETTINGS, seeds: SEEDS, title: "3D MYCELIUM TRAIL SCREEN" },
@@ -137,6 +199,7 @@ export const GRIDS: Record<string, Grid> = {
   "owner-darkfloor": { settings: SCREEN2, seeds: SCREEN2_SEEDS, title: "3D MYCELIUM OWNER / DARK-FLOOR SCREEN" },
   "bond-pilots": { settings: BOND_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM BOND SIZING PILOTS" },
   bodies: { settings: BODIES, seeds: SCREEN2_SEEDS, title: "3D MYCELIUM BODIES (BONDS) SCREEN" },
+  leads: { settings: LEADS, seeds: LEADS_SEEDS, title: "3D MYCELIUM LEADS SCREEN (BODIES WITHOUT UPKEEP, TOLL SPAN)" },
 };
 
 /** What a stored run must match to be reused: the readout definitions, the config and every cadence. */
