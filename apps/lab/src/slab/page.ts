@@ -1,16 +1,22 @@
-// The private slab viewer (/slab/): reads the cells back after each batch of steps and draws them to 2D canvases.
-// Rung A only: no new shader, no volume renderer. Every create, advance, readback and destroy goes through one serial queue.
+// The slab viewer (/slab/): reads the cells back after each batch of steps and draws them, either as 2D layer tiles or as a
+// volume (apps/lab/src/volume3d/, packed from the same frame on the CPU). Every create, advance, readback and destroy goes
+// through one serial queue; the volume view only ever sees frames that passed the same current-world check as the tiles.
 import { applySettings, SUBMIT_STEPS } from "../../../../experiments/3d-rps/gate0-spike/adapter.ts";
 import { GpuSim3 as RpsSim3 } from "../../../../experiments/3d-rps/gate0-spike/gpu-sim3-rps.ts";
 import { jobConfig, mixParams } from "../../../../experiments/3d-rps/gate0-spike/rungs.ts";
 import { rpsMix } from "../../../../experiments/3d-rps/gate0-spike/world.ts";
 import { rpsLabels } from "@bl/metrics";
-import { CH, G, initWorld, presetById } from "@bl/schema";
+import { CH, G, initWorld } from "@bl/schema";
 import { GpuSim3 as StockSim3 } from "@bl/sim-gpu";
 import {
-  BURN_IN, CYCLIC_SEEDS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SEEDS, ECO_SIZES, KILL_OPTIONS, PACES, SPREAD,
-  cyclicRecord, cyclicSettings, ecoConfig, ecoRecordId, type CyclicChoice, type EcoChoice, type KillChoice, type Pace,
+  BURN_IN, CANOPY_OPTIONS, CYCLIC_SEEDS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SEEDS, JAR_OPTIONS, JAR_SEEDS, KILL_OPTIONS, PACES, SPREAD,
+  cyclicRecord, cyclicSettings, ecoConfig, ecoInit, ecoRecordId, isCanopy, isJar, sizesFor, type CyclicChoice, type EcoChoice, type KillChoice, type Pace,
 } from "./settings.ts";
+import { PRESETS } from "../volume3d/camera.ts";
+import { Disposer } from "../volume3d/approaches/disposer.ts";
+import { RENDERERS } from "../volume3d/approaches/registry.ts";
+import type { ParamSpec } from "../volume3d/contract.ts";
+import { VolumeView } from "../volume3d/view.ts";
 import { CYCLIC_COLOURS, EMPTY_RGB, censusCyclic, censusEco, paintCombined, paintLayer, share, tileLayout, type Frame } from "./render.ts";
 import { createCyclic, createEco, getDevice, type WorldSim } from "./worlds.ts";
 
@@ -24,8 +30,49 @@ const S = {
   playing: false,
   view: "combined" as "combined" | "layer",
   layer: 0,
+  display: "layers" as "layers" | "volume",
 };
 const dimsText = (s: readonly number[]) => `${s[0]} by ${s[1]} by ${s[2]}`;
+/** Every ecology option the page offers: the M4 picks, the M4b canopy and the jar levers screen. */
+const ALL_ECO = [...ECO_OPTIONS, ...CANOPY_OPTIONS, ...JAR_OPTIONS];
+/** Keeps the ecology size one the chosen option runs at (a jar setting only at 64 by 64 by 64, the others at the slab sizes). */
+function fitEcoSize() {
+  const sizes = sizesFor(S.eco.option);
+  if (!sizes.some((z) => z.join("x") === S.eco.size.join("x"))) S.eco.size = [sizes[0][0], sizes[0][1], sizes[0][2]];
+}
+
+// ---- link parameters -------------------------------------------------------------------------------------------------
+// Optional, for links and for tools/volume-capture: world, setting (an ecology setting id, or the cyclic ring rule), seed,
+// size (WxHxD, one of the listed sizes), display (layers or volume), and for the volume renderer, stretch, peel and camera
+// (a pose id). A value the page does not offer is ignored, so a bad link opens the defaults instead of failing. Values are
+// matched against the page's own lists or own keys only, never inherited ones (camera=toString is just unknown).
+const linkVolume: { renderer?: VolumeView["renderer"]; stretch?: number; peel?: number; camera?: string } = {};
+function readLink() {
+  const q = new URLSearchParams(location.search);
+  const int = (k: string, lo: number, hi: number) => {
+    const raw = q.get(k);
+    const n = raw === null || !/^\d+$/.test(raw) ? NaN : Number(raw);
+    return Number.isInteger(n) && n >= lo && n <= hi ? n : undefined;
+  };
+  const world = q.get("world");
+  if (world === "cyclic" || world === "eco") S.world = world;
+  const setting = q.get("setting");
+  if (setting && S.world === "cyclic" && KILL_OPTIONS.some((k) => k.id === setting)) S.cyc.kill = setting as KillChoice;
+  if (setting && S.world === "eco" && ALL_ECO.some((o) => o.id === setting)) S.eco.option = setting;
+  const seed = int("seed", 0, 999999);
+  if (seed !== undefined) { if (S.world === "cyclic") S.cyc.seed = seed; else S.eco.seed = seed; }
+  const size = (S.world === "cyclic" ? CYCLIC_SIZES : sizesFor(S.eco.option)).find((z) => z.join("x") === q.get("size"));
+  if (size) { if (S.world === "cyclic") S.cyc.size = [size[0], size[1], size[2]]; else S.eco.size = [size[0], size[1], size[2]]; }
+  fitEcoSize();
+  const display = q.get("display");
+  if (display === "layers" || display === "volume") S.display = display;
+  const renderer = RENDERERS.find((r) => r.id === q.get("renderer"));
+  if (renderer) linkVolume.renderer = renderer.id;
+  linkVolume.stretch = int("stretch", 1, 16);
+  linkVolume.peel = int("peel", 0, 63); // the deepest jar has 64 layers; syncPeel holds it to the slab shown
+  const camera = q.get("camera");
+  if (camera && Object.hasOwn(PRESETS, camera)) linkVolume.camera = camera;
+}
 
 // ---- serial queue ----------------------------------------------------------------------------------------------------
 let chain: Promise<unknown> = Promise.resolve();
@@ -100,13 +147,16 @@ function draw(f: Frame) {
   drawLog?.push(`${S.world}:${f.kind}@${f.step}`);
   buildTiles(f);
   const { W, H, D } = f.dims;
-  const buf = new Uint8ClampedArray(W * H * 4);
-  for (let z = 0; z < D; z++) {
-    paintLayer(f, z, buf);
-    ctxOf(tileCanvases[z]).putImageData(new ImageData(buf, W, H), 0, 0);
+  if (S.display === "volume") drawVolume(f);
+  else {
+    const buf = new Uint8ClampedArray(W * H * 4);
+    for (let z = 0; z < D; z++) {
+      paintLayer(f, z, buf);
+      ctxOf(tileCanvases[z]).putImageData(new ImageData(buf, W, H), 0, 0);
+    }
+    if (S.view === "combined") paintCombined(f, buf); else paintLayer(f, S.layer, buf);
+    ctxOf($("combined")).putImageData(new ImageData(buf, W, H), 0, 0);
   }
-  if (S.view === "combined") paintCombined(f, buf); else paintLayer(f, S.layer, buf);
-  ctxOf($("combined")).putImageData(new ImageData(buf, W, H), 0, 0);
   const pct = (a: number, b: number) => `${(100 * share(a, b)).toFixed(1)} %`;
   const plane = W * H;
   let line: string;
@@ -138,6 +188,138 @@ function draw(f: Frame) {
     : `Layer ${S.layer} only${S.layer === 0 ? " (the surface)" : ""}.`;
   document.querySelectorAll<HTMLElement>(".slab-tile").forEach((el) => { el.dataset.picked = String(S.view === "layer" && Number(el.dataset.z) === S.layer); });
   stats.drawMs = performance.now() - t0;
+}
+
+// ---- volume view -----------------------------------------------------------------------------------------------------
+let volume: VolumeView | null = null;
+let volumeShown = ""; // the frame (world:kind@step) last packed into the volume
+
+function drawVolume(f: Frame) {
+  if (!volume) return;
+  volume.upload(f, f.kind === "eco" ? { lightK: ecoConfig(S.eco).lightK } : {});
+  volumeShown = `${S.world}:${f.kind}@${f.step}`;
+  volumeCaption(f);
+  $("volume-canvas").setAttribute("aria-label", `Volume view of all ${f.dims.D} layers at step ${f.step}`);
+}
+
+function volumeCaption(f: Frame) {
+  const { W, H, D } = f.dims;
+  const k = volume?.stretch ?? 1;
+  const shape = k === 1
+    ? `at the world's true shape: ${W} by ${H} cells across and ${D} deep, so the slab is a thin sheet. `
+    : `with depth stretched ${k} times as a viewing aid: the world is ${W} by ${H} cells across and only ${D} deep. `;
+  $("volume-cap").textContent = `All ${D} layers at step ${f.step}, layer 0 (the surface, where light enters) on top, ${shape}` +
+    (f.kind === "eco" ? "Colour is the lineage colour; how solid a cell looks is how much body it holds. " : "Colour is the type; empty cells are clear. ") +
+    "Drag to turn it, the wheel or a pinch zooms, shift-drag moves it; with the picture focused, the arrow keys turn it and + and - zoom.";
+}
+
+function syncPeel() {
+  if (!volume) return;
+  const max = Math.max(0, (volume.layers || (S.world === "cyclic" ? S.cyc.size : S.eco.size)[2]) - 1);
+  const peel = $<HTMLInputElement>("peel");
+  peel.max = String(max);
+  if (volume.peel > max) volume.peel = max;
+  peel.value = String(volume.peel);
+  $("peel-out").textContent = String(volume.peel);
+  const cut = $<HTMLInputElement>("cut");
+  cut.value = String(Math.round(volume.cut * 100));
+  $("cut-out").textContent = cut.value;
+}
+
+let lookSeq = 0;
+async function renderLook() {
+  if (!volume) return;
+  const host = $("volume-params");
+  const seq = ++lookSeq; // a slower, earlier call must not rebuild the panel over a newer renderer's controls
+  let specs: ParamSpec[];
+  try { specs = await volume.specs(); } catch (e) { if (seq === lookSeq) console.error("slab: the view's settings could not load", e); return; }
+  if (seq !== lookSeq) return;
+  host.replaceChildren();
+  for (const p of specs) {
+    const id = `look-${p.key}-${serial++}`;
+    const hint = document.createElement("p");
+    hint.className = "fine"; hint.id = `${id}-d`; hint.textContent = p.hint;
+    let input: HTMLInputElement | HTMLSelectElement;
+    if (p.kind === "select") {
+      const sel = document.createElement("select");
+      for (const o of p.options) { const op = document.createElement("option"); op.value = o.value; op.textContent = o.label; sel.append(op); }
+      sel.value = p.value;
+      sel.addEventListener("change", () => volume!.setParam(p.key, sel.value));
+      input = sel;
+    } else {
+      const inp = document.createElement("input");
+      if (p.kind === "toggle") {
+        inp.type = "checkbox"; inp.checked = p.value;
+        inp.addEventListener("change", () => volume!.setParam(p.key, inp.checked));
+      } else {
+        inp.type = "range"; inp.min = String(p.min); inp.max = String(p.max); inp.step = String(p.step); inp.value = String(p.value);
+        inp.addEventListener("input", () => volume!.setParam(p.key, Number(inp.value)));
+      }
+      input = inp;
+    }
+    input.id = id;
+    input.setAttribute("aria-describedby", hint.id);
+    const label = document.createElement("label");
+    label.htmlFor = id; label.textContent = p.label;
+    if (p.kind === "toggle") {
+      const row = document.createElement("div");
+      row.className = "check";
+      row.append(input, label);
+      host.append(row, hint);
+    } else host.append(label, input, hint);
+  }
+}
+
+function renderVolumeControls() {
+  if (!volume) return;
+  radios($("o-renderer"), "renderer", RENDERERS.map((r) => ({ value: r.id, title: r.title, text: r.text })), volume.renderer, (v) => {
+    volume!.setRenderer(v as VolumeView["renderer"]);
+    void renderLook();
+  });
+  const poses = $("camera-poses");
+  if (!poses.childElementCount) {
+    for (const [id, p] of Object.entries(PRESETS)) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "button quiet"; b.textContent = p.label; b.dataset.pose = id;
+      b.setAttribute("aria-describedby", "camera-help");
+      b.addEventListener("click", () => { volume!.setPose(id); $("camera-help").textContent = p.hint; });
+      poses.append(b, " ");
+    }
+    $("camera-help").textContent = `Jump to a view. ${PRESETS[linkVolume.camera ?? "oblique"]!.hint}`;
+  }
+  syncPeel();
+  void renderLook();
+}
+
+function setDisplay(d: "layers" | "volume") {
+  S.display = d;
+  const vol = d === "volume";
+  $("volume").hidden = !vol;
+  $<HTMLElement>("slab-views").hidden = vol;
+  $("layers-only").hidden = vol;
+  if (vol && !volume) {
+    volume = new VolumeView($<HTMLCanvasElement>("volume-canvas"), syncPeel);
+    applyLinkVolume(volume);
+    renderVolumeControls();
+  }
+  if (volume) {
+    if (vol && sharedDeviceForVolume) volume.attach(sharedDeviceForVolume);
+    volume.setActive(vol);
+  }
+  if (last) draw(last);
+}
+let sharedDeviceForVolume: GPUDevice | null = null;
+
+/** The link's volume settings, once, on the new view (the controls are drawn from it right after). */
+function applyLinkVolume(v: VolumeView) {
+  if (linkVolume.renderer) v.renderer = linkVolume.renderer;
+  if (linkVolume.stretch !== undefined) {
+    v.setStretch(linkVolume.stretch);
+    $<HTMLInputElement>("stretch").value = String(v.stretch);
+    $("stretch-out").textContent = String(v.stretch);
+  }
+  if (linkVolume.peel !== undefined) v.peel = linkVolume.peel; // clamped to the slab's layers by syncPeel and the first frame
+  if (linkVolume.camera) v.setPose(linkVolume.camera);
 }
 
 function statusLine(f: Frame) {
@@ -191,6 +373,13 @@ function currentChoiceText(): { record: string } {
     return { record: r ? `Recorded setting: job ${r.id} (class ${r.klass}), from GATE0-EXPLORATION${r.id.startsWith("g2-") ? "-2" : ""}.md. Exploration, not a result.` : "Not recorded: this combination of size, rule, seed and start was not run in the committed records. Exploration, not a result." };
   }
   const id = ecoRecordId(S.eco);
+  if (isJar(S.eco.option)) {
+    const s = (JAR_SEEDS as readonly number[]).includes(S.eco.seed);
+    return { record: `A setting of the jar levers screen (experiments/3d-slab/jar-levers-screen-2026-11-16.md)${s ? ", with a seed it ran" : "; the screen ran seeds 101 and 102 only"}. This is a fresh run from step 0, not a recorded state. Exploration, judged by eye: no setting passes or fails.` };
+  }
+  if (isCanopy(S.eco.option)) {
+    return { record: id ? `Re-run of an M4b calibration setting: run ${id} (experiments/3d-slab/m4b-results.tsv). That file holds summaries of the run, not its states, so this is a fresh run from step 0 with the same setting and seed, not a recorded state. The calibration found no setting that qualified. Exploration, not a result.` : "Not a calibration run: the M4b calibration ran this setting only at 256 by 256 by 8 on seeds 101, 102 and 103. Exploration, not a result." };
+  }
   return { record: id ? `Recorded setting: M4 calibration run ${id} (experiments/3d-slab/m4-results.tsv). The calibration found no setting that qualified, and this viewer starts at step 0 from eight small balls. Exploration, not a result.` : "Not recorded: this size or seed was not run in the M4 calibration, and 128 by 128 dynamics differ from the recorded 256 by 256 ones. Exploration, not a result." };
 }
 
@@ -201,6 +390,8 @@ async function rebuild(myGen: number) {
   say("Building the world…");
   $("provenance").textContent = currentChoiceText().record;
   const device = await getDevice((m) => fail(new Error(m)));
+  sharedDeviceForVolume = device;
+  volume?.attach(device);
   if (myGen !== gen) return;
   const made = S.world === "cyclic" ? await createCyclic(device, { ...S.cyc, size: [...S.cyc.size] as [number, number, number] }) : await createEco(device, { ...S.eco });
   counts.created++;
@@ -213,6 +404,8 @@ async function rebuild(myGen: number) {
 function restart() {
   gen++;
   last = null; // the picture on screen belongs to the old choice: no redraw (view or layer change) may use it from here on
+  volume?.clear();
+  volumeShown = "";
   const my = gen;
   queued(() => rebuild(my));
 }
@@ -263,7 +456,7 @@ function radios(host: HTMLElement, name: string, opts: Opt[], checked: string, o
 function sizeOpts(): Opt[] {
   return S.world === "cyclic"
     ? CYCLIC_SIZES.map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[0] === 256 ? "The size of the recorded 200,000-step runs; about 340 steps a second here. Fine detail, slower." : "The size of the registered pilot, about four times as fast; dynamics differ from the recorded 256 by 256 runs." }))
-    : ECO_SIZES.map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[0] === 256 ? "The recorded calibration size; about 160 to 280 steps a second here." : "Four times quicker, but not a recorded shape: dynamics differ from the calibration's." }));
+    : sizesFor(S.eco.option).map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[2] === 64 ? "The jar: 64 layers deep, the only size the jar settings run at; about 200 steps a second." : s[0] === 256 ? "The recorded calibration size; about 160 to 280 steps a second here." : "Four times quicker, but not a recorded shape: dynamics differ from the calibration's." }));
 }
 
 function renderControls() {
@@ -274,7 +467,11 @@ function renderControls() {
     { value: "eco", title: "Slab ecology (8 layers)", text: "The main rule set on a slab, in lineage colours. No setting qualified in calibration; some settings give a full carpet, some stay nearly empty." },
   ], S.world, (v) => { S.world = v as World; S.playing = false; syncPlay(); renderControls(); restart(); });
   radios($("o-kill"), "kill", KILL_OPTIONS.map((k) => ({ value: k.id, title: k.title, text: k.text })), S.cyc.kill, (v) => { S.cyc.kill = v as KillChoice; renderControls(); restart(); });
-  radios($("o-eco"), "eco", ECO_OPTIONS.map((o) => ({ value: o.id, title: `${o.title} (mu ${o.mu}, sigma ${o.sigma}, light ${o.lightK})`, text: o.text })), S.eco.option, (v) => { S.eco.option = v; renderControls(); restart(); });
+  radios($("o-eco"), "eco", ALL_ECO.map((o) => ({ value: o.id, title: `${o.title} (${o.nutrient === undefined ? "" : `nutrient ${o.nutrient}, `}mu ${o.mu}, sigma ${o.sigma}, light ${o.lightK})`, text: o.text })), S.eco.option, (v) => { S.eco.option = v; fitEcoSize(); renderControls(); restart(); });
+  radios($("o-display"), "display", [
+    { value: "layers", title: "Layers", text: "One flat tile per layer and a large top-down picture, as drawn from the start." },
+    { value: "volume", title: "Volume", text: "The whole slab drawn in 3D at its true shape, a thin sheet you can turn, zoom and peel layer by layer from the surface." },
+  ], S.display, (v) => setDisplay(v as "layers" | "volume"));
   radios($("o-size"), "size", sizeOpts(), (cyc ? S.cyc.size : S.eco.size).join("x"), (v) => {
     const size = v.split("x").map(Number) as [number, number, number];
     if (cyc) S.cyc.size = size; else S.eco.size = size;
@@ -293,9 +490,10 @@ function renderControls() {
   seed.value = String(cyc ? S.cyc.seed : S.eco.seed);
   const quick = $("seed-quick");
   quick.replaceChildren();
-  for (const s of cyc ? CYCLIC_SEEDS : ECO_SEEDS) {
+  const jar = !cyc && isJar(S.eco.option);
+  for (const s of cyc ? CYCLIC_SEEDS : jar ? JAR_SEEDS : ECO_SEEDS) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "button quiet"; b.textContent = `${s} (recorded)`;
+    b.type = "button"; b.className = "button quiet"; b.textContent = jar ? `${s} (as in the screen)` : !cyc && isCanopy(S.eco.option) ? `${s} (as in M4b)` : `${s} (recorded)`;
     b.addEventListener("click", () => { setSeed(s); });
     quick.append(b, " ");
   }
@@ -316,6 +514,8 @@ function setSeed(s: number) {
 function renderNotes() {
   $("notes").innerHTML = S.world === "cyclic"
     ? `<h2>What you are looking at</h2><p>Each colour is one of three types; dark cells are empty. A tile is one layer of a slab four cells deep. Edges wrap sideways (left meets right, top meets bottom) but the picture does not draw the wrap; the top and bottom layers are closed. Watch for spirals, blobs and flat or tilted fronts through depth. The kill only starts after ${BURN_IN.toLocaleString("en")} steps when the recorded start is chosen.</p><p>Status of this world: Gate 0 ended in a stop, so nothing here is a result. Spread ${SPREAD}, rate and seed come from the committed exploration records; the run is not a re-run of them and no hash match is claimed.</p>`
+    : isJar(S.eco.option)
+    ? `<h2>What you are looking at</h2><p>A jar 64 cells wide, 64 deep and 64 tall; layer 0, at the top, gets the light. Each tile is one layer. The world starts from eight small balls, and the jar fills over the first 10,000 to 20,000 steps. The jar settings are the arms of the jar levers screen: the same world, with one change each (where life starts, waste sinking, waste rotting on the floor, upwelling, or a ring of three types). Nothing here is a result; the screen was judged by eye.</p><p>Colours are lineage colours, as in the lab; dark squares are non-living cells lit by their nutrient.</p>`
     : `<h2>What you are looking at</h2><p>Each tile is one layer of an eight-layer slab; layer 0 gets the light. The world starts from eight small balls, so with the default setting on seed 101 the recorded full carpet appears only after about 15,000 steps, about a minute at the fastest pace; other settings and seeds do something else, and some stay nearly empty. The calibration found no setting that qualified, and the 3D line is closed at rung 1b; this viewer is for looking.</p><p>Colours are lineage colours, as in the lab; dark squares are non-living cells lit by their nutrient.</p>`;
 }
 
@@ -327,7 +527,25 @@ function debugHooks() {
     draws: () => drawLog,
     counts: () => ({ ...counts, live: counts.created - counts.destroyed, pending }),
     step: () => sim?.step ?? -1,
-    state: () => ({ world: S.world, cyc: S.cyc, eco: S.eco }),
+    state: () => ({ world: S.world, cyc: S.cyc, eco: S.eco, display: S.display }),
+    /** The volume view: what was packed last, its GPU errors and draw count, and a draw that waits for the renderer. */
+    volume: () => (volume ? { shown: volumeShown, errors: [...volume.errors], draws: volume.draws, live: volume.liveCount, renderer: volume.renderer, mounted: volume.mountedRenderer, painted: volume.lastPainted, peel: volume.peel, stretch: volume.stretch, resources: Disposer.live } : null),
+    volumeDraw: () => volume?.drawNow(),
+    volumeShot: async () => { await volume?.drawNow(); return ($("volume-canvas") as HTMLCanvasElement).toDataURL("image/png"); },
+    /** A capture still (tools/volume-capture): turntable off, no per-frame jitter or drift, the camera at the given pose
+     *  (absolute, unset fields as they are), drawn fresh. The picture then depends only on the frame and these settings. */
+    volumeStill: async (pose: { yaw?: number; pitch?: number; dist?: number } = {}) => {
+      if (!volume) return null;
+      volume.setTurntable(false);
+      $("turntable").setAttribute("aria-pressed", "false");
+      volume.still = true;
+      if (pose.yaw !== undefined) volume.cam.yaw = pose.yaw;
+      if (pose.pitch !== undefined) volume.cam.pitch = pose.pitch;
+      if (pose.dist !== undefined) volume.cam.dist = pose.dist;
+      await volume.drawNow();
+      const c = $("volume-canvas") as HTMLCanvasElement;
+      return { url: c.toDataURL("image/png"), w: c.width, h: c.height, yaw: volume.cam.yaw, pitch: volume.cam.pitch, dist: volume.cam.dist };
+    },
     /** Advances to exactly `n` steps in batches of 100 (cutting at the hand-over), then draws. */
     runTo: (n: number) => {
       const asked = gen; // captured when asked, not when the queue reaches it: a world change in between makes this a no-op
@@ -352,7 +570,7 @@ function debugHooks() {
       const cfg = ecoConfig(S.eco);
       const n = cfg.tileW * cfg.tileH * cfg.tileD!;
       const device = await getDevice(() => {});
-      const g = await StockSim3.create(device, initWorld(cfg, presetById("slab-spots")!.init));
+      const g = await StockSim3.create(device, initWorld(cfg, ecoInit(S.eco)));
       for (let b = 0; b < steps; b += SUBMIT_STEPS) g.run(Math.min(SUBMIT_STEPS, steps - b));
       const cells = await g.readCells();
       const lin = await g.readGenomeChannels(G.LIN_HI, 2);
@@ -393,6 +611,7 @@ function debugHooks() {
 }
 
 function boot() {
+  readLink();
   debugHooks();
   if (!navigator.gpu) {
     $("slab-body").hidden = true;
@@ -406,8 +625,22 @@ function boot() {
   $("step1").addEventListener("click", () => { S.playing = false; syncPlay(); stepBy(1); });
   $("step100").addEventListener("click", () => { S.playing = false; syncPlay(); stepBy(100); });
   $("seed").addEventListener("change", () => { const raw = $<HTMLInputElement>("seed").value.trim(); setSeed(raw === "" ? NaN : Number(raw)); });
+  $("peel").addEventListener("input", () => { if (volume) { volume.peel = Number($<HTMLInputElement>("peel").value); syncPeel(); volume.request(); } });
+  $("cut").addEventListener("input", () => { if (volume) { volume.cut = Number($<HTMLInputElement>("cut").value) / 100; syncPeel(); volume.request(); } });
+  $("stretch").addEventListener("input", () => {
+    const k = Number($<HTMLInputElement>("stretch").value);
+    $("stretch-out").textContent = String(k);
+    volume?.setStretch(k);
+    if (last && S.display === "volume") volumeCaption(last);
+  });
+  $("turntable").addEventListener("click", () => {
+    if (!volume) return;
+    volume.setTurntable(!volume.turntable);
+    $("turntable").setAttribute("aria-pressed", String(volume.turntable));
+  });
   const layer = $<HTMLInputElement>("layer");
   layer.addEventListener("input", () => { setLayer(Number(layer.value)); if (last) draw(last); });
+  if (S.display === "volume") setDisplay("volume");
   restart();
   requestAnimationFrame(tick);
 }

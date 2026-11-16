@@ -21,7 +21,10 @@ import { FRESH_MIN } from "./r2-protocol.ts";
 import { embargoReason, R2_SEEDS, R2B_WORLD_SEEDS } from "./r2b-seeds.ts";
 import { R3_WORLD_SEEDS } from "./r3-seeds.ts";
 import { R4_WORLD_SEEDS } from "./r4-seeds.ts";
+import { branchRates, type Branch, type BranchSide, seedPredicates, strengthLabel, doseOrdered, diffusionControlHolds } from "./conduit-labels.ts";
 import { createWorld, defaultConfig, energyTotal, matterTotal, type MyceliumConfig, type MyceliumState, validateState } from "./world.ts";
+
+export { branchRates, type Branch, type BranchSide, seedPredicates, strengthLabel, type StrengthCounts, doseOrdered, diffusionControlHolds } from "./conduit-labels.ts";
 
 export type Heredity4 = "inherit" | "blocked" | "physarum" | "blind";
 /** World seed = slot + offset. All below FRESH_MIN (9001), so tools/mycelium/run.ts would not refuse any of them; none is a registered world (auditSeeds). */
@@ -96,8 +99,7 @@ async function trailUseLogSeeds(): Promise<number[]> {
 const ledgerBad = (s: MyceliumState): boolean => matterTotal(s) - s.matter0 !== 0 || energyTotal(s) - (s.energy0 + s.totals.lightIn - s.totals.heat) !== 0 || validateState(s).length > 0;
 const sumA = (s: MyceliumState): number => { let t = 0; for (let k = 0; k < s.A.length; k++) t += s.A[k]; return t; };
 
-export interface BranchSide { nStart: number[]; births: number; deaths: number; intake: number; ledgerBad: number; first: { births: number; deaths: number; intake: number; n: number }; nEnd: number }
-export interface Branch { steps: number; on: BranchSide; off: BranchSide }
+
 
 /** 200 steps one at a time from the state `s0` (already on `gpu`), one read per step: n at the start of each step is the denominator. */
 async function runSide(gpu: GpuMycelium, s0: MyceliumState, steps: number): Promise<BranchSide> {
@@ -170,13 +172,7 @@ const med = (a: number[]): number => { const s = [...a].sort((x, y) => x - y); r
 const f = (v: number | null | undefined, d = 3) => (v === null || v === undefined || Number.isNaN(v) ? "-" : v.toFixed(d));
 const sv = (rs: Row[], g: (r: Row) => number | null | undefined, d = 3) => rs.map((r) => f(g(r), d)).join(" / ");
 const md = (rs: Row[], g: (r: Row) => number | null | undefined) => med(rs.map(g).filter((x): x is number => x !== null && x !== undefined));
-/** Branch deltas, per particle-step: births and intake, on minus off (the conduit's effect over the 200 steps). */
-export function branchRates(b: Branch | null): { bOn: number; bOff: number; iOn: number; iOff: number; rel: number | null } | null {
-  if (!b) return null;
-  const den = (s: BranchSide) => s.nStart.reduce((t, x) => t + x, 0);
-  const bOn = b.on.births / Math.max(1, den(b.on)), bOff = b.off.births / Math.max(1, den(b.off));
-  return { bOn, bOff, iOn: b.on.intake / Math.max(1, den(b.on)), iOff: b.off.intake / Math.max(1, den(b.off)), rel: bOn > 0 ? (bOn - bOff) / bOn : null };
-}
+
 
 function printTables(rows: Row[]): void {
   console.log("Per arm and heredity: values are window means over the heavy (500-step) or scalar (100-step) censuses; per-seed values in slot order; medians over seeds. Late = (steps/2, steps] (the second half of each run), early = (10k, 20k].\n");
@@ -219,26 +215,6 @@ function printTables(rows: Row[]): void {
 
 // ---- section 7 labels ----------------------------------------------------------------------------------------
 
-/** Per-seed predicates of DESIGN.md section 7 for an inherit run, paired with its blocked run (same slot) and the physarum anchor's acute. */
-export function seedPredicates(inh: Row, blk: Row | undefined, anchorAcute: number | null) {
-  const K = (inh.late.runValues.TM ?? 0) >= 0.1;
-  const br = branchRates(inh.branch);
-  const a = !!br && br.bOn > 0 && br.rel !== null && br.rel >= 0.05 && !inh.branch.on.ledgerBad && !inh.branch.off.ledgerBad && inh.branch.on.nEnd > 0 && inh.branch.off.nEnd > 0;
-  // (b): both groups present in at least half of the late-window heavy censuses, and the window means ordered.
-  const cs = inh.conduitSeries, late = cs.step.map((s: number, i: number) => (s > inh.steps / 2 ? i : -1)).filter((i: number) => i >= 0);
-  const both = late.filter((i: number) => cs.cols.impLayer[i] !== null && cs.cols.impNon[i] !== null).length;
-  const cl = inh.late.conduit;
-  const b = late.length > 0 && both * 2 >= late.length && cl.impLayer !== null && cl.impNon !== null && cl.impLayer > 0 && cl.impLayer > cl.impNon;
-  const bl = blk?.late;
-  const hi = (inh.late.conduit.occx - inh.late.conduit.occxShift) - (bl ? bl.conduit.occx - bl.conduit.occxShift : 0) > 0.25;
-  const sensOk = (x: number | null, y: number | null | undefined) => x !== null && x >= 0.005 && x >= 2 * (y ?? 0);
-  const hii = bl ? sensOk(cl.sensLevel, bl.conduit.sensLevel) || sensOk(cl.sensNut, bl.conduit.sensNut) : false;
-  const hiii = bl && anchorAcute !== null ? inh.late.r4.acute - bl.r4.acute > anchorAcute / 2 : false;
-  const H = !!bl && (hi || hii || hiii);
-  const G = !!bl && inh.late.r4.speed >= 0.05 && inh.late.r4.speed >= 0.5 * bl.r4.speed;
-  const d = cl.csat !== null && cl.csatCap !== null && cl.csat <= 0.5 && cl.csatCap <= 0.5;
-  return { K, a, b, d, H, G, c: H && G, hCases: { occx: hi, sens: hii, acute: hiii } };
-}
 
 function printLabels(rows: Row[]): void {
   const pick = (aid: string, h: string) => rows.filter((r) => r.armId === aid && r.heredity === h).sort((x, y) => x.slot - y.slot);
@@ -248,12 +224,12 @@ function printLabels(rows: Row[]): void {
   const m = (aid: string) => med(pick(aid, "inherit").map((r) => r.late.runValues.TM));
   const strengths = ["c2", "c8", "c32", "c128"];
   const control = ["diffA56", "diffA80", "diffA104"].map((id) => ({ id, kept: pick(id, "inherit").filter((r) => (r.late.runValues.TM ?? 0) >= 0.1).length, n: pick(id, "inherit").length }));
-  const fOk = control.every((c) => c.kept <= 1);
+  const fOk = diffusionControlHolds(control);
   console.log(`(f) control, uniform diffusion bracket kept: ${control.map((c) => `${c.id} ${c.kept}/${c.n}`).join(", ")} -> ${fOk ? "holds" : "FAILS"}`);
   console.log(`keyless inherit (base) kept: ${pick("base", "inherit").filter((r) => (r.late.runValues.TM ?? 0) >= 0.1).length}/${pick("base", "inherit").length}\n`);
   console.log("| strength | seeds | K | (a) branch | (b) import | (c) behaviour (H and G) | H without G | (d) unsaturated | (e) dose | label |");
   console.log("|---|---|---|---|---|---|---|---|---|---|");
-  const eOf = (s: string) => (s === "c2" ? true : s === "c8" ? m("c8") >= m("c2") : s === "c32" ? m("c32") >= 0.8 * m("c8") : m("c128") >= 0.8 * m("c32"));
+  const eOf = (s: string) => doseOrdered(s, m);
   for (const s of strengths) {
     const inh = pick(s, "inherit");
     if (!inh.length) continue;
@@ -262,19 +238,10 @@ function printLabels(rows: Row[]): void {
     const cnt = (g: (p: (typeof ps)[number]) => boolean) => kept.filter(g).length;
     const nK = kept.length, na = cnt((p) => p.a), nb = cnt((p) => p.b), nc = cnt((p) => p.c), nd = cnt((p) => p.d), nHnoG = cnt((p) => p.H && !p.G);
     const e = eOf(s);
-    const nTot = inh.length, need = Math.ceil(0.75 * nTot);
+    const nTot = inh.length;
     // Complete cohort: 4 or 8 seeds, a blocked partner per slot, and every diffusion control at the same size.
     const complete = (nTot === 4 || nTot === 8) && inh.every((r) => pick(s, "blocked").some((x) => x.slot === r.slot)) && control.every((c) => c.n === nTot);
-    let label: string;
-    if (!complete) label = "INCOMPLETE (no label: cohort or controls missing)";
-    else if (nK <= Math.floor(nTot / 4)) label = "PURGED";
-    else if (nK * 2 === nTot) label = "INCONCLUSIVE (extend to 8 seeds)";
-    else if (na >= need && nb >= need && nc >= need && nd >= need && e && fOk) label = "KEPT-AND-USED";
-    else if (na >= need && nb >= need && nd >= need && e && fOk && nHnoG >= need) label = "KEPT-STATIC-SPONGE";
-    else {
-      const why = [na < need && "(a)", nb < need && "(b)", nc < need && "(c)", nd < need && "(d)", !e && "(e)", !fOk && "(f)"].filter(Boolean).join(", ");
-      label = `KEPT-BY-PRESENCE-ONLY (failing: ${why})`;
-    }
+    const label = strengthLabel({ complete, nTot, nK, na, nb, nc, nd, nHnoG, e, fOk });
     console.log(`| ${s} | ${nTot} | ${nK}/${nTot} | ${na} | ${nb} | ${nc} | ${nHnoG} | ${nd} | ${e ? "yes" : "no"}${s === "c128" ? " (post hoc form)" : ""} | ${label} |`);
   }
   console.log("\nPer seed (inherit runs): K, a, b, c(H,G), d, and which H branch.\n");

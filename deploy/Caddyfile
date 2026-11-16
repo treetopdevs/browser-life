@@ -60,6 +60,7 @@
   redir /spatial /spatial/{?query} 308
   redir /predictability /predictability/{?query} 308
   redir /mycelium /mycelium/{?query} 308
+  redir /mycelium3d /mycelium3d/{?query} 308
   redir /assembly /assembly/{?query} 308
   redir /niche /niche/{?query} 308
   redir /moving-light /moving-light/{?query} 308

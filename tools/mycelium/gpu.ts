@@ -27,23 +27,44 @@ const W1_OFF = 0, B1_OFF = NN_I * NN_H, W2_OFF = B1_OFF + NN_H, B2_OFF = W2_OFF 
 
 /** ctl words: scalars, then the per-step stat pairs, then the cumulative total pairs (lo, hi). */
 const C = { n: 0, nextId: 1, nextGid: 2, step: 3, err: 4, surv: 5, wantTotal: 6, newGids: 7, stepHi: 8, cut: 9, stat: 16, tot: 32, words: 64 } as const;
+/**
+ * Free-layer counters (only with trailFreeLayer). Per-step free and paid units are one u32 word each (their sum is at most the total matter,
+ * below 2^31); the cumulative totals are (lo, hi) pairs, free then paid.
+ */
+const FC = { freeStep: 46, paidStep: 47, freeTot: 48, paidTot: 50 } as const;
 /** Order of the seven counter pairs, same as Totals. */
 const COUNTERS = ["lightIn", "heat", "births", "deaths", "refused", "contended", "mutations"] as const;
 const ERR_LEDGER = 2, ERR_STEP = 4;
 /** The step counter is exact up to 2^53 (the CPU's double): high word 2^21 with a zero low word. */
 const STEP_HI_MAX = 2 ** 21;
 
+/**
+ * The field buffer's plane offsets in words (the allocator uses this too). A keyless config gets exactly
+ * { A: 0, C: N, P: 2N, D: 3N, R: 4N, TK: 5N, SENT: 6N, words: 10N }. Planes for optional keys are appended after, so those offsets never move:
+ * DS (only with trailFreeLayer): per-cell sum of the particles' deposit requests; Z, Q (only with trailOwner): owner tag and owned trail,
+ * persistent and read back; W1, W2 (only with trailOwner): claim scratch.
+ */
+export function fieldLayout(c: Pick<MyceliumConfig, "width" | "height" | "trailFreeLayer" | "trailOwner">) {
+  const N = c.width * c.height;
+  const F = { A: 0, C: N, P: 2 * N, D: 3 * N, R: 4 * N, TK: 5 * N, SENT: 6 * N, words: 10 * N, DS: 0, Z: 0, Q: 0, W1: 0, W2: 0 };
+  if (c.trailFreeLayer !== undefined) { F.DS = F.words; F.words += N; }
+  if (c.trailOwner !== undefined) { F.Z = F.words; F.Q = F.words + N; F.W1 = F.words + 2 * N; F.W2 = F.words + 3 * N; F.words += 4 * N; }
+  return F;
+}
+
 function layouts(c: MyceliumConfig) {
   const N = c.width * c.height, cap = c.maxParticles;
   // Field buffer, in units of N words: A, C, P persist; D, R, taken are per-step cell scratch; SENT is diffusion scratch (4N).
-  const F = { A: 0, C: N, P: 2 * N, D: 3 * N, R: 4 * N, TK: 5 * N, SENT: 6 * N, words: 10 * N };
+  const F = fieldLayout(c);
   // Particle buffer (one of two, ping-ponged): eight u32 planes of cap, then genome words (40 per slot).
   const P = { ID: 0, PAR: cap, GID: 2 * cap, X: 3 * cap, Y: 4 * cap, M: 5 * cap, E: 6 * cap, AGE: 7 * cap, GEN: 8 * cap, words: (8 + GENOME_WORDS) * cap };
-  // Per-step particle scratch: planes of cap words, then three block-offset arrays of 256.
+  // Per-step particle scratch: planes of cap words, then three block-offset arrays of 256. FR (free share) and CDEP (claim deposit) come last, only with their key.
   const T = {
     CELL: 0, REQ: cap, GRANT: 2 * cap, MX: 3 * cap, MY: 4 * cap, DREQ: 5 * cap, SPL: 6 * cap, ALIVE: 7 * cap, WANTS: 8 * cap, NOVEL: 9 * cap,
-    LA: 10 * cap, LW: 11 * cap, LN: 12 * cap, BA: 13 * cap, BW: 13 * cap + 256, BN: 13 * cap + 512, DISC: 13 * cap + 768, words: 14 * cap + 768,
+    LA: 10 * cap, LW: 11 * cap, LN: 12 * cap, BA: 13 * cap, BW: 13 * cap + 256, BN: 13 * cap + 512, DISC: 13 * cap + 768, FR: 0, CDEP: 0, words: 14 * cap + 768,
   };
+  if (c.trailFreeLayer !== undefined) { T.FR = T.words; T.words += cap; }
+  if (c.trailOwner !== undefined) { T.CDEP = T.words; T.words += cap; }
   return { N, cap, F, P, T };
 }
 
@@ -62,15 +83,20 @@ function wgsl(c: MyceliumConfig): string {
     PHYS: c.controller === "physarum" ? 1 : 0, PDEP_SET: c.physarumDeposit === undefined ? 0 : 1, PDEP: c.physarumDeposit ?? 0, BLIND: c.blindTrailGradient === true ? 1 : 0,
     TD_SET: c.trailMoveDiscount === undefined ? 0 : 1, TD: c.trailMoveDiscount ?? 0, TOLL: c.trailDiscountMode === "toll" ? 1 : 0,
     CG_SET: c.trailConduit === undefined ? 0 : 1, CG: c.trailConduit ?? 0, CQ: c.trailConduitCap ?? 255,
+    GH_SET: c.trailConduitGhost === undefined ? 0 : 1, GH: c.trailConduitGhost ?? 0,
+    FL_SET: c.trailFreeLayer === undefined ? 0 : 1, FLC: c.trailFreeLayer ?? 0,
+    OWN: c.trailOwner === undefined ? 0 : c.trailOwner === "id" ? 1 : 2, TH_SET: c.ownerDefend === undefined ? 0 : 1, TH: c.ownerDefend ?? 0,
+    OC_SET: c.ownerConduit === undefined ? 0 : 1, OCG: c.ownerConduit ?? 0, OCQ: c.ownerConduitCap ?? 255, OGH_SET: c.ownerGhost === undefined ? 0 : 1, OGH: c.ownerGhost ?? 0,
+    C_FREE: FC.freeStep, C_PAID: FC.paidStep, TOT_FREE: FC.freeTot, TOT_PAID: FC.paidTot,
     MUTRATE: c.mutRate, MUTCOUNT: c.mutCount, MUTSTEP: c.mutStep, SPAN: c.weightSpan, SSHIFT: c.sensorShift, ESHIFT: c.energyShift, MSHIFT: c.massShift,
     NN_BYTES, W1_OFF, B1_OFF, W2_OFF, B2_OFF, GW: GENOME_WORDS,
     C_N: C.n, C_NEXTID: C.nextId, C_NEXTGID: C.nextGid, C_STEP: C.step, C_ERR: C.err, C_SURV: C.surv, C_WANTT: C.wantTotal, C_NEWG: C.newGids, C_STEPHI: C.stepHi, C_CUT: C.cut,
     S_LIGHT: C.stat, S_HEAT: C.stat + 2, S_BIRTHS: C.stat + 4, S_DEATHS: C.stat + 6, S_REFUSED: C.stat + 8, S_CONTENDED: C.stat + 10, S_MUT: C.stat + 12,
     TOT0: C.tot, ID_MAX_V: ID_MAX, ERR_LEDGER, ERR_STEP, STEP_HI_MAX, LEDGER_HI: Math.floor(LEDGER_MAX / 2 ** 32),
-    F_A: F.A, F_C: F.C, F_P: F.P, F_D: F.D, F_R: F.R, F_TK: F.TK, F_SENT: F.SENT,
+    F_A: F.A, F_C: F.C, F_P: F.P, F_D: F.D, F_R: F.R, F_TK: F.TK, F_SENT: F.SENT, F_DS: F.DS, F_Z: F.Z, F_Q: F.Q, F_W1: F.W1, F_W2: F.W2,
     P_ID: P.ID, P_PAR: P.PAR, P_GID: P.GID, P_X: P.X, P_Y: P.Y, P_M: P.M, P_E: P.E, P_AGE: P.AGE, P_GEN: P.GEN,
     T_CELL: T.CELL, T_REQ: T.REQ, T_GRANT: T.GRANT, T_MX: T.MX, T_MY: T.MY, T_DREQ: T.DREQ, T_SPL: T.SPL, T_ALIVE: T.ALIVE, T_WANTS: T.WANTS,
-    T_NOVEL: T.NOVEL, T_LA: T.LA, T_LW: T.LW, T_LN: T.LN, T_BA: T.BA, T_BW: T.BW, T_BN: T.BN, T_DISC: T.DISC,
+    T_NOVEL: T.NOVEL, T_LA: T.LA, T_LW: T.LW, T_LN: T.LN, T_BA: T.BA, T_BW: T.BW, T_BN: T.BN, T_DISC: T.DISC, T_FR: T.FR, T_CDEP: T.CDEP,
   };
   const head = Object.entries(consts).map(([k, v]) => `const ${k} = ${u(v)};`).join("\n");
   return `${head}\n${BODY}`;
@@ -141,7 +167,25 @@ fn k_clear(@builtin(global_invocation_id) g: vec3<u32>) {
 @compute @workgroup_size(1)
 fn k_begin() {
   for (var k = 0u; k < 14u; k++) { atomicStore(&ctl[S_LIGHT + k], 0u); }
+  atomicStore(&ctl[C_FREE], 0u);
+  atomicStore(&ctl[C_PAID], 0u);
   atomicStore(&ctl[C_CUT], 0xffffffffu);
+}
+
+// Optional planes cleared each step: the free layer's request sums, the owner claim scratch (W1, W2 are adjacent).
+@compute @workgroup_size(256)
+fn k_fl_clear(@builtin(global_invocation_id) g: vec3<u32>) {
+  if (g.x < N) { atomicStore(&fld[F_DS + g.x], 0u); }
+}
+@compute @workgroup_size(256)
+fn k_own_clear(@builtin(global_invocation_id) g: vec3<u32>) {
+  if (g.x < 2u * N) { atomicStore(&fld[F_W1 + g.x], 0u); }
+}
+
+// The owner tag of particle slot i: id + 1 or gid + 1 (exact, no wrap: ids end at 0xfffffffe). 0 means no owner.
+fn own_tag(i: u32) -> u32 {
+  if (OWN == 1u) { return pc[P_ID + i] + 1u; }
+  return pc[P_GID + i] + 1u;
 }
 
 // 1. Bin.
@@ -224,11 +268,17 @@ fn k_think(@builtin(global_invocation_id) g: vec3<u32>) {
   tmp[T_MY + i] = bitcast<u32>(o[1]);
   var room = 0u;
   if (BODYMAX > m0) { room = BODYMAX - m0; }
-  let r = min((MAXEAT * u32(max(o[2], 0))) >> 7u, room);
+  var r = min((MAXEAT * u32(max(o[2], 0))) >> 7u, room);
+  // Eating gate (owner worlds): a cell owned by a stranger with Q >= theta refuses my request, zeroed before the store and before the sum.
+  if (TH_SET == 1u) {
+    let z = atomicLoad(&fld[F_Z + ci]);
+    if (z != 0u && z != own_tag(i) && atomicLoad(&fld[F_Q + ci]) >= TH) { r = 0u; }
+  }
   tmp[T_REQ + i] = r;
   if (r > 0u) { atomicAdd(&fld[F_R + ci], r); }
   let dreq = (MAXDEP * u32(max(o[3], 0))) >> 7u;
   tmp[T_DREQ + i] = dreq;
+  if (FL_SET == 1u && dreq > 0u) { atomicAdd(&fld[F_DS + ci], dreq); }
   // Trail use (optional): the discount factor from the START-of-step trail in this cell. k_live adds trail in the same
   // dispatch, so it is read and stored here, where the field is untouched.
   if (TD_SET == 1u) {
@@ -246,6 +296,17 @@ fn k_grant(@builtin(global_invocation_id) g: vec3<u32>) {
   if (i >= ld(C_N)) { return; }
   let ci = tmp[T_CELL + i];
   let r = tmp[T_REQ + i];
+  // Free first layer: this particle's share of the room under the ceiling, from the START-of-step trail (k_live has not run yet).
+  if (FL_SET == 1u) {
+    let dq = tmp[T_DREQ + i];
+    let p0 = atomicLoad(&fld[F_P + ci]);
+    var rm = 0u;
+    if (FLC > p0) { rm = FLC - p0; }
+    let ds = atomicLoad(&fld[F_DS + ci]);
+    var fr = dq;
+    if (ds > rm) { fr = (dq * rm) / ds; }
+    tmp[T_FR + i] = fr;
+  }
   let a = atomicLoad(&fld[F_A + ci]);
   let rs = atomicLoad(&fld[F_R + ci]);
   var gr = r;
@@ -275,6 +336,7 @@ fn k_apply_eat(@builtin(global_invocation_id) g: vec3<u32>, @builtin(local_invoc
 fn live_one(i: u32) -> vec2<u32> {
   tmp[T_ALIVE + i] = 0u;
   tmp[T_WANTS + i] = 0u;
+  if (OWN != 0u) { tmp[T_CDEP + i] = 0u; }
   let ci = tmp[T_CELL + i];
   let gr = tmp[T_GRANT + i];
   var m = pc[P_M + i] + gr;
@@ -295,11 +357,29 @@ fn live_one(i: u32) -> vec2<u32> {
   en -= cost;
   heat += cost;
   var dep = min(tmp[T_DREQ + i], m);
-  if (dep * DEPCOST > en) { dep = en / DEPCOST; }
-  en -= dep * DEPCOST;
-  heat += dep * DEPCOST;
+  if (FL_SET == 0u) {
+    if (dep * DEPCOST > en) { dep = en / DEPCOST; }
+    en -= dep * DEPCOST;
+    heat += dep * DEPCOST;
+  } else {
+    // Free first layer: the free units pay nothing; only the paid rest is clipped by the energy left.
+    let free = min(tmp[T_FR + i], dep);
+    var paid = dep - free;
+    if (paid * DEPCOST > en) { paid = en / DEPCOST; }
+    dep = free + paid;
+    en -= paid * DEPCOST;
+    heat += paid * DEPCOST;
+    if (free > 0u) { atomicAdd(&ctl[C_FREE], free); }
+    if (paid > 0u) { atomicAdd(&ctl[C_PAID], paid); }
+  }
   m -= dep;
   if (dep > 0u) { atomicAdd(&fld[F_P + ci], dep); }
+  if (OWN != 0u && dep > 0u) {
+    // Z is not written until k_light, so this is the start-of-step owner. Mine: the owned trail grows. None: a claim candidate (k_claim_*).
+    let z = atomicLoad(&fld[F_Z + ci]);
+    if (z == own_tag(i)) { atomicAdd(&fld[F_Q + ci], dep); }
+    else if (z == 0u) { tmp[T_CDEP + i] = dep; }
+  }
   let ex = mul_frac(m, EXCK, 16u, draw(pb, 91u));
   m -= ex;
   if (ex > 0u) { atomicAdd(&fld[F_C + ci], ex); }
@@ -332,6 +412,32 @@ fn k_live(@builtin(global_invocation_id) g: vec3<u32>, @builtin(local_invocation
     let d = atomicLoad(&w_c);
     if (d > 0u) { atomicAdd(&ctl[S_DEATHS], d); }
   }
+}
+
+// 5b. Owner claims, three passes with no packed compare: the largest deposit per cell (W1), the largest tag among those (W2), then every
+// candidate with that tag adds its own deposit to Q. k_light gives a cell with no owner the tag W2. T_CDEP is 0 for a non-candidate.
+@compute @workgroup_size(256)
+fn k_claim_a(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  let d = tmp[T_CDEP + i];
+  if (d > 0u) { atomicMax(&fld[F_W1 + tmp[T_CELL + i]], d); }
+}
+@compute @workgroup_size(256)
+fn k_claim_b(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  let d = tmp[T_CDEP + i];
+  let ci = tmp[T_CELL + i];
+  if (d > 0u && d == atomicLoad(&fld[F_W1 + ci])) { atomicMax(&fld[F_W2 + ci], own_tag(i)); }
+}
+@compute @workgroup_size(256)
+fn k_claim_c(@builtin(global_invocation_id) g: vec3<u32>) {
+  let i = g.x;
+  if (i >= ld(C_N)) { return; }
+  let d = tmp[T_CDEP + i];
+  let ci = tmp[T_CELL + i];
+  if (d > 0u && own_tag(i) == atomicLoad(&fld[F_W2 + ci])) { atomicAdd(&fld[F_Q + ci], d); }
 }
 
 // 6-7. Scans over slot order: block-local exclusive prefix, then a prefix over the (at most 256) block totals.
@@ -519,11 +625,23 @@ fn k_light(@builtin(global_invocation_id) g: vec3<u32>, @builtin(local_invocatio
     atomicStore(&fld[F_C + k], cw - conv);
     atomicStore(&fld[F_A + k], atomicLoad(&fld[F_A + k]) + conv);
     li = conv * EA;
+    // A cell with no owner at the start of the step takes the claim winner's tag (W2 is 0 where nobody claimed).
+    if (OWN != 0u && atomicLoad(&fld[F_Z + k]) == 0u) { atomicStore(&fld[F_Z + k], atomicLoad(&fld[F_W2 + k])); }
     let pv = atomicLoad(&fld[F_P + k]);
     if (pv > 0u && PDECAY > 0u) {
-      let dec = min(pv, mul_frac(pv, PDECAY, 16u, draw(fb, 0u)));
+      let rd = draw(fb, 0u);
+      let dec = min(pv, mul_frac(pv, PDECAY, 16u, rd));
       atomicStore(&fld[F_P + k], pv - dec);
       atomicStore(&fld[F_C + k], atomicLoad(&fld[F_C + k]) + dec);
+      // Owned trail decays with the same draw; a cell whose Q reaches 0 has no owner.
+      if (OWN != 0u) {
+        let qv = atomicLoad(&fld[F_Q + k]);
+        if (qv > 0u) {
+          let qn = qv - min(qv, mul_frac(qv, PDECAY, 16u, rd));
+          atomicStore(&fld[F_Q + k], qn);
+          if (qn == 0u) { atomicStore(&fld[F_Z + k], 0u); }
+        }
+      }
     }
   }
   w_add(li);
@@ -551,6 +669,39 @@ fn send(f0: u32, De: u32, sp: u32, k: u32, conduit: bool) {
     atomicStore(&fld[F_SENT + 4u * k + d], mul_frac(portion, dd * 4u, 10u, draw(base, 1u + d * 3u + sp)));
   }
 }
+// The cell index of k shifted by (+s, +s) on the torus (the ghost controls read the field there).
+fn shift_cell(k: u32, s: u32) -> u32 { return ((k / W + s) % H) * W + (k % W + s) % W; }
+// Species A when the conduit has a ghost (trailConduitGhost) or is the owner conduit (ownerConduit). Same sends as send(), only the per-edge rate differs.
+fn send_x(k: u32) {
+  let base = cell_base(DSEED, ld(C_STEP), k);
+  let q = atomicLoad(&fld[F_A + k]);
+  let rot = base >> 30u;
+  let cx = k % W;
+  let cy = k / W;
+  var nbs = array<u32, 4>(cy * W + (cx + 1u) % W, cy * W + (cx + W - 1u) % W, ((cy + 1u) % H) * W + cx, ((cy + H - 1u) % H) * W + cx);
+  for (var d = 0u; d < 4u; d++) {
+    var portion = q >> 2u;
+    if (((d + rot) & 3u) < (q & 3u)) { portion += 1u; }
+    var dd = DIFFA;
+    if (OC_SET == 1u) {
+      var a = k;
+      var b = nbs[d];
+      if (OGH_SET == 1u) { a = shift_cell(k, OGH); b = shift_cell(nbs[d], OGH); }
+      let za = atomicLoad(&fld[F_Z + a]);
+      if (za != 0u && za == atomicLoad(&fld[F_Z + b])) {
+        let qm = min(min(atomicLoad(&fld[F_Q + a]), atomicLoad(&fld[F_Q + b])), OCQ);
+        dd = min(DIFFA + ((qm * OCG) >> 4u), 128u);
+      }
+    } else if (CG_SET == 1u) {
+      var a = k;
+      var b = nbs[d];
+      if (GH_SET == 1u) { a = shift_cell(k, GH); b = shift_cell(nbs[d], GH); }
+      let pm = min(min(atomicLoad(&fld[F_P + a]), atomicLoad(&fld[F_P + b])), CQ);
+      dd = min(DIFFA + ((pm * CG) >> 4u), 128u);
+    }
+    atomicStore(&fld[F_SENT + 4u * k + d], mul_frac(portion, dd * 4u, 10u, draw(base, 1u + d * 3u + 0u)));
+  }
+}
 fn gather(f0: u32, k: u32) {
   let cx = k % W;
   let cy = k / W;
@@ -564,6 +715,8 @@ fn gather(f0: u32, k: u32) {
 }
 @compute @workgroup_size(256)
 fn k_send_a(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send(F_A, DIFFA, 0u, g.x, CG_SET != 0u); } }
+@compute @workgroup_size(256)
+fn k_send_ax(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { send_x(g.x); } }
 @compute @workgroup_size(256)
 fn k_gather_a(@builtin(global_invocation_id) g: vec3<u32>) { if (g.x < N) { gather(F_A, g.x); } }
 @compute @workgroup_size(256)
@@ -603,6 +756,20 @@ fn k_finish() {
     atomicStore(&ctl[TOT0 + 2u * k], nl);
     atomicStore(&ctl[TOT0 + 2u * k + 1u], nh);
     if (k < 2u && (nh > LEDGER_HI || (nh == LEDGER_HI && nl > 0u))) { atomicOr(&ctl[C_ERR], ERR_LEDGER); }
+  }
+  if (FL_SET == 1u) {
+    // Free and paid units: per-step words into (lo, hi) lifetime pairs, checked against 2^50 like the other ledgers.
+    for (var k = 0u; k < 2u; k++) {
+      let lo = ld(C_FREE + k);
+      let o = ld(TOT_FREE + 2u * k);
+      let nl = o + lo;
+      var carry = 0u;
+      if (nl < o) { carry = 1u; }
+      let nh = ld(TOT_FREE + 2u * k + 1u) + carry;
+      atomicStore(&ctl[TOT_FREE + 2u * k], nl);
+      atomicStore(&ctl[TOT_FREE + 2u * k + 1u], nh);
+      if (nh > LEDGER_HI || (nh == LEDGER_HI && nl > 0u)) { atomicOr(&ctl[C_ERR], ERR_LEDGER); }
+    }
   }
 }
 `;
@@ -647,7 +814,8 @@ export class GpuMycelium {
     const layout = d.createPipelineLayout({ bindGroupLayouts: [bgl] });
     const module = d.createShaderModule({ code: wgsl(config) });
     for (const name of ["k_clear", "k_begin", "k_bin", "k_think", "k_grant", "k_apply_eat", "k_live", "k_scan_aw", "k_top_aw", "k_compact",
-      "k_scan_n", "k_top_n", "k_assign_gid", "k_trim", "k_light", "k_send_a", "k_gather_a", "k_send_c", "k_gather_c", "k_finish"]) {
+      "k_scan_n", "k_top_n", "k_assign_gid", "k_trim", "k_light", "k_send_a", "k_gather_a", "k_send_c", "k_gather_c", "k_finish",
+      "k_fl_clear", "k_own_clear", "k_claim_a", "k_claim_b", "k_claim_c", "k_send_ax"]) {
       this.pl[name] = d.createComputePipeline({ layout, compute: { module, entryPoint: name } });
     }
     const bg = (a: GPUBuffer, b: GPUBuffer) => d.createBindGroup({
@@ -684,9 +852,17 @@ export class GpuMycelium {
     const ctl = new Uint32Array(C.words);
     ctl[C.n] = s.n; ctl[C.nextId] = s.nextId; ctl[C.nextGid] = s.nextGid; [ctl[C.step], ctl[C.stepHi]] = pair(s.step);
     COUNTERS.forEach((k, j) => { [ctl[C.tot + 2 * j], ctl[C.tot + 2 * j + 1]] = pair(s.totals[k]); });
+    if (this.config.trailFreeLayer !== undefined) {
+      [ctl[FC.freeTot], ctl[FC.freeTot + 1]] = pair(s.totals.freeUnits ?? 0);
+      [ctl[FC.paidTot], ctl[FC.paidTot + 1]] = pair(s.totals.paidUnits ?? 0);
+    }
     q.writeBuffer(this.ctl, 0, ctl);
     const f = new Uint32Array(this.L.F.words);
     f.set(s.A.subarray(0, N), 0); f.set(s.C.subarray(0, N), N); f.set(s.P.subarray(0, N), 2 * N);
+    if (this.config.trailOwner !== undefined) {
+      if (!s.Z || !s.Q) throw new Error("GpuMycelium.upload: trailOwner needs the Z and Q planes");
+      f.set(s.Z.subarray(0, N), this.L.F.Z); f.set(s.Q.subarray(0, N), this.L.F.Q);
+    }
     q.writeBuffer(this.fld, 0, f);
     const buf = this.parts[this.cur];
     if (s.n > 0) {
@@ -709,13 +885,19 @@ export class GpuMycelium {
         pass.setBindGroup(0, this.bgs[this.cur]);
         const run = (name: string, x: number, y = 1) => { pass.setPipeline(this.pl[name]); pass.dispatchWorkgroups(x, y); };
         run("k_clear", Math.ceil(3 * N / WG));
+        if (c.trailFreeLayer !== undefined) run("k_fl_clear", cg);
+        if (c.trailOwner !== undefined) run("k_own_clear", Math.ceil(2 * N / WG));
         run("k_begin", 1);
         run("k_bin", pg); run("k_think", pg); run("k_grant", pg); run("k_apply_eat", cg); run("k_live", pg);
+        if (c.trailOwner !== undefined) { run("k_claim_a", pg); run("k_claim_b", pg); run("k_claim_c", pg); }
         run("k_scan_aw", pg, 2); run("k_top_aw", 2);
         run("k_compact", pg);
         run("k_scan_n", pg); run("k_top_n", 1); run("k_assign_gid", pg); run("k_trim", pg);
         run("k_light", cg);
-        if (c.diffA > 0 || c.trailConduit !== undefined) { run("k_send_a", cg); run("k_gather_a", cg); }
+        // The ghost and owner conduits have their own send (send() is not edited); the gather is shared. The owner conduit also runs with diffA 0, as on the CPU.
+        if (c.diffA > 0 || c.trailConduit !== undefined || c.ownerConduit !== undefined) {
+          run(c.trailConduitGhost !== undefined || c.ownerConduit !== undefined ? "k_send_ax" : "k_send_a", cg); run("k_gather_a", cg);
+        }
         if (c.diffC > 0) { run("k_send_c", cg); run("k_gather_c", cg); }
         run("k_finish", 1);
         this.cur ^= 1;
@@ -746,32 +928,41 @@ export class GpuMycelium {
 
   /** Waits for queued work and returns the full state, byte-comparable with the CPU reference. */
   async read(): Promise<MyceliumState> {
-    const d = this.device, { N, cap, P } = this.L;
+    const d = this.device, { N, cap, P, F } = this.L;
+    const owner = this.config.trailOwner !== undefined;
     const mk = (size: number) => d.createBuffer({ size, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
-    const sCtl = mk(C.words * 4), sFld = mk(3 * N * 4), sPart = mk(P.words * 4);
+    const sCtl = mk(C.words * 4), sFld = mk(3 * N * 4), sPart = mk(P.words * 4), sOwn = owner ? mk(2 * N * 4) : null;
     const enc = d.createCommandEncoder();
     enc.copyBufferToBuffer(this.ctl, 0, sCtl, 0, C.words * 4);
     enc.copyBufferToBuffer(this.fld, 0, sFld, 0, 3 * N * 4);
+    if (sOwn) enc.copyBufferToBuffer(this.fld, F.Z * 4, sOwn, 0, 2 * N * 4); // Z then Q are adjacent
     enc.copyBufferToBuffer(this.parts[this.cur], 0, sPart, 0, P.words * 4);
     d.queue.submit([enc.finish()]);
-    await Promise.all([sCtl.mapAsync(GPUMapMode.READ), sFld.mapAsync(GPUMapMode.READ), sPart.mapAsync(GPUMapMode.READ)]);
+    await Promise.all([sCtl.mapAsync(GPUMapMode.READ), sFld.mapAsync(GPUMapMode.READ), sPart.mapAsync(GPUMapMode.READ), sOwn?.mapAsync(GPUMapMode.READ)]);
     const ctl = new Uint32Array(sCtl.getMappedRange().slice(0));
     const fld = new Uint32Array(sFld.getMappedRange().slice(0));
     const part = new Uint32Array(sPart.getMappedRange().slice(0));
-    sCtl.destroy(); sFld.destroy(); sPart.destroy();
+    const own = sOwn ? new Uint32Array(sOwn.getMappedRange().slice(0)) : null;
+    sCtl.destroy(); sFld.destroy(); sPart.destroy(); sOwn?.destroy();
     if (ctl[C.err] & ERR_STEP) throw new Error("GpuMycelium: the step counter passed 2^53, past what a double holds exactly (RULES.md, R1)");
     if (ctl[C.err] & ERR_LEDGER) throw new Error("GpuMycelium: ledger counters passed 2^50; the run is over");
     const n = ctl[C.n];
     const totals = {} as Totals;
     COUNTERS.forEach((k, j) => { totals[k] = ctl[C.tot + 2 * j + 1] * 2 ** 32 + ctl[C.tot + 2 * j]; });
+    if (this.config.trailFreeLayer !== undefined) {
+      totals.freeUnits = ctl[FC.freeTot + 1] * 2 ** 32 + ctl[FC.freeTot];
+      totals.paidUnits = ctl[FC.paidTot + 1] * 2 ** 32 + ctl[FC.paidTot];
+    }
     const plane = (off: number) => { const a = new Uint32Array(cap); a.set(part.subarray(off, off + n)); return a; };
     const genome = new Int8Array(cap * NN_BYTES);
     genome.set(new Int8Array(part.buffer, part.byteOffset + P.GEN * 4, n * NN_BYTES));
-    return {
+    const state: MyceliumState = {
       config: { ...this.config }, step: ctl[C.stepHi] * 2 ** 32 + ctl[C.step],
       A: fld.slice(0, N), C: fld.slice(N, 2 * N), P: fld.slice(2 * N, 3 * N),
       n, id: plane(P.ID), parent: plane(P.PAR), gid: plane(P.GID), x: plane(P.X), y: plane(P.Y), M: plane(P.M), E: plane(P.E), age: plane(P.AGE),
       genome, nextId: ctl[C.nextId], nextGid: ctl[C.nextGid], matter0: this.matter0, energy0: this.energy0, totals,
     };
+    if (own) { state.Z = own.slice(0, N); state.Q = own.slice(N, 2 * N); }
+    return state;
   }
 }

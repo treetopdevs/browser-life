@@ -26,7 +26,7 @@
       <section class="page-intro shell">
         <p class="eyebrow">Exploration, not a result</p>
         <h1>The slab worlds, live.</h1>
-        <p class="lede">Two thin three-dimensional worlds run on your graphics card: three types that each beat the next in a ring, and the main ecology on a slab. You see one tile per layer (layer 0 is the surface, where light enters) and a top-down view of all layers. Neither world passed its gate; this page is for looking, not for evidence.</p>
+        <p class="lede">Two thin three-dimensional worlds run on your graphics card: three types that each beat the next in a ring, and the main ecology on a slab. You see one tile per layer (layer 0 is the surface, where light enters) and a top-down view of all layers, or the whole slab as a volume you can turn. Neither world passed its gate; this page is for looking, not for evidence.</p>
         <p class="slab-banner" role="note"><strong>Exploration, not a result.</strong> The default choices and the seeds marked recorded come from committed records, named on the page. Other choices (the kill on from step 0, the smaller ecology size, any other seed) were never recorded. There is no registered setting: cyclic competition stopped at Gate 0, and the ecology calibration found no setting that qualified.</p>
       </section>
       <section class="shell slab-section" id="slab-app">
@@ -44,10 +44,14 @@
               <p class="fine" id="seed-help">The number that picks the starting pattern. Changing it restarts the run from step 0. Seeds marked recorded were run in the committed records; any other seed is not recorded.</p>
             </div>
             <fieldset class="slab-group" id="g-pace"><legend>Pace</legend><div class="slab-options" id="o-pace"></div></fieldset>
-            <fieldset class="slab-group" id="g-view"><legend>View</legend><div class="slab-options" id="o-view"></div>
-              <label for="layer" class="slab-legend">Layer to show (when one layer is chosen)</label>
-              <input id="layer" type="range" min="0" max="3" step="1" value="0" aria-describedby="layer-help" />
-              <p class="fine" id="layer-help">Layer <output id="layer-out">0</output>: 0 is the surface. Moves the large view to that layer and outlines its tile.</p>
+            <fieldset class="slab-group" id="g-view"><legend>View</legend><div class="slab-options" id="o-display"></div>
+              <div id="layers-only">
+                <p class="slab-legend slab-sublegend" id="h-large">Large picture</p>
+                <div class="slab-options" id="o-view" role="radiogroup" aria-labelledby="h-large"></div>
+                <label for="layer" class="slab-legend">Layer to show (when one layer is chosen)</label>
+                <input id="layer" type="range" min="0" max="3" step="1" value="0" aria-describedby="layer-help" />
+                <p class="fine" id="layer-help">Layer <output id="layer-out">0</output>: 0 is the surface. Moves the large view to that layer and outlines its tile.</p>
+              </div>
             </fieldset>
           </div>
           <div class="slab-transport" role="group" aria-label="Run controls">
@@ -59,13 +63,42 @@
           </div>
           <p class="slab-status" id="status" role="status" aria-live="off">Starting…</p>
           <p class="slab-provenance" id="provenance"></p>
-          <div class="slab-views">
+          <div class="slab-views" id="slab-views">
             <figure class="slab-big">
               <canvas id="combined" aria-label="Combined top-down view" role="img"></canvas>
               <figcaption id="combined-cap" class="fine"></figcaption>
             </figure>
             <div class="slab-tiles" id="tiles"></div>
           </div>
+          <section class="slab-volume" id="volume" aria-labelledby="h-volume" hidden>
+            <h2 id="h-volume" class="slab-volume-title">Volume</h2>
+            <figure class="slab-volume-fig">
+              <canvas id="volume-canvas" tabindex="0" role="img" aria-label="Volume view of the slab" aria-describedby="volume-cap"></canvas>
+              <figcaption id="volume-cap" class="fine"></figcaption>
+            </figure>
+            <div class="slab-volume-controls">
+              <fieldset class="slab-group" id="g-renderer"><legend>How to draw it</legend><div class="slab-options" id="o-renderer"></div></fieldset>
+              <div class="slab-group" id="g-camera">
+                <p class="slab-legend" id="h-camera">Camera</p>
+                <div class="slab-seedrow" role="group" aria-labelledby="h-camera" id="camera-poses"></div>
+                <p class="fine" id="camera-help"></p>
+                <button type="button" class="button" id="turntable" aria-pressed="false" aria-describedby="turntable-help">Turntable</button>
+                <p class="fine" id="turntable-help">Turns the view slowly round and round, as on a record player, so depth shows without dragging. Press again to stop.</p>
+                <label for="stretch" class="slab-legend slab-sublegend">Depth stretch</label>
+                <input id="stretch" type="range" min="1" max="16" step="1" value="1" aria-describedby="stretch-help" />
+                <p class="fine" id="stretch-help">Draws each layer <output id="stretch-out">1</output> times as thick as it is wide, so the layers come apart when you look from the side. A viewing aid only: it changes the picture, not the world. 1 is the true shape.</p>
+              </div>
+              <div class="slab-group" id="g-peel">
+                <label for="peel" class="slab-legend">Peel layers from the surface</label>
+                <input id="peel" type="range" min="0" max="7" step="1" value="0" aria-describedby="peel-help" />
+                <p class="fine" id="peel-help"><output id="peel-out">0</output> layers peeled. Hides the top layers one at a time, from the surface down, so you can see what grows under the canopy. In Slices the flat plane moves down with it.</p>
+                <label for="cut" class="slab-legend">Cut away the south side</label>
+                <input id="cut" type="range" min="0" max="100" step="1" value="100" aria-describedby="cut-help" />
+                <p class="fine" id="cut-help">Keeps <output id="cut-out">100</output> % of the slab from the north edge. Lower it to open the slab and see every layer at the cut face.</p>
+              </div>
+              <details class="slab-group" id="g-look"><summary class="slab-legend">Look settings for this renderer</summary><div id="volume-params" class="slab-params"></div></details>
+            </div>
+          </section>
           <section class="slab-census" aria-labelledby="h-census">
             <h2 id="h-census">Census</h2>
             <p id="census" class="slab-census-line"></p>

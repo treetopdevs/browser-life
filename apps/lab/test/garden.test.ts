@@ -943,7 +943,7 @@ describe("the page is public and linked", () => {
   const words = (html: string) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
   const SITE = ["../index.html", "../404.html", "../about/index.html", "../garden/index.html", "../how-it-works/index.html",
     "../participate/index.html", "../privacy/index.html", "../research/index.html", "../status/index.html", "../worlds/index.html",
-    "../story/index.html", "../experiments/index.html", "../soup/index.html", "../slab/index.html"];
+    "../story/index.html", "../experiments/index.html", "../soup/index.html", "../slab/index.html", "../mycelium3d/index.html"];
 
   it("every site header and footer links to the shared garden, and so does the lab's bench header", () => {
     expect(Object.keys(pages)).toEqual(expect.arrayContaining(SITE));

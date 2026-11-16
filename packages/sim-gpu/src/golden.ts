@@ -274,6 +274,59 @@ function slabCases(): GoldenCase[] {
       every: 10,
     },
   );
+  // The jar (64 layers, docs/3d-rung2-plan-2026-10-23.md): new cases only. Four worlds 64 deep at 16 x 16, cheap
+  // enough for every run; the shaded column uses lightK 65536 so its light stays above zero down to z = 63 and the
+  // wall founders sit at z = 0 and z = 63. The 64-cube runs a few steps (gated in the vitest pins like 64 x 64 x 8).
+  const jarSpots = (c: WorldConfig) => spots(c, 24);
+  out.push(
+    { name: "jar-default-16x16x64", cfg: slabCfg(16, 16, 64, 321), init: jarSpots, steps: 24, every: 12 },
+    { name: "jar-neutral-16x16x64", cfg: slabCfg(16, 16, 64, 322, { neutral: true }), init: jarSpots, steps: 24, every: 12 },
+    { name: "jar-shaded-column-16x16x64", cfg: slabCfg(16, 16, 64, 323, { lightK: 65536 }), init: shadedColumnWorld, steps: 24, every: 12 },
+    {
+      name: "jar-motility-seasons-16x16x64",
+      cfg: slabCfg(16, 16, 64, 324, { motility: true, signalGain: 127, kSDecay: 13, kEmit: 1024, lightMode: "uniform", lightBase: 30, lightAmp: 150, seasonPeriod: 17, seasonAmp: 60 }),
+      init: jarSpots,
+      steps: 24,
+      every: 12,
+    },
+    { name: "jar-cube-64x64x64", cfg: slabCfg(64, 64, 64, 325, { lightK: 4096 }), init: (c) => spots(c, 160), steps: 6, every: 3 },
+  );
+  // Slab levers (docs/3d-rung1b-step-spec.md section 17, step A2 of docs/3d-expansion-plan-2026-11-15.md): new cases only.
+  // Slab-spots starts with no waste, so each world seeds C (and in the upwelling case small, uneven A and C, so that
+  // sinking and upwelling both fire on cells holding 1 to 3 quanta and the nested outflow is exercised).
+  const withWaste = (s: WorldState, waste: number) => {
+    const n = cellCount(s.cfg);
+    s.cells.fill(waste, CH.C * n, (CH.C + 1) * n);
+    return s;
+  };
+  const smallUneven = (s: WorldState) => {
+    const n = cellCount(s.cfg);
+    const r = hashStream(s.cfg.seed);
+    for (let i = 0; i < n; i++) {
+      s.cells[CH.C * n + i] = r() % 4;
+      s.cells[CH.A * n + i] = r() % 6;
+    }
+    return s;
+  };
+  const allLevers = { sinkShift: 3, floorDecay: 20_000, upwellPeriod: 5, upwellShift: 2 };
+  const surfaceSpots = (c: WorldConfig, count: number) => slabSpotsWorld(c, generalistGenome3(c.defaultMu, c.defaultSigma), count, 48, 64, { surface: 6 });
+  out.push(
+    { name: "jar-sink-16x16x64", cfg: slabCfg(16, 16, 64, 331, { sinkShift: 2 }), init: (c) => withWaste(jarSpots(c), 40), steps: 24, every: 12 },
+    { name: "jar-floor-decay-16x16x64", cfg: slabCfg(16, 16, 64, 332, { sinkShift: 1, floorDecay: 40_000 }), init: (c) => withWaste(jarSpots(c), 40), steps: 24, every: 12 },
+    { name: "jar-upwell-16x16x64", cfg: slabCfg(16, 16, 64, 333, { sinkShift: 1, upwellPeriod: 3, upwellShift: 1 }), init: (c) => smallUneven(jarSpots(c)), steps: 24, every: 12 },
+    { name: "jar-upwell-only-16x16x64", cfg: slabCfg(16, 16, 64, 334, { upwellPeriod: 2, upwellShift: 1 }), init: (c) => smallUneven(jarSpots(c)), steps: 24, every: 12 },
+    { name: "jar-levers-16x16x64", cfg: slabCfg(16, 16, 64, 335, allLevers), init: (c) => withWaste(surfaceSpots(c, 24), 16), steps: 24, every: 12 },
+    { name: "jar-levers-cube-64x64x64", cfg: slabCfg(64, 64, 64, 336, { lightK: 4096, ...allLevers, upwellPeriod: 2 }), init: (c) => withWaste(surfaceSpots(c, 160), 8), steps: 6, every: 3 },
+  );
+  // rpsMutate (spec 17.3): the vacancy kill with mutation, typed founders (rpsCycle 3), a high mutation rate so events
+  // fire within the case. K 3 at half RPS events (both branches), and K 5 with every event an RPS event (relabels onto
+  // labels nobody founded).
+  const rpsKeys = (K: number, share: number) => ({ rpsTypes: K, rpsRate: 4096, rpsMin: 1, rpsKill: "vacancy" as const, rpsMutate: share, mutRate: 42_949_673 });
+  const typedSpots = (c: WorldConfig) => slabSpotsWorld(c, generalistGenome3(c.defaultMu, c.defaultSigma), 24, 48, 64, { rpsCycle: 3 });
+  out.push(
+    { name: "slab-rps-mutate-16x16x8", cfg: slabCfg(16, 16, 8, 341, rpsKeys(3, 32_768)), init: typedSpots, steps: 20, every: 10 },
+    { name: "slab-rps-mutate-k5-16x16x8", cfg: slabCfg(16, 16, 8, 342, rpsKeys(5, 65_536)), init: typedSpots, steps: 20, every: 10 },
+  );
   return out;
 }
 

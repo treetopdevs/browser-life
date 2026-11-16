@@ -25,6 +25,10 @@ export interface InitParams {
   start?: "clone" | "founders";
   /** Kind "ponds" with start "clone" only: an index into M3_FOUNDERS. */
   founder?: number;
+  /** Kind "slab-spots" only, optional (an init option, not a rule): every founder's z in 0..surface-1 (world3.ts SlabSpotsOptions). */
+  surface?: number;
+  /** Kind "slab-spots" only, optional: founder f gets RPS type f mod rpsCycle with the cyclic beats-mask (needs the vacancy keys). */
+  rpsCycle?: number;
 }
 
 export interface Preset {
@@ -407,9 +411,11 @@ export function presetIdentity(p: Preset): string {
   // init object happens to be written. `waste` is included only when present,
   // and `start`/`founder` only for kind "ponds", so existing presets keep their
   // pinned identities.
-  const { kind, founders, nutrient, biomass, waste, start, founder } = p.init;
+  const { kind, founders, nutrient, biomass, waste, start, founder, surface, rpsCycle } = p.init;
   const base = waste !== undefined ? { kind, founders, nutrient, biomass, waste } : { kind, founders, nutrient, biomass };
-  const init = kind === "ponds" ? { ...base, start, founder: founder ?? null } : base;
+  // The slab-spots options likewise only when present.
+  const slab = { ...base, ...(surface !== undefined ? { surface } : {}), ...(rpsCycle !== undefined ? { rpsCycle } : {}) };
+  const init = kind === "ponds" ? { ...base, start, founder: founder ?? null } : slab;
   const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init, founderSetId }));
   const words = new Uint32Array(Math.ceil(bytes.length / 4));
   new Uint8Array(words.buffer).set(bytes);
@@ -488,7 +494,7 @@ function foundingWorld(cfg: WorldConfig, init: InitParams): WorldState {
     case "motile-drift":
       return motileWorld(cfg, true, init.founders, init.nutrient, init.biomass);
     case "slab-spots":
-      return slabSpotsWorld(cfg, generalistGenome3(cfg.defaultMu, cfg.defaultSigma), init.founders, init.nutrient, init.biomass);
+      return slabSpotsWorld(cfg, generalistGenome3(cfg.defaultMu, cfg.defaultSigma), init.founders, init.nutrient, init.biomass, { surface: init.surface, rpsCycle: init.rpsCycle });
     default:
       return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
   }
@@ -496,6 +502,7 @@ function foundingWorld(cfg: WorldConfig, init: InitParams): WorldState {
 
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
   if (init.kind !== "ponds" && (init.start !== undefined || init.founder !== undefined)) throw new Error(`init kind ${init.kind}: start and founder belong to kind "ponds"`);
+  if (init.kind !== "slab-spots" && (init.surface !== undefined || init.rpsCycle !== undefined)) throw new Error(`init kind ${init.kind}: surface and rpsCycle belong to kind "slab-spots"`);
   const s = foundingWorld(cfg, init);
   // Waste is applied here rather than through m3World/soupWorld/generalistWorld
   // so those helpers' signatures stay free for other callers (e.g. Genome[] only).

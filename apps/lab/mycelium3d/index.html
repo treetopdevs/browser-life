@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <!-- An exploration page: a new world under exploration, with no results claimed. -->
+    <meta name="description" content="Particles with small neural controllers eat, lay trail and split in a closed three-dimensional jar lit from the top. A world under exploration, not a result." />
+    <title>Mycelium in a jar · Cadence Garden</title>
+    <link rel="canonical" href="https://cadence.garden/mycelium3d/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <link rel="stylesheet" href="/src/mycelium3d/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="2.6" rx="1.3"/><path class="bm-jar" d="M8 14.5h16a3 3 0 0 1 3 3V26a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-8.5a3 3 0 0 1 3-3z"/><circle class="bm-life" cx="10.5" cy="25.6" r="1.5"/><circle class="bm-life" cx="15.6" cy="23.2" r="2.1"/><circle class="bm-life" cx="21.3" cy="20.4" r="2.7"/></svg><span>Cadence<span class="brand-light"> Garden</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/garden/">Shared garden</a><a href="/how-it-works/">How it works</a><a href="/story/">Story</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell m3-intro">
+        <p class="eyebrow">Exploration, not a result</p>
+        <h1>Mycelium in a jar.</h1>
+        <p class="lede">The mycelium world, grown in three dimensions. Particles with small neural controllers eat, lay trail and split inside a closed jar. Light enters at the top and is shaded by what grows there, so food is made only near the surface. This is a new world under exploration: nothing on this page is a result.</p>
+        <p class="m3-banner" role="note"><strong>A new world, no results claimed.</strong> The rules were written on 15 November 2026 and the default numbers were chosen so a population lasts. No registered test has been run on this world. Its screens so far are explorations judged by eye and by counts, and the sinking, trail and bond options are here to look at, not because anything has been shown about them.</p>
+        <details class="m3-how" open>
+          <summary>What the particles do</summary>
+          <p>Each bead is a particle with a body of matter, a store of energy and its own small neural controller (13 inputs, 8 hidden units, 9 outputs). It senses nutrient, waste and trail around it, the trail and nutrient above and below it, and how much light reaches it. Then it decides how to move east, south and down, how much to eat, how much trail to lay and whether to split. A child takes half its parent's matter and energy and a copy of its controller that sometimes mutates. Light turning waste back into nutrient is the only energy coming in, and it falls from the top: each layer passes on less of it, shaded by the trail and bodies above.</p>
+        </details>
+        <details class="m3-how">
+          <summary>What was checked, and what was not</summary>
+          <p>Matter is conserved exactly and energy is booked exactly; the two residuals in the census stay at 0, and the page stops if either ever is not. On your GPU the world runs as WebGPU code that matched the CPU reference bit for bit in the project's parity test (102 cases): that says the port is faithful where the test ran, not that it has been checked on every GPU. Without WebGPU the page runs the CPU reference itself, at the default size only. Nothing about evolution, trail use or lifting matter has been measured here yet.</p>
+        </details>
+        <p class="m3-engine" id="engine-now" data-engine="" role="status">Starting.</p>
+      </section>
+
+      <section class="shell m3-section" aria-label="Run the world">
+        <div class="m3-transport" role="group" aria-label="Run controls">
+          <button type="button" class="button primary" id="play" aria-pressed="false">Play</button>
+          <button type="button" class="button" id="step">One step</button>
+          <label for="pace" class="m3-inline">Pace<select id="pace"></select></label>
+        </div>
+        <p class="m3-status" id="status" role="status" aria-live="off">Planting.</p>
+
+        <div class="m3-world">
+          <div class="m3-view">
+            <figure class="m3-fig" id="gpu-fig">
+              <canvas id="volume-canvas" tabindex="0" role="img" aria-label="The jar in 3D" aria-describedby="volume-cap"></canvas>
+              <figcaption id="volume-cap" class="fine"></figcaption>
+            </figure>
+            <figure class="m3-fig" id="cpu-fig" hidden>
+              <canvas id="side-canvas" role="img" aria-label="Side view of the jar" aria-describedby="side-cap"></canvas>
+              <figcaption id="side-cap" class="fine">A flat side view, because the 3D view needs WebGPU: east runs left to right and depth top to bottom, with the surface at the top. Every north-south row is added into one column. Brightness is the light reaching each place, violet is trail, darkening is waste, and each dot is a particle in its family colour. With bonds on, a pale line joins two bonded partners.</figcaption>
+            </figure>
+
+            <section class="m3-tools" id="tools" aria-labelledby="h-tools">
+              <h2 class="m3-tools-h" id="h-tools">Touch the jar</h2>
+              <p class="fine">Two tools reach into the world between steps. They keep the books: matter is never made or destroyed, and the two residuals in the census stay at 0. A world you have touched no longer follows from its seed alone.</p>
+              <fieldset class="m3-tool-pick"><legend class="m3-legend">Tool</legend><div class="m3-seg" id="o-tool"></div></fieldset>
+              <div id="brush" class="m3-brush" hidden>
+                <p class="fine" id="tool-help"></p>
+                <div class="m3-brush-grid">
+                  <div class="m3-field"><label for="cur-x">East, x</label><input id="cur-x" type="number" min="0" max="31" step="1" value="16" inputmode="numeric" aria-describedby="cur-help" /></div>
+                  <div class="m3-field"><label for="cur-y">South, y</label><input id="cur-y" type="number" min="0" max="31" step="1" value="16" inputmode="numeric" aria-describedby="cur-help" /></div>
+                  <div class="m3-field"><label for="cur-z">Layer</label><input id="cur-z" type="number" min="0" max="15" step="1" value="0" inputmode="numeric" aria-describedby="cur-help" /></div>
+                </div>
+                <p class="fine" id="cur-help">The cell at the centre of the tool. Layer 0 is the surface, where light enters. When you point at the picture, the cursor goes to the first particle under the pointer; where there is none, it sits on this layer, which is why the layer is also called the working layer.</p>
+                <label for="cur-r" class="m3-legend m3-sub">Radius: <output id="cur-r-out">2</output> cells</label>
+                <input id="cur-r" type="range" min="0" max="8" step="1" value="2" aria-describedby="cur-r-help" />
+                <p class="fine" id="cur-r-help">How far the tool reaches from the centre cell, counted in whole cells and across the east and west and the north and south walls, which wrap. 0 is the centre cell alone. It stops at the surface and the floor.</p>
+                <div class="m3-field" id="feed-field"><label for="feed-amount">Strength of the flash</label><select id="feed-amount" aria-describedby="feed-help"></select><p class="fine" id="feed-help"></p></div>
+                <p class="m3-readout" id="cur-readout"></p>
+                <button type="button" class="button primary" id="apply">Wound here</button>
+              </div>
+              <p class="m3-report" id="brush-report" role="status"></p>
+            </section>
+
+            <div class="m3-controls" id="view-controls">
+              <fieldset class="m3-group" id="g-renderer"><legend>How to draw it</legend><div class="m3-options" id="o-renderer"></div></fieldset>
+              <div class="m3-group" id="g-camera">
+                <p class="m3-legend" id="h-camera">Camera</p>
+                <div class="m3-row" role="group" aria-labelledby="h-camera" id="camera-poses"></div>
+                <p class="fine" id="camera-help"></p>
+                <button type="button" class="button" id="turntable" aria-pressed="false" aria-describedby="turntable-help">Turntable</button>
+                <p class="fine" id="turntable-help">Turns the jar slowly round, as on a record player, so depth shows without dragging. Press again to stop.</p>
+                <label for="stretch" class="m3-legend m3-sub">Depth stretch</label>
+                <input id="stretch" type="range" min="1" max="4" step="1" value="1" aria-describedby="stretch-help" />
+                <p class="fine" id="stretch-help">Draws each layer <output id="stretch-out">1</output> times as tall as it is wide. A viewing aid only: it changes the picture, not the world. 1 is the true shape.</p>
+              </div>
+              <div class="m3-group" id="g-peel">
+                <label for="peel" class="m3-legend">Peel layers from the surface</label>
+                <input id="peel" type="range" min="0" max="15" step="1" value="0" aria-describedby="peel-help" />
+                <p class="fine" id="peel-help"><output id="peel-out">0</output> layers peeled. Hides the top layers one at a time, from the surface down, to show what lives in the dark below.</p>
+                <label for="cut" class="m3-legend m3-sub">Cut away the south side</label>
+                <input id="cut" type="range" min="0" max="100" step="1" value="100" aria-describedby="cut-help" />
+                <p class="fine" id="cut-help">Keeps <output id="cut-out">100</output> % of the jar from the north wall. Lower it to open the jar and see every layer at the cut face.</p>
+                <div class="m3-check"><input type="checkbox" id="show-waste" checked aria-describedby="waste-help" /><label for="show-waste">Show waste as a dark haze</label></div>
+                <p class="fine" id="waste-help">Waste is what particles excrete and what decayed trail becomes. It carries no energy until light turns it back into nutrient, so waste that sinks into the dark is matter lost to the surface. Turn it off to see the particles through clear water.</p>
+              </div>
+              <details class="m3-group" id="g-look"><summary class="m3-legend">Look settings for this way of drawing</summary><div id="volume-params" class="m3-params"></div></details>
+            </div>
+          </div>
+
+          <aside class="m3-census" aria-labelledby="h-census">
+            <h2 id="h-census">Census</h2>
+            <dl id="numbers" class="m3-numbers">
+              <div><dt>Step</dt><dd id="r-step">0</dd></div>
+              <div><dt>Particles</dt><dd id="r-n">0</dd></div>
+              <div><dt>Families alive</dt><dd id="r-g">0</dd></div>
+              <div><dt>Births per 100 steps</dt><dd id="r-b">–</dd></div>
+              <div><dt>Deaths per 100 steps</dt><dd id="r-d">–</dd></div>
+              <div><dt>Births refused per 100 steps</dt><dd id="r-f">–</dd></div>
+              <div><dt>Matter residual</dt><dd id="r-m">0</dd></div>
+              <div><dt>Energy residual</dt><dd id="r-e">0</dd></div>
+              <div><dt>Time per step</dt><dd id="r-t">–</dd></div>
+            </dl>
+            <p class="fine" id="audit-note"></p>
+            <div id="bond-census" hidden>
+              <h3 class="m3-h3">Bonds</h3>
+              <dl class="m3-numbers">
+                <div><dt>Bonded particles</dt><dd id="r-bonded">0</dd></div>
+                <div><dt>Bonds</dt><dd id="r-bonds">0</dd></div>
+                <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
+                <div><dt>Largest body</dt><dd id="r-largest">–</dd></div>
+              </dl>
+              <p class="fine">A body is two or more particles joined by bonds, directly or along a chain; each particle holds at most two bonds, so a body is a chain or a ring. Bonded particles are those holding at least one bond, with their share of all particles. In the 3D view each bond is a pale link between its partners (in the particles and haze way of drawing only); a bond across a wrapped wall is drawn as two short stubs, one from each partner to the wall.</p>
+            </div>
+            <h3 class="m3-h3">By depth</h3>
+            <div class="m3-table-wrap">
+              <table class="m3-depth">
+                <caption id="depth-caption">Census by depth, surface first</caption>
+                <thead><tr><th scope="col">Layers</th><th scope="col">Particles</th><th scope="col">Body</th><th scope="col">Nutrient</th><th scope="col">Waste</th><th scope="col">Trail</th><th scope="col">Light</th></tr></thead>
+                <tbody id="depth-rows"></tbody>
+              </table>
+            </div>
+            <p class="fine">Layer 0 is the surface, where light enters. Body is the matter inside particles; nutrient (food), waste and trail are the matter in the water. The four add up to the same total every step. Light is the share of the unshaded surface light that reaches the layers, on average. Matter from 10,000 up is rounded to three figures (k is thousands, M millions). Births refused are splits turned down because the jar had no room for the child.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="shell m3-section m3-plant" aria-labelledby="h-plant">
+        <h2 id="h-plant">Plant a new world</h2>
+        <p class="fine">Choices take effect when you press Plant. Each one is an optional extra rule, absent from the default world; a world planted with one is a different world, not a variation of the default.</p>
+        <div class="m3-plant-grid">
+          <div class="m3-field"><label for="size">World size</label><select id="size" aria-describedby="size-help"></select><p class="fine" id="size-help"></p></div>
+          <div class="m3-field"><label for="sink">Sinking</label><select id="sink" aria-describedby="sink-help"></select><p class="fine" id="sink-help"></p></div>
+          <div class="m3-field"><label for="trail">Trail rule</label><select id="trail" aria-describedby="trail-help"></select><p class="fine" id="trail-help"></p></div>
+          <div class="m3-field"><label for="bonds">Bonds</label><select id="bonds" aria-describedby="bonds-help"></select><p class="fine" id="bonds-help"></p></div>
+          <div class="m3-field"><label for="seed">Seed</label><input id="seed" type="number" min="0" max="4294967295" step="1" value="1" inputmode="numeric" aria-describedby="seed-help" /><p class="fine" id="seed-help">The number that picks the founders' places and controllers. The same seed and choices give the same world, step for step, on either engine.</p></div>
+        </div>
+        <button type="button" class="button primary" id="plant">Plant</button>
+      </section>
+
+      <section class="shell prose-grid">
+        <div class="aside-label">Why this is not a result</div>
+        <div class="prose">
+          <ul>
+            <li>Nothing has been tested on this world. A crowd of beads or a haze of trail is not an organism, and a family that spreads may only be lucky.</li>
+            <li>A family is a set of particles with identical controllers. A mutation always starts a new one, so the family count measures mutation and survival together, not adaptation.</li>
+            <li>The default numbers were tuned by hand on the 32 × 32 × 16 world on one seed so a population lasts. The bigger sizes keep the same numbers per cell; they are less tested.</li>
+            <li>In the flat world, trail that only costs was purged by inheritance, the toll road kept trail that nothing was found using, and the owner conduit with the gate kept trail in 6 of 8 worlds. Those are flat-world explorations. They are why these options are offered here, and say nothing about this world.</li>
+            <li>Bonds join particles into chains and rings that move together. A body of bonded beads is a shape the rules allow, not an organism; in the exploration runs bodies were mostly lost again, with or without upkeep.</li>
+            <li>The question the jar is built to ask: sinking carries waste away from the light, so does anything evolve that lifts matter back up? Nothing here answers it yet.</li>
+          </ul>
+          <p class="fine">Rules: tools/mycelium3d/RULES.md (rule mycelium3d-r0). Plan: docs/3d-expansion-plan-2026-11-15.md, Phase 1, Bet B. Exact integer arithmetic on both engines.</p>
+        </div>
+      </section>
+      <script type="module" src="/src/mycelium3d/page.ts"></script>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Cadence Garden</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/garden/">Shared garden</a><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/theme.ts"></script>
+  </body>
+</html>

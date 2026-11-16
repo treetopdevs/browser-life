@@ -11,20 +11,33 @@ import {
   createWorld, decode, defaultConfig, encode, energyTotal, ID_MAX, matterTotal, type MyceliumConfig, type MyceliumState, stateDigest, step, validateState,
 } from "../../tools/mycelium/world.ts";
 import { GpuMycelium, myceliumDevice } from "../../tools/mycelium/gpu.ts";
+import { POS_SHIFT } from "../../tools/mycelium/world.ts";
+import { fieldLayout } from "../../tools/mycelium/gpu.ts";
 
 const dev = await myceliumDevice();
 const only = Deno.args;
 
-/** First difference between two states over everything the checkpoint encodes, or null. */
-function firstDiff(a: MyceliumState, b: MyceliumState): string | null {
+/**
+ * First difference between two states over everything the checkpoint encodes, or null. Strict by default: a counter or plane one side has and the other
+ * lacks is a difference (a GPU read that drops the owner planes or the free counters must not pass). `baseline` is for comparing a keyed world with a
+ * keyless baseline config (the `vs` check), where one side legitimately has no free counters and no Z, Q.
+ */
+function firstDiff(a: MyceliumState, b: MyceliumState, baseline = false): string | null {
   for (const k of ["step", "n", "nextId", "nextGid", "matter0", "energy0"] as const) {
     if (a[k] !== b[k]) return `${k}: cpu ${a[k]} gpu ${b[k]}`;
   }
-  for (const k of Object.keys(a.totals) as (keyof MyceliumState["totals"])[]) {
+  for (const k of new Set([...Object.keys(a.totals), ...Object.keys(b.totals)]) as Set<keyof MyceliumState["totals"]>) {
+    // The free-layer counters exist only with trailFreeLayer; only a baseline comparison may skip them when one side lacks them (the digest covers them).
+    if (baseline && (k === "freeUnits" || k === "paidUnits") && (a.totals[k] === undefined || b.totals[k] === undefined)) continue;
     if (a.totals[k] !== b.totals[k]) return `totals.${k}: cpu ${a.totals[k]} gpu ${b.totals[k]}`;
   }
   for (const k of ["A", "C", "P"] as const) {
     for (let i = 0; i < a[k].length; i++) if (a[k][i] !== b[k][i]) return `${k}[${i}] (x ${i % a.config.width}, y ${Math.floor(i / a.config.width)}): cpu ${a[k][i]} gpu ${b[k][i]}`;
+  }
+  for (const k of ["Z", "Q"] as const) {
+    const x = a[k], y = b[k];
+    if (!baseline && !x !== !y) return `${k}: cpu ${x ? "has" : "lacks"} the plane, gpu ${y ? "has" : "lacks"} it`;
+    if (x && y) for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return `${k}[${i}] (x ${i % a.config.width}, y ${Math.floor(i / a.config.width)}): cpu ${x[i]} gpu ${y[i]}`;
   }
   for (const k of ["id", "parent", "gid", "x", "y", "M", "E", "age"] as const) {
     for (let i = 0; i < a.n; i++) if (a[k][i] !== b[k][i]) return `${k}[${i}]: cpu ${a[k][i]} gpu ${b[k][i]} (cpu id ${a.id[i]})`;
@@ -231,6 +244,198 @@ function conduitCases(): Case[] {
     },
   ];
 }
+/** Puts particles 0..k-1 in the middle of cell (cx, cy); the others stay where createWorld put them. */
+function clump(s: MyceliumState, k: number, cx = 3, cy = 3): void {
+  for (let i = 0; i < k; i++) { s.x[i] = (cx << POS_SHIFT) + 128; s.y[i] = (cy << POS_SHIFT) + 128; }
+}
+
+/** Per-particle controller output biases (setOut gives every particle the same). */
+function setOutEach(s: MyceliumState, f: (i: number) => Record<number, number>): void {
+  s.genome.fill(0);
+  for (let i = 0; i < s.n; i++) for (const [k, v] of Object.entries(f(i))) s.genome[i * NN_BYTES + B2_OFF + Number(k)] = v;
+}
+
+/**
+ * Bootstrap keys (docs/mycelium-bootstrap-2026-11-14/DESIGN.md, exploration): pre-laid trail (P), free first layer (F) and owner conduit
+ * (O), each alone, at both ends of every bound, and in the combinations the screens run. Each case compares the GPU with the CPU at every
+ * segment (stateDigest, which covers the free counters and the Z and Q planes) and names a baseline: `same: false` proves the key is not
+ * vacuous, `same: true` proves a key set to its neutral value changes nothing. firstDiff (in baseline mode, for the `vs` check only) skips the free counters and Z, Q when the baseline
+ * does not carry them, so a baseline without the keys compares on A, C, P and the particles.
+ */
+function bootstrapCases(): Case[] {
+  const w = { width: 64, height: 64, founders: 600, maxParticles: 3000 };
+  const cs = ["births", "deaths", "contended"] as const;
+  const out: Case[] = [];
+  /** A case from config overrides and the keys its baseline drops. */
+  const mk = (name: string, over: Partial<MyceliumConfig>, drop: string[], extra: Partial<Case> = {}, size: Partial<MyceliumConfig> = w): void => {
+    const rest = Object.fromEntries(Object.entries(over).filter(([k]) => !drop.includes(k))) as Partial<MyceliumConfig>;
+    out.push({
+      name: `bootstrap ${name}`, cfg: defaultConfig({ ...size, ...over }), steps: 400, seg: 100, must: ["births", "deaths"],
+      vs: { cfg: defaultConfig({ ...size, ...rest }), same: false }, ...extra,
+    });
+  };
+  const P = ["trailInit", "trailInitPattern", "trailInitPitch"];
+  const FL = ["trailFreeLayer"];
+  const OWN = ["trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost"];
+
+  // ---- P: pre-laid trail (createWorld only; the GPU gets it through upload) ----
+  mk("prelaid carpet 16 + conduit 128", { trailInit: 16, trailConduit: 128 }, [...P, "trailConduit"], { must: [...cs] });
+  mk("prelaid rows 8 + conduit, gradient light", { trailInit: 32, trailInitPattern: "rows", trailConduit: 64, lightPattern: "gradient" }, [...P, "trailConduit"]);
+  mk("prelaid cols 8 + conduit, gradient light", { trailInit: 32, trailInitPattern: "cols", trailConduit: 64, lightPattern: "gradient" }, [...P, "trailConduit"]);
+  mk("prelaid lattice pitch 6", { trailInit: 32, trailInitPattern: "lattice", trailInitPitch: 6 }, P);
+  mk("prelaid patches (default pitch 8)", { trailInit: 32, trailInitPattern: "patches" }, P);
+  mk("prelaid patches pitch 2 (smallest, h 1)", { trailInit: 20, trailInitPattern: "patches", trailInitPitch: 2 }, P);
+  mk("prelaid patches pitch 3 (odd, h 1)", { trailInit: 20, trailInitPattern: "patches", trailInitPitch: 3 }, P);
+  mk("prelaid rows pitch 64 (largest, one row)", { trailInit: 64, trailInitPattern: "rows", trailInitPitch: 64 }, P);
+  mk("prelaid carpet 1 (smallest)", { trailInit: 1 }, P);
+  mk("prelaid carpet 255 clamps to nutrient0 48", { trailInit: 255 }, P, { check: (cpu) => (cpu.P.some((v) => v > 0) ? null : "no trail on the field") });
+  mk("prelaid carpet 16 on nutrient0 4", { trailInit: 16, nutrient0: 4 }, ["trailInit", "trailInitPattern", "trailInitPitch"]);
+  mk("prelaid rows, durable pDecay 66", { trailInit: 48, trailInitPattern: "rows", pDecay: 66 }, P);
+  mk("prelaid rows, blocked", { trailInit: 48, trailInitPattern: "rows", heredity: "blocked" }, P);
+  mk("prelaid rows, physarum null", { controller: "physarum", heredity: "frozen", trailInit: 48, trailInitPattern: "rows" }, P, { must: ["births", "deaths"] });
+  mk("prelaid rows with toll", { trailInit: 64, trailInitPattern: "rows", moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, P);
+  mk("prelaid lattice pitch 7, 100x60", { trailInit: 40, trailInitPattern: "lattice", trailInitPitch: 7 }, P, {}, { width: 100, height: 60, founders: 300, maxParticles: 900 });
+  mk("prelaid lattice pitch 16 + conduit, 256x256", { trailInit: 40, trailInitPattern: "lattice", trailInitPitch: 16, trailConduit: 32 }, [...P, "trailConduit"],
+    { steps: 800, seg: 200, must: [...cs, "mutations"] }, { width: 256, height: 256, founders: 4096, maxParticles: 16384 });
+
+  // ---- F: free first layer ----
+  const dep = { maxDeposit: 12 };
+  for (const F of [1, 4, 255]) mk(`free layer ${F}`, { trailFreeLayer: F, ...dep }, FL, { must: [...cs, "mutations"], check: (cpu) => ((cpu.totals.freeUnits ?? 0) > 0 ? null : "no free unit was laid") });
+  mk("free layer 8 with default maxDeposit 4", { trailFreeLayer: 8 }, FL);
+  mk("free layer 8 + conduit 32", { trailFreeLayer: 8, trailConduit: 32, ...dep }, FL);
+  mk("free layer 8 + conduit 32 + ghost 5", { trailFreeLayer: 8, trailConduit: 32, trailConduitGhost: 5, ...dep }, FL);
+  mk("conduit ghost 1 without F", { trailConduit: 64, trailConduitGhost: 1, ...dep }, ["trailConduitGhost"]);
+  mk("conduit ghost 63 (largest on 64x64) without F", { trailConduit: 64, trailConduitGhost: 63, ...dep }, ["trailConduitGhost"]);
+  for (const h of ["inherit", "blocked", "frozen"] as const) mk(`free layer 8, ${h}`, { trailFreeLayer: 8, heredity: h, ...dep }, FL);
+  mk("free layer 8 with toll", { trailFreeLayer: 8, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", ...dep }, FL);
+  mk("free layer 8, gradient light", { trailFreeLayer: 8, lightPattern: "gradient", ...dep }, FL);
+  mk("free layer 16 + prelaid rows 8 + conduit 32, durable", { trailFreeLayer: 16, trailInit: 24, trailInitPattern: "rows", trailConduit: 32, pDecay: 66, ...dep }, [...FL, ...P, "trailConduit"]);
+  mk("free layer 8, 256x256", { trailFreeLayer: 8, ...dep }, FL, { steps: 800, seg: 200, must: [...cs, "mutations"] }, { width: 256, height: 256, founders: 4096, maxParticles: 16384 });
+  // Clipped energy: depositCost 4096 exceeds the energy, so no unit is paid for, and the free units still go down.
+  mk("free layer 2 with the paid part clipped to zero by energy", { trailFreeLayer: 2, maxEat: 0, depositCost: 4096, founderEnergy: 600, moveCost: 12, ...dep }, FL, {
+    must: ["deaths"], tweak: (s) => setOut(s, { 0: 60, 1: 60, 2: 127, 3: 127 }), check: (cpu) => ((cpu.totals.freeUnits ?? 0) > 0 && cpu.totals.paidUnits === 0 ? null : "expected free units and no paid unit"),
+  });
+  // Energy that binds part way: some paid units are clipped, some are not.
+  mk("free layer 3 with the paid part clipped part way", { trailFreeLayer: 3, depositCost: 300, founderEnergy: 800, maxEat: 4, ...dep }, FL, {
+    must: ["deaths"], tweak: (s) => setOut(s, { 0: 20, 1: -20, 2: 60, 3: 127 }), check: (cpu) => ((cpu.totals.freeUnits ?? 0) > 0 && (cpu.totals.paidUnits ?? 0) > 0 ? null : "expected both free and paid units"),
+  });
+  // P far above F everywhere: room is 0 (compare before subtract), so the state arrays equal the keyless run exactly.
+  mk("free layer 8 over trail 1000 (room 0 equals keyless)", { trailFreeLayer: 8, ...dep }, FL, {
+    steps: 150, seg: 50, tweak: (s) => { s.P.fill(1000); }, vs: { cfg: defaultConfig({ ...w, ...dep }), same: true },
+  });
+  // 100 particles on one cell, all asking for 11: the shared room, and trail that changes within one step.
+  mk("free layer 255 with a clump of 100 on one cell", { trailFreeLayer: 255, ...dep }, FL, {
+    steps: 12, seg: 2, must: [], tweak: (s) => { setOut(s, { 2: 127, 3: 127 }); clump(s, 100); }, // short: the clump dies out and the baseline would catch up
+    check: (cpu) => ((cpu.totals.freeUnits ?? 0) > 0 ? null : "no free unit"),
+  });
+  mk("free layer 5 with a clump of 40 (room not a multiple of the share)", { trailFreeLayer: 5, ...dep }, FL, {
+    steps: 120, seg: 20, must: [], tweak: (s) => { setOutEach(s, (i) => ({ 2: 127, 3: 20 + (i % 7) * 15 })); clump(s, 40); },
+  });
+  out.push({
+    name: "bootstrap free layer 8 with trailConduit 0 equals free layer 8 alone", cfg: defaultConfig({ ...w, trailFreeLayer: 8, trailConduit: 0, ...dep }), steps: 300, seg: 100, must: ["births", "deaths"],
+    vs: { cfg: defaultConfig({ ...w, trailFreeLayer: 8, ...dep }), same: true },
+  });
+
+  // ---- O: owner conduit ----
+  const own = (m: "id" | "gid" = "id"): Partial<MyceliumConfig> => ({ trailOwner: m });
+  const noOwn = (over: Partial<MyceliumConfig>) => Object.fromEntries(Object.entries(over).filter(([k]) => !OWN.includes(k))) as Partial<MyceliumConfig>;
+  // Passive: the planes alone change nothing about the dynamics (only the header and Z, Q differ).
+  const claimed = (cpu: MyceliumState) => (cpu.Q!.some((v) => v > 0) ? null : "no cell was claimed");
+  mk("owner passive (id) equals keyless", own(), OWN, { vs: { cfg: defaultConfig(w), same: true }, check: claimed });
+  mk("owner passive (gid) equals keyless", own("gid"), OWN, { vs: { cfg: defaultConfig(w), same: true }, check: claimed });
+  mk("owner passive, maxDeposit 12 equals keyless", { ...own(), ...dep }, OWN, { vs: { cfg: defaultConfig({ ...w, ...dep }), same: true }, check: claimed });
+
+  // Claims, in a clump of stationary depositors on cell (3,3) of a 16x16 world. Particle i has id i and starts with gid i; nothing moves or eats.
+  const cb = { width: 16, height: 16, founders: 40, maxParticles: 400 };
+  const rich = { maxDeposit: 255, founderMatter: 300, founderEnergy: 20000, energyMax: 1 << 20, depositCost: 1, maxEat: 0, bodyMax: 600, upkeep: 0, nutrient0: 0 };
+  const CELL = 3 * 16 + 3;
+  /** P is set in every world (the keyless baseline too); Z and Q only where the planes exist. */
+  const seedCell = (s: MyceliumState, z: number, q: number, p: number, a = 0): void => { s.P[CELL] = p; s.A[CELL] = a; if (s.Z && s.Q) { s.Z[CELL] = z; s.Q[CELL] = q; } };
+  const depOut = (v: number) => ({ 3: v });
+  const small = (name: string, over: Partial<MyceliumConfig>, tweak: Case["tweak"], same: boolean, extra: Partial<Case> = {}): void => {
+    out.push({
+      name: `bootstrap ${name}`, cfg: defaultConfig({ ...cb, ...rich, ...over }), steps: 60, seg: 10, must: [], tweak,
+      vs: { cfg: defaultConfig({ ...cb, ...rich, ...noOwn(over) }), same }, check: claimed, ...extra,
+    });
+  };
+  // Deposits: 64 gives 127, 127 gives 253 (maxDeposit 255); an output of 1 gives 1.
+  const tie = (v: number) => (s: MyceliumState): void => { setOutEach(s, () => depOut(v)); clump(s, 6); };
+  small("owner claim tie at deposit 1 (larger id wins)", own(), tie(1), true);
+  small("owner claim tie at deposit 127", own(), tie(64), true);
+  small("owner claim tie at deposit 253", own(), tie(127), true);
+  small("owner claim tie, gid mode, two clans of three", own("gid"), (s) => { setOutEach(s, () => depOut(127)); clump(s, 6); for (let i = 0; i < 6; i++) s.gid[i] = i % 2; }, true);
+  small("owner claim: the larger deposit beats the larger tag", own(), (s) => { setOutEach(s, (i) => depOut(i === 0 ? 127 : 64)); clump(s, 5); }, true);
+  small("owner claim: a same-clan depositor below the maximum still adds to Q", own("gid"), (s) => {
+    setOutEach(s, (i) => depOut(i === 0 ? 127 : 64)); clump(s, 4);
+    s.gid[0] = 1; s.gid[1] = 1; s.gid[2] = 0; s.gid[3] = 0;
+  }, true);
+  small("owner claim: a foreign deposit adds to P only and does not dislodge", own("gid"), (s) => {
+    setOutEach(s, (i) => depOut(i < 3 ? 127 : 40)); clump(s, 4); s.gid[3] = 7; seedCell(s, 8, 100, 100); // clan 7 (tag 8) owns it; particle 3 is of that clan
+  }, true);
+  small("owner claim: only strangers deposit on an owned cell", own("gid"), (s) => { setOutEach(s, () => depOut(127)); clump(s, 4); seedCell(s, 9, 50, 80); }, true);
+  // Q decays with the same draw as P: the largest rate, the smallest, and none.
+  small("owner Q decay at pDecay 65535", { ...own(), pDecay: 65535 }, tie(127), true, { steps: 20, seg: 1, check: () => null }); // every cell decays to nothing each step
+  small("owner Q decay at pDecay 1", { ...own(), pDecay: 1 }, tie(127), true, { steps: 120, seg: 30 });
+  small("owner Q decay at pDecay 0 (no decay branch)", { ...own(), pDecay: 0 }, tie(127), true, { steps: 120, seg: 30 });
+
+  // Eating gate. Ten particles stationary on one owned cell, two of the owner clan (tag 6) and eight strangers, all asking for 198.
+  // Nobody deposits, so Q stays where it was put (pDecay 0). Q = theta - 1 never fires the gate (equals keyless); Q = theta does.
+  const gate = (theta: number, q: number, a: number): void => {
+    small(`owner defend theta ${theta}, Q ${q}, A ${a}${a >= 1000 ? " (R <= A: a gated request left in req would underflow A)" : ""}`,
+      { ...own("gid"), ownerDefend: theta, maxEat: 200, pDecay: 0 },
+      (s) => {
+        setOutEach(s, () => ({ 2: 127 })); clump(s, 10);
+        for (let i = 0; i < 10; i++) s.gid[i] = i < 2 ? 5 : i;
+        seedCell(s, 6, q, q + 3, a);
+      }, q < theta, { check: () => null });
+  };
+  gate(10, 9, 40); gate(10, 10, 40); gate(10, 10, 1000); gate(10, 40, 1000);
+  gate(1, 1, 40);       // theta 1, the smallest: any owned trail refuses a stranger
+  gate(255, 254, 40); gate(255, 255, 40); // theta 255, the largest
+
+  // Owner conduit. A 32x32 world with two seeded territories side by side (tags 1 and 2) and extra A at their centres, so edges conduct.
+  const w2 = { width: 32, height: 32, founders: 200, maxParticles: 1000 };
+  const terr = (qv: number) => (s: MyceliumState): void => {
+    for (let y = 4; y < 12; y++) for (let x = 4; x < 12; x++) { const c = y * 32 + x; s.P[c] += qv; if (s.Z && s.Q) { s.Z[c] = 1; s.Q[c] = qv; } }
+    for (let y = 4; y < 12; y++) for (let x = 12; x < 20; x++) { const c = y * 32 + x; s.P[c] += qv; if (s.Z && s.Q) { s.Z[c] = 2; s.Q[c] = qv; } }
+    s.A[8 * 32 + 8] += 3000; s.A[8 * 32 + 15] += 3000;
+  };
+  const conduit = (name: string, over: Partial<MyceliumConfig>, drop: string[], same = false, extra: Partial<Case> = {}, size: Partial<MyceliumConfig> = w2): void => {
+    const rest = Object.fromEntries(Object.entries(over).filter(([k]) => !drop.includes(k))) as Partial<MyceliumConfig>;
+    out.push({
+      name: `bootstrap ${name}`, cfg: defaultConfig({ ...size, ...over }), steps: 300, seg: 100, must: ["births", "deaths"], tweak: terr(120),
+      vs: { cfg: defaultConfig({ ...size, ...rest }), same }, ...extra,
+    });
+  };
+  const OC = ["ownerConduit", "ownerConduitCap", "ownerGhost"];
+  conduit("owner conduit g 0 equals no conduit", { ...own(), ownerConduit: 0 }, OC, true);
+  conduit("owner conduit g 1", { ...own(), ownerConduit: 1 }, OC);
+  conduit("owner conduit g 255 (rate capped at 128)", { ...own(), ownerConduit: 255 }, OC);
+  conduit("owner conduit g 64 cap 1", { ...own(), ownerConduit: 64, ownerConduitCap: 1 }, OC);
+  conduit("owner conduit g 255 cap 255", { ...own(), ownerConduit: 255, ownerConduitCap: 255 }, OC);
+  conduit("owner conduit g 16 cap 40, gid", { ...own("gid"), ownerConduit: 16, ownerConduitCap: 40 }, OC);
+  conduit("owner conduit g 64, diffA 128 (the largest allowed: the cap leaves nothing to add, equals no conduit)", { ...own(), ownerConduit: 64, diffA: 128 }, OC, true);
+  conduit("owner conduit g 64, diffA 0 (the skip guard is off)", { ...own(), ownerConduit: 64, diffA: 0 }, OC);
+  conduit("owner conduit g 64 + ghost 1", { ...own(), ownerConduit: 64, ownerGhost: 1 }, ["ownerGhost"]);
+  conduit("owner conduit g 64 + ghost 31 (largest on 32x32)", { ...own(), ownerConduit: 64, ownerGhost: 31 }, ["ownerGhost"]);
+  conduit("owner conduit g 64 + ghost 5, defend 20", { ...own(), ownerConduit: 64, ownerGhost: 5, ownerDefend: 20 }, ["ownerGhost"]);
+  conduit("owner defend 20 + conduit 64 (EC)", { ...own("gid"), ownerDefend: 20, ownerConduit: 64 }, OC);
+  conduit("public conduit 64 beside owner + defend (C-pub)", { ...own("gid"), ownerDefend: 20, trailConduit: 64 }, ["trailConduit"]);
+  conduit("owner conduit g 64, 100x60 odd size, gradient light", { ...own(), ownerConduit: 64, lightPattern: "gradient" }, OC, false, {}, { width: 100, height: 60, founders: 300, maxParticles: 900 });
+  // The proposal on its own: territories form by themselves, no seeding.
+  const EC = { ...own("gid"), ownerDefend: 24, ownerConduit: 48, maxDeposit: 12 };
+  mk("owner EC emerging (gid)", EC, [...OWN], { must: [...cs, "mutations"], check: claimed });
+  mk("owner EC emerging (id), blocked heredity", { ...EC, trailOwner: "id", heredity: "blocked" }, [...OWN], { must: [...cs] });
+  mk("owner EC emerging with low mutation (mutRate 4096)", { ...EC, mutRate: 4096 }, [...OWN], { must: [...cs, "mutations"] });
+  mk("owner EC emerging, physarum null (id)", { ...EC, trailOwner: "id", controller: "physarum", heredity: "frozen" }, [...OWN]);
+  mk("owner EC on the toll substrate", { ...EC, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, [...OWN]);
+  mk("owner EC-ghost 64 emerging (ghost on 64x64: displaced owner)", { ...EC, ownerGhost: 32 }, ["ownerGhost"]);
+  mk("owner EC + free layer 8 + prelaid rows (every key at once)", { ...EC, trailFreeLayer: 8, trailInit: 24, trailInitPattern: "rows", pDecay: 66 }, [...OWN, ...FL, ...P]);
+  mk("owner defend theta 255 + conduit 255 cap 255 emerging", { ...own("gid"), ownerDefend: 255, ownerConduit: 255, maxDeposit: 12 }, [...OWN]);
+  mk("owner EC, 256x256, 4096 founders", EC, [...OWN], { steps: 800, seg: 200, must: [...cs, "mutations"], check: claimed }, { width: 256, height: 256, founders: 4096, maxParticles: 16384 });
+  return out;
+}
+
 const smallWorld = { width: 32, height: 32, founders: 64, maxParticles: 256 };
 const cases: Case[] = [
   {
@@ -299,6 +504,7 @@ const cases: Case[] = [
   ...r2bCases(),
   ...trailCases(),
   ...conduitCases(),
+  ...bootstrapCases(),
   { name: "default 128x128", cfg: defaultConfig(), steps: 2000, seg: 250, must: [...base, "mutations"] },
   { name: "inherit", cfg: defaultConfig({ heredity: "inherit" }), steps: 500, seg: 100, must: [...base, "mutations"] },
   { name: "frozen", cfg: defaultConfig({ heredity: "frozen" }), steps: 500, seg: 100, must: [...base] },
@@ -361,7 +567,7 @@ async function runCase(c: Case): Promise<Row> {
   if (ok && c.vs) {
     const base = make({ ...c, cfg: c.vs.cfg }); // same tweak, baseline config
     for (let t = 0; t < c.steps; t++) step(base);
-    const d = firstDiff(cpu, base);
+    const d = firstDiff(cpu, base, true);
     if (c.vs.same && d) { ok = false; note = `expected the same dynamics as the baseline config, but ${d}`; }
     if (!c.vs.same && !d) { ok = false; note = "the key changed nothing against its baseline config (vacuous case)"; }
   }
@@ -551,6 +757,78 @@ async function runGuards(): Promise<Row> {
   return { name: "ledger bound raises like the CPU; genotype-id refusal and steps past 2^32 equal the CPU", ok, steps: 0, n: 0, cpuMs: 0, gpuMs: 0, digest: "-", note, totals: "" };
 }
 
+
+/**
+ * Bootstrap guards: the state straight after create equals the CPU's createWorld (the pre-laid trail only exists there), the keyless field layout
+ * is the frozen literal, bad new-key configs stop at createWorld, and the free-layer counters raise at 2^50 on both engines.
+ */
+async function runBootstrapGuards(): Promise<Row> {
+  let ok = true, note = "";
+  const fail = (m: string) => { ok = false; note += `${note ? "; " : ""}${m}`; };
+  const w = { width: 64, height: 48, founders: 300, maxParticles: 1500 };
+  // Step 0: every pattern, the clamp, and the owner and free-layer planes, read straight after create.
+  const zero: [string, Partial<MyceliumConfig>][] = [
+    ["carpet", { trailInit: 20 }], ["carpet clamp", { trailInit: 255 }], ["nutrient0 4", { trailInit: 16, nutrient0: 4 }],
+    ["rows", { trailInit: 20, trailInitPattern: "rows" }], ["cols", { trailInit: 20, trailInitPattern: "cols", trailInitPitch: 5 }],
+    ["lattice", { trailInit: 20, trailInitPattern: "lattice", trailInitPitch: 6 }], ["patches", { trailInit: 20, trailInitPattern: "patches" }],
+    ["patches pitch 2", { trailInit: 20, trailInitPattern: "patches", trailInitPitch: 2 }], ["rows pitch 64", { trailInit: 20, trailInitPattern: "rows", trailInitPitch: 64 }],
+    ["free layer", { trailFreeLayer: 8 }], ["owner", { trailOwner: "gid", ownerDefend: 5, ownerConduit: 9 }], ["owner id + free layer + prelaid", { trailOwner: "id", trailFreeLayer: 3, trailInit: 5 }],
+  ];
+  for (const [label, over] of zero) {
+    const cfg = defaultConfig({ ...w, ...over });
+    const cpu = createWorld(cfg);
+    const g = await GpuMycelium.create(dev, cfg);
+    const gs = await g.read();
+    if (stateDigest(gs) !== stateDigest(cpu) || firstDiff(cpu, gs) || validateState(gs).length) fail(`step 0, ${label}: ${firstDiff(cpu, gs) ?? "digest differs"}`);
+    g.destroy();
+  }
+  // The keyless field layout is exactly the literal; each key appends planes after it.
+  const N = 64 * 48, lit = fieldLayout(defaultConfig(w));
+  const same = lit.A === 0 && lit.C === N && lit.P === 2 * N && lit.D === 3 * N && lit.R === 4 * N && lit.TK === 5 * N && lit.SENT === 6 * N && lit.words === 10 * N;
+  if (!same) fail(`keyless field layout moved: ${JSON.stringify(lit)}`);
+  const lf = fieldLayout(defaultConfig({ ...w, trailFreeLayer: 4 })), lo = fieldLayout(defaultConfig({ ...w, trailOwner: "id" })), lb = fieldLayout(defaultConfig({ ...w, trailFreeLayer: 4, trailOwner: "id" }));
+  if (lf.DS !== 10 * N || lf.words !== 11 * N || lo.Z !== 10 * N || lo.Q !== 11 * N || lo.W1 !== 12 * N || lo.W2 !== 13 * N || lo.words !== 14 * N
+    || lb.DS !== 10 * N || lb.Z !== 11 * N || lb.words !== 15 * N) fail("optional planes are not appended after the keyless ones");
+  // Bad values stop at createWorld, never at the shader.
+  const bad: Partial<MyceliumConfig>[] = [
+    { trailInit: 0 }, { trailInit: 256 }, { trailInit: 1.5 }, { trailInitPattern: "rows" }, { trailInit: 5, trailInitPattern: "stripes" as never }, { trailInitPitch: 8 },
+    { trailInit: 5, trailInitPitch: 8 }, { trailInit: 5, trailInitPattern: "carpet", trailInitPitch: 8 }, { trailInit: 5, trailInitPattern: "rows", trailInitPitch: 1 },
+    { trailInit: 5, trailInitPattern: "rows", trailInitPitch: 65 }, { trailFreeLayer: 0 }, { trailFreeLayer: 256 }, { trailConduitGhost: 3 },
+    { trailConduit: 8, trailConduitGhost: 0 }, { trailConduit: 8, trailConduitGhost: 48 }, { trailOwner: "both" as never }, { ownerDefend: 5 }, { trailOwner: "id", ownerDefend: 0 },
+    { trailOwner: "id", ownerDefend: 256 }, { ownerConduit: 5 }, { trailOwner: "id", ownerConduit: 256 }, { trailOwner: "id", ownerConduit: 5, diffA: 129 },
+    { trailOwner: "id", ownerConduit: 5, trailConduit: 5 }, { trailOwner: "id", ownerConduitCap: 5 }, { trailOwner: "id", ownerConduit: 5, ownerConduitCap: 0 },
+    { trailOwner: "id", ownerConduit: 5, ownerConduitCap: 256 }, { ownerGhost: 3 }, { trailOwner: "id", ownerConduit: 5, ownerGhost: 0 }, { trailOwner: "id", ownerConduit: 5, ownerGhost: 48 },
+  ];
+  for (const b of bad) {
+    let threw = false;
+    try { createWorld(defaultConfig({ ...w, ...b })); } catch { threw = true; }
+    if (!threw) fail(`config ${JSON.stringify(b)} was accepted`);
+  }
+  // The free-layer counters are ledgers too: one unit past 2^50 raises on both engines, exactly 2^50 does not.
+  {
+    const cfg = defaultConfig({ width: 32, height: 32, founders: 64, maxParticles: 256, trailFreeLayer: 255, maxDeposit: 12 });
+    const s = createWorld(cfg);
+    s.totals.freeUnits = 2 ** 50 - 5;
+    const cpu = decode(encode(s));
+    const g = await GpuMycelium.create(dev, s);
+    let threwAt = 0;
+    for (let t = 1; t <= 200 && !threwAt; t++) { try { step(cpu); } catch { threwAt = t; } }
+    if (!threwAt) fail("free counter: the CPU never passed 2^50");
+    else {
+      g.step(threwAt - 1);
+      const before = await readOrNull(g);
+      if (!before) fail(`free counter: the GPU raised before step ${threwAt}`);
+      g.step(1);
+      const gpuThrew = await throws(() => g.read());
+      if (!gpuThrew) fail(`free counter: the CPU raised at step ${threwAt}, the GPU did not`);
+    }
+    g.destroy();
+  }
+  return { name: "bootstrap guards: step 0 equals createWorld, keyless layout frozen, bad configs refused, free counter raises at 2^50", ok, steps: 0, n: 0, cpuMs: 0, gpuMs: 0, digest: "-", note, totals: "" };
+}
+async function readOrNull(g: GpuMycelium): Promise<MyceliumState | null> { try { return await g.read(); } catch { return null; } }
+async function throws(f: () => Promise<unknown>): Promise<boolean> { try { await f(); return false; } catch { return true; } }
+
 const rows: Row[] = [];
 for (const c of cases) {
   if (only.length && !only.some((s) => c.name.includes(s))) continue;
@@ -566,6 +844,10 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
     [{ moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", trailMoveDiscount 64 toll"],
     [{ trailConduit: 32, trailConduitCap: 60 }, ", trailConduit 32 cap 60"],
     [{ trailConduit: 8, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ", trailConduit 8 with toll"],
+    [{ trailInit: 24, trailInitPattern: "lattice", trailInitPitch: 8, trailConduit: 32, pDecay: 66 }, ", bootstrap prelaid lattice + conduit"],
+    [{ trailFreeLayer: 8, maxDeposit: 12, trailConduit: 32, trailConduitGhost: 5 }, ", bootstrap free layer 8 + conduit ghost 5"],
+    [{ trailOwner: "gid", ownerDefend: 24, ownerConduit: 48, maxDeposit: 12 }, ", bootstrap owner defend 24 conduit 48 (gid)"],
+    [{ trailOwner: "id", ownerDefend: 24, ownerConduit: 48, ownerGhost: 7, trailFreeLayer: 8, trailInit: 24, trailInitPattern: "rows", maxDeposit: 12 }, ", bootstrap every key (id)"],
   ];
   for (const [over, label] of variants) {
     rows.push(await runResume(over, label));
@@ -576,6 +858,37 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
 
 if (!only.length || only.some((s) => "guards".includes(s))) {
   rows.push(await runGuards());
+  const r = rows.at(-1)!;
+  console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
+}
+
+/** The comparison helper itself: strict by default (a one-sided counter or plane is a difference), lenient only in baseline mode. */
+function runDiffGuards(): Row {
+  let ok = true, note = "";
+  const fail = (m: string) => { ok = false; note += `${note ? "; " : ""}${m}`; };
+  const w = { width: 32, height: 32, founders: 50, maxParticles: 400 };
+  const keyed = createWorld(defaultConfig({ ...w, trailFreeLayer: 8, trailOwner: "gid", ownerDefend: 4 }));
+  const plain = createWorld(defaultConfig(w));
+  if (firstDiff(keyed, keyed) !== null) fail("a state differs from itself");
+  const lacksCounters = { ...keyed, totals: { ...keyed.totals } };
+  delete lacksCounters.totals.freeUnits; delete lacksCounters.totals.paidUnits;
+  if (!firstDiff(keyed, lacksCounters)?.startsWith("totals.")) fail("a GPU read without the free counters was not reported");
+  if (!firstDiff(lacksCounters, keyed)?.startsWith("totals.")) fail("a CPU state without the free counters was not reported");
+  const lacksPlanes = { ...keyed, Z: undefined, Q: undefined } as MyceliumState;
+  if (!firstDiff(keyed, lacksPlanes)?.startsWith("Z:")) fail("a GPU read without the owner planes was not reported");
+  if (firstDiff(keyed, plain, true) !== null) fail(`baseline mode reported a counter or plane the baseline lacks: ${firstDiff(keyed, plain, true)}`);
+  if (firstDiff(keyed, plain) === null) fail("strict mode did not report the keyed state against a keyless one");
+  return { name: "firstDiff guards: one-sided free counters and owner planes are differences (baseline mode skips them)", ok, steps: 0, n: 0, cpuMs: 0, gpuMs: 0, digest: "-", note, totals: "" };
+}
+
+if (!only.length || only.some((s) => "firstdiff guards".includes(s.toLowerCase()))) {
+  rows.push(runDiffGuards());
+  const r = rows.at(-1)!;
+  console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
+}
+
+if (!only.length || only.some((s) => "bootstrap guards".includes(s))) {
+  rows.push(await runBootstrapGuards());
   const r = rows.at(-1)!;
   console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name}${r.note ? `\n      ${r.note}` : ""}`);
 }

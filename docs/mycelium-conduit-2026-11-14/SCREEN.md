@@ -397,3 +397,7 @@ Conduit readouts (late window; HYPOTHETICAL g=8: what a conduit of that strength
 | toll-ref.inherit.8103 | 8103 | 100.394 | 1.0135 | 3846 | 1198 | -0.103 | 1.04 | 0.0244 | - | - | 98.628 | 1000/1000 |
 | toll-ref.inherit.8104 | 8104 | 98.628 | 0.9956 | 3785 | 4335 | -0.079 | 1.08 | 0.0241 | 0.0311 | - | 98.694 | 1000/1000 |
 
+
+## Note 15 Nov 2026: label rules under unit test
+
+The section 7 rules moved to `tools/mycelium/conduit-labels.ts` (re-exported by `conduit-screen.ts`) and have unit tests in `tools/test/mycelium-conduit-labels.test.ts`. A Sol 6.1 High review of the move found one rule bug from before it: a blocked partner with no sensitivity readout counted as zero, so route H(ii) could pass on a missing value. The rule now fails a missing value, as section 7 says. Re-running `conduit-screen.ts --label` on the 200 finished runs gives byte-identical output before and after (every strength is PURGED on K alone), so no recorded label changes.

@@ -22,6 +22,8 @@ import {
   OUT3,
   POOL_MAX3,
   RND3,
+  RND3_LEVER,
+  RPS_EDGE_SHARE,
   U32_MAX,
   W1_OFF3,
   W2_OFF3,
@@ -553,8 +555,62 @@ export function reactShader3(c: WorldConfig): string {
     }
 ` : "";
 
+  // Slab levers (spec 17): constants and blocks exist only when their key is set, so a key-absent shader is the text it was.
+  const sink = c.sinkShift !== undefined;
+  const upwell = c.upwellPeriod !== undefined;
+  const floor = c.floorDecay !== undefined;
+  const rpsMut = rps && c.rpsMutate !== undefined;
+  const leverConstants =
+    (sink ? `const SINK_SHIFT = ${c.sinkShift}u;\nconst RND_SINK = ${RND3_LEVER.SINK}u;\n` : "") +
+    (upwell ? `const UPWELL_PERIOD = ${c.upwellPeriod}u;\nconst UPWELL_SHIFT = ${c.upwellShift}u;\nconst RND_UPWELL_A = ${RND3_LEVER.UPWELL_A}u;\nconst RND_UPWELL_C = ${RND3_LEVER.UPWELL_C}u;\n` : "") +
+    (floor ? `const FLOOR_DECAY = ${c.floorDecay}u;\nconst RND_FLOOR = ${RND3_LEVER.FLOOR}u;\n` : "") +
+    (rpsMut ? `const RPS_MUTATE = ${c.rpsMutate}u;\nconst RPS_TYPES = ${c.rpsTypes}u;\nconst RPS_EDGE_SHARE = ${RPS_EDGE_SHARE}u;\nconst RND_RPS_FLIP = ${RND3_LEVER.RPS_FLIP}u;\n` : "");
+  const leverFns =
+    (sink ? `// Waste a cell sends to the layer below this step (none from the floor).
+fn sink_of(j: u32, zj: u32, step: u32) -> u32 {
+  if (zj + 1u >= TILE_D) { return 0u; }
+  return mul_frac(cells[CH_C + j], 1u, SINK_SHIFT, draw(cell_base(step, j), RND_SINK));
+}
+` : "") +
+    (rpsMut ? `// The RPS type operator (spec 17.3): flip one mask bit, or relabel the type and clear the new own bit.
+fn mutate_rps(i: u32, which: u32, deltaRnd: u32) {
+  let p1 = genome[G_PARAM1 + i];
+  var t = (p1 >> 8u) & 0xffu;
+  var m = (p1 >> 16u) & 0xffu;
+  let other = (t + 1u + deltaRnd % (RPS_TYPES - 1u)) % RPS_TYPES;
+  if ((which & 0xffu) < RPS_EDGE_SHARE) {
+    m ^= 1u << other;
+  } else {
+    t = other;
+    m &= ~(1u << other);
+  }
+  genome[G_PARAM1 + i] = (p1 & 0xffu) | (t << 8u) | (m << 16u);
+}
+` : "");
+  const sinkExpr = sink ? "sink_of" : "";
+  const exchange = sink || upwell ? `    // Slab levers (spec 17.1): sinking and the upwelling exchange, gathered from post-transport values.
+    {
+${sink ? `      let sinkI = ${sinkExpr}(i, z, step);
+      C -= sinkI;
+      if (z > 0u) { C += ${sinkExpr}(i - WH, z - 1u, step); }
+` : "      let sinkI = 0u;\n"}${upwell ? `      if (step % UPWELL_PERIOD == UPWELL_PERIOD - 1u) {
+        let zm = TILE_D - 1u - z;
+        let m = (zm * TILE_H + y) * TILE_W + x;
+        let bm = cell_base(step, m);
+        A = A - mul_frac(cells[CH_A + i], 1u, UPWELL_SHIFT, draw(base, RND_UPWELL_A)) + mul_frac(cells[CH_A + m], 1u, UPWELL_SHIFT, draw(bm, RND_UPWELL_A));
+        C -= mul_frac(cells[CH_C + i] - sinkI, 1u, UPWELL_SHIFT, draw(base, RND_UPWELL_C));
+        C += mul_frac(cells[CH_C + m] - ${sink ? `${sinkExpr}(m, zm, step)` : "0u"}, 1u, UPWELL_SHIFT, draw(bm, RND_UPWELL_C));
+      }
+` : ""}    }
+` : "";
+  const floorBlock = floor ? `    if (z == TILE_D - 1u) {
+      q = mul_frac(C, FLOOR_DECAY, 16u, draw(base, RND_FLOOR));
+      C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] += q;
+    }
+` : "";
+
   return /* wgsl */ `${prelude3(c)}
-${rpsConstants}@group(0) @binding(0) var<storage, read> cells: array<u32>;
+${rpsConstants}${leverConstants}@group(0) @binding(0) var<storage, read> cells: array<u32>;
 @group(0) @binding(1) var<storage, read_write> genome: array<u32>;
 @group(0) @binding(2) var<storage, read> U: array<i32>;
 @group(0) @binding(3) var<storage, read_write> cellsOut: array<u32>;
@@ -610,7 +666,7 @@ fn add64(lo: u32, hi: u32, v: u32) {
   if (old + v < old) { add_hi(hi, 1u); }
 }
 
-fn mutate(i: u32, which: u32, deltaRnd: u32) {
+${leverFns}fn mutate(i: u32, which: u32, deltaRnd: u32) {
   let slot = which % (NN_BYTES + 3u);
   var delta = i32(deltaRnd % u32(2 * MUT_STEP + 1)) - MUT_STEP;
   if (delta == 0) { delta = 1; }
@@ -663,7 +719,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (E > POOL_MAX3) { hadd(E - POOL_MAX3); E = POOL_MAX3; }
     if (S > POOL_MAX3) { hadd(S - POOL_MAX3); S = POOL_MAX3; }
 
-${vacancy}    if (living && B > 0u) {
+${exchange}${vacancy}    if (living && B > 0u) {
       var words: array<u32, ${NN_WORDS3}>;
       if (NEUTRAL) {
         words = REF_W;
@@ -762,7 +818,11 @@ ${vacancy}    if (living && B > 0u) {
         if (draw(base, RND_MUT) < p) {
           let parentHi = genome[G_LIN_HI + i];
           let parentLo = genome[G_LIN_LO + i];
-          mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+${rpsMut ? `          if ((draw(base, RND_RPS_FLIP) & 0xffffu) < RPS_MUTATE) {
+            mutate_rps(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+          } else {
+            mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+          }` : "          mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));"}
           let childLo = i;
           genome[G_LIN_HI + i] = step + 1u;
           genome[G_LIN_LO + i] = childLo;
@@ -796,7 +856,7 @@ ${vacancy}    if (living && B > 0u) {
     let ta = mul_frac(C, L, 8u, draw(base, RND_ABIO1));
     q = min(C, mul_frac(ta, K_ABIO, 16u, draw(base, RND_ABIO2)));
     C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] = q;
-
+${floorBlock}
     if (living && B == 0u && P == 0u) {
       genome[G_LIN_HI + i] = 0u;
       genome[G_LIN_LO + i] = 0u;

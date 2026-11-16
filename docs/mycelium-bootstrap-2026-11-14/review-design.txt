@@ -1,0 +1,69 @@
+Reviewed checkout `11ff7e1d` read-only. No builds or tests run. Below, **DESIGN.md** means `docs/mycelium-bootstrap-2026-11-14/DESIGN.md`.
+
+1. **P1 — Signed claim packing breaks CPU/GPU parity.** DESIGN.md:154 uses `dep << 24 | t`, a signed JS result. At `dep=128`, CPU `max(0, packed)` rejects the negative candidate; GPU `atomicMax<u32>` accepts it. **Fix:** apply `>>> 0` before comparison/storage and test deposits 127, 128 and 253. Legal bounds permit these deposits (`tools/mycelium/world.ts:236`, `:554`).
+
+2. **P1 — Zero deposits can claim empty cells.** DESIGN.md:154 packs `dep=0` into a nonzero tag, producing `Z!=0, Q=0`, violating DESIGN.md:152. With `P=0`, GPU decay skips the cleanup (`tools/mycelium/gpu.ts:522`). **Fix:** require actual `dep>0` before submitting either engine’s claim.
+
+3. **P1 — Owner tags collide within the legal ID range.** DESIGN.md:150 maps IDs **1 and 2,604,073** to the same tag, **10,368,889**. Unrelated individuals/clones then share ownership, defence and dead-owner classification. IDs legally extend to `0xfffffffe` (`tools/mycelium/world.ts:309`). **Fix:** retain exact IDs and use separate deposit/tag reduction passes, or enforce a proven injective range.
+
+4. **P1 — Extending counters needs a different GPU allocation.** DESIGN.md:114 does not specify offsets. Extending the existing contiguous stat mapping puts the ninth stat pair at words **32–33**, overlapping cumulative `lightIn`. Existing clear/finish loops also handle only seven counters (`tools/mycelium/gpu.ts:29`, `:143`, `:595`). **Fix:** specify four nonoverlapping new pairs and their clear, accumulate, upload and read paths.
+
+5. **P1 — A void public control explicitly permits a positive O label.** DESIGN.md:324 lets condition (g) pass when C-pub is void; DESIGN.md:368 then permits KEPT-AND-USED. **Fix:** missing or unmatched C-pub must make the owner-specific conclusion unresolved, never satisfy its control predicate.
+
+6. **P1 — Extension rules retain eight-seed thresholds.** DESIGN.md:328 extends to 16, but DESIGN.md:347–368 still uses literal counts such as six passes and at most two control keepers. Six of sixteen could satisfy positive-label components. **Fix:** express every threshold through `n`, including readability, controls, anchors and windfall votes.
+
+7. **P2 — The claim pass lacks the actual deposit value.** DESIGN.md:154/:166 requires `dep` again after `k_live`, but existing scratch retains only requested deposit. Actual deposit can be energy-clipped or followed by death (`tools/mycelium/gpu.ts:297–308`). **Fix:** store actual deposit, including zero on early death, before compaction; specify how CPU pending claims retain it.
+
+8. **P2 — O’s behavioural comparator changes ownership regime.** The labelled treatment is inherit-`gid` (DESIGN.md:253), while its blocked comparator is `id` (DESIGN.md:255/:360). Reusing predicate (c) therefore confounds heredity with clan versus individual ownership, despite DESIGN.md:179. **Fix:** evaluate the contrast within `id`, or introduce an ownership lineage independent of genotype novelty (`tools/mycelium/world.ts:605–626`).
+
+9. **P2 — C-pub does not specify an otherwise identical intervention.** DESIGN.md:178 leaves unclear whether E remains enabled, and matches on passive states rather than realised EC states. The branch list omits C-pub despite requiring PAY against it (DESIGN.md:255/:323). **Fix:** define an E-preserving public-conduit branch from the same checkpoint and verify realised matching.
+
+10. **P2 — The claimed factorial is not matched.** DESIGN.md:249 borrows F’s no-road arms, but those use default decay, uniform light, different strengths, slots and horizons; B uses durable decay, gradient light and D slots (DESIGN.md:198/:230/:247). **Fix:** add the missing no-road cells under B’s exact conditions, or call these cross-series comparisons descriptive.
+
+11. **P2 — `nofree` does not isolate energy windfall over 2,000 steps.** DESIGN.md:259 changes future deposits, trail, conduction, mass shedding and survival as well as energy expenditure (`tools/mycelium/world.ts:554–559`). Consequently DESIGN.md:315 cannot attribute the births difference specifically to free energy. **Fix:** call it total F dependence; use a controlled immediate-energy comparison for “windfall-led.”
+
+12. **P2 — The ghost validity check measures the wrong field for O.** DESIGN.md:86 checks `corr(P, shifted P)`, but owner conduction depends on `Z/Q` equality (DESIGN.md:157–158). P can be decorrelated while owner conductance remains correlated. **Fix:** check real versus displaced edge-conductance maps, handle constant fields explicitly, and propagate void status into votes.
+
+13. **P2 — The diffusion match changes definition.** DESIGN.md:80 promises realised on-twin mean conduction; DESIGN.md:191 freezes hypothetical conduction on keyless states. Treatment feedback can invalidate that match. **Fix:** name the exact strength/window and report realised treatment/control mismatch, with a fixed validity tolerance.
+
+14. **P2 — Noise relaxes the ecological safeguards.** DESIGN.md:288–290 increases permitted population loss, death increase and birth reduction as their noise increases. Only intake noise can make a checkpoint unresolved. **Fix:** use fixed noninferiority margins for those safeguards and mark noisy safeguards unresolved instead of enlarging acceptable harm.
+
+15. **P2 — Branch/noise inputs are missing.** DESIGN.md:243/:259 never gives F’s main-run checkpoint times. O schedules one `off-replicate`, but its noise formula requires `nullA/nullB` (DESIGN.md:255/:288). D1/D2 PAY and GRAD need window noise, while D’s null branches start at 5,000 and 50,000 (DESIGN.md:224/:343). **Fix:** provide a complete checkpoint/branch/seed/window matrix.
+
+16. **P2 — Unresolved controls can become mechanism evidence.** DESIGN.md:339–341 treats diffA-matched “not Y” as sufficient for TRANSIENT, including I. DESIGN.md:354 similarly accepts a MIXED anchor because it is “not NO-DAMPS.” **Fix:** require explicit negative control votes and anchor YES; preserve unresolved results as INCONCLUSIVE.
+
+17. **P2 — Marginal votes need not describe any successful world.** DESIGN.md:354/:368 separately requires six passes for several predicates. Four six-of-eight sets can have **zero common members**. **Fix:** require a joint per-seed predicate including K and all required mechanism conditions, then apply V to that conjunction.
+
+18. **P2 — Paying for deposits can substitute for behavioural use.** DESIGN.md:313 allows paid-unit rate alone to establish H. A constant depositor with unrelated movement can therefore satisfy “behaviour” without responding to trail. **Fix:** retain paid units as investment evidence; require trail-dependent behaviour separately.
+
+19. **P2 — “Leak is zero by construction” is false.** DESIGN.md:320 includes all owned edges, but E excludes foreigners only where `Q>=theta` (DESIGN.md:156). For example, same-owner cells with `Q=1`, `theta=2` can conduct and feed strangers. **Fix:** restrict the zero assertion to foreign grants on defended cells; measure leakage elsewhere.
+
+20. **P2 — The F pilot can select a configuration absent from the arm table.** DESIGN.md:192 can halve F-mid to 8, while core arms, labels and dose comparisons remain explicitly F=16 (DESIGN.md:237–245/:345). **Fix:** introduce one selected ceiling symbol and propagate it through every arm, comparator and predicate.
+
+21. **P2 — Sizing is not executable for several outcomes.** DESIGN.md:188–193 omits fallbacks for no settle time, empty/zero `x_med`, failed strength adjustment and missing theta levels. `mid/2` and `mid/4` can also produce invalid fractional strengths. **Fix:** specify integer rounding, deterministic selection and explicit UNREADABLE outcomes for every failure.
+
+22. **P2 — Durable results cannot uniquely diagnose “startup-only.”** T labels P2, but D changes to rising R (DESIGN.md:206/:219/:343). A negative D result could reflect the changed conductance curve. D0 also assumes the `v=32` lifetime although sizing may choose 16 (DESIGN.md:189/:228). **Fix:** include durable P2 twins and size durable readability using the selected `v` and strength.
+
+23. **P2 — The seed audit would reject its own restart.** DESIGN.md:384 includes every `docs/mycelium-*/run-log.jsonl`; that glob includes the new bootstrap log once runs begin. Re-auditing then finds its own reserved seeds. **Fix:** separate historical exclusion logs from the bootstrap log, whose entries should instead be reconciled against the reservation table.
+
+24. **P2 — N-E is required but never scheduled.** DESIGN.md:372 requires reading N-E for BOOTSTRAPS; DESIGN.md:255 schedules only N-P and N-EC. **Fix:** add N-E, update counts/budget, and require the intended contrast.
+
+25. **P2 — Gates and cuts contradict mandatory evidence.** DESIGN.md:19/:253 makes core unconditional, while DESIGN.md:193 can stop O entirely. DESIGN.md:278 cuts forced dose arms and second checkpoints required by labels (DESIGN.md:245/:255/:259). **Fix:** define gate precedence and an explicit INCOMPLETE/NOT-RUN outcome whenever required evidence is cut.
+
+26. **P2 — The extension budget is not a worst-case bound.** DESIGN.md:276 claims extending every inconclusive cell adds at most about 25%. Every series reserves another eight slots; broad extension can approximately double affected runs. **Fix:** generate the extension dependency graph and budget all required treatment, comparator, anchor and branch runs.
+
+27. **P2 — The parity-preservation instructions are mutually incompatible.** DESIGN.md:390 inserts new cases after `conduitCases()`, before existing cases (`tests/deno/mycelium_gpu.ts:299–306`), so the “first 69 rows” cannot remain identical. DESIGN.md:395 also needs a new `core:true` comparison mode absent from the existing runner (`:51–68`, `:361–366`). **Fix:** compare baseline results by stable identity and explicitly permit the necessary harness changes.
+
+28. **P2 — The layout guard asserts an object the API does not expose.** DESIGN.md:165/:395 expects `view.field` to include D/R/TK/SENT/words. It exposes only A/C/P (`tools/mycelium/gpu.ts:734–740`). **Fix:** test a pure layout helper, or explicitly extend the inspection API.
+
+29. **P3 — Decode provenance is misstated.** DESIGN.md:71 attributes anchor reconstruction to `createEmpty`. That function initializes anchors to zero; `decode` restores them directly from the header (`tools/mycelium/world.ts:728–729`, `:741–747`). **Fix:** describe header restoration accurately.
+
+30. **P3 — “No trail was laid” overstates the prior result.** DESIGN.md:10 turns zero p90 into literal absence. SCREEN.md:43 reports nonzero retained trail in seed 8102; SCREEN.md:106 says the conduit “essentially” never operated. **Fix:** use that qualified wording.
+
+Checked and fine:
+
+- P’s initial A→P transfer preserves matter; taking `energy0` afterward closes its energy ledger.
+- F’s free/paid transfer algebra closes both ledgers, and its shared-room, multiplication and division bounds fit u32.
+- Same-draw Q decay preserves `Q<=P`; capped public/owner conduit arithmetic preserves the existing conservative diffusion bounds.
+- The provisional seed block and its two XOR images are mutually disjoint and clear of the checked historical sets.
+- T’s 208 runs, nominal total 723, and unconditional total 475 add up correctly.
