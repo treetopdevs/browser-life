@@ -1,6 +1,6 @@
 # Mycelium in a volume: rules, rung R0
 
-Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. A WGSL twin comes later and must match it bit for bit. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
+Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. The WGSL twin `tools/mycelium3d/gpu.ts` matches it bit for bit (`tests/deno/mycelium3d_gpu.ts`, 62 cases). At the guard limits the CPU throws before the step and keeps its state; the GPU runs the step and `read()` throws, as in the 2D twin, so that state is not usable. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
 
 This rule set copies the 2D mycelium world (`tools/mycelium/RULES.md`, rule `mycelium-r0`) and changes only what is listed here. It is a separate rule set: it does not import `tools/mycelium/` (the small pure helpers `conduitRate`, `ownerRate`, `resolveClaims`, `ownerTag` and `shiftCell` are copied, so this rule does not move when the 2D one does), and the research kernel's `RULE_VERSION` and golden pins are untouched. From the kernel it reuses the integer helpers and counter-based PRNG (`@bl/schema` `int.ts`) and the slab's six-way diffusion split (`diffOut6` in `@bl/sim-ref`, `packages/sim-ref/src/step3d.ts`).
 
@@ -177,4 +177,4 @@ Sinking piles waste on the floor and starves the surface of the waste light need
 
 ## Not in R0
 
-The WGSL twin, rendering, upwelling, floor decomposition, and every 2D rung after R0 except the levers above.
+Rendering, upwelling, floor decomposition, and every 2D rung after R0 except the levers above.
