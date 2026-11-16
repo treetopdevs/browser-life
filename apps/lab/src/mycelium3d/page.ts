@@ -8,7 +8,7 @@
 // queue; a generation counter drops read-backs of a world that has since been replaced, and a sim is destroyed only after
 // its queued work and read-back have settled.
 import { GpuMycelium3d, mycelium3dDevice } from '../../../../tools/mycelium3d/gpu.ts';
-import { createWorld, energyTotal, lightPlane, matterTotal, type Mycelium3dConfig, type Mycelium3dState, step } from '../../../../tools/mycelium3d/world.ts';
+import { createWorld, encode, energyTotal, lightPlane, matterTotal, stateDigest, type Mycelium3dConfig, type Mycelium3dState, step } from '../../../../tools/mycelium3d/world.ts';
 import { css, familyRGB } from '../mycelium/colour.ts';
 import { Disposer } from '../volume3d/approaches/disposer.ts';
 import { RENDERERS, type ApproachEntry } from '../volume3d/approaches/registry.ts';
@@ -19,7 +19,9 @@ import { VolumeView } from '../volume3d/view.ts';
 import { census, packField, packParticles, ratePer100, type Census, type Instances } from './pack.ts';
 import { createParticleHaze, type ParticleStore } from './render.ts';
 import { drawSide } from './render-cpu.ts';
-import { DEFAULT_CHOICE, describeChoice, isSink, isSize, isTrail, SINKS, SIZES, TRAILS, worldConfig, type Choice, type SizeId } from './settings.ts';
+import {
+  DEFAULT_CHOICE, describeChoice, isSink, isSize, isTrail, isView, SEED_MAX, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, worldConfig, type Choice, type SizeId, type ViewId,
+} from './settings.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (n: number) => n.toLocaleString('en-US');
@@ -74,15 +76,47 @@ function exclusive<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
+// ---- link parameters ----------------------------------------------------------------------------------------------------
+// Optional, for links and for tools/volume-capture: size, seed, sink, trail (the Plant choices), renderer, stretch, peel,
+// camera (a pose id) and waste (on or off). A value the page does not offer is ignored, so a bad link opens the defaults
+// instead of failing. Values are matched against the page's own lists or own keys only, never inherited ones
+// (camera=toString is just unknown). Without parameters the page is exactly as it was.
+interface Link { choice: Partial<Choice>; renderer?: ViewId; stretch?: number; peel?: number; camera?: string; waste?: boolean }
+function readLink(): Link {
+  const q = new URLSearchParams(location.search);
+  const int = (k: string, lo: number, hi: number) => {
+    const raw = q.get(k);
+    const n = raw === null || !/^\d+$/.test(raw) ? NaN : Number(raw);
+    return Number.isInteger(n) && n >= lo && n <= hi ? n : undefined;
+  };
+  const l: Link = { choice: {} };
+  const size = q.get('size'), sink = q.get('sink'), trail = q.get('trail'), renderer = q.get('renderer'), camera = q.get('camera'), waste = q.get('waste');
+  if (size !== null && isSize(size)) l.choice.size = size;
+  if (sink !== null && isSink(sink)) l.choice.sink = sink;
+  if (trail !== null && isTrail(trail)) l.choice.trail = trail;
+  const seed = int('seed', 0, SEED_MAX);
+  if (seed !== undefined) l.choice.seed = seed;
+  if (renderer !== null && isView(renderer)) l.renderer = renderer;
+  l.stretch = int('stretch', STRETCH_RANGE.min, STRETCH_RANGE.max);
+  // up to the chosen size's floor; applied after the first plant, when the volume knows its layers
+  l.peel = int('peel', 0, SIZES[l.choice.size ?? DEFAULT_CHOICE.size].dims[2] - 1);
+  if (camera !== null && Object.hasOwn(PRESETS, camera)) l.camera = camera;
+  if (waste === 'on' || waste === 'off') l.waste = waste === 'on';
+  return l;
+}
+const link = readLink();
+const debug = new URLSearchParams(location.search).has('debug');
+
 // ---- the volume view ----------------------------------------------------------------------------------------------------
 const stock = (id: string) => RENDERERS.find((r) => r.id === id)!;
-const MENU: ApproachEntry[] = [
-  { id: 'particles', title: 'Particles and haze (default)', text: 'Every particle as a lit bead at its true position, coloured by family, inside a haze of trail (violet) and waste (dark), with the water as bright as the light that reaches it.', load: async () => createParticleHaze(store) },
-  { ...stock('raymarch'), title: 'Cells, ray-marched', text: 'Each cell that holds particles as a glowing body in the colour of its heaviest particle, and trail as a blue haze. Coarser, but shows where bodies crowd.' },
-  { ...stock('slices'), title: 'Slices', text: 'Three flat cuts drawn exactly as packed, one on the top layer left by the peel. Plain on purpose: the check that particles are in the right layers.' },
-];
+const VIEWS: Record<ViewId, ApproachEntry> = {
+  particles: { id: 'particles', title: 'Particles and haze (default)', text: 'Every particle as a lit bead at its true position, coloured by family, inside a haze of trail (violet) and waste (dark), with the water as bright as the light that reaches it.', load: async () => createParticleHaze(store) },
+  raymarch: { ...stock('raymarch'), title: 'Cells, ray-marched', text: 'Each cell that holds particles as a glowing body in the colour of its heaviest particle, and trail as a blue haze. Coarser, but shows where bodies crowd.' },
+  slices: { ...stock('slices'), title: 'Slices', text: 'Three flat cuts drawn exactly as packed, one on the top layer left by the peel. Plain on purpose: the check that particles are in the right layers.' },
+};
+const MENU: ApproachEntry[] = VIEW_IDS.map((id) => VIEWS[id]);
 const volume = new VolumeView($<HTMLCanvasElement>('volume-canvas'), syncPeel, MENU);
-volume.renderer = 'particles';
+volume.renderer = link.renderer ?? VIEW_IDS[0];
 
 function syncPeel() {
   const max = Math.max(0, (volume.layers || (cfg?.depth ?? 16)) - 1);
@@ -182,7 +216,14 @@ function renderViewControls() {
     b.addEventListener('click', () => { volume.setPose(id); setText('camera-help', POSES[id]?.hint ?? p.hint); });
     poses.append(b);
   }
-  setText('camera-help', `Jump to a view. ${POSES.oblique!.hint}`);
+  const pose = link.camera ?? 'oblique';
+  if (link.camera) volume.setPose(link.camera);
+  setText('camera-help', `Jump to a view. ${POSES[pose]?.hint ?? PRESETS[pose]!.hint}`);
+  if (link.stretch !== undefined) {
+    volume.setStretch(link.stretch);
+    $<HTMLInputElement>('stretch').value = String(volume.stretch);
+    setText('stretch-out', String(volume.stretch));
+  }
   syncPeel();
   void renderLook();
 }
@@ -299,6 +340,7 @@ async function plant(): Promise<void> {
       sizeHelp();
       fillPaces();
       await readAndShow(gen);
+      if (link.peel !== undefined) { volume.peel = Math.min(link.peel, cfg.depth - 1); link.peel = undefined; syncPeel(); volume.request(); }
       setText('status', `Planted ${fmt(cfg.founders)} founders with random controllers: ${describeChoice(c)}. Most founders die; watch which families spread, and where.`);
       document.body.dataset.ready = '1';
     });
@@ -504,9 +546,11 @@ function sizeHelp() {
 }
 
 function fillChoices() {
-  fillSelect('size', Object.entries(SIZES).map(([value, s]) => ({ value, text: s.title })), DEFAULT_CHOICE.size);
-  fillSelect('sink', Object.entries(SINKS).map(([value, s]) => ({ value, text: s.title })), DEFAULT_CHOICE.sink);
-  fillSelect('trail', Object.entries(TRAILS).map(([value, s]) => ({ value, text: s.title })), DEFAULT_CHOICE.trail);
+  const c = { ...DEFAULT_CHOICE, ...link.choice };
+  fillSelect('size', Object.entries(SIZES).map(([value, s]) => ({ value, text: s.title })), c.size);
+  fillSelect('sink', Object.entries(SINKS).map(([value, s]) => ({ value, text: s.title })), c.sink);
+  fillSelect('trail', Object.entries(TRAILS).map(([value, s]) => ({ value, text: s.title })), c.trail);
+  if (link.choice.seed !== undefined) $<HTMLInputElement>('seed').value = String(c.seed);
   fillPaces();
   const help = () => {
     sizeHelp();
@@ -564,7 +608,7 @@ $('show-waste').addEventListener('change', () => {
     const q = (a: Uint32Array) => { const b = Array.from(a).sort((x, y) => x - y); return [0.5, 0.9, 0.99, 1].map((p) => b[Math.min(b.length - 1, Math.floor(p * b.length))]); };
     return { P: q(s.P), C: q(s.C), A: q(s.A) };
   },
-  volume: () => ({ errors: [...volume.errors], draws: volume.draws, live: volume.liveCount, renderer: volume.renderer, mounted: volume.mountedRenderer, painted: volume.lastPainted, peel: volume.peel, stretch: volume.stretch, resources: Disposer.live }),
+  volume: () => ({ errors: [...volume.errors], draws: volume.draws, live: volume.liveCount, renderer: volume.renderer, mounted: volume.mountedRenderer, painted: volume.lastPainted, peel: volume.peel, stretch: volume.stretch, waste: $<HTMLInputElement>('show-waste').checked, pose: { yaw: volume.cam.yaw, pitch: volume.cam.pitch, dist: volume.cam.dist }, resources: Disposer.live }),
   volumeDraw: () => volume.drawNow(),
   volumeShot: async () => { await volume.drawNow(); return $<HTMLCanvasElement>('volume-canvas').toDataURL('image/png'); },
   /** Mean milliseconds for one fresh draw, GPU work included (n draws, each waited for). */
@@ -585,10 +629,37 @@ $('show-waste').addEventListener('change', () => {
     if (pose.dist !== undefined) volume.cam.dist = pose.dist;
     await volume.drawNow();
   },
+  // Debug pages only (?debug), for tools/volume-capture, as the slab's __slab hooks.
+  ...(debug ? {
+    /** A capture still: as `still`, then the canvas as a PNG data URL with its size and the camera pose it was drawn at.
+     *  The particle-and-haze renderer keeps one jitter pattern in a still frame and reads no clock, so the picture depends
+     *  only on the read-back and these settings. */
+    volumeStill: async (pose: { yaw?: number; pitch?: number; dist?: number } = {}) => {
+      if (engine !== 'gpu') return null;
+      volume.setTurntable(false);
+      $('turntable').setAttribute('aria-pressed', 'false');
+      volume.still = true;
+      if (pose.yaw !== undefined) volume.cam.yaw = pose.yaw;
+      if (pose.pitch !== undefined) volume.cam.pitch = pose.pitch;
+      if (pose.dist !== undefined) volume.cam.dist = pose.dist;
+      await volume.drawNow();
+      const c = $<HTMLCanvasElement>('volume-canvas');
+      return { url: c.toDataURL('image/png'), w: c.width, h: c.height, yaw: volume.cam.yaw, pitch: volume.cam.pitch, dist: volume.cam.dist };
+    },
+    /** The state on screen: its step, a SHA-256 of its checkpoint encoding, the rule set's own digest (tools/mycelium3d/run.ts
+     *  prints the same) and counts. */
+    digest: async () => {
+      const s = lastState;
+      if (!s) return null;
+      const h = new Uint8Array(await crypto.subtle.digest('SHA-256', encode(s) as Uint8Array<ArrayBuffer>));
+      return { step: s.step, sha256: [...h].map((b) => b.toString(16).padStart(2, '0')).join(''), stateDigest: stateDigest(s), particles: s.n, families: last?.families ?? 0, gpuError: document.body.dataset.gpuError ?? null };
+    },
+  } : {}),
 };
 
 // On a phone the world comes first: the long descriptions start folded.
 if (window.matchMedia('(max-width: 760px)').matches) for (const d of document.querySelectorAll('.m3-how')) d.removeAttribute('open');
+if (link.waste !== undefined) $<HTMLInputElement>('show-waste').checked = link.waste;
 fillChoices();
 renderViewControls();
 applyWaste();

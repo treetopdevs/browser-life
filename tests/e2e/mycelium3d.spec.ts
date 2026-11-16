@@ -8,6 +8,7 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { CAMERA_POSES, M3D } from "../../tools/volume-capture/lib.ts";
 
 test.describe.configure({ mode: "serial" });
 test.skip(({ browserName }) => browserName !== "chromium", "WebGPU Chrome only");
@@ -20,8 +21,8 @@ function watch(page: Page): string[] {
   page.on("pageerror", (e) => errors.push(e.message));
   return errors;
 }
-async function open(page: Page) {
-  await page.goto("/mycelium3d/");
+async function open(page: Page, query = "") {
+  await page.goto(`/mycelium3d/${query}`);
   await page.waitForFunction(() => document.body.dataset.ready === "1" && (window as Any).__m3d?.census(), null, { timeout: 120_000 });
 }
 const m3d = <T = Any>(page: Page, fn: string, ...args: unknown[]) =>
@@ -197,6 +198,72 @@ test("without WebGPU it runs the CPU reference at the default size and says so",
   await page.waitForFunction(() => (window as Any).__m3d.census()?.step === 0, null, { timeout: 60_000 });
   expect((await m3d(page, "config")).width).toBe(32);
   await expect(page.locator("#size")).toHaveValue("32x32x16");
+  expect(errors).toEqual([]);
+});
+
+/** What the page shows for the link choices: the planted config, the Plant form, and the view. */
+async function linked(page: Page) {
+  const cfg = await m3d(page, "config");
+  const v = await vol(page);
+  return {
+    cfg: { width: cfg.width, depth: cfg.depth, seed: cfg.seed, sinkShift: cfg.sinkShift ?? null, trailOwner: cfg.trailOwner ?? null, trailDiscountMode: cfg.trailDiscountMode ?? null },
+    choice: (await m3d(page, "state")).choice,
+    form: await page.evaluate(() => ["size", "sink", "trail", "seed"].map((id) => (document.getElementById(id) as HTMLInputElement).value)),
+    renderer: v.renderer, stretch: v.stretch, peel: v.peel, waste: v.waste, pose: v.pose,
+    checked: await page.locator("#o-renderer input:checked").getAttribute("value"),
+    outs: [await page.locator("#stretch-out").innerText(), await page.locator("#peel-out").innerText()],
+  };
+}
+const DEFAULT_VIEW = { cfg: { width: 32, depth: 16, seed: 1, sinkShift: null, trailOwner: null, trailDiscountMode: null }, choice: { size: "32x32x16", seed: 1, sink: "off", trail: "none" }, form: ["32x32x16", "off", "none", "1"], renderer: "particles", stretch: 1, peel: 0, waste: true, pose: CAMERA_POSES.oblique, checked: "particles", outs: ["1", "0"] };
+
+test("link parameters: junk and inherited-key values open the default jar, with no errors and no debug hooks", async ({ page }) => {
+  const errors = watch(page);
+  for (const q of [
+    "?size=toString&seed=-1&sink=__proto__&trail=constructor&renderer=hasOwnProperty&stretch=9&peel=abc&camera=toString&waste=maybe",
+    "?size=64x64x99&seed=1.5&sink=medium&trail=public&renderer=points&stretch=0&peel=16&camera=top&waste=1",
+    "?size=__proto__&sink=valueOf&trail=toString&camera=__proto__&renderer=constructor&seed=4294967296&peel=-1&stretch=1e1",
+  ]) {
+    await open(page, q);
+    expect(await linked(page), q).toEqual(DEFAULT_VIEW);
+    expect(await page.evaluate(() => typeof (window as Any).__m3d.volumeStill), q).toBe("undefined");
+  }
+  expect((await vol(page)).errors).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("link parameters: valid values take effect, the page's ways of drawing are the capture tool's, and ?debug stills repeat", async ({ page }) => {
+  const errors = watch(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await open(page, "?debug&size=64x64x32&seed=9&sink=fast&trail=owner&renderer=slices&stretch=3&peel=20&camera=side&waste=off");
+  await expect.poll(async () => (await vol(page)).mounted).toBe("slices");
+  expect(await linked(page)).toEqual({
+    cfg: { width: 64, depth: 32, seed: 9, sinkShift: 4, trailOwner: "gid", trailDiscountMode: null }, choice: { size: "64x64x32", seed: 9, sink: "fast", trail: "owner" },
+    form: ["64x64x32", "fast", "owner", "9"], renderer: "slices", stretch: 3, peel: 20, waste: false, pose: CAMERA_POSES.side, checked: "slices", outs: ["3", "20"],
+  });
+  expect(await page.locator("#show-waste").isChecked()).toBe(false);
+  expect(await page.locator("#o-renderer input").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value))).toEqual([...M3D.renderers]);
+  // sinking and trail on their own, and the toll road
+  await open(page, "?sink=slow&trail=toll&seed=3");
+  expect((await linked(page)).cfg).toEqual({ width: 32, depth: 16, seed: 3, sinkShift: 8, trailOwner: null, trailDiscountMode: "toll" });
+  // the debug hooks: a still at an absolute pose, the same picture every time, and the state's digest
+  await open(page, "?debug&seed=4&camera=above");
+  await m3d(page, "runTo", 200);
+  const d = await m3d(page, "digest");
+  expect([d.step, d.sha256.length, d.stateDigest.length, d.particles > 0, d.gpuError]).toEqual([200, 64, 16, true, null]);
+  const a = await m3d(page, "volumeStill", {});
+  expect([a.yaw, a.pitch, a.dist]).toEqual([CAMERA_POSES.above.yaw, CAMERA_POSES.above.pitch, CAMERA_POSES.above.dist]);
+  const turned = await m3d(page, "volumeStill", { yaw: a.yaw + 1.3 });
+  expect(turned.yaw).toBeCloseTo(a.yaw + 1.3, 12);
+  expect(turned.url).not.toBe(a.url);
+  const back = await m3d(page, "volumeStill", { yaw: a.yaw });
+  expect(back.url).toBe(a.url);
+  expect(await m3d(page, "digest")).toEqual(d);
+  // waste=off reaches the picture, not only the checkbox: the same fast-sinking world, haze on and off
+  const shotAt = async (q: string) => { await open(page, q); await m3d(page, "runTo", 300); expect((await vol(page)).mounted).toBe("particles"); return m3d(page, "volumeStill", {}); };
+  const on = await shotAt("?debug&sink=fast&seed=5"), off = await shotAt("?debug&sink=fast&seed=5&waste=off");
+  expect(off.url).not.toBe(on.url);
+  expect(await shotAt("?debug&sink=fast&seed=5&waste=on")).toEqual(on);
+  expect((await vol(page)).errors).toEqual([]);
   expect(errors).toEqual([]);
 });
 

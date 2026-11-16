@@ -65,12 +65,22 @@ export const TRAILS: Record<Trail, { delta: Partial<Mycelium3dConfig>; title: st
   },
 };
 
+// Own keys only: "toString" or "__proto__" from a link are not choices.
 export const isSize = (v: string): v is SizeId => Object.hasOwn(SIZES, v);
 export const isSink = (v: string): v is Sink => Object.hasOwn(SINKS, v);
 export const isTrail = (v: string): v is Trail => Object.hasOwn(TRAILS, v);
 
 export interface Choice { size: SizeId; seed: number; sink: Sink; trail: Trail }
 export const DEFAULT_CHOICE: Choice = { size: '32x32x16', seed: 1, sink: 'off', trail: 'none' };
+/** The seed box's range (index.html #seed). */
+export const SEED_MAX = 0xffffffff;
+
+/** The ways of drawing the jar, in menu order: page.ts builds its menu from these ids (the first is the default). */
+export const VIEW_IDS = ['particles', 'raymarch', 'slices'] as const;
+export type ViewId = (typeof VIEW_IDS)[number];
+export const isView = (v: string): v is ViewId => (VIEW_IDS as readonly string[]).includes(v);
+/** The depth stretch slider's range (index.html #stretch). */
+export const STRETCH_RANGE = { min: 1, max: 4 } as const;
 
 /** The config for a choice. The default world is defaultConfig itself; bigger worlds keep the founders and the room per cell. */
 export function worldConfig(c: Choice): Mycelium3dConfig {

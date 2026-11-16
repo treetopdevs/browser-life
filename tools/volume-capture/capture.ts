@@ -1,11 +1,14 @@
-// Deterministic captures of the slab viewer's Volume view (/slab/), for judging screens by eye: a turntable (PNG frames, an
-// MP4 and a small GIF) of one run, or a contact sheet of several runs at one step from one camera. Node 24, real Chrome with
+// Deterministic captures of the slab viewer's Volume view (/slab/) and of the 3D mycelium jar (/mycelium3d/), for judging
+// screens by eye: a turntable (PNG frames, an MP4 and a small GIF) of one run, or a contact sheet of several runs (either
+// page, mixed) at one step from one camera. Node 24, real Chrome with
 // WebGPU (the e2e's flags), the lab's own Vite. Every picture is the page's canvas only, drawn with the renderer's still
 // mode (no frame-to-frame jitter or drift) at a camera set absolutely per frame, never by a clock; the caption strip and a
 // JSON sidecar carry the settings, the step and a SHA-256 of the read-back frame the picture was drawn from.
 //
 //   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --world eco --setting n12-mu50-s8-k64 \
 //     --seed 101 --step 30000 --stretch 8 --frames 48 [--port 5261 | --url http://localhost:5173]
+//   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --page mycelium3d --size 64x64x32 \
+//     --sink fast --trail toll --seed 2 --step 20000 --frames 48
 //   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --sheet runs.json --step 20000
 //
 // Flags and the sheet file: lib.ts USAGE. Bad arguments exit 2 before anything starts; a failed capture exits 1.
@@ -16,8 +19,8 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "no
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  ArgError, CAMERA_POSES, GPU_ARGS, USAGE, captionLines, parseArgs, parseSheet, sheetHeader, sheetLayout, sheetSubLabel, slabUrl, stripHeight, turntableYaw,
-  type CaptureArgs, type RunSettings, type SheetEntry,
+  ArgError, CAMERA_POSES, GPU_ARGS, USAGE, anyCaptionLines, anySubLabel, isM3d, parseArgs, parseSheet, runUrl, sheetHeader, sheetLayout, stripHeight, turntableYaw,
+  type AnyRun, type CaptureArgs, type M3dRun, type SheetEntry,
 } from "./lib.ts";
 import { FRAME_FILE, OutputError, prepareOut } from "./outputs.ts";
 
@@ -48,14 +51,15 @@ function startVite(port: number, onSpawn: (child: ChildProcess) => void): Promis
   });
 }
 
-async function openRun(browser: Browser, origin: string, r: RunSettings, a: CaptureArgs): Promise<{ page: Page; errors: string[] }> {
+async function openRun(browser: Browser, origin: string, r: AnyRun, a: CaptureArgs): Promise<{ page: Page; errors: string[] }> {
   const page = await browser.newPage({ viewport: { width: Math.max(1280, a.width + 160), height: Math.max(900, a.height + 300) }, deviceScaleFactor: 1 });
   const errors: string[] = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(slabUrl(origin, r));
+  await page.goto(runUrl(origin, r));
   // the canvas at exactly the asked size, whatever the layout around it does (78vh cap, the narrow-screen aspect ratio)
   await page.addStyleTag({ content: `#volume-canvas { width: ${a.width}px !important; height: ${a.height}px !important; max-height: none !important; aspect-ratio: auto !important; border: 0 !important; box-sizing: content-box !important; }` });
+  if (isM3d(r)) { await openJar(page, r); return { page, errors }; }
   await page.waitForFunction(() => { const s = (window as Any).__slab; return s && s.step() >= 0 && s.counts().live === 1 && s.counts().pending === 0; }, null, { timeout: 180_000 });
   const st = await page.evaluate(() => { const s = (window as Any).__slab; return { state: s.state(), volume: s.volume() }; });
   const w = r.world === "cyclic" ? { setting: st.state.cyc.kill, seed: st.state.cyc.seed, size: st.state.cyc.size.join("x") } : { setting: st.state.eco.option, seed: st.state.eco.seed, size: st.state.eco.size.join("x") };
@@ -65,8 +69,31 @@ async function openRun(browser: Browser, origin: string, r: RunSettings, a: Capt
   return { page, errors };
 }
 
+/** The jar page planted what the link asked, on the GPU (a silent fall-back to the CPU engine would change the size). */
+async function openJar(page: Page, r: M3dRun) {
+  await page.waitForFunction(() => { const m = (window as Any).__m3d; return document.body.dataset.ready === "1" && m?.census() && typeof m.volumeStill === "function"; }, null, { timeout: 180_000 });
+  const st = await page.evaluate(() => { const m = (window as Any).__m3d; return { state: m.state(), config: m.config(), volume: m.volume(), gpuError: document.body.dataset.gpuError ?? null }; });
+  if (st.state.engine !== "gpu") throw new CaptureError(`the jar is on the ${st.state.engine} engine, not the GPU`);
+  if (st.gpuError) throw new CaptureError(`GPU error on the jar page: ${st.gpuError}`);
+  const c = st.state.choice, v = st.volume;
+  const seen = { size: c.size, seed: c.seed, sink: c.sink, trail: c.trail, dims: [st.config.width, st.config.height, st.config.depth].join("x"), cfgSeed: st.config.seed, renderer: v.renderer, stretch: v.stretch, waste: v.waste };
+  const want = { size: r.size, seed: r.seed, sink: r.sink, trail: r.trail, dims: r.size, cfgSeed: r.seed, renderer: r.renderer, stretch: r.stretch, waste: r.waste };
+  if (JSON.stringify(seen) !== JSON.stringify(want)) throw new CaptureError(`the page did not take the settings: asked ${JSON.stringify(want)}, page has ${JSON.stringify(seen)}`);
+}
+
 /** Runs to exactly `step` with the page's own deterministic stepping, then checks the frame on screen is that step's. */
-async function runTo(page: Page, r: RunSettings, step: number, say: (m: string) => void) {
+async function runTo(page: Page, r: AnyRun, step: number, say: (m: string) => void) {
+  if (isM3d(r)) {
+    for (let s = 0; s < step;) {
+      s = Math.min(step, s + 2000);
+      await page.evaluate((k) => (window as Any).__m3d.runTo(k), s);
+      if (s % 10000 === 0 || s === step) say(`step ${s}`);
+    }
+    const got = await page.evaluate(() => { const m = (window as Any).__m3d; return { step: m.census()?.step, queued: m.state().queued, peel: m.volume().peel }; });
+    if (got.step !== step || got.queued !== step) throw new CaptureError(`the jar is at step ${got.step} (queued ${got.queued}), asked ${step}`);
+    if (got.peel !== r.peel) throw new CaptureError(`peel on the page is ${got.peel}, asked ${r.peel}`);
+    return;
+  }
   for (let s = 0; s < step;) {
     s = Math.min(step, s + 2000);
     await page.evaluate((k) => (window as Any).__slab.runTo(k), s);
@@ -78,8 +105,14 @@ async function runTo(page: Page, r: RunSettings, step: number, say: (m: string) 
   if (vol.peel !== r.peel) throw new CaptureError(`peel on the page is ${vol.peel}, asked ${r.peel}`);
 }
 
-/** SHA-256 of the read-back channels the picture is drawn from (cyclic: labels; ecology: hi, lo, B, P, A), and the living count. */
-async function frameDigest(page: Page): Promise<{ step: number; sha256: string; channels: string[]; living: number | null }> {
+/** SHA-256 of the read-back the picture is drawn from (cyclic: labels; ecology: hi, lo, B, P, A; the jar: the whole state,
+ *  checkpoint-encoded, with the rule set's own digest too), and the living count (the jar: its particles). */
+async function frameDigest(page: Page, r: AnyRun): Promise<{ step: number; sha256: string; channels: string[]; living: number | null; stateDigest?: string; families?: number }> {
+  if (isM3d(r)) {
+    const d = await page.evaluate(() => (window as Any).__m3d.digest());
+    if (!d) throw new CaptureError("the jar page has no state read back");
+    return { step: d.step, sha256: d.sha256, channels: ["checkpoint encoding"], living: d.particles, stateDigest: d.stateDigest, families: d.families };
+  }
   return page.evaluate(async () => {
     const s = (window as Any).__slab;
     const f = s.frame();
@@ -97,18 +130,20 @@ async function frameDigest(page: Page): Promise<{ step: number; sha256: string; 
 interface Still { url: string; w: number; h: number; yaw: number; pitch: number; dist: number }
 
 /** One still at an absolute yaw (or the pose's own), checked: the asked renderer painted it, at the asked size, with no GPU error. */
-async function still(page: Page, r: RunSettings, a: CaptureArgs, yaw?: number): Promise<Still> {
-  const s: Still | null = await page.evaluate((y) => (window as Any).__slab.volumeStill(y === null ? {} : { yaw: y }), yaw ?? null);
+async function still(page: Page, r: AnyRun, a: CaptureArgs, yaw?: number): Promise<Still> {
+  const hooks = isM3d(r) ? "__m3d" : "__slab";
+  const s: Still | null = await page.evaluate(([h, y]) => (window as Any)[h!].volumeStill(y === null ? {} : { yaw: y }), [hooks, yaw ?? null] as const);
   if (!s) throw new CaptureError("the Volume view is not on the page");
-  const v = await page.evaluate(() => (window as Any).__slab.volume());
+  const v = await page.evaluate((h) => (window as Any)[h].volume(), hooks);
   if (v.mounted !== r.renderer || v.painted !== r.renderer) throw new CaptureError(`renderer ${r.renderer} asked, mounted ${v.mounted}, painted ${v.painted}`);
   if (v.errors.length) throw new CaptureError(`GPU errors in the volume view: ${v.errors.join("; ")}`);
+  if (isM3d(r) && v.waste !== r.waste) throw new CaptureError(`waste haze ${r.waste ? "on" : "off"} asked, the page has it ${v.waste ? "on" : "off"}`);
   if (s.w !== a.width || s.h !== a.height) throw new CaptureError(`canvas is ${s.w}x${s.h}, asked ${a.width}x${a.height}`);
   return s;
 }
 
 /** The page's camera before any turn is the asked preset's pose (an ignored camera= would mislabel every picture). */
-function checkPose(s: Still, r: RunSettings) {
+function checkPose(s: Still, r: AnyRun) {
   const want = CAMERA_POSES[r.camera];
   const off = Math.max(Math.abs(s.yaw - want.yaw), Math.abs(s.pitch - want.pitch), Math.abs(s.dist - want.dist));
   if (off > 1e-6) throw new CaptureError(`camera ${r.camera} asked (${JSON.stringify(want)}), page pose is yaw ${s.yaw}, pitch ${s.pitch}, dist ${s.dist}`);
@@ -168,7 +203,7 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
   for (const f of readdirSync(framesDir)) if (FRAME_FILE.test(f)) rmSync(join(framesDir, f)); // no stale frames from a longer run
   const { page, errors } = await openRun(browser, origin, r, a);
   await runTo(page, r, a.step, say);
-  const digest = await frameDigest(page);
+  const digest = await frameDigest(page, r);
   if (digest.step !== a.step) throw new CaptureError(`frame on screen is step ${digest.step}, asked ${a.step}`);
   const pose = await still(page, r, a);
   checkPose(pose, r);
@@ -176,14 +211,14 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
   for (let i = 0; i < a.frames; i++) {
     const yaw = turntableYaw(pose.yaw, i, a.frames);
     const s = await still(page, r, a, yaw);
-    const out = await captioned(page, s, captionLines(r, a.step, { index: i, count: a.frames, yawDeg: (360 * i) / a.frames }));
+    const out = await captioned(page, s, anyCaptionLines(r, a.step, { index: i, count: a.frames, yawDeg: (360 * i) / a.frames }));
     const file = `frames/frame-${String(i).padStart(4, "0")}.png`;
     writeFileSync(join(a.out, file), out.png);
     frames.push({ file, yawRad: yaw, sha256: sha256(out.png), pixelSha256: out.pixelSha256 });
   }
   say(`${a.frames} frames`);
   // the first frame again, after all the others: per-draw state left behind would show here
-  const again = await captioned(page, await still(page, r, a, turntableYaw(pose.yaw, 0, a.frames)), captionLines(r, a.step, { index: 0, count: a.frames, yawDeg: 0 }));
+  const again = await captioned(page, await still(page, r, a, turntableYaw(pose.yaw, 0, a.frames)), anyCaptionLines(r, a.step, { index: 0, count: a.frames, yawDeg: 0 }));
   const recheck = { frame: frames[0]!.file, samePng: sha256(again.png) === frames[0]!.sha256, samePixels: again.pixelSha256 === frames[0]!.pixelSha256 };
   if (errors.length) throw new CaptureError(`page errors: ${errors.join("; ")}`);
   const prov = await provenance(browser, page);
@@ -199,7 +234,7 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
     frameDigest: digest, frames, recheckFirstFrame: recheck,
     video: { file: "turntable.mp4", sha256: sha256(readFileSync(video)), codec: "h264", pixFmt: "yuv420p" },
     gif: { file: "turntable.gif", width: a.gifWidth, sha256: sha256(readFileSync(gif)) },
-    url: slabUrl("", r), ...prov,
+    url: runUrl("", r), ...prov,
   };
   writeFileSync(join(a.out, "capture.json"), JSON.stringify(sidecar, null, 2) + "\n");
   return { out: a.out, frames: a.frames, frameDigest: digest.sha256, living: digest.living, recheck };
@@ -213,13 +248,14 @@ async function sheet(browser: Browser, origin: string, a: CaptureArgs, entries: 
     say(`run ${i + 1}/${entries.length}: ${e.label}`);
     const { page, errors } = await openRun(browser, origin, e.run, a);
     await runTo(page, e.run, a.step, say);
-    const digest = await frameDigest(page);
+    const digest = await frameDigest(page, e.run);
+    if (digest.step !== a.step) throw new CaptureError(`frame on screen is step ${digest.step}, asked ${a.step} (${e.label})`);
     const s = await still(page, e.run, a);
     checkPose(s, e.run);
     if (errors.length) throw new CaptureError(`page errors (${e.label}): ${errors.join("; ")}`);
     prov ??= await provenance(browser, page);
     stills.push({ url: s.url });
-    runs.push({ label: e.label, run: e.run, frameDigest: digest, pose: { yawRad: s.yaw, pitchRad: s.pitch, dist: s.dist }, stillSha256: sha256(Buffer.from(s.url.slice(s.url.indexOf(",") + 1), "base64")), url: slabUrl("", e.run) });
+    runs.push({ label: e.label, run: e.run, frameDigest: digest, pose: { yawRad: s.yaw, pitchRad: s.pitch, dist: s.dist }, stillSha256: sha256(Buffer.from(s.url.slice(s.url.indexOf(",") + 1), "base64")), url: runUrl("", e.run) });
     await page.close();
   }
   const top = 34;
@@ -235,7 +271,7 @@ async function sheet(browser: Browser, origin: string, a: CaptureArgs, entries: 
       { text: sheetHeader(a.step, a.run.camera, a.width, a.height), x: 12, y: 12, size: 15, bold: true, colour: TEXT },
       ...L.cells.flatMap((c, i) => [
         { text: entries[i]!.label, x: c.x + 2, y: c.labelY + 5, size: 15, bold: true, colour: TEXT },
-        { text: sheetSubLabel(entries[i]!.run), x: c.x + 2, y: c.labelY + 25, size: 12, colour: MUTED },
+        { text: anySubLabel(entries[i]!.run), x: c.x + 2, y: c.labelY + 25, size: 12, colour: MUTED },
       ]),
     ],
   });
