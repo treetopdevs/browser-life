@@ -1,5 +1,5 @@
 // Mycelium in a volume R0 (tools/mycelium3d/world.ts): exact ledgers on every step with and without sinking,
-// the toll and the conduits; determinism; byte-equal replay from checkpoints; the lift of 2D genomes; sinking;
+// the toll, the conduits and waste shading; determinism; byte-equal replay from checkpoints; the lift of 2D genomes; sinking;
 // shading; config and checkpoint validation.
 import { describe, expect, it } from "vitest";
 import { cellBase, draw, mulFrac, NN_BYTES, NN_H, NN_I, NN_O } from "@bl/schema";
@@ -36,6 +36,8 @@ const LEVERS: [string, Partial<Mycelium3dConfig>][] = [
   ["sinking + toll + conduit", { sinkShift: 5, trailMoveDiscount: 64, trailDiscountMode: "toll", trailConduit: 16 }],
   ["owner gate + owner conduit + sinking", { sinkShift: 4, trailOwner: "gid", ownerDefend: 4, ownerConduit: 16 }],
   ["conduit ghost + gradient light", { trailConduit: 16, trailConduitGhost: 5, lightPattern: "gradient" }],
+  ["sinking + waste shading", { sinkShift: 5, wasteShade: 1 }],
+  ["waste shading 0 + sinking + owner gate + owner conduit", { wasteShade: 0, sinkShift: 6, trailOwner: "id", ownerDefend: 1, ownerConduit: 120 }],
 ];
 
 describe("mycelium3d R0 ledgers", () => {
@@ -101,7 +103,7 @@ describe("mycelium3d R0 determinism and replay", () => {
     expect(stateDigest(c)).not.toBe(stateDigest(a));
   });
 
-  for (const [name, over] of [["no keys", {}], ["sinking + toll + conduit", LEVERS[4][1]], ["owner gate + owner conduit + sinking", LEVERS[5][1]]] as const) {
+  for (const [name, over] of [["no keys", {}], ["sinking + toll + conduit", LEVERS[4][1]], ["owner gate + owner conduit + sinking", LEVERS[5][1]], ["sinking + waste shading", LEVERS[7][1]]] as const) {
     it(`${name}: a run resumed from a checkpoint equals the continuous run byte for byte at every cut`, () => {
       const end = 400;
       const cont = createWorld(small(over));
@@ -217,6 +219,55 @@ describe("mycelium3d R0 sinking and light", () => {
     expect(lp[WH + 1]).toBe(256);
   });
 
+  it("waste shades the cells below only with wasteShade, as C >> wasteShade units, and never itself", () => {
+    const WH = 16 * 16, D = 8;
+    const plane = (over: Partial<Mycelium3dConfig>) => {
+      const s = createWorld(small({ founders: 0, lightK: 256, ...over }));
+      for (let k = 0; k < WH; k++) s.C[k] = 256; // waste in the top layer
+      return lightPlane(s);
+    };
+    const off = plane({}), on0 = plane({ wasteShade: 0 }), on1 = plane({ wasteShade: 1 }), on16 = plane({ wasteShade: 16 });
+    for (let k = 0; k < WH; k++) { expect(on0[k]).toBe(256); expect(on1[k]).toBe(256); } // the waste does not shade its own cell
+    for (let k = WH; k < D * WH; k++) {
+      expect(off[k]).toBe(256);
+      expect(on0[k]).toBe(divT(256, 256, 256)); // 128
+      expect(on1[k]).toBe(divT(256, 256, 128)); // 170
+      expect(on16[k]).toBe(256); // 256 >> 16 = 0
+    }
+    // Waste on the floor layer shades nothing; waste in the layer above the floor shades the floor only.
+    const s = createWorld(small({ founders: 0, lightK: 256, wasteShade: 0 }));
+    for (let k = (D - 1) * WH; k < D * WH; k++) s.C[k] = 4096;
+    for (const v of lightPlane(s)) expect(v).toBe(256);
+    for (let k = (D - 2) * WH; k < (D - 1) * WH; k++) s.C[k] = 256;
+    const lp = lightPlane(s);
+    for (let k = 0; k < (D - 1) * WH; k++) expect(lp[k]).toBe(256);
+    for (let k = (D - 1) * WH; k < D * WH; k++) expect(lp[k]).toBe(128);
+    // The cap applies to the sum: P + Mb + C past MCAP shades like MCAP.
+    const t = createWorld(small({ founders: 0, lightK: 256, wasteShade: 0 }));
+    t.C[0] = 10_000; t.P[0] = 10_000;
+    expect(lightPlane(t)[WH]).toBe(divT(256, 256, 16383));
+  });
+
+  it("with sinking, waste shading darkens the floor, and both ledgers stay exact on every step", () => {
+    const floorLight = (over: Partial<Mycelium3dConfig>) => {
+      const { s } = runChecked(small({ sinkShift: 6, ...over }), 1500);
+      const I = lightPlane(s), WH = 16 * 16, D = 8;
+      let sum = 0;
+      for (let k = (D - 1) * WH; k < D * WH; k++) sum += I[k];
+      return { light: sum / WH, n: s.n };
+    };
+    const off = floorLight({}), on = floorLight({ wasteShade: 0 });
+    expect(on.n).toBeGreaterThan(0);
+    expect(on.light).toBeLessThan(off.light / 2);
+  }, LONG);
+
+  it("an absent wasteShade leaves the R0 dynamics as they were (digests pinned before the key existed)", () => {
+    const run = (over: Partial<Mycelium3dConfig>) => { const s = createWorld(small(over)); for (let t = 0; t < 600; t++) step(s); return stateDigest(s); };
+    expect(run({ sinkShift: 6 })).toBe("cfabc7c1a99c0a85");
+    expect(run({ sinkShift: 4, trailOwner: "gid", ownerDefend: 4, ownerConduit: 16 })).toBe("c64187585962f447");
+    expect(run({ sinkShift: 6, wasteShade: 2 })).not.toBe("cfabc7c1a99c0a85");
+  });
+
   it("the light input reads the plane: 127 unshaded, lower under a dense layer", () => {
     const s = createWorld(small({ founders: 2 }));
     // Particle 0 at (5, 5, 0) and particle 1 at (3, 3, 1): different columns, so neither shades the other.
@@ -278,6 +329,8 @@ describe("mycelium3d R0 bounds and validation", () => {
     expect(validateConfig(defaultConfig({ lightK: 0 }))).not.toEqual([]);
     expect(validateConfig(defaultConfig({ sinkShift: 0 }))).not.toEqual([]);
     expect(validateConfig(defaultConfig({ sinkShift: 17 }))).not.toEqual([]);
+    for (const v of [0, 16]) expect(validateConfig(defaultConfig({ wasteShade: v }))).toEqual([]);
+    for (const v of [-1, 17, 1.5]) expect(validateConfig(defaultConfig({ wasteShade: v }))).toContain("wasteShade must be an integer in [0, 16]");
     expect(validateConfig(defaultConfig({ width: 512, height: 512, depth: 64 }))).toEqual([]); // exactly 2^24 cells
     expect(validateConfig(defaultConfig({ width: 512, height: 512, depth: 64, nutrient0: 128 }))).toContain("initial matter must not exceed 2^31");
     expect(validateConfig(defaultConfig({ trailConduit: 4, ownerConduit: 4, trailOwner: "id" }))).not.toEqual([]);
@@ -287,7 +340,7 @@ describe("mycelium3d R0 bounds and validation", () => {
   });
 
   it("leaves every optional key out of defaultConfig", () => {
-    for (const k of ["sinkShift", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap", "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost"]) {
+    for (const k of ["sinkShift", "wasteShade", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap", "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost"]) {
       expect(k in defaultConfig()).toBe(false);
     }
   });

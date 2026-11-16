@@ -1,8 +1,12 @@
-// EXPLORATORY first screen of the 3D mycelium world (docs/3d-expansion-plan-2026-11-15.md, Phase 1 B4): sinking x trail rule x
-// light depth, on the GPU twin (GpuMycelium3d). Not a pre-registered test: no gates, no labels; judged by eye from the pictures plus
-// the descriptive numbers of observe-screen.ts. Report: experiments/mycelium3d/trail-screen-2026-11-15.md.
+// EXPLORATORY screens of the 3D mycelium world (docs/3d-expansion-plan-2026-11-15.md, Phase 1 B4) on the GPU twin (GpuMycelium3d).
+// Not pre-registered tests: no gates, no labels; judged by eye from the pictures plus the descriptive numbers of observe-screen.ts.
+// Grids (--grid, observe-screen.ts GRIDS):
+//   first            sinking x trail rule x light depth (experiments/mycelium3d/trail-screen-2026-11-15.md), seeds 1, 2;
+//   owner-pilots     owner gate / conduit sizing at sink 6, lightK 64, seeds 21, 22;
+//   shade-pilots     the wasteShade probe at sink 6, lightK 64, seeds 21, 22;
+//   owner-darkfloor  the second screen, six arms, seeds 11 to 14 (experiments/mycelium3d/owner-darkfloor-screen-2026-11-16.md).
 //
-//   deno run -A --no-lock tools/mycelium3d/screen.ts [--out runs/mycelium3d-screen] [--steps 50000] [--every 2000] [--move-every 20]
+//   deno run -A --no-lock tools/mycelium3d/screen.ts [--grid first] [--out runs/mycelium3d-screen] [--steps 50000] [--every 2000] [--move-every 20]
 //        [--jobs 1|2] [--seeds 1,2] [--only <id-substring>] [--log <out>/run-log.jsonl] [--reclaim]
 //   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --render     (PNGs and the contact sheet from finished runs, no GPU)
 //   deno run -A --no-lock tools/mycelium3d/screen.ts --out <dir> --table      (markdown tables of finished runs, no GPU)
@@ -15,15 +19,15 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { GpuMycelium3d, mycelium3dDevice } from "./gpu.ts";
 import {
-  addTransport, contactSheet, emptyTransport, fieldFlux, fingerprint, GROUPS, type Projections, projections, readout, type Readout, SEEDS,
-  screenConfig, type Setting, SETTINGS, sharedMax, tilePng, type Transport,
+  addTransport, contactSheet, emptyTransport, fieldFlux, fingerprint, GRIDS, GROUPS, type Projections, projections, readout, type Readout,
+  screenConfig, type Setting, sharedMax, tilePng, type Transport,
 } from "./observe-screen.ts";
 import { createWorld, energyTotal, liveGenotypes, matterTotal, type Mycelium3dState, validateState } from "./world.ts";
 
 const NUMS = ["steps", "every", "move-every", "jobs"];
 const fail = (msg: string): never => { console.error(msg); Deno.exit(2); };
 const a = parseArgs(Deno.args, {
-  string: ["out", "seeds", "only", "log", ...NUMS], boolean: ["render", "table", "reclaim"],
+  string: ["out", "seeds", "only", "log", "grid", ...NUMS], boolean: ["render", "table", "reclaim"],
   unknown: (f) => fail(f.startsWith("-") ? `unknown flag ${f}` : `unexpected argument ${f}`),
 });
 if (a._.length) fail(`unexpected argument ${a._[0]}`);
@@ -33,13 +37,16 @@ const num = (k: string, dflt: number): number => {
   if (typeof v !== "string" || !/^[0-9]+$/.test(v) || !Number.isSafeInteger(Number(v))) return fail(`--${k} must be a non-negative integer, got ${JSON.stringify(v)}`);
   return Number(v);
 };
+const gridName = a.grid ?? "first";
+const grid = (typeof gridName === "string" && Object.hasOwn(GRIDS, gridName) ? GRIDS[gridName] : undefined) ?? fail(`--grid must be one of ${Object.keys(GRIDS).join(", ")}`);
+const SETTINGS = grid.settings;
 const out = a.out ?? "runs/mycelium3d-screen";
 const steps = num("steps", 50_000), every = num("every", 2000), moveEvery = num("move-every", 20), jobs = num("jobs", 1);
 if (moveEvery < 1) fail("--move-every must be at least 1");
 if (every < moveEvery || every % moveEvery !== 0) fail("--every must be a positive multiple of --move-every");
 if (steps < every || steps % every !== 0) fail("--steps must be a positive multiple of --every");
 if (jobs < 1 || jobs > 2) fail("--jobs must be 1 or 2 (the GPU is shared)");
-const seeds = (a.seeds ?? SEEDS.join(",")).split(",").map((v) => (/^[0-9]+$/.test(v) && Number.isSafeInteger(Number(v)) ? Number(v) : fail(`--seeds: bad seed ${JSON.stringify(v)}`)));
+const seeds = (a.seeds ?? grid.seeds.join(",")).split(",").map((v) => (/^[0-9]+$/.test(v) && Number.isSafeInteger(Number(v)) ? Number(v) : fail(`--seeds: bad seed ${JSON.stringify(v)}`)));
 const logPath = a.log ?? `${out}/run-log.jsonl`;
 
 type Row = Record<string, any>;
@@ -129,6 +136,14 @@ function lateSummary(r: Row) {
     diffUpA: mean(ro.map((x) => 1000 * fieldFlux(x.layers, r.config).diffUpA)),
     fieldDown: mean(ro.map((x) => { const f = fieldFlux(x.layers, r.config); return 1000 * (f.sinkDown - f.diffUpC - f.diffUpA); })),
     sameShare: ro[0]?.owner ? mean(ro.map((x) => x.owner!.sameShare)) : NaN, minQ: ro[0]?.owner ? mean(ro.map((x) => x.owner!.medianMinQ)) : NaN,
+    ownedCells: ro[0]?.owner ? mean(ro.map((x) => x.owner!.ownedCells)) : NaN, medianQ: ro[0]?.owner ? mean(ro.map((x) => x.owner!.medianQ)) : NaN,
+    // The owner conduit's extra A rate on the median same-owner edge, min(De + ((min(Q, Q, q) * g) >> 4), 128) - De, at the late mean median.
+    extraRate: ro[0]?.owner && r.config.ownerConduit !== undefined
+      ? Math.min(r.config.diffA + ((Math.min(Math.round(mean(ro.map((x) => x.owner!.medianMinQ))), r.config.ownerConduitCap ?? 255) * r.config.ownerConduit) >> 4), 128) - r.config.diffA
+      : NaN,
+    lightFloorLayer: mean(ro.map((x) => x.floorLight)),
+    owners: ro[0]?.owner ? mean(ro.map((x) => x.owner!.owners)) : NaN, topOwner: ro[0]?.owner ? mean(ro.map((x) => x.owner!.topOwnerShare)) : NaN,
+    sameShareFinal: fin.owner ? fin.owner.sameShare : NaN,
     D,
   };
 }
@@ -142,7 +157,9 @@ function printTables(rows: Row[]): void {
     ["matched share", (x) => x.matchedShare, 3], ["sinking down (C+P, expected)", (x) => x.sinkDown, 0], ["diffusion up, C (expected)", (x) => x.diffUpC, 0],
     ["diffusion up, A (expected)", (x) => x.diffUpA, 0], ["net field down (expected)", (x) => x.fieldDown, 0], ["births /1k particle-steps", (x) => x.births, 2], ["deaths", (x) => x.deaths, 2], ["genotypes (final)", (x) => x.genotypes, 0],
     ["C share in G8", (x) => x.floorC, 3], ["A in G1", (x) => x.topA, 0], ["light G1/256", (x) => x.lightTop, 0], ["light G8/256", (x) => x.lightFloor, 0],
-    ["same-owner edge share", (x) => x.sameShare, 3], ["median min(Q,Q)", (x) => x.minQ, 1],
+    ["light floor layer /256", (x) => x.lightFloorLayer, 1],
+    ["same-owner edge share", (x) => x.sameShare, 3], ["same-owner share (final)", (x) => x.sameShareFinal, 3], ["median min(Q,Q)", (x) => x.minQ, 1],
+    ["owned cells", (x) => x.ownedCells, 0], ["distinct owners", (x) => x.owners, 0], ["largest owner's share of owned cells", (x) => x.topOwner, 3], ["median Q (owned cells)", (x) => x.medianQ, 1], ["conduit extra rate at median edge", (x) => x.extraRate, 0],
   ];
   const by = (st: Setting) => seeds.map((sd) => rows.find((r) => r.id === `${st.id}.s${sd}`)).filter((r): r is Row => !!r);
   const present = SETTINGS.filter((st) => by(st).length);
@@ -171,8 +188,9 @@ function printTables(rows: Row[]): void {
 // ---- pictures ----------------------------------------------------------------------------------------------------
 
 const label = (r: Row) => {
-  const st = SETTINGS.find((x) => r.id.startsWith(x.id + "."))!;
-  return `SINK ${st.sink ?? "OFF"} ${st.trail.toUpperCase()} K${st.lightK} S${r.config.seed}`;
+  const st = SETTINGS.find((x) => r.id === `${x.id}.s${r.config.seed}`)!;
+  const own = st.owner ? ` ${st.owner.trailOwner.toUpperCase()} T${st.owner.ownerDefend ?? "-"} G${st.owner.ownerConduit ?? "-"}` : "";
+  return `SINK ${st.sink ?? "OFF"} ${st.trail.toUpperCase()}${own}${st.wasteShade === undefined ? "" : ` WS${st.wasteShade}`} K${st.lightK} S${r.config.seed}`;
 };
 async function render(rows: Row[]): Promise<void> {
   await Deno.mkdir(`${out}/png`, { recursive: true });
@@ -180,11 +198,11 @@ async function render(rows: Row[]): Promise<void> {
   const mx = sharedMax(order.map((r) => r.projections));
   for (const r of order) await Deno.writeFile(`${out}/png/${r.id}.png`, await tilePng(r.projections, mx, label(r)));
   const header = [
-    `3D MYCELIUM TRAIL SCREEN, STEP ${order[0].steps}. 64 X 64 X 32, 8192 FOUNDERS. EACH TILE: TOP VIEWS ABOVE (X BY Y, SUMMED OVER Z),`,
+    `${grid.title}, STEP ${order[0].steps}. 64 X 64 X 32, 8192 FOUNDERS. EACH TILE: TOP VIEWS ABOVE (X BY Y, SUMMED OVER Z),`,
     `SIDE VIEWS BELOW (X BY Z, SUMMED OVER Y, SURFACE UP). LEFT ORANGE = PARTICLES, RIGHT GREEN = TRAIL. LOG SCALE SHARED BY ALL TILES:`,
     `PARTICLES MAX ${mx.particles} SIDE / ${mx.topParticles} TOP, TRAIL MAX ${mx.trail} SIDE / ${mx.topTrail} TOP. BLACK = NONE.`,
   ];
-  await Deno.writeFile(`${out}/contact-sheet.png`, await contactSheet(order.map((r) => ({ p: r.projections, label: label(r) })), mx, 4, header));
+  await Deno.writeFile(`${out}/contact-sheet.png`, await contactSheet(order.map((r) => ({ p: r.projections, label: label(r) })), mx, seeds.length === 2 ? 4 : seeds.length, header));
   console.error(`wrote ${order.length} tiles to ${out}/png and ${out}/contact-sheet.png`);
 }
 

@@ -2,10 +2,10 @@
 // synthetic pair of states (sign, id matching, what it misses), the largest 6-connected trail component (wrap in x and y, closed z),
 // owner edges, the readout by depth against the world's totals, the projections, and the fingerprint.
 import { describe, expect, it } from "vitest";
-import { createWorld, defaultConfig, matterTotal, type Mycelium3dState, POS_SHIFT, step, validateConfig } from "../mycelium3d/world.ts";
+import { createWorld, defaultConfig, lightPlane, matterTotal, type Mycelium3dState, POS_SHIFT, step, validateConfig } from "../mycelium3d/world.ts";
 import {
   addTransport, componentSpans, contactSheet, drawText, emptyTransport, fieldFlux, fingerprint, GROUPS, groupOf, largestComponent, logT, ownerEdges, projections, readout,
-  screenConfig, SEEDS, SETTINGS, sharedMax, textWidth,
+  GRIDS, OWNER3D, PILOT_SEEDS, SCREEN2, SCREEN2_SEEDS, screenConfig, SEEDS, SETTINGS, sharedMax, textWidth, WASTE_SHADE,
 } from "../mycelium3d/observe-screen.ts";
 
 const L = 1 << POS_SHIFT;
@@ -30,6 +30,30 @@ describe("the grid", () => {
     expect([toll.sinkShift, toll.moveCost, toll.trailMoveDiscount, toll.trailDiscountMode, toll.trailOwner]).toEqual([4, 12, 64, "toll", undefined]);
     const own = pick("sink6.owner.k64");
     expect([own.trailOwner, own.ownerDefend, own.ownerConduit, own.ownerConduitCap, own.trailMoveDiscount, own.moveCost]).toEqual(["gid", 4, 30, undefined, undefined, 2]);
+  });
+  it("every grid gives valid, distinct configs with distinct ids; pilots keep off the second screen's seeds", () => {
+    for (const [name, g] of Object.entries(GRIDS)) {
+      const cfgs = g.settings.flatMap((st) => g.seeds.map((sd) => screenConfig(st, sd)));
+      for (const c of cfgs) expect(validateConfig(c), name).toEqual([]);
+      expect(new Set(cfgs.map((c) => JSON.stringify(c))).size, name).toBe(cfgs.length);
+      expect(new Set(g.settings.map((st) => st.id)).size, name).toBe(g.settings.length);
+    }
+    expect(GRIDS.first.settings).toBe(SETTINGS);
+    for (const sd of PILOT_SEEDS) expect([...SEEDS, ...SCREEN2_SEEDS]).not.toContain(sd);
+  });
+  it("sets the second screen's six arms as stated, all at sink 6 and lightK 64", () => {
+    expect(SCREEN2.length).toBe(6);
+    const cs = SCREEN2.map((st) => screenConfig(st, 11));
+    for (const c of cs) expect([c.sinkShift, c.lightK, c.width, c.height, c.depth, c.founders]).toEqual([6, 64, 64, 64, 32, 8192]);
+    const [none, toll, move, own, ownWs, noneWs] = cs;
+    expect([none.moveCost, "trailMoveDiscount" in none, "trailOwner" in none, "wasteShade" in none]).toEqual([2, false, false, false]);
+    expect([toll.moveCost, toll.trailMoveDiscount, toll.trailDiscountMode]).toEqual([12, 64, "toll"]);
+    expect([move.moveCost, "trailMoveDiscount" in move, "trailDiscountMode" in move, "trailOwner" in move]).toEqual([12, false, false, false]);
+    for (const o of [own, ownWs]) {
+      expect([o.trailOwner, o.ownerDefend, o.ownerConduit, o.ownerConduitCap, o.moveCost, "trailMoveDiscount" in o])
+        .toEqual([OWNER3D.trailOwner, OWNER3D.ownerDefend, OWNER3D.ownerConduit, OWNER3D.ownerConduitCap, 2, false]);
+    }
+    expect(["wasteShade" in own, ownWs.wasteShade, noneWs.wasteShade, "trailOwner" in noneWs]).toEqual([false, WASTE_SHADE, WASTE_SHADE, false]);
   });
   it("fingerprints change with any setting", () => {
     const c = screenConfig(SETTINGS[0], 1);
@@ -131,6 +155,11 @@ describe("owner edges", () => {
     expect(e.owned).toBe(15);
     expect(e.sameShare).toBeCloseTo(2 / 15, 12);
     expect(e.medianMinQ).toBe(4);
+    expect(e.ownedCells).toBe(3);
+    expect(e.medianQ).toBe(4); // Q 1, 4, 10
+    expect(e.owners).toBe(2);
+    expect(e.topOwnerShare).toBeCloseTo(2 / 3, 12);
+    expect(ownerEdges(new Uint32Array(N), new Uint32Array(N), W, H, D)).toEqual({ owned: 0, sameShare: 0, medianMinQ: 0, ownedCells: 0, medianQ: 0, owners: 0, topOwnerShare: 0 });
   });
 });
 
@@ -149,6 +178,8 @@ describe("readout and projections on a small real world", () => {
     expect(r.layers.particles.reduce((a, b) => a + b, 0)).toBe(s.n);
     expect(r.layers.C.reduce((a, b) => a + b, 0)).toBe(sum("C"));
     expect(r.owner).not.toBeNull();
+    const I = lightPlane(s), WH = 16 * 16;
+    expect(r.floorLight).toBeCloseTo(I.slice(7 * WH).reduce((a, b) => a + b, 0) / WH, 9);
     expect(r.occTrailFrac).toBeGreaterThanOrEqual(0);
     expect(r.occTrailFrac).toBeLessThanOrEqual(1);
     expect(r.comp.size).toBeGreaterThanOrEqual(r.compAboveFloor.size);

@@ -183,6 +183,28 @@ const cases: Case[] = [
     name: "shading saturates (trail 10^6 per cell, lightK 1)", cfg: defaultConfig({ ...mid, lightK: 1 }), steps: 200, seg: 50, must: ["deaths"],
     tweak: (s) => { s.P.fill(1_000_000); },
   },
+  // ---- waste shading ----
+  lever("wasteShade 0, sinkShift 6", { wasteShade: 0, sinkShift: 6 }, ["wasteShade"], { steps: 800, must: [...cs, "mutations"] }),
+  lever("wasteShade 3, sinkShift 4, lightK 16", { wasteShade: 3, sinkShift: 4, lightK: 16 }, ["wasteShade"], { steps: 600 }),
+  lever("wasteShade 2, 13x9x5 odd shape, light 3, gradient", { wasteShade: 2, sinkShift: 5, light: 3, lightPattern: "gradient" }, ["wasteShade"], { steps: 500 },
+    { width: 13, height: 9, depth: 5, founders: 150, maxParticles: 900 }),
+  lever("32x32x16 with sinkShift 6 and wasteShade 4", { sinkShift: 6, wasteShade: 4 }, ["wasteShade"], { steps: 1000, seg: 250, must: [...cs, "mutations"] }, {}),
+  lever("wasteShade with sinkShift 6, toll and owner gate + conduit (gid)", {
+    wasteShade: 1, sinkShift: 6, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", trailOwner: "gid", ownerDefend: 2, ownerConduit: 120, maxDeposit: 12,
+  }, ["wasteShade"], { steps: 600, check: claimed }),
+  lever("D = 1 with wasteShade 0 equals no waste shading", { width: 16, height: 16, depth: 1, founders: 100, maxParticles: 800, wasteShade: 0, sinkShift: 3 }, ["wasteShade"], { steps: 400 }, {}, true),
+  {
+    // Waste far above MCAP everywhere: m saturates on C alone (shift 0), the floor gets almost no light.
+    name: "waste shading saturates (waste 10^6 per cell, wasteShade 0)", cfg: defaultConfig({ ...mid, wasteShade: 0, sinkShift: 6 }), steps: 200, seg: 50, must: ["deaths"],
+    tweak: (s) => { s.C.fill(1_000_000); },
+    vs: { cfg: defaultConfig({ ...mid, sinkShift: 6 }), same: false },
+  },
+  {
+    // The largest shift: 2^19 waste per cell (2^30 in all) gives C >> 16 = 8 per cell, so the shift-16 path still shades.
+    name: "wasteShade 16 with waste 2^19 per cell", cfg: defaultConfig({ ...mid, wasteShade: 16, nutrient0: 0 }), steps: 200, seg: 50, must: ["deaths"],
+    tweak: (s) => { s.C.fill(1 << 19); },
+    vs: { cfg: defaultConfig({ ...mid, nutrient0: 0 }), same: false },
+  },
   // ---- toll road ----
   lever("toll road, public 32", { moveCost: 12, trailMoveDiscount: 32 }, ["trailMoveDiscount"], { must: [...cs, "mutations"] }),
   lever("toll road, toll 64", { moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll" }, ["trailMoveDiscount", "trailDiscountMode"], { must: [...cs, "mutations"] }),
@@ -260,6 +282,7 @@ const cases: Case[] = [
   { name: "per step: sinkShift 1 (sinking rounding)", cfg: defaultConfig({ ...mid, sinkShift: 1 }), steps: 200, seg: 1, must: [...cs] },
   { name: "per step: sinkShift 7 with owned trail (gid, gate 8)", cfg: defaultConfig({ ...mid, sinkShift: 7, trailOwner: "gid", ownerDefend: 8, maxDeposit: 12 }), steps: 200, seg: 1, must: [...cs], check: claimed },
   { name: "per step: owner conduit 48 + gate 24 (gid)", cfg: defaultConfig({ ...mid, trailOwner: "gid", ownerDefend: 24, ownerConduit: 48, maxDeposit: 12 }), steps: 200, seg: 1, must: [...cs], check: claimed },
+  { name: "per step: wasteShade 1, sinkShift 5, owner gate 8 (id)", cfg: defaultConfig({ ...mid, wasteShade: 1, sinkShift: 5, trailOwner: "id", ownerDefend: 8, maxDeposit: 12 }), steps: 200, seg: 1, must: [...cs], check: claimed },
   { name: "per step: light 3, gradient, lightK 16 (light rounding)", cfg: defaultConfig({ width: 13, height: 9, depth: 6, founders: 150, maxParticles: 900, light: 3, lightPattern: "gradient", lightK: 16 }), steps: 200, seg: 1, must: ["births", "deaths"] },
   { name: "per step: default 32x32x16 (contended eating, z walls)", cfg: defaultConfig(), steps: 200, seg: 1, must: [...cs], walls: true },
   { name: "per step: toll 64 + trail conduit 32 cap 9", cfg: defaultConfig({ ...mid, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", trailConduit: 32, trailConduitCap: 9 }), steps: 200, seg: 1, must: [...cs] },
@@ -545,6 +568,7 @@ if (!only.length || only.some((s) => "resume".includes(s))) {
   const variants: [Partial<Mycelium3dConfig>, string][] = [
     [{}, " (default 32x32x16)"],
     [{ sinkShift: 6, trailOwner: "gid", ownerDefend: 24, ownerConduit: 48, maxDeposit: 12 }, ", sinkShift 6 + owner gate and conduit (gid)"],
+    [{ sinkShift: 6, wasteShade: 2, trailOwner: "gid", ownerDefend: 2, ownerConduit: 120, maxDeposit: 12 }, ", sinkShift 6 + wasteShade 2 + owner gate and conduit (gid)"],
     [{ sinkShift: 3, moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: "toll", trailConduit: 32, trailConduitCap: 60, trailConduitGhost: 3 }, ", sinkShift 3 + toll + trail conduit ghost"],
     [{ width: 13, height: 9, depth: 5, founders: 150, maxParticles: 777, lightPattern: "gradient", trailOwner: "id", ownerConduit: 64, ownerGhost: 4, maxDeposit: 12 }, ", 13x9x5 owner conduit ghost (id)"],
   ];

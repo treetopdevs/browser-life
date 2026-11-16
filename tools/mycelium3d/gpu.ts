@@ -90,6 +90,7 @@ function wgsl(c: Mycelium3dConfig): string {
     SPLITE: c.splitEnergy, SPLITM: c.splitMatter, EMAX: c.energyMax, TOP: top, TOPD: Math.max(top, 1), LGRAD: c.lightPattern === "gradient" ? 1 : 0,
     LK: c.lightK, LNUM: 256 * c.lightK, MCAP,
     PDECAY: c.pDecay, DIFFA: c.diffA, DIFFC: c.diffC, HER: c.heredity === "inherit" ? 0 : c.heredity === "frozen" ? 1 : 2,
+    WS_SET: c.wasteShade === undefined ? 0 : 1, WSHIFT: c.wasteShade ?? 0,
     SINK_SET: c.sinkShift === undefined ? 0 : 1, SINKK: c.sinkShift === undefined ? 0 : 1 << (16 - c.sinkShift),
     TD_SET: c.trailMoveDiscount === undefined ? 0 : 1, TD: c.trailMoveDiscount ?? 0, TOLL: c.trailDiscountMode === "toll" ? 1 : 0,
     CG_SET: c.trailConduit === undefined ? 0 : 1, CG: c.trailConduit ?? 0, CQ: c.trailConduitCap ?? 255,
@@ -221,7 +222,8 @@ fn k_bin(@builtin(global_invocation_id) g: vec3<u32>) {
   atomicAdd(&fld[F_MB + ci], pc[P_M + i]);
 }
 
-// 1b. The light plane, one thread per column, top to bottom, from start-of-step P and the binned M (1/256 units).
+// 1b. The light plane, one thread per column, top to bottom, from start-of-step P, the binned M and, with wasteShade, C >> WSHIFT
+// (1/256 units). P + M + C is at most the total matter (2^31), so the sum never wraps before the min.
 @compute @workgroup_size(256)
 fn k_shade(@builtin(global_invocation_id) g: vec3<u32>) {
   let k = g.x;
@@ -231,7 +233,9 @@ fn k_shade(@builtin(global_invocation_id) g: vec3<u32>) {
   atomicStore(&fld[F_I + k], L);
   for (var z = 1u; z < D; z++) {
     let above = (z - 1u) * WH + k;
-    let m = min(fl(F_P + above) + fl(F_MB + above), MCAP);
+    var sm = fl(F_P + above) + fl(F_MB + above);
+    if (WS_SET == 1u) { sm += fl(F_C + above) >> WSHIFT; }
+    let m = min(sm, MCAP);
     let t = LNUM / (LK + m);
     L = (L * t) >> 8u;
     atomicStore(&fld[F_I + z * WH + k], L);

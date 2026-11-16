@@ -1,6 +1,6 @@
 # Mycelium in a volume: rules, rung R0
 
-Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. The WGSL twin `tools/mycelium3d/gpu.ts` matches it bit for bit (`tests/deno/mycelium3d_gpu.ts`, 62 cases). At the guard limits the CPU throws before the step and keeps its state; the GPU runs the step and `read()` throws, as in the 2D twin, so that state is not usable. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
+Rule id `mycelium3d-r0`. This is the prose specification of `tools/mycelium3d/world.ts`, the CPU reference. The WGSL twin `tools/mycelium3d/gpu.ts` matches it bit for bit (`tests/deno/mycelium3d_gpu.ts`, 79 cases). At the guard limits the CPU throws before the step and keeps its state; the GPU runs the step and `read()` throws, as in the 2D twin, so that state is not usable. Plan: `docs/3d-expansion-plan-2026-11-15.md` (in the `browser-life-3d-plan` checkout, not yet on main), Phase 1 B1 and B2 (section 3, "What depth adds to mycelium").
 
 This rule set copies the 2D mycelium world (`tools/mycelium/RULES.md`, rule `mycelium-r0`) and changes only what is listed here. It is a separate rule set: it does not import `tools/mycelium/` (the small pure helpers `conduitRate`, `ownerRate`, `resolveClaims`, `ownerTag` and `shiftCell` are copied, so this rule does not move when the 2D one does), and the research kernel's `RULE_VERSION` and golden pins are untouched. From the kernel it reuses the integer helpers and counter-based PRNG (`@bl/schema` `int.ts`) and the slab's six-way diffusion split (`diffOut6` in `@bl/sim-ref`, `packages/sim-ref/src/step3d.ts`).
 
@@ -30,7 +30,7 @@ Slot order equals id order.
 Light is carried in 1/256 units of conversion. The plane `I` is computed once per step from the **start-of-step** state (phase 1), and the sensor (phase 2), the conversion (phase 8), `probe`, `lightPlane` and the census all read this one plane.
 
 - **Surface** (layer 0): `I = light << 8` (uniform), or `I = floor((light << 8) · (x + 1) / W)` (gradient).
-- **Shading matter** of a cell: `m = min(P + Mb, MCAP)`, with `Mb` the sum of `M` over the particles binned in the cell at the start of the step and `MCAP = 16383` (the slab's cap).
+- **Shading matter** of a cell: `m = min(P + Mb, MCAP)`, with `Mb` the sum of `M` over the particles binned in the cell at the start of the step and `MCAP = 16383` (the slab's cap). With `wasteShade` set (below), `m = min(P + Mb + (C >> wasteShade), MCAP)`, with C at the start of the step.
 - **Below the surface**: `I(z) = (I(z − 1) · T(m(z − 1))) >> 8` with `T(m) = floor(256 · lightK / (lightK + m))`, the slab's form (`packages/sim-ref/src/step3d.ts`, `lightColumn`). A cell does not shade itself, only the cells below it. Empty water is lossless: `m = 0` gives `T = 256`.
 
 The slab applies the same form to an integer light `L ≤ 255`. Here `light` is usually 1, so on whole units any shading would floor the next layer to 0; carrying `I` in 1/256 units keeps the expected light exact down the column, and rounding happens only at conversion. Zero light gives `I = 0` everywhere and converts exactly nothing.
@@ -91,6 +91,22 @@ Owned trail (only with `trailOwner`): `Q −= min(Q, mulFrac(Q, 2^(16 − sinkSh
 
 Matter moves between cells, so ΣA + ΣC + ΣP + ΣM is unchanged; C and P carry no energy, so `ΣE + eA·ΣA` is unchanged too.
 
+## Waste shading (optional `wasteShade`)
+
+Integer 0..16. Absent means waste does not shade (the R0 rule above). When set, dissolved waste is turbid: a cell's shading matter becomes
+
+```
+m = min(P + Mb + (C >> wasteShade), MCAP)
+```
+
+with C read at the start of the step, like P and Mb. So `wasteShade` 0 makes a unit of waste shade like a unit of trail or body, and each step up halves its weight. As before, a cell shades only the cells below it: waste lying on the floor layer shades nothing, and the floor darkens only from the waste (and trail and bodies) in the water column above it.
+
+It changes the light plane only. No matter moves and no draw is taken, so both ledgers are untouched; the conversion, the sensor (input 12), `probe`, `lightPlane` and the census all read the one plane, so they all see it.
+
+The point is the plan's dark floor. Without it, sinking empties the water column of bodies and trail and the floor stays lit (the first screen measured 80 to 156/256 in G8 at `sinkShift` 4), so the floor converts its own waste pile. With it, the waste on its way down shades what is below.
+
+Bounds: `P + Mb + C` is at most the total matter, 2^31, so the sum is exact in u32 before the `min`, and the shift is at most 16 (below 32, where WGSL and JS shifts would wrap the count).
+
 ## Diffusion
 
 A and C diffuse to the six face neighbours with the slab's `diffOut6`: a cell splits its amount `q` into six portions `q / 6`, plus one for `q mod 6` of the directions chosen by a rotation from the draw, and sends `mulFrac(portion, 4 · Dd, 10, rnd)` toward each neighbour. Directions are 0 +x, 1 −x, 2 +y, 3 −y, 4 +z (down), 5 −z (up). A portion aimed outside the volume in z is not sent and stays with its source. The draws come from `cellBase(seed XOR 0x64696666, step, cell)`, with the species index keeping A and C apart (the slab's slots `DIFF + d · 3 + species` and `DIFF_ROT`). Sends are written to a scratch plane and gathered, so nothing depends on order.
@@ -130,6 +146,7 @@ All draws use `draw(cellBase(seed', step, key), slot)` from `int.ts`:
 
 - **Shape.** `8 ≤ W, H ≤ 512`, `1 ≤ D ≤ 64`, `W · H · D ≤ 2^24`. Positions are below `512 · 256 = 2^17` in x and y and `64 · 256 = 2^14` in z.
 - **Total matter ≤ 2^31.** This bounds every field cell, every sum of cells and `P + Mb`, so u32 never wraps.
+- **Shading.** `P + Mb + (C >> wasteShade) ≤ ΣA + ΣC + ΣP + ΣM ≤ 2^31` before the `min` with `MCAP`; `wasteShade ≤ 16`.
 - **Light.** `light ≤ 2^12`, so `I ≤ 2^20`; `T ≤ 256`, `I · T ≤ 2^28`; `lightK` in `[1, 65536]`, so `256 · lightK ≤ 2^24` and `lightK + m < 2^17`; the gradient product `(light << 8) · (x + 1) ≤ 2^29`; the sensor product `I · 127 < 2^27`.
 - **The contended grant `r · A`.** As in 2D: `r ≤ 253`, `maxParticles ≤ 2^16`, so `r · A < 2^32`.
 - **Controller.** `|acc| < 2^18`.

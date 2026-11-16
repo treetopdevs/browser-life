@@ -145,6 +145,8 @@ export interface Mycelium3dConfig {
   heredity: Heredity;
   /** Optional. Integer 1..16: each step every cell above the floor sends C / 2^k and P / 2^k (stochastically rounded) to the cell below. */
   sinkShift?: number;
+  /** Optional. Integer 0..16: waste shades the light below too, as C >> k units of shading matter (RULES.md, "Waste shading"). */
+  wasteShade?: number;
   trailMoveDiscount?: number;
   trailDiscountMode?: TrailDiscountMode;
   trailConduit?: number;
@@ -253,7 +255,7 @@ const INT_KEYS: (keyof Mycelium3dConfig)[] = [
 ];
 /** Every key a config may carry; anything else (including the 2D keys not ported) is rejected. */
 const KNOWN_KEYS = new Set<string>([
-  "rule", "lightPattern", "heredity", ...INT_KEYS, "sinkShift", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap",
+  "rule", "lightPattern", "heredity", ...INT_KEYS, "sinkShift", "wasteShade", "trailMoveDiscount", "trailDiscountMode", "trailConduit", "trailConduitCap",
   "trailConduitGhost", "trailOwner", "ownerDefend", "ownerConduit", "ownerConduitCap", "ownerGhost",
 ]);
 
@@ -286,6 +288,7 @@ export function validateConfig(c: Mycelium3dConfig): string[] {
   const isInt = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
   const shiftMax = Math.min(c.width, c.height) - 1;
   if (c.sinkShift !== undefined && !isInt(c.sinkShift, 1, 16)) bad.push("sinkShift must be an integer in [1, 16]");
+  if (c.wasteShade !== undefined && !isInt(c.wasteShade, 0, 16)) bad.push("wasteShade must be an integer in [0, 16]");
   if (c.trailMoveDiscount !== undefined && !isInt(c.trailMoveDiscount, 0, TRAIL_DISCOUNT_MAX)) bad.push(`trailMoveDiscount must be an integer in [0, ${TRAIL_DISCOUNT_MAX}]`);
   if (c.trailDiscountMode !== undefined) {
     if (c.trailDiscountMode !== "public" && c.trailDiscountMode !== "toll") bad.push("trailDiscountMode must be public or toll");
@@ -462,7 +465,7 @@ interface Bins {
   cell: Uint32Array;
   /** Crowding: particles per cell. */
   crowd: Uint32Array;
-  /** The light plane in 1/256 units of conversion, from start-of-step P and binned M. */
+  /** The light plane in 1/256 units of conversion, from start-of-step P and binned M (and C, with wasteShade). */
   I: Uint32Array;
 }
 
@@ -472,19 +475,23 @@ function surfaceLight(c: Mycelium3dConfig, x: number): number {
   return c.lightPattern === "uniform" ? top : divu(top * (x + 1), c.width);
 }
 
-/** The light plane from the field P and the per-cell particle matter Mb: layer 0 gets the surface light, each layer below passes T(m) of it. */
-function shade(c: Mycelium3dConfig, P: Uint32Array, Mb: Uint32Array): Uint32Array {
+/**
+ * The light plane from the field P, the per-cell particle matter Mb and (only with wasteShade) the waste C: layer 0 gets the
+ * surface light, each layer below passes T(m) of it. P + Mb + C is at most the total matter (2^31), so the sum is exact.
+ */
+function shade(c: Mycelium3dConfig, P: Uint32Array, Mb: Uint32Array, C: Uint32Array): Uint32Array {
   const W = c.width, H = c.height, D = c.depth, WH = W * H;
   const I = new Uint32Array(WH * D);
   const K = c.lightK;
   const num = 256 * K;
+  const ws = c.wasteShade;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       let L = surfaceLight(c, x);
       I[y * W + x] = L;
       for (let z = 1; z < D; z++) {
         const above = (z - 1) * WH + y * W + x;
-        const m = Math.min(P[above] + Mb[above], MCAP);
+        const m = Math.min(P[above] + Mb[above] + (ws === undefined ? 0 : C[above] >>> ws), MCAP);
         const T = divu(num, K + m);
         L = (L * T) >>> 8;
         I[z * WH + y * W + x] = L;
@@ -507,7 +514,7 @@ function binParticles(s: Mycelium3dState): Bins {
     crowd[ci]++;
     Mb[ci] += s.M[i];
   }
-  return { cell, crowd, I: shade(c, s.P, Mb) };
+  return { cell, crowd, I: shade(c, s.P, Mb, s.C) };
 }
 
 /** The light plane the next step will use (1/256 units of conversion per cell), for observers and tests. */

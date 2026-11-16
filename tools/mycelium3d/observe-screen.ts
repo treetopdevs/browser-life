@@ -8,20 +8,28 @@
 //   - the largest 6-connected component of cells with P >= 1 (x and y wrap, z closed), its size, z-range and cells per group,
 //     once over the whole volume and once with the floor layer left out (with sinking, trail rains onto the floor and sits there);
 //   - over every trail component: the count, the largest z-span, and how many reach from the surface group to the floor group;
-//   - in owner worlds, the same-owner share of directed face edges between owned cells and the median min(Q, Q) on them;
+//   - in owner worlds, the same-owner share of directed face edges between owned cells and the median min(Q, Q) on them, the
+//     number of owned cells and the median Q over them, the number of distinct owners and the largest owner's share of owned cells
+//     (so one owner's carpet is not read as many territories);
+//   - the mean light of the floor layer alone (the floor group G8 averages its D / 8 layers);
 //   - side (x by z, summed over y) and top (x by y, summed over z) projections of particle count and of trail.
 // Net upward transport of matter by particles is in `transport` (below says what it counts and what it misses).
 import { defaultConfig, lightPlane, type Mycelium3dConfig, type Mycelium3dState, POS_SHIFT } from "./world.ts";
 import { encodePng } from "../lib/png.ts";
 
 /** Bumped whenever a readout's definition changes, so a stored result is never reused across definitions. */
-export const READOUT_VERSION = 3;
+export const READOUT_VERSION = 5;
 export const GROUPS = 8;
 
 // ---- the grid ----------------------------------------------------------------------------------------------------
 
-export type TrailArm = "none" | "toll" | "owner";
-export interface Setting { id: string; sink: number | null; trail: TrailArm; lightK: number }
+export type TrailArm = "none" | "toll" | "owner" | "move12" | "ownertoll";
+/**
+ * One arm. `owner` replaces OWNER (the owner keys) for the owner arms; `wasteShade` adds the dark-floor key. The first screen's
+ * settings carry neither, so their configs are unchanged.
+ */
+export interface Setting { id: string; sink: number | null; trail: TrailArm; lightK: number; wasteShade?: number; owner?: OwnerKeys }
+export type OwnerKeys = Required<Pick<Mycelium3dConfig, "trailOwner">> & Partial<Pick<Mycelium3dConfig, "ownerDefend" | "ownerConduit" | "ownerConduitCap">>;
 export const SINKS: readonly (number | null)[] = [null, 6, 4];
 export const TRAILS: readonly TrailArm[] = ["none", "toll", "owner"];
 export const LIGHT_KS: readonly number[] = [16, 64];
@@ -39,10 +47,56 @@ export const SETTINGS: readonly Setting[] = SINKS.flatMap((sink) => TRAILS.flatM
 export function screenConfig(st: Setting, seed: number): Mycelium3dConfig {
   const over: Partial<Mycelium3dConfig> = { ...SHAPE, seed, lightK: st.lightK };
   if (st.sink !== null) over.sinkShift = st.sink;
-  if (st.trail === "toll") Object.assign(over, TOLL);
-  if (st.trail === "owner") Object.assign(over, OWNER);
+  if (st.wasteShade !== undefined) over.wasteShade = st.wasteShade;
+  if (st.trail === "toll" || st.trail === "ownertoll") Object.assign(over, TOLL);
+  if (st.trail === "move12") over.moveCost = TOLL.moveCost;
+  if (st.trail === "owner" || st.trail === "ownertoll") Object.assign(over, st.owner ?? OWNER);
   return defaultConfig(over);
 }
+
+// ---- the second screen: owner sizing pilots and the owner / dark-floor screen (16 Nov 2026) ---------------------------
+
+/** Pilot seeds for sizing, kept apart from the second screen's seeds. */
+export const PILOT_SEEDS: readonly number[] = [21, 22];
+export const SCREEN2_SEEDS: readonly number[] = [11, 12, 13, 14];
+const ownerLabel = (o: OwnerKeys) => `${o.trailOwner}.t${o.ownerDefend ?? "off"}.g${o.ownerConduit ?? "off"}${o.ownerConduitCap === undefined ? "" : `.q${o.ownerConduitCap}`}`;
+const ownerSetting = (sink: number | null, o: OwnerKeys, trail: "owner" | "ownertoll" = "owner", wasteShade?: number, lightK = 64): Setting => ({
+  id: `sink${sink ?? "off"}.${trail}.${ownerLabel(o)}${wasteShade === undefined ? "" : `.ws${wasteShade}`}.k${lightK}`, sink, trail, lightK, owner: o,
+  ...(wasteShade === undefined ? {} : { wasteShade }),
+});
+/**
+ * Owner sizing pilots at the second screen's substrate (sink 6, lightK 64): owner by gid and by id, gate theta 1..64 (the gate
+ * fires on a stranger's Q >= theta, so a lower theta is a stronger gate), owner conduit g 30..255; then two diagnostics, no
+ * sinking and the toll substrate the 2D territories formed on.
+ */
+export const OWNER_PILOTS: readonly Setting[] = [
+  ...(["gid", "id"] as const).flatMap((m) => [1, 4, 16, 64].flatMap((t) => [30, 120, 255].map((g) => ownerSetting(6, { trailOwner: m, ownerDefend: t, ownerConduit: g })))),
+  ...(["gid", "id"] as const).map((m) => ownerSetting(null, { trailOwner: m, ownerDefend: 1, ownerConduit: 255 })),
+  ...(["gid", "id"] as const).flatMap((m) => [1, 4].map((t) => ownerSetting(6, { trailOwner: m, ownerDefend: t, ownerConduit: 120 }, "ownertoll"))),
+];
+/** Dark-floor probe: no rule at sink 6, lightK 64, over wasteShade (none, 0, 2, 4, 6). */
+export const SHADE_PILOTS: readonly Setting[] = [undefined, 0, 2, 4, 6].map((ws) => ({
+  id: `sink6.none${ws === undefined ? "" : `.ws${ws}`}.k64`, sink: 6, trail: "none", lightK: 64, ...(ws === undefined ? {} : { wasteShade: ws }),
+}));
+/** The owner keys and waste shading the second screen uses; set from the pilots (experiments/mycelium3d/owner-darkfloor-screen-2026-11-16.md). */
+export const OWNER3D: OwnerKeys = { trailOwner: "gid", ownerDefend: 1, ownerConduit: 255 };
+export const WASTE_SHADE = 2;
+/** The second screen: six arms at sink 6, lightK 64. */
+export const SCREEN2: readonly Setting[] = [
+  { id: "sink6.none.k64", sink: 6, trail: "none", lightK: 64 },
+  { id: "sink6.toll.k64", sink: 6, trail: "toll", lightK: 64 },
+  { id: "sink6.move12.k64", sink: 6, trail: "move12", lightK: 64 },
+  ownerSetting(6, OWNER3D),
+  ownerSetting(6, OWNER3D, "owner", WASTE_SHADE),
+  { id: `sink6.none.ws${WASTE_SHADE}.k64`, sink: 6, trail: "none", lightK: 64, wasteShade: WASTE_SHADE },
+];
+export interface Grid { settings: readonly Setting[]; seeds: readonly number[]; title: string }
+export const GRIDS: Record<string, Grid> = {
+  first: { settings: SETTINGS, seeds: SEEDS, title: "3D MYCELIUM TRAIL SCREEN" },
+  "owner-pilots": { settings: OWNER_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM OWNER SIZING PILOTS" },
+  "shade-pilots": { settings: SHADE_PILOTS, seeds: PILOT_SEEDS, title: "3D MYCELIUM WASTE-SHADE PROBE" },
+  "owner-darkfloor": { settings: SCREEN2, seeds: SCREEN2_SEEDS, title: "3D MYCELIUM OWNER / DARK-FLOOR SCREEN" },
+};
 
 /** What a stored run must match to be reused: the readout definitions, the config and every cadence. */
 export function fingerprint(config: Mycelium3dConfig, steps: number, every: number, moveEvery: number): string {
@@ -161,15 +215,22 @@ export function componentSpans(P: ArrayLike<number>, W: number, H: number, D: nu
 
 // ---- owner edges -------------------------------------------------------------------------------------------------
 
-export interface OwnerEdges { owned: number; sameShare: number; medianMinQ: number }
+export interface OwnerEdges { owned: number; sameShare: number; medianMinQ: number; ownedCells: number; medianQ: number; owners: number; topOwnerShare: number }
 
-/** Directed face edges from an owned cell (Z != 0): the share whose neighbour has the same owner, and the median min(Q, Q) over those. */
+/**
+ * Directed face edges from an owned cell (Z != 0): the share whose neighbour has the same owner, and the median min(Q, Q) over
+ * those; the owned cells, with the median Q over them (both medians capped at 256); the distinct owner tags, and the share of
+ * owned cells held by the most common one.
+ */
 export function ownerEdges(Z: ArrayLike<number>, Q: ArrayLike<number>, W: number, H: number, D: number): OwnerEdges {
   const WH = W * H;
-  let owned = 0, same = 0;
-  const hist = new Uint32Array(257);
+  let owned = 0, same = 0, ownedCells = 0;
+  const hist = new Uint32Array(257), qHist = new Uint32Array(257);
+  const perOwner = new Map<number, number>();
   for (let k = 0; k < WH * D; k++) {
     if (Z[k] === 0) continue;
+    ownedCells++; qHist[Math.min(Q[k], 256)]++;
+    perOwner.set(Z[k], (perOwner.get(Z[k]) ?? 0) + 1);
     const x = k % W, y = ((k / W) | 0) % H, z = (k / WH) | 0;
     const nb = [
       z * WH + y * W + ((x + 1) % W), z * WH + y * W + ((x + W - 1) % W),
@@ -182,12 +243,17 @@ export function ownerEdges(Z: ArrayLike<number>, Q: ArrayLike<number>, W: number
       if (Z[m] === Z[k]) { same++; hist[Math.min(Q[k], Q[m], 256)]++; }
     }
   }
-  let medianMinQ = 0;
-  if (same > 0) {
+  const median = (h: Uint32Array, count: number) => {
     let acc = 0;
-    for (let v = 0; v <= 256; v++) { acc += hist[v]; if (2 * acc >= same) { medianMinQ = v; break; } }
-  }
-  return { owned, sameShare: owned ? same / owned : 0, medianMinQ };
+    for (let v = 0; v <= 256 && count > 0; v++) { acc += h[v]; if (2 * acc >= count) return v; }
+    return 0;
+  };
+  let top = 0;
+  for (const v of perOwner.values()) top = Math.max(top, v);
+  return {
+    owned, sameShare: owned ? same / owned : 0, medianMinQ: median(hist, same), ownedCells, medianQ: median(qHist, ownedCells),
+    owners: perOwner.size, topOwnerShare: ownedCells ? top / ownedCells : 0,
+  };
 }
 
 // ---- readout by depth --------------------------------------------------------------------------------------------
@@ -203,6 +269,8 @@ export interface Readout {
   /** Occupied cells with P >= 1, over all occupied cells (0 when none is occupied). */
   occTrailFrac: number;
   trailMass: number;
+  /** Mean light of the floor layer z = D - 1 alone, in 1/256 units of conversion. */
+  floorLight: number;
   comp: Component;
   compAboveFloor: Component;
   /** Over every trail component, not only the largest. */
@@ -239,8 +307,10 @@ export function readout(s: Mycelium3dState): Readout {
   }
   // Light as the mean per cell of each group, in 1/256 units of conversion.
   for (const g of groups) g.light = Math.round(g.light / (WH * (D / GROUPS)));
+  let floorLight = 0;
+  for (let k = (D - 1) * WH; k < D * WH; k++) floorLight += I[k];
   return {
-    step: s.step, n: s.n, groups, layers, occTrailFrac: occ ? occTrail / occ : 0, trailMass,
+    step: s.step, n: s.n, groups, layers, occTrailFrac: occ ? occTrail / occ : 0, trailMass, floorLight: floorLight / WH,
     comp: largestComponent(s.P, W, H, D), compAboveFloor: largestComponent(s.P, W, H, D, 1, D - 1),
     spans: componentSpans(s.P, W, H, D),
     owner: s.Z && s.Q ? ownerEdges(s.Z, s.Q, W, H, D) : null,
