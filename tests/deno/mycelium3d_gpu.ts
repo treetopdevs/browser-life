@@ -232,7 +232,8 @@ const cases: Case[] = [
   lever("trail conduit, diffA 0 (the skip guard), g 32", { trailConduit: 32, diffA: 0 }, ["trailConduit"], { must: ["births", "deaths"] }),
   {
     name: "trail conduit, trail 2^19 per cell, g 255 (min before multiply)", cfg: defaultConfig({ ...mid, trailConduit: 255 }), steps: 200, seg: 50, must: ["births", "deaths"],
-    tweak: (s) => { s.P.fill(1 << 19); } // 2048 cells: total matter stays below 2^31, vs: { cfg: defaultConfig(mid), same: false },
+    // 2048 cells: total matter stays below 2^31
+    tweak: (s) => { s.P.fill(1 << 19); }, vs: { cfg: defaultConfig(mid), same: false },
   },
   // ---- owner planes, gate and owner conduit ----
   lever("owner passive (id) equals keyless", { trailOwner: "id", maxDeposit: 12 }, OWN, { check: claimed }, mid, true),

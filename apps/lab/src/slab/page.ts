@@ -69,7 +69,7 @@ function readLink() {
   const renderer = RENDERERS.find((r) => r.id === q.get("renderer"));
   if (renderer) linkVolume.renderer = renderer.id;
   linkVolume.stretch = int("stretch", 1, 16);
-  linkVolume.peel = int("peel", 0, 15);
+  linkVolume.peel = int("peel", 0, 63); // the deepest jar has 64 layers; syncPeel holds it to the slab shown
   const camera = q.get("camera");
   if (camera && Object.hasOwn(PRESETS, camera)) linkVolume.camera = camera;
 }
@@ -226,10 +226,14 @@ function syncPeel() {
   $("cut-out").textContent = cut.value;
 }
 
+let lookSeq = 0;
 async function renderLook() {
   if (!volume) return;
   const host = $("volume-params");
-  const specs: ParamSpec[] = await volume.specs();
+  const seq = ++lookSeq; // a slower, earlier call must not rebuild the panel over a newer renderer's controls
+  let specs: ParamSpec[];
+  try { specs = await volume.specs(); } catch (e) { if (seq === lookSeq) console.error("slab: the view's settings could not load", e); return; }
+  if (seq !== lookSeq) return;
   host.replaceChildren();
   for (const p of specs) {
     const id = `look-${p.key}-${serial++}`;

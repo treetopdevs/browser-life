@@ -62,6 +62,8 @@ let choice: Choice = { ...DEFAULT_CHOICE };
 /** Steps queued on the GPU engine since planting (the GPU's own counter equals it; read-backs confirm it). */
 let queuedSteps = 0;
 let gen = 0;
+/** Counts worlds planted: a stroke aimed at one world is refused if another has replaced it by the time it runs. */
+let worldEpoch = 0;
 let running = false;
 let loopGen = 0;
 let pending: Promise<void> | null = null;
@@ -160,10 +162,15 @@ function radios(host: HTMLElement, name: string, opts: Opt[], checked: string, o
   }
 }
 
+let lookSeq = 0;
 async function renderLook() {
   const host = $('volume-params');
+  const seq = ++lookSeq; // a slower, earlier call must not rebuild the panel over a newer renderer's controls
+  let all: ParamSpec[];
+  try { all = await volume.specs(); } catch (e) { if (seq === lookSeq) setText('status', `The view's settings could not load (${errMsg(e)}).`); return; }
+  if (seq !== lookSeq) return;
   // The waste haze has its own checkbox on the page; the rest are this renderer's own settings.
-  const specs: ParamSpec[] = (await volume.specs()).filter((p) => p.key !== 'waste')
+  const specs: ParamSpec[] = all.filter((p) => p.key !== 'waste')
     .map((p) => {
       if (volume.renderer === 'raymarch' && RAYMARCH_WORDS[p.key]) return { ...p, ...RAYMARCH_WORDS[p.key] };
       if (volume.renderer === 'slices' && p.key === 'view' && p.kind === 'select') {
@@ -325,6 +332,7 @@ async function plant(): Promise<void> {
           why = `The GPU engine could not start (${errMsg(e)}).`;
         }
       }
+      worldEpoch++; // here, where the world is replaced: a stroke queued behind this plant is then dropped
       swapSim(next);
       world = null;
       if (next) {
@@ -698,9 +706,10 @@ function reportText(r: BrushReport3d, c: Census | null): string {
  * the old one; CPU: brush the live state. A refused stroke (RangeError, or a state the rules reject) changes nothing. Either
  * way the world is read back at once, under a new generation, so a read-back begun before the stroke is dropped.
  */
-function brush(stroke: BrushStroke3d): Promise<BrushReport3d> {
+function brush(stroke: BrushStroke3d, epoch?: number): Promise<BrushReport3d> {
   return exclusive(async () => {
     if (!engine || !cfg) throw new Error('there is no world yet');
+    if (epoch !== undefined && epoch !== worldEpoch) throw new Error('a new world was planted before this stroke ran, so it was dropped');
     const g = ++gen;
     let report: BrushReport3d;
     try {
@@ -730,6 +739,7 @@ function brush(stroke: BrushStroke3d): Promise<BrushReport3d> {
 /** Uses the tool at the committed cursor (Apply, or a click that set it), and says what happened. */
 async function useTool(): Promise<void> {
   if (tool === 'look' || !cfg) return;
+  if (planting) { setText('brush-report', 'Not applied: a new world is being planted. Try again when it is in the jar.'); return; }
   const at = { x: cursor.x, y: cursor.y, z: cursor.z };
   if (!cellShown(at)) {
     setText('brush-report', `Not applied: cell x ${at.x}, y ${at.y}, layer ${at.z} is peeled or cut away in the view. Pick a cell you can see, or lower the peel or widen the cut. The world is as it was.`);
@@ -737,7 +747,7 @@ async function useTool(): Promise<void> {
   }
   const amount = Number($<HTMLSelectElement>('feed-amount').value) || FEEDS[1].amount;
   try {
-    const r = await brush({ kind: tool, cx: at.x, cy: at.y, cz: at.z, radius: cursor.r, ...(tool === 'feed' ? { amount } : {}) });
+    const r = await brush({ kind: tool, cx: at.x, cy: at.y, cz: at.z, radius: cursor.r, ...(tool === 'feed' ? { amount } : {}) }, worldEpoch);
     setText('brush-report', reportText(r, last));
   } catch (e) {
     setText('brush-report', `Not applied: ${errMsg(e)}. The world is as it was.`);

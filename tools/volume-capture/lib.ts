@@ -126,7 +126,7 @@ export const USAGE = `Usage: node --experimental-strip-types tools/volume-captur
 Server:   --port <1024..65535> (default 5261, starts Vite)  |  --url <http://localhost:PORT> (reuse a running one)
 Page:     --page slab|mycelium3d (default slab)
 Slab:     --world cyclic|eco (default eco)  --setting <id>  --seed <0..999999>  --size WxHxD
-          --renderer raymarch|slices|points  --stretch <1..16>  --peel <0..15>
+          --renderer raymarch|slices|points  --stretch <1..16>  --peel <0..depth-1>
 Jar:      (--page mycelium3d) --size 32x32x16|64x64x32|64x64x64 (default 32x32x16)  --seed <0..4294967295> (default 1)
           --sink off|slow|fast  --trail none|toll|owner  --bonds off|upkeep|free (default off)  --waste on|off (default on)
           --renderer particles|raymarch|slices (default particles)  --stretch <1..4>  --peel <0..depth-1>
@@ -245,7 +245,7 @@ function slabRun(got: Map<string, string>, seedRaw: string | undefined): RunSett
     size: sizeFor(setting, got.get("size"), d.size),
     renderer: (got.get("renderer") ?? "raymarch") as RendererId,
     stretch: intIn("stretch", got.get("stretch") ?? "1", 1, 16),
-    peel: intIn("peel", got.get("peel") ?? "0", 0, 15),
+    peel: intIn("peel", got.get("peel") ?? "0", 0, 63), // checkRun holds it to the chosen size's depth
     camera: (got.get("camera") ?? "oblique") as CameraId,
   }, "flags");
 }

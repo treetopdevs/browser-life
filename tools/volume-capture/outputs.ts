@@ -1,7 +1,7 @@
 // Where tools/volume-capture/capture.ts may write and delete: inside --out only. --out itself may be a link (the caller chose
 // it), but nothing below it that the tool touches may be: a symlinked frames/ or artifact would send writes, and the stale
 // frame clean-up, outside --out. Checked before anything starts; tools/test/volume-capture.test.ts covers it.
-import { existsSync, lstatSync, mkdirSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { closeSync, constants, existsSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, sep } from "node:path";
 
 export class OutputError extends Error {}
@@ -36,6 +36,15 @@ export function prepareOut(out: string, dirs: readonly string[], files: readonly
   }
   for (const f of files) check(f);
   return root;
+}
+
+/**
+ * Writes an artifact under --out without following a symlink at the file itself: prepareOut checked the path before the capture
+ * ran, and this refuses (ELOOP) a link put there since. It does not re-check the directories above the file.
+ */
+export function writeOutFile(path: string, data: string | Uint8Array): void {
+  const fd = openSync(path, constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW, 0o644);
+  try { writeFileSync(fd, data); } finally { closeSync(fd); }
 }
 
 function isLink(p: string): boolean {

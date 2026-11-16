@@ -269,6 +269,7 @@ export function attachCameraControls(target: HTMLElement, cam: OrbitCamera, onMo
   }, { passive: false });
   // Keyboard: arrows orbit, + and - zoom, so the view works without a pointer.
   target.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // browser zoom and Back/Forward stay the browser's
     const k = e.key;
     if (k === "ArrowLeft") cam.orbit(0.12, 0);
     else if (k === "ArrowRight") cam.orbit(-0.12, 0);

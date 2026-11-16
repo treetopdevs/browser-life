@@ -51,7 +51,8 @@ export function familyLinear(gid: number): [number, number, number] {
 }
 
 /**
- * Packs one state into `into` when the dims match (no allocation), else into fresh buffers. `I` is lightPlane(s).
+ * Packs one state into `into` when the dims match (the output buffers are reused; two per-cell scratch arrays are still
+ * allocated per call), else into fresh buffers. `I` is lightPlane(s).
  * `live` lists the texels holding particles, in texel order.
  */
 export function packField(s: Mycelium3dState, I: Uint32Array, opts: FieldPackOptions = {}, into?: Packed): Packed {

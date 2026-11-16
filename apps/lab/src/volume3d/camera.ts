@@ -133,11 +133,12 @@ export class OrbitCamera {
 
   /** A view narrower than 1.3 : 1 backs off, so a phone's square canvas frames the box as a wide one does. */
   info(aspect: number): CameraInfo {
-    const { eye } = this.vectors(Math.max(1, 1.3 / aspect));
+    const fit = Math.max(1, 1.3 / aspect);
+    const { eye } = this.vectors(fit);
     const up: V3 = [0, 1, 0];
     const near = Math.max(0.005, this.dist * 0.02);
     const view = lookAt(eye, this.target, up);
-    const proj = perspective(this.fovY, aspect, near, this.dist + 6);
+    const proj = perspective(this.fovY, aspect, near, this.dist * fit + 6); // the eye sits at dist * fit, so the far plane follows it
     const viewProj = mat4Mul(proj, view);
     return { eye, target: [...this.target], up, fovY: this.fovY, aspect, view, proj, viewProj, invViewProj: mat4Invert(viewProj) };
   }

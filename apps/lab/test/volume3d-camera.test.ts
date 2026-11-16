@@ -46,6 +46,22 @@ describe("volume3d camera", () => {
     }
   });
 
+  it("a portrait view zoomed all the way out still has the whole box inside the far plane", () => {
+    const dims = { W: 64, H: 64, D: 64 };
+    const ext = boxExtent(dims);
+    const c = new OrbitCamera();
+    c.setBox(ext);
+    c.setPose(PRESETS.oblique!.pose);
+    c.zoom(1e9);
+    expect(c.dist).toBe(DIST_MAX);
+    const vp = c.info(0.5).viewProj; // the eye backs off by 2.6, to 15.6 units
+    for (const corner of [[0, 0, 0], [ext[0], 0, 0], [0, ext[1], 0], [0, 0, ext[2]], [ext[0], ext[1], 0], [ext[0], 0, ext[2]], [0, ext[1], ext[2]], ext] as [number, number, number][]) {
+      const z = project(vp, corner)[2];
+      expect(z).toBeGreaterThan(0);
+      expect(z).toBeLessThan(1);
+    }
+  });
+
   it("from straight above, east is to the right and north is up, as in the top-down Layers view", () => {
     const ext = boxExtent({ W: 256, H: 256, D: 8 });
     const c = new OrbitCamera();

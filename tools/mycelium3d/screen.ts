@@ -46,14 +46,17 @@ const num = (k: string, dflt: number): number => {
 const gridName = a.grid ?? (a.leads ? "leads" : "first");
 const grid = (typeof gridName === "string" && Object.hasOwn(GRIDS, gridName) ? GRIDS[gridName] : undefined) ?? fail(`--grid must be one of ${Object.keys(GRIDS).join(", ")}`);
 const SETTINGS = grid.settings;
-const out = a.out ?? "runs/mycelium3d-screen";
+/** A string flag given without its operand parses as "": refuse it rather than use the empty string. */
+const str = (k: "out" | "log" | "only"): string | undefined => (a[k] === "" ? fail(`--${k} needs a value`) : a[k]);
+const only = str("only");
+const out = str("out") ?? "runs/mycelium3d-screen";
 const steps = num("steps", 50_000), every = num("every", 2000), moveEvery = num("move-every", 20), jobs = num("jobs", 1);
 if (moveEvery < 1) fail("--move-every must be at least 1");
 if (every < moveEvery || every % moveEvery !== 0) fail("--every must be a positive multiple of --move-every");
 if (steps < every || steps % every !== 0) fail("--steps must be a positive multiple of --every");
 if (jobs < 1 || jobs > 2) fail("--jobs must be 1 or 2 (the GPU is shared)");
 const seeds = (a.seeds ?? grid.seeds.join(",")).split(",").map((v) => (/^[0-9]+$/.test(v) && Number.isSafeInteger(Number(v)) ? Number(v) : fail(`--seeds: bad seed ${JSON.stringify(v)}`)));
-const logPath = a.log ?? `${out}/run-log.jsonl`;
+const logPath = str("log") ?? `${out}/run-log.jsonl`;
 
 type Row = Record<string, any>;
 async function loadRows(): Promise<Row[]> {
@@ -309,7 +312,7 @@ const exists = async (p: string) => { try { await Deno.stat(p); return true; } c
 const todo: { st: Setting; seed: number; id: string }[] = [];
 for (const st of SETTINGS) for (const seed of seeds) {
   const id = `${st.id}.s${seed}`;
-  if (a.only && !id.includes(a.only)) continue;
+  if (only !== undefined && !id.includes(only)) continue;
   if (await exists(path(id))) {
     const done = JSON.parse(await Deno.readTextFile(path(id)));
     if (done.fingerprint !== fingerprint(screenConfig(st, seed), steps, every, moveEvery)) fail(`${id} exists with different settings (config, steps or cadences); use a fresh --out`);

@@ -13,16 +13,16 @@
 //
 // Flags and the sheet file: lib.ts USAGE. Bad arguments exit 2 before anything starts; a failed capture exits 1.
 import { chromium, type Browser, type Page } from "@playwright/test";
-import { spawn, execFileSync, type ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ArgError, CAMERA_POSES, GPU_ARGS, USAGE, anyCaptionLines, anySubLabel, isM3d, parseArgs, parseSheet, runUrl, sheetHeader, sheetLayout, stripHeight, turntableYaw,
   type AnyRun, type CaptureArgs, type M3dRun, type SheetEntry,
 } from "./lib.ts";
-import { FRAME_FILE, OutputError, prepareOut } from "./outputs.ts";
+import { FRAME_FILE, OutputError, prepareOut, writeOutFile } from "./outputs.ts";
 
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const FFMPEG = existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
@@ -32,6 +32,10 @@ const sha256 = (b: Uint8Array | string) => createHash("sha256").update(b).digest
 type Any = any;
 
 class CaptureError extends Error {}
+/** The FFmpeg child while it encodes, so a signal can stop it (shutdown). */
+let encoder: ChildProcess | null = null;
+/** Set once shutdown begins: no encoder is started after it. */
+let stopped = false;
 
 // ---- server and browser -------------------------------------------------------------------------------------------------
 
@@ -213,7 +217,7 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
     const s = await still(page, r, a, yaw);
     const out = await captioned(page, s, anyCaptionLines(r, a.step, { index: i, count: a.frames, yawDeg: (360 * i) / a.frames }));
     const file = `frames/frame-${String(i).padStart(4, "0")}.png`;
-    writeFileSync(join(a.out, file), out.png);
+    writeOutFile(join(a.out, file), out.png);
     frames.push({ file, yawRad: yaw, sha256: sha256(out.png), pixelSha256: out.pixelSha256 });
   }
   say(`${a.frames} frames`);
@@ -224,9 +228,16 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
   const prov = await provenance(browser, page);
   await page.close();
   const video = join(a.out, "turntable.mp4"), gif = join(a.out, "turntable.gif");
-  const ff = (args: string[]) => execFileSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y", ...args], { stdio: ["ignore", "inherit", "inherit"] });
-  ff(["-framerate", String(a.fps), "-i", join(framesDir, "frame-%04d.png"), "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-map_metadata", "-1", "-fflags", "+bitexact", "-flags:v", "+bitexact", video]);
-  ff(["-framerate", String(a.fps), "-i", join(framesDir, "frame-%04d.png"), "-vf", `scale=${a.gifWidth}:-2:flags=lanczos,split[x][y];[x]palettegen=max_colors=128:stats_mode=full[p];[y][p]paletteuse=dither=bayer:bayer_scale=4`, "-loop", "0", gif]);
+  // Not execFileSync: that would block the event loop, and a SIGTERM during the encode could not stop Vite until FFmpeg ended.
+  const ff = (args: string[]) => new Promise<void>((ok, bad) => {
+    if (stopped) { bad(new CaptureError("stopped before encoding")); return; }
+    const p = spawn(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y", ...args], { stdio: ["ignore", "inherit", "inherit"] });
+    encoder = p;
+    p.once("error", (e) => { encoder = null; bad(e); });
+    p.once("exit", (code, sig) => { encoder = null; if (code === 0) ok(); else bad(new CaptureError(sig ? `ffmpeg was stopped by ${sig}` : `ffmpeg exited with ${code}`)); });
+  });
+  await ff(["-framerate", String(a.fps), "-i", join(framesDir, "frame-%04d.png"), "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-map_metadata", "-1", "-fflags", "+bitexact", "-flags:v", "+bitexact", video]);
+  await ff(["-framerate", String(a.fps), "-i", join(framesDir, "frame-%04d.png"), "-vf", `scale=${a.gifWidth}:-2:flags=lanczos,split[x][y];[x]palettegen=max_colors=128:stats_mode=full[p];[y][p]paletteuse=dither=bayer:bayer_scale=4`, "-loop", "0", gif]);
   const sidecar = {
     tool: "tools/volume-capture/capture.ts", mode: "turntable", run: r, step: a.step,
     picture: { width: a.width, height: a.height, captionStrip: stripHeight(2, a.height, LINE_H, PAD), deviceScaleFactor: 1, still: true },
@@ -236,7 +247,7 @@ async function turntable(browser: Browser, origin: string, a: CaptureArgs, say: 
     gif: { file: "turntable.gif", width: a.gifWidth, sha256: sha256(readFileSync(gif)) },
     url: runUrl("", r), ...prov,
   };
-  writeFileSync(join(a.out, "capture.json"), JSON.stringify(sidecar, null, 2) + "\n");
+  writeOutFile(join(a.out, "capture.json"), JSON.stringify(sidecar, null, 2) + "\n");
   return { out: a.out, frames: a.frames, frameDigest: digest.sha256, living: digest.living, recheck };
 }
 
@@ -276,8 +287,8 @@ async function sheet(browser: Browser, origin: string, a: CaptureArgs, entries: 
     ],
   });
   await page.close();
-  writeFileSync(join(a.out, "sheet.png"), out.png);
-  writeFileSync(join(a.out, "sheet.json"), JSON.stringify({
+  writeOutFile(join(a.out, "sheet.png"), out.png);
+  writeOutFile(join(a.out, "sheet.json"), JSON.stringify({
     tool: "tools/volume-capture/capture.ts", mode: "sheet", step: a.step, camera: a.run.camera,
     still: { width: a.width, height: a.height, deviceScaleFactor: 1, still: true }, layout: { cols: L.cols, rows: L.rows, width: L.width, height: L.height },
     sheet: { file: "sheet.png", sha256: sha256(out.png), pixelSha256: out.pixelSha256 }, runs, ...(prov as object),
@@ -315,6 +326,13 @@ async function main(argv: string[]): Promise<number> {
     const b = browser ?? (await launching?.catch(() => null)) ?? null, v = vite; // a Chrome still starting is waited for
     browser = null; launching = null; vite = null;
     await b?.close().catch(() => {});
+    stopped = true;
+    const f = encoder;
+    if (f && f.exitCode === null && f.signalCode === null) {
+      const gone = new Promise<void>((ok) => f.once("exit", () => ok()));
+      f.kill("SIGTERM");
+      await gone;
+    }
     if (v && v.exitCode === null && v.signalCode === null) {
       const gone = new Promise<void>((ok) => v.once("exit", () => ok()));
       v.kill("SIGTERM");
