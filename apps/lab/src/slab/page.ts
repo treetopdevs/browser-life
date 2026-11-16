@@ -9,8 +9,8 @@ import { rpsLabels } from "@bl/metrics";
 import { CH, G, initWorld } from "@bl/schema";
 import { GpuSim3 as StockSim3 } from "@bl/sim-gpu";
 import {
-  BURN_IN, CANOPY_OPTIONS, CYCLIC_SEEDS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SEEDS, ECO_SIZES, KILL_OPTIONS, PACES, SPREAD,
-  cyclicRecord, cyclicSettings, ecoConfig, ecoInit, ecoRecordId, isCanopy, type CyclicChoice, type EcoChoice, type KillChoice, type Pace,
+  BURN_IN, CANOPY_OPTIONS, CYCLIC_SEEDS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SEEDS, JAR_OPTIONS, JAR_SEEDS, KILL_OPTIONS, PACES, SPREAD,
+  cyclicRecord, cyclicSettings, ecoConfig, ecoInit, ecoRecordId, isCanopy, isJar, sizesFor, type CyclicChoice, type EcoChoice, type KillChoice, type Pace,
 } from "./settings.ts";
 import { PRESETS } from "../volume3d/camera.ts";
 import { Disposer } from "../volume3d/approaches/disposer.ts";
@@ -33,6 +33,13 @@ const S = {
   display: "layers" as "layers" | "volume",
 };
 const dimsText = (s: readonly number[]) => `${s[0]} by ${s[1]} by ${s[2]}`;
+/** Every ecology option the page offers: the M4 picks, the M4b canopy and the jar levers screen. */
+const ALL_ECO = [...ECO_OPTIONS, ...CANOPY_OPTIONS, ...JAR_OPTIONS];
+/** Keeps the ecology size one the chosen option runs at (a jar setting only at 64 by 64 by 64, the others at the slab sizes). */
+function fitEcoSize() {
+  const sizes = sizesFor(S.eco.option);
+  if (!sizes.some((z) => z.join("x") === S.eco.size.join("x"))) S.eco.size = [sizes[0][0], sizes[0][1], sizes[0][2]];
+}
 
 // ---- link parameters -------------------------------------------------------------------------------------------------
 // Optional, for links and for tools/volume-capture: world, setting (an ecology setting id, or the cyclic ring rule), seed,
@@ -51,11 +58,12 @@ function readLink() {
   if (world === "cyclic" || world === "eco") S.world = world;
   const setting = q.get("setting");
   if (setting && S.world === "cyclic" && KILL_OPTIONS.some((k) => k.id === setting)) S.cyc.kill = setting as KillChoice;
-  if (setting && S.world === "eco" && [...ECO_OPTIONS, ...CANOPY_OPTIONS].some((o) => o.id === setting)) S.eco.option = setting;
+  if (setting && S.world === "eco" && ALL_ECO.some((o) => o.id === setting)) S.eco.option = setting;
   const seed = int("seed", 0, 999999);
   if (seed !== undefined) { if (S.world === "cyclic") S.cyc.seed = seed; else S.eco.seed = seed; }
-  const size = (S.world === "cyclic" ? CYCLIC_SIZES : ECO_SIZES).find((z) => z.join("x") === q.get("size"));
+  const size = (S.world === "cyclic" ? CYCLIC_SIZES : sizesFor(S.eco.option)).find((z) => z.join("x") === q.get("size"));
   if (size) { if (S.world === "cyclic") S.cyc.size = [size[0], size[1], size[2]]; else S.eco.size = [size[0], size[1], size[2]]; }
+  fitEcoSize();
   const display = q.get("display");
   if (display === "layers" || display === "volume") S.display = display;
   const renderer = RENDERERS.find((r) => r.id === q.get("renderer"));
@@ -361,6 +369,10 @@ function currentChoiceText(): { record: string } {
     return { record: r ? `Recorded setting: job ${r.id} (class ${r.klass}), from GATE0-EXPLORATION${r.id.startsWith("g2-") ? "-2" : ""}.md. Exploration, not a result.` : "Not recorded: this combination of size, rule, seed and start was not run in the committed records. Exploration, not a result." };
   }
   const id = ecoRecordId(S.eco);
+  if (isJar(S.eco.option)) {
+    const s = (JAR_SEEDS as readonly number[]).includes(S.eco.seed);
+    return { record: `A setting of the jar levers screen (experiments/3d-slab/jar-levers-screen-2026-11-16.md)${s ? ", with a seed it ran" : "; the screen ran seeds 101 and 102 only"}. This is a fresh run from step 0, not a recorded state. Exploration, judged by eye: no setting passes or fails.` };
+  }
   if (isCanopy(S.eco.option)) {
     return { record: id ? `Re-run of an M4b calibration setting: run ${id} (experiments/3d-slab/m4b-results.tsv). That file holds summaries of the run, not its states, so this is a fresh run from step 0 with the same setting and seed, not a recorded state. The calibration found no setting that qualified. Exploration, not a result.` : "Not a calibration run: the M4b calibration ran this setting only at 256 by 256 by 8 on seeds 101, 102 and 103. Exploration, not a result." };
   }
@@ -440,7 +452,7 @@ function radios(host: HTMLElement, name: string, opts: Opt[], checked: string, o
 function sizeOpts(): Opt[] {
   return S.world === "cyclic"
     ? CYCLIC_SIZES.map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[0] === 256 ? "The size of the recorded 200,000-step runs; about 340 steps a second here. Fine detail, slower." : "The size of the registered pilot, about four times as fast; dynamics differ from the recorded 256 by 256 runs." }))
-    : ECO_SIZES.map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[0] === 256 ? "The recorded calibration size; about 160 to 280 steps a second here." : "Four times quicker, but not a recorded shape: dynamics differ from the calibration's." }));
+    : sizesFor(S.eco.option).map((s) => ({ value: s.join("x"), title: dimsText(s), text: s[2] === 64 ? "The jar: 64 layers deep, the only size the jar settings run at; about 200 steps a second." : s[0] === 256 ? "The recorded calibration size; about 160 to 280 steps a second here." : "Four times quicker, but not a recorded shape: dynamics differ from the calibration's." }));
 }
 
 function renderControls() {
@@ -451,7 +463,7 @@ function renderControls() {
     { value: "eco", title: "Slab ecology (8 layers)", text: "The main rule set on a slab, in lineage colours. No setting qualified in calibration; some settings give a full carpet, some stay nearly empty." },
   ], S.world, (v) => { S.world = v as World; S.playing = false; syncPlay(); renderControls(); restart(); });
   radios($("o-kill"), "kill", KILL_OPTIONS.map((k) => ({ value: k.id, title: k.title, text: k.text })), S.cyc.kill, (v) => { S.cyc.kill = v as KillChoice; renderControls(); restart(); });
-  radios($("o-eco"), "eco", [...ECO_OPTIONS, ...CANOPY_OPTIONS].map((o) => ({ value: o.id, title: `${o.title} (${o.nutrient === undefined ? "" : `nutrient ${o.nutrient}, `}mu ${o.mu}, sigma ${o.sigma}, light ${o.lightK})`, text: o.text })), S.eco.option, (v) => { S.eco.option = v; renderControls(); restart(); });
+  radios($("o-eco"), "eco", ALL_ECO.map((o) => ({ value: o.id, title: `${o.title} (${o.nutrient === undefined ? "" : `nutrient ${o.nutrient}, `}mu ${o.mu}, sigma ${o.sigma}, light ${o.lightK})`, text: o.text })), S.eco.option, (v) => { S.eco.option = v; fitEcoSize(); renderControls(); restart(); });
   radios($("o-display"), "display", [
     { value: "layers", title: "Layers", text: "One flat tile per layer and a large top-down picture, as drawn from the start." },
     { value: "volume", title: "Volume", text: "The whole slab drawn in 3D at its true shape, a thin sheet you can turn, zoom and peel layer by layer from the surface." },
@@ -474,9 +486,10 @@ function renderControls() {
   seed.value = String(cyc ? S.cyc.seed : S.eco.seed);
   const quick = $("seed-quick");
   quick.replaceChildren();
-  for (const s of cyc ? CYCLIC_SEEDS : ECO_SEEDS) {
+  const jar = !cyc && isJar(S.eco.option);
+  for (const s of cyc ? CYCLIC_SEEDS : jar ? JAR_SEEDS : ECO_SEEDS) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "button quiet"; b.textContent = !cyc && isCanopy(S.eco.option) ? `${s} (as in M4b)` : `${s} (recorded)`;
+    b.type = "button"; b.className = "button quiet"; b.textContent = jar ? `${s} (as in the screen)` : !cyc && isCanopy(S.eco.option) ? `${s} (as in M4b)` : `${s} (recorded)`;
     b.addEventListener("click", () => { setSeed(s); });
     quick.append(b, " ");
   }
@@ -497,6 +510,8 @@ function setSeed(s: number) {
 function renderNotes() {
   $("notes").innerHTML = S.world === "cyclic"
     ? `<h2>What you are looking at</h2><p>Each colour is one of three types; dark cells are empty. A tile is one layer of a slab four cells deep. Edges wrap sideways (left meets right, top meets bottom) but the picture does not draw the wrap; the top and bottom layers are closed. Watch for spirals, blobs and flat or tilted fronts through depth. The kill only starts after ${BURN_IN.toLocaleString("en")} steps when the recorded start is chosen.</p><p>Status of this world: Gate 0 ended in a stop, so nothing here is a result. Spread ${SPREAD}, rate and seed come from the committed exploration records; the run is not a re-run of them and no hash match is claimed.</p>`
+    : isJar(S.eco.option)
+    ? `<h2>What you are looking at</h2><p>A jar 64 cells wide, 64 deep and 64 tall; layer 0, at the top, gets the light. Each tile is one layer. The world starts from eight small balls, and the jar fills over the first 10,000 to 20,000 steps. The jar settings are the arms of the jar levers screen: the same world, with one change each (where life starts, waste sinking, waste rotting on the floor, upwelling, or a ring of three types). Nothing here is a result; the screen was judged by eye.</p><p>Colours are lineage colours, as in the lab; dark squares are non-living cells lit by their nutrient.</p>`
     : `<h2>What you are looking at</h2><p>Each tile is one layer of an eight-layer slab; layer 0 gets the light. The world starts from eight small balls, so with the default setting on seed 101 the recorded full carpet appears only after about 15,000 steps, about a minute at the fastest pace; other settings and seeds do something else, and some stay nearly empty. The calibration found no setting that qualified, and the 3D line is closed at rung 1b; this viewer is for looking.</p><p>Colours are lineage colours, as in the lab; dark squares are non-living cells lit by their nutrient.</p>`;
 }
 

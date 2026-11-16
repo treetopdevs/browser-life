@@ -17,11 +17,17 @@ export const WORLDS: Record<WorldId, { title: string; settings: readonly string[
   },
   eco: {
     title: "Slab ecology",
-    settings: ["mu40-s20-k1024", "mu30-s8-k256", "mu60-s12-k256", "mu20-s12-k1024", "n12-mu50-s8-k64"],
-    sizes: ["256x256x8", "128x128x8"],
+    settings: ["mu40-s20-k1024", "mu30-s8-k256", "mu60-s12-k256", "mu20-s12-k1024", "n12-mu50-s8-k64", "jar-base", "jar-surface", "jar-sink", "jar-floor", "jar-upwell", "jar-all", "jar-rps"],
+    sizes: ["256x256x8", "128x128x8", "64x64x64"],
     defaults: { setting: "mu40-s20-k1024", seed: 101, size: "256x256x8" },
   },
 };
+/** The slab page's jar settings (settings.ts JAR_OPTIONS) run only at the jar size, and the other ecology settings never do. */
+export const JAR_SIZE = "64x64x64";
+export const isJarSetting = (setting: string) => setting.startsWith("jar-");
+/** The size a run takes when none is given: the jar's for a jar setting, else `fallback`. */
+const sizeFor = (setting: string, given: string | undefined, fallback: string) => given ?? (isJarSetting(setting) ? JAR_SIZE : fallback);
+
 /** True only for the two world ids (own keys: "toString" or "__proto__" are not worlds). */
 export const isWorld = (w: unknown): w is WorldId => typeof w === "string" && Object.hasOwn(WORLDS, w);
 export const RENDERER_IDS = ["raymarch", "slices", "points"] as const;
@@ -144,6 +150,7 @@ export function checkRun(r: RunSettings, where: string): RunSettings {
   const w = WORLDS[r.world];
   if (!w.settings.includes(r.setting)) throw new ArgError(`${where}: setting ${JSON.stringify(r.setting)} is not a ${r.world} setting (${w.settings.join(", ")})`);
   if (!w.sizes.includes(r.size)) throw new ArgError(`${where}: size ${JSON.stringify(r.size)} is not a ${r.world} size (${w.sizes.join(", ")})`);
+  if (r.world === "eco" && isJarSetting(r.setting) !== (r.size === JAR_SIZE)) throw new ArgError(`${where}: the jar settings run only at ${JAR_SIZE}, and the other ecology settings never do (setting ${r.setting}, size ${r.size})`);
   if (!Number.isInteger(r.seed) || r.seed < 0 || r.seed > 999999) throw new ArgError(`${where}: seed must be a whole number from 0 to 999999, got ${JSON.stringify(r.seed)}`);
   if (!(RENDERER_IDS as readonly string[]).includes(r.renderer)) throw new ArgError(`${where}: renderer must be one of ${RENDERER_IDS.join(", ")}, got ${JSON.stringify(r.renderer)}`);
   if (!(CAMERA_IDS as readonly string[]).includes(r.camera)) throw new ArgError(`${where}: camera must be one of ${CAMERA_IDS.join(", ")}, got ${JSON.stringify(r.camera)}`);
@@ -223,11 +230,12 @@ function slabRun(got: Map<string, string>, seedRaw: string | undefined): RunSett
   const world = (got.get("world") ?? "eco") as WorldId;
   if (!isWorld(world)) throw new ArgError(`--world must be cyclic or eco, got ${JSON.stringify(world)}`);
   const d = WORLDS[world].defaults;
+  const setting = got.get("setting") ?? d.setting;
   return checkRun({
     world,
-    setting: got.get("setting") ?? d.setting,
+    setting,
     seed: seedRaw === undefined ? d.seed : intIn("seed", seedRaw, 0, 999999),
-    size: got.get("size") ?? d.size,
+    size: sizeFor(setting, got.get("size"), d.size),
     renderer: (got.get("renderer") ?? "raymarch") as RendererId,
     stretch: intIn("stretch", got.get("stretch") ?? "1", 1, 16),
     peel: intIn("peel", got.get("peel") ?? "0", 0, 15),
@@ -304,13 +312,14 @@ export function parseSheet(json: unknown, base: AnyRun): SheetEntry[] {
     const world = (o.world as WorldId | undefined) ?? slab.world;
     const own = world === slab.world ? slab : { ...slab, ...WORLDS[world].defaults };
     for (const k of ["setting", "size", "renderer"] as const) if (o[k] !== undefined && typeof o[k] !== "string") throw new ArgError(`${where}: ${k} must be a string`);
+    const setting = (o.setting as string | undefined) ?? own.setting;
     return {
       label: o.label.trim(),
       run: checkRun({
         world,
-        setting: (o.setting as string | undefined) ?? own.setting,
+        setting,
         seed: (o.seed as number | undefined) ?? own.seed,
-        size: (o.size as string | undefined) ?? own.size,
+        size: o.size === undefined && isJarSetting(setting) !== isJarSetting(own.setting) ? sizeFor(setting, undefined, WORLDS[world].defaults.size) : (o.size as string | undefined) ?? own.size,
         renderer: ((o.renderer as string | undefined) ?? slab.renderer) as RendererId,
         stretch: (o.stretch as number | undefined) ?? slab.stretch,
         peel: (o.peel as number | undefined) ?? slab.peel,

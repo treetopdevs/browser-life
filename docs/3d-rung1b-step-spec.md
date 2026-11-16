@@ -539,3 +539,43 @@ earlier slab pins are byte-identical.
 | P3 64x64x8 slab cases slow in vitest | **Accepted.** The five 64x64x8 cases are skipped in `golden-hashes.test.ts` unless `BL_SLAB_BIG=1`; their pins stay in the table and the cases still run bit for bit against the GPU in Deno and Chrome. The 32x32x8 and 16x16x8 pins always run. |
 | P3 limits audit, no break | **No action.** Optional promotion of the A-storm / A3 states was taken: `slab-e-saturation` is the aimed 27-source storm with E and S saturated. |
 | P3 2D path untouched | **No action.** Re-confirmed: no 2D pin line changed. |
+
+## 17. Optional levers (step A2 of the 3D plan, 2026-11-16)
+
+Optional keys, absent from `defaultConfig()`; a slab without them steps, hashes and generates shader text exactly as above.
+Prose and justification: `docs/rules.md`, "Optional slab levers". Draw slots (used only when the key is set, never part of
+`RND3`, so the key-absent prelude is unchanged): `RPS_FLIP 41`, `SINK 42`, `FLOOR 43`, `UPWELL_A 44`, `UPWELL_C 45`.
+
+### 17.1 Exchange at cell load (react, after the two pool caps of §9.1, before the vacancy kill)
+
+Let `A'(j)`, `C'(j)` be the post-transport values (`cells'`, binding 0 on the GPU) and `b(j) = cellBase(seed, step, j)`.
+With `s = sinkShift`, `u = upwellShift`, `z(j)` the layer of `j`:
+
+- `sink(j) = s set and z(j) < D - 1 ? mulFrac(C'(j), 1, s, draw(b(j), SINK)) : 0`
+- `up = upwellPeriod set and step % upwellPeriod == upwellPeriod - 1` (pre-increment `step`)
+- `ua(j) = up ? mulFrac(A'(j), 1, u, draw(b(j), UPWELL_A)) : 0`
+- `uc(j) = up ? mulFrac(C'(j) - sink(j), 1, u, draw(b(j), UPWELL_C)) : 0`
+
+For cell `i` with `above = (x, y, z - 1)` (absent at `z = 0`, contributing 0) and `mirror = (x, y, D - 1 - z)`:
+`A = A'(i) - ua(i) + ua(mirror)`, `C = C'(i) - sink(i) + sink(above) - uc(i) + uc(mirror)`, evaluated left to right in u32
+(no step wraps: `sink(i) + uc(i) <= C'(i)` and `ua(i) <= A'(i)`). `mulFrac(q, 1, s, r) = (q >> s) + ((q & M) > (r & M))` with
+`M = 2^s - 1`, so `mulFrac(q, 1, s) <= q` for `s >= 1`. No heat, no flux (potential energy does not depend on position).
+
+### 17.2 Floor decomposition (passive processes, after abiotic recycling)
+
+If `floorDecay` is set and `z = D - 1`: `q = mulFrac(C, floorDecay, 16, draw(base, FLOOR))`; `C -= q; A += q; heat += q*(eC - eA)`;
+`F.abio += q`. Then the lineage clear and the writes of §9.5.
+
+### 17.3 `rpsMutate` (the mutation site of §9.4 step 8, vacancy-kill configs only)
+
+On an event: `parent` as §9.6; if `rpsMutate` is set and `(draw(base, RPS_FLIP) & 0xffff) < rpsMutate` then `mutateRps(i, which, deltaRnd)`,
+else `mutateInPlace3(i, which, deltaRnd)` (the same two draws). `mutateRps`: `p1 = PARAM1[i]`, `t = (p1 >> 8) & 0xff`, `m = (p1 >> 16) & 0xff`,
+`other = (t + 1 + deltaRnd % (K - 1)) % K` with `K = rpsTypes`; if `(which & 0xff) < 128` then `m ^= 1 << other`, else `t = other; m &= ~(1 << other)`;
+`PARAM1[i] = (p1 & 0xff) | t << 8 | m << 16`. Then the lineage and event of §9.6. The MOT store ORs `m << 24` from the genome after the
+mutation (the existing vacancy-kill rule), so the mirror always matches.
+
+### 17.4 Bounds
+
+Every amount sent is at most its sender's value, a receiver's total is at most world matter (`<= 2^26`), `q*(eC - eA) <= 2^26 * 31`,
+`floorDecay < 2^16` (`mulFrac` exactness). The golden cases `jar-sink-16x16x64`, `jar-floor-decay-16x16x64`, `jar-upwell-16x16x64`, `jar-upwell-only-16x16x64`,
+`jar-levers-16x16x64`, `slab-rps-mutate-16x16x8` and (gated in vitest) `jar-levers-cube-64x64x64` run them bit for bit.

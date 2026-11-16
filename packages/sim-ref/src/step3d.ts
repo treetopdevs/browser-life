@@ -24,7 +24,9 @@ import {
   OUT3,
   POOL_MAX3,
   RND3,
+  RND3_LEVER,
   ROLE_WORDS,
+  RPS_EDGE_SHARE,
   U32_MAX,
   W1_OFF3,
   W2_OFF3,
@@ -129,6 +131,23 @@ export function mutateInPlace3(genome: Uint32Array, n: number, i: number, c: Wor
     const gain = clampi((p1 & 0xff) + delta, 0, 255);
     genome[G.PARAM1 * n + i] = ((p1 & 0xffffff00) | gain) >>> 0;
   }
+}
+
+/**
+ * The RPS type operator of an `rpsMutate` event (docs/3d-cyclic-rps-plan-2026-10-23.md 4.4, spec 17.3): flip one mask bit
+ * (`(which & 0xff) < RPS_EDGE_SHARE`) or relabel the type and clear the new own bit. `K` is `rpsTypes`.
+ */
+export function mutateRps(genome: Uint32Array, n: number, i: number, K: number, which: number, deltaRnd: number): void {
+  const p1 = genome[G.PARAM1 * n + i];
+  let t = (p1 >>> 8) & 0xff;
+  let m = (p1 >>> 16) & 0xff;
+  const other = (t + 1 + (deltaRnd % (K - 1))) % K;
+  if ((which & 0xff) < RPS_EDGE_SHARE) m ^= 1 << other;
+  else {
+    t = other;
+    m &= ~(1 << other);
+  }
+  genome[G.PARAM1 * n + i] = ((p1 & 0xff) | (t << 8) | (m << 16)) >>> 0;
 }
 
 export class RefSim3 {
@@ -517,6 +536,8 @@ export class RefSim3 {
     const cap24 = (v: number) => (v > 0xffffff ? 0xffffff : v);
     const sat16 = (v: number) => (v > 0xffff ? 0xffff : v);
     const sg = c.signalGain ?? 1;
+    const sinkS = c.sinkShift ?? 0;
+    const upwell = c.upwellPeriod !== undefined && step % c.upwellPeriod === c.upwellPeriod - 1;
 
     for (let zz = 0; zz < D; zz++) {
       for (let yy = 0; yy < H; yy++) {
@@ -543,6 +564,24 @@ export class RefSim3 {
           if (S > POOL_MAX3) {
             heat += S - POOL_MAX3;
             S = POOL_MAX3;
+          }
+
+          // Slab levers (spec 17.1): sinking of waste and the upwelling exchange with the mirror cell, gathered from
+          // post-transport values; each sender's amount is a function of its own value and its own cellBase.
+          if (sinkS || upwell) {
+            const sinkOf = (j: number, zj: number) => (sinkS && zj < D - 1 ? mulFrac(cells[CH.C * n + j], 1, sinkS, draw(cellBase(c.seed, step, j), RND3_LEVER.SINK)) : 0);
+            const sinkI = sinkOf(i, zz);
+            C = subu(C, sinkI);
+            if (zz > 0) C = addu(C, sinkOf(i - this.WH, zz - 1));
+            if (upwell) {
+              const zm = D - 1 - zz;
+              const m = (zm * H + yy) * W + xx;
+              const bm = cellBase(c.seed, step, m);
+              const us = c.upwellShift!;
+              A = addu(subu(A, mulFrac(cells[CH.A * n + i], 1, us, draw(base, RND3_LEVER.UPWELL_A))), mulFrac(cells[CH.A * n + m], 1, us, draw(bm, RND3_LEVER.UPWELL_A)));
+              C = subu(C, mulFrac(cells[CH.C * n + i] - sinkI, 1, us, draw(base, RND3_LEVER.UPWELL_C)));
+              C = addu(C, mulFrac(cells[CH.C * n + m] - sinkOf(m, zm), 1, us, draw(bm, RND3_LEVER.UPWELL_C)));
+            }
           }
 
           // Gather predation from post-transport faces; vacancy before controller and passive reactions.
@@ -652,7 +691,9 @@ export class RefSim3 {
               if (draw(base, RND3.MUT) < p) {
                 const parentHi = genome[G.LIN_HI * n + i];
                 const parentLo = genome[G.LIN_LO * n + i];
-                mutateInPlace3(genome, n, i, c, draw(base, RND3.MUT_WHICH), draw(base, RND3.MUT_DELTA));
+                if (c.rpsMutate !== undefined && (draw(base, RND3_LEVER.RPS_FLIP) & 0xffff) < c.rpsMutate)
+                  mutateRps(genome, n, i, c.rpsTypes!, draw(base, RND3.MUT_WHICH), draw(base, RND3.MUT_DELTA));
+                else mutateInPlace3(genome, n, i, c, draw(base, RND3.MUT_WHICH), draw(base, RND3.MUT_DELTA));
                 genome[G.LIN_HI * n + i] = (step + 1) >>> 0;
                 genome[G.LIN_LO * n + i] = i;
                 events.push({ childHi: step + 1, childLo: i, parentHi, parentLo });
@@ -672,6 +713,11 @@ export class RefSim3 {
           const t = mulFrac(C, L, 8, draw(base, RND3.ABIO1));
           q = Math.min(C, mulFrac(t, c.kAbio, 16, draw(base, RND3.ABIO2)));
           C -= q; A += q; heat += q * (c.eC - c.eA); F[FX.abio] = q;
+          // Floor decomposition (spec 17.2): downhill C -> A on the bottom layer, the difference exported as heat.
+          if (c.floorDecay !== undefined && zz === D - 1) {
+            q = mulFrac(C, c.floorDecay, 16, draw(base, RND3_LEVER.FLOOR));
+            C -= q; A += q; heat += q * (c.eC - c.eA); F[FX.abio] += q;
+          }
 
           if (living && B === 0 && P === 0) {
             genome[G.LIN_HI * n + i] = 0;

@@ -305,6 +305,12 @@ test("link parameters: junk and inherited-key values open the defaults without e
   const mixed = await openWith(page, "world=cyclic&setting=mu30-s8-k256&peel=3&display=volume");
   expect(mixed.state.cyc.kill).toBe("vacancy");
   expect(mixed.volume!.peel).toBe(3);
+  // a jar setting (the jar levers screen) runs only at 64 x 64 x 64: a slab size in the link is not one it offers
+  const jar = await openWith(page, "world=eco&setting=jar-sink&seed=102&size=256x256x8&display=volume");
+  expect(jar.state).toMatchObject({ world: "eco", eco: { option: "jar-sink", seed: 102, size: [64, 64, 64] }, display: "volume" });
+  expect(await page.locator("input[name=eco][value=jar-sink]").isChecked()).toBe(true);
+  expect(await page.locator("input[name=size][value='64x64x64']").isChecked()).toBe(true);
+  await expect(page.locator("#provenance")).toContainText("jar levers screen");
   expect(errors).toEqual([]);
 });
 

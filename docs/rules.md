@@ -108,3 +108,53 @@ Matter stays in the cell. Each GPU heat term fits the existing bounds and is add
 separately to the 64-bit accumulator. The CPU sums in exact integer range. This is
 an opt-in research implementation, not evidence of adaptive evolution or a public
 preset; see `experiments/3d-rps/RULES.md`, Amendment 3.
+
+### Optional slab levers: sinking, floor decomposition, upwelling, and mutation with the vacancy kill (2026-11-16)
+
+Step A2 of `docs/3d-expansion-plan-2026-11-15.md`. Every key below is optional, slab only (`validateConfig` refuses
+it on a 2D config), and absent from `defaultConfig()`, so every existing config, shader text and pin is unchanged and
+`RULE_VERSION` stays 1. Their arithmetic is in `docs/3d-rung1b-step-spec.md` section 17; the twins are `step3d.ts` and
+`shaders3d.ts`. New draw slots, used only when their key is set: 41 `RPS_FLIP`, 42 `SINK`, 43 `FLOOR`,
+44 `UPWELL_A`, 45 `UPWELL_C`.
+
+Bound matter (`B`, `P`) moves only through flow and transport, so these levers act on the dissolved channels. All
+three run in `react`, right after the pool caps at cell load, as a gather on the post-transport values: a cell
+computes what it sends from its own value and its own draw, and what it receives by recomputing the sender's amount
+from the sender's value and the sender's `cellBase`. Nothing depends on the order in which cells run, and no new
+pass, buffer or binding exists. Potential energy per quantum (`eA`, `eC`) does not depend on depth, so moving `A` or
+`C` between cells changes no energy content and books no heat.
+
+- **`sinkShift`** (1..16). Waste `C` is detritus (dead `B` and `P` decay into it), so it sinks. Each cell above the floor
+  sends `mulFrac(C', 1, sinkShift, draw(SINK))` of its post-transport `C'` to the cell directly below: `C'/2^sinkShift`
+  in expectation, with stochastic rounding, and the remainder stays. The floor layer sends nothing. Nutrient `A` does
+  not sink: it is the dissolved solute, and sinking it would only starve the lit top by construction.
+- **`floorDecay`** (0..65535, /65536 per step). In the passive processes, after abiotic recycling, a floor cell
+  (`z = D − 1`) turns `q = mulFrac(C, floorDecay, 16, draw(FLOOR))` of its waste into nutrient: `C −= q`, `A += q`,
+  heat `+= q·(eC − eA)`. This is downhill (`eC ≥ eA`), so the energy difference leaves as heat and the ledger stays
+  exact. It is booked in the `abio` flux (abiotic `C → A`), which is the only flux it touches.
+- **`upwellPeriod`** (1..2^31 − 1) **and `upwellShift`** (1..16), set together. On a step with
+  `step mod upwellPeriod = upwellPeriod − 1` (the pre-increment step), each cell exchanges with its mirror
+  `(x, y, D − 1 − z)`: it sends `mulFrac(A', 1, upwellShift, draw(UPWELL_A))` of its nutrient and
+  `mulFrac(C' − sink, 1, upwellShift, draw(UPWELL_C))` of the waste it kept after sinking, and receives the mirror's two
+  amounts. The mirror pairing is an involution with no fixed cell (`D` is even), so the exchange is a set of
+  disjoint pairwise swaps: conservative, order-free and one read per cell. It is an overturn: floor water reaches the
+  surface in one step, which a one-layer lift every `N` steps could not do against sinking every step. Waste is taken
+  from what the cell kept after sinking, so sinking and upwelling together never send more than `C'`.
+- **`rpsMutate`** (0..65536, /65536), only with the four vacancy-kill keys. It lifts the `mutRate 0` requirement of
+  the vacancy kill; without it the requirement and every earlier refusal (`rpsFlip`, `rpsEdge`, a nonzero `mutRate`)
+  stay. On a mutation event (the unchanged `draw(MUT) < p` test), `(draw(RPS_FLIP) & 0xffff) < rpsMutate` sends the
+  event to the type operator of `docs/3d-cyclic-rps-plan-2026-10-23.md` section 4.4, otherwise to the ordinary
+  controller mutation. With `t` the type, `m` the beats-mask, `other = (t + 1 + deltaRnd mod (K − 1)) mod K`: if
+  `(which & 0xff) < 128` the event flips mask bit `other` (gain or lose one prey), else it relabels `t = other` and
+  clears the new own bit `m &= ~(1 << other)`. The edge share is fixed at one half. Either way the event mints one
+  lineage id `(step + 1, i)` and records one event, as any mutation does, and the MOT mirror is written from the
+  genome after the mutation, so every RPS state invariant (`validateState`) holds. Mutation moves no matter or energy.
+
+`InitParams` gets two founding options for `slab-spots` (not rules, absent from every preset): `surface` places every
+founder's z in `0..surface − 1` instead of `0..D − 1` (x, y and the noise are unchanged), and `rpsCycle` gives founder
+`f` type `f mod rpsCycle` with the cyclic mask `1 << ((t + 1) mod rpsCycle)` and the MOT mirror set.
+
+Bounds: every amount sent is at most the sender's value (`mulFrac(q, 1, s) ≤ q` for `s ≥ 1`), so no channel wraps,
+and a receiver's total is bounded by world matter (`≤ 2^26`). `q·(eC − eA) ≤ 2^26·31`, as the other decays. The
+golden cases `jar-sink-*`, `jar-floor-decay-*`, `jar-upwell-*`, `jar-levers-*` and `slab-rps-mutate-*` run each
+lever bit for bit (the 64-cube `jar-levers-cube-64x64x64` is gated in the vitest pins like the other cube).

@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { PRESETS } from "../../apps/lab/src/volume3d/camera.ts";
-import { CANOPY_OPTIONS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SIZES, KILL_OPTIONS } from "../../apps/lab/src/slab/settings.ts";
+import { CANOPY_OPTIONS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SIZES, JAR_OPTIONS, JAR_SIZES, KILL_OPTIONS } from "../../apps/lab/src/slab/settings.ts";
 import { RENDERERS } from "../../apps/lab/src/volume3d/approaches/registry.ts";
 import { DEFAULT_CHOICE, SEED_MAX, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, describeChoice, type Trail } from "../../apps/lab/src/mycelium3d/settings.ts";
 import {
@@ -23,9 +23,9 @@ const REPO = fileURLToPath(new URL("../..", import.meta.url));
 describe("copies of the page's tables", () => {
   it("worlds, settings, sizes and defaults match apps/lab/src/slab/settings.ts", () => {
     expect(WORLDS.cyclic.settings).toEqual(KILL_OPTIONS.map((k) => k.id));
-    expect(WORLDS.eco.settings).toEqual([...ECO_OPTIONS, ...CANOPY_OPTIONS].map((o) => o.id));
+    expect(WORLDS.eco.settings).toEqual([...ECO_OPTIONS, ...CANOPY_OPTIONS, ...JAR_OPTIONS].map((o) => o.id));
     expect(WORLDS.cyclic.sizes).toEqual(CYCLIC_SIZES.map((s) => s.join("x")));
-    expect(WORLDS.eco.sizes).toEqual(ECO_SIZES.map((s) => s.join("x")));
+    expect(WORLDS.eco.sizes).toEqual([...ECO_SIZES, ...JAR_SIZES].map((s) => s.join("x")));
     expect(WORLDS.cyclic.defaults).toEqual({ setting: DEFAULT_CYCLIC.kill, seed: DEFAULT_CYCLIC.seed, size: DEFAULT_CYCLIC.size.join("x") });
     expect(WORLDS.eco.defaults).toEqual({ setting: DEFAULT_ECO.option, seed: DEFAULT_ECO.seed, size: DEFAULT_ECO.size.join("x") });
   });
@@ -81,6 +81,13 @@ describe("parseArgs", () => {
     expect(a.url).toBe("http://localhost:5173");
     expect(a.run).toMatchObject({ setting: "n12-mu50-s8-k64", seed: 101, stretch: 8 });
     expect(a.step).toBe(30000);
+  });
+  it("runs a jar setting at the jar size, and refuses any other pairing of a jar setting and a size", () => {
+    expect(ok("--out x --setting jar-sink --seed 102").run).toMatchObject({ world: "eco", setting: "jar-sink", seed: 102, size: "64x64x64" });
+    expect(ok("--out x --setting jar-rps --size 64x64x64 --peel 10").run).toMatchObject({ size: "64x64x64", peel: 10 });
+    bad("--out x --setting jar-sink --size 256x256x8", /jar settings run only at 64x64x64/);
+    bad("--out x --size 64x64x64", /jar settings run only at 64x64x64/);
+    expect(parseSheet([{ label: "a", setting: "jar-all" }, { label: "b", setting: "mu30-s8-k256" }], parseArgs(["--out", "x", "--setting", "jar-base", "--sheet", "s.json"]).run).map((e) => e.run.size)).toEqual(["64x64x64", "256x256x8"]);
   });
   it("rejects bad arguments with a message naming the flag", () => {
     bad("", /--out <dir> is required/);
