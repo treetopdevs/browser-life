@@ -89,14 +89,22 @@ const PINNED: Record<number, Record<string, string>> = {
     "slab-rounding-spread0-16x16x8": "fee86a6c0f8a01c5",
     "slab-rounding-spread32-16x16x8": "ac142dd61f152157",
     "slab-motility-off-16x16x8": "9c1e01eabbd0195f",
+    // The jar (tileD 64, step A1 of docs/3d-expansion-plan-2026-11-15.md): new cases only, GPU and CPU bit for bit;
+    // every pin above is untouched.
+    "jar-default-16x16x64": "b3519c74e2454395",
+    "jar-neutral-16x16x64": "b764ca79ae90a85d",
+    "jar-shaded-column-16x16x64": "94f867816a461eaf",
+    "jar-motility-seasons-16x16x64": "08a566625482c55e",
+    "jar-cube-64x64x64": "132a5c1edbaa40ff",
   },
 };
 
 // The 64x64x8 slab cases cost minutes of CPU on a loaded machine and run bit for bit against the GPU in
 // tests/deno/gpu_golden.ts and the Chrome golden anyway: vitest checks their pins only on request
 // (BL_SLAB_BIG=1 pnpm vitest run packages/sim-ref/test/golden-hashes.test.ts). The 32x32x8 and 16x16x8 pins always run.
+// The jar's 64-cube is gated the same way; its 16x16x64 pins always run.
 const big = process.env.BL_SLAB_BIG === "1";
-const heavy = (name: string) => name.startsWith("slab-") && name.includes("64x64x8");
+const heavy = (name: string) => (name.startsWith("slab-") && name.includes("64x64x8")) || name === "jar-cube-64x64x64";
 
 describe(`rule version ${RULE_VERSION}`, () => {
   for (const gc of goldenCases()) {

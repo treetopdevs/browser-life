@@ -33,7 +33,7 @@ M1 (`packages/sim-ref/src/step3d.ts`, `RefSim3`) found nothing in this spec to c
   wrap would be possible the text says "split form".
 - `floor(a/b)` on non-negative integers is `divu`. `>>` on a signed value is the arithmetic (floor) shift, on an unsigned value logical.
 - `W = tileW`, `H = tileH`, `D = tileD`, `WH = W*H`, `N = W*H*D = cellCount(cfg)`. Slab: `tilesX = tilesY = 1`, `kernelRadius = 3`, `D % 4 = 0`,
-  `4 <= D <= 32`, `W % 8 = H % 8 = 0`, `N <= 2^24` (all enforced by `validateConfig`).
+  `D` a multiple of 4 from 4 to 32, or 64 (the jar), `W % 8 = H % 8 = 0`, `N <= 2^24` (all enforced by `validateConfig`).
 - **Index and axes.** `i = z*WH + y*W + x`. `x` grows east, `y` grows south, **`z` grows downward: layer 0 is the surface (light enters
   here), layer `D - 1` is the floor.** "Direction +z" means towards the floor. A positive displacement, motility byte, gradient, or `MZ`
   means towards larger index on that axis. x and y wrap within the single tile; z does not wrap.
