@@ -34,6 +34,38 @@ const S = {
 };
 const dimsText = (s: readonly number[]) => `${s[0]} by ${s[1]} by ${s[2]}`;
 
+// ---- link parameters -------------------------------------------------------------------------------------------------
+// Optional, for links and for tools/volume-capture: world, setting (an ecology setting id, or the cyclic ring rule), seed,
+// size (WxHxD, one of the listed sizes), display (layers or volume), and for the volume renderer, stretch, peel and camera
+// (a pose id). A value the page does not offer is ignored, so a bad link opens the defaults instead of failing. Values are
+// matched against the page's own lists or own keys only, never inherited ones (camera=toString is just unknown).
+const linkVolume: { renderer?: VolumeView["renderer"]; stretch?: number; peel?: number; camera?: string } = {};
+function readLink() {
+  const q = new URLSearchParams(location.search);
+  const int = (k: string, lo: number, hi: number) => {
+    const raw = q.get(k);
+    const n = raw === null || !/^\d+$/.test(raw) ? NaN : Number(raw);
+    return Number.isInteger(n) && n >= lo && n <= hi ? n : undefined;
+  };
+  const world = q.get("world");
+  if (world === "cyclic" || world === "eco") S.world = world;
+  const setting = q.get("setting");
+  if (setting && S.world === "cyclic" && KILL_OPTIONS.some((k) => k.id === setting)) S.cyc.kill = setting as KillChoice;
+  if (setting && S.world === "eco" && [...ECO_OPTIONS, ...CANOPY_OPTIONS].some((o) => o.id === setting)) S.eco.option = setting;
+  const seed = int("seed", 0, 999999);
+  if (seed !== undefined) { if (S.world === "cyclic") S.cyc.seed = seed; else S.eco.seed = seed; }
+  const size = (S.world === "cyclic" ? CYCLIC_SIZES : ECO_SIZES).find((z) => z.join("x") === q.get("size"));
+  if (size) { if (S.world === "cyclic") S.cyc.size = [size[0], size[1], size[2]]; else S.eco.size = [size[0], size[1], size[2]]; }
+  const display = q.get("display");
+  if (display === "layers" || display === "volume") S.display = display;
+  const renderer = RENDERERS.find((r) => r.id === q.get("renderer"));
+  if (renderer) linkVolume.renderer = renderer.id;
+  linkVolume.stretch = int("stretch", 1, 16);
+  linkVolume.peel = int("peel", 0, 15);
+  const camera = q.get("camera");
+  if (camera && Object.hasOwn(PRESETS, camera)) linkVolume.camera = camera;
+}
+
 // ---- serial queue ----------------------------------------------------------------------------------------------------
 let chain: Promise<unknown> = Promise.resolve();
 let pending = 0;
@@ -241,7 +273,7 @@ function renderVolumeControls() {
       b.addEventListener("click", () => { volume!.setPose(id); $("camera-help").textContent = p.hint; });
       poses.append(b, " ");
     }
-    $("camera-help").textContent = `Jump to a view. ${PRESETS.oblique!.hint}`;
+    $("camera-help").textContent = `Jump to a view. ${PRESETS[linkVolume.camera ?? "oblique"]!.hint}`;
   }
   syncPeel();
   void renderLook();
@@ -255,6 +287,7 @@ function setDisplay(d: "layers" | "volume") {
   $("layers-only").hidden = vol;
   if (vol && !volume) {
     volume = new VolumeView($<HTMLCanvasElement>("volume-canvas"), syncPeel);
+    applyLinkVolume(volume);
     renderVolumeControls();
   }
   if (volume) {
@@ -264,6 +297,18 @@ function setDisplay(d: "layers" | "volume") {
   if (last) draw(last);
 }
 let sharedDeviceForVolume: GPUDevice | null = null;
+
+/** The link's volume settings, once, on the new view (the controls are drawn from it right after). */
+function applyLinkVolume(v: VolumeView) {
+  if (linkVolume.renderer) v.renderer = linkVolume.renderer;
+  if (linkVolume.stretch !== undefined) {
+    v.setStretch(linkVolume.stretch);
+    $<HTMLInputElement>("stretch").value = String(v.stretch);
+    $("stretch-out").textContent = String(v.stretch);
+  }
+  if (linkVolume.peel !== undefined) v.peel = linkVolume.peel; // clamped to the slab's layers by syncPeel and the first frame
+  if (linkVolume.camera) v.setPose(linkVolume.camera);
+}
 
 function statusLine(f: Frame) {
   const phase = f.kind === "cyclic" && sim ? (sim.phase === "burn" ? " · kill off (burn-in)" : S.cyc.kill === "none" ? " · no kill" : " · kill on") : "";
@@ -468,6 +513,20 @@ function debugHooks() {
     volume: () => (volume ? { shown: volumeShown, errors: [...volume.errors], draws: volume.draws, live: volume.liveCount, renderer: volume.renderer, mounted: volume.mountedRenderer, painted: volume.lastPainted, peel: volume.peel, stretch: volume.stretch, resources: Disposer.live } : null),
     volumeDraw: () => volume?.drawNow(),
     volumeShot: async () => { await volume?.drawNow(); return ($("volume-canvas") as HTMLCanvasElement).toDataURL("image/png"); },
+    /** A capture still (tools/volume-capture): turntable off, no per-frame jitter or drift, the camera at the given pose
+     *  (absolute, unset fields as they are), drawn fresh. The picture then depends only on the frame and these settings. */
+    volumeStill: async (pose: { yaw?: number; pitch?: number; dist?: number } = {}) => {
+      if (!volume) return null;
+      volume.setTurntable(false);
+      $("turntable").setAttribute("aria-pressed", "false");
+      volume.still = true;
+      if (pose.yaw !== undefined) volume.cam.yaw = pose.yaw;
+      if (pose.pitch !== undefined) volume.cam.pitch = pose.pitch;
+      if (pose.dist !== undefined) volume.cam.dist = pose.dist;
+      await volume.drawNow();
+      const c = $("volume-canvas") as HTMLCanvasElement;
+      return { url: c.toDataURL("image/png"), w: c.width, h: c.height, yaw: volume.cam.yaw, pitch: volume.cam.pitch, dist: volume.cam.dist };
+    },
     /** Advances to exactly `n` steps in batches of 100 (cutting at the hand-over), then draws. */
     runTo: (n: number) => {
       const asked = gen; // captured when asked, not when the queue reaches it: a world change in between makes this a no-op
@@ -533,6 +592,7 @@ function debugHooks() {
 }
 
 function boot() {
+  readLink();
   debugHooks();
   if (!navigator.gpu) {
     $("slab-body").hidden = true;
@@ -561,6 +621,7 @@ function boot() {
   });
   const layer = $<HTMLInputElement>("layer");
   layer.addEventListener("input", () => { setLayer(Number(layer.value)); if (last) draw(last); });
+  if (S.display === "volume") setDisplay("volume");
   restart();
   requestAnimationFrame(tick);
 }

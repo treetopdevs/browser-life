@@ -71,6 +71,8 @@ export interface FrameInfo {
   /** Cut-away along the south axis (world z): keep z <= cut of the box, 0..1; 1 keeps everything. */
   cut: number;
   background: [number, number, number];
+  /** True for captures: no frame-to-frame jitter or drift, so the same inputs draw the same picture. Absent means false. */
+  still?: boolean;
 }
 
 interface SpecBase {

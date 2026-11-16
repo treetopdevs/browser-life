@@ -1,0 +1,263 @@
+// The pure parts of tools/volume-capture/capture.ts: argument parsing and validation, the slab page's link, caption text and
+// the contact-sheet layout. No browser, no files, no processes, so vitest covers it (tools/test/volume-capture.test.ts).
+// The id lists below copy the slab page's own tables (apps/lab/src/slab/settings.ts, volume3d/camera.ts and the renderer
+// registry), because plain Node cannot import those (they pull in @bl/* through the bundler's aliases); the test checks
+// each copy against its source.
+
+/** Chrome's WebGPU flags, as playwright.config.ts gives the e2e (the test checks the two lists match). */
+export const GPU_ARGS = ["--enable-unsafe-webgpu", "--enable-gpu", "--use-angle=metal", "--ignore-gpu-blocklist"];
+
+export type WorldId = "cyclic" | "eco";
+export const WORLDS: Record<WorldId, { title: string; settings: readonly string[]; sizes: readonly string[]; defaults: { setting: string; seed: number; size: string } }> = {
+  cyclic: {
+    title: "Cyclic competition",
+    settings: ["vacancy", "removal", "none"],
+    sizes: ["256x256x4", "128x128x4"],
+    defaults: { setting: "vacancy", seed: 401, size: "256x256x4" },
+  },
+  eco: {
+    title: "Slab ecology",
+    settings: ["mu40-s20-k1024", "mu30-s8-k256", "mu60-s12-k256", "mu20-s12-k1024", "n12-mu50-s8-k64"],
+    sizes: ["256x256x8", "128x128x8"],
+    defaults: { setting: "mu40-s20-k1024", seed: 101, size: "256x256x8" },
+  },
+};
+/** True only for the two world ids (own keys: "toString" or "__proto__" are not worlds). */
+export const isWorld = (w: unknown): w is WorldId => typeof w === "string" && Object.hasOwn(WORLDS, w);
+export const RENDERER_IDS = ["raymarch", "slices", "points"] as const;
+export const CAMERA_IDS = ["oblique", "above", "side", "below"] as const;
+/** Each camera preset's pose (volume3d/camera.ts PRESETS), so a capture can check the page took the asked camera. */
+export const CAMERA_POSES: Record<(typeof CAMERA_IDS)[number], { yaw: number; pitch: number; dist: number }> = {
+  oblique: { yaw: 0.6, pitch: 0.62, dist: 1.45 },
+  above: { yaw: 0, pitch: 1.5, dist: 1.6 },
+  side: { yaw: 0.6, pitch: 0.12, dist: 1.6 },
+  below: { yaw: 0.6, pitch: -0.7, dist: 1.75 },
+};
+export type RendererId = (typeof RENDERER_IDS)[number];
+export type CameraId = (typeof CAMERA_IDS)[number];
+
+/** One world on screen: what the slab page's link carries. */
+export interface RunSettings {
+  world: WorldId;
+  setting: string;
+  seed: number;
+  size: string;
+  renderer: RendererId;
+  stretch: number;
+  peel: number;
+  camera: CameraId;
+}
+
+export interface CaptureArgs {
+  mode: "turntable" | "sheet";
+  out: string;
+  /** Reuse a running lab dev server at this origin instead of starting one. */
+  url: string | null;
+  port: number;
+  step: number;
+  frames: number;
+  fps: number;
+  width: number;
+  height: number;
+  gifWidth: number;
+  /** Turntable: the one run. Sheet: the defaults each entry starts from (its camera is every entry's camera). */
+  run: RunSettings;
+  sheet: string | null;
+  cols: number | null;
+}
+
+export class ArgError extends Error {}
+
+export const USAGE = `Usage: node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> [options]
+  Turntable (default): one run, K frames turning 360 degrees, PNG frames + MP4 + GIF + capture.json.
+  --sheet <runs.json>: one still per run at --step from --camera, in a grid PNG + sheet.json.
+Server:   --port <1024..65535> (default 5261, starts Vite)  |  --url <http://localhost:PORT> (reuse a running one)
+World:    --world cyclic|eco (default eco)  --setting <id>  --seed <0..999999>  --size WxHxD
+Picture:  --renderer raymarch|slices|points  --stretch <1..16>  --peel <0..15>  --camera oblique|above|side|below
+Capture:  --step <0..1000000> (default 0)  --frames <1..720> (default 48)  --fps <1..60> (default 24)
+          --width <even 64..2048> (default 960)  --height <even 64..2048> (default 600)  --gif-width <even 64..1024> (default 320)
+Sheet:    --cols <1..12> (default: about square). runs.json is an array of {label, world?, setting?, seed?, size?,
+          renderer?, stretch?, peel?}; missing keys take the flags' values.`;
+
+const FLAGS = new Set(["out", "url", "port", "step", "frames", "fps", "width", "height", "gif-width", "world", "setting", "seed", "size", "renderer", "stretch", "peel", "camera", "sheet", "cols"]);
+
+function intIn(name: string, raw: string, lo: number, hi: number, even = false): number {
+  if (!/^\d+$/.test(raw)) throw new ArgError(`--${name} must be a whole number, got ${JSON.stringify(raw)}`);
+  const n = Number(raw);
+  if (n < lo || n > hi) throw new ArgError(`--${name} must be from ${lo} to ${hi}, got ${n}`);
+  if (even && n % 2) throw new ArgError(`--${name} must be even (H.264 needs even sizes), got ${n}`);
+  return n;
+}
+
+/** Checks one run's settings against the page's tables; `where` names it in the message. */
+export function checkRun(r: RunSettings, where: string): RunSettings {
+  if (!isWorld(r.world)) throw new ArgError(`${where}: world must be cyclic or eco, got ${JSON.stringify(r.world)}`);
+  const w = WORLDS[r.world];
+  if (!w.settings.includes(r.setting)) throw new ArgError(`${where}: setting ${JSON.stringify(r.setting)} is not a ${r.world} setting (${w.settings.join(", ")})`);
+  if (!w.sizes.includes(r.size)) throw new ArgError(`${where}: size ${JSON.stringify(r.size)} is not a ${r.world} size (${w.sizes.join(", ")})`);
+  if (!Number.isInteger(r.seed) || r.seed < 0 || r.seed > 999999) throw new ArgError(`${where}: seed must be a whole number from 0 to 999999, got ${JSON.stringify(r.seed)}`);
+  if (!(RENDERER_IDS as readonly string[]).includes(r.renderer)) throw new ArgError(`${where}: renderer must be one of ${RENDERER_IDS.join(", ")}, got ${JSON.stringify(r.renderer)}`);
+  if (!(CAMERA_IDS as readonly string[]).includes(r.camera)) throw new ArgError(`${where}: camera must be one of ${CAMERA_IDS.join(", ")}, got ${JSON.stringify(r.camera)}`);
+  if (!Number.isInteger(r.stretch) || r.stretch < 1 || r.stretch > 16) throw new ArgError(`${where}: stretch must be a whole number from 1 to 16, got ${JSON.stringify(r.stretch)}`);
+  const depth = Number(r.size.split("x")[2]);
+  if (!Number.isInteger(r.peel) || r.peel < 0 || r.peel > depth - 1) throw new ArgError(`${where}: peel must be a whole number from 0 to ${depth - 1} for ${r.size}, got ${JSON.stringify(r.peel)}`);
+  return r;
+}
+
+export function parseArgs(argv: readonly string[]): CaptureArgs {
+  const got = new Map<string, string>();
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    if (!a.startsWith("--")) throw new ArgError(`unexpected argument ${JSON.stringify(a)}`);
+    const name = a.slice(2);
+    if (!FLAGS.has(name)) throw new ArgError(`unknown flag ${a}`);
+    if (got.has(name)) throw new ArgError(`${a} given twice`);
+    const v = argv[i + 1];
+    if (v === undefined || v.startsWith("--")) throw new ArgError(`${a} needs a value`);
+    got.set(name, v);
+    i++;
+  }
+  const out = got.get("out");
+  if (!out) throw new ArgError("--out <dir> is required");
+  if (got.has("url") && got.has("port")) throw new ArgError("give --url or --port, not both");
+  let url: string | null = null;
+  if (got.has("url")) {
+    let u: URL;
+    try { u = new URL(got.get("url")!); } catch { throw new ArgError(`--url is not a URL: ${got.get("url")}`); }
+    if (u.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(u.hostname)) throw new ArgError("--url must be a local http origin, e.g. http://localhost:5173");
+    url = u.origin;
+  }
+  const world = (got.get("world") ?? "eco") as WorldId;
+  if (!isWorld(world)) throw new ArgError(`--world must be cyclic or eco, got ${JSON.stringify(world)}`);
+  const d = WORLDS[world].defaults;
+  const seedRaw = got.get("seed");
+  const run = checkRun({
+    world,
+    setting: got.get("setting") ?? d.setting,
+    seed: seedRaw === undefined ? d.seed : intIn("seed", seedRaw, 0, 999999),
+    size: got.get("size") ?? d.size,
+    renderer: (got.get("renderer") ?? "raymarch") as RendererId,
+    stretch: intIn("stretch", got.get("stretch") ?? "1", 1, 16),
+    peel: intIn("peel", got.get("peel") ?? "0", 0, 15),
+    camera: (got.get("camera") ?? "oblique") as CameraId,
+  }, "flags");
+  const sheet = got.get("sheet") ?? null;
+  if (!sheet && got.has("cols")) throw new ArgError("--cols needs --sheet");
+  if (sheet && (got.has("frames") || got.has("fps") || got.has("gif-width"))) throw new ArgError("--frames, --fps and --gif-width are for turntables, not --sheet");
+  return {
+    mode: sheet ? "sheet" : "turntable",
+    out, url,
+    port: intIn("port", got.get("port") ?? "5261", 1024, 65535),
+    step: intIn("step", got.get("step") ?? "0", 0, 1_000_000),
+    frames: intIn("frames", got.get("frames") ?? "48", 1, 720),
+    fps: intIn("fps", got.get("fps") ?? "24", 1, 60),
+    width: intIn("width", got.get("width") ?? "960", 64, 2048, true),
+    height: intIn("height", got.get("height") ?? "600", 64, 2048, true),
+    gifWidth: intIn("gif-width", got.get("gif-width") ?? "320", 64, 1024, true),
+    run, sheet,
+    cols: got.has("cols") ? intIn("cols", got.get("cols")!, 1, 12) : null,
+  };
+}
+
+export interface SheetEntry { label: string; run: RunSettings }
+const ENTRY_KEYS = new Set(["label", "world", "setting", "seed", "size", "renderer", "stretch", "peel"]);
+
+/**
+ * The sheet file's runs, each completed from `base`. A world given without a setting, seed or size takes that world's
+ * defaults (not the flags', which may belong to the other world). Camera is the sheet's, never an entry's.
+ */
+export function parseSheet(json: unknown, base: RunSettings): SheetEntry[] {
+  if (!Array.isArray(json) || json.length === 0) throw new ArgError("the sheet file must be a non-empty JSON array of runs");
+  if (json.length > 48) throw new ArgError(`a sheet holds at most 48 runs, got ${json.length}`);
+  return json.map((e: unknown, i) => {
+    const where = `sheet run ${i + 1}`;
+    if (!e || typeof e !== "object" || Array.isArray(e)) throw new ArgError(`${where} must be an object`);
+    const raw = e as Record<string, unknown>;
+    for (const k of Object.keys(raw)) if (!ENTRY_KEYS.has(k)) throw new ArgError(`${where}: unknown key ${JSON.stringify(k)} (camera and step are the sheet's, set by flags)`);
+    // own fields only: nothing is ever read from the prototype chain
+    const o: Record<string, unknown> = Object.fromEntries([...ENTRY_KEYS].map((k) => [k, Object.hasOwn(raw, k) ? raw[k] : undefined]));
+    if (typeof o.label !== "string" || !o.label.trim() || o.label.length > 80) throw new ArgError(`${where}: label must be a non-empty string of at most 80 characters`);
+    if (o.world !== undefined && !isWorld(o.world)) throw new ArgError(`${where}: world must be cyclic or eco, got ${JSON.stringify(o.world)}`);
+    const world = (o.world as WorldId | undefined) ?? base.world;
+    const own = world === base.world ? base : { ...base, ...WORLDS[world].defaults };
+    for (const k of ["seed", "stretch", "peel"] as const) if (o[k] !== undefined && typeof o[k] !== "number") throw new ArgError(`${where}: ${k} must be a number`);
+    for (const k of ["setting", "size", "renderer"] as const) if (o[k] !== undefined && typeof o[k] !== "string") throw new ArgError(`${where}: ${k} must be a string`);
+    return {
+      label: o.label.trim(),
+      run: checkRun({
+        world,
+        setting: (o.setting as string | undefined) ?? own.setting,
+        seed: (o.seed as number | undefined) ?? own.seed,
+        size: (o.size as string | undefined) ?? own.size,
+        renderer: ((o.renderer as string | undefined) ?? base.renderer) as RendererId,
+        stretch: (o.stretch as number | undefined) ?? base.stretch,
+        peel: (o.peel as number | undefined) ?? base.peel,
+        camera: base.camera,
+      }, where),
+    };
+  });
+}
+
+/** The slab page's link for a run, with the debug hooks and the Volume view on. */
+export function slabUrl(origin: string, r: RunSettings): string {
+  const q = new URLSearchParams({
+    debug: "1", world: r.world, setting: r.setting, seed: String(r.seed), size: r.size, display: "volume",
+    renderer: r.renderer, stretch: String(r.stretch), peel: String(r.peel), camera: r.camera,
+  });
+  return `${origin}/slab/?${q}`;
+}
+
+/** Thousands with commas, independent of the machine's locale. */
+export const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const RENDERER_TITLES: Record<RendererId, string> = { raymarch: "ray march", slices: "slices", points: "points" };
+
+/** A sheet still's second label line: the run's settings, so the sheet reads without its JSON. */
+export function sheetSubLabel(r: RunSettings): string {
+  return `${r.world} · ${r.setting} · seed ${r.seed} · ${r.size.replace(/x/g, "×")}${r.stretch === 1 ? "" : ` · stretch ${r.stretch}`}${r.peel ? ` · peel ${r.peel}` : ""}${r.renderer === "raymarch" ? "" : ` · ${RENDERER_TITLES[r.renderer]}`}`;
+}
+
+/** The sheet's header line. */
+export const sheetHeader = (step: number, camera: CameraId, w: number, h: number) => `Contact sheet · step ${thousands(step)} · camera ${camera} · each still ${w}×${h}`;
+
+/** The caption burned under every frame: the world and its setting, then how it is drawn. No clock time, ever. */
+export function captionLines(r: RunSettings, step: number, frame?: { index: number; count: number; yawDeg: number }): [string, string] {
+  const [W, H, D] = r.size.split("x");
+  const first = `${WORLDS[r.world].title} · setting ${r.setting} · seed ${r.seed} · ${W}×${H}×${D} · step ${thousands(step)}`;
+  const parts = [RENDERER_TITLES[r.renderer], `depth stretch ${r.stretch}`, `peel ${r.peel}`, `camera ${r.camera}`];
+  if (frame) parts.push(`frame ${frame.index + 1}/${frame.count}`, `turn ${frame.yawDeg.toFixed(1)}°`);
+  return [first, parts.join(" · ")];
+}
+
+/** Turntable yaw of frame i of k: the pose's own yaw plus i/k of a full turn, computed from i (never accumulated). */
+export const turntableYaw = (yaw0: number, i: number, k: number) => yaw0 + (2 * Math.PI * i) / k;
+
+/** Height of the caption strip for `lines` lines, rounded up so picture plus strip stays even. */
+export function stripHeight(lines: number, pictureH: number, lineH = 18, pad = 8): number {
+  const h = lines * lineH + 2 * pad;
+  return (pictureH + h) % 2 ? h + 1 : h;
+}
+
+export interface SheetLayout {
+  cols: number; rows: number; width: number; height: number;
+  cells: { x: number; y: number; labelY: number }[];
+}
+
+/**
+ * A grid of `n` stills of w by h, each with a label strip of `labelH` under it, `gap` pixels apart and around, below a header
+ * band of `top`; filled row by row; width and height rounded up to even.
+ */
+export function sheetLayout(n: number, w: number, h: number, opts: { cols?: number | null; labelH?: number; gap?: number; top?: number } = {}): SheetLayout {
+  if (!Number.isInteger(n) || n < 1) throw new Error("a sheet needs at least one still");
+  const labelH = opts.labelH ?? 40, gap = opts.gap ?? 12, top = opts.top ?? 0;
+  const cols = Math.min(n, opts.cols ?? Math.ceil(Math.sqrt(n)));
+  const rows = Math.ceil(n / cols);
+  const cellH = h + labelH;
+  let width = gap + cols * (w + gap), height = top + gap + rows * (cellH + gap);
+  if (width % 2) width++;
+  if (height % 2) height++;
+  const cells = Array.from({ length: n }, (_, i) => {
+    const x = gap + (i % cols) * (w + gap), y = top + gap + Math.floor(i / cols) * (cellH + gap);
+    return { x, y, labelY: y + h };
+  });
+  return { cols, rows, width, height, cells };
+}

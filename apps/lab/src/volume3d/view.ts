@@ -23,6 +23,8 @@ export class VolumeView {
   turntable = false;
   /** Viewing aid: how many times thicker each layer is drawn (1 is the true shape). Changes the picture only. */
   stretch = 1;
+  /** Captures (tools/volume-capture): renderers drop per-frame jitter and drift, so a picture depends only on its inputs. */
+  still = false;
   /** Frames drawn so far, and the renderer that drew the last one (debug). */
   draws = 0;
   lastPainted: string | null = null;
@@ -212,7 +214,7 @@ export class VolumeView {
     }
     const f: FrameInfo = {
       camera: this.cam.info(w / h), ext: boxExtent(this.dims, this.stretch), dims: this.dims, dt,
-      sunDir: [0, 1, 0], size: { w, h, dpr }, peel: this.peel, cut: this.cut, background: BACKGROUND,
+      sunDir: [0, 1, 0], size: { w, h, dpr }, peel: this.peel, cut: this.cut, background: BACKGROUND, still: this.still,
     };
     this.approach.render(f);
     this.lastPainted = this.mounted;

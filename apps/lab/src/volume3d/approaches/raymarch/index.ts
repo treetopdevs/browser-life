@@ -62,7 +62,7 @@ export function create(): Approach {
       const { W, H, D } = f.dims;
       data.set(f.camera.invViewProj, 0);
       data.set([...f.camera.eye, 0], 16);
-      data.set([...f.sunDir, frameNo++], 20);
+      data.set([...f.sunDir, f.still ? 0 : frameNo++], 20); // a still keeps one jitter pattern
       data.set([...f.background, 1], 24);
       data.set([...f.ext, 0], 28);
       data.set([...visibleMax(f), clipped(f) ? 1 : 0], 32);

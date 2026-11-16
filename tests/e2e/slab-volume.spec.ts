@@ -252,6 +252,62 @@ for (const theme of ["light", "dark"] as const) {
   });
 }
 
+/** Opens /slab/ with a query, waits for the first world, and returns the page's choices, its volume view and the pose. */
+async function openWith(page: Page, query: string) {
+  await page.goto(`/slab/?debug=1&${query}`);
+  await rebuilt(page);
+  await page.waitForFunction(() => { const s = (window as Any).__slab; const v = s.volume(); const f = s.frame(); return !v || (f && v.shown === `${s.state().world}:${f.kind}@${f.step}`); }, null, { timeout: 60_000 });
+  return page.evaluate(async () => {
+    const s = (window as Any).__slab;
+    const v = s.volume();
+    const pose = v ? await s.volumeStill() : null;
+    return { state: s.state(), volume: v && { renderer: v.renderer, painted: v.painted, stretch: v.stretch, peel: v.peel, errors: v.errors }, pose: pose && { yaw: pose.yaw, pitch: pose.pitch, dist: pose.dist } };
+  });
+}
+
+test("link parameters: junk and inherited-key values open the defaults without errors; valid ones take effect", async ({ page }) => {
+  test.setTimeout(900_000);
+  const errors = watch(page);
+  const KEYS = ["world", "setting", "seed", "size", "display", "renderer", "stretch", "peel", "camera"];
+  const plain = await openWith(page, "");
+  expect(plain.state.display).toBe("layers");
+  const volumeDefaults = { renderer: "raymarch", painted: "raymarch", stretch: 1, peel: 0, errors: [] };
+  const oblique = { yaw: 0.6, pitch: 0.62, dist: 1.45 };
+  for (const v of ["toString", "constructor", "__proto__", "hasOwnProperty", "valueOf", "junk", "-1", "1.5", "1e3", "99999999", ""]) {
+    // every parameter junk, including display; then display=volume so the volume parameters are read with junk too
+    for (const display of [v, "volume"]) {
+      const q = KEYS.map((k) => `${k}=${encodeURIComponent(k === "display" ? display : v)}`).join("&");
+      const got = await openWith(page, q);
+      expect(got.state, q).toEqual({ ...plain.state, display: display === "volume" ? "volume" : "layers" });
+      if (display === "volume") {
+        expect(got.volume, q).toEqual(volumeDefaults);
+        expect(got.pose, q).toEqual(oblique);
+        await expect(page.locator("#stretch")).toHaveValue("1");
+      } else expect(got.volume, q).toBeNull();
+      expect(errors, q).toEqual([]);
+    }
+  }
+  // valid parameters take effect, the controls show them, and the page draws
+  const eco = await openWith(page, "world=eco&setting=mu30-s8-k256&seed=102&size=128x128x8&display=volume&renderer=slices&stretch=4&peel=2&camera=side");
+  expect(eco.state).toMatchObject({ world: "eco", eco: { option: "mu30-s8-k256", seed: 102, size: [128, 128, 8] }, display: "volume" });
+  expect(eco.volume).toEqual({ renderer: "slices", painted: "slices", stretch: 4, peel: 2, errors: [] });
+  expect(eco.pose).toEqual({ yaw: 0.6, pitch: 0.12, dist: 1.6 });
+  expect(await page.locator("input[name=renderer][value=slices]").isChecked()).toBe(true);
+  expect(await page.locator("input[name=eco][value=mu30-s8-k256]").isChecked()).toBe(true);
+  await expect(page.locator("#seed")).toHaveValue("102");
+  await expect(page.locator("#stretch")).toHaveValue("4");
+  await expect(page.locator("#peel")).toHaveValue("2");
+  await expect(page.locator("#volume")).toBeVisible();
+  const cyc = await openWith(page, "world=cyclic&setting=none&seed=402&size=128x128x4&camera=above");
+  expect(cyc.state).toMatchObject({ world: "cyclic", cyc: { kill: "none", seed: 402, size: [128, 128, 4] }, display: "layers" });
+  expect(await page.locator("input[name=kill][value=none]").isChecked()).toBe(true);
+  // a cyclic link with an ecology setting keeps the cyclic default rule
+  const mixed = await openWith(page, "world=cyclic&setting=mu30-s8-k256&peel=3&display=volume");
+  expect(mixed.state.cyc.kill).toBe("vacancy");
+  expect(mixed.volume!.peel).toBe(3);
+  expect(errors).toEqual([]);
+});
+
 const SHOTS = process.env.BL_VOLUME_SHOTS;
 test("capture: the canopy setting in the Volume view at 1280 and 375 wide", async ({ page }) => {
   test.skip(!SHOTS, "set BL_VOLUME_SHOTS to a directory to capture");

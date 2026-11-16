@@ -126,7 +126,7 @@ export function create(): Approach {
       if (!device || !ctx || !uni || !group || !src) return;
       ensureTargets();
       if (!msaaView || !depthView) return;
-      time += f.dt;
+      time = f.still ? 0 : time + f.dt; // a still holds the beads at their rest offsets
       const cam = f.camera;
       const v = cam.view;
       const { W, H, D } = f.dims;
