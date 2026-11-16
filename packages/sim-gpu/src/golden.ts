@@ -274,6 +274,23 @@ function slabCases(): GoldenCase[] {
       every: 10,
     },
   );
+  // The jar (64 layers, docs/3d-rung2-plan-2026-10-23.md): new cases only. Four worlds 64 deep at 16 x 16, cheap
+  // enough for every run; the shaded column uses lightK 65536 so its light stays above zero down to z = 63 and the
+  // wall founders sit at z = 0 and z = 63. The 64-cube runs a few steps (gated in the vitest pins like 64 x 64 x 8).
+  const jarSpots = (c: WorldConfig) => spots(c, 24);
+  out.push(
+    { name: "jar-default-16x16x64", cfg: slabCfg(16, 16, 64, 321), init: jarSpots, steps: 24, every: 12 },
+    { name: "jar-neutral-16x16x64", cfg: slabCfg(16, 16, 64, 322, { neutral: true }), init: jarSpots, steps: 24, every: 12 },
+    { name: "jar-shaded-column-16x16x64", cfg: slabCfg(16, 16, 64, 323, { lightK: 65536 }), init: shadedColumnWorld, steps: 24, every: 12 },
+    {
+      name: "jar-motility-seasons-16x16x64",
+      cfg: slabCfg(16, 16, 64, 324, { motility: true, signalGain: 127, kSDecay: 13, kEmit: 1024, lightMode: "uniform", lightBase: 30, lightAmp: 150, seasonPeriod: 17, seasonAmp: 60 }),
+      init: jarSpots,
+      steps: 24,
+      every: 12,
+    },
+    { name: "jar-cube-64x64x64", cfg: slabCfg(64, 64, 64, 325, { lightK: 4096 }), init: (c) => spots(c, 160), steps: 6, every: 3 },
+  );
   return out;
 }
 

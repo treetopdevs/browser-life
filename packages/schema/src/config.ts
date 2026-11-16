@@ -412,7 +412,7 @@ export interface WorldConfig {
   geneDrive?: number;
   /**
    * The slab (rung 1b, docs/3d-rung1b-plan-2026-10-23.md): present, the world is one tileW x tileH tile that is
-   * `tileD` layers deep (x and y wrap, z is closed), run by the slab rules (RefSim3 / GpuSim3) with the
+   * `tileD` layers deep (a multiple of 4 up to 32, or 64 for the jar; x and y wrap, z is closed), run by the slab rules (RefSim3 / GpuSim3) with the
    * 49-word genome of layout3d.ts. Absent from `defaultConfig()`, so every 2D config hashes as before.
    * Set together with `lightK`; `validateSlab` lists what a slab cannot combine with.
    */
@@ -717,7 +717,7 @@ export function validateConfig(c: WorldConfig): string[] {
     ["pondK", POND_K_RANGE],
     ["pondDeath", POND_DEATH_RANGE],
     ["pondExport", POND_EXPORT_RANGE],
-    ["tileD", [4, 32] as Range],
+    ["tileD", [4, 64] as Range],
     ["lightK", [1, 65536] as Range],
   ] as const) {
     const v = c[key];
@@ -795,6 +795,9 @@ function validateSlab(c: WorldConfig): string[] {
   if (c.tileD === undefined || c.lightK === undefined) return ["tileD and lightK are set together"];
   const errs: string[] = [];
   if (c.tileD % 4 !== 0) errs.push("tileD must be a multiple of 4");
+  // The jar (docs/3d-rung2-plan-2026-10-23.md): 64 is allowed beside 4..32. Every slab bound is per cell or per
+  // neighbourhood, and the light pass walks a column one layer at a time, so none depends on D (docs/rules.md, the slab).
+  if (c.tileD > 32 && c.tileD !== 64) errs.push("tileD above 32 must be 64 (the jar)");
   if (c.tilesX !== 1 || c.tilesY !== 1) errs.push("a slab (tileD set) is one tile: tilesX and tilesY must be 1");
   if (c.kernelRadius !== 3) errs.push("a slab (tileD set) needs kernelRadius 3");
   if (c.lightMode !== "uniform" && c.lightMode !== "gradient") errs.push("a slab (tileD set) needs lightMode uniform or gradient");
