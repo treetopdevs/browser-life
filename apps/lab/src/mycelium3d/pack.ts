@@ -1,6 +1,6 @@
 // Pure packers and census helpers for /mycelium3d/: one read-back of the 3D mycelium world (tools/mycelium3d/world.ts)
 // becomes the volume renderer's two RGBA8 3D textures (apps/lab/src/volume3d/contract.ts), a list of particle instances
-// for the particle-and-haze renderer, and a census by layer group. CPU-only and pure, so they are unit-tested without a
+// for the particle-and-haze renderer, the bonds as link segments, and a census by layer group. CPU-only and pure, so they are unit-tested without a
 // GPU (apps/lab/test/mycelium3d-pack.test.ts). Nothing here changes the state.
 //
 // Texture channels, as the volume contract names them, filled for this world:
@@ -9,7 +9,7 @@
 // - aux: r = trail, log-scaled to trailUnit; g = light, the simulation's own light plane (lightPlane in world.ts, the plane
 //   the next step uses) as a fraction of the unshaded surface; b = waste, log-scaled to wasteUnit; a = 1 where particles are.
 // Layer 0 (the surface) is the top slab of texels, as for the slab (cell (x, y, z) is texel (x, D - 1 - z, y)).
-import { POS_SHIFT, type Mycelium3dState } from '../../../../tools/mycelium3d/world.ts';
+import { BOND_NONE, POS_SHIFT, slotOfId, type Mycelium3dState } from '../../../../tools/mycelium3d/world.ts';
 import { familyRGB } from '../mycelium/colour.ts';
 import { voxelCount, type VolumeDims } from '../volume3d/contract.ts';
 import type { Packed } from '../volume3d/pack.ts';
@@ -133,6 +133,74 @@ export function packParticles(s: Mycelium3dState, I: Uint32Array, into?: Instanc
     d[o + 7] = top === 0 ? 0 : Math.min(1, I[particleCell(s, i)] / top);
   }
   out.count = s.n;
+  return out;
+}
+
+// ---- bond links --------------------------------------------------------------------------------------------------------
+
+/** Floats per link instance, in the instances' texel space: drawn start (a particle), drawn end, and the partner's true centre. */
+export const LINK_FLOATS = 9;
+
+export interface Links {
+  data: Float32Array;
+  /** Link instances: one per bond, two (a stub at each end) for a bond across an x or y seam. */
+  count: number;
+  bonds: number;
+  /** Bonds whose shortest way between the partners crosses a wrapped wall (x or y). */
+  seamBonds: number;
+}
+
+/**
+ * The bond graph as line segments, each bond once (from the smaller slot, which is the smaller id). Partners are joined by the
+ * shortest way in the wrapped x and y (the minimal image). When that way crosses a wall, the bond is drawn as two stubs, one
+ * from each partner to the wall it leaves through, so no line spans the jar. Each instance also carries the partner's true
+ * centre, so the renderer can hide a link whose either particle is peeled or cut away. Null without bond slots.
+ */
+export function packLinks(s: Mycelium3dState, into?: Links): Links | null {
+  const b0 = s.bond0, b1 = s.bond1;
+  if (!b0 || !b1) return null;
+  const n = s.n;
+  // at most n bonds (degree 2), each at most two instances
+  const need = 2 * n * LINK_FLOATS;
+  const out = into && into.data.length >= need ? into : { data: new Float32Array(Math.max(need, LINK_FLOATS)), count: 0, bonds: 0, seamBonds: 0 };
+  const { width: W, height: H, depth: D } = s.config;
+  const PW = W << POS_SHIFT, PH = H << POS_SHIFT;
+  const scale = 1 / (1 << POS_SHIFT);
+  const d = out.data;
+  let count = 0, bonds = 0, seam = 0;
+  const put = (au: number, av: number, aw: number, eu: number, ev: number, ew: number, qu: number, qv: number, qw: number) => {
+    const o = count++ * LINK_FLOATS;
+    d[o] = au; d[o + 1] = av; d[o + 2] = aw; d[o + 3] = eu; d[o + 4] = ev; d[o + 5] = ew; d[o + 6] = qu; d[o + 7] = qv; d[o + 8] = qw;
+  };
+  /** From p (inside the box) along e: the point where it leaves [0, W] x [0, H] in u and w, or p + e if it stays inside. */
+  const stub = (pu: number, pv: number, pw: number, eu: number, ev: number, ew: number, qu: number, qv: number, qw: number) => {
+    let t = 1;
+    if (pu + eu > W) t = Math.min(t, (W - pu) / eu); else if (pu + eu < 0) t = Math.min(t, -pu / eu);
+    if (pw + ew > H) t = Math.min(t, (H - pw) / ew); else if (pw + ew < 0) t = Math.min(t, -pw / ew);
+    put(pu, pv, pw, pu + eu * t, pv + ev * t, pw + ew * t, qu, qv, qw);
+  };
+  for (let i = 0; i < n; i++) {
+    for (const pid of [b0[i], b1[i]]) {
+      if (pid === BOND_NONE) continue;
+      const j = slotOfId(s.id, n, pid);
+      if (j <= i) continue; // each bond once, from its smaller slot (a partner not alive is never drawn)
+      bonds++;
+      let dx = s.x[j] - s.x[i], dy = s.y[j] - s.y[i];
+      if (dx > PW / 2) dx -= PW; else if (dx < -PW / 2) dx += PW;
+      if (dy > PH / 2) dy -= PH; else if (dy < -PH / 2) dy += PH;
+      const iu = (s.x[i] + 0.5) * scale, iv = D - (s.z[i] + 0.5) * scale, iw = (s.y[i] + 0.5) * scale;
+      const ju = (s.x[j] + 0.5) * scale, jv = D - (s.z[j] + 0.5) * scale, jw = (s.y[j] + 0.5) * scale;
+      const crosses = s.x[i] + dx < 0 || s.x[i] + dx >= PW || s.y[i] + dy < 0 || s.y[i] + dy >= PH;
+      if (!crosses) { put(iu, iv, iw, ju, jv, jw, ju, jv, jw); continue; }
+      seam++;
+      // Known limit: a bond that crosses both the x and the y seam (a corner) gets its two end stubs only; the short piece
+      // between the two wall crossings is not drawn.
+      const eu = dx * scale, ev = jv - iv, ew = dy * scale;
+      stub(iu, iv, iw, eu, ev, ew, ju, jv, jw);
+      stub(ju, jv, jw, -eu, -ev, -ew, iu, iv, iw);
+    }
+  }
+  out.count = count; out.bonds = bonds; out.seamBonds = seam;
   return out;
 }
 

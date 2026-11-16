@@ -11,9 +11,9 @@ import { describe, expect, it } from "vitest";
 import { PRESETS } from "../../apps/lab/src/volume3d/camera.ts";
 import { CANOPY_OPTIONS, CYCLIC_SIZES, DEFAULT_CYCLIC, DEFAULT_ECO, ECO_OPTIONS, ECO_SIZES, JAR_OPTIONS, JAR_SIZES, KILL_OPTIONS } from "../../apps/lab/src/slab/settings.ts";
 import { RENDERERS } from "../../apps/lab/src/volume3d/approaches/registry.ts";
-import { DEFAULT_CHOICE, SEED_MAX, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, describeChoice, type Trail } from "../../apps/lab/src/mycelium3d/settings.ts";
+import { BONDS, DEFAULT_CHOICE, SEED_MAX, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, describeChoice, type Bonds, type Trail } from "../../apps/lab/src/mycelium3d/settings.ts";
 import {
-  ArgError, CAMERA_IDS, CAMERA_POSES, GPU_ARGS, M3D, M3D_TRAIL_WORDS, RENDERER_IDS, WORLDS, anyCaptionLines, anySubLabel, captionLines, m3dCaptionLines, m3dSubLabel, m3dUrl,
+  ArgError, CAMERA_IDS, CAMERA_POSES, GPU_ARGS, M3D, M3D_BOND_WORDS, M3D_TRAIL_WORDS, RENDERER_IDS, WORLDS, anyCaptionLines, anySubLabel, captionLines, m3dCaptionLines, m3dSubLabel, m3dUrl,
   parseArgs, parseSheet, runUrl, sheetLayout, sheetSubLabel, slabUrl, stripHeight, thousands, turntableYaw, type M3dRun, type RunSettings,
 } from "../volume-capture/lib.ts";
 import { OutputError, prepareOut } from "../volume-capture/outputs.ts";
@@ -37,10 +37,11 @@ describe("copies of the page's tables", () => {
       expect(CAMERA_POSES[id], id).toEqual({ yaw: p.yaw, pitch: p.pitch, dist: p.dist });
     }
   });
-  it("the jar's sizes, sinks, trails, defaults, ways of drawing and ranges match apps/lab/src/mycelium3d/", () => {
+  it("the jar's sizes, sinks, trails, bonds, defaults, ways of drawing and ranges match apps/lab/src/mycelium3d/", () => {
     expect([...M3D.sizes]).toEqual(Object.keys(SIZES));
     expect([...M3D.sinks]).toEqual(Object.keys(SINKS));
     expect([...M3D.trails]).toEqual(Object.keys(TRAILS));
+    expect([...M3D.bonds]).toEqual(Object.keys(BONDS));
     expect(M3D.defaults).toEqual(DEFAULT_CHOICE);
     expect([...M3D.renderers]).toEqual([...VIEW_IDS]);
     expect(M3D.stretch).toEqual(STRETCH_RANGE);
@@ -55,6 +56,10 @@ describe("copies of the page's tables", () => {
     expect(page).toMatch(/const MENU: ApproachEntry\[\] = VIEW_IDS\.map\(\(id\) => VIEWS\[id\]\);/);
     // the trail rules' caption words are the page's own
     for (const t of M3D.trails) expect(describeChoice({ ...DEFAULT_CHOICE, trail: t as Trail })).toContain(`trail rule ${M3D_TRAIL_WORDS[t]}`);
+    // and the bond choices' words too; without bonds the words add nothing
+    expect(M3D_BOND_WORDS.off).toBe("");
+    expect(describeChoice({ ...DEFAULT_CHOICE, bonds: "off" })).toBe(describeChoice(DEFAULT_CHOICE));
+    for (const b of M3D.bonds.filter((x) => x !== "off")) expect(describeChoice({ ...DEFAULT_CHOICE, bonds: b as Bonds })).toContain(`, ${M3D_BOND_WORDS[b]}`);
   });
   it("the WebGPU flags are the e2e's", () => {
     const cfg = readFileSync(`${REPO}playwright.config.ts`, "utf8");
@@ -140,11 +145,11 @@ describe("parseArgs --page mycelium3d", () => {
   it("fills the jar's defaults: the default world, particles and haze, waste haze on", () => {
     const a = ok("--out x --page mycelium3d");
     expect(a.page).toBe("mycelium3d");
-    expect(a.run).toEqual({ page: "mycelium3d", size: "32x32x16", seed: 1, sink: "off", trail: "none", renderer: "particles", stretch: 1, peel: 0, camera: "oblique", waste: true });
+    expect(a.run).toEqual({ page: "mycelium3d", size: "32x32x16", seed: 1, sink: "off", trail: "none", bonds: "off", renderer: "particles", stretch: 1, peel: 0, camera: "oblique", waste: true });
   });
   it("reads the demo's flags", () => {
-    const a = ok("--out x --page mycelium3d --size 64x64x32 --sink fast --trail toll --seed 2 --step 20000 --waste off --peel 31 --stretch 4 --renderer slices --camera side");
-    expect(a.run).toEqual({ page: "mycelium3d", size: "64x64x32", seed: 2, sink: "fast", trail: "toll", renderer: "slices", stretch: 4, peel: 31, camera: "side", waste: false });
+    const a = ok("--out x --page mycelium3d --size 64x64x32 --sink fast --trail toll --bonds free --seed 2 --step 20000 --waste off --peel 31 --stretch 4 --renderer slices --camera side");
+    expect(a.run).toEqual({ page: "mycelium3d", size: "64x64x32", seed: 2, sink: "fast", trail: "toll", bonds: "free", renderer: "slices", stretch: 4, peel: 31, camera: "side", waste: false });
     expect(ok("--out x --page mycelium3d --seed 4294967295").run.seed).toBe(4294967295);
   });
   it("rejects the other page's flags and values outside the jar's lists", () => {
@@ -153,6 +158,8 @@ describe("parseArgs --page mycelium3d", () => {
     bad("--out x --page mycelium3d --setting vacancy", /--setting is not a mycelium3d flag/);
     bad("--out x --sink fast", /--sink is not a slab flag/);
     bad("--out x --page slab --waste off", /--waste is not a slab flag/);
+    bad("--out x --bonds free", /--bonds is not a slab flag/);
+    bad("--out x --page mycelium3d --bonds on", /bonds must be one of off, upkeep, free/);
     bad("--out x --page mycelium3d --size 256x256x8", /size must be one of 32x32x16/);
     bad("--out x --page mycelium3d --sink medium", /sink must be one of off, slow, fast/);
     bad("--out x --page mycelium3d --trail public", /trail must be one of none, toll, owner/);
@@ -166,7 +173,7 @@ describe("parseArgs --page mycelium3d", () => {
   });
   it("rejects inherited keys as values: an ArgError, never a TypeError", () => {
     for (const v of ["toString", "constructor", "__proto__", "hasOwnProperty", "valueOf"]) {
-      for (const flag of ["page", "size", "sink", "trail", "renderer", "camera", "waste"]) {
+      for (const flag of ["page", "size", "sink", "trail", "bonds", "renderer", "camera", "waste"]) {
         expect(() => parseArgs(["--out", "x", ...(flag === "page" ? [] : ["--page", "mycelium3d"]), `--${flag}`, v]), `--${flag} ${v}`).toThrow(ArgError);
       }
     }
@@ -214,14 +221,14 @@ describe("parseSheet with the jar", () => {
   const jarBase = parseArgs(["--out", "x", "--page", "mycelium3d", "--size", "64x64x32", "--seed", "1", "--camera", "above"]).run;
   it("completes jar entries from jar flags, and a page given against the flags from its own defaults", () => {
     const e = parseSheet([
-      { label: "fast owner", sink: "fast", trail: "owner" },
+      { label: "fast owner", sink: "fast", trail: "owner", bonds: "upkeep" },
       { label: "slab eco", page: "slab", seed: 5 },
       { label: "jar from slab flags", page: "mycelium3d", trail: "toll", waste: false },
     ], jarBase);
-    expect(e[0]!.run).toEqual({ page: "mycelium3d", size: "64x64x32", seed: 1, sink: "fast", trail: "owner", renderer: "particles", stretch: 1, peel: 0, camera: "above", waste: true });
+    expect(e[0]!.run).toEqual({ page: "mycelium3d", size: "64x64x32", seed: 1, sink: "fast", trail: "owner", bonds: "upkeep", renderer: "particles", stretch: 1, peel: 0, camera: "above", waste: true });
     expect(e[1]!.run).toEqual({ world: "eco", setting: "mu40-s20-k1024", seed: 5, size: "256x256x8", renderer: "raymarch", stretch: 1, peel: 0, camera: "above" });
     expect(parseSheet([{ label: "j", page: "mycelium3d", trail: "toll", waste: false }], slabBase)[0]!.run)
-      .toEqual({ page: "mycelium3d", size: "32x32x16", seed: 1, sink: "off", trail: "toll", renderer: "particles", stretch: 1, peel: 0, camera: "side", waste: false });
+      .toEqual({ page: "mycelium3d", size: "32x32x16", seed: 1, sink: "off", trail: "toll", bonds: "off", renderer: "particles", stretch: 1, peel: 0, camera: "side", waste: false });
     expect(e[2]!.run).toMatchObject({ page: "mycelium3d", size: "64x64x32", trail: "toll", waste: false });
   });
   it("rejects bad jar entries", () => {
@@ -233,10 +240,12 @@ describe("parseSheet with the jar", () => {
     expect(() => parseSheet([{ label: "a", seed: "7" }], jarBase)).toThrow(/seed must be a number/);
     expect(() => parseSheet([{ label: "a", peel: 32 }], jarBase)).toThrow(/from 0 to 31 for 64x64x32/);
     expect(() => parseSheet([{ label: "a", renderer: "points" }], jarBase)).toThrow(/renderer must be one of/);
+    expect(() => parseSheet([{ label: "a", bonds: "on" }], jarBase)).toThrow(/bonds must be one of off, upkeep, free/);
+    expect(() => parseSheet([{ label: "a", bonds: true }], jarBase)).toThrow(/bonds must be a string/);
   });
   it("rejects inherited keys in jar entries and reads nothing from the prototype chain", () => {
     for (const v of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
-      for (const k of ["page", "size", "sink", "trail", "renderer"]) {
+      for (const k of ["page", "size", "sink", "trail", "bonds", "renderer"]) {
         expect(() => parseSheet([{ label: "a", [k]: v }], jarBase), `${k}: ${v}`).toThrow(ArgError);
       }
     }
@@ -287,6 +296,9 @@ describe("the jar's captions and links", () => {
     expect(anyCaptionLines(run, 0)).toEqual(m3dCaptionLines(run, 0));
     expect(m3dSubLabel(run)).toBe("mycelium3d · 64×64×32 · seed 2 · sinking fast · trail toll road");
     expect(anySubLabel({ ...run, trail: "owner", waste: false, renderer: "slices", peel: 3 })).toBe("mycelium3d · 64×64×32 · seed 2 · sinking fast · trail owner conduit with gate · peel 3 · slices · waste haze off");
+    // bonds on add their words after the trail rule; off leaves the words above unchanged
+    expect(m3dCaptionLines({ ...run, bonds: "free" }, 20000)[0]).toBe("Mycelium in a jar · 64×64×32 · seed 2 · sinking fast · trail rule toll road · bonds free · step 20,000");
+    expect(m3dSubLabel({ ...run, bonds: "upkeep" })).toBe("mycelium3d · 64×64×32 · seed 2 · sinking fast · trail toll road · bonds with upkeep");
     const slab = parseArgs(["--out", "x"]).run as RunSettings;
     expect(anyCaptionLines(slab, 5)).toEqual(captionLines(slab, 5));
     expect(anySubLabel(slab)).toBe(sheetSubLabel(slab));
@@ -294,7 +306,7 @@ describe("the jar's captions and links", () => {
   it("links the jar page with every setting, and the slab's link is unchanged", () => {
     const u = new URL(m3dUrl("http://localhost:5261", run));
     expect(u.pathname).toBe("/mycelium3d/");
-    expect(Object.fromEntries(u.searchParams)).toEqual({ debug: "1", size: "64x64x32", seed: "2", sink: "fast", trail: "toll", renderer: "particles", stretch: "1", peel: "0", camera: "oblique", waste: "on" });
+    expect(Object.fromEntries(u.searchParams)).toEqual({ debug: "1", size: "64x64x32", seed: "2", sink: "fast", trail: "toll", bonds: "off", renderer: "particles", stretch: "1", peel: "0", camera: "oblique", waste: "on" });
     expect(runUrl("", run)).toBe(m3dUrl("", run));
     const slab = parseArgs(["--out", "x"]).run as RunSettings;
     expect(runUrl("http://localhost:1", slab)).toBe(slabUrl("http://localhost:1", slab));

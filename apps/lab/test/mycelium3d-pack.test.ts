@@ -1,23 +1,28 @@
 // The /mycelium3d/ page's pure parts: its choices and config builder (src/mycelium3d/settings.ts), and the packers and
-// census that turn a read-back of the 3D mycelium world into the volume renderer's textures, particle instances and the
-// census by depth (src/mycelium3d/pack.ts).
+// census that turn a read-back of the 3D mycelium world into the volume renderer's textures, particle instances, bond links
+// and the census by depth (src/mycelium3d/pack.ts).
 import { describe, expect, it } from 'vitest';
 import {
-  censusByDepth, createWorld, defaultConfig, energyTotal, lightPlane, matterTotal, type Mycelium3dState, step, validateConfig,
+  BOND_NONE, censusByDepth, createWorld, defaultConfig, energyTotal, lightPlane, matterTotal, type Mycelium3dState, step, validateConfig, validateState,
 } from '../../../tools/mycelium3d/world.ts';
+import { bondReadout } from '../../../tools/mycelium3d/observe-screen.ts';
 import { familyRGB } from '../src/mycelium/colour.ts';
-import { census, FIELD_DEFAULTS, familyLinear, INSTANCE_FLOATS, layerGroups, packField, packParticles, ratePer100 } from '../src/mycelium3d/pack.ts';
-import { DEFAULT_CHOICE, describeChoice, SINKS, SIZES, TRAILS, worldConfig, type Choice, type Sink, type SizeId, type Trail } from '../src/mycelium3d/settings.ts';
+import { census, FIELD_DEFAULTS, familyLinear, INSTANCE_FLOATS, layerGroups, LINK_FLOATS, packField, packLinks, packParticles, ratePer100 } from '../src/mycelium3d/pack.ts';
+import {
+  BONDS, choiceFromQuery, choiceQuery, DEFAULT_CHOICE, describeChoice, isBonds, SINKS, SIZES, TRAILS, worldConfig, type Bonds, type Choice, type Sink, type SizeId, type Trail,
+} from '../src/mycelium3d/settings.ts';
 import { cellToTexel, texelIndex } from '../src/volume3d/contract.ts';
 
 const lin = (c: number) => Math.round(Math.pow(c, 2.2) * 255);
 
 describe('choices and configs', () => {
   const all: Choice[] = [];
-  for (const size of Object.keys(SIZES) as SizeId[]) for (const sink of Object.keys(SINKS) as Sink[]) for (const trail of Object.keys(TRAILS) as Trail[]) all.push({ size, sink, trail, seed: 7 });
+  for (const size of Object.keys(SIZES) as SizeId[]) for (const sink of Object.keys(SINKS) as Sink[]) for (const trail of Object.keys(TRAILS) as Trail[]) {
+    for (const bonds of Object.keys(BONDS) as Bonds[]) all.push({ size, sink, trail, bonds, seed: 7 });
+  }
 
-  it('every size, sinking and trail rule makes a config the rules accept', () => {
-    expect(all.length).toBe(27);
+  it('every size, sinking, trail rule and bonds choice makes a config the rules accept', () => {
+    expect(all.length).toBe(81);
     for (const c of all) expect(validateConfig(worldConfig(c)), describeChoice(c)).toEqual([]);
   });
 
@@ -25,7 +30,23 @@ describe('choices and configs', () => {
     const c = worldConfig(DEFAULT_CHOICE);
     expect(c).toEqual(defaultConfig());
     expect(JSON.stringify(c)).toBe(JSON.stringify(defaultConfig()));
-    for (const k of ['sinkShift', 'trailMoveDiscount', 'trailDiscountMode', 'trailOwner', 'ownerDefend', 'ownerConduit']) expect(k in c, k).toBe(false);
+    for (const k of ['sinkShift', 'trailMoveDiscount', 'trailDiscountMode', 'trailOwner', 'ownerDefend', 'ownerConduit', 'bondBreak', 'bondCost', 'bondChild']) expect(k in c, k).toBe(false);
+    expect(DEFAULT_CHOICE.bonds).toBe('off');
+  });
+
+  it('bonds: off sets no key, upkeep sets break 1024 and cost 1, free sets break 1024 and no cost key; the words say which', () => {
+    const keys = (b: Bonds) => { const c = worldConfig({ ...DEFAULT_CHOICE, bonds: b }); return ['bondBreak', 'bondCost', 'bondChild'].map((k) => (k in c ? c[k as 'bondBreak'] : 'absent')); };
+    expect(keys('off')).toEqual(['absent', 'absent', 'absent']);
+    expect(keys('upkeep')).toEqual([1024, 1, 'absent']);
+    expect(keys('free')).toEqual([1024, 'absent', 'absent']);
+    expect(worldConfig({ ...DEFAULT_CHOICE, bonds: 'free', trail: 'owner', sink: 'fast' })).toEqual(defaultConfig({ trailOwner: 'gid', ownerDefend: 4, ownerConduit: 30, sinkShift: 4, bondBreak: 1024 }));
+    // without bonds the words are exactly as before the option existed (status lines and capture captions)
+    expect(describeChoice(DEFAULT_CHOICE)).toBe('32 × 32 × 16, seed 1, sinking off, trail rule none');
+    expect(describeChoice({ ...DEFAULT_CHOICE, bonds: 'upkeep' })).toBe('32 × 32 × 16, seed 1, sinking off, trail rule none, bonds with upkeep');
+    expect(describeChoice({ ...DEFAULT_CHOICE, bonds: 'free' })).toMatch(/, bonds free$/);
+    // a link value is a choice only as an own key
+    expect(['off', 'upkeep', 'free', 'toString', '__proto__', 'constructor', ''].map(isBonds)).toEqual([true, true, true, false, false, false, false]);
+    for (const b of Object.values(BONDS)) expect(b.text.length).toBeGreaterThan(40);
   });
 
   it('sinking sets sinkShift (off, slow 8, fast 4) and the trail rules set their own keys and nothing else', () => {
@@ -37,6 +58,20 @@ describe('choices and configs', () => {
     const owner = worldConfig({ ...DEFAULT_CHOICE, trail: 'owner' });
     expect([owner.trailOwner, owner.ownerDefend, owner.ownerConduit, 'trailMoveDiscount' in owner, 'trailConduit' in owner]).toEqual(['gid', 4, 30, false, false]);
     expect(owner.moveCost).toBe(defaultConfig().moveCost);
+  });
+
+  it('links: every choice survives a round trip, the default is the bare page, old links read as before, junk is ignored', () => {
+    for (const c of all) for (const seed of [0, 1, 7, 0xffffffff]) {
+      const q = choiceQuery({ ...c, seed });
+      expect({ ...DEFAULT_CHOICE, ...choiceFromQuery(new URLSearchParams(q.toString())) }, q.toString()).toEqual({ ...c, seed });
+    }
+    expect(choiceQuery(DEFAULT_CHOICE).toString()).toBe('');
+    expect(choiceQuery({ ...DEFAULT_CHOICE, bonds: 'free', seed: 9 }).toString()).toBe('seed=9&bonds=free');
+    // a link from before bonds existed: no bonds key, so bonds stay off
+    expect(choiceFromQuery(new URLSearchParams('?size=64x64x32&sink=fast&trail=owner&seed=9'))).toEqual({ size: '64x64x32', sink: 'fast', trail: 'owner', seed: 9 });
+    for (const junk of ['?size=toString&seed=-1&sink=__proto__&trail=constructor&bonds=toString', '?seed=1.5&bonds=on&trail=public', '?seed=4294967296&bonds=__proto__&size=valueOf', '?seed=&bonds=']) {
+      expect(choiceFromQuery(new URLSearchParams(junk)), junk).toEqual({});
+    }
   });
 
   it('bigger worlds keep the founders and the room per cell, up to the 65,536-particle cap; the seed passes through', () => {
@@ -160,6 +195,86 @@ describe('packParticles', () => {
     expect(inst.data[INSTANCE_FLOATS * 2]).toBeCloseTo(2047.5 / 256, 6);
     // reuses a big enough buffer
     expect(packParticles(s, lightPlane(s), inst)).toBe(inst);
+  });
+});
+
+/** An empty 8 x 8 x 4 world with bonds and hand-placed particles: ids are slots. `bonds` lists pairs of slots. */
+function bondWorld(pos: [number, number, number][], bonds: [number, number][]): Mycelium3dState {
+  const s = createWorld(defaultConfig({ width: 8, height: 8, depth: 4, founders: 0, maxParticles: 32, bondBreak: 1024 }));
+  pos.forEach(([x, y, z], i) => { s.x[i] = x; s.y[i] = y; s.z[i] = z; s.M[i] = 16; s.E[i] = 0; s.id[i] = i; s.gid[i] = 1; });
+  s.n = pos.length;
+  s.nextId = s.n; s.nextGid = 2; s.matter0 += 16 * s.n;
+  const slots: number[][] = pos.map(() => []);
+  for (const [a, b] of bonds) { slots[a]!.push(b); slots[b]!.push(a); }
+  slots.forEach((p, i) => { p.sort((a, b) => a - b); s.bond0![i] = p[0] ?? BOND_NONE; s.bond1![i] = p[1] ?? BOND_NONE; });
+  return s;
+}
+const C = (cell: number, off = 128) => cell * 256 + off;
+
+describe('packLinks', () => {
+  it('without bond slots there are no links', () => {
+    const s = handWorld();
+    expect(packLinks(s)).toBeNull();
+  });
+
+  it('draws each bond once, from the smaller slot, between the true centres; a ring of four gives four links', () => {
+    // a ring of four in one plane, and a separate pair
+    const s = bondWorld([[C(2), C(2), C(1)], [C(3), C(2), C(1)], [C(3), C(3), C(1)], [C(2), C(3), C(1)], [C(5), C(5), C(0)], [C(5), C(5), C(2)]],
+      [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5]]);
+    expect(validateState(s)).toEqual([]);
+    const l = packLinks(s)!;
+    expect([l.count, l.bonds, l.seamBonds]).toEqual([5, 5, 0]);
+    const at = (k: number) => [...l.data.subarray(k * LINK_FLOATS, (k + 1) * LINK_FLOATS)];
+    const u = (x: number) => (x + 0.5) / 256, v = (z: number) => 4 - (z + 0.5) / 256;
+    // slot 0's bonds (to 1 and 3), then 1-2, 2-3, 4-5: the drawn end is the partner, and q is the partner too
+    expect(at(0)).toEqual([u(C(2)), v(C(1)), u(C(2)), u(C(3)), v(C(1)), u(C(2)), u(C(3)), v(C(1)), u(C(2))]);
+    const pairs = Array.from({ length: l.count }, (_, k) => at(k)).map((d) => [d[0], d[3], d[2], d[5], d[1], d[4]]);
+    const unique = new Set(pairs.map((p) => JSON.stringify(p)));
+    expect(unique.size).toBe(5);
+    // the vertical pair goes from layer 0 (top of the box) down to layer 2
+    expect(at(4).slice(1, 2)[0]).toBeCloseTo(v(C(0)), 6);
+    expect(at(4)[4]).toBeCloseTo(v(C(2)), 6);
+    // the readout agrees: 5 bonds, 6 bonded, two bodies, the largest of four, one ring
+    const r = bondReadout(s);
+    expect([r.bonds, r.bonded, r.bodies, r.largest, r.rings]).toEqual([5, 6, 2, 4, 1]);
+    // reuses a big enough buffer
+    expect(packLinks(s, l)).toBe(l);
+  });
+
+  it('a bond across the x seam is two stubs to the walls, never a line across the jar; across both seams as well', () => {
+    // 0 at the east wall, 1 just past the west wall; 2 and 3 across the north-south and east-west seams at once
+    const s = bondWorld([[8 * 256 - 40, C(4), C(1)], [30, C(4), C(1)], [8 * 256 - 20, 8 * 256 - 100, C(2)], [60, 100, C(2)]], [[0, 1], [2, 3]]);
+    expect(validateState(s)).toEqual([]);
+    const l = packLinks(s)!;
+    expect([l.count, l.bonds, l.seamBonds]).toEqual([4, 2, 2]);
+    for (let k = 0; k < l.count; k++) {
+      const d = l.data.subarray(k * LINK_FLOATS, (k + 1) * LINK_FLOATS);
+      // each piece is short (under one cell here) and stays in the box
+      expect(Math.hypot(d[3]! - d[0]!, d[5]! - d[2]!)).toBeLessThan(1);
+      for (const x of [d[0]!, d[3]!, d[2]!, d[5]!]) { expect(x).toBeGreaterThanOrEqual(0); expect(x).toBeLessThanOrEqual(8); }
+    }
+    const at = (k: number) => [...l.data.subarray(k * LINK_FLOATS, (k + 1) * LINK_FLOATS)];
+    // the first stub leaves 0 east and ends on the east wall; the second leaves 1 west and ends on the west wall
+    expect([at(0)[0], at(0)[3]]).toEqual([(8 * 256 - 39.5) / 256, 8]);
+    expect([at(1)[0], at(1)[3]]).toEqual([30.5 / 256, 0]);
+    // each stub knows its partner, so a cut hides both halves of the bond
+    expect(at(0).slice(6)).toEqual(at(1).slice(0, 3));
+    expect(at(1).slice(6)).toEqual(at(0).slice(0, 3));
+    // the corner bond: 2's stub leaves through the nearer wall crossing, the east wall (20 units) before the south one (100)
+    expect(at(2)[3]).toBe(8);
+    expect(at(2)[5]).toBeLessThan(8);
+    expect(at(3)[3]).toBeGreaterThan(0);
+    expect(at(3)[5]).toBeGreaterThanOrEqual(0);
+  });
+
+  it('on a stepped world with free bonds: as many links as bonds plus seam bonds, and the readout counts the same bonds', () => {
+    const s = createWorld(defaultConfig({ width: 8, height: 8, depth: 4, founders: 200, maxParticles: 512, seed: 2, bondBreak: 1024 }));
+    for (let t = 0; t < 40; t++) step(s);
+    const l = packLinks(s)!;
+    const r = bondReadout(s);
+    expect(l.bonds).toBeGreaterThan(0);
+    expect(l.bonds).toBe(r.bonds);
+    expect(l.count).toBe(l.bonds + l.seamBonds);
   });
 });
 

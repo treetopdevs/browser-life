@@ -52,14 +52,18 @@ export const M3D = {
   sizes: ["32x32x16", "64x64x32", "64x64x64"],
   sinks: ["off", "slow", "fast"],
   trails: ["none", "toll", "owner"],
+  bonds: ["off", "upkeep", "free"],
   renderers: ["particles", "raymarch", "slices"],
   stretch: { min: 1, max: 4 },
   seedMax: 0xffffffff,
-  defaults: { size: "32x32x16", seed: 1, sink: "off", trail: "none" },
+  defaults: { size: "32x32x16", seed: 1, sink: "off", trail: "none", bonds: "off" },
 } as const;
 export type M3dRendererId = (typeof M3D.renderers)[number];
 /** The trail rules in the page's own words (describeChoice in settings.ts). */
 export const M3D_TRAIL_WORDS: Record<(typeof M3D.trails)[number], string> = { none: "none", toll: "toll road", owner: "owner conduit with gate" };
+/** The bond choices in the page's own words (describeChoice in settings.ts); off adds nothing, so captions without bonds read as before. */
+export const M3D_BOND_WORDS: Record<(typeof M3D.bonds)[number], string> = { off: "", upkeep: "bonds with upkeep", free: "bonds free" };
+const bondPart = (b: string) => (b === "off" ? "" : ` · ${M3D_BOND_WORDS[b as keyof typeof M3D_BOND_WORDS]}`);
 const M3D_RENDERER_TITLES: Record<M3dRendererId, string> = { particles: "particles and haze", raymarch: "cells, ray-marched", slices: "slices" };
 
 /** One 3D mycelium jar on screen: what the /mycelium3d/ page's link carries. */
@@ -69,6 +73,7 @@ export interface M3dRun {
   seed: number;
   sink: string;
   trail: string;
+  bonds: string;
   renderer: M3dRendererId;
   stretch: number;
   peel: number;
@@ -123,18 +128,18 @@ Page:     --page slab|mycelium3d (default slab)
 Slab:     --world cyclic|eco (default eco)  --setting <id>  --seed <0..999999>  --size WxHxD
           --renderer raymarch|slices|points  --stretch <1..16>  --peel <0..15>
 Jar:      (--page mycelium3d) --size 32x32x16|64x64x32|64x64x64 (default 32x32x16)  --seed <0..4294967295> (default 1)
-          --sink off|slow|fast  --trail none|toll|owner  --waste on|off (default on)
+          --sink off|slow|fast  --trail none|toll|owner  --bonds off|upkeep|free (default off)  --waste on|off (default on)
           --renderer particles|raymarch|slices (default particles)  --stretch <1..4>  --peel <0..depth-1>
 Picture:  --camera oblique|above|side|below (either page)
 Capture:  --step <0..1000000> (default 0)  --frames <1..720> (default 48)  --fps <1..60> (default 24)
           --width <even 64..2048> (default 960)  --height <even 64..2048> (default 600)  --gif-width <even 64..1024> (default 320)
 Sheet:    --cols <1..12> (default: about square). runs.json is an array of runs, each {label, page?, ...}: a slab run
           {world?, setting?, seed?, size?, renderer?, stretch?, peel?}, a jar run (page "mycelium3d") {size?, seed?, sink?,
-          trail?, renderer?, stretch?, peel?, waste? (true or false)}. Missing keys take the flags' values when the run is
+          trail?, bonds?, renderer?, stretch?, peel?, waste? (true or false)}. Missing keys take the flags' values when the run is
           on the flags' page, else that page's defaults.`;
 
-const FLAGS = new Set(["out", "url", "port", "step", "frames", "fps", "width", "height", "gif-width", "page", "world", "setting", "seed", "size", "renderer", "stretch", "peel", "camera", "sink", "trail", "waste", "sheet", "cols"]);
-const SLAB_ONLY = ["world", "setting"], M3D_ONLY = ["sink", "trail", "waste"];
+const FLAGS = new Set(["out", "url", "port", "step", "frames", "fps", "width", "height", "gif-width", "page", "world", "setting", "seed", "size", "renderer", "stretch", "peel", "camera", "sink", "trail", "bonds", "waste", "sheet", "cols"]);
+const SLAB_ONLY = ["world", "setting"], M3D_ONLY = ["sink", "trail", "bonds", "waste"];
 
 function intIn(name: string, raw: string, lo: number, hi: number, even = false): number {
   if (!/^\d+$/.test(raw)) throw new ArgError(`--${name} must be a whole number, got ${JSON.stringify(raw)}`);
@@ -168,6 +173,7 @@ export function checkM3d(r: M3dRun, where: string): M3dRun {
   one("size", r.size, M3D.sizes);
   one("sink", r.sink, M3D.sinks);
   one("trail", r.trail, M3D.trails);
+  one("bonds", r.bonds, M3D.bonds);
   one("renderer", r.renderer, M3D.renderers);
   one("camera", r.camera, CAMERA_IDS);
   if (!Number.isInteger(r.seed) || r.seed < 0 || r.seed > M3D.seedMax) throw new ArgError(`${where}: seed must be a whole number from 0 to ${M3D.seedMax}, got ${JSON.stringify(r.seed)}`);
@@ -216,6 +222,7 @@ export function parseArgs(argv: readonly string[]): CaptureArgs {
       seed: seedRaw === undefined ? M3D.defaults.seed : intIn("seed", seedRaw, 0, M3D.seedMax),
       sink: got.get("sink") ?? M3D.defaults.sink,
       trail: got.get("trail") ?? M3D.defaults.trail,
+      bonds: got.get("bonds") ?? M3D.defaults.bonds,
       renderer: (got.get("renderer") ?? "particles") as M3dRendererId,
       stretch: intIn("stretch", got.get("stretch") ?? "1", 1, 16),
       peel: intIn("peel", got.get("peel") ?? "0", 0, 63),
@@ -264,7 +271,7 @@ function finishArgs(got: Map<string, string>, page: PageId, run: AnyRun, out: st
 
 export interface SheetEntry { label: string; run: AnyRun }
 const ENTRY_KEYS = new Set(["label", "page", "world", "setting", "seed", "size", "renderer", "stretch", "peel"]);
-const M3D_ENTRY_KEYS = new Set(["label", "page", "size", "seed", "sink", "trail", "renderer", "stretch", "peel", "waste"]);
+const M3D_ENTRY_KEYS = new Set(["label", "page", "size", "seed", "sink", "trail", "bonds", "renderer", "stretch", "peel", "waste"]);
 
 /**
  * The sheet file's runs, each completed from `base`. A run on the other page than the flags' (its own `page` key) starts
@@ -288,7 +295,7 @@ export function parseSheet(json: unknown, base: AnyRun): SheetEntry[] {
     if (typeof o.label !== "string" || !o.label.trim() || o.label.length > 80) throw new ArgError(`${where}: label must be a non-empty string of at most 80 characters`);
     for (const k of ["seed", "stretch", "peel"] as const) if (o[k] !== undefined && typeof o[k] !== "number") throw new ArgError(`${where}: ${k} must be a number`);
     if (page === "mycelium3d") {
-      for (const k of ["size", "sink", "trail", "renderer"] as const) if (o[k] !== undefined && typeof o[k] !== "string") throw new ArgError(`${where}: ${k} must be a string`);
+      for (const k of ["size", "sink", "trail", "bonds", "renderer"] as const) if (o[k] !== undefined && typeof o[k] !== "string") throw new ArgError(`${where}: ${k} must be a string`);
       if (o.waste !== undefined && typeof o.waste !== "boolean") throw new ArgError(`${where}: waste must be true or false`);
       const own = isM3d(base) ? base : m3dDefaults(base.camera);
       return {
@@ -299,6 +306,7 @@ export function parseSheet(json: unknown, base: AnyRun): SheetEntry[] {
           seed: (o.seed as number | undefined) ?? own.seed,
           sink: (o.sink as string | undefined) ?? own.sink,
           trail: (o.trail as string | undefined) ?? own.trail,
+          bonds: (o.bonds as string | undefined) ?? own.bonds,
           renderer: ((o.renderer as string | undefined) ?? own.renderer) as M3dRendererId,
           stretch: (o.stretch as number | undefined) ?? own.stretch,
           peel: (o.peel as number | undefined) ?? own.peel,
@@ -341,7 +349,7 @@ export function slabUrl(origin: string, r: RunSettings): string {
 /** The /mycelium3d/ page's link for a jar run, with the debug hooks on. */
 export function m3dUrl(origin: string, r: M3dRun): string {
   const q = new URLSearchParams({
-    debug: "1", size: r.size, seed: String(r.seed), sink: r.sink, trail: r.trail,
+    debug: "1", size: r.size, seed: String(r.seed), sink: r.sink, trail: r.trail, bonds: r.bonds,
     renderer: r.renderer, stretch: String(r.stretch), peel: String(r.peel), camera: r.camera, waste: r.waste ? "on" : "off",
   });
   return `${origin}/mycelium3d/?${q}`;
@@ -360,7 +368,7 @@ export function sheetSubLabel(r: RunSettings): string {
 
 /** A jar still's second label line. */
 export function m3dSubLabel(r: M3dRun): string {
-  return `mycelium3d · ${r.size.replace(/x/g, "×")} · seed ${r.seed} · sinking ${r.sink} · trail ${M3D_TRAIL_WORDS[r.trail as keyof typeof M3D_TRAIL_WORDS]}${r.stretch === 1 ? "" : ` · stretch ${r.stretch}`}${r.peel ? ` · peel ${r.peel}` : ""}${r.renderer === "particles" ? "" : ` · ${M3D_RENDERER_TITLES[r.renderer]}`}${r.waste ? "" : " · waste haze off"}`;
+  return `mycelium3d · ${r.size.replace(/x/g, "×")} · seed ${r.seed} · sinking ${r.sink} · trail ${M3D_TRAIL_WORDS[r.trail as keyof typeof M3D_TRAIL_WORDS]}${bondPart(r.bonds)}${r.stretch === 1 ? "" : ` · stretch ${r.stretch}`}${r.peel ? ` · peel ${r.peel}` : ""}${r.renderer === "particles" ? "" : ` · ${M3D_RENDERER_TITLES[r.renderer]}`}${r.waste ? "" : " · waste haze off"}`;
 }
 export const anySubLabel = (r: AnyRun) => (isM3d(r) ? m3dSubLabel(r) : sheetSubLabel(r));
 
@@ -376,9 +384,9 @@ export function captionLines(r: RunSettings, step: number, frame?: { index: numb
   return [first, parts.join(" · ")];
 }
 
-/** A jar frame's caption: the size, seed and the two rules, then how it is drawn. No clock time, ever. */
+/** A jar frame's caption: the size, seed, the two rules and bonds (when on), then how it is drawn. No clock time, ever. */
 export function m3dCaptionLines(r: M3dRun, step: number, frame?: { index: number; count: number; yawDeg: number }): [string, string] {
-  const first = `${M3D.title} · ${r.size.replace(/x/g, "×")} · seed ${r.seed} · sinking ${r.sink} · trail rule ${M3D_TRAIL_WORDS[r.trail as keyof typeof M3D_TRAIL_WORDS]} · step ${thousands(step)}`;
+  const first = `${M3D.title} · ${r.size.replace(/x/g, "×")} · seed ${r.seed} · sinking ${r.sink} · trail rule ${M3D_TRAIL_WORDS[r.trail as keyof typeof M3D_TRAIL_WORDS]}${bondPart(r.bonds)} · step ${thousands(step)}`;
   const parts = [M3D_RENDERER_TITLES[r.renderer], `depth stretch ${r.stretch}`, `peel ${r.peel}`, `camera ${r.camera}`, `waste haze ${r.waste ? "on" : "off"}`];
   if (frame) parts.push(`frame ${frame.index + 1}/${frame.count}`, `turn ${frame.yawDeg.toFixed(1)}°`);
   return [first, parts.join(" · ")];

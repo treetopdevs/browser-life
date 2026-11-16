@@ -6,21 +6,32 @@
 // shares the device. Without WebGPU the CPU reference runs on the main thread at the default size, checks both ledgers
 // after every step, and draws a flat side view (render-cpu.ts). Plant, step and the debug runTo go through one serial
 // queue; a generation counter drops read-backs of a world that has since been replaced, and a sim is destroyed only after
-// its queued work and read-back have settled.
+// its queued work and read-back have settled. With bonds on, each read-back also packs the bonds as links (both views draw
+// them) and counts bonded particles and bodies (bondReadout in tools/mycelium3d/observe-screen.ts).
+//
+// Wound and Feed (tools/mycelium3d/brush.ts) reach into the world between steps, through the same serial queue: on the GPU as
+// read() -> brush on that copy -> a new GpuMycelium3d made from it, the old one destroyed (swapSim, as Plant swaps); on the
+// CPU on the live state. A stroke bumps the generation, so a read-back begun before it is dropped, and reads back at once.
+// The cursor (cursor.ts) is set by the x, y and layer inputs, or by pointing: hovering previews it, a click or tap that does
+// not drag uses the tool there, and a drag still turns the jar. The renderer draws the brush's sphere cell by cell: exactly
+// the cells a stroke reaches (render.ts).
+import { applyBrush3d, FEED_AMOUNT_MAX, type BrushReport3d, type BrushStroke3d } from '../../../../tools/mycelium3d/brush.ts';
 import { GpuMycelium3d, mycelium3dDevice } from '../../../../tools/mycelium3d/gpu.ts';
-import { createWorld, encode, energyTotal, lightPlane, matterTotal, stateDigest, type Mycelium3dConfig, type Mycelium3dState, step } from '../../../../tools/mycelium3d/world.ts';
+import { bondReadout, type BondReadout } from '../../../../tools/mycelium3d/observe-screen.ts';
+import { BOND_NONE, createWorld, encode, energyTotal, lightPlane, matterTotal, POS_SHIFT, slotOfId, stateDigest, step, validateState, type Mycelium3dConfig, type Mycelium3dState } from '../../../../tools/mycelium3d/world.ts';
 import { css, familyRGB } from '../mycelium/colour.ts';
 import { Disposer } from '../volume3d/approaches/disposer.ts';
 import { RENDERERS, type ApproachEntry } from '../volume3d/approaches/registry.ts';
 import { PRESETS } from '../volume3d/camera.ts';
-import type { ParamSpec } from '../volume3d/contract.ts';
+import { boxExtent, type ParamSpec } from '../volume3d/contract.ts';
 import type { Packed } from '../volume3d/pack.ts';
 import { VolumeView } from '../volume3d/view.ts';
-import { census, packField, packParticles, ratePer100, type Census, type Instances } from './pack.ts';
+import { cellCentre, cursorFromRay, isShown, pointerRay, sphereSummary, type Cell, type ViewClip } from './cursor.ts';
+import { census, packField, packLinks, packParticles, ratePer100, type Census, type Instances, type Links } from './pack.ts';
 import { createParticleHaze, type ParticleStore } from './render.ts';
 import { drawSide } from './render-cpu.ts';
 import {
-  DEFAULT_CHOICE, describeChoice, isSink, isSize, isTrail, isView, SEED_MAX, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, worldConfig, type Choice, type SizeId, type ViewId,
+  BONDS, choiceFromQuery, DEFAULT_CHOICE, describeChoice, isBonds, isSink, isSize, isTrail, isView, linkInt, SINKS, SIZES, STRETCH_RANGE, TRAILS, VIEW_IDS, worldConfig, type Choice, type SizeId, type ViewId,
 } from './settings.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -65,7 +76,10 @@ const stats = { msPerStep: 0, readMs: 0, packMs: 0, frameMs: 0, reads: 0, readEv
 let lastFrameAt = 0;
 let packed: Packed | undefined;
 let inst: Instances | undefined;
-const store: ParticleStore = { inst: null, version: 0 };
+let links: Links | undefined;
+/** The bond census of the last read-back; null without bonds. */
+let lastBonds: BondReadout | null = null;
+const store: ParticleStore = { inst: null, links: null, version: 0, linkCount: 0, linkBuffer: false, cursor: null, cursorDrawn: false };
 
 let chain: Promise<unknown> = Promise.resolve();
 let exclusiveDepth = 0;
@@ -77,25 +91,16 @@ function exclusive<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 // ---- link parameters ----------------------------------------------------------------------------------------------------
-// Optional, for links and for tools/volume-capture: size, seed, sink, trail (the Plant choices), renderer, stretch, peel,
+// Optional, for links and for tools/volume-capture: size, seed, sink, trail, bonds (the Plant choices), renderer, stretch, peel,
 // camera (a pose id) and waste (on or off). A value the page does not offer is ignored, so a bad link opens the defaults
 // instead of failing. Values are matched against the page's own lists or own keys only, never inherited ones
 // (camera=toString is just unknown). Without parameters the page is exactly as it was.
 interface Link { choice: Partial<Choice>; renderer?: ViewId; stretch?: number; peel?: number; camera?: string; waste?: boolean }
 function readLink(): Link {
   const q = new URLSearchParams(location.search);
-  const int = (k: string, lo: number, hi: number) => {
-    const raw = q.get(k);
-    const n = raw === null || !/^\d+$/.test(raw) ? NaN : Number(raw);
-    return Number.isInteger(n) && n >= lo && n <= hi ? n : undefined;
-  };
-  const l: Link = { choice: {} };
-  const size = q.get('size'), sink = q.get('sink'), trail = q.get('trail'), renderer = q.get('renderer'), camera = q.get('camera'), waste = q.get('waste');
-  if (size !== null && isSize(size)) l.choice.size = size;
-  if (sink !== null && isSink(sink)) l.choice.sink = sink;
-  if (trail !== null && isTrail(trail)) l.choice.trail = trail;
-  const seed = int('seed', 0, SEED_MAX);
-  if (seed !== undefined) l.choice.seed = seed;
+  const int = (k: string, lo: number, hi: number) => linkInt(q.get(k), lo, hi);
+  const l: Link = { choice: choiceFromQuery(q) };
+  const renderer = q.get('renderer'), camera = q.get('camera'), waste = q.get('waste');
   if (renderer !== null && isView(renderer)) l.renderer = renderer;
   l.stretch = int('stretch', STRETCH_RANGE.min, STRETCH_RANGE.max);
   // up to the chosen size's floor; applied after the first plant, when the volume knows its layers
@@ -294,9 +299,9 @@ async function settle() {
 }
 
 function readChoice(): Choice {
-  const size = $<HTMLSelectElement>('size').value, sink = $<HTMLSelectElement>('sink').value, trail = $<HTMLSelectElement>('trail').value;
+  const size = $<HTMLSelectElement>('size').value, sink = $<HTMLSelectElement>('sink').value, trail = $<HTMLSelectElement>('trail').value, bonds = $<HTMLSelectElement>('bonds').value;
   const seed = Math.max(0, Math.min(0xffffffff, Math.floor(Number($<HTMLInputElement>('seed').value) || 0)));
-  return { size: isSize(size) ? size : DEFAULT_CHOICE.size, sink: isSink(sink) ? sink : DEFAULT_CHOICE.sink, trail: isTrail(trail) ? trail : DEFAULT_CHOICE.trail, seed };
+  return { size: isSize(size) ? size : DEFAULT_CHOICE.size, sink: isSink(sink) ? sink : DEFAULT_CHOICE.sink, trail: isTrail(trail) ? trail : DEFAULT_CHOICE.trail, bonds: isBonds(bonds) ? bonds : DEFAULT_CHOICE.bonds, seed };
 }
 
 let planting = 0;
@@ -320,8 +325,7 @@ async function plant(): Promise<void> {
           why = `The GPU engine could not start (${errMsg(e)}).`;
         }
       }
-      sim?.destroy();
-      sim = next;
+      swapSim(next);
       world = null;
       if (next) {
         engine = 'gpu';
@@ -332,11 +336,14 @@ async function plant(): Promise<void> {
       }
       choice = c;
       cfg = engine === 'gpu' ? next!.config : world!.config;
-      queuedSteps = 0; marks = []; last = null; lastState = null; lastLight = null;
+      queuedSteps = 0; marks = []; last = null; lastState = null; lastLight = null; lastBonds = null;
       stats.msPerStep = 0; stats.reads = 0; autoK = 8;
       volume.clear();
-      store.inst = null; store.version++;
+      store.inst = null; store.links = null; store.version++;
+      $('bond-census').hidden = cfg.bondBreak === undefined;
+      fitCursor();
       engineText(why);
+      setTool(tool);
       sizeHelp();
       fillPaces();
       await readAndShow(gen);
@@ -351,6 +358,13 @@ async function plant(): Promise<void> {
   }
 }
 
+/** Puts a new GPU world in place of the current one and destroys the old one's buffers (Plant and every GPU stroke). The
+ *  renderer holds nothing of a sim (each read-back is packed on the CPU), so nothing else needs to follow. */
+function swapSim(next: GpuMycelium3d | null) {
+  if (sim && sim !== next) sim.destroy();
+  sim = next;
+}
+
 /** One read-back (GPU) or a look at the live state (CPU): census, ledger check, picture. Dropped if the world changed. */
 async function readAndShow(g: number): Promise<void> {
   const t0 = performance.now();
@@ -359,14 +373,18 @@ async function readAndShow(g: number): Promise<void> {
   const t1 = performance.now();
   const I = lightPlane(s);
   const c = census(s, I);
+  // only with bonds: the links for both views and the bond census (no allocation or pass without them)
+  const l = s.bond0 ? packLinks(s, links) : null;
+  if (l) links = l;
+  lastBonds = s.bond0 ? bondReadout(s) : null;
   if (engine === 'gpu') {
     packed = packField(s, I, {}, packed);
     inst = packParticles(s, I, inst);
-    store.inst = inst; store.version++;
+    store.inst = inst; store.links = l; store.version++;
     volume.uploadPacked(packed);
     volumeCaption(c);
   } else {
-    drawSide($<HTMLCanvasElement>('side-canvas'), s, I, $<HTMLInputElement>('show-waste').checked);
+    drawSide($<HTMLCanvasElement>('side-canvas'), s, I, $<HTMLInputElement>('show-waste').checked, l);
   }
   const t2 = performance.now();
   if (engine === 'gpu') stats.readMs = stats.reads ? stats.readMs * 0.7 + (t1 - t0) * 0.3 : t1 - t0;
@@ -376,6 +394,8 @@ async function readAndShow(g: number): Promise<void> {
   lastReadAt = performance.now();
   last = c; lastState = s; lastLight = I;
   publish(c);
+  publishBonds(c);
+  showCursor();
   if (c.matterResidual !== 0 || c.energyResidual !== 0) {
     stop();
     setText('status', `Stopped: a ledger residual appeared at step ${fmt(c.step)}. This is a bug in the rules; please report the seed and choices.`);
@@ -414,6 +434,16 @@ function publish(c: Census) {
     return tr;
   });
   body.replaceChildren(...rows);
+}
+
+function publishBonds(c: Census) {
+  const b = lastBonds;
+  if (!b) return;
+  const share = c.particles ? (100 * b.bonded) / c.particles : 0;
+  setText('r-bonded', `${fmt(b.bonded)} (${share.toFixed(share < 10 && share > 0 ? 1 : 0)}%)`);
+  setText('r-bonds', fmt(b.bonds));
+  setText('r-bodies', fmt(b.bodies));
+  setText('r-largest', b.bodies ? fmt(b.largest) : '–');
 }
 
 function statusLine() {
@@ -550,16 +580,284 @@ function fillChoices() {
   fillSelect('size', Object.entries(SIZES).map(([value, s]) => ({ value, text: s.title })), c.size);
   fillSelect('sink', Object.entries(SINKS).map(([value, s]) => ({ value, text: s.title })), c.sink);
   fillSelect('trail', Object.entries(TRAILS).map(([value, s]) => ({ value, text: s.title })), c.trail);
+  fillSelect('bonds', Object.entries(BONDS).map(([value, s]) => ({ value, text: s.title })), c.bonds);
   if (link.choice.seed !== undefined) $<HTMLInputElement>('seed').value = String(c.seed);
   fillPaces();
   const help = () => {
     sizeHelp();
-    const sink = $<HTMLSelectElement>('sink').value, trail = $<HTMLSelectElement>('trail').value;
+    const sink = $<HTMLSelectElement>('sink').value, trail = $<HTMLSelectElement>('trail').value, bonds = $<HTMLSelectElement>('bonds').value;
     setText('sink-help', isSink(sink) ? SINKS[sink].text : '');
     setText('trail-help', isTrail(trail) ? TRAILS[trail].text : '');
+    setText('bonds-help', isBonds(bonds) ? BONDS[bonds].text : '');
   };
-  for (const id of ['size', 'sink', 'trail']) $(id).addEventListener('change', help);
+  for (const id of ['size', 'sink', 'trail', 'bonds']) $(id).addEventListener('change', help);
   help();
+}
+
+// ---- the tools: Look, Wound and Feed ----------------------------------------------------------------------------------------
+
+type Tool = 'look' | 'wound' | 'feed';
+const TOOLS: { value: Tool; title: string; text: string }[] = [
+  { value: 'look', title: 'Look', text: 'Dragging turns the jar. Nothing in the world changes.' },
+  { value: 'wound', title: 'Wound', text: 'Removes every particle in a small sphere. Their bodies stay in the jar as waste where they stood, their energy is booked as heat, and any bond to them is cut.' },
+  { value: 'feed', title: 'Feed', text: 'A flash of light in a small sphere: it turns waste already there into food. It adds nothing, so in clean water it does nothing, and the matter in the jar is the same before and after.' },
+];
+/** The feed's strengths: how much waste at most becomes food in each cell. Unshaded surface light converts `light` (1) a step. */
+const FEEDS = [
+  { amount: 16, title: 'A glimmer: up to 16 waste per cell', text: 'Up to 16 waste in each cell becomes food, as much as a surface cell in full, unshaded light converts in 16 steps. A gentle nudge.' },
+  { amount: 256, title: 'Daylight: up to 256 waste per cell', text: 'Up to 256 waste in each cell becomes food. Clears the thin waste that drifts through the water; a heap on the floor keeps some.' },
+  { amount: FEED_AMOUNT_MAX, title: `A flash: up to ${fmt(FEED_AMOUNT_MAX)} waste per cell`, text: `Up to ${fmt(FEED_AMOUNT_MAX)} waste in each cell becomes food, the most one stroke may. On almost every cell that is all the waste there.` },
+] as const;
+const PRESS_SLOP = 6; // CSS pixels a press may move and still count as a click, not a drag
+const PICK_PX = 5; // how near the pointer must pass a bead to snap to it
+
+let tool: Tool = 'look';
+/** The committed cursor: the cell the inputs show and Apply uses. */
+const cursor: Cell & { r: number } = { x: 16, y: 16, z: 0, r: 2 };
+/** Where the pointer hovers (a preview only), or null. */
+let hover: Cell | null = null;
+let lastReport: BrushReport3d | null = null;
+let strokes = 0;
+
+function viewClip(): ViewClip | null {
+  if (!cfg) return null;
+  const dims = { W: cfg.width, H: cfg.height, D: cfg.depth };
+  return { ext: boxExtent(dims, volume.stretch), dims, peel: volume.peel, cut: volume.cut };
+}
+/** Whether the view shows a cell; on the CPU engine (a flat side view, no peel or cut) every cell counts as shown. */
+const cellShown = (c: Cell) => { const v = viewClip(); return engine !== 'gpu' || !v || isShown(v, c); };
+
+/** Keeps the cursor inside a newly planted world (the centre when the size changed) and the inputs' ranges in step. */
+function fitCursor() {
+  if (!cfg) return;
+  const fit = (id: string, max: number) => { const i = $<HTMLInputElement>(id); i.max = String(max); };
+  if (cursor.x >= cfg.width || cursor.y >= cfg.height || cursor.z >= cfg.depth) { cursor.x = cfg.width >> 1; cursor.y = cfg.height >> 1; cursor.z = 0; }
+  fit('cur-x', cfg.width - 1); fit('cur-y', cfg.height - 1); fit('cur-z', cfg.depth - 1);
+  hover = null;
+  syncCursorInputs();
+}
+
+function syncCursorInputs() {
+  const put = (id: string, v: number) => { const i = $<HTMLInputElement>(id); if (i.value !== String(v)) i.value = String(v); };
+  put('cur-x', cursor.x); put('cur-y', cursor.y); put('cur-z', cursor.z); put('cur-r', cursor.r);
+  setText('cur-r-out', String(cursor.r));
+}
+
+/** The readout under the inputs (where the cursor is and what its sphere holds in the last read-back), and the sphere drawn. */
+function showCursor() {
+  if (!cfg) return;
+  const at = hover ?? cursor;
+  const shownNow = cellShown(at);
+  const where = `${hover ? 'Pointing at' : 'Cursor at'} cell x ${at.x}, y ${at.y}, layer ${at.z} of 0 to ${cfg.depth - 1} (0 is the surface)`;
+  let text: string;
+  if (!shownNow) {
+    text = `${where}. That cell is peeled or cut away in the view, so the tool will not act there: pick a layer from ${volume.peel} down, or lower the peel or widen the cut.`;
+  } else if (!lastState) {
+    text = `${where}, radius ${cursor.r}.`;
+  } else {
+    const sum = sphereSummary(lastState, at, cursor.r);
+    const dry = sum.dryCells === sum.cells ? 'none of them holds waste' : `${fmt(sum.waste)} waste${sum.dryCells ? ` (${fmt(sum.dryCells)} of the cells ${sum.dryCells === 1 ? 'holds' : 'hold'} none)` : ''}`;
+    text = `${where}, radius ${cursor.r}: ${fmt(sum.cells)} cells holding ${fmt(sum.particles)} ${sum.particles === 1 ? 'particle' : 'particles'} and ${dry}, at step ${fmt(lastState.step)}.`;
+  }
+  const r = $('cur-readout');
+  setText('cur-readout', text);
+  r.dataset.hidden = shownNow ? '0' : '1';
+  const want = tool !== 'look' && engine === 'gpu' && shownNow ? { x: at.x, y: at.y, z: at.z, r: cursor.r, kind: tool } : null;
+  const had = store.cursor;
+  if (JSON.stringify(had) !== JSON.stringify(want)) { store.cursor = want; volume.request(); }
+}
+
+function setTool(t: Tool) {
+  tool = t;
+  $('brush').hidden = t === 'look';
+  $('feed-field').hidden = t !== 'feed';
+  $('volume-canvas').dataset.tool = t;
+  setText('apply', t === 'feed' ? 'Feed here' : 'Wound here');
+  setText('tool-help', t === 'look' ? '' : (engine === 'gpu'
+    ? `Click or tap the picture to ${t === 'wound' ? 'wound' : 'feed'} where you point; dragging still turns the jar. The red block in the picture is the tool's sphere drawn cell by cell: exactly the cells a stroke reaches, with a bead in the centre cell; where beads are in front of it, it shows faintly through them. It is drawn in the particles and haze way of drawing; the others show neither the block nor the beads to point at, so there the cursor sits on the working layer. Or set the cell below and press ${t === 'feed' ? 'Feed here' : 'Wound here'}. The centre must be in the part of the jar you can see; the sphere itself can reach into peeled or cut-away cells.`
+    : `The flat side view cannot be pointed at, so set the cell below and press ${t === 'feed' ? 'Feed here' : 'Wound here'}.`));
+  hover = null;
+  showCursor();
+}
+
+/** Words for a stroke's report, from the BrushReport3d. */
+function reportText(r: BrushReport3d, c: Census | null): string {
+  const where = `at step ${fmt(r.step)}, cell x ${r.cx}, y ${r.cy}, layer ${r.cz}, radius ${r.radius}`;
+  const books = c ? ` Matter residual ${fmt(c.matterResidual)}, energy residual ${fmt(c.energyResidual)}.` : '';
+  if (r.kind === 'wound') {
+    if (r.removed === 0) return `Wound ${where}: no particle stood in its ${fmt(r.cells)} cells, so nothing changed.${books}`;
+    const bonds = cfg?.bondBreak !== undefined ? `; ${fmt(r.bondsCut)} ${r.bondsCut === 1 ? 'bond' : 'bonds'} cut` : '';
+    return `Wound ${where}: removed ${fmt(r.removed)} ${r.removed === 1 ? 'particle' : 'particles'}; ${fmt(r.matterMoved)} matter went to waste, ${fmt(r.heatBooked)} energy to heat${bonds}.${books}`;
+  }
+  if (r.matterMoved === 0) return `Feed ${where}: none of its ${fmt(r.cells)} cells held waste, so nothing was turned into food.${books}`;
+  return `Feed ${where}: turned ${fmt(r.matterMoved)} waste into food in ${fmt(r.cells - r.cellsWithoutWaste)} cells; ${fmt(r.cellsWithoutWaste)} cells had no waste. ${fmt(r.lightBooked)} energy booked as light.${books}`;
+}
+
+/**
+ * One stroke, through the serial queue. GPU: read the world back, brush that copy, make a new GpuMycelium3d from it and destroy
+ * the old one; CPU: brush the live state. A refused stroke (RangeError, or a state the rules reject) changes nothing. Either
+ * way the world is read back at once, under a new generation, so a read-back begun before the stroke is dropped.
+ */
+function brush(stroke: BrushStroke3d): Promise<BrushReport3d> {
+  return exclusive(async () => {
+    if (!engine || !cfg) throw new Error('there is no world yet');
+    const g = ++gen;
+    let report: BrushReport3d;
+    try {
+      if (engine === 'gpu' && sim && device) {
+        await settle();
+        const s = await sim.read();
+        report = applyBrush3d(s, stroke);
+        const bad = validateState(s);
+        if (bad.length) throw new Error(`the stroke would break the books (${bad[0]}); nothing was changed`);
+        swapSim(await GpuMycelium3d.create(device, s));
+      } else if (engine === 'cpu' && world) {
+        report = applyBrush3d(world, stroke);
+        const bad = validateState(world);
+        if (bad.length) { stop(); throw new Error(`the stroke broke the books (${bad[0]})`); }
+      } else throw new Error('the world is not ready');
+    } catch (e) {
+      if (g === gen) await readAndShow(g);
+      throw e;
+    }
+    await readAndShow(g);
+    strokes++;
+    lastReport = report;
+    return report;
+  });
+}
+
+/** Uses the tool at the committed cursor (Apply, or a click that set it), and says what happened. */
+async function useTool(): Promise<void> {
+  if (tool === 'look' || !cfg) return;
+  const at = { x: cursor.x, y: cursor.y, z: cursor.z };
+  if (!cellShown(at)) {
+    setText('brush-report', `Not applied: cell x ${at.x}, y ${at.y}, layer ${at.z} is peeled or cut away in the view. Pick a cell you can see, or lower the peel or widen the cut. The world is as it was.`);
+    return;
+  }
+  const amount = Number($<HTMLSelectElement>('feed-amount').value) || FEEDS[1].amount;
+  try {
+    const r = await brush({ kind: tool, cx: at.x, cy: at.y, cz: at.z, radius: cursor.r, ...(tool === 'feed' ? { amount } : {}) });
+    setText('brush-report', reportText(r, last));
+  } catch (e) {
+    setText('brush-report', `Not applied: ${errMsg(e)}. The world is as it was.`);
+  }
+}
+
+/** Reads a whole number from an input, held to [0, max]; null while the box is empty or not a number. */
+function readInt(id: string, max: number): number | null {
+  const raw = $<HTMLInputElement>(id).value;
+  if (raw.trim() === '' || !Number.isFinite(Number(raw))) return null;
+  return Math.max(0, Math.min(max, Math.round(Number(raw))));
+}
+
+function onCursorInput() {
+  if (!cfg) return;
+  const x = readInt('cur-x', cfg.width - 1), y = readInt('cur-y', cfg.height - 1), z = readInt('cur-z', cfg.depth - 1);
+  if (x !== null) cursor.x = x;
+  if (y !== null) cursor.y = y;
+  if (z !== null) cursor.z = z;
+  hover = null;
+  showCursor();
+}
+
+/** The cell under a pointer event by the depth rule (cursor.ts), or null where the view shows nothing of the jar. */
+function cellAtPointer(e: PointerEvent | MouseEvent): Cell | null {
+  const v = viewClip();
+  const cv = $<HTMLCanvasElement>('volume-canvas');
+  if (!v || engine !== 'gpu') return null;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return null;
+  const rect = cv.getBoundingClientRect();
+  const px = e.clientX - rect.left - cv.clientLeft, py = e.clientY - rect.top - cv.clientTop;
+  // the camera exactly as the view draws it: aspect from the drawing buffer, as paint() sizes it
+  const info = volume.cam.info(cv.width && cv.height ? cv.width / cv.height : w / h);
+  const ray = pointerRay(info.invViewProj, (px / w) * 2 - 1, 1 - (py / h) * 2);
+  const tol = (PICK_PX * 2 * Math.tan(info.fovY / 2)) / h;
+  const size = Number(volume.paramsOf('particles').size ?? 1);
+  const hit = cursorFromRay(ray, volume.renderer === 'particles' ? lastState : null, v, cursor.z, tol, size);
+  return hit ? hit.cell : null;
+}
+
+function renderTools() {
+  radios($('o-tool'), 'tool', TOOLS, tool, (v) => setTool(v as Tool));
+  fillSelect('feed-amount', FEEDS.map((f) => ({ value: String(f.amount), text: f.title })), String(FEEDS[1].amount));
+  const feedHelp = () => setText('feed-help', FEEDS.find((f) => String(f.amount) === $<HTMLSelectElement>('feed-amount').value)?.text ?? '');
+  $('feed-amount').addEventListener('change', feedHelp);
+  feedHelp();
+  for (const id of ['cur-x', 'cur-y', 'cur-z']) $(id).addEventListener('input', onCursorInput);
+  $<HTMLInputElement>('cur-r').addEventListener('input', (e) => { cursor.r = Number((e.target as HTMLInputElement).value); setText('cur-r-out', String(cursor.r)); showCursor(); });
+  $('apply').addEventListener('click', () => { void useTool(); });
+
+  // Pointing. The camera's own handlers (view.ts) orbit on every drag; these only watch: a press that stays within a few
+  // pixels, with the main button, no shift and no second finger, is a click and uses the tool at the cell it began on.
+  const cv = $<HTMLCanvasElement>('volume-canvas');
+  const down = new Set<number>();
+  let press: { id: number; x: number; y: number; cell: Cell | null; far: boolean } | null = null;
+  cv.addEventListener('pointerdown', (e) => {
+    down.add(e.pointerId);
+    if (down.size > 1) { press = null; return; }
+    press = tool !== 'look' && e.button === 0 && !e.shiftKey ? { id: e.pointerId, x: e.clientX, y: e.clientY, cell: cellAtPointer(e), far: false } : null;
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > PRESS_SLOP) press.far = true;
+    if (tool !== 'look' && e.buttons === 0 && e.pointerType !== 'touch') { hover = cellAtPointer(e); showCursor(); }
+  });
+  const end = (e: PointerEvent, cancelled: boolean) => {
+    down.delete(e.pointerId);
+    const p = press;
+    if (!p || p.id !== e.pointerId) return;
+    press = null;
+    if (cancelled || p.far || tool === 'look') return;
+    if (!p.cell) { setText('brush-report', 'Not applied: no part of the jar you can see is under the pointer there. The world is as it was.'); return; }
+    Object.assign(cursor, p.cell);
+    hover = null;
+    syncCursorInputs();
+    showCursor();
+    void useTool();
+  };
+  cv.addEventListener('pointerup', (e) => end(e, false));
+  cv.addEventListener('pointercancel', (e) => end(e, true));
+  // A capture lost without an up or a cancel (the finger lifts outside after the browser took the capture away) must not leave
+  // its id in `down`: every later tap would then look like a second finger and never apply.
+  cv.addEventListener('lostpointercapture', (e) => end(e, true));
+  cv.addEventListener('pointerleave', () => { if (hover) { hover = null; showCursor(); } });
+}
+
+/** Debug and tests: a cell of a kind in the last read-back (null if none). */
+function findCell(kind: 'particle' | 'waste' | 'clean' | 'bonded', r = 1): Cell | null {
+  const s = lastState;
+  if (!s) return null;
+  const { width: W, height: H } = s.config;
+  const of = (i: number): Cell => ({ x: s.x[i] >>> POS_SHIFT, y: s.y[i] >>> POS_SHIFT, z: s.z[i] >>> POS_SHIFT });
+  const at = (k: number): Cell => ({ x: k % W, y: Math.floor(k / W) % H, z: Math.floor(k / (W * H)) });
+  if (kind === 'particle') return s.n ? of(s.n >> 1) : null;
+  if (kind === 'waste') { let best = -1; for (let k = 0; k < s.C.length; k++) if (s.C[k] > 0 && (best < 0 || s.C[k] > s.C[best])) best = k; return best < 0 ? null : at(best); }
+  if (kind === 'bonded') {
+    if (!s.bond0 || !s.bond1) return null;
+    for (let i = 0; i < s.n; i++) for (const p of [s.bond0[i], s.bond1[i]]) {
+      if (p === BOND_NONE) continue;
+      const j = slotOfId(s.id, s.n, p);
+      const a = of(i), b = of(j);
+      if (a.x !== b.x || a.y !== b.y || a.z !== b.z) return a;
+    }
+    return null;
+  }
+  for (let k = 0; k < s.C.length; k++) { const c = at(k); if (sphereSummary(s, c, r).waste === 0) return c; }
+  return null;
+}
+
+/** Debug and tests: where a cell's centre is drawn on screen, in client pixels (GPU engine), or null. */
+function screenOf(c: Cell): { x: number; y: number } | null {
+  const v = viewClip();
+  const cv = $<HTMLCanvasElement>('volume-canvas');
+  if (!v || engine !== 'gpu') return null;
+  const info = volume.cam.info(cv.width && cv.height ? cv.width / cv.height : cv.clientWidth / cv.clientHeight);
+  const p = cellCentre(v, c), m = info.viewProj;
+  const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+  const nx = (m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12]) / w, ny = (m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13]) / w;
+  const rect = cv.getBoundingClientRect();
+  return { x: rect.left + cv.clientLeft + ((nx + 1) / 2) * cv.clientWidth, y: rect.top + cv.clientTop + ((1 - ny) / 2) * cv.clientHeight };
 }
 
 // ---- wiring ----------------------------------------------------------------------------------------------------------------
@@ -579,11 +877,11 @@ $<HTMLInputElement>('stretch').addEventListener('input', (e) => {
   setText('stretch-out', String(volume.stretch));
   if (last) volumeCaption(last);
 });
-$<HTMLInputElement>('peel').addEventListener('input', (e) => { volume.peel = Number((e.target as HTMLInputElement).value); setText('peel-out', String(volume.peel)); volume.request(); });
-$<HTMLInputElement>('cut').addEventListener('input', (e) => { const v = Number((e.target as HTMLInputElement).value); volume.cut = v / 100; setText('cut-out', String(v)); volume.request(); });
+$<HTMLInputElement>('peel').addEventListener('input', (e) => { volume.peel = Number((e.target as HTMLInputElement).value); setText('peel-out', String(volume.peel)); volume.request(); showCursor(); });
+$<HTMLInputElement>('cut').addEventListener('input', (e) => { const v = Number((e.target as HTMLInputElement).value); volume.cut = v / 100; setText('cut-out', String(v)); volume.request(); showCursor(); });
 $('show-waste').addEventListener('change', () => {
   applyWaste();
-  if (engine === 'cpu' && lastState && lastLight) drawSide($<HTMLCanvasElement>('side-canvas'), lastState, lastLight, $<HTMLInputElement>('show-waste').checked);
+  if (engine === 'cpu' && lastState && lastLight) drawSide($<HTMLCanvasElement>('side-canvas'), lastState, lastLight, $<HTMLInputElement>('show-waste').checked, lastState.bond0 ? links : null);
 });
 
 // The page's hooks for tests and captures (tests/e2e/mycelium3d.spec.ts).
@@ -592,8 +890,27 @@ $('show-waste').addEventListener('change', () => {
   state: () => ({ engine, step: last?.step ?? -1, queued: currentStep(), choice, running }),
   config: () => (cfg ? { ...cfg } : null),
   census: () => last,
+  /** Bonds in the last read-back (null without bonds): the bond census, the link instances packed from it, and what the
+   *  particle renderer last uploaded (link instances, and whether it holds a link buffer at all). */
+  bonds: () => ({
+    readout: lastBonds && { bonds: lastBonds.bonds, bonded: lastBonds.bonded, bodies: lastBonds.bodies, largest: lastBonds.largest, rings: lastBonds.rings },
+    packed: lastState?.bond0 && links ? { count: links.count, bonds: links.bonds, seamBonds: links.seamBonds } : null,
+    uploaded: store.linkCount, linkBuffer: store.linkBuffer,
+  }),
   stats: () => ({ ...stats }),
   runTo: (n: number) => stepTo(n),
+  /** A stroke as the page makes one (no check that the view shows its centre): resolves to the brush's report, or rejects
+   *  with the refusal, the world unchanged. */
+  brush: (stroke: BrushStroke3d) => brush(stroke),
+  /** The tool, the committed cursor and any hover, whether the view shows it, what its sphere holds, whether the renderer
+   *  drew the sphere in its last frame, the last report and the strokes made since the page opened. */
+  cursor: () => ({
+    tool, cell: { x: cursor.x, y: cursor.y, z: cursor.z }, radius: cursor.r, hover, shown: cellShown(hover ?? cursor),
+    holds: lastState ? sphereSummary(lastState, hover ?? cursor, cursor.r) : null, drawn: store.cursorDrawn ?? false, report: lastReport, strokes,
+    readout: $('cur-readout').textContent,
+  }),
+  findCell: (kind: 'particle' | 'waste' | 'clean' | 'bonded', r?: number) => findCell(kind, r),
+  screenOf: (c: Cell) => screenOf(c),
   families: () => {
     const s = lastState;
     if (!s) return [];
@@ -662,6 +979,8 @@ if (window.matchMedia('(max-width: 760px)').matches) for (const d of document.qu
 if (link.waste !== undefined) $<HTMLInputElement>('show-waste').checked = link.waste;
 fillChoices();
 renderViewControls();
+renderTools();
+setTool('look');
 applyWaste();
 syncPlay();
 void plant();

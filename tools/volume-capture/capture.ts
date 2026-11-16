@@ -8,7 +8,7 @@
 //   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --world eco --setting n12-mu50-s8-k64 \
 //     --seed 101 --step 30000 --stretch 8 --frames 48 [--port 5261 | --url http://localhost:5173]
 //   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --page mycelium3d --size 64x64x32 \
-//     --sink fast --trail toll --seed 2 --step 20000 --frames 48
+//     --sink fast --trail toll --seed 2 --step 20000 --frames 48 [--bonds off|upkeep|free]
 //   node --experimental-strip-types tools/volume-capture/capture.ts --out <dir> --sheet runs.json --step 20000
 //
 // Flags and the sheet file: lib.ts USAGE. Bad arguments exit 2 before anything starts; a failed capture exits 1.
@@ -76,8 +76,8 @@ async function openJar(page: Page, r: M3dRun) {
   if (st.state.engine !== "gpu") throw new CaptureError(`the jar is on the ${st.state.engine} engine, not the GPU`);
   if (st.gpuError) throw new CaptureError(`GPU error on the jar page: ${st.gpuError}`);
   const c = st.state.choice, v = st.volume;
-  const seen = { size: c.size, seed: c.seed, sink: c.sink, trail: c.trail, dims: [st.config.width, st.config.height, st.config.depth].join("x"), cfgSeed: st.config.seed, renderer: v.renderer, stretch: v.stretch, waste: v.waste };
-  const want = { size: r.size, seed: r.seed, sink: r.sink, trail: r.trail, dims: r.size, cfgSeed: r.seed, renderer: r.renderer, stretch: r.stretch, waste: r.waste };
+  const seen = { size: c.size, seed: c.seed, sink: c.sink, trail: c.trail, bonds: c.bonds, dims: [st.config.width, st.config.height, st.config.depth].join("x"), cfgSeed: st.config.seed, renderer: v.renderer, stretch: v.stretch, waste: v.waste };
+  const want = { size: r.size, seed: r.seed, sink: r.sink, trail: r.trail, bonds: r.bonds, dims: r.size, cfgSeed: r.seed, renderer: r.renderer, stretch: r.stretch, waste: r.waste };
   if (JSON.stringify(seen) !== JSON.stringify(want)) throw new CaptureError(`the page did not take the settings: asked ${JSON.stringify(want)}, page has ${JSON.stringify(seen)}`);
 }
 

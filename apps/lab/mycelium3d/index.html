@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f3f1ec" />
     <!-- An exploration page: a new world under exploration, with no results claimed. -->
-    <meta name="description" content="Particles with small neural controllers eat, lay trail and split in a closed three-dimensional jar lit from the top. A new world under exploration, not a result." />
+    <meta name="description" content="Particles with small neural controllers eat, lay trail and split in a closed three-dimensional jar lit from the top. A world under exploration, not a result." />
     <title>Mycelium in a jar · Cadence Garden</title>
     <link rel="canonical" href="https://cadence.garden/mycelium3d/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -27,7 +27,7 @@
         <p class="eyebrow">Exploration, not a result</p>
         <h1>Mycelium in a jar.</h1>
         <p class="lede">The mycelium world, grown in three dimensions. Particles with small neural controllers eat, lay trail and split inside a closed jar. Light enters at the top and is shaded by what grows there, so food is made only near the surface. This is a new world under exploration: nothing on this page is a result.</p>
-        <p class="m3-banner" role="note"><strong>A new world, no results claimed.</strong> The rules were written on 15 November 2026 and the default numbers were chosen so a population lasts. No test has been run on this world; the sinking and trail options are here to look at, not because anything has been shown about them.</p>
+        <p class="m3-banner" role="note"><strong>A new world, no results claimed.</strong> The rules were written on 15 November 2026 and the default numbers were chosen so a population lasts. No registered test has been run on this world. Its screens so far are explorations judged by eye and by counts, and the sinking, trail and bond options are here to look at, not because anything has been shown about them.</p>
         <details class="m3-how" open>
           <summary>What the particles do</summary>
           <p>Each bead is a particle with a body of matter, a store of energy and its own small neural controller (13 inputs, 8 hidden units, 9 outputs). It senses nutrient, waste and trail around it, the trail and nutrient above and below it, and how much light reaches it. Then it decides how to move east, south and down, how much to eat, how much trail to lay and whether to split. A child takes half its parent's matter and energy and a copy of its controller that sometimes mutates. Light turning waste back into nutrient is the only energy coming in, and it falls from the top: each layer passes on less of it, shaded by the trail and bodies above.</p>
@@ -55,8 +55,30 @@
             </figure>
             <figure class="m3-fig" id="cpu-fig" hidden>
               <canvas id="side-canvas" role="img" aria-label="Side view of the jar" aria-describedby="side-cap"></canvas>
-              <figcaption id="side-cap" class="fine">A flat side view, because the 3D view needs WebGPU: east runs left to right and depth top to bottom, with the surface at the top. Every north-south row is added into one column. Brightness is the light reaching each place, violet is trail, darkening is waste, and each dot is a particle in its family colour.</figcaption>
+              <figcaption id="side-cap" class="fine">A flat side view, because the 3D view needs WebGPU: east runs left to right and depth top to bottom, with the surface at the top. Every north-south row is added into one column. Brightness is the light reaching each place, violet is trail, darkening is waste, and each dot is a particle in its family colour. With bonds on, a pale line joins two bonded partners.</figcaption>
             </figure>
+
+            <section class="m3-tools" id="tools" aria-labelledby="h-tools">
+              <h2 class="m3-tools-h" id="h-tools">Touch the jar</h2>
+              <p class="fine">Two tools reach into the world between steps. They keep the books: matter is never made or destroyed, and the two residuals in the census stay at 0. A world you have touched no longer follows from its seed alone.</p>
+              <fieldset class="m3-tool-pick"><legend class="m3-legend">Tool</legend><div class="m3-seg" id="o-tool"></div></fieldset>
+              <div id="brush" class="m3-brush" hidden>
+                <p class="fine" id="tool-help"></p>
+                <div class="m3-brush-grid">
+                  <div class="m3-field"><label for="cur-x">East, x</label><input id="cur-x" type="number" min="0" max="31" step="1" value="16" inputmode="numeric" aria-describedby="cur-help" /></div>
+                  <div class="m3-field"><label for="cur-y">South, y</label><input id="cur-y" type="number" min="0" max="31" step="1" value="16" inputmode="numeric" aria-describedby="cur-help" /></div>
+                  <div class="m3-field"><label for="cur-z">Layer</label><input id="cur-z" type="number" min="0" max="15" step="1" value="0" inputmode="numeric" aria-describedby="cur-help" /></div>
+                </div>
+                <p class="fine" id="cur-help">The cell at the centre of the tool. Layer 0 is the surface, where light enters. When you point at the picture, the cursor goes to the first particle under the pointer; where there is none, it sits on this layer, which is why the layer is also called the working layer.</p>
+                <label for="cur-r" class="m3-legend m3-sub">Radius: <output id="cur-r-out">2</output> cells</label>
+                <input id="cur-r" type="range" min="0" max="8" step="1" value="2" aria-describedby="cur-r-help" />
+                <p class="fine" id="cur-r-help">How far the tool reaches from the centre cell, counted in whole cells and across the east and west and the north and south walls, which wrap. 0 is the centre cell alone. It stops at the surface and the floor.</p>
+                <div class="m3-field" id="feed-field"><label for="feed-amount">Strength of the flash</label><select id="feed-amount" aria-describedby="feed-help"></select><p class="fine" id="feed-help"></p></div>
+                <p class="m3-readout" id="cur-readout"></p>
+                <button type="button" class="button primary" id="apply">Wound here</button>
+              </div>
+              <p class="m3-report" id="brush-report" role="status"></p>
+            </section>
 
             <div class="m3-controls" id="view-controls">
               <fieldset class="m3-group" id="g-renderer"><legend>How to draw it</legend><div class="m3-options" id="o-renderer"></div></fieldset>
@@ -98,6 +120,16 @@
               <div><dt>Time per step</dt><dd id="r-t">–</dd></div>
             </dl>
             <p class="fine" id="audit-note"></p>
+            <div id="bond-census" hidden>
+              <h3 class="m3-h3">Bonds</h3>
+              <dl class="m3-numbers">
+                <div><dt>Bonded particles</dt><dd id="r-bonded">0</dd></div>
+                <div><dt>Bonds</dt><dd id="r-bonds">0</dd></div>
+                <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
+                <div><dt>Largest body</dt><dd id="r-largest">–</dd></div>
+              </dl>
+              <p class="fine">A body is two or more particles joined by bonds, directly or along a chain; each particle holds at most two bonds, so a body is a chain or a ring. Bonded particles are those holding at least one bond, with their share of all particles. In the 3D view each bond is a pale link between its partners (in the particles and haze way of drawing only); a bond across a wrapped wall is drawn as two short stubs, one from each partner to the wall.</p>
+            </div>
             <h3 class="m3-h3">By depth</h3>
             <div class="m3-table-wrap">
               <table class="m3-depth">
@@ -118,6 +150,7 @@
           <div class="m3-field"><label for="size">World size</label><select id="size" aria-describedby="size-help"></select><p class="fine" id="size-help"></p></div>
           <div class="m3-field"><label for="sink">Sinking</label><select id="sink" aria-describedby="sink-help"></select><p class="fine" id="sink-help"></p></div>
           <div class="m3-field"><label for="trail">Trail rule</label><select id="trail" aria-describedby="trail-help"></select><p class="fine" id="trail-help"></p></div>
+          <div class="m3-field"><label for="bonds">Bonds</label><select id="bonds" aria-describedby="bonds-help"></select><p class="fine" id="bonds-help"></p></div>
           <div class="m3-field"><label for="seed">Seed</label><input id="seed" type="number" min="0" max="4294967295" step="1" value="1" inputmode="numeric" aria-describedby="seed-help" /><p class="fine" id="seed-help">The number that picks the founders' places and controllers. The same seed and choices give the same world, step for step, on either engine.</p></div>
         </div>
         <button type="button" class="button primary" id="plant">Plant</button>
@@ -131,6 +164,7 @@
             <li>A family is a set of particles with identical controllers. A mutation always starts a new one, so the family count measures mutation and survival together, not adaptation.</li>
             <li>The default numbers were tuned by hand on the 32 × 32 × 16 world on one seed so a population lasts. The bigger sizes keep the same numbers per cell; they are less tested.</li>
             <li>In the flat world, trail that only costs was purged by inheritance, the toll road kept trail that nothing was found using, and the owner conduit with the gate kept trail in 6 of 8 worlds. Those are flat-world explorations. They are why these options are offered here, and say nothing about this world.</li>
+            <li>Bonds join particles into chains and rings that move together. A body of bonded beads is a shape the rules allow, not an organism; in the exploration runs bodies were mostly lost again, with or without upkeep.</li>
             <li>The question the jar is built to ask: sinking carries waste away from the light, so does anything evolve that lifts matter back up? Nothing here answers it yet.</li>
           </ul>
           <p class="fine">Rules: tools/mycelium3d/RULES.md (rule mycelium3d-r0). Plan: docs/3d-expansion-plan-2026-11-15.md, Phase 1, Bet B. Exact integer arithmetic on both engines.</p>

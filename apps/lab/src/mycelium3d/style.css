@@ -67,6 +67,24 @@
 .m3-field select, .m3-field input { width: 100%; }
 .m3-field p.fine { margin: 0; }
 .m3-plant .button { min-height: 44px; min-width: 8em; }
+.m3-tools { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.m3-tools-h { margin: 0 0 4px; font-size: 1.125rem; }
+.m3-tools p.fine { margin: 2px 0 10px; }
+.m3-tool-pick { margin: 0; padding: 0; border: 0; min-width: 0; }
+.m3-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 8px; }
+.m3-brush { margin-top: 12px; }
+.m3-brush[hidden] { display: none; }
+.m3-brush-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.m3-brush input[type=range] { width: 100%; margin: 4px 0; }
+.m3-brush input[type=range]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.m3-brush .m3-field { margin-top: 4px; }
+.m3-brush .m3-field[hidden] { display: none; }
+.m3-readout { margin: 10px 0; padding: 8px 10px; border-left: 3px solid var(--line); background: var(--raised); color: var(--text); font-size: .9375rem; overflow-wrap: anywhere; }
+.m3-readout[data-hidden="1"] { border-left-color: var(--sun); }
+.m3-brush .button { min-height: 44px; min-width: 8em; }
+.m3-report { margin: 10px 0 0; color: var(--text); font-size: .9375rem; overflow-wrap: anywhere; }
+.m3-report:empty { display: none; }
+.m3-fig canvas[data-tool="wound"], .m3-fig canvas[data-tool="feed"] { cursor: crosshair; }
 @media (max-width: 900px) {
   .m3-world { grid-template-columns: minmax(0, 1fr); }
 }

@@ -1,11 +1,14 @@
 // The CPU engine's picture for /mycelium3d/ when WebGPU is missing: a flat side view with Canvas 2D (the volume view needs
 // WebGPU). East runs left to right and depth top to bottom (layer 0, the surface, at the top), every north-south row summed
 // into one column: the light plane's brightness, trail in violet, waste darkening, and each particle a dot in its family
-// colour at its true x and depth.
+// colour at its true x and depth. With bonds, each bond is a pale line under the dots, from the same link segments as the 3D
+// view (packLinks in pack.ts): a bond across the east-west seam ends at the side walls, and one across the north-south seam,
+// which this view folds away, shows only its east-west and depth extent.
 import { POS_SHIFT, type Mycelium3dState } from '../../../../tools/mycelium3d/world.ts';
 import { css, familyRGB } from '../mycelium/colour.ts';
+import { LINK_FLOATS, type Links } from './pack.ts';
 
-export function drawSide(canvas: HTMLCanvasElement, s: Mycelium3dState, I: Uint32Array, showWaste: boolean): void {
+export function drawSide(canvas: HTMLCanvasElement, s: Mycelium3dState, I: Uint32Array, showWaste: boolean, links?: Links | null): void {
   const { width: W, height: H, depth: D, light } = s.config;
   const cw = canvas.clientWidth || 640;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -32,6 +35,18 @@ export function drawSide(canvas: HTMLCanvasElement, s: Mycelium3dState, I: Uint3
   tmp.getContext('2d')!.putImageData(img, 0, 0);
   g.imageSmoothingEnabled = false;
   g.drawImage(tmp, 0, 0, pw, ph);
+  if (links && links.count > 0) {
+    // instance space: u east, v = D - depth
+    g.strokeStyle = 'rgba(255, 236, 190, 0.85)';
+    g.lineWidth = Math.max(1, cell * 0.14);
+    g.beginPath();
+    for (let k = 0; k < links.count; k++) {
+      const o = k * LINK_FLOATS, d = links.data;
+      g.moveTo(d[o] * cell, (D - d[o + 1]) * cell);
+      g.lineTo(d[o + 3] * cell, (D - d[o + 4]) * cell);
+    }
+    g.stroke();
+  }
   const r = Math.max(1.2, cell * 0.28);
   for (let i = 0; i < s.n; i++) {
     g.fillStyle = css(familyRGB(s.gid[i]));
