@@ -57,7 +57,7 @@ export const TRAILS: Record<Trail, { delta: Partial<Mycelium3dConfig>; title: st
   toll: {
     delta: { moveCost: 12, trailMoveDiscount: 64, trailDiscountMode: 'toll' },
     title: 'toll road: cheaper moves on trail for particles that lay it',
-    text: 'Moving costs six times the usual energy, but a particle that is laying trail pays much less for moving through a cell that already holds a little trail (on all three axes). In the flat world this kept trail but nothing was found using it. In the 3D tuning runs (64 × 64 × 32, sinking between this page’s slow and fast) it kept a bed of trail on the floor every time, and in 3 of 16 worlds the trail also ran unbroken from the surface to the floor. The strengths were sized in the flat world, not here.',
+    text: 'Moving costs six times the usual energy, but a particle that is laying trail pays much less for moving through a cell that already holds a little trail (on all three axes). In the flat world this kept trail but nothing was found using it. In the 3D tuning runs (64 × 64 × 32, sinking between this page’s slow and fast) it kept a bed of trail on the floor every time. In two of the first four worlds the trail also ran unbroken from the surface to the floor, and in one of twelve further seeds. The strengths were sized in the flat world, not here.',
   },
   owner: {
     delta: { trailOwner: 'gid', ownerDefend: 4, ownerConduit: 30 },
