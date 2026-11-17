@@ -31,4 +31,12 @@ Honest status of the original work: the plan review above is the only review the
 implementation review, no pre-fix failing-test evidence (plan promised "SIGINT cases fail on old code") and no
 `garden.ts` 503-vs-502 read were recorded in REVIEW.md. The README states the garden/status outcome; that claim rests on the
 e2e screenshots, not on a recorded code read. The real-launcher gate (`bin/garden-dev` with mix and deno, SIGINT, ports
-free afterwards) was **not measured** in this landing.
+free afterwards) was not measured at the port. It was run once afterwards on the integration tree (2026-11-17, one machine,
+`GARDEN_ISLANDS=0 LAB_PORT=5361 PORT=6361`): both servers answered after 12 s, an external SIGINT was sent to the launcher,
+and 25 s later neither port had a listener. `bin/dev` itself was not run this way; its signal handling is covered by
+`tools/test/dev-launchers-signal.test.ts` only.
+
+Also after the port: the dev proxy answered 502 instead of 503 three times on a loaded machine, because the `localhost`
+connect is an aggregate of two attempts and one timed out before it was refused. `coordinatorUnavailable` now reads the
+aggregate (refused when one attempt was refused and the rest timed out connecting); unit test added, and the browser spec
+passed three runs in a row.
