@@ -228,3 +228,24 @@ no atlas cell (D1 undefined again), 3 in cells. It says nothing about the atlas 
 **Cost.** Calibration: 16 batches, 255 genome evaluations (1,020 tile replicates), 765 s of evaluation wall time,
 47.8 s/batch, under a machine load average above 300 (bootstrap-200 logged about 22 s/batch unloaded), so the
 timing is an upper bound. The smoke: 3 batches, 48 evaluations, about 156 s.
+
+## Amendment (2026-11-17): review of the landed tools
+
+A review of the landed code found six defects. Five are fixed in code, with tests: the D2 lower-bound rounding, the
+gene-blind ledger key, a truncated gate.json read as a match by replay-check, the calibrate resume check, and the
+`--confirm-only` background-medium refusal in `tools/bootstrap.ts`. None of the five changes a recorded number:
+the D2 fifth percentile of set A is exactly 0, so the range stays [0, 1], and every recorded genome has no gene byte.
+Re-run against the raw rows and source runs, `report`, `replay-check` and `ledger` reproduce `calibration.json`,
+`replay-check-*.json` and `manifest-*.json` except for paths and `codeSha`.
+
+One defect is left in the code and recorded here instead. `calibrate` (packages/search/src/calibration.ts) counts
+`cells.massSpeed` over all set-A candidates, but `cells.atlas` only over those with both descriptors. The
+interface comment, and "22 mass/speed cells for the same candidates" in the Results above, say both counts use the
+same candidates. That is not true: the recorded **22** is over all 160 candidates, while the **12** atlas cells are
+over the 55 with both D1 and D2 defined. Counted like for like, those 55 occupy **13** mass/speed cells (computed
+from `runs/atlas-calibration/rows.jsonl` with the landed `calibrate`). Fixing the code would change
+`calibration.json`'s `cells.massSpeed` from 22 to 13, so the code and the evidence stay as recorded. Nothing else in
+the report depends on this count: `cells.atlas`, `cells.sparse`, `pair`, `usableBoth` and both verdicts use only the
+atlas cells.
+
+Also 2026-11-17, from a second review of these fixes: `tools/atlas-ledger.ts` and `tools/bootstrap.ts` now carry `genes` through their saved-genome codecs (written only when non-zero, so gene-free records keep their bytes), and a `gate.json` that parses but is not a list of gate entries is an error. The codec change has no test with gene-distinct saved rows; no saved run has any.

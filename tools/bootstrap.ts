@@ -111,7 +111,7 @@ const int = (flag: "batches" | "seed" | "confirm-reps" | "confirm-seed") => {
 };
 const batches = int("batches"), reps = int("confirm-reps"), confirmSeedFlag = int("confirm-seed");
 
-function parseMedium(raw: string): Pick<EvalConfig, "nutrient" | "medium" | "darkSteps"> {
+function parseMedium(raw: string): Partial<Pick<EvalConfig, "nutrient" | "medium" | "darkSteps">> {
   if (raw.startsWith("waste:")) {
     const parts = raw.slice("waste:".length).split(":");
     if (parts.length !== 2) throw new Error(`--medium waste:A:C needs two integers, not ${JSON.stringify(raw)}`);
@@ -148,7 +148,9 @@ const archiveFlag = a.archive ?? "mass-speed";
 if (archiveFlag !== "mass-speed" && archiveFlag !== "atlas-v1") throw new Error(`--archive must be mass-speed or atlas-v1, not ${JSON.stringify(archiveFlag)}`);
 if (archiveFlag === "atlas-v1" && ATLAS_V1.calibration !== "passed" && !a["uncalibrated-smoke"] && !a["confirm-only"])
   throw new Error(`--archive atlas-v1 is not calibrated (${ATLAS_V1.calibration}); a real search must not be built on it. --uncalibrated-smoke runs it as a tool test only`);
-if (archiveFlag === "atlas-v1" && a.medium?.startsWith("background:")) throw new Error("--archive atlas-v1 does not support --medium background (the descriptors read whole-tile mass)");
+// --confirm-only takes its archive from archive.json (a disagreeing --archive is ignored), so it is checked below against that.
+const backgroundAtlas = "--archive atlas-v1 does not support --medium background (the descriptors read whole-tile mass)";
+if (!a["confirm-only"] && archiveFlag === "atlas-v1" && a.medium?.startsWith("background:")) throw new Error(backgroundAtlas);
 const mediumPatch = a.medium ? parseMedium(a.medium) : {};
 // `roles` is an observer (each evaluation also records its role, never scored or gated); it is part of
 // the evaluation config, so a search started without it cannot be resumed with it.
@@ -164,9 +166,10 @@ const search = {
   ...(archiveFlag !== "mass-speed" ? { archive: archiveFlag } : {}),
 };
 const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
-type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
-const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
-const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
+// `genes` is written only when non-zero, so records of gene-free genomes keep their bytes.
+type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[]; genes?: number };
+const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}), ...(g.genes ? { genes: g.genes } : {}) });
+const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}), ...(g.genes ? { genes: g.genes } : {}) });
 type SavedArchive = {
   evaluated: number;
   eval: typeof ec;
@@ -247,6 +250,7 @@ if (recorded?.ignored.length) console.warn(`--confirm-only confirms under the se
 const recordedArchive = a["confirm-only"] ? searchedArchive(saved!.search, passed("archive") ? archiveFlag : undefined) : undefined;
 if (recordedArchive?.ignored.length) console.warn(`--confirm-only confirms under the archive ${archivePath} was searched with, ignoring ${recordedArchive.ignored.join(", ")}`);
 const effArchive = recordedArchive?.archive ?? archiveFlag;
+if (effArchive === "atlas-v1" && a.medium?.startsWith("background:")) throw new Error(backgroundAtlas);
 const cellFn = ARCHIVE_CELLS[effArchive];
 const effGate: GateName = recorded?.gate ?? gateName;
 const effScore = recorded?.score ?? scoreName;

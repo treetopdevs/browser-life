@@ -1,7 +1,7 @@
 /** Audit retained TECHNICAL-STOP evidence without resuming or accepting a run. */
 import { canonicalObserverJSON, decodeCheckpoint, cloneState, worldW } from "@bl/schema";
 import { compareTraces, stateIdentity, assertConserved, type branchTrace } from "./parity.ts";
-import { validateTrack } from "./continuity.ts";
+import { validateRoleTraces } from "./audit-traces.ts";
 import { RefSim, applyLesion } from "@bl/sim-ref";
 import { enumerateCandidatesDetailed, selectPair } from "./selector.ts";
 import type { Target } from "../recovery-accessibility/observer.ts";
@@ -55,11 +55,8 @@ for(const seed of [2026102401,2026102402])for(const subject of ["parent","mutant
   missing.push(id);continue;}
  if(!have.every(Boolean))throw Error(`incomplete retained evidence for ${id}`);
  for(const name of ["cpu25","gpu25","gpu50"])traces.push(await read(`${out}/${id}-${name}.json`));
- for(const t of traces) {
-  validateTrack(t.track,original.mass,t.cadence,original.state.step);
-  if(t.rows.length!==t.track.history.length+1||t.rows[0].offset!==0||t.rows[0].label!==t.track.initialLabel||t.rows[0].mass!==t.initialMass)throw Error("initial trace mismatch");
-  t.track.history.forEach((h,i)=>{const r=t.rows[i+1];if(r.offset!==h.step-original.state.step||r.mass!==h.mass||r.label!==h.label)throw Error("trace/history mismatch");});
- }
+ // Cadence is fixed by the file's role, so a copied gpu50 trace cannot stand in for a 25-step one.
+ validateRoleTraces(traces,original.mass,original.state.step);
  compareTraces(traces[0],traces[1]);
  for(const slow of traces[2].rows) {
   const fast=traces[1].rows.find(r=>r.offset===slow.offset)!;

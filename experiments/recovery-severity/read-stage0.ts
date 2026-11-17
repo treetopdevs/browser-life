@@ -12,6 +12,38 @@ const sha = async (b: Uint8Array) =>
       await crypto.subtle.digest("SHA-256", b as Uint8Array<ArrayBuffer>),
     ),
   ].map((x) => x.toString(16).padStart(2, "0")).join("");
+/** Hold budget.ts's exclusive lock while reading and verifying the settled budget,
+ * so no attempt can open between the marker checks and debit verification. */
+export async function withSettledBudget<T>(
+  budgetPath: string,
+  verify: (budget: ReturnType<typeof JSON.parse>) => Promise<T> | T,
+): Promise<T> {
+  let lock: Deno.FsFile;
+  try {
+    lock = await Deno.open(`${budgetPath}.lock`, {
+      write: true,
+      createNew: true,
+    });
+  } catch (e) {
+    if (e instanceof Deno.errors.AlreadyExists) {
+      throw new Error("budget unsettled");
+    }
+    throw e;
+  }
+  // Only the lock this reader created is released.
+  try {
+    try {
+      await Deno.stat(`${budgetPath}.tmp`);
+      throw new Error("budget unsettled");
+    } catch (e) {
+      if (!(e instanceof Deno.errors.NotFound)) throw e;
+    }
+    return await verify(JSON.parse(await Deno.readTextFile(budgetPath)));
+  } finally {
+    lock.close();
+    await Deno.remove(`${budgetPath}.lock`);
+  }
+}
 export async function readStage0(out: string, budgetPath?: string) {
   const scan = async (path: string) => {
     for await (const e of Deno.readDir(path)) {
@@ -128,47 +160,40 @@ export async function readStage0(out: string, budgetPath?: string) {
     if (!budgetPath) {
       throw new Error("shared budget required for global acceptance");
     }
-    for (const suffix of [".lock", ".tmp"]) {
-      try {
-        await Deno.stat(`${budgetPath}${suffix}`);
-        throw new Error("budget unsettled");
-      } catch (e) {
-        if (!(e instanceof Deno.errors.NotFound)) throw e;
-      }
-    }
-    const budget = JSON.parse(await Deno.readTextFile(budgetPath));
-    const debit = await resolveUniqueDebit(
-      budget.attempts ?? [],
-      out,
-      async (path) => {
-        try {
-          return await Deno.realPath(path);
-        } catch (e) {
-          if (e instanceof Deno.errors.NotFound) return null;
-          throw e;
-        }
-      },
-    );
-    if (
-      result.artifacts.reduce((sum: number, p: FilePin) => sum + p.bytes, 0) !==
-        result.writtenBytes
-    ) throw new Error("artifact byte accounting mismatch");
-    const finalBytes = (await Deno.stat(`${out}/result.json`)).size +
-      (await Deno.stat(`${out}/result-digest.json`)).size;
-    verifyBudgetDebit(
-      manifest.priorBudget,
-      budget,
-      result,
-      debit,
-      finalBytes,
-    );
-    verifiedAccounting = {
-      spentMs: budget.spentMs,
-      spentBytes: budget.spentBytes,
-      debitOut: debit.out,
-      debitedMs: debit.elapsedMs,
-      debitedBytes: debit.bytes,
-    };
+    verifiedAccounting = await withSettledBudget(budgetPath, async (budget) => {
+      const debit = await resolveUniqueDebit(
+        budget.attempts ?? [],
+        out,
+        async (path) => {
+          try {
+            return await Deno.realPath(path);
+          } catch (e) {
+            if (e instanceof Deno.errors.NotFound) return null;
+            throw e;
+          }
+        },
+      );
+      if (
+        result.artifacts.reduce((sum: number, p: FilePin) => sum + p.bytes, 0) !==
+          result.writtenBytes
+      ) throw new Error("artifact byte accounting mismatch");
+      const finalBytes = (await Deno.stat(`${out}/result.json`)).size +
+        (await Deno.stat(`${out}/result-digest.json`)).size;
+      verifyBudgetDebit(
+        manifest.priorBudget,
+        budget,
+        result,
+        debit,
+        finalBytes,
+      );
+      return {
+        spentMs: budget.spentMs,
+        spentBytes: budget.spentBytes,
+        debitOut: debit.out,
+        debitedMs: debit.elapsedMs,
+        debitedBytes: debit.bytes,
+      };
+    });
   }
   return { ...result, verifiedAccounting };
 }

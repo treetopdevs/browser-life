@@ -112,7 +112,20 @@ test("lab page to coordinator: a hand-picked breeder cycle becomes a picked expe
       await ctx.close();
     }
   } finally {
-    server.kill("SIGTERM");
+    // The coordinator writes into `data`: wait for it to exit (SIGKILL after 10 s, give up after 5 s more) before removing it.
+    // The data directory is removed only once the exit was seen; otherwise it is left and the test fails.
+    if (!(await stopServer(server))) throw new Error(`the coordinator (pid ${server.pid}) did not exit; left ${dir} in place`);
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+async function stopServer(server: ChildProcess): Promise<boolean> {
+  if (server.exitCode !== null || server.signalCode !== null) return true;
+  if (server.pid === undefined) return true; // never started: nothing holds the directory
+  const exited = new Promise<boolean>((resolve) => server.once("exit", () => resolve(true)));
+  const within = (ms: number) => Promise.race([exited, new Promise<boolean>((r) => setTimeout(() => r(false), ms).unref())]);
+  server.kill("SIGTERM");
+  if (await within(10_000)) return true;
+  server.kill("SIGKILL");
+  return within(5_000);
+}

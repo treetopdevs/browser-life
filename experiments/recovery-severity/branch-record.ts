@@ -424,9 +424,13 @@ export async function verifyBranchRecord(
   for (const t of [cpu, fast, slow]) {
     if (
       t.rows[0].identity !== stateIdentity(post) ||
-      t.rows.at(-1)!.identity !== stateIdentity(final) ||
       t.track.initialLabel !== (initialLabel ?? null)
     ) throw new Error("reader: trace/boundary mismatch");
+  }
+  // The GPU25 run saves the final checkpoint (stage0.ts); CPU25/GPU50 final
+  // identities stay parity evidence, so a mismatch there is a readable TECHNICAL-FAILURE.
+  if (fast.rows.at(-1)!.identity !== stateIdentity(final)) {
+    throw new Error("reader: trace/boundary mismatch");
   }
   const facts: BranchFacts = {
     id: record.diagnostic.facts.id,

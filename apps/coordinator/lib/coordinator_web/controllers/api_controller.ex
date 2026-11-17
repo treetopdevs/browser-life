@@ -424,10 +424,16 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   # The digest is checked before it names a path (`Store.blob_path/2` does not),
-  # and the stored bytes are served only if they still validate against it.
+  # and the stored bytes are served only if they still validate against it. Pick
+  # logs share the blob namespace with bundle files, which may be far larger, so
+  # the size is bounded before anything is read.
   def get_pick_log(conn, %{"sha" => sha}) do
+    max = Coordinator.PickLog.max_bytes()
+
     with true <- Coordinator.PickLog.sha?(sha),
-         {:ok, bin} <- File.read(Store.blob_path(Queue.data_dir(), sha)),
+         path = Store.blob_path(Queue.data_dir(), sha),
+         {:ok, %File.Stat{type: :regular, size: size}} when size <= max <- File.stat(path),
+         {:ok, bin} <- File.read(path),
          {:ok, _} <- Coordinator.PickLog.validate_bytes(bin, sha) do
       conn |> put_resp_content_type("application/octet-stream") |> send_resp(200, bin)
     else

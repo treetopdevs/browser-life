@@ -1,7 +1,12 @@
 // tools/submit-picks.ts's input side: the loader it shares with tools/run.ts (tools/lib/pick-record.ts), its submit-only policy and the
 // canonical log it sends (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02). The pond keeper fixtures all hold pressures or
-// lesions and are the refusal cases; the picks-only session is the usable one. No GPU, no coordinator.
+// lesions and are the refusal cases; the picks-only session is the usable one. No GPU, no real coordinator: the admin-token rule
+// runs the tool against a local capture server.
+import { spawn, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createServer, type IncomingHttpHeaders } from "node:http";
+import type { AddressInfo } from "node:net";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { canonicalPickLog, pickLogDigest, type RunSpec } from "@bl/runner";
 import { loadPickRecord, submitRefusal } from "../lib/pick-record.ts";
@@ -94,4 +99,52 @@ describe("the submit-only policy", () => {
   it("refuses a lab manifest beside scheduled flags, as before", () => {
     expect(() => load(fixture("picks-only-session.json"), spec(), { scheduledCount: 1 })).toThrow(/cannot be combined with a lab run manifest/);
   });
+});
+
+const REPO = fileURLToPath(new URL("../..", import.meta.url));
+const HAS_DENO = spawnSync("deno", ["--version"], { encoding: "utf8" }).status === 0;
+
+/** tools/submit-picks.ts, spawned (async, so an in-process server can answer it) with `env` added. */
+const submit = (coordinator: string, env: Record<string, string>) =>
+  new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve, reject) => {
+    const file = fileURLToPath(new URL("../../tests/e2e/fixtures/picks-only-session.json", import.meta.url));
+    const child = spawn("deno", ["run", "--no-lock", "-A", "tools/submit-picks.ts", "--coordinator", coordinator, "--picks-from", file, "--experiment", "tok", "--steps", "15000", "--segment-steps", "5000"], { cwd: REPO, env: { ...process.env, ...env } });
+    let stdout = "", stderr = "";
+    child.stdout.on("data", (d) => (stdout += d));
+    child.stderr.on("data", (d) => (stderr += d));
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stdout, stderr }));
+  });
+
+describe.skipIf(!HAS_DENO)("the admin token never crosses a network in clear text", () => {
+  const TOKEN = "s3cret-admin-token";
+
+  it("a plain-http remote coordinator with BL_ADMIN_TOKEN is refused before any request, without printing the token", async () => {
+    const r = await submit("http://coordinator.invalid:4000", { BL_ADMIN_TOKEN: TOKEN });
+    expect(r.status, r.stdout + r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/sent only over https or to a loopback host/);
+    expect(r.stdout + r.stderr).not.toContain(TOKEN);
+  }, 300_000);
+
+  it("plain http to 127.0.0.1 sends it, on both requests", async () => {
+    const seen: { method?: string; url?: string; headers: IncomingHttpHeaders }[] = [];
+    const server = createServer((req, res) => {
+      seen.push({ method: req.method, url: req.url, headers: req.headers });
+      req.resume();
+      req.on("end", () => {
+        res.setHeader("content-type", "application/json");
+        res.end(JSON.stringify(req.method === "POST" ? { segments: 3 } : { ok: true }));
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const { port } = server.address() as AddressInfo;
+      const r = await submit(`http://127.0.0.1:${port}`, { BL_ADMIN_TOKEN: TOKEN });
+      expect(r.status, r.stdout + r.stderr).toBe(0);
+      expect(seen.map((s) => `${s.method} ${s.url?.replace(/[0-9a-f]{64}/, "<sha>")}`)).toEqual(["PUT /api/pick-logs/<sha>", "POST /api/experiments"]);
+      for (const s of seen) expect(s.headers.authorization).toBe(`Bearer ${TOKEN}`);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  }, 300_000);
 });

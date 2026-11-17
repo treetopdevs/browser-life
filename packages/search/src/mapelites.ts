@@ -47,6 +47,7 @@ export type CellFn = (e: Evaluation) => [number, number] | null;
 export interface ViableLedgerEntry {
   idx: number;
   born: number;
+  /** `ledgerKey` of the genome (gene-aware). */
   key: string;
   quality: number;
   cell: [number, number] | null;
@@ -58,7 +59,7 @@ export interface ViableLedgerEntry {
   current: boolean;
   /** Passed the archive's screening gate. */
   passer: boolean;
-  /** Same genome key as an earlier viable offer. */
+  /** Same ledger key as an earlier viable offer. */
   duplicate: boolean;
   prov?: Provenance;
 }
@@ -220,7 +221,7 @@ export class Archive {
   ledger(): ViableLedgerEntry[] {
     const seen = new Set<string>();
     return this.viable.map((el, i) => {
-      const key = genomeKey(el.genome);
+      const key = ledgerKey(el.genome);
       const duplicate = seen.has(key);
       seen.add(key);
       const o = this.outcome[i];
@@ -303,6 +304,15 @@ export function m3Gate(confirmations: { genome: Genome; eval: Evaluation }[], mi
 export function genomeKey(g: Genome): string {
   const r = ringsOf(g);
   return `${g.mu}:${g.sigma}:${g.motGain}:${Array.from(g.weights).join(",")}${r ? `:r${r.join("/")}` : ""}`;
+}
+
+/**
+ * Ledger identity: `genomeKey` plus the capability gene byte when non-zero (absent genes read as zero), so two
+ * genomes differing only in genes are not marked duplicates while every zero-gene key stays as it was. The same
+ * key as `atlasGenomeKey`; `genomeKey` itself (passers, the search path) is unchanged.
+ */
+export function ledgerKey(g: Genome): string {
+  return genomeKey(g) + (g.genes ? `:g${g.genes}` : "");
 }
 
 /** A few random weight/parameter perturbations, deterministic in `seed`. */

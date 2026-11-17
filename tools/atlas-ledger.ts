@@ -16,12 +16,13 @@
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, ringsOf, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
-import { ARCHIVE_CELLS, ATLAS_V1, sameAtlasSpec, Archive, DEFAULT_ARCHIVE, DEFAULT_EVAL, GATES, SCORES, calibrate, evaluateBatch, genomeKey, proposalGenome, searchedArchive, searchedWith, type CalRow, type EvalConfig, type Evaluation, type Provenance } from "@bl/search";
+import { ARCHIVE_CELLS, ATLAS_V1, sameAtlasSpec, Archive, DEFAULT_ARCHIVE, DEFAULT_EVAL, GATES, SCORES, calibrate, evaluateBatch, genomeKey, ledgerKey, proposalGenome, resumedBatches, searchedArchive, searchedWith, type CalRow, type EvalConfig, type Evaluation, type Provenance } from "@bl/search";
 import { FIXTURE_CADENCE, FIXTURE_FRAMES, FIXTURE_TILE, fixtures, runFixture } from "../packages/search/src/atlas-fixtures.ts";
 
-type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
-const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
-const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
+// `genes` is written only when non-zero, so records of gene-free genomes keep their bytes.
+type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[]; genes?: number };
+const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}), ...(g.genes ? { genes: g.genes } : {}) });
+const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}), ...(g.genes ? { genes: g.genes } : {}) });
 const sha256 = async (path: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(path)))).map((b) => b.toString(16).padStart(2, "0")).join("");
 const readLines = async (p: string) => (await Deno.readTextFile(p)).split("\n").filter(Boolean);
 const gitSha = async () => new TextDecoder().decode((await new Deno.Command("git", { args: ["rev-parse", "HEAD"], stdout: "piped" }).output()).stdout).trim();
@@ -73,8 +74,13 @@ if (cmd === "fixture") {
   const lineages = saved.lineages.map((l, i) => { const m = lin[i]; return !!m && m.size === l.size && m.passers === l.passers && m.best.length === l.best && JSON.stringify(m.best[0].cell) === JSON.stringify(l.bestCell) && m.best[0].quality === l.bestQuality; });
   const checks = {
     passersMatchGateJson: await (async () => {
-      const g = await Deno.readTextFile(`${dirArg}/gate.json`).then((t) => JSON.parse(t) as { genome: EncGenome }[]).catch(() => undefined);
-      if (!g) return true; // no gate.json to compare
+      // Only a missing gate.json is skipped; a truncated or unreadable one is an error, not a match.
+      const g = await Deno.readTextFile(`${dirArg}/gate.json`).then((t) => JSON.parse(t) as { genome: EncGenome }[]).catch((e) => {
+        if (e instanceof Deno.errors.NotFound) return undefined;
+        throw e;
+      });
+      if (g === undefined) return true; // no gate.json to compare
+      if (!Array.isArray(g) || g.some((r) => !r || typeof r !== "object" || !r.genome || !Array.isArray(r.genome.weights))) throw new Error(`${dirArg}/gate.json is not a list of gate entries`);
       const want = new Set(g.map((r) => genomeKey(dec(r.genome))));
       const got = archive.gatePassing().map((e) => genomeKey(e.genome));
       return want.size === got.length && got.every((k) => want.has(k));
@@ -99,7 +105,7 @@ if (cmd === "fixture") {
   // Audit: every logged proposal must regenerate its genome from its provenance and its parent's logged genome.
   const log = archive.viableLog();
   const mu = saved.eval.world.defaultMu!, sigma = saved.eval.world.defaultSigma!;
-  const regenerated = ledger.filter((l) => l.prov && genomeKey(proposalGenome(l.prov, l.prov.parent === null ? undefined : log[l.prov.parent].genome, mu, sigma)) === l.key).length;
+  const regenerated = ledger.filter((l) => l.prov && ledgerKey(proposalGenome(l.prov, l.prov.parent === null ? undefined : log[l.prov.parent].genome, mu, sigma)) === l.key).length;
   const cellsUsed = new Set(ledger.flatMap((l) => (l.cell ? [l.cell.join(",")] : [])));
   const viable = ledger.length;
   const manifest = {
@@ -129,7 +135,6 @@ if (cmd === "fixture") {
   console.log(JSON.stringify(manifest, null, 1));
 } else if (cmd === "calibrate") {
   if (!a.src || !a.out) throw new Error("calibrate needs --src and --out");
-  await Deno.mkdir(a.out, { recursive: true });
   const n = Number(a.n);
   const ec: EvalConfig = { ...DEFAULT_EVAL, atlas: true };
   const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
@@ -155,14 +160,11 @@ if (cmd === "fixture") {
   add("B", 3000101, setB);
   add("twin", 3000001, setA.slice(0, perBatch), false);
   const rowsPath = `${a.out}/rows.jsonl`;
-  const doneKeys = new Map<string, string[]>();
-  for (const l of (await Deno.readTextFile(rowsPath).catch(() => "")).split("\n").filter(Boolean)) { const r = JSON.parse(l); const id = `${r.set}:${r.seed}`; doneKeys.set(id, [...(doneKeys.get(id) ?? []), r.key]); }
-  // A resumed run must be the same sample: a batch already on file has to hold exactly the genomes this plan expects there.
-  for (const b of plan) {
-    const have = doneKeys.get(`${b.set}:${b.seed}`);
-    if (have && JSON.stringify(have) !== JSON.stringify(b.genomes.map((g) => genomeKey(g)))) throw new Error(`calibrate: ${rowsPath} holds ${b.set}:${b.seed} for other genomes (different --src or --n); use a fresh --out`);
-  }
-  const done = new Set(doneKeys.keys());
+  const savedRows = (await Deno.readTextFile(rowsPath).catch(() => "")).split("\n").filter(Boolean).map((l) => JSON.parse(l) as { set: string; seed: number; key: string });
+  // A resumed run must be the same sample: every batch on file must be one of this plan's, holding exactly its genomes.
+  // Checked before the GPU is requested or anything is written.
+  const done = resumedBatches(savedRows, plan.map((b) => ({ set: b.set, seed: b.seed, keys: b.genomes.map((g) => genomeKey(g)) })), rowsPath);
+  await Deno.mkdir(a.out, { recursive: true });
   const timingPath = `${a.out}/timing.json`;
   const timing: { batches: { set: string; seed: number; genomes: number; seconds: number }[] } = JSON.parse(await Deno.readTextFile(timingPath).catch(() => '{"batches":[]}'));
   const device = await requestDevice(navigator.gpu);

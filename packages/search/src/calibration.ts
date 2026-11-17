@@ -25,11 +25,30 @@ export function rangesFromCalibration(d1: number[], d2: number[]): Pick<Descript
   const p95 = d1.length ? percentile(d1, 0.95) : 0;
   const p05 = d2.length ? percentile(d2, 0.05) : 0;
   const hi = Math.max(0.25, Math.ceil(p95 / 0.25) * 0.25);
-  const lo = Math.min(0.95, Math.floor(p05 / 0.05) * 0.05);
+  // Scale to the 0.05 grid by multiplying: p05 / 0.05 is inexact (0.3 / 0.05 = 5.999...) and would floor a value on the grid down a step.
+  const lo = Math.min(0.95, Math.floor(p05 * 20) / 20);
   return { displacementRange: [0, hi], persistenceRange: [Number(lo.toFixed(2)), 1] };
 }
 
-export type Verdict = "usable" | "mostly-undefined" | "noisy" | "redundant";
+/**
+ * The resume check of `tools/atlas-ledger.ts calibrate`: a resumed run must be the same sample. Every batch on file
+ * (rows in file order, grouped by set and seed) has to be a batch of the new plan holding exactly the genome keys the
+ * plan expects there; a batch the plan no longer has would stay in rows.jsonl and be read by `report`. Throws on a
+ * mismatch; returns the ids (`set:seed`) of the plan's batches already done.
+ */
+export function resumedBatches(saved: { set: string; seed: number; key: string }[], plan: { set: string; seed: number; keys: string[] }[], rowsPath = "rows.jsonl"): Set<string> {
+  const have = new Map<string, string[]>();
+  for (const r of saved) { const id = `${r.set}:${r.seed}`; have.set(id, [...(have.get(id) ?? []), r.key]); }
+  const want = new Map(plan.map((b) => [`${b.set}:${b.seed}`, b.keys]));
+  for (const [id, keys] of have) {
+    const w = want.get(id);
+    if (!w) throw new Error(`calibrate: ${rowsPath} holds ${id}, which this plan does not have (different --src or --n); use a fresh --out`);
+    if (JSON.stringify(keys) !== JSON.stringify(w)) throw new Error(`calibrate: ${rowsPath} holds ${id} for other genomes (different --src or --n); use a fresh --out`);
+  }
+  return new Set(have.keys());
+}
+
+export type Verdict ="usable" | "mostly-undefined" | "noisy" | "redundant";
 
 export interface CalibrationReport {
   n: number;

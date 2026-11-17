@@ -29,3 +29,27 @@ try {
  assert(charged.attempts[0].bytes===12&&charged.spentBytes===4108);
  console.log("PASS final-byte debit; failed debit blocks publication and retains lock; aggregate debit, exclusive lock, exhausted budget and lock cleanup");
 }finally{await Deno.remove(dir,{recursive:true});}
+// The independent reader holds the same exclusive lock while it reads and verifies the budget.
+import { withSettledBudget } from "../../experiments/recovery-severity/read-stage0.ts";
+const readerDir=await Deno.makeTempDir();
+try {
+ const path=`${readerDir}/budget.json`;
+ await Deno.writeTextFile(path,JSON.stringify({maxMs:1200000,maxBytes:536870912,spentMs:0,spentBytes:0,attempts:[]}));
+ const lockGone=async()=>{try{await Deno.stat(`${path}.lock`);return false;}catch(e){if(e instanceof Deno.errors.NotFound)return true;throw e;}};
+ // An attempt opened before the reader: the reader refuses and leaves that lock in place.
+ const attempt=await openBudget(path);
+ let refused=false;try{await withSettledBudget(path,()=>true);}catch(e){refused=String(e).includes("budget unsettled");}
+ assert(refused&&!await lockGone());
+ await attempt.settle(`${readerDir}/absent`);assert(await lockGone());
+ // While the reader verifies, no attempt can open; the lock is released afterwards.
+ let blocked=false;
+ const seen=await withSettledBudget(path,async(budget)=>{try{await openBudget(path);}catch{blocked=true;}return budget.attempts.length;});
+ assert(blocked&&seen===1&&await lockGone());
+ // A throwing verification and a stale settlement temp both release the reader's lock.
+ refused=false;try{await withSettledBudget(path,()=>{throw Error("bad debit");});}catch(e){refused=String(e).includes("bad debit");}
+ assert(refused&&await lockGone());
+ await Deno.writeTextFile(`${path}.tmp`,"stale");
+ refused=false;try{await withSettledBudget(path,()=>true);}catch(e){refused=String(e).includes("budget unsettled");}
+ assert(refused&&await lockGone());
+ console.log("PASS reader budget lock: refuses an open attempt without removing its lock, blocks openBudget while verifying, releases its own lock on success, throw and stale temp");
+}finally{await Deno.remove(readerDir,{recursive:true});}

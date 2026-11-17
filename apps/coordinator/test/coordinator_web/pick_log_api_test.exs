@@ -97,6 +97,23 @@ defmodule CoordinatorWeb.PickLogApiTest do
              build_conn() |> get("/api/pick-logs/#{sha}") |> json_response(404)
   end
 
+  test "GET refuses a blob over the pick-log cap (a bundle file shares the namespace) and a non-file" do
+    big = String.duplicate("x", PickLog.max_bytes() + 1)
+    sha = PickLog.sha256(big)
+    path = Coordinator.Store.blob_path(Queue.data_dir(), sha)
+    File.mkdir_p!(Path.dirname(path))
+    File.write!(path, big)
+
+    assert %{"error" => "not found"} =
+             build_conn() |> get("/api/pick-logs/#{sha}") |> json_response(404)
+
+    dir_sha = PickLog.sha256("a directory")
+    File.mkdir_p!(Coordinator.Store.blob_path(Queue.data_dir(), dir_sha))
+
+    assert %{"error" => "not found"} =
+             build_conn() |> get("/api/pick-logs/#{dir_sha}") |> json_response(404)
+  end
+
   test "auth: PUT is admin only; GET is admin or an island; tokenless local admin works in dev/test only when no token is set" do
     sha = PickLog.sha256(@log)
 

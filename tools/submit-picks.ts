@@ -14,9 +14,10 @@
 // condition whose arm does not choose donors. The pick log is stored on the coordinator by its SHA-256 (PUT /api/pick-logs/:sha,
 // admin), and the experiment (POST /api/experiments) names it by that digest; islands that advertise `picks-v1` fetch it. Prints
 // the run id and the digest. --dry-run prints them without a request. Administrative: --token or BL_ADMIN_TOKEN, as tools/stitch.ts;
-// without one only a loopback coordinator that allows local administration (the dev default, bin/dev) answers.
+// without one only a loopback coordinator that allows local administration (the dev default, bin/dev) answers. A token is sent only
+// over https or to a loopback host; a plain-http remote --coordinator with a token is refused with exit 2.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { canonicalPickLog, pickLogDigest, pickedConfigError, picksPreflightError, specConfig, validateSpec, type RunSpec } from "@bl/runner";
+import { canonicalPickLog, gardenTokenForCoordinator, pickLogDigest, pickedConfigError, picksPreflightError, specConfig, validateSpec, type RunSpec } from "@bl/runner";
 import { loadPickRecord, submitRefusal } from "./lib/pick-record.ts";
 
 const a = parseArgs(Deno.args, {
@@ -69,6 +70,8 @@ if (a["dry-run"]) {
 
 const base = a.coordinator.replace(/\/$/, "");
 const token = a.token ?? Deno.env.get("BL_ADMIN_TOKEN");
+// The administrator's token crosses a network only encrypted: https, or plain http to a loopback host (the island's rule).
+if (token && !gardenTokenForCoordinator(base, token)) die(`--coordinator ${base}: an admin token (--token or BL_ADMIN_TOKEN) is sent only over https or to a loopback host; refusing to send it in clear text`);
 const headers = (type: string): Record<string, string> => ({ "content-type": type, ...(token ? { authorization: `Bearer ${token}` } : {}) });
 async function send(method: string, path: string, type: string, body: string): Promise<unknown> {
   const r = await fetch(`${base}${path}`, { method, headers: headers(type), body });

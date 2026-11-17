@@ -28,10 +28,9 @@ describe("an island that cannot use the task's pick log reports the segment fail
   const json = (v: unknown, status = 200) => new Response(JSON.stringify(v), { status, headers: { "content-type": "application/json" } });
 
   /** One task (segment #0 or #1 of 5000 steps) against a fake coordinator that serves `served` as the pick log. */
-  async function attempt(taskSpec: RunSpec, served: string | null, segment = { id: "seg-0", run: "r", index: 0, startStep: 0, steps: 5000 }) {
-    const calls: string[] = [];
+  async function attempt(taskSpec: RunSpec, served: string | null, segment = { id: "seg-0", run: "r", index: 0, startStep: 0, steps: 5000 }, seen: { calls: string[]; fails: { reason?: string }[] } = { calls: [], fails: [] }) {
+    const { calls, fails } = seen;
     const logged: string[] = [];
-    const fails: { reason?: string }[] = [];
     let given = false;
     vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
       const path = new URL(url).pathname;
@@ -84,8 +83,14 @@ describe("an island that cannot use the task's pick log reports the segment fail
     // Entries are cut to (start, start + steps]: a log whose only entry is cycle 1 is empty for segment #1 (5000..10000)... which has
     // a boundary at 10000 and, implicit, is answered by the rule. That reaches the GPU (a fake device here), not a pick failure.
     const second = { id: "seg-1", run: "r", index: 1, startStep: 5000, steps: 5000 };
-    const err = await attempt(spec, log, second).catch((e: Error) => e);
-    expect(err instanceof Error ? err.message : "").not.toMatch(/pick/);
+    // A pick error would resolve (the segment reported via /fail); this one must reject, after the log was fetched, with no /fail.
+    const seen = { calls: [] as string[], fails: [] as { reason?: string }[] };
+    const err = await attempt(spec, log, second, seen).then(() => null, (e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).not.toMatch(/pick/);
+    expect(seen.calls).toContain(`GET /api/pick-logs/${digest}`);
+    expect(seen.calls.filter((c) => c.endsWith("/fail"))).toEqual([]);
+    expect(seen.fails).toEqual([]);
     const off = canonicalPickLog([{ step: 5100, cycle: 1, donors: [1] }]);
     // In segment #1's window (5000, 10000]; segment #0's window (0, 5000] does not hold it.
     const r = await attempt({ ...spec, pickLog: pickLogDigest(off) }, off, { ...second, id: "seg-0" });

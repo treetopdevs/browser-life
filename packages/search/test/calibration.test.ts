@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calibrate, percentile, rangesFromCalibration, type AtlasEval, type CalRow, type Evaluation } from "@bl/search";
+import { calibrate, percentile, rangesFromCalibration, resumedBatches, type AtlasEval, type CalRow, type Evaluation } from "@bl/search";
 
 const ev = (d1: number | null, d2: number | null, over: Partial<Evaluation> = {}): Evaluation => ({
   survived: 4, recovered: 4, lightDependent: 4, reps: 4, individuals: 1, meanMass: 256, speed: 1, mass: 256, recovery: 1, regenerated: 4, reproduction: 0,
@@ -19,6 +19,14 @@ describe("calibration rules", () => {
     expect(rangesFromCalibration([0, 0, 0], [1, 1, 1])).toEqual({ displacementRange: [0, 0.25], persistenceRange: [0.95, 1] });
     // a descriptor undefined everywhere still yields finite bounds
     expect(rangesFromCalibration([], [])).toEqual({ displacementRange: [0, 0.25], persistenceRange: [0, 1] });
+  });
+  it("keeps a D2 fifth percentile that lies exactly on the 0.05 grid (0.3 stays 0.30, not 0.25)", () => {
+    expect(rangesFromCalibration([1], [0.3]).persistenceRange).toEqual([0.3, 1]);
+    expect(rangesFromCalibration([1], [0.95]).persistenceRange).toEqual([0.95, 1]);
+    for (let k = 0; k <= 19; k++) expect(rangesFromCalibration([1], [k / 20]).persistenceRange[0]).toBe(Number((k / 20).toFixed(2)));
+    // just below a grid point floors a step; 1.0 is held by the 0.95 guard
+    expect(rangesFromCalibration([1], [0.2999]).persistenceRange[0]).toBe(0.25);
+    expect(rangesFromCalibration([1], [1]).persistenceRange[0]).toBe(0.95);
   });
   const rows = (n: number, f: (i: number) => Partial<{ d1: number | null; d2: number | null; speed: number; meanMass: number }>): CalRow[] =>
     Array.from({ length: n }, (_, i) => {
@@ -52,5 +60,34 @@ describe("calibration rules", () => {
     expect(r.cells.sparse).toBe(true);
     expect(r.pair).toBe("sparse");
     expect(r.usableBoth).toBe(false);
+  });
+});
+
+describe("resuming a calibration (resumedBatches)", () => {
+  // Batches of 2 genomes; keys stand for genomeKey. With a stride of 1 (distinct genomes between 3P and 4P), --n 3P
+  // and --n 2P draw the same first A batches, so only the batch set tells the two samples apart.
+  const plan = (n: number) => {
+    const keys = Array.from({ length: n }, (_, i) => `g${i}`);
+    const out: { set: string; seed: number; keys: string[] }[] = [];
+    for (let i = 0; i * 2 < n; i++) out.push({ set: "A", seed: 3000001 + i, keys: keys.slice(i * 2, i * 2 + 2) });
+    out.push({ set: "elites", seed: 3000001 + Math.ceil(n / 2), keys: ["e0", "e1"] });
+    return out;
+  };
+  const rowsOf = (p: { set: string; seed: number; keys: string[] }[]) => p.flatMap((b) => b.keys.map((key) => ({ set: b.set, seed: b.seed, key })));
+
+  it("resumes an unchanged plan, partly or wholly done", () => {
+    expect(resumedBatches([], plan(6))).toEqual(new Set());
+    expect(resumedBatches(rowsOf(plan(6).slice(0, 2)), plan(6))).toEqual(new Set(["A:3000001", "A:3000002"]));
+    expect(resumedBatches(rowsOf(plan(6)), plan(6)).size).toBe(4);
+  });
+  it("refuses a saved batch the new plan does not have (--n 3P resumed with --n 2P)", () => {
+    // The first two A batches agree; the saved third A batch (and the elites batch on its old seed) are not in the plan.
+    expect(() => resumedBatches(rowsOf(plan(6)), plan(4))).toThrow(/A:3000003, which this plan does not have/);
+    // even when only that stale batch is on file
+    expect(() => resumedBatches(rowsOf(plan(6)).filter((r) => r.seed === 3000003), plan(4))).toThrow(/does not have/);
+  });
+  it("refuses a saved batch holding other genomes", () => {
+    const saved = rowsOf(plan(6).slice(0, 1)).map((r, i) => (i ? { ...r, key: "other" } : r));
+    expect(() => resumedBatches(saved, plan(6), "x/rows.jsonl")).toThrow("calibrate: x/rows.jsonl holds A:3000001 for other genomes");
   });
 });

@@ -643,3 +643,82 @@ it("rejects a repinned selection whose lesion geometry does not produce the save
     /prescribed lesion geometry/,
   );
 });
+
+import { validateRoleTraces } from "../recovery-severity/audit-traces.ts";
+it("audit binds each retained trace's cadence to its file role, not to the trace's own field", async () => {
+  const s = await saved();
+  // The retained pair-2 traces still pass the stricter role check.
+  expect(() =>
+    validateRoleTraces([s.cpu, s.fast, s.slow], s.facts.referenceMass, s.facts.startStep)
+  ).not.toThrow();
+  expect(() =>
+    validateRoleTraces([synthetic(25), synthetic(25), synthetic(50)], 1000, 0)
+  ).not.toThrow();
+  // Copies of one branch's gpu50 trace in the cpu25 and gpu25 files would
+  // otherwise validate and compare equal, hiding the cadence disagreements.
+  expect(() =>
+    validateRoleTraces([synthetic(50), synthetic(50), synthetic(50)], 1000, 0)
+  ).toThrow(/does not match role cpu25/);
+  expect(() =>
+    validateRoleTraces([synthetic(25), synthetic(50), synthetic(50)], 1000, 0)
+  ).toThrow(/does not match role gpu25/);
+  const relabelled = synthetic(50);
+  (relabelled as { cadence: number }).cadence = 25;
+  expect(() =>
+    validateRoleTraces([synthetic(25), relabelled, synthetic(50)], 1000, 0)
+  ).toThrow(/incomplete recovery observations/);
+  expect(() =>
+    validateRoleTraces([synthetic(25), synthetic(25), synthetic(25)], 1000, 0)
+  ).toThrow(/does not match role gpu50/);
+});
+it("publishes and rereads a final-offset parity failure; only GPU25 must match the saved final checkpoint", async () => {
+  const engineering = async (
+    role: "cpu25" | "gpu25" | "gpu50",
+  ) => {
+    const s = await saved();
+    s.record.mode = "engineering-execution";
+    const manifest = decode<{ stage: string }>(s.files.get("manifest.json")!);
+    manifest.stage = "engineering-only";
+    s.files.set("manifest.json", jsonBytes(manifest));
+    s.record.evidence.manifest = await pinBytes(
+      "manifest.json",
+      s.files.get("manifest.json")!,
+    );
+    const path = s.record.evidence[role].path,
+      trace = decode<Trace>(s.files.get(path)!);
+    trace.rows.at(-1)!.identity = "different final state";
+    s.files.set(path, jsonBytes(trace));
+    s.record.evidence[role] = await pinBytes(path, s.files.get(path)!);
+    const t = (r: "cpu25" | "gpu25" | "gpu50") =>
+      decode<Trace>(s.files.get(s.record.evidence[r].path)!);
+    s.record.diagnostic = diagnoseBranch(
+      s.facts,
+      t("cpu25"),
+      t("gpu25"),
+      t("gpu50"),
+    );
+    return s;
+  };
+  for (
+    const [role, key] of [["cpu25", "sameCadenceOffsets"], [
+      "gpu50",
+      "sharedCadenceOffsets",
+    ]] as const
+  ) {
+    const s = await engineering(role), path = `${role}-diagnostic.json`;
+    await expect(
+      finishBranch(s.record, path, async (p, value) => {
+        s.files.set(p, jsonBytes(value));
+      }, s.load),
+    ).rejects.toThrow(/TECHNICAL-FAILURE/);
+    const reread = (await readBranchRecord(path, s.load)).diagnostic;
+    expect(reread.stage0).toBe("TECHNICAL-STOP");
+    expect(reread.endpoint.status).toBe("TECHNICAL-FAILURE");
+    expect(reread.physicalParity[key]).toContain(2000);
+  }
+  // A checkpoint that differs from the trace that saved it is still rejected.
+  const own = await engineering("gpu25");
+  await expect(verifyBranchRecord(own.record, own.load)).rejects.toThrow(
+    /trace\/boundary mismatch/,
+  );
+});

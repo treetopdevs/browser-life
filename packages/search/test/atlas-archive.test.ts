@@ -10,8 +10,10 @@ import {
   HELDOUT_ASSAYS,
   SEED_LEDGER,
   atlasCell,
+  atlasGenomeKey,
   genomeKey,
   heldoutConfig,
+  ledgerKey,
   mutateGenome,
   proposalGenome,
   searchedArchive,
@@ -113,11 +115,28 @@ describe("accepted-candidate ledger", () => {
     for (const l of led) {
       if (l.prov?.op !== "mutant") continue;
       const regen = proposalGenome(l.prov, a.viableLog()[l.prov.parent!].genome, 60, 20);
-      expect(genomeKey(regen)).toBe(l.key);
+      expect(ledgerKey(regen)).toBe(l.key);
     }
     expect(genomeKey(proposalGenome({ op: "random", parent: null, seed: 9 }, undefined, 60, 20))).toBe(genomeKey(randomGenome(9, 60, 20)));
     expect(genomeKey(proposalGenome({ op: "generalist-mutant", parent: null, seed: 4, count: 6 }, undefined, 60, 20))).toBe(genomeKey(mutateGenome(generalistGenome(60, 20), 4, 6)));
     expect(() => proposalGenome({ op: "mutant", parent: 0, seed: 1, count: 1 }, undefined, 60, 20)).toThrow(/parent/);
+  });
+  it("keys entries by genes too, so gene-distinct genomes are not duplicates; zero-gene keys are genomeKey", () => {
+    const t = new Archive();
+    t.offer(genome(1), ev({}), 0);
+    t.offer({ ...genome(1), genes: 3 }, ev({}), 0);
+    t.offer({ ...genome(1), genes: 0 }, ev({}), 0);
+    t.offer({ ...genome(1), genes: 3 }, ev({}), 0);
+    expect(t.ledger().map((l) => l.duplicate)).toEqual([false, false, true, true]);
+    expect(t.ledger()[0].key).toBe(genomeKey(genome(1)));
+    for (const g of [genome(1), { ...genome(1), genes: 0 }, { ...genome(1), genes: 3 }, { ...genome(1), rings: [0, 1, 0] as [number, number, number] }]) expect(ledgerKey(g)).toBe(atlasGenomeKey(g));
+    // existing zero-gene ledgers keep their keys and duplicates
+    expect(led.map((l) => l.key)).toEqual(a.viableLog().map((e) => genomeKey(e.genome)));
+    // the passer set (the search path) stays gene-blind
+    const p = new Archive();
+    p.offer(genome(1), ev({}), 0);
+    p.offer({ ...genome(1), genes: 3 }, ev({}), 0);
+    expect(p.gatePassing()).toHaveLength(1);
   });
 });
 
