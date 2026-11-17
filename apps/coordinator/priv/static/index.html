@@ -299,6 +299,7 @@ function render(s, gardenViews, discovery) {
   const kindOf = (name, spec) => {
     const all = Object.values(needs[name] || {}).flat();
     if (spec.garden === true) return "garden";
+    if (typeof spec.pickLog === "string") return "picked " + spec.pickLog.slice(0, 8);
     if (all.includes("breed-v1")) return "bred";
     if (all.includes("ponds-v1")) return "pond";
     if (spec.interventions != null) return "scheduled";

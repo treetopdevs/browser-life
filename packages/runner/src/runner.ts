@@ -214,6 +214,19 @@ export interface RunSpec {
    */
   picked?: true;
   /**
+   * The SHA-256 (64 lowercase hex digits) of a fixed, content-addressed pick log (picks.ts `canonicalPickLog`): the donors the
+   * run's boundaries take, kept by the coordinator and fetched by islands, so a picked run can be distributed
+   * (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02). Needs `picked: true`; excludes `pressures` and `branch`.
+   * The spec only names the log: `runExperiment` still gets the entries through `RunOptions.picks` (the island fetches,
+   * checks the digest and slices them to its segment). Optional and absent from every default.
+   */
+  pickLog?: string;
+  /**
+   * With `pickLog`: the log is sparse (a lab history), so a boundary with no entry takes the arm's rule donors
+   * (`RunOptions.implicitRule`). Absent means strict: the log must cover every boundary. Needs `pickLog`.
+   */
+  pickImplicit?: true;
+  /**
    * Scheduled interventions (interventions.ts): lesions, feeds and suns applied at their absolute steps as the lab's
    * traversal applies them, so a wounded or fed history, such as a lab manifest's (`labHistory`), runs and replays
    * headless bit for bit. An entry at step s belongs to the segment that stepped to s (`ownedInterventions`: steps in
@@ -479,6 +492,15 @@ export function validateSpec(spec: RunSpec): string[] {
     if ((spec.picked as unknown) !== true) errs.push("picked must be true or absent");
     if (spec.branch !== undefined) errs.push("a picked run cannot be a branch run");
     if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
+  }
+  if (spec.pickLog !== undefined) {
+    if (typeof spec.pickLog !== "string" || !/^[0-9a-f]{64}$/.test(spec.pickLog)) errs.push("pickLog must be a 64-digit lowercase hex SHA-256");
+    if (spec.picked !== true) errs.push("pickLog needs picked: true");
+    if (spec.pressures !== undefined) errs.push("a pick log cannot be combined with pressures");
+  }
+  if (spec.pickImplicit !== undefined) {
+    if ((spec.pickImplicit as unknown) !== true) errs.push("pickImplicit must be true or absent");
+    if (spec.pickLog === undefined) errs.push("pickImplicit needs pickLog");
   }
   if (spec.interventions !== undefined) errs.push(...validateInterventions(spec.interventions));
   if (spec.pressures !== undefined) errs.push(...validatePressures(spec.pressures, spec.picked === true));
@@ -1018,9 +1040,10 @@ export async function runExperiment(
   const picked = spec.picked === true;
   if (picked !== !!(opts.picker || opts.picks)) throw new Error(picked ? "a picked run needs its picks (a picker or a record)" : "a picker or recorded picks need spec.picked");
   if (picked) {
-    if (opts.start || opts.observer) throw new Error("a picked run cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
+    // Only a run whose donors are all recorded can continue: a live picker's choices are in no checkpoint.
+    if ((opts.start || opts.observer) && (opts.picker || !opts.picks)) throw new Error("a picked run with a live picker cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
     if (opts.immigrant) throw new Error("a picked run cannot import an immigrant state");
-    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
+    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, opts.start?.step ?? 0, spec.steps, !!opts.picker || !!opts.implicitRule);
     if (pickedBad) throw new Error(pickedBad);
   }
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once

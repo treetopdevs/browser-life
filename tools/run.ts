@@ -138,7 +138,7 @@
 //                                     look identical).
 //                                     Without these flags nothing here changes.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { PRESETS, RULE_VERSION, cellCount, genomeChannels, initWorld, isSlab, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
+import { cellCount, genomeChannels, isSlab, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
 import { join as joinPath } from "node:path";
 import { requestDeviceFor } from "@bl/sim-gpu";
 import {
@@ -150,7 +150,6 @@ import {
   continuationError,
   decodeArtifact,
   interventionsError,
-  labHistory,
   parseInterventionLog,
   parseOverrides,
   mergePickLogs,
@@ -165,7 +164,6 @@ import {
   runId,
   sameCompletedRun,
   slabSpecError,
-  sameConfig,
   specConfig,
   validateInterventions,
   validateSpec,
@@ -179,6 +177,7 @@ import {
   type Sink,
 } from "@bl/runner";
 import { branchFlagsError, branchSource } from "./lib/branch-source.ts";
+import { loadPickRecord, type LabRecord, type PickRecord } from "./lib/pick-record.ts";
 import { claimPickDir, commandAnswerer, denoIo, denoRun, dirPicker, fileAnswerer, pickDirTaken, randomPicker, rulePicker } from "./lib/pickers.ts";
 
 const a = parseArgs(Deno.args, {
@@ -345,69 +344,24 @@ if (picking && specs.length !== 1) die("a --picker or --picks-from run takes one
 if (a["verify-against"] !== undefined && specs.length !== 1) die("--verify-against takes one run per invocation");
 
 /** The record named by --picks-from: a picks.jsonl or a lab run manifest (then a boundary without an entry takes the rule's donors). */
-let record: { entries: PickEntry[]; text?: string; implicit: boolean } | undefined;
-/**
- * A lab run manifest's other half (packages/runner/src/interventions.ts `labHistory`): its lesions and feeds, which become the run's
- * schedule, and what the lab recorded to compare the replay with (its checkpoints, and every logged intervention of any kind, which a
- * checkpoint counts). `pondPicks`: the manifest's config is a pond config whose arm chooses donors, or the manifest holds picks, so
- * the replay is a picked run; a plain (fed or wounded) world is not.
- */
-let lab: { scheduled: ScheduledIntervention[]; pressures: PressureEntry[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
+let record: PickRecord | undefined;
+/** A lab run manifest's other half (tools/lib/pick-record.ts `LabRecord`): its lesions and feeds, pressures, and what the lab recorded to compare the replay with. */
+let lab: LabRecord | undefined;
 if (a["picks-from"] !== undefined) {
+  let text: string;
   try {
-    const text = await Deno.readTextFile(a["picks-from"]);
-    let manifest: Record<string, unknown> | undefined;
-    if (text.trimStart().startsWith("{")) {
-      try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed?.interventions)) manifest = parsed;
-      } catch { /* several JSON lines: a pick log */ }
-    }
-    if (manifest) {
-      if (scheduled.length > 0) die("--lesion, --feed and --interventions cannot be combined with a lab run manifest in --picks-from: the manifest is the history, and its lesions and feeds are the schedule");
-      // The start world is the preset's, which the lab planted and whose hash is checked below; a founder option would build
-      // another world under the same config, which that check cannot see (it hashes the preset's start).
-      if (a["solo-founder"] !== undefined || a["solo-genome"] !== undefined || a["founder-set"] !== undefined)
-        die("--solo-founder, --solo-genome and --founder-set cannot be combined with a lab run manifest in --picks-from: the manifest is the history, and its start world is the preset's");
-      const spec = specs[0];
-      const labPreset = PRESETS.find((x) => x.id === spec.presetId);
-      const mismatches = [
-        manifest.presetId !== spec.presetId && "presetId",
-        manifest.seed !== spec.seed && "seed",
-        manifest.ruleVersion !== RULE_VERSION && "ruleVersion",
-        !sameConfig(manifest.cfg as WorldConfig, specConfig(spec)) && "cfg",
-        JSON.stringify(manifest.init) !== JSON.stringify(labPreset?.init) && "init",
-      ].filter(Boolean);
-      if (mismatches.length) die(`the lab manifest does not describe this run: ${mismatches.join(", ")} differ`);
-      // The lab recorded the hash of the world it planted. Its lesions and feeds are at absolute coordinates, so a start world that this
-      // checkout builds differently (initWorld or a founder set drifted without a RULE_VERSION bump) would take them on another world.
-      if (typeof manifest.startHash === "string" && labPreset !== undefined) {
-        const here = stateHash(initWorld(specConfig(spec), labPreset.init));
-        if (manifest.startHash !== here)
-          die(`the lab planted a start world with hash ${manifest.startHash}, but this checkout builds ${here} from the same preset, config and seed: the start world has changed since, so the manifest's lesions and feeds would land on another world`);
-      }
-      const settings = manifest.settings as { censusEvery?: number; deepEvery?: number } | undefined;
-      if (settings && (settings.censusEvery !== spec.censusEvery || settings.deepEvery !== spec.deepEvery))
-        console.error(`note: the lab observed with census ${settings.censusEvery} / deep ${settings.deepEvery}, this run with ${spec.censusEvery} / ${spec.deepEvery}: the physics replays, but summary.finalHash can differ from the lab's`);
-      const history = labHistory(manifest); // refuses edgesFrom > 0 and a lesion or feed that does not validate
-      record = { entries: history.picks, implicit: true }; // no pick lines of its own: a recovery copy gets them written out
-      const labCfg = specConfig(spec);
-      lab = {
-        scheduled: history.scheduled,
-        pressures: history.pressures,
-        checkpoints: Array.isArray(manifest.checkpoints) ? manifest.checkpoints : [],
-        logged: manifest.interventions as { step?: unknown }[],
-        pondPicks: history.picks.length > 0 || (labCfg.pondPeriod !== undefined && (labCfg.pondArm === "scaf" || labCfg.pondArm === "rand" || labCfg.pondArm === "breed")),
-      };
-    } else {
-      // A log cut mid-record by a crash is replayed up to its last complete line; any other damage is an error.
-      const log = parsePickLogPrefix(text);
-      if (log.torn !== null) console.error(`note: ${a["picks-from"]} ends in a torn record (${log.torn.length} bytes, not JSON); replaying its ${log.entries.length} complete picks`);
-      record = { entries: log.entries, text: log.text, implicit: false };
-    }
+    text = await Deno.readTextFile(a["picks-from"]);
   } catch (e) {
     die(`--picks-from ${a["picks-from"]}: ${(e as Error).message}`);
   }
+  ({ record, lab } = loadPickRecord(text!, {
+    file: a["picks-from"],
+    spec: specs[0],
+    scheduledCount: scheduled.length,
+    founderOption: a["solo-founder"] !== undefined || a["solo-genome"] !== undefined || a["founder-set"] !== undefined,
+    die,
+    note: (m) => console.error(m),
+  }));
 }
 if (picking) {
   const only = specs[0];

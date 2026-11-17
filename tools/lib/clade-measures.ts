@@ -670,3 +670,206 @@ export function eligibility(records: readonly RunRecord[], o: EligibilityOptions
   }
   return { counts, complete, incompleteRuns: records.filter((r) => r.complete === false).map((r) => r.dir), eligible, measures: out };
 }
+
+// ---------------------------------------------------------------------------------------------
+// Amendment (2026-10-18): a null matched on demography. Rules fixed in the note's amendment before computing; reads
+// only the per-run record. Additive: nothing above changes.
+
+/** Fixed in the amendment before computing. Calipers are ratios: every covariate within that factor either way (inclusive). */
+export const MATCHING = {
+  covariates: ["meanCells2", "livingLast", "mutationsPer1e5_2"],
+  caliperRatio: 1.1,
+  k: 3,
+  minMatched: 5,
+  minFraction: 0.5,
+  effectBar: 0.8,
+  alpha: 0.05,
+  ladder: [1.05, 1.1, 1.2, 1.5],
+  /** Floating-point allowance at the inclusive bounds (caliper and effect bar), added after review on 2026-10-19. */
+  eps: 1e-9,
+  /** The v1 record this amendment reads. A fresh `all` stamps another code (this file and tools/clade.ts are hashed),
+   * so `matched` then stops until this is updated deliberately. */
+  inputCode: "137e73aa1ba4f404",
+} as const;
+export interface MatchingOptions {
+  covariates: readonly string[];
+  caliperRatio: number;
+  k: number;
+  minMatched: number;
+  minFraction: number;
+  effectBar: number;
+  alpha: number;
+  ladder: readonly number[];
+  eps: number;
+}
+
+/**
+ * Per covariate, d_c = |ln(c_T / c_N)|, computed as ln(max / min) so that it is symmetric to the last bit; also the ratio
+ * max / min that the caliper gates on. Null when a covariate is missing or not positive on either side.
+ */
+export function logRatios(T: RunRecord, N: RunRecord, covariates: readonly string[]): { ratio: number[]; d: number[] } | null {
+  const ratio: number[] = [];
+  for (const c of covariates) {
+    const a = num(T[c]), b = num(N[c]);
+    if (a === null || b === null || a <= 0 || b <= 0) return null;
+    ratio.push(Math.max(a, b) / Math.min(a, b));
+  }
+  return { ratio, d: ratio.map((r) => Math.log(r)) };
+}
+
+export interface MatchedNeutral { dir: string; d: number[]; norm: number }
+export interface Match { dir: string; preset: string; neutrals: MatchedNeutral[] }
+
+/** Throws when a run directory appears twice: a repeated run would count as several matched sets or sign trials. */
+export function assertUniqueDirs(records: readonly RunRecord[], where: string): void {
+  const seen = new Set<string>();
+  for (const r of records) {
+    if (seen.has(r.dir)) throw new Error(`${where}: duplicate run ${r.dir}`);
+    seen.add(r.dir);
+  }
+}
+
+/**
+ * For each treatment run, up to k admissible neutral runs of its own preset (every covariate ratio ≤ caliperRatio + eps),
+ * nearest first by the Euclidean norm of the d_c, ties by directory in ascending string order. With replacement. A
+ * treatment run with a missing covariate gets an empty set; a neutral run with a missing covariate is never admissible.
+ */
+export function matchRuns(treatment: readonly RunRecord[], neutral: readonly RunRecord[], caliperRatio: number, k: number, covariates: readonly string[] = MATCHING.covariates, eps: number = MATCHING.eps): Match[] {
+  return treatment.map((t) => {
+    const cands: MatchedNeutral[] = [];
+    for (const n of neutral) {
+      if (n.preset !== t.preset) continue;
+      const lr = logRatios(t, n, covariates);
+      if (!lr || !lr.ratio.every((r) => r <= caliperRatio + eps)) continue;
+      cands.push({ dir: n.dir, d: lr.d, norm: Math.hypot(...lr.d) });
+    }
+    cands.sort((x, y) => x.norm - y.norm || (x.dir < y.dir ? -1 : x.dir > y.dir ? 1 : 0));
+    return { dir: t.dir, preset: t.preset, neutrals: cands.slice(0, k) };
+  });
+}
+
+/** e_i: the share of the matched neutral values that t is beyond in the expected direction; a tie counts 0.5. */
+export function withinSetEffect(t: number, ns: readonly number[], higher: MeasureSpec["higher"]): number {
+  if (!ns.length) throw new Error("withinSetEffect: empty matched set");
+  let s = 0;
+  for (const n of ns) s += t === n ? 0.5 : (higher === "treatment" ? t > n : t < n) ? 1 : 0;
+  return s / ns.length;
+}
+
+/** Exact one-sided sign test: P(Bin(n, 1/2) ≥ pos). 1 when n = 0. */
+export function signTestP(pos: number, n: number): number {
+  if (!Number.isInteger(pos) || !Number.isInteger(n) || pos < 0 || n < 0 || pos > n) throw new Error(`signTestP(${pos}, ${n})`);
+  let c = 1, s = 0; // c = C(n, i)
+  for (let i = 0; i <= n; i++) {
+    if (i >= pos) s += c;
+    c = (c * (n - i)) / (i + 1);
+  }
+  return s / 2 ** n;
+}
+
+const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);
+
+export type MatchedStatus = "unmatchable" | "pass" | "fail";
+export interface V1Rules { complete: boolean; separation: boolean; nullFlags: boolean | null; splits: boolean; sanity: boolean }
+
+/**
+ * The amendment's readout. Per measure and preset: treatment and neutral runs with the measure's scalar present are
+ * matched; the preset is matchable when at least max(minMatched, ⌈n_T · minFraction⌉) treatment runs (n_T = all of the
+ * preset's treatment runs) have a non-empty set. Status `pass` needs mean e ≥ effectBar (within eps), n′ ≥ minMatched and
+ * sign-test p < alpha. Directories must be unique. Matched separation needs `pass` in both presets; a matched comparative candidate also needs v1's rules
+ * complete, 3 (null flags; null = no such rule), 4 (splits) and 5 (sanity), which are not re-run.
+ */
+export function matchedReadout(records: readonly RunRecord[], v1: Record<string, V1Rules>, o: MatchingOptions = MATCHING) {
+  assertUniqueDirs(records, "matchedReadout");
+  // e_i is a multiple of 1/(2 k_i); summing e_i · L with L = lcm(2, 4, ..., 2k) keeps the sum exact and order-free.
+  const L = Array.from({ length: o.k }, (_, i) => 2 * (i + 1)).reduce((x, y) => (x * y) / gcd(x, y), 1);
+  const of = (set: RunSet, preset: string) => records.filter((r) => r.set === set && r.preset === preset);
+  const caliperMatches = (T: RunRecord[], N: RunRecord[], ratio: number, covs: readonly string[] = o.covariates) =>
+    matchRuns(T, N, ratio, o.k, covs, o.eps).filter((m) => m.neutrals.length > 0).length;
+  const measures: Record<string, unknown> = {};
+  const matchedSeparation: Record<string, boolean> = {}, matchedCandidate: Record<string, boolean> = {};
+  for (const m of MEASURES) {
+    const rules = v1[m.name];
+    if (!rules) throw new Error(`matchedReadout: no v1 rules for ${m.name}`);
+    const perPreset: Record<string, unknown> = {};
+    let allPass = true;
+    for (const p of PRESETS) {
+      const nT = of("treatment", p).length;
+      const T = of("treatment", p).filter((r) => num(r[m.scalar]) !== null);
+      const N = of("neutral", p).filter((r) => num(r[m.scalar]) !== null);
+      const val = new Map(N.map((r) => [r.dir, num(r[m.scalar])!]));
+      const matches = matchRuns(T, N, o.caliperRatio, o.k, o.covariates, o.eps).filter((x) => x.neutrals.length > 0);
+      const need = Math.max(o.minMatched, Math.ceil(nT * o.minFraction));
+      const matchable = matches.length >= need;
+      let pos = 0, neg = 0, ties = 0, sumL = 0;
+      const diffs: number[] = [];
+      for (const x of matches) {
+        const t = num(T.find((r) => r.dir === x.dir)![m.scalar])!;
+        const ns = x.neutrals.map((n) => val.get(n.dir)!);
+        const e = withinSetEffect(t, ns, m.higher);
+        sumL += Math.round(e * L);
+        if (e > 0.5) pos++;
+        else if (e < 0.5) neg++;
+        else ties++;
+        diffs.push(t - median(ns)!);
+      }
+      const nPrime = pos + neg;
+      const meanE = matches.length ? sumL / (L * matches.length) : null;
+      const pSign = signTestP(pos, nPrime);
+      const status: MatchedStatus = !matchable ? "unmatchable" : meanE !== null && meanE >= o.effectBar - o.eps && nPrime >= o.minMatched && pSign < o.alpha ? "pass" : "fail";
+      if (status !== "pass") allPass = false;
+      const distinct = [...new Set(matches.flatMap((x) => x.neutrals.map((n) => n.dir)))].sort();
+      const balance = Object.fromEntries(o.covariates.map((c, i) => [c, matches.length ? Math.max(...matches.flatMap((x) => x.neutrals.map((n) => n.d[i]))) : null]));
+      let flags: { flagged: number; of: number } | null = null;
+      if (m.flag) {
+        const xs = N.filter((r) => distinct.includes(r.dir) && typeof r[m.flag!] === "boolean");
+        flags = { flagged: xs.filter((r) => r[m.flag!] === true).length, of: xs.length };
+      }
+      perPreset[p] = {
+        status,
+        treatmentRuns: nT,
+        needed: need,
+        matched: matches.length,
+        matchedSets: matches.map((x) => ({ dir: x.dir, neutrals: x.neutrals.map((n) => n.dir) })),
+        meanE,
+        positives: pos,
+        negatives: neg,
+        ties,
+        nPrime,
+        pSign,
+        distinctNeutrals: distinct.length,
+        balance,
+        medianDiff: median(diffs),
+        matchedNeutralFlags: flags,
+        ladder: Object.fromEntries(o.ladder.map((r) => [String(r), caliperMatches(T, N, r)])),
+        perCovariate: Object.fromEntries(o.covariates.map((c) => [c, caliperMatches(T, N, o.caliperRatio, [c])])),
+      };
+    }
+    matchedSeparation[m.name] = allPass;
+    matchedCandidate[m.name] = allPass && rules.complete && rules.nullFlags !== false && rules.splits && rules.sanity;
+    measures[m.name] = { scalar: m.scalar, higher: m.higher, v1Rules: rules, presets: perPreset };
+  }
+  return { measures, matchedSeparation, matchedCandidate };
+}
+
+/**
+ * The per-treatment-run matching table on covariates alone (every run; the measures use the same rule per scalar), with
+ * the nearest neutral run of the preset by largest covariate ratio whatever the caliper (descriptive).
+ */
+export function matchingTable(records: readonly RunRecord[], o: MatchingOptions = MATCHING) {
+  assertUniqueDirs(records, "matchingTable");
+  return Object.fromEntries(PRESETS.map((p) => {
+    const T = records.filter((r) => r.set === "treatment" && r.preset === p), N = records.filter((r) => r.set === "neutral" && r.preset === p);
+    return [p, matchRuns(T, N, o.caliperRatio, o.k, o.covariates, o.eps).map((x) => {
+      // Descriptive: the nearest neutral run of the preset by its largest covariate ratio, whatever the caliper.
+      let nearest: { dir: string; maxRatio: number } | null = null;
+      for (const n of N) {
+        const lr = logRatios(records.find((r) => r.dir === x.dir)!, n, o.covariates);
+        if (!lr) continue;
+        const mr = Math.max(...lr.ratio);
+        if (!nearest || mr < nearest.maxRatio || (mr === nearest.maxRatio && n.dir < nearest.dir)) nearest = { dir: n.dir, maxRatio: mr };
+      }
+      return { dir: x.dir, neutrals: x.neutrals, nearest };
+    })];
+  }));
+}

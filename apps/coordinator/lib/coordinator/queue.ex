@@ -100,6 +100,12 @@ defmodule Coordinator.Queue do
   segment's status), and tools/stitch.ts refuses to export a bred run whose
   record mismatches.
 
+  Picked breeder runs (`spec["pickLog"]`, `Coordinator.PickLog`): the SHA-256 of a pick log stored in the blob
+  store. Creation reads the stored bytes and checks them against the spec; a task then carries `picked`,
+  `pickLog` and `pickImplicit` (only for such an experiment), and its segments, run or verify, go only to an
+  island whose request carries `"picks-v1"` (`gated_experiments/2`; `CoordinatorWeb.OpsStatus.needs/2` is held
+  to it). Older islands would refuse the spec, so none runs one unpicked.
+
   Scheduled interventions (`spec["interventions"]`, the runner's
   `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
   lesions and feeds at absolute steps, the wounds and feedings a lab history
@@ -752,7 +758,7 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:create, spec}, _from, s) do
-    with {:ok, spec} <- validate(spec),
+    with {:ok, spec} <- validate(spec, s.dir),
          {:ok, s, count} <- add_experiment(s, spec, now()) do
       {:reply, {:ok, count}, persist(s)}
     else
@@ -2014,7 +2020,10 @@ defmodule Coordinator.Queue do
 
   # ---- validation ----
 
-  defp validate(spec) when is_map(spec) do
+  # `dir` is the data directory a pick log is read from (the Queue's own, passed by `{:create, _}`).
+  defp validate(spec, dir \\ nil)
+
+  defp validate(spec, dir) when is_map(spec) do
     presets = Application.get_env(:coordinator, :presets)
     conditions = Application.get_env(:coordinator, :conditions)
     int_in? = fn v, lo, hi -> is_integer(v) and v >= lo and v <= hi end
@@ -2089,6 +2098,10 @@ defmodule Coordinator.Queue do
       (bad = invalid_interventions(spec)) != nil ->
         {:error, bad}
 
+      # A picked run: its fixed, content-addressed pick log (Coordinator.PickLog).
+      (bad = invalid_pick_log(spec, dir)) != nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -2101,7 +2114,7 @@ defmodule Coordinator.Queue do
 
       true ->
         keep =
-          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions)
+          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions pickLog pickImplicit)
 
         # "metricsVersion" is deliberately not in `keep`: it is the
         # coordinator's own required version at creation time (like
@@ -2121,12 +2134,17 @@ defmodule Coordinator.Queue do
         # reads it so), and must leave no key behind: every segment's task
         # spec, and the stored spec, keep their shape from before the field.
         base = if base["interventions"] == nil, do: Map.delete(base, "interventions"), else: base
+        # Likewise the pick log's two keys: absent unless the experiment is picked.
+        base =
+          if base["pickLog"] == nil, do: Map.drop(base, ["pickLog", "pickImplicit"]), else: base
+
+        base = if base["pickImplicit"] == nil, do: Map.delete(base, "pickImplicit"), else: base
 
         {:ok, put_metapopulation(base, spec)}
     end
   end
 
-  defp validate(_), do: {:error, "spec must be an object"}
+  defp validate(_, _), do: {:error, "spec must be an object"}
 
   # Conditions that remove something the preset does not have (see
   # packages/runner/src/conditions.ts) would fail on every island.
@@ -2269,6 +2287,76 @@ defmodule Coordinator.Queue do
   end
 
   defp put_metapopulation(base, _spec), do: base
+
+  # ---- picked runs (see Coordinator.PickLog and the moduledoc) ----
+
+  # Why `spec["pickLog"]` cannot drive this experiment, or nil (no pick log, or
+  # nil, is an ordinary experiment). The blob must be stored and is validated
+  # again here, against this spec: a pick log's existence in the shared blob
+  # store says only that *some* context-free-valid log has that digest.
+  defp invalid_pick_log(%{"pickLog" => nil} = spec, _dir),
+    do: if(spec["pickImplicit"] != nil, do: "pickImplicit needs pickLog", else: nil)
+
+  defp invalid_pick_log(%{"pickLog" => _}, nil),
+    do: "a pick log belongs to an experiment created through POST /api/experiments"
+
+  defp invalid_pick_log(%{"pickLog" => sha} = spec, dir) do
+    conditions = spec["conditions"]
+    implicit = spec["pickImplicit"]
+
+    cond do
+      not Coordinator.PickLog.sha?(sha) ->
+        "pickLog must be 64 lowercase hex digits (the SHA-256 of a stored pick log)"
+
+      implicit not in [nil, true] ->
+        "pickImplicit must be true or absent"
+
+      Map.has_key?(spec, "overrides") ->
+        "a picked experiment takes no overrides"
+
+      not (is_list(conditions) and length(conditions) == 1) or
+          not (is_list(spec["seeds"]) and length(spec["seeds"]) == 1) ->
+        "a picked experiment is one condition and one seed (a pick log is the history of one world)"
+
+      not picked_condition?(spec["presetId"], hd(conditions)) ->
+        "a picked experiment needs the condition treatment on a breeder preset (#{Enum.join(Application.get_env(:coordinator, :breed_presets, []), ", ")}) or a pond-breed-<score> condition on a pond preset: the arms that choose donors"
+
+      not is_integer(spec["steps"]) ->
+        "steps must be an integer"
+
+      true ->
+        path = Store.blob_path(dir, sha)
+
+        with {:ok, bin} <- File.read(path),
+             {:ok, entries} <- Coordinator.PickLog.validate_bytes(bin, sha),
+             :ok <-
+               Coordinator.PickLog.validate_in_context(entries, %{
+                 preset: spec["presetId"],
+                 steps: spec["steps"],
+                 implicit: implicit == true
+               }) do
+          nil
+        else
+          {:error, :enoent} -> "pick log #{sha} is not stored; PUT /api/pick-logs/#{sha} first"
+          {:error, why} when is_binary(why) -> why
+          {:error, why} -> "pick log #{sha} cannot be read: #{inspect(why)}"
+        end
+    end
+  end
+
+  defp invalid_pick_log(%{"pickImplicit" => v}, _dir) when v != nil,
+    do: "pickImplicit needs pickLog"
+
+  defp invalid_pick_log(_spec, _dir), do: nil
+
+  # The arms that choose donors, as the runner's pickedConfigError sees them: the
+  # breeder preset's treatment is the breed arm, and pond-breed-<score> sets it on
+  # any pond preset. (The island still checks the arm it builds.)
+  defp picked_condition?(preset, condition) do
+    (condition == "treatment" and preset in Application.get_env(:coordinator, :breed_presets, [])) or
+      (is_binary(condition) and String.starts_with?(condition, "pond-breed-") and
+         pond_preset?(preset))
+  end
 
   # ---- scheduled interventions (see the moduledoc) ----
 
@@ -2669,6 +2757,10 @@ defmodule Coordinator.Queue do
       # The whole schedule, to every segment (see the moduledoc): the runner
       # keeps the entries this segment owns. Absent from every other payload.
       |> maybe_put(:interventions, spec["interventions"])
+      # A picked experiment's fixed pick log, by digest (see Coordinator.PickLog): present only then.
+      |> maybe_put(:picked, if(spec["pickLog"] != nil, do: true))
+      |> maybe_put(:pickLog, spec["pickLog"])
+      |> maybe_put(:pickImplicit, spec["pickImplicit"])
 
     %{
       kind: kind,
@@ -2742,6 +2834,9 @@ defmodule Coordinator.Queue do
   # A schedule holding a sun (see the moduledoc): asked for besides
   # `@interventions_capability`.
   @sun_capability "sun-v1"
+  # A picked experiment (`spec["pickLog"]`): its segments, run or verify, need the
+  # island code that fetches and applies the pick log (see the moduledoc).
+  @picks_capability "picks-v1"
 
   # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
   # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
@@ -2761,7 +2856,8 @@ defmodule Coordinator.Queue do
     @current_capability,
     @interventions_capability,
     @breed_capability,
-    @sun_capability
+    @sun_capability,
+    @picks_capability
   ]
   @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
   @stored_capability_bytes 32
@@ -2839,15 +2935,17 @@ defmodule Coordinator.Queue do
     breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
     sun? = @sun_capability in capabilities
+    picks? = @picks_capability in capabilities
 
-    if ponds? and breed? and scheduled? and sun? do
+    if ponds? and breed? and scheduled? and sun? and picks? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
             (not breed? and breed_preset?(exp.spec["presetId"])) or
             (not scheduled? and exp.spec["interventions"] != nil) or
-            (not sun? and sun_schedule?(exp.spec["interventions"])),
+            (not sun? and sun_schedule?(exp.spec["interventions"])) or
+            (not picks? and exp.spec["pickLog"] != nil),
           into: MapSet.new(),
           do: name
     end
