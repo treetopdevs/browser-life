@@ -895,6 +895,121 @@ try {
       if (scored) check(`the stitched ${preset}/${condition} ponds.tsv has rows whose donor was chosen by a score above 0 (${scoredDonors})`, scoredDonors > 0);
     }
   }
+  // Picked breeder runs on islands (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02): a lab-exported pick log
+  // (tests/e2e/fixtures/picks-only-session.json: non-rule donors at cycles 1 and 3, cycle 2 left to the rule) submitted with
+  // tools/submit-picks.ts, stored by its SHA-256, fetched by islands that advertise "picks-v1", run in three segments by one
+  // real island and verified by a second (observation digests compared), then exported by tools/stitch.ts and compared with
+  // tools/run.ts --picks-from on the same log. Created last, so no earlier runIsland call picks up their work.
+  {
+    const fixture = `${root}/tests/e2e/fixtures/picks-only-session.json`;
+    const submit = (args: string[]) => new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/submit-picks.ts", "--coordinator", base, ...args], stdin: "null" }).output();
+    const text = (o: Deno.CommandOutput) => new TextDecoder().decode(o.stdout) + new TextDecoder().decode(o.stderr);
+    const submitted = await submit(["--picks-from", fixture, "--experiment", "it-picked", "--steps", "15000", "--segment-steps", "5000", "--verify-fraction", "1"]);
+    const digest = /pick log ([0-9a-f]{64})/.exec(text(submitted))?.[1] ?? "";
+    check("submit-picks.ts stores the lab's pick log and creates the 3-segment picked experiment", submitted.success && digest.length === 64 && /submitted it-picked\/breeder\/treatment\/seed-1: 3 segments/.test(text(submitted)), text(submitted).slice(-300));
+    const stored = await fetch(`${base}/api/pick-logs/${digest}`);
+    check("the coordinator serves the stored log back, byte for byte the canonical text", stored.ok && (await stored.text()) === '{"step":5000,"kind":"pick","cycle":1,"donors":[3,9,12,0]}\n{"step":15000,"kind":"pick","cycle":3,"donors":[5,12,3,1]}\n');
+    const expPicked = await call<{ spec: Record<string, unknown> }>("/api/experiments/it-picked");
+    check("the stored spec names the log by digest and is sparse (pickImplicit)", expPicked.spec.pickLog === digest && expPicked.spec.pickImplicit === true, JSON.stringify(expPicked.spec));
+
+    const refusedPick = async (what: string, args: string[], re: RegExp) => {
+      const o = await submit(args);
+      check(`${what} is refused`, !o.success && re.test(text(o)), text(o).slice(0, 240));
+    };
+    await refusedPick("a lab history with a lesion (the pond keeper session)", ["--picks-from", `${root}/tests/e2e/fixtures/pond-keeper-session-v3.json`, "--experiment", "it-picked-lesion", "--steps", "10000", "--segment-steps", "5000"], /holds \d+ lesions? besides its picks/);
+    await refusedPick("the same pick log under a run whose steps it does not fit", ["--picks-from", fixture, "--experiment", "it-picked-short", "--steps", "10000", "--segment-steps", "5000"], /outside the run/);
+    const putBad = await fetch(`${base}/api/pick-logs/${"0".repeat(64)}`, { method: "PUT", headers: { "content-type": "application/octet-stream" }, body: "{}\n" });
+    check("a pick log that does not hash to its address is refused (409) and not stored", putBad.status === 409 && (await fetch(`${base}/api/pick-logs/${"0".repeat(64)}`)).status === 404, String(putBad.status));
+    const noBlob = await fetch(`${base}/api/experiments`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ experiment: "it-picked-noblob", presetId: "breeder", conditions: ["treatment"], seeds: [1], steps: 5000, segmentSteps: 5000, censusEvery: 100, pickLog: "1".repeat(64), pickImplicit: true }),
+    });
+    check("an experiment naming a pick log that is not stored is refused (422)", noBlob.status === 422 && /is not stored/.test(await noBlob.text()), String(noBlob.status));
+
+    const noPicks = await call<{ id: string; token: string }>("/api/islands", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ adapter: "no-picks-capability", metricsVersion: METRICS_VERSION }),
+    });
+    const noPicksNext = () =>
+      call<Task>(`/api/next?island=${encodeURIComponent(noPicks.id)}`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${noPicks.token}` },
+        body: JSON.stringify({ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"] }),
+      });
+    const idleNoPicks = await noPicksNext();
+    check("an island without picks-v1 is idle while the picked run's tasks are waiting", idleNoPicks.kind === "idle", JSON.stringify(idleNoPicks.segment ?? idleNoPicks));
+    const logP: string[] = [];
+    const producedPicked = await runIsland(device, { coordinator: base, host, maxTasks: 3, idleMs: 200, log: (m) => logP.push(m) });
+    check("a real island (picks-v1) runs the picked run's 3 segments", producedPicked === 3, `${producedPicked}: ${logP.filter((m) => /^run /.test(m)).join(" | ")}`);
+    const idleNoPicksVerify = await noPicksNext();
+    check("an island without picks-v1 is idle while its verify tasks are waiting", idleNoPicksVerify.kind === "idle", JSON.stringify(idleNoPicksVerify.segment ?? idleNoPicksVerify));
+    const verifiedPicked = await runIsland(device, { coordinator: base, host, maxTasks: 3, idleMs: 200 });
+    check("a second island verifies all 3 segments by state hash", verifiedPicked === 3, String(verifiedPicked));
+    type PickSeg = { id: string; index: number; status: string; files: Record<string, string> | null; observationsVerified: boolean | null };
+    const expP = await call<{ segments: PickSeg[] }>("/api/experiments/it-picked");
+    check(
+      "all 3 segments are verified with matching observation digests (ponds.tsv among them) and no picks.jsonl was uploaded",
+      expP.segments.length === 3 && expP.segments.every((x) => x.status === "verified" && x.observationsVerified === true && typeof x.files?.[PONDS_FILE] === "string" && x.files?.[PICKS_FILE] === undefined),
+      JSON.stringify(expP.segments.map((x) => ({ i: x.index, status: x.status, ov: x.observationsVerified, files: Object.keys(x.files ?? {}) }))),
+    );
+
+    const pickStitch = await stitchCli("it-picked");
+    check("stitch.ts exports the picked run (it fetches and checks the pick log)", pickStitch.success && stdout(pickStitch).includes("1 written"), `${stdout(pickStitch).slice(-200)} ${new TextDecoder().decode(pickStitch.stderr).slice(0, 300)}`);
+    const pickSingleOut = `${dataDir}/single-picked`;
+    const pickSingle = await new Deno.Command(Deno.execPath(), {
+      args: ["run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-picked", "--preset", "breeder", "--conditions", "treatment", "--seeds", "1", "--steps", "15000", "--census", "100", "--deep", "10", "--checkpoint", "0", "--picks-from", fixture, "--out", pickSingleOut],
+      stdin: "null",
+    }).output();
+    check("tools/run.ts --picks-from replays the same pick log unsegmented", pickSingle.success, new TextDecoder().decode(pickSingle.stderr).slice(0, 300));
+    const readP = (path: string) => Deno.readTextFile(path).catch(() => undefined);
+    const pStitched = `${outDir}/it-picked/breeder/treatment/seed-1`;
+    const pSingle = `${pickSingleOut}/it-picked/breeder/treatment-by-replay/seed-1`;
+    const pDiffering: string[] = [];
+    for (const f of VERIFIED_FILES) if ((await readP(`${pStitched}/${f}`)) !== (await readP(`${pSingle}/${f}`))) pDiffering.push(f);
+    const pm = [JSON.parse((await readP(`${pStitched}/manifest.json`)) ?? "{}"), JSON.parse((await readP(`${pSingle}/manifest.json`)) ?? "{}")];
+    const entriesOf = (t: string | undefined) => (t ?? "").split("\n").filter(Boolean).map((l) => { const e = JSON.parse(l); return [e.step, e.cycle, e.donors.join(",")].join("/"); });
+    const [pe, ps] = [entriesOf(await readP(`${pStitched}/${PICKS_FILE}`)), entriesOf(await readP(`${pSingle}/${PICKS_FILE}`))];
+    check(
+      "the stitched picked bundle equals tools/run.ts --picks-from on the same log: finalHash, every verified file, the picks block (digest, counts) and the applied entries",
+      pDiffering.length === 0 && pm[0].summary.finalHash === pm[1].summary.finalHash && JSON.stringify(pm[0].picks) === JSON.stringify(pm[1].picks) && pe.length === 3 && pe.join("|") === ps.join("|"),
+      `differing [${pDiffering.join(", ")}], finalHash ${pm[0].summary?.finalHash} vs ${pm[1].summary?.finalHash}, picks ${JSON.stringify(pm[0].picks)} vs ${JSON.stringify(pm[1].picks)}, entries ${pe.join("|")} vs ${ps.join("|")}`,
+    );
+    const pondsP = ((await readP(`${pStitched}/${PONDS_FILE}`)) ?? "").split("\n").filter(Boolean);
+    const cols = (pondsP[0] ?? "").split("\t");
+    const donorsAt = (cycle: number) => [...new Set(pondsP.slice(1).map((l) => l.split("\t")).filter((c) => c[cols.indexOf("cycle")] === String(cycle)).map((c) => Number(c[cols.indexOf("donor")])))].sort((x, y) => x - y);
+    check(
+      "the stitched ponds.tsv's cycle 1 and cycle 3 donors are the log's non-rule picks ([0, 3, 9, 12] and [1, 3, 5, 12]), not the rule's",
+      donorsAt(1).join() === "0,3,9,12" && donorsAt(3).join() === "1,3,5,12",
+      `${donorsAt(1)} / ${donorsAt(3)}`,
+    );
+    const pickedAgain = await stitchCli("it-picked");
+    check("re-exporting the unchanged picked run keeps the bundle", pickedAgain.success && stdout(pickedAgain).includes("0 written, 1 already present"), stdout(pickedAgain).slice(-200));
+    // A bundle whose picks.jsonl is gone, or altered with the fingerprint unchanged, is not kept (the cached-export check).
+    await Deno.remove(`${pStitched}/${PICKS_FILE}`);
+    const pickRepaired = await stitchCli("it-picked");
+    check("an export whose picks.jsonl was deleted is moved aside and re-exported", pickRepaired.success && stdout(pickRepaired).includes("1 written") && (await readP(`${pStitched}/${PICKS_FILE}`)) !== undefined, stdout(pickRepaired).slice(-200));
+    const altered = ((await readP(`${pStitched}/${PICKS_FILE}`)) ?? "").replace('"donors":[3,9,12,0]', '"donors":[9,3,12,0]');
+    await Deno.writeTextFile(`${pStitched}/${PICKS_FILE}`, altered);
+    const pickAltered = await stitchCli("it-picked");
+    check("an export whose picks.jsonl donor order was altered is re-exported, not kept", pickAltered.success && stdout(pickAltered).includes("1 written") && (await readP(`${pStitched}/${PICKS_FILE}`)) !== altered, stdout(pickAltered).slice(-200));
+
+    // A pick the world cannot take (a pond that does not exist) is the same on every island: reported as a failed segment.
+    const badLog = '{"step":5000,"kind":"pick","cycle":1,"donors":[999]}\n';
+    const badSha = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(badLog))), (b) => b.toString(16).padStart(2, "0")).join("");
+    await fetch(`${base}/api/pick-logs/${badSha}`, { method: "PUT", headers: { "content-type": "application/octet-stream" }, body: badLog });
+    await call("/api/experiments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ experiment: "it-picked-bad", presetId: "breeder", conditions: ["treatment"], seeds: [1], steps: 5000, segmentSteps: 5000, censusEvery: 100, verifyFraction: 0, pickLog: badSha, pickImplicit: true }) });
+    const logBad: string[] = [];
+    const producedBad = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200, log: (m) => logBad.push(m) });
+    const badStatus = await call<{ failures: { run: string; reason?: string }[] }>("/api/status");
+    const badFailure = badStatus.failures.find((f) => f.run.startsWith("it-picked-bad/"));
+    check(
+      "an island meeting a pick of a pond that does not exist completes nothing and reports the segment failed with the runner's reason",
+      producedBad === 0 && logBad.some((m) => /cannot apply the picks as given/.test(m)) && /not an occupied pond|pond cycle 1 at t=5000/.test(badFailure?.reason ?? ""),
+      `${logBad.join(" | ")} ${JSON.stringify(badFailure)}`,
+    );
+  }
 } finally {
   try {
     server.kill("SIGTERM");

@@ -9,11 +9,22 @@ export function noLockDenoShim(deno: string): string {
   return `#!/bin/sh\ncase "$1" in run|eval|test|check|cache) sub=$1; shift; exec ${q} "$sub" --no-lock "$@" ;; esac\nexec ${q} "$@"\n`;
 }
 
-/** Writes the shim for this deno as `<dir>/deno` (creating `dir`) and returns `dir`, to put first on the child's PATH. */
-export async function noLockDenoBin(dir: string): Promise<string> {
-  await Deno.mkdir(dir, { recursive: true });
+/**
+ * Writes the shim for this deno as `<dir>/deno` (creating `dir`) and returns `dir`, to put first on the child's PATH. Under node
+ * (a Playwright spec has no `Deno`) the path of the deno to run is `deno`, which the caller resolves.
+ */
+export async function noLockDenoBin(dir: string, deno?: string): Promise<string> {
   const shim = `${dir}/deno`;
-  await Deno.writeTextFile(shim, noLockDenoShim(Deno.execPath()));
-  await Deno.chmod(shim, 0o755);
+  // Looked up through globalThis so the root tsc program, which a Playwright spec's import pulls this file into, needs no Deno types.
+  const D = (globalThis as { Deno?: { execPath(): string; mkdir(d: string, o: { recursive: boolean }): Promise<void>; writeTextFile(p: string, t: string): Promise<void>; chmod(p: string, m: number): Promise<void> } }).Deno;
+  if (D === undefined) {
+    const fs = await import("node:fs/promises");
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(shim, noLockDenoShim(deno!), { mode: 0o755 });
+    return dir;
+  }
+  await D.mkdir(dir, { recursive: true });
+  await D.writeTextFile(shim, noLockDenoShim(deno ?? D.execPath()));
+  await D.chmod(shim, 0o755);
   return dir;
 }

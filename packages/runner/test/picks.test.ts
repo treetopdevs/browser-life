@@ -523,7 +523,7 @@ describe("the island refuses a picked spec", () => {
   const picked: RunSpec = { ...spec, picked: true };
   it("specRefusal: null for an ordinary spec, a message for a picked one", () => {
     expect(specRefusal(spec)).toBeNull();
-    expect(specRefusal(picked)).toMatch(/picked run.*not distributed/);
+    expect(specRefusal(picked)).toMatch(/picked run.*without a pick log/);
   });
   it("refuses a task whose spec is picked before fetching anything else", async () => {
     const requests: [string, string][] = [];
@@ -540,7 +540,7 @@ describe("the island refuses a picked spec", () => {
       }
       throw new Error(`unexpected ${path}`);
     });
-    await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 })).rejects.toThrow(/refusing pk\/ponds-small\/treatment\/seed-1 #1: .*picked.*not distributed/);
+    await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 })).rejects.toThrow(/refusing pk\/ponds-small\/treatment\/seed-1 #1: .*picked.*without a pick log/);
     expect(requests).toEqual([["POST", "/api/islands"], ["POST", "/api/next"], ["DELETE", "/api/islands/isl"]]);
     expect(leaves).toEqual([{ island: "isl", authorization: "Bearer tok" }]);
   });
