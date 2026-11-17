@@ -76,6 +76,14 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   `:conditions`, `:incompatible` and the queue's breeder prefixes to the runner's own
   refusals by `packages/runner/test/coordinator-conditions.test.ts`.
 
+* Picked breeder runs (docs/archipelago-breed-2026-10-18.md, amendment 4): `PUT /api/pick-logs/:sha`
+  (admin) stores a canonical pick log in the blob store under its SHA-256 after context-free validation
+  (`Coordinator.PickLog`); `GET /api/pick-logs/:sha` serves it to an island or the administrator. An experiment
+  spec may name it with `pickLog` (and `pickImplicit: true` for a sparse log): creation needs the blob and
+  re-validates it against the spec (breeder `treatment` or `pond-breed-*`, one condition and seed, boundaries
+  inside the steps, full coverage unless implicit). Its segments carry `picked`, `pickLog` and `pickImplicit` and go
+  only to islands that advertise `picks-v1`. `tools/submit-picks.ts` is the one command that does both calls.
+
 ### Island limits
 
 Island request budgets are kept outside the Queue process (`Coordinator.IslandLimiter`),

@@ -491,7 +491,7 @@ describe("run identity and the island", () => {
     const pressured: RunSpec = { ...pondSpec, picked: true, pressures: [{ step: 0, cycle: 1, score: "body" }] };
     expect(sameCompletedRun(done({ ...pondSpec, picked: true }), pressured)).toBe(false);
     expect(sameCompletedRun(done(pressured), pressured)).toBe(true);
-    expect(specRefusal(pressured)).toMatch(/picked runs are not distributed/);
+    expect(specRefusal(pressured)).toMatch(/without a pick log/);
     expect(specRefusal({ ...pondSpec, pressures: pressured.pressures })).toMatch(/pressured run is not distributed/); // belt and braces over the picked refusal
   });
 
@@ -499,7 +499,7 @@ describe("run identity and the island", () => {
     expect(specRefusal(spotsSmall)).toBeNull();
     expect(specRefusal(wounded)).toBeNull();
     expect(ISLAND_CAPABILITIES).toContain("interventions-v1");
-    expect(specRefusal({ ...spotsSmall, picked: true })).toMatch(/picked runs are not distributed/);
+    expect(specRefusal({ ...spotsSmall, picked: true })).toMatch(/without a pick log/);
     expect(specRefusal({ ...wounded, branch: { source: "x", sourceHash: "0000000000000000", boundary: 1 } })).toMatch(/branches are not distributed/);
   });
 });

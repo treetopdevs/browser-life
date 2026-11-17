@@ -340,7 +340,7 @@ describe("island idle wait", () => {
       throw new Error(`unexpected ${path}`);
     });
     await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
-    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
+    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1", "picks-v1"];
     expect(ISLAND_CAPABILITIES).toEqual(caps);
     expect(bodies).toEqual([{ capabilities: caps }, { capabilities: caps }]);
   });

@@ -1,0 +1,3 @@
+{"step":5000,"kind":"pick","cycle":1,"donors":[3,9,12,0],"by":"recorded","suggested":[6,7,15,2]}
+{"step":10000,"kind":"pick","cycle":2,"donors":[7,1,0,14],"by":"rule(implicit)","suggested":[7,1,0,14]}
+{"step":15000,"kind":"pick","cycle":3,"donors":[14,13,9,11],"by":"rule(implicit)","suggested":[14,13,9,11]}

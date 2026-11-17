@@ -173,6 +173,51 @@ GPU is criterion 2's (scored overrides), and criterion 1's `breeder` run is the 
     "are ordered as the breed arm orders them, and are not the mass control's". The full donor set and assignment are
     held by the replay itself (the donors' cells are in the checkpoint every verifier recomputes), not by this check.
 
+- **2026-11-02, amendment 4: picked breeder runs on islands, from a fixed, content-addressed pick log.** The "Picked and
+  pressured runs on islands" item of "Not built" is partly built; the text above is not edited. A *picked* run
+  (`RunSpec.picked`) can now be distributed when its picks are fixed before the run and stored by digest. Pressured runs, model
+  pickers and live hand picks stay out (no paid calls; nothing is chosen during a run). `tools/submit-picks.ts` refuses lesions,
+  feeds, suns and pressures beside the picks; the coordinator's experiment POST does not itself forbid a schedule beside a
+  `pickLog`, and that combination is untested.
+  - *Two logs, never conflated.* The **input pick log** is an immutable, possibly sparse blob: explicit choices only, in the
+    canonical text `packages/runner/src/picks.ts` `canonicalPickLog` writes (`{"step","kind":"pick","cycle","donors"}` per line,
+    ascending, no `by`/`suggested`); its lowercase hex SHA-256 is its address. The **applied history** is the complete per-boundary
+    `picks.jsonl` a run writes (implicit boundaries included); a stitched bundle's `picks.jsonl` is that history, rebuilt from the
+    stitched `ponds.tsv` (every pond is a recipient, so the ordered donors are recoverable: `appliedPicksFromPonds`) and checked
+    against the input log (`appliedHistoryError`) and against `ponds.tsv` (`picksConsistencyError`, donor order included).
+  - *Coordinator.* `PUT /api/pick-logs/:sha` (admin) stores a log in `Coordinator.Store`'s blob store after context-free
+    validation only (`Coordinator.PickLog`: size cap, UTF-8, canonical shape, ascending, digest = path). `GET` serves it to an
+    island or the administrator (hex64 checked before the path, bytes re-validated). An experiment spec may carry `pickLog` (and
+    `pickImplicit: true` for a sparse log); creation requires the blob to exist and re-validates the stored bytes in the
+    experiment's own context: `treatment` on a `:breed_presets` preset or `pond-breed-*` on a pond preset, no `overrides`, one
+    condition and one seed, steps a multiple of the pond period, every entry on a boundary with cycle = step / period inside
+    `(0, steps]`, and, without `pickImplicit`, an entry at every boundary. The task spec carries `picked`, `pickLog` and
+    `pickImplicit` only for such an experiment (every other payload is byte-identical). New capability `picks-v1`, asked for
+    with `ponds-v1` and `breed-v1`: its segments, run or verify, go only to islands that advertise it.
+  - *Island and runner.* An island fetches the log, checks its SHA-256 and canonical form itself, keeps the entries in the
+    segment's own window `(start, start + steps]` and passes them as `RunOptions.picks` (with `implicitRule` for a sparse log). A
+    picked run with recorded picks and no picker may now continue from a checkpoint; a live picker still refuses. Every
+    deterministic pick failure (a log that fails its digest or parse, a preflight refusal, a `PickError` at a boundary such as an
+    unoccupied donor) is reported through the existing terminal `/fail` path, not released for retry. `picks.jsonl` stays an
+    unverified, never-uploaded file. Verification is by state hash as before.
+  - *Stitch.* `stitchRun` accepts a picked chain only with `spec.pickLog` and the log's text, recomputes the manifest's `picks`
+    block over the whole run (a segment's own block counts only its window), and `taskSpecError` binds the three new keys.
+    `tools/stitch.ts` downloads and checks the blob, and its cached-export check refuses a picked bundle whose `picks.jsonl` is
+    missing, altered or inconsistent. Equality claim (designed and coded, not yet measured: see Status below) to `tools/run.ts --picks-from` on the same log: same `finalHash`, same bytes in
+    every `VERIFIED_FILES` file, same `picks` digest and counts and applied entries (`by` and `suggested` columns may differ).
+  - *Submitting.* `tools/submit-picks.ts` (Deno, no GPU) reads what the lab exports (a run manifest, a session file or a
+    picks.jsonl, through `tools/lib/pick-record.ts`, moved out of `tools/run.ts` unchanged), refuses lesions, feeds, suns and
+    pressures by name, canonicalises, stores the log and creates the experiment. See the root README, the paragraph on picked breeder runs.
+  - *Null fixture.* Every equality gate uses a log whose donors differ from the rule's (`tests/e2e/fixtures/picks-only-session.json`:
+    cycles 1 and 3 explicit, cycle 2 implicit), and the GPU legs are written to assert that a run ignoring it has another hash (not yet run, see Status).
+  - *Status (2026-11-17, landing).* Code, vitest, ExUnit and the Deno/Playwright scripts are in the tree. The GPU legs
+    (`tests/deno/picked_segments.ts`, the `it-picked` leg of `tests/deno/coordinator_integration.ts`), the Playwright spec
+    `tests/e2e/lab-picks-to-coordinator.spec.ts` and the manual two-island run were **not run** when this was landed, so the
+    chain-equals-continuous and stitched-equals-`tools/run.ts` claims above are unmeasured, and no evidence.md exists.
+  - *Not built / limits.* One condition x seed per pick log; donor validity against the world is checked on the island (a bad pick
+    fails its segment at run time, not at creation); a browser island as verifier is not gated; physics, `RULE_VERSION` and golden
+    pins are untouched.
+
 ## Results (2026-10-18)
 
 All criteria PASS. The machine was heavily loaded throughout (load averages 400 to 560); every result below passed
