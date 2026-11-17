@@ -4,12 +4,15 @@
 //
 //   deno run -A tools/clade.ts pilot                              2 runs: timings, retained nodes and the cadence rule; no measure values
 //   deno run -A tools/clade.ts all --cadence 1|10 --cache FILE    every run -> experiments/foundations/clade-v1.json (resumes from FILE)
+//   deno run -A tools/clade.ts matched [--record F] [--out F]      the amendment's matched null, from the record alone
+//                                                                 -> experiments/foundations/clade-v1-matched.json
 //
 //   --base       directory standing in for "runs" (default runs; from a worktree, pass the main checkout's runs/)
 //   --cache      per-run cache, required by `all`; must not be under --base (run bundles are read-only)
 //   --out        the record (default experiments/foundations/clade-v1.json)
 //   --cadence    1 = measures at every census, 10 = at every 10th; chosen by the pilot's rule, required by `all`
 //   --cap-hours  wall-time cap for `all` (default 12); when hit, the record is written with partial: true
+//   --record     `matched` only: the v1 record to read (default experiments/foundations/clade-v1.json); no bundle is read
 //
 // Each cache entry records its input (manifest ids and hashes, sizes and modification times of lineages.tsv and
 // mutations.tsv) and is refused when the files under --base differ. Contents are not digested (about 20 GB per pass), so
@@ -21,13 +24,14 @@
 // per cache file at a time.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { lineageCensuses } from "./lib/bundle.ts";
-import { type CladeResult, type RunRecord, type RunSet, cladeMeasures, eligibility, ELIGIBILITY, isUnder, PARAMS, splitLines } from "./lib/clade-measures.ts";
+import { type CladeResult, type RunRecord, type RunSet, type V1Rules, cladeMeasures, eligibility, ELIGIBILITY, isUnder, MATCHING, matchedReadout, matchingTable, MEASURES, PARAMS, PRESETS, splitLines } from "./lib/clade-measures.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["base", "cache", "out", "cadence", "cap-hours"],
-  default: { base: "runs", out: "experiments/foundations/clade-v1.json", "cap-hours": "12" },
+  string: ["base", "cache", "out", "cadence", "cap-hours", "record"],
+  default: { base: "runs", "cap-hours": "12", record: "experiments/foundations/clade-v1.json" },
 });
 const cmd = String(a._[0] ?? "");
+const out = a.out ?? (cmd === "matched" ? "experiments/foundations/clade-v1-matched.json" : "experiments/foundations/clade-v1.json");
 const VERSION = 1;
 const HORIZON = 1_000_000;
 const CENSUS_EVERY = 100;
@@ -252,7 +256,7 @@ async function all() {
   if (!(capHours >= 0)) throw new Error(`--cap-hours ${a["cap-hours"]}`);
   const base = await Deno.realPath(a.base);
   const dirOf = (f: string) => Deno.realPath(f.includes("/") ? f.slice(0, f.lastIndexOf("/")) || "/" : ".");
-  for (const [flag, f] of [["--cache", a.cache], ["--out", a.out]] as const) {
+  for (const [flag, f] of [["--cache", a.cache], ["--out", out]] as const) {
     if (isUnder(await dirOf(f), base)) throw new Error(`${flag} ${f} is under --base ${a.base}; run bundles are read-only`);
   }
   const code = await codeHash();
@@ -333,15 +337,65 @@ async function all() {
     timings: { computeSeconds: { treatment: secs("treatment"), neutral: secs("neutral"), noMutation: secs("noMutation") }, wallSecondsThisInvocation: Math.round((performance.now() - t00) / 1000) },
     uptime: { start: uptimeStart, end: uptime() },
   };
-  await writeAtomic(a.out, JSON.stringify(record, null, 1) + "\n");
-  console.log(`wrote ${a.out}${record.partial ? " (PARTIAL)" : ""}; ${record.uptime.end}`);
+  await writeAtomic(out, JSON.stringify(record, null, 1) + "\n");
+  console.log(`wrote ${out}${record.partial ? " (PARTIAL)" : ""}; ${record.uptime.end}`);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Amendment (2026-10-18): the matched null, from the committed record alone (no bundle is read, nothing is simulated).
+
+const hex = async (bytes: Uint8Array<ArrayBuffer>) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+
+async function matched() {
+  const uptimeStart = uptime();
+  const bytes = await Deno.readFile(a.record);
+  const rec = JSON.parse(new TextDecoder().decode(bytes));
+  const problems: string[] = [];
+  if (rec.partial !== false) problems.push(`partial is ${rec.partial}`);
+  if (!Array.isArray(rec.incompleteRuns) || rec.incompleteRuns.length) problems.push(`incompleteRuns ${JSON.stringify(rec.incompleteRuns)}`);
+  if (rec.code !== MATCHING.inputCode) problems.push(`code ${rec.code}, expected ${MATCHING.inputCode}`);
+  const records: RunRecord[] = [...(rec.runs?.treatment ?? []), ...(rec.runs?.neutral ?? [])];
+  for (const set of ["treatment", "neutral"] as const)
+    for (const p of PRESETS) {
+      const n = records.filter((r) => r.set === set && r.preset === p).length;
+      if (n !== ELIGIBILITY.expected[set][p]) problems.push(`${set} ${p}: ${n} runs, expected ${ELIGIBILITY.expected[set][p]}`);
+    }
+  const bad = records.filter((r) => r.complete !== true).map((r) => r.dir);
+  if (bad.length) problems.push(`runs not complete: ${bad.join(", ")}`);
+  const v1: Record<string, V1Rules> = {};
+  for (const m of MEASURES) {
+    const rules = rec.measures?.[m.name]?.rules;
+    if (!rules) problems.push(`no v1 rules for ${m.name}`);
+    else v1[m.name] = rules;
+  }
+  if (problems.length) throw new Error(`STOP: ${a.record} is not the record the amendment reads:\n  ${problems.join("\n  ")}`);
+
+  // This hash covers the matched readout only (this file, the library, MATCHING); v1's `code` is the input record's.
+  const src = await Promise.all([new URL("./lib/clade-measures.ts", import.meta.url), new URL(import.meta.url)].map((u) => Deno.readTextFile(u)));
+  const code = (await hex(new TextEncoder().encode(JSON.stringify([src, MATCHING])))).slice(0, 16);
+  const readout = matchedReadout(records, v1);
+  const result = {
+    note: "Matched-null amendment to the clade measures (docs/clade-measures-2026-10-18.md, 'Amendment: a null matched on demography'); " +
+      "rules fixed there before computing. Reads only the v1 record; exploratory, not a registration.",
+    input: { path: a.record, sha256: await hex(bytes), code: rec.code },
+    code,
+    matching: MATCHING,
+    matchingTable: matchingTable(records),
+    measures: readout.measures,
+    matchedSeparation: readout.matchedSeparation,
+    matchedCandidate: readout.matchedCandidate,
+    uptime: { start: uptimeStart, end: uptime() },
+  };
+  await writeAtomic(out, JSON.stringify(result, null, 1) + "\n");
+  console.log(`wrote ${out}; code ${code}; matchedSeparation ${JSON.stringify(readout.matchedSeparation)}; matchedCandidate ${JSON.stringify(readout.matchedCandidate)}; ${result.uptime.end}`);
 }
 
 if (import.meta.main) {
   if (cmd === "pilot") await pilot();
   else if (cmd === "all") await all();
+  else if (cmd === "matched") await matched();
   else {
-    console.error("usage: deno run -A tools/clade.ts pilot | all --cadence 1|10 --cache FILE [--base D] [--out F] [--cap-hours H]");
+    console.error("usage: deno run -A tools/clade.ts pilot | all --cadence 1|10 --cache FILE [--base D] [--out F] [--cap-hours H] | matched [--record F] [--out F]");
     Deno.exit(2);
   }
 }

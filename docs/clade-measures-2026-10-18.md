@@ -374,3 +374,175 @@ under an unchanged hash. The hash now covers both files (import maps and the res
 per-run scalar and every eligibility value is identical, and the record's `code` hash is `137e73aa1ba4f404`. No test
 covers the cache's modification-time comparison or the hash's file list; both live in the CLI and were checked by
 review.
+
+## Amendment: a null matched on demography (2026-10-18)
+
+Status: **exploratory, analysis only**, as above. This is the follow-up the Readout asks for ("a null matched on
+population size and lineage structure"). The Readout said that would be a new note; it is kept here as a
+self-contained dated section with its own rules instead, and it changes no rule, parameter, value or verdict of v1
+above. Code: `tools/lib/clade-measures.ts` (additive exports), `tools/clade.ts matched`. Record:
+`experiments/foundations/clade-v1-matched.json`. No new simulation and no bundle is read: every quantity comes from
+the committed per-run record `experiments/foundations/clade-v1.json` (code `137e73aa1ba4f404`).
+
+### What had been seen when these rules were written
+
+- Everything in v1: its readout, its table, and the committed record, which holds every per-run scalar and covariate.
+- For this amendment, before the rules below were fixed: the minimum, median and maximum of each matching covariate
+  per set and preset (treatment and neutral, gradient-m3 and spots-m3). No scalar was paired with a covariate, and no
+  matched set, matched effect or sign test was computed. Those ranges, with the v1 ranges already published above,
+  already show that gradient treatment runs hold more living lineages (185–614) than any gradient neutral run (70–122),
+  and that the lowest spots treatment `meanCells2` (26,964) is close to a 10% caliper above the highest spots neutral
+  (24,528). The caliper was not chosen to make or avoid matches; the caliper ladder below reports what other calipers
+  would give.
+
+### Fixed before computing (2026-10-18)
+
+**Covariates.** Three per-run quantities, all already in the record and all positive:
+`meanCells2` (mean living cells over censuses with t > horizon/2), `livingLast` (living lineages at the final census)
+and `mutationsPer1e5_2` (mutation rows with childHi > horizon/2, per 10⁵ steps). `livingLast` is the only lineage
+count in the record; a second-half mean would be better but is not computed, and no other lineage covariate
+(`retainedLast`, `depthLast`) is substituted for it later. A run with any of the three missing, or with a missing
+scalar for a measure, is unmatched for that measure; all 130 runs are complete.
+
+**Matching rule.**
+1. *Within preset only.* A treatment run is matched only to neutral runs of its own preset. No-mutation runs are
+   not a null (v1, Corpora).
+2. *Distance, scale-free.* For covariate c, d_c(T, N) = |ln(c_T / c_N)|. A within-neutral standard deviation is not
+   used: gradient neutral runs span 0.6% in cells and 1.4% in mutation rows, so it would put every treatment run
+   effectively infinitely far away, and a pooled standard deviation would build the treatment–neutral gap into the
+   scale.
+3. *Caliper (primary).* A neutral run N is admissible for T if max_c d_c(T, N) ≤ ln 1.10 (inclusive): every
+   covariate within a factor of 1.10 either way.
+4. *Matched set.* Among admissible neutral runs, the up to k = 3 nearest by the Euclidean norm of (d_c), ties broken by
+   run directory in ascending string order. Matching is with replacement: one neutral run may serve several treatment
+   runs (the number of distinct neutral runs used is reported, and the dependence this adds to the sign test is
+   noted, not corrected). T is *matched* if its set is non-empty (size 1–3).
+5. *Enough matches.* A preset is *matchable* only if at least max(5, ⌈n_T / 2⌉) treatment runs are matched: at least
+   10 of 20 in gradient-m3 and at least 5 of 10 in spots-m3. Five is the smallest n at which a one-sided sign test can
+   reach 0.05 (1/32). Half is a representativeness floor: matched runs are the most neutral-looking treatment runs,
+   so the comparison is about that subset (the effect on the treated within the overlap), not about treatment.
+6. *When matching fails* (a preset not matchable), that preset reads `unmatchable` and the measure fails in it. The
+   caliper is not widened, presets are not pooled, no regression or other extrapolation across non-overlapping
+   covariates is used, no covariate is dropped or swapped, and no stratum is dropped.
+
+**Caliper ladder (descriptive only).** The same rule at calipers of 1.05, 1.10, 1.20 and 1.50: matched treatment
+runs per preset at each. Also, at the primary caliper, per covariate on its own: how many treatment runs have at
+least one neutral run within the caliper on that covariate alone (which covariate blocks matching). No verdict is
+read at any caliper other than 1.10.
+
+**Comparison on the matched sets** (per measure, per preset, matched treatment runs only).
+- *Within-set effect.* For matched treatment run i with matched neutral runs j = 1…k_i,
+  e_i = (1 / k_i) Σ_j s(T_i, N_j), where s is 1 if T_i is beyond N_j in the measure's expected direction (TMRCA95:
+  T lower; mutant sweeps and gross replacement: T higher), 0.5 on a tie and 0 otherwise. It is computed directly, not
+  through `mannWhitney`.
+- *Effect.* The mean of e_i over matched runs must be at least 0.8 (v1's bar).
+- *Sign test.* Runs with e_i > 0.5 are positive, e_i < 0.5 negative, e_i = 0.5 dropped. With n′ = positives +
+  negatives, the exact one-sided p = P(Bin(n′, ½) ≥ positives) must be below 0.05; n′ < 5 cannot pass.
+- *Matched separation* holds for a measure only if the preset is matchable and both the effect and the sign test pass,
+  in **both** presets (as v1 rule 2: a registration would run in both).
+
+**What can become a candidate.** v1 rules 3, 4 and 5 are not re-run and are not rescued by matching. TMRCA95 and
+mutant sweeps failed rule 3 on all 70 neutral runs, so they stay not eligible whatever the matched readout says; for
+them it is diagnostic only. Gross replacement (no rule 3; rules 4 and 5 passed in v1) is the only measure that can come
+out as a **matched comparative candidate**, and only if matched separation holds in both presets. Even then it needs
+its own dated registration rule, a fresh pilot and a neutral arm, as v1 says. Three measures, no multiplicity
+correction.
+
+**Descriptive (never gating).** Per preset: matched balance (the largest d_c per covariate over matched pairs), distinct
+neutral runs used, the median of (T_i minus the median of its matched neutrals), and, for TMRCA95 and sweeps, the flag
+rate among the distinct matched neutral runs.
+
+**Input checks** (stop on any failure): the record is not partial, has no incomplete run, has code
+`137e73aa1ba4f404`, and holds 20 / 10 treatment and 40 / 30 neutral runs. The matched record carries the input
+record's SHA-256, its own code hash and `uptime`.
+
+### What each outcome means (written before computing)
+
+- **Matchable in both presets, matched separation holds.** The measure separates treatment from neutral runs of the
+  same population size, lineage count and mutation supply, among the treatment runs that have such neighbours. For
+  gross replacement that makes it a matched comparative candidate; for the other two it shows that separation survives
+  matching but they still fail rule 3.
+- **Matchable in both presets, matched separation fails.** Among demographically matched runs the measure does not tell
+  selection from drift, so v1's spots separation can be explained by demography. Not eligible.
+- **Unmatchable in one or both presets.** The existing corpus cannot supply a matched null there, and the confound v1
+  names stays open. Nothing is eligible, and the next step is a neutral arm whose demography overlaps treatment's
+  (new simulation, a separate note and go-ahead), not a wider caliper.
+- **Mixed** (one preset passes, the other fails or is unmatchable). Reported per preset; the measure is not eligible,
+  because both presets are required.
+- **A caveat on all four.** The covariates are themselves outcomes of the condition: selection changes population size
+  and lineage structure. Matching on them asks whether treatment differs from neutral runs that happen to share its
+  demography; it can over-control (removing part of selection's real effect) as well as remove a confound. A pass is
+  evidence beyond demography; a fail is not evidence that selection is absent.
+
+The readout is added below this section once `clade-v1-matched.json` exists, and is recorded against these rules
+whatever it says.
+
+### Readout (2026-10-19)
+
+Computed with `deno run -A tools/clade.ts matched` from `experiments/foundations/clade-v1.json` (SHA-256
+`2b1a58df8264839b4808fbf96071c8b1565ee2b781242cf7a77817267926e438`, code `137e73aa1ba4f404`; all input checks passed) into
+`experiments/foundations/clade-v1-matched.json` (code `e958befb9c27cd5d`). Seconds of CPU, no bundle read; load average
+340 at start and end.
+
+**Outcome: unmatchable in both presets, for all three measures.** At the primary caliper (1.10) no treatment run in
+either preset has a single admissible neutral run, against floors of 10 (gradient-m3) and 5 (spots-m3). No matched
+effect or sign test exists, `matchedSeparation` and `matchedCandidate` are false for every measure, and nothing is
+eligible. By the rules above this is the third case: the existing corpus cannot supply a matched null, the
+demographic confound v1 names stays open, and the next step is a neutral arm whose demography overlaps treatment's
+(new simulation, its own note and a go-ahead), not a wider caliper.
+
+| | gradient-m3 (20 treatment, 40 neutral) | spots-m3 (10 treatment, 30 neutral) |
+|---|---|---|
+| matched at 1.10 (floor) | 0 (10) | 0 (5) |
+| ladder 1.05 / 1.10 / 1.20 / 1.50 | 0 / 0 / 0 / 0 | 0 / 0 / 1 / 6 |
+| within 1.10 on `meanCells2` alone | 7 | 1 |
+| within 1.10 on `livingLast` alone | 0 | 7 |
+| within 1.10 on `mutationsPer1e5_2` alone | 0 | 8 |
+| nearest neutral, largest covariate ratio (min / median / max over treatment runs) | 2.01 / 4.06 / 5.03 | 1.15 / 1.49 / 28.4 |
+
+The ladder and per-covariate counts are the same for the three measures (every run has every scalar), and were
+checked by an independent recount from the v1 record. The last row is derived from `matchingTable[preset][*].nearest.maxRatio`
+in the matched record (each treatment run's nearest neutral run by its largest covariate ratio, whatever the caliper).
+
+- **Gradient-m3** is blocked by lineage count and mutation supply: no treatment run is within 1.10 of any neutral run
+  on either, and none matches even at 1.50. The nearest pair differs by a factor of 2.01 on its worst covariate. Cells
+  alone would match 7 of 20.
+- **Spots-m3** is blocked by population size: only one treatment run (seed 10, 26,964 cells) is within 1.10 of a
+  neutral run on cells alone, and its nearest neutral by largest ratio (replay-calib seed 1003: 23,531 cells, 765
+  against 669 living lineages, 48,920 against 45,998 mutation rows per 10⁵) is 1.146 apart on cells. Lineage counts and
+  mutation rows overlap for most runs; the treatment runs are simply larger.
+- Descriptive only, and no verdict is read from it: at 1.50 six spots runs would match, still not a gradient run.
+
+What this changes: nothing in v1. Its readout already said rule 5 had almost no power here; this confirms with the
+pre-stated rule that the committed neutral corpus does not overlap treatment in demography at all in gradient-m3, and
+overlaps in spots-m3 only on lineage count and mutation supply, not on population size. A matched comparison needs new
+neutral runs with treatment-like demography (in gradient-m3 the treatment runs hold 1.5× to 8.8× the replay neutrals' living
+lineages and 1.3× to 3.7× their mutation rows, from the covariate ranges above), which is outside this amendment.
+
+**Hash note.** Adding the matched exports to `tools/lib/clade-measures.ts` and the `matched` subcommand to
+`tools/clade.ts` changes v1's code hash, which covers both files: a fresh `all` would stamp a code other than
+`137e73aa1ba4f404` and miss every cache entry. No v1 function, rule or parameter changed (the v1 tests pass
+unchanged), so v1's per-run values and eligibility stand as recorded; `all` was not rerun. The matched record carries
+its own hash over the two files and `MATCHING`.
+
+**Record stamp note (landing, 2026-11-17).** `MATCHING.eps` (1e-9, a floating-point allowance at the inclusive caliper
+and effect-bar bounds) was added after review on 2026-10-19, after `clade-v1-matched.json` was written, so the committed
+record's `code` (`e958befb9c27cd5d`) and its `matching` block (no `eps`) predate the final library. Re-running
+`deno run -A --no-lock tools/clade.ts matched` on the unchanged v1 record into a scratch file gives a record that is
+identical in every other field (matching table, all measures, `matchedSeparation`, `matchedCandidate`) and stamps code
+`6695dd277085fa5c` with `eps` present. The committed record was not rewritten: no recorded value changed, only the
+provenance stamp is stale. Nothing was simulated.
+
+**Reading caveats added at landing (2026-11-17, from review; no rule or value changed).**
+- A "matched separation fails" outcome means only that matched separation was not established. A fail can also come from
+  too few informative sets (n' < 5 after ties are dropped, as the tests show with mean e 0.9) and so does not show that
+  demography explains v1's separation; the "can be explained by demography" wording in the outcome list above reads
+  that way. This corpus never reached that case: every status is `unmatchable`.
+- The sign test's p is the exact binomial tail given the stated coin model, but that model is not calibrated for discrete
+  scalars (such as sweep counts), where ties within a set are broken unevenly, nor for control reuse (noted above). It is
+  a screening statistic fixed before computing, not a calibrated p-value. It was never evaluated here, because no preset
+  was matchable.
+
+Gates (2026-10-19): `deno check tools/clade.ts` passed; `pnpm vitest run tools/test/clade-measures` passed (both
+files); `pnpm typecheck` passed (it does not cover `tools/`). Load averages are recorded beside each in the slice
+report.
