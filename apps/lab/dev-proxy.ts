@@ -13,11 +13,25 @@ const BODY = JSON.stringify({
  * not read them as "refused"). A websocket upgrade hands the error listener a socket, not a ServerResponse, and a
  * response whose headers went out cannot be answered again; both are left alone. Returns whether it answered.
  *
+ * `localhost` resolves to two addresses and Node tries both, so the error can be an aggregate of connection attempts.
+ * On a busy machine one attempt can time out before it is refused; the aggregate then reports ETIMEDOUT although no
+ * attempt ever connected. An aggregate counts as refused when at least one attempt was refused and every other one
+ * timed out while connecting: nothing was sent on any of them.
+ *
  * Vite installs its own error listener after `configure`; it writes its 502 only while the response is still open,
  * so answering here first replaces it (it still logs its line).
  */
+function refused(err: unknown): boolean {
+  const e = err as { code?: unknown; errors?: unknown } | null;
+  if (Array.isArray(e?.errors) && e.errors.length > 0) {
+    const codes = e.errors.map((x) => (x as { code?: unknown } | null)?.code);
+    return codes.includes("ECONNREFUSED") && codes.every((c) => c === "ECONNREFUSED" || c === "ETIMEDOUT");
+  }
+  return e?.code === "ECONNREFUSED";
+}
+
 export function coordinatorUnavailable(err: unknown, res: unknown): boolean {
-  if ((err as { code?: unknown } | null)?.code !== "ECONNREFUSED") return false;
+  if (!refused(err)) return false;
   const r = res as Partial<ServerResponse> | null;
   if (!r || typeof r.setHeader !== "function" || typeof r.end !== "function") return false;
   if (r.headersSent || r.writableEnded) return false;

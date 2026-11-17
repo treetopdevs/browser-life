@@ -11,6 +11,15 @@ const fakeRes = (over: Record<string, unknown> = {}) => {
 };
 
 describe("coordinatorUnavailable", () => {
+  it("reads an aggregate of connection attempts: refused when one was refused and the rest timed out connecting", () => {
+    const mk = () => ({ statusCode: 0, headersSent: false, writableEnded: false, setHeader() {}, end() {} });
+    const agg = (code: string, ...codes: string[]) => ({ code, errors: codes.map((c) => ({ code: c })) });
+    expect(coordinatorUnavailable(agg("ECONNREFUSED", "ECONNREFUSED", "ECONNREFUSED"), mk())).toBe(true);
+    expect(coordinatorUnavailable(agg("ETIMEDOUT", "ETIMEDOUT", "ECONNREFUSED"), mk())).toBe(true);
+    expect(coordinatorUnavailable(agg("ETIMEDOUT", "ETIMEDOUT", "ETIMEDOUT"), mk())).toBe(false);
+    expect(coordinatorUnavailable(agg("ECONNREFUSED", "ECONNREFUSED", "ECONNRESET"), mk())).toBe(false);
+  });
+
   it("answers 503 JSON for ECONNREFUSED", () => {
     const res = fakeRes();
     expect(coordinatorUnavailable({ code: "ECONNREFUSED" }, res)).toBe(true);
