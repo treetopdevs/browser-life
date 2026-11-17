@@ -209,11 +209,14 @@ GPU is criterion 2's (scored overrides), and criterion 1's `breeder` run is the 
     picks.jsonl, through `tools/lib/pick-record.ts`, moved out of `tools/run.ts` unchanged), refuses lesions, feeds, suns and
     pressures by name, canonicalises, stores the log and creates the experiment. See the root README, the paragraph on picked breeder runs.
   - *Null fixture.* Every equality gate uses a log whose donors differ from the rule's (`tests/e2e/fixtures/picks-only-session.json`:
-    cycles 1 and 3 explicit, cycle 2 implicit), and the GPU legs are written to assert that a run ignoring it has another hash (not yet run, see Status).
-  - *Status (2026-11-17, landing).* Code, vitest, ExUnit and the Deno/Playwright scripts are in the tree. The GPU legs
-    (`tests/deno/picked_segments.ts`, the `it-picked` leg of `tests/deno/coordinator_integration.ts`), the Playwright spec
-    `tests/e2e/lab-picks-to-coordinator.spec.ts` and the manual two-island run were **not run** when this was landed, so the
-    chain-equals-continuous and stitched-equals-`tools/run.ts` claims above are unmeasured, and no evidence.md exists.
+    cycles 1 and 3 explicit, cycle 2 implicit), and the GPU legs are written to assert that a run ignoring it has another hash (run once, see Status).
+  - *Status (2026-11-17, landing).* Run on the integration tree the same day, on one local machine (native WebGPU):
+    `tests/deno/picked_segments.ts` passed in full (a chain of segments equals the continuous run; a chain that drops the
+    picks has another hash and is refused); `tests/deno/coordinator_integration.ts` passed with 113 checks and no failure,
+    including the `it-picked` leg (the stitched picked bundle equals `tools/run.ts --picks-from` on the same log: finalHash,
+    every verified file, the picks block); the Playwright spec `tests/e2e/lab-picks-to-coordinator.spec.ts` passed in Chrome.
+    Not done: the manual two-island demo on separate machines, so no evidence.md exists, and one machine and one run of
+    each script is all this says.
   - *Not built / limits.* One condition x seed per pick log; donor validity against the world is checked on the island (a bad pick
     fails its segment at run time, not at creation); a browser island as verifier is not gated; physics, `RULE_VERSION` and golden
     pins are untouched.

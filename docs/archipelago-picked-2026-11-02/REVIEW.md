@@ -26,7 +26,7 @@ Ported onto main b1d463f0 from the uncommitted workspace (base e8d75273). Only `
 path and imports; the loader was kept moved to `tools/lib/pick-record.ts`, main's slab code kept). Dropped as scratch:
 `plan-review-codex.full.log` (613 KB raw log; the 10 KB `plan-review-codex.txt` is kept). Not done, because they need GPU runs
 that were out of scope: `tests/deno/picked_segments.ts`, the `it-picked` leg of `coordinator_integration.ts`, the Playwright
-spec, and the manual demo with its `evidence.md`. They are written but unrun; the equality claims are unmeasured.
+spec, and the manual demo with its `evidence.md`. They were unrun at the port. Later the same day, on the integration tree and one local machine, `picked_segments.ts` passed in full, `coordinator_integration.ts` passed with 113 checks and no failure (including `it-picked`), and the Playwright spec passed in Chrome. The manual two-machine demo and its `evidence.md` remain not done.
 
 Codex Sol 6.1 High review of the ported diff (read-only): P2 JSONL submission silently dropped lesion/feed/sun/pressure lines
 (fixed: `submitRefusal(lab, text)` names them, test added); P2 a 404 on the pick-log fetch was released for retry instead of

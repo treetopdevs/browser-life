@@ -87,6 +87,15 @@ export const ENTRIES: Entry[] = [
     answer: "Two readouts told a hand-built hierarchy from duplicated random shapes; a naive copies-times-cost score got it backwards every time. Nothing was read from real ecology clips.",
     pages: [{ href: "/assembly/", text: "Assembly observer" }],
     sources: ["docs/assembly-observer-2026-11-02/EVIDENCE.md"] },
+  { chapter: 3, card: "A null matched on demography", label: "Exploratory", date: "19 Oct",
+    answer: "No treatment run had a neutral run of similar size and lineage count to match, in either world, so the existing runs cannot supply a matched null. The confound stays open; a fail would not have shown selection absent either.",
+    sources: ["docs/clade-measures-2026-10-18.md"] },
+  { chapter: 3, card: "A recovery check that stopped itself", label: "Open", date: "25 Oct",
+    answer: "A planned mass-targeted recovery test stopped at its engineering stage: with the physical states matching, two observation schedules followed different remnants. A technical stop, with no recovery claim.",
+    sources: ["docs/recovery-severity-2026-10-24/STAGE0.md", "docs/recovery-severity-2026-10-24/TRACKER-DIAGNOSIS.json", "docs/recovery-severity-2026-10-24/V4-IMPLEMENTATION.md"] },
+  { chapter: 3, card: "Can the observer tell rebuilding from copying?", label: "Exploratory", date: "2 Nov",
+    answer: "On a toy with answers we set, a readout that needs the class back after total destruction and a deletable store was right on 128 of 128; a naive level check on 48 of 128. It cannot tell a stored recipe from a stored image, and heredity is untested.",
+    sources: ["docs/assembly-destruction-2026-11-02/PROTOCOL.md", "docs/assembly-destruction-2026-11-02/evidence.json", "docs/assembly-destruction-2026-11-02/REVIEW.md"] },
 
   // 4 · A hand on the dial
   { chapter: 4, card: "A life cycle for groups", label: "Measured", date: "1 Oct",
@@ -171,8 +180,8 @@ export const ENTRIES: Entry[] = [
 
   // 7 · Sharper questions
   { chapter: 7, card: "A map of behaviours", label: "Open", date: "1 Nov",
-    answer: "A tool that keeps one example of each kind of behaviour now runs end to end, but its first comparison could not tell the search methods apart.",
-    sources: ["docs/behaviour-atlas-2026-11-01/PLAN-2.md"] },
+    answer: "A tool that keeps one example of each kind of behaviour now runs end to end, but its first comparison could not tell the search methods apart. A second line calibrated two descriptors: the displacement one was mostly undefined, the persistence one usable, and no calibrated archive was built on them.",
+    sources: ["docs/behaviour-atlas-2026-11-01/PLAN-2.md", "docs/behaviour-atlas-2026-11-01/PLAN-ledger.md", "docs/behaviour-atlas-2026-11-01/calibration.json"] },
   { chapter: 7, card: "Better than the past, or just different?", label: "Open", date: "2 Nov",
     answer: "Old and new genomes competed in small arenas. Nothing shows improvement against the past under the frozen rules, and that is not a finding of no improvement: two of three archives failed a control.",
     pages: [{ href: "/opponents/", text: "Historical opponents" }, { href: "/opponents/archive/", text: "Archive tournament" }],
