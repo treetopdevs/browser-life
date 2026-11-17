@@ -63,8 +63,28 @@ export function freezeCommit(root = REPO, configPath = "tools/opponents/archive-
   return lines.length ? lines[lines.length - 1] : null;
 }
 export interface FreezeResult { problems: string[]; commit: string | null; inventory: Record<string, string> }
-/** Verifies the freeze: ancestor of HEAD, every inventoried file byte-identical to the commit, no outcome files in it, manifest agrees. */
-export function freezeCheck(root = REPO, files: string[] = frozenFiles(root), commit?: string, manifestPath = MANIFEST): FreezeResult {
+/**
+ * Dated record of inventoried files whose bytes moved after the freeze (or that joined an inventoried directory later),
+ * each with the hash it has now. It is read only when verifying saved evidence, never before scoring. An entry is
+ * accepted only when the working tree has exactly that hash, and the record must name the freeze commit it belongs to;
+ * the record's own note says which replay showed the payload still regenerates byte for byte. Absent: the check is strict.
+ */
+export const POST_FREEZE = "docs/historical-opponents-archive-2026-11-02/post-freeze-sources.json";
+export function postFreezeHashes(root: string, commit: string): Record<string, string> {
+  if (!existsSync(root + POST_FREEZE)) return {};
+  const r = JSON.parse(readFileSync(root + POST_FREEZE, "utf8")) as { kind?: string; date?: string; freezeCommit?: string; files?: Record<string, string> };
+  if (r.kind !== "historical-opponents-archive-post-freeze-sources") throw new Error(`${POST_FREEZE} has the wrong kind`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date ?? "")) throw new Error(`${POST_FREEZE} has no date`);
+  if (r.freezeCommit !== commit) throw new Error(`${POST_FREEZE} belongs to freeze ${r.freezeCommit}, not ${commit}`);
+  if (!r.files || typeof r.files !== "object" || Object.values(r.files).some((h) => !/^[0-9a-f]{64}$/.test(String(h)))) throw new Error(`${POST_FREEZE} has no valid files map`);
+  return r.files;
+}
+/**
+ * Verifies the freeze: ancestor of HEAD, every inventoried file byte-identical to the commit, no outcome files in it,
+ * manifest agrees. With `allowRecorded` (verification of saved evidence only) a file may instead equal its hash in the
+ * post-freeze record; scoring (`--write`) and `--freeze-check` stay strict.
+ */
+export function freezeCheck(root = REPO, files: string[] = frozenFiles(root), commit?: string, manifestPath = MANIFEST, allowRecorded = false): FreezeResult {
   const problems: string[] = [];
   const c = commit ?? freezeCommit(root);
   if (!c) return { problems: ["no freeze commit: archive-config.json was never committed"], commit: null, inventory: {} };
@@ -72,12 +92,15 @@ export function freezeCheck(root = REPO, files: string[] = frozenFiles(root), co
   const tree = git(root, ["ls-tree", "-r", "--name-only", c]).split("\n");
   for (const o of OUTCOME_FILES) if (tree.includes(o)) problems.push(`outcome file ${o} is in the freeze commit`);
   const inventory: Record<string, string> = {};
+  const later = allowRecorded ? postFreezeHashes(root, c) : {};
   for (const f of files) {
+    const now = existsSync(root + f) ? sha256(readFileSync(root + f)) : null;
+    const recorded = now !== null && later[f] === now;
     const then = fileAt(root, c, f);
-    if (!then) { problems.push(`frozen file ${f} is not in the freeze commit`); continue; }
+    if (!then) { if (!recorded) problems.push(`frozen file ${f} is not in the freeze commit`); continue; }
     inventory[f] = sha256(then);
-    if (!existsSync(root + f)) problems.push(`frozen file ${f} is missing from the working tree`);
-    else if (sha256(readFileSync(root + f)) !== inventory[f]) problems.push(`frozen file ${f} changed after the freeze`);
+    if (now === null) problems.push(`frozen file ${f} is missing from the working tree`);
+    else if (now !== inventory[f] && !recorded) problems.push(`frozen file ${f} changed after the freeze`);
   }
   if (existsSync(manifestPath)) {
     const m = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -315,7 +338,7 @@ export function checkSaved(o: { evidencePath?: string; manifestPath?: string; ar
   cmp("payload schedule counts", scheduleCounts(planOf(cfg, fx).jobs), payload.schedule);
   cmp("manifest constants", payload.constants, manifest.constants);
   cmp("manifest schedule", payload.schedule, manifest.schedule);
-  if (root === REPO) problems.push(...freezeCheck(REPO, undefined, undefined, manifestPath).problems);
+  if (root === REPO) problems.push(...freezeCheck(REPO, undefined, undefined, manifestPath, true).problems);
   else if (!manifest.freeze?.commit || !/^[0-9a-f]{40}$/.test(manifest.freeze.commit)) problems.push("manifest has no valid freeze commit");
   const fixture = checkFixture(fx, cfg, o.runsDir === undefined ? (process.env.RUNS ?? null) : o.runsDir);
   problems.push(...fixture.problems);
@@ -402,7 +425,8 @@ async function main(): Promise<void> {
     for (const s of fx.sources) console.log(`${s.name}: ${s.status}${s.dropReason ? ` (${s.dropReason})` : ""} bins ${s.bins.map((b) => (b.snapshot ? "V" : "-")).join("")} horizon ${s.horizon}`);
     console.log(`cpu ${cpu()} s`);
   } else if (mode === "--freeze-check") {
-    const r = freezeCheck();
+    // strict unless --recorded: with it, files listed in the dated post-freeze record may have their recorded hash
+    const r = freezeCheck(REPO, undefined, undefined, MANIFEST, process.argv.includes("--recorded"));
     if (r.problems.length) { console.error(r.problems.join("\n")); process.exit(1); }
     console.log(`--freeze-check ok (freeze commit ${r.commit}, ${Object.keys(r.inventory).length} frozen files)`);
   } else if (mode === "--write") {

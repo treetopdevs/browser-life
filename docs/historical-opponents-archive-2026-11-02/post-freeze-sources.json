@@ -1,0 +1,24 @@
+{
+ "kind": "historical-opponents-archive-post-freeze-sources",
+ "date": "2026-11-16",
+ "freezeCommit": "2a012b9fb29641351e7ead0c83fb05f316858fc8",
+ "note": "Files in the frozen inventory whose bytes moved after the freeze, or that joined an inventoried directory later, with the SHA-256 each has now. The 3D line (the slab reference merged to main in 9e80170f, the jar and 3D mycelium by PR #172, 94047077) changed nine schema and sim-ref files and added six for the slab and jar worlds; no RULE_VERSION 1 golden pin moved. tools/opponents/archive.ts changed only to read this record when verifying saved evidence; scoring (--write) and the plain --freeze-check never read it. With these bytes, `node tools/opponents/archive.ts --replay-check` regenerated evidence.json byte for byte on 2026-11-16. The manifest's freeze inventory is unchanged and still lists the freeze commit's hashes. See REVIEW.md, dated note 2026-11-16.",
+ "files": {
+  "packages/schema/src/accounting.ts": "da2c224820d07a2b947f07f7df296b4a9623317bd5d90bd7cf6533895ae8fc18",
+  "packages/schema/src/checkpoint.ts": "74595dbbb9f2b77503b95e2eb077a2b872eb8b182a3f727855271a5ddeb909fb",
+  "packages/schema/src/config.ts": "71b97e040cf873a7140484729fac173d25daf2f9fcdc2c07684404d84937b8e4",
+  "packages/schema/src/feed.ts": "caf2e0e800b4694b9660e52eaf8e641a8d2eec598737a2b54794e0f1966ef0ab",
+  "packages/schema/src/genome3.ts": "376fe3ebb32397b7cafd9339309d6360b038afe522fa9df52749f1caf462f0cd",
+  "packages/schema/src/index.ts": "71a9723991ac0b36b1b1b9196e213a15e9279eef7af7195a678c29b7d8acb486",
+  "packages/schema/src/kernel3d.ts": "3a4a9a4270dfd6911dc6aaa0868e8c584e091294c354cfc90a08009f466687b0",
+  "packages/schema/src/layout3d.ts": "615068ba0296274307c7528e274133ddc46290df1827d2c0f654e126d4bb904c",
+  "packages/schema/src/presets.ts": "7d7bed97c3a3254feb25281b122f44daf28afdc7ae4f744a735852fa38abd15b",
+  "packages/schema/src/world.ts": "ecba3cb274729104be28af27caf96858a7853079c976819d07d2916864119c08",
+  "packages/schema/src/world3.ts": "5ee20d64d8fee8b6721167bbcf8979236c54c93f4f07a4494809431a041b6552",
+  "packages/sim-ref/src/create.ts": "367b77276ee995958cab847442c6cd4ec21e7cfd1ce323a1f8ddacc4caa10e2c",
+  "packages/sim-ref/src/index.ts": "9f1985d1e32eb6d519945eaa921032b19d75fb0a66b7c30a536b8f1e2e098fd9",
+  "packages/sim-ref/src/step.ts": "d61fe0803a57ab03a30b90e8559bb88c0d94a9e22d05780cb427710878a64744",
+  "packages/sim-ref/src/step3d.ts": "24f5cb4f9cbafd9b6e0fed70c515d1904cb5afe6ef3254bbb50b9a78ba874cb4",
+  "tools/opponents/archive.ts": "5e98c425fe1cc646ef18523fffba66e83cca13f3a6c87207721d55344af3bd34"
+ }
+}

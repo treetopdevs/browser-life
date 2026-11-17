@@ -1,9 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ARCHIVE, CONFIG, EVIDENCE, MANIFEST, REPO, checkFixture, checkSaved, freezeCheck, freezeCommit, frozenFiles, generatePayload, mini, sampled, serialize, sourceFiles } from '../opponents/archive.ts';
+import { ARCHIVE, CONFIG, EVIDENCE, MANIFEST, POST_FREEZE, REPO, checkFixture, checkSaved, freezeCheck, freezeCommit, frozenFiles, generatePayload, mini, sampled, serialize, sourceFiles } from '../opponents/archive.ts';
 import { checkSaved as firstRungCheck } from '../opponents/assay.ts';
 import { recompute, sealPayload, verifySeal, STATEMENTS, type ArchiveFixture, type Payload } from '../../packages/metrics/src/archive-tournament/evidence.ts';
 
@@ -112,6 +113,51 @@ describe('freeze-check', () => {
     sh(dir, 'add', '-A'); sh(dir, 'commit', '-q', '-m', 'sneaky change'); // committing it does not launder it
     expect(freezeCheck(dir, files, undefined, dir + 'none.json').problems.some((p) => p.includes('lib.ts changed after the freeze'))).toBe(true);
   });
+  it('a post-freeze record admits exactly the recorded bytes, only when verifying, and only for its own freeze', () => {
+    const { dir, files, put } = setup(false);
+    const sha = (t: string) => createHash('sha256').update(t).digest('hex');
+    const head = sh(dir, 'rev-parse', 'HEAD').trim();
+    const frozen = { 'tools/opponents/archive-config.json': sha('{}\n'), 'lib.ts': sha('export const x = 1;\n') };
+    const manifest = dir + 'manifest.json';
+    writeFileSync(manifest, JSON.stringify({ freeze: { commit: head, inventory: frozen } }));
+    const record = (m: Record<string, string>, over: Record<string, unknown> = {}) =>
+      put(POST_FREEZE, JSON.stringify({ kind: 'historical-opponents-archive-post-freeze-sources', date: '2026-11-16', freezeCommit: head, files: m, ...over }));
+    const all = [...files, 'new.ts'];
+    const verify = () => freezeCheck(dir, all, undefined, manifest, true);
+    const strict = () => freezeCheck(dir, all, undefined, manifest);
+    put('lib.ts', 'export const x = 2;\n');
+    put('new.ts', 'export const y = 1;\n');
+    expect(verify().problems.length).toBe(2); // no record yet
+    const good = { 'lib.ts': sha('export const x = 2;\n'), 'new.ts': sha('export const y = 1;\n') };
+    record(good);
+    const ok = verify();
+    expect(ok.problems).toEqual([]);
+    expect(ok.inventory).toEqual(frozen); // the inventory, and so the manifest comparison, stays the freeze commit's hashes
+    // scoring and the plain freeze check never read the record
+    expect(strict().problems.some((p) => p.includes('lib.ts changed after the freeze'))).toBe(true);
+    expect(strict().problems.some((p) => p.includes('new.ts is not in the freeze commit'))).toBe(true);
+    put('lib.ts', 'export const x = 3;\n'); // bytes other than the recorded ones
+    expect(verify().problems.some((p) => p.includes('lib.ts changed after the freeze'))).toBe(true);
+    put('lib.ts', 'export const x = 1;\n'); // back to the freeze bytes: fine, the entry is not required
+    expect(verify().problems).toEqual([]);
+    put('new.ts', 'export const y = 2;\n');
+    expect(verify().problems.some((p) => p.includes('new.ts is not in the freeze commit'))).toBe(true);
+    put('new.ts', 'export const y = 1;\n');
+    // a record for another freeze, or a malformed one, is refused outright
+    record(good, { freezeCommit: 'a'.repeat(40) });
+    expect(() => verify()).toThrow(/belongs to freeze/);
+    record(good, { kind: 'x' });
+    expect(() => verify()).toThrow(/wrong kind/);
+    record(good, { date: 'soon' });
+    expect(() => verify()).toThrow(/no date/);
+    record({ 'lib.ts': 'nothex' });
+    expect(() => verify()).toThrow(/no valid files map/);
+    // a manifest whose inventory was altered to the new bytes is still caught
+    record(good);
+    put('lib.ts', 'export const x = 2;\n');
+    writeFileSync(manifest, JSON.stringify({ freeze: { commit: head, inventory: { ...frozen, 'lib.ts': good['lib.ts'] } } }));
+    expect(verify().problems).toContain('manifest freeze inventory differs from the freeze commit');
+  });
   it('freeze-check fails when an outcome file is in the freeze commit, and when no freeze exists', () => {
     const { dir, files } = setup(true);
     expect(freezeCheck(dir, files, undefined, dir + 'none.json').problems.some((p) => p.includes('outcome file'))).toBe(true);
@@ -122,7 +168,11 @@ describe('freeze-check', () => {
   });
   it('freeze-check passes on the real branch', () => {
     if (!freezeCommit(REPO)) return; // before the freeze commit exists
-    expect(freezeCheck().problems).toEqual([]);
+    // verification reads the dated post-freeze record; the strict check (scoring) reports exactly the recorded files
+    expect(freezeCheck(REPO, undefined, undefined, MANIFEST, true).problems).toEqual([]);
+    const recorded = existsSync(REPO + POST_FREEZE) ? Object.keys(JSON.parse(readFileSync(REPO + POST_FREEZE, 'utf8')).files).sort() : [];
+    const strict = freezeCheck().problems.map((p) => /^frozen file (\S+) (changed after the freeze|is not in the freeze commit)$/.exec(p)?.[1]);
+    expect(strict.sort()).toEqual(recorded);
     expect(frozenFiles().length).toBeGreaterThan(8);
   });
 });
