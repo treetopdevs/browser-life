@@ -4,6 +4,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { WORLD_LINK_PAGES, withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
 import { SCREENS } from "./src/food-bands/screens.ts";
+import { apiProxy } from "./dev-proxy.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
@@ -176,8 +177,8 @@ export default defineConfig({
   // "mpa": an unknown path is not rewritten to the home page, so the not-found plugin above can answer it.
   appType: "mpa",
   resolve: { alias },
-  server: { port: 5173, strictPort: true, proxy: { "/api": coordinatorUrl } },
-  preview: { proxy: { "/api": coordinatorUrl } },
+  server: { port: 5173, strictPort: true, proxy: { "/api": apiProxy(coordinatorUrl) } },
+  preview: { proxy: { "/api": apiProxy(coordinatorUrl) } },
   worker: { format: "es" },
   build: {
     target: "es2023",
