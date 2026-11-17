@@ -1,0 +1,245 @@
+{
+  "version": "recovery-severity-cadence-diagnosis-v1",
+  "scope": "saved-evidence-only",
+  "id": "2026102402-mutant-mass-targeted",
+  "sources": [
+    {
+      "path": "inputs.json",
+      "bytes": 903,
+      "sha256": "0af6504785f2de6aa731747314d676935b6ea064da300f1d52f04a10e93ec9e7"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-cpu25.json",
+      "bytes": 110624,
+      "sha256": "d7e3950f7ed14da9d9fe31007d3b557d91812cff9633a96ec4be8ff0899dee54"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-gpu25.json",
+      "bytes": 110624,
+      "sha256": "d7e3950f7ed14da9d9fe31007d3b557d91812cff9633a96ec4be8ff0899dee54"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-gpu50.json",
+      "bytes": 55951,
+      "sha256": "308c022dc30aa0747601cd858bb0aac400efc6b147557163ccc44c03cc5f5d99"
+    }
+  ],
+  "originalTargetMass": 4174,
+  "physicalStatesAgreeAtAllSharedObservations": true,
+  "cpu25AndGpu25Agree": true,
+  "continuityEvidenceValid": true,
+  "differences": [
+    {
+      "offset": 100,
+      "fast": {
+        "label": 2,
+        "mass": 1766
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "offset": 150,
+      "fast": {
+        "label": 2,
+        "mass": 732
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "offset": 200,
+      "fast": {
+        "label": 2,
+        "mass": 490
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "offset": 250,
+      "fast": {
+        "label": 2,
+        "mass": 483
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "offset": 300,
+      "fast": {
+        "label": 2,
+        "mass": 218
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "offset": 350,
+      "fast": {
+        "label": 2,
+        "mass": 170
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    }
+  ],
+  "window": {
+    "fast": [
+      {
+        "offset": 50,
+        "label": 3,
+        "mass": 2291,
+        "edges": [
+          {
+            "from": 0,
+            "to": 1,
+            "cells": 17
+          },
+          {
+            "from": 1,
+            "to": 2,
+            "cells": 17
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "cells": 15
+          }
+        ],
+        "split": false,
+        "merged": false,
+        "lost": false
+      },
+      {
+        "offset": 75,
+        "label": 2,
+        "mass": 2057,
+        "edges": [
+          {
+            "from": 1,
+            "to": 0,
+            "cells": 21
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "cells": 16
+          },
+          {
+            "from": 3,
+            "to": 2,
+            "cells": 11
+          }
+        ],
+        "split": false,
+        "merged": false,
+        "lost": false
+      },
+      {
+        "offset": 100,
+        "label": 2,
+        "mass": 1766,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "cells": 17
+          },
+          {
+            "from": 1,
+            "to": 1,
+            "cells": 16
+          },
+          {
+            "from": 2,
+            "to": 2,
+            "cells": 9
+          }
+        ],
+        "split": false,
+        "merged": false,
+        "lost": false
+      }
+    ],
+    "slow": [
+      {
+        "offset": 50,
+        "label": 3,
+        "mass": 2291,
+        "edges": [
+          {
+            "from": 2,
+            "to": 1,
+            "cells": 16
+          },
+          {
+            "from": 3,
+            "to": 2,
+            "cells": 16
+          },
+          {
+            "from": 0,
+            "to": 3,
+            "cells": 6
+          }
+        ],
+        "split": false,
+        "merged": false,
+        "lost": false
+      },
+      {
+        "offset": 100,
+        "label": null,
+        "mass": 0,
+        "edges": [
+          {
+            "from": 1,
+            "to": 0,
+            "cells": 17
+          },
+          {
+            "from": 2,
+            "to": 1,
+            "cells": 14
+          }
+        ],
+        "split": false,
+        "merged": false,
+        "lost": true
+      }
+    ]
+  },
+  "events": {
+    "fast": {
+      "split": 150,
+      "merged": 250,
+      "lost": 400
+    },
+    "slow": {
+      "split": null,
+      "merged": null,
+      "lost": 100
+    }
+  },
+  "frozenOutcome": {
+    "T": 2025,
+    "cleanRecoveryEligible": false,
+    "stage0Pass": false
+  },
+  "limitation": "Compact edges show eligible spatial overlap, not material ancestry or a motion/threshold decomposition.",
+  "simulationStepsRun": 0,
+  "scientificSeedsRun": 0
+}
