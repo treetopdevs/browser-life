@@ -1,0 +1,62 @@
+{
+ "plan": "docs/behaviour-atlas-2026-11-01/PLAN.md",
+ "twin": {
+  "genomes": 16,
+  "identicalExceptAtlas": true
+ },
+ "calibration": {
+  "n": 160,
+  "ranges": {
+   "displacementRange": [
+    0,
+    1.75
+   ],
+   "persistenceRange": [
+    0,
+    1
+   ]
+  },
+  "d1": {
+   "defined": 55,
+   "definedFrac": 0.34375,
+   "verdict": "mostly-undefined",
+   "correlationAB": 0.6153846153846154,
+   "pairsAB": 12,
+   "versusSpeed": 0.6348484848484849,
+   "versusMeanMass": -0.10057720057720057,
+   "versusQuality": -0.10783280873692315
+  },
+  "d2": {
+   "defined": 160,
+   "definedFrac": 1,
+   "verdict": "usable",
+   "correlationAB": 0.9882266372332598,
+   "pairsAB": 32,
+   "versusSpeed": -0.7998886599713954,
+   "versusMeanMass": -0.1455789508013177,
+   "versusQuality": -0.16312443757956738
+  },
+  "cells": {
+   "atlas": 12,
+   "massSpeed": 22,
+   "sparse": false
+  },
+  "pair": "usable",
+  "d1VersusD2": -0.8007936507936508,
+  "usableBoth": false
+ },
+ "eliteAudit": {
+  "elites": 47,
+  "withBothDescriptors": 11,
+  "distinctAtlasCells": 8,
+  "massSpeedCells": 47,
+  "note": "the 47 mass/speed elites re-described by D1/D2 under the calibrated ranges; spread across atlas cells is breadth, not capability"
+ },
+ "cost": {
+  "batches": 16,
+  "genomeEvaluations": 255,
+  "tileReplicates": 1020,
+  "evaluationWallSeconds": 765,
+  "secondsPerBatch": 47.79734397137499
+ }
+}

@@ -1015,7 +1015,7 @@ export function launchState(events: readonly LaunchEvent[]): { over: boolean; fi
  * tools/soup/device.ts's soupDevice(). Every tests/deno script counts too.
  */
 export const GPU_TOOLS: readonly string[] = [
-  "assay", "atlas", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays", "soup", "soup_island",
+  "assay", "atlas", "atlas-ledger", "biogeo-smoke", "biogeo-sweep", "bootstrap", "breed", "calibrate", "horizon", "island", "obligates-x", "retest", "run", "scaffold", "scaffold-assays", "soup", "soup_island",
 ];
 const GPU_TOOL_NAMES = GPU_TOOLS.map((t) => t.replace(/-/g, "\\-")).join("|");
 /**
