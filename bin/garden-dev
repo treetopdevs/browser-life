@@ -42,6 +42,18 @@ case ${GARDEN_FOOD-0} in
   *) printf '%s\n' 'bin/garden-dev: GARDEN_FOOD must be exactly 0 or 1' >&2; exit 1 ;;
 esac
 
+# A launcher started with SIGINT ignored (`nohup`, or `&` in a non-interactive shell) cannot trap it in POSIX sh, so
+# a Ctrl-C-style interrupt sent from outside would skip the cleanup below and leave the children running. Re-exec
+# once with SIGINT back to its default (only INT: SIGHUP stays as inherited, so `nohup` keeps working). The exec is
+# loud on failure; without perl the launcher says so and goes on as before.
+if [ "${BL_SIGNALS_RESET-}" != "$$" ]; then
+  if command -v perl >/dev/null 2>&1; then
+    BL_SIGNALS_RESET=$$ exec perl -e '$SIG{INT}="DEFAULT"; exec { $ARGV[0] } @ARGV or die "exec failed: $!\n"' /bin/sh "$0" "$@"
+  fi
+  echo "bin/garden-dev: note: perl not found; an interrupt sent from outside a terminal may not stop the children" >&2
+fi
+unset BL_SIGNALS_RESET
+
 cd "$(dirname "$0")/.."
 
 for v in $(env | sed -n 's/^\(BL_[A-Za-z0-9_]*\)=.*/\1/p'); do
