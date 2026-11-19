@@ -1,0 +1,5 @@
+c2-tol0-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 0
+c2-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16
+c2-tol64-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 64
+c2-nogate-s1 --scenario crowd --seed 1 --steps 20000
+c2-same-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames

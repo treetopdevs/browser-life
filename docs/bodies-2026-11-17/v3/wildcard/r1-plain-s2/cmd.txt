@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario pair --seed 2 --steps 10000 --no-frames --out docs/bodies-2026-11-17/v3/wildcard/r1-plain-s2

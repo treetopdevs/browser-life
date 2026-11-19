@@ -1,0 +1,24 @@
+r4 sc0raid2 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 0 --raid 2
+r4 sc8raid2 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8 --raid 2
+r4 sc20raid2 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 2
+r4 sc2raid0 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2
+r4 sc2raid8 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 8
+r4 sc2raid24 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 24
+r4 sc20raid24 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24
+r4 sc20raid24_blind 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24 --tag-blind
+r4 sc0raid2 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 0 --raid 2
+r4 sc8raid2 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8 --raid 2
+r4 sc20raid2 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 2
+r4 sc2raid0 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2
+r4 sc2raid8 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 8
+r4 sc2raid24 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 24
+r4 sc20raid24 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24
+r4 sc20raid24_blind 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24 --tag-blind
+r4 sc0raid2 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 0 --raid 2
+r4 sc8raid2 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8 --raid 2
+r4 sc20raid2 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 2
+r4 sc2raid0 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2
+r4 sc2raid8 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 8
+r4 sc2raid24 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 2 --raid 24
+r4 sc20raid24 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24
+r4 sc20raid24_blind 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --raid 24 --tag-blind

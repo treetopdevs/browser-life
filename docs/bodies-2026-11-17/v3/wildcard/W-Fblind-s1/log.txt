@@ -1,0 +1,1 @@
+wound-in-crowd seed 1 steps 13500: cells 6907 basins 40 patches(>=10) 50 seam 133 permille distinct marks 18 residual 0 validate [] hash 932285486 step 84873 ms observe 1547 ms -> docs/bodies-2026-11-17/v3/wildcard/W-Fblind-s1/readout.json

@@ -1,0 +1,30 @@
+No P1 found. The main invariants survived review, but the README contains material numerical overstatements.
+
+1. **P2 — The control does not consistently have as many mark patches.** [README.md:12](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:12) asserts “as many or more,” repeated in `SUMMARY.json:6,20`, although skeptic B seed 5 has **16 blind versus 40 gated** patches of ≥30 cells ([numbers.txt:2](</Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/_skeptic/grow-only (GATE_GROW only)/numbers.txt:2>), line 7). Explorer seed-2 late means likewise give **8.92 versus 32.14** for B and **14.65 versus 33** for D; the supported conclusion is mixed directions and overlapping ranges.
+
+2. **P2 — The fixed-gate summary omits a substantial minority clade.** [README.md:40](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:40) describes two minority patches frozen around 145–175 cells, but seed 3 ends at **[5499, 1306, 145]** ([readout.json:1](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/all-three-fixed/c2-tol16-s3/readout.json:1)). The **1306-cell minority holds 18.8%** of live cells, and the arm’s own [NOTES.md:8](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/all-three-fixed/NOTES.md:8) explicitly preserves this exception.
+
+3. **P2 — The claimed concentration in giant territories is numerically wrong.** [README.md:58](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:58) says 80–90% of cells occupy territories of 2000–6700 cells; the stored C seed-4 components place only **4075/6905 = 59.0%** in that range, while seed 5 has **zero**, with its largest component only 1974 ([comp_sizes.txt:3](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/_skeptic/seam-conflict/comp_sizes.txt:3), line 4). Being outside the 85–340 size band does not establish membership in a 2000-plus-cell territory.
+
+4. **P2 — The explicit default-key requirement is unmet.** [model.ts:32](/Users/nicholas/develop/browser-life-bodies/apps/lab/src/bodies/model.ts:32) adds all nine v3 keys directly to `RULES_V1`, inherited by default `RULES_V2` and serialized harness rules. Comparison with `_audit/model_orig.ts` confirms their addition; default physics hashes remain compatible because `hashState` excludes the rule object, but the requested absence of optional keys is not preserved.
+
+5. **P3 — The replacement scan is still positionally biased in expectation.** [model.ts:375](/Users/nicholas/develop/browser-life-bodies/apps/lab/src/bodies/model.ts:375) rounds multipliers upward to the next coprime, giving multipliers congruent to 5 modulo 6 roughly twice the weight of those congruent to 1; even assuming uniform hash outputs, tiles one row apart have precedence probability **0.49300**, rather than 0.5. This contradicts [HARNESS.md:122](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/HARNESS.md:122): the existing facing-block fixture passes its 20% allowance, demonstrating improvement without establishing unbiasedness.
+
+6. **P3 — The founder-robustness range excludes its own counterexample.** [README.md:49](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:49) says the listed founder variants “all still give 8 to 38 components,” but the one-founder C seed-5 run gives **2.0** ([table1.txt:8](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/v3/_skeptic/seam-conflict/table1.txt:8)). The next README bullet acknowledges this outcome, so the universal range needs qualification.
+
+7. **P3 — The sweep range mixes seed populations.** [README.md:42](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:42) reports gated dominance of **66–97%** against controls spanning **38–90%**, omitting skeptic seed 4’s gated **44%**. [README.md:64](/Users/nicholas/develop/browser-life-bodies/docs/bodies-2026-11-17/README.md:64) itself records the matched **44/38** comparison; label the original-seed range or include the skeptic outcomes.
+
+No additional defect found in identity isolation, newborn-mark checks, tolerance boundaries, torus seams, ledger accounting, observer feedback, or PNG generation. The documented matching-chain transport and RAID crossings follow their stated semantics.
+
+Read-only verification reproduced all six 2000-step pins against both current code and `_audit/model_orig.ts`, plus the current 20000-step crowd hash. All **450 stored `readout.json` files** report zero final residual and no validation errors. Vitest was not run because the named files include filesystem-writing tests.
+
+The admitted pre-fix provenance gap remains unresolved: representative hash matches support those reruns, not every stored arm. I found no demonstrated stale headline artifact.
+
+README claims verified as true:
+
+- Default crowd seed 1 at 20000 steps hashes to **2445250181**.
+- C skeptic components average **12.2/19.5**, versus **1.0/1.1** under `tol 128`.
+- C basin counts/medians are **82/77** and **68/100**; the quoted matched controls agree.
+- Exact short-gap foreign-mark refill counts support approximately **10×** border churn over blind controls.
+
+Overall verdict: core dynamics look sound; correct the summaries and qualify the scan’s unbiasedness before treating the v3 account as reliable.

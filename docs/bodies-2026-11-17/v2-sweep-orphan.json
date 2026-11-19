@@ -1,0 +1,218 @@
+[
+ {
+  "ORPH16": 0,
+  "note": "lone shape genome, 2000 steps settle, root killed, 1500 steps watched",
+  "runs": [
+   {
+    "seed": 1,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 173,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 42,
+    "cellsAt": {
+     "0": 131,
+     "25": 189,
+     "75": 514,
+     "150": 515,
+     "500": 515,
+     "1500": 515
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 5,
+     "75": 5,
+     "150": 5,
+     "500": 5,
+     "1500": 5
+    },
+    "recoveredPermille": 2976,
+    "roots": 5,
+    "comps": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 172,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 43,
+    "cellsAt": {
+     "0": 129,
+     "25": 174,
+     "75": 419,
+     "150": 422,
+     "500": 422,
+     "1500": 422
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 4,
+     "75": 4,
+     "150": 4,
+     "500": 4,
+     "1500": 4
+    },
+    "recoveredPermille": 2453,
+    "roots": 4,
+    "comps": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 169,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 40,
+    "cellsAt": {
+     "0": 129,
+     "25": 180,
+     "75": 561,
+     "150": 565,
+     "500": 565,
+     "1500": 565
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 6,
+     "75": 6,
+     "150": 6,
+     "500": 6,
+     "1500": 6
+    },
+    "recoveredPermille": 3343,
+    "roots": 6,
+    "comps": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "ORPH16": 16,
+  "note": "lone shape genome, 2000 steps settle, root killed, 1500 steps watched",
+  "runs": [
+   {
+    "seed": 1,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 173,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 42,
+    "cellsAt": {
+     "0": 131,
+     "25": 139,
+     "75": 396,
+     "150": 399,
+     "500": 399,
+     "1500": 399
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 3,
+     "75": 3,
+     "150": 3,
+     "500": 3,
+     "1500": 3
+    },
+    "recoveredPermille": 2306,
+    "roots": 3,
+    "comps": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 172,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 43,
+    "cellsAt": {
+     "0": 129,
+     "25": 136,
+     "75": 246,
+     "150": 252,
+     "500": 252,
+     "1500": 252
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 1,
+     "75": 1,
+     "150": 1,
+     "500": 1,
+     "1500": 1
+    },
+    "recoveredPermille": 1465,
+    "roots": 1,
+    "comps": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "kind": "killed",
+    "settle": 2000,
+    "before": 169,
+    "rootsBefore": 1,
+    "woundClass": "root-killed",
+    "woundCentre": [
+     48,
+     48
+    ],
+    "rootsInDisk": 1,
+    "killed": 40,
+    "cellsAt": {
+     "0": 129,
+     "25": 130,
+     "75": 233,
+     "150": 241,
+     "500": 241,
+     "1500": 241
+    },
+    "rootsAt": {
+     "0": 0,
+     "25": 0,
+     "75": 1,
+     "150": 1,
+     "500": 1,
+     "1500": 1
+    },
+    "recoveredPermille": 1426,
+    "roots": 1,
+    "comps": 1,
+    "residual": 0
+   }
+  ]
+ }
+]

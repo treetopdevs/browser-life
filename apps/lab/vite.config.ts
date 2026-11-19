@@ -193,6 +193,7 @@ export default defineConfig({
       if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
       for (const key of FOOD_BANDS_MODELS) if (id.includes(`/src/${key}/model.ts`)) return `food-bands-model-${key}`;
       if (id.includes("/src/development/model.ts")) return "development-model";
+      if (id.includes("/src/bodies/model.ts")) return "bodies-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
       if (id.includes("/src/particles/environment-page.ts")) return "particles-environment-page";
@@ -220,6 +221,7 @@ export default defineConfig({
       particleMotifs: r("./particles/motifs/index.html"),
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
+      bodies: r("./bodies/index.html"),
       hungryShapes: r("./hungry-shapes/index.html"),
       foodBands: r("./food-bands/index.html"),
       matter: r("./matter/index.html"),

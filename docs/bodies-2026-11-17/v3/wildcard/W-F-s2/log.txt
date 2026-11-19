@@ -1,0 +1,1 @@
+wound-in-crowd seed 2 steps 13500: cells 6885 basins 83 patches(>=10) 34 seam 0 permille distinct marks 13 residual 0 validate [] hash 128611237 step 101187 ms observe 691 ms -> docs/bodies-2026-11-17/v3/wildcard/W-F-s2/readout.json

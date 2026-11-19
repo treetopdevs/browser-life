@@ -1,0 +1,9 @@
+exact per-step event counts: births onto a tile whose last occupant had a non-matching mark (tol 16); any gap / gap<=200 / gap<=1000 steps; split t<10000 / t>=10000
+B_s4             refill any 1904 (<=200: 269 )  early(<=10k) 99  late(>10k) 170 | births 20180
+C_s4             refill any 97 (<=200: 5 )  early(<=10k) 3  late(>10k) 2 | births 16081
+sc20_blind_s4    refill any 699 (<=200: 128 )  early(<=10k) 97  late(>10k) 31 | births 16324
+sc20_blind_s5    refill any 539 (<=200: 122 )  early(<=10k) 96  late(>10k) 26 | births 19060
+sc20_s4          refill any 3973 (<=200: 1245 )  early(<=10k) 737  late(>10k) 508 | births 26285
+sc20_s5          refill any 3177 (<=200: 1261 )  early(<=10k) 893  late(>10k) 368 | births 25650
+sc8_s4           refill any 3760 (<=200: 1273 )  early(<=10k) 790  late(>10k) 483 | births 26356
+sc8_s5           refill any 2940 (<=200: 1276 )  early(<=10k) 971  late(>10k) 305 | births 25238

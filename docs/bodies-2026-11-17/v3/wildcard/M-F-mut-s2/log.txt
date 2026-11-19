@@ -1,0 +1,1 @@
+crowd seed 2 steps 20000: cells 6895 basins 67 patches(>=10) 8 seam 0 permille distinct marks 8 residual 0 validate [] hash 4274439928 step 145052 ms observe 1801 ms -> docs/bodies-2026-11-17/v3/wildcard/M-F-mut-s2/readout.json

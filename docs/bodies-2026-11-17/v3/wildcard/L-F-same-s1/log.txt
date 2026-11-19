@@ -1,0 +1,1 @@
+crowd seed 1 steps 20000: cells 6928 basins 86 patches(>=10) 35 seam 0 permille distinct marks 10 residual 0 validate [] hash 2775780880 step 55525 ms observe 364 ms -> docs/bodies-2026-11-17/v3/wildcard/L-F-same-s1/readout.json
