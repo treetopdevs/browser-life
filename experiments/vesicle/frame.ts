@@ -44,7 +44,9 @@ export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tin
     if (!w.alive[i]) continue;
     const j = w.next[i], s = w.blen[i] / w.p.l0 - 1, t = Math.max(-1, Math.min(1, s / 0.2));
     // stretched = warm, slack = pale, compressed = cool
-    const r = 235 + 20 * Math.min(0, -t) + 0, g = 235 - 110 * Math.abs(t), b = 235 - 150 * Math.max(0, t);
+    let r = 235 + 20 * Math.min(0, -t) + 0, g = 235 - 110 * Math.abs(t), b = 235 - 150 * Math.max(0, t);
+    // with heredity in the wall, the wall shows its own byte instead of its strain
+    if (w.p.wallGenes && by !== 'founder') [r, g, b] = hue(300 - (by === 'gene' ? w.wgene[i] : w.wmark[i]) * 1.1);
     let x0 = w.bx[i] * scale, y0 = w.by[i] * scale;
     const x1 = w.bx[j] * scale, y1 = w.by[j] * scale, n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
     const sx = (x1 - x0) / n, sy = (y1 - y0) / n;

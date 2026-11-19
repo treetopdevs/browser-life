@@ -1,12 +1,13 @@
 // Headless garden runs for the vesicle world: a census table, optional frames, structural checks.
 // Usage: node experiments/vesicle/run.ts --out DIR [--seed 1] [--steps 50000] [--every 2500] [--frames]
 //          [--params '{"kLip":0.001}'] [--heredity] [--neutral] [--wound-every N] [--founders 6] [--food N] [--colour founder|gene|mark]
+//          [--wall] (heredity in the wall beads) [--founder-gene 96 | 96,160] [--chimera 64,192]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Params } from '../../apps/lab/src/vesicle/model.ts';
 import { census, check, loops } from '../../apps/lab/src/vesicle/observe.ts';
-import { HEREDITY, garden } from '../../apps/lab/src/vesicle/worlds.ts';
+import { HEREDITY, WALL_GENES, garden } from '../../apps/lab/src/vesicle/worlds.ts';
 import type { GardenOpts } from '../../apps/lab/src/vesicle/worlds.ts';
 import { writeFrame } from './frame.ts';
 import type { ColourBy } from './frame.ts';
@@ -28,7 +29,29 @@ export function runGarden(o: RunOpts) {
       // geneCell: every cell counts once, however much solute it holds (gene is the mean over particles)
       geneCell: live.length ? Math.round((10 * live.reduce((a, l) => a + l.geneMean, 0)) / live.length) / 10 : 0,
       gene: w.n ? Math.round((10 * g) / w.n) / 10 : 0, mark: w.n ? Math.round((10 * mk) / w.n) / 10 : 0,
-    };
+    } as Record<string, number>;
+    if (w.p.wallGenes) {
+      // every living cell counts once: mean of the cells' wall bytes, how far cells differ, how mixed one wall is
+      const r1 = (v: number) => Math.round(10 * v) / 10, n = live.length, mean = n ? live.reduce((a, l) => a + l.wallGene, 0) / n : 0;
+      row.wallGene = r1(mean); row.wallMark = r1(n ? live.reduce((a, l) => a + l.wallMark, 0) / n : 0);
+      row.wallBetween = r1(n ? Math.sqrt(live.reduce((a, l) => a + (l.wallGene - mean) ** 2, 0) / n) : 0);
+      row.wallWithin = r1(n ? live.reduce((a, l) => a + l.wallGeneSd, 0) / n : 0);
+      row.medBeads = n ? live.map((l) => l.beads).sort((a, b) => a - b)[n >> 1] : 0;
+      // with shifts off every wall keeps its founder's byte exactly, so cells can be counted by it
+      // (a cell whose wall is mixed is counted under `cells@mixed`); and all beads can be counted by their byte
+      if (w.p.mut === 0) {
+        for (const l of live) { const key = l.wallGeneSd > 0 ? 'cells@mixed' : `cells@${Math.round(l.wallGene)}`; row[key] = (row[key] ?? 0) + 1; }
+        for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { const key = `beads@${w.wgene[i]}`; row[key] = (row[key] ?? 0) + 1; }
+        // and, within rings whose wall is still mixed, beads by byte (a change here is not a contest between cells)
+        const seen = new Uint8Array(w.beadHi);
+        for (let i = 0; i < w.beadHi; i++) {
+          if (!w.alive[i] || seen[i]) continue;
+          const tally = new Map<number, number>();
+          for (let m = i; !seen[m]; m = w.next[m]) { seen[m] = 1; tally.set(w.wgene[m], (tally.get(w.wgene[m]) ?? 0) + 1); }
+          if (tally.size > 1) for (const [g, n] of tally) row[`mixedBeads@${g}`] = (row[`mixedBeads@${g}`] ?? 0) + n;
+        }
+      }
+    }
     rows.push(row);
     if (!o.quiet) console.log(JSON.stringify(row));
   };
@@ -62,8 +85,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   if (out) mkdirSync(out, { recursive: true });
   const r = runGarden({
     seed: num('seed') ?? 1, steps: num('steps') ?? 50000, every: num('every') ?? 2500, out, frames: process.argv.includes('--frames'),
-    colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every'), founders: num('founders'), food: num('food'), lipid: num('lipid'), solute: num('solute'),
-    params: { ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
+    colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every'), founders: num('founders'),
+    chimera: arg('chimera') ? (arg('chimera')!.split(',').map(Number) as [number, number]) : undefined,
+    founderGene: arg('founder-gene') ? (arg('founder-gene')!.includes(',') ? arg('founder-gene')!.split(',').map(Number) : Number(arg('founder-gene'))) : undefined, food: num('food'), lipid: num('lipid'), solute: num('solute'),
+    params: { ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
   });
   const { world: _w, ...rest } = r;
   if (out) writeFileSync(join(out, `s${r.seed}.json`), JSON.stringify(rest));

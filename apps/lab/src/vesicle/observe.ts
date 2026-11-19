@@ -11,6 +11,8 @@ export interface Loop {
   /** 4*pi*area / perimeter^2: 1 for a circle, lower when there is wall to spare. */
   roundness: number;
   solute: number; geneMean: number; markMean: number;
+  /** Mean and spread of the wall's own bytes over the ring's beads (meaningful when `wallGenes` is on). */
+  wallGene: number; wallGeneSd: number; wallMark: number;
   /** Solute count by founder id. */
   founders: Map<number, number>;
   xs: Float64Array; ys: Float64Array;
@@ -26,7 +28,8 @@ export function loops(w: VesicleWorld, withSolute = true): Loop[] {
     for (let i = s; !seen[i]; i = w.next[i]) { seen[i] = 1; idx.push(i); }
     const n = idx.length, xs = new Float64Array(n), ys = new Float64Array(n);
     let per = 0, a2 = 0, cx = 0, cy = 0;
-    for (let k = 0; k < n; k++) { xs[k] = w.bx[idx[k]]; ys[k] = w.by[idx[k]]; }
+    let wg = 0, wg2 = 0, wm = 0;
+    for (let k = 0; k < n; k++) { xs[k] = w.bx[idx[k]]; ys[k] = w.by[idx[k]]; const g = w.wgene[idx[k]]; wg += g; wg2 += g * g; wm += w.wmark[idx[k]]; }
     for (let k = 0; k < n; k++) {
       const m = (k + 1) % n, dx = xs[m] - xs[k], dy = ys[m] - ys[k], cr = xs[k] * ys[m] - xs[m] * ys[k];
       per += Math.sqrt(dx * dx + dy * dy); a2 += cr; cx += (xs[k] + xs[m]) * cr; cy += (ys[k] + ys[m]) * cr;
@@ -36,6 +39,7 @@ export function loops(w: VesicleWorld, withSolute = true): Loop[] {
       first: s, beads: n, perimeter: per, area, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
       stretch: per / (n * w.p.l0) - 1, roundness: per > 0 ? (12.566370614359172 * area) / (per * per) : 0,
       solute: 0, geneMean: 0, markMean: 0, founders: new Map(), xs, ys,
+      wallGene: wg / n, wallGeneSd: Math.sqrt(Math.max(0, wg2 / n - (wg / n) * (wg / n))), wallMark: wm / n,
     });
   }
   if (withSolute) assign(w, out);

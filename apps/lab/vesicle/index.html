@@ -38,10 +38,11 @@
             <option value="heredity">Garden with heredity: making less lipid lets a particle copy faster</option>
             <option value="nogain">Garden with heredity, no private gain: lipid share is inherited but copying speed is the same for all</option>
             <option value="neutral">Garden, drift only: shifts are inherited but change nothing</option>
+            <option value="wall">Garden with heredity in the wall: beads carry the lipid share, solute is stamped by the wall that makes it</option>
             <option value="theft">Two cells, fixed lipid: the crowded one takes wall</option>
             <option value="feed">One cell in spare lipid: wall outgrows contents and splits</option>
           </select></label>
-          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself)</option><option value="mark">Idle marker (inherited, does nothing)</option></select></label>
+          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing)</option></select></label>
           <label for="tint">Background shows<select id="tint"><option value="lipid">Free lipid in the water</option><option value="food">Food</option><option value="none">Nothing</option></select></label>
           <fieldset><legend>Click the world to</legend>
             <label><input type="radio" name="tool" value="lipid" checked /> Drop lipid <small>(adds 60 units)</small></label>

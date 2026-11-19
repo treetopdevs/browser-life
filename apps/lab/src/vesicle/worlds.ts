@@ -7,7 +7,11 @@ export const METABOLISM: Partial<Params> = {
   kRep: 0.01, kDecay: 0.0005, kLip: 0.02, kLight: 0.002, kLipDecay: 0.002,
 };
 
-export interface GardenOpts { founders?: number; solute?: number; radius?: number; food?: number; lipid?: number; params?: Partial<Params> }
+export interface GardenOpts { founders?: number; solute?: number; radius?: number; food?: number; lipid?: number; params?: Partial<Params>;
+  /** Lipid-share byte the founders start with (walls and solute alike), default 128. A list gives one value per founder in turn. */
+  founderGene?: number | number[];
+  /** Every founder starts as a chimera: half of its wall (and of its solute) carries the first share, half the second. */
+  chimera?: [number, number] }
 
 /** A dish with a few founder vesicles, each with its own founder id, food and a little free lipid. */
 export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
@@ -16,8 +20,15 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
   const cols = Math.ceil(Math.sqrt(k)), rows = Math.ceil(k / cols);
   for (let f = 0; f < k; f++) {
     const cx = (W * ((f % cols) + 0.5)) / cols + (w.rand() - 0.5) * 6, cy = (H * (Math.floor(f / cols) + 0.5)) / rows + (w.rand() - 0.5) * 6;
-    w.addLoop(cx, cy, r);
-    w.addSolute(cx, cy, r - 2, o.solute ?? 60, 128, f + 1);
+    const fg = o.founderGene, g = fg === undefined ? 128 : typeof fg === 'number' ? fg : fg[f % fg.length];
+    const first = w.addLoop(cx, cy, r, undefined, g), n = o.solute ?? 60;
+    if (o.chimera) {
+      let beads = 1;
+      for (let i = w.next[first]; i !== first; i = w.next[i]) beads++;
+      // which half gets which share alternates from founder to founder
+      for (let i = first, k = 0; k < beads; k++, i = w.next[i]) w.wgene[i] = o.chimera[(k < beads >> 1 ? 0 : 1) ^ (f & 1)];
+      w.addSolute(cx, cy, r - 2, n >> 1, o.chimera[0], f + 1); w.addSolute(cx, cy, r - 2, n - (n >> 1), o.chimera[1], f + 1);
+    } else w.addSolute(cx, cy, r - 2, n, g, f + 1);
   }
   w.scatter(w.food, o.food ?? 2 * w.food.length);
   w.scatter(w.lipid, o.lipid ?? Math.floor(w.lipid.length / 4));
@@ -41,3 +52,7 @@ export function feedWorld(seed: number): VesicleWorld {
   w.addLoop(48, 48, 10); w.addSolute(48, 48, 8, 120, 128, 1); w.scatter(w.lipid, 550);
   return w;
 }
+
+/** Rung 3: the bytes live in the wall. Wall beads are replaced about every hundred steps, far more often than
+ *  solute copies, so the shift rate per copy is a tenth of rung 2's. */
+export const WALL_GENES: Partial<Params> = { mut: 0.01, mutStep: 16, wallGenes: true };

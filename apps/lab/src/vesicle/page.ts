@@ -2,7 +2,7 @@ import './style.css';
 import { VesicleWorld } from './model.ts';
 import { census } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, feedWorld, garden, theftWorld } from './worlds.ts';
+import { HEREDITY, WALL_GENES, feedWorld, garden, theftWorld } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -15,6 +15,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function build(kind: string, seed: number): VesicleWorld {
   if (kind === 'theft') return theftWorld(seed);
   if (kind === 'feed') return feedWorld(seed);
+  if (kind === 'wall') return garden(seed, { params: WALL_GENES });
   if (kind === 'heredity') return garden(seed, { params: HEREDITY });
   if (kind === 'neutral') return garden(seed, { params: { ...HEREDITY, neutral: true } });
   if (kind === 'nogain') return garden(seed, { params: { ...HEREDITY, tradeoff: 0 } });
@@ -52,6 +53,24 @@ function draw(): void {
     for (const k of ks) ctx.fillRect(w.px[k] * s - 1.5, w.py[k] * s - 1.5, 3, 3);
   }
   ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  if (w.p.wallGenes && mode !== 'founder') {
+    // heredity is in the wall: draw each bond in the colour of its own byte
+    ctx.lineWidth = 3;
+    const bonds = new Map<string, number[]>();
+    for (let i = 0; i < w.beadHi; i++) {
+      if (!w.alive[i]) continue;
+      const col = geneColour(((mode === 'gene' ? w.wgene[i] : w.wmark[i]) >> 3) << 3);
+      let g = bonds.get(col);
+      if (!g) bonds.set(col, (g = []));
+      g.push(i);
+    }
+    for (const [col, is] of bonds) {
+      ctx.strokeStyle = col; ctx.beginPath();
+      for (const i of is) { const j = w.next[i]; ctx.moveTo(w.bx[i] * s, w.by[i] * s); ctx.lineTo(w.bx[j] * s, w.by[j] * s); }
+      ctx.stroke();
+    }
+    return;
+  }
   for (const [colour, lo, hi] of [['#b99cff', -9, -0.03], ['#f1f0ea', -0.03, 0.05], ['#ffa24a', 0.05, 9]] as const) {
     ctx.strokeStyle = colour; ctx.beginPath();
     for (let i = 0; i < w.beadHi; i++) {
@@ -69,8 +88,13 @@ function refresh(): void {
   last = census(world);
   const liveCells = last.loops.filter((l) => l.solute >= 5).length;
   let g = 0, m = 0;
-  for (let k = 0; k < world.n; k++) { g += world.gene[k]; m += world.mark[k]; }
-  const gene = world.n ? g / world.n : 0, mark = world.n ? m / world.n : 0;
+  let count = world.n;
+  if (world.p.wallGenes) {
+    // the heritable bytes are the wall's: average them over beads
+    count = 0;
+    for (let i = 0; i < world.beadHi; i++) if (world.alive[i]) { g += world.wgene[i]; m += world.wmark[i]; count++; }
+  } else for (let k = 0; k < world.n; k++) { g += world.gene[k]; m += world.mark[k]; }
+  const gene = count ? g / count : 0, mark = count ? m / count : 0;
   const set = (id: string, v: string | number) => { el(id).textContent = String(v); };
   set('r-t', world.step.toLocaleString()); set('r-live', liveCells); set('r-empty', last.loops.length - liveCells); set('r-solute', last.particles);
   set('r-beads', last.beads); set('r-lipid', last.freeLipid); set('r-pinch', world.events.pinch); set('r-dissolve', world.events.dissolve);

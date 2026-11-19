@@ -1,0 +1,156 @@
+# Vesicle world, rung 3: heredity in the wall (2026-11-19)
+
+Rung 2 (`docs/vesicle-2026-11-18/README.md`) put the heritable bytes on solute particles that copy
+themselves. A particle that made less lipid copied faster, took over its cell, and the cells stopped
+dividing and died in four of four worlds.
+
+This rung moves the bytes into the wall. Rules added (`wallGenes` on; off by default, and with it off the
+kernel's pinned state is unchanged):
+
+- Every wall bead carries the two bytes (lipid share, idle marker). A new bead copies them from one end of
+  the bond it joins, picked evenly, each byte shifted with probability `mut` by up to `mutStep`.
+- Solute is only made against the inner face of a wall: a particle that is due to copy does so only if a wall
+  bond is within `rIns` and the particle is on its interior side. The copy takes the bytes of the nearest
+  bead of that bond, unshifted. Solute keeps that stamp for life and has no heredity of its own.
+- Everything else is as before. A particle's stamp sets how much lipid it makes and, with `tradeoff` 1, how
+  fast it copies (a low share copies up to twice as fast).
+
+So the wall is the genome, and a pinch hands each daughter the stretch of wall it keeps. Nothing says
+"reproduce" and no cell has an id. The wall is not copied once per division, though: walls trade beads
+with the water all the time (about 23,000 beads joined and 22,800 left a garden of 300 beads in 6,000
+steps), so a bead is replaced roughly every hundred steps and every replacement is a copy. For that reason
+the shift rate per copy here is 0.01, a tenth of rung 2's.
+
+## What would count, written before the long runs
+
+Seen before writing this: two seeds of the selection and drift-only arms to step 80,000 to 100,000, on an
+earlier build (shift rate 0.1, and with a fault that let solute copy just outside a wall corner). Cells
+lived in both; the share was falling in the selection arm. A Codex review (Sol 6.1, High; no P1) then
+pointed out that a fall can come from inside one wall as well as from contests between cells, which is why
+arms 3 and 4 exist and why rule 4 reads as it does.
+
+All arms use `tradeoff` 1 (a low share copies up to twice as fast), four seeds.
+
+- **Selection**: wall genes on, shifts 0.01 by up to 16, 400,000 steps.
+- **Drift only**: the same, but the rules read 128 for every particle.
+- **Whole cells** (shifts off, 300,000 steps): six founders with wall shares 32, 64, 96, 128, 160, 192,
+  rotated by seed. Every wall keeps its founder's byte, so the only contest is between whole cells.
+- **Chimeras** (shifts off, 100,000 steps): all six founders alike, each with half its wall at one
+  share and half at another: 64 and 192 in one set of four seeds, 96 and 160 in another. At the start there
+  is nothing for cells to compete over, so an early move in the bead count is a gain inside one wall.
+- **Rung 2 reference**: bytes on self-copying solute (final kernel: 1, 2, 4, 4 cells at 400,000, no
+  division after 300,000).
+
+Rules:
+
+1. **Cells hold** if, in at least three of four selection worlds, there are 10 or more living cells at
+   400,000 and at least one division after 300,000. If this fails the rung has failed.
+2. **Selected, not drift** if the per-cell wall share at 400,000 lies outside the range of the four
+   drift-only worlds in at least three of four selection worlds.
+3. **Which way whole cells pull**: the share that holds the most living cells at 300,000 in the most
+   whole-cell worlds. Read as "low" (32 to 96), "middle" (128) or "high" (160, 192).
+4. **Which way a wall pulls on itself**: in each chimera world, the low share's fraction of all wall beads
+   at step 20,000. "Low gains" if it is above 0.6 in at least three of four worlds of a set, "high gains"
+   if below 0.4, otherwise "no clear gain".
+5. **Evolution follows the cells** only if the selection arm moved from 128 toward the side named in 3, in
+   at least three of four worlds, AND rule 4 does not name the same side in either chimera set. If rule 4
+   names the same side, the result is **confounded**: the move could be the wall's private gain. If the
+   selection arm moved against the side named in 3, the wall's private gain beat the cells.
+
+## Known ways a wall bead can gain privately
+
+Three, none removed. The chimera arm measures their sum.
+- Lipid made near a wall goes straight into the nearest bond. Solute stamped by a high-share stretch of
+  wall starts life next to it, so that stretch gets more of the lipid and is copied more. (The review rates
+  this stronger than "a little".)
+- Solute stamped by a low-share stretch copies faster and starts life next to it. More solute there can
+  make more lipid in total next to that stretch even though each particle makes less. (Found by the review:
+  with walls frozen and food plentiful, a 64 stretch outgrew a 128 stretch 5,472 beads to 2,027.)
+- More solute next to a stretch also means more local push, more stretch, and stretched bonds take up lipid
+  more readily.
+Solute moves across a cell in about 1,200 steps and lives about 2,000, so all three are diluted, not absent.
+
+## Results (2026-11-19)
+
+Runs: `runs/vesicle/w2` (the five arms above) and `runs/vesicle/w3` (follow-ups), gitignored; commands in
+each folder's `jobs.txt`. No run made a wall crossing or changed the matter total.
+
+| Rule | Result |
+|---|---|
+| 1. Cells hold | **Yes, 4 of 4.** 23, 21, 21, 20 living cells at 400,000; 9, 11, 14, 5 divisions after 300,000. Rung 2 reference: 1, 2, 4, 4 cells, no divisions. |
+| 2. Selected, not drift | **Yes, 4 of 4.** Per-cell wall share 58, 63, 60, 51 against 161, 103, 109, 107 in the drift-only worlds. The idle marker ends at 129 to 163 in the selection worlds and 87 to 163 in the drift-only ones. |
+| 3. Which way whole cells pull | **Low.** Share 64 held the most cells in 4 of 4 worlds (30 of 31, 26 of 31, 15 of 27, 23 of 30 cells). It beat 96 and 128 everywhere and beat 32 in the two worlds where 32 survived the start. 160 and 192 were gone by step 20,000. |
+| 4. Which way a wall pulls on itself | **Low gains, by the rule as written**: the low share held 94 to 100% of beads at step 20,000 in all eight chimera worlds. |
+| 5. Evolution follows the cells | **Confounded**, because 3 and 4 name the same side. |
+
+![selection arm](selection-s1-t400000.png)
+
+Selection arm, seed 1, step 400,000. Walls and solute are coloured by lipid share (violet and blue are
+low). Each cell's wall is close to one colour and cells differ from each other.
+
+![whole cells](whole-cells-s3-t100000.png)
+
+Whole-cell contest, seed 3, step 100,000: three shares left, each in its own patch of pure cells.
+
+### Rule 4 measured the wrong moment
+
+By step 20,000 the chimeras had already sorted into pure cells (0 to 2 mixed cells left among 14 or more) and
+those cells had competed as whole cells, so rule 4 as written measured rule 3 again. The rule stays as
+stated and so does the label. The following was run afterwards to look at the first few thousand steps.
+
+Chimeras again, eight seeds per set, a census every 500 steps, counting beads only in rings whose wall is
+still mixed. Low share's fraction of those beads:
+
+| Set | Step 1,000 | 2,000 | 4,000 | Mixed rings at 4,000 |
+|---|---|---|---|---|
+| 64 and 192 | 0.38 to 0.62, mean 0.49 | 0.42 to 0.61, mean 0.53 | 0.47 to 0.69, mean 0.55 | 4 to 13 |
+| 96 and 160 | 0.41 to 0.68, mean 0.51 | 0.33 to 0.64, mean 0.49 | 0.51 to 0.64, mean 0.56 | 6 to 12 |
+
+In rings that are still mixed the low share's fraction has moved little by step 4,000 (a mean of 0.55 or
+0.56 from a start of 0.50, with single worlds on both sides of a half), while between whole cells the low
+share ends with 56 to 97% of the cells. This does not settle the question. The count leaves out every
+ring that has already become pure (by step 4,000 one world had 23 divisions and 12 pure cells), so beads
+that won inside a wall and then left the mixed set are not seen, and it weights rings by size. It is also
+a measure chosen after seeing the first result. A clean answer needs single rings followed from the start
+with their descendants counted.
+
+### Where the share settles
+
+A finer whole-cell contest (shares 40, 52, 64, 76, 88, 100; shifts off; four seeds; 300,000 steps) has no
+single winner: the most cells went to 64, 52, 100 and 52, and 52 to 76 together held 23 of 31, 16 of 26,
+18 of 30 and 26 of 32 cells. 40 died out in two worlds and held 3 and 4 cells in the others. Whole cells
+do best somewhere around 52 to 76 and worse on both sides.
+
+The selection worlds went from 128 to 51 to 63 and stayed in 38 to 71 for the second half of the run.
+They did not carry on down, as rung 2's free copiers did (to 6, with the cells dying). That is what
+selection among cells would do; it does not rule out a gain inside the wall that happens to weaken at low
+shares.
+
+### What it costs
+
+The selection worlds divide a quarter as often as the drift-only ones (211 to 258 divisions in 400,000
+steps against 956 to 1,034) and hold larger cells (median 50 to 71 solute against 12 to 17). The share
+that wins contests between cells is one that makes cells bigger and slower, not one that makes more cells.
+
+## Reading
+
+- Putting heredity in the wall does what rung 2 could not: with the same private incentive to copy instead
+  of build, the cells stay alive and keep dividing in every world.
+- The share moves, it is not drift, and it stops in the range where whole cells win contests. By the rules
+  written beforehand the cause is confounded, and the look afterwards does not resolve it. Selection among
+  cells fits everything seen; a gain inside the wall is not excluded.
+- What is selected is not "divide more". Cells that make less wall hold more solute and crowd out their
+  neighbours.
+
+## Limits
+
+- One machine, four seeds per arm (eight for the early chimera look), exploration.
+- Rule 4 was badly timed, and the measure that replaced it was chosen after seeing results.
+- The private gains listed above are real mechanisms and their size is not measured.
+- Chimera founders are not quite identical: a founder has 25 beads, so the halves are 12 and 13 and
+  alternate, giving founder means of 125.4 and 130.6 in the 64 and 192 set.
+- Walls are copied by turnover far more than by growth, so this is not "one genome copied once per
+  division". A wall is a population of about 20 to 30 beads that drifts to one value quickly (spread
+  inside a cell about 6 to 9, between cells about 18 to 26).
+- Garden parameters are those of rung 1, tuned by eye there. The shift rate was lowered once, before the
+  long runs, for the reason given above.

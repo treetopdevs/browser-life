@@ -35,6 +35,10 @@ export interface Params {
   mut: number; mutStep: number; neutral: boolean;
   /** How much copying speed a particle gains by making less lipid: 1 = a pure copier copies twice as fast as the founder, 0 = no private gain. */
   tradeoff: number;
+  /** Heredity lives in the wall: each bead carries the two bytes, a new bead copies them (with shifts) from an
+   *  end of the bond it joins, and solute is only made against the inner face of a wall, stamped with that
+   *  wall's bytes. Solute then carries no heredity of its own. Off = the bytes ride on solute (rung 2). */
+  wallGenes: boolean;
   maxBeads: number; maxParts: number;
 }
 
@@ -48,7 +52,7 @@ export const DEFAULTS: Params = {
   dLipid: 0.02, dFood: 0.1, dWaste: 0.1,
   rIns: 3,
   kRep: 0, kDecay: 0, kLip: 0, kLight: 0, kLipDecay: 0, foodCap: 8, crowdCap: 6,
-  mut: 0, mutStep: 8, neutral: false, tradeoff: 1,
+  mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false,
   maxBeads: 1 << 15, maxParts: 1 << 16,
 };
 
@@ -75,6 +79,8 @@ export class VesicleWorld {
   // wall beads
   readonly bx: Float64Array; readonly by: Float64Array;
   readonly next: Int32Array; readonly prev: Int32Array; readonly alive: Uint8Array;
+  /** The wall's own bytes, one pair per bead: lipid share and idle marker (read only when `wallGenes` is on). */
+  readonly wgene: Uint8Array; readonly wmark: Uint8Array;
   /** Length of bond i -> next[i] as of the last force pass. */
   readonly blen: Float64Array;
   private readonly fx: Float64Array; private readonly fy: Float64Array; private readonly born: Int32Array;
@@ -124,6 +130,8 @@ export class VesicleWorld {
     this.next = new Int32Array(nb).fill(-1); this.prev = new Int32Array(nb).fill(-1); this.alive = new Uint8Array(nb);
     this.blen = new Float64Array(nb); this.fx = new Float64Array(nb); this.fy = new Float64Array(nb); this.born = new Int32Array(nb).fill(-1);
     this.gap = new Float64Array(nb);
+    this.wgene = new Uint8Array(nb).fill(128); this.wmark = new Uint8Array(nb).fill(128);
+    if (p.wallGenes && !(p.rIns > 0)) throw new Error('wallGenes needs rIns > 0 (solute is made within rIns of a wall)');
     this.px = new Float64Array(np); this.py = new Float64Array(np);
     this.gene = new Uint8Array(np); this.mark = new Uint8Array(np); this.founder = new Uint16Array(np);
     this.food = new Int32Array(nc); this.waste = new Int32Array(nc); this.lipid = new Int32Array(nc);
@@ -159,7 +167,7 @@ export class VesicleWorld {
   private freeBead(i: number): void { this.alive[i] = 0; this.next[i] = this.prev[i] = -1; this.beadCount--; this.freedNow.push(i); }
 
   /** A round loop of `beads` beads (default: rest spacing), counter-clockwise, inside the dish inset. Returns its first bead. */
-  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0))): number {
+  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0)), gene = 128, mark = 128): number {
     let first = -1, last = -1;
     for (let k = 0; k < beads; k++) {
       const [s, c] = sinCos((6.283185307179586 * k) / beads);
@@ -168,7 +176,7 @@ export class VesicleWorld {
       const x = cx + radius * c, y = cy + radius * s, inset = 2 * this.p.rp;
       // beads live inside the dish inset: a bead seeded outside it would be snapped in by more than its step cap
       if (x < inset || x > this.p.W - inset || y < inset || y > this.p.H - inset) throw new Error('a ring must start inside the dish inset (2 rp from the edge)');
-      this.bx[i] = x; this.by[i] = y;
+      this.bx[i] = x; this.by[i] = y; this.wgene[i] = gene; this.wmark[i] = mark;
       if (last >= 0) { this.next[last] = i; this.prev[i] = last; } else first = i;
       last = i;
     }
@@ -507,6 +515,7 @@ export class VesicleWorld {
         if (m < 0) continue;
         bx[m] = mx; by[m] = my; next[i] = m; prev[m] = i; next[m] = j; prev[j] = m;
         blen[i] = blen[m] = 0.5 * blen[i];
+        this.inherit(m, i, j);
         lipid[c]--; this.events.insert++;
       }
     }
@@ -532,11 +541,16 @@ export class VesicleWorld {
       if (p.kRep > 0 && crowd > 0 && this.n < p.maxParts) {
         const cf = (crowd < p.crowdCap ? crowd : p.crowdCap) / p.crowdCap;
         if (this.rand() < p.kRep * ff * cf * (1 + (p.tradeoff * (128 - g)) / 127)) {
-          food[c]--; sCount[c]++; this.events.birth++;
-          const l = this.n++;
-          px[l] = px[k]; py[l] = py[k]; founder[l] = founder[k];
-          gene[l] = this.copyByte(gene[k]); mark[l] = this.copyByte(mark[k]);
-          if (food[c] <= 0) continue;
+          // with wall genes, a copy is only made against the inner face of a wall, and takes that wall's bytes
+          const from = p.wallGenes ? this.innerBead(px[k], py[k], c) : -2;
+          if (from !== -1) {
+            food[c]--; sCount[c]++; this.events.birth++;
+            const l = this.n++;
+            px[l] = px[k]; py[l] = py[k]; founder[l] = founder[k];
+            if (from >= 0) { gene[l] = this.wgene[from]; mark[l] = this.wmark[from]; }
+            else { gene[l] = this.copyByte(gene[k]); mark[l] = this.copyByte(mark[k]); }
+            if (food[c] <= 0) continue;
+          }
         }
       }
       if (p.kLip > 0 && this.rand() < p.kLip * ff * (g / 128)) {
@@ -578,6 +592,23 @@ export class VesicleWorld {
     return best;
   }
 
+  /** The bead nearest to (x, y) on the nearest wall bond within `rIns`, if (x, y) is on the wall's interior
+   *  side there; -1 if there is no such bond or the point is outside. Where the nearest point of the wall is
+   *  a bead (a corner), the side is judged against both of that bead's bonds: inside a corner that bulges
+   *  outward means left of both, inside one that folds inward means left of either. */
+  private innerBead(x: number, y: number, c: number): number {
+    const a = this.nearBond(x, y, c);
+    if (a < 0) return -1;
+    const { bx, by, next, prev } = this, b = next[a], ex = bx[b] - bx[a], ey = by[b] - by[a], rx = x - bx[a], ry = y - by[a];
+    const along = rx * ex + ry * ey, e2 = ex * ex + ey * ey;
+    if (along > 0 && along < e2) return ex * ry - ey * rx > 0 ? (2 * along < e2 ? a : b) : -1;
+    const v = along <= 0 ? a : b, q = prev[v], n = next[v];
+    const ax = bx[v] - bx[q], ay = by[v] - by[q], cx = bx[n] - bx[v], cy = by[n] - by[v];
+    const s1 = ax * (y - by[q]) - ay * (x - bx[q]), s2 = cx * (y - by[v]) - cy * (x - bx[v]);
+    const inside = ax * cy - ay * cx >= 0 ? s1 > 0 && s2 > 0 : s1 > 0 || s2 > 0;
+    return inside ? v : -1;
+  }
+
   /** Put one new bead into the nearest wall bond within `rIns` of (x, y). False if there is none. */
   private insertNear(x: number, y: number, c: number): boolean {
     const { bx, by, next, prev, blen } = this;
@@ -590,8 +621,17 @@ export class VesicleWorld {
     bx[m] = 0.5 * (bx[best] + bx[j]); by[m] = 0.5 * (by[best] + by[j]);
     next[best] = m; prev[m] = best; next[m] = j; prev[j] = m;
     blen[best] = blen[m] = 0.5 * blen[best];
+    this.inherit(m, best, j);
     this.events.insert++;
     return true;
+  }
+
+  /** A new bead m in the bond i -> j takes its bytes from one of the two ends, picked evenly, each byte
+   *  shifted like any copy. With `wallGenes` off it takes i's bytes and no random number is drawn. */
+  private inherit(m: number, i: number, j: number): void {
+    const src = this.p.wallGenes && this.rand() < 0.5 ? j : i;
+    if (this.p.wallGenes) { this.wgene[m] = this.copyByte(this.wgene[src]); this.wmark[m] = this.copyByte(this.wmark[src]); }
+    else { this.wgene[m] = this.wgene[src]; this.wmark[m] = this.wmark[src]; }
   }
 
   private copyByte(v: number): number {
@@ -662,6 +702,7 @@ export class VesicleWorld {
     for (const a of [this.bx, this.by, this.next, this.prev, this.alive]) eat(view(a, this.beadHi));
     for (const a of [this.px, this.py, this.gene, this.mark, this.founder]) eat(view(a, this.n));
     for (const a of [this.food, this.waste, this.lipid]) eat(view(a, a.length));
+    if (this.p.wallGenes) for (const a of [this.wgene, this.wmark]) eat(view(a, this.beadHi));
     return (h >>> 0).toString(16).padStart(8, '0');
   }
 }

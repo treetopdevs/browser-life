@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VesicleWorld, sinCos } from '../src/vesicle/model.ts';
 import { assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
-import { HEREDITY, feedWorld, garden, theftWorld } from '../src/vesicle/worlds.ts';
+import { HEREDITY, METABOLISM, WALL_GENES, feedWorld, garden, theftWorld } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
 const run = (w: VesicleWorld, steps: number) => { for (let t = 0; t < steps; t++) w.tick(); return w; };
@@ -254,5 +254,107 @@ describe('vesicle world', () => {
       run(w, 6000);
       expect(loops(w)[0].solute).toBe(n);
     }
+  });
+
+  // ---- rung 3: heredity in the wall ---------------------------------------------------------------------
+
+  it('wall genes: matter stays exact, rings stay whole, and a seed repeats', () => {
+    const w = garden(3, { params: WALL_GENES }), m0 = w.matter();
+    run(w, 3000);
+    expect(w.matter()).toBe(m0);
+    expect(check(w)).toEqual([]);
+    expect(w.events.birth).toBeGreaterThan(100);
+    expect(run(garden(3, { params: WALL_GENES }), 3000).digest()).toBe(w.digest());
+    // the wall bytes are part of the state: two worlds that differ only there do not share a digest
+    const a = garden(3, { params: WALL_GENES }), b = garden(3, { params: WALL_GENES });
+    b.wgene[0] = 7;
+    expect(a.digest()).not.toBe(b.digest());
+  });
+
+  it('wall genes: with shifts off every wall keeps its founder byte and solute carries the byte of its own wall', () => {
+    const w = garden(2, { params: { ...WALL_GENES, mut: 0 }, founderGene: [64, 192] });
+    run(w, 6000);
+    expect(w.events.pinch).toBeGreaterThan(0);
+    expect(w.events.insert).toBeGreaterThan(1000);
+    const ls = loops(w), where = assign(w, ls);
+    for (const l of ls) { expect([64, 192]).toContain(l.wallGene); expect(l.wallGeneSd).toBe(0); }
+    let inside = 0;
+    for (let k = 0; k < w.n; k++) if (where[k] >= 0) { inside++; expect(w.gene[k]).toBe(ls[where[k]].wallGene); }
+    expect(inside).toBeGreaterThan(200);
+  });
+
+  it('wall genes: solute is only made against the inner face of a wall', () => {
+    // loose solute and food, no wall anywhere: nothing copies. The same crowd without wall genes does.
+    const loose = (params: object) => {
+      const w = new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, kDecay: 0, ...params });
+      w.addSolute(32, 32, 6, 200); w.scatter(w.food, 4000);
+      return run(w, 400);
+    };
+    expect(loose({ wallGenes: true }).events.birth).toBe(0);
+    expect(loose({}).events.birth).toBeGreaterThan(50);
+    // solute outside a ring, against its outer face, does not copy either
+    const w = new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, kDecay: 0, kIn: 0, kOut: 0, sBurst: 0, wallGenes: true });
+    w.addLoop(32, 32, 8);
+    for (let k = 0; k < 150; k++) { const [s, c] = sinCos(k * 0.0419); w.addParticle(32 + 10.5 * c, 32 + 10.5 * s); }
+    w.scatter(w.food, 4000);
+    run(w, 300);
+    expect(w.events.birth).toBe(0);
+  });
+
+  it('wall genes: a copy takes the wall\'s bytes, not its parent\'s', () => {
+    const w = new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, kDecay: 0, kIn: 0, kOut: 0, sBurst: 0, kLip: 0, wallGenes: true });
+    w.addLoop(32, 32, 8, undefined, 200, 77);
+    for (let k = 0; k < 60; k++) { const [s, c] = sinCos(k * 0.1047); w.addParticle(32 + 6 * c, 32 + 6 * s, 10, 1, 20); }
+    w.scatter(w.food, 4000);
+    run(w, 400);
+    expect(w.events.birth).toBeGreaterThan(20);
+    for (let k = 0; k < 60; k++) expect([w.gene[k], w.mark[k]]).toEqual([10, 20]);
+    for (let k = 60; k < w.n; k++) expect([w.gene[k], w.mark[k]]).toEqual([200, 77]);
+  });
+
+  it('wall genes: a new bead takes the bytes of either end of its bond, shifted only when shifts are on', () => {
+    const grow = (mut: number) => {
+      const w = new VesicleWorld(5, { W: 64, H: 64, kOut: 0, sBurst: 0, wallGenes: true, mut, mutStep: 4 });
+      const first = w.addLoop(32, 32, 8);
+      for (let i = first, k = 0; k < 25; k++, i = w.next[i]) { w.wgene[i] = k % 2 ? 40 : 200; w.wmark[i] = k % 2 ? 3 : 9; }
+      w.addSolute(32, 32, 6, 300); w.scatter(w.lipid, 600);
+      const old = w.beadHi;
+      run(w, 600);
+      expect(w.beadHi - old).toBeGreaterThan(20);
+      return { w, old };
+    };
+    const { w, old } = grow(0), seen = new Set<string>();
+    for (let i = old; i < w.beadHi; i++) seen.add(`${w.wgene[i]}/${w.wmark[i]}`);
+    expect([...seen].sort()).toEqual(['200/9', '40/3']);
+    // one bond, ends 40 and 200, asked many times: both ends are used, about evenly
+    const one = new VesicleWorld(9, { wallGenes: true }), f = one.addLoop(50, 50, 8), j = one.next[f], spare = one.next[j];
+    one.wgene[f] = 40; one.wgene[j] = 200;
+    const pick = one as unknown as { inherit(m: number, i: number, j: number): void };
+    let low = 0;
+    for (let t = 0; t < 400; t++) { pick.inherit(spare, f, j); expect([40, 200]).toContain(one.wgene[spare]); if (one.wgene[spare] === 40) low++; }
+    expect(low).toBeGreaterThan(150);
+    expect(low).toBeLessThan(250);
+    const m = grow(1);
+    let shifted = 0;
+    for (let i = m.old; i < m.w.beadHi; i++) if (m.w.wgene[i] !== 40 && m.w.wgene[i] !== 200) shifted++;
+    expect(shifted).toBeGreaterThan(10);
+  });
+
+  it('wall genes: inside and outside are told apart at corners that bulge and corners that fold', () => {
+    // an L-shaped ring (counter-clockwise): the corner at (20, 20) folds inward, the others bulge
+    const w = new VesicleWorld(1, { ...still, wallGenes: true });
+    const first = w.addLoop(50, 50, 5, 12), at = [[10, 10], [20, 10], [30, 10], [30, 15], [30, 20], [25, 20], [20, 20], [20, 25], [20, 30], [15, 30], [10, 30], [10, 20]];
+    for (let i = first, k = 0; k < 12; k++, i = w.next[i]) { w.bx[i] = at[k][0]; w.by[i] = at[k][1]; }
+    const k = w as unknown as { buildHash(): void; innerBead(x: number, y: number, c: number): number };
+    k.buildHash();
+    const inside = (x: number, y: number) => k.innerBead(x, y, w.cellOf(x, y)) >= 0;
+    expect([inside(11, 11), inside(29, 11), inside(11, 29), inside(19, 19), inside(15, 11), inside(21, 19.5)]).toEqual([true, true, true, true, true, true]);
+    expect([inside(9, 9), inside(9.5, 9.9), inside(31, 9.5), inside(30.5, 20.9), inside(21, 21), inside(20.5, 22), inside(15, 9), inside(25, 21)]).toEqual([false, false, false, false, false, false, false, false]);
+    expect(inside(15, 20)).toBe(false);
+  });
+
+  it('wall genes: matches the pinned state after 2,000 steps', () => {
+    const w = run(garden(1, { params: WALL_GENES }), 2000);
+    expect([w.digest(), w.matter(), w.n, w.beadCount]).toEqual(['48c2db7d', 5694, 443, 365]);
   });
 });
