@@ -1,0 +1,2693 @@
+{
+ "version": 1,
+ "salt": 2057177873,
+ "rule": "exploratory, no gate",
+ "config": {
+  "grid": {
+   "points": 26244
+  },
+  "mutantsRule": "see shards",
+  "viableProxy": "L1 half / L2 2x+32, functional parents only"
+ },
+ "arms": {
+  "weights": {
+   "genomeBytes": 160
+  },
+  "tapeR": {
+   "genomeBytes": 160,
+   "instructions": 40
+  },
+  "bff": {
+   "genomeBytes": 100,
+   "fuel": 1024
+  }
+ },
+ "shards": [
+  {
+   "shard": "bff-dense-func",
+   "rep": "bff-dense",
+   "panel": "func",
+   "parents": 4,
+   "mutantsPerParent": 100
+  },
+  {
+   "shard": "bff-dense-raw",
+   "rep": "bff-dense",
+   "panel": "raw",
+   "parents": 12,
+   "mutantsPerParent": 100
+  },
+  {
+   "shard": "bff-uniform-raw",
+   "rep": "bff-uniform",
+   "panel": "raw",
+   "parents": 12,
+   "mutantsPerParent": 100
+  },
+  {
+   "shard": "nn-founders-matched",
+   "rep": "nn",
+   "panel": "founders-matched",
+   "parents": 6,
+   "mutantsPerParent": 400
+  },
+  {
+   "shard": "nn-founders",
+   "rep": "nn",
+   "panel": "founders",
+   "parents": 12,
+   "mutantsPerParent": 400
+  },
+  {
+   "shard": "nn-func",
+   "rep": "nn",
+   "panel": "func",
+   "parents": 40,
+   "mutantsPerParent": 200
+  },
+  {
+   "shard": "nn-raw",
+   "rep": "nn",
+   "panel": "raw",
+   "parents": 40,
+   "mutantsPerParent": 200
+  },
+  {
+   "shard": "tape-func",
+   "rep": "tape",
+   "panel": "func",
+   "parents": 40,
+   "mutantsPerParent": 200
+  },
+  {
+   "shard": "tape-matched",
+   "rep": "tape",
+   "panel": "matched",
+   "parents": 6,
+   "mutantsPerParent": 400
+  },
+  {
+   "shard": "tape-raw",
+   "rep": "tape",
+   "panel": "raw",
+   "parents": 40,
+   "mutantsPerParent": 200
+  }
+ ],
+ "matching": {
+  "achieved": true,
+  "matchedCount": 6,
+  "sampleN": 1024,
+  "restarts": 4,
+  "evals": 30000,
+  "maxMeanErr": 6,
+  "records": [
+   {
+    "cluster": 0,
+    "subError": 40343,
+    "fullErrorMilli": 4938,
+    "zeroErrorMilli": 20128,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "af434922c2ae073816414345b24c21454ea300287f40066c3fadfeb24632f76a3e060cb3d48d0b7f0c60ef73d418c2a1efe0c027dd7ac92a3f66a041f8221631e124386bf3b65a0302fa166d4f7348df5ab146404165894c71d0eb18bff03614b44636f136b3ce45dfd3491cb88e3665b156c13b854e70c01f2746a3bbcc1584ac0aa1d0a44cf307762aba444fcc58e63f7d0904def156754a5d0221cfd1e7dc"
+   },
+   {
+    "cluster": 1,
+    "subError": 45618,
+    "fullErrorMilli": 5649,
+    "zeroErrorMilli": 32777,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "f5f8e5ebf4ea496d11d6b16667090aa17fe1c5a044d5290025afaae39f9d0ae64ee762cd01a82e4b346d2578af6aa5624fd3c0d2634d040fb3b1b584a124722eaf0a1d6c371a8831862a2d7dc4452a073609cffb8609c541f230e41dbfe8810c73b1bd9a4e2d65bbf4c789e28d6f703d00a174b39f3a27cd938beda5ce09763b76f0d3f6b2579b7c670a480a0630a7efcf519ac0868f68c88a4dd821459bde81"
+   },
+   {
+    "cluster": 2,
+    "subError": 62513,
+    "fullErrorMilli": 7666,
+    "zeroErrorMilli": 29452,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "ff42a7a4af1704e99e0b211421723633309f35bbefd269d61325e8c2b39d60d76ff5f0d4af1d45a4f47a690e5441b3124472a4b24d57bd293e9272ec214d0e66fe02d791a371f2724d50a9dae223b020731c7282b6dc9fbb9fa24d679b2f82c9d14270b32f2f0381b36d028d93840d5b16926fc2ef49dc884f8f8b9118f01115a450cd9102eaed3b46cdfdadaf6d492191077741afeada16b46c0bf245ebcc89"
+   },
+   {
+    "cluster": 4,
+    "subError": 4132,
+    "fullErrorMilli": 500,
+    "zeroErrorMilli": 21402,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "ed619163d15971f001abc59556982b5a124c324b01fcf00dff616b60f9bb1c8104c3a5d956955cc33a0aac0da30c1bfb5e56a489638bf6550d44a4cf9d58818bd71bf99bc421ee03c977a843a06cb36daed25ca413ddbbc19ab6eb1f21bec0781f0cfb6d53137b4b6380ccae1fe5b5c05f6bb5769f2c16f3310f63e7c65c041d84cd76fc24ea6575f4021eebd4f5fe00b3e4783e7fcb556aaa2ed8b19cb8bb76"
+   },
+   {
+    "cluster": 5,
+    "subError": 48143,
+    "fullErrorMilli": 5966,
+    "zeroErrorMilli": 32938,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "3d9c17c070f9d07f9e424941a57e26c767e346338120e58292b9de6aadaca3b1127f1e19881999692f0d84c9383880ac8f39c5324dbea7b12467860927710dd8b6784501d3ce6dd424e58c27ae5bc5d39db160ddf77a8e99e7f4e57a9fb11426e4805bed2eacedb2e7f06814df0cb4c91f1e81df81f3a75ff4eab3fec638208c80c6564a9c4c629ca42f93df84d5449503904db08fd1c0eb2fa058c666aa9100"
+   },
+   {
+    "cluster": 9,
+    "subError": 47481,
+    "fullErrorMilli": 5818,
+    "zeroErrorMilli": 41027,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "7f5c81dce1c22cd2a87a69bcd1f8004e0fd8a5f187eff8e7814c871ed42852b10311c2f191b3d8ad6f1c818e96681c202876f3fc6609b7e157de0679aac741050150a8bf75e0587eccebaf2c563a24d8664fa8b6dbca1045239bfaac513f3aabbfba274c4337489bcabdfa1cd3c4f88ce69f0e513690ab57a6f02b9aa32c7d7ef1a865454f9d0aa27da1f041af7aaa3e7dec2cb5d6467d0816aa268bb64bfa21"
+   },
+   {
+    "cluster": 10,
+    "subError": 4887,
+    "fullErrorMilli": 604,
+    "zeroErrorMilli": 19236,
+    "functionalTape": true,
+    "matched": true,
+    "tapeHex": "74ca0d43deac8a759ab960d27ae3cc62fc7210dda1479407b03d8443073617274ed2a45a8c4cca0038bef793c6d62c6a1457c596f7a9f3129a4bf2957068fe7c27226ec6cb36f012e9d9ed5c017d76a736abbdfd7f8585ea27ea1925623fb7b34ba1dfaf130d695946753ada4a22ceac0d11b3481ff29cc73f97c4ce514c621365c746a66c4deba2217417b33f2e2c5e5f4db7e7cf4bca1d833340f77f8e6ef6"
+   },
+   {
+    "cluster": 11,
+    "subError": 62726,
+    "fullErrorMilli": 7781,
+    "zeroErrorMilli": 41453,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "1a2142fd6e50335e3f042127e4208f086c91ff80dada04aa74c82b06ab2a658084ad29841d558a74c3e32320313da827a78724e8b5b1e666bfef91733f852367f7249d2a2fafc71938db106397b34f3d212b373febb4368d3e46c21d0f8ba31d46821a0befb24a337fe4cdb096265bb3f9e0139a5fee0635f6eb9d82a6b30625e9f1d3c437fb33e40f60e886769b1d60ae909b9bb3aab153546dd1cf8f6b7306"
+   },
+   {
+    "cluster": 12,
+    "subError": 49240,
+    "fullErrorMilli": 6075,
+    "zeroErrorMilli": 24163,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "215d38f9714708d392eae444a9d8a63c5ecde243cfe7369adffd84f8d1bf4a1d4f8da9655e98851e7a4cd15fd7485c18096aff31e5fe2dbfa3509e1d06e4256d2f220139b346a0b724ab0b67eebcab81c6fd7da524edcb7d19c4648ac66da2a483c01c67b6b05d062fa08471dfe9808eff0d4df241076c96d6e7d8bc16260729c7ee33bc1654a580c79160ace6cae63d062ffbf4b2512a303ca693db1092e9c8"
+   },
+   {
+    "cluster": 16,
+    "subError": 72836,
+    "fullErrorMilli": 9016,
+    "zeroErrorMilli": 34426,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "3bdc01361685c362dfc0e2857de145dd5d11a9611ed5c3d67611a160486db091412c313394fd20cc568f9c7676ada69dcfb5a165ed37e6e11f01b1cfcde77c0dd4b7ec1fbf87814f9fa4ad81e379c8a3066c074431432524e16ff5406d4e87616fd58944d64f419c665d6fa1d7dcef02576bd4a5e615a2a17602bc9d0a10d5dd8f7c116fff8cf339062eec02c3ea437116ac972e36d870e724cdd8daf50b9c55"
+   },
+   {
+    "cluster": 17,
+    "subError": 48961,
+    "fullErrorMilli": 6033,
+    "zeroErrorMilli": 22949,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "5e10e2075f2427a39a5b54a3ff13d07fdf0de202d401f6ceb56e19dbd17d144611340e173fe0d9a3426c607f4e47d45c34af33224fd004eb54b98f0831c9682d34f36419c686f89e3ba3673ede798ce60b78d3ada3aa14d944d1d04336d03d59df1878e4e1b3bf409d4003f06ce4774b51acf3e8ff00d01eac408df03ac5f848c34bf3f19fc2252b03d321e94229fe2cafcaecbbc78d18b312379d7ba3518ac0"
+   },
+   {
+    "cluster": 20,
+    "subError": 56325,
+    "fullErrorMilli": 6893,
+    "zeroErrorMilli": 40647,
+    "functionalTape": true,
+    "matched": false,
+    "tapeHex": "319a779857593017f118163e0bc34e681e2978d0c1c6da1e1191c4d3d4b5f73ebbcf7ae98f4660eaeec311b210bd6c70477beda72f98f3b082793973216a6d599437812fdfc057750f854089229c684275b9b45f831e96b4e063ad407f26662a211328237fc663c52a9645faafef962c295dc5f9ff5300061fd06a8f978ab8a8a6e06c6ab64a1c89d2216af430c780435b4c267bf7a8d78543ab54d37eddee4c"
+   }
+  ]
+ },
+ "acceptance": {
+  "bff-dense/func": {
+   "tried": 431,
+   "accepted": 4
+  },
+  "nn/func": {
+   "tried": 40,
+   "accepted": 40
+  },
+  "tape/func": {
+   "tried": 113,
+   "accepted": 40
+  }
+ },
+ "calibration": {
+  "mutantsPerParent": 20,
+  "parentsUsed": [
+   0,
+   1,
+   2,
+   4,
+   5,
+   9,
+   10,
+   11,
+   12,
+   16,
+   17,
+   20
+  ],
+  "parentsSkipped": [],
+  "n": 240,
+  "confusion": {
+   "neutral": {
+    "realViable": 37,
+    "realNot": 0
+   },
+   "viable": {
+    "realViable": 202,
+    "realNot": 0
+   },
+   "lethal": {
+    "realViable": 1,
+    "realNot": 0
+   }
+  },
+  "sweepConfusion": {
+   "quarter": {
+    "neutral": {
+     "realViable": 37,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 202,
+     "realNot": 0
+    },
+    "lethal": {
+     "realViable": 1,
+     "realNot": 0
+    }
+   },
+   "half": {
+    "neutral": {
+     "realViable": 37,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 202,
+     "realNot": 0
+    },
+    "lethal": {
+     "realViable": 1,
+     "realNot": 0
+    }
+   },
+   "threeQuarter": {
+    "neutral": {
+     "realViable": 37,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 199,
+     "realNot": 0
+    },
+    "lethal": {
+     "realViable": 4,
+     "realNot": 0
+    }
+   }
+  },
+  "agreementPermille": 995,
+  "agreementPermilleSweep": {
+   "quarter": 995,
+   "half": 995,
+   "threeQuarter": 983
+  },
+  "gridBlind": 0,
+  "assayRuns": 1512
+ },
+ "calibrationResample": {
+  "kind": "W-resample",
+  "mutantsPerParent": 40,
+  "parentsUsed": [
+   0,
+   1,
+   2,
+   4,
+   5,
+   9,
+   10,
+   11,
+   12,
+   16,
+   17,
+   20
+  ],
+  "parentsSkipped": [],
+  "n": 480,
+  "confusion": {
+   "neutral": {
+    "realViable": 70,
+    "realNot": 0
+   },
+   "viable": {
+    "realViable": 375,
+    "realNot": 2
+   },
+   "lethal": {
+    "realViable": 33,
+    "realNot": 0
+   }
+  },
+  "sweepConfusion": {
+   "quarter": {
+    "neutral": {
+     "realViable": 70,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 385,
+     "realNot": 2
+    },
+    "lethal": {
+     "realViable": 23,
+     "realNot": 0
+    }
+   },
+   "half": {
+    "neutral": {
+     "realViable": 70,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 375,
+     "realNot": 2
+    },
+    "lethal": {
+     "realViable": 33,
+     "realNot": 0
+    }
+   },
+   "threeQuarter": {
+    "neutral": {
+     "realViable": 70,
+     "realNot": 0
+    },
+    "viable": {
+     "realViable": 350,
+     "realNot": 2
+    },
+    "lethal": {
+     "realViable": 58,
+     "realNot": 0
+    }
+   }
+  },
+  "agreementPermille": 927,
+  "agreementPermilleSweep": {
+   "quarter": 947,
+   "half": 927,
+   "threeQuarter": 875
+  },
+  "gridBlind": 0,
+  "assayRuns": 2944
+ },
+ "cells": [
+  {
+   "rep": "bff-dense",
+   "panel": "func",
+   "kind": "B-byte-resample",
+   "parents": 4,
+   "functionalParents": 4,
+   "mutantsPerParent": 100,
+   "n": 400,
+   "degenerate": 0,
+   "redraws": 51,
+   "neutral": 265,
+   "changedViable": 55,
+   "lethal": 80,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 400,
+    "neutral": 265
+   },
+   "permille": {
+    "neutral": 662,
+    "changedViable": 137,
+    "lethal": 200
+   },
+   "wilson": {
+    "neutral": [
+     614,
+     708
+    ],
+    "changedViable": [
+     107,
+     175
+    ],
+    "lethal": [
+     163,
+     242
+    ]
+   },
+   "parentSpread": {
+    "min": 450,
+    "median": 710,
+    "max": 810
+   },
+   "parentBoot": [
+    515,
+    777
+   ],
+   "changed": 135,
+   "bins": [
+    0,
+    30,
+    7,
+    98
+   ],
+   "meanAbsDeltaInt": 60,
+   "meanMaxDelta": 95,
+   "meanOutputsMovedMilli": 5733,
+   "distinct": {
+    "perParentMeanMilli": 15500,
+    "changedPerParentMeanMilli": 33750,
+    "pooledRatioPermille": 459
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 265,
+     "viable": 57,
+     "lethal": 78
+    },
+    "half": {
+     "neutral": 265,
+     "viable": 55,
+     "lethal": 80
+    },
+    "threeQuarter": {
+     "neutral": 265,
+     "viable": 55,
+     "lethal": 80
+    }
+   }
+  },
+  {
+   "rep": "bff-dense",
+   "panel": "raw",
+   "kind": "B-byte-resample",
+   "parents": 12,
+   "functionalParents": 0,
+   "mutantsPerParent": 100,
+   "n": 1200,
+   "degenerate": 0,
+   "redraws": 129,
+   "neutral": 1085,
+   "changedViable": 0,
+   "lethal": 0,
+   "viableNA": 115,
+   "neutralDecodeChanging": {
+    "n": 1200,
+    "neutral": 1085
+   },
+   "permille": {
+    "neutral": 904,
+    "changedViable": 0,
+    "lethal": 0
+   },
+   "wilson": {
+    "neutral": [
+     886,
+     920
+    ],
+    "changedViable": [
+     0,
+     4
+    ],
+    "lethal": [
+     0,
+     4
+    ]
+   },
+   "parentSpread": {
+    "min": 750,
+    "median": 940,
+    "max": 1000
+   },
+   "parentBoot": [
+    845,
+    960
+   ],
+   "changed": 115,
+   "bins": [
+    0,
+    0,
+    0,
+    115
+   ],
+   "meanAbsDeltaInt": 50,
+   "meanMaxDelta": 47,
+   "meanOutputsMovedMilli": 1730,
+   "distinct": {
+    "perParentMeanMilli": 3666,
+    "changedPerParentMeanMilli": 9583,
+    "pooledRatioPermille": 382
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 1085,
+     "viable": 0,
+     "lethal": 0
+    },
+    "half": {
+     "neutral": 1085,
+     "viable": 0,
+     "lethal": 0
+    },
+    "threeQuarter": {
+     "neutral": 1085,
+     "viable": 0,
+     "lethal": 0
+    }
+   }
+  },
+  {
+   "rep": "bff-uniform",
+   "panel": "raw",
+   "kind": "B-byte-resample",
+   "parents": 12,
+   "functionalParents": 0,
+   "mutantsPerParent": 100,
+   "n": 1200,
+   "degenerate": 0,
+   "redraws": 6,
+   "neutral": 1200,
+   "changedViable": 0,
+   "lethal": 0,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 1200,
+    "neutral": 1200
+   },
+   "permille": {
+    "neutral": 1000,
+    "changedViable": 0,
+    "lethal": 0
+   },
+   "wilson": {
+    "neutral": [
+     996,
+     1000
+    ],
+    "changedViable": [
+     0,
+     4
+    ],
+    "lethal": [
+     0,
+     4
+    ]
+   },
+   "parentSpread": {
+    "min": 1000,
+    "median": 1000,
+    "max": 1000
+   },
+   "parentBoot": [
+    1000,
+    1000
+   ],
+   "changed": 0,
+   "bins": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "meanAbsDeltaInt": 0,
+   "meanMaxDelta": 0,
+   "meanOutputsMovedMilli": 0,
+   "distinct": {
+    "perParentMeanMilli": 0,
+    "changedPerParentMeanMilli": 0,
+    "pooledRatioPermille": 0
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 1200,
+     "viable": 0,
+     "lethal": 0
+    },
+    "half": {
+     "neutral": 1200,
+     "viable": 0,
+     "lethal": 0
+    },
+    "threeQuarter": {
+     "neutral": 1200,
+     "viable": 0,
+     "lethal": 0
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "founders-matched",
+   "kind": "W-step",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 7,
+   "neutral": 580,
+   "changedViable": 1814,
+   "lethal": 6,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 580
+   },
+   "permille": {
+    "neutral": 241,
+    "changedViable": 755,
+    "lethal": 2
+   },
+   "wilson": {
+    "neutral": [
+     224,
+     260
+    ],
+    "changedViable": [
+     738,
+     773
+    ],
+    "lethal": [
+     1,
+     6
+    ]
+   },
+   "parentSpread": {
+    "min": 2,
+    "median": 117,
+    "max": 650
+   },
+   "parentBoot": [
+    44,
+    453
+   ],
+   "changed": 1820,
+   "bins": [
+    92,
+    244,
+    789,
+    695
+   ],
+   "meanAbsDeltaInt": 3,
+   "meanMaxDelta": 6,
+   "meanOutputsMovedMilli": 3263,
+   "distinct": {
+    "perParentMeanMilli": 293000,
+    "changedPerParentMeanMilli": 303333,
+    "pooledRatioPermille": 965
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 580,
+     "viable": 1818,
+     "lethal": 2
+    },
+    "half": {
+     "neutral": 580,
+     "viable": 1814,
+     "lethal": 6
+    },
+    "threeQuarter": {
+     "neutral": 580,
+     "viable": 1791,
+     "lethal": 29
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "founders-matched",
+   "kind": "W-resample",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 10,
+   "neutral": 505,
+   "changedViable": 1768,
+   "lethal": 127,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 505
+   },
+   "permille": {
+    "neutral": 210,
+    "changedViable": 736,
+    "lethal": 52
+   },
+   "wilson": {
+    "neutral": [
+     194,
+     228
+    ],
+    "changedViable": [
+     718,
+     754
+    ],
+    "lethal": [
+     44,
+     63
+    ]
+   },
+   "parentSpread": {
+    "min": 15,
+    "median": 95,
+    "max": 570
+   },
+   "parentBoot": [
+    34,
+    394
+   ],
+   "changed": 1895,
+   "bins": [
+    57,
+    137,
+    752,
+    949
+   ],
+   "meanAbsDeltaInt": 12,
+   "meanMaxDelta": 33,
+   "meanOutputsMovedMilli": 3338,
+   "distinct": {
+    "perParentMeanMilli": 305333,
+    "changedPerParentMeanMilli": 315833,
+    "pooledRatioPermille": 966
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 505,
+     "viable": 1813,
+     "lethal": 82
+    },
+    "half": {
+     "neutral": 505,
+     "viable": 1768,
+     "lethal": 127
+    },
+    "threeQuarter": {
+     "neutral": 505,
+     "viable": 1669,
+     "lethal": 226
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "founders",
+   "kind": "W-step",
+   "parents": 12,
+   "functionalParents": 12,
+   "mutantsPerParent": 400,
+   "n": 4800,
+   "degenerate": 0,
+   "redraws": 13,
+   "neutral": 871,
+   "changedViable": 3912,
+   "lethal": 17,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 4800,
+    "neutral": 871
+   },
+   "permille": {
+    "neutral": 181,
+    "changedViable": 815,
+    "lethal": 3
+   },
+   "wilson": {
+    "neutral": [
+     170,
+     193
+    ],
+    "changedViable": [
+     803,
+     826
+    ],
+    "lethal": [
+     2,
+     6
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 97,
+    "max": 647
+   },
+   "parentBoot": [
+    72,
+    315
+   ],
+   "changed": 3929,
+   "bins": [
+    238,
+    618,
+    1645,
+    1428
+   ],
+   "meanAbsDeltaInt": 3,
+   "meanMaxDelta": 6,
+   "meanOutputsMovedMilli": 3540,
+   "distinct": {
+    "perParentMeanMilli": 315583,
+    "changedPerParentMeanMilli": 327416,
+    "pooledRatioPermille": 963
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 871,
+     "viable": 3926,
+     "lethal": 3
+    },
+    "half": {
+     "neutral": 871,
+     "viable": 3912,
+     "lethal": 17
+    },
+    "threeQuarter": {
+     "neutral": 871,
+     "viable": 3876,
+     "lethal": 53
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "founders",
+   "kind": "W-resample",
+   "parents": 12,
+   "functionalParents": 12,
+   "mutantsPerParent": 400,
+   "n": 4800,
+   "degenerate": 0,
+   "redraws": 17,
+   "neutral": 715,
+   "changedViable": 3817,
+   "lethal": 268,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 4800,
+    "neutral": 715
+   },
+   "permille": {
+    "neutral": 148,
+    "changedViable": 795,
+    "lethal": 55
+   },
+   "wilson": {
+    "neutral": [
+     139,
+     160
+    ],
+    "changedViable": [
+     783,
+     807
+    ],
+    "lethal": [
+     49,
+     63
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 77,
+    "max": 587
+   },
+   "parentBoot": [
+    51,
+    271
+   ],
+   "changed": 4085,
+   "bins": [
+    202,
+    450,
+    1551,
+    1882
+   ],
+   "meanAbsDeltaInt": 12,
+   "meanMaxDelta": 31,
+   "meanOutputsMovedMilli": 3600,
+   "distinct": {
+    "perParentMeanMilli": 332000,
+    "changedPerParentMeanMilli": 340416,
+    "pooledRatioPermille": 975
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 715,
+     "viable": 3932,
+     "lethal": 153
+    },
+    "half": {
+     "neutral": 715,
+     "viable": 3817,
+     "lethal": 268
+    },
+    "threeQuarter": {
+     "neutral": 715,
+     "viable": 3549,
+     "lethal": 536
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "func",
+   "kind": "W-step",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 852,
+   "changedViable": 7121,
+   "lethal": 27,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 852
+   },
+   "permille": {
+    "neutral": 106,
+    "changedViable": 890,
+    "lethal": 3
+   },
+   "wilson": {
+    "neutral": [
+     99,
+     114
+    ],
+    "changedViable": [
+     883,
+     897
+    ],
+    "lethal": [
+     2,
+     5
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 105,
+    "max": 375
+   },
+   "parentBoot": [
+    82,
+    135
+   ],
+   "changed": 7148,
+   "bins": [
+    650,
+    1447,
+    2894,
+    2157
+   ],
+   "meanAbsDeltaInt": 3,
+   "meanMaxDelta": 5,
+   "meanOutputsMovedMilli": 3304,
+   "distinct": {
+    "perParentMeanMilli": 175925,
+    "changedPerParentMeanMilli": 178700,
+    "pooledRatioPermille": 984
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 852,
+     "viable": 7139,
+     "lethal": 9
+    },
+    "half": {
+     "neutral": 852,
+     "viable": 7121,
+     "lethal": 27
+    },
+    "threeQuarter": {
+     "neutral": 852,
+     "viable": 7043,
+     "lethal": 105
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "func",
+   "kind": "W-resample",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 30,
+   "neutral": 723,
+   "changedViable": 6951,
+   "lethal": 326,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 723
+   },
+   "permille": {
+    "neutral": 90,
+    "changedViable": 868,
+    "lethal": 40
+   },
+   "wilson": {
+    "neutral": [
+     84,
+     97
+    ],
+    "changedViable": [
+     861,
+     877
+    ],
+    "lethal": [
+     36,
+     46
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 75,
+    "max": 350
+   },
+   "parentBoot": [
+    67,
+    114
+   ],
+   "changed": 7277,
+   "bins": [
+    452,
+    1148,
+    2699,
+    2978
+   ],
+   "meanAbsDeltaInt": 11,
+   "meanMaxDelta": 29,
+   "meanOutputsMovedMilli": 3619,
+   "distinct": {
+    "perParentMeanMilli": 179525,
+    "changedPerParentMeanMilli": 181925,
+    "pooledRatioPermille": 986
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 723,
+     "viable": 7085,
+     "lethal": 192
+    },
+    "half": {
+     "neutral": 723,
+     "viable": 6951,
+     "lethal": 326
+    },
+    "threeQuarter": {
+     "neutral": 723,
+     "viable": 6578,
+     "lethal": 699
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "raw",
+   "kind": "W-step",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 580,
+   "changedViable": 7394,
+   "lethal": 26,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 580
+   },
+   "permille": {
+    "neutral": 72,
+    "changedViable": 924,
+    "lethal": 3
+   },
+   "wilson": {
+    "neutral": [
+     67,
+     79
+    ],
+    "changedViable": [
+     918,
+     930
+    ],
+    "lethal": [
+     2,
+     5
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 45,
+    "max": 325
+   },
+   "parentBoot": [
+    48,
+    96
+   ],
+   "changed": 7420,
+   "bins": [
+    630,
+    1224,
+    3315,
+    2251
+   ],
+   "meanAbsDeltaInt": 3,
+   "meanMaxDelta": 6,
+   "meanOutputsMovedMilli": 3597,
+   "distinct": {
+    "perParentMeanMilli": 181975,
+    "changedPerParentMeanMilli": 185500,
+    "pooledRatioPermille": 980
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 580,
+     "viable": 7412,
+     "lethal": 8
+    },
+    "half": {
+     "neutral": 580,
+     "viable": 7394,
+     "lethal": 26
+    },
+    "threeQuarter": {
+     "neutral": 580,
+     "viable": 7333,
+     "lethal": 87
+    }
+   }
+  },
+  {
+   "rep": "weights",
+   "panel": "raw",
+   "kind": "W-resample",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 31,
+   "neutral": 430,
+   "changedViable": 7177,
+   "lethal": 393,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 430
+   },
+   "permille": {
+    "neutral": 53,
+    "changedViable": 897,
+    "lethal": 49
+   },
+   "wilson": {
+    "neutral": [
+     49,
+     59
+    ],
+    "changedViable": [
+     890,
+     904
+    ],
+    "lethal": [
+     44,
+     55
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 35,
+    "max": 230
+   },
+   "parentBoot": [
+    36,
+    72
+   ],
+   "changed": 7570,
+   "bins": [
+    473,
+    935,
+    3117,
+    3045
+   ],
+   "meanAbsDeltaInt": 10,
+   "meanMaxDelta": 29,
+   "meanOutputsMovedMilli": 3907,
+   "distinct": {
+    "perParentMeanMilli": 186200,
+    "changedPerParentMeanMilli": 189250,
+    "pooledRatioPermille": 983
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 430,
+     "viable": 7352,
+     "lethal": 218
+    },
+    "half": {
+     "neutral": 430,
+     "viable": 7177,
+     "lethal": 393
+    },
+    "threeQuarter": {
+     "neutral": 430,
+     "viable": 6752,
+     "lethal": 818
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-byte-step",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 6788,
+   "changedViable": 872,
+   "lethal": 340,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 6869,
+    "neutral": 5657
+   },
+   "permille": {
+    "neutral": 848,
+    "changedViable": 109,
+    "lethal": 42
+   },
+   "wilson": {
+    "neutral": [
+     840,
+     857
+    ],
+    "changedViable": [
+     102,
+     117
+    ],
+    "lethal": [
+     38,
+     48
+    ]
+   },
+   "parentSpread": {
+    "min": 690,
+    "median": 855,
+    "max": 925
+   },
+   "parentBoot": [
+    831,
+    863
+   ],
+   "changed": 1212,
+   "bins": [
+    0,
+    6,
+    540,
+    666
+   ],
+   "meanAbsDeltaInt": 42,
+   "meanMaxDelta": 60,
+   "meanOutputsMovedMilli": 1254,
+   "distinct": {
+    "perParentMeanMilli": 18425,
+    "changedPerParentMeanMilli": 30300,
+    "pooledRatioPermille": 608
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6788,
+     "viable": 898,
+     "lethal": 314
+    },
+    "half": {
+     "neutral": 6788,
+     "viable": 872,
+     "lethal": 340
+    },
+    "threeQuarter": {
+     "neutral": 6788,
+     "viable": 844,
+     "lethal": 368
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-byte-resample",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 28,
+   "neutral": 6798,
+   "changedViable": 865,
+   "lethal": 337,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 6762,
+    "neutral": 5560
+   },
+   "permille": {
+    "neutral": 849,
+    "changedViable": 108,
+    "lethal": 42
+   },
+   "wilson": {
+    "neutral": [
+     841,
+     858
+    ],
+    "changedViable": [
+     101,
+     116
+    ],
+    "lethal": [
+     37,
+     47
+    ]
+   },
+   "parentSpread": {
+    "min": 675,
+    "median": 850,
+    "max": 925
+   },
+   "parentBoot": [
+    833,
+    864
+   ],
+   "changed": 1202,
+   "bins": [
+    0,
+    15,
+    469,
+    718
+   ],
+   "meanAbsDeltaInt": 43,
+   "meanMaxDelta": 62,
+   "meanOutputsMovedMilli": 1247,
+   "distinct": {
+    "perParentMeanMilli": 19450,
+    "changedPerParentMeanMilli": 30050,
+    "pooledRatioPermille": 647
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6798,
+     "viable": 892,
+     "lethal": 310
+    },
+    "half": {
+     "neutral": 6798,
+     "viable": 865,
+     "lethal": 337
+    },
+    "threeQuarter": {
+     "neutral": 6798,
+     "viable": 836,
+     "lethal": 366
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-instr-resample",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 5959,
+   "changedViable": 1366,
+   "lethal": 675,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 7970,
+    "neutral": 5929
+   },
+   "permille": {
+    "neutral": 744,
+    "changedViable": 170,
+    "lethal": 84
+   },
+   "wilson": {
+    "neutral": [
+     735,
+     755
+    ],
+    "changedViable": [
+     162,
+     180
+    ],
+    "lethal": [
+     78,
+     91
+    ]
+   },
+   "parentSpread": {
+    "min": 525,
+    "median": 755,
+    "max": 855
+   },
+   "parentBoot": [
+    721,
+    769
+   ],
+   "changed": 2041,
+   "bins": [
+    0,
+    16,
+    792,
+    1233
+   ],
+   "meanAbsDeltaInt": 45,
+   "meanMaxDelta": 65,
+   "meanOutputsMovedMilli": 1281,
+   "distinct": {
+    "perParentMeanMilli": 24200,
+    "changedPerParentMeanMilli": 51025,
+    "pooledRatioPermille": 474
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 5959,
+     "viable": 1403,
+     "lethal": 638
+    },
+    "half": {
+     "neutral": 5959,
+     "viable": 1366,
+     "lethal": 675
+    },
+    "threeQuarter": {
+     "neutral": 5959,
+     "viable": 1328,
+     "lethal": 713
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-insert",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 5821,
+   "changedViable": 1136,
+   "lethal": 1043,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 5821
+   },
+   "permille": {
+    "neutral": 727,
+    "changedViable": 142,
+    "lethal": 130
+   },
+   "wilson": {
+    "neutral": [
+     717,
+     738
+    ],
+    "changedViable": [
+     134,
+     150
+    ],
+    "lethal": [
+     123,
+     138
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 890,
+    "max": 945
+   },
+   "parentBoot": [
+    613,
+    823
+   ],
+   "changed": 2179,
+   "bins": [
+    0,
+    10,
+    848,
+    1321
+   ],
+   "meanAbsDeltaInt": 43,
+   "meanMaxDelta": 56,
+   "meanOutputsMovedMilli": 1157,
+   "distinct": {
+    "perParentMeanMilli": 19000,
+    "changedPerParentMeanMilli": 54475,
+    "pooledRatioPermille": 348
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 5821,
+     "viable": 1157,
+     "lethal": 1022
+    },
+    "half": {
+     "neutral": 5821,
+     "viable": 1136,
+     "lethal": 1043
+    },
+    "threeQuarter": {
+     "neutral": 5821,
+     "viable": 1114,
+     "lethal": 1065
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-delete",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 6764,
+   "changedViable": 852,
+   "lethal": 384,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 7983,
+    "neutral": 6747
+   },
+   "permille": {
+    "neutral": 845,
+    "changedViable": 106,
+    "lethal": 48
+   },
+   "wilson": {
+    "neutral": [
+     837,
+     854
+    ],
+    "changedViable": [
+     99,
+     114
+    ],
+    "lethal": [
+     43,
+     53
+    ]
+   },
+   "parentSpread": {
+    "min": 660,
+    "median": 845,
+    "max": 960
+   },
+   "parentBoot": [
+    824,
+    865
+   ],
+   "changed": 1236,
+   "bins": [
+    0,
+    17,
+    493,
+    726
+   ],
+   "meanAbsDeltaInt": 44,
+   "meanMaxDelta": 64,
+   "meanOutputsMovedMilli": 1214,
+   "distinct": {
+    "perParentMeanMilli": 4975,
+    "changedPerParentMeanMilli": 30900,
+    "pooledRatioPermille": 161
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6764,
+     "viable": 865,
+     "lethal": 371
+    },
+    "half": {
+     "neutral": 6764,
+     "viable": 852,
+     "lethal": 384
+    },
+    "threeQuarter": {
+     "neutral": 6764,
+     "viable": 834,
+     "lethal": 402
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "func",
+   "kind": "T-dup",
+   "parents": 40,
+   "functionalParents": 40,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 210,
+   "neutral": 6514,
+   "changedViable": 686,
+   "lethal": 800,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 6514
+   },
+   "permille": {
+    "neutral": 814,
+    "changedViable": 85,
+    "lethal": 100
+   },
+   "wilson": {
+    "neutral": [
+     805,
+     823
+    ],
+    "changedViable": [
+     79,
+     93
+    ],
+    "lethal": [
+     93,
+     107
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 1000,
+    "max": 1000
+   },
+   "parentBoot": [
+    691,
+    914
+   ],
+   "changed": 1486,
+   "bins": [
+    0,
+    0,
+    645,
+    841
+   ],
+   "meanAbsDeltaInt": 40,
+   "meanMaxDelta": 46,
+   "meanOutputsMovedMilli": 1039,
+   "distinct": {
+    "perParentMeanMilli": 775,
+    "changedPerParentMeanMilli": 37150,
+    "pooledRatioPermille": 20
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6514,
+     "viable": 686,
+     "lethal": 800
+    },
+    "half": {
+     "neutral": 6514,
+     "viable": 686,
+     "lethal": 800
+    },
+    "threeQuarter": {
+     "neutral": 6514,
+     "viable": 686,
+     "lethal": 800
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-byte-step",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 691,
+   "changedViable": 1325,
+   "lethal": 384,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2190,
+    "neutral": 481
+   },
+   "permille": {
+    "neutral": 287,
+    "changedViable": 552,
+    "lethal": 160
+   },
+   "wilson": {
+    "neutral": [
+     270,
+     307
+    ],
+    "changedViable": [
+     532,
+     572
+    ],
+    "lethal": [
+     145,
+     176
+    ]
+   },
+   "parentSpread": {
+    "min": 195,
+    "median": 325,
+    "max": 445
+   },
+   "parentBoot": [
+    223,
+    363
+   ],
+   "changed": 1709,
+   "bins": [
+    1,
+    12,
+    371,
+    1325
+   ],
+   "meanAbsDeltaInt": 19,
+   "meanMaxDelta": 41,
+   "meanOutputsMovedMilli": 2077,
+   "distinct": {
+    "perParentMeanMilli": 179333,
+    "changedPerParentMeanMilli": 284833,
+    "pooledRatioPermille": 629
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 691,
+     "viable": 1408,
+     "lethal": 301
+    },
+    "half": {
+     "neutral": 691,
+     "viable": 1325,
+     "lethal": 384
+    },
+    "threeQuarter": {
+     "neutral": 691,
+     "viable": 1191,
+     "lethal": 518
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-byte-resample",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 8,
+   "neutral": 707,
+   "changedViable": 1284,
+   "lethal": 409,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2137,
+    "neutral": 444
+   },
+   "permille": {
+    "neutral": 294,
+    "changedViable": 535,
+    "lethal": 170
+   },
+   "wilson": {
+    "neutral": [
+     276,
+     314
+    ],
+    "changedViable": [
+     515,
+     555
+    ],
+    "lethal": [
+     155,
+     186
+    ]
+   },
+   "parentSpread": {
+    "min": 200,
+    "median": 270,
+    "max": 477
+   },
+   "parentBoot": [
+    227,
+    379
+   ],
+   "changed": 1693,
+   "bins": [
+    0,
+    10,
+    332,
+    1351
+   ],
+   "meanAbsDeltaInt": 21,
+   "meanMaxDelta": 45,
+   "meanOutputsMovedMilli": 2082,
+   "distinct": {
+    "perParentMeanMilli": 182833,
+    "changedPerParentMeanMilli": 282166,
+    "pooledRatioPermille": 647
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 707,
+     "viable": 1402,
+     "lethal": 291
+    },
+    "half": {
+     "neutral": 707,
+     "viable": 1284,
+     "lethal": 409
+    },
+    "threeQuarter": {
+     "neutral": 707,
+     "viable": 1166,
+     "lethal": 527
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-instr-resample",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 403,
+   "changedViable": 1409,
+   "lethal": 588,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 403
+   },
+   "permille": {
+    "neutral": 167,
+    "changedViable": 587,
+    "lethal": 245
+   },
+   "wilson": {
+    "neutral": [
+     153,
+     184
+    ],
+    "changedViable": [
+     567,
+     607
+    ],
+    "lethal": [
+     228,
+     263
+    ]
+   },
+   "parentSpread": {
+    "min": 90,
+    "median": 140,
+    "max": 357
+   },
+   "parentBoot": [
+    106,
+    249
+   ],
+   "changed": 1997,
+   "bins": [
+    0,
+    24,
+    393,
+    1580
+   ],
+   "meanAbsDeltaInt": 21,
+   "meanMaxDelta": 47,
+   "meanOutputsMovedMilli": 2181,
+   "distinct": {
+    "perParentMeanMilli": 120666,
+    "changedPerParentMeanMilli": 332833,
+    "pooledRatioPermille": 362
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 403,
+     "viable": 1554,
+     "lethal": 443
+    },
+    "half": {
+     "neutral": 403,
+     "viable": 1409,
+     "lethal": 588
+    },
+    "threeQuarter": {
+     "neutral": 403,
+     "viable": 1288,
+     "lethal": 709
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-insert",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 560,
+   "changedViable": 1731,
+   "lethal": 109,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 560
+   },
+   "permille": {
+    "neutral": 233,
+    "changedViable": 721,
+    "lethal": 45
+   },
+   "wilson": {
+    "neutral": [
+     216,
+     251
+    ],
+    "changedViable": [
+     702,
+     739
+    ],
+    "lethal": [
+     37,
+     55
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 0,
+    "max": 735
+   },
+   "parentBoot": [
+    0,
+    490
+   ],
+   "changed": 1840,
+   "bins": [
+    0,
+    2,
+    49,
+    1789
+   ],
+   "meanAbsDeltaInt": 14,
+   "meanMaxDelta": 35,
+   "meanOutputsMovedMilli": 1425,
+   "distinct": {
+    "perParentMeanMilli": 90166,
+    "changedPerParentMeanMilli": 306666,
+    "pooledRatioPermille": 294
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 560,
+     "viable": 1757,
+     "lethal": 83
+    },
+    "half": {
+     "neutral": 560,
+     "viable": 1731,
+     "lethal": 109
+    },
+    "threeQuarter": {
+     "neutral": 560,
+     "viable": 1686,
+     "lethal": 154
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-delete",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 533,
+   "changedViable": 1394,
+   "lethal": 473,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 533
+   },
+   "permille": {
+    "neutral": 222,
+    "changedViable": 580,
+    "lethal": 197
+   },
+   "wilson": {
+    "neutral": [
+     205,
+     240
+    ],
+    "changedViable": [
+     560,
+     601
+    ],
+    "lethal": [
+     181,
+     214
+    ]
+   },
+   "parentSpread": {
+    "min": 110,
+    "median": 227,
+    "max": 370
+   },
+   "parentBoot": [
+    156,
+    301
+   ],
+   "changed": 1867,
+   "bins": [
+    0,
+    29,
+    432,
+    1406
+   ],
+   "meanAbsDeltaInt": 18,
+   "meanMaxDelta": 39,
+   "meanOutputsMovedMilli": 2009,
+   "distinct": {
+    "perParentMeanMilli": 28333,
+    "changedPerParentMeanMilli": 311166,
+    "pooledRatioPermille": 91
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 533,
+     "viable": 1514,
+     "lethal": 353
+    },
+    "half": {
+     "neutral": 533,
+     "viable": 1394,
+     "lethal": 473
+    },
+    "threeQuarter": {
+     "neutral": 533,
+     "viable": 1296,
+     "lethal": 571
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "matched",
+   "kind": "T-dup",
+   "parents": 6,
+   "functionalParents": 6,
+   "mutantsPerParent": 400,
+   "n": 2400,
+   "degenerate": 0,
+   "redraws": 68,
+   "neutral": 605,
+   "changedViable": 1772,
+   "lethal": 23,
+   "viableNA": 0,
+   "neutralDecodeChanging": {
+    "n": 2400,
+    "neutral": 605
+   },
+   "permille": {
+    "neutral": 252,
+    "changedViable": 738,
+    "lethal": 9
+   },
+   "wilson": {
+    "neutral": [
+     235,
+     270
+    ],
+    "changedViable": [
+     720,
+     756
+    ],
+    "lethal": [
+     6,
+     15
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 0,
+    "max": 790
+   },
+   "parentBoot": [
+    0,
+    526
+   ],
+   "changed": 1795,
+   "bins": [
+    0,
+    0,
+    30,
+    1765
+   ],
+   "meanAbsDeltaInt": 9,
+   "meanMaxDelta": 28,
+   "meanOutputsMovedMilli": 1460,
+   "distinct": {
+    "perParentMeanMilli": 11000,
+    "changedPerParentMeanMilli": 299166,
+    "pooledRatioPermille": 36
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 605,
+     "viable": 1772,
+     "lethal": 23
+    },
+    "half": {
+     "neutral": 605,
+     "viable": 1772,
+     "lethal": 23
+    },
+    "threeQuarter": {
+     "neutral": 605,
+     "viable": 1748,
+     "lethal": 47
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-byte-step",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 7258,
+   "changedViable": 241,
+   "lethal": 124,
+   "viableNA": 377,
+   "neutralDecodeChanging": {
+    "n": 6869,
+    "neutral": 6127
+   },
+   "permille": {
+    "neutral": 907,
+    "changedViable": 30,
+    "lethal": 15
+   },
+   "wilson": {
+    "neutral": [
+     900,
+     914
+    ],
+    "changedViable": [
+     26,
+     35
+    ],
+    "lethal": [
+     13,
+     19
+    ]
+   },
+   "parentSpread": {
+    "min": 655,
+    "median": 930,
+    "max": 990
+   },
+   "parentBoot": [
+    885,
+    925
+   ],
+   "changed": 742,
+   "bins": [
+    0,
+    1,
+    265,
+    476
+   ],
+   "meanAbsDeltaInt": 47,
+   "meanMaxDelta": 64,
+   "meanOutputsMovedMilli": 1106,
+   "distinct": {
+    "perParentMeanMilli": 12450,
+    "changedPerParentMeanMilli": 18550,
+    "pooledRatioPermille": 671
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 7258,
+     "viable": 255,
+     "lethal": 110
+    },
+    "half": {
+     "neutral": 7258,
+     "viable": 241,
+     "lethal": 124
+    },
+    "threeQuarter": {
+     "neutral": 7258,
+     "viable": 237,
+     "lethal": 128
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-byte-resample",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 31,
+   "neutral": 7300,
+   "changedViable": 214,
+   "lethal": 134,
+   "viableNA": 352,
+   "neutralDecodeChanging": {
+    "n": 6779,
+    "neutral": 6079
+   },
+   "permille": {
+    "neutral": 912,
+    "changedViable": 26,
+    "lethal": 16
+   },
+   "wilson": {
+    "neutral": [
+     906,
+     919
+    ],
+    "changedViable": [
+     23,
+     31
+    ],
+    "lethal": [
+     14,
+     20
+    ]
+   },
+   "parentSpread": {
+    "min": 665,
+    "median": 935,
+    "max": 995
+   },
+   "parentBoot": [
+    890,
+    932
+   ],
+   "changed": 700,
+   "bins": [
+    0,
+    1,
+    220,
+    479
+   ],
+   "meanAbsDeltaInt": 51,
+   "meanMaxDelta": 68,
+   "meanOutputsMovedMilli": 1152,
+   "distinct": {
+    "perParentMeanMilli": 11800,
+    "changedPerParentMeanMilli": 17500,
+    "pooledRatioPermille": 674
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 7300,
+     "viable": 231,
+     "lethal": 117
+    },
+    "half": {
+     "neutral": 7300,
+     "viable": 214,
+     "lethal": 134
+    },
+    "threeQuarter": {
+     "neutral": 7300,
+     "viable": 202,
+     "lethal": 146
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-instr-resample",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 6691,
+   "changedViable": 346,
+   "lethal": 213,
+   "viableNA": 750,
+   "neutralDecodeChanging": {
+    "n": 7969,
+    "neutral": 6660
+   },
+   "permille": {
+    "neutral": 836,
+    "changedViable": 43,
+    "lethal": 26
+   },
+   "wilson": {
+    "neutral": [
+     828,
+     845
+    ],
+    "changedViable": [
+     39,
+     48
+    ],
+    "lethal": [
+     23,
+     31
+    ]
+   },
+   "parentSpread": {
+    "min": 445,
+    "median": 860,
+    "max": 975
+   },
+   "parentBoot": [
+    800,
+    865
+   ],
+   "changed": 1309,
+   "bins": [
+    0,
+    2,
+    422,
+    885
+   ],
+   "meanAbsDeltaInt": 50,
+   "meanMaxDelta": 68,
+   "meanOutputsMovedMilli": 1148,
+   "distinct": {
+    "perParentMeanMilli": 17200,
+    "changedPerParentMeanMilli": 32725,
+    "pooledRatioPermille": 525
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6691,
+     "viable": 354,
+     "lethal": 205
+    },
+    "half": {
+     "neutral": 6691,
+     "viable": 346,
+     "lethal": 213
+    },
+    "threeQuarter": {
+     "neutral": 6691,
+     "viable": 329,
+     "lethal": 230
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-insert",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 6743,
+   "changedViable": 208,
+   "lethal": 72,
+   "viableNA": 977,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 6743
+   },
+   "permille": {
+    "neutral": 842,
+    "changedViable": 26,
+    "lethal": 9
+   },
+   "wilson": {
+    "neutral": [
+     834,
+     851
+    ],
+    "changedViable": [
+     22,
+     30
+    ],
+    "lethal": [
+     7,
+     12
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 910,
+    "max": 960
+   },
+   "parentBoot": [
+    764,
+    909
+   ],
+   "changed": 1257,
+   "bins": [
+    0,
+    1,
+    417,
+    839
+   ],
+   "meanAbsDeltaInt": 50,
+   "meanMaxDelta": 65,
+   "meanOutputsMovedMilli": 1081,
+   "distinct": {
+    "perParentMeanMilli": 15225,
+    "changedPerParentMeanMilli": 31425,
+    "pooledRatioPermille": 484
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 6743,
+     "viable": 219,
+     "lethal": 61
+    },
+    "half": {
+     "neutral": 6743,
+     "viable": 208,
+     "lethal": 72
+    },
+    "threeQuarter": {
+     "neutral": 6743,
+     "viable": 204,
+     "lethal": 76
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-delete",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 0,
+   "neutral": 7346,
+   "changedViable": 204,
+   "lethal": 134,
+   "viableNA": 316,
+   "neutralDecodeChanging": {
+    "n": 7983,
+    "neutral": 7329
+   },
+   "permille": {
+    "neutral": 918,
+    "changedViable": 25,
+    "lethal": 16
+   },
+   "wilson": {
+    "neutral": [
+     912,
+     925
+    ],
+    "changedViable": [
+     22,
+     30
+    ],
+    "lethal": [
+     14,
+     20
+    ]
+   },
+   "parentSpread": {
+    "min": 650,
+    "median": 945,
+    "max": 1000
+   },
+   "parentBoot": [
+    892,
+    940
+   ],
+   "changed": 654,
+   "bins": [
+    0,
+    0,
+    217,
+    437
+   ],
+   "meanAbsDeltaInt": 49,
+   "meanMaxDelta": 66,
+   "meanOutputsMovedMilli": 1087,
+   "distinct": {
+    "perParentMeanMilli": 2925,
+    "changedPerParentMeanMilli": 16350,
+    "pooledRatioPermille": 178
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 7346,
+     "viable": 204,
+     "lethal": 134
+    },
+    "half": {
+     "neutral": 7346,
+     "viable": 204,
+     "lethal": 134
+    },
+    "threeQuarter": {
+     "neutral": 7346,
+     "viable": 197,
+     "lethal": 141
+    }
+   }
+  },
+  {
+   "rep": "tape-R",
+   "panel": "raw",
+   "kind": "T-dup",
+   "parents": 40,
+   "functionalParents": 11,
+   "mutantsPerParent": 200,
+   "n": 8000,
+   "degenerate": 0,
+   "redraws": 203,
+   "neutral": 7383,
+   "changedViable": 12,
+   "lethal": 5,
+   "viableNA": 600,
+   "neutralDecodeChanging": {
+    "n": 8000,
+    "neutral": 7383
+   },
+   "permille": {
+    "neutral": 922,
+    "changedViable": 1,
+    "lethal": 0
+   },
+   "wilson": {
+    "neutral": [
+     916,
+     929
+    ],
+    "changedViable": [
+     0,
+     3
+    ],
+    "lethal": [
+     0,
+     2
+    ]
+   },
+   "parentSpread": {
+    "min": 0,
+    "median": 1000,
+    "max": 1000
+   },
+   "parentBoot": [
+    842,
+    997
+   ],
+   "changed": 617,
+   "bins": [
+    0,
+    0,
+    212,
+    405
+   ],
+   "meanAbsDeltaInt": 52,
+   "meanMaxDelta": 63,
+   "meanOutputsMovedMilli": 1000,
+   "distinct": {
+    "perParentMeanMilli": 125,
+    "changedPerParentMeanMilli": 15425,
+    "pooledRatioPermille": 8
+   },
+   "sweep": {
+    "quarter": {
+     "neutral": 7383,
+     "viable": 12,
+     "lethal": 5
+    },
+    "half": {
+     "neutral": 7383,
+     "viable": 12,
+     "lethal": 5
+    },
+    "threeQuarter": {
+     "neutral": 7383,
+     "viable": 12,
+     "lethal": 5
+    }
+   }
+  }
+ ]
+}

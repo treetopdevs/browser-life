@@ -1,0 +1,9 @@
+plain 4 24000
+plain 5 24000
+ssg 4 24000 --gates share,signal --seam-cost 1 --raid 2
+ssg 5 24000 --gates share,signal --seam-cost 1 --raid 2
+all 4 24000 --gates share,grow,signal --seam-cost 1 --raid 2
+all 5 24000 --gates share,grow,signal --seam-cost 1 --raid 2
+plain_g6 4 24000 --gap 6
+ssg_g6 4 24000 --gates share,signal --seam-cost 1 --raid 2 --gap 6
+all_g6 4 24000 --gates share,grow,signal --seam-cost 1 --raid 2 --gap 6

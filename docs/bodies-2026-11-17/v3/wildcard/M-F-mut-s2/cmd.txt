@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario crowd --seed 2 --steps 20000 --tag-mut-rate 65536 --tag-mut-bud --tag-step 40 --gates grow --founders 5 --mut on --mut-rate 12 --frames 5000,end --out docs/bodies-2026-11-17/v3/wildcard/M-F-mut-s2

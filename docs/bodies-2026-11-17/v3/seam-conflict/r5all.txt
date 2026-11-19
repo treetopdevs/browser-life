@@ -1,0 +1,27 @@
+r5 sc8raid0 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20raid0 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5 sc20raid0_blind 1 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5 sc8_nogates 1 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20_nogates 1 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0 1 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0_blind 1 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5w C 1 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on
+r5w C_blind 1 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --tag-blind
+r5 sc8raid0 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20raid0 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5 sc20raid0_blind 2 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5 sc8_nogates 2 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20_nogates 2 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0 2 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0_blind 2 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5w C 2 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on
+r5w C_blind 2 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --tag-blind
+r5 sc8raid0 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20raid0 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5 sc20raid0_blind 3 crowd --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5 sc8_nogates 3 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 8
+r5 sc20_nogates 3 crowd --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0 3 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20
+r5w sc20raid0_blind 3 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,signal --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --seam-cost 20 --tag-blind
+r5w C 3 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on
+r5w C_blind 3 wound-in-crowd --steps 9600 --wound-at 8000 --gates share,grow,signal --seam-cost 2 --raid 2 --tag-mut-bud --tag-step 40 --tag-mut-rate 20000 --mut on --tag-blind

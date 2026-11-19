@@ -1,0 +1,289 @@
+[
+ {
+  "dmax": 8,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 49,
+     "2000": 49,
+     "4000": 49
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 49,
+     "2000": 49,
+     "4000": 49
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 49,
+     "2000": 49,
+     "4000": 49
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 12,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 14,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 141,
+     "2000": 207,
+     "4000": 180
+    },
+    "comps": 1,
+    "roots": 0,
+    "rootsCreated": 2,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 141,
+     "2000": 133,
+     "4000": 134
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 140,
+     "2000": 170,
+     "4000": 163
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 2,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 16,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 173,
+     "4000": 172
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 172,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 166,
+     "2000": 169,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 20,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 373,
+     "2000": 346,
+     "4000": 828
+    },
+    "comps": 1,
+    "roots": 3,
+    "rootsCreated": 6,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 577,
+     "2000": 576,
+     "4000": 937
+    },
+    "comps": 1,
+    "roots": 3,
+    "rootsCreated": 7,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 251,
+     "2000": 252,
+     "4000": 251
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 24,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 830,
+     "2000": 794,
+     "4000": 1894
+    },
+    "comps": 1,
+    "roots": 5,
+    "rootsCreated": 11,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 817,
+     "2000": 761,
+     "4000": 1029
+    },
+    "comps": 1,
+    "roots": 3,
+    "rootsCreated": 5,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 340,
+     "2000": 349,
+     "4000": 351
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "dmax": 32,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 1402,
+     "2000": 1301,
+     "4000": 3148
+    },
+    "comps": 1,
+    "roots": 6,
+    "rootsCreated": 13,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 610,
+     "2000": 2044,
+     "4000": 2081
+    },
+    "comps": 1,
+    "roots": 4,
+    "rootsCreated": 6,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 1703,
+     "2000": 2036,
+     "4000": 2155
+    },
+    "comps": 1,
+    "roots": 4,
+    "rootsCreated": 7,
+    "residual": 0
+   }
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+crowd seed 1 steps 20000: cells 6910 basins 38 patches(>=10) 4 seam 19 permille distinct marks 3 residual 0 validate [] hash 2084384177 step 245197 ms observe 2980 ms -> docs/bodies-2026-11-17/v3/wildcard/r2-plain-s1/readout.json
