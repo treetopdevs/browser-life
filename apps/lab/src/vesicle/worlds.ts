@@ -26,7 +26,8 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
       let beads = 1;
       for (let i = w.next[first]; i !== first; i = w.next[i]) beads++;
       // which half gets which share alternates from founder to founder
-      for (let i = first, k = 0; k < beads; k++, i = w.next[i]) w.wgene[i] = o.chimera[(k < beads >> 1 ? 0 : 1) ^ (f & 1)];
+      // (and the idle marker names the founder, so with shifts off every bead says which founder's wall it descends from)
+      for (let i = first, k = 0; k < beads; k++, i = w.next[i]) { w.wgene[i] = o.chimera[(k < beads >> 1 ? 0 : 1) ^ (f & 1)]; w.wmark[i] = f + 1; }
       w.addSolute(cx, cy, r - 2, n >> 1, o.chimera[0], f + 1); w.addSolute(cx, cy, r - 2, n - (n >> 1), o.chimera[1], f + 1);
     } else w.addSolute(cx, cy, r - 2, n, g, f + 1);
   }

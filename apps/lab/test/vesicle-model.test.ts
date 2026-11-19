@@ -353,6 +353,22 @@ describe('vesicle world', () => {
     expect(inside(15, 20)).toBe(false);
   });
 
+  it('wall genes: a chimera start gives each founder two halves and its own marker', () => {
+    const w = garden(1, { params: { ...WALL_GENES, mut: 0 }, chimera: [64, 192] }), ls = loops(w);
+    expect(ls.length).toBe(6);
+    const marks = new Set<number>();
+    for (const l of ls) {
+      let lo = 0, hi = 0;
+      for (let i = l.first, k = 0; k < l.beads; k++, i = w.next[i]) { if (w.wgene[i] === 64) lo++; else if (w.wgene[i] === 192) hi++; expect(w.wmark[i]).toBe(w.wmark[l.first]); }
+      expect([lo + hi, Math.abs(lo - hi)]).toEqual([l.beads, l.beads % 2]);
+      marks.add(w.wmark[l.first]);
+    }
+    expect(marks.size).toBe(6);
+    run(w, 1500);
+    // shifts are off: every bead still names a founder and carries one of the two shares
+    for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { expect(marks.has(w.wmark[i])).toBe(true); expect([64, 192]).toContain(w.wgene[i]); }
+  });
+
   it('wall genes: matches the pinned state after 2,000 steps', () => {
     const w = run(garden(1, { params: WALL_GENES }), 2000);
     expect([w.digest(), w.matter(), w.n, w.beadCount]).toEqual(['48c2db7d', 5694, 443, 365]);

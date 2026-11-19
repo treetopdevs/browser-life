@@ -49,6 +49,12 @@ export function runGarden(o: RunOpts) {
           const tally = new Map<number, number>();
           for (let m = i; !seen[m]; m = w.next[m]) { seen[m] = 1; tally.set(w.wgene[m], (tally.get(w.wgene[m]) ?? 0) + 1); }
           if (tally.size > 1) for (const [g, n] of tally) row[`mixedBeads@${g}`] = (row[`mixedBeads@${g}`] ?? 0) + n;
+          // chimera starts mark each founder's wall: per founder, its rings and its beads by byte
+          if (o.chimera) {
+            const f = w.wmark[i];
+            row[`clan${f}:rings`] = (row[`clan${f}:rings`] ?? 0) + 1;
+            for (const [g, n] of tally) row[`clan${f}:beads@${g}`] = (row[`clan${f}:beads@${g}`] ?? 0) + n;
+          }
         }
       }
     }

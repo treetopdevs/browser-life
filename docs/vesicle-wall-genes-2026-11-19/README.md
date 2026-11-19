@@ -111,8 +111,37 @@ In rings that are still mixed the low share's fraction has moved little by step 
 share ends with 56 to 97% of the cells. This does not settle the question. The count leaves out every
 ring that has already become pure (by step 4,000 one world had 23 divisions and 12 pure cells), so beads
 that won inside a wall and then left the mixed set are not seen, and it weights rings by size. It is also
-a measure chosen after seeing the first result. A clean answer needs single rings followed from the start
-with their descendants counted.
+a measure chosen after seeing the first result.
+
+### Single rings followed from the start
+
+To remove that objection each founder's wall was given its own marker, so a founder can be followed while
+it is still one ring: until its first division there are no descendants to leave out and no other cell of
+its kind to compete with. Sixteen seeds per pair of shares, 96 founders per pair, a census every 250 steps
+(`runs/vesicle/w4`).
+
+Low share's fraction of a founder's wall, over founders that have not yet divided:
+
+| Pair | Step 500 | Step 750 | Step 1,000 | Wall by step 1,000 |
+|---|---|---|---|---|
+| 64 and 192 | 0.504 (se 0.013), all 96 | 0.498 (0.015), 94 | 0.502 (0.017), 89 | 42 beads (median), from 25 |
+| 96 and 160 | 0.507 (se 0.013), all 96 | 0.501 (0.016), 94 | 0.497 (0.018), 93 | 42 beads (median), from 25 |
+
+Over the first 1,000 steps, with nearly every founder still whole, the wall grows by two thirds, each bead
+has been replaced roughly ten times over, and the low share's part of the wall shows no net shift: within
+0.01 of a half, give or take 0.02 to 0.04.
+
+Later than that the picture cannot be read cleanly, because which founders are still whole depends on
+their makeup. At the census before each founder's first observed division (median step 1,750, wall about
+57 beads) the fraction averages 0.506 (se 0.021; 52 founders above a half, 43 below) for 64 and 192, and
+0.478 (se 0.020; 40 above, 54 below) for 96 and 160. But in the 64 and 192 pair, founders that divided
+before step 2,500 average 0.46 and those that divided later 0.62, and three founders never divided in
+6,000 steps and ended entirely at the low share. A wall that happens to go low divides later, or a gain
+for the low share builds up with time; these runs cannot tell which.
+
+So: no net shift inside a wall over the first 1,000 steps for these two pairs, and no clean reading
+after that. The same shares, as whole cells, sort decisively (rule 3). This measure was also chosen after
+the first results, so the label under rule 5 stays as it is.
 
 ### Where the share settles
 
@@ -126,6 +155,18 @@ They did not carry on down, as rung 2's free copiers did (to 6, with the cells d
 selection among cells would do; it does not rule out a gain inside the wall that happens to weaken at low
 shares.
 
+Three selection worlds run to 1,500,000 steps (`runs/vesicle/w3`) stay there:
+
+| Seed | Per-cell wall share every 300k | Cells every 300k | Fewest cells | Range of the share after 300k | Divisions in the last 500k |
+|---|---|---|---|---|---|
+| 1 | 58, 58, 61, 50, 61 | 20, 18, 13, 18, 20 | 13 | 48 to 70 | 55 |
+| 2 | 64, 63, 56, 64, 51 | 20, 23, 20, 22, 18 | 13 | 40 to 69 | 62 |
+| 3 | 54, 50, 63, 66, 53 | 16, 20, 19, 21, 17 | 14 | 47 to 73 | 39 |
+
+Rung 2's no-private-gain worlds, the only ones there that lived this long, fell to 3 to 9 cells at their
+lowest census; these, with the full private incentive, are never below 13 at a census (every 50,000 steps,
+after the six founders have multiplied).
+
 ### What it costs
 
 The selection worlds divide a quarter as often as the drift-only ones (211 to 258 divisions in 400,000
@@ -137,16 +178,19 @@ that wins contests between cells is one that makes cells bigger and slower, not 
 - Putting heredity in the wall does what rung 2 could not: with the same private incentive to copy instead
   of build, the cells stay alive and keep dividing in every world.
 - The share moves, it is not drift, and it stops in the range where whole cells win contests. By the rules
-  written beforehand the cause is confounded, and the look afterwards does not resolve it. Selection among
-  cells fits everything seen; a gain inside the wall is not excluded.
+  written beforehand the cause is confounded. Followed afterwards as single rings, a wall shows no net
+  shift toward either share over its first 1,000 steps (96 founders per pair), while whole cells with
+  those shares sort decisively. That points toward selection among cells. It rests on a measure chosen
+  after the fact, and a gain inside the wall that builds up later is not excluded.
 - What is selected is not "divide more". Cells that make less wall hold more solute and crowd out their
   neighbours.
 
 ## Limits
 
 - One machine, four seeds per arm (eight for the early chimera look), exploration.
-- Rule 4 was badly timed, and the measure that replaced it was chosen after seeing results.
-- The private gains listed above are real mechanisms and their size is not measured.
+- Rule 4 was badly timed, and the two measures that replaced it were chosen after seeing results.
+- The private gains listed above are real mechanisms. Their net effect was measured only for two pairs of shares
+  and only over a founder's first 1,000 steps; later, and in smaller or larger cells, it is not known.
 - Chimera founders are not quite identical: a founder has 25 beads, so the halves are 12 and 13 and
   alternate, giving founder means of 125.4 and 130.6 in the 64 and 192 set.
 - Walls are copied by turnover far more than by growth, so this is not "one genome copied once per
