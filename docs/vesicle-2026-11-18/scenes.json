@@ -1,0 +1,2243 @@
+[
+ {
+  "scene": "inflate",
+  "seed": 1,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 171.60143613019386,
+    "beads": 26,
+    "stretch": -0.05373032190875471,
+    "roundness": 0.8906236984081427
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 80,
+    "area": 282.3003027079567,
+    "beads": 32,
+    "stretch": -0.026494687421652396,
+    "roundness": 0.9138703942193976
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 499.55547284901434,
+    "beads": 45,
+    "stretch": -0.04409662655604585,
+    "roundness": 0.8481654506442294
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 970.2906847099265,
+    "beads": 56,
+    "stretch": 0.0013813744992321464,
+    "roundness": 0.9693411775788061
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 2,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 116.72782724652609,
+    "beads": 21,
+    "stretch": -0.022856250319870708,
+    "roundness": 0.8709009577226982
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 80,
+    "area": 263.7368545269834,
+    "beads": 33,
+    "stretch": -0.08352629708255033,
+    "roundness": 0.9058427219624202
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 476.73252784118245,
+    "beads": 39,
+    "stretch": 0.020884198299575996,
+    "roundness": 0.9448056473625849
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 988.7504698598331,
+    "beads": 62,
+    "stretch": -0.041251495363970325,
+    "roundness": 0.8791111683146782
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 3,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 158.3763158598906,
+    "beads": 26,
+    "stretch": -0.08752208078340162,
+    "roundness": 0.8839927133413016
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 80,
+    "area": 268.5126544249989,
+    "beads": 31,
+    "stretch": -0.028472111325019922,
+    "roundness": 0.9299951827440225
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 504.23400617756784,
+    "beads": 44,
+    "stretch": -0.04937581659891066,
+    "roundness": 0.9054384533774275
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 972.8746080894631,
+    "beads": 64,
+    "stretch": -0.053427146891098176,
+    "roundness": 0.8327961389165219
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 4,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 149.33971484038796,
+    "beads": 21,
+    "stretch": 0.06265669518328876,
+    "roundness": 0.9421078778219243
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 80,
+    "area": 274.9935277783212,
+    "beads": 33,
+    "stretch": -0.04720576798818121,
+    "roundness": 0.8738687854348005
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 511.23849831616803,
+    "beads": 43,
+    "stretch": -0.009529977314263638,
+    "roundness": 0.8854292003825592
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 950.6933344601105,
+    "beads": 61,
+    "stretch": -0.04780665055650668,
+    "roundness": 0.8852794111109165
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 5,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 141.56904564885247,
+    "beads": 22,
+    "stretch": -0.01118290392678245,
+    "roundness": 0.9398117758184271
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 79,
+    "area": 229.23954317242897,
+    "beads": 27,
+    "stretch": 0.011580857354261953,
+    "roundness": 0.9654075122813769
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 552.9130930030334,
+    "beads": 47,
+    "stretch": -0.04662852591665767,
+    "roundness": 0.8651406620407267
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 994.0890703841102,
+    "beads": 67,
+    "stretch": -0.12424004260855559,
+    "roundness": 0.9071004832859226
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 6,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 123.9308595337742,
+    "beads": 23,
+    "stretch": -0.09053168562684111,
+    "roundness": 0.889812528987716
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 80,
+    "area": 314.27254605546057,
+    "beads": 34,
+    "stretch": -0.03747771941331424,
+    "roundness": 0.921885320838499
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 451.44704966418783,
+    "beads": 42,
+    "stretch": -0.03954536181943302,
+    "roundness": 0.8715742577226069
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 1013.374520315849,
+    "beads": 65,
+    "stretch": -0.055628333275763886,
+    "roundness": 0.8449037589512016
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 7,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 136.20126490805853,
+    "beads": 24,
+    "stretch": -0.0975971011628266,
+    "roundness": 0.9122367554919806
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 79,
+    "area": 274.88478858395047,
+    "beads": 33,
+    "stretch": 0.014940548077574833,
+    "roundness": 0.7698240838899736
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 498.59488895092306,
+    "beads": 42,
+    "stretch": -0.014403200094446289,
+    "roundness": 0.9141143880070141
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 937.0653887586939,
+    "beads": 59,
+    "stretch": -0.033197399547648,
+    "roundness": 0.904774030855928
+   }
+  ]
+ },
+ {
+  "scene": "inflate",
+  "seed": 8,
+  "pass": true,
+  "rows": [
+   {
+    "solute": 40,
+    "loops": 1,
+    "inside": 40,
+    "area": 149.9445976346392,
+    "beads": 25,
+    "stretch": -0.09363551904125234,
+    "roundness": 0.9174764443008202
+   },
+   {
+    "solute": 80,
+    "loops": 1,
+    "inside": 79,
+    "area": 267.9413323297964,
+    "beads": 31,
+    "stretch": -0.0350870846723178,
+    "roundness": 0.9407840778893002
+   },
+   {
+    "solute": 160,
+    "loops": 1,
+    "inside": 160,
+    "area": 490.79948376303616,
+    "beads": 43,
+    "stretch": -0.03963752184712299,
+    "roundness": 0.9041629180232312
+   },
+   {
+    "solute": 320,
+    "loops": 1,
+    "inside": 320,
+    "area": 967.9795535776576,
+    "beads": 59,
+    "stretch": -0.02851845620864646,
+    "roundness": 0.9256417286824915
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 1,
+  "pass": false,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 36,
+   "poor": 18,
+   "free": 8
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 31,
+    "poor": 21,
+    "free": 10
+   },
+   {
+    "t": 2000,
+    "rich": 31,
+    "poor": 17,
+    "free": 14
+   },
+   {
+    "t": 3000,
+    "rich": 33,
+    "poor": 18,
+    "free": 11
+   },
+   {
+    "t": 4000,
+    "rich": 34,
+    "poor": 16,
+    "free": 12
+   },
+   {
+    "t": 5000,
+    "rich": 34,
+    "poor": 17,
+    "free": 11
+   },
+   {
+    "t": 6000,
+    "rich": 34,
+    "poor": 18,
+    "free": 10
+   },
+   {
+    "t": 7000,
+    "rich": 36,
+    "poor": 18,
+    "free": 8
+   },
+   {
+    "t": 8000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 9000,
+    "rich": 37,
+    "poor": 20,
+    "free": 5
+   },
+   {
+    "t": 10000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 11000,
+    "rich": 35,
+    "poor": 17,
+    "free": 10
+   },
+   {
+    "t": 12000,
+    "rich": 36,
+    "poor": 18,
+    "free": 8
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 2,
+  "pass": true,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 38,
+   "poor": 15,
+   "free": 9
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 31,
+    "poor": 19,
+    "free": 12
+   },
+   {
+    "t": 2000,
+    "rich": 32,
+    "poor": 19,
+    "free": 11
+   },
+   {
+    "t": 3000,
+    "rich": 34,
+    "poor": 18,
+    "free": 10
+   },
+   {
+    "t": 4000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 5000,
+    "rich": 37,
+    "poor": 17,
+    "free": 8
+   },
+   {
+    "t": 6000,
+    "rich": 37,
+    "poor": 18,
+    "free": 7
+   },
+   {
+    "t": 7000,
+    "rich": 37,
+    "poor": 17,
+    "free": 8
+   },
+   {
+    "t": 8000,
+    "rich": 38,
+    "poor": 18,
+    "free": 6
+   },
+   {
+    "t": 9000,
+    "rich": 37,
+    "poor": 18,
+    "free": 7
+   },
+   {
+    "t": 10000,
+    "rich": 39,
+    "poor": 16,
+    "free": 7
+   },
+   {
+    "t": 11000,
+    "rich": 39,
+    "poor": 18,
+    "free": 5
+   },
+   {
+    "t": 12000,
+    "rich": 38,
+    "poor": 15,
+    "free": 9
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 3,
+  "pass": true,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 39,
+   "poor": 17,
+   "free": 6
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 30,
+    "poor": 22,
+    "free": 10
+   },
+   {
+    "t": 2000,
+    "rich": 32,
+    "poor": 19,
+    "free": 11
+   },
+   {
+    "t": 3000,
+    "rich": 32,
+    "poor": 20,
+    "free": 10
+   },
+   {
+    "t": 4000,
+    "rich": 33,
+    "poor": 19,
+    "free": 10
+   },
+   {
+    "t": 5000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 6000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 7000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 8000,
+    "rich": 35,
+    "poor": 16,
+    "free": 11
+   },
+   {
+    "t": 9000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 10000,
+    "rich": 38,
+    "poor": 16,
+    "free": 8
+   },
+   {
+    "t": 11000,
+    "rich": 40,
+    "poor": 17,
+    "free": 5
+   },
+   {
+    "t": 12000,
+    "rich": 39,
+    "poor": 17,
+    "free": 6
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 4,
+  "pass": true,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 37,
+   "poor": 17,
+   "free": 8
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 31,
+    "poor": 20,
+    "free": 11
+   },
+   {
+    "t": 2000,
+    "rich": 31,
+    "poor": 19,
+    "free": 12
+   },
+   {
+    "t": 3000,
+    "rich": 31,
+    "poor": 18,
+    "free": 13
+   },
+   {
+    "t": 4000,
+    "rich": 32,
+    "poor": 18,
+    "free": 12
+   },
+   {
+    "t": 5000,
+    "rich": 32,
+    "poor": 18,
+    "free": 12
+   },
+   {
+    "t": 6000,
+    "rich": 33,
+    "poor": 20,
+    "free": 9
+   },
+   {
+    "t": 7000,
+    "rich": 34,
+    "poor": 18,
+    "free": 10
+   },
+   {
+    "t": 8000,
+    "rich": 34,
+    "poor": 19,
+    "free": 9
+   },
+   {
+    "t": 9000,
+    "rich": 35,
+    "poor": 20,
+    "free": 7
+   },
+   {
+    "t": 10000,
+    "rich": 35,
+    "poor": 18,
+    "free": 9
+   },
+   {
+    "t": 11000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 12000,
+    "rich": 37,
+    "poor": 17,
+    "free": 8
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 5,
+  "pass": false,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 36,
+   "poor": 17,
+   "free": 9
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 33,
+    "poor": 21,
+    "free": 8
+   },
+   {
+    "t": 2000,
+    "rich": 35,
+    "poor": 18,
+    "free": 9
+   },
+   {
+    "t": 3000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 4000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 5000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 6000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 7000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 8000,
+    "rich": 37,
+    "poor": 18,
+    "free": 7
+   },
+   {
+    "t": 9000,
+    "rich": 36,
+    "poor": 19,
+    "free": 7
+   },
+   {
+    "t": 10000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 11000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 12000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 6,
+  "pass": true,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 39,
+   "poor": 15,
+   "free": 8
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 31,
+    "poor": 21,
+    "free": 10
+   },
+   {
+    "t": 2000,
+    "rich": 34,
+    "poor": 18,
+    "free": 10
+   },
+   {
+    "t": 3000,
+    "rich": 36,
+    "poor": 18,
+    "free": 8
+   },
+   {
+    "t": 4000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 5000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 6000,
+    "rich": 36,
+    "poor": 15,
+    "free": 11
+   },
+   {
+    "t": 7000,
+    "rich": 38,
+    "poor": 16,
+    "free": 8
+   },
+   {
+    "t": 8000,
+    "rich": 39,
+    "poor": 16,
+    "free": 7
+   },
+   {
+    "t": 9000,
+    "rich": 39,
+    "poor": 16,
+    "free": 7
+   },
+   {
+    "t": 10000,
+    "rich": 39,
+    "poor": 16,
+    "free": 7
+   },
+   {
+    "t": 11000,
+    "rich": 39,
+    "poor": 15,
+    "free": 8
+   },
+   {
+    "t": 12000,
+    "rich": 39,
+    "poor": 15,
+    "free": 8
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 7,
+  "pass": false,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 36,
+   "poor": 17,
+   "free": 9
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 31,
+    "poor": 21,
+    "free": 10
+   },
+   {
+    "t": 2000,
+    "rich": 33,
+    "poor": 18,
+    "free": 11
+   },
+   {
+    "t": 3000,
+    "rich": 35,
+    "poor": 18,
+    "free": 9
+   },
+   {
+    "t": 4000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 5000,
+    "rich": 36,
+    "poor": 18,
+    "free": 8
+   },
+   {
+    "t": 6000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 7000,
+    "rich": 35,
+    "poor": 17,
+    "free": 10
+   },
+   {
+    "t": 8000,
+    "rich": 37,
+    "poor": 17,
+    "free": 8
+   },
+   {
+    "t": 9000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 10000,
+    "rich": 37,
+    "poor": 19,
+    "free": 6
+   },
+   {
+    "t": 11000,
+    "rich": 38,
+    "poor": 18,
+    "free": 6
+   },
+   {
+    "t": 12000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   }
+  ]
+ },
+ {
+  "scene": "theft",
+  "seed": 8,
+  "pass": true,
+  "lipid": 62,
+  "start": {
+   "t": 0,
+   "rich": 31,
+   "poor": 31,
+   "free": 0
+  },
+  "end": {
+   "t": 12000,
+   "rich": 38,
+   "poor": 17,
+   "free": 7
+  },
+  "series": [
+   {
+    "t": 0,
+    "rich": 31,
+    "poor": 31,
+    "free": 0
+   },
+   {
+    "t": 1000,
+    "rich": 29,
+    "poor": 22,
+    "free": 11
+   },
+   {
+    "t": 2000,
+    "rich": 32,
+    "poor": 20,
+    "free": 10
+   },
+   {
+    "t": 3000,
+    "rich": 33,
+    "poor": 16,
+    "free": 13
+   },
+   {
+    "t": 4000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 5000,
+    "rich": 37,
+    "poor": 16,
+    "free": 9
+   },
+   {
+    "t": 6000,
+    "rich": 36,
+    "poor": 16,
+    "free": 10
+   },
+   {
+    "t": 7000,
+    "rich": 38,
+    "poor": 16,
+    "free": 8
+   },
+   {
+    "t": 8000,
+    "rich": 38,
+    "poor": 17,
+    "free": 7
+   },
+   {
+    "t": 9000,
+    "rich": 36,
+    "poor": 17,
+    "free": 9
+   },
+   {
+    "t": 10000,
+    "rich": 35,
+    "poor": 16,
+    "free": 11
+   },
+   {
+    "t": 11000,
+    "rich": 37,
+    "poor": 15,
+    "free": 10
+   },
+   {
+    "t": 12000,
+    "rich": 38,
+    "poor": 17,
+    "free": 7
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 1,
+  "pass": true,
+  "firstPinch": 6848,
+  "pinches": 3,
+  "dissolved": 0,
+  "loops": 4,
+  "holding": [
+   12,
+   78,
+   12,
+   13
+  ],
+  "soluteInside": 115,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 41,
+    "roundness": 0.874841143646976
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 51,
+    "roundness": 0.6694490776439634
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 59,
+    "roundness": 0.5011105316207022
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 71,
+    "roundness": 0.34663206337035496
+   },
+   {
+    "t": 7000,
+    "loops": 2,
+    "beads": 67,
+    "roundness": 0.5046669618911299
+   },
+   {
+    "t": 8000,
+    "loops": 2,
+    "beads": 80,
+    "roundness": 0.4363982469138478
+   },
+   {
+    "t": 9000,
+    "loops": 2,
+    "beads": 80,
+    "roundness": 0.40244087110869187
+   },
+   {
+    "t": 10000,
+    "loops": 2,
+    "beads": 77,
+    "roundness": 0.43361371861290715
+   },
+   {
+    "t": 11000,
+    "loops": 2,
+    "beads": 90,
+    "roundness": 0.31332621271363215
+   },
+   {
+    "t": 12000,
+    "loops": 3,
+    "beads": 96,
+    "roundness": 0.4071018485001817
+   },
+   {
+    "t": 13000,
+    "loops": 3,
+    "beads": 90,
+    "roundness": 0.4070431310830388
+   },
+   {
+    "t": 14000,
+    "loops": 3,
+    "beads": 97,
+    "roundness": 0.34243220942588076
+   },
+   {
+    "t": 15000,
+    "loops": 4,
+    "beads": 96,
+    "roundness": 0.5355944478422907
+   },
+   {
+    "t": 16000,
+    "loops": 4,
+    "beads": 91,
+    "roundness": 0.514257738779716
+   },
+   {
+    "t": 17000,
+    "loops": 4,
+    "beads": 96,
+    "roundness": 0.536695342059168
+   },
+   {
+    "t": 18000,
+    "loops": 4,
+    "beads": 84,
+    "roundness": 0.5922816488253454
+   },
+   {
+    "t": 19000,
+    "loops": 4,
+    "beads": 102,
+    "roundness": 0.4841401381001744
+   },
+   {
+    "t": 20000,
+    "loops": 4,
+    "beads": 104,
+    "roundness": 0.4460887933401214
+   },
+   {
+    "t": 21000,
+    "loops": 4,
+    "beads": 96,
+    "roundness": 0.39615991341550805
+   },
+   {
+    "t": 22000,
+    "loops": 4,
+    "beads": 99,
+    "roundness": 0.35823739226814155
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 2,
+  "pass": true,
+  "firstPinch": 12200,
+  "pinches": 2,
+  "dissolved": 1,
+  "loops": 2,
+  "holding": [
+   99,
+   14
+  ],
+  "soluteInside": 113,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 40,
+    "roundness": 0.7833542120331501
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 47,
+    "roundness": 0.7564565703869942
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 43,
+    "roundness": 0.8063702497607007
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 47,
+    "roundness": 0.7237273283279142
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 43,
+    "roundness": 0.7986616621293727
+   },
+   {
+    "t": 8000,
+    "loops": 1,
+    "beads": 50,
+    "roundness": 0.572306109124344
+   },
+   {
+    "t": 9000,
+    "loops": 1,
+    "beads": 59,
+    "roundness": 0.5255586028615823
+   },
+   {
+    "t": 10000,
+    "loops": 1,
+    "beads": 57,
+    "roundness": 0.5349550881014272
+   },
+   {
+    "t": 11000,
+    "loops": 1,
+    "beads": 63,
+    "roundness": 0.42804982622995735
+   },
+   {
+    "t": 12000,
+    "loops": 1,
+    "beads": 63,
+    "roundness": 0.39973329573466176
+   },
+   {
+    "t": 13000,
+    "loops": 2,
+    "beads": 65,
+    "roundness": 0.5467810134638815
+   },
+   {
+    "t": 14000,
+    "loops": 2,
+    "beads": 68,
+    "roundness": 0.42482554945221723
+   },
+   {
+    "t": 15000,
+    "loops": 2,
+    "beads": 65,
+    "roundness": 0.45947549212173744
+   },
+   {
+    "t": 16000,
+    "loops": 2,
+    "beads": 73,
+    "roundness": 0.408075121147337
+   },
+   {
+    "t": 17000,
+    "loops": 2,
+    "beads": 78,
+    "roundness": 0.3811133052409639
+   },
+   {
+    "t": 18000,
+    "loops": 1,
+    "beads": 67,
+    "roundness": 0.3544245490311992
+   },
+   {
+    "t": 19000,
+    "loops": 2,
+    "beads": 76,
+    "roundness": 0.3802844170986222
+   },
+   {
+    "t": 20000,
+    "loops": 2,
+    "beads": 76,
+    "roundness": 0.34786446105735536
+   },
+   {
+    "t": 21000,
+    "loops": 2,
+    "beads": 79,
+    "roundness": 0.3246913716417612
+   },
+   {
+    "t": 22000,
+    "loops": 2,
+    "beads": 90,
+    "roundness": 0.29049048429080887
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 3,
+  "pass": true,
+  "firstPinch": 8700,
+  "pinches": 4,
+  "dissolved": 1,
+  "loops": 4,
+  "holding": [
+   39,
+   37,
+   17,
+   16
+  ],
+  "soluteInside": 109,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 40,
+    "roundness": 0.9141860801550529
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 46,
+    "roundness": 0.7999843394114108
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 47,
+    "roundness": 0.7477761494327066
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 52,
+    "roundness": 0.6500480901007121
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 53,
+    "roundness": 0.6841416857748086
+   },
+   {
+    "t": 8000,
+    "loops": 1,
+    "beads": 64,
+    "roundness": 0.35256257932759205
+   },
+   {
+    "t": 9000,
+    "loops": 2,
+    "beads": 74,
+    "roundness": 0.4575533295967682
+   },
+   {
+    "t": 10000,
+    "loops": 2,
+    "beads": 74,
+    "roundness": 0.47406874480926037
+   },
+   {
+    "t": 11000,
+    "loops": 2,
+    "beads": 73,
+    "roundness": 0.46853910056586073
+   },
+   {
+    "t": 12000,
+    "loops": 2,
+    "beads": 75,
+    "roundness": 0.46901293288088985
+   },
+   {
+    "t": 13000,
+    "loops": 2,
+    "beads": 78,
+    "roundness": 0.5738751240560023
+   },
+   {
+    "t": 14000,
+    "loops": 2,
+    "beads": 80,
+    "roundness": 0.43261245476488064
+   },
+   {
+    "t": 15000,
+    "loops": 2,
+    "beads": 79,
+    "roundness": 0.3798253098779576
+   },
+   {
+    "t": 16000,
+    "loops": 2,
+    "beads": 87,
+    "roundness": 0.37190033997940497
+   },
+   {
+    "t": 17000,
+    "loops": 3,
+    "beads": 87,
+    "roundness": 0.44481992744345195
+   },
+   {
+    "t": 18000,
+    "loops": 3,
+    "beads": 96,
+    "roundness": 0.31624602666836144
+   },
+   {
+    "t": 19000,
+    "loops": 5,
+    "beads": 102,
+    "roundness": 0.5803816843772087
+   },
+   {
+    "t": 20000,
+    "loops": 4,
+    "beads": 93,
+    "roundness": 0.761343673684327
+   },
+   {
+    "t": 21000,
+    "loops": 4,
+    "beads": 95,
+    "roundness": 0.6659874542915056
+   },
+   {
+    "t": 22000,
+    "loops": 4,
+    "beads": 100,
+    "roundness": 0.4501054738072341
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 4,
+  "pass": true,
+  "firstPinch": 7345,
+  "pinches": 4,
+  "dissolved": 0,
+  "loops": 5,
+  "holding": [
+   16,
+   18,
+   20,
+   17,
+   47
+  ],
+  "soluteInside": 118,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 50,
+    "roundness": 0.7219742730199231
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 55,
+    "roundness": 0.5747558450359623
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 59,
+    "roundness": 0.4447059250077263
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 65,
+    "roundness": 0.38011076344626704
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 74,
+    "roundness": 0.3060284738986719
+   },
+   {
+    "t": 8000,
+    "loops": 2,
+    "beads": 87,
+    "roundness": 0.36883880686710113
+   },
+   {
+    "t": 9000,
+    "loops": 3,
+    "beads": 82,
+    "roundness": 0.5923878469797651
+   },
+   {
+    "t": 10000,
+    "loops": 3,
+    "beads": 82,
+    "roundness": 0.5300620598347376
+   },
+   {
+    "t": 11000,
+    "loops": 3,
+    "beads": 90,
+    "roundness": 0.5264327399195201
+   },
+   {
+    "t": 12000,
+    "loops": 3,
+    "beads": 99,
+    "roundness": 0.44093746964971847
+   },
+   {
+    "t": 13000,
+    "loops": 3,
+    "beads": 96,
+    "roundness": 0.41533008440685826
+   },
+   {
+    "t": 14000,
+    "loops": 3,
+    "beads": 92,
+    "roundness": 0.43879479218947415
+   },
+   {
+    "t": 15000,
+    "loops": 3,
+    "beads": 108,
+    "roundness": 0.345070140867721
+   },
+   {
+    "t": 16000,
+    "loops": 3,
+    "beads": 95,
+    "roundness": 0.35828411422874473
+   },
+   {
+    "t": 17000,
+    "loops": 3,
+    "beads": 95,
+    "roundness": 0.35016366954352296
+   },
+   {
+    "t": 18000,
+    "loops": 3,
+    "beads": 111,
+    "roundness": 0.30178561953296995
+   },
+   {
+    "t": 19000,
+    "loops": 4,
+    "beads": 110,
+    "roundness": 0.40176294845743094
+   },
+   {
+    "t": 20000,
+    "loops": 4,
+    "beads": 113,
+    "roundness": 0.42279861810801295
+   },
+   {
+    "t": 21000,
+    "loops": 5,
+    "beads": 109,
+    "roundness": 0.7467326394987112
+   },
+   {
+    "t": 22000,
+    "loops": 5,
+    "beads": 108,
+    "roundness": 0.7595017931919065
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 5,
+  "pass": true,
+  "firstPinch": 7695,
+  "pinches": 4,
+  "dissolved": 1,
+  "loops": 4,
+  "holding": [
+   10,
+   22,
+   64,
+   15
+  ],
+  "soluteInside": 111,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 43,
+    "roundness": 0.7936504680530084
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 47,
+    "roundness": 0.7848104912325777
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 55,
+    "roundness": 0.5977980562254713
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 62,
+    "roundness": 0.3969214699997182
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 70,
+    "roundness": 0.34128473110957747
+   },
+   {
+    "t": 8000,
+    "loops": 3,
+    "beads": 78,
+    "roundness": 0.5371020531098738
+   },
+   {
+    "t": 9000,
+    "loops": 3,
+    "beads": 77,
+    "roundness": 0.6240341051754366
+   },
+   {
+    "t": 10000,
+    "loops": 3,
+    "beads": 88,
+    "roundness": 0.4806604113213661
+   },
+   {
+    "t": 11000,
+    "loops": 3,
+    "beads": 87,
+    "roundness": 0.38183810037369936
+   },
+   {
+    "t": 12000,
+    "loops": 3,
+    "beads": 90,
+    "roundness": 0.3328522876772479
+   },
+   {
+    "t": 13000,
+    "loops": 3,
+    "beads": 87,
+    "roundness": 0.4148344038553712
+   },
+   {
+    "t": 14000,
+    "loops": 4,
+    "beads": 93,
+    "roundness": 0.6099757218380301
+   },
+   {
+    "t": 15000,
+    "loops": 4,
+    "beads": 96,
+    "roundness": 0.5381888013236069
+   },
+   {
+    "t": 16000,
+    "loops": 4,
+    "beads": 98,
+    "roundness": 0.4738434863687202
+   },
+   {
+    "t": 17000,
+    "loops": 4,
+    "beads": 92,
+    "roundness": 0.4896411038795195
+   },
+   {
+    "t": 18000,
+    "loops": 4,
+    "beads": 92,
+    "roundness": 0.482787234309171
+   },
+   {
+    "t": 19000,
+    "loops": 4,
+    "beads": 97,
+    "roundness": 0.48129500970113703
+   },
+   {
+    "t": 20000,
+    "loops": 4,
+    "beads": 94,
+    "roundness": 0.5562740527240997
+   },
+   {
+    "t": 21000,
+    "loops": 4,
+    "beads": 92,
+    "roundness": 0.7324066380461748
+   },
+   {
+    "t": 22000,
+    "loops": 4,
+    "beads": 88,
+    "roundness": 0.537713742642011
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 6,
+  "pass": true,
+  "firstPinch": 7990,
+  "pinches": 5,
+  "dissolved": 0,
+  "loops": 6,
+  "holding": [
+   13,
+   20,
+   20,
+   11,
+   19,
+   35
+  ],
+  "soluteInside": 118,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 49,
+    "roundness": 0.7069496966801249
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 55,
+    "roundness": 0.5128672915379736
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 67,
+    "roundness": 0.4134923324251944
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 59,
+    "roundness": 0.45392282460861677
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 62,
+    "roundness": 0.3627537756845538
+   },
+   {
+    "t": 8000,
+    "loops": 2,
+    "beads": 70,
+    "roundness": 0.5670987071898421
+   },
+   {
+    "t": 9000,
+    "loops": 2,
+    "beads": 71,
+    "roundness": 0.5396621362994544
+   },
+   {
+    "t": 10000,
+    "loops": 2,
+    "beads": 83,
+    "roundness": 0.37948415342396374
+   },
+   {
+    "t": 11000,
+    "loops": 3,
+    "beads": 84,
+    "roundness": 0.5604500835236255
+   },
+   {
+    "t": 12000,
+    "loops": 3,
+    "beads": 92,
+    "roundness": 0.644660747130265
+   },
+   {
+    "t": 13000,
+    "loops": 3,
+    "beads": 89,
+    "roundness": 0.5342971572377045
+   },
+   {
+    "t": 14000,
+    "loops": 3,
+    "beads": 85,
+    "roundness": 0.5267944055014347
+   },
+   {
+    "t": 15000,
+    "loops": 3,
+    "beads": 93,
+    "roundness": 0.44897751603407743
+   },
+   {
+    "t": 16000,
+    "loops": 5,
+    "beads": 100,
+    "roundness": 0.7029634548628501
+   },
+   {
+    "t": 17000,
+    "loops": 5,
+    "beads": 111,
+    "roundness": 0.5616548628184246
+   },
+   {
+    "t": 18000,
+    "loops": 5,
+    "beads": 108,
+    "roundness": 0.5344950730524617
+   },
+   {
+    "t": 19000,
+    "loops": 5,
+    "beads": 111,
+    "roundness": 0.48031405148822626
+   },
+   {
+    "t": 20000,
+    "loops": 5,
+    "beads": 119,
+    "roundness": 0.4748551348982916
+   },
+   {
+    "t": 21000,
+    "loops": 5,
+    "beads": 126,
+    "roundness": 0.4150677577677578
+   },
+   {
+    "t": 22000,
+    "loops": 6,
+    "beads": 117,
+    "roundness": 0.567654186867179
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 7,
+  "pass": true,
+  "firstPinch": 14077,
+  "pinches": 4,
+  "dissolved": 1,
+  "loops": 4,
+  "holding": [
+   31,
+   20,
+   46,
+   16
+  ],
+  "soluteInside": 113,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 46,
+    "roundness": 0.7947173949640605
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 55,
+    "roundness": 0.5161025143805444
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 60,
+    "roundness": 0.47485699133800147
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 57,
+    "roundness": 0.4794493457082089
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 61,
+    "roundness": 0.41393525779958046
+   },
+   {
+    "t": 8000,
+    "loops": 1,
+    "beads": 63,
+    "roundness": 0.38712709923574307
+   },
+   {
+    "t": 9000,
+    "loops": 1,
+    "beads": 63,
+    "roundness": 0.3743986127266796
+   },
+   {
+    "t": 10000,
+    "loops": 1,
+    "beads": 68,
+    "roundness": 0.35531453094885546
+   },
+   {
+    "t": 11000,
+    "loops": 1,
+    "beads": 71,
+    "roundness": 0.3163839545029926
+   },
+   {
+    "t": 12000,
+    "loops": 1,
+    "beads": 77,
+    "roundness": 0.3146739547388969
+   },
+   {
+    "t": 13000,
+    "loops": 1,
+    "beads": 83,
+    "roundness": 0.23704497718613293
+   },
+   {
+    "t": 14000,
+    "loops": 1,
+    "beads": 86,
+    "roundness": 0.23140768128993597
+   },
+   {
+    "t": 15000,
+    "loops": 2,
+    "beads": 91,
+    "roundness": 0.3409915203457212
+   },
+   {
+    "t": 16000,
+    "loops": 4,
+    "beads": 94,
+    "roundness": 0.5297481049393125
+   },
+   {
+    "t": 17000,
+    "loops": 4,
+    "beads": 96,
+    "roundness": 0.6750048314367113
+   },
+   {
+    "t": 18000,
+    "loops": 3,
+    "beads": 92,
+    "roundness": 0.5433259148930103
+   },
+   {
+    "t": 19000,
+    "loops": 3,
+    "beads": 93,
+    "roundness": 0.4951131856308393
+   },
+   {
+    "t": 20000,
+    "loops": 3,
+    "beads": 98,
+    "roundness": 0.3373020725113115
+   },
+   {
+    "t": 21000,
+    "loops": 4,
+    "beads": 94,
+    "roundness": 0.5663424712907963
+   },
+   {
+    "t": 22000,
+    "loops": 4,
+    "beads": 100,
+    "roundness": 0.4978474562587227
+   }
+  ]
+ },
+ {
+  "scene": "pinch",
+  "seed": 8,
+  "pass": true,
+  "firstPinch": 9844,
+  "pinches": 4,
+  "dissolved": 1,
+  "loops": 4,
+  "holding": [
+   41,
+   26,
+   32,
+   15
+  ],
+  "soluteInside": 114,
+  "soluteTotal": 120,
+  "series": [
+   {
+    "t": 3000,
+    "loops": 1,
+    "beads": 44,
+    "roundness": 0.8209891234684127
+   },
+   {
+    "t": 4000,
+    "loops": 1,
+    "beads": 45,
+    "roundness": 0.8194478465724907
+   },
+   {
+    "t": 5000,
+    "loops": 1,
+    "beads": 50,
+    "roundness": 0.6728087863798612
+   },
+   {
+    "t": 6000,
+    "loops": 1,
+    "beads": 54,
+    "roundness": 0.6050565355921671
+   },
+   {
+    "t": 7000,
+    "loops": 1,
+    "beads": 60,
+    "roundness": 0.4819133679374667
+   },
+   {
+    "t": 8000,
+    "loops": 1,
+    "beads": 59,
+    "roundness": 0.4519024600911683
+   },
+   {
+    "t": 9000,
+    "loops": 1,
+    "beads": 71,
+    "roundness": 0.38637347475009
+   },
+   {
+    "t": 10000,
+    "loops": 2,
+    "beads": 86,
+    "roundness": 0.34731050617559395
+   },
+   {
+    "t": 11000,
+    "loops": 3,
+    "beads": 95,
+    "roundness": 0.3536237370700656
+   },
+   {
+    "t": 12000,
+    "loops": 2,
+    "beads": 87,
+    "roundness": 0.33434862868567733
+   },
+   {
+    "t": 13000,
+    "loops": 2,
+    "beads": 78,
+    "roundness": 0.349503315895311
+   },
+   {
+    "t": 14000,
+    "loops": 3,
+    "beads": 87,
+    "roundness": 0.41718338008646133
+   },
+   {
+    "t": 15000,
+    "loops": 3,
+    "beads": 97,
+    "roundness": 0.3857004420034834
+   },
+   {
+    "t": 16000,
+    "loops": 4,
+    "beads": 91,
+    "roundness": 0.7191270585332673
+   },
+   {
+    "t": 17000,
+    "loops": 4,
+    "beads": 103,
+    "roundness": 0.6457501002851651
+   },
+   {
+    "t": 18000,
+    "loops": 4,
+    "beads": 100,
+    "roundness": 0.617941828555311
+   },
+   {
+    "t": 19000,
+    "loops": 4,
+    "beads": 101,
+    "roundness": 0.6194254620265125
+   },
+   {
+    "t": 20000,
+    "loops": 4,
+    "beads": 119,
+    "roundness": 0.5679016805717945
+   },
+   {
+    "t": 21000,
+    "loops": 4,
+    "beads": 115,
+    "roundness": 0.5913814154953864
+   },
+   {
+    "t": 22000,
+    "loops": 4,
+    "beads": 100,
+    "roundness": 0.6114709947144626
+   }
+  ]
+ }
+]

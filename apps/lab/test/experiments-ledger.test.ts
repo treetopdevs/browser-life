@@ -103,7 +103,9 @@ describe("experiments ledger", () => {
     // Site furniture, and sub-pages reached from their parent page.
     const elsewhere = new Set(["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/", "/story/", "/experiments/",
       "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/ecosystem/archive/"]);
-    const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i));
+    // Prototypes kept off the index on purpose (their pages carry noindex).
+    const unlisted = new Set(["/bodies/", "/vesicle/"]);
+    const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i) && !unlisted.has(i));
     expect(missing).toEqual([]);
   });
 });
