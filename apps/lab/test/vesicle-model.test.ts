@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VesicleWorld, sinCos } from '../src/vesicle/model.ts';
 import { assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
-import { HEREDITY, METABOLISM, WALL_GENES, feedWorld, garden, theftWorld } from '../src/vesicle/worlds.ts';
+import { HEREDITY, METABOLISM, WALL_GATE, WALL_GENES, feedWorld, garden, theftWorld } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
 const run = (w: VesicleWorld, steps: number) => { for (let t = 0; t < steps; t++) w.tick(); return w; };
@@ -367,6 +367,25 @@ describe('vesicle world', () => {
     run(w, 1500);
     // shifts are off: every bead still names a founder and carries one of the two shares
     for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { expect(marks.has(w.wmark[i])).toBe(true); expect([64, 192]).toContain(w.wgene[i]); }
+  });
+
+  it('gate-only control: copies need the inner face of a wall but take their parent\'s bytes', () => {
+    const loose = new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, kDecay: 0, wallGate: true });
+    loose.addSolute(32, 32, 6, 200); loose.scatter(loose.food, 4000);
+    expect(run(loose, 400).events.birth).toBe(0);
+    const w = new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, kDecay: 0, kIn: 0, kOut: 0, sBurst: 0, kLip: 0, wallGate: true });
+    w.addLoop(32, 32, 8, undefined, 200, 77);
+    for (let k = 0; k < 60; k++) { const [s, c] = sinCos(k * 0.1047); w.addParticle(32 + 6 * c, 32 + 6 * s, 10, 1, 20); }
+    w.scatter(w.food, 4000);
+    run(w, 400);
+    expect(w.events.birth).toBeGreaterThan(20);
+    for (let k = 0; k < w.n; k++) expect([w.gene[k], w.mark[k]]).toEqual([10, 20]);
+    // with shifts on, the bytes ride on solute and move
+    const g = run(garden(2, { params: WALL_GATE }), 3000);
+    let moved = 0;
+    for (let k = 0; k < g.n; k++) if (g.gene[k] !== 128) moved++;
+    expect(moved).toBeGreaterThan(5);
+    expect(check(g)).toEqual([]);
   });
 
   it('wall genes: matches the pinned state after 2,000 steps', () => {

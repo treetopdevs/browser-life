@@ -1,13 +1,13 @@
 // Headless garden runs for the vesicle world: a census table, optional frames, structural checks.
 // Usage: node experiments/vesicle/run.ts --out DIR [--seed 1] [--steps 50000] [--every 2500] [--frames]
 //          [--params '{"kLip":0.001}'] [--heredity] [--neutral] [--wound-every N] [--founders 6] [--food N] [--colour founder|gene|mark]
-//          [--wall] (heredity in the wall beads) [--founder-gene 96 | 96,160] [--chimera 64,192]
+//          [--wall] (heredity in the wall beads) [--gate] (control: solute heredity, copies only at the inner face) [--founder-gene 96 | 96,160] [--chimera 64,192]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Params } from '../../apps/lab/src/vesicle/model.ts';
 import { census, check, loops } from '../../apps/lab/src/vesicle/observe.ts';
-import { HEREDITY, WALL_GENES, garden } from '../../apps/lab/src/vesicle/worlds.ts';
+import { HEREDITY, WALL_GATE, WALL_GENES, garden } from '../../apps/lab/src/vesicle/worlds.ts';
 import type { GardenOpts } from '../../apps/lab/src/vesicle/worlds.ts';
 import { writeFrame } from './frame.ts';
 import type { ColourBy } from './frame.ts';
@@ -87,6 +87,7 @@ export function runGarden(o: RunOpts) {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const arg = (k: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
   const num = (k: string) => (arg(k) !== undefined ? Number(arg(k)) : undefined);
+  if (process.argv.includes('--wall') && process.argv.includes('--gate')) throw new Error('--wall and --gate are different arms: pick one');
   const out = arg('out');
   if (out) mkdirSync(out, { recursive: true });
   const r = runGarden({
@@ -94,7 +95,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every'), founders: num('founders'),
     chimera: arg('chimera') ? (arg('chimera')!.split(',').map(Number) as [number, number]) : undefined,
     founderGene: arg('founder-gene') ? (arg('founder-gene')!.includes(',') ? arg('founder-gene')!.split(',').map(Number) : Number(arg('founder-gene'))) : undefined, food: num('food'), lipid: num('lipid'), solute: num('solute'),
-    params: { ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
+    params: { ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--gate') ? WALL_GATE : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
   });
   const { world: _w, ...rest } = r;
   if (out) writeFileSync(join(out, `s${r.seed}.json`), JSON.stringify(rest));

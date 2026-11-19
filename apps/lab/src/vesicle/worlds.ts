@@ -57,3 +57,7 @@ export function feedWorld(seed: number): VesicleWorld {
 /** Rung 3: the bytes live in the wall. Wall beads are replaced about every hundred steps, far more often than
  *  solute copies, so the shift rate per copy is a tenth of rung 2's. */
 export const WALL_GENES: Partial<Params> = { mut: 0.01, mutStep: 16, wallGenes: true };
+
+/** Control for rung 3: rung 2's heredity (bytes on self-copying solute) with rung 3's rule that solute is only
+ *  made against the inner face of a wall. */
+export const WALL_GATE: Partial<Params> = { ...HEREDITY, wallGate: true };

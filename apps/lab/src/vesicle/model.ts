@@ -39,6 +39,9 @@ export interface Params {
    *  end of the bond it joins, and solute is only made against the inner face of a wall, stamped with that
    *  wall's bytes. Solute then carries no heredity of its own. Off = the bytes ride on solute (rung 2). */
   wallGenes: boolean;
+  /** Control for `wallGenes`: solute copies only against the inner face of a wall, as there, but the copy
+   *  takes its parent's bytes (shifted), as in rung 2. Ignored when `wallGenes` is on. */
+  wallGate: boolean;
   maxBeads: number; maxParts: number;
 }
 
@@ -52,7 +55,7 @@ export const DEFAULTS: Params = {
   dLipid: 0.02, dFood: 0.1, dWaste: 0.1,
   rIns: 3,
   kRep: 0, kDecay: 0, kLip: 0, kLight: 0, kLipDecay: 0, foodCap: 8, crowdCap: 6,
-  mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false,
+  mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false, wallGate: false,
   maxBeads: 1 << 15, maxParts: 1 << 16,
 };
 
@@ -131,7 +134,7 @@ export class VesicleWorld {
     this.blen = new Float64Array(nb); this.fx = new Float64Array(nb); this.fy = new Float64Array(nb); this.born = new Int32Array(nb).fill(-1);
     this.gap = new Float64Array(nb);
     this.wgene = new Uint8Array(nb).fill(128); this.wmark = new Uint8Array(nb).fill(128);
-    if (p.wallGenes && !(p.rIns > 0)) throw new Error('wallGenes needs rIns > 0 (solute is made within rIns of a wall)');
+    if ((p.wallGenes || p.wallGate) && !(p.rIns > 0)) throw new Error('wallGenes and wallGate need rIns > 0 (solute is made within rIns of a wall)');
     this.px = new Float64Array(np); this.py = new Float64Array(np);
     this.gene = new Uint8Array(np); this.mark = new Uint8Array(np); this.founder = new Uint16Array(np);
     this.food = new Int32Array(nc); this.waste = new Int32Array(nc); this.lipid = new Int32Array(nc);
@@ -542,7 +545,8 @@ export class VesicleWorld {
         const cf = (crowd < p.crowdCap ? crowd : p.crowdCap) / p.crowdCap;
         if (this.rand() < p.kRep * ff * cf * (1 + (p.tradeoff * (128 - g)) / 127)) {
           // with wall genes, a copy is only made against the inner face of a wall, and takes that wall's bytes
-          const from = p.wallGenes ? this.innerBead(px[k], py[k], c) : -2;
+          // (with the gate-only control, the same place is required but the bytes are the parent's)
+          const from = p.wallGenes ? this.innerBead(px[k], py[k], c) : p.wallGate ? (this.innerBead(px[k], py[k], c) >= 0 ? -2 : -1) : -2;
           if (from !== -1) {
             food[c]--; sCount[c]++; this.events.birth++;
             const l = this.n++;

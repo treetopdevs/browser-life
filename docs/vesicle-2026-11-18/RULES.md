@@ -71,6 +71,18 @@ contents are the particles that fall inside its polygon. Observers compute both;
 `share` is the particle's lipid-share byte (128 at the start). With `neutral` on, the rules read 128 for every
 particle while the bytes are still copied and shifted: the drift reference. The idle marker byte is never read.
 
+## Optional: heredity in the wall (`wallGenes`, rung 3)
+
+Off by default; with it off nothing above changes. With it on:
+- every wall bead carries the two bytes; a new bead (from the water or made directly) copies them from one
+  end of the bond it joins, picked evenly, each shifted with probability `mut`;
+- in step 7 a particle that is due to copy does so only if a wall bond is within `rIns` and the particle is
+  on the wall's interior side there (at a bead, judged against both of that bead's bonds); the copy takes
+  the bytes of the nearest bead of that bond, unshifted. A particle's bytes are then a stamp, not a lineage.
+
+`wallGate` is a control: the same condition on where a copy can be made, but the copy takes its parent's
+bytes, shifted, as in step 7. Results: `docs/vesicle-wall-genes-2026-11-19/README.md`.
+
 ## What is conserved
 
 Every bead, particle, food, waste and lipid unit counts as one unit of matter, and every reaction is one for

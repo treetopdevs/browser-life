@@ -175,8 +175,12 @@ that wins contests between cells is one that makes cells bigger and slower, not 
 
 ## Reading
 
-- Putting heredity in the wall does what rung 2 could not: with the same private incentive to copy instead
-  of build, the cells stay alive and keep dividing in every world.
+- With heredity in the wall and the same private incentive to copy instead of build, the cells stay alive
+  and keep dividing in every world, for 1.5 million steps in the three run that long. Rung 2's cells died.
+  But this rung did not show that the wall's heredity is why: a control added afterwards (last section)
+  keeps rung 2's self-copying solute, adds only the rule that solute is made at the wall, and at the same
+  slow shift rate keeps three worlds of four alive and dividing over the same span (two of them in the
+  same share band, one shrinking, one collapsing).
 - The share moves, it is not drift, and it stops in the range where whole cells win contests. By the rules
   written beforehand the cause is confounded. Followed afterwards as single rings, a wall shows no net
   shift toward either share over its first 1,000 steps (96 founders per pair), while whole cells with
@@ -198,3 +202,64 @@ that wins contests between cells is one that makes cells bigger and slower, not 
   inside a cell about 6 to 9, between cells about 18 to 26).
 - Garden parameters are those of rung 1, tuned by eye there. The shift rate was lowered once, before the
   long runs, for the reason given above.
+
+## A missing control, added afterwards: is it the wall's heredity or the wall's gate?
+
+The selection arm differs from the rung 2 reference in two ways, not one. The bytes moved into the wall,
+and solute can only copy within `rIns` of a wall's inner face. The second alone might keep cells alive: a
+swollen cell has less of its solute near its wall, so the gate throttles exactly the runaway that killed
+rung 2. (The shift rate differs too: 0.1 there, 0.01 here.)
+
+Control (`wallGate`): solute copies only against the inner face of a wall, as in rung 3, but each copy
+takes its parent's bytes, shifted, as in rung 2. `tradeoff` 1, four seeds, 400,000 steps, at shift rate
+0.1 (rung 2's) and again at 0.01 (rung 3's).
+
+Written before these runs:
+- If the control fails rule 1 (fewer than three of four worlds with 10 or more cells at 400,000 and a
+  division after 300,000) at both shift rates, the gate does not save the cells, and what does is rung
+  3's way of carrying heredity taken as a whole: bytes in the wall, copied at every bead that joins, with
+  solute stamped and not copied. It would not single out where the bytes are stored, because the two arms
+  also differ in how often a copy (and so a shift) happens.
+- If the control passes rule 1 at either rate, cells can persist without heredity in the wall, and the
+  first line of "Reading" above is wrong as written: it has to say that rung 3 did not show heredity in
+  the wall to be the cause. A pass would not show how the gate helps, and at the slow shift rate it might
+  only mean the share has not had time to fall.
+- In either case the lipid share at the end is reported next to the selection arm's 51 to 63.
+
+### Result of the control (`runs/vesicle/w5`)
+
+| Control arm | Cells at 400,000 | Per-cell share at 400,000 | Divisions after 300,000 | Rule 1 |
+|---|---|---|---|---|
+| Gate only, shift rate 0.1 | 9, 8, 5, 9 | 6, 22, 7, 10 | 0, 2, 0, 0 | fails (no world has 10 cells) |
+| Gate only, shift rate 0.01 | 33, 35, 33, 29 | 81, 85, 73, 83 | 27, 47, 17, 59 | passes, 4 of 4 |
+
+By the reading written beforehand, the control passes at one rate, so **rung 3 did not show heredity in
+the wall to be the cause** of the cells holding. At rung 2's shift rate the gate alone does not save the
+cells; at rung 3's it keeps them alive to 400,000 steps.
+
+At 400,000 the share in the slow control was still falling, so its four worlds were run to 1,500,000
+steps, the length of the wall-heredity long runs (this run was decided after seeing the table above):
+
+| Seed | Per-cell share every 300k | Cells every 300k | Divisions in each 300k | Median solute per cell at the end |
+|---|---|---|---|---|
+| 1 | 96, 68, 48, 30, 20 | 35, 29, 23, 8, 4 | 532, 44, 9, 0, 9 | 390 |
+| 2 | 94, 68, 59, 42, 44 | 35, 32, 26, 18, 12 | 540, 83, 11, 6, 9 | 100 |
+| 3 | 82, 61, 50, 38, 54 | 31, 29, 24, 19, 24 | 384, 29, 6, 3, 18 | 50 |
+| 4 | 105, 60, 55, 62, 60 | 32, 21, 17, 25, 24 | 653, 97, 21, 43, 22 | 42 |
+
+Held to the standard of rule 1 (10 or more cells at the end and still dividing), three of the four
+control worlds pass at 1,500,000 and one fails (seed 1: 4 swollen cells, share 20). Looked at more
+closely, which is a judgement made after the fact: seed 2 is shrinking (35 cells down to 12, share 44),
+and two worlds hold at 24 cells with the share at 54 and 60, the band the wall-heredity worlds sit in.
+The three wall-heredity worlds run to the same length all pass (13 to 23 cells at the listed checkpoints,
+share 50 to 61 at the end, none shrinking). Three of three against three of four, or against two of four
+on the closer look, is a hint at most.
+
+What the control does show:
+- Where solute can be made matters. Rung 2 with free copying anywhere inside a cell and shift rate 0.1
+  ended at 1, 2, 4, 4 cells; the same with copying only at the wall ends at 9, 8, 5, 9.
+- How fast the share can shift matters a great deal. With the gate, a tenth of the rate turns collapse
+  by 400,000 steps into three worlds of four still alive and dividing at 1,500,000.
+- With slow shifts the share can stop falling even when the bytes ride on self-copying solute: two worlds
+  end where whole cells do best, and one of them (seed 3) fell to 38 and came back to 54. That is
+  consistent with contests between cells holding it up; these runs do not show that it is the reason.

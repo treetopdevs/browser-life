@@ -44,8 +44,11 @@ time. Earlier runs are kept in `runs/vesicle/pre-review/` (before any review) an
   pressed together could be pushed through each other in one step; a bead in contact now moves at most a
   fraction of its gap (RULES.md, step 4), which rules that out.
 
-Each fix has a test that fails on the kernel before it. The last review found no P1 or P2 left in these
-changes. On the final kernel: six gardens checked at every one of 30,000 steps, and 28 gardens checked at
+Each fix has a test that fails on the kernel before it, with one exception: the check that the two new
+bonds of a pinch do not cross each other has no test of its own. The last review found no P1 and one P2
+(a ring seeded at the dish edge); the seeding check that closes it has a test but was not itself reviewed.
+On the final kernel: six gardens checked at every one of 30,000 steps (`experiments/vesicle/crossings.ts`;
+the script used at the time was a scratch copy of it), and 28 gardens checked at
 every census (400,000 or 1,500,000 steps, eight of them wounded), showed no crossing and no change in matter.
 
 Still open, and accepted: a moving wall can pass over a particle (a bead's own step, or the shortcut bond
@@ -184,7 +187,8 @@ lives. It also kills worlds. (Before the last fixes this arm had three seeds: tw
   way: when there is room to divide into, the cells that still divide do better.
 - The open problem has moved. It is no longer how walls form and stay unfrozen. It is what makes dividing
   pay: space to move into, a way to disperse, or copying that is tied to the cell (one linked genome copied
-  once per division) so that no part of a cell can out-copy the rest.
+  once per division) so that no part of a cell can out-copy the rest. Rung 3 tries a version of the last:
+  `docs/vesicle-wall-genes-2026-11-19/README.md`.
 
 ## Limits of these runs
 
