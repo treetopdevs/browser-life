@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="A grid world where compartments build walls from one of six four-letter patterns, and predators can evolve to cut the pattern that spreads." />
+  <title>Walls made of oligomers · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/oligomer/" />
+</head>
+<body class="oligomer-page">
+  <a class="skip" href="#main">Skip to the world</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed world · prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Walls made of oligomers</p>
+      <h1>Compartments that fight over wall patterns</h1>
+      <p>Light makes two kinds of small building block out of loose 0s and 1s. Each square of the grid can hold a compartment, a pocket with a wall and a small genome of catalysts. A wall is built from one of six four-letter patterns made of two 0s and two 1s (0011, 0101, 0110, 1001, 1010, 1100). Everything is counted in whole pieces, and the total number of 0s and the total number of 1s never change; the badge below checks that every few frames.</p>
+      <p>In the worlds with predators, a compartment can evolve a lysin: a catalyst that cuts one wall pattern in its neighbours. The idea being tested is that a pattern which spreads becomes an easy target, and then another pattern takes over. Watch the colour of the grid and the stacked chart: does the leader change? Founders start with no lysin, so the predators arrive only after mutation finds one, which can take thousands of steps.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> the light that makes food, the six wall patterns, the size a wall must reach before a compartment divides, the lysin rule, background rupture and drift are all engineered, and a compartment is a grid square that is switched on or off. What is not written in is which pattern wins, or which lysins appear.</p>
+      <p class="scope-note"><strong>What this has shown so far:</strong> a provisional 40,000-step pilot (4 seeds, 24x24 grid, chosen after three mechanical fixes found during the pilot). With predators, the leading wall pattern changed hands 0 to 12 times in the last 20,000 steps depending on the seed; none of the 12 control runs changed leader. That is a pilot, not the 500,000-step confirmation the plan calls for (not yet run), the leader was checked every 500 steps there and every 200 here, and a run you watch can stay quiet for a long time or show nothing at all.</p>
+    </section>
+    <section class="stage">
+      <div class="world">
+        <div class="frame">
+          <canvas id="world" width="160" height="160" tabindex="0" role="img" aria-label="Oligomer world, a grid of compartments. Click or use arrow keys to inspect a tile." aria-describedby="world-help"></canvas>
+          <canvas id="overlay" width="160" height="160" aria-hidden="true"></canvas>
+        </div>
+        <p id="world-help" class="help">Click a square, or focus the grid and use the arrow keys, to read what is in it. Inspecting never changes the run.</p>
+        <p id="scale" class="help"></p>
+        <p id="live" class="live" role="status" aria-live="polite">Paused.</p>
+        <ul id="legend" class="legend" aria-label="Legend"></ul>
+      </div>
+      <div class="panel">
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="play" class="primary" type="button">Play</button>
+          <button id="step" type="button">One step</button>
+          <label for="pace">Pace<select id="pace">
+            <option value="1">1 step per frame (slow motion)</option>
+            <option value="4">Up to 4 per frame</option>
+            <option value="8" selected>Up to 8 per frame (default)</option>
+            <option value="0">Fast (as many as fit in about 10 ms)</option>
+          </select></label>
+        </div>
+        <div class="controls">
+          <label for="start">World<select id="start">
+            <option value="LYSE" selected>Six wall patterns, predators allowed: a compartment can evolve a lysin that cuts one pattern in its neighbours</option>
+            <option value="NO_LYSE">Same six founders, predators switched off (the control)</option>
+            <option value="NEUTRAL_WALL">Predators that ignore the pattern: they cut any neighbour wall at one fixed rate</option>
+            <option value="SINGLE_WALL">One wall pattern only (0011), predators allowed</option>
+          </select></label>
+          <p id="world-note" class="note"></p>
+          <label for="size">Grid<select id="size">
+            <option value="16">16 x 16 (fastest)</option>
+            <option value="24">24 x 24 (the size the pilot used)</option>
+            <option value="32" selected>32 x 32 (default, more room for turnover)</option>
+          </select></label>
+          <label for="view">View<select id="view">
+            <option value="wall" selected>Wall pattern: the colour of each compartment's main wall</option>
+            <option value="lysin">Predators: a ring marks compartments that carry a lysin</option>
+            <option value="trophic">Who eats what: food-eaters, scavengers or both</option>
+            <option value="chem">Chemistry outside: the loose matter between compartments</option>
+          </select></label>
+          <p id="view-note" class="note"></p>
+          <label for="chem" id="chem-label" hidden>Show<select id="chem" hidden>
+            <option value="food" selected>Food (the light-made pieces)</option>
+            <option value="dimers">Short pieces (two letters)</option>
+            <option value="monomers">Free 0s and 1s</option>
+          </select></label>
+          <form id="seed-form" class="seed-form"><label for="seed">Seed</label><input id="seed" type="text" inputmode="numeric" value="1" /><button type="submit">Reset</button></form>
+        </div>
+        <dl class="readout">
+          <div><dt>Step</dt><dd id="r-t">0</dd></div>
+          <div><dt>Compartments alive</dt><dd id="r-live">0</dd></div>
+          <div><dt>Divisions</dt><dd id="r-div">0</dd></div>
+          <div><dt>Deaths with no neighbour cut</dt><dd id="r-starve">0</dd></div>
+          <div><dt>Deaths with a neighbour cut</dt><dd id="r-lyse">0</dd></div>
+          <div><dt>Lysin cuts</dt><dd id="r-cuts">0</dd></div>
+          <div><dt>Leading pattern</dt><dd id="r-lead">none yet</dd></div>
+          <div><dt>Pattern diversity (1 to 6)</dt><dd id="r-wd1">0</dd></div>
+          <div><dt>Leader changes (after step 20,000)</dt><dd id="r-sw">0</dd></div>
+          <div class="wide"><dt>Matter check (0s and 1s)</dt><dd><span id="r-res" class="badge-res ok">res 0, 0</span> <span id="r-res-word">balanced</span></dd></div>
+        </dl>
+        <p class="help">Counts and the matter check are live. Leading pattern, diversity, leader changes (counted from step 20,000, once the founders have settled, checked every 200 steps) and the charts update every 200 steps.</p>
+        <canvas id="history" width="600" height="140" role="img" aria-label="Wall pattern shares over time. No census yet."></canvas>
+        <p id="history-note" class="help">Share of wall by pattern, one column per 200 steps. The history fills over about a minute and a half.</p>
+        <ul id="shares" class="shares" aria-label="Current share of each wall pattern"></ul>
+        <div class="mini"><div><canvas id="history2" width="600" height="60" role="img" aria-label="Number of compartments over time."></canvas><p id="h2-note" class="help">Compartments alive: 0 to 0</p></div><div><canvas id="history3" width="600" height="60" role="img" aria-label="Pattern diversity over time."></canvas><p id="h3-note" class="help">Pattern diversity: 1 to 6</p></div></div>
+        <h2 class="inspect-h">Inspector</h2>
+        <div id="inspector" class="inspector"><p class="help">Nothing selected. Click a square of the grid.</p></div>
+      </div>
+    </section>
+    <section class="explanation">
+      <p>Counts, diversity and leader changes are read by observers that watch the run; they never change it. Known limits: the grid is flat and wraps around at the edges, matter only moves between neighbours, compartments drift by swapping places with a neighbour, and the viewer shows the leading pattern of each square, so a square that is half one pattern and half another looks like the larger half. Squares are not tracked as individuals: the inspector reads the square, not the cell that happens to sit in it. Death counts are observations, not causes: a death with no neighbour cut can be hunger, thin walls or random rupture, and a death with a neighbour cut means a lysin cut a neighbour during that step. The predator ring marks carriers of a lysin gene, not the cuts themselves. Results above are provisional.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/oligomer/page.ts"></script>
+</body>
+</html>
