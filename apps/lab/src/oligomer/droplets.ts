@@ -48,13 +48,24 @@ export interface DropletConfig {
   readonly synThreshold: number; // minimum concentration c_m for autocatalytic synthesis (prevents uniform film)
   readonly noiseAmp: number; // tiny thermal flux noise to break exact symmetry for division
 
-  // Phase B1.2: Heritable motif-specific lysis & conserved motif switching (off by default: kLyse = 0)
-  readonly kLyse: number; // contact-digestion rate (W_target on neighbor -> F at attacker)
-  readonly neutralLyse: boolean; // control: motif-blind lysis at flat rate
-  readonly lyseCoreMin: number; // min droplet density (fraction of scale) to carry/express a lysin
+  // Phase B1.2/B1.3: Heritable motif-specific secreted lysin & conserved motif switching (off by default: kLyse = 0)
+  readonly kLyse: number; // hydrolytic lysis rate per unit lysin concentration (W_target -> A)
+  readonly neutralLyse: boolean; // control: foreign-motif-only motif-blind secreted lysin
+  readonly lyseCoreMin: number; // min droplet density (fraction of scale) to carry/secrete a lysin
   readonly mutLyse: number; // per-step prob a core tile mutates its lysin target
   readonly mutMotif: number; // per-step prob a core tile isomerizes a packet of W_m -> W_m' (exact conservation)
   readonly lyseUpkeep: number; // tiny extra W degradation for carrying an active lysin (prevents free-lunch weapons)
+  readonly secreteL: number; // per-step lysin secretion rate from active core tiles
+  readonly diffL: number; // isotropic 4-neighbor diffusion fraction of lysin in water (0..0.5)
+  readonly decayL: number; // per-step decay rate of lysin in water (screening length sqrt((diffL/4)/decayL))
+
+  // Phase B1.4: Conserved obligate phage / parasite field P[tile * 6 + m] (off by default: kInfect = 0)
+  readonly kInfect: number; // host-specific lytic infection rate (W_m -> phageYield*P_m + (1-phageYield)*A)
+  readonly neutralPhage: boolean; // control: motif-blind generalist phage infecting all W_m equally
+  readonly phageYield: number; // fraction of cleaved W_m converted to new P_m (rest -> A)
+  readonly diffP: number; // isotropic 4-neighbor integer diffusion fraction of P in water
+  readonly kDecayP: number; // per-step phage decay rate (P_m -> A) in water
+  readonly mutPhage: number; // per-step prob a droplet tile spawns a tiny conserved 5-unit phage packet (W -> P)
 }
 
 export function defaultDropletConfig(overrides: Partial<DropletConfig> = {}): DropletConfig {
@@ -82,6 +93,15 @@ export function defaultDropletConfig(overrides: Partial<DropletConfig> = {}): Dr
     mutLyse: 0,
     mutMotif: 0,
     lyseUpkeep: 0.002,
+    secreteL: 0.025,
+    diffL: 0.48,
+    decayL: 0.025,
+    kInfect: 0,
+    neutralPhage: false,
+    phageYield: 0.5,
+    diffP: 0.30,
+    kDecayP: 0.015,
+    mutPhage: 0,
     ...overrides,
   };
 }
@@ -107,25 +127,33 @@ export class DropletWorld {
   readonly nTiles: number;
   stepCount = 0;
 
-  // Exact integer matter pools (conserved: sum(A + F + sum_m W_m) === initTotalMatter)
+  // Exact integer matter pools (conserved: sum(A + F + sum_m W_m + sum_m P_m) === initTotalMatter)
   readonly A: Int32Array; // soluble waste / monomers
   readonly F: Int32Array; // soluble high-energy feedstock
   readonly W: Int32Array; // [tile * NUM_MOTIFS + m] droplet-forming oligomers
+  readonly P: Int32Array; // [tile * NUM_MOTIFS + m] conserved motif-specific phage / obligate parasite oligomers
   // Heritable lysin target per tile (-1 = none, 0..5 = target motif); advects with W inflow
   readonly lyseTarget: Int8Array;
+  // Secreted trace lysin/bacteriocin catalytic field [tile * NUM_MOTIFS + m] (massless enzyme; matter cleavage W->F/A is exact)
+  readonly L: Float64Array;
 
   // Scratch buffers (never serialized)
   private readonly mu: Float64Array;
   private readonly deltaA: Int32Array;
   private readonly deltaF: Int32Array;
   private readonly deltaW: Int32Array;
+  private readonly deltaP: Int32Array;
   private readonly maxInflow: Int32Array;
   private readonly maxInflowSrc: Int32Array;
   private readonly maxInflowTie: Int32Array;
   private readonly lyseNext: Int8Array;
+  private readonly isCore: Uint8Array;
+  private readonly prevCore: Uint8Array;
+  private readonly LNext: Float64Array;
 
   // Pure observer counters
   lyseMassCleaved = 0;
+  phageMassCleaved = 0;
 
   readonly initTotalMatter: number;
 
@@ -139,6 +167,38 @@ export class DropletWorld {
     if (!Number.isSafeInteger(cfg.initMatterPerTile) || cfg.initMatterPerTile < 0) {
       throw new Error(`Invalid initMatterPerTile: ${cfg.initMatterPerTile}`);
     }
+    if (
+      !Number.isFinite(cfg.diffL) ||
+      cfg.diffL < 0 ||
+      cfg.diffL > 1 ||
+      !Number.isFinite(cfg.decayL) ||
+      cfg.decayL < 0 ||
+      cfg.decayL > 1 ||
+      !Number.isFinite(cfg.secreteL) ||
+      cfg.secreteL < 0
+    ) {
+      throw new Error(`Invalid lysin field parameters: diffL=${cfg.diffL}, decayL=${cfg.decayL}, secreteL=${cfg.secreteL}`);
+    }
+    if (
+      !Number.isFinite(cfg.kInfect) ||
+      cfg.kInfect < 0 ||
+      !Number.isFinite(cfg.phageYield) ||
+      cfg.phageYield < 0 ||
+      cfg.phageYield > 1 ||
+      !Number.isFinite(cfg.diffP) ||
+      cfg.diffP < 0 ||
+      cfg.diffP > 1 ||
+      !Number.isFinite(cfg.kDecayP) ||
+      cfg.kDecayP < 0 ||
+      cfg.kDecayP > 1 ||
+      !Number.isFinite(cfg.mutPhage) ||
+      cfg.mutPhage < 0 ||
+      cfg.mutPhage > 1
+    ) {
+      throw new Error(
+        `Invalid phage parameters: kInfect=${cfg.kInfect}, phageYield=${cfg.phageYield}, diffP=${cfg.diffP}, kDecayP=${cfg.kDecayP}, mutPhage=${cfg.mutPhage}`,
+      );
+    }
     const nTiles = cfg.width * cfg.height;
     if (nTiles * cfg.initMatterPerTile > 0x3fffffff) {
       throw new Error(`Total world matter (${nTiles * cfg.initMatterPerTile}) exceeds Int32-safe bound (1073741823)`);
@@ -148,15 +208,21 @@ export class DropletWorld {
     this.A = new Int32Array(this.nTiles);
     this.F = new Int32Array(this.nTiles);
     this.W = new Int32Array(this.nTiles * NUM_MOTIFS);
+    this.P = new Int32Array(this.nTiles * NUM_MOTIFS);
     this.lyseTarget = new Int8Array(this.nTiles).fill(-1);
+    this.L = new Float64Array(this.nTiles * NUM_MOTIFS);
     this.mu = new Float64Array(this.nTiles);
     this.deltaA = new Int32Array(this.nTiles);
     this.deltaF = new Int32Array(this.nTiles);
     this.deltaW = new Int32Array(this.nTiles * NUM_MOTIFS);
+    this.deltaP = new Int32Array(this.nTiles * NUM_MOTIFS);
     this.maxInflow = new Int32Array(this.nTiles);
     this.maxInflowSrc = new Int32Array(this.nTiles).fill(-1);
     this.maxInflowTie = new Int32Array(this.nTiles);
     this.lyseNext = new Int8Array(this.nTiles).fill(-1);
+    this.isCore = new Uint8Array(this.nTiles);
+    this.prevCore = new Uint8Array(this.nTiles);
+    this.LNext = new Float64Array(this.nTiles * NUM_MOTIFS);
 
     const initF = Math.floor(cfg.initMatterPerTile * 0.5);
     const initA = cfg.initMatterPerTile - initF;
@@ -234,18 +300,50 @@ export class DropletWorld {
 
     for (const i of targets) {
       this.W[i * NUM_MOTIFS + motif] += target;
+      this.prevCore[i] = 1;
       if (lyseTarget >= 0) this.lyseTarget[i] = lyseTarget;
     }
   }
 
-  /** Exact integer total matter across A, F, and all W motifs. */
+  /**
+   * Seed a small conserved phage inoculum of `amount` units at (cx, cy) targeting `motif`,
+   * converting local soluble A/F into P_motif (preserves exact total matter).
+   */
+  seedPhage(cx: number, cy: number, motif: number, amount = 20): void {
+    if (!Number.isSafeInteger(cx) || !Number.isSafeInteger(cy)) {
+      throw new Error(`Invalid phage coordinates: (${cx}, ${cy})`);
+    }
+    if (!Number.isSafeInteger(motif) || motif < 0 || motif >= NUM_MOTIFS) {
+      throw new Error(`Invalid phage motif: ${motif}`);
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error(`Invalid phage amount: ${amount}`);
+    }
+    const W = this.cfg.width;
+    const H = this.cfg.height;
+    const x = ((cx % W) + W) % W;
+    const y = ((cy % H) + H) % H;
+    const i = y * W + x;
+    const want = Math.round(amount);
+    const have = this.A[i] + this.F[i];
+    if (have < want) {
+      throw new Error(`Not enough soluble matter at (${x},${y}) to seed phage (need ${want}, have ${have})`);
+    }
+    const fromA = Math.min(this.A[i], want);
+    const fromF = want - fromA;
+    this.A[i] -= fromA;
+    this.F[i] -= fromF;
+    this.P[i * NUM_MOTIFS + motif] += want;
+  }
+
+  /** Exact integer total matter across A, F, all W motifs, and all P phage species. */
   totalMatter(): number {
     let total = 0;
     for (let i = 0; i < this.nTiles; i++) {
       total += this.A[i] + this.F[i];
     }
     for (let i = 0; i < this.W.length; i++) {
-      total += this.W[i];
+      total += this.W[i] + this.P[i];
     }
     return total;
   }
@@ -556,45 +654,73 @@ export class DropletWorld {
       this.A[i] += this.deltaA[i];
     }
 
-    // 4. Phase B1.2: Heritable lysin advection/mutation, conserved motif isomerization, and contact lysis
+    // 4. Phase B1.3: Heritable lysin advection/mutation, conserved motif isomerization, and secreted lysin
     if (trackGenetics) {
       const coreMinInt = Math.round(cfg.lyseCoreMin * cfg.scale);
 
-      // 4a. Advect lyseTarget along W mass inflow + mutate
+      // Identify dense core tiles so peaceful (-1) and armed (0..5) alleles advect symmetrically
       for (let i = 0; i < N; i++) {
         const wBase = i * NUM_MOTIFS;
         let wSum = 0;
         for (let m = 0; m < NUM_MOTIFS; m++) wSum += this.W[wBase + m];
+        this.isCore[i] = wSum >= coreMinInt ? 1 : 0;
+      }
 
-        if (wSum < coreMinInt) {
+      // 4a. Advect lyseTarget along W mass inflow + mutate
+      for (let i = 0; i < N; i++) {
+        if (!this.isCore[i]) {
           this.lyseNext[i] = -1;
           continue;
         }
 
         let gene = this.lyseTarget[i];
         const src = this.maxInflowSrc[i];
-        if (src >= 0 && this.lyseTarget[src] >= 0) {
-          // Newly grown tile inherits immediately; existing core tile mixes gently along mass flow
-          if (gene < 0 || (hash32(seed, step, i, 300) & 0xff) < 32) {
+        if (src >= 0 && this.isCore[src]) {
+          // Newly grown rim tile inherits immediately; existing core tile mixes gently & symmetrically along mass flow
+          if (!this.prevCore[i] || (hash32(seed, step, i, 300) & 0xff) < 8) {
             gene = this.lyseTarget[src];
-          }
-        }
-        if (cfg.mutLyse > 0) {
-          const rM = hash32(seed, step, i, 301);
-          if ((rM & 0xffff) / 65536 < cfg.mutLyse) {
-            const pick = (rM >>> 16) % (NUM_MOTIFS + 1);
-            gene = pick === NUM_MOTIFS ? -1 : pick;
           }
         }
         this.lyseNext[i] = gene;
       }
+      if (cfg.mutLyse > 0) {
+        // Order-invariant overlap resolution via hashed event priority (highest prio wins)
+        const lyseEvents: { i: number; newGene: number; prio: number }[] = [];
+        for (let i = 0; i < N; i++) {
+          if (!this.isCore[i]) continue;
+          const rM = hash32(seed, step, i, 301);
+          if ((rM >>> 0) / 4294967296 >= cfg.mutLyse) continue;
+          const rPick = hash32(seed, step, i, 302);
+          // 50% loss-of-function (disarm -> -1), 50% gain-of-function (specific target 0..5)
+          const newGene = (rPick & 1) === 0 ? -1 : (rPick >>> 1) % NUM_MOTIFS;
+          lyseEvents.push({ i, newGene, prio: hash32(seed, step, i, 303) >>> 0 });
+        }
+        if (lyseEvents.length > 1) {
+          lyseEvents.sort((a, b) => a.prio - b.prio || a.i - b.i);
+        }
+        for (const ev of lyseEvents) {
+          const cx = ev.i % W;
+          const cy = (ev.i / W) | 0;
+          for (let dy = -2; dy <= 2; dy++) {
+            const yy = ((cy + dy + H) % H) * W;
+            for (let dx = -2; dx <= 2; dx++) {
+              if (dx * dx + dy * dy > 4) continue;
+              const j = yy + ((cx + dx + W) % W);
+              if (this.isCore[j]) this.lyseNext[j] = ev.newGene;
+            }
+          }
+        }
+      }
       this.lyseTarget.set(this.lyseNext);
+      this.prevCore.set(this.isCore);
 
-      // 4b. Conserved motif isomerization (exact 1-for-1 W_m -> W_m', lets rare motifs emerge)
+      // 4b. Conserved motif isomerization (exact 1-for-1 W_m -> W_m' over a local r=3 super-critical patch)
+      //     Proposals are snapshotted before mutation and resolved by hashed priority without cascades.
       if (cfg.mutMotif > 0) {
+        const motifEvents: { i: number; domM: number; newM: number; prio: number }[] = [];
         for (let i = 0; i < N; i++) {
           const rI = hash32(seed, step, i, 310);
-          if ((rI & 0xffff) / 65536 >= cfg.mutMotif) continue;
+          if ((rI >>> 0) / 4294967296 >= cfg.mutMotif) continue;
           const wBase = i * NUM_MOTIFS;
           let domM = -1;
           let domW = 0;
@@ -602,32 +728,53 @@ export class DropletWorld {
             if (this.W[wBase + m] > domW) { domW = this.W[wBase + m]; domM = m; }
           }
           if (domM < 0 || domW < coreMinInt) continue;
-          const newM = (domM + 1 + ((rI >>> 16) % (NUM_MOTIFS - 1))) % NUM_MOTIFS;
-          // Isomerize a nucleation packet (exact conservation)
-          const packet = Math.min(domW, Math.round(0.5 * cfg.scale));
-          this.W[wBase + domM] -= packet;
-          this.W[wBase + newM] += packet;
+          const newM = (domM + 1 + (hash32(seed, step, i, 311) % (NUM_MOTIFS - 1))) % NUM_MOTIFS;
+          motifEvents.push({ i, domM, newM, prio: hash32(seed, step, i, 312) >>> 0 });
+        }
+        if (motifEvents.length > 0) {
+          if (motifEvents.length > 1) {
+            motifEvents.sort((a, b) => b.prio - a.prio || b.i - a.i);
+          }
+          const claimed = new Set<number>();
+          for (const ev of motifEvents) {
+            const cx = ev.i % W;
+            const cy = (ev.i / W) | 0;
+            for (let dy = -3; dy <= 3; dy++) {
+              const yy = ((cy + dy + H) % H) * W;
+              for (let dx = -3; dx <= 3; dx++) {
+                if (dx * dx + dy * dy > 9) continue;
+                const j = yy + ((cx + dx + W) % W);
+                if (claimed.has(j)) continue;
+                claimed.add(j);
+                const jb = j * NUM_MOTIFS;
+                const wm = this.W[jb + ev.domM];
+                if (wm > 0) {
+                  this.W[jb + ev.domM] -= wm;
+                  this.W[jb + ev.newM] += wm;
+                }
+              }
+            }
+          }
         }
       }
 
-      // 4c. Self-toxic, motif-specific contact lysis (W_target on neighbor -> F at attacker; exact conservation)
+      // 4c. Phase B1.3: Short-range secreted lysin (bacteriocin) field + local conserved hydrolysis (W_m -> A)
       if (cfg.kLyse > 0) {
-        const start = hash32(seed, step, 0, 320) % N;
-        const gcd = (a: number, b: number): number => { while (b) { const t = a % b; a = b; b = t; } return a; };
-        // Sample coprime stride uniformly by rejection (avoids increment-bias toward certain units mod N)
-        let stride = 1;
-        for (let attempt = 1; attempt <= 64; attempt++) {
-          const cand = hash32(seed, step, attempt, 320) % N;
-          if (cand > 0 && gcd(cand, N) === 1) { stride = cand; break; }
-        }
-        for (let idx = 0; idx < N; idx++) {
-          const i = (start + idx * stride) % N;
+        // 4c.1. Upkeep + secretion from dense droplet tiles carrying an active lysin
+        const foreignShare = cfg.secreteL / (NUM_MOTIFS - 1);
+        for (let i = 0; i < N; i++) {
           const target = this.lyseTarget[i];
           if (target < 0) continue;
 
           const wBase = i * NUM_MOTIFS;
           let wSum = 0;
-          for (let m = 0; m < NUM_MOTIFS; m++) wSum += this.W[wBase + m];
+          let domM = -1;
+          let domW = 0;
+          for (let m = 0; m < NUM_MOTIFS; m++) {
+            const wm = this.W[wBase + m];
+            wSum += wm;
+            if (wm > domW) { domW = wm; domM = m; }
+          }
           if (wSum < coreMinInt) continue;
 
           // Upkeep cost of carrying an active lysin (W -> A, exact conservation)
@@ -642,62 +789,237 @@ export class DropletWorld {
             }
           }
 
-          // Self-toxicity (if not neutralLyse): cleaves own matching motif W_target -> A
-          if (!cfg.neutralLyse) {
-            const ownW = this.W[wBase + target];
-            if (ownW > 0) {
-              const dSelf = Math.min(ownW, roundStochastic(ownW * cfg.kLyse * 0.5, hash32(seed, step, i, 340)));
-              this.W[wBase + target] -= dSelf;
-              this.A[i] += dSelf;
-            }
-          }
-
-          // Contact digestion on uniform eligible 4-neighbor (W_target -> F[attacker])
-          const x = i % W;
-          const y = (i / W) | 0;
-          const xL = x > 0 ? x - 1 : W - 1;
-          const xR = x + 1 < W ? x + 1 : 0;
-          const yU = y > 0 ? y - 1 : H - 1;
-          const yD = y + 1 < H ? y + 1 : 0;
-          const nbs = [y * W + xR, y * W + xL, yD * W + x, yU * W + x];
-          const elig: number[] = [];
-          for (let d = 0; d < 4; d++) {
-            const nb = nbs[d];
-            const nbBase = nb * NUM_MOTIFS;
+          // Secrete lysin into water:
+          // - LYSE: specialist secretes into its own target motif channel (self-toxic if target === domM).
+          // - NEUTRAL_LYSE: motif-blind control gated strictly to foreign motifs (m !== domM) so it never
+          //   self-cleaves or self-fuels, while attacking all foreign motifs equally across the moat.
+          if (cfg.secreteL > 0) {
             if (cfg.neutralLyse) {
               for (let m = 0; m < NUM_MOTIFS; m++) {
-                if (this.W[nbBase + m] > 0) { elig.push(nb); break; }
-              }
-            } else if (this.W[nbBase + target] > 0) {
-              elig.push(nb);
-            }
-          }
-          if (elig.length > 0) {
-            const nb = elig[hash32(seed, step, i, 350) % elig.length];
-            const nbBase = nb * NUM_MOTIFS;
-            if (cfg.neutralLyse) {
-              for (let m = 0; m < NUM_MOTIFS; m++) {
-                const wm = this.W[nbBase + m];
-                if (wm > 0) {
-                  const d = Math.min(wm, roundStochastic(wm * cfg.kLyse, hash32(seed, step, i, 360 + m)));
-                  this.W[nbBase + m] -= d;
-                  this.F[i] += d;
-                  this.lyseMassCleaved += d;
-                }
+                if (m !== domM) this.L[wBase + m] += foreignShare;
               }
             } else {
-              const wm = this.W[nbBase + target];
-              if (wm > 0) {
-                const d = Math.min(wm, roundStochastic(wm * cfg.kLyse, hash32(seed, step, i, 360)));
-                this.W[nbBase + target] -= d;
-                this.F[i] += d;
-                this.lyseMassCleaved += d;
-              }
+              this.L[wBase + target] += cfg.secreteL;
+            }
+          }
+        }
+
+        // 4c.2. Isotropic 4-neighbor diffusion + decay of secreted lysin in water (2-3 tile reach)
+        const keep = 1 - cfg.decayL;
+        const diffL = cfg.diffL;
+        this.LNext.fill(0);
+        for (let m = 0; m < NUM_MOTIFS; m++) {
+          let hasL = false;
+          for (let i = 0; i < N; i++) {
+            if (this.L[i * NUM_MOTIFS + m] > 0) { hasL = true; break; }
+          }
+          if (!hasL) continue;
+
+          for (let y = 0; y < H; y++) {
+            const yU = (y > 0 ? y - 1 : H - 1) * W;
+            const y0 = y * W;
+            const yD = (y + 1 < H ? y + 1 : 0) * W;
+            for (let x = 0; x < W; x++) {
+              const xL = x > 0 ? x - 1 : W - 1;
+              const xR = x + 1 < W ? x + 1 : 0;
+              const i = y0 + x;
+              const c = this.L[i * NUM_MOTIFS + m];
+              const avgNb =
+                0.25 *
+                (this.L[(y0 + xR) * NUM_MOTIFS + m] +
+                  this.L[(y0 + xL) * NUM_MOTIFS + m] +
+                  this.L[(yD + x) * NUM_MOTIFS + m] +
+                  this.L[(yU + x) * NUM_MOTIFS + m]);
+              let next = (c + diffL * (avgNb - c)) * keep;
+              if (next < 1e-6) next = 0;
+              this.LNext[i * NUM_MOTIFS + m] = next;
+            }
+          }
+        }
+        this.L.set(this.LNext);
+
+        // 4c.3. Local conserved dissipative lysis (W_m -> 75% F + 25% A catalyzed by L_m; zero tile-order bias).
+        // Thermodynamically downhill (25% lost to low-energy waste A, 75% recovered as local oligomeric fuel F
+        // that diffuses across the 2-tile moat to feed the adjacent predator).
+        for (let i = 0; i < N; i++) {
+          const wBase = i * NUM_MOTIFS;
+          for (let m = 0; m < NUM_MOTIFS; m++) {
+            const wm = this.W[wBase + m];
+            if (wm === 0) continue;
+            const lm = this.L[wBase + m];
+            if (lm <= 0) continue;
+            const rate = Math.min(0.95, cfg.kLyse * lm);
+            const d = Math.min(wm, roundStochastic(wm * rate, hash32(seed, step, i, 360 + m)));
+            if (d > 0) {
+              const dA = Math.min(d, roundStochastic(d * 0.25, hash32(seed, step, i, 370 + m)));
+              const dF = d - dA;
+              this.W[wBase + m] -= d;
+              this.F[i] += dF;
+              this.A[i] += dA;
+              this.lyseMassCleaved += d;
             }
           }
         }
       }
     }
+
+    // 5. Phase B1.4: Conserved obligate phage / parasite field P[tile * NUM_MOTIFS + m]
+    //    Replicates ONLY on matching host motif W_m (true Kill-the-Winner negative frequency dependence),
+    //    diffuses as exact integer virion packets in water, and decays back to soluble waste A when hostless.
+    let runPhage = cfg.kInfect > 0 || cfg.mutPhage > 0;
+    if (!runPhage) {
+      for (let idx = 0; idx < this.P.length; idx++) {
+        if (this.P[idx] > 0) { runPhage = true; break; }
+      }
+    }
+    if (runPhage) {
+      // 5a. Local conserved infection & lytic burst: W_m -> phageYield * P + (1 - phageYield) * A
+      if (cfg.kInfect > 0) {
+        for (let i = 0; i < N; i++) {
+          const base = i * NUM_MOTIFS;
+          if (cfg.neutralPhage) {
+            let pTot = 0;
+            for (let m = 0; m < NUM_MOTIFS; m++) pTot += this.P[base + m];
+            if (pTot > 0) {
+              const rate = Math.min(0.95, cfg.kInfect * (pTot * invScale));
+              for (let m = 0; m < NUM_MOTIFS; m++) {
+                const wm = this.W[base + m];
+                if (wm === 0) continue;
+                const d = Math.min(wm, roundStochastic(wm * rate, hash32(seed, step, i, 400 + m)));
+                if (d > 0) {
+                  const dP = Math.min(d, roundStochastic(d * cfg.phageYield, hash32(seed, step, i, 410 + m)));
+                  const dA = d - dP;
+                  this.W[base + m] -= d;
+                  this.P[base + 0] += dP;
+                  this.A[i] += dA;
+                  this.phageMassCleaved += d;
+                }
+              }
+            }
+          } else {
+            for (let m = 0; m < NUM_MOTIFS; m++) {
+              const wm = this.W[base + m];
+              if (wm === 0) continue;
+              const pm = this.P[base + m];
+              if (pm === 0) continue;
+              const rate = Math.min(0.95, cfg.kInfect * (pm * invScale));
+              const d = Math.min(wm, roundStochastic(wm * rate, hash32(seed, step, i, 400 + m)));
+              if (d > 0) {
+                const dP = Math.min(d, roundStochastic(d * cfg.phageYield, hash32(seed, step, i, 410 + m)));
+                const dA = d - dP;
+                this.W[base + m] -= d;
+                this.P[base + m] += dP;
+                this.A[i] += dA;
+                this.phageMassCleaved += d;
+              }
+            }
+          }
+        }
+      }
+
+      // 5b. Conserved phage decay in water: P_m -> A
+      if (cfg.kDecayP > 0) {
+        for (let i = 0; i < N; i++) {
+          const base = i * NUM_MOTIFS;
+          for (let m = 0; m < NUM_MOTIFS; m++) {
+            const pm = this.P[base + m];
+            if (pm === 0) continue;
+            const dec = Math.min(pm, roundStochastic(pm * cfg.kDecayP, hash32(seed, step, i, 420 + m)));
+            if (dec > 0) {
+              this.P[base + m] -= dec;
+              this.A[i] += dec;
+            }
+          }
+        }
+      }
+
+      // 5c. Rare conserved prophage / host-range emergence: tiny 5-unit packet W_dom -> P_target
+      if (cfg.mutPhage > 0) {
+        for (let i = 0; i < N; i++) {
+          const rP = hash32(seed, step, i, 430);
+          if ((rP >>> 0) / 4294967296 >= cfg.mutPhage) continue;
+          const base = i * NUM_MOTIFS;
+          let domM = -1;
+          let domW = 0;
+          for (let m = 0; m < NUM_MOTIFS; m++) {
+            if (this.W[base + m] > domW) { domW = this.W[base + m]; domM = m; }
+          }
+          if (domM < 0 || domW < 10) continue;
+          const targetM = cfg.neutralPhage ? 0 : hash32(seed, step, i, 431) % NUM_MOTIFS;
+          const q = Math.min(domW, 5);
+          this.W[base + domM] -= q;
+          this.P[base + targetM] += q;
+        }
+      }
+
+      // 5d. Exact integer isotropic 4-neighbor diffusion of P in water
+      if (cfg.diffP > 0) {
+        this.deltaP.fill(0);
+        for (let m = 0; m < NUM_MOTIFS; m++) {
+          let hasP = false;
+          for (let i = 0; i < N; i++) {
+            if (this.P[i * NUM_MOTIFS + m] > 0) { hasP = true; break; }
+          }
+          if (!hasP) continue;
+          for (let y = 0; y < H; y++) {
+            const yU = (y > 0 ? y - 1 : H - 1) * W;
+            const y0 = y * W;
+            const yD = (y + 1 < H ? y + 1 : 0) * W;
+            for (let x = 0; x < W; x++) {
+              const xL = x > 0 ? x - 1 : W - 1;
+              const xR = x + 1 < W ? x + 1 : 0;
+              const i = y0 + x;
+              const p = this.P[i * NUM_MOTIFS + m];
+              if (p === 0) continue;
+              const r = hash32(seed, step, i, 440 + m);
+              const out = Math.min(p, roundStochastic(p * cfg.diffP, r));
+              if (out > 0) {
+                this.deltaP[i * NUM_MOTIFS + m] -= out;
+                const q = out >> 2;
+                const rem = out & 3;
+                const nbs = [y0 + xR, y0 + xL, yD + x, yU + x];
+                if (q > 0) {
+                  this.deltaP[nbs[0] * NUM_MOTIFS + m] += q;
+                  this.deltaP[nbs[1] * NUM_MOTIFS + m] += q;
+                  this.deltaP[nbs[2] * NUM_MOTIFS + m] += q;
+                  this.deltaP[nbs[3] * NUM_MOTIFS + m] += q;
+                }
+                // Isotropic remainder distribution across all 4 (rem=1,3) or 6 (rem=2) unordered neighbor subsets
+                if (rem === 1) {
+                  this.deltaP[nbs[(r >>> 16) & 3] * NUM_MOTIFS + m] += 1;
+                } else if (rem === 2) {
+                  const pairIdx = (r >>> 16) % 6;
+                  const a = pairIdx < 3 ? 0 : pairIdx < 5 ? 1 : 2;
+                  const b = pairIdx < 3 ? pairIdx + 1 : pairIdx < 5 ? pairIdx - 1 : 3;
+                  this.deltaP[nbs[a] * NUM_MOTIFS + m] += 1;
+                  this.deltaP[nbs[b] * NUM_MOTIFS + m] += 1;
+                } else if (rem === 3) {
+                  const skip = (r >>> 16) & 3;
+                  for (let k = 0; k < 4; k++) {
+                    if (k !== skip) this.deltaP[nbs[k] * NUM_MOTIFS + m] += 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+        for (let idx = 0; idx < this.P.length; idx++) {
+          this.P[idx] += this.deltaP[idx];
+        }
+      }
+    }
+  }
+
+  /** Pure observer: total conserved phage matter per target motif. */
+  phageTotals(): number[] {
+    const totals = new Array<number>(NUM_MOTIFS).fill(0);
+    for (let i = 0; i < this.nTiles; i++) {
+      const base = i * NUM_MOTIFS;
+      for (let m = 0; m < NUM_MOTIFS; m++) {
+        totals[m] += this.P[base + m];
+      }
+    }
+    return totals;
   }
 
   /** Pure observer: motif mass shares, dominant motif, Hill D1, and lysin carrier counts. */
