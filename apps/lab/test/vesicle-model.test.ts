@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { VesicleWorld, sinCos } from '../src/vesicle/model.ts';
-import { LineageObserver, assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
-import { HEREDITY, METABOLISM, THREAD, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
+import { VesicleWorld, scaleJobs, sinCos } from '../src/vesicle/model.ts';
+import { LineageObserver, assign, cellHeader, cellLine, census, check, countCrossings, eventHeader, eventLine, jobHueLight, loops } from '../src/vesicle/observe.ts';
+import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_INERT, METABOLISM, THREAD, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
+// digest, matter, solute, beads, units harvested and units digested after 2,000 steps of the JOBS garden (founders 200/55, seed 1)
+const PIN_JOBS: [string, number, number, number, number, number] = ['8941c6a4', 5694, 484, 252, 209, 2870];
 const run = (w: VesicleWorld, steps: number) => { for (let t = 0; t < steps; t++) w.tick(); return w; };
 
 describe('vesicle world', () => {
@@ -635,6 +637,263 @@ describe('vesicle world', () => {
         for (const e of ev) { expect(e.id).toBeGreaterThan(0); expect(ended.has(e.id)).toBe(false); ended.add(e.id); }
         expect(ev.some((e) => e.ev === 'end' && e.kind === 'wound')).toBe(true);
       }
+    });
+  });
+
+  // ---- stage 2: jobs for genes -------------------------------------------------------------------------------
+
+  describe('jobs', () => {
+    const jobsGarden = (seed: number, params: Partial<import('../src/vesicle/model.ts').Params> = JOBS, founderJobs: [number, number] | [number, number][] = JOBS_FOUNDER) => garden(seed, { founderJobs, params });
+    /** A bare dish: no solute chemistry, no wall growth, no diffusion, so only the enzymes move food, waste and lipid. */
+    const bare = (extra: object = {}) => new VesicleWorld(1, { W: 64, H: 64, ...JOBS, kIn: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0, dLipid: 0, dFood: 0, dWaste: 0, kHarvest: 0.2, kDigest: 0.2, ...extra });
+
+    it('scales a bead whose two enzymes ask for more than 255 down to a sum of exactly 255, and leaves a smaller sum alone', () => {
+      expect(scaleJobs(100, 100)).toEqual([100, 100]); expect(scaleJobs(255, 0)).toEqual([255, 0]); expect(scaleJobs(0, 255)).toEqual([0, 255]); expect(scaleJobs(200, 55)).toEqual([200, 55]);
+      expect(scaleJobs(200, 200)).toEqual([127, 128]); expect(scaleJobs(255, 255)).toEqual([127, 128]); expect(scaleJobs(255, 85)).toEqual([191, 64]);
+      for (let h = 0; h <= 255; h += 5) for (let d = 0; d <= 255; d += 5) { const [a, b] = scaleJobs(h, d); if (h + d > 255) expect(a + b).toBe(255); else expect([a, b]).toEqual([h, d]); }
+      // the colour sees the scaled bytes: a bead asking for (255, 255) looks like (127, 128)
+      expect(jobHueLight(255, 255)).toEqual(jobHueLight(127, 128));
+      expect(jobHueLight(255, 0).hue).toBe(120); expect(jobHueLight(0, 255).hue).toBe(300); expect(jobHueLight(0, 0).light).toBe(0);
+    });
+
+    it('a bead asking for more than the budget acts like its scaled bytes (the fields come out identical)', () => {
+      const mk = (h: number, d: number) => {
+        const w = bare({ kHarvest: 0.05, kDigest: 0.05 }), f = w.addLoop(32, 32, 8, undefined, 128, 128, h, d);
+        void f; w.scatter(w.waste, 3000); w.scatter(w.lipid, 3000); w.scatter(w.food, 100); return run(w, 60);
+      };
+      const a = mk(255, 255), b = mk(127, 128);
+      expect(Array.from(a.food)).toEqual(Array.from(b.food)); expect(Array.from(a.waste)).toEqual(Array.from(b.waste)); expect(Array.from(a.lipid)).toEqual(Array.from(b.lipid));
+      expect(a.events.harvest).toBeGreaterThan(0); expect(a.events.digest).toBeGreaterThan(0);
+      // and a pure harvester does no digesting, a pure digester no harvesting
+      const ph = mk(255, 0), pd = mk(0, 255);
+      expect(ph.events.digest).toBe(0); expect(ph.events.harvest).toBeGreaterThan(0); expect(pd.events.harvest).toBe(0); expect(pd.events.digest).toBeGreaterThan(0);
+    });
+
+    it('activity is convex: a half-and-half bead does a quarter of each job', () => {
+      const mk = (h: number, d: number) => { const w = bare({ kHarvest: 0.004, kDigest: 0.004 }); w.addLoop(32, 32, 8, undefined, 128, 128, h, d); w.scatter(w.waste, 200000); w.scatter(w.lipid, 200000); run(w, 40); return w.events; };
+      const full = mk(255, 0), half = mk(127, 128), dfull = mk(0, 255);
+      // expected counts scale as (x / 255)^2: harvest by 127/255 squared = 0.248; digest by 128/255 squared = 0.252
+      expect(half.harvest / full.harvest).toBeGreaterThan(0.2); expect(half.harvest / full.harvest).toBeLessThan(0.3);
+      expect(half.digest / dfull.digest).toBeGreaterThan(0.2); expect(half.digest / dfull.digest).toBeLessThan(0.3);
+    });
+
+    it('keeps matter exact and rings whole with jobs on, in the uniform dish and the wild dish', () => {
+      const wl = wild(1), mkU = () => jobsGarden(3), mkW = () => garden(3, { founders: wl.founders, founderJobs: [JOBS_FOUNDER, [160, 95], [255, 0]], params: { ...wl.params, ...JOBS } });
+      for (const mk of [mkU, mkW]) {
+        const w = mk(), m0 = w.matter(), we = new Weather(3, 900);
+        for (let k = 1; k <= 4; k++) { for (let t = 0; t < 750; t++) { w.tick(); we.after(w, w.step); } expect(w.matter()).toBe(m0); expect(check(w)).toEqual([]); }
+        expect(w.events.harvest).toBeGreaterThan(0); expect(w.events.digest).toBeGreaterThan(0);
+        const again = mk(), we2 = new Weather(3, 900);
+        for (let t = 0; t < 3000; t++) { again.tick(); we2.after(again, again.step); }
+        expect(again.digest()).toBe(w.digest());
+      }
+    });
+
+    it('with every option off, the four pinned states are untouched even with the job rates set', () => {
+      const off = { jobs: false, jobsInert: false, kHarvest: 0.3, kDigest: 0.3 };
+      expect(run(garden(1, { params: { ...HEREDITY, ...off } }), 2000).digest()).toBe('d0d875d2');
+      expect(run(garden(1, { params: { ...WALL_GENES, ...off } }), 2000).digest()).toBe('48c2db7d');
+      expect(run(garden(1, { params: { ...THREAD, ...off } }), 3000).digest()).toBe('9f878938');
+      const wl = wild(4), w = garden(1, { founders: wl.founders, params: { ...wl.params, ...WALL_GENES, ...off } }), we = new Weather(1, 0, wl.weatherRings ?? 0);
+      for (let t = 1; t <= 5000; t++) { w.tick(); we.after(w, t); }
+      expect(w.digest()).toBe('995afe1e');
+      // and the new bytes are not state when the option is off
+      const a = garden(1, { params: WALL_GENES }), b = garden(1, { params: WALL_GENES });
+      b.wh[0] = 3; b.wd[0] = 9;
+      expect(a.digest()).toBe(b.digest());
+      const c = jobsGarden(1), d = jobsGarden(1);
+      d.wd[0] = 9;
+      expect(c.digest()).not.toBe(d.digest());
+    });
+
+    it('needs wall genes, and the inert twin needs jobs', () => {
+      expect(() => new VesicleWorld(1, { jobs: true, kHarvest: 0.1, kDigest: 0.1 })).toThrow(/wallGenes/);
+      expect(() => new VesicleWorld(1, { ...WALL_GENES, jobsInert: true })).toThrow(/jobs/);
+      expect(() => new VesicleWorld(1, { ...JOBS, kHarvest: 2 })).toThrow(/probabilities/);
+    });
+
+    it('harvest never turns waste to food outside the light in the wild dish, and digest works in the dark', () => {
+      const wl = wild(4), w = new VesicleWorld(1, { ...wl.params, ...JOBS, kIn: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0, dLipid: 0, dFood: 0, dWaste: 0, kHarvest: 0.3, kDigest: 0.3 });
+      // rings spread over the dish (some in light, some not), all kinds of job: pure harvesters and pure digesters alternate
+      for (let k = 0; k < 40; k++) w.addLoop(20 + (k % 8) * 44, 20 + Math.floor(k / 8) * 70, 6, undefined, 128, 128, k % 2 ? 255 : 0, k % 2 ? 0 : 255);
+      w.scatter(w.waste, 60000); w.scatter(w.lipid, 60000);
+      let lit = 0, darkHarvest = 0, darkDigest = 0, litDigest = 0;
+      const cellOfBead = (i: number) => w.cellOf(w.bx[i], w.by[i]);
+      w.hooks.harvest = (i, n) => { if (w.litMask[cellOfBead(i)] === 1) lit += n; else darkHarvest += n; };
+      w.hooks.digest = (i, n) => { if (w.litMask[cellOfBead(i)] === 1) litDigest += n; else darkDigest += n; };
+      const m0 = w.matter();
+      run(w, 30);
+      expect(w.matter()).toBe(m0);
+      expect(lit).toBeGreaterThan(0); expect(darkHarvest).toBe(0);
+      expect(darkDigest).toBeGreaterThan(0); expect(litDigest).toBeGreaterThan(0);
+      expect(lit + darkHarvest).toBe(w.events.harvest); expect(litDigest + darkDigest).toBe(w.events.digest);
+      // under uniform light, with nothing else but a pure harvester, harvest happens everywhere the bead is
+      const u = bare({ kHarvest: 0.5 }); u.addLoop(32, 32, 8, undefined, 128, 128, 255, 0); u.scatter(u.waste, 5000); run(u, 20);
+      expect(u.events.harvest).toBeGreaterThan(0);
+    });
+
+    it('the free conversions are off with jobs on: no light, no lipid decay, whatever kLight and kLipDecay say', () => {
+      const w = new VesicleWorld(1, { ...JOBS, kLight: 0.5, kLipDecay: 0.5, kHarvest: 0, kDigest: 0, kIn: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0 });
+      w.addLoop(32, 32, 8); w.scatter(w.waste, 500); w.scatter(w.lipid, 500);
+      const waste = Array.from(w.waste), lipid = Array.from(w.lipid);
+      run(w, 20);
+      // fields only move by diffusion: totals unchanged, nothing became food
+      expect(w.food.reduce((a, v) => a + v, 0)).toBe(0);
+      expect(w.waste.reduce((a, v) => a + v, 0)).toBe(waste.reduce((a, v) => a + v, 0)); expect(w.lipid.reduce((a, v) => a + v, 0)).toBe(lipid.reduce((a, v) => a + v, 0));
+    });
+
+    it('a new bead copies all four bytes from one neighbour (never a mix), and from either neighbour', () => {
+      const w = new VesicleWorld(5, { W: 64, H: 64, ...JOBS, mut: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0 });
+      const first = w.addLoop(32, 32, 8), n0: string[] = [];
+      for (let i = first, k = 0; k < 25; k++, i = w.next[i]) { w.wgene[i] = 10 + k; w.wmark[i] = 60 + k; w.wh[i] = 100 + k; w.wd[i] = 130 + k; n0.push(`${w.wgene[i]}/${w.wmark[i]}/${w.wh[i]}/${w.wd[i]}`); }
+      w.addSolute(32, 32, 6, 300); w.scatter(w.lipid, 800);
+      const old = w.beadHi;
+      run(w, 600);
+      expect(w.beadHi - old).toBeGreaterThan(10);
+      let born = 0;
+      for (let i = 0; i < w.beadHi; i++) { if (!w.alive[i]) continue; born++; expect(n0).toContain(`${w.wgene[i]}/${w.wmark[i]}/${w.wh[i]}/${w.wd[i]}`); }
+      expect(born).toBeGreaterThan(25);
+      // a bond with different ends: the copy is one end or the other, in all four bytes, about evenly
+      const one = new VesicleWorld(9, { ...JOBS, mut: 0 }), f = one.addLoop(50, 50, 8), j = one.next[f], spare = one.next[j];
+      one.wgene[f] = 40; one.wmark[f] = 41; one.wh[f] = 42; one.wd[f] = 43; one.wgene[j] = 200; one.wmark[j] = 201; one.wh[j] = 202; one.wd[j] = 203;
+      const pick = one as unknown as { inherit(m: number, i: number, j: number): void };
+      let low = 0;
+      for (let t = 0; t < 400; t++) {
+        pick.inherit(spare, f, j);
+        const got = [one.wgene[spare], one.wmark[spare], one.wh[spare], one.wd[spare]].join('/');
+        expect(['40/41/42/43', '200/201/202/203']).toContain(got); if (got === '40/41/42/43') low++;
+      }
+      expect(low).toBeGreaterThan(150); expect(low).toBeLessThan(250);
+    });
+
+    it('--founder-mark sets the wall marker bytes (and the solute inside), cycled over founders, and founder jobs are cycled too', () => {
+      const w = garden(1, { founders: 4, founderMark: [11, 22, 33], founderJobs: [[255, 0], [0, 255], [128, 127]], params: JOBS });
+      const marks = new Map<string, number>(), jobsSeen = new Map<number, string>();
+      for (const l of loops(w, false)) {
+        const key = `${w.wmark[l.first]}`; marks.set(key, (marks.get(key) ?? 0) + 1);
+        let same = true; for (let i = l.first; ;) { if (w.wmark[i] !== w.wmark[l.first] || w.wh[i] !== w.wh[l.first] || w.wd[i] !== w.wd[l.first]) same = false; i = w.next[i]; if (i === l.first) break; }
+        expect(same).toBe(true); jobsSeen.set(w.wmark[l.first], `${w.wh[l.first]}/${w.wd[l.first]}`);
+      }
+      expect([...marks.keys()].sort()).toEqual(['11', '22', '33']);
+      expect(jobsSeen.get(11)).toBe('255/0'); expect(jobsSeen.get(22)).toBe('0/255'); expect(jobsSeen.get(33)).toBe('128/127');
+      const seenSolute = new Set<number>(); for (let k = 0; k < w.n; k++) seenSolute.add(w.mark[k]);
+      expect([...seenSolute].sort()).toEqual([11, 22, 33]);
+      // without wall genes, a thread-less garden ignores founderMark (marker stays 128)
+      const g = garden(1, { founders: 2, founderMark: [11, 22] });
+      for (let i = 0; i < g.beadHi; i++) if (g.alive[i]) expect(g.wmark[i]).toBe(128);
+    });
+
+    it('the job bytes shift like the others when mutation is on, and not otherwise', () => {
+      const shifted = (mut: number) => {
+        const w = jobsGarden(2, { ...JOBS, mut, mutStep: 16 }); run(w, 1500);
+        let n = 0; for (let i = 0; i < w.beadHi; i++) if (w.alive[i] && (w.wh[i] !== 200 || w.wd[i] !== 55)) n++;
+        return n;
+      };
+      expect(shifted(0)).toBe(0); expect(shifted(0.1)).toBeGreaterThan(20);
+    });
+
+    it('blind copying: the job bytes do not steer where beads come from or go (same state with the bytes swapped when the enzymes cannot act)', () => {
+      // with the enzymes silenced (rates 0) the bytes are inert: two worlds that differ only in the job bytes of one founder
+      // build the same walls, solute and fields (the job bytes are the only thing the digest sees differing)
+      const mk = (h: number, d: number) => garden(4, { founderJobs: [h, d], params: { ...JOBS, kHarvest: 0, kDigest: 0, kLight: 0, kLipDecay: 0 } });
+      const a = run(mk(255, 0), 1500), b = run(mk(0, 255), 1500);
+      for (const k of ['bx', 'by', 'next', 'prev', 'alive', 'wgene', 'wmark', 'food', 'waste', 'lipid'] as const) expect(Array.from(a[k] as ArrayLike<number>)).toEqual(Array.from(b[k] as ArrayLike<number>));
+      expect(a.beadCount).toBe(b.beadCount); expect(a.n).toBe(b.n);
+    });
+
+    it('never wraps the Int32 food field: a full food cell takes no more units, and the ledger holds (harvest and digest)', () => {
+      for (const kind of ['harvest', 'digest'] as const) {
+        const w = bare({ beadCap: 0, kHarvest: 1, kDigest: 1 }), i = w.addLoop(32, 32, 8, 8, 128, 128, kind === 'harvest' ? 255 : 0, kind === 'digest' ? 255 : 0), c = w.cellOf(w.bx[i], w.by[i]);
+        w.food[c] = 2147483647; w[kind === 'harvest' ? 'waste' : 'lipid'][c] = 1;
+        const before = w.matter(); w.tick();
+        expect(w.food[c]).toBe(2147483647); expect(w.matter()).toBe(before); expect(w.events[kind]).toBe(0);
+      }
+    });
+
+    it('failed enzyme rolls do not move the main random stream: active and inert twins pick the same neighbours while nothing converts', () => {
+      const mk = (inert: boolean) => {
+        const w = new VesicleWorld(4, { ...JOBS, jobsInert: inert, mut: 0, kHarvest: 0.01, kDigest: 0, kLight: 0, kLipDecay: 0, kIn: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0, dLipid: 0, dFood: 0, dWaste: 0 });
+        const i = w.addLoop(32, 32, 7, 8, 128, 128, 0, 0); w.wh[i] = 1; w.waste[w.cellOf(w.bx[i], w.by[i])] = 1;
+        for (let q = 0; q < 8; q++) { w.wgene[q] = 10 + q; w.wmark[q] = 40 + q; }
+        return w;
+      };
+      const a = mk(false), b = mk(true);
+      for (let s = 0; s < 3; s++) { a.tick(); b.tick(); }
+      expect(Array.from(a.bx)).toEqual(Array.from(b.bx)); expect(Array.from(a.by)).toEqual(Array.from(b.by));
+      const c = mk(false), d = mk(true);
+      const ca = c as any, da = d as any; ca.enzymes(); ca.inherit(7, 0, 1); da.inherit(7, 0, 1);
+      expect(c.wgene[7]).toBe(d.wgene[7]);
+    });
+
+    it('jobsInert converts nothing by enzyme, keeps the free conversions on, and carries and shifts the genome', () => {
+      const w = jobsGarden(2, { ...JOBS_INERT, mut: 0.1, mutStep: 16 }), m0 = w.matter();
+      run(w, 1500);
+      expect(w.matter()).toBe(m0); expect(check(w)).toEqual([]);
+      expect(w.events.harvest).toBe(0); expect(w.events.digest).toBe(0);
+      // the free conversions ran: lipid decayed to waste and waste to food (with no solute decay and no uptake, nothing else could)
+      let moved = 0; for (let i = 0; i < w.beadHi; i++) if (w.alive[i] && (w.wh[i] !== 200 || w.wd[i] !== 55)) moved++;
+      expect(moved).toBeGreaterThan(10);
+      const bare2 = new VesicleWorld(1, { ...JOBS_INERT, kIn: 0, kOut: 0, sBurst: 0, kRep: 0, kDecay: 0, kLip: 0, kLight: 0.2, kLipDecay: 0.2, dLipid: 0, dFood: 0, dWaste: 0, kHarvest: 0.5, kDigest: 0.5 });
+      bare2.addLoop(32, 32, 8, undefined, 128, 128, 255, 255); bare2.scatter(bare2.waste, 400); bare2.scatter(bare2.lipid, 400);
+      run(bare2, 10);
+      expect(bare2.events.harvest + bare2.events.digest).toBe(0);
+      expect(bare2.food.reduce((a, v) => a + v, 0)).toBeGreaterThan(0); expect(bare2.waste.reduce((a, v) => a + v, 0)).toBeGreaterThan(0);
+      // the genome is state
+      const x = jobsGarden(1, JOBS_INERT), y = jobsGarden(1, JOBS_INERT); y.wd[0] = 9;
+      expect(x.digest()).not.toBe(y.digest());
+    });
+
+    it('observer: credits each conversion to the id of the bead that did it, and changes nothing in the world', () => {
+      const watched = (steps: number) => {
+        const w = jobsGarden(1), ev: import('../src/vesicle/observe.ts').LineageEvent[] = [], o = new LineageObserver(w, (e) => ev.push(e));
+        for (let t = 0; t < steps; t++) { w.tick(); o.afterTick(); }
+        return { w, o, ev };
+      };
+      const a = watched(6000), b = run(jobsGarden(1), 6000);
+      expect(a.w.digest()).toBe(b.digest());
+      // credits: in a world where no ring ever ends or pinches, every unit is credited to a living id and the sweep sums to the totals
+      const w = bare({ kHarvest: 0.05, kDigest: 0.05 });
+      w.addLoop(20, 20, 8, undefined, 128, 128, 255, 0); w.addLoop(44, 44, 8, undefined, 128, 128, 0, 255);
+      w.scatter(w.waste, 2000); w.scatter(w.lipid, 2000);
+      const o = new LineageObserver(w, () => {});
+      for (let t = 0; t < 200; t++) { w.tick(); o.afterTick(); }
+      const got: Record<number, { harvests: number; digests: number }> = {}, lines: string[] = [];
+      o.forEachCell((id, s, j) => { got[id] = j; lines.push(cellLine(w.step, id, s, false, j)); });
+      const ids = Object.keys(got).map(Number);
+      expect(ids.length).toBe(2);
+      expect(ids.reduce((a, id) => a + got[id].harvests, 0)).toBe(w.events.harvest); expect(ids.reduce((a, id) => a + got[id].digests, 0)).toBe(w.events.digest);
+      // the harvester ring did all the harvesting, the digester ring all the digesting
+      const [x, y] = ids.sort((p, q) => p - q);
+      expect(got[x].harvests).toBeGreaterThan(0); expect(got[x].digests).toBe(0); expect(got[y].digests).toBeGreaterThan(0); expect(got[y].harvests).toBe(0);
+      // columns line up with the header, and the counts reset after a sweep
+      for (const l of lines) expect(l.split('\t').length).toBe(cellHeader(false, true).split('\t').length);
+      const again: number[] = []; o.forEachCell((_id, _s, j) => again.push(j.harvests + j.digests));
+      expect(again).toEqual([0, 0]);
+      const first = lines.find((l) => l.split('\t')[1] === String(x))!.split('\t'), hd = cellHeader(false, true).split('\t');
+      expect(Number(first[hd.indexOf('hMean')])).toBe(255); expect(Number(first[hd.indexOf('dMean')])).toBe(0); expect(Number(first[hd.indexOf('hSd')])).toBe(0);
+      // pinch rows carry mean h and d for mother and both daughters, and the header agrees
+      const p = a.ev.find((e) => e.ev === 'pinch');
+      expect(p).toBeTruthy();
+      if (p) {
+        const cols = eventLine(p, false, true).split('\t');
+        expect(cols.length).toBe(eventHeader(false, true).split('\t').length);
+        const h = eventHeader(false, true).split('\t');
+        expect(h.slice(-2)).toEqual(['m_harvests', 'm_digests']); expect(Number(cols[h.length - 1])).toBeGreaterThanOrEqual(0);
+        expect(Number(cols[h.indexOf('m_hMean')])).toBeGreaterThan(0); expect(Number(cols[h.indexOf('a_dMean')])).toBeGreaterThan(0);
+      }
+      // nothing is lost to pinches or ends: the tallies on those rows plus the last sweep add up to the dish totals
+      let hv = 0, dg = 0;
+      for (const e of a.ev) { hv += e.jobs?.harvests ?? 0; dg += e.jobs?.digests ?? 0; }
+      a.o.forEachCell((_id, _s, j) => { hv += j.harvests; dg += j.digests; });
+      expect(hv).toBe(a.w.events.harvest); expect(dg).toBe(a.w.events.digest);
+      expect(a.w.events.harvest).toBeGreaterThan(0);
+      // the old row formats are unchanged when jobs are off
+      expect(eventHeader(false)).toBe(eventHeader(false, false)); expect(cellHeader(true)).toBe(cellHeader(true, false));
+    });
+
+    it('matches the pinned state after 2,000 steps (a JOBS garden, founders 200/55)', () => {
+      const w = run(jobsGarden(1), 2000);
+      expect([w.digest(), w.matter(), w.n, w.beadCount, w.events.harvest, w.events.digest]).toEqual(PIN_JOBS);
     });
   });
 

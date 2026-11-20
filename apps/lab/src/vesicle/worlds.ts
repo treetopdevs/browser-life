@@ -13,8 +13,11 @@ export interface GardenOpts { founders?: number; solute?: number; radius?: numbe
   founderGene?: number | number[];
   /** Every founder starts as a chimera: half of its wall (and of its solute) carries the first share, half the second. */
   chimera?: [number, number];
-  /** With threads on: the marker gene (gene 1) each founder's thread starts with, default 128. A list gives one value per founder in turn. */
-  founderMark?: number | number[] }
+  /** The marker byte each founder starts with: its thread's gene 1 with threads on, and its wall's marker byte with `wallGenes` on
+   *  (the solute inside gets it too). Default 128. A list gives one value per founder in turn. */
+  founderMark?: number | number[];
+  /** With `jobs` on: the (harvest, digest) bytes each founder's wall starts with, default (255, 0), a pure harvester. A list is cycled over the founders. */
+  founderJobs?: [number, number] | [number, number][] }
 
 /** A dish with a few founder vesicles, each with its own founder id, food and a little free lipid. */
 export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
@@ -24,7 +27,10 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
   for (let f = 0; f < k; f++) {
     const cx = (W * ((f % cols) + 0.5)) / cols + (w.rand() - 0.5) * 6, cy = (H * (Math.floor(f / cols) + 0.5)) / rows + (w.rand() - 0.5) * 6;
     const fg = o.founderGene, g = fg === undefined ? 128 : typeof fg === 'number' ? fg : fg[f % fg.length];
-    const first = w.addLoop(cx, cy, r, undefined, g), n = o.solute ?? 60;
+    const fm = o.founderMark, mk = fm === undefined ? 128 : typeof fm === 'number' ? fm : fm[f % fm.length];
+    const fj = o.founderJobs, [jh, jd] = fj === undefined ? [255, 0] : typeof fj[0] === 'number' ? (fj as [number, number]) : (fj as [number, number][])[f % fj.length];
+    const wmk = w.p.wallGenes ? mk : 128;
+    const first = w.addLoop(cx, cy, r, undefined, g, wmk, jh, jd), n = o.solute ?? 60;
     if (o.chimera) {
       let beads = 1;
       for (let i = w.next[first]; i !== first; i = w.next[i]) beads++;
@@ -32,10 +38,9 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
       // (and the idle marker names the founder, so with shifts off every bead says which founder's wall it descends from)
       for (let i = first, k = 0; k < beads; k++, i = w.next[i]) { w.wgene[i] = o.chimera[(k < beads >> 1 ? 0 : 1) ^ (f & 1)]; w.wmark[i] = f + 1; }
       w.addSolute(cx, cy, r - 2, n >> 1, o.chimera[0], f + 1); w.addSolute(cx, cy, r - 2, n - (n >> 1), o.chimera[1], f + 1);
-    } else w.addSolute(cx, cy, r - 2, n, g, f + 1);
+    } else w.addSolute(cx, cy, r - 2, n, g, f + 1, wmk);
     if (w.p.thread) {
       // one thread per founder, carrying the founder's lipid share and its marker
-      const fm = o.founderMark, mk = fm === undefined ? 128 : typeof fm === 'number' ? fm : fm[f % fm.length];
       w.addThread(cx, cy, [g, mk]);
     }
   }
@@ -65,6 +70,27 @@ export function feedWorld(seed: number): VesicleWorld {
 /** Rung 3: the bytes live in the wall. Wall beads are replaced about every hundred steps, far more often than
  *  solute copies, so the shift rate per copy is a tenth of rung 2's. */
 export const WALL_GENES: Partial<Params> = { mut: 0.01, mutStep: 16, wallGenes: true };
+
+/** Stage 2, "jobs for genes": the wall genome gains two bytes, harvest and digest (one shared budget of 255, activity convex), and
+ *  the two recycling jobs that used to happen for free are done by the beads: harvest turns waste to food where light falls,
+ *  digest turns free lipid to food. `kLight` and `kLipDecay` are not read. `garden` starts founders as pure harvesters (255, 0) unless told
+ *  otherwise, but a dish of pure harvesters runs down (nothing returns free lipid to food: it was all in the lipid by step 20,000 in 5 of 5
+ *  runs); a founder with (200, 55) holds. kHarvest and kDigest were set on that founder so the dish-wide waste to food rate per unit
+ *  is about the old light's (0.002) and the cell count is about the old dish's. */
+export const JOBS: Partial<Params> = { ...WALL_GENES, jobs: true, kHarvest: 0.01, kDigest: 0.35 };
+
+/** The neutral twin of JOBS: the same genome, carried and shifted the same way, but the enzymes do nothing and the free
+ *  conversions (`kLight`, `kLipDecay`) stay on. The drift baseline. */
+/** In the wild dish the light covers about a quarter of the dish, so with jobs a harvester only works while it sits in a patch. The old light
+ *  made up for the dark by raising its rate inside the patches by (cells in the dish / lit cells), about 4. The same here: a wild dish with
+ *  JOBS and the plain kHarvest ran down (waste 11,000 and food falling, 2 live cells at step 100,000, seed 1); 0.04 holds (45 to 47 live
+ *  cells at 100,000 with 0.04 and 0.06). */
+export const JOBS_WILD_KHARVEST = 0.04;
+
+/** Founders that hold the dish with JOBS: mostly harvest, a little digest. */
+export const JOBS_FOUNDER: [number, number] = [200, 55];
+
+export const JOBS_INERT: Partial<Params> = { ...JOBS, jobsInert: true };
 
 /** Control for rung 3: rung 2's heredity (bytes on self-copying solute) with rung 3's rule that solute is only
  *  made against the inner face of a wall. */

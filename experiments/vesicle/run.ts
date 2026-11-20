@@ -4,13 +4,17 @@
 //          [--mut 0.01] (shift rate per copy; overrides the arm's default) [--pinch-log] (needs --out: writes s<seed>.pinch.tsv and s<seed>.cells.tsv, pure observer)
 //          [--thread] (stage 1: one genome object per cell, free-floating) [--founder-mark 96 | 96,160] (thread marker gene)
 //          [--wild] (stage 3: big dish, drifting light patches, weather in proportion to the rings; combine with --wall/--gate/--thread/--heredity) [--wild-area 4 (default) | 1 | 9 | 16] [--no-light] [--no-weather]
+//          [--jobs] (stage 2: the wall genome also carries harvest and digest bytes; beads turn waste to food in light and free lipid to food; implies --wall;
+//             composes with --wild) [--jobs-inert] (its neutral twin: same genome, enzymes do nothing, free light and lipid decay stay on) [--founder-jobs "255,0;0,255;128,128"]
+//             (harvest,digest per founder, cycled; default 255,0) [--k-harvest 0.01 (0.04 with --wild and light on)] [--k-digest 0.35] [--colour job] (walls by job: green harvester to magenta digester)
 //          [--wall] (heredity in the wall beads) [--gate] (control: solute heredity, copies only at the inner face) [--founder-gene 96 | 96,160] [--chimera 64,192]
 import { closeSync, mkdirSync, openSync, writeFileSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { scaleJobs } from '../../apps/lab/src/vesicle/model.ts';
 import type { Params } from '../../apps/lab/src/vesicle/model.ts';
 import { LineageObserver, cellHeader, cellLine, census, check, eventHeader, eventLine, loops } from '../../apps/lab/src/vesicle/observe.ts';
-import { HEREDITY, THREAD, WALL_GATE, WALL_GENES, Weather, garden, wild } from '../../apps/lab/src/vesicle/worlds.ts';
+import { HEREDITY, JOBS, JOBS_INERT, JOBS_WILD_KHARVEST, THREAD, WALL_GATE, WALL_GENES, Weather, garden, wild } from '../../apps/lab/src/vesicle/worlds.ts';
 import type { GardenOpts } from '../../apps/lab/src/vesicle/worlds.ts';
 import { writeFrame } from './frame.ts';
 import type { ColourBy } from './frame.ts';
@@ -36,6 +40,13 @@ export function runGarden(o: RunOpts) {
       geneCell: live.length ? Math.round((10 * live.reduce((a, l) => a + l.geneMean, 0)) / live.length) / 10 : 0,
       gene: w.n ? Math.round((10 * g) / w.n) / 10 : 0, mark: w.n ? Math.round((10 * mk) / w.n) / 10 : 0,
     } as Record<string, number>;
+    if (w.p.jobs) {
+      // dish totals of the two jobs so far (units converted), and the job bytes (scaled to the shared budget) averaged over beads and over live cells
+      let sh = 0, sd = 0, nb = 0;
+      for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { const [h, d] = scaleJobs(w.wh[i], w.wd[i]); sh += h; sd += d; nb++; }
+      const r1 = (v: number) => Math.round(10 * v) / 10;
+      row.harvests = w.events.harvest; row.digests = w.events.digest; row.hMean = r1(nb ? sh / nb : 0); row.dMean = r1(nb ? sd / nb : 0);
+    }
     if (w.p.thread) {
       // threads: totals, those outside every ring, copies and decays so far; live cells holding none; gene means over threads
       let t0 = 0, t1 = 0;
@@ -86,12 +97,12 @@ export function runGarden(o: RunOpts) {
     if (fdE >= 0 && (force || bufE.length > 2000)) { writeSync(fdE, bufE.join('')); bufE = []; }
     if (fdC >= 0 && (force || bufC.length > 2000)) { writeSync(fdC, bufC.join('')); bufC = []; }
   };
-  const cells = () => { obs!.forEachCell((id, s) => bufC.push(cellLine(w.step, id, s, w.p.thread) + '\n')); flush(); };
+  const cells = () => { obs!.forEachCell((id, s, j) => bufC.push(cellLine(w.step, id, s, w.p.thread, w.p.jobs ? j : undefined) + '\n')); flush(); };
   if (o.pinchLog) {
     if (!o.out) throw new Error('--pinch-log needs --out');
     fdE = openSync(join(o.out, `s${o.seed}.pinch.tsv`), 'w'); fdC = openSync(join(o.out, `s${o.seed}.cells.tsv`), 'w');
-    bufE.push(eventHeader(w.p.thread) + '\n'); bufC.push(cellHeader(w.p.thread) + '\n');
-    obs = new LineageObserver(w, (e) => { bufE.push(eventLine(e, w.p.thread) + '\n'); flush(); });
+    bufE.push(eventHeader(w.p.thread, w.p.jobs) + '\n'); bufC.push(cellHeader(w.p.thread, w.p.jobs) + '\n');
+    obs = new LineageObserver(w, (e) => { bufE.push(eventLine(e, w.p.thread, w.p.jobs) + '\n'); flush(); });
     cells();
   }
   sample();
@@ -123,6 +134,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const arg = (k: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
   const num = (k: string) => (arg(k) !== undefined ? Number(arg(k)) : undefined);
   if (process.argv.includes('--thread-anchored')) throw new Error('--thread-anchored was retired (it died out in 8 of 8 worlds); use --thread');
+  if (process.argv.includes('--jobs') && process.argv.includes('--jobs-inert')) throw new Error('--jobs and --jobs-inert are different arms: pick one');
+  if ((process.argv.includes('--jobs') || process.argv.includes('--jobs-inert')) && (process.argv.includes('--gate') || process.argv.includes('--thread') || process.argv.includes('--heredity'))) throw new Error('jobs ride on wall heredity: do not combine with --gate, --thread or --heredity');
   if (process.argv.includes('--wall') && process.argv.includes('--gate')) throw new Error('--wall and --gate are different arms: pick one');
   const out = arg('out');
   const wl = process.argv.includes('--wild') ? wild(num('wild-area') ?? 4, { lit: !process.argv.includes('--no-light'), weather: !process.argv.includes('--no-weather') }) : undefined;
@@ -131,8 +144,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     seed: num('seed') ?? 1, steps: num('steps') ?? 50000, every: num('every') ?? 2500, out, frames: process.argv.includes('--frames'),
     colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every'), weatherRings: num('wound-every') === undefined ? wl?.weatherRings : undefined, pinchLog: process.argv.includes('--pinch-log'), founders: num('founders') ?? wl?.founders,
     chimera: arg('chimera') ? (arg('chimera')!.split(',').map(Number) as [number, number]) : undefined,
-    founderGene: arg('founder-gene') ? (arg('founder-gene')!.includes(',') ? arg('founder-gene')!.split(',').map(Number) : Number(arg('founder-gene'))) : undefined, founderMark: arg('founder-mark') ? (arg('founder-mark')!.includes(',') ? arg('founder-mark')!.split(',').map(Number) : Number(arg('founder-mark'))) : undefined, food: num('food'), lipid: num('lipid'), solute: num('solute'),
-    params: { ...wl?.params, ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--thread') ? THREAD : {}), ...(process.argv.includes('--gate') ? WALL_GATE : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(num('mut') !== undefined ? { mut: num('mut') } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
+    founderGene: arg('founder-gene') ? (arg('founder-gene')!.includes(',') ? arg('founder-gene')!.split(',').map(Number) : Number(arg('founder-gene'))) : undefined, founderMark: arg('founder-mark') ? (arg('founder-mark')!.includes(',') ? arg('founder-mark')!.split(',').map(Number) : Number(arg('founder-mark'))) : undefined, founderJobs: arg('founder-jobs') ? (arg('founder-jobs')!.split(';').map((p) => { const v = p.split(',').map(Number); if (v.length !== 2 || v.some((x) => !Number.isInteger(x) || x < 0 || x > 255)) throw new Error(`--founder-jobs: each pair is two integers 0..255, got '${p}'`); return v as [number, number]; })) : undefined, food: num('food'), lipid: num('lipid'), solute: num('solute'),
+    params: { ...wl?.params, ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--jobs') ? JOBS : {}), ...(process.argv.includes('--jobs-inert') ? JOBS_INERT : {}), ...((process.argv.includes('--jobs') || process.argv.includes('--jobs-inert')) && (wl?.params.lightPatches ?? 0) > 0 ? { kHarvest: JOBS_WILD_KHARVEST } : {}), ...(num('k-harvest') !== undefined ? { kHarvest: num('k-harvest') } : {}), ...(num('k-digest') !== undefined ? { kDigest: num('k-digest') } : {}), ...(process.argv.includes('--thread') ? THREAD : {}), ...(process.argv.includes('--gate') ? WALL_GATE : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(num('mut') !== undefined ? { mut: num('mut') } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
   });
   const { world: _w, ...rest } = r;
   if (out) writeFileSync(join(out, `s${r.seed}.json`), JSON.stringify(rest));

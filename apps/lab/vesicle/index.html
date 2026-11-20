@@ -40,14 +40,16 @@
             <option value="neutral">Garden, drift only: shifts are inherited but change nothing</option>
             <option value="wall">Garden with heredity in the wall: beads carry the lipid share, solute is stamped by the wall that makes it</option>
             <option value="thread">Garden with a thread: one genome object per cell (the ring dot), solute can only copy next to it and takes its lipid share from it</option>
+            <option value="jobs">Garden with jobs: the wall carries two enzymes, harvest (waste to food, in light) and digest (loose lipid to food); founders mostly harvest, a little digest; wall coloured by job</option>
             <option value="wild">Wild dish (4 times the area): light comes in drifting pale patches and a ring is burst now and then; no heredity</option>
             <option value="wild-wall">Wild dish with heredity in the wall</option>
             <option value="wild-heredity">Wild dish with heredity on solute</option>
             <option value="wild-thread">Wild dish with a thread</option>
+            <option value="wild-jobs">Wild dish with jobs: harvesting works only inside the lit patches, digesting anywhere</option>
             <option value="theft">Two cells, fixed lipid: the crowded one takes wall</option>
             <option value="feed">One cell in spare lipid: wall outgrows contents and splits</option>
           </select></label>
-          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing; in the thread worlds the thread rings show it too)</option></select></label>
+          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing; in the thread worlds the thread rings show it too)</option><option value="job">Job (jobs worlds: wall green = harvests waste, magenta = digests loose lipid, yellow and orange between; brighter = more of its budget in use; solute by family)</option></select></label>
           <label for="tint">Background shows<select id="tint"><option value="lipid">Free lipid in the water</option><option value="food">Food</option><option value="none">Nothing</option></select></label>
           <fieldset><legend>Click the world to</legend>
             <label><input type="radio" name="tool" value="lipid" checked /> Drop lipid <small>(adds 60 units)</small></label>

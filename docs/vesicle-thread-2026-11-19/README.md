@@ -7,7 +7,7 @@ and logs every division so that daughters can be compared with mothers.
 New: `--pinch-log` and `--mut` on `experiments/vesicle/run.ts` (a pure observer: same digest with it on or off, tested),
 `experiments/vesicle/heritability.ts`, `experiments/vesicle/heritability-frames.ts`.
 
-Stages 1 and 3 (the thread, the wild dish) are in `stage-1-3.md`.
+Stages 1 and 3 (the thread, the wild dish) are in `stage-1-3.md`; stage 2 (jobs for genes) is in `stage-2.md`.
 
 ## What it found
 

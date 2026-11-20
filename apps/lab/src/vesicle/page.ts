@@ -1,8 +1,8 @@
 import './style.css';
 import { VesicleWorld } from './model.ts';
-import { census } from './observe.ts';
+import { census, jobHueLight } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, THREAD, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
+import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_WILD_KHARVEST, THREAD, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -19,14 +19,15 @@ let weather = new Weather(1, 0);
 function build(kind: string, seed: number): VesicleWorld {
   weather = new Weather(seed, 0);
   if (kind.startsWith('wild')) {
-    const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : {};
+    const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : kind === 'wild-jobs' ? { ...JOBS, kHarvest: JOBS_WILD_KHARVEST } : {};
     weather = new Weather(seed, 0, wl.weatherRings ?? 0);
-    return garden(seed, { founders: wl.founders, params: { ...wl.params, ...arm } });
+    return garden(seed, { founders: wl.founders, founderJobs: kind === 'wild-jobs' ? JOBS_FOUNDER : undefined, params: { ...wl.params, ...arm } });
   }
   if (kind === 'theft') return theftWorld(seed);
   if (kind === 'feed') return feedWorld(seed);
   if (kind === 'wall') return garden(seed, { params: WALL_GENES });
   if (kind === 'thread') return garden(seed, { params: THREAD });
+  if (kind === 'jobs') return garden(seed, { founderJobs: JOBS_FOUNDER, params: JOBS });
   if (kind === 'heredity') return garden(seed, { params: HEREDITY });
   if (kind === 'neutral') return garden(seed, { params: { ...HEREDITY, neutral: true } });
   if (kind === 'nogain') return garden(seed, { params: { ...HEREDITY, tradeoff: 0 } });
@@ -38,6 +39,8 @@ const history: { live: number; gene: number; mark: number }[] = [];
 
 function hue(h: number): string { return `hsl(${((h % 360) + 360) % 360} 70% 62%)`; }
 const geneColour = (v: number) => hue(240 - (v * 240) / 255 + 360);
+/** A wall bead's job colour: hue from d / (h + d) (green harvester, through yellow and orange, to magenta digester), lightness from h + d. */
+const jobColour = (wh: number, wd: number) => { const { hue: hu, light } = jobHueLight(wh, wd); return `hsl(${Math.round(hu / 6) * 6} 75% ${Math.round((22 + 40 * light) / 3) * 3}%)`; };
 
 function draw(): void {
   const w = world, sx = canvas.width / w.p.W, sy = canvas.height / w.p.H, s = Math.min(sx, sy);
@@ -59,7 +62,7 @@ function draw(): void {
   }
   const mode = colorSel.value, groups = new Map<string, number[]>();
   for (let k = 0; k < w.n; k++) {
-    const col = mode === 'founder' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
+    const col = mode === 'founder' || mode === 'job' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
     let g = groups.get(col);
     if (!g) groups.set(col, (g = []));
     g.push(k);
@@ -77,13 +80,13 @@ function draw(): void {
     }
   }
   ctx.lineWidth = 2; ctx.lineJoin = 'round';
-  if (w.p.wallGenes && mode !== 'founder') {
+  if (w.p.wallGenes && (mode === 'job' ? w.p.jobs : mode !== 'founder')) {
     // heredity is in the wall: draw each bond in the colour of its own byte
     ctx.lineWidth = 3;
     const bonds = new Map<string, number[]>();
     for (let i = 0; i < w.beadHi; i++) {
       if (!w.alive[i]) continue;
-      const col = geneColour(((mode === 'gene' ? w.wgene[i] : w.wmark[i]) >> 3) << 3);
+      const col = mode === 'job' ? jobColour(w.wh[i], w.wd[i]) : geneColour(((mode === 'gene' ? w.wgene[i] : w.wmark[i]) >> 3) << 3);
       let g = bonds.get(col);
       if (!g) bonds.set(col, (g = []));
       g.push(i);
@@ -142,6 +145,7 @@ function pause(text = 'Paused.'): void { paused = true; playBtn.textContent = 'P
 function reset(): void {
   const seed = Number.parseInt(seedInput.value, 10);
   world = build(startSel.value, Number.isFinite(seed) ? seed : 1);
+  if (world.p.jobs && colorSel.value !== 'job') colorSel.value = 'job'; else if (!world.p.jobs && colorSel.value === 'job') colorSel.value = 'founder';
   canvas.height = Math.round((canvas.width * world.p.H) / world.p.W);
   history.length = 0;
   pause('Paused · new world'); refresh(); draw();

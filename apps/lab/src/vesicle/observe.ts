@@ -2,6 +2,14 @@
 // found by walking `next`, and its contents are the particles that fall inside its polygon.
 import type { VesicleWorld } from './model.ts';
 
+/** Wall colour for a bead's job bytes (as scaled to the shared budget): hue from the balance d / (h + d), green for a pure harvester
+ *  through yellow and orange to magenta for a pure digester; lightness from the budget in use, (h + d) / 255. Pure function. */
+export function jobHueLight(wh: number, wd: number): { hue: number; light: number } {
+  const sum = wh + wd, h = sum <= 255 ? wh : Math.floor((wh * 255) / sum), d = sum <= 255 ? wd : 255 - h, t = h + d;
+  const bal = t > 0 ? d / t : 0;
+  return { hue: ((120 - 180 * bal) % 360 + 360) % 360, light: t / 255 };
+}
+
 export interface Loop {
   /** Lowest bead index in the ring: stable while that bead lives, not an identity. */
   first: number;
@@ -188,14 +196,18 @@ export interface RingStat {
   area: number; cx: number; cy: number;
   /** Threads inside the ring and the mean of thread genes 0 and 1 over them (zeros with threads off). */
   threads: number; t0: number; t1: number;
+  /** Mean and sd over the ring's beads of the harvest and digest bytes after scaling to the shared budget (zeros unless `jobs` is on). */
+  hMean: number; hSd: number; dMean: number; dSd: number;
 }
 
 /** Whole-ring record for the ring that holds bead `start`: wall bytes over its beads, solute bytes over the particles inside. */
 export function ringStat(w: VesicleWorld, start: number): RingStat {
   const xs: number[] = [], ys: number[] = [];
-  let wg = 0, wg2 = 0;
+  let wg = 0, wg2 = 0, jh = 0, jh2 = 0, jd = 0, jd2 = 0;
+  const jobs = w.p.jobs;
   for (let i = start; ;) {
     xs.push(w.bx[i]); ys.push(w.by[i]); const g = w.wgene[i]; wg += g; wg2 += g * g;
+    if (jobs) { const sum = w.wh[i] + w.wd[i], h = sum <= 255 ? w.wh[i] : Math.floor((w.wh[i] * 255) / sum), d = sum <= 255 ? w.wd[i] : 255 - h; jh += h; jh2 += h * h; jd += d; jd2 += d * d; }
     i = w.next[i]; if (i === start) break;
   }
   const n = xs.length;
@@ -220,35 +232,51 @@ export function ringStat(w: VesicleWorld, start: number): RingStat {
     beads: n, solute: s, gMean: s ? g1 / s : 0, gSd: sd(g1, g2, s), wMean: wg / n, wSd: sd(wg, wg2, n),
     area: a2 / 2, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
     threads: nt, t0: nt ? tg0 / nt : 0, t1: nt ? tg1 / nt : 0,
+    hMean: jh / n, hSd: sd(jh, jh2, n), dMean: jd / n, dSd: sd(jd, jd2, n),
   };
 }
 
+/** Conversions credited to a ring's id since the last cell record, written on the row that ends the id (so a pinch or an end loses none). */
+export interface JobTally { harvests: number; digests: number }
 export type LineageEvent =
-  | { ev: 'pinch'; step: number; id: number; d1: number; d2: number; m: RingStat; a: RingStat; b: RingStat }
-  | { ev: 'end'; step: number; id: number; kind: 'burst' | 'dissolve' | 'wound'; m: RingStat };
+  | { ev: 'pinch'; step: number; id: number; d1: number; d2: number; m: RingStat; a: RingStat; b: RingStat; jobs?: JobTally }
+  | { ev: 'end'; step: number; id: number; kind: 'burst' | 'dissolve' | 'wound'; m: RingStat; jobs?: JobTally };
 
 export const STAT_COLS = ['beads', 'solute', 'gMean', 'gSd', 'wMean', 'wSd', 'area'] as const;
 /** Extra columns written when threads are on: how many threads the ring holds and the mean of thread genes 0 and 1. */
 export const THREAD_COLS = ['threads', 't0', 't1'] as const;
 export const EVENT_HEADER = ['ev', 'step', 'id', 'd1', 'd2', 'kind', ...['m', 'a', 'b'].flatMap((r) => STAT_COLS.map((c) => `${r}_${c}`))].join('\t');
 export const CELL_HEADER = ['step', 'id', ...STAT_COLS, 'cx', 'cy'].join('\t');
-export const eventHeader = (thread: boolean) => (thread ? [EVENT_HEADER, ...['m', 'a', 'b'].flatMap((r) => THREAD_COLS.map((c) => `${r}_${c}`))].join('\t') : EVENT_HEADER);
-export const cellHeader = (thread: boolean) => (thread ? [CELL_HEADER, ...THREAD_COLS].join('\t') : CELL_HEADER);
+/** Extra columns written when jobs are on: pinch rows get the mean harvest and digest byte (scaled) of each ring; cell rows get the mean
+ *  and sd of both over the ring's beads and the conversions credited to the ring's id since the last cell record. */
+export const JOB_EVENT_COLS = ['hMean', 'dMean'] as const;
+/** The last two jobs columns of a pinch or end row: what the mother's id had done since the last cell record. */
+export const JOB_TALLY_COLS = ['m_harvests', 'm_digests'] as const;
+export const JOB_CELL_COLS = ['hMean', 'hSd', 'dMean', 'dSd', 'harvests', 'digests'] as const;
+export const eventHeader = (thread: boolean, jobs = false) =>
+  [EVENT_HEADER, ...(thread ? ['m', 'a', 'b'].flatMap((r) => THREAD_COLS.map((c) => `${r}_${c}`)) : []), ...(jobs ? [...['m', 'a', 'b'].flatMap((r) => JOB_EVENT_COLS.map((c) => `${r}_${c}`)), ...JOB_TALLY_COLS] : [])].join('\t');
+export const cellHeader = (thread: boolean, jobs = false) => [CELL_HEADER, ...(thread ? THREAD_COLS : []), ...(jobs ? JOB_CELL_COLS : [])].join('\t');
 
 const f = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(3));
 const statCells = (s?: RingStat) => (s ? STAT_COLS.map((c) => f(s[c])) : STAT_COLS.map(() => ''));
 const threadCells = (s?: RingStat) => (s ? THREAD_COLS.map((c) => f(c === 'threads' ? s.threads : c === 't0' ? s.t0 : s.t1)) : THREAD_COLS.map(() => ''));
-export const eventLine = (e: LineageEvent, thread = false) =>
+const jobEventCells = (s?: RingStat) => (s ? [f(s.hMean), f(s.dMean)] : ['', '']);
+export const eventLine = (e: LineageEvent, thread = false, jobs = false) =>
   (e.ev === 'pinch'
-    ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b), ...(thread ? [...threadCells(e.m), ...threadCells(e.a), ...threadCells(e.b)] : [])]
-    : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined), ...(thread ? [...threadCells(e.m), ...threadCells(undefined), ...threadCells(undefined)] : [])]).join('\t');
-export const cellLine = (step: number, id: number, s: RingStat, thread = false) => [step, id, ...statCells(s), f(s.cx), f(s.cy), ...(thread ? threadCells(s) : [])].join('\t');
+    ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b), ...(thread ? [...threadCells(e.m), ...threadCells(e.a), ...threadCells(e.b)] : []), ...(jobs ? [...jobEventCells(e.m), ...jobEventCells(e.a), ...jobEventCells(e.b), e.jobs?.harvests ?? 0, e.jobs?.digests ?? 0] : [])]
+    : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined), ...(thread ? [...threadCells(e.m), ...threadCells(undefined), ...threadCells(undefined)] : []), ...(jobs ? [...jobEventCells(e.m), ...jobEventCells(undefined), ...jobEventCells(undefined), e.jobs?.harvests ?? 0, e.jobs?.digests ?? 0] : [])]).join('\t');
+/** `jobs` (conversions credited to this id since the last record) given = write the jobs columns. */
+export const cellLine = (step: number, id: number, s: RingStat, thread = false, jobs?: { harvests: number; digests: number }) =>
+  [step, id, ...statCells(s), f(s.cx), f(s.cy), ...(thread ? threadCells(s) : []), ...(jobs ? [f(s.hMean), f(s.hSd), f(s.dMean), f(s.dSd), jobs.harvests, jobs.digests] : [])].join('\t');
 
 export class LineageObserver {
   /** Cell id per bead slot (0 = none yet). Ids are 1, 2, 3, ... never reused. */
   readonly cid: Int32Array;
   nextId = 1;
   private pending: { m: RingStat; id: number } | null = null;
+  /** Conversions by job credited to each ring id since the last `forEachCell` sweep (units, not events). A pinch ends the mother's id, so
+   *  what it had counted is dropped with it, as is a ring that ends before a sweep. */
+  private harvests = new Map<number, number>(); private digests = new Map<number, number>();
 
   readonly w: VesicleWorld;
   readonly onEvent: (e: LineageEvent) => void;
@@ -264,9 +292,27 @@ export class LineageObserver {
     }
     w.hooks.pinch = (stage, c, a, pc, b) => this.onPinch(stage, c, a, pc, b);
     w.hooks.end = (kind, bead) => this.onEnd(kind, bead);
+    if (w.p.jobs) {
+      w.hooks.harvest = (bead, n) => { const id = this.idOf(bead); this.harvests.set(id, (this.harvests.get(id) ?? 0) + n); };
+      w.hooks.digest = (bead, n) => { const id = this.idOf(bead); this.digests.set(id, (this.digests.get(id) ?? 0) + n); };
+    }
   }
 
-  detach(): void { this.w.hooks.pinch = undefined; this.w.hooks.end = undefined; }
+  detach(): void { this.w.hooks.pinch = undefined; this.w.hooks.end = undefined; this.w.hooks.harvest = undefined; this.w.hooks.digest = undefined; }
+
+  /** What id `id` has done since the last sweep, removed from the tallies (it is written on the row that ends the id). */
+  private takeTally(id: number): JobTally | undefined {
+    if (!this.w.p.jobs) return undefined;
+    const t = { harvests: this.harvests.get(id) ?? 0, digests: this.digests.get(id) ?? 0 };
+    this.harvests.delete(id); this.digests.delete(id);
+    return t;
+  }
+
+  /** The id of the ring that holds bead `bead`; a bead born this step has none yet, so take it from the nearest labelled bead behind it. */
+  private idOf(bead: number): number {
+    const { w, cid } = this;
+    for (let i = bead; ;) { if (cid[i] !== 0) return cid[i]; i = w.prev[i]; if (i === bead) return 0; }
+  }
 
   private paint(start: number, id: number): void {
     for (let i = start; ;) { this.cid[i] = id; i = this.w.next[i]; if (i === start) break; }
@@ -278,7 +324,7 @@ export class LineageObserver {
     const { id, m } = this.pending!; this.pending = null;
     const d1 = this.nextId++, d2 = this.nextId++;
     this.paint(c, d1); this.paint(b, d2);
-    this.onEvent({ ev: 'pinch', step: w.step, id, d1, d2, m, a: ringStat(w, c), b: ringStat(w, b) });
+    this.onEvent({ ev: 'pinch', step: w.step, id, d1, d2, m, a: ringStat(w, c), b: ringStat(w, b), jobs: this.takeTally(id) });
     void a; void pc;
   }
 
@@ -289,7 +335,7 @@ export class LineageObserver {
     let id = 0;
     for (let i = bead; ;) { if (cid[i] !== 0) { id = cid[i]; break; } i = w.next[i]; if (i === bead) break; }
     if (id === 0) id = this.nextId++;
-    this.onEvent({ ev: 'end', step: w.step, id, kind, m: ringStat(w, bead) });
+    this.onEvent({ ev: 'end', step: w.step, id, kind, m: ringStat(w, bead), jobs: this.takeTally(id) });
     for (let i = bead; ;) { cid[i] = 0; i = w.next[i]; if (i === bead) break; }
   }
 
@@ -306,12 +352,14 @@ export class LineageObserver {
   }
 
   /** One record per living ring, by id (the periodic baseline for contemporaries). */
-  forEachCell(fn: (id: number, s: RingStat) => void): void {
+  forEachCell(fn: (id: number, s: RingStat, jobs: { harvests: number; digests: number }) => void): void {
     const { w } = this, seen = new Uint8Array(w.beadHi);
     for (let s = 0; s < w.beadHi; s++) {
       if (!w.alive[s] || seen[s]) continue;
       for (let i = s; !seen[i]; i = w.next[i]) seen[i] = 1;
-      fn(this.cid[s], ringStat(w, s));
+      const id = this.cid[s];
+      fn(id, ringStat(w, s), { harvests: this.harvests.get(id) ?? 0, digests: this.digests.get(id) ?? 0 });
     }
+    this.harvests.clear(); this.digests.clear();
   }
 }

@@ -57,6 +57,17 @@ export interface Params {
    *  (a pure function of the step, no random draws). The rate inside is `kLight` times (cells in the dish / cells
    *  lit this step), so the light per unit area, averaged over the dish, equals the uniform case as long as the rate stays at or below 1 (kLight times dish cells / lit cells; above that the light is capped and the mean is lower). 0 = uniform light. */
   lightPatches: number; patchR: number; patchSpeed: number;
+  /** Stage 2, "jobs for genes" (needs `wallGenes`): every wall bead carries two more bytes, harvest `h` and digest `d`, copied
+   *  together with the share and marker bytes from the same neighbour. Beads then do the two recycling jobs themselves
+   *  (`enzymes()`): a bead turns waste in its grid cell to food, only where light falls, with probability `kHarvest * a(h)`
+   *  per unit per step; and turns free lipid in its cell to food, light or not, with probability `kDigest * a(d)`. The two
+   *  enzymes share one budget of 255 (see `scaleJobs`) and activity is `a(x) = (x / 255)^2`. With jobs on, the free
+   *  conversions are off: `kLight` (uniform and patchy) and `kLipDecay` are not read. Off = nothing here is read, drawn or hashed. */
+  jobs: boolean;
+  /** The neutral twin of `jobs` (needs `jobs`): the bytes are carried, copied, shifted and hashed exactly as with `jobs`, but
+   *  the enzymes do nothing and the free conversions (`kLight`, `kLipDecay`) stay on. */
+  jobsInert: boolean;
+  kHarvest: number; kDigest: number;
   maxBeads: number; maxParts: number;
 }
 
@@ -72,10 +83,11 @@ export const DEFAULTS: Params = {
   kRep: 0, kDecay: 0, kLip: 0, kLight: 0, kLipDecay: 0, foodCap: 8, crowdCap: 6,
   mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false, wallGate: false,
   thread: false, tG: 2, tCost: 6, kTFood: 0.02, rInhib: 14, rShare: 12, kTDecay: 0.01, rSup: 8, kSup: 3, maxThreads: 4096, lightPatches: 0, patchR: 40, patchSpeed: 0.004,
+  jobs: false, jobsInert: false, kHarvest: 0, kDigest: 0,
   maxBeads: 1 << 15, maxParts: 1 << 16,
 };
 
-export interface Events { pinch: number; dissolve: number; burst: number; insert: number; desorb: number; birth: number; decay: number; lipidMade: number; tcopy: number; tdecay: number }
+export interface Events { pinch: number; dissolve: number; burst: number; insert: number; desorb: number; birth: number; decay: number; lipidMade: number; tcopy: number; tdecay: number; harvest: number; digest: number }
 
 /** Deterministic sine and cosine from basic operations only (seeding must not depend on the host's Math.sin). */
 export function sinCos(theta: number): [number, number] {
@@ -92,6 +104,17 @@ export function sinCos(theta: number): [number, number] {
   return [s, c];
 }
 
+/** The two enzymes of a bead share one budget of 255. Raw bytes h and d with h + d <= 255 are used as they are; with a larger sum
+ *  both are scaled down to sum exactly 255: harvest = floor(h * 255 / (h + d)), digest = 255 - harvest (integer arithmetic only). */
+export function scaleJobs(h: number, d: number): [number, number] {
+  const s = h + d;
+  if (s <= 255) return [h, d];
+  const hs = Math.floor((h * 255) / s);
+  return [hs, 255 - hs];
+}
+
+const INT_MAX = 2147483647;
+
 export class VesicleWorld {
   readonly p: Params;
   step = 0;
@@ -100,6 +123,8 @@ export class VesicleWorld {
   readonly next: Int32Array; readonly prev: Int32Array; readonly alive: Uint8Array;
   /** The wall's own bytes, one pair per bead: lipid share and idle marker (read only when `wallGenes` is on). */
   readonly wgene: Uint8Array; readonly wmark: Uint8Array;
+  /** Stage 2: the wall's job bytes, harvest and digest (read, copied and hashed only when `jobs` is on). */
+  readonly wh: Uint8Array; readonly wd: Uint8Array;
   /** Length of bond i -> next[i] as of the last force pass. */
   readonly blen: Float64Array;
   private readonly fx: Float64Array; private readonly fy: Float64Array; private readonly born: Int32Array;
@@ -139,13 +164,18 @@ export class VesicleWorld {
   private readonly hStart: Int32Array; private hItems = new Int32Array(1024);
   // rng (sfc32)
   private ra: number; private rb: number; private rc: number; private rd: number;
-  readonly events: Events = { pinch: 0, dissolve: 0, burst: 0, insert: 0, desorb: 0, birth: 0, decay: 0, lipidMade: 0, tcopy: 0, tdecay: 0 };
+  // a second sfc32 stream for the enzymes' stochastic rounding only, so that a bead's job bytes never change what the main stream
+  // hands the physics and the copy rules (it is drawn from only with `jobs` on, and never touched otherwise)
+  private ea = 0x6a09e667; private eb = 0xbb67ae85; private ec = 0x3c6ef372; private ed = 0;
+  readonly events: Events = { pinch: 0, dissolve: 0, burst: 0, insert: 0, desorb: 0, birth: 0, decay: 0, lipidMade: 0, tcopy: 0, tdecay: 0, harvest: 0, digest: 0 };
   /** Each pinch: step and the bead counts of the two daughters. */
   readonly pinchLog: { step: number; a: number; b: number }[] = [];
   /** Observer hooks (never read by the rules, no random draws): called around a successful pinch (stage 0 just
    *  before the reconnection, 1 just after; c..a and b..pc are the two daughters) and just before a whole ring is
    *  returned to free lipid. Empty by default. */
-  readonly hooks: { pinch?: (stage: 0 | 1, c: number, a: number, pc: number, b: number) => void; end?: (kind: 'burst' | 'dissolve' | 'wound', bead: number) => void } = {};
+  readonly hooks: { pinch?: (stage: 0 | 1, c: number, a: number, pc: number, b: number) => void; end?: (kind: 'burst' | 'dissolve' | 'wound', bead: number) => void;
+    /** Called when bead `bead` turned `n` units of waste to food (harvest) or of free lipid to food (digest). */
+    harvest?: (bead: number, n: number) => void; digest?: (bead: number, n: number) => void } = {};
 
   constructor(seed: number, params: Partial<Params> = {}) {
     const p = (this.p = { ...DEFAULTS, ...params });
@@ -164,6 +194,10 @@ export class VesicleWorld {
     this.blen = new Float64Array(nb); this.fx = new Float64Array(nb); this.fy = new Float64Array(nb); this.born = new Int32Array(nb).fill(-1);
     this.gap = new Float64Array(nb);
     this.wgene = new Uint8Array(nb).fill(128); this.wmark = new Uint8Array(nb).fill(128);
+    this.wh = new Uint8Array(nb).fill(255); this.wd = new Uint8Array(nb);
+    if ((p.jobs || p.jobsInert) && !p.wallGenes) throw new Error('jobs need wallGenes (the job bytes are carried by the wall)');
+    if (p.jobsInert && !p.jobs) throw new Error('jobsInert is the neutral twin of jobs: set both');
+    if (p.jobs && !(p.kHarvest >= 0 && p.kHarvest <= 1 && p.kDigest >= 0 && p.kDigest <= 1)) throw new Error('kHarvest and kDigest are probabilities per unit per step, 0 to 1');
     if ((p.wallGenes || p.wallGate) && !(p.rIns > 0)) throw new Error('wallGenes and wallGate need rIns > 0 (solute is made within rIns of a wall)');
     const mt = p.thread ? p.maxThreads : 0;
     this.tx = new Float64Array(mt); this.ty = new Float64Array(mt); this.tgene = new Uint8Array(mt * p.tG); this.tstore = new Int32Array(mt);
@@ -177,6 +211,8 @@ export class VesicleWorld {
     this.hStart = new Int32Array(nc + 1);
     this.ra = 0x9e3779b9; this.rb = 0x243f6a88; this.rc = 0xb7e15162; this.rd = seed | 0;
     for (let i = 0; i < 16; i++) this.rand();
+    this.ed = (seed ^ 0x5bd1e995) | 0;
+    for (let i = 0; i < 16; i++) this.erand();
   }
 
   rand(): number {
@@ -184,6 +220,15 @@ export class VesicleWorld {
     const t = (((a + b) | 0) + d) | 0;
     d = (d + 1) | 0; a = b ^ (b >>> 9); b = (c + (c << 3)) | 0; c = (c << 21) | (c >>> 11); c = (c + t) | 0;
     this.ra = a; this.rb = b; this.rc = c; this.rd = d;
+    return (t >>> 0) / 4294967296;
+  }
+
+  /** The enzyme stream: the same sfc32 step as `rand`, on its own state. */
+  private erand(): number {
+    let a = this.ea | 0, b = this.eb | 0, c = this.ec | 0, d = this.ed | 0;
+    const t = (((a + b) | 0) + d) | 0;
+    d = (d + 1) | 0; a = b ^ (b >>> 9); b = (c + (c << 3)) | 0; c = (c << 21) | (c >>> 11); c = (c + t) | 0;
+    this.ea = a; this.eb = b; this.ec = c; this.ed = d;
     return (t >>> 0) / 4294967296;
   }
 
@@ -207,7 +252,7 @@ export class VesicleWorld {
   }
 
   /** A round loop of `beads` beads (default: rest spacing), counter-clockwise, inside the dish inset. Returns its first bead. */
-  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0)), gene = 128, mark = 128): number {
+  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0)), gene = 128, mark = 128, h = 255, d = 0): number {
     let first = -1, last = -1;
     for (let k = 0; k < beads; k++) {
       const [s, c] = sinCos((6.283185307179586 * k) / beads);
@@ -216,7 +261,7 @@ export class VesicleWorld {
       const x = cx + radius * c, y = cy + radius * s, inset = 2 * this.p.rp;
       // beads live inside the dish inset: a bead seeded outside it would be snapped in by more than its step cap
       if (x < inset || x > this.p.W - inset || y < inset || y > this.p.H - inset) throw new Error('a ring must start inside the dish inset (2 rp from the edge)');
-      this.bx[i] = x; this.by[i] = y; this.wgene[i] = gene; this.wmark[i] = mark;
+      this.bx[i] = x; this.by[i] = y; this.wgene[i] = gene; this.wmark[i] = mark; this.wh[i] = h; this.wd[i] = d;
       if (last >= 0) { this.next[last] = i; this.prev[i] = last; } else first = i;
       last = i;
     }
@@ -231,11 +276,11 @@ export class VesicleWorld {
   }
 
   /** `count` particles uniformly inside a disc. */
-  addSolute(cx: number, cy: number, radius: number, count: number, gene = 128, founder = 0): void {
+  addSolute(cx: number, cy: number, radius: number, count: number, gene = 128, founder = 0, mark = 128): void {
     for (let k = 0; k < count;) {
       const dx = (this.rand() * 2 - 1) * radius, dy = (this.rand() * 2 - 1) * radius;
       if (dx * dx + dy * dy > radius * radius) continue;
-      this.addParticle(cx + dx, cy + dy, gene, founder); k++;
+      this.addParticle(cx + dx, cy + dy, gene, founder, mark); k++;
     }
   }
 
@@ -259,8 +304,11 @@ export class VesicleWorld {
     const p = this.p;
     if (p.kRep > 0 || p.kDecay > 0 || p.kLip > 0) this.chemistry();
     if (p.thread) this.threadChemistry();
-    if (p.kLight > 0) { if (p.lightPatches > 0) this.convertLit(); else this.convert(this.waste, this.food, p.kLight); }
-    if (p.kLipDecay > 0) this.convert(this.lipid, this.waste, p.kLipDecay);
+    if (p.jobs && !p.jobsInert) this.enzymes();
+    else {
+      if (p.kLight > 0) { if (p.lightPatches > 0) this.convertLit(); else this.convert(this.waste, this.food, p.kLight); }
+      if (p.kLipDecay > 0) this.convert(this.lipid, this.waste, p.kLipDecay);
+    }
     if (p.dLipid > 0) this.diffuse(this.lipid, p.dLipid);
     if (p.dFood > 0) this.diffuse(this.food, p.dFood);
     if (p.dWaste > 0) this.diffuse(this.waste, p.dWaste);
@@ -772,8 +820,44 @@ export class VesicleWorld {
    *  shifted like any copy. With `wallGenes` off it takes i's bytes and no random number is drawn. */
   private inherit(m: number, i: number, j: number): void {
     const src = this.p.wallGenes && this.rand() < 0.5 ? j : i;
-    if (this.p.wallGenes) { this.wgene[m] = this.copyByte(this.wgene[src]); this.wmark[m] = this.copyByte(this.wmark[src]); }
+    if (this.p.wallGenes) {
+      this.wgene[m] = this.copyByte(this.wgene[src]); this.wmark[m] = this.copyByte(this.wmark[src]);
+      // the job bytes come from the same bead, after the others (linked: one draw picks the source for all four)
+      if (this.p.jobs) { this.wh[m] = this.copyByte(this.wh[src]); this.wd[m] = this.copyByte(this.wd[src]); }
+    }
     else { this.wgene[m] = this.wgene[src]; this.wmark[m] = this.wmark[src]; }
+  }
+
+  /** Stage 2: each bead works on the grid cell where it sits, beads in index order. Harvest: waste -> food, only in a lit cell
+   *  (every cell under uniform light), `m` units with `m` = floor(x) or floor(x) + 1 by one draw, x = waste * kHarvest * a(h) (so the
+   *  expected number is x). Digest: free lipid -> food, light or not, the same way with kDigest * a(d). Every unit moved is one unit
+   *  out of one field and into another, so the ledger is exact. A bead whose scaled enzyme is zero makes no draw. */
+  private enzymes(): void {
+    const { bx, by, alive, waste, food, lipid, wh, wd, p } = this, patchy = p.lightPatches > 0, mask = this.litMask;
+    if (patchy) this.lightMask();
+    for (let i = 0; i < this.beadHi; i++) {
+      if (!alive[i]) continue;
+      const c = this.cellOf(bx[i], by[i]), sum = wh[i] + wd[i];
+      // scaleJobs, inlined (no allocation per bead per step)
+      const h = sum <= 255 ? wh[i] : Math.floor((wh[i] * 255) / sum), d = sum <= 255 ? wd[i] : 255 - h;
+      if (h > 0 && waste[c] > 0 && (!patchy || mask[c] === 1)) {
+        let m = this.take(waste[c], (p.kHarvest * h * h) / 65025);
+        if (m > INT_MAX - food[c]) m = INT_MAX - food[c]; // food is an Int32 field: never wrap it
+        if (m > 0) { waste[c] -= m; food[c] += m; this.events.harvest += m; this.hooks.harvest?.(i, m); }
+      }
+      if (d > 0 && lipid[c] > 0) {
+        let m = this.take(lipid[c], (p.kDigest * d * d) / 65025);
+        if (m > INT_MAX - food[c]) m = INT_MAX - food[c];
+        if (m > 0) { lipid[c] -= m; food[c] += m; this.events.digest += m; this.hooks.digest?.(i, m); }
+      }
+    }
+  }
+
+  /** How many of `n` units a job with chance `q` per unit takes this step: floor(n q), plus one with the remainder as its chance. */
+  private take(n: number, q: number): number {
+    const x = n * q, m0 = Math.floor(x), f = x - m0;
+    const m = m0 + (f > 0 && this.erand() < f ? 1 : 0);
+    return m > n ? n : m;
   }
 
   private copyByte(v: number): number {
@@ -889,6 +973,7 @@ export class VesicleWorld {
     for (const a of [this.px, this.py, this.gene, this.mark, this.founder]) eat(view(a, this.n));
     for (const a of [this.food, this.waste, this.lipid]) eat(view(a, a.length));
     if (this.p.wallGenes) for (const a of [this.wgene, this.wmark]) eat(view(a, this.beadHi));
+    if (this.p.jobs) for (const a of [this.wh, this.wd]) eat(view(a, this.beadHi));
     if (this.p.thread) {
       eat(new Uint8Array(new Int32Array([this.nt]).buffer));
       for (const a of [this.tx, this.ty, this.tgene, this.tstore]) eat(view(a, a === this.tgene ? this.nt * this.p.tG : this.nt));

@@ -2,6 +2,7 @@
 import { deflateSync, crc32 } from 'node:zlib';
 import { writeFileSync } from 'node:fs';
 import type { VesicleWorld } from '../../apps/lab/src/vesicle/model.ts';
+import { jobHueLight } from '../../apps/lab/src/vesicle/observe.ts';
 
 function chunk(type: string, data: Uint8Array): Buffer {
   const out = Buffer.alloc(12 + data.length);
@@ -22,7 +23,7 @@ export function hue(h: number): [number, number, number] {
   return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
 }
 
-export type ColourBy = 'founder' | 'gene' | 'mark';
+export type ColourBy = 'founder' | 'gene' | 'mark' | 'job';
 export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tint: 'lipid' | 'food' | 'none' = 'lipid'): { width: number; height: number; rgb: Uint8Array } {
   const W = Math.round(w.p.W * scale), H = Math.round(w.p.H * scale), rgb = new Uint8Array(W * H * 3);
   const field = tint === 'lipid' ? w.lipid : tint === 'food' ? w.food : null, cs = w.p.cell * scale;
@@ -44,7 +45,7 @@ export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tin
     const o = (y * W + x) * 3; rgb[o] = r; rgb[o + 1] = g; rgb[o + 2] = b;
   };
   for (let k = 0; k < w.n; k++) {
-    const [r, g, b] = by === 'founder' ? hue(w.founder[k] * 67 + 30) : hue(300 - (by === 'gene' ? w.gene[k] : w.mark[k]) * 1.1);
+    const [r, g, b] = by === 'founder' ? hue(w.founder[k] * 67 + 30) : by === 'job' ? hue(w.founder[k] * 67 + 30) : hue(300 - (by === 'gene' ? w.gene[k] : w.mark[k]) * 1.1);
     const x = Math.floor(w.px[k] * scale), y = Math.floor(w.py[k] * scale);
     put(x, y, r, g, b); put(x + 1, y, r, g, b); put(x, y + 1, r, g, b); put(x + 1, y + 1, r, g, b);
   }
@@ -59,7 +60,11 @@ export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tin
     // stretched = warm, slack = pale, compressed = cool
     let r = 235 + 20 * Math.min(0, -t) + 0, g = 235 - 110 * Math.abs(t), b = 235 - 150 * Math.max(0, t);
     // with heredity in the wall, the wall shows its own byte instead of its strain
-    if (w.p.wallGenes && by !== 'founder') [r, g, b] = hue(300 - (by === 'gene' ? w.wgene[i] : w.wmark[i]) * 1.1);
+    if (w.p.wallGenes && by === 'job' && w.p.jobs) {
+      // job colour: hue from the balance d / (h + d), brightness from the budget in use (h + d) / 255
+      const jc = jobHueLight(w.wh[i], w.wd[i]), [hr, hg, hb] = hue(jc.hue), k = 0.25 + 0.75 * jc.light;
+      [r, g, b] = [hr * k, hg * k, hb * k];
+    } else if (w.p.wallGenes && by !== 'founder') [r, g, b] = hue(300 - (by === 'gene' || by === 'job' ? w.wgene[i] : w.wmark[i]) * 1.1);
     let x0 = w.bx[i] * scale, y0 = w.by[i] * scale;
     const x1 = w.bx[j] * scale, y1 = w.by[j] * scale, n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
     const sx = (x1 - x0) / n, sy = (y1 - y0) / n;
