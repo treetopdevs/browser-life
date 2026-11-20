@@ -106,3 +106,20 @@ When pure harvesters are left alone at mutation zero they die in under 10,000 st
 - In the wild dish the jobs arms hold no more cells than their neutral twin; in the old dish E2 holds slightly more (mean 22.3 against 19.0). Jobs arms carry 2 to 3.9 times the loose lipid. The wild dish is still changing at
   400,000 steps (cells rising, lowest census 2 cells in one world), so wild numbers describe a transient.
 - Not done: a pure-digester control in the wild dish; controls blocking one job at several mutation rates.
+
+## Follow-up: is it the tuning? (2026-11-20)
+
+At the winning bytes (about 175 and 18) the per-unit rates are about 0.0047 for harvest and 0.0017 for digest, because the digest
+rate constant (0.35) is 35 times the harvest one (0.01). So a small digest byte suffices by construction. Sweep, same mixed founders,
+mutation 0.1, old dish, 400,000 steps, four seeds, no code change (`runs/vesicle/s2b/`):
+
+| digest rate | live cells at 400k | bead-mean harvest / digest byte | founder clades left |
+|---|---|---|---|
+| 0.35 (stage 2) | 23, 24, 24, 22 | 174-182 / 17-19 | 1 in most |
+| 0.1 | 20, 30, 22, 24 | 156-183 / 27-30 | 2, 1, 1, 1 |
+| 0.03 | 31, 30, 28, 31 | 168-176 / 37-48 | 1, 1, 1, 1 |
+| 0.01 | 0, 28, 33, 0 | 147, 150 / 69, 70 | 0, 1, 1, 0 |
+
+The digest byte rises as its rate falls (18, 28, 43, 70), and each surviving world is still one clade with one mixed profile. So the
+single generalist is not an accident of the tuning over this range; the gene adjusts instead. Per-cell conversions were not analysed
+for these runs.
