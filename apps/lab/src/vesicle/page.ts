@@ -1,8 +1,8 @@
 import './style.css';
 import { VesicleWorld } from './model.ts';
-import { census } from './observe.ts';
+import { LineageObserver, census, clusterHue, jobHueLight, tieGraph } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, WALL_GENES, feedWorld, garden, theftWorld } from './worlds.ts';
+import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_WILD_KHARVEST, THREAD, TIES, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -12,10 +12,33 @@ const startSel = el<HTMLSelectElement>('start'), colorSel = el<HTMLSelectElement
 const seedInput = el<HTMLInputElement>('seed'), live = el<HTMLElement>('live');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** The page runs the wild worlds on a dish of 4 times the base area (the 16-fold dish is too slow for a browser frame loop). */
+const WILD_AREA = 4;
+let weather = new Weather(1, 0);
+/** In the ties worlds a lineage observer gives each cell a stable id, so that a cluster keeps its hue (the smallest cell id in it) while beads come and go. */
+let lineage: LineageObserver | undefined;
+
 function build(kind: string, seed: number): VesicleWorld {
+  weather = new Weather(seed, 0);
+  lineage?.detach(); lineage = undefined;
+  if (kind === 'ties' || kind === 'wild-ties') {
+    // founders all carry glue 255: every division ties its daughters; the glue byte can drift (mutation 0.01), and no refuge weather on the page
+    const wl = kind === 'wild-ties' ? wild(WILD_AREA) : undefined;
+    if (wl) weather = new Weather(seed, 0, wl.weatherRings ?? 0);
+    const w = garden(seed, { founders: wl?.founders, founderGlue: 255, params: { ...wl?.params, ...TIES } });
+    lineage = new LineageObserver(w, () => {});
+    return w;
+  }
+  if (kind.startsWith('wild')) {
+    const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : kind === 'wild-jobs' ? { ...JOBS, kHarvest: JOBS_WILD_KHARVEST } : {};
+    weather = new Weather(seed, 0, wl.weatherRings ?? 0);
+    return garden(seed, { founders: wl.founders, founderJobs: kind === 'wild-jobs' ? JOBS_FOUNDER : undefined, params: { ...wl.params, ...arm } });
+  }
   if (kind === 'theft') return theftWorld(seed);
   if (kind === 'feed') return feedWorld(seed);
   if (kind === 'wall') return garden(seed, { params: WALL_GENES });
+  if (kind === 'thread') return garden(seed, { params: THREAD });
+  if (kind === 'jobs') return garden(seed, { founderJobs: JOBS_FOUNDER, params: JOBS });
   if (kind === 'heredity') return garden(seed, { params: HEREDITY });
   if (kind === 'neutral') return garden(seed, { params: { ...HEREDITY, neutral: true } });
   if (kind === 'nogain') return garden(seed, { params: { ...HEREDITY, tradeoff: 0 } });
@@ -27,11 +50,18 @@ const history: { live: number; gene: number; mark: number }[] = [];
 
 function hue(h: number): string { return `hsl(${((h % 360) + 360) % 360} 70% 62%)`; }
 const geneColour = (v: number) => hue(240 - (v * 240) / 255 + 360);
+/** A wall bead's job colour: hue from d / (h + d) (green harvester, through yellow and orange, to magenta digester), lightness from h + d. */
+const jobColour = (wh: number, wd: number) => { const { hue: hu, light } = jobHueLight(wh, wd); return `hsl(${Math.round(hu / 6) * 6} 75% ${Math.round((22 + 40 * light) / 3) * 3}%)`; };
 
 function draw(): void {
   const w = world, sx = canvas.width / w.p.W, sy = canvas.height / w.p.H, s = Math.min(sx, sy);
   ctx.fillStyle = '#0e141a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   const tint = tintSel.value, field = tint === 'lipid' ? w.lipid : tint === 'food' ? w.food : null, cs = w.p.cell * s;
+  if (w.p.lightPatches > 0) {
+    // light patches: a pale wash over the lit cells
+    w.lightMask(); ctx.fillStyle = 'rgba(255,240,190,0.10)';
+    for (let c = 0; c < w.litMask.length; c++) if (w.litMask[c]) ctx.fillRect((c % w.gw) * cs, Math.floor(c / w.gw) * cs, cs, cs);
+  }
   if (field) {
     const full = tint === 'food' ? 12 : 4;
     for (let c = 0; c < field.length; c++) {
@@ -42,8 +72,11 @@ function draw(): void {
     }
   }
   const mode = colorSel.value, groups = new Map<string, number[]>();
+  // cluster colouring: rings joined by ties share one hue; a cell with no tie is grey
+  const tg = mode === 'cluster' && w.p.ties ? tieGraph(w, (b) => lineage?.idOf(b) ?? b) : undefined;
+  const ringColour = (ring: number) => { const c = tg!.comp[ring]; return tg!.compRings[c] > 1 ? `hsl(${Math.round(clusterHue(tg!.compHandle[c]))} 75% 58%)` : '#8a929a'; };
   for (let k = 0; k < w.n; k++) {
-    const col = mode === 'founder' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
+    const col = tg ? '#3d464f' : mode === 'founder' || mode === 'job' || mode === 'cluster' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
     let g = groups.get(col);
     if (!g) groups.set(col, (g = []));
     g.push(k);
@@ -52,14 +85,21 @@ function draw(): void {
     ctx.fillStyle = col;
     for (const k of ks) ctx.fillRect(w.px[k] * s - 1.5, w.py[k] * s - 1.5, 3, 3);
   }
+  // threads: clear rings (never filled), coloured by the idle marker, gene 1
+  if (w.p.thread) {
+    ctx.lineWidth = 1.5;
+    for (let k = 0; k < w.nt; k++) {
+      ctx.strokeStyle = geneColour(((w.tgene[k * w.p.tG + 1]) >> 3) << 3);
+      ctx.beginPath(); ctx.arc(w.tx[k] * s, w.ty[k] * s, 4, 0, 6.283185307179586); ctx.stroke();
+    }
+  }
   ctx.lineWidth = 2; ctx.lineJoin = 'round';
-  if (w.p.wallGenes && mode !== 'founder') {
-    // heredity is in the wall: draw each bond in the colour of its own byte
+  if (tg) {
     ctx.lineWidth = 3;
     const bonds = new Map<string, number[]>();
     for (let i = 0; i < w.beadHi; i++) {
       if (!w.alive[i]) continue;
-      const col = geneColour(((mode === 'gene' ? w.wgene[i] : w.wmark[i]) >> 3) << 3);
+      const col = ringColour(tg.ringOf[i]);
       let g = bonds.get(col);
       if (!g) bonds.set(col, (g = []));
       g.push(i);
@@ -69,6 +109,26 @@ function draw(): void {
       for (const i of is) { const j = w.next[i]; ctx.moveTo(w.bx[i] * s, w.by[i] * s); ctx.lineTo(w.bx[j] * s, w.by[j] * s); }
       ctx.stroke();
     }
+    drawTies(s);
+    return;
+  }
+  if (w.p.wallGenes && (mode === 'job' ? w.p.jobs : mode !== 'founder' && mode !== 'cluster')) {
+    // heredity is in the wall: draw each bond in the colour of its own byte
+    ctx.lineWidth = 3;
+    const bonds = new Map<string, number[]>();
+    for (let i = 0; i < w.beadHi; i++) {
+      if (!w.alive[i]) continue;
+      const col = mode === 'job' ? jobColour(w.wh[i], w.wd[i]) : geneColour(((mode === 'gene' ? w.wgene[i] : w.wmark[i]) >> 3) << 3);
+      let g = bonds.get(col);
+      if (!g) bonds.set(col, (g = []));
+      g.push(i);
+    }
+    for (const [col, is] of bonds) {
+      ctx.strokeStyle = col; ctx.beginPath();
+      for (const i of is) { const j = w.next[i]; ctx.moveTo(w.bx[i] * s, w.by[i] * s); ctx.lineTo(w.bx[j] * s, w.by[j] * s); }
+      ctx.stroke();
+    }
+    drawTies(s);
     return;
   }
   for (const [colour, lo, hi] of [['#b99cff', -9, -0.03], ['#f1f0ea', -0.03, 0.05], ['#ffa24a', 0.05, 9]] as const) {
@@ -82,6 +142,16 @@ function draw(): void {
     }
     ctx.stroke();
   }
+  drawTies(s);
+}
+
+/** Ties: short bright lines between the two beads (a tie is not a wall; nothing in the rules sees it). */
+function drawTies(s: number): void {
+  const w = world;
+  if (!w.p.ties) return;
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath();
+  for (let u = 0; u < w.beadHi; u++) { const v = w.tie[u]; if (v > u && w.alive[u]) { ctx.moveTo(w.bx[u] * s, w.by[u] * s); ctx.lineTo(w.bx[v] * s, w.by[v] * s); } }
+  ctx.stroke();
 }
 
 function refresh(): void {
@@ -99,6 +169,7 @@ function refresh(): void {
   set('r-t', world.step.toLocaleString()); set('r-live', liveCells); set('r-empty', last.loops.length - liveCells); set('r-solute', last.particles);
   set('r-beads', last.beads); set('r-lipid', last.freeLipid); set('r-pinch', world.events.pinch); set('r-dissolve', world.events.dissolve);
   set('r-burst', world.events.burst); set('r-gene', gene.toFixed(1)); set('r-mark', mark.toFixed(1)); set('r-matter', world.matter().toLocaleString());
+  set('r-threads', world.nt); set('r-threads-out', last.freeThreads); set('r-tcopy', world.events.tcopy); set('r-tdecay', world.events.tdecay);
   history.push({ live: liveCells, gene, mark });
   if (history.length > 576) history.shift();
   const H = historyCanvas.height, W = historyCanvas.width;
@@ -117,6 +188,8 @@ function pause(text = 'Paused.'): void { paused = true; playBtn.textContent = 'P
 function reset(): void {
   const seed = Number.parseInt(seedInput.value, 10);
   world = build(startSel.value, Number.isFinite(seed) ? seed : 1);
+  if (world.p.jobs && colorSel.value !== 'job') colorSel.value = 'job'; else if (!world.p.jobs && colorSel.value === 'job') colorSel.value = 'founder';
+  if (world.p.ties && colorSel.value === 'founder') colorSel.value = 'cluster'; else if (!world.p.ties && colorSel.value === 'cluster') colorSel.value = 'founder';
   canvas.height = Math.round((canvas.width * world.p.H) / world.p.W);
   history.length = 0;
   pause('Paused · new world'); refresh(); draw();
@@ -125,7 +198,7 @@ function reset(): void {
 function loop(): void {
   if (!paused) {
     const n = Number(paceSel.value);
-    for (let i = 0; i < n; i++) world.tick();
+    for (let i = 0; i < n; i++) { world.tick(); lineage?.afterTick(); weather.after(world, world.step); }
     if (++frame % 30 === 0) refresh();
     draw();
   }
@@ -133,7 +206,7 @@ function loop(): void {
 }
 
 playBtn.addEventListener('click', () => { if (paused) { paused = false; playBtn.textContent = 'Pause'; say('Running.'); } else pause(); });
-stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); refresh(); draw(); });
+stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); lineage?.afterTick(); weather.after(world, world.step); refresh(); draw(); });
 startSel.addEventListener('change', reset);
 el<HTMLFormElement>('seed-form').addEventListener('submit', (e) => { e.preventDefault(); reset(); });
 colorSel.addEventListener('change', draw); tintSel.addEventListener('change', draw);
