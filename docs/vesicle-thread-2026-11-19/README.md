@@ -32,10 +32,10 @@ New: `--pinch-log` and `--mut` on `experiments/vesicle/run.ts` (a pure observer:
 ## What this changes
 
 - "Daughters resemble mothers better than the control" is a poor test for a linked genome: this yardstick did not clearly separate the arms that already exist.
-- What differs between arms is whether cells survive their own contents at a given mutation rate. In the free and gate arms the bytes
-  copy many times inside a cell per cell generation, so variants that help themselves at the cell's cost can arise and spread within
-  one cell. The next stage's test is therefore survival and division at mutation rates where free and gate collapse, with mutation
-  counted per cell generation, plus the spread of bytes within one cell.
+- What differs between arms is whether cells survive at a given mutation rate. A hypothesis, not tested here: in the free and gate
+  arms the bytes copy many times inside a cell per cell generation, so variants that help themselves at the cell's cost can arise and
+  spread within one cell. The next stage is therefore judged on cells holding at both mutation rates as well as the wall arm does, on
+  a genome of more than one gene arriving intact in daughters, and on how many daughters get no genome at all.
 
 ## Limits
 
