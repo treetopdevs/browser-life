@@ -1,4 +1,5 @@
 import './style.css';
+import { dropletFamily, isDropletWorld } from './droplet-page.ts';
 import { inspectRows, tileHeading } from './inspect.ts';
 import type { OligomerWorld } from './model.ts';
 import {
@@ -181,11 +182,14 @@ function stepOnce(): void {
 }
 
 function reset(): void {
+  // Same rule as parseSeed in droplet-run.ts (the droplet controls reset through it); a test keeps them equal.
   const raw = seedInput.value.trim();
   let seed = raw === '' ? NaN : Number(raw);
   const replaced = !Number.isInteger(seed) || seed < 0 || seed > 2 ** 31 - 1;
   if (replaced) seed = 1;
   seedInput.value = String(seed);
+  if (isDropletWorld(startSel.value)) { setPaused(true); dropletFamily.reset(seed, replaced); return; }
+  dropletFamily.leave(); el('view-note').textContent = VIEW_NOTES[viewSel.value];
   const size = Number(sizeSel.value);
   world = buildCondition(startSel.value, size, seed);
   src = tileSourceOf(world); viewer = new ViewerObserver(world); maskCache.clear();
@@ -208,6 +212,7 @@ function select(tile: number | null): void {
 }
 
 function loop(): void {
+  if (dropletFamily.active) { dropletFamily.frame(); requestAnimationFrame(loop); return; }
   if (!paused) {
     const cap = Number(paceSel.value) || Infinity, t0 = performance.now();
     let n = 0;
@@ -218,8 +223,8 @@ function loop(): void {
   requestAnimationFrame(loop);
 }
 
-playBtn.addEventListener('click', () => { if (paused) { setPaused(false, 'Running.'); } else { setPaused(true, 'Paused.'); refresh(); draw(); } });
-stepBtn.addEventListener('click', () => { setPaused(true, 'Paused · one step'); stepOnce(); refresh(); draw(); });
+playBtn.addEventListener('click', () => { if (dropletFamily.active) return dropletFamily.play(); if (paused) { setPaused(false, 'Running.'); } else { setPaused(true, 'Paused.'); refresh(); draw(); } });
+stepBtn.addEventListener('click', () => { if (dropletFamily.active) return dropletFamily.step(); setPaused(true, 'Paused · one step'); stepOnce(); refresh(); draw(); });
 startSel.addEventListener('change', reset);
 sizeSel.addEventListener('change', reset);
 el<HTMLFormElement>('seed-form').addEventListener('submit', (e) => { e.preventDefault(); reset(); });
@@ -232,10 +237,12 @@ function viewChanged(): void {
 viewSel.addEventListener('change', viewChanged);
 chemSel.addEventListener('change', () => { draw(); buildLegend(); });
 canvas.addEventListener('click', (e) => {
+  if (dropletFamily.active) return;
   const r = canvas.getBoundingClientRect();
   select(tileAt(e.clientX - r.left - canvas.clientLeft, e.clientY - r.top - canvas.clientTop, canvas.clientWidth, canvas.clientHeight, src.width, src.height));
 });
 canvas.addEventListener('keydown', (e) => {
+  if (dropletFamily.active) return;
   if (e.key.startsWith('Arrow')) {
     e.preventDefault();
     select(selected === null ? (Math.floor(src.height / 2) * src.width + Math.floor(src.width / 2)) : stepTile(selected, e.key, src.width, src.height));
