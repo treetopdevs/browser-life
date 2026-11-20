@@ -25,7 +25,7 @@ services:
       PHX_SERVER: "true"
       PHX_HOST: cadence.garden
       PORT: "4000"
-      # This release publishes the lab, while garden scheduling stays off.
+      # Garden scheduling stays off until the operator turns it on after the founding (deploy/README.md).
       BL_GARDEN_SCHEDULING: "off"
       BL_DATA_DIR: /data
       # The discovery plane (Coordinator.Discovery) refuses a directory inside

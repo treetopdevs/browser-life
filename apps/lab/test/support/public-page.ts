@@ -26,7 +26,8 @@ export function expectPublicPage(dir: string, viteEntry: string, chunks: string[
   const caddy = read('deploy/Caddyfile');
   const escaped = dir.replace(/[.+?^${}()|[\]\\/-]/g, '\\$&');
   expect(caddy, `Caddy answers 404 for ${dir}`).not.toMatch(new RegExp(`\\^/${escaped}\\(\\?:`));
-  expect([...new Set(caddy.match(/@private_\w+/g) ?? [])], 'no page is held back; only the garden API is closed').toEqual(['@private_garden_api']);
+  // Opening day (#60) lifted the last hold, the garden API's, so the proxy holds nothing back.
+  expect([...new Set(caddy.match(/@private_\w+/g) ?? [])], 'no page and no garden API is held back').toEqual([]);
   expect(caddy).toContain(`redir /${dir} /${dir}/{?query} 308`);
 
   const html = read(`apps/lab/${dir}/index.html`);

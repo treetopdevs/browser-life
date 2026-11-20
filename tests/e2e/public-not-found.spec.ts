@@ -215,7 +215,9 @@ test.describe("Caddy", () => {
     }
   });
 
-  test("Caddy: the garden page is served, and every garden API stays closed", async () => {
+  // Opening day lifts the API hold kept on 14 Nov: the page was already served, and now every garden API reaches Phoenix,
+  // which keeps its own rules (scheduling stays on compose's BL_GARDEN_SCHEDULING, off until the operator turns it on).
+  test("Caddy: the garden page is served and every garden API reaches Phoenix", async () => {
     for (const path of ["/garden/", "/garden/index.html"]) {
       const res = await raw(base, path);
       expect(res.status, path).toBe(200);
@@ -228,13 +230,14 @@ test.describe("Caddy", () => {
       "/api/public/gardens/commons", "/api/public/gardens/commons/letters",
       "/api/public/gardens/commons/checkpoints/abc",
       "/api/gardens", "/api/gardens/commons/days/0/requeue",
-      "/api/gardens/commons/letters/1/drop", "/api/public/garden%2fletters",
-      "/api/public/x/../gardens/commons", "/API/PUBLIC/GARDEN",
+      "/api/gardens/commons/letters/1/drop",
     ];
     for (const path of paths) {
-      for (const method of ["GET", "HEAD", "POST"]) {
+      for (const method of ["GET", "POST"]) {
+        stubSeen.length = 0;
         const res = await raw(base, path, { method });
-        expect(res.status, `${method} ${path}`).toBe(404);
+        expect(res.status, `${method} ${path}`).toBe(200);
+        expect(stubSeen, `${method} ${path}`).toEqual([{ url: path, proto: "https" }]);
       }
     }
   });
@@ -262,9 +265,11 @@ test.describe("Caddy", () => {
     expect(plain.status()).toBe(200);
     expect(ogUrl(await plain.text()), "an unknown world gets the plain lab").toBe(`${ORIGIN}/lab/`);
 
-    const bare = await get(request, "/lab");
-    expect(bare.status()).toBe(308);
-    expect(bare.headers().location).toBe("/lab/");
+    for (const page of ["lab", "garden"]) {
+      const bare = await get(request, `/${page}`);
+      expect(bare.status(), `/${page}`).toBe(308);
+      expect(bare.headers().location, `/${page}`).toBe(`/${page}/`);
+    }
     const copy = await get(request, `/lab/world/${world}/`);
     expect(copy.status()).toBe(308);
     expect(copy.headers().location).toBe(`/lab/?world=${world}`);
