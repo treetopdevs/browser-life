@@ -48,6 +48,18 @@ export function loops(w: VesicleWorld, withSolute = true): Loop[] {
   return out;
 }
 
+/** How many rings there are (no allocation: `seen` is scratch of at least `beadHi` entries). */
+export function ringCount(w: VesicleWorld, seen: Uint8Array): number {
+  seen.fill(0, 0, w.beadHi);
+  let n = 0;
+  for (let s = 0; s < w.beadHi; s++) {
+    if (!w.alive[s] || seen[s]) continue;
+    n++;
+    for (let i = s; !seen[i]; i = w.next[i]) seen[i] = 1;
+  }
+  return n;
+}
+
 function inside(l: Loop, x: number, y: number): boolean {
   let c = false;
   const { xs, ys } = l, n = xs.length;

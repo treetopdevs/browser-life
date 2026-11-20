@@ -2,7 +2,7 @@ import './style.css';
 import { VesicleWorld } from './model.ts';
 import { census } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, THREAD, THREAD_ANCHORED, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
+import { HEREDITY, THREAD, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -20,14 +20,13 @@ function build(kind: string, seed: number): VesicleWorld {
   weather = new Weather(seed, 0);
   if (kind.startsWith('wild')) {
     const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : {};
-    weather = new Weather(seed, wl.woundEvery ?? 0);
+    weather = new Weather(seed, 0, wl.weatherRings ?? 0);
     return garden(seed, { founders: wl.founders, params: { ...wl.params, ...arm } });
   }
   if (kind === 'theft') return theftWorld(seed);
   if (kind === 'feed') return feedWorld(seed);
   if (kind === 'wall') return garden(seed, { params: WALL_GENES });
   if (kind === 'thread') return garden(seed, { params: THREAD });
-  if (kind === 'thread-anchored') return garden(seed, { params: THREAD_ANCHORED });
   if (kind === 'heredity') return garden(seed, { params: HEREDITY });
   if (kind === 'neutral') return garden(seed, { params: { ...HEREDITY, neutral: true } });
   if (kind === 'nogain') return garden(seed, { params: { ...HEREDITY, tradeoff: 0 } });

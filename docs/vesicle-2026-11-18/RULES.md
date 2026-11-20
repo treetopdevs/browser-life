@@ -89,9 +89,10 @@ Off by default; with it off nothing above changes. With `lightPatches` > 0, step
 lies within `patchR` of a patch centre (distances wrap round the dish). Patches start spread by the golden angle and drift in straight
 lines at `patchSpeed` per step, a pure function of the step with no random draws. The rate inside is `kLight` times
 (cells in the dish / lit cells), so the dish's mean light equals the uniform case (while that rate is at most 1; above it the light is capped and the mean is lower). `wild(area)` in `worlds.ts` gives a dish of `area`
-times the base area (4 by default), proportionally many founders, patches covering about a quarter of it, and a weather interval
-of 100,000 / founders steps; `Weather` (also `worlds.ts`) bursts one ring per interval, picked by its own generator, as `--wound-every`
-always did. CLI: `--wild [--wild-area 4] [--no-light] [--no-weather]`, composable with `--wall`, `--gate`, `--thread`, `--heredity`.
+times the base area (4 by default), proportionally many founders, patches covering about a quarter of it, and weather in proportion to
+the rings: `Weather` (also `worlds.ts`) adds the number of rings to a count each step and bursts one ring, picked by its own generator,
+each time the count reaches 100,000 (one ring per 5,000 steps per 20 rings; until 2026-11-20 it was a fixed interval of 100,000 / founders
+steps, which grew weaker as the cells multiplied). `--wound-every N` still bursts one ring every N steps, as it always did. CLI: `--wild [--wild-area 4] [--no-light] [--no-weather]`, composable with `--wall`, `--gate`, `--thread`, `--heredity`.
 
 ## What is conserved
 

@@ -1,7 +1,7 @@
 // Starting worlds for the vesicle sandbox, shared by the lab page and the headless runner.
 import { VesicleWorld } from './model.ts';
 import type { Params } from './model.ts';
-import { loops } from './observe.ts';
+import { loops, ringCount } from './observe.ts';
 
 /** Chemistry on: solute copies itself from food in company, makes lipid, decays; light turns waste to food. */
 export const METABOLISM: Partial<Params> = {
@@ -34,9 +34,9 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
       w.addSolute(cx, cy, r - 2, n >> 1, o.chimera[0], f + 1); w.addSolute(cx, cy, r - 2, n - (n >> 1), o.chimera[1], f + 1);
     } else w.addSolute(cx, cy, r - 2, n, g, f + 1);
     if (w.p.thread) {
-      // one thread per founder, carrying the founder's lipid share and its marker; anchored threads sit on the first bead
+      // one thread per founder, carrying the founder's lipid share and its marker
       const fm = o.founderMark, mk = fm === undefined ? 128 : typeof fm === 'number' ? fm : fm[f % fm.length];
-      w.addThread(cx, cy, [g, mk], first);
+      w.addThread(cx, cy, [g, mk]);
     }
   }
   w.scatter(w.food, o.food ?? 2 * w.food.length);
@@ -75,9 +75,6 @@ export const WALL_GATE: Partial<Params> = { ...HEREDITY, wallGate: true };
  *  thread copy, as rare as a cell division, so it is as high as rung 2's. */
 export const THREAD: Partial<Params> = { mut: 0.1, mutStep: 16, thread: true };
 
-/** The same with each thread riding on a wall bead's inner face, so wall growth carries copies apart. */
-export const THREAD_ANCHORED: Partial<Params> = { ...THREAD, threadAnchor: true, rInhib: 18, tSep: 0 };
-
 /** The base dish edge, and how many founders it is seeded with. */
 export const BASE_EDGE = 192, BASE_FOUNDERS = 6;
 
@@ -90,14 +87,16 @@ export function wildDish(area: number): { W: number; H: number; founders: number
 }
 
 /** Stage 3, "make dividing pay": a big dish, light in drifting patches, and weather. Composes with any heredity arm.
- *  - Dish: `area` times the base area (4 unless told otherwise; 9 and 16 timed too slow for 400,000 steps), `founders` seeded in proportion; the particle and bead stores are raised to hold it.
+ *  - Dish: `area` times the base area (4 unless told otherwise), `founders` seeded in proportion; the particle and bead stores are raised to hold it.
  *  - Light: patches of radius 48 cover about a quarter of the dish (their number is set from the dish), drift at 0.004 per step
  *    (about two dish widths in 400,000 steps; a cell moves its own radius in about 2,000 steps) and wrap round; the rate inside
  *    is raised by the unlit share so that the dish's mean light equals the uniform case's.
- *  - Weather: `woundEvery` steps one ring (picked by the runner's own generator) is burst. 100,000 / founders keeps the base rate of
- *    one ring per 5,000 steps per 20 cells (a generation is 4,000 to 6,000 steps) as the dish grows; the lab page and the runner both use `Weather`.
+ *  - Weather: one ring (picked by the runner's own generator) is burst per `weatherRings` ring-steps, counted on the rings there
+ *    are now: 100,000 is one ring per 5,000 steps per 20 rings (a generation is 4,000 to 6,000 steps), however many cells the dish
+ *    holds. (It was a fixed interval of 100,000 / founders steps until 2026-11-20, which grew weaker as the cells multiplied.)
+ *    The lab page and the runner both use `Weather`.
  *  Passing `lit: false` or `weather: false` leaves that part out. */
-export function wild(area = 4, o: { lit?: boolean; weather?: boolean } = {}): { params: Partial<Params>; founders: number; woundEvery: number | undefined } {
+export function wild(area = 4, o: { lit?: boolean; weather?: boolean } = {}): { params: Partial<Params>; founders: number; weatherRings: number | undefined } {
   const d = wildDish(area), R = 48, patches = Math.max(1, Math.round((0.25 * d.W * d.H) / (Math.PI * R * R)));
   return {
     params: {
@@ -105,17 +104,28 @@ export function wild(area = 4, o: { lit?: boolean; weather?: boolean } = {}): { 
       ...(o.lit === false ? {} : { lightPatches: patches, patchR: R, patchSpeed: 0.004 }),
     },
     founders: d.founders,
-    woundEvery: o.weather === false ? undefined : Math.round(100000 / d.founders),
+    weatherRings: o.weather === false ? undefined : 100000,
   };
 }
 
-/** Weather: every `every` steps one ring, picked by this object's own generator (the kernel's stream is untouched), is burst.
- *  Call `after(world, step)` after each tick. Seeded as the runner's `--wound-every` always was. */
+/** Weather, picked by this object's own generator (the kernel's stream is untouched): with `every` > 0, one ring is burst every
+ *  `every` steps (as the runner's `--wound-every` always did); otherwise, with `ringSteps` > 0, each step adds the number of rings
+ *  to a count and a ring is burst whenever the count reaches `ringSteps` (which is then taken off it). Call `after(world, step)`
+ *  after each tick. */
 export class Weather {
-  private s: number; wounds = 0; readonly every: number;
-  constructor(seed: number, every: number) { this.s = (seed * 2654435761) >>> 0; this.every = every; }
+  private s: number; private acc = 0; private seen = new Uint8Array(0); wounds = 0; readonly every: number; readonly ringSteps: number;
+  constructor(seed: number, every: number, ringSteps = 0) { this.s = (seed * 2654435761) >>> 0; this.every = every; this.ringSteps = ringSteps; }
   after(w: VesicleWorld, t: number): void {
-    if (!this.every || t % this.every !== 0) return;
+    if (this.every) { if (t % this.every !== 0) return; }
+    else if (this.ringSteps > 0) {
+      if (this.seen.length < w.beadHi) this.seen = new Uint8Array(w.p.maxBeads);
+      this.acc += ringCount(w, this.seen);
+      while (this.acc >= this.ringSteps) { this.acc -= this.ringSteps; this.burst(w); }
+      return;
+    } else return;
+    this.burst(w);
+  }
+  private burst(w: VesicleWorld): void {
     const ls = loops(w, false);
     this.s = (Math.imul(this.s, 1664525) + 1013904223) >>> 0;
     if (ls.length) { w.dissolveLoop(ls[this.s % ls.length].first); this.wounds++; }

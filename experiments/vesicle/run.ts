@@ -1,21 +1,23 @@
 // Headless garden runs for the vesicle world: a census table, optional frames, structural checks.
 // Usage: node experiments/vesicle/run.ts --out DIR [--seed 1] [--steps 50000] [--every 2500] [--frames]
-//          [--params '{"kLip":0.001}'] [--heredity] [--neutral] [--wound-every N] [--founders 6] [--food N] [--colour founder|gene|mark]
+//          [--params '{"kLip":0.001}'] [--heredity] [--neutral] [--wound-every N] (one ring burst every N steps; overrides --wild's weather) [--founders 6] [--food N] [--colour founder|gene|mark]
 //          [--mut 0.01] (shift rate per copy; overrides the arm's default) [--pinch-log] (needs --out: writes s<seed>.pinch.tsv and s<seed>.cells.tsv, pure observer)
-//          [--thread] (stage 1: one genome object per cell, free-floating) [--thread-anchored] (threads ride on a wall bead's inner face) [--founder-mark 96 | 96,160] (thread marker gene)
-//          [--wild] (stage 3: big dish, drifting light patches, weather; combine with --wall/--gate/--thread/--heredity) [--wild-area 4 (default) | 1 | 9 | 16] [--no-light] [--no-weather]
+//          [--thread] (stage 1: one genome object per cell, free-floating) [--founder-mark 96 | 96,160] (thread marker gene)
+//          [--wild] (stage 3: big dish, drifting light patches, weather in proportion to the rings; combine with --wall/--gate/--thread/--heredity) [--wild-area 4 (default) | 1 | 9 | 16] [--no-light] [--no-weather]
 //          [--wall] (heredity in the wall beads) [--gate] (control: solute heredity, copies only at the inner face) [--founder-gene 96 | 96,160] [--chimera 64,192]
 import { closeSync, mkdirSync, openSync, writeFileSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Params } from '../../apps/lab/src/vesicle/model.ts';
 import { LineageObserver, cellHeader, cellLine, census, check, eventHeader, eventLine, loops } from '../../apps/lab/src/vesicle/observe.ts';
-import { HEREDITY, THREAD, THREAD_ANCHORED, WALL_GATE, WALL_GENES, Weather, garden, wild } from '../../apps/lab/src/vesicle/worlds.ts';
+import { HEREDITY, THREAD, WALL_GATE, WALL_GENES, Weather, garden, wild } from '../../apps/lab/src/vesicle/worlds.ts';
 import type { GardenOpts } from '../../apps/lab/src/vesicle/worlds.ts';
 import { writeFrame } from './frame.ts';
 import type { ColourBy } from './frame.ts';
 
-export interface RunOpts extends GardenOpts { seed: number; steps: number; every: number; out?: string; frames?: boolean; colour?: ColourBy; quiet?: boolean; woundEvery?: number; pinchLog?: boolean }
+export interface RunOpts extends GardenOpts { seed: number; steps: number; every: number; out?: string; frames?: boolean; colour?: ColourBy; quiet?: boolean; woundEvery?: number;
+  /** Weather in proportion to the rings (one wound per this many ring-steps; see `Weather`); ignored when `woundEvery` is set. */
+  weatherRings?: number; pinchLog?: boolean }
 
 export function runGarden(o: RunOpts) {
   const w = garden(o.seed, o), m0 = w.matter(), rows: Record<string, number>[] = [];
@@ -73,7 +75,7 @@ export function runGarden(o: RunOpts) {
         }
       }
     }
-    if (o.woundEvery) row.wounds = weather?.wounds ?? 0;
+    if (o.woundEvery || o.weatherRings) row.wounds = weather?.wounds ?? 0;
     row.ms = Date.now() - t0;
     rows.push(row);
     if (!o.quiet) console.log(JSON.stringify(row));
@@ -96,7 +98,7 @@ export function runGarden(o: RunOpts) {
   t0 = Date.now();
   try {
   if (o.frames && o.out) writeFrame(join(o.out, `s${o.seed}-t000000.png`), w, 4, o.colour);
-  weather = new Weather(o.seed, o.woundEvery ?? 0);
+  weather = new Weather(o.seed, o.woundEvery ?? 0, o.weatherRings ?? 0);
   for (let t = 1; t <= o.steps; t++) {
     w.tick();
     obs?.afterTick(); // label newborn beads before any wound reads ids
@@ -120,17 +122,17 @@ export function runGarden(o: RunOpts) {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const arg = (k: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
   const num = (k: string) => (arg(k) !== undefined ? Number(arg(k)) : undefined);
-  if (process.argv.includes('--thread') && process.argv.includes('--thread-anchored')) throw new Error('--thread and --thread-anchored are different arms: pick one');
+  if (process.argv.includes('--thread-anchored')) throw new Error('--thread-anchored was retired (it died out in 8 of 8 worlds); use --thread');
   if (process.argv.includes('--wall') && process.argv.includes('--gate')) throw new Error('--wall and --gate are different arms: pick one');
   const out = arg('out');
   const wl = process.argv.includes('--wild') ? wild(num('wild-area') ?? 4, { lit: !process.argv.includes('--no-light'), weather: !process.argv.includes('--no-weather') }) : undefined;
   if (out) mkdirSync(out, { recursive: true });
   const r = runGarden({
     seed: num('seed') ?? 1, steps: num('steps') ?? 50000, every: num('every') ?? 2500, out, frames: process.argv.includes('--frames'),
-    colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every') ?? wl?.woundEvery, pinchLog: process.argv.includes('--pinch-log'), founders: num('founders') ?? wl?.founders,
+    colour: (arg('colour') as ColourBy) ?? 'founder', woundEvery: num('wound-every'), weatherRings: num('wound-every') === undefined ? wl?.weatherRings : undefined, pinchLog: process.argv.includes('--pinch-log'), founders: num('founders') ?? wl?.founders,
     chimera: arg('chimera') ? (arg('chimera')!.split(',').map(Number) as [number, number]) : undefined,
     founderGene: arg('founder-gene') ? (arg('founder-gene')!.includes(',') ? arg('founder-gene')!.split(',').map(Number) : Number(arg('founder-gene'))) : undefined, founderMark: arg('founder-mark') ? (arg('founder-mark')!.includes(',') ? arg('founder-mark')!.split(',').map(Number) : Number(arg('founder-mark'))) : undefined, food: num('food'), lipid: num('lipid'), solute: num('solute'),
-    params: { ...wl?.params, ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--thread') ? THREAD : {}), ...(process.argv.includes('--thread-anchored') ? THREAD_ANCHORED : {}), ...(process.argv.includes('--gate') ? WALL_GATE : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(num('mut') !== undefined ? { mut: num('mut') } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
+    params: { ...wl?.params, ...(process.argv.includes('--heredity') ? HEREDITY : {}), ...(process.argv.includes('--wall') ? WALL_GENES : {}), ...(process.argv.includes('--thread') ? THREAD : {}), ...(process.argv.includes('--gate') ? WALL_GATE : {}), ...(process.argv.includes('--neutral') ? { neutral: true } : {}), ...(num('mut') !== undefined ? { mut: num('mut') } : {}), ...(arg('params') ? (JSON.parse(arg('params')!) as Partial<Params>) : {}) },
   });
   const { world: _w, ...rest } = r;
   if (out) writeFileSync(join(out, `s${r.seed}.json`), JSON.stringify(rest));

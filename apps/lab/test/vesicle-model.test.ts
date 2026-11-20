@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VesicleWorld, sinCos } from '../src/vesicle/model.ts';
 import { LineageObserver, assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
-import { HEREDITY, METABOLISM, THREAD, THREAD_ANCHORED, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
+import { HEREDITY, METABOLISM, THREAD, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
 const run = (w: VesicleWorld, steps: number) => { for (let t = 0; t < steps; t++) w.tick(); return w; };
@@ -399,8 +399,8 @@ describe('vesicle world', () => {
     /** A bare dish for one rule at a time: no wall growth, no solute decay, threads fast to feed. */
     const bare = (extra: object = {}) => new VesicleWorld(1, { W: 64, H: 64, ...METABOLISM, ...still, thread: true, kLip: 0, kDecay: 0, kTDecay: 0, kTFood: 1, kLight: 0, kLipDecay: 0, ...extra });
 
-    it('keeps matter exact and rings whole, free and anchored, and a seed repeats', () => {
-      for (const params of [THREAD, THREAD_ANCHORED]) {
+    it('keeps matter exact and rings whole, and a seed repeats', () => {
+      for (const params of [THREAD]) {
         const w = garden(3, { params }), m0 = w.matter();
         for (let k = 0; k < 6; k++) { run(w, 500); expect(w.matter()).toBe(m0); expect(check(w)).toEqual([]); }
         expect(w.events.tcopy).toBeGreaterThan(0);
@@ -413,8 +413,13 @@ describe('vesicle world', () => {
       expect(a.digest()).not.toBe(b.digest());
     });
 
+    it('free thread: matches the pinned state after 3,000 steps', () => {
+      const w = run(garden(1, { params: THREAD }), 3000);
+      expect([w.digest(), w.matter(), w.n, w.beadCount, w.nt]).toEqual(['9f878938', 5700, 645, 447, 12]);
+    });
+
     it('with the option off, the pinned states and the world are untouched', () => {
-      const w = run(garden(1, { params: { ...HEREDITY, thread: false, threadAnchor: false } }), 2000);
+      const w = run(garden(1, { params: { ...HEREDITY, thread: false } }), 2000);
       expect([w.digest(), w.nt]).toEqual(['d0d875d2', 0]);
       const g = run(garden(1, { params: { ...WALL_GENES, thread: false } }), 2000);
       expect(g.digest()).toBe('48c2db7d');
@@ -524,68 +529,6 @@ describe('vesicle world', () => {
       expect(loops(w)[0].threads).toBeGreaterThanOrEqual(1);
     });
 
-    it('anchored threads always sit on a living bead, hop when it leaves, and are let go when the ring ends', () => {
-      const w = garden(2, { params: { ...THREAD_ANCHORED, kOut: 0.02 } });
-      for (let t = 0; t < 2500; t++) {
-        w.tick();
-        for (let k = 0; k < w.nt; k++) if (w.tanchor[k] >= 0) expect(w.alive[w.tanchor[k]]).toBe(1);
-      }
-      expect(w.events.desorb).toBeGreaterThan(100);
-      const x = new VesicleWorld(1, { ...METABOLISM, thread: true, threadAnchor: true });
-      const first = x.addLoop(32, 32, 10);
-      x.addThread(32, 32, [128, 128], first);
-      expect(x.tanchor[0]).toBe(first);
-      expect(x.dissolveLoop(first)).toBeGreaterThan(0);
-      expect(x.tanchor[0]).toBe(-1);
-    });
-
-    it('anchored threads lie inside the ring that carries their bead (every step, as in the reviewed seed 2 corner case at step 291)', () => {
-      const w = garden(2, { params: THREAD_ANCHORED });
-      let bad = 0, total = 0;
-      for (let t = 0; t < 4000; t++) {
-        w.tick();
-        const ls = loops(w, false), ringOf = new Int32Array(w.beadHi).fill(-1);
-        ls.forEach((l, li) => { for (let i = l.first, n = 0; n < l.beads; n++, i = w.next[i]) ringOf[i] = li; });
-        for (let k = 0; k < w.nt; k++) {
-          if (w.tanchor[k] < 0) continue;
-          total++;
-          const { xs, ys } = ls[ringOf[w.tanchor[k]]];
-          let c = false;
-          for (let i = 0, j = xs.length - 1; i < xs.length; j = i++) if ((ys[i] > w.ty[k]) !== (ys[j] > w.ty[k]) && w.tx[k] < ((xs[j] - xs[i]) * (w.ty[k] - ys[i])) / (ys[j] - ys[i]) + xs[i]) c = !c;
-          if (!c) bad++;
-        }
-      }
-      expect(total).toBeGreaterThan(1000);
-      expect(bad).toBe(0);
-    });
-
-    it('a thread on a corner bead is placed inside both bonds, and never through a thin ring (review P1s)', () => {
-      const w = new VesicleWorld(1, { W: 512, H: 64, thread: true, threadAnchor: true });
-      w.addLoop(250, 32, 8, 8);
-      const xy = [[10, 20], [250, 20], [490, 20], [490, 20.1], [250, 20.1], [10, 20.1], [10, 20.06], [10, 20.03]];
-      xy.forEach(([x, y], i) => { w.bx[i] = x; w.by[i] = y; });
-      (w as unknown as { buildHash(): void }).buildHash();
-      w.addThread(250, 20, [128, 128], 1);
-      // no candidate clears the opposite wall: the thread sits on its bead
-      expect([w.tx[0], w.ty[0]]).toEqual([250, 20]);
-      // a corner with unequal bonds: the thread is on the interior side of both
-      const v = new VesicleWorld(1, { thread: true, threadAnchor: true });
-      const first = v.addLoop(32, 32, 10, 8);
-      v.bx[first] += 4; v.by[first] -= 3;
-      (v as unknown as { buildHash(): void }).buildHash();
-      v.addThread(32, 32, [128, 128], first);
-      const side = (a: number, b: number) => (v.bx[b] - v.bx[a]) * (v.ty[0] - v.by[a]) - (v.by[b] - v.by[a]) * (v.tx[0] - v.bx[a]);
-      expect(side(v.prev[first], first)).toBeGreaterThanOrEqual(0);
-      expect(side(first, v.next[first])).toBeGreaterThanOrEqual(0);
-    });
-
-    it('seeding an anchored thread tests walls against a current hash (round 2 P2)', () => {
-      const w = new VesicleWorld(1, { thread: true, threadAnchor: true });
-      const b = w.addLoop(32, 32, 0.3, 3);
-      w.addThread(32, 32, [128, 128], b);
-      expect(census(w).freeThreads).toBe(0);
-    });
-
     it('threads need a whole-number cost of at least 1, so matter cannot be lost in a split (review P1)', () => {
       for (const tCost of [6.5, 0, -1, NaN]) expect(() => new VesicleWorld(1, { thread: true, tCost })).toThrow();
       const w = new VesicleWorld(1, { thread: true, tCost: 6, kTFood: 8, kTDecay: 0, kIn: 0, kOut: 0, sBurst: 0, partNoise: 0, dFood: 0, dWaste: 0, dLipid: 0 });
@@ -598,7 +541,7 @@ describe('vesicle world', () => {
     });
 
     it('the pinch log counts threads: daughters hold no more than the mother, and the digest does not change', () => {
-      for (const params of [THREAD, THREAD_ANCHORED]) {
+      for (const params of [THREAD]) {
         const w = garden(2, { params }), ev: import('../src/vesicle/observe.ts').LineageEvent[] = [];
         const o = new LineageObserver(w, (e) => ev.push(e));
         for (let t = 0; t < 4000; t++) { w.tick(); o.afterTick(); }
@@ -701,7 +644,7 @@ describe('vesicle world', () => {
     it('sizes the dish and the founders together, and refuses a non-square area', () => {
       expect(wild(16).params.W).toBe(768); expect(wild(16).founders).toBe(96); expect(wild(4).params.H).toBe(384); expect(wild(1).founders).toBe(6);
       expect(() => wild(5)).toThrow();
-      expect(wild(16).woundEvery).toBe(Math.round(100000 / 96));
+      expect(wild(16).weatherRings).toBe(100000); expect(wild(4, { weather: false }).weatherRings).toBe(undefined);
     });
 
     it('lights about a quarter of the dish, moves the patches and wraps them', () => {
@@ -733,6 +676,29 @@ describe('vesicle world', () => {
         for (let t = 1; t <= 2100; t++) { a.tick(); wa.after(a, t); b.tick(); wb.after(b, t); if (t % 700 === 0) { expect(a.matter()).toBe(m0); expect(check(a)).toEqual([]); } }
         expect(a.digest()).toBe(b.digest()); expect(wa.wounds).toBeGreaterThan(0);
       }
+    });
+
+    it('wild dish with wall genes and weather: matches the pinned state after 5,000 steps', () => {
+      // runner sequence (tick, then weather) on the 4x dish. Re-pinned 2026-11-20 when the weather changed on purpose from a fixed
+      // interval (100,000 / founders steps: e40389c5, 22776, 1645, 1737, 1 wound) to one wound per 100,000 ring-steps (two wounds here)
+      const wl = wild(4), w = garden(1, { founders: wl.founders, params: { ...wl.params, ...WALL_GENES } }), we = new Weather(1, 0, wl.weatherRings ?? 0);
+      for (let t = 1; t <= 5000; t++) { w.tick(); we.after(w, t); }
+      expect([w.digest(), w.matter(), w.n, w.beadCount, we.wounds]).toEqual(['995afe1e', 22776, 1721, 1802, 2]);
+    }, 120000);
+
+    it('weather in proportion to the rings: a wound each time the ring-steps reach the mark; a fixed interval when given', () => {
+      // two rings, mark 1,000: the first wound at step 500, then one ring is left and the next comes 1,000 steps later
+      const w = theftWorld(1), x = new Weather(1, 0, 1000), at: number[] = [];
+      for (let t = 1; t <= 2000; t++) { w.tick(); const k = x.wounds; x.after(w, t); if (x.wounds > k) at.push(t); }
+      expect(at).toEqual([500, 1500]);
+      // a fixed interval wins over the rate, and wounds every `every` steps whatever the rings
+      const v = theftWorld(1), y = new Weather(1, 300, 1000), got: number[] = [];
+      for (let t = 1; t <= 700; t++) { v.tick(); const k = y.wounds; y.after(v, t); if (y.wounds > k) got.push(t); }
+      expect(got).toEqual([300, 600]);
+      // nothing set: no weather
+      const u = theftWorld(1), z = new Weather(1, 0);
+      for (let t = 1; t <= 700; t++) { u.tick(); z.after(u, t); }
+      expect(z.wounds).toBe(0);
     });
 
     it('leaves the world alone when the light is uniform whatever the patch numbers say', () => {

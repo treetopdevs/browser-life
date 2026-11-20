@@ -50,10 +50,7 @@ export interface Params {
    *  thread with fewer than `kSup` solute within `rSup` (same side of the walls) decays to waste at rate `kTDecay`.
    *  Off = nothing below is read, drawn or hashed. */
   thread: boolean;
-  /** Variant (b): a thread rides on a wall bead's inner face (hops to a neighbouring bead of its ring when its bead
-   *  leaves, is let go when its ring ends), and a copy anchors `tSep` beads along the ring from its parent (0 = half way round). Off = free-floating. */
-  threadAnchor: boolean;
-  tG: number; tCost: number; kTFood: number; rInhib: number; rShare: number; kTDecay: number; rSup: number; kSup: number; tSep: number; tOff: number;
+  tG: number; tCost: number; kTFood: number; rInhib: number; rShare: number; kTDecay: number; rSup: number; kSup: number;
   maxThreads: number;
   /** Patchy moving light: with `lightPatches` > 0, waste turns to food only in grid cells whose centre lies within
    *  `patchR` of a patch centre; patches drift in straight lines at `patchSpeed` per step and wrap round the dish
@@ -74,7 +71,7 @@ export const DEFAULTS: Params = {
   rIns: 3,
   kRep: 0, kDecay: 0, kLip: 0, kLight: 0, kLipDecay: 0, foodCap: 8, crowdCap: 6,
   mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false, wallGate: false,
-  thread: false, threadAnchor: false, tG: 2, tCost: 6, kTFood: 0.02, rInhib: 14, rShare: 12, kTDecay: 0.01, rSup: 8, kSup: 3, tSep: 1, tOff: 0.8, maxThreads: 4096, lightPatches: 0, patchR: 40, patchSpeed: 0.004,
+  thread: false, tG: 2, tCost: 6, kTFood: 0.02, rInhib: 14, rShare: 12, kTDecay: 0.01, rSup: 8, kSup: 3, maxThreads: 4096, lightPatches: 0, patchR: 40, patchSpeed: 0.004,
   maxBeads: 1 << 15, maxParts: 1 << 16,
 };
 
@@ -110,8 +107,11 @@ export class VesicleWorld {
    *  is near, or a bead near one of its own two bonds); `rw` when it touches nothing. */
   private readonly gap: Float64Array;
   /** Set when a bead has left a ring since the hash was built: the shortcut bond can lie in cells that list
-   *  neither of the bonds it replaced, so the next lookup rebuilds the hash first. */
+   *  neither of the bonds it replaced, so the next lookup rebuilds the hash first (except the desorption check, which
+   *  searches `shortcuts` as well). */
   private hashStale = false;
+  /** First beads of the shortcut bonds made since the hash was last built (read only by the lazy crossing check). */
+  private shortcuts: number[] = [];
   beadHi = 0; beadCount = 0;
   /** Bead slots free for reuse, and those freed during this step (reused from the next step on, so a slot the
    *  bond hash still lists never comes back as a different bead within the step). */
@@ -126,8 +126,6 @@ export class VesicleWorld {
   n = 0;
   // threads (stage 1; empty and untouched unless `thread` is on)
   readonly tx: Float64Array; readonly ty: Float64Array; readonly tgene: Uint8Array; readonly tstore: Int32Array;
-  /** Wall bead a thread rides on (variant b), or -1 for a free thread. */
-  readonly tanchor: Int32Array;
   nt = 0;
   // small molecules
   readonly gw: number; readonly gh: number;
@@ -135,6 +133,8 @@ export class VesicleWorld {
   private readonly tmp: Int32Array; readonly sCount: Int32Array;
   /** Grid cells lit by the patches, as filled by `lightMask()` (observers and the light step; not state). */
   readonly litMask: Uint8Array;
+  /** Scratch for `lightMask`: per-axis distances to the patch and the columns and rows within its radius. */
+  private colD?: Float64Array; private rowD?: Float64Array; private cols?: Int32Array; private rows?: Int32Array;
   // bond hash
   private readonly hStart: Int32Array; private hItems = new Int32Array(1024);
   // rng (sfc32)
@@ -166,7 +166,7 @@ export class VesicleWorld {
     this.wgene = new Uint8Array(nb).fill(128); this.wmark = new Uint8Array(nb).fill(128);
     if ((p.wallGenes || p.wallGate) && !(p.rIns > 0)) throw new Error('wallGenes and wallGate need rIns > 0 (solute is made within rIns of a wall)');
     const mt = p.thread ? p.maxThreads : 0;
-    this.tx = new Float64Array(mt); this.ty = new Float64Array(mt); this.tgene = new Uint8Array(mt * p.tG); this.tstore = new Int32Array(mt); this.tanchor = new Int32Array(mt).fill(-1);
+    this.tx = new Float64Array(mt); this.ty = new Float64Array(mt); this.tgene = new Uint8Array(mt * p.tG); this.tstore = new Int32Array(mt);
     if (p.thread && !(Number.isInteger(p.tCost) && p.tCost >= 1)) throw new Error('tCost is a whole number of units, at least 1 (the body is one of them)');
     if (p.thread && !(p.tG >= 2)) throw new Error('threads carry at least two genes');
     if (p.thread && !(0.5 * p.rp + p.partNoise < Math.max(p.rp, p.rw))) throw new Error('thread moves must stay inside the hash padding');
@@ -202,8 +202,7 @@ export class VesicleWorld {
     if (i >= 0) { this.alive[i] = 1; this.beadCount++; this.born[i] = this.step; }
     return i;
   }
-  private freeBead(i: number, hop = -1): void {
-    if (this.nt > 0) for (let k = 0; k < this.nt; k++) if (this.tanchor[k] === i) this.tanchor[k] = hop;
+  private freeBead(i: number): void {
     this.alive[i] = 0; this.next[i] = this.prev[i] = -1; this.beadCount--; this.freedNow.push(i);
   }
 
@@ -258,7 +257,6 @@ export class VesicleWorld {
     if (this.p.sBurst > 0) this.rupture();
     this.exchange();
     const p = this.p;
-    if (p.thread) this.syncAnchors();
     if (p.kRep > 0 || p.kDecay > 0 || p.kLip > 0) this.chemistry();
     if (p.thread) this.threadChemistry();
     if (p.kLight > 0) { if (p.lightPatches > 0) this.convertLit(); else this.convert(this.waste, this.food, p.kLight); }
@@ -272,7 +270,7 @@ export class VesicleWorld {
   private buildHash(): void {
     const { cell } = this.p, gw = this.gw, gh = this.gh, hs = this.hStart, pad = Math.max(this.p.rp, this.p.rw);
     hs.fill(0);
-    this.hashStale = false;
+    this.hashStale = false; this.shortcuts.length = 0;
     const { bx, by, next, alive } = this;
     for (let pass = 0; pass < 2; pass++) {
       for (let i = 0; i < this.beadHi; i++) {
@@ -386,9 +384,9 @@ export class VesicleWorld {
     return true;
   }
 
-  /** Would a new bond u -> v touch or cross any bond that shares no bead with it? */
-  private wouldCross(u: number, v: number): boolean {
-    return this.segHit(this.bx[u], this.by[u], this.bx[v], this.by[v], u, v);
+  /** Would a new bond u -> v touch or cross any bond that shares no bead with it? `lazy`: see `segHit`. */
+  private wouldCross(u: number, v: number, lazy = false): boolean {
+    return this.segHit(this.bx[u], this.by[u], this.bx[v], this.by[v], u, v, lazy);
   }
 
   /** Does the segment from (x0, y0) to (x1, y1) reach a wall bond: its start strictly on one side, its end on
@@ -398,39 +396,49 @@ export class VesicleWorld {
    *  covers this step's bead moves). The hash can be older than the rings: it is rebuilt first if a bead has
    *  left a ring since, and beads born since are reached by walking on from the bond they split (a split
    *  stays inside its parent bond's box). A start exactly on a bond counts as reaching it unless the end is
-   *  strictly on that bond's interior side. */
-  private segHit(x0: number, y0: number, x1: number, y1: number, u: number, v: number): boolean {
-    if (this.hashStale) this.buildHash();
-    const { bx, by, next, alive, born, hStart, gw, gh, step } = this, items = this.hItems, cell = this.p.cell;
+   *  strictly on that bond's interior side.
+   *  `lazy` (the desorption check only): a stale hash is not rebuilt; the shortcut bonds made since it was built are
+   *  searched as well, which lists every bond again. The answer is a yes or no about the bonds as they are, so it is
+   *  the same either way; only `nearBond`, which picks the first of equally near bonds, reads the hash's order.
+   *  One known difference (Sol review, 2026-11-20): a shortcut of zero length (two beads at the same point) is found from
+   *  anywhere in the lazy search but only from its own cells in a fresh hash, so in that degenerate case a far-off
+   *  desorption can be refused that a rebuild would have allowed. It errs toward refusing; no crossing is missed. */
+  private segHit(x0: number, y0: number, x1: number, y1: number, u: number, v: number, lazy = false): boolean {
+    const stale = this.hashStale && lazy;
+    if (this.hashStale && !lazy) this.buildHash();
+    const { gw, gh, hStart } = this, items = this.hItems, cell = this.p.cell;
     let cx0 = Math.floor((x0 < x1 ? x0 : x1) / cell), cx1 = Math.floor((x0 < x1 ? x1 : x0) / cell);
     let cy0 = Math.floor((y0 < y1 ? y0 : y1) / cell), cy1 = Math.floor((y0 < y1 ? y1 : y0) / cell);
     if (cx0 < 0) cx0 = 0; if (cy0 < 0) cy0 = 0; if (cx1 >= gw) cx1 = gw - 1; if (cy1 >= gh) cy1 = gh - 1;
-    const dx = x1 - x0, dy = y1 - y0;
     for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
       const c = cy * gw + cx;
-      for (let h = hStart[c]; h < hStart[c + 1]; h++) {
-        let a = items[h];
-        if (!alive[a]) continue;
-        const first = a;
-        for (;;) {
-          const b = next[a];
-          if (a !== u && a !== v && b !== u && b !== v) {
-            const ex = bx[b] - bx[a], ey = by[b] - by[a];
-            const s0 = ex * (y0 - by[a]) - ey * (x0 - bx[a]), s1 = ex * (y1 - by[a]) - ey * (x1 - bx[a]);
-            if ((s0 > 0 && s1 <= 0) || (s0 < 0 && s1 >= 0)) {
-              const o3 = dx * (by[a] - y0) - dy * (bx[a] - x0), o4 = dx * (by[b] - y0) - dy * (bx[b] - x0);
-              if ((o3 <= 0 && o4 >= 0) || (o3 >= 0 && o4 <= 0)) return true;
-            } else if (s0 === 0 && s1 <= 0) {
-              const along = (x0 - bx[a]) * ex + (y0 - by[a]) * ey;
-              if (along >= 0 && along <= ex * ex + ey * ey) return true;
-            }
-          }
-          if (born[b] !== step || b === first) break;
-          a = b;
+      for (let h = hStart[c]; h < hStart[c + 1]; h++) if (this.chainHit(items[h], x0, y0, x1, y1, u, v)) return true;
+    }
+    if (stale) for (const a of this.shortcuts) if (this.chainHit(a, x0, y0, x1, y1, u, v)) return true;
+    return false;
+  }
+
+  /** `segHit` for the bond that starts at bead a and for the bonds of beads born since into it. */
+  private chainHit(a: number, x0: number, y0: number, x1: number, y1: number, u: number, v: number): boolean {
+    const { bx, by, next, alive, born, step } = this, dx = x1 - x0, dy = y1 - y0;
+    if (!alive[a]) return false;
+    const first = a;
+    for (;;) {
+      const b = next[a];
+      if (a !== u && a !== v && b !== u && b !== v) {
+        const ex = bx[b] - bx[a], ey = by[b] - by[a];
+        const s0 = ex * (y0 - by[a]) - ey * (x0 - bx[a]), s1 = ex * (y1 - by[a]) - ey * (x1 - bx[a]);
+        if ((s0 > 0 && s1 <= 0) || (s0 < 0 && s1 >= 0)) {
+          const o3 = dx * (by[a] - y0) - dy * (bx[a] - x0), o4 = dx * (by[b] - y0) - dy * (bx[b] - x0);
+          if ((o3 <= 0 && o4 >= 0) || (o3 >= 0 && o4 <= 0)) return true;
+        } else if (s0 === 0 && s1 <= 0) {
+          const along = (x0 - bx[a]) * ex + (y0 - by[a]) * ey;
+          if (along >= 0 && along <= ex * ex + ey * ey) return true;
         }
       }
+      if (born[b] !== step || b === first) return false;
+      a = b;
     }
-    return false;
   }
 
   private wallForces(): void {
@@ -456,9 +464,9 @@ export class VesicleWorld {
     for (let k = 0; k < this.n; k++) this.pushMove(this.px, this.py, k);
   }
 
-  /** Free threads move exactly like solute: pushed off walls (and pushing them back), random step, never through a wall. */
+  /** Threads move exactly like solute: pushed off walls (and pushing them back), random step, never through a wall. */
   private moveThreads(): void {
-    for (let k = 0; k < this.nt; k++) if (this.tanchor[k] < 0) this.pushMove(this.tx, this.ty, k);
+    for (let k = 0; k < this.nt; k++) this.pushMove(this.tx, this.ty, k);
   }
 
   /** One particle-like body: pushed away from every wall bond within rp (the bond's beads take the opposite push),
@@ -557,10 +565,12 @@ export class VesicleWorld {
           for (m = i; ;) { const nx = next[m]; lipid[this.cellOf(bx[m], by[m])]++; this.freeBead(m); if (nx === i) break; m = nx; }
           this.events.dissolve++;
         } else {
-          if (this.wouldCross(q, j)) continue;
+          // checked without rebuilding a stale hash (one rebuild per desorption made the step grow with the square of
+          // the dish); a refusal rebuilds it here, where the check always used to, since `nearBond` may read it next
+          if (this.wouldCross(q, j, true)) { if (this.hashStale) this.buildHash(); continue; }
           next[q] = j; prev[j] = q; blen[q] += blen[i];
-          this.hashStale = true;
-          lipid[this.cellOf(bx[i], by[i])]++; this.freeBead(i, this.p.threadAnchor ? q : -1); this.events.desorb++;
+          this.hashStale = true; this.shortcuts.push(q);
+          lipid[this.cellOf(bx[i], by[i])]++; this.freeBead(i); this.events.desorb++;
         }
         continue;
       }
@@ -624,34 +634,6 @@ export class VesicleWorld {
 
   // ---- threads (stage 1) ---------------------------------------------------------------------------------
 
-  /** Put an anchored thread's position on the inner face of its bead: `tOff` along the inward normal of the bead's two
-   *  bonds, or nearer if that segment would reach a wall. Free threads are left alone. */
-  private syncAnchors(): void {
-    for (let k = 0; k < this.nt; k++) if (this.tanchor[k] >= 0) this.placeOnBead(k);
-  }
-
-  /** Thread k goes `tOff` in from its bead along the bisector of the two bonds' inward normals (so it is inside both
-   *  bonds at a corner), halved up to twice if that segment would reach a wall; if no candidate is inside both bonds
-   *  and clear of every other wall, it sits on the bead itself. */
-  private placeOnBead(k: number): void {
-    const { bx, by, next, prev, p } = this, i = this.tanchor[k], a = prev[i], b = next[i];
-    const ux = bx[i] - bx[a], uy = by[i] - by[a], vx = bx[b] - bx[i], vy = by[b] - by[i];
-    const ul = Math.sqrt(ux * ux + uy * uy), vl = Math.sqrt(vx * vx + vy * vy);
-    if (ul > 0 && vl > 0) {
-      // inward (left) normals of the incoming and outgoing bonds, each of unit length, summed
-      const sx = -uy / ul - vy / vl, sy = ux / ul + vx / vl, sl = Math.sqrt(sx * sx + sy * sy);
-      if (sl > 0) {
-        let off = p.tOff;
-        for (let tries = 0; tries < 3; tries++, off *= 0.5) {
-          const nx = bx[i] + (off * sx) / sl, ny = by[i] + (off * sy) / sl;
-          // inside both incident bonds' half-planes, and the step from the bead reaches no other wall
-          if (ux * (ny - by[a]) - uy * (nx - bx[a]) > 0 && vx * (ny - by[i]) - vy * (nx - bx[i]) > 0 && !this.segHit(bx[i], by[i], nx, ny, i, -1)) { this.tx[k] = nx; this.ty[k] = ny; return; }
-        }
-      }
-    }
-    this.tx[k] = bx[i]; this.ty[k] = by[i];
-  }
-
   /** The thread nearest to (x, y) within `rShare` with no wall between, or -1. */
   private nearThread(x: number, y: number): number {
     const { tx, ty, p } = this;
@@ -688,13 +670,13 @@ export class VesicleWorld {
   /** A thread takes up food where it sits; with `tCost` stored and no other thread near, it splits (the copy is one
    *  unit of body, the rest of the cost goes back to the water as waste); unsupported threads decay to waste. */
   private threadChemistry(): void {
-    const { tx, ty, tgene, tstore, tanchor, food, waste, p } = this, G = p.tG;
+    const { tx, ty, tgene, tstore, food, waste, p } = this, G = p.tG;
     for (let k = this.nt - 1; k >= 0; k--) {
       const c = this.cellOf(tx[k], ty[k]);
       if (p.kTDecay > 0 && this.rand() < p.kTDecay && !this.supported(k)) {
         waste[c]++; food[c] += tstore[k]; this.events.tdecay++;
         const l = --this.nt;
-        tx[k] = tx[l]; ty[k] = ty[l]; tstore[k] = tstore[l]; tanchor[k] = tanchor[l];
+        tx[k] = tx[l]; ty[k] = ty[l]; tstore[k] = tstore[l];
         for (let g = 0; g < G; g++) tgene[k * G + g] = tgene[l * G + g];
         continue;
       }
@@ -707,29 +689,17 @@ export class VesicleWorld {
       tstore[k] -= p.tCost; waste[c] += p.tCost - 1; this.events.tcopy++;
       const l = this.nt++;
       for (let g = 0; g < G; g++) tgene[l * G + g] = this.copyByte(tgene[k * G + g]);
-      tstore[l] = 0;
-      let a = tanchor[k];
-      if (a >= 0) {
-        // anchored: the copy sits tSep beads along the ring from its parent, to either side
-        // (tSep 0 = half way round the ring: its own ring size is counted on the spot)
-        const fwd = this.rand() < 0.5;
-        let hop = p.tSep;
-        if (hop === 0) { hop = 1; for (let m = this.next[a]; m !== a; m = this.next[m]) hop++; hop >>= 1; }
-        for (let s = 0; s < hop; s++) a = fwd ? this.next[a] : this.prev[a];
-        tanchor[l] = a;
-        this.placeOnBead(l);
-      } else { tanchor[l] = -1; tx[l] = tx[k]; ty[l] = ty[k]; }
+      tstore[l] = 0; tx[l] = tx[k]; ty[l] = ty[k];
     }
   }
 
-  /** Seed a thread (stage 1) with the given genes; anchored on `bead` if given and `threadAnchor` is on. */
-  addThread(x: number, y: number, genes: number[], bead = -1): void {
+  /** Seed a thread (stage 1) with the given genes. */
+  addThread(x: number, y: number, genes: number[]): void {
     if (!this.p.thread) throw new Error('threads are off');
     if (this.nt >= this.p.maxThreads) return;
     const k = this.nt++, G = this.p.tG;
-    this.tx[k] = x; this.ty[k] = y; this.tstore[k] = 0; this.tanchor[k] = this.p.threadAnchor ? bead : -1;
+    this.tx[k] = x; this.ty[k] = y; this.tstore[k] = 0;
     for (let g = 0; g < G; g++) this.tgene[k * G + g] = genes[g] ?? 128;
-    if (this.tanchor[k] >= 0) { this.buildHash(); this.syncAnchors(); } // placement tests walls: the bond hash must be current
   }
 
   /** The wall bond nearest to (x, y) within `rIns` (its first bead), or -1. Searches the 3 by 3 block of hash
@@ -820,24 +790,25 @@ export class VesicleWorld {
     return [x - W * Math.floor(x / W), y - H * Math.floor(y / H)];
   }
 
-  /** Is the grid cell `c` lit now (patch centres given)? Distances wrap round the dish. */
-  private lit(cx: number, cy: number, cs: [number, number][]): boolean {
-    const { W, H, patchR } = this.p, r2 = patchR * patchR;
-    for (const [px, py] of cs) {
-      let dx = Math.abs(cx - px), dy = Math.abs(cy - py);
-      if (dx > W / 2) dx = W - dx;
-      if (dy > H / 2) dy = H - dy;
-      if (dx * dx + dy * dy <= r2) return true;
-    }
-    return false;
-  }
-
-  /** Fill `litMask` for the current step and return how many grid cells are lit. */
+  /** Fill `litMask` for the current step and return how many grid cells are lit. The same per-cell test as `lit`,
+   *  made per patch only on the columns and rows that pass its one-axis part (a cell inside a patch passes both),
+   *  so the cost is the lit area rather than cells times patches. */
   lightMask(): number {
-    const { p, gw, gh, litMask } = this, cs: [number, number][] = [];
-    for (let k = 0; k < p.lightPatches; k++) cs.push(this.patchCentre(k));
+    const { p, gw, gh, litMask } = this, { W, H, patchR } = p, r2 = patchR * patchR;
+    const colD = this.colD ??= new Float64Array(gw), rowD = this.rowD ??= new Float64Array(gh);
+    const cols = this.cols ??= new Int32Array(gw), rows = this.rows ??= new Int32Array(gh);
+    litMask.fill(0);
     let n = 0;
-    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const m = this.lit((x + 0.5) * p.cell, (y + 0.5) * p.cell, cs) ? 1 : 0; litMask[y * gw + x] = m; n += m; }
+    for (let k = 0; k < p.lightPatches; k++) {
+      const [px, py] = this.patchCentre(k);
+      let nc = 0, nr = 0;
+      for (let x = 0; x < gw; x++) { let dx = Math.abs((x + 0.5) * p.cell - px); if (dx > W / 2) dx = W - dx; if (dx * dx <= r2) { colD[x] = dx; cols[nc++] = x; } }
+      for (let y = 0; y < gh; y++) { let dy = Math.abs((y + 0.5) * p.cell - py); if (dy > H / 2) dy = H - dy; if (dy * dy <= r2) { rowD[y] = dy; rows[nr++] = y; } }
+      for (let b = 0; b < nr; b++) {
+        const y = rows[b], dy = rowD[y], o = y * gw;
+        for (let a = 0; a < nc; a++) { const x = cols[a], dx = colD[x]; if (!litMask[o + x] && dx * dx + dy * dy <= r2) { litMask[o + x] = 1; n++; } }
+      }
+    }
     return n;
   }
 
@@ -920,7 +891,9 @@ export class VesicleWorld {
     if (this.p.wallGenes) for (const a of [this.wgene, this.wmark]) eat(view(a, this.beadHi));
     if (this.p.thread) {
       eat(new Uint8Array(new Int32Array([this.nt]).buffer));
-      for (const a of [this.tx, this.ty, this.tgene, this.tstore, this.tanchor]) eat(view(a, a === this.tgene ? this.nt * this.p.tG : this.nt));
+      for (const a of [this.tx, this.ty, this.tgene, this.tstore]) eat(view(a, a === this.tgene ? this.nt * this.p.tG : this.nt));
+      // where the retired anchored variant's column was (its bead, -1 for a free thread): kept so that the pins hold
+      eat(new Uint8Array(new Int32Array(this.nt).fill(-1).buffer));
     }
     return (h >>> 0).toString(16).padStart(8, '0');
   }

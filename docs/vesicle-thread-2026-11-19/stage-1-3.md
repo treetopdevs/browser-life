@@ -144,3 +144,14 @@ Seed 1, step 400,000; walls are white to pink lines (orange where stretched), so
 - Wild dish: cells sit in lit area 46 to 53 percent of the time against 22 percent of the dish lit; 36 percent of pinches there have a
   daughter under 5 solute; up to 65 threads lie outside any ring. Pinch counts there are churn, not fitness.
 - Not done: wild-dish neutral controls, why copy number grows, diversity of threads within one cell.
+
+## After this stage (2026-11-20)
+
+- The cost that grew faster than area was the bond hash being rebuilt after almost every bead that left a wall. With that fixed
+  (results unchanged on four digest pins), 400,000 steps take about 10 minutes at 4x and about 43 minutes at 16x.
+- Weather now follows the number of rings (one burst per 5,000 steps per 20 rings), which is about 2.5 times the old rate in a
+  full dish. The wild wall baseline rerun under it: 44, 52, 32, 55 live cells (`runs/vesicle/s2/base-wild-wall`).
+- The anchored thread was removed from the code.
+- Divisions where both daughters go on to divide, per live cell per 100,000 steps (`experiments/vesicle/divisions.ts`): wall heredity
+  0.60 in the old dish and 2.27 in the wild dish (2.39 under the new weather); drift only 1.31; thread 1.31 and 7.82. About a fifth to
+  a quarter of pinches are productive in every arm.
