@@ -1,8 +1,8 @@
 import './style.css';
 import { VesicleWorld } from './model.ts';
-import { census, jobHueLight } from './observe.ts';
+import { LineageObserver, census, clusterHue, jobHueLight, tieGraph } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_WILD_KHARVEST, THREAD, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
+import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_WILD_KHARVEST, THREAD, TIES, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -15,9 +15,20 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** The page runs the wild worlds on a dish of 4 times the base area (the 16-fold dish is too slow for a browser frame loop). */
 const WILD_AREA = 4;
 let weather = new Weather(1, 0);
+/** In the ties worlds a lineage observer gives each cell a stable id, so that a cluster keeps its hue (the smallest cell id in it) while beads come and go. */
+let lineage: LineageObserver | undefined;
 
 function build(kind: string, seed: number): VesicleWorld {
   weather = new Weather(seed, 0);
+  lineage?.detach(); lineage = undefined;
+  if (kind === 'ties' || kind === 'wild-ties') {
+    // founders all carry glue 255: every division ties its daughters; the glue byte can drift (mutation 0.01), and no refuge weather on the page
+    const wl = kind === 'wild-ties' ? wild(WILD_AREA) : undefined;
+    if (wl) weather = new Weather(seed, 0, wl.weatherRings ?? 0);
+    const w = garden(seed, { founders: wl?.founders, founderGlue: 255, params: { ...wl?.params, ...TIES } });
+    lineage = new LineageObserver(w, () => {});
+    return w;
+  }
   if (kind.startsWith('wild')) {
     const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : kind === 'wild-jobs' ? { ...JOBS, kHarvest: JOBS_WILD_KHARVEST } : {};
     weather = new Weather(seed, 0, wl.weatherRings ?? 0);
@@ -61,8 +72,11 @@ function draw(): void {
     }
   }
   const mode = colorSel.value, groups = new Map<string, number[]>();
+  // cluster colouring: rings joined by ties share one hue; a cell with no tie is grey
+  const tg = mode === 'cluster' && w.p.ties ? tieGraph(w, (b) => lineage?.idOf(b) ?? b) : undefined;
+  const ringColour = (ring: number) => { const c = tg!.comp[ring]; return tg!.compRings[c] > 1 ? `hsl(${Math.round(clusterHue(tg!.compHandle[c]))} 75% 58%)` : '#8a929a'; };
   for (let k = 0; k < w.n; k++) {
-    const col = mode === 'founder' || mode === 'job' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
+    const col = tg ? '#3d464f' : mode === 'founder' || mode === 'job' || mode === 'cluster' ? hue(w.founder[k] * 67 + 30) : geneColour(((mode === 'gene' ? w.gene[k] : w.mark[k]) >> 3) << 3);
     let g = groups.get(col);
     if (!g) groups.set(col, (g = []));
     g.push(k);
@@ -80,7 +94,25 @@ function draw(): void {
     }
   }
   ctx.lineWidth = 2; ctx.lineJoin = 'round';
-  if (w.p.wallGenes && (mode === 'job' ? w.p.jobs : mode !== 'founder')) {
+  if (tg) {
+    ctx.lineWidth = 3;
+    const bonds = new Map<string, number[]>();
+    for (let i = 0; i < w.beadHi; i++) {
+      if (!w.alive[i]) continue;
+      const col = ringColour(tg.ringOf[i]);
+      let g = bonds.get(col);
+      if (!g) bonds.set(col, (g = []));
+      g.push(i);
+    }
+    for (const [col, is] of bonds) {
+      ctx.strokeStyle = col; ctx.beginPath();
+      for (const i of is) { const j = w.next[i]; ctx.moveTo(w.bx[i] * s, w.by[i] * s); ctx.lineTo(w.bx[j] * s, w.by[j] * s); }
+      ctx.stroke();
+    }
+    drawTies(s);
+    return;
+  }
+  if (w.p.wallGenes && (mode === 'job' ? w.p.jobs : mode !== 'founder' && mode !== 'cluster')) {
     // heredity is in the wall: draw each bond in the colour of its own byte
     ctx.lineWidth = 3;
     const bonds = new Map<string, number[]>();
@@ -96,6 +128,7 @@ function draw(): void {
       for (const i of is) { const j = w.next[i]; ctx.moveTo(w.bx[i] * s, w.by[i] * s); ctx.lineTo(w.bx[j] * s, w.by[j] * s); }
       ctx.stroke();
     }
+    drawTies(s);
     return;
   }
   for (const [colour, lo, hi] of [['#b99cff', -9, -0.03], ['#f1f0ea', -0.03, 0.05], ['#ffa24a', 0.05, 9]] as const) {
@@ -109,6 +142,16 @@ function draw(): void {
     }
     ctx.stroke();
   }
+  drawTies(s);
+}
+
+/** Ties: short bright lines between the two beads (a tie is not a wall; nothing in the rules sees it). */
+function drawTies(s: number): void {
+  const w = world;
+  if (!w.p.ties) return;
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath();
+  for (let u = 0; u < w.beadHi; u++) { const v = w.tie[u]; if (v > u && w.alive[u]) { ctx.moveTo(w.bx[u] * s, w.by[u] * s); ctx.lineTo(w.bx[v] * s, w.by[v] * s); } }
+  ctx.stroke();
 }
 
 function refresh(): void {
@@ -146,6 +189,7 @@ function reset(): void {
   const seed = Number.parseInt(seedInput.value, 10);
   world = build(startSel.value, Number.isFinite(seed) ? seed : 1);
   if (world.p.jobs && colorSel.value !== 'job') colorSel.value = 'job'; else if (!world.p.jobs && colorSel.value === 'job') colorSel.value = 'founder';
+  if (world.p.ties && colorSel.value === 'founder') colorSel.value = 'cluster'; else if (!world.p.ties && colorSel.value === 'cluster') colorSel.value = 'founder';
   canvas.height = Math.round((canvas.width * world.p.H) / world.p.W);
   history.length = 0;
   pause('Paused · new world'); refresh(); draw();
@@ -154,7 +198,7 @@ function reset(): void {
 function loop(): void {
   if (!paused) {
     const n = Number(paceSel.value);
-    for (let i = 0; i < n; i++) { world.tick(); weather.after(world, world.step); }
+    for (let i = 0; i < n; i++) { world.tick(); lineage?.afterTick(); weather.after(world, world.step); }
     if (++frame % 30 === 0) refresh();
     draw();
   }
@@ -162,7 +206,7 @@ function loop(): void {
 }
 
 playBtn.addEventListener('click', () => { if (paused) { paused = false; playBtn.textContent = 'Pause'; say('Running.'); } else pause(); });
-stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); weather.after(world, world.step); refresh(); draw(); });
+stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); lineage?.afterTick(); weather.after(world, world.step); refresh(); draw(); });
 startSel.addEventListener('change', reset);
 el<HTMLFormElement>('seed-form').addEventListener('submit', (e) => { e.preventDefault(); reset(); });
 colorSel.addEventListener('change', draw); tintSel.addEventListener('change', draw);

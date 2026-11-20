@@ -46,10 +46,12 @@
             <option value="wild-heredity">Wild dish with heredity on solute</option>
             <option value="wild-thread">Wild dish with a thread</option>
             <option value="wild-jobs">Wild dish with jobs: harvesting works only inside the lit patches, digesting anywhere</option>
+            <option value="ties">Garden with ties: every wall carries a glue byte (founders 255); when a cell divides, the daughters are tied with probability glue / 255; walls and ties coloured by cluster</option>
+            <option value="wild-ties">Wild dish with ties: the same, in the big dish with drifting light and weather</option>
             <option value="theft">Two cells, fixed lipid: the crowded one takes wall</option>
             <option value="feed">One cell in spare lipid: wall outgrows contents and splits</option>
           </select></label>
-          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing; in the thread worlds the thread rings show it too)</option><option value="job">Job (jobs worlds: wall green = harvests waste, magenta = digests loose lipid, yellow and orange between; brighter = more of its budget in use; solute by family)</option></select></label>
+          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing; in the thread worlds the thread rings show it too)</option><option value="cluster">Cluster (ties worlds: each group of tied cells has one hue, single cells are grey, ties are bright lines; solute dark)</option><option value="job">Job (jobs worlds: wall green = harvests waste, magenta = digests loose lipid, yellow and orange between; brighter = more of its budget in use; solute by family)</option></select></label>
           <label for="tint">Background shows<select id="tint"><option value="lipid">Free lipid in the water</option><option value="food">Food</option><option value="none">Nothing</option></select></label>
           <fieldset><legend>Click the world to</legend>
             <label><input type="radio" name="tool" value="lipid" checked /> Drop lipid <small>(adds 60 units)</small></label>

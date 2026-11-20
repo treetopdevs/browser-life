@@ -68,6 +68,15 @@ export interface Params {
    *  the enzymes do nothing and the free conversions (`kLight`, `kLipDecay`) stay on. */
   jobsInert: boolean;
   kHarvest: number; kDigest: number;
+  /** Stage 4, "bodies", first rung: ties (needs `wallGenes`). Every wall bead carries one more linked byte, the glue byte `wglue`, copied from the
+   *  same neighbour as the others. When a pinch succeeds, with probability (glue byte of the bead that closed the neck) / 255, drawn from a
+   *  stream of its own, the two daughters are tied: a spring (rest `tieRest`, stiffness `tieK`) between one neck bead of each. A bead has at most
+   *  one tie. A tie is not a wall (solute and the crossing checks do not see it), carries no matter and ends when stretched past `tieBreak`,
+   *  when its ring ends, or when its bead leaves the ring and no free neighbour can take it over. Off = nothing here is read, drawn or hashed. */
+  ties: boolean;
+  /** The neutral twin of `ties` (needs `ties`): the glue byte is carried and shifted exactly as with `ties`, but no tie ever forms. */
+  tiesInert: boolean;
+  tieRest: number; tieK: number; tieBreak: number;
   maxBeads: number; maxParts: number;
 }
 
@@ -84,10 +93,15 @@ export const DEFAULTS: Params = {
   mut: 0, mutStep: 8, neutral: false, tradeoff: 1, wallGenes: false, wallGate: false,
   thread: false, tG: 2, tCost: 6, kTFood: 0.02, rInhib: 14, rShare: 12, kTDecay: 0.01, rSup: 8, kSup: 3, maxThreads: 4096, lightPatches: 0, patchR: 40, patchSpeed: 0.004,
   jobs: false, jobsInert: false, kHarvest: 0, kDigest: 0,
+  ties: false, tiesInert: false, tieRest: 2, tieK: 0.1, tieBreak: 6,
   maxBeads: 1 << 15, maxParts: 1 << 16,
 };
 
-export interface Events { pinch: number; dissolve: number; burst: number; insert: number; desorb: number; birth: number; decay: number; lipidMade: number; tcopy: number; tdecay: number; harvest: number; digest: number }
+export interface Events { pinch: number; dissolve: number; burst: number; insert: number; desorb: number; birth: number; decay: number; lipidMade: number; tcopy: number; tdecay: number; harvest: number; digest: number;
+  /** Ties formed, and ended by stretching, by a bead leaving with no free neighbour to take the tie over, or by the ring ending; hops to a neighbour. */
+  tie: number; tieStretch: number; tieDesorb: number; tieRingEnd: number; tieHop: number;
+  /** Pinches whose glue draw passed but where no pair of neck beads was free of ties (no tie formed). */
+  tieBlocked: number }
 
 /** Deterministic sine and cosine from basic operations only (seeding must not depend on the host's Math.sin). */
 export function sinCos(theta: number): [number, number] {
@@ -125,6 +139,8 @@ export class VesicleWorld {
   readonly wgene: Uint8Array; readonly wmark: Uint8Array;
   /** Stage 2: the wall's job bytes, harvest and digest (read, copied and hashed only when `jobs` is on). */
   readonly wh: Uint8Array; readonly wd: Uint8Array;
+  /** Stage 4: the glue byte (read, copied and hashed only when `ties` is on), and each bead's tie partner (-1 = none; symmetric; always -1 on a dead slot). */
+  readonly wglue: Uint8Array; readonly tie: Int32Array;
   /** Length of bond i -> next[i] as of the last force pass. */
   readonly blen: Float64Array;
   private readonly fx: Float64Array; private readonly fy: Float64Array; private readonly born: Int32Array;
@@ -167,7 +183,9 @@ export class VesicleWorld {
   // a second sfc32 stream for the enzymes' stochastic rounding only, so that a bead's job bytes never change what the main stream
   // hands the physics and the copy rules (it is drawn from only with `jobs` on, and never touched otherwise)
   private ea = 0x6a09e667; private eb = 0xbb67ae85; private ec = 0x3c6ef372; private ed = 0;
-  readonly events: Events = { pinch: 0, dissolve: 0, burst: 0, insert: 0, desorb: 0, birth: 0, decay: 0, lipidMade: 0, tcopy: 0, tdecay: 0, harvest: 0, digest: 0 };
+  // a third sfc32 stream for tie formation only (drawn from once per successful pinch, and only with `ties` on and not inert)
+  private ta = 0x510e527f; private tb = 0x9b05688c; private tc = 0x1f83d9ab; private td = 0;
+  readonly events: Events = { pinch: 0, dissolve: 0, burst: 0, insert: 0, desorb: 0, birth: 0, decay: 0, lipidMade: 0, tcopy: 0, tdecay: 0, harvest: 0, digest: 0, tie: 0, tieStretch: 0, tieDesorb: 0, tieRingEnd: 0, tieHop: 0, tieBlocked: 0 };
   /** Each pinch: step and the bead counts of the two daughters. */
   readonly pinchLog: { step: number; a: number; b: number }[] = [];
   /** Observer hooks (never read by the rules, no random draws): called around a successful pinch (stage 0 just
@@ -175,7 +193,11 @@ export class VesicleWorld {
    *  returned to free lipid. Empty by default. */
   readonly hooks: { pinch?: (stage: 0 | 1, c: number, a: number, pc: number, b: number) => void; end?: (kind: 'burst' | 'dissolve' | 'wound', bead: number) => void;
     /** Called when bead `bead` turned `n` units of waste to food (harvest) or of free lipid to food (digest). */
-    harvest?: (bead: number, n: number) => void; digest?: (bead: number, n: number) => void } = {};
+    harvest?: (bead: number, n: number) => void; digest?: (bead: number, n: number) => void;
+    /** Ties: 'form' just after a tie is made between beads u and v (x = the glue byte used); 'end' just BEFORE one is ended by stretching or by a bead
+     *  leaving with no free neighbour (the rings are still as they were; x = 1 stretch, 2 desorb-no-neighbour); 'hop' after u's tie moved to bead v
+     *  (x = the partner); 'none' after a pinch that made no tie (u = c, v = b of that pinch). A tie ended because its ring ends is not announced here: `end` above is called first and the observer reads the ring. */
+    tie?: (kind: 'form' | 'end' | 'hop' | 'none', u: number, v: number, x: number) => void } = {};
 
   constructor(seed: number, params: Partial<Params> = {}) {
     const p = (this.p = { ...DEFAULTS, ...params });
@@ -195,6 +217,10 @@ export class VesicleWorld {
     this.gap = new Float64Array(nb);
     this.wgene = new Uint8Array(nb).fill(128); this.wmark = new Uint8Array(nb).fill(128);
     this.wh = new Uint8Array(nb).fill(255); this.wd = new Uint8Array(nb);
+    this.wglue = new Uint8Array(nb); this.tie = new Int32Array(nb).fill(-1);
+    if (p.ties && !p.wallGenes) throw new Error('ties need wallGenes (the glue byte is carried by the wall)');
+    if (p.tiesInert && !p.ties) throw new Error('tiesInert is the neutral twin of ties: set both');
+    if (p.ties && !(p.tieRest > 0 && p.tieK >= 0 && p.tieBreak > p.tieRest)) throw new Error('tieRest must be positive, tieK not negative and tieBreak above tieRest');
     if ((p.jobs || p.jobsInert) && !p.wallGenes) throw new Error('jobs need wallGenes (the job bytes are carried by the wall)');
     if (p.jobsInert && !p.jobs) throw new Error('jobsInert is the neutral twin of jobs: set both');
     if (p.jobs && !(p.kHarvest >= 0 && p.kHarvest <= 1 && p.kDigest >= 0 && p.kDigest <= 1)) throw new Error('kHarvest and kDigest are probabilities per unit per step, 0 to 1');
@@ -213,6 +239,8 @@ export class VesicleWorld {
     for (let i = 0; i < 16; i++) this.rand();
     this.ed = (seed ^ 0x5bd1e995) | 0;
     for (let i = 0; i < 16; i++) this.erand();
+    this.td = (seed ^ 0x2545f491) | 0;
+    for (let i = 0; i < 16; i++) this.trand();
   }
 
   rand(): number {
@@ -232,6 +260,15 @@ export class VesicleWorld {
     return (t >>> 0) / 4294967296;
   }
 
+  /** The tie stream: the same sfc32 step as `rand`, on its own state. */
+  private trand(): number {
+    let a = this.ta | 0, b = this.tb | 0, c = this.tc | 0, d = this.td | 0;
+    const t = (((a + b) | 0) + d) | 0;
+    d = (d + 1) | 0; a = b ^ (b >>> 9); b = (c + (c << 3)) | 0; c = (c << 21) | (c >>> 11); c = (c + t) | 0;
+    this.ta = a; this.tb = b; this.tc = c; this.td = d;
+    return (t >>> 0) / 4294967296;
+  }
+
   cellOf(x: number, y: number): number {
     const c = this.p.cell;
     let cx = Math.floor(x / c), cy = Math.floor(y / c);
@@ -244,15 +281,18 @@ export class VesicleWorld {
 
   private allocBead(): number {
     const i = this.freeBeads.length ? this.freeBeads.pop()! : this.beadHi < this.p.maxBeads ? this.beadHi++ : -1;
-    if (i >= 0) { this.alive[i] = 1; this.beadCount++; this.born[i] = this.step; }
+    if (i >= 0) { this.alive[i] = 1; this.beadCount++; this.born[i] = this.step; this.tie[i] = -1; }
     return i;
   }
   private freeBead(i: number): void {
+    // a freed slot never keeps tie state, and its partner is left untied (this is how a tie ends with its ring)
+    const v = this.tie[i];
+    if (v >= 0) { this.tie[i] = -1; this.tie[v] = -1; this.events.tieRingEnd++; }
     this.alive[i] = 0; this.next[i] = this.prev[i] = -1; this.beadCount--; this.freedNow.push(i);
   }
 
   /** A round loop of `beads` beads (default: rest spacing), counter-clockwise, inside the dish inset. Returns its first bead. */
-  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0)), gene = 128, mark = 128, h = 255, d = 0): number {
+  addLoop(cx: number, cy: number, radius: number, beads = Math.max(8, Math.round((6.283185307179586 * radius) / this.p.l0)), gene = 128, mark = 128, h = 255, d = 0, glue = 0): number {
     let first = -1, last = -1;
     for (let k = 0; k < beads; k++) {
       const [s, c] = sinCos((6.283185307179586 * k) / beads);
@@ -261,7 +301,7 @@ export class VesicleWorld {
       const x = cx + radius * c, y = cy + radius * s, inset = 2 * this.p.rp;
       // beads live inside the dish inset: a bead seeded outside it would be snapped in by more than its step cap
       if (x < inset || x > this.p.W - inset || y < inset || y > this.p.H - inset) throw new Error('a ring must start inside the dish inset (2 rp from the edge)');
-      this.bx[i] = x; this.by[i] = y; this.wgene[i] = gene; this.wmark[i] = mark; this.wh[i] = h; this.wd[i] = d;
+      this.bx[i] = x; this.by[i] = y; this.wgene[i] = gene; this.wmark[i] = mark; this.wh[i] = h; this.wd[i] = d; this.wglue[i] = glue; this.tie[i] = -1;
       if (last >= 0) { this.next[last] = i; this.prev[i] = last; } else first = i;
       last = i;
     }
@@ -296,6 +336,7 @@ export class VesicleWorld {
     this.buildHash();
     this.wallContact();
     this.wallForces();
+    if (this.p.ties) this.tieForces();
     this.moveParticles();
     if (this.p.thread && this.nt > 0) this.moveThreads();
     this.moveBeads();
@@ -429,6 +470,7 @@ export class VesicleWorld {
     this.hooks.pinch?.(1, c, a, pc, b);
     this.events.pinch++;
     this.pinchLog.push({ step: this.step, a: n1, b: n2 });
+    if (p.ties && !p.tiesInert) this.formTie(c, a, pc, b);
     return true;
   }
 
@@ -616,6 +658,7 @@ export class VesicleWorld {
           // checked without rebuilding a stale hash (one rebuild per desorption made the step grow with the square of
           // the dish); a refusal rebuilds it here, where the check always used to, since `nearBond` may read it next
           if (this.wouldCross(q, j, true)) { if (this.hashStale) this.buildHash(); continue; }
+          if (this.tie[i] >= 0) this.hopTie(i, q, j);
           next[q] = j; prev[j] = q; blen[q] += blen[i];
           this.hashStale = true; this.shortcuts.push(q);
           lipid[this.cellOf(bx[i], by[i])]++; this.freeBead(i); this.events.desorb++;
@@ -824,8 +867,67 @@ export class VesicleWorld {
       this.wgene[m] = this.copyByte(this.wgene[src]); this.wmark[m] = this.copyByte(this.wmark[src]);
       // the job bytes come from the same bead, after the others (linked: one draw picks the source for all four)
       if (this.p.jobs) { this.wh[m] = this.copyByte(this.wh[src]); this.wd[m] = this.copyByte(this.wd[src]); }
+      // and the glue byte, last of all, from the same bead (a tie never changes which neighbour a bead copies)
+      if (this.p.ties) this.wglue[m] = this.copyByte(this.wglue[src]);
     }
     else { this.wgene[m] = this.wgene[src]; this.wmark[m] = this.wmark[src]; }
+  }
+
+  // ---- ties (stage 4) ------------------------------------------------------------------------------------
+
+  /** Tie beads u and v (both alive and untied, different beads). Public for tests and scenes; the rules call it only from a pinch. */
+  addTie(u: number, v: number, glue = 0): void {
+    if (!this.p.ties) throw new Error('ties are off');
+    if (u === v || !this.alive[u] || !this.alive[v] || this.tie[u] >= 0 || this.tie[v] >= 0) throw new Error('a tie needs two different live beads without ties');
+    for (let m = this.next[u], k = 0; m !== u && m >= 0 && k <= this.beadHi; m = this.next[m], k++) if (m === v) throw new Error('a tie joins two different rings: these beads share one');
+    this.tie[u] = v; this.tie[v] = u; this.events.tie++;
+    this.hooks.tie?.('form', u, v, glue);
+  }
+
+  /** After a successful pinch (beads c, a, pc, b as in `tryPinch`; daughter 1 is c..a, daughter 2 is b..pc). One draw from the tie stream:
+   *  with probability wglue[c] / 255 (c is the bead that closed the neck, the mother's) the daughters are tied, between the nearest pair
+   *  among {c, a} x {pc, b} in which both beads have no tie (the first in the order c-pc, c-b, a-pc, a-b among equals). No pair free = no tie. */
+  private formTie(c: number, a: number, pc: number, b: number): void {
+    const { bx, by, tie } = this, glue = this.wglue[c];
+    if (!(this.trand() * 255 < glue)) { this.hooks.tie?.('none', c, b, 0); return; }
+    let bu = -1, bv = -1, bd = Infinity;
+    for (const u of [c, a]) {
+      if (tie[u] >= 0) continue;
+      for (const v of [pc, b]) {
+        if (tie[v] >= 0) continue;
+        const dx = bx[u] - bx[v], dy = by[u] - by[v], d2 = dx * dx + dy * dy;
+        if (d2 < bd) { bd = d2; bu = u; bv = v; }
+      }
+    }
+    if (bu < 0) { this.events.tieBlocked++; this.hooks.tie?.('none', c, b, 0); return; }
+    this.addTie(bu, bv, glue);
+  }
+
+  /** Spring pass: every tie pulls its beads toward rest length `tieRest` (both ways, like a bond); a tie longer than `tieBreak` ends first.
+   *  Its own pass after the wall contact pass, so the restart that follows a pinch cannot apply it twice. */
+  private tieForces(): void {
+    const { bx, by, tie, alive, fx, fy, p } = this, lim2 = p.tieBreak * p.tieBreak;
+    for (let u = 0; u < this.beadHi; u++) {
+      const v = tie[u];
+      if (v < u || !alive[u]) continue; // v < u: -1 or already handled from the other end
+      const dx = bx[v] - bx[u], dy = by[v] - by[u], d2 = dx * dx + dy * dy;
+      if (d2 > lim2) { this.hooks.tie?.('end', u, v, 1); tie[u] = tie[v] = -1; this.events.tieStretch++; continue; }
+      const len = Math.sqrt(d2);
+      if (len === 0) continue;
+      const f = (p.tieK * (len - p.tieRest)) / len;
+      fx[u] += f * dx; fy[u] += f * dy; fx[v] -= f * dx; fy[v] -= f * dy;
+    }
+  }
+
+  /** Bead i (tied) is about to leave its ring between q and j: its tie moves to the one of q and j that has no tie and is nearer to the
+   *  partner (q on a tie), or ends if both have one. */
+  private hopTie(i: number, q: number, j: number): void {
+    const { bx, by, tie } = this, v = tie[i];
+    const dq = (bx[q] - bx[v]) ** 2 + (by[q] - by[v]) ** 2, dj = (bx[j] - bx[v]) ** 2 + (by[j] - by[v]) ** 2;
+    const to = tie[q] < 0 && (tie[j] >= 0 || dq <= dj) ? q : tie[j] < 0 ? j : -1;
+    if (to < 0) { this.hooks.tie?.('end', i, v, 2); tie[i] = tie[v] = -1; this.events.tieDesorb++; return; }
+    tie[i] = -1; tie[to] = v; tie[v] = to; this.events.tieHop++;
+    this.hooks.tie?.('hop', i, to, v);
   }
 
   /** Stage 2: each bead works on the grid cell where it sits, beads in index order. Harvest: waste -> food, only in a lit cell
@@ -974,6 +1076,7 @@ export class VesicleWorld {
     for (const a of [this.food, this.waste, this.lipid]) eat(view(a, a.length));
     if (this.p.wallGenes) for (const a of [this.wgene, this.wmark]) eat(view(a, this.beadHi));
     if (this.p.jobs) for (const a of [this.wh, this.wd]) eat(view(a, this.beadHi));
+    if (this.p.ties) { eat(view(this.wglue, this.beadHi)); eat(view(this.tie, this.beadHi)); }
     if (this.p.thread) {
       eat(new Uint8Array(new Int32Array([this.nt]).buffer));
       for (const a of [this.tx, this.ty, this.tgene, this.tstore]) eat(view(a, a === this.tgene ? this.nt * this.p.tG : this.nt));

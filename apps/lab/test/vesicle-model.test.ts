@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VesicleWorld, scaleJobs, sinCos } from '../src/vesicle/model.ts';
-import { LineageObserver, assign, cellHeader, cellLine, census, check, countCrossings, eventHeader, eventLine, jobHueLight, loops } from '../src/vesicle/observe.ts';
-import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_INERT, METABOLISM, THREAD, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
+import { LineageObserver, TieObserver, assign, cellHeader, cellLine, census, check, countCrossings, eventHeader, eventLine, jobHueLight, loops, tieGraph, tieStats } from '../src/vesicle/observe.ts';
+import { HEREDITY, JOBS, JOBS_FOUNDER, JOBS_INERT, METABOLISM, THREAD, TIES, TIES_INERT, WALL_GATE, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
 // digest, matter, solute, beads, units harvested and units digested after 2,000 steps of the JOBS garden (founders 200/55, seed 1)
@@ -963,6 +963,292 @@ describe('vesicle world', () => {
     it('leaves the world alone when the light is uniform whatever the patch numbers say', () => {
       const a = run(garden(1, { params: HEREDITY }), 300).digest(), b = run(garden(1, { params: { ...HEREDITY, lightPatches: 0, patchR: 10, patchSpeed: 1 } }), 300).digest();
       expect(a).toBe(b);
+    });
+  });
+
+  // ---- stage 4: ties -------------------------------------------------------------------------------------
+
+  describe('ties', () => {
+    const tg = (seed: number, glue: number | number[] = 255, extra: object = {}, o: object = {}) => garden(seed, { founderGlue: glue, ...o, params: { ...TIES, mut: 0, ...extra } });
+    /** Two separate rings of 25 beads each, no wall growth, with ties on and no chemistry: for one rule at a time. */
+    const two = (extra: object = {}) => {
+      const w = new VesicleWorld(1, { W: 96, H: 64, ...still, wallGenes: true, ties: true, tieBreak: 30, ...extra });
+      const a = w.addLoop(24, 32, 8, undefined, 128, 128, 255, 0, 255), b = w.addLoop(50, 32, 8, undefined, 128, 128, 255, 0, 255);
+      return { w, a, b };
+    };
+    /** The bead of ring `first` farthest right / left. */
+    const extreme = (w: VesicleWorld, first: number, sign: 1 | -1) => { let best = first; for (let i = w.next[first]; i !== first; i = w.next[i]) if (sign * w.bx[i] > sign * w.bx[best]) best = i; return best; };
+
+    it('is off by default and leaves every pin alone, whatever the tie numbers say', () => {
+      expect(run(garden(1, { founderGlue: 200, params: { ...WALL_GENES, ties: false, tieK: 5, tieBreak: 1 } }), 2000).digest()).toBe('48c2db7d');
+      expect(run(garden(1, { params: { ...HEREDITY, ties: false } }), 2000).digest()).toBe('d0d875d2');
+      expect(() => new VesicleWorld(1, { ties: true })).toThrow(/wallGenes/);
+      expect(() => new VesicleWorld(1, { wallGenes: true, tiesInert: true })).toThrow(/twin/);
+    });
+
+    it('matches the pinned state of a TIES garden after 2,000 steps', () => {
+      const w = run(garden(1, { founderGlue: 255, params: TIES }), 2000);
+      expect([w.digest(), w.matter(), w.n, w.beadCount, w.events.pinch, w.events.tie]).toEqual(['ccb1eef3', 5694, 393, 334, 3, 3]);
+    });
+
+    it('keeps matter exact and rings whole and repeats from a seed: old dish, and wild dish with weather and refuge', () => {
+      const w = tg(3, 255, { mut: 0.05 }), m0 = w.matter();
+      for (let k = 0; k < 5; k++) { run(w, 500); expect(w.matter()).toBe(m0); expect(check(w)).toEqual([]); }
+      expect(w.events.tie).toBeGreaterThan(5);
+      expect(run(tg(3, 255, { mut: 0.05 }), 2500).digest()).toBe(w.digest());
+      const wl = wild(4), mk = () => garden(2, { founders: wl.founders, founderGlue: 255, params: { ...wl.params, ...TIES, mut: 0.05 } });
+      const a = mk(), b = mk(), m1 = a.matter(), wa = new Weather(2, 200, 0, 0.8), wb = new Weather(2, 200, 0, 0.8);
+      for (let t = 1; t <= 3000; t++) { a.tick(); wa.after(a, t); b.tick(); wb.after(b, t); if (t % 1000 === 0) { expect(a.matter()).toBe(m1); expect(check(a)).toEqual([]); } }
+      expect(a.digest()).toBe(b.digest()); expect(wa.wounds + wa.spared).toBeGreaterThan(0); expect(a.events.tie).toBeGreaterThan(0);
+    }, 60000);
+
+    it('ties are invisible to everything else: with a spring of zero strength a tied world moves exactly like its inert twin', () => {
+      // same founders, same glue; the only difference is that ties form (and hop, and end) in one. Positions, matter and counts must agree to the bit.
+      const mk = (extra: object) => garden(4, { founderGlue: 255, params: { ...TIES, mut: 0.02, tieK: 0, tieBreak: 1e9, ...extra } });
+      const a = mk({}), b = mk({ tiesInert: true });
+      run(a, 6000); run(b, 6000);
+      expect(a.events.tie).toBeGreaterThan(10); expect(a.events.tieHop).toBeGreaterThan(0); expect(b.events.tie).toBe(0);
+      expect([a.matter(), a.n, a.beadCount, a.events.pinch, a.events.birth]).toEqual([b.matter(), b.n, b.beadCount, b.events.pinch, b.events.birth]);
+      expect(Array.from(a.bx.subarray(0, a.beadHi))).toEqual(Array.from(b.bx.subarray(0, b.beadHi)));
+      expect(Array.from(a.px.subarray(0, a.n))).toEqual(Array.from(b.px.subarray(0, b.n)));
+      expect(Array.from(a.wglue.subarray(0, a.beadHi))).toEqual(Array.from(b.wglue.subarray(0, b.beadHi)));
+      expect(a.digest()).not.toBe(b.digest());
+    });
+
+    it('blind copying: glue changes nothing else, and with glue 0 and no shifts a TIES garden is a WALL_GENES garden', () => {
+      const wall = run(garden(2, { params: { ...WALL_GENES, mut: 0 } }), 2500), z = run(tg(2, 0), 2500);
+      expect(z.events.tie).toBe(0); expect(z.events.pinch).toBeGreaterThan(0);
+      expect(Array.from(z.bx.subarray(0, z.beadHi))).toEqual(Array.from(wall.bx.subarray(0, wall.beadHi)));
+      expect([z.matter(), z.n, z.beadCount]).toEqual([wall.matter(), wall.n, wall.beadCount]);
+      // glue 0 and glue 255 with the tie option inert: every position the same
+      const lo = run(tg(2, 0, { tiesInert: true }), 2500), hi = run(tg(2, 255, { tiesInert: true }), 2500);
+      expect(Array.from(lo.bx.subarray(0, lo.beadHi))).toEqual(Array.from(hi.bx.subarray(0, hi.beadHi)));
+      expect(Array.from(lo.px.subarray(0, lo.n))).toEqual(Array.from(hi.px.subarray(0, hi.n)));
+    });
+
+    it('a new bead takes all its bytes from one neighbour: three bytes with ties, five with jobs and ties', () => {
+      for (const arm of [{}, { jobs: true, kHarvest: 0.01, kDigest: 0.35 }]) {
+        const w = new VesicleWorld(5, { W: 64, H: 64, kOut: 0, sBurst: 0, wallGenes: true, ties: true, mut: 0, ...arm });
+        const first = w.addLoop(32, 32, 8);
+        for (let i = first, k = 0; k < 25; k++, i = w.next[i]) { const o = k % 2; w.wgene[i] = o ? 40 : 200; w.wmark[i] = o ? 3 : 9; w.wh[i] = o ? 11 : 99; w.wd[i] = o ? 21 : 55; w.wglue[i] = o ? 7 : 250; }
+        w.addSolute(32, 32, 6, 300); w.scatter(w.lipid, 600);
+        const old = w.beadHi;
+        run(w, 600);
+        expect(w.beadHi - old).toBeGreaterThan(20);
+        const seen = new Set<string>(), key = (i: number) => `${w.wgene[i]}/${w.wmark[i]}/${w.p.jobs ? `${w.wh[i]}/${w.wd[i]}` : ''}/${w.wglue[i]}`;
+        for (let i = old; i < w.beadHi; i++) seen.add(key(i));
+        expect(seen.size).toBe(2);
+        expect([...seen].sort()).toEqual(w.p.jobs ? ['200/9/99/55/250', '40/3/11/21/7'] : ['200/9//250', '40/3//7']);
+      }
+    });
+
+    it('a tie forms with probability glue / 255: never at glue 0, always at glue 255 when a neck pair is free', () => {
+      const trial = (glue: number, n: number) => {
+        let formed = 0;
+        const w = new VesicleWorld(7, { W: 96, H: 64, ...still, wallGenes: true, ties: true, tieBreak: 30 });
+        const a = w.addLoop(24, 32, 8, 12), b = w.addLoop(50, 32, 8, 12);
+        const ids = [a, w.next[a], b, w.next[b]], form = w as unknown as { formTie(c: number, a: number, pc: number, b: number): void };
+        for (const i of ids) w.wglue[i] = glue;
+        for (let k = 0; k < n; k++) { form.formTie(ids[0], ids[1], ids[2], ids[3]); if (w.tie[ids[0]] >= 0 || w.tie[ids[1]] >= 0) { formed++; for (const i of ids) w.tie[i] = -1; } }
+        return formed;
+      };
+      expect(trial(0, 300)).toBe(0); expect(trial(255, 300)).toBe(300);
+      const half = trial(128, 600); expect(half).toBeGreaterThan(240); expect(half).toBeLessThan(360);
+      // in a living garden every pinch of a glue-255 line makes a tie or is counted as blocked (every neck bead already tied)
+      const w = run(tg(1, 255), 6000);
+      expect(w.events.pinch).toBeGreaterThan(20); expect(w.events.tie + w.events.tieBlocked).toBe(w.events.pinch);
+      expect(run(tg(1, 0), 6000).events.tie).toBe(0);
+    });
+
+    it('a tie joins two rings: addTie refuses two beads of one ring, and check() flags such a tie', () => {
+      const { w, a } = two({ tieK: 0 });
+      expect(() => w.addTie(a, w.next[a])).toThrow(/share one/);
+      expect(w.tie[a]).toBe(-1);
+      w.tie[a] = w.next[a]; w.tie[w.next[a]] = a; // forged past the guard
+      expect(check(w).some((m) => /within one ring/.test(m))).toBe(true);
+    });
+
+    it('a tie is not a wall: solute and the crossing checks do not see it, and nothing counts it as pressure', () => {
+      const { w, a, b } = two({ tieK: 0 });
+      const u = extreme(w, a, 1), v = extreme(w, b, -1);
+      w.addTie(u, v);
+      const hit = w as unknown as { segHit(x0: number, y0: number, x1: number, y1: number, u: number, v: number): boolean };
+      expect(hit.segHit(w.bx[u] + 0.1, w.by[u], w.bx[v] - 0.1, w.by[v], -1, -1)).toBe(false);
+      expect(hit.segHit(32, 20, 32, 44, -1, -1)).toBe(false);
+      // a particle that sits on the line between the two beads wanders off it freely, and the walls come out as without the tie
+      const free = two({ tieK: 0 }), x = (c: { w: VesicleWorld }) => { c.w.addParticle(37, 32); return c; };
+      x({ w }); x(free);
+      free.w.addTie(extreme(free.w, free.a, 1), extreme(free.w, free.b, -1));
+      const ref = two({ tieK: 0 }); x(ref);
+      run(free.w, 400); run(ref.w, 400);
+      expect(Array.from(free.w.bx.subarray(0, 50))).toEqual(Array.from(ref.w.bx.subarray(0, 50)));
+      expect([free.w.px[0], free.w.py[0]]).toEqual([ref.w.px[0], ref.w.py[0]]);
+      expect(free.w.px[0]).not.toBe(37);
+    });
+
+    it('the spring pulls once per step toward its rest length (its own pass, after the contact restart)', () => {
+      const { w, a, b } = two({ tieK: 0.1, tieRest: 2, tieBreak: 30 });
+      const u = extreme(w, a, 1), v = extreme(w, b, -1);
+      w.addTie(u, v);
+      const d = w.bx[v] - w.bx[u], priv = w as unknown as { buildHash(): void; wallContact(): void; wallForces(): void; tieForces(): void; fx: Float64Array; fy: Float64Array };
+      priv.buildHash(); priv.wallContact(); priv.wallForces();
+      const before = [priv.fx[u], priv.fy[u], priv.fx[v]];
+      priv.tieForces();
+      const f = (0.1 * (Math.hypot(d, w.by[v] - w.by[u]) - 2)) / Math.hypot(d, w.by[v] - w.by[u]);
+      expect(priv.fx[u] - before[0]).toBeCloseTo(f * d, 12); expect(priv.fx[v] - before[2]).toBeCloseTo(-f * d, 12);
+      // and a closed pair of rings does close up over time under it
+      const { w: c, a: ca, b: cb } = two({ tieK: 0.1, tieRest: 2, tieBreak: 30 });
+      const cu = extreme(c, ca, 1), cv = extreme(c, cb, -1), gap0 = c.bx[cv] - c.bx[cu];
+      c.addTie(cu, cv); run(c, 800);
+      expect(Math.hypot(c.bx[cv] - c.bx[cu], c.by[cv] - c.by[cu])).toBeLessThan(0.5 * gap0);
+    });
+
+    it('a tie stretched past the break length ends, and says why', () => {
+      const { w, a, b } = two({ tieK: 0.1, tieBreak: 6 }), ev: string[] = [];
+      w.hooks.tie = (k, u, v, x) => ev.push(`${k}:${x}`);
+      const u = extreme(w, a, 1), v = extreme(w, b, -1);
+      w.addTie(u, v);
+      run(w, 1);
+      expect(w.tie[u]).toBe(-1); expect(w.tie[v]).toBe(-1);
+      expect(w.events.tieStretch).toBe(1);
+      expect(ev).toEqual(['form:0', 'end:1']);
+    });
+
+    it('when a tied bead leaves its ring the tie hops to a free neighbour nearer the partner, and ends cleanly with none', () => {
+      const { w, a, b } = two({ tieK: 0 });
+      const u = extreme(w, a, 1), v = extreme(w, b, -1), q = w.prev[u], j = w.next[u], ev: string[] = [];
+      w.hooks.tie = (k, x, y, z) => ev.push(`${k}:${x}:${y}:${z}`);
+      w.addTie(u, v);
+      const hop = w as unknown as { hopTie(i: number, q: number, j: number): void };
+      hop.hopTie(u, q, j);
+      const to = ev[1].split(':')[2];
+      expect([String(q), String(j)]).toContain(to);
+      expect(w.tie[u]).toBe(-1); expect(w.tie[Number(to)]).toBe(v); expect(w.tie[v]).toBe(Number(to));
+      expect(w.events.tieHop).toBe(1);
+      // both neighbours already tied: the tie ends, nobody is left pointing at anybody
+      const t = two({ tieK: 0 }), tu = extreme(t.w, t.a, 1), tq = t.w.prev[tu], tj = t.w.next[tu], tv = extreme(t.w, t.b, -1);
+      t.w.addTie(tu, tv); t.w.addTie(tq, t.w.next[tv]); t.w.addTie(tj, t.w.prev[tv]);
+      hop.hopTie.call(t.w, tu, tq, tj);
+      expect(t.w.tie[tu]).toBe(-1); expect(t.w.tie[tv]).toBe(-1); expect(t.w.events.tieDesorb).toBe(1);
+      expect(check(t.w)).toEqual([]);
+      // really leaving: a bead with a tie that desorbs in a live dish keeps the tie on a live neighbour
+      const g = run(tg(1, 255), 6000);
+      expect(g.events.tieHop).toBeGreaterThan(20);
+      expect(check(g)).toEqual([]);
+    });
+
+    it('when a ring ends (wound, burst or dissolve) its ties end with it and its slots keep no tie', () => {
+      const { w, a, b } = two({ tieK: 0 });
+      const u = extreme(w, a, 1), v = extreme(w, b, -1);
+      w.addTie(u, v);
+      expect(w.dissolveLoop(a)).toBe(25);
+      expect(w.tie[v]).toBe(-1); expect(w.tie[u]).toBe(-1); expect(w.events.tieRingEnd).toBe(1);
+      expect(check(w)).toEqual([]);
+      run(w, 3);
+      for (let i = 0; i < w.beadHi; i++) if (!w.alive[i]) expect(w.tie[i]).toBe(-1);
+      // a slot reused later by a new bead starts untied
+      const m = w as unknown as { allocBead(): number };
+      for (let k = 0; k < 40; k++) { const s = m.allocBead(); expect(w.tie[s]).toBe(-1); }
+    });
+
+    it('ties are symmetric and never on a dead or freed slot, every step of a wild run with weather (hops, ring ends and slot reuse all happen)', () => {
+      const wl = wild(4), w = garden(3, { founders: wl.founders, founderGlue: 255, params: { ...wl.params, ...TIES, mut: 0.02 } }), we = new Weather(3, 150, 0, 0);
+      const lin = new LineageObserver(w, () => {}), tob = new TieObserver(w, lin, () => {}), had = new Set<number>(), wasAlive = new Uint8Array(w.p.maxBeads).fill(1);
+      let reused = 0;
+      for (let t = 1; t <= 4000; t++) {
+        w.tick(); lin.afterTick(); we.after(w, t);
+        const tied: number[] = [];
+        for (let i = 0; i < w.beadHi; i++) {
+          const v = w.tie[i];
+          if (!w.alive[i]) { if (v !== -1) throw new Error(`step ${t}: dead slot ${i} holds a tie`); wasAlive[i] = 0; continue; }
+          if (!wasAlive[i] && had.has(i)) reused++;
+          wasAlive[i] = 1;
+          if (v >= 0) { had.add(i); tied.push(i); if (v === i || !w.alive[v] || w.tie[v] !== i) throw new Error(`step ${t}: bead ${i} tie ${v} not mutual`); }
+        }
+        if (tied.length !== tob.tied.size || tied.some((i) => !tob.tied.has(i))) throw new Error(`step ${t}: observer's tied set differs from the world`);
+        if (t % 500 === 0) expect(check(w)).toEqual([]);
+      }
+      expect(w.events.tie).toBeGreaterThan(20); expect(w.events.tieHop).toBeGreaterThan(50); expect(w.events.tieRingEnd).toBeGreaterThan(5); expect(reused).toBeGreaterThan(5);
+    }, 60000);
+
+    it('tiesInert carries and shifts the glue byte and forms no tie', () => {
+      const w = run(tg(1, 200, { tiesInert: true }), 3000);
+      expect(w.events.pinch).toBeGreaterThan(5); expect(w.events.tie).toBe(0);
+      for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { expect(w.tie[i]).toBe(-1); expect(w.wglue[i]).toBe(200); }
+      const m = run(tg(1, 200, { tiesInert: true, mut: 0.1 }), 3000);
+      let off = 0; for (let i = 0; i < m.beadHi; i++) if (m.alive[i] && m.wglue[i] !== 200) off++;
+      expect(off).toBeGreaterThan(20); expect(m.events.tie).toBe(0);
+    });
+
+    it('the observers change nothing (same digest with and without them) and their logs agree with the kernel counters', () => {
+      const mk = () => tg(1, 255, { mut: 0 });
+      const a = run(mk(), 6000), b = mk(), ev: import('../src/vesicle/observe.ts').TieEvent[] = [], lin = new LineageObserver(b, () => {}), tob = new TieObserver(b, lin, (e) => ev.push(e));
+      for (let t = 0; t < 6000; t++) { b.tick(); lin.afterTick(); }
+      tob.detach(); lin.detach();
+      expect(b.digest()).toBe(a.digest());
+      const count = (f: (e: typeof ev[number]) => boolean) => ev.filter(f).length;
+      expect(count((e) => e.ev === 'form')).toBe(a.events.tie);
+      expect(count((e) => e.ev === 'end' && e.reason === 'ring-end')).toBe(a.events.tieRingEnd);
+      expect(count((e) => e.ev === 'end' && e.reason === 'stretch')).toBe(a.events.tieStretch);
+      expect(count((e) => e.ev === 'end' && e.reason === 'desorb-no-neighbour')).toBe(a.events.tieDesorb);
+      expect(a.events.tieRingEnd).toBeGreaterThan(0);
+      const splits = ev.filter((e) => e.ev === 'split');
+      for (const s of splits) if (s.ev === 'split') { expect(s.sizes.length).toBeGreaterThanOrEqual(2); expect(s.sizes.length).toBe(s.handles.length); }
+      expect(splits.length).toBeGreaterThan(0);
+    });
+
+    it('cluster sizes found by walking ties agree with a brute-force count, in the stats, the graph and the observer', () => {
+      const wl = wild(4), w = garden(2, { founders: wl.founders, founderGlue: 255, params: { ...wl.params, ...TIES, mut: 0 } }), we = new Weather(2, 0, wl.weatherRings ?? 0, 0);
+      const lin = new LineageObserver(w, () => {}), tob = new TieObserver(w, lin, () => {});
+      for (let t = 1; t <= 5000; t++) { w.tick(); lin.afterTick(); we.after(w, t); }
+      const ls = loops(w), g = tieGraph(w);
+      // brute force: label rings by walking next, join rings by every tie, flood fill
+      const ring = new Map<number, number>(); ls.forEach((l, r) => { for (let i = l.first; !ring.has(i); i = w.next[i]) ring.set(i, r); });
+      const adj: number[][] = ls.map(() => []); let ties = 0;
+      for (let i = 0; i < w.beadHi; i++) if (w.alive[i] && w.tie[i] > i) { ties++; const a = ring.get(i)!, b = ring.get(w.tie[i])!; adj[a].push(b); adj[b].push(a); }
+      const label = new Int32Array(ls.length).fill(-1); let nc = 0; const members: number[][] = [];
+      for (let r = 0; r < ls.length; r++) { if (label[r] >= 0) continue; const stack = [r], m: number[] = []; label[r] = nc; while (stack.length) { const x = stack.pop()!; m.push(x); for (const y of adj[x]) if (label[y] < 0) { label[y] = nc; stack.push(y); } } members.push(m); nc++; }
+      const hist = { c1: 0, c2: 0, c3: 0, c4to7: 0, c8p: 0 }; let max = 0, inCl = 0, nLive = 0;
+      for (const m of members) { const live = m.filter((r) => ls[r].solute >= 5).length; nLive += live; if (!live) continue; if (live === 1) hist.c1++; else if (live === 2) hist.c2++; else if (live === 3) hist.c3++; else if (live < 8) hist.c4to7++; else hist.c8p++; if (live > max) max = live; if (live >= 2) inCl += live; }
+      const st = tieStats(w, ls);
+      expect(ties).toBeGreaterThan(5); expect(st.ties).toBe(ties);
+      expect([st.c1, st.c2, st.c3, st.c4to7, st.c8p, st.max]).toEqual([hist.c1, hist.c2, hist.c3, hist.c4to7, hist.c8p, max]);
+      expect(st.share).toBeCloseTo(nLive ? inCl / nLive : 0, 12);
+      expect(g.clusters).toBe(nc); expect(Math.max(...members.map((m) => m.length))).toBeGreaterThanOrEqual(2);
+      ls.forEach((l, r) => { expect(g.compRings[g.comp[g.ringOf[l.first]]]).toBe(members[label[r]].length); expect(tob.cluster(lin.idOf(l.first)).size).toBe(members[label[r]].length); });
+    }, 60000);
+
+    it('refuge spares only rings that hold a tie, with its own generator', () => {
+      const { w, a, b } = two({ tieK: 0 });
+      const c = w.addLoop(72, 32, 8);
+      w.addTie(extreme(w, a, 1), extreme(w, b, -1));
+      const we = new Weather(1, 1, 0, 1);
+      for (let t = 1; t <= 40; t++) { w.tick(); we.after(w, t); }
+      // the loose ring is burst the first time it is picked; the tied pair is never burst
+      expect(w.alive[c]).toBe(0); expect(w.alive[a]).toBe(1); expect(w.alive[b]).toBe(1);
+      expect(we.wounds).toBe(1); expect(we.spared).toBeGreaterThan(5);
+      // and without refuge the pair goes too
+      const q = two({ tieK: 0 }); q.w.addTie(extreme(q.w, q.a, 1), extreme(q.w, q.b, -1));
+      const wq = new Weather(1, 1, 0, 0);
+      for (let t = 1; t <= 40; t++) { q.w.tick(); wq.after(q.w, t); }
+      expect(wq.wounds).toBe(2);
+      // no ties anywhere (inert twin): refuge on or off, the same world and no sparing, kernel untouched
+      const wl = wild(1), mk = () => garden(4, { founders: wl.founders, founderGlue: 255, params: { ...wl.params, ...TIES_INERT, mut: 0 } });
+      const x = mk(), y = mk(), wx = new Weather(4, 300, 0, 0.8), wy = new Weather(4, 300, 0, 0);
+      for (let t = 1; t <= 2400; t++) { x.tick(); wx.after(x, t); y.tick(); wy.after(y, t); }
+      expect(x.digest()).toBe(y.digest()); expect(wx.spared).toBe(0); expect(wx.wounds).toBeGreaterThan(3);
+      // with ties it spares sometimes
+      const wl4 = wild(4), z = garden(4, { founders: wl4.founders, founderGlue: 255, params: { ...wl4.params, ...TIES, mut: 0 } }), wz = new Weather(4, 100, 0, 0.8);
+      for (let t = 1; t <= 5000; t++) { z.tick(); wz.after(z, t); }
+      expect(wz.spared).toBeGreaterThan(0);
+    }, 60000);
+
+    it('the ties worlds of the page are sound at the start', () => {
+      const wl = wild(4);
+      for (const w of [garden(1, { founderGlue: 255, params: TIES }), garden(1, { founders: wl.founders, founderGlue: 255, params: { ...wl.params, ...TIES } })]) {
+        expect(check(w)).toEqual([]);
+        expect(census(w).loops.every((l) => l.solute > 0)).toBe(true);
+      }
     });
   });
 });

@@ -94,6 +94,19 @@ the rings: `Weather` (also `worlds.ts`) adds the number of rings to a count each
 each time the count reaches 100,000 (one ring per 5,000 steps per 20 rings; until 2026-11-20 it was a fixed interval of 100,000 / founders
 steps, which grew weaker as the cells multiplied). `--wound-every N` still bursts one ring every N steps, as it always did. CLI: `--wild [--wild-area 4] [--no-light] [--no-weather]`, composable with `--wall`, `--gate`, `--thread`, `--heredity`.
 
+## Optional: ties (`ties`, `tiesInert`, `Weather` refuge; stage 4, "bodies", first rung)
+
+Off by default; with it off nothing above changes (every pin holds). Needs `wallGenes`. With it on:
+- every wall bead carries one more byte, the glue byte, copied with the others from the same neighbour (one draw picks the source for all of them) and shifted like them. Glue never decides which neighbour a bead copies from, or insertion, desorption, springs or pinching of the ring.
+- after a successful pinch (bead `c` closed the neck, `a` and `b` are the ends of the bond it met, `pc` was before `c`; daughter 1 is `c..a`, daughter 2 is `b..pc`), one number is drawn from a third generator used only for this (the main stream is not touched). With probability glue(c) / 255 the daughters are tied: a spring between the nearest pair among {c, a} x {pc, b} in which both beads hold no tie. If every such bead already holds one, no tie forms (counted as `tieBlocked`).
+- a tie is a spring (rest length `tieRest` 2, stiffness `tieK` 0.1, pulling or pushing both ways, in a pass of its own after the wall forces and before anything moves) between two beads of different rings. A bead holds at most one tie (partner index, symmetric). Ties carry no matter. They are not walls: solute, the crossing checks and the bond hash never see them, and they add nothing to pressure.
+- a tie ends when (a) stretched past `tieBreak` 6; (b) its ring ends (dissolve, burst, weather or wound): freeing a bead clears its tie and its partner's at once, so a freed slot never keeps tie state; (c) its bead desorbs from the ring and neither neighbour of that bead is free of ties. If one is free the tie hops to it instead (the one nearer the partner; the previous bead if equal) and nothing ends.
+- a ring that pinches keeps its ties with their beads: each goes to whichever daughter keeps the bead.
+- `tiesInert` (needs `ties`): the glue byte is carried and shifted exactly the same, and no tie ever forms.
+- refuge (`Weather`, runner side, off by default): when the weather picks a ring that holds at least one tie, the pick is wasted with probability `pRefuge` (0.8). The draw comes from Weather's own generator and is made only for tied rings, so without ties nothing changes. Stands for a grazer that takes single cells more easily than attached ones.
+
+Clusters are never in the physics: an observer finds them by walking ties between rings (`tieGraph`, `tieStats`, `TieObserver`). Cell and cluster sizes in `cells.tsv` and `ties.tsv` count rings; the census row counts live cells (5 or more solute).
+
 ## What is conserved
 
 Every bead, particle, food, waste and lipid unit counts as one unit of matter, and every reaction is one for

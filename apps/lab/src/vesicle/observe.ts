@@ -141,7 +141,27 @@ export function check(w: VesicleWorld, crossings = true): string[] {
     if (!(w.bx[i] === w.bx[i]) || !(w.by[i] === w.by[i])) bad.push(`bead ${i}: NaN position`);
   }
   if (live !== w.beadCount) bad.push(`bead count ${w.beadCount} but ${live} alive`);
+  if (w.p.ties) {
+    // ties: never on a dead slot, always symmetric, never to oneself
+    for (let i = 0; i < w.beadHi; i++) {
+      const v = w.tie[i];
+      if (v < 0) continue;
+      if (!w.alive[i]) bad.push(`dead bead ${i} still has a tie`);
+      else if (v === i || v >= w.beadHi || !w.alive[v]) bad.push(`bead ${i}: tie to ${v} (self or dead)`);
+      else if (w.tie[v] !== i) bad.push(`bead ${i}: tie to ${v} is not returned`);
+    }
+  } else for (let i = 0; i < w.beadHi; i++) if (w.tie[i] >= 0) { bad.push(`bead ${i}: tie with ties off`); break; }
   if (bad.length) return bad;
+  if (w.p.ties) {
+    // a tie joins two different rings, never two beads of one
+    for (let i = 0; i < w.beadHi; i++) {
+      const v = w.tie[i];
+      if (v <= i) continue;
+      let k = 0;
+      for (let m = w.next[i]; m !== i && k <= w.beadHi; m = w.next[m], k++) if (m === v) { bad.push(`bead ${i}: tie to ${v} within one ring`); break; }
+    }
+    if (bad.length) return bad;
+  }
   const ls = loops(w, false);
   let total = 0;
   for (const l of ls) {
@@ -198,16 +218,19 @@ export interface RingStat {
   threads: number; t0: number; t1: number;
   /** Mean and sd over the ring's beads of the harvest and digest bytes after scaling to the shared budget (zeros unless `jobs` is on). */
   hMean: number; hSd: number; dMean: number; dSd: number;
+  /** Mean glue byte over the ring's beads and the number of beads that hold a tie (zeros unless `ties` is on). */
+  glue: number; ties: number;
 }
 
 /** Whole-ring record for the ring that holds bead `start`: wall bytes over its beads, solute bytes over the particles inside. */
 export function ringStat(w: VesicleWorld, start: number): RingStat {
   const xs: number[] = [], ys: number[] = [];
-  let wg = 0, wg2 = 0, jh = 0, jh2 = 0, jd = 0, jd2 = 0;
-  const jobs = w.p.jobs;
+  let wg = 0, wg2 = 0, jh = 0, jh2 = 0, jd = 0, jd2 = 0, gl = 0, tn = 0;
+  const jobs = w.p.jobs, tied = w.p.ties;
   for (let i = start; ;) {
     xs.push(w.bx[i]); ys.push(w.by[i]); const g = w.wgene[i]; wg += g; wg2 += g * g;
     if (jobs) { const sum = w.wh[i] + w.wd[i], h = sum <= 255 ? w.wh[i] : Math.floor((w.wh[i] * 255) / sum), d = sum <= 255 ? w.wd[i] : 255 - h; jh += h; jh2 += h * h; jd += d; jd2 += d * d; }
+    if (tied) { gl += w.wglue[i]; if (w.tie[i] >= 0) tn++; }
     i = w.next[i]; if (i === start) break;
   }
   const n = xs.length;
@@ -233,6 +256,7 @@ export function ringStat(w: VesicleWorld, start: number): RingStat {
     area: a2 / 2, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
     threads: nt, t0: nt ? tg0 / nt : 0, t1: nt ? tg1 / nt : 0,
     hMean: jh / n, hSd: sd(jh, jh2, n), dMean: jd / n, dSd: sd(jd, jd2, n),
+    glue: gl / n, ties: tn,
   };
 }
 
@@ -255,7 +279,10 @@ export const JOB_TALLY_COLS = ['m_harvests', 'm_digests'] as const;
 export const JOB_CELL_COLS = ['hMean', 'hSd', 'dMean', 'dSd', 'harvests', 'digests'] as const;
 export const eventHeader = (thread: boolean, jobs = false) =>
   [EVENT_HEADER, ...(thread ? ['m', 'a', 'b'].flatMap((r) => THREAD_COLS.map((c) => `${r}_${c}`)) : []), ...(jobs ? [...['m', 'a', 'b'].flatMap((r) => JOB_EVENT_COLS.map((c) => `${r}_${c}`)), ...JOB_TALLY_COLS] : [])].join('\t');
-export const cellHeader = (thread: boolean, jobs = false) => [CELL_HEADER, ...(thread ? THREAD_COLS : []), ...(jobs ? JOB_CELL_COLS : [])].join('\t');
+/** Extra columns of cells.tsv when ties are on: the ring's mean glue byte, how many of its beads hold a tie, the number of rings in its cluster
+ *  (itself alone = 1) and the cluster's handle (the smallest cell id in it). */
+export const TIE_CELL_COLS = ['glue', 'ties', 'cluster', 'handle'] as const;
+export const cellHeader = (thread: boolean, jobs = false, ties = false) => [CELL_HEADER, ...(thread ? THREAD_COLS : []), ...(jobs ? JOB_CELL_COLS : []), ...(ties ? TIE_CELL_COLS : [])].join('\t');
 
 const f = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(3));
 const statCells = (s?: RingStat) => (s ? STAT_COLS.map((c) => f(s[c])) : STAT_COLS.map(() => ''));
@@ -266,8 +293,8 @@ export const eventLine = (e: LineageEvent, thread = false, jobs = false) =>
     ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b), ...(thread ? [...threadCells(e.m), ...threadCells(e.a), ...threadCells(e.b)] : []), ...(jobs ? [...jobEventCells(e.m), ...jobEventCells(e.a), ...jobEventCells(e.b), e.jobs?.harvests ?? 0, e.jobs?.digests ?? 0] : [])]
     : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined), ...(thread ? [...threadCells(e.m), ...threadCells(undefined), ...threadCells(undefined)] : []), ...(jobs ? [...jobEventCells(e.m), ...jobEventCells(undefined), ...jobEventCells(undefined), e.jobs?.harvests ?? 0, e.jobs?.digests ?? 0] : [])]).join('\t');
 /** `jobs` (conversions credited to this id since the last record) given = write the jobs columns. */
-export const cellLine = (step: number, id: number, s: RingStat, thread = false, jobs?: { harvests: number; digests: number }) =>
-  [step, id, ...statCells(s), f(s.cx), f(s.cy), ...(thread ? threadCells(s) : []), ...(jobs ? [f(s.hMean), f(s.hSd), f(s.dMean), f(s.dSd), jobs.harvests, jobs.digests] : [])].join('\t');
+export const cellLine = (step: number, id: number, s: RingStat, thread = false, jobs?: { harvests: number; digests: number }, cluster?: { size: number; handle: number }) =>
+  [step, id, ...statCells(s), f(s.cx), f(s.cy), ...(thread ? threadCells(s) : []), ...(jobs ? [f(s.hMean), f(s.hSd), f(s.dMean), f(s.dSd), jobs.harvests, jobs.digests] : []), ...(cluster ? [f(s.glue), s.ties, cluster.size, cluster.handle] : [])].join('\t');
 
 export class LineageObserver {
   /** Cell id per bead slot (0 = none yet). Ids are 1, 2, 3, ... never reused. */
@@ -309,7 +336,7 @@ export class LineageObserver {
   }
 
   /** The id of the ring that holds bead `bead`; a bead born this step has none yet, so take it from the nearest labelled bead behind it. */
-  private idOf(bead: number): number {
+  idOf(bead: number): number {
     const { w, cid } = this;
     for (let i = bead; ;) { if (cid[i] !== 0) return cid[i]; i = w.prev[i]; if (i === bead) return 0; }
   }
@@ -361,5 +388,194 @@ export class LineageObserver {
       fn(id, ringStat(w, s), { harvests: this.harvests.get(id) ?? 0, digests: this.digests.get(id) ?? 0 });
     }
     this.harvests.clear(); this.digests.clear();
+  }
+}
+
+// ---- ties (stage 4) ------------------------------------------------------------------------------------------
+// Clusters are never stored in the physics: they are found by walking ties between rings (two rings are in one cluster if a chain of ties
+// joins them). Everything here reads the world and draws nothing.
+
+export interface TieGraph {
+  /** Ring index of each bead slot (-1 for a dead slot), the first bead of each ring, its cluster (0..clusters-1), and per cluster the number of
+   *  rings and the handle (lowest first-bead index among them, or the smallest cell id when `idOf` is given). */
+  ringOf: Int32Array; first: Int32Array; comp: Int32Array; compRings: Int32Array; compHandle: Int32Array; rings: number; clusters: number;
+}
+
+/** Union of rings joined by ties (union-find over the rings, one pass over the beads that hold a tie). */
+export function tieGraph(w: VesicleWorld, idOf?: (bead: number) => number): TieGraph {
+  const ringOf = new Int32Array(w.beadHi).fill(-1), first: number[] = [];
+  for (let s = 0; s < w.beadHi; s++) {
+    if (!w.alive[s] || ringOf[s] >= 0) continue;
+    const r = first.length; first.push(s);
+    for (let i = s; ringOf[i] < 0; i = w.next[i]) ringOf[i] = r;
+  }
+  const n = first.length, parent = new Int32Array(n);
+  for (let r = 0; r < n; r++) parent[r] = r;
+  const find = (x: number) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  for (let u = 0; u < w.beadHi; u++) {
+    const v = w.tie[u];
+    if (v <= u || !w.alive[u]) continue;
+    const a = find(ringOf[u]), b = find(ringOf[v]);
+    if (a !== b) parent[Math.max(a, b)] = Math.min(a, b); // the root is the ring with the lowest first bead (rings are numbered by first bead)
+  }
+  const comp = new Int32Array(n), id = new Int32Array(n).fill(-1);
+  let k = 0;
+  for (let r = 0; r < n; r++) { const root = find(r); if (id[root] < 0) id[root] = k++; comp[r] = id[root]; }
+  const compRings = new Int32Array(k), compHandle = new Int32Array(k).fill(-1);
+  // handle: the lowest first-bead index in the cluster, or with `idOf` (a cell id per bead, e.g. the lineage observer's) the smallest cell id
+  for (let r = 0; r < n; r++) { const c = comp[r], h = idOf ? idOf(first[r]) : first[r]; compRings[c]++; if (compHandle[c] < 0 || h < compHandle[c]) compHandle[c] = h; }
+  return { ringOf, first: Int32Array.from(first), comp, compRings, compHandle, rings: n, clusters: k };
+}
+
+export interface TieStats {
+  /** Ties in the dish (pairs of beads). */
+  ties: number;
+  /** Clusters of live cells (solute 5 or more) by the number of live cells in them: 1, 2, 3, 4 to 7, 8 or more; clusters with no live cell are left out. */
+  c1: number; c2: number; c3: number; c4to7: number; c8p: number;
+  /** Largest cluster, in live cells. */
+  max: number;
+  /** Mean glue byte over all wall beads. */
+  glue: number;
+  /** Share of live cells that are in a cluster with at least one other live cell. */
+  share: number;
+}
+
+/** Census numbers on ties, from the census's rings (`ls` as `loops(w)` returns them; a ring is a live cell with 5 or more solute). */
+export function tieStats(w: VesicleWorld, ls: Loop[]): TieStats {
+  const g = tieGraph(w), live = new Int32Array(g.clusters);
+  let nLive = 0, ties = 0, glue = 0, beads = 0;
+  for (const l of ls) if (l.solute >= 5) { live[g.comp[g.ringOf[l.first]]]++; nLive++; }
+  for (let i = 0; i < w.beadHi; i++) if (w.alive[i]) { beads++; glue += w.wglue[i]; if (w.tie[i] > i) ties++; }
+  const o: TieStats = { ties, c1: 0, c2: 0, c3: 0, c4to7: 0, c8p: 0, max: 0, glue: beads ? glue / beads : 0, share: 0 };
+  let inCluster = 0;
+  for (let c = 0; c < g.clusters; c++) {
+    const m = live[c];
+    if (m === 0) continue;
+    if (m === 1) o.c1++; else if (m === 2) o.c2++; else if (m === 3) o.c3++; else if (m < 8) o.c4to7++; else o.c8p++;
+    if (m > o.max) o.max = m;
+    if (m >= 2) inCluster += m;
+  }
+  o.share = nLive ? inCluster / nLive : 0;
+  return o;
+}
+
+/** A hue (degrees) for cluster handle `h`, spread by the golden angle. */
+export const clusterHue = (h: number) => (h * 137.50776405003785 + 20) % 360;
+
+export type TieEvent =
+  | { ev: 'form'; step: number; a: number; b: number; glue: number }
+  | { ev: 'end'; step: number; a: number; b: number; reason: 'stretch' | 'desorb-no-neighbour' | 'ring-end' }
+  | { ev: 'split'; step: number; cause: 'stretch' | 'desorb-no-neighbour' | 'ring-end' | 'pinch'; sizes: number[]; handles: number[] };
+
+export const TIE_HEADER = ['ev', 'step', 'a', 'b', 'glue', 'reason', 'sizes', 'handles'].join('\t');
+/** One row of ties.tsv. form: the two cell ids and the glue byte of the bead that closed the neck. end: the two cell ids and why. split: the cause,
+ *  then the sizes of the pieces in cells (rings), comma-separated, and for each piece its smallest cell id. */
+export const tieLine = (e: TieEvent) =>
+  (e.ev === 'form' ? ['form', e.step, e.a, e.b, e.glue, '', '', '']
+    : e.ev === 'end' ? ['end', e.step, e.a, e.b, '', e.reason, '', '']
+      : ['split', e.step, '', '', '', e.cause, e.sizes.join(','), e.handles.join(',')]).join('\t');
+
+/** Writes the tie events of a run and answers cluster questions by cell id. A pure observer: it needs the lineage observer's cell ids, keeps its
+ *  own set of tied beads, never draws a random number and never writes the world. Create it after the `LineageObserver`; `detach` it first. */
+export class TieObserver {
+  /** The beads that hold a tie, as this observer has followed them (tests compare it with a scan of the world). */
+  readonly tied = new Set<number>();
+  private prevEnd: VesicleWorld['hooks']['end'];
+  readonly w: VesicleWorld;
+  private lin: LineageObserver; private onEvent: (e: TieEvent) => void;
+
+  constructor(w: VesicleWorld, lin: LineageObserver, onEvent: (e: TieEvent) => void) {
+    this.w = w; this.lin = lin; this.onEvent = onEvent;
+    for (let i = 0; i < w.beadHi; i++) if (w.alive[i] && w.tie[i] >= 0) this.tied.add(i);
+    w.hooks.tie = (kind, u, v, x) => this.onTie(kind, u, v, x);
+    this.prevEnd = w.hooks.end;
+    w.hooks.end = (kind, bead) => { this.onRingEnd(bead); this.prevEnd?.(kind, bead); };
+  }
+
+  detach(): void { this.w.hooks.tie = undefined; this.w.hooks.end = this.prevEnd; }
+
+  /** The cell-id graph of the ties now, leaving out the ties for which `skip(u, v)` is true (u is the lower bead). */
+  private adjacency(skip: (u: number, v: number) => boolean): Map<number, number[]> {
+    const adj = new Map<number, number[]>(), add = (a: number, b: number) => { const l = adj.get(a); if (l) l.push(b); else adj.set(a, [b]); };
+    for (const u of this.tied) {
+      const v = this.w.tie[u];
+      if (v < u || skip(u, v)) continue;
+      const a = this.lin.idOf(u), b = this.lin.idOf(v);
+      if (a === b) continue;
+      add(a, b); add(b, a);
+    }
+    return adj;
+  }
+
+  private static component(adj: Map<number, number[]>, start: number): number[] {
+    const seen = new Set<number>([start]), stack = [start];
+    while (stack.length) for (const y of adj.get(stack.pop()!) ?? []) if (!seen.has(y)) { seen.add(y); stack.push(y); }
+    return [...seen];
+  }
+
+  /** Cluster of cell `id` right now: its size in cells (rings) and its handle (the smallest cell id in it). */
+  cluster(id: number, adj = this.adjacency(() => false)): { size: number; handle: number } {
+    const comp = TieObserver.component(adj, id);
+    return { size: comp.length, handle: Math.min(...comp) };
+  }
+
+  /** One adjacency for a whole sweep of cells.tsv rows. */
+  sweep(): (id: number) => { size: number; handle: number } {
+    const adj = this.adjacency(() => false), memo = new Map<number, { size: number; handle: number }>();
+    return (id) => {
+      let r = memo.get(id);
+      if (!r) {
+        const comp = TieObserver.component(adj, id), size = comp.length, handle = Math.min(...comp);
+        for (const c of comp) memo.set(c, { size, handle });
+        r = memo.get(id)!;
+      }
+      return r;
+    };
+  }
+
+  private onTie(kind: 'form' | 'end' | 'hop' | 'none', u: number, v: number, x: number): void {
+    const { w } = this, step = w.step;
+    if (kind === 'none') {
+      // a pinch that made no tie: if the mother held ties, her cluster may now be in two pieces (each daughter kept the ties of the beads she kept)
+      const d1 = this.lin.idOf(u), d2 = this.lin.idOf(v), adj = this.adjacency(() => false), c1 = TieObserver.component(adj, d1);
+      if (!c1.includes(d2)) { const c2 = TieObserver.component(adj, d2); if (c1.length > 1 || c2.length > 1) this.pieces(step, 'pinch', [c1, c2]); }
+      return;
+    }
+    if (kind === 'form') { this.tied.add(u); this.tied.add(v); this.onEvent({ ev: 'form', step, a: this.lin.idOf(u), b: this.lin.idOf(v), glue: x }); return; }
+    if (kind === 'hop') { this.tied.delete(u); this.tied.add(v); return; }
+    // the tie between u and v ends (rings as they are now): did a cluster fall in two?
+    const reason = x === 1 ? 'stretch' : 'desorb-no-neighbour', a = this.lin.idOf(u), b = this.lin.idOf(v), lo = Math.min(u, v);
+    this.onEvent({ ev: 'end', step, a, b, reason });
+    const adj = this.adjacency((p) => p === lo), ca = TieObserver.component(adj, a);
+    if (a !== b && !ca.includes(b)) this.pieces(step, reason, [ca, TieObserver.component(adj, b)]);
+    this.tied.delete(u); this.tied.delete(v);
+  }
+
+  private pieces(step: number, cause: 'stretch' | 'desorb-no-neighbour' | 'ring-end' | 'pinch', comps: number[][]): void {
+    const ps = comps.map((c) => ({ size: c.length, handle: Math.min(...c) })).sort((p, q) => p.handle - q.handle);
+    this.onEvent({ ev: 'split', step, cause, sizes: ps.map((p) => p.size), handles: ps.map((p) => p.handle) });
+  }
+
+  /** Called with the ring about to return to free lipid (before the lineage observer forgets its ids): its ties end with it. */
+  private onRingEnd(bead: number): void {
+    const { w } = this, step = w.step, x = this.lin.idOf(bead), mine: number[] = [];
+    for (let i = bead; ;) { if (w.tie[i] >= 0) mine.push(i); i = w.next[i]; if (i === bead) break; }
+    if (mine.length === 0) return;
+    const partners = new Set<number>(), gone = new Set<number>();
+    for (const u of mine) {
+      const v = w.tie[u];
+      gone.add(u); gone.add(v); partners.add(this.lin.idOf(v));
+      this.onEvent({ ev: 'end', step, a: x, b: this.lin.idOf(v), reason: 'ring-end' });
+    }
+    // what is left of the cluster once this ring is out of it: in how many pieces?
+    const adj = this.adjacency((u, v) => gone.has(u) || gone.has(v)), seen = new Set<number>(), comps: number[][] = [];
+    for (const y of partners) {
+      if (seen.has(y)) continue;
+      const c = TieObserver.component(adj, y);
+      for (const z of c) seen.add(z);
+      comps.push(c);
+    }
+    if (comps.length >= 2) this.pieces(step, 'ring-end', comps);
+    for (const b of gone) this.tied.delete(b);
   }
 }

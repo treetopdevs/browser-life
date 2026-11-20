@@ -17,7 +17,9 @@ export interface GardenOpts { founders?: number; solute?: number; radius?: numbe
    *  (the solute inside gets it too). Default 128. A list gives one value per founder in turn. */
   founderMark?: number | number[];
   /** With `jobs` on: the (harvest, digest) bytes each founder's wall starts with, default (255, 0), a pure harvester. A list is cycled over the founders. */
-  founderJobs?: [number, number] | [number, number][] }
+  founderJobs?: [number, number] | [number, number][];
+  /** With `ties` on: the glue byte each founder's wall starts with, default 0 (never ties). A list is cycled over the founders. */
+  founderGlue?: number | number[] }
 
 /** A dish with a few founder vesicles, each with its own founder id, food and a little free lipid. */
 export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
@@ -30,7 +32,8 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
     const fm = o.founderMark, mk = fm === undefined ? 128 : typeof fm === 'number' ? fm : fm[f % fm.length];
     const fj = o.founderJobs, [jh, jd] = fj === undefined ? [255, 0] : typeof fj[0] === 'number' ? (fj as [number, number]) : (fj as [number, number][])[f % fj.length];
     const wmk = w.p.wallGenes ? mk : 128;
-    const first = w.addLoop(cx, cy, r, undefined, g, wmk, jh, jd), n = o.solute ?? 60;
+    const fl = o.founderGlue, gl = fl === undefined ? 0 : typeof fl === 'number' ? fl : fl[f % fl.length];
+    const first = w.addLoop(cx, cy, r, undefined, g, wmk, jh, jd, gl), n = o.solute ?? 60;
     if (o.chimera) {
       let beads = 1;
       for (let i = w.next[first]; i !== first; i = w.next[i]) beads++;
@@ -92,6 +95,14 @@ export const JOBS_FOUNDER: [number, number] = [200, 55];
 
 export const JOBS_INERT: Partial<Params> = { ...JOBS, jobsInert: true };
 
+/** Stage 4, "bodies", first rung: ties. The wall genome gains a glue byte; when a ring pinches, the daughters are tied (a spring between a neck
+ *  bead of each) with probability glue/255. The tie spring is the only tuned part: rest 2 (a bond length), stiffness 0.1, breaks at 6 (see
+ *  RULES.md for how they were chosen). Founders start with glue 0 unless `founderGlue` says otherwise. */
+export const TIES: Partial<Params> = { ...WALL_GENES, ties: true };
+
+/** The neutral twin of TIES: the glue byte is carried and shifted exactly the same, but no tie ever forms. */
+export const TIES_INERT: Partial<Params> = { ...TIES, tiesInert: true };
+
 /** Control for rung 3: rung 2's heredity (bytes on self-copying solute) with rung 3's rule that solute is only
  *  made against the inner face of a wall. */
 export const WALL_GATE: Partial<Params> = { ...HEREDITY, wallGate: true };
@@ -140,7 +151,11 @@ export function wild(area = 4, o: { lit?: boolean; weather?: boolean } = {}): { 
  *  after each tick. */
 export class Weather {
   private s: number; private acc = 0; private seen = new Uint8Array(0); wounds = 0; readonly every: number; readonly ringSteps: number;
-  constructor(seed: number, every: number, ringSteps = 0) { this.s = (seed * 2654435761) >>> 0; this.every = every; this.ringSteps = ringSteps; }
+  /** Refuge (stage 4; a grazer that takes single cells more easily than attached ones): with `pRefuge` > 0, a ring that has at least one tie is
+   *  spared with that probability when picked (the pick is wasted, no new pick). The draw comes from this generator and is made only when the
+   *  picked ring has a tie, so without ties nothing changes. `spared` counts the sparings. */
+  readonly pRefuge: number; spared = 0;
+  constructor(seed: number, every: number, ringSteps = 0, pRefuge = 0) { this.s = (seed * 2654435761) >>> 0; this.every = every; this.ringSteps = ringSteps; this.pRefuge = pRefuge; }
   after(w: VesicleWorld, t: number): void {
     if (this.every) { if (t % this.every !== 0) return; }
     else if (this.ringSteps > 0) {
@@ -154,6 +169,15 @@ export class Weather {
   private burst(w: VesicleWorld): void {
     const ls = loops(w, false);
     this.s = (Math.imul(this.s, 1664525) + 1013904223) >>> 0;
-    if (ls.length) { w.dissolveLoop(ls[this.s % ls.length].first); this.wounds++; }
+    if (!ls.length) return;
+    const pick = ls[this.s % ls.length].first;
+    if (this.pRefuge > 0 && this.hasTie(w, pick)) {
+      this.s = (Math.imul(this.s, 1664525) + 1013904223) >>> 0;
+      if ((this.s >>> 8) / 16777216 < this.pRefuge) { this.spared++; return; }
+    }
+    w.dissolveLoop(pick); this.wounds++;
+  }
+  private hasTie(w: VesicleWorld, first: number): boolean {
+    for (let i = first; ;) { if (w.tie[i] >= 0) return true; i = w.next[i]; if (i === first) return false; }
   }
 }
