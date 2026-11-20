@@ -116,6 +116,10 @@ export class VesicleWorld {
   readonly events: Events = { pinch: 0, dissolve: 0, burst: 0, insert: 0, desorb: 0, birth: 0, decay: 0, lipidMade: 0 };
   /** Each pinch: step and the bead counts of the two daughters. */
   readonly pinchLog: { step: number; a: number; b: number }[] = [];
+  /** Observer hooks (never read by the rules, no random draws): called around a successful pinch (stage 0 just
+   *  before the reconnection, 1 just after; c..a and b..pc are the two daughters) and just before a whole ring is
+   *  returned to free lipid. Empty by default. */
+  readonly hooks: { pinch?: (stage: 0 | 1, c: number, a: number, pc: number, b: number) => void; end?: (kind: 'burst' | 'dissolve' | 'wound', bead: number) => void } = {};
 
   constructor(seed: number, params: Partial<Params> = {}) {
     const p = (this.p = { ...DEFAULTS, ...params });
@@ -337,7 +341,9 @@ export class VesicleWorld {
     const s1 = acx * (by[pc] - by[a]) - acy * (bx[pc] - bx[a]), s2 = acx * (by[b] - by[a]) - acy * (bx[b] - bx[a]);
     const s3 = pbx * (by[a] - by[pc]) - pby * (bx[a] - bx[pc]), s4 = pbx * (by[c] - by[pc]) - pby * (bx[c] - bx[pc]);
     if (((s1 <= 0 && s2 >= 0) || (s1 >= 0 && s2 <= 0)) && ((s3 <= 0 && s4 >= 0) || (s3 >= 0 && s4 <= 0))) return false;
+    this.hooks.pinch?.(0, c, a, pc, b);
     next[a] = c; prev[c] = a; next[pc] = b; prev[b] = pc;
+    this.hooks.pinch?.(1, c, a, pc, b);
     this.events.pinch++;
     this.pinchLog.push({ step: this.step, a: n1, b: n2 });
     return true;
@@ -477,6 +483,7 @@ export class VesicleWorld {
       let m = i, k = 0;
       for (; k < 8 && blen[m] > limit; k++) m = next[m];
       if (k < 8) continue;
+      this.hooks.end?.('burst', i);
       for (m = i; ;) { const nx = next[m]; lipid[this.cellOf(bx[m], by[m])]++; this.freeBead(m); if (nx === i) break; m = nx; }
       this.events.burst++;
     }
@@ -498,6 +505,7 @@ export class VesicleWorld {
         let m = j, size = 1;
         while (m !== i && size <= 6) { m = next[m]; size++; }
         if (size <= 6) {
+          this.hooks.end?.('dissolve', i);
           for (m = i; ;) { const nx = next[m]; lipid[this.cellOf(bx[m], by[m])]++; this.freeBead(m); if (nx === i) break; m = nx; }
           this.events.dissolve++;
         } else {
@@ -683,6 +691,7 @@ export class VesicleWorld {
   dissolveLoop(first: number): number {
     if (first < 0 || first >= this.beadHi || !this.alive[first]) return 0;
     let n = 0;
+    this.hooks.end?.('wound', first);
     for (let m = first; ;) { const nx = this.next[m]; this.lipid[this.cellOf(this.bx[m], this.by[m])]++; this.freeBead(m); n++; if (nx === first) break; m = nx; }
     return n;
   }

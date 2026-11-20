@@ -139,3 +139,135 @@ export function countCrossings(w: VesicleWorld): number {
   }
   return seen.size;
 }
+
+// ---- cell lineage observer ---------------------------------------------------------------------------------
+// A pure observer: it keeps a cell id per wall bead on its own side and reads the world, never writes it and
+// never draws a random number, so the world's state digest is the same with or without it. A bead born between
+// two beads of a ring takes that ring's id; a pinch ends the mother's id and gives both daughters fresh ones.
+
+export interface RingStat {
+  beads: number; solute: number;
+  /** Mean and sd of the solute lipid-share byte over the solute inside the ring (0 if none). */
+  gMean: number; gSd: number;
+  /** Mean and sd of the wall beads' lipid-share byte. */
+  wMean: number; wSd: number;
+  area: number; cx: number; cy: number;
+}
+
+/** Whole-ring record for the ring that holds bead `start`: wall bytes over its beads, solute bytes over the particles inside. */
+export function ringStat(w: VesicleWorld, start: number): RingStat {
+  const xs: number[] = [], ys: number[] = [];
+  let wg = 0, wg2 = 0;
+  for (let i = start; ;) {
+    xs.push(w.bx[i]); ys.push(w.by[i]); const g = w.wgene[i]; wg += g; wg2 += g * g;
+    i = w.next[i]; if (i === start) break;
+  }
+  const n = xs.length;
+  let a2 = 0, cx = 0, cy = 0, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let k = 0; k < n; k++) {
+    const m = k + 1 === n ? 0 : k + 1, cr = xs[k] * ys[m] - xs[m] * ys[k];
+    a2 += cr; cx += (xs[k] + xs[m]) * cr; cy += (ys[k] + ys[m]) * cr;
+    if (xs[k] < x0) x0 = xs[k]; if (xs[k] > x1) x1 = xs[k]; if (ys[k] < y0) y0 = ys[k]; if (ys[k] > y1) y1 = ys[k];
+  }
+  let s = 0, g1 = 0, g2 = 0;
+  for (let k = 0; k < w.n; k++) {
+    const x = w.px[k], y = w.py[k];
+    if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+    let c = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) if ((ys[i] > y) !== (ys[j] > y) && x < ((xs[j] - xs[i]) * (y - ys[i])) / (ys[j] - ys[i]) + xs[i]) c = !c;
+    if (c) { s++; const g = w.gene[k]; g1 += g; g2 += g * g; }
+  }
+  const sd = (sum: number, sq: number, m: number) => (m ? Math.sqrt(Math.max(0, sq / m - (sum / m) * (sum / m))) : 0);
+  return {
+    beads: n, solute: s, gMean: s ? g1 / s : 0, gSd: sd(g1, g2, s), wMean: wg / n, wSd: sd(wg, wg2, n),
+    area: a2 / 2, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
+  };
+}
+
+export type LineageEvent =
+  | { ev: 'pinch'; step: number; id: number; d1: number; d2: number; m: RingStat; a: RingStat; b: RingStat }
+  | { ev: 'end'; step: number; id: number; kind: 'burst' | 'dissolve' | 'wound'; m: RingStat };
+
+export const STAT_COLS = ['beads', 'solute', 'gMean', 'gSd', 'wMean', 'wSd', 'area'] as const;
+export const EVENT_HEADER = ['ev', 'step', 'id', 'd1', 'd2', 'kind', ...['m', 'a', 'b'].flatMap((r) => STAT_COLS.map((c) => `${r}_${c}`))].join('\t');
+export const CELL_HEADER = ['step', 'id', ...STAT_COLS, 'cx', 'cy'].join('\t');
+
+const f = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(3));
+const statCells = (s?: RingStat) => (s ? STAT_COLS.map((c) => f(s[c])) : STAT_COLS.map(() => ''));
+export const eventLine = (e: LineageEvent) =>
+  (e.ev === 'pinch'
+    ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b)]
+    : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined)]).join('\t');
+export const cellLine = (step: number, id: number, s: RingStat) => [step, id, ...statCells(s), f(s.cx), f(s.cy)].join('\t');
+
+export class LineageObserver {
+  /** Cell id per bead slot (0 = none yet). Ids are 1, 2, 3, ... never reused. */
+  readonly cid: Int32Array;
+  nextId = 1;
+  private pending: { m: RingStat; id: number } | null = null;
+
+  readonly w: VesicleWorld;
+  readonly onEvent: (e: LineageEvent) => void;
+
+  constructor(w: VesicleWorld, onEvent: (e: LineageEvent) => void) {
+    this.w = w; this.onEvent = onEvent;
+    this.cid = new Int32Array(w.p.maxBeads);
+    const seen = new Uint8Array(w.beadHi);
+    for (let s = 0; s < w.beadHi; s++) {
+      if (!w.alive[s] || seen[s]) continue;
+      const id = this.nextId++;
+      for (let i = s; !seen[i]; i = w.next[i]) { seen[i] = 1; this.cid[i] = id; }
+    }
+    w.hooks.pinch = (stage, c, a, pc, b) => this.onPinch(stage, c, a, pc, b);
+    w.hooks.end = (kind, bead) => this.onEnd(kind, bead);
+  }
+
+  detach(): void { this.w.hooks.pinch = undefined; this.w.hooks.end = undefined; }
+
+  private paint(start: number, id: number): void {
+    for (let i = start; ;) { this.cid[i] = id; i = this.w.next[i]; if (i === start) break; }
+  }
+
+  private onPinch(stage: 0 | 1, c: number, a: number, pc: number, b: number): void {
+    const w = this.w;
+    if (stage === 0) { this.pending = { id: this.cid[c], m: ringStat(w, c) }; return; }
+    const { id, m } = this.pending!; this.pending = null;
+    const d1 = this.nextId++, d2 = this.nextId++;
+    this.paint(c, d1); this.paint(b, d2);
+    this.onEvent({ ev: 'pinch', step: w.step, id, d1, d2, m, a: ringStat(w, c), b: ringStat(w, b) });
+    void a; void pc;
+  }
+
+  private onEnd(kind: 'burst' | 'dissolve' | 'wound', bead: number): void {
+    // the anchor may be a bead born this step with no id yet: take the ring's id from any labelled bead, then clear
+    // every bead's id now, because freed slots can be reused before the next sweep and would keep a dead id
+    const { w, cid } = this;
+    let id = 0;
+    for (let i = bead; ;) { if (cid[i] !== 0) { id = cid[i]; break; } i = w.next[i]; if (i === bead) break; }
+    if (id === 0) id = this.nextId++;
+    this.onEvent({ ev: 'end', step: w.step, id, kind, m: ringStat(w, bead) });
+    for (let i = bead; ;) { cid[i] = 0; i = w.next[i]; if (i === bead) break; }
+  }
+
+  /** Call once per step, after `tick()`: gives beads born this step their ring's id and clears freed slots. */
+  afterTick(): void {
+    const { w, cid } = this;
+    for (let i = 0; i < w.beadHi; i++) {
+      if (!w.alive[i]) { cid[i] = 0; continue; }
+      if (cid[i] !== 0) continue;
+      let m = w.prev[i];
+      while (cid[m] === 0 && m !== i) m = w.prev[m];
+      cid[i] = cid[m] !== 0 ? cid[m] : this.nextId++;
+    }
+  }
+
+  /** One record per living ring, by id (the periodic baseline for contemporaries). */
+  forEachCell(fn: (id: number, s: RingStat) => void): void {
+    const { w } = this, seen = new Uint8Array(w.beadHi);
+    for (let s = 0; s < w.beadHi; s++) {
+      if (!w.alive[s] || seen[s]) continue;
+      for (let i = s; !seen[i]; i = w.next[i]) seen[i] = 1;
+      fn(this.cid[s], ringStat(w, s));
+    }
+  }
+}

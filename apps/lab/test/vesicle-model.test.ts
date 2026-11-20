@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { VesicleWorld, sinCos } from '../src/vesicle/model.ts';
-import { assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
+import { LineageObserver, assign, census, check, countCrossings, loops } from '../src/vesicle/observe.ts';
 import { HEREDITY, METABOLISM, WALL_GATE, WALL_GENES, feedWorld, garden, theftWorld } from '../src/vesicle/worlds.ts';
 import { inflate, pinch, theft } from '../../../experiments/vesicle/scenes.ts';
 
@@ -391,5 +391,80 @@ describe('vesicle world', () => {
   it('wall genes: matches the pinned state after 2,000 steps', () => {
     const w = run(garden(1, { params: WALL_GENES }), 2000);
     expect([w.digest(), w.matter(), w.n, w.beadCount]).toEqual(['48c2db7d', 5694, 443, 365]);
+  });
+
+  describe('lineage observer', () => {
+    const watched = (w: VesicleWorld, steps: number, each?: (o: LineageObserver) => void) => {
+      const ev: import('../src/vesicle/observe.ts').LineageEvent[] = [], o = new LineageObserver(w, (e) => ev.push(e));
+      for (let t = 0; t < steps; t++) { w.tick(); o.afterTick(); each?.(o); }
+      return { o, ev };
+    };
+
+    it('leaves the state digest unchanged: default garden and wall-genes garden, observer on vs off', () => {
+      const a = watched(garden(1, { params: HEREDITY }), 2000).o.w, b = run(garden(1, { params: HEREDITY }), 2000);
+      expect(a.digest()).toBe(b.digest());
+      expect(a.digest()).toBe('d0d875d2');
+      const c = watched(garden(1, { params: WALL_GENES }), 2000).o.w, d = run(garden(1, { params: WALL_GENES }), 2000);
+      expect(c.digest()).toBe(d.digest());
+      expect(c.digest()).toBe('48c2db7d');
+    });
+
+    it('records pinches, and every bead of a ring carries one id at every step', () => {
+      const w = garden(2, { params: HEREDITY });
+      const { ev } = watched(w, 2500, (o) => {
+        const seen = new Uint8Array(w.beadHi), ids = new Set<number>();
+        for (let s = 0; s < w.beadHi; s++) {
+          if (!w.alive[s] || seen[s]) continue;
+          const id = o.cid[s]; expect(id).toBeGreaterThan(0);
+          expect(ids.has(id)).toBe(false); ids.add(id);
+          for (let i = s; !seen[i]; i = w.next[i]) { seen[i] = 1; if (o.cid[i] !== id) throw new Error(`step ${w.step}: ring of bead ${s} carries ids ${id} and ${o.cid[i]}`); }
+        }
+        for (let i = 0; i < w.beadHi; i++) if (!w.alive[i]) expect(o.cid[i]).toBe(0);
+      });
+      const pinches = ev.filter((e) => e.ev === 'pinch');
+      expect(pinches.length).toBe(w.events.pinch);
+      expect(pinches.length).toBeGreaterThan(0);
+      for (const e of pinches) if (e.ev === 'pinch') {
+        expect(e.d1).not.toBe(e.d2); expect(e.d1).not.toBe(e.id); expect(e.d2).not.toBe(e.id);
+        expect(e.a.beads + e.b.beads).toBe(e.m.beads);
+      }
+    });
+
+    it('logs a wound as the end of an id', () => {
+      const w = garden(2, { params: HEREDITY }), ev: import('../src/vesicle/observe.ts').LineageEvent[] = [];
+      const o = new LineageObserver(w, (e) => ev.push(e));
+      for (let t = 0; t < 300; t++) { w.tick(); o.afterTick(); }
+      const first = loops(w, false)[0].first, id = o.cid[first];
+      w.dissolveLoop(first); o.afterTick();
+      const end = ev.find((e) => e.ev === 'end');
+      expect(end && end.ev === 'end' && end.kind === 'wound' && end.id === id).toBe(true);
+    });
+
+    it('under the runner sequence with wounds: ids stay one per ring, nonzero, and each id ends once', () => {
+      for (const params of [HEREDITY, WALL_GENES]) {
+        const w = garden(2, { params }), ev: import('../src/vesicle/observe.ts').LineageEvent[] = [];
+        const o = new LineageObserver(w, (e) => {
+          ev.push(e);
+          if (e.ev === 'pinch') { // the daughters' ids sit on rings of the recorded sizes
+            const n = (id: number) => { let k = 0; for (let i = 0; i < w.beadHi; i++) if (w.alive[i] && o.cid[i] === id) k++; return k; };
+            expect(n(e.d1)).toBe(e.a.beads); expect(n(e.d2)).toBe(e.b.beads);
+          }
+        });
+        let wseed = 12345;
+        for (let t = 1; t <= 3500; t++) {
+          w.tick(); o.afterTick();
+          if (t % 250 === 0) { const ls = loops(w, false); wseed = (Math.imul(wseed, 1664525) + 1013904223) >>> 0; if (ls.length) w.dissolveLoop(ls[wseed % ls.length].first); }
+          const seen = new Uint8Array(w.beadHi), ids = new Set<number>();
+          for (let s = 0; s < w.beadHi; s++) {
+            if (!w.alive[s] || seen[s]) continue;
+            const id = o.cid[s]; expect(id).toBeGreaterThan(0); expect(ids.has(id)).toBe(false); ids.add(id);
+            for (let i = s; !seen[i]; i = w.next[i]) { seen[i] = 1; if (o.cid[i] !== id) throw new Error(`step ${w.step}: ring carries ${id} and ${o.cid[i]}`); }
+          }
+        }
+        const ended = new Set<number>();
+        for (const e of ev) { expect(e.id).toBeGreaterThan(0); expect(ended.has(e.id)).toBe(false); ended.add(e.id); }
+        expect(ev.some((e) => e.ev === 'end' && e.kind === 'wound')).toBe(true);
+      }
+    });
   });
 });
