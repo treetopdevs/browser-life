@@ -31,6 +31,14 @@ export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tin
     const t = Math.min(1, v / (tint === 'food' ? 12 : 4));
     rgb[o] = 14 + 40 * t; rgb[o + 1] = 20 + (tint === 'food' ? 50 : 26) * t; rgb[o + 2] = 26 + (tint === 'food' ? 10 : 60) * t;
   }
+  // light patches: a pale wash over the lit cells (drawn under everything else)
+  if (w.p.lightPatches > 0) {
+    w.lightMask();
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!w.litMask[Math.min(w.gh - 1, Math.floor(y / cs)) * w.gw + Math.min(w.gw - 1, Math.floor(x / cs))]) continue;
+      const o = (y * W + x) * 3; rgb[o] += 34; rgb[o + 1] += 32; rgb[o + 2] += 18;
+    }
+  }
   const put = (x: number, y: number, r: number, g: number, b: number) => {
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     const o = (y * W + x) * 3; rgb[o] = r; rgb[o + 1] = g; rgb[o + 2] = b;
@@ -39,6 +47,11 @@ export function render(w: VesicleWorld, scale = 4, by: ColourBy = 'founder', tin
     const [r, g, b] = by === 'founder' ? hue(w.founder[k] * 67 + 30) : hue(300 - (by === 'gene' ? w.gene[k] : w.mark[k]) * 1.1);
     const x = Math.floor(w.px[k] * scale), y = Math.floor(w.py[k] * scale);
     put(x, y, r, g, b); put(x + 1, y, r, g, b); put(x, y + 1, r, g, b); put(x + 1, y + 1, r, g, b);
+  }
+  // threads: a clear ring of dots (the middle left empty), coloured by the marker gene (gene 1) whatever the solute colouring
+  for (let k = 0; k < w.nt; k++) {
+    const [r, g, b] = hue(300 - w.tgene[k * w.p.tG + 1] * 1.1), cx = Math.floor(w.tx[k] * scale), cy = Math.floor(w.ty[k] * scale), rad = Math.max(4, Math.round(1.3 * scale));
+    for (let a = 0; a < 16; a++) { const [sn, cs] = [Math.sin((a * Math.PI) / 8), Math.cos((a * Math.PI) / 8)]; put(cx + Math.round(rad * cs), cy + Math.round(rad * sn), r, g, b); }
   }
   for (let i = 0; i < w.beadHi; i++) {
     if (!w.alive[i]) continue;

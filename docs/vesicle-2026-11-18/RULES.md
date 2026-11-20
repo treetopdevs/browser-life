@@ -83,6 +83,16 @@ Off by default; with it off nothing above changes. With it on:
 `wallGate` is a control: the same condition on where a copy can be made, but the copy takes its parent's
 bytes, shifted, as in step 7. Results: `docs/vesicle-wall-genes-2026-11-19/README.md`.
 
+## Optional: wild worlds (`lightPatches`, `wild()`, `Weather`; stage 3, "make dividing pay")
+
+Off by default; with it off nothing above changes. With `lightPatches` > 0, step 8's light acts only in grid cells whose centre
+lies within `patchR` of a patch centre (distances wrap round the dish). Patches start spread by the golden angle and drift in straight
+lines at `patchSpeed` per step, a pure function of the step with no random draws. The rate inside is `kLight` times
+(cells in the dish / lit cells), so the dish's mean light equals the uniform case (while that rate is at most 1; above it the light is capped and the mean is lower). `wild(area)` in `worlds.ts` gives a dish of `area`
+times the base area (4 by default), proportionally many founders, patches covering about a quarter of it, and a weather interval
+of 100,000 / founders steps; `Weather` (also `worlds.ts`) bursts one ring per interval, picked by its own generator, as `--wound-every`
+always did. CLI: `--wild [--wild-area 4] [--no-light] [--no-weather]`, composable with `--wall`, `--gate`, `--thread`, `--heredity`.
+
 ## What is conserved
 
 Every bead, particle, food, waste and lipid unit counts as one unit of matter, and every reaction is one for

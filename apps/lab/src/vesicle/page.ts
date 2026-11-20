@@ -2,7 +2,7 @@ import './style.css';
 import { VesicleWorld } from './model.ts';
 import { census } from './observe.ts';
 import type { Census } from './observe.ts';
-import { HEREDITY, WALL_GENES, feedWorld, garden, theftWorld } from './worlds.ts';
+import { HEREDITY, THREAD, THREAD_ANCHORED, WALL_GENES, Weather, feedWorld, garden, theftWorld, wild } from './worlds.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = el<HTMLCanvasElement>('world'), historyCanvas = el<HTMLCanvasElement>('history');
@@ -12,10 +12,22 @@ const startSel = el<HTMLSelectElement>('start'), colorSel = el<HTMLSelectElement
 const seedInput = el<HTMLInputElement>('seed'), live = el<HTMLElement>('live');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** The page runs the wild worlds on a dish of 4 times the base area (the 16-fold dish is too slow for a browser frame loop). */
+const WILD_AREA = 4;
+let weather = new Weather(1, 0);
+
 function build(kind: string, seed: number): VesicleWorld {
+  weather = new Weather(seed, 0);
+  if (kind.startsWith('wild')) {
+    const wl = wild(WILD_AREA), arm = kind === 'wild-wall' ? WALL_GENES : kind === 'wild-thread' ? THREAD : kind === 'wild-heredity' ? HEREDITY : {};
+    weather = new Weather(seed, wl.woundEvery ?? 0);
+    return garden(seed, { founders: wl.founders, params: { ...wl.params, ...arm } });
+  }
   if (kind === 'theft') return theftWorld(seed);
   if (kind === 'feed') return feedWorld(seed);
   if (kind === 'wall') return garden(seed, { params: WALL_GENES });
+  if (kind === 'thread') return garden(seed, { params: THREAD });
+  if (kind === 'thread-anchored') return garden(seed, { params: THREAD_ANCHORED });
   if (kind === 'heredity') return garden(seed, { params: HEREDITY });
   if (kind === 'neutral') return garden(seed, { params: { ...HEREDITY, neutral: true } });
   if (kind === 'nogain') return garden(seed, { params: { ...HEREDITY, tradeoff: 0 } });
@@ -32,6 +44,11 @@ function draw(): void {
   const w = world, sx = canvas.width / w.p.W, sy = canvas.height / w.p.H, s = Math.min(sx, sy);
   ctx.fillStyle = '#0e141a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   const tint = tintSel.value, field = tint === 'lipid' ? w.lipid : tint === 'food' ? w.food : null, cs = w.p.cell * s;
+  if (w.p.lightPatches > 0) {
+    // light patches: a pale wash over the lit cells
+    w.lightMask(); ctx.fillStyle = 'rgba(255,240,190,0.10)';
+    for (let c = 0; c < w.litMask.length; c++) if (w.litMask[c]) ctx.fillRect((c % w.gw) * cs, Math.floor(c / w.gw) * cs, cs, cs);
+  }
   if (field) {
     const full = tint === 'food' ? 12 : 4;
     for (let c = 0; c < field.length; c++) {
@@ -51,6 +68,14 @@ function draw(): void {
   for (const [col, ks] of groups) {
     ctx.fillStyle = col;
     for (const k of ks) ctx.fillRect(w.px[k] * s - 1.5, w.py[k] * s - 1.5, 3, 3);
+  }
+  // threads: clear rings (never filled), coloured by the idle marker, gene 1
+  if (w.p.thread) {
+    ctx.lineWidth = 1.5;
+    for (let k = 0; k < w.nt; k++) {
+      ctx.strokeStyle = geneColour(((w.tgene[k * w.p.tG + 1]) >> 3) << 3);
+      ctx.beginPath(); ctx.arc(w.tx[k] * s, w.ty[k] * s, 4, 0, 6.283185307179586); ctx.stroke();
+    }
   }
   ctx.lineWidth = 2; ctx.lineJoin = 'round';
   if (w.p.wallGenes && mode !== 'founder') {
@@ -99,6 +124,7 @@ function refresh(): void {
   set('r-t', world.step.toLocaleString()); set('r-live', liveCells); set('r-empty', last.loops.length - liveCells); set('r-solute', last.particles);
   set('r-beads', last.beads); set('r-lipid', last.freeLipid); set('r-pinch', world.events.pinch); set('r-dissolve', world.events.dissolve);
   set('r-burst', world.events.burst); set('r-gene', gene.toFixed(1)); set('r-mark', mark.toFixed(1)); set('r-matter', world.matter().toLocaleString());
+  set('r-threads', world.nt); set('r-threads-out', last.freeThreads); set('r-tcopy', world.events.tcopy); set('r-tdecay', world.events.tdecay);
   history.push({ live: liveCells, gene, mark });
   if (history.length > 576) history.shift();
   const H = historyCanvas.height, W = historyCanvas.width;
@@ -125,7 +151,7 @@ function reset(): void {
 function loop(): void {
   if (!paused) {
     const n = Number(paceSel.value);
-    for (let i = 0; i < n; i++) world.tick();
+    for (let i = 0; i < n; i++) { world.tick(); weather.after(world, world.step); }
     if (++frame % 30 === 0) refresh();
     draw();
   }
@@ -133,7 +159,7 @@ function loop(): void {
 }
 
 playBtn.addEventListener('click', () => { if (paused) { paused = false; playBtn.textContent = 'Pause'; say('Running.'); } else pause(); });
-stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); refresh(); draw(); });
+stepBtn.addEventListener('click', () => { pause('Paused · one step'); world.tick(); weather.after(world, world.step); refresh(); draw(); });
 startSel.addEventListener('change', reset);
 el<HTMLFormElement>('seed-form').addEventListener('submit', (e) => { e.preventDefault(); reset(); });
 colorSel.addEventListener('change', draw); tintSel.addEventListener('change', draw);

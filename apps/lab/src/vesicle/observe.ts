@@ -11,6 +11,8 @@ export interface Loop {
   /** 4*pi*area / perimeter^2: 1 for a circle, lower when there is wall to spare. */
   roundness: number;
   solute: number; geneMean: number; markMean: number;
+  /** Threads inside the ring and the mean of thread genes 0 and 1 over them (0 when there are none or threads are off). */
+  threads: number; thread0: number; thread1: number;
   /** Mean and spread of the wall's own bytes over the ring's beads (meaningful when `wallGenes` is on). */
   wallGene: number; wallGeneSd: number; wallMark: number;
   /** Solute count by founder id. */
@@ -18,7 +20,7 @@ export interface Loop {
   xs: Float64Array; ys: Float64Array;
 }
 
-export interface Census { loops: Loop[]; freeSolute: number; beads: number; particles: number; freeLipid: number; food: number; waste: number }
+export interface Census { loops: Loop[]; freeThreads: number; threads: number; freeSolute: number; beads: number; particles: number; freeLipid: number; food: number; waste: number }
 
 export function loops(w: VesicleWorld, withSolute = true): Loop[] {
   const seen = new Uint8Array(w.beadHi), out: Loop[] = [];
@@ -38,7 +40,7 @@ export function loops(w: VesicleWorld, withSolute = true): Loop[] {
     out.push({
       first: s, beads: n, perimeter: per, area, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
       stretch: per / (n * w.p.l0) - 1, roundness: per > 0 ? (12.566370614359172 * area) / (per * per) : 0,
-      solute: 0, geneMean: 0, markMean: 0, founders: new Map(), xs, ys,
+      solute: 0, geneMean: 0, markMean: 0, threads: 0, thread0: 0, thread1: 0, founders: new Map(), xs, ys,
       wallGene: wg / n, wallGeneSd: Math.sqrt(Math.max(0, wg2 / n - (wg / n) * (wg / n))), wallMark: wm / n,
     });
   }
@@ -74,7 +76,25 @@ export function assign(w: VesicleWorld, ls: Loop[]): Int32Array {
       break;
     }
   }
+  if (w.p.thread) assignThreads(w, ls, box);
   for (let i = 0; i < ls.length; i++) if (ls[i].solute) { ls[i].geneMean = gs[i] / ls[i].solute; ls[i].markMean = ms[i] / ls[i].solute; }
+  return where;
+}
+
+/** Which loop each thread is in (-1 = outside all); fills the per-loop thread counts and gene means. */
+function assignThreads(w: VesicleWorld, ls: Loop[], box: number[][]): Int32Array {
+  const where = new Int32Array(w.nt).fill(-1), G = w.p.tG, t0 = new Float64Array(ls.length), t1 = new Float64Array(ls.length);
+  for (const l of ls) { l.threads = 0; l.thread0 = 0; l.thread1 = 0; }
+  for (let k = 0; k < w.nt; k++) {
+    const x = w.tx[k], y = w.ty[k];
+    for (let i = 0; i < ls.length; i++) {
+      const b = box[i];
+      if (x < b[0] || x > b[1] || y < b[2] || y > b[3] || !inside(ls[i], x, y)) continue;
+      where[k] = i; ls[i].threads++; t0[i] += w.tgene[k * G]; t1[i] += w.tgene[k * G + 1];
+      break;
+    }
+  }
+  for (let i = 0; i < ls.length; i++) if (ls[i].threads) { ls[i].thread0 = t0[i] / ls[i].threads; ls[i].thread1 = t1[i] / ls[i].threads; }
   return where;
 }
 
@@ -83,7 +103,9 @@ export function census(w: VesicleWorld): Census {
   let inLoops = 0, lipid = 0, food = 0, waste = 0;
   for (const l of ls) inLoops += l.solute;
   for (let c = 0; c < w.lipid.length; c++) { lipid += w.lipid[c]; food += w.food[c]; waste += w.waste[c]; }
-  return { loops: ls, freeSolute: w.n - inLoops, beads: w.beadCount, particles: w.n, freeLipid: lipid, food, waste };
+  let tIn = 0;
+  for (const l of ls) tIn += l.threads;
+  return { loops: ls, threads: w.nt, freeThreads: w.nt - tIn, freeSolute: w.n - inLoops, beads: w.beadCount, particles: w.n, freeLipid: lipid, food, waste };
 }
 
 /** Structural checks used while tuning and in tests. Returns the list of problems (empty = sound). */
@@ -152,6 +174,8 @@ export interface RingStat {
   /** Mean and sd of the wall beads' lipid-share byte. */
   wMean: number; wSd: number;
   area: number; cx: number; cy: number;
+  /** Threads inside the ring and the mean of thread genes 0 and 1 over them (zeros with threads off). */
+  threads: number; t0: number; t1: number;
 }
 
 /** Whole-ring record for the ring that holds bead `start`: wall bytes over its beads, solute bytes over the particles inside. */
@@ -170,17 +194,20 @@ export function ringStat(w: VesicleWorld, start: number): RingStat {
     if (xs[k] < x0) x0 = xs[k]; if (xs[k] > x1) x1 = xs[k]; if (ys[k] < y0) y0 = ys[k]; if (ys[k] > y1) y1 = ys[k];
   }
   let s = 0, g1 = 0, g2 = 0;
-  for (let k = 0; k < w.n; k++) {
-    const x = w.px[k], y = w.py[k];
-    if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+  const hit = (x: number, y: number) => {
+    if (x < x0 || x > x1 || y < y0 || y > y1) return false;
     let c = false;
     for (let i = 0, j = n - 1; i < n; j = i++) if ((ys[i] > y) !== (ys[j] > y) && x < ((xs[j] - xs[i]) * (y - ys[i])) / (ys[j] - ys[i]) + xs[i]) c = !c;
-    if (c) { s++; const g = w.gene[k]; g1 += g; g2 += g * g; }
-  }
+    return c;
+  };
+  for (let k = 0; k < w.n; k++) if (hit(w.px[k], w.py[k])) { s++; const g = w.gene[k]; g1 += g; g2 += g * g; }
+  let nt = 0, tg0 = 0, tg1 = 0;
+  if (w.p.thread) for (let k = 0; k < w.nt; k++) if (hit(w.tx[k], w.ty[k])) { nt++; tg0 += w.tgene[k * w.p.tG]; tg1 += w.tgene[k * w.p.tG + 1]; }
   const sd = (sum: number, sq: number, m: number) => (m ? Math.sqrt(Math.max(0, sq / m - (sum / m) * (sum / m))) : 0);
   return {
     beads: n, solute: s, gMean: s ? g1 / s : 0, gSd: sd(g1, g2, s), wMean: wg / n, wSd: sd(wg, wg2, n),
     area: a2 / 2, cx: a2 !== 0 ? cx / (3 * a2) : xs[0], cy: a2 !== 0 ? cy / (3 * a2) : ys[0],
+    threads: nt, t0: nt ? tg0 / nt : 0, t1: nt ? tg1 / nt : 0,
   };
 }
 
@@ -189,16 +216,21 @@ export type LineageEvent =
   | { ev: 'end'; step: number; id: number; kind: 'burst' | 'dissolve' | 'wound'; m: RingStat };
 
 export const STAT_COLS = ['beads', 'solute', 'gMean', 'gSd', 'wMean', 'wSd', 'area'] as const;
+/** Extra columns written when threads are on: how many threads the ring holds and the mean of thread genes 0 and 1. */
+export const THREAD_COLS = ['threads', 't0', 't1'] as const;
 export const EVENT_HEADER = ['ev', 'step', 'id', 'd1', 'd2', 'kind', ...['m', 'a', 'b'].flatMap((r) => STAT_COLS.map((c) => `${r}_${c}`))].join('\t');
 export const CELL_HEADER = ['step', 'id', ...STAT_COLS, 'cx', 'cy'].join('\t');
+export const eventHeader = (thread: boolean) => (thread ? [EVENT_HEADER, ...['m', 'a', 'b'].flatMap((r) => THREAD_COLS.map((c) => `${r}_${c}`))].join('\t') : EVENT_HEADER);
+export const cellHeader = (thread: boolean) => (thread ? [CELL_HEADER, ...THREAD_COLS].join('\t') : CELL_HEADER);
 
 const f = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(3));
 const statCells = (s?: RingStat) => (s ? STAT_COLS.map((c) => f(s[c])) : STAT_COLS.map(() => ''));
-export const eventLine = (e: LineageEvent) =>
+const threadCells = (s?: RingStat) => (s ? THREAD_COLS.map((c) => f(c === 'threads' ? s.threads : c === 't0' ? s.t0 : s.t1)) : THREAD_COLS.map(() => ''));
+export const eventLine = (e: LineageEvent, thread = false) =>
   (e.ev === 'pinch'
-    ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b)]
-    : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined)]).join('\t');
-export const cellLine = (step: number, id: number, s: RingStat) => [step, id, ...statCells(s), f(s.cx), f(s.cy)].join('\t');
+    ? ['pinch', e.step, e.id, e.d1, e.d2, '', ...statCells(e.m), ...statCells(e.a), ...statCells(e.b), ...(thread ? [...threadCells(e.m), ...threadCells(e.a), ...threadCells(e.b)] : [])]
+    : ['end', e.step, e.id, '', '', e.kind, ...statCells(e.m), ...statCells(undefined), ...statCells(undefined), ...(thread ? [...threadCells(e.m), ...threadCells(undefined), ...threadCells(undefined)] : [])]).join('\t');
+export const cellLine = (step: number, id: number, s: RingStat, thread = false) => [step, id, ...statCells(s), f(s.cx), f(s.cy), ...(thread ? threadCells(s) : [])].join('\t');
 
 export class LineageObserver {
   /** Cell id per bead slot (0 = none yet). Ids are 1, 2, 3, ... never reused. */

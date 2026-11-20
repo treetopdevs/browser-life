@@ -1,6 +1,7 @@
 // Starting worlds for the vesicle sandbox, shared by the lab page and the headless runner.
 import { VesicleWorld } from './model.ts';
 import type { Params } from './model.ts';
+import { loops } from './observe.ts';
 
 /** Chemistry on: solute copies itself from food in company, makes lipid, decays; light turns waste to food. */
 export const METABOLISM: Partial<Params> = {
@@ -11,7 +12,9 @@ export interface GardenOpts { founders?: number; solute?: number; radius?: numbe
   /** Lipid-share byte the founders start with (walls and solute alike), default 128. A list gives one value per founder in turn. */
   founderGene?: number | number[];
   /** Every founder starts as a chimera: half of its wall (and of its solute) carries the first share, half the second. */
-  chimera?: [number, number] }
+  chimera?: [number, number];
+  /** With threads on: the marker gene (gene 1) each founder's thread starts with, default 128. A list gives one value per founder in turn. */
+  founderMark?: number | number[] }
 
 /** A dish with a few founder vesicles, each with its own founder id, food and a little free lipid. */
 export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
@@ -30,6 +33,11 @@ export function garden(seed: number, o: GardenOpts = {}): VesicleWorld {
       for (let i = first, k = 0; k < beads; k++, i = w.next[i]) { w.wgene[i] = o.chimera[(k < beads >> 1 ? 0 : 1) ^ (f & 1)]; w.wmark[i] = f + 1; }
       w.addSolute(cx, cy, r - 2, n >> 1, o.chimera[0], f + 1); w.addSolute(cx, cy, r - 2, n - (n >> 1), o.chimera[1], f + 1);
     } else w.addSolute(cx, cy, r - 2, n, g, f + 1);
+    if (w.p.thread) {
+      // one thread per founder, carrying the founder's lipid share and its marker; anchored threads sit on the first bead
+      const fm = o.founderMark, mk = fm === undefined ? 128 : typeof fm === 'number' ? fm : fm[f % fm.length];
+      w.addThread(cx, cy, [g, mk], first);
+    }
   }
   w.scatter(w.food, o.food ?? 2 * w.food.length);
   w.scatter(w.lipid, o.lipid ?? Math.floor(w.lipid.length / 4));
@@ -61,3 +69,55 @@ export const WALL_GENES: Partial<Params> = { mut: 0.01, mutStep: 16, wallGenes: 
 /** Control for rung 3: rung 2's heredity (bytes on self-copying solute) with rung 3's rule that solute is only
  *  made against the inner face of a wall. */
 export const WALL_GATE: Partial<Params> = { ...HEREDITY, wallGate: true };
+
+/** Stage 1, the thread: a genome that is one physical object per cell (free-floating). Solute copies only next to a
+ *  thread and takes its lipid share from it; the thread copies about once per cell generation. The shift rate is per
+ *  thread copy, as rare as a cell division, so it is as high as rung 2's. */
+export const THREAD: Partial<Params> = { mut: 0.1, mutStep: 16, thread: true };
+
+/** The same with each thread riding on a wall bead's inner face, so wall growth carries copies apart. */
+export const THREAD_ANCHORED: Partial<Params> = { ...THREAD, threadAnchor: true, rInhib: 18, tSep: 0 };
+
+/** The base dish edge, and how many founders it is seeded with. */
+export const BASE_EDGE = 192, BASE_FOUNDERS = 6;
+
+/** The dish for "wild" worlds: `area` times the base dish's area (a perfect square: 1, 4, 9, 16), seeded with
+ *  proportionally many founders. */
+export function wildDish(area: number): { W: number; H: number; founders: number } {
+  const L = Math.round(Math.sqrt(area));
+  if (L * L !== area || L < 1) throw new Error('wild area must be a square number: 1, 4, 9 or 16');
+  return { W: BASE_EDGE * L, H: BASE_EDGE * L, founders: BASE_FOUNDERS * area };
+}
+
+/** Stage 3, "make dividing pay": a big dish, light in drifting patches, and weather. Composes with any heredity arm.
+ *  - Dish: `area` times the base area (4 unless told otherwise; 9 and 16 timed too slow for 400,000 steps), `founders` seeded in proportion; the particle and bead stores are raised to hold it.
+ *  - Light: patches of radius 48 cover about a quarter of the dish (their number is set from the dish), drift at 0.004 per step
+ *    (about two dish widths in 400,000 steps; a cell moves its own radius in about 2,000 steps) and wrap round; the rate inside
+ *    is raised by the unlit share so that the dish's mean light equals the uniform case's.
+ *  - Weather: `woundEvery` steps one ring (picked by the runner's own generator) is burst. 100,000 / founders keeps the base rate of
+ *    one ring per 5,000 steps per 20 cells (a generation is 4,000 to 6,000 steps) as the dish grows; the lab page and the runner both use `Weather`.
+ *  Passing `lit: false` or `weather: false` leaves that part out. */
+export function wild(area = 4, o: { lit?: boolean; weather?: boolean } = {}): { params: Partial<Params>; founders: number; woundEvery: number | undefined } {
+  const d = wildDish(area), R = 48, patches = Math.max(1, Math.round((0.25 * d.W * d.H) / (Math.PI * R * R)));
+  return {
+    params: {
+      W: d.W, H: d.H, maxBeads: Math.max(1 << 15, area * (1 << 13)), maxParts: Math.max(1 << 16, area * (1 << 14)), maxThreads: Math.max(4096, area * 1024),
+      ...(o.lit === false ? {} : { lightPatches: patches, patchR: R, patchSpeed: 0.004 }),
+    },
+    founders: d.founders,
+    woundEvery: o.weather === false ? undefined : Math.round(100000 / d.founders),
+  };
+}
+
+/** Weather: every `every` steps one ring, picked by this object's own generator (the kernel's stream is untouched), is burst.
+ *  Call `after(world, step)` after each tick. Seeded as the runner's `--wound-every` always was. */
+export class Weather {
+  private s: number; wounds = 0; readonly every: number;
+  constructor(seed: number, every: number) { this.s = (seed * 2654435761) >>> 0; this.every = every; }
+  after(w: VesicleWorld, t: number): void {
+    if (!this.every || t % this.every !== 0) return;
+    const ls = loops(w, false);
+    this.s = (Math.imul(this.s, 1664525) + 1013904223) >>> 0;
+    if (ls.length) { w.dissolveLoop(ls[this.s % ls.length].first); this.wounds++; }
+  }
+}
