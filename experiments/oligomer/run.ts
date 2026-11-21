@@ -6,18 +6,10 @@
  *   node experiments/oligomer/run.ts --rung 2 --steps 40000 --seeds 4 --size 32
  */
 
-import {
-  OP_CLEAVE,
-  OP_IMPORT,
-  OP_LIGATE,
-  OP_LYSE,
-  SPECIES,
-  WALL_SPECIES,
-  makeCatalyst,
-  speciesByLabel,
-} from '../../apps/lab/src/oligomer/chem.ts';
+import { SPECIES, WALL_SPECIES } from '../../apps/lab/src/oligomer/chem.ts';
 import { type OligomerConfig, OligomerWorld, defaultConfig } from '../../apps/lab/src/oligomer/model.ts';
 import { type CensusRow, OligomerObserver } from '../../apps/lab/src/oligomer/observe.ts';
+import { CONDITIONS, seedUniform6 } from '../../apps/lab/src/oligomer/worlds.ts';
 
 function parseArgs(argv: string[]) {
   const out: Record<string, string> = {};
@@ -30,17 +22,6 @@ function parseArgs(argv: string[]) {
     }
   }
   return out;
-}
-
-function starterGenome(wallLabel: string, lyseTarget?: string): number[] {
-  return [
-    makeCatalyst(OP_CLEAVE, '0001', 2),
-    makeCatalyst(OP_CLEAVE, '1110', 2),
-    makeCatalyst(OP_LIGATE, wallLabel, 2),
-    makeCatalyst(OP_IMPORT, '0001', 2),
-    makeCatalyst(OP_IMPORT, '1110', 2),
-    lyseTarget ? makeCatalyst(OP_LYSE, lyseTarget, 2) : 0,
-  ];
 }
 
 interface ArmSummary {
@@ -128,42 +109,6 @@ function runArm(
   };
 }
 
-function seedUniform6(w: OligomerWorld, wallLabel = '0011'): void {
-  const W = w.cfg.width;
-  const H = w.cfg.height;
-  const g = starterGenome(wallLabel);
-  const wid = speciesByLabel(wallLabel);
-  const coords = [
-    [Math.floor(W * 0.25), Math.floor(H * 0.25)],
-    [Math.floor(W * 0.75), Math.floor(H * 0.25)],
-    [Math.floor(W * 0.5), Math.floor(H * 0.5)],
-    [Math.floor(W * 0.25), Math.floor(H * 0.75)],
-    [Math.floor(W * 0.75), Math.floor(H * 0.75)],
-    [Math.floor(W * 0.5), Math.floor(H * 0.15)],
-  ];
-  coords.forEach(([x, y], idx) => {
-    w.seedCompartment(x, y, wid, 20, g, idx + 1);
-  });
-}
-
-function seedMixedWalls6(w: OligomerWorld): void {
-  const W = w.cfg.width;
-  const H = w.cfg.height;
-  const coords = [
-    [Math.floor(W * 0.2), Math.floor(H * 0.25)],
-    [Math.floor(W * 0.5), Math.floor(H * 0.25)],
-    [Math.floor(W * 0.8), Math.floor(H * 0.25)],
-    [Math.floor(W * 0.2), Math.floor(H * 0.75)],
-    [Math.floor(W * 0.5), Math.floor(H * 0.75)],
-    [Math.floor(W * 0.8), Math.floor(H * 0.75)],
-  ];
-  WALL_SPECIES.forEach((wid, idx) => {
-    const label = SPECIES[wid].label;
-    const [x, y] = coords[idx];
-    w.seedCompartment(x, y, wid, 20, starterGenome(label), idx + 1);
-  });
-}
-
 function printSummary(s: ArmSummary): void {
   console.log(
     `${s.arm.padEnd(13)} s${s.seed} | live=${String(s.endLive).padStart(4)} (late ${s.meanLiveLate.toFixed(0).padStart(4)}) ` +
@@ -203,12 +148,7 @@ if (rung === 'smoke') {
     }
   }
 } else if (rung === '2') {
-  const arms: [string, Partial<OligomerConfig>, (w: OligomerWorld) => void][] = [
-    ['LYSE', { width: size, height: size, enableLyse: true }, seedMixedWalls6],
-    ['NO_LYSE', { width: size, height: size, enableLyse: false }, seedMixedWalls6],
-    ['SINGLE_WALL', { width: size, height: size, enableLyse: true, singleWallOnly: true }, (w) => seedUniform6(w, '0011')],
-    ['NEUTRAL_WALL', { width: size, height: size, enableLyse: true, neutralWallLyse: true }, seedMixedWalls6],
-  ];
+  const arms = CONDITIONS.map((c) => [c.id, { width: size, height: size, ...c.overrides }, c.seeder] as const);
   for (const [name, ov, seeder] of arms) {
     for (let seed = 1; seed <= seeds; seed++) {
       printSummary(runArm(name, { ...ov, seed }, steps, censusEvery, seeder));

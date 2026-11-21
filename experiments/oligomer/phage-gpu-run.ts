@@ -19,6 +19,7 @@ import {
   observeTotalMatter,
 } from '../../apps/lab/src/oligomer/droplets-kernel.ts';
 import { DropletGpuSim } from '../../apps/lab/src/oligomer/droplets-gpu.ts';
+import { phageArms, seedPhageArena } from '../../apps/lab/src/oligomer/droplet-worlds.ts';
 
 function parseArgs(argv: string[]) {
   const out: Record<string, string> = {};
@@ -80,12 +81,7 @@ device.addEventListener?.('uncapturederror', (e) => {
   console.error('WebGPU error:', (e as GPUUncapturedErrorEvent).error.message);
 });
 
-const arms = [
-  { name: 'PHAGE', ov: { kInfect, kDecayP, diffP, mutPhage, mutMotif, neutralPhage: false }, single: false },
-  { name: 'NO_PHAGE', ov: { kInfect: 0.0, kDecayP, diffP, mutPhage: 0.0, mutMotif, neutralPhage: false }, single: false },
-  { name: 'SINGLE_WALL', ov: { kInfect, kDecayP, diffP, mutPhage, mutMotif: 0.0, neutralPhage: false }, single: true },
-  { name: 'NEUTRAL_PHAGE', ov: { kInfect, kDecayP, diffP, mutPhage, mutMotif, neutralPhage: true }, single: false },
-] as const;
+const arms = phageArms({ kInfect, kDecayP, diffP, mutPhage, mutMotif });
 
 console.log(
   `=== Phase B2 WebGPU Droplets | init=${initMode} | size=${size}x${size} | steps=${steps} | seeds=${seeds} | kInfect=${kInfect} kDecayP=${kDecayP} ===`,
@@ -99,17 +95,7 @@ for (const arm of arms) {
     const ref = new DropletKernelRef(cfg);
 
     // Seed a grid of droplets scaled to arena size (spacing ~20 tiles)
-    const gridN = Math.max(3, Math.floor(size / 22));
-    let idx = 0;
-    for (let gy = 0; gy < gridN; gy++) {
-      for (let gx = 0; gx < gridN; gx++) {
-        const cx = Math.floor(((gx + 0.5) / gridN) * size);
-        const cy = Math.floor(((gy + 0.5) / gridN) * size);
-        const m = arm.single || initMode === 'single' ? 0 : idx % KERNEL_MOTIFS;
-        ref.seedDroplet(cx, cy, 3, m, 0.85);
-        idx++;
-      }
-    }
+    seedPhageArena(ref, size, arm.single, initMode);
 
     const gpu = new DropletGpuSim(device, cfg);
     gpu.uploadFromRef(ref);
