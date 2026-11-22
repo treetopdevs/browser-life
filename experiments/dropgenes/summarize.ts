@@ -1,7 +1,10 @@
 /**
  * Droplet genes: read every run JSON in a directory and print the tables the plan's decision rules need.
  *
- * Usage: deno run -A --no-lock experiments/dropgenes/summarize.ts runs/dropgenes/confirm-v2 [--json]
+ * Usage: deno run -A --no-lock experiments/dropgenes/summarize.ts runs/dropgenes/confirm-v2 [--per-seed] [--json]
+ *
+ * Tables: held and late state, heredity, bookkeeping, largest K held, compartment properties; with --per-seed,
+ * one row per run as well (for rules stated over more than 4 seeds, which the "(held)" cell mark does not cover).
  *
  * A cell (setting, K, sites, arm) is "held" when it has at least 4 seeds and at least 3 of them are held.
  * Refuses a directory whose runs of one setting do not share steps and configuration (apart from the keys a
@@ -43,12 +46,14 @@ interface Summary {
   deaths: number;
   deathsIncomplete: number;
   denovo: number;
+  ages?: { observedDeaths: { n: number; median: number | null }; absorbedByFusion: { n: number; median: number | null }; aliveAtEnd: { n: number; median: number | null } };
   heredityGene0: Heredity | null;
   heredityGene0Delayed: Heredity | null;
   heredityParasiteDelayed: Heredity | null;
 }
 interface Row {
   step: number;
+  compartments: number;
   parasiteShare: number;
   strandedShare: number;
   strandedBareShare: number;
@@ -59,13 +64,14 @@ interface Row {
 }
 
 const dir = Deno.args[0];
-if (!dir) throw new Error('usage: summarize.ts <dir> [--json]');
+if (!dir) throw new Error('usage: summarize.ts <dir> [--per-seed] [--json]');
 const asJson = Deno.args.includes('--json');
 if (Deno.args.includes('--trait')) {
   const { traitSummary } = await import('./trait-summarize.ts');
   await traitSummary(dir, Deno.args.slice(1));
   Deno.exit(0);
 }
+const perSeed = Deno.args.includes('--per-seed');
 const CELL_KEYS = new Set(['seed', 'genes', 'capPerTile', 'gated', 'mutPar']);
 
 interface Cell { tag: string; genes: number; cap: number; arm: string; runs: { s: Summary; rows: Row[] }[] }
@@ -120,6 +126,15 @@ const lateMean = (s: Summary, rows: Row[], pick: (r: Row) => number | null): num
   return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
 };
 if (protocol === null) throw new Error('no runs found');
+/**
+ * Turnover time: compartment-steps per observed death (mean compartments over all report rows x steps run /
+ * deaths), for runs that reached the planned end only (a run that ended early has too few report rows).
+ * Bookkeeping like the death count it is built from: it depends on the census interval.
+ */
+const turnover = (s: Summary, rows: Row[]): number | null => {
+  if (rows.length === 0 || s.deaths <= 0 || s.stepsRun < s.steps) return null;
+  return (rows.reduce((a, r) => a + r.compartments, 0) / rows.length) * s.stepsRun / s.deaths;
+};
 const margin = (h: Heredity | null): number | null => (h && h.parentR !== null && h.neighbourR !== null ? h.parentR - h.neighbourR : null);
 
 const out: unknown[] = [];
@@ -187,6 +202,36 @@ for (const [k, cs] of groups) {
   console.log(`| ${tag || 'default'} | ${cap} | ${arm} | ${heldKs.length ? Math.max(...heldKs) : 'none'} | ${cs.map((c) => c.genes).join(', ')} | ${notHeld.join(', ') || 'none'} | ${thin.join(', ') || 'none'} |`);
 }
 
+// Compartment properties, for comparing settings (docs/droplet-genes-2026-11-21/FIRMUP-PLAN.md, B3).
+console.log(`\nCompartment properties (late = the last tenth of the planned run; ages and turnover depend on the ${protocol.census}-step census and are for comparing settings observed the same way)\n`);
+console.log('| setting | K | sites/tile | arm | seeds held | late compartments | late mean area, tiles | late copies per compartment | median age at death, steps (observed deaths) | turnover time, steps (compartment-steps per death; runs that reached the end) | median age of those alive at the end, steps |');
+console.log('|---|---|---|---|---|---|---|---|---|---|---|');
+for (const c of sorted) {
+  console.log(
+    `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${c.runs.filter((r) => r.s.held).length} of ${c.runs.length} | ${range(c.runs.map((r) => r.s.lateMeanCompartments))} | ` +
+      `${range(c.runs.map((r) => lateMean(r.s, r.rows, (x) => x.meanArea)), 1)} | ${range(c.runs.map((r) => lateMean(r.s, r.rows, (x) => x.meanCopies)), 1)} | ` +
+      `${range(c.runs.map((r) => r.s.ages?.observedDeaths.median ?? null), 0)} | ${range(c.runs.map((r) => turnover(r.s, r.rows)), 0)} | ${range(c.runs.map((r) => r.s.ages?.aliveAtEnd.median ?? null), 0)} |`,
+  );
+}
+
+if (perSeed) {
+  console.log(`\nPer seed (late = the last tenth of the planned run; heredity is the gene-0 share, and the parasite share, read ${protocol.heredityDelay} steps after the split, parent r / control r (daughters))\n`);
+  console.log('| setting | K | sites/tile | arm | seed | held | ended early at step | late compartments | late complete share | late parasite share | late copies per compartment | late mean area, tiles | heredity, control = nearest neighbour | margin | heredity, control = nearest unrelated | parasite-share heredity, control = nearest neighbour | fissions | deaths | residual |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const c of sorted) {
+    for (const r of c.runs) {
+      const h = r.s.heredityGene0Delayed;
+      const hp = r.s.heredityParasiteDelayed;
+      console.log(
+        `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${r.s.seed} | ${r.s.held ? 'yes' : 'no'} | ${r.s.stepsRun < r.s.steps ? r.s.stepsRun : 'none'} | ${f(r.s.lateMeanCompartments, 1)} | ${f(r.s.lateCompleteShare, 3)} | ` +
+          `${f(lateMean(r.s, r.rows, (x) => x.parasiteShare), 3)} | ${f(lateMean(r.s, r.rows, (x) => x.meanCopies), 1)} | ${f(lateMean(r.s, r.rows, (x) => x.meanArea), 1)} | ` +
+          `${h ? `${f(h.parentR)}/${f(h.neighbourR)} (${h.pairs})` : 'n/a'} | ${f(margin(h))} | ${h ? `${f(h.parentRUnrelatedSet)}/${f(h.unrelatedR)} (${h.unrelatedPairs})` : 'n/a'} | ` +
+          `${hp ? `${f(hp.parentR)}/${f(hp.neighbourR)} (${hp.pairs})` : 'n/a'} | ${r.s.fissions} | ${r.s.deaths} | ${r.s.residual} |`,
+      );
+    }
+  }
+}
+
 for (const c of sorted) {
   out.push({
     tag: c.tag, genes: c.genes, cap: c.cap, arm: c.arm, seeds: c.runs.map((r) => r.s.seed), heldSeeds: c.runs.filter((r) => r.s.held).length, cellHeld: cellHeld(c),
@@ -196,6 +241,9 @@ for (const c of sorted) {
       residual: r.s.residual, heredityGene0: r.s.heredityGene0, heredityGene0Delayed: r.s.heredityGene0Delayed, heredityParasiteDelayed: r.s.heredityParasiteDelayed,
       lateParasiteShare: lateMean(r.s, r.rows, (x) => x.parasiteShare), lateVarGene0: lateMean(r.s, r.rows, (x) => x.varGene0),
       lateMeanCopies: lateMean(r.s, r.rows, (x) => x.meanCopies), lateMeanArea: lateMean(r.s, r.rows, (x) => x.meanArea),
+      medianAgeAtDeath: r.s.ages?.observedDeaths.median ?? null, observedDeaths: r.s.ages?.observedDeaths.n ?? null,
+      medianAgeAliveAtEnd: r.s.ages?.aliveAtEnd.median ?? null, turnoverTime: turnover(r.s, r.rows),
+      lateStrandedBareShare: lateMean(r.s, r.rows, (x) => x.strandedBareShare), lateStrandedHaloShare: lateMean(r.s, r.rows, (x) => x.strandedHaloShare),
     })),
   });
 }
