@@ -1,0 +1,92 @@
+/*
+ * The /dropgenes/ sandbox on the garden's shared tokens: paper by day, dusk by night. The arena is a jar, dark in
+ * both themes (--field), and the colours on it are data (viewer-core.ts), so they do not follow the theme.
+ */
+@import "../tokens.css";
+
+.dropgenes-page { line-height: 1.5; }
+.dropgenes-page a { color: var(--text); text-decoration-color: var(--sun-ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.dropgenes-page :is(a, button, input):focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.dropgenes-page .skip { position: absolute; left: -999px; top: 8px; padding: 6px 10px; border-radius: var(--radius); background: var(--surface); }
+.dropgenes-page .skip:focus { left: 8px; z-index: 2; }
+.dropgenes-page .dg-header, .dropgenes-page main { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+.dropgenes-page .dg-header { min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-block: 10px; }
+.dropgenes-page .brand { margin-right: auto; font-weight: 700; text-decoration: none; }
+.dropgenes-page .brand span { color: var(--muted); font-weight: 400; }
+.dropgenes-page .badge { padding: 4px 10px; border: 1px solid var(--control-line); border-radius: 99px; color: var(--muted); font-size: .75rem; }
+
+.dropgenes-page button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--raised); color: var(--text); font-size: .875rem; font-weight: 600; cursor: pointer; }
+.dropgenes-page button:hover { background: var(--hover); }
+.dropgenes-page button.primary { min-width: 5.5em; border-color: var(--sun); background: var(--sun); color: var(--accent-ink); }
+.dropgenes-page button.primary:hover { background: color-mix(in oklch, var(--sun) 90%, var(--text)); }
+.dropgenes-page button[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+.dropgenes-page button[aria-disabled="true"]:hover { background: var(--raised); }
+.dropgenes-page button.primary[aria-disabled="true"]:hover { background: var(--sun); }
+
+.dropgenes-page .intro { max-width: 78ch; padding: 12px 0 8px; }
+.dropgenes-page .eyebrow { margin: 0; color: var(--sun-ink); font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.dropgenes-page h1 { margin: 6px 0 12px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.15; letter-spacing: -.02em; }
+.dropgenes-page .caption { margin: 0 0 12px; color: var(--text); font-size: .9375rem; }
+.dropgenes-page .scope-note { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--sun); border-radius: 0 var(--radius) var(--radius) 0; background: var(--sun-soft); color: var(--text); font-size: .875rem; }
+.dropgenes-page .help, .dropgenes-page .summary, .dropgenes-page .live { margin: 8px 0; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
+.dropgenes-page .summary { color: var(--text); font-variant-numeric: tabular-nums; }
+.dropgenes-page .live { min-height: 1.5em; }
+.dropgenes-page .world-name { margin: 0 0 8px; color: var(--text); font-size: .8125rem; font-weight: 600; }
+.dropgenes-page [hidden] { display: none; }
+
+.dropgenes-page .stage { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 12px; }
+.dropgenes-page .world, .dropgenes-page .panel { min-width: 0; }
+.dropgenes-page .transport { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.dropgenes-page .jar { padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.dropgenes-page #world { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: var(--field); image-rendering: crisp-edges; image-rendering: pixelated; }
+
+.dropgenes-page .legend { display: grid; gap: 6px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: .8125rem; line-height: 1.35; }
+.dropgenes-page .legend li { display: flex; align-items: center; gap: 8px; }
+.dropgenes-page .legend i { flex: none; width: 34px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); }
+
+.dropgenes-page .readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.dropgenes-page .readout div { padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); }
+.dropgenes-page .readout .wide { grid-column: span 2; }
+.dropgenes-page dt { color: var(--muted); font-size: .6875rem; line-height: 1.25; }
+.dropgenes-page dd { margin: 3px 0 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dropgenes-page dd small { display: block; color: var(--muted); font-size: .75rem; font-weight: 400; }
+.dropgenes-page .badge-res { display: inline-block; padding: 0 7px; border-radius: 5px; font-size: .875rem; font-weight: 700; }
+.dropgenes-page .badge-res.ok { border: 1px solid var(--success); color: var(--success); }
+.dropgenes-page .badge-res.bad { border: 1px solid var(--error); background: var(--error-fill); color: var(--error); }
+
+.dropgenes-page .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.dropgenes-page figure { min-width: 0; margin: 0; }
+.dropgenes-page figcaption { margin-bottom: 4px; color: var(--muted); font-size: .8125rem; font-weight: 600; }
+.dropgenes-page .charts canvas { display: block; width: 100%; height: 84px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+
+.dropgenes-page .settings { margin-top: 18px; padding-top: 6px; border-top: 1px solid var(--line); }
+.dropgenes-page fieldset { min-width: 0; margin: 14px 0 0; padding: 0; border: 0; }
+.dropgenes-page legend { padding: 0; font-size: .875rem; font-weight: 700; }
+.dropgenes-page .choice { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; }
+.dropgenes-page .choice:hover { border-color: var(--control-line); }
+.dropgenes-page .choice:has(input:checked) { border-color: var(--sun-ink); background: var(--sun-soft); }
+.dropgenes-page .choice input { flex: none; width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--sun-ink); }
+.dropgenes-page .choice-text { min-width: 0; font-size: .8125rem; line-height: 1.45; color: var(--muted); }
+.dropgenes-page .choice-text strong { display: block; color: var(--text); font-size: .875rem; }
+.dropgenes-page .choice:has(input:checked) .choice-text { color: var(--text); }
+.dropgenes-page .seed-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.dropgenes-page .seed-row label { font-size: .875rem; font-weight: 700; }
+.dropgenes-page #seed { width: 9em; min-height: 38px; padding: 6px 10px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: .9375rem; }
+
+.dropgenes-page .explanation { max-width: 78ch; margin: 24px 0 48px; color: var(--muted); font-size: .875rem; }
+
+/* Wide and tall enough: the picture stays in view while the settings beside it scroll. */
+@media (min-width: 901px) and (min-height: 760px) {
+  .dropgenes-page .world { position: sticky; top: 12px; }
+}
+@media (max-width: 900px) {
+  .dropgenes-page .stage { grid-template-columns: minmax(0, 1fr); }
+  .dropgenes-page .jar { max-width: 560px; }
+}
+@media (max-width: 560px) {
+  .dropgenes-page .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dropgenes-page .charts { grid-template-columns: minmax(0, 1fr); }
+}
+@media (pointer: coarse) {
+  .dropgenes-page button, .dropgenes-page #seed { min-height: 44px; }
+}
