@@ -35,6 +35,7 @@ All 56 runs completed with zero matter residual. No seed was replaced. The dropl
 - The Reef's no-grazing control is split: 5 of 8 seeds collapse to single cells (size 1.0) and 3 stay multicellular. Where the control stayed multicellular, grazing had larger bodies in 2 of 3 seeds, so much of the body-size separation comes from the control's collapse.
 - Pattern-blind phage is extinct in all 8 seeds, so the droplet comparisons against it show that it kills the world. They do not measure a margin between two living worlds.
 - Droplets are a steady cycle among six fixed patterns. These runs show durable coexistence and turnover, not open-ended novelty.
+- **Note added 2026-11-22.** The droplet count is a count of connected patches of wall above 0.20. A later check (docs/b2-compartment-check-2026-11-21) found that in the PHAGE and NO_PHAGE worlds these patches are crests of moving waves, not compartments: 2% to 3% (PHAGE) and under 0.1% (NO_PHAGE) keep their identity for 1,000 steps. D1, D2 and D5 compare amounts and fragmentation of wall pattern, not numbers of individuals. D3 and D4 do not use the count.
 
 ## Exploratory check (after the verdict, not part of the rule)
 

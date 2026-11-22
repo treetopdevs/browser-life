@@ -19,12 +19,12 @@ export function dropletInspectRows(src: DropletSource, tile: number): DropletIns
   let wTot = 0;
   for (let k = 0; k < KERNEL_MOTIFS; k++) wTot += W[tile * KERNEL_MOTIFS + k];
   return [
-    ['Square', `${dropletHeading(src, tile)} (a square of the grid, not a tracked droplet)`],
+    ['Square', `${dropletHeading(src, tile)} (a square of the grid, not a tracked patch)`],
     ['Loose pieces (A)', String(src.A[tile])],
     ['Food (F)', String(src.F[tile])],
     ['Wall matter', `total ${wTot}; main pattern ${WALL_NAMES[m]} (${WALL_COLOUR_NAMES[m]})\n${line(W, tile)}`],
     ['Phage', line(P, tile)],
-    ['In a droplet core?', `${wd >= DROPLET_CORE ? 'yes' : 'no'} (the main pattern holds ${wd}; a core is ${DROPLET_CORE} or more, full density is 1,024)`],
+    ['Thick wall?', `${wd >= DROPLET_CORE ? 'yes' : 'no'} (the main pattern holds ${wd}; the patch count looks for ${DROPLET_CORE} or more, full density is 1,024)`],
     ['All matter on this square', String(dropletTileMatter(src, tile))],
   ];
 }
@@ -32,5 +32,5 @@ export function dropletInspectRows(src: DropletSource, tile: number): DropletIns
 export function dropletTileSpeech(src: DropletSource, tile: number): string {
   const W = src.W, m = dominantMotif(W, tile), wd = W[tile * KERNEL_MOTIFS + m];
   const x = tile % src.width, y = Math.floor(tile / src.width);
-  return wd >= DROPLET_CORE ? `Tile (${x}, ${y}): droplet core, main pattern ${WALL_NAMES[m]}` : `Tile (${x}, ${y}): thin wall or empty`;
+  return wd >= DROPLET_CORE ? `Tile (${x}, ${y}): thick wall, main pattern ${WALL_NAMES[m]}` : `Tile (${x}, ${y}): thin wall or empty`;
 }

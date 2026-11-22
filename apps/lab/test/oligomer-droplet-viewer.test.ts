@@ -39,6 +39,7 @@ import {
   parseSeed,
   sampleDropletCensus,
 } from '../src/oligomer/droplet-run.ts';
+import { CHECK_SENTENCE, SEED_SENTENCE_FROZEN, SEED_SENTENCE_PAGE, dropletPageNote, rewordDropletNote } from '../src/oligomer/droplet-wording.ts';
 import {
   DROPLET_ARM_IDS,
   DROPLET_WORLD_OPTIONS,
@@ -783,6 +784,7 @@ describe('droplet page markup and copy', () => {
   const html = readFileSync(new URL('../oligomer/index.html', import.meta.url), 'utf8');
   const page = readFileSync(new URL('../src/oligomer/page.ts', import.meta.url), 'utf8');
   const dpage = readFileSync(new URL('../src/oligomer/droplet-page.ts', import.meta.url), 'utf8');
+  const dinspect = readFileSync(new URL('../src/oligomer/droplet-inspect.ts', import.meta.url), 'utf8');
   const doc = readFileSync(new URL('../../../docs/oligomer-2026-11-20/PHASE-B2-GPU.md', import.meta.url), 'utf8');
 
   it('every id the scripts use exists in the markup, and every droplet control has a label', () => {
@@ -813,7 +815,7 @@ describe('droplet page markup and copy', () => {
   const dropletCopy = () => {
     const a = html.indexOf('id="intro-d"'), b = html.indexOf('</section>', a);
     const c = html.indexOf('id="explain-d"'), d = html.indexOf('</section>', c);
-    return html.slice(a, b) + html.slice(c, d) + [...DROPLET_ARM_IDS].map((x) => describeDropletArm(x)).join(' ') + dpage;
+    return html.slice(a, b) + html.slice(c, d) + [...DROPLET_ARM_IDS].map((x) => `${describeDropletArm(x)} ${dropletPageNote(x)}`).join(' ') + dpage;
   };
 
   it('copy makes no promise in seconds or minutes, and every quoted figure sits beside its setting', () => {
@@ -844,7 +846,7 @@ describe('droplet page markup and copy', () => {
     expect(describeDropletArm('NO_PHAGE')).toContain('59 to 65'); expect(describeDropletArm('NO_PHAGE')).toContain('0 to 2 times');
     expect(describeDropletArm('SINGLE_WALL')).toContain('17 to 25');
     expect(describeDropletArm('NEUTRAL_PHAGE')).toContain('10 to 19');
-    expect(html).toContain('about 287 droplets late');
+    expect(html).toContain('about 287 wall patches late');
   });
 
   it('the page quotes the doc table beside our own re-run on the current kernel, and says which is which', () => {
@@ -862,7 +864,7 @@ describe('droplet page markup and copy', () => {
   });
 
   it('the page swaps accessible names with the family', () => {
-    expect(dpage).toContain("'Number of droplets over time.'");
+    expect(dpage).toContain("'Number of wall patches over time.'");
     expect(dpage).toMatch(/setAttribute\('aria-label', d \? dropletName : aText\)/);
     expect(dpage).toContain('latest.step');
     expect(dpage).not.toContain('chartsStep !== s.ring.length');
@@ -874,15 +876,82 @@ describe('droplet page markup and copy', () => {
     expect(t).toContain('0011 colour');
   });
 
-  it('the tile speech and inspector name a droplet core', () => {
+  it('the tile speech and inspector name thick wall, not a droplet core', () => {
     const { ref } = buildDropletWorld('PHAGE', 24, 1);
     const src = dropletSourceOfRef(ref);
     const core = Array.from({ length: 576 }, (_, i) => i).find((i) => ref.W[i * 6] >= DROPLET_CORE)!;
-    expect(dropletTileSpeech(src, core)).toContain('droplet core');
+    expect(dropletTileSpeech(src, core)).toContain('thick wall');
     expect(dropletTileSpeech(src, 0)).toContain('thin wall or empty');
     const rows = dropletInspectRows(src, core);
-    expect(rows.map((r) => r[0])).toEqual(['Square', 'Loose pieces (A)', 'Food (F)', 'Wall matter', 'Phage', 'In a droplet core?', 'All matter on this square']);
+    expect(rows.map((r) => r[0])).toEqual(['Square', 'Loose pieces (A)', 'Food (F)', 'Wall matter', 'Phage', 'Thick wall?', 'All matter on this square']);
+    expect(rows[5][1]).toContain(`looks for ${DROPLET_CORE} or more`);
+    for (const i of [core, 0]) expect(`${dropletTileSpeech(src, i)} ${dropletInspectRows(src, i).flat().join(' ')}`).not.toMatch(/droplet/i);
     expect(rows[3][1].split('\n').length).toBe(7);
     expect(rows[4][1].split('\n').length).toBe(6);
+  });
+
+  // ---- wording after the compartment check (docs/b2-compartment-check-2026-11-21) ----------------
+
+  const numbers = (t: string) => [...t.matchAll(/\d[\d,]*(?:\.\d+)?/g)].map((m) => m[0]);
+
+  it('the note the page shows never says droplet, keeps every figure of the frozen note in order, and adds the check only to the phage world', () => {
+    for (const id of DROPLET_ARM_IDS) {
+      const frozen = describeDropletArm(id), note = dropletPageNote(id);
+      expect(note, id).not.toMatch(/droplet/i);
+      const kept = numbers(frozen), now = numbers(note);
+      expect(kept.length, id).toBeGreaterThan(8);
+      expect(now.slice(0, kept.length), id).toEqual(kept);
+      const extra = id === 'PHAGE' ? ` ${CHECK_SENTENCE}` : '';
+      expect(now.slice(kept.length), id).toEqual(numbers(extra));
+      // the only differences from the frozen text are the two nouns and the added sentence
+      const back = note.slice(0, note.length - extra.length).replaceAll('wall patches late', 'droplets late').replace(SEED_SENTENCE_PAGE, SEED_SENTENCE_FROZEN);
+      expect(back, id).toBe(frozen);
+      expect((note.match(/held \d+ to \d+ wall patches late/g) ?? []).length, id).toBe(2);
+      expect(note.includes(CHECK_SENTENCE), id).toBe(id === 'PHAGE');
+      expect(note.includes(SEED_SENTENCE_PAGE), id).toBe(id !== 'SINGLE_WALL');
+    }
+    expect(dropletPageNote('PHAGE').endsWith(CHECK_SENTENCE)).toBe(true);
+    expect(new Set(DROPLET_ARM_IDS.map((a) => dropletPageNote(a))).size).toBe(4);
+  });
+
+  it('the page notes are exactly these, so any change to the frozen text or to the wording is looked at', () => {
+    const setting = '128 x 128 squares, 20,000 steps, 4 seeds, run on a graphics card';
+    const seeded = 'The dish is seeded with patches of six wall patterns (the names and colours on this page are display labels only).';
+    const rerun = 'that table predates a later fix to the kernel, and our re-run on the current code (same size, steps and seeds)';
+    const counter = 'The leader-change counter on this page samples every 500 steps from step 2,000 over the whole run, so it is not the same measurement as these figures.';
+    expect(dropletPageNote('PHAGE')).toBe(`${seeded} A phage can only grow in wall of its own pattern, and it turns that wall back into loose pieces and more phage, so a pattern that spreads becomes the next target. In the doc runs (${setting}) it held 65 to 70 wall patches late and the leading pattern changed 6 to 9 times; ${rerun} held 68 to 71 wall patches late with 7 to 10 leader changes. ${counter} The patches are crests of moving waves of wall, not closed bodies: in our check (seeds 13 to 16) 2 to 3 in 100 were still there 1,000 steps later.`);
+    expect(dropletPageNote('NO_PHAGE')).toBe(`${seeded} Phage is switched off, so no pattern is ever a target (the control). In the doc runs (${setting}) it held 59 to 65 wall patches late and the leading pattern changed 0 to 2 times; ${rerun} held 60 to 68 wall patches late with 0 to 1 leader changes. ${counter}`);
+    expect(dropletPageNote('SINGLE_WALL')).toBe(`Only one wall pattern (shown as 0011) exists, so there is nothing to switch to. Phage is allowed, but only phage of that one pattern can grow, and only in its wall. In the doc runs (${setting}) it held 17 to 25 wall patches late; ${rerun} held 19 to 29 wall patches late. ${counter}`);
+    expect(dropletPageNote('NEUTRAL_PHAGE')).toBe(`${seeded} A phage here grows in any wall at the same rate, so no pattern is safer than another. All its phage is drawn as the 0011 colour, since it has no pattern of its own. In the doc runs (${setting}) it held 10 to 19 wall patches late and the leading pattern changed 1 to 9 times; ${rerun} held 4 to 15 wall patches late with 1 to 11 leader changes. ${counter}`);
+  });
+
+  it('the wording module throws when the frozen text does not hold the phrases it replaces', () => {
+    const phage = describeDropletArm('PHAGE'), single = describeDropletArm('SINGLE_WALL');
+    expect(() => rewordDropletNote('PHAGE', 'Six wall patterns. Nothing else is said here.')).toThrow(/droplet-wording/);
+    expect(() => rewordDropletNote('PHAGE', phage.replace(SEED_SENTENCE_FROZEN, 'Six wall patterns exist.'))).toThrow(/opening sentence 0 times/);
+    expect(() => rewordDropletNote('PHAGE', phage.replace('held 65 to 70 droplets late', 'kept 65 to 70 droplets late'))).toThrow(/has 1 "held N to M droplets late"/);
+    expect(() => rewordDropletNote('PHAGE', phage.replace('held 65 to 70 droplets late', 'held 65 to 70 late'))).toThrow(/has 1 "held N to M droplets late"/);
+    expect(() => rewordDropletNote('SINGLE_WALL', `${SEED_SENTENCE_FROZEN} ${single}`)).toThrow(/opening sentence 1 times, expected 0/);
+    expect(() => rewordDropletNote('NO_PHAGE', `${describeDropletArm('NO_PHAGE')} Each droplet is new.`)).toThrow(/still says "droplet"/);
+    expect(() => rewordDropletNote('NO_PHAGE', `${describeDropletArm('NO_PHAGE')} DROPLETS move.`)).toThrow(/still says "droplet"/);
+    expect(() => rewordDropletNote('NOPE', phage)).toThrow(/Unknown droplet arm/);
+    for (const id of DROPLET_ARM_IDS) expect(() => rewordDropletNote(id, describeDropletArm(id))).not.toThrow();
+  });
+
+  it('the page shows the reworded note, never the frozen text, and the option labels need no rewording', () => {
+    expect(dpage).not.toContain('describeDropletArm');
+    expect(dpage).toMatch(/el\('world-note'\)\.textContent = dropletPageNote\(/);
+    for (const o of DROPLET_WORLD_OPTIONS) expect(o.label).not.toMatch(/droplet/i);
+  });
+
+  it('nothing a visitor reads on the droplet worlds says droplet: the markup, and the strings of the page and inspector scripts', () => {
+    expect(html.replace('id="start-droplets"', '')).not.toMatch(/droplet/i);
+    // code lines only (comments are not shown to anyone); then names, ids and file names are not prose
+    const prose = (src: string) => src.split('\n').filter((l) => !/^\s*(\/\*\*|\*|\/\/)/.test(l)).map((l) => l.replace(/\s\/\/ .*$/, ''))
+      .filter((l) => /(?<![.\w/-])droplets?(?![\w-]|\.ts)/i.test(l));
+    expect(prose(dpage)).toEqual([]);
+    expect(prose(dinspect)).toEqual([]);
+    expect(prose("say('Building the new droplet world');")).toHaveLength(1);
+    expect(prose('const maxDrops = Math.max(8, ...rows.map((r) => r.droplets));')).toEqual([]);
   });
 });
