@@ -11,12 +11,20 @@
  *   --ov '{"kDecT":0.03}' any other DropGenesConfig overrides, --out file (omit to print the summary only),
  *   --snapshot 1 prints an ASCII picture at the end.
  *
+ * Linked templates (docs/droplet-genes-linked-2026-11-21/PLAN.md) are switched on through --ov, for example
+ *   --ov '{"linked":true,"linkSites":"molecule","linkJoin":0.2,"linkBreak":0.001,"linkLoss":0.001}'
+ * and --templates linked|single says what the founders carry (default linked when linking is on): two full
+ * templates per wall tile, or two single copies of every gene. Either way that is two copies of each gene.
+ * A linked run counts a gene wherever it sits (complete, copies, heredity) and adds a `linked` block to the
+ * summary and to each report row. Without linking the output is what it was.
+ *
  * "Held" for a run (docs/droplet-genes-2026-11-21/PLAN.md): over the last tenth of the run the mean number of
  * compartments is at least 10 and at least half of them carry every gene.
  */
 
 import { DG_SCALE, DropGenesKernel, defaultDropGenesConfig, type DropGenesConfig } from '../../apps/lab/src/dropgenes/kernel.ts';
 import { CompartmentTracker, gene0Share, heredity, heredityDelayed, parasiteShare, type Census } from '../../apps/lab/src/dropgenes/observe.ts';
+import { addLinkedCounts, geneCopiesWithLinked, linkedCounts, linkedReadout, type LinkedCounts, type LinkedReadout } from '../../apps/lab/src/dropgenes/observe.ts';
 
 function parseArgs(argv: string[]): Record<string, string> {
   const out: Record<string, string> = {};
@@ -36,7 +44,7 @@ function num(args: Record<string, string>, key: string, dflt: number): number {
   return v;
 }
 
-const KNOWN = new Set(['size', 'steps', 'seed', 'genes', 'cap', 'gated', 'mutPar', 'census', 'report', 'founders', 'spacing', 'ov', 'out', 'snapshot', 'label']);
+const KNOWN = new Set(['size', 'steps', 'seed', 'genes', 'cap', 'gated', 'mutPar', 'census', 'report', 'founders', 'spacing', 'ov', 'out', 'snapshot', 'label', 'templates']);
 const args = parseArgs(Deno.args);
 for (const k of Object.keys(args)) if (!KNOWN.has(k)) throw new Error(`Unknown option --${k}`);
 
@@ -83,7 +91,16 @@ if (founders === 'one') {
     }
   }
 }
-world.seedTemplates(2, 0.125, 0);
+// Linked templates: what the founders carry. Two copies of every gene per wall tile in both forms.
+const linked = cfg.linked === true;
+const founderTemplates = args.templates ?? (linked ? 'linked' : 'single');
+if (founderTemplates !== 'linked' && founderTemplates !== 'single') throw new Error(`--templates must be linked or single, got ${founderTemplates}`);
+if (founderTemplates === 'linked' && !linked) throw new Error('--templates linked needs "linked": true in --ov');
+if (founderTemplates === 'linked') world.seedLinked(2, 0.125);
+else world.seedTemplates(2, 0.125, 0);
+/** What the tracker reads: T, or with linking on the per-tile gene copies, single plus linked, in T's layout. */
+const copiesBuf = linked ? new Uint32Array(world.T.length) : null;
+const copiesNow = (): Uint32Array => (copiesBuf ? geneCopiesWithLinked(world.T, world.L, K, copiesBuf) : world.T);
 
 /** Steps after a split at which daughters are read again for the heredity readout (PLAN.md amendment 1). */
 const HEREDITY_DELAY = 500;
@@ -111,6 +128,8 @@ interface Row {
   fusions: number;
   deaths: number;
   denovo: number;
+  /** Linked runs only: the linked-template readout over the whole arena at this census. */
+  linked?: LinkedReadout;
 }
 
 function variance(xs: number[]): number | null {
@@ -155,6 +174,7 @@ function rowOf(c: Census): Row {
     fusions: tracker.totals.fusions,
     deaths: tracker.totals.deaths,
     denovo: tracker.totals.denovo,
+    ...(linked ? { linked: linkedReadout(linkedCounts(world.T, world.L, K)) } : {}),
   };
 }
 
@@ -165,12 +185,21 @@ let lateComps = 0;
 let lateComplete = 0;
 let extinctAt: number | null = null;
 const t0 = performance.now();
-let lastCensus = tracker.observe(0, world.W, world.T);
+let lastCensus = tracker.observe(0, world.W, copiesNow());
+/** Linked runs: counts summed over the censuses of the late window (pooled, so a census with more templates weighs more). */
+let lateLinked: LinkedCounts | null = null;
+let lateLinkedN = 0;
 for (let s = 1; s <= steps; s++) {
   world.step();
   if (s % censusEvery === 0) {
-    const c = tracker.observe(s, world.W, world.T);
+    const c = tracker.observe(s, world.W, copiesNow());
     lastCensus = c;
+    if (linked && s > lateFrom) {
+      const lc = linkedCounts(world.T, world.L, K);
+      if (lateLinked === null) lateLinked = lc;
+      else addLinkedCounts(lateLinked, lc);
+      lateLinkedN++;
+    }
     if (c.compartments.length === 0 && extinctAt === null) extinctAt = s;
     if (s > lateFrom) {
       lateN++;
@@ -251,9 +280,23 @@ const summary = {
   heredityGene0Delayed: K >= 2 ? heredityDelayed(tracker.fissionRecords, (c) => gene0Share(c, K)) : null,
   heredityParasiteDelayed: K >= 1 ? heredityDelayed(tracker.fissionRecords, (c) => parasiteShare(c, K)) : null,
   fissionRecordsKept: tracker.fissionRecords.length,
+  ...(linked
+    ? {
+        linked: {
+          founders: founderTemplates,
+          sites: cfg.linkSites ?? 'gene',
+          /** Pooled over the censuses of the last tenth that were reached (0 censuses: the run ended first). */
+          lateCensuses: lateLinkedN,
+          late: lateLinked ? linkedReadout(lateLinked) : null,
+          /** The same readout at the last census the run reached. */
+          atEnd: linkedReadout(linkedCounts(world.T, world.L, K)),
+        },
+      }
+    : {}),
 };
 
 if (args.snapshot === '1' || args.snapshot === 'true') {
+  const snapCopies = copiesNow();
   for (let y = 0; y < size; y++) {
     let line = '';
     for (let x = 0; x < size; x++) {
@@ -261,7 +304,7 @@ if (args.snapshot === '1' || args.snapshot === 'true') {
       const w = world.W[i];
       let n = 0;
       let par = 0;
-      for (let k = 0; k < K; k++) if (world.T[i * S + k] > 0) n++;
+      for (let k = 0; k < K; k++) if (snapCopies[i * S + k] > 0) n++; // linked runs: a gene counted wherever it sits
       if (S > 0) par = world.T[i * S + K];
       line += w < 0.03 * DG_SCALE ? (par > 0 ? '!' : ' ') : w < cfg.gateHi * DG_SCALE ? '.' : par > 0 ? 'p' : String.fromCharCode(48 + Math.min(9, n));
     }

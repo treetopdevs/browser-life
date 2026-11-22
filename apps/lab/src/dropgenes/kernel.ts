@@ -60,6 +60,23 @@ export interface DropGenesConfig {
   readonly geneSat: number;
   /** Chance per tile per step that one essential copy on that tile becomes a parasite copy. */
   readonly mutPar: number;
+
+  // ---- LINKED (begin): linked templates, docs/droplet-genes-linked-2026-11-21/PLAN.md. All four keys are
+  // optional and are left out of defaultDropGenesConfig(): absent means off, and the kernel is then unchanged.
+  /** true: templates can be linked (one molecule carrying two or more genes). Needs 2..DG_LINK_MAX_GENES genes. */
+  readonly linked?: boolean;
+  /** Chance per tile per step of one join attempt between two template molecules on that tile. */
+  readonly linkJoin?: number;
+  /** Chance per step that a linked template breaks in two. */
+  readonly linkBreak?: number;
+  /** Chance that a new copy of a linked template is made without one of its genes. */
+  readonly linkLoss?: number;
+  /**
+   * Template sites one linked molecule takes. 'gene' (the default): one per gene it carries, so sites count
+   * matter. 'molecule': one, whatever its length, so a tile's sites can hold more gene copies when they are linked.
+   */
+  readonly linkSites?: 'gene' | 'molecule';
+  // ---- LINKED (end) ----
 }
 
 /**
@@ -296,6 +313,111 @@ export function dgDigest(A: Uint32Array, F: Uint32Array, W: Uint32Array, T: Uint
   return h >>> 0;
 }
 
+// ---- LINKED (begin): linked templates, docs/droplet-genes-linked-2026-11-21/PLAN.md ----
+//
+// A linked template is one molecule that carries a set of two or more genes: a bitmask m, bit k = gene k, each
+// gene at most once. With `len` = the number of genes it carries, one molecule
+//   holds `len` units of matter, is made from `len` units of fuel, returns `len` units of A when it decays,
+//   and is copied at kRep / len per step when every site is free.
+// So one molecule takes up fuel at the rate a single gene does, and its matter grows `len` times more slowly.
+// Sites: `len` per molecule with linkSites 'gene' (the default), one per molecule with linkSites 'molecule'.
+// Decay and hopping are per molecule at the single-gene rates. The parasite is never linked.
+//
+// State: L[tile * masks + m] molecules, for m with two or more bits (the other entries stay 0).
+// Arithmetic bounds: every count is at most the world's total matter (below 2^30, packDropGenesParams), so
+// count * len, the sums of sites and the per-tile gene counts stay below 2^30 as well. Rates are Q16 in
+// [0, 65536] and go through dgMulStochQ16; the copy rate floor(kRepQ16 * free / (cap * len)) is computed in a
+// double from factors below 2^17 and 2^12, exactly.
+
+/** Most genes a world with linking may have (2^genes template kinds per tile). */
+export const DG_LINK_MAX_GENES = 8;
+
+/** Hash channels of the linked rules. The unlinked rules use channels 10 to 616; these start at 20000. */
+const LK_CH_DECAY = 20000; // + mask (below 256)
+const LK_CH_COPY = 20256; // + mask
+const LK_CH_LOSS = 20512; // + mask
+const LK_CH_LOSS_GENE = 20768; // + mask
+const LK_CH_BREAK = 21024; // + mask
+const LK_CH_BREAK_AT = 21280; // + mask
+const LK_CH_HOP = 21536; // + mask
+const LK_CH_ORDER = 21792;
+const LK_CH_JOIN = 21794;
+const LK_CH_JOIN_A = 21795;
+const LK_CH_JOIN_B = 21796;
+const LK_CH_CARRIER = 21797;
+const LK_CH_SHUFFLE = 22000; // + position in the tile's list of linked kinds (below 256)
+
+export interface PackedDropGenesLinkParams {
+  readonly on: boolean;
+  /** 2^genes when linking is on, else 0: the stride of L. */
+  readonly masks: number;
+  /** The masks with two or more genes, ascending. */
+  readonly multi: Uint16Array;
+  /** len[m] = number of genes in mask m. */
+  readonly len: Uint8Array;
+  readonly joinU32: number;
+  readonly breakQ16: number;
+  readonly lossQ16: number;
+  /** true: a linked molecule takes one site; false: one site per gene. */
+  readonly siteless: boolean;
+}
+
+export function packDropGenesLinkParams(cfg: DropGenesConfig): PackedDropGenesLinkParams {
+  if (cfg.linked !== undefined && typeof cfg.linked !== 'boolean') throw new Error(`Invalid linked: ${cfg.linked} (expected true or false)`);
+  const rates: [string, number | undefined][] = [['linkJoin', cfg.linkJoin], ['linkBreak', cfg.linkBreak], ['linkLoss', cfg.linkLoss]];
+  for (const [name, v] of rates) {
+    if (v === undefined) continue;
+    if (!Number.isFinite(v) || v < 0 || v > 1) throw new Error(`Invalid ${name}: ${v} (expected [0, 1])`);
+    if (cfg.linked !== true && v !== 0) throw new Error(`${name} is set but linked is not true`);
+  }
+  if (cfg.linkSites !== undefined && cfg.linkSites !== 'gene' && cfg.linkSites !== 'molecule') throw new Error(`Invalid linkSites: ${cfg.linkSites} (expected 'gene' or 'molecule')`);
+  if (cfg.linked !== true && cfg.linkSites !== undefined) throw new Error('linkSites is set but linked is not true');
+  if (cfg.linked !== true) return { on: false, masks: 0, multi: new Uint16Array(0), len: new Uint8Array(0), joinU32: 0, breakQ16: 0, lossQ16: 0, siteless: false };
+  if (!Number.isSafeInteger(cfg.genes) || cfg.genes < 2 || cfg.genes > DG_LINK_MAX_GENES) {
+    throw new Error(`Invalid genes for linked templates: ${cfg.genes} (expected 2..${DG_LINK_MAX_GENES})`);
+  }
+  const masks = 1 << cfg.genes;
+  const len = new Uint8Array(masks);
+  const multi: number[] = [];
+  for (let m = 1; m < masks; m++) {
+    let c = 0;
+    for (let k = 0; k < cfg.genes; k++) if ((m >>> k) & 1) c++;
+    len[m] = c;
+    if (c >= 2) multi.push(m);
+  }
+  const joinU32 = probU32(cfg.linkJoin ?? 0);
+  const breakQ16 = q16(cfg.linkBreak ?? 0);
+  const lossQ16 = q16(cfg.linkLoss ?? 0);
+  // A rate too small for its fixed-point form would be silently off.
+  if ((cfg.linkJoin ?? 0) > 0 && joinU32 === 0) throw new Error(`linkJoin ${cfg.linkJoin} is below the resolution 2^-32`);
+  if ((cfg.linkBreak ?? 0) > 0 && breakQ16 === 0) throw new Error(`linkBreak ${cfg.linkBreak} is below the resolution 2^-17`);
+  if ((cfg.linkLoss ?? 0) > 0 && lossQ16 === 0) throw new Error(`linkLoss ${cfg.linkLoss} is below the resolution 2^-17`);
+  return { on: true, masks, multi: Uint16Array.from(multi), len, joinU32, breakQ16, lossQ16, siteless: cfg.linkSites === 'molecule' };
+}
+
+/** dgDigest continued over the linked templates. */
+export function dgDigestLinked(A: Uint32Array, F: Uint32Array, W: Uint32Array, T: Uint32Array, L: Uint32Array): number {
+  let h = dgDigest(A, F, W, T);
+  for (let i = 0; i < L.length; i++) {
+    h ^= L[i];
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
+/** The lowest `count` genes of mask m, as a mask. */
+function lkLowGenes(m: number, count: number): number {
+  let out = 0;
+  for (let k = 0; count > 0 && k < 31; k++) {
+    if ((m >>> k) & 1) {
+      out |= 1 << k;
+      count--;
+    }
+  }
+  return out;
+}
+// ---- LINKED (end) ----
+
 export class DropGenesKernel {
   readonly cfg: DropGenesConfig;
   readonly p: PackedDropGenesParams;
@@ -318,6 +440,24 @@ export class DropGenesKernel {
   private readonly geneQ: Uint16Array;
   private readonly rndF: Uint32Array;
   private readonly rndA: Uint32Array;
+
+  // ---- LINKED (begin): fields ----
+  readonly lk: PackedDropGenesLinkParams;
+  /** L[tile * lk.masks + m]: molecules of the linked template with gene set m. Empty when linking is off. */
+  L: Uint32Array;
+  private L2: Uint32Array;
+  /** Scratch: per-tile copies of each gene, single plus linked (stride genes), filled by pass 0. */
+  private readonly lkG: Uint32Array;
+  /** Scratch: lossy copies made on the tile being worked on, by the mask of the shortened product. */
+  private readonly lkBorn: Uint32Array;
+  private readonly lkBornList: Uint16Array;
+  /** Scratch: the linked kinds present on the tile being worked on, in the order they are served. */
+  private readonly lkOrder: Uint16Array;
+  private readonly lkCnt: Uint32Array;
+  /** Scratch: A and F of the tile after lkDecayCopy. */
+  private lkA = 0;
+  private lkF = 0;
+  // ---- LINKED (end) ----
 
   readonly initTotalMatter: bigint;
 
@@ -344,14 +484,25 @@ export class DropGenesKernel {
     this.F.fill(initF);
     this.A.fill(cfg.initMatterPerTile - initF);
     this.initTotalMatter = dgTotalMatter(this.A, this.F, this.W, this.T);
+
+    // ---- LINKED (begin): arrays (all empty when linking is off) ----
+    this.lk = packDropGenesLinkParams(cfg);
+    this.L = new Uint32Array(n * this.lk.masks);
+    this.L2 = new Uint32Array(n * this.lk.masks);
+    this.lkG = new Uint32Array(this.lk.on ? n * cfg.genes : 0);
+    this.lkBorn = new Uint32Array(this.lk.masks);
+    this.lkBornList = new Uint16Array(this.lk.masks);
+    this.lkOrder = new Uint16Array(this.lk.masks);
+    this.lkCnt = new Uint32Array(this.lk.on ? cfg.genes : 0);
+    // ---- LINKED (end) ----
   }
 
   totalMatter(): bigint {
-    return dgTotalMatter(this.A, this.F, this.W, this.T);
+    return dgTotalMatter(this.A, this.F, this.W, this.T) + this.linkedMatter(); // LINKED: + linked templates (0 when off)
   }
 
   digest(): number {
-    return dgDigest(this.A, this.F, this.W, this.T);
+    return this.lk.on ? dgDigestLinked(this.A, this.F, this.W, this.T, this.L) : dgDigest(this.A, this.F, this.W, this.T); // LINKED
   }
 
   /** Seed a disc of wall at (cx, cy), drawing the matter from the soluble pools exactly as the reference does. */
@@ -453,7 +604,12 @@ export class DropGenesKernel {
     const K = p.genes;
     const S = p.species;
     const geneQ = this.geneQ;
+    const LK = this.lk.on; // LINKED: read by the linked blocks below; false leaves every pass as it was
 
+    // ---- LINKED (begin): pass 0 with a gene counted wherever it sits; the unlinked pass 0 below is then skipped ----
+    if (LK) this.lkPass0();
+    else
+    // ---- LINKED (end) ----
     // Pass 0: gene function per tile, from the 3x3 patch of template counts at the start of the step.
     // geneQ = 1024 * min_k min(patch_k, geneSat) / geneSat. Only read where wall is present.
     if (K > 0) {
@@ -506,6 +662,13 @@ export class DropGenesKernel {
         f += dAF;
       }
 
+      // ---- LINKED (begin): decay and copying of single and linked templates; 1t below is then skipped ----
+      if (LK) {
+        this.lkDecayCopy(i, step, a, f, w0);
+        a = this.lkA;
+        f = this.lkF;
+      } else
+      // ---- LINKED (end) ----
       // 1t. Templates: decay T_s -> A, then copying F + T_s -> 2 T_s into free sites.
       if (S > 0) {
         const tb = i * S;
@@ -581,6 +744,10 @@ export class DropGenesKernel {
         }
       }
 
+      // ---- LINKED (begin): parasite origin from any carrier, then breaking and joining; 1m below is then skipped ----
+      if (LK) this.lkOriginBreakJoin(i, step);
+      else
+      // ---- LINKED (end) ----
       // 1m. Rare parasite origin: one essential copy on this tile becomes one parasite copy. The gene is chosen
       // by hash among the genes present on the tile (with every gene present this is hash % K).
       if (K > 0 && p.mutParU32 > 0 && dgHash32(seed, step, i, 560) < p.mutParU32) {
@@ -687,6 +854,7 @@ export class DropGenesKernel {
       this.rndA[i] = dgHash32(seed, step, i, 201);
     }
     if (S > 0) this.T2.set(this.T);
+    if (LK) this.L2.set(this.L); // LINKED
     for (let y = 0; y < H; y++) {
       const yU = (y > 0 ? y - 1 : H - 1) * Wd;
       const y0 = y * Wd;
@@ -747,6 +915,9 @@ export class DropGenesKernel {
             }
           }
         }
+        // ---- LINKED (begin): linked templates hop as single ones do ----
+        if (LK && p.diffTQ16 > 0) this.lkHop(i, step, iE, iW, iS, iN);
+        // ---- LINKED (end) ----
       }
     }
 
@@ -754,5 +925,423 @@ export class DropGenesKernel {
     tmp = this.F; this.F = this.F2; this.F2 = tmp;
     tmp = this.W; this.W = this.W2; this.W2 = tmp;
     if (S > 0) { tmp = this.T; this.T = this.T2; this.T2 = tmp; }
+    if (LK) { tmp = this.L; this.L = this.L2; this.L2 = tmp; } // LINKED
   }
+
+  // ---- LINKED (begin): methods. None is reached from step() when linking is off. ----
+
+  /** Matter held in linked templates: one unit per gene per molecule. */
+  linkedMatter(): bigint {
+    const lk = this.lk;
+    if (!lk.on) return 0n;
+    const M = lk.masks;
+    const multi = lk.multi;
+    let sum = 0;
+    for (let i = 0; i < this.nTiles; i++) {
+      const lb = i * M;
+      for (let j = 0; j < multi.length; j++) sum += this.L[lb + multi[j]] * lk.len[multi[j]];
+    }
+    return BigInt(sum);
+  }
+
+  /**
+   * Put `count` molecules of the linked template `mask` (default: every gene) on each tile whose wall is at least
+   * `minWall`, taking count * len units of matter from that tile's A then F. Returns the number of tiles seeded.
+   */
+  seedLinked(count: number, minWall = 0.125, mask?: number): number {
+    const lk = this.lk;
+    if (!lk.on) throw new Error('seedLinked needs linked: true');
+    const m = mask ?? lk.masks - 1;
+    if (!Number.isSafeInteger(count) || count < 0) throw new Error('Template seed amounts must be non-negative integers');
+    if (!Number.isSafeInteger(m) || m < 1 || m >= lk.masks || lk.len[m] < 2) throw new Error(`Invalid linked template mask: ${m}`);
+    const want = count * lk.len[m];
+    const thresh = Math.round(minWall * DG_SCALE);
+    let seeded = 0;
+    for (let i = 0; i < this.nTiles; i++) {
+      if (this.W[i] < thresh) continue;
+      if (this.A[i] + this.F[i] < want) throw new Error(`Not enough soluble matter on tile ${i} to seed templates`);
+      const fromA = Math.min(this.A[i], want);
+      this.A[i] -= fromA;
+      this.F[i] -= want - fromA;
+      this.L[i * lk.masks + m] += count;
+      seeded++;
+    }
+    return seeded;
+  }
+
+  /** Add `count` molecules with gene set m to a tile: a single gene goes to T, anything longer to L. */
+  private lkAdd(i: number, m: number, count: number): void {
+    if (this.lk.len[m] === 1) this.T[i * this.p.species + (31 - Math.clz32(m))] += count;
+    else this.L[i * this.lk.masks + m] += count;
+  }
+
+  /**
+   * Pass 0 with linking on: lkG[tile * K + k] = single copies of gene k plus linked templates that carry it, then
+   * geneQ from the 3x3 patch of those counts by the same formula as the unlinked pass 0.
+   */
+  private lkPass0(): void {
+    const p = this.p;
+    const lk = this.lk;
+    const K = p.genes;
+    const S = p.species;
+    const M = lk.masks;
+    const multi = lk.multi;
+    const N = this.nTiles;
+    const Wd = p.width;
+    const H = p.height;
+    const G = this.lkG;
+    const geneQ = this.geneQ;
+    for (let i = 0; i < N; i++) {
+      const gb = i * K;
+      const tb = i * S;
+      const lb = i * M;
+      for (let k = 0; k < K; k++) G[gb + k] = this.T[tb + k];
+      for (let j = 0; j < multi.length; j++) {
+        const m = multi[j];
+        const n = this.L[lb + m];
+        if (n === 0) continue;
+        for (let k = 0; k < K; k++) if ((m >>> k) & 1) G[gb + k] += n;
+      }
+    }
+    const sat = p.geneSat;
+    for (let y = 0; y < H; y++) {
+      const yU = (y > 0 ? y - 1 : H - 1) * Wd;
+      const y0 = y * Wd;
+      const yD = (y + 1 < H ? y + 1 : 0) * Wd;
+      for (let x = 0; x < Wd; x++) {
+        const i = y0 + x;
+        if (this.W[i] === 0) {
+          geneQ[i] = 0;
+          continue;
+        }
+        const xL = x > 0 ? x - 1 : Wd - 1;
+        const xR = x + 1 < Wd ? x + 1 : 0;
+        const b0 = (yU + xL) * K;
+        const b1 = (yU + x) * K;
+        const b2 = (yU + xR) * K;
+        const b3 = (y0 + xL) * K;
+        const b4 = i * K;
+        const b5 = (y0 + xR) * K;
+        const b6 = (yD + xL) * K;
+        const b7 = (yD + x) * K;
+        const b8 = (yD + xR) * K;
+        let minS = sat;
+        for (let k = 0; k < K && minS > 0; k++) {
+          const s = G[b0 + k] + G[b1 + k] + G[b2 + k] + G[b3 + k] + G[b4 + k] + G[b5 + k] + G[b6 + k] + G[b7 + k] + G[b8 + k];
+          if (s < minS) minS = s;
+        }
+        geneQ[i] = Math.floor((minS * 1024) / sat);
+      }
+    }
+  }
+
+  /**
+   * Rule 1t with linking on, for tile i whose A and F are `a` and `f` after the light step. Leaves the tile's
+   * A and F in lkA and lkF.
+   *
+   * Decay: every molecule, single or linked, decays at kDecT; a linked one returns one unit of A per gene.
+   * Sites: floor(min(W, 1.0) * capPerTile), as unlinked; a linked molecule takes one per gene (linkSites 'gene')
+   * or one (linkSites 'molecule').
+   * Copying: singles and the parasite exactly as unlinked (same order, rates and hash channels). A linked
+   * template of `len` genes is copied at kRep / len * free / sites per molecule, and a copy needs `len` units of
+   * fuel and as many free sites as the new molecule takes. With chance linkLoss a copy is made without one of
+   * the genes (it then takes len - 1 units of fuel, and len - 1 sites under 'gene'); all the lossy copies of one
+   * kind on a tile in a step lack the same gene. Which copies are whole and which lossy is settled before the
+   * limits of fuel and free sites are applied, each at its own cost; whether the whole or the lossy copies of a
+   * kind are served first is one hash bit.
+   * Which is served first, the singles or the linked templates, is one hash bit per tile per step. The linked
+   * kinds present on the tile are served in a hashed random order (a shuffle of the kinds present, so a kind's
+   * place does not depend on its mask number or on which other kinds are absent; the orders are equally likely
+   * up to the modulo bias of a 32-bit hash, below 2^-24).
+   * With no linked molecule on the tile this is the unlinked rule 1t bit for bit.
+   */
+  private lkDecayCopy(i: number, step: number, a: number, f: number, w0: number): void {
+    const p = this.p;
+    const lk = this.lk;
+    const K = p.genes;
+    const S = p.species;
+    const M = lk.masks;
+    const multi = lk.multi;
+    const seed = p.seed;
+    const tb = i * S;
+    const lb = i * M;
+    let tot = 0;
+    for (let s = 0; s < S; s++) {
+      let t = this.T[tb + s];
+      if (t === 0) continue;
+      let d = dgMulStochQ16(t, p.kDecTQ16, dgHash32(seed, step, i, 500 + s));
+      if (d > t) d = t;
+      t -= d;
+      a += d;
+      this.T[tb + s] = t;
+      tot += t;
+    }
+    let nLinked = 0;
+    for (let j = 0; j < multi.length; j++) {
+      const m = multi[j];
+      let n = this.L[lb + m];
+      if (n === 0) continue;
+      let d = dgMulStochQ16(n, p.kDecTQ16, dgHash32(seed, step, i, LK_CH_DECAY + m));
+      if (d > n) d = n;
+      n -= d;
+      a += d * lk.len[m];
+      this.L[lb + m] = n;
+      tot += lk.siteless ? n : n * lk.len[m];
+      nLinked += n;
+    }
+    if (tot > 0 && f > 0) {
+      const wc = w0 > DG_SCALE ? DG_SCALE : w0;
+      const cap = Math.imul(wc, p.capPerTile) >>> 10;
+      if (cap > tot) {
+        const free0 = cap - tot;
+        let freeLeft = free0;
+        let nBorn = 0;
+        const linkedFirst = nLinked > 0 && (dgHash32(seed, step, i, LK_CH_ORDER) & 1) === 1;
+        for (let turn = 0; turn < 2; turn++) {
+          if ((turn === 0) === linkedFirst) {
+            if (nLinked === 0) continue;
+            // The kinds present, shuffled by hash (Fisher-Yates): every order equally likely, up to modulo bias.
+            const order = this.lkOrder;
+            let nPresent = 0;
+            for (let j = 0; j < multi.length; j++) if (this.L[lb + multi[j]] !== 0) order[nPresent++] = multi[j];
+            for (let q = nPresent - 1; q > 0; q--) {
+              const r = dgHash32(seed, step, i, LK_CH_SHUFFLE + q) % (q + 1);
+              const swap = order[q];
+              order[q] = order[r];
+              order[r] = swap;
+            }
+            for (let off = 0; off < nPresent && freeLeft > 0 && f > 0; off++) {
+              const m = order[off];
+              const n = this.L[lb + m];
+              const len = lk.len[m];
+              const rateQ16 = Math.floor((p.kRepQ16 * free0) / (cap * len));
+              const b = dgMulStochQ16(n, rateQ16, dgHash32(seed, step, i, LK_CH_COPY + m));
+              if (b === 0) continue;
+              // Whole and lossy copies are told apart first; each is then limited by fuel and free sites at its
+              // own cost (len, or len - 1 for a lossy copy; one site each under 'molecule').
+              const hl = lk.lossQ16 > 0 ? dgHash32(seed, step, i, LK_CH_LOSS + m) : 0;
+              let lost = lk.lossQ16 > 0 ? dgMulStochQ16(b, lk.lossQ16, hl) : 0;
+              if (lost > b) lost = b;
+              let whole = b - lost;
+              const siteWhole = lk.siteless ? 1 : len;
+              const siteLost = lk.siteless ? 1 : len - 1;
+              const lossyFirst = ((hl >>> 16) & 1) === 1;
+              for (let part = 0; part < 2; part++) {
+                if ((part === 0) === lossyFirst) {
+                  const roomSites = Math.floor(freeLeft / siteLost);
+                  if (lost > roomSites) lost = roomSites;
+                  const roomFuel = Math.floor(f / (len - 1));
+                  if (lost > roomFuel) lost = roomFuel;
+                  f -= lost * (len - 1);
+                  freeLeft -= lost * siteLost;
+                } else {
+                  const roomSites = Math.floor(freeLeft / siteWhole);
+                  if (whole > roomSites) whole = roomSites;
+                  const roomFuel = Math.floor(f / len);
+                  if (whole > roomFuel) whole = roomFuel;
+                  f -= whole * len;
+                  freeLeft -= whole * siteWhole;
+                }
+              }
+              this.L[lb + m] = n + whole;
+              if (lost > 0) {
+                // The gene left out: the (hash % len)-th gene of m. The shortened copies are added after both
+                // turns, so nothing made in this step is copied in this step.
+                let g = dgHash32(seed, step, i, LK_CH_LOSS_GENE + m) % len;
+                let k = 0;
+                for (; k < K; k++) if (((m >>> k) & 1) === 1 && g-- === 0) break;
+                const m2 = m & ~(1 << k);
+                if (this.lkBorn[m2] === 0) this.lkBornList[nBorn++] = m2;
+                this.lkBorn[m2] += lost;
+              }
+            }
+          } else {
+            const s0 = dgHash32(seed, step, i, 540) % S;
+            for (let off = 0; off < S && freeLeft > 0 && f > 0; off++) {
+              const s = (s0 + off) % S;
+              const t = this.T[tb + s];
+              if (t === 0) continue;
+              const kq = s < K ? p.kRepQ16 : p.kRepParQ16;
+              const rateQ16 = Math.floor((kq * free0) / cap);
+              let b = dgMulStochQ16(t, rateQ16, dgHash32(seed, step, i, 520 + s));
+              if (b > freeLeft) b = freeLeft;
+              if (b > f) b = f;
+              if (b > 0) {
+                this.T[tb + s] = t + b;
+                f -= b;
+                freeLeft -= b;
+              }
+            }
+          }
+        }
+        for (let q = 0; q < nBorn; q++) {
+          const m2 = this.lkBornList[q];
+          this.lkAdd(i, m2, this.lkBorn[m2]);
+          this.lkBorn[m2] = 0;
+        }
+      }
+    }
+    this.lkA = a;
+    this.lkF = f;
+  }
+
+  /**
+   * Rule 1m with linking on, then the two rules that make and unmake linked templates. None of them changes A,
+   * F or W: matter only moves between template kinds on the tile.
+   *
+   * Parasite origin: the same event, at the same rate and with the same gene choice as unlinked (hash channels
+   * 560 and 561, over the genes present on the tile in any form). The carrier is then chosen by hash among every
+   * molecule on the tile that carries that gene. A single copy becomes one parasite copy, as unlinked; a linked
+   * template loses that gene (it becomes the template of the other genes) and one parasite copy is added.
+   *
+   * Breaking: each linked template breaks with chance linkBreak per step, between two genes that are next to
+   * each other in gene order: the lowest `cut` genes become one piece, the rest the other. All the molecules of
+   * one kind that break on a tile in a step break at the same point.
+   *
+   * Joining: with chance linkJoin per tile per step, two different slots are drawn by hash from the tile's
+   * capPerTile slots (the sites of a tile whose wall is 1.0; when the tile holds more molecules than that, from as
+   * many slots as molecules). The tile's gene-carrying molecules (parasite excluded) fill the first slots. If both
+   * slots hold a molecule and the two have no gene in common, they become one molecule carrying both gene sets.
+   * So on a tile holding no more molecules than capPerTile the chance that two given molecules meet does not
+   * depend on how many others are there (mass action), and a tile with few molecules joins rarely. Above that
+   * (a tile over its slots, which hops and breaks can make) every draw finds two molecules and the chance for a
+   * given pair falls with the number on the tile. Joining needs no fuel. Under linkSites 'gene' breaking and joining leave the sites taken unchanged;
+   * under 'molecule' a break takes one more site (it is not held back when none is free, so a tile can be over
+   * its sites, as it can after hops) and a join frees one.
+   */
+  private lkOriginBreakJoin(i: number, step: number): void {
+    const p = this.p;
+    const lk = this.lk;
+    const K = p.genes;
+    const S = p.species;
+    const M = lk.masks;
+    const multi = lk.multi;
+    const seed = p.seed;
+    const tb = i * S;
+    const lb = i * M;
+
+    if (p.mutParU32 > 0 && dgHash32(seed, step, i, 560) < p.mutParU32) {
+      const cnt = this.lkCnt;
+      for (let k = 0; k < K; k++) cnt[k] = this.T[tb + k];
+      for (let j = 0; j < multi.length; j++) {
+        const m = multi[j];
+        const n = this.L[lb + m];
+        if (n === 0) continue;
+        for (let k = 0; k < K; k++) if ((m >>> k) & 1) cnt[k] += n;
+      }
+      let present = 0;
+      for (let k = 0; k < K; k++) if (cnt[k] > 0) present++;
+      if (present > 0) {
+        let j = dgHash32(seed, step, i, 561) % present;
+        let k = 0;
+        for (; k < K; k++) if (cnt[k] > 0 && j-- === 0) break;
+        let r = dgHash32(seed, step, i, LK_CH_CARRIER) % cnt[k];
+        if (r < this.T[tb + k]) {
+          this.T[tb + k] -= 1;
+        } else {
+          r -= this.T[tb + k];
+          for (let q = 0; q < multi.length; q++) {
+            const m = multi[q];
+            if (((m >>> k) & 1) === 0) continue;
+            const n = this.L[lb + m];
+            if (r < n) {
+              this.L[lb + m] = n - 1;
+              this.lkAdd(i, m & ~(1 << k), 1);
+              break;
+            }
+            r -= n;
+          }
+        }
+        this.T[tb + K] += 1;
+      }
+    }
+
+    if (lk.breakQ16 > 0) {
+      // Ascending masks: both pieces of m are smaller than m, so a piece is never visited after it is made.
+      for (let j = 0; j < multi.length; j++) {
+        const m = multi[j];
+        const n = this.L[lb + m];
+        if (n === 0) continue;
+        let b = dgMulStochQ16(n, lk.breakQ16, dgHash32(seed, step, i, LK_CH_BREAK + m));
+        if (b > n) b = n;
+        if (b === 0) continue;
+        const cut = 1 + (dgHash32(seed, step, i, LK_CH_BREAK_AT + m) % (lk.len[m] - 1));
+        const lo = lkLowGenes(m, cut);
+        this.L[lb + m] = n - b;
+        this.lkAdd(i, lo, b);
+        this.lkAdd(i, m ^ lo, b);
+      }
+    }
+
+    if (lk.joinU32 > 0 && dgHash32(seed, step, i, LK_CH_JOIN) < lk.joinU32) {
+      let n = 0;
+      for (let k = 0; k < K; k++) n += this.T[tb + k];
+      for (let j = 0; j < multi.length; j++) n += this.L[lb + multi[j]];
+      if (n >= 2) {
+        const slots = n > p.capPerTile ? n : p.capPerTile;
+        const r1 = dgHash32(seed, step, i, LK_CH_JOIN_A) % slots;
+        let r2 = dgHash32(seed, step, i, LK_CH_JOIN_B) % (slots - 1);
+        if (r2 >= r1) r2++;
+        if (r1 < n && r2 < n) {
+          const m1 = this.lkPick(i, r1);
+          const m2 = this.lkPick(i, r2);
+          if ((m1 & m2) === 0) {
+            this.lkAdd(i, m1, -1);
+            this.lkAdd(i, m2, -1);
+            this.L[lb + (m1 | m2)] += 1;
+          }
+        }
+      }
+    }
+  }
+
+  /** Gene set of the r-th gene-carrying molecule on tile i, counting singles in gene order and then linked templates by mask. */
+  private lkPick(i: number, r: number): number {
+    const K = this.p.genes;
+    const tb = i * this.p.species;
+    const lb = i * this.lk.masks;
+    const multi = this.lk.multi;
+    for (let k = 0; k < K; k++) {
+      const t = this.T[tb + k];
+      if (r < t) return 1 << k;
+      r -= t;
+    }
+    for (let j = 0; j < multi.length; j++) {
+      const n = this.L[lb + multi[j]];
+      if (r < n) return multi[j];
+      r -= n;
+    }
+    throw new Error(`lkPick: index past the molecules on tile ${i}`);
+  }
+
+  /** Rule 6 for linked templates: the same hop rate, gate and one-neighbour rule as single copies, per molecule. */
+  private lkHop(i: number, step: number, iE: number, iW: number, iS: number, iN: number): void {
+    const p = this.p;
+    const M = this.lk.masks;
+    const multi = this.lk.multi;
+    const lb = i * M;
+    for (let j = 0; j < multi.length; j++) {
+      const m = multi[j];
+      const n = this.L[lb + m];
+      if (n === 0) continue;
+      const r = dgHash32(p.seed, step, i, LK_CH_HOP + m);
+      const dir = r & 3;
+      const nb = dir === 0 ? iE : dir === 1 ? iW : dir === 2 ? iS : iN;
+      let rateQ16 = p.diffTQ16;
+      if (p.gated !== 0) {
+        const wi = this.W[i];
+        const wn = this.W[nb];
+        const g = dgGateQ10(wi < wn ? wi : wn, p.gateLoInt, p.gateHiInt);
+        if (g === 0) continue;
+        rateQ16 = Math.imul(rateQ16, g) >>> 10;
+      }
+      let out = dgMulStochQ16(n, rateQ16, r >>> 8);
+      if (out > n) out = n;
+      if (out > 0) {
+        this.L2[lb + m] -= out;
+        this.L2[nb * M + m] += out;
+      }
+    }
+  }
+  // ---- LINKED (end) ----
 }

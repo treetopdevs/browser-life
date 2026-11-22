@@ -43,6 +43,15 @@ interface Summary {
   heredityGene0: Heredity | null;
   heredityGene0Delayed: Heredity | null;
   heredityParasiteDelayed: Heredity | null;
+  /** Linked-template runs only (docs/droplet-genes-linked-2026-11-21/PLAN.md). */
+  linked?: { founders: string; sites: string; lateCensuses: number; late: LinkedReadout | null; atEnd: LinkedReadout };
+}
+interface LinkedReadout {
+  linkedShare: (number | null)[];
+  meanLength: number | null;
+  shortenedShare: number | null;
+  fullShare: number | null;
+  byLength: number[];
 }
 interface Row {
   step: number;
@@ -65,6 +74,7 @@ const cells = new Map<string, Cell>();
 const sharedByTag = new Map<string, string>();
 let protocol: Summary['protocol'] | null = null;
 const parMutByTag = new Map<string, number>();
+const foundersByTag = new Map<string, string>(); // linked runs: the founders' template form, one per setting
 const names: string[] = [];
 for await (const e of Deno.readDir(dir)) if (e.isFile && e.name.endsWith('.json')) names.push(e.name);
 names.sort();
@@ -92,6 +102,12 @@ for (const name of names) {
     const pm = parMutByTag.get(tag);
     if (pm === undefined) parMutByTag.set(tag, c.mutPar as number);
     else if (pm !== c.mutPar) throw new Error(`${name}: mutPar differs from other parasite runs of setting "${tag || 'default'}"`);
+  }
+  {
+    const form = summary.linked ? summary.linked.founders : 'single';
+    const seenForm = foundersByTag.get(tag);
+    if (seenForm === undefined) foundersByTag.set(tag, form);
+    else if (seenForm !== form) throw new Error(`${name}: founders' template form differs from other runs of setting "${tag || 'default'}"`);
   }
   const key = `${tag}|${c.genes}|${c.capPerTile}|${arm}`;
   let cell = cells.get(key);
@@ -160,6 +176,27 @@ for (const c of sorted) {
   );
 }
 
+// Linked templates: printed only when the directory holds linked runs, so first-rung directories read as before.
+if (sorted.some((c) => c.runs.some((r) => r.s.linked))) {
+  console.log('\nLinked templates (late = pooled over the censuses of the last tenth of the planned run; n/a where a run ended before it). Ranges over seeds.\n');
+  console.log('| setting | K | sites/tile | arm | founders | site rule | share of each gene\'s copies that are linked (lowest to highest gene) | mean genes per template | share of linked templates that are shortened | share of templates carrying every gene |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|');
+  for (const c of sorted) {
+    const ls = c.runs.map((r) => r.s.linked);
+    if (!ls.some((l) => l)) continue;
+    const late = ls.map((l) => l?.late ?? null);
+    const withLate = late.filter((l): l is LinkedReadout => l !== null);
+    const shares = withLate.flatMap((l) => l.linkedShare).filter((v): v is number => v !== null);
+    const perGene = shares.length
+      ? `${Math.min(...shares).toFixed(2)} to ${Math.max(...shares).toFixed(2)}${withLate.length < late.length ? ` (${withLate.length} of ${late.length} runs)` : ''}`
+      : 'n/a';
+    console.log(
+      `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${[...new Set(ls.map((l) => l?.founders ?? 'n/a'))].join(',')} | ${[...new Set(ls.map((l) => l?.sites ?? 'n/a'))].join(',')} | ` +
+        `${perGene} | ${range(late.map((l) => l?.meanLength ?? null), 2)} | ${range(late.map((l) => l?.shortenedShare ?? null), 3)} | ${range(late.map((l) => l?.fullShare ?? null), 3)} |`,
+    );
+  }
+}
+
 // Largest K held per (setting, sites, arm): the largest tested K whose cell is held. Rungs below it that were
 // not held, and rungs with fewer than 4 seeds, are listed, since nothing guarantees holding is monotone in K.
 console.log('\nLargest K held\n');
@@ -188,6 +225,7 @@ for (const c of sorted) {
       residual: r.s.residual, heredityGene0: r.s.heredityGene0, heredityGene0Delayed: r.s.heredityGene0Delayed, heredityParasiteDelayed: r.s.heredityParasiteDelayed,
       lateParasiteShare: lateMean(r.s, r.rows, (x) => x.parasiteShare), lateVarGene0: lateMean(r.s, r.rows, (x) => x.varGene0),
       lateMeanCopies: lateMean(r.s, r.rows, (x) => x.meanCopies), lateMeanArea: lateMean(r.s, r.rows, (x) => x.meanArea),
+      ...(r.s.linked ? { linked: r.s.linked } : {}),
     })),
   });
 }

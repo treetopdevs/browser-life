@@ -481,3 +481,115 @@ export function heredityDelayed(records: readonly FissionRecord[], trait: (copie
   for (const r of records) for (const st of r.delayedStatus) counts[st]++;
   return { ...correlate(records, trait, (r) => r.delayed), ...counts };
 }
+
+// ---- LINKED (begin): readouts for linked templates (docs/droplet-genes-linked-2026-11-21/PLAN.md) ----
+// Additions only. `L` is the kernel's linked-template array: L[tile * 2^genes + mask] molecules, bit k = gene k.
+
+/**
+ * Per-tile copies in the layout of T (stride genes + 1), with a gene counted wherever it sits: column k is the
+ * single copies of gene k plus the linked templates that carry it; the parasite column is copied. Give this to
+ * CompartmentTracker.observe in place of T and every count it reports is in gene copies (units of matter).
+ */
+export function geneCopiesWithLinked(T: Uint32Array, L: Uint32Array, genes: number, out?: Uint32Array): Uint32Array {
+  const S = genes + 1;
+  const M = 1 << genes;
+  const n = T.length / S;
+  if (L.length !== n * M) throw new Error(`geneCopiesWithLinked: L has ${L.length} entries, expected ${n * M}`);
+  const G = out ?? new Uint32Array(T.length);
+  G.set(T);
+  for (let i = 0; i < n; i++) {
+    const lb = i * M;
+    const gb = i * S;
+    for (let m = 3; m < M; m++) {
+      const c = L[lb + m];
+      if (c === 0) continue;
+      for (let k = 0; k < genes; k++) if ((m >>> k) & 1) G[gb + k] += c;
+    }
+  }
+  return G;
+}
+
+/** Raw counts over a whole arena (or summed over several censuses). The parasite is not counted anywhere here. */
+export interface LinkedCounts {
+  /** Gene-carrying template molecules by the number of genes they carry: byLength[len - 1]; singles first. */
+  byLength: number[];
+  /** Per gene: its copies that sit in linked templates (two or more genes). */
+  linkedCopies: number[];
+  /** Per gene: all its copies, single and linked. */
+  allCopies: number[];
+}
+
+export function linkedCounts(T: Uint32Array, L: Uint32Array, genes: number): LinkedCounts {
+  const S = genes + 1;
+  const M = 1 << genes;
+  const n = T.length / S;
+  if (L.length !== n * M) throw new Error(`linkedCounts: L has ${L.length} entries, expected ${n * M}`);
+  const byLength = new Array<number>(genes).fill(0);
+  const linkedCopies = new Array<number>(genes).fill(0);
+  const allCopies = new Array<number>(genes).fill(0);
+  const len = new Uint8Array(M);
+  for (let m = 1; m < M; m++) len[m] = len[m >>> 1] + (m & 1);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < genes; k++) {
+      const t = T[i * S + k];
+      byLength[0] += t;
+      allCopies[k] += t;
+    }
+    const lb = i * M;
+    for (let m = 3; m < M; m++) {
+      const c = L[lb + m];
+      if (c === 0) continue;
+      if (len[m] < 2) throw new Error(`linkedCounts: a single gene (mask ${m}) is stored as a linked template`);
+      byLength[len[m] - 1] += c;
+      for (let k = 0; k < genes; k++) {
+        if ((m >>> k) & 1) {
+          linkedCopies[k] += c;
+          allCopies[k] += c;
+        }
+      }
+    }
+  }
+  return { byLength, linkedCopies, allCopies };
+}
+
+export function addLinkedCounts(into: LinkedCounts, more: LinkedCounts): void {
+  for (let i = 0; i < into.byLength.length; i++) into.byLength[i] += more.byLength[i];
+  for (let k = 0; k < into.linkedCopies.length; k++) {
+    into.linkedCopies[k] += more.linkedCopies[k];
+    into.allCopies[k] += more.allCopies[k];
+  }
+}
+
+export interface LinkedReadout {
+  /** Per gene: the share of its copies that sit in linked templates (null when the gene has no copy). */
+  readonly linkedShare: (number | null)[];
+  /** Mean number of genes per gene-carrying template molecule, a single copy counting as 1 (null when there is none). */
+  readonly meanLength: number | null;
+  /** Of the linked templates (two or more genes): the share that carry fewer than every gene (null when there is none). */
+  readonly shortenedShare: number | null;
+  /** Of all gene-carrying template molecules: the share that carry every gene. */
+  readonly fullShare: number | null;
+  /** Molecules by genes carried, byLength[len - 1]. With counts summed over censuses these are sums, not means. */
+  readonly byLength: number[];
+}
+
+export function linkedReadout(c: LinkedCounts): LinkedReadout {
+  const K = c.byLength.length;
+  let molecules = 0;
+  let matter = 0;
+  let linked = 0;
+  for (let i = 0; i < K; i++) {
+    molecules += c.byLength[i];
+    matter += c.byLength[i] * (i + 1);
+    if (i >= 1) linked += c.byLength[i];
+  }
+  const full = K >= 2 ? c.byLength[K - 1] : 0;
+  return {
+    linkedShare: c.allCopies.map((all, k) => (all > 0 ? c.linkedCopies[k] / all : null)),
+    meanLength: molecules > 0 ? matter / molecules : null,
+    shortenedShare: linked > 0 ? (linked - full) / linked : null,
+    fullShare: molecules > 0 ? full / molecules : null,
+    byLength: c.byLength.slice(),
+  };
+}
+// ---- LINKED (end) ----
