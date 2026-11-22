@@ -50,6 +50,18 @@ interface Summary {
   heredityGene0: Heredity | null;
   heredityGene0Delayed: Heredity | null;
   heredityParasiteDelayed: Heredity | null;
+  /** Linked-template runs only (docs/droplet-genes-linked-2026-11-21/PLAN.md). */
+  linked?: { founders: string; sites: string; lateCensuses: number; late: LinkedReadout | null; atEnd: LinkedReadout };
+  /** Runs made for the second linked screen (docs/droplet-genes-linked2-2026-11-21/PLAN.md); absent in older files. */
+  deathGenes?: { records: number; withMissing: number; missingByGene: number[]; byMissingCount: number[]; medianMissingSteps: number | null; missingAtTwoCensusesShare: number | null };
+  lastCompartments?: { step: number; compartments: number; complete: number; arena: number[]; inCompartments: number[]; byLength?: number[] } | null;
+}
+interface LinkedReadout {
+  linkedShare: (number | null)[];
+  meanLength: number | null;
+  shortenedShare: number | null;
+  fullShare: number | null;
+  byLength: number[];
 }
 interface Row {
   step: number;
@@ -61,6 +73,7 @@ interface Row {
   varGene0: number | null;
   meanCopies: number;
   meanArea: number;
+  linked?: LinkedReadout;
 }
 
 const dir = Deno.args[0];
@@ -79,6 +92,7 @@ const cells = new Map<string, Cell>();
 const sharedByTag = new Map<string, string>();
 let protocol: Summary['protocol'] | null = null;
 const parMutByTag = new Map<string, number>();
+const foundersByTag = new Map<string, string>(); // linked runs: the founders' template form, one per setting
 const names: string[] = [];
 for await (const e of Deno.readDir(dir)) if (e.isFile && e.name.endsWith('.json')) names.push(e.name);
 names.sort();
@@ -106,6 +120,12 @@ for (const name of names) {
     const pm = parMutByTag.get(tag);
     if (pm === undefined) parMutByTag.set(tag, c.mutPar as number);
     else if (pm !== c.mutPar) throw new Error(`${name}: mutPar differs from other parasite runs of setting "${tag || 'default'}"`);
+  }
+  {
+    const form = summary.linked ? summary.linked.founders : 'single';
+    const seenForm = foundersByTag.get(tag);
+    if (seenForm === undefined) foundersByTag.set(tag, form);
+    else if (seenForm !== form) throw new Error(`${name}: founders' template form differs from other runs of setting "${tag || 'default'}"`);
   }
   const key = `${tag}|${c.genes}|${c.capPerTile}|${arm}`;
   let cell = cells.get(key);
@@ -183,6 +203,27 @@ for (const c of sorted) {
   );
 }
 
+// Linked templates: printed only when the directory holds linked runs, so first-rung directories read as before.
+if (sorted.some((c) => c.runs.some((r) => r.s.linked))) {
+  console.log('\nLinked templates (late = pooled over the censuses of the last tenth of the planned run; n/a where a run ended before it). Ranges over seeds.\n');
+  console.log('| setting | K | sites/tile | arm | founders | site rule | share of each gene\'s copies that are linked (lowest to highest gene) | mean genes per template | share of linked templates that are shortened | share of templates carrying every gene |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|');
+  for (const c of sorted) {
+    const ls = c.runs.map((r) => r.s.linked);
+    if (!ls.some((l) => l)) continue;
+    const late = ls.map((l) => l?.late ?? null);
+    const withLate = late.filter((l): l is LinkedReadout => l !== null);
+    const shares = withLate.flatMap((l) => l.linkedShare).filter((v): v is number => v !== null);
+    const perGene = shares.length
+      ? `${Math.min(...shares).toFixed(2)} to ${Math.max(...shares).toFixed(2)}${withLate.length < late.length ? ` (${withLate.length} of ${late.length} runs)` : ''}`
+      : 'n/a';
+    console.log(
+      `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${[...new Set(ls.map((l) => l?.founders ?? 'n/a'))].join(',')} | ${[...new Set(ls.map((l) => l?.sites ?? 'n/a'))].join(',')} | ` +
+        `${perGene} | ${range(late.map((l) => l?.meanLength ?? null), 2)} | ${range(late.map((l) => l?.shortenedShare ?? null), 3)} | ${range(late.map((l) => l?.fullShare ?? null), 3)} |`,
+    );
+  }
+}
+
 // Largest K held per (setting, sites, arm): the largest tested K whose cell is held. Rungs below it that were
 // not held, and rungs with fewer than 4 seeds, are listed, since nothing guarantees holding is monotone in K.
 console.log('\nLargest K held\n');
@@ -232,6 +273,71 @@ if (perSeed) {
   }
 }
 
+// Second linked screen: templates by length at fixed steps. Printed only when the directory holds linked runs
+// of at least 2,000 steps; it reads the report rows, which linked runs have always carried.
+const AT_STEPS = [2000, 10000, 50000, 200000];
+const linkedCells = sorted.filter((c) => c.runs.some((r) => r.s.linked));
+if (linkedCells.length > 0) {
+  const rowAt = (r: { rows: Row[] }, step: number): LinkedReadout | null => r.rows.find((x) => x.step === step)?.linked ?? null;
+  console.log('\nFull templates over time: the share of gene-carrying molecules that carry every gene, whole arena, per seed in seed order (n/a: the run had ended, or was not planned that long).\n');
+  console.log(`| setting | K | sites/tile | arm | ${AT_STEPS.map((t) => `step ${t}`).join(' | ')} |`);
+  console.log(`|---|---|---|---|${AT_STEPS.map(() => '---').join('|')}|`);
+  for (const c of linkedCells) {
+    console.log(`| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${AT_STEPS.map((t) => c.runs.map((r) => f(rowAt(r, t)?.fullShare ?? null, 3)).join(', ')).join(' | ')} |`);
+  }
+  console.log('\nMolecules by genes carried (1 to K), whole arena, summed over the seeds that reached the step: shares of all gene-carrying molecules, shortest first.\n');
+  console.log(`| setting | K | sites/tile | arm | ${AT_STEPS.map((t) => `step ${t}`).join(' | ')} |`);
+  console.log(`|---|---|---|---|${AT_STEPS.map(() => '---').join('|')}|`);
+  for (const c of linkedCells) {
+    const cols = AT_STEPS.map((t) => {
+      const rs = c.runs.map((r) => rowAt(r, t)).filter((l): l is LinkedReadout => l !== null);
+      if (rs.length === 0) return 'n/a';
+      const sum = new Array<number>(c.genes).fill(0);
+      for (const l of rs) l.byLength.forEach((v, i) => { sum[i] += v; });
+      const tot = sum.reduce((a, b) => a + b, 0);
+      return tot > 0 ? `${sum.map((v) => (v / tot).toFixed(3)).join(' / ')} (${rs.length} of ${c.runs.length})` : `no molecule (${rs.length} of ${c.runs.length})`;
+    });
+    console.log(`| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${cols.join(' | ')} |`);
+  }
+}
+
+// Second linked screen: which genes were missing when compartments ended. Printed only for runs that recorded it.
+if (sorted.some((c) => c.runs.some((r) => r.s.deathGenes))) {
+  console.log('\nCompartments that ended (the tracker\'s deaths): genes missing at the compartment\'s last census, a gene counted wherever it sits. Ranges over seeds; counts by gene are summed over seeds.\n');
+  console.log('| setting | K | sites/tile | arm | deaths recorded | share with a gene missing at the last census | deaths by gene missing (lowest to highest gene) | deaths by number of genes missing (0 to K) | median steps from first seen missing to gone | share seen missing at two censuses or more |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|');
+  for (const c of sorted) {
+    const ds = c.runs.map((r) => r.s.deathGenes ?? null);
+    const have = ds.filter((d): d is NonNullable<Summary['deathGenes']> => d !== null);
+    if (have.length === 0) continue;
+    const sumOver = (pick: (d: NonNullable<Summary['deathGenes']>) => number[], n: number) => {
+      const sum = new Array<number>(n).fill(0);
+      for (const d of have) pick(d).forEach((v, i) => { sum[i] += v; });
+      return sum.join(', ');
+    };
+    console.log(
+      `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${range(ds.map((d) => d?.records ?? null), 0)} | ${range(ds.map((d) => (d && d.records > 0 ? d.withMissing / d.records : null)), 2)} | ` +
+        `${sumOver((d) => d.missingByGene, c.genes)} | ${sumOver((d) => d.byMissingCount, c.genes + 1)} | ${range(ds.map((d) => d?.medianMissingSteps ?? null), 0)} | ${range(ds.map((d) => d?.missingAtTwoCensusesShare ?? null), 2)} |`,
+    );
+  }
+  const lost = sorted.filter((c) => c.runs.some((r) => r.s.lastCompartments));
+  if (lost.length > 0) {
+    console.log('\nRuns that lost every compartment: the last census that still had one. Copies per gene over the whole arena, then the parasite, a gene counted wherever it sits.\n');
+    console.log('| setting | K | sites/tile | arm | seed | step | compartments (complete) | copies per gene, whole arena | parasite, whole arena | copies per gene inside compartments | molecules by genes carried (1 to K) |');
+    console.log('|---|---|---|---|---|---|---|---|---|---|---|');
+    for (const c of lost) {
+      for (const r of c.runs) {
+        const l = r.s.lastCompartments;
+        if (!l) continue;
+        console.log(
+          `| ${c.tag || 'default'} | ${c.genes} | ${c.cap} | ${c.arm} | ${r.s.seed} | ${l.step} | ${l.compartments} (${l.complete}) | ${l.arena.slice(0, c.genes).join(', ')} | ${l.arena[c.genes]} | ` +
+            `${l.inCompartments.slice(0, c.genes).join(', ')} | ${l.byLength ? l.byLength.join(', ') : 'n/a'} |`,
+        );
+      }
+    }
+  }
+}
+
 for (const c of sorted) {
   out.push({
     tag: c.tag, genes: c.genes, cap: c.cap, arm: c.arm, seeds: c.runs.map((r) => r.s.seed), heldSeeds: c.runs.filter((r) => r.s.held).length, cellHeld: cellHeld(c),
@@ -244,6 +350,10 @@ for (const c of sorted) {
       medianAgeAtDeath: r.s.ages?.observedDeaths.median ?? null, observedDeaths: r.s.ages?.observedDeaths.n ?? null,
       medianAgeAliveAtEnd: r.s.ages?.aliveAtEnd.median ?? null, turnoverTime: turnover(r.s, r.rows),
       lateStrandedBareShare: lateMean(r.s, r.rows, (x) => x.strandedBareShare), lateStrandedHaloShare: lateMean(r.s, r.rows, (x) => x.strandedHaloShare),
+      ...(r.s.linked ? { linked: r.s.linked } : {}),
+      ...(r.s.deathGenes ? { deathGenes: r.s.deathGenes } : {}),
+      ...(r.s.lastCompartments !== undefined ? { lastCompartments: r.s.lastCompartments } : {}),
+      ...(r.s.linked ? { fullShareAt: Object.fromEntries(AT_STEPS.map((t) => [t, r.rows.find((x) => x.step === t)?.linked?.fullShare ?? null])) } : {}),
     })),
   });
 }

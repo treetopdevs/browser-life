@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DG_SCALE } from '../src/dropgenes/kernel.ts';
-import { CompartmentTracker, gene0Share, heredity, heredityDelayed, labelCompartments, type FissionRecord } from '../src/dropgenes/observe.ts';
+import { CompartmentTracker, deathReadout, gene0Share, heredity, heredityDelayed, labelCompartments, type FissionRecord } from '../src/dropgenes/observe.ts';
 
 const SIZE = 12;
 const S = 3; // two genes and the parasite
@@ -216,5 +216,113 @@ describe('droplet genes observer', () => {
     t.observe(150, W1, genesOn(W1));
     const rec = t.fissionRecords[0];
     expect(rec.delayedStatus.slice().sort()).toEqual(['fused', 'read']);
+  });
+
+  // ---- LINKED2: which genes a compartment lacked when it ended ----
+
+  /** Remove every copy of `gene` from the tiles of a rectangle. */
+  function without(T: Uint32Array, gene: number, [x0, y0, x1, y1]: [number, number, number, number]): Uint32Array {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) T[(y * SIZE + x) * S + gene] = 0;
+    return T;
+  }
+
+  it('a death records the genes missing at the last census and since which census; a complete one records none', () => {
+    const t = tracker();
+    const A: [number, number, number, number] = [1, 1, 2, 2];
+    const B: [number, number, number, number] = [5, 5, 6, 6];
+    const W = walls(A, B);
+    t.observe(0, W, genesOn(W));
+    t.observe(50, W, without(genesOn(W), 1, B)); // B loses gene 1 here
+    t.observe(100, W, without(genesOn(W), 1, B));
+    t.observe(150, walls(), new Uint32Array(SIZE * SIZE * S)); // both gone
+    expect(t.totals).toMatchObject({ deaths: 2, deathsComplete: 1, deathsIncomplete: 1 });
+    expect(t.deathRecords.length).toBe(2);
+    const a = t.deathRecords.find((r) => r.copies[1] > 0)!;
+    const b = t.deathRecords.find((r) => r.copies[1] === 0)!;
+    expect(a).toMatchObject({ step: 150, lastSeen: 100, bornStep: 0, area: 4, copies: [4, 4, 0], missingSince: [-1, -1] });
+    expect(b).toMatchObject({ step: 150, lastSeen: 100, bornStep: 0, area: 4, copies: [4, 0, 0], missingSince: [-1, 50] });
+    const d = deathReadout(t.deathRecords, K);
+    expect(d).toEqual({ records: 2, withMissing: 1, missingByGene: [0, 1], byMissingCount: [1, 1, 0], medianMissingSteps: 100, missingAtTwoCensusesShare: 1 });
+    // The readout agrees with the count the tracker already kept.
+    expect(d.withMissing).toBe(t.totals.deathsIncomplete);
+  });
+
+  it('a gene that comes back clears its date; one missing only at the last census is not "seen at two censuses"', () => {
+    const t = tracker();
+    const B: [number, number, number, number] = [5, 5, 6, 6];
+    const W = walls(B);
+    t.observe(0, W, without(genesOn(W), 0, B)); // gene 0 missing at the first census
+    t.observe(50, W, genesOn(W)); // and back
+    t.observe(100, W, without(genesOn(W), 0, B)); // missing again, at the last census only
+    t.observe(150, walls(), new Uint32Array(SIZE * SIZE * S));
+    expect(t.deathRecords.length).toBe(1);
+    expect(t.deathRecords[0].missingSince).toEqual([100, -1]);
+    expect(deathReadout(t.deathRecords, K)).toMatchObject({ withMissing: 1, missingByGene: [1, 0], medianMissingSteps: 50, missingAtTwoCensusesShare: 0 });
+  });
+
+  it('a daughter born by a split keeps the date of a gene its parent already lacked', () => {
+    const t = tracker();
+    const W0 = walls([1, 1, 6, 2]);
+    t.observe(0, W0, without(genesOn(W0), 1, [1, 1, 6, 2])); // the parent lacks gene 1 from step 0
+    const W1 = walls([1, 1, 2, 2], [5, 1, 6, 2]);
+    t.observe(50, W1, without(genesOn(W1), 1, [1, 1, 6, 2])); // it splits; neither daughter has gene 1
+    expect(t.totals.fissions).toBe(1);
+    t.observe(100, walls(), new Uint32Array(SIZE * SIZE * S));
+    expect(t.deathRecords.length).toBe(2);
+    expect(t.deathRecords.map((r) => r.missingSince)).toEqual([[-1, 0], [-1, 0]]);
+    expect(t.deathRecords.map((r) => r.bornStep).sort()).toEqual([0, 50]);
+  });
+
+  it('a compartment absorbed by a fusion leaves no death record, and the record list is capped', () => {
+    const t = new CompartmentTracker(SIZE, SIZE, S, K, { wallMin: 0.125, bareMax: 0.03, maxDeathRecords: 1 });
+    const W0 = walls([1, 1, 2, 2], [5, 1, 6, 2]);
+    t.observe(0, W0, genesOn(W0));
+    const W1 = walls([1, 1, 6, 2]);
+    t.observe(50, W1, genesOn(W1));
+    expect(t.totals.fusions).toBe(1);
+    expect(t.deathRecords.length).toBe(0);
+    const W2 = walls([1, 1, 2, 2], [8, 8, 9, 9]);
+    t.observe(100, W2, genesOn(W2)); // the merged blob shrinks; a far blob appears
+    t.observe(150, walls(), new Uint32Array(SIZE * SIZE * S)); // two deaths, one record kept
+    expect(t.totals.deaths).toBe(2);
+    expect(t.deathRecords.length).toBe(1);
+    expect(deathReadout(t.deathRecords, K).records).toBe(1);
+  });
+
+  it('three genes, several deaths: the span is from the earliest still-missing gene, the median is over deaths with a gene missing', () => {
+    const S3 = 4; // three genes and the parasite
+    const t = new CompartmentTracker(SIZE, SIZE, S3, 3, { wallMin: 0.125, bareMax: 0.03 });
+    const rects: [number, number, number, number][] = [[0, 0, 1, 1], [4, 0, 5, 1], [8, 0, 9, 1], [0, 4, 1, 5], [4, 4, 5, 5]];
+    /** All three genes on every walled tile, except the genes listed per rectangle. */
+    const copies = (W: Uint32Array, lacking: number[][]): Uint32Array => {
+      const T = new Uint32Array(SIZE * SIZE * S3);
+      for (let i = 0; i < W.length; i++) if (W[i] > 0) for (let k = 0; k < 3; k++) T[i * S3 + k] = 1;
+      rects.forEach(([x0, y0, x1, y1], r) => {
+        for (const k of lacking[r] ?? []) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) T[(y * SIZE + x) * S3 + k] = 0;
+      });
+      return T;
+    };
+    const W = walls(...rects);
+    //            A        B        C     D   E
+    t.observe(0, W, copies(W, [[2], [], [], [], []])); // A lacks gene 2 from step 0
+    t.observe(50, W, copies(W, [[2], [0], [], [], []])); // B lacks gene 0 from step 50
+    t.observe(100, W, copies(W, [[1, 2], [0], [], [], []])); // A lacks gene 1 as well from step 100
+    t.observe(150, W, copies(W, [[1, 2], [0, 1], [2], [], []])); // B lacks gene 1 from 150; C lacks gene 2 at the last census only
+    t.observe(200, walls(rects[4]), copies(walls(rects[4]), [])); // A, B, C and D are gone; E lives
+    expect(t.totals).toMatchObject({ deaths: 4, deathsComplete: 1, deathsIncomplete: 3 });
+    const withCopies = (x: number[]) => t.deathRecords.find((r) => r.copies[0] === x[0] && r.copies[1] === x[1] && r.copies[2] === x[2])!;
+    expect(withCopies([4, 0, 0]).missingSince).toEqual([-1, 100, 0]); // A
+    expect(withCopies([0, 0, 4]).missingSince).toEqual([50, 150, -1]); // B
+    expect(withCopies([4, 4, 0]).missingSince).toEqual([-1, -1, 150]); // C
+    expect(withCopies([4, 4, 4]).missingSince).toEqual([-1, -1, -1]); // D
+    // Spans from the earliest still-missing gene to gone: A 200, B 150, C 50. Median 150; A and B seen at two censuses or more.
+    expect(deathReadout(t.deathRecords, 3)).toEqual({
+      records: 4,
+      withMissing: 3,
+      missingByGene: [1, 2, 2],
+      byMissingCount: [1, 1, 2, 0],
+      medianMissingSteps: 150,
+      missingAtTwoCensusesShare: 2 / 3,
+    });
   });
 });

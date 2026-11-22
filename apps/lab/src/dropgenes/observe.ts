@@ -94,6 +94,28 @@ export interface TrackerTotals {
   absorbedAges: number[];
 }
 
+/**
+ * LINKED2. A compartment the tracker saw end (nothing overlaps it at the next census): what it held at its last
+ * census. Inferred from censuses, so "missing" means no copy on the compartment's tiles at a census, single or
+ * linked when the tracker is given gene copies; a gene lost and regained between two censuses is not seen.
+ */
+export interface DeathRecord {
+  /** The census at which it was gone. */
+  readonly step: number;
+  /** The census before: its last. */
+  readonly lastSeen: number;
+  readonly uid: number;
+  readonly bornStep: number;
+  readonly area: number;
+  /** Copies per species at its last census. */
+  readonly copies: number[];
+  /**
+   * Per essential gene: -1 when the gene was present at the last census; otherwise the first census of the
+   * unbroken run of censuses, up to the last, at which the compartment (or, at its birth, its parent) lacked it.
+   */
+  readonly missingSince: number[];
+}
+
 export interface TrackerOptions {
   readonly wallMin?: number; // wall fraction, default 0.125
   readonly bareMax?: number; // wall fraction at or below which a tile is bare, default 0.03 (the kernel's gateLo)
@@ -104,6 +126,7 @@ export interface TrackerOptions {
   /** Ladder worlds: levels per gene (species = genes * levels). `complete` then uses ladderComplete. */
   readonly ladderLevels?: number;
   readonly ladderNeutral?: boolean;
+  readonly maxDeathRecords?: number; // default 50000 (LINKED2: see DeathRecord)
 }
 
 export function labelCompartments(
@@ -176,6 +199,14 @@ export class CompartmentTracker {
   private readonly ladderNeutral: boolean;
   /** uids that ended by being absorbed into another compartment (the smaller part of a fusion). */
   private readonly absorbedUids = new Set<number>();
+  // ---- LINKED2 (begin): which genes a compartment lacked when it ended. Additions only; nothing above reads them. ----
+  /** One record per observed death (the same events `totals.deaths` counts), up to `maxDeathRecords`. */
+  readonly deathRecords: DeathRecord[] = [];
+  private readonly maxDeathRecords: number;
+  private prevStep = 0;
+  /** uid -> per gene, the first census of the unbroken run of censuses in which the gene was below completeMin (-1: present). */
+  private missingSince = new Map<number, number[]>();
+  // ---- LINKED2 (end) ----
 
   constructor(
     private readonly width: number,
@@ -192,6 +223,7 @@ export class CompartmentTracker {
     this.heredityDelay = opts.heredityDelay ?? 500;
     this.ladderLevels = opts.ladderLevels ?? 0;
     this.ladderNeutral = opts.ladderNeutral ?? false;
+    this.maxDeathRecords = opts.maxDeathRecords ?? 50000; // LINKED2
   }
 
   observe(step: number, W: Uint32Array, T: Uint32Array): Census {
@@ -349,6 +381,19 @@ export class CompartmentTracker {
           if (dead.complete) this.totals.deathsComplete++;
           else this.totals.deathsIncomplete++;
           this.totals.lifetimes.push(step - dead.bornStep);
+          // LINKED2: the genes it lacked at its last census, and since when.
+          if (this.deathRecords.length < this.maxDeathRecords) {
+            const since = this.missingSince.get(dead.uid);
+            this.deathRecords.push({
+              step,
+              lastSeen: this.prevStep,
+              uid: dead.uid,
+              bornStep: dead.bornStep,
+              area: dead.area,
+              copies: dead.copies,
+              missingSince: since ? since.slice() : new Array<number>(K).fill(-1),
+            });
+          }
         }
       }
     }
@@ -408,6 +453,21 @@ export class CompartmentTracker {
       }
       this.pending.splice(0, done);
     }
+    // ---- LINKED2 (begin): per compartment, since which census each gene has been missing ----
+    // A compartment born at this census by a split starts from its parent's record, so a gene the parent already
+    // lacked keeps its date. A gene that comes back (copies hop in) clears its date.
+    {
+      const next = new Map<number, number[]>();
+      for (const c of compartments) {
+        const before = this.missingSince.get(c.uid) ?? (c.bornStep === step && c.parentUid !== 0 ? this.missingSince.get(c.parentUid) : undefined);
+        const z = new Array<number>(K);
+        for (let k = 0; k < K; k++) z[k] = c.copies[k] >= this.completeMin ? -1 : before && before[k] >= 0 ? before[k] : step;
+        next.set(c.uid, z);
+      }
+      this.missingSince = next;
+      this.prevStep = step;
+    }
+    // ---- LINKED2 (end) ----
     this.prev = compartments;
     this.prevLabels = labels;
     return { step, compartments, stranded, strandedBare, strandedHalo, strandedSmall };
@@ -760,3 +820,167 @@ export class DescentWindow {
     return { n, meanW: mw, cov, between, zStart: mz, zEnd, within: between !== null && zEnd !== null ? zEnd - mz - between : null, orphans, traitless };
   }
 }
+
+// ---- LINKED (begin): readouts for linked templates (docs/droplet-genes-linked-2026-11-21/PLAN.md) ----
+// Additions only. `L` is the kernel's linked-template array: L[tile * 2^genes + mask] molecules, bit k = gene k.
+
+/**
+ * Per-tile copies in the layout of T (stride genes + 1), with a gene counted wherever it sits: column k is the
+ * single copies of gene k plus the linked templates that carry it; the parasite column is copied. Give this to
+ * CompartmentTracker.observe in place of T and every count it reports is in gene copies (units of matter).
+ */
+export function geneCopiesWithLinked(T: Uint32Array, L: Uint32Array, genes: number, out?: Uint32Array): Uint32Array {
+  const S = genes + 1;
+  const M = 1 << genes;
+  const n = T.length / S;
+  if (L.length !== n * M) throw new Error(`geneCopiesWithLinked: L has ${L.length} entries, expected ${n * M}`);
+  const G = out ?? new Uint32Array(T.length);
+  G.set(T);
+  for (let i = 0; i < n; i++) {
+    const lb = i * M;
+    const gb = i * S;
+    for (let m = 3; m < M; m++) {
+      const c = L[lb + m];
+      if (c === 0) continue;
+      for (let k = 0; k < genes; k++) if ((m >>> k) & 1) G[gb + k] += c;
+    }
+  }
+  return G;
+}
+
+/** Raw counts over a whole arena (or summed over several censuses). The parasite is not counted anywhere here. */
+export interface LinkedCounts {
+  /** Gene-carrying template molecules by the number of genes they carry: byLength[len - 1]; singles first. */
+  byLength: number[];
+  /** Per gene: its copies that sit in linked templates (two or more genes). */
+  linkedCopies: number[];
+  /** Per gene: all its copies, single and linked. */
+  allCopies: number[];
+}
+
+export function linkedCounts(T: Uint32Array, L: Uint32Array, genes: number): LinkedCounts {
+  const S = genes + 1;
+  const M = 1 << genes;
+  const n = T.length / S;
+  if (L.length !== n * M) throw new Error(`linkedCounts: L has ${L.length} entries, expected ${n * M}`);
+  const byLength = new Array<number>(genes).fill(0);
+  const linkedCopies = new Array<number>(genes).fill(0);
+  const allCopies = new Array<number>(genes).fill(0);
+  const len = new Uint8Array(M);
+  for (let m = 1; m < M; m++) len[m] = len[m >>> 1] + (m & 1);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < genes; k++) {
+      const t = T[i * S + k];
+      byLength[0] += t;
+      allCopies[k] += t;
+    }
+    const lb = i * M;
+    for (let m = 3; m < M; m++) {
+      const c = L[lb + m];
+      if (c === 0) continue;
+      if (len[m] < 2) throw new Error(`linkedCounts: a single gene (mask ${m}) is stored as a linked template`);
+      byLength[len[m] - 1] += c;
+      for (let k = 0; k < genes; k++) {
+        if ((m >>> k) & 1) {
+          linkedCopies[k] += c;
+          allCopies[k] += c;
+        }
+      }
+    }
+  }
+  return { byLength, linkedCopies, allCopies };
+}
+
+export function addLinkedCounts(into: LinkedCounts, more: LinkedCounts): void {
+  for (let i = 0; i < into.byLength.length; i++) into.byLength[i] += more.byLength[i];
+  for (let k = 0; k < into.linkedCopies.length; k++) {
+    into.linkedCopies[k] += more.linkedCopies[k];
+    into.allCopies[k] += more.allCopies[k];
+  }
+}
+
+export interface LinkedReadout {
+  /** Per gene: the share of its copies that sit in linked templates (null when the gene has no copy). */
+  readonly linkedShare: (number | null)[];
+  /** Mean number of genes per gene-carrying template molecule, a single copy counting as 1 (null when there is none). */
+  readonly meanLength: number | null;
+  /** Of the linked templates (two or more genes): the share that carry fewer than every gene (null when there is none). */
+  readonly shortenedShare: number | null;
+  /** Of all gene-carrying template molecules: the share that carry every gene. */
+  readonly fullShare: number | null;
+  /** Molecules by genes carried, byLength[len - 1]. With counts summed over censuses these are sums, not means. */
+  readonly byLength: number[];
+}
+
+export function linkedReadout(c: LinkedCounts): LinkedReadout {
+  const K = c.byLength.length;
+  let molecules = 0;
+  let matter = 0;
+  let linked = 0;
+  for (let i = 0; i < K; i++) {
+    molecules += c.byLength[i];
+    matter += c.byLength[i] * (i + 1);
+    if (i >= 1) linked += c.byLength[i];
+  }
+  const full = K >= 2 ? c.byLength[K - 1] : 0;
+  return {
+    linkedShare: c.allCopies.map((all, k) => (all > 0 ? c.linkedCopies[k] / all : null)),
+    meanLength: molecules > 0 ? matter / molecules : null,
+    shortenedShare: linked > 0 ? (linked - full) / linked : null,
+    fullShare: molecules > 0 ? full / molecules : null,
+    byLength: c.byLength.slice(),
+  };
+}
+// ---- LINKED (end) ----
+
+// ---- LINKED2 (begin): readout of the death records (docs/droplet-genes-linked2-2026-11-21/PLAN.md) ----
+
+export interface DeathReadout {
+  /** Death records read (the tracker keeps at most `maxDeathRecords`; compare with totals.deaths). */
+  readonly records: number;
+  /** Deaths with at least one essential gene missing at the compartment's last census. */
+  readonly withMissing: number;
+  /** Per gene: deaths at which that gene was missing at the last census. A death can count for several genes. */
+  readonly missingByGene: number[];
+  /** Deaths by the number of genes missing at the last census: byMissingCount[n], n = 0..genes. */
+  readonly byMissingCount: number[];
+  /**
+   * Over deaths with a gene missing: steps from the first census at which a still-missing gene was missing to the
+   * census at which the compartment was gone (the longest such span of the death). Median, and the share of these
+   * deaths where it is more than one census interval, that is where the gene was seen missing at two censuses or more.
+   */
+  readonly medianMissingSteps: number | null;
+  readonly missingAtTwoCensusesShare: number | null;
+}
+
+export function deathReadout(records: readonly DeathRecord[], genes: number): DeathReadout {
+  const missingByGene = new Array<number>(genes).fill(0);
+  const byMissingCount = new Array<number>(genes + 1).fill(0);
+  const spans: number[] = [];
+  let twoCensuses = 0;
+  for (const r of records) {
+    let n = 0;
+    let first = Infinity;
+    for (let k = 0; k < genes; k++) {
+      if (r.missingSince[k] < 0) continue;
+      n++;
+      missingByGene[k]++;
+      if (r.missingSince[k] < first) first = r.missingSince[k];
+    }
+    byMissingCount[n]++;
+    if (n > 0) {
+      spans.push(r.step - first);
+      if (first < r.lastSeen) twoCensuses++;
+    }
+  }
+  spans.sort((a, b) => a - b);
+  return {
+    records: records.length,
+    withMissing: spans.length,
+    missingByGene,
+    byMissingCount,
+    medianMissingSteps: spans.length ? spans[spans.length >> 1] : null,
+    missingAtTwoCensusesShare: spans.length ? twoCensuses / spans.length : null,
+  };
+}
+// ---- LINKED2 (end) ----

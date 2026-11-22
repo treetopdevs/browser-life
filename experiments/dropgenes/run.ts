@@ -16,6 +16,17 @@
  *   --startLevel v (the level every founder copy starts at, default 0), --series steps between rows of the
  *   level time series (default 500). --mutPar must be 0. The output then has a `ladder` section in the summary,
  *   a `ladder` object on every report row and a `levelSeries` array; nothing else changes.
+ * Linked templates (docs/droplet-genes-linked-2026-11-21/PLAN.md) are switched on through --ov, for example
+ *   --ov '{"linked":true,"linkSites":"molecule","linkJoin":0.2,"linkBreak":0.001,"linkLoss":0.001}'
+ * and --templates linked|single says what the founders carry (default linked when linking is on): two full
+ * templates per wall tile, or two single copies of every gene. Either way that is two copies of each gene.
+ * A linked run counts a gene wherever it sits (complete, copies, heredity) and adds a `linked` block to the
+ * summary and to each report row. Without linking the output is what it was.
+ *
+ * Added for the second linked screen (docs/droplet-genes-linked2-2026-11-21/PLAN.md), new fields only:
+ *   summary.deathGenes        for compartments the tracker saw end: which genes were missing at their last census
+ *   summary.lastCompartments  what the arena held at the last census before the first census with no compartment
+ *   lengths (beside summary and rows, linked runs only): molecules by genes carried at every census, whole arena
  *
  * "Held" for a run (docs/droplet-genes-2026-11-21/PLAN.md): over the last tenth of the run the mean number of
  * compartments is at least 10 and at least half of them carry every gene.
@@ -32,6 +43,8 @@ import {
   ladderTopShare,
   type ResponseReadout,
 } from '../../apps/lab/src/dropgenes/observe.ts';
+import { addLinkedCounts, geneCopiesWithLinked, linkedCounts, linkedReadout, type LinkedCounts, type LinkedReadout } from '../../apps/lab/src/dropgenes/observe.ts';
+import { deathReadout } from '../../apps/lab/src/dropgenes/observe.ts';
 
 function parseArgs(argv: string[]): Record<string, string> {
   const out: Record<string, string> = {};
@@ -51,7 +64,7 @@ function num(args: Record<string, string>, key: string, dflt: number): number {
   return v;
 }
 
-const KNOWN = new Set(['size', 'steps', 'seed', 'genes', 'cap', 'gated', 'mutPar', 'census', 'report', 'founders', 'spacing', 'ov', 'out', 'snapshot', 'label']);
+const KNOWN = new Set(['size', 'steps', 'seed', 'genes', 'cap', 'gated', 'mutPar', 'census', 'report', 'founders', 'spacing', 'ov', 'out', 'snapshot', 'label', 'templates']);
 for (const k of ['levels', 'mutLevel', 'neutral', 'startLevel', 'series']) KNOWN.add(k); // ladder worlds
 const args = parseArgs(Deno.args);
 for (const k of Object.keys(args)) if (!KNOWN.has(k)) throw new Error(`Unknown option --${k}`);
@@ -115,8 +128,18 @@ if (founders === 'one') {
     }
   }
 }
+// Linked templates: what the founders carry. Two copies of every gene per wall tile in both forms.
+const linked = cfg.linked === true;
+const founderTemplates = args.templates ?? (linked ? 'linked' : 'single');
+if (founderTemplates !== 'linked' && founderTemplates !== 'single') throw new Error(`--templates must be linked or single, got ${founderTemplates}`);
+if (founderTemplates === 'linked' && !linked) throw new Error('--templates linked needs "linked": true in --ov');
+if (ladderOn && linked) throw new Error('A ladder world cannot have linked templates');
 if (ladderOn) world.seedTemplatesAtLevel(2, startLevel, 0.125);
+else if (founderTemplates === 'linked') world.seedLinked(2, 0.125);
 else world.seedTemplates(2, 0.125, 0);
+/** What the tracker reads: T, or with linking on the per-tile gene copies, single plus linked, in T's layout. */
+const copiesBuf = linked ? new Uint32Array(world.T.length) : null;
+const copiesNow = (): Uint32Array => (copiesBuf ? geneCopiesWithLinked(world.T, world.L, K, copiesBuf) : world.T);
 
 /** Steps after a split at which daughters are read again for the heredity readout (PLAN.md amendment 1). */
 const HEREDITY_DELAY = 500;
@@ -147,6 +170,8 @@ interface Row {
   fusions: number;
   deaths: number;
   denovo: number;
+  /** Linked runs only: the linked-template readout over the whole arena at this census. */
+  linked?: LinkedReadout;
   /** Ladder worlds only. */
   ladder?: LadderRow;
 }
@@ -243,6 +268,20 @@ function rowOf(c: Census): Row {
     fusions: tracker.totals.fusions,
     deaths: tracker.totals.deaths,
     denovo: tracker.totals.denovo,
+    ...(linked ? { linked: linkedReadout(linkedCounts(world.T, world.L, K)) } : {}),
+  };
+}
+
+/** Copies per species over the whole arena and inside compartments at one census (linked runs: a gene counted wherever it sits). */
+function holdings(c: Census): { step: number; compartments: number; complete: number; arena: number[]; inCompartments: number[] } {
+  const inCompartments = new Array<number>(S).fill(0);
+  for (const k of c.compartments) for (let s = 0; s < S; s++) inCompartments[s] += k.copies[s];
+  return {
+    step: c.step,
+    compartments: c.compartments.length,
+    complete: c.compartments.filter((k) => k.complete).length,
+    arena: inCompartments.map((v, s) => v + c.stranded[s]),
+    inCompartments,
   };
 }
 
@@ -345,14 +384,36 @@ let lateComps = 0;
 let lateComplete = 0;
 let extinctAt: number | null = null;
 const t0 = performance.now();
-let lastCensus = tracker.observe(0, world.W, world.T);
+let lastCensus = tracker.observe(0, world.W, copiesNow());
+/** Linked runs: counts summed over the censuses of the late window (pooled, so a census with more templates weighs more). */
+let lateLinked: LinkedCounts | null = null;
+let lateLinkedN = 0;
+/** Linked runs: molecules by genes carried (byLength[len - 1]) at every census from step 0, whole arena. */
+const lengthSeries: number[][] = [];
+if (linked) lengthSeries.push(linkedCounts(world.T, world.L, K).byLength);
+/** The last census that had a compartment, and (frozen at the first census with none) what the arena held then. */
+type Holdings = ReturnType<typeof holdings> & { byLength?: number[] };
+let lastWith: Holdings | null = lastCensus.compartments.length > 0 ? { ...holdings(lastCensus), ...(linked ? { byLength: lengthSeries[0] } : {}) } : null;
+let lastCompartments: Holdings | null = null;
 if (ladderOn) ladderCensus(lastCensus, 0, false);
 for (let s = 1; s <= steps; s++) {
   world.step();
   if (s % censusEvery === 0) {
-    const c = tracker.observe(s, world.W, world.T);
+    const c = tracker.observe(s, world.W, copiesNow());
     lastCensus = c;
-    if (c.compartments.length === 0 && extinctAt === null) extinctAt = s;
+    const lcNow = linked ? linkedCounts(world.T, world.L, K) : null;
+    if (lcNow) lengthSeries.push(lcNow.byLength.slice());
+    if (lcNow && s > lateFrom) {
+      const lc = lcNow;
+      if (lateLinked === null) lateLinked = lc;
+      else addLinkedCounts(lateLinked, lc);
+      lateLinkedN++;
+    }
+    if (c.compartments.length === 0 && extinctAt === null) {
+      extinctAt = s;
+      lastCompartments = lastWith;
+    }
+    if (c.compartments.length > 0) lastWith = { ...holdings(c), ...(lcNow ? { byLength: lcNow.byLength.slice() } : {}) };
     if (s > lateFrom) {
       lateN++;
       lateComps += c.compartments.length;
@@ -441,6 +502,27 @@ const summary = {
   heredityGene0Delayed: K >= 2 ? heredityDelayed(tracker.fissionRecords, (c) => gene0Share(c, K)) : null,
   heredityParasiteDelayed: K >= 1 ? heredityDelayed(tracker.fissionRecords, (c) => parasiteShare(c, K)) : null,
   fissionRecordsKept: tracker.fissionRecords.length,
+  /** Compartments the tracker saw end: the genes missing at their last census (observe.ts, DeathReadout). */
+  // Not in ladder worlds: the death records and the per-species holdings read copies in the first-rung layout.
+  ...(ladderOn ? {} : { deathGenes: deathReadout(tracker.deathRecords, K) }),
+  /**
+   * The last census that still had a compartment before the first census with none (null: the run never had
+   * none): copies per species over the whole arena and inside compartments, and for linked runs molecules by length.
+   */
+  ...(ladderOn ? {} : { lastCompartments }),
+  ...(linked
+    ? {
+        linked: {
+          founders: founderTemplates,
+          sites: cfg.linkSites ?? 'gene',
+          /** Pooled over the censuses of the last tenth that were reached (0 censuses: the run ended first). */
+          lateCensuses: lateLinkedN,
+          late: lateLinked ? linkedReadout(lateLinked) : null,
+          /** The same readout at the last census the run reached. */
+          atEnd: linkedReadout(linkedCounts(world.T, world.L, K)),
+        },
+      }
+    : {}),
 };
 
 // Ladder worlds: replace the first-rung readouts that read the species layout K genes + parasite, and add the
@@ -518,6 +600,7 @@ if (ladderOn) {
 }
 
 if (args.snapshot === '1' || args.snapshot === 'true') {
+  const snapCopies = copiesNow();
   for (let y = 0; y < size; y++) {
     let line = '';
     for (let x = 0; x < size; x++) {
@@ -525,7 +608,7 @@ if (args.snapshot === '1' || args.snapshot === 'true') {
       const w = world.W[i];
       let n = 0;
       let par = 0;
-      for (let k = 0; k < K; k++) if (world.T[i * S + k] > 0) n++;
+      for (let k = 0; k < K; k++) if (snapCopies[i * S + k] > 0) n++; // linked runs: a gene counted wherever it sits
       if (S > 0) par = world.T[i * S + K];
       if (ladderOn) {
         // Ladder layout: the digit counts genes with a working copy (below the top level; any level in the
@@ -555,7 +638,14 @@ if (args.out) {
   if (residual !== 0n) {
     await Deno.writeTextFile(`${args.out}.failed`, JSON.stringify(ladderOn ? { summary, rows, levelSeries } : { summary, rows }, null, 1));
   } else {
-    await Deno.writeTextFile(`${args.out}.tmp`, JSON.stringify(ladderOn ? { summary, rows, levelSeries } : { summary, rows }, null, 1));
+    if (ladderOn) {
+      await Deno.writeTextFile(`${args.out}.tmp`, JSON.stringify(ladderOn ? { summary, rows, levelSeries } : { summary, rows }, null, 1));
+    } else {
+      // `lengths` is written on one line per census; summary and rows are laid out as before.
+      const body = JSON.stringify({ summary, rows }, null, 1);
+      const lengths = linked ? `,\n "lengths": {\n  "census": ${censusEvery},\n  "byLength": [\n${lengthSeries.map((r) => `   ${JSON.stringify(r)}`).join(',\n')}\n  ]\n }\n}` : null;
+      await Deno.writeTextFile(`${args.out}.tmp`, lengths === null ? body : body.slice(0, body.lastIndexOf('\n}')) + lengths);
+    }
     await Deno.rename(`${args.out}.tmp`, args.out);
   }
 }

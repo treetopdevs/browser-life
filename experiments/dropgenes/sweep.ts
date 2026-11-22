@@ -4,7 +4,10 @@
  * Usage:
  *   deno run -A --no-lock experiments/dropgenes/sweep.ts --dir runs/dropgenes/confirm --genes 2 --caps 8,16,32 \
  *     --seeds 5,6,7,8 --steps 200000 --mutPar 1e-6 --jobs 8 [--arms GATED_PAR,GATED_CLEAN,UNGATED_PAR,UNGATED_CLEAN]
- *     [--ov '{"kDecT":0.03}'] [--tag large] [--size 64]
+ *     [--ov '{"kDecT":0.03}'] [--tag large] [--size 64] [--templates linked|single]
+ *
+ * Linked templates: put the link keys in --ov ("linked":true, "linkSites", "linkJoin", "linkBreak", "linkLoss")
+ * and give linked and unlinked runs different --tag values. --templates is passed to run.ts (founders' form).
  *
  * A run whose output file already exists is skipped, so the sweep can be re-invoked after an interruption.
  * File name: <tag->K<genes>-cap<cap>-<ARM>-s<seed>.json
@@ -41,7 +44,7 @@ function parseArgs(argv: string[]): Record<string, string> {
   return out;
 }
 
-const KNOWN = new Set(['dir', 'genes', 'caps', 'seeds', 'steps', 'mutPar', 'jobs', 'arms', 'ov', 'tag', 'size']);
+const KNOWN = new Set(['dir', 'genes', 'caps', 'seeds', 'steps', 'mutPar', 'jobs', 'arms', 'ov', 'tag', 'size', 'templates']);
 for (const k of ['levels', 'mutLevel', 'startLevel']) KNOWN.add(k); // ladder worlds
 const args = parseArgs(Deno.args);
 for (const k of Object.keys(args)) if (!KNOWN.has(k)) throw new Error(`Unknown option --${k}`);
@@ -80,6 +83,9 @@ const ladderWant = (arm: string): Partial<DropGenesConfig> =>
 for (const a of arms) if (!ARMS[a]) throw new Error(`Unknown arm ${a}`);
 if (![...genesList, ...caps, ...seeds, steps, mutPar, jobs, size].every(Number.isFinite)) throw new Error('Non-numeric option');
 const ovObj = (args.ov ? JSON.parse(args.ov) : {}) as Record<string, unknown>;
+/** Linked runs: the founders' template form this sweep asks for (run.ts default: linked when linking is on). */
+const wantFounderTemplates = ovObj.linked === true ? (args.templates ?? 'linked') : null;
+if (args.templates !== undefined && ovObj.linked !== true && args.templates !== 'single') throw new Error('--templates linked needs "linked": true in --ov');
 
 const runner = new URL('./run.ts', import.meta.url).pathname;
 /** The observation protocol a sweep always uses (run.ts defaults); an existing file made otherwise is not this run. */
@@ -100,7 +106,7 @@ for (const genes of genesList) {
         } catch { /* not there: run it */ }
         if (existing !== null) {
           // Skip only a finished run of exactly this request; anything else in the way is an error, not a skip.
-          const { summary } = JSON.parse(existing) as { summary: { steps: number; residual: string; config: Record<string, unknown>; protocol?: Record<string, unknown>; ladder?: { startLevel: number } } };
+          const { summary } = JSON.parse(existing) as { summary: { steps: number; residual: string; config: Record<string, unknown>; protocol?: Record<string, unknown>; ladder?: { startLevel: number }; linked?: { founders?: string } } };
           const c = summary.config;
           // The whole effective configuration this request would run, defaults included, not only what was overridden.
           const want = defaultDropGenesConfig({
@@ -109,6 +115,7 @@ for (const genes of genesList) {
           const wrong = [...new Set([...Object.keys(want), ...Object.keys(c)])].filter((k) => c[k] !== want[k]);
           if (JSON.stringify(summary.protocol) !== JSON.stringify(PROTOCOL)) wrong.push('protocol');
           if (summary.steps !== steps) wrong.push('steps');
+          if ((summary.linked?.founders ?? null) !== wantFounderTemplates) wrong.push('templates');
           if (summary.residual !== '0') wrong.push('residual');
           if (ladderLevels > 0 && summary.ladder?.startLevel !== ladderStart) wrong.push('startLevel');
           if (wrong.length > 0) throw new Error(`${out} exists but is not this run (differs in: ${wrong.join(', ')}); use another --dir or remove it`);
@@ -124,6 +131,7 @@ for (const genes of genesList) {
         if (ladderLevels > 0) {
           argv.push('--levels', String(ladderLevels), '--mutLevel', String(ladderMut), '--startLevel', String(ladderStart), '--neutral', LADDER_ARMS[arm].neutral ? '1' : '0');
         }
+        if (args.templates) argv.push('--templates', args.templates);
         queue.push({ name, argv });
       }
     }
