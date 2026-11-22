@@ -9,7 +9,10 @@
  * --confirm is the confirmation of PLAN.md and nothing else: it refuses a directory unless every requested seed
  * has all eight runs of the frozen setting (configuration, set-up, starts 0 and 3, 200,000 steps in every arm),
  * takes no threshold options, reads the seeds in blocks of four in the order given, applies "at least 3 of 4
- * seeds in each block" to every part and prints the reading from PLAN.md's outcome table.
+ * seeds in each block" to every part and prints the reading from PLAN.md's outcome table. It also refuses a run
+ * file whose own records disagree with the frozen setting or with each other (levels, response window, a run
+ * that stopped short of its planned steps without having gone extinct, a held run with no level), and uses the
+ * frozen runaway level 3.5 whatever a file says its ladder is.
  * With --seeds and without --confirm, a requested seed with no runs is listed with n/a verdicts and counts in
  * the denominators.
  *
@@ -162,6 +165,8 @@ const FROZEN_CONFIG: Record<string, unknown> = {
 const FROZEN_PROTOCOL: Record<string, unknown> = { census: 50, report: 2000, heredityDelay: 500, founders: 'grid', spacing: 16, seedPerGene: 2 };
 const FROZEN_STARTS = [0, 3];
 const FROZEN_STEPS = 200000;
+/** U's level: "at least 3.5". Set directly in --confirm, not derived from what a run file says its ladder is. */
+const FROZEN_RUNAWAY = 3.5;
 const canon = (o: Record<string, unknown>) => JSON.stringify(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
 
 const ARM_ORDER = ['GATED_SEL', 'GATED_NEU', 'UNGATED_SEL', 'UNGATED_NEU'];
@@ -207,16 +212,18 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
     const c = summary.config;
     const l = summary.ladder;
     if (!l) throw new Error(`${name}: not a ladder run`);
-    if (onlySeeds && !onlySeeds.has(summary.seed)) continue;
+    if (onlySeeds && !onlySeeds.has(summary.seed) && summary.seed === c.seed && c.seed === Number(m[5])) continue;
     const arm = `${c.gated ? 'GATED' : 'UNGATED'}_${c.ladderNeutral ? 'NEU' : 'SEL'}`;
     if (arm !== m[4] || c.genes !== Number(m[2]) || c.capPerTile !== Number(m[3]) || c.seed !== Number(m[5])) {
       throw new Error(`${name}: file name disagrees with the recorded configuration`);
     }
+    // The seed a run is filed under below must be the one it ran with (and the one in its name).
+    if (summary.seed !== c.seed) throw new Error(`${name}: the recorded seed (${summary.seed}) disagrees with the recorded configuration (${c.seed})`);
     if (summary.residual !== '0') throw new Error(`${name}: conservation residual ${summary.residual}`);
     const sh = JSON.stringify(Object.entries(c).filter(([k]) => !CELL_KEYS.has(k)).sort(([a], [b]) => a.localeCompare(b)));
     if (shared === null) shared = sh;
     else if (shared !== sh) throw new Error(`${name}: configuration differs from other runs in this directory`);
-    const pr = JSON.stringify(summary.protocol);
+    const pr = summary.protocol ? canon(summary.protocol) : 'none';
     if (protocol === null) protocol = pr;
     else if (protocol !== pr) throw new Error(`${name}: set-up or observation protocol differs from other runs in this directory`);
     const st = stepsByArm.get(arm);
@@ -248,9 +255,26 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
     const missing: string[] = [];
     for (const seed of seeds) for (const a of ARM_ORDER) for (const st of starts) if (!get(a, st, seed)) missing.push(`${a} start ${st} seed ${seed}`);
     if (missing.length) throw new Error(`--confirm: ${missing.length} run(s) missing: ${missing.slice(0, 8).join('; ')}${missing.length > 8 ? '; ...' : ''}`);
+    // Each file's own records must agree with the frozen setting and with each other.
+    for (const r of all) {
+      if (r.l.levels !== FROZEN_CONFIG.ladderLevels) throw new Error(`--confirm: ${r.name}: ladder section says ${r.l.levels} levels, the frozen setting has ${FROZEN_CONFIG.ladderLevels}`);
+      if (r.l.responseWindowSteps !== FROZEN_PROTOCOL.report) throw new Error(`--confirm: ${r.name}: response window of ${r.l.responseWindowSteps} steps, the frozen protocol has ${FROZEN_PROTOCOL.report}`);
+      if (typeof r.s.held !== 'boolean') throw new Error(`--confirm: ${r.name}: no held verdict recorded`);
+      // A run may stop before its planned steps only because the world ended (no compartments, no wall left).
+      const ranAll = r.s.stepsRun === r.s.steps;
+      const endedEarly = Number.isInteger(r.s.stepsRun) && r.s.stepsRun > 0 && r.s.stepsRun < r.s.steps && typeof r.s.extinctAt === 'number' && r.s.extinctAt <= r.s.stepsRun;
+      if (!ranAll && !endedEarly) throw new Error(`--confirm: ${r.name}: ran ${r.s.stepsRun} of ${r.s.steps} steps without a recorded extinction`);
+      if (r.s.held && !(typeof r.l.lateLevelMean === 'number' && Number.isFinite(r.l.lateLevelMean))) throw new Error(`--confirm: ${r.name}: held, but no late level recorded`);
+    }
+    runaway = FROZEN_RUNAWAY;
   }
   const f = (v: number | null | undefined, d = 2) => (v === null || v === undefined || !Number.isFinite(v) ? 'n/a' : v.toFixed(d));
-  const levelOf = (r: Run | undefined): number | null => (r && r.s.held ? r.l.lateLevelMean : null);
+  /** The late level. A run that is not held has no level (PLAN.md); neither has one with no finite level recorded. */
+  const levelOf = (r: Run | undefined): number | null =>
+    r && r.s.held === true && typeof r.l.lateLevelMean === 'number' && Number.isFinite(r.l.lateLevelMean) ? r.l.lateLevelMean : null;
+  /** The level column: n/a for a run that is not held, with the mean over its late censuses that had copies in compartments beside it. */
+  const levelCell = (r: Run): string =>
+    r.s.held === true ? f(levelOf(r), 3) : `n/a (not held${typeof r.l.lateLevelMean === 'number' && Number.isFinite(r.l.lateLevelMean) ? `; ${r.l.lateLevelMean.toFixed(3)} over the late censuses with copies in compartments` : ''})`;
 
   console.log(
     `Ladder runs in ${dir}: ${first.l.levels} levels, mutLevel ${first.l.mutLevel} (effective ${first.l.mutLevelEffective}), geneSat ${first.s.config.geneSat}, ` +
@@ -267,7 +291,7 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
         if (!r) continue;
         const lw = r.l.lastWithCopies;
         console.log(
-          `| ${arm} | ${start} | ${seed} | ${r.s.held ? 'yes' : 'no'} | ${r.s.stepsRun < r.s.steps ? r.s.stepsRun : r.s.extinctAt ?? 'ran to the end'} | ${f(r.s.lateMeanCompartments, 1)} | ${f(r.l.lateLevelMean, 3)} | ` +
+          `| ${arm} | ${start} | ${seed} | ${r.s.held ? 'yes' : 'no'} | ${r.s.stepsRun < r.s.steps ? r.s.stepsRun : r.s.extinctAt ?? 'ran to the end'} | ${f(r.s.lateMeanCompartments, 1)} | ${levelCell(r)} | ` +
             `${f(r.l.lateCompLevelSd, 3)} | ${f(r.l.lateTopShare, 3)} | ${f(r.l.lateStrandedLevelMean, 3)} | ${f(r.l.peakAllLevelMean, 3)} | ${lw ? `${lw.step}, ${f(lw.allLevelMean, 3)}` : 'n/a'} |`,
         );
       }
@@ -316,7 +340,12 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
       response = worstSel < 0 && worstSel < Math.min(...(bn as number[]));
     }
     const G = [held, converged, offNeutral, response].some((v) => v === null) ? null : held === true && converged === true && offNeutral === true && response === true;
-    const ranAway = (r: Run | undefined): boolean | null => (r ? !r.s.held && r.l.lastWithCopies !== null && r.l.lastWithCopies.allLevelMean >= runaway : null);
+    // U reads the last census that still had at least 50 copies: the record must be one (count, a finite level, a step the run reached).
+    const ranAway = (r: Run | undefined): boolean | null => {
+      if (!r) return null;
+      const lw = r.l.lastWithCopies;
+      return r.s.held === false && lw !== null && lw !== undefined && lw.copies >= 50 && Number.isFinite(lw.allLevelMean) && lw.step <= r.s.stepsRun && lw.allLevelMean >= runaway;
+    };
     const ra = us.map(ranAway);
     const U = !have(us) || ra.some((v) => v === null) ? null : ra.every((v) => v === true);
     let matches: boolean | null = have(us) && have(gs) ? true : null;
@@ -407,9 +436,11 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
         const a = r.l.response;
         const b = r.l.responseLate;
         const h = responseAfter(r, r.s.steps / 2);
+        // The verdicts use the mean only when every second-half window is present and finite; say so when it is not.
+        const partial = h.between !== null && betweenSecondHalf(r) === null ? ' (partial: not every second-half window is present and finite, so not counted by the rule)' : '';
         console.log(
           `| ${arm} | ${start} | ${seed} | ${f(a.meanCov, 4)} | ${f(a.meanBetween, 4)} | ${f(a.meanWithin, 4)} | ${a.negativeCov} of ${a.windowsWithCov} | ` +
-            `${f(h.between, 4)} | ${f(h.within, 4)} | ${h.negative} of ${h.windows} | ${f(b.meanBetween, 4)} | ${f(b.meanWithin, 4)} | ${b.negativeCov} of ${b.windowsWithCov} | ${f(a.meanN, 1)} |`,
+            `${f(h.between, 4)}${partial} | ${f(h.within, 4)} | ${h.negative} of ${h.windows} | ${f(b.meanBetween, 4)} | ${f(b.meanWithin, 4)} | ${b.negativeCov} of ${b.windowsWithCov} | ${f(a.meanN, 1)} |`,
         );
       }
     }
