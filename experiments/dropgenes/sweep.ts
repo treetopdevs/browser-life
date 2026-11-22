@@ -8,6 +8,11 @@
  *
  * A run whose output file already exists is skipped, so the sweep can be re-invoked after an interruption.
  * File name: <tag->K<genes>-cap<cap>-<ARM>-s<seed>.json
+ *
+ * Ladder worlds (heritable trait, docs/droplet-genes-trait-2026-11-21/PLAN.md): give --levels V --mutLevel p
+ * --startLevel v and the ladder arms GATED_SEL, GATED_NEU, UNGATED_SEL, UNGATED_NEU (SEL: rates and function
+ * follow the ladder; NEU: the neutral twin), with --mutPar 0. One start level per invocation: put it in --tag,
+ * for example --tag trait-L0, so the two starts sit side by side in one directory.
  */
 
 import { defaultDropGenesConfig, type DropGenesConfig } from '../../apps/lab/src/dropgenes/kernel.ts';
@@ -17,6 +22,13 @@ const ARMS: Record<string, { gated: boolean; par: boolean }> = {
   GATED_CLEAN: { gated: true, par: false },
   UNGATED_PAR: { gated: false, par: true },
   UNGATED_CLEAN: { gated: false, par: false },
+};
+/** Ladder arms: neutral = the neutral twin. Kept apart from ARMS so the first-rung default arm list is unchanged. */
+const LADDER_ARMS: Record<string, { gated: boolean; neutral: boolean }> = {
+  GATED_SEL: { gated: true, neutral: false },
+  GATED_NEU: { gated: true, neutral: true },
+  UNGATED_SEL: { gated: false, neutral: false },
+  UNGATED_NEU: { gated: false, neutral: true },
 };
 
 function parseArgs(argv: string[]): Record<string, string> {
@@ -30,6 +42,7 @@ function parseArgs(argv: string[]): Record<string, string> {
 }
 
 const KNOWN = new Set(['dir', 'genes', 'caps', 'seeds', 'steps', 'mutPar', 'jobs', 'arms', 'ov', 'tag', 'size']);
+for (const k of ['levels', 'mutLevel', 'startLevel']) KNOWN.add(k); // ladder worlds
 const args = parseArgs(Deno.args);
 for (const k of Object.keys(args)) if (!KNOWN.has(k)) throw new Error(`Unknown option --${k}`);
 for (const k of ['dir', 'genes', 'caps', 'seeds', 'steps', 'mutPar']) if (args[k] === undefined) throw new Error(`--${k} is required`);
@@ -45,6 +58,25 @@ const mutPar = Number(args.mutPar);
 const jobs = Number(args.jobs ?? 6);
 const size = Number(args.size ?? 64);
 const tag = args.tag ? `${args.tag}-` : '';
+// Ladder worlds: with --levels every arm is a ladder arm (and is registered in ARMS as a gated or ungated arm
+// with no parasite origin, which is what the existing loop below reads); without it none is.
+const ladderLevels = args.levels === undefined ? 0 : Number(args.levels);
+const ladderMut = Number(args.mutLevel ?? 0);
+const ladderStart = Number(args.startLevel ?? 0);
+if (ladderLevels > 0) {
+  if (args.arms === undefined) throw new Error('--levels needs --arms from GATED_SEL, GATED_NEU, UNGATED_SEL, UNGATED_NEU');
+  if (Number(args.mutPar) !== 0) throw new Error('--levels needs --mutPar 0');
+  if (![ladderLevels, ladderMut, ladderStart].every(Number.isFinite)) throw new Error('Non-numeric ladder option');
+  for (const a of arms) {
+    if (!LADDER_ARMS[a]) throw new Error(`Arm ${a} is not a ladder arm`);
+    ARMS[a] = { gated: LADDER_ARMS[a].gated, par: false };
+  }
+} else if (args.mutLevel !== undefined || args.startLevel !== undefined) {
+  throw new Error('--mutLevel and --startLevel need --levels');
+}
+/** The ladder keys of an arm's configuration, exactly as run.ts builds them (none for a first-rung arm). */
+const ladderWant = (arm: string): Partial<DropGenesConfig> =>
+  ladderLevels > 0 ? { ladderLevels, mutLevel: ladderMut, ladderNeutral: LADDER_ARMS[arm].neutral } : {};
 for (const a of arms) if (!ARMS[a]) throw new Error(`Unknown arm ${a}`);
 if (![...genesList, ...caps, ...seeds, steps, mutPar, jobs, size].every(Number.isFinite)) throw new Error('Non-numeric option');
 const ovObj = (args.ov ? JSON.parse(args.ov) : {}) as Record<string, unknown>;
@@ -68,16 +100,17 @@ for (const genes of genesList) {
         } catch { /* not there: run it */ }
         if (existing !== null) {
           // Skip only a finished run of exactly this request; anything else in the way is an error, not a skip.
-          const { summary } = JSON.parse(existing) as { summary: { steps: number; residual: string; config: Record<string, unknown>; protocol?: Record<string, unknown> } };
+          const { summary } = JSON.parse(existing) as { summary: { steps: number; residual: string; config: Record<string, unknown>; protocol?: Record<string, unknown>; ladder?: { startLevel: number } } };
           const c = summary.config;
           // The whole effective configuration this request would run, defaults included, not only what was overridden.
           const want = defaultDropGenesConfig({
-            width: size, height: size, seed, genes, capPerTile: cap, gated: ARMS[arm].gated, mutPar: ARMS[arm].par ? mutPar : 0, ...(ovObj as Partial<DropGenesConfig>),
+            width: size, height: size, seed, genes, capPerTile: cap, gated: ARMS[arm].gated, mutPar: ARMS[arm].par ? mutPar : 0, ...(ovObj as Partial<DropGenesConfig>), ...ladderWant(arm),
           }) as unknown as Record<string, unknown>;
           const wrong = [...new Set([...Object.keys(want), ...Object.keys(c)])].filter((k) => c[k] !== want[k]);
           if (JSON.stringify(summary.protocol) !== JSON.stringify(PROTOCOL)) wrong.push('protocol');
           if (summary.steps !== steps) wrong.push('steps');
           if (summary.residual !== '0') wrong.push('residual');
+          if (ladderLevels > 0 && summary.ladder?.startLevel !== ladderStart) wrong.push('startLevel');
           if (wrong.length > 0) throw new Error(`${out} exists but is not this run (differs in: ${wrong.join(', ')}); use another --dir or remove it`);
           continue;
         }
@@ -88,6 +121,9 @@ for (const genes of genesList) {
           '--label', name, '--out', out,
         ];
         if (args.ov) argv.push('--ov', args.ov);
+        if (ladderLevels > 0) {
+          argv.push('--levels', String(ladderLevels), '--mutLevel', String(ladderMut), '--startLevel', String(ladderStart), '--neutral', LADDER_ARMS[arm].neutral ? '1' : '0');
+        }
         queue.push({ name, argv });
       }
     }
@@ -110,7 +146,8 @@ async function worker(): Promise<void> {
       console.log(`FAILED ${job.name} (exit ${res.code}, ${secs}s): ${new TextDecoder().decode(res.stderr).split('\n').slice(-4).join(' | ')}`);
     } else {
       const s = JSON.parse(new TextDecoder().decode(res.stdout).trim().split('\n').pop() ?? '{}');
-      console.log(`${job.name}: held=${s.held} comps=${Number(s.lateMeanCompartments).toFixed(1)} complete=${Number(s.lateCompleteShare).toFixed(2)} residual=${s.residual} (${secs}s, ${queue.length} left)`);
+      const lad = s.ladder ? ` level=${s.ladder.lateLevelMean === null ? 'n/a' : Number(s.ladder.lateLevelMean).toFixed(3)} top=${s.ladder.lateTopShare === null ? 'n/a' : Number(s.ladder.lateTopShare).toFixed(3)} extinctAt=${s.extinctAt}` : '';
+      console.log(`${job.name}: held=${s.held} comps=${Number(s.lateMeanCompartments).toFixed(1)} complete=${Number(s.lateCompleteShare).toFixed(2)} residual=${s.residual}${lad} (${secs}s, ${queue.length} left)`);
     }
   }
 }

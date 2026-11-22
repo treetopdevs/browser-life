@@ -6,6 +6,9 @@
  * A cell (setting, K, sites, arm) is "held" when it has at least 4 seeds and at least 3 of them are held.
  * Refuses a directory whose runs of one setting do not share steps and configuration (apart from the keys a
  * cell is named by), so results of different settings cannot be mixed by accident.
+ *
+ * Ladder worlds (heritable trait): summarize.ts <dir> --trait [--json] reads a directory of ladder runs with
+ * experiments/dropgenes/trait-summarize.ts instead; see that file. Without --trait nothing here changes.
  */
 
 interface Heredity {
@@ -58,6 +61,11 @@ interface Row {
 const dir = Deno.args[0];
 if (!dir) throw new Error('usage: summarize.ts <dir> [--json]');
 const asJson = Deno.args.includes('--json');
+if (Deno.args.includes('--trait')) {
+  const { traitSummary } = await import('./trait-summarize.ts');
+  await traitSummary(dir, Deno.args.slice(1));
+  Deno.exit(0);
+}
 const CELL_KEYS = new Set(['seed', 'genes', 'capPerTile', 'gated', 'mutPar']);
 
 interface Cell { tag: string; genes: number; cap: number; arm: string; runs: { s: Summary; rows: Row[] }[] }

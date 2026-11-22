@@ -60,6 +60,18 @@ export interface DropGenesConfig {
   readonly geneSat: number;
   /** Chance per tile per step that one essential copy on that tile becomes a parasite copy. */
   readonly mutPar: number;
+
+  // ---- Ladder (heritable trait; docs/droplet-genes-trait-2026-11-21/PLAN.md). All three keys are optional and
+  // absent from defaultDropGenesConfig(): without them the kernel is the first-rung kernel bit for bit. ----
+  /**
+   * V variants ("levels") per gene. Species are then T[tile * K * V + k * V + v] and there is no separate
+   * parasite: level 0 copies at kRep with full function, level V - 1 copies at 2 * kRep with none.
+   */
+  readonly ladderLevels?: number;
+  /** Chance that a new copy is made one level away from its template (up or down, each half of it). */
+  readonly mutLevel?: number;
+  /** Neutral twin: the same ladder and mutation, but every level copies at kRep and has full function. */
+  readonly ladderNeutral?: boolean;
 }
 
 /**
@@ -128,6 +140,16 @@ export interface PackedDropGenesParams {
   readonly gateHiInt: number;
   readonly geneSat: number;
   readonly mutParU32: number;
+  // ---- Ladder (see dgLadderTables). ladderLevels 0 = off; the tables are then empty. ----
+  readonly ladderLevels: number;
+  readonly mutLevelQ16: number;
+  readonly ladderNeutral: number;
+  /** Copy rate (Q16) per species, length K * V. */
+  readonly ladderRateQ16: readonly number[];
+  /** Function weight per species, length K * V: V - 1 - level (V - 1 for every level in the neutral twin). */
+  readonly ladderWeight: readonly number[];
+  /** Weighted copies of a gene in the 3x3 patch that give full wall synthesis: geneSat * (V - 1). */
+  readonly ladderSatW: number;
 }
 
 function q16(x: number): number {
@@ -191,6 +213,7 @@ export function packDropGenesParams(cfg: DropGenesConfig): PackedDropGenesParams
   const gateLoInt = Math.round(cfg.gateLo * DG_SCALE);
   const gateHiInt = Math.round(cfg.gateHi * DG_SCALE);
   if (gateHiInt <= gateLoInt) throw new Error(`gateHi (${cfg.gateHi}) must be above gateLo (${cfg.gateLo})`);
+  const ladder = dgLadderTables(cfg);
   return {
     width: cfg.width >>> 0,
     height: cfg.height >>> 0,
@@ -206,7 +229,7 @@ export function packDropGenesParams(cfg: DropGenesConfig): PackedDropGenesParams
     kSynQ16: q16Unbounded(cfg.kSyn),
     kDegQ16: q16(cfg.kDeg),
     genes: cfg.genes,
-    species: cfg.genes > 0 ? cfg.genes + 1 : 0,
+    species: cfg.genes > 0 ? (ladder.ladderLevels > 0 ? cfg.genes * ladder.ladderLevels : cfg.genes + 1) : 0,
     capPerTile: cfg.capPerTile,
     kRepQ16: q16(cfg.kRep),
     kRepParQ16: q16(cfg.kRepPar),
@@ -217,7 +240,57 @@ export function packDropGenesParams(cfg: DropGenesConfig): PackedDropGenesParams
     gateHiInt,
     geneSat: cfg.geneSat,
     mutParU32: probU32(cfg.mutPar),
+    ...ladder,
   };
+}
+
+// ---- Ladder (heritable trait) ------------------------------------------------------------------------------
+
+/**
+ * Most species the template arrays and hash channels are laid out for: 500 + s (decay), 520 + s (copying),
+ * 540 (first-rung service start), 542 to 557 (ladder service shuffle, 541 + position for positions 1 to 16),
+ * 560 and 561 (parasite origin), 570 + s (ladder mutation), 600 + s (hops).
+ */
+export const DG_MAX_SPECIES = DG_MAX_GENES + 1;
+
+/**
+ * Validates the ladder keys and builds the per-species tables. With V = ladderLevels and level v = s % V:
+ *
+ *   copy rate   rateQ16[v] = floor(kRepQ16 * (V - 1 + v) / (V - 1))     kRep at level 0, exactly 2 * kRepQ16 at V - 1
+ *   function    weight[v]  = V - 1 - v                                  V - 1 at level 0, 0 at level V - 1
+ *
+ * A gene's function on a tile is min(sum over the 3x3 patch of copies * weight, geneSat * (V - 1)) over
+ * geneSat * (V - 1): a level-0 copy counts as one copy of the first-rung rule, a top-level copy as none.
+ * Neutral twin: rateQ16[v] = kRepQ16 and weight[v] = V - 1 for every v.
+ *
+ * Bounds: kRep <= 0.5 keeps every rate <= 65536 (the range dgMulStochQ16 is defined for); the largest
+ * intermediate is kRepQ16 * (2V - 2) <= 32768 * 32 = 2^20. K * V <= DG_MAX_SPECIES keeps the hash channels of
+ * different passes apart. mutPar must be 0: the top level is the parasite, and it arises by mutLevel only.
+ */
+export function dgLadderTables(cfg: DropGenesConfig): Pick<PackedDropGenesParams, 'ladderLevels' | 'mutLevelQ16' | 'ladderNeutral' | 'ladderRateQ16' | 'ladderWeight' | 'ladderSatW'> {
+  const V = cfg.ladderLevels ?? 0;
+  const mutLevel = cfg.mutLevel ?? 0;
+  if (V === 0) {
+    if (mutLevel !== 0 || cfg.ladderNeutral) throw new Error('mutLevel and ladderNeutral need ladderLevels');
+    return { ladderLevels: 0, mutLevelQ16: 0, ladderNeutral: 0, ladderRateQ16: [], ladderWeight: [], ladderSatW: 0 };
+  }
+  if (!Number.isSafeInteger(V) || V < 2) throw new Error(`Invalid ladderLevels: ${V} (expected an integer of at least 2)`);
+  if (cfg.genes < 1) throw new Error('ladderLevels needs genes >= 1');
+  if (cfg.genes * V > DG_MAX_SPECIES) throw new Error(`genes * ladderLevels is ${cfg.genes * V}, above ${DG_MAX_SPECIES}`);
+  if (cfg.mutPar !== 0) throw new Error('mutPar must be 0 with ladderLevels (the top level is the parasite)');
+  if (cfg.kRep > 0.5) throw new Error(`kRep (${cfg.kRep}) must be at most 0.5 with ladderLevels (the top level copies at 2 * kRep)`);
+  if (!Number.isFinite(mutLevel) || mutLevel < 0 || mutLevel > 1) throw new Error(`Invalid mutLevel: ${mutLevel} (expected [0, 1])`);
+  if (mutLevel > 0 && q16(mutLevel) === 0) throw new Error(`mutLevel ${mutLevel} is below the kernel's resolution of 1 / 65536`);
+  const kRepQ16 = q16(cfg.kRep);
+  const neutral = cfg.ladderNeutral === true;
+  const rate: number[] = [];
+  const weight: number[] = [];
+  for (let s = 0; s < cfg.genes * V; s++) {
+    const v = s % V;
+    rate.push(neutral ? kRepQ16 : Math.floor((kRepQ16 * (V - 1 + v)) / (V - 1)));
+    weight.push(neutral ? V - 1 : V - 1 - v);
+  }
+  return { ladderLevels: V, mutLevelQ16: q16(mutLevel), ladderNeutral: neutral ? 1 : 0, ladderRateQ16: rate, ladderWeight: weight, ladderSatW: cfg.geneSat * (V - 1) };
 }
 
 /** Counter-based 32-bit hash, identical to the reference `kernelHash32`. */
@@ -318,6 +391,17 @@ export class DropGenesKernel {
   private readonly geneQ: Uint16Array;
   private readonly rndF: Uint32Array;
   private readonly rndA: Uint32Array;
+  /** Ladder: copies of each species born on the tile being processed (cleared by ladderMutateTile). */
+  private readonly ladderBorn: Uint32Array;
+  /** Ladder: the order species are served in on the tile being processed (see ladderServiceOrder). */
+  private readonly ladderOrder: Uint8Array;
+  /**
+   * Ladder tallies, per species copied from: new copies, and those made one level up or down. Whole numbers
+   * kept for tests and readouts; they are not state, are not in the digest and are never read by step().
+   */
+  readonly ladderMutUp: Float64Array;
+  readonly ladderMutDown: Float64Array;
+  readonly ladderBirths: Float64Array;
 
   readonly initTotalMatter: bigint;
 
@@ -340,6 +424,11 @@ export class DropGenesKernel {
     this.geneQ = new Uint16Array(n);
     this.rndF = new Uint32Array(n);
     this.rndA = new Uint32Array(n);
+    this.ladderBorn = new Uint32Array(this.p.species);
+    this.ladderOrder = new Uint8Array(this.p.species);
+    this.ladderMutUp = new Float64Array(this.p.species);
+    this.ladderMutDown = new Float64Array(this.p.species);
+    this.ladderBirths = new Float64Array(this.p.species);
     const initF = cfg.initMatterPerTile >>> 1;
     this.F.fill(initF);
     this.A.fill(cfg.initMatterPerTile - initF);
@@ -419,6 +508,7 @@ export class DropGenesKernel {
     const S = this.p.species;
     const K = this.p.genes;
     if (S === 0) return 0;
+    if (this.p.ladderLevels > 0) throw new Error('With ladderLevels use seedTemplatesAtLevel');
     if (!Number.isSafeInteger(perGene) || perGene < 0 || !Number.isSafeInteger(parasite) || parasite < 0) {
       throw new Error('Template seed amounts must be non-negative integers');
     }
@@ -443,6 +533,161 @@ export class DropGenesKernel {
     return seeded;
   }
 
+  // ---- Ladder (heritable trait) ----------------------------------------------------------------------------
+
+  /**
+   * Ladder worlds: put `perGene` copies of every gene, all at `level`, on each tile whose wall is at least
+   * `minWall`, taking the matter from that tile's A then F. Returns the number of tiles seeded.
+   */
+  seedTemplatesAtLevel(perGene: number, level: number, minWall = 0.125): number {
+    const V = this.p.ladderLevels;
+    const K = this.p.genes;
+    if (V === 0) throw new Error('seedTemplatesAtLevel needs ladderLevels');
+    if (!Number.isSafeInteger(perGene) || perGene < 0) throw new Error('Template seed amounts must be non-negative integers');
+    if (!Number.isSafeInteger(level) || level < 0 || level >= V) throw new Error(`Invalid level: ${level} (expected 0..${V - 1})`);
+    const thresh = Math.round(minWall * DG_SCALE);
+    const want = perGene * K;
+    let seeded = 0;
+    for (let i = 0; i < this.nTiles; i++) {
+      if (this.W[i] < thresh) continue;
+      if (this.A[i] + this.F[i] < want) throw new Error(`Not enough soluble matter on tile ${i} to seed templates`);
+      const fromA = Math.min(this.A[i], want);
+      this.A[i] -= fromA;
+      this.F[i] -= want - fromA;
+      for (let k = 0; k < K; k++) this.T[i * this.p.species + k * V + level] += perGene;
+      seeded++;
+    }
+    return seeded;
+  }
+
+  /**
+   * Ladder pass 0: geneQ = 1024 * min_k min(patch_k, satW) / satW, where patch_k is the sum over the 3x3 patch
+   * and over gene k's levels of copies * weight. Same reads and the same skip of wall-less tiles as the
+   * first-rung pass 0.
+   *
+   * Bounds: the nine tiles are distinct, so the weighted sum is at most (V - 1) * (total matter) <=
+   * 16 * (2^30 - 1) < 2^34, exact in a JS number (a 32-bit port must saturate each term at satW <= 1024 * 16).
+   * minS * 1024 <= satW * 1024 <= 2^24, and geneQ <= 1024 fits the Uint16Array.
+   */
+  private ladderGeneFunction(): void {
+    const p = this.p;
+    const Wd = p.width;
+    const H = p.height;
+    const K = p.genes;
+    const V = p.ladderLevels;
+    const S = p.species;
+    const T = this.T;
+    const weight = p.ladderWeight;
+    const satW = p.ladderSatW;
+    const geneQ = this.geneQ;
+    for (let y = 0; y < H; y++) {
+      const yU = (y > 0 ? y - 1 : H - 1) * Wd;
+      const y0 = y * Wd;
+      const yD = (y + 1 < H ? y + 1 : 0) * Wd;
+      for (let x = 0; x < Wd; x++) {
+        const i = y0 + x;
+        if (this.W[i] === 0) {
+          geneQ[i] = 0;
+          continue;
+        }
+        const xL = x > 0 ? x - 1 : Wd - 1;
+        const xR = x + 1 < Wd ? x + 1 : 0;
+        const b0 = (yU + xL) * S;
+        const b1 = (yU + x) * S;
+        const b2 = (yU + xR) * S;
+        const b3 = (y0 + xL) * S;
+        const b4 = i * S;
+        const b5 = (y0 + xR) * S;
+        const b6 = (yD + xL) * S;
+        const b7 = (yD + x) * S;
+        const b8 = (yD + xR) * S;
+        let minS = satW;
+        for (let k = 0; k < K && minS > 0; k++) {
+          let sum = 0;
+          for (let v = 0; v < V; v++) {
+            const s = k * V + v;
+            const wgt = weight[s];
+            if (wgt === 0) continue;
+            sum += (T[b0 + s] + T[b1 + s] + T[b2 + s] + T[b3 + s] + T[b4 + s] + T[b5 + s] + T[b6 + s] + T[b7 + s] + T[b8 + s]) * wgt;
+          }
+          if (sum < minS) minS = sum;
+        }
+        geneQ[i] = Math.floor((minS * 1024) / satW);
+      }
+    }
+  }
+
+  /**
+   * Ladder service order for one tile's copying. The first rung serves species in index order from a hashed
+   * start. That is not even-handed among the species present: with species 0 and 1 present out of ten, 0 is
+   * served before 1 for nine of the ten starts, and when free sites or fuel run out the species served first
+   * gets the copy. On a ladder the index is the level, so that would favour low levels, in the neutral twin
+   * too. A ladder world instead serves the species present on the tile in a uniformly random order: a
+   * Fisher-Yates shuffle of the list of present species, one hash per swap (channel 541 + position, at most
+   * 16 of them). Every order of the present species is equally likely, so what a species gets depends on its
+   * own count and on the counts of the others, not on which index, level or gene any of them has. (Picking a
+   * random start and direction round the index ring is not enough: neighbours in index would still be
+   * neighbours in the order, which shows when counts are unequal.)
+   *
+   * Species absent from the tile fill the rest of the order and are skipped by the copy loop. A species absent
+   * at the start of the loop stays absent through it: copying only adds to species present, and mutation is
+   * applied after the loop. `hash % (j + 1)` is biased by less than (j + 1) / 2^32.
+   */
+  private ladderServiceOrder(i: number, tb: number, step: number): void {
+    const S = this.p.species;
+    const order = this.ladderOrder;
+    let n = 0;
+    for (let s = 0; s < S; s++) if (this.T[tb + s] > 0) order[n++] = s;
+    let fill = n;
+    for (let s = 0; s < S && fill < S; s++) if (this.T[tb + s] === 0) order[fill++] = s;
+    for (let j = n - 1; j >= 1; j--) {
+      const pick = dgHash32(this.p.seed, step, i, 541 + j) % (j + 1);
+      const tmp = order[j];
+      order[j] = order[pick];
+      order[pick] = tmp;
+    }
+  }
+
+  /**
+   * Ladder mutation on one tile, after that tile's copying. Of the b copies of species s born this step,
+   * m = stochastic rounding of b * mutLevel (so its mean is exactly b * mutLevelQ16 / 65536, and m <= b) are
+   * one level away from their template: all m up or all m down, by one hash bit, each direction half the
+   * time. A move below level 0 or above level V - 1 is dropped (those copies keep their template's level), so
+   * the realised rate is mutLevel / 2 per new copy in each direction that exists.
+   *
+   * Conservation: the m copies were already added to T[s] out of F by the copy step; here they only change
+   * species. T[s] >= b >= m, so nothing goes below zero.
+   */
+  private ladderMutateTile(i: number, tb: number, step: number): void {
+    const p = this.p;
+    const V = p.ladderLevels;
+    const S = p.species;
+    const born = this.ladderBorn;
+    for (let s = 0; s < S; s++) {
+      const b = born[s];
+      if (b === 0) continue;
+      born[s] = 0;
+      this.ladderBirths[s] += b;
+      if (p.mutLevelQ16 === 0) continue;
+      const r = dgHash32(p.seed, step, i, 570 + s);
+      let m = dgMulStochQ16(b, p.mutLevelQ16, r);
+      if (m === 0) continue;
+      if (m > b) m = b;
+      const v = s % V;
+      if (((r >>> 16) & 1) === 1) {
+        if (v + 1 >= V) continue;
+        this.T[tb + s] -= m;
+        this.T[tb + s + 1] += m;
+        this.ladderMutUp[s] += m;
+      } else {
+        if (v === 0) continue;
+        this.T[tb + s] -= m;
+        this.T[tb + s - 1] += m;
+        this.ladderMutDown[s] += m;
+      }
+    }
+  }
+
   step(): void {
     const step = (++this.stepCount) >>> 0;
     const p = this.p;
@@ -453,10 +698,12 @@ export class DropGenesKernel {
     const K = p.genes;
     const S = p.species;
     const geneQ = this.geneQ;
+    const LV = p.ladderLevels; // ladder levels per gene; 0 = first-rung kernel
 
     // Pass 0: gene function per tile, from the 3x3 patch of template counts at the start of the step.
     // geneQ = 1024 * min_k min(patch_k, geneSat) / geneSat. Only read where wall is present.
-    if (K > 0) {
+    if (LV > 0) this.ladderGeneFunction();
+    if (K > 0 && LV === 0) {
       const T = this.T;
       const sat = p.geneSat;
       for (let y = 0; y < H; y++) {
@@ -527,11 +774,12 @@ export class DropGenesKernel {
             const free0 = cap - tot;
             let freeLeft = free0;
             const s0 = dgHash32(seed, step, i, 540) % S;
+            if (LV > 0) this.ladderServiceOrder(i, tb, step);
             for (let off = 0; off < S && freeLeft > 0 && f > 0; off++) {
-              const s = (s0 + off) % S;
+              const s = LV > 0 ? this.ladderOrder[off] : (s0 + off) % S;
               const t = this.T[tb + s];
               if (t === 0) continue;
-              const kq = s < K ? p.kRepQ16 : p.kRepParQ16;
+              const kq = LV > 0 ? p.ladderRateQ16[s] : s < K ? p.kRepQ16 : p.kRepParQ16;
               const rateQ16 = Math.floor((kq * free0) / cap);
               let b = dgMulStochQ16(t, rateQ16, dgHash32(seed, step, i, 520 + s));
               if (b > freeLeft) b = freeLeft;
@@ -540,8 +788,10 @@ export class DropGenesKernel {
                 this.T[tb + s] = t + b;
                 f -= b;
                 freeLeft -= b;
+                if (LV > 0) this.ladderBorn[s] = b;
               }
             }
+            if (LV > 0) this.ladderMutateTile(i, tb, step);
           }
         }
       }

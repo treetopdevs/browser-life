@@ -51,6 +51,20 @@ export interface FissionRecord {
    * recorded. 'pending': the run ended before the delay passed.
    */
   readonly delayedStatus: ('pending' | 'read' | 'gone' | 'fused')[];
+  /**
+   * Each daughter's copies at the last census, from the split to the delayed read, at which its uid existed
+   * and had not merged with another compartment since the split (null: never seen unmerged). Unlike `delayed`
+   * this is filled for daughters that are gone by the delayed read, so it does not condition on surviving.
+   */
+  readonly lastSeen?: (number[] | null)[];
+  readonly lastSeenStep?: number[];
+  /**
+   * true for a daughter that merged with another compartment between its split and its delayed read, as
+   * either part: the larger part (it kept its uid; if it is still there at the delayed read its
+   * delayedStatus is 'fused', if it has dissolved by then it is 'gone') or the smaller part (its uid ended
+   * there; delayedStatus 'gone'). This flag tells a merged daughter from one that dissolved as itself.
+   */
+  readonly merged?: boolean[];
 }
 
 export interface Census {
@@ -87,6 +101,9 @@ export interface TrackerOptions {
   readonly completeMin?: number; // copies, default 1
   readonly maxFissionRecords?: number; // default 20000
   readonly heredityDelay?: number; // steps after a split at which daughters are read again, default 500
+  /** Ladder worlds: levels per gene (species = genes * levels). `complete` then uses ladderComplete. */
+  readonly ladderLevels?: number;
+  readonly ladderNeutral?: boolean;
 }
 
 export function labelCompartments(
@@ -155,6 +172,10 @@ export class CompartmentTracker {
   private pending: { record: FissionRecord; index: number; uid: number; due: number }[] = [];
   /** uid -> step of the last census at which its holder overlapped two or more previous compartments. */
   private readonly lastFusion = new Map<number, number>();
+  private readonly ladderLevels: number;
+  private readonly ladderNeutral: boolean;
+  /** uids that ended by being absorbed into another compartment (the smaller part of a fusion). */
+  private readonly absorbedUids = new Set<number>();
 
   constructor(
     private readonly width: number,
@@ -169,6 +190,8 @@ export class CompartmentTracker {
     this.completeMin = opts.completeMin ?? 1;
     this.maxRecords = opts.maxFissionRecords ?? 20000;
     this.heredityDelay = opts.heredityDelay ?? 500;
+    this.ladderLevels = opts.ladderLevels ?? 0;
+    this.ladderNeutral = opts.ladderNeutral ?? false;
   }
 
   observe(step: number, W: Uint32Array, T: Uint32Array): Census {
@@ -290,6 +313,9 @@ export class CompartmentTracker {
             daughterUids: kids.map((c) => uidOf[c]),
             delayed: kids.map(() => null),
             delayedStatus: kids.map(() => 'pending' as const),
+            lastSeen: kids.map(() => null),
+            lastSeenStep: kids.map(() => -1),
+            merged: kids.map(() => false),
           };
           this.fissionRecords.push(record);
           kids.forEach((c, index) => this.pending.push({ record, index, uid: uidOf[c], due: step + this.heredityDelay }));
@@ -316,6 +342,7 @@ export class CompartmentTracker {
         let overlapped = false;
         for (let c = 1; c <= count && !overlapped; c++) if (curParents[c].has(pl)) overlapped = true;
         if (overlapped && !childrenOf.has(pl)) this.totals.absorbedAges.push(step - prev[pl - 1].bornStep);
+        if (overlapped && !childrenOf.has(pl)) this.absorbedUids.add(prev[pl - 1].uid);
         if (!overlapped) {
           const dead = prev[pl - 1];
           this.totals.deaths++;
@@ -333,6 +360,7 @@ export class CompartmentTracker {
       if (cy < 0) cy += height;
       let complete = K > 0;
       for (let k = 0; k < K; k++) if (copies[c][k] < this.completeMin) complete = false;
+      if (this.ladderLevels > 0) complete = ladderComplete(copies[c], K, this.ladderLevels, this.completeMin, this.ladderNeutral);
       compartments[c - 1] = {
         uid: uidOf[c],
         parentUid: parentUidOf[c],
@@ -344,6 +372,21 @@ export class CompartmentTracker {
         copies: copies[c],
         complete,
       };
+    }
+    // Last-seen read (see FissionRecord.lastSeen): every daughter still waiting for its delayed read is looked
+    // up by uid at every census. Runs before the delayed read so a daughter read now is also last seen now.
+    if (this.pending.length > 0) {
+      const seen = new Map<number, Compartment>();
+      for (const c of compartments) seen.set(c.uid, c);
+      for (const q of this.pending) {
+        const found = seen.get(q.uid);
+        const fusedSince = (this.lastFusion.get(q.uid) ?? -1) >= q.record.step;
+        if (found && !fusedSince && q.record.lastSeen && q.record.lastSeenStep) {
+          q.record.lastSeen[q.index] = found.copies;
+          q.record.lastSeenStep[q.index] = step;
+        }
+        if (q.record.merged && ((found && fusedSince) || (!found && this.absorbedUids.has(q.uid)))) q.record.merged[q.index] = true;
+      }
     }
     // Delayed heredity read: daughters whose time has come are looked up by uid in this census.
     if (this.pending.length > 0 && this.pending[0].due <= step) {
@@ -480,4 +523,240 @@ export function heredityDelayed(records: readonly FissionRecord[], trait: (copie
   const counts = { read: 0, gone: 0, fused: 0, pending: 0 };
   for (const r of records) for (const st of r.delayedStatus) counts[st]++;
   return { ...correlate(records, trait, (r) => r.delayed), ...counts };
+}
+
+// ---- Ladder (heritable trait) readouts; docs/droplet-genes-trait-2026-11-21/PLAN.md ---------------------------
+// Species layout in a ladder world: copies[k * levels + v] is gene k at level v.
+
+/** Copies at each level, summed over genes. */
+export function ladderLevelCounts(copies: readonly number[], genes: number, levels: number): number[] {
+  const out = new Array<number>(levels).fill(0);
+  for (let k = 0; k < genes; k++) for (let v = 0; v < levels; v++) out[v] += copies[k * levels + v];
+  return out;
+}
+
+/** Copy-weighted mean level over every gene (null if there are no copies). */
+export function ladderMeanLevel(copies: readonly number[], genes: number, levels: number): number | null {
+  let tot = 0;
+  let sum = 0;
+  for (let k = 0; k < genes; k++) {
+    for (let v = 0; v < levels; v++) {
+      const c = copies[k * levels + v];
+      tot += c;
+      sum += c * v;
+    }
+  }
+  return tot > 0 ? sum / tot : null;
+}
+
+/** Share of the copies that are at the top level, the parasite end (null if there are no copies). */
+export function ladderTopShare(copies: readonly number[], genes: number, levels: number): number | null {
+  let tot = 0;
+  let top = 0;
+  for (let k = 0; k < genes; k++) {
+    for (let v = 0; v < levels; v++) tot += copies[k * levels + v];
+    top += copies[k * levels + levels - 1];
+  }
+  return tot > 0 ? top / tot : null;
+}
+
+/** Share of gene 0 (all its levels) among all copies (null if there are none). */
+export function ladderGene0Share(copies: readonly number[], genes: number, levels: number): number | null {
+  let tot = 0;
+  let g0 = 0;
+  for (let k = 0; k < genes; k++) {
+    for (let v = 0; v < levels; v++) {
+      tot += copies[k * levels + v];
+      if (k === 0) g0 += copies[v];
+    }
+  }
+  return tot > 0 ? g0 / tot : null;
+}
+
+/**
+ * A ladder compartment is complete when every gene has at least `completeMin` copies that function: any level
+ * below the top one (the top level has function 0). In the neutral twin every level functions.
+ */
+export function ladderComplete(copies: readonly number[], genes: number, levels: number, completeMin: number, neutral: boolean): boolean {
+  if (genes <= 0) return false;
+  const working = neutral ? levels : levels - 1;
+  for (let k = 0; k < genes; k++) {
+    let n = 0;
+    for (let v = 0; v < working; v++) n += copies[k * levels + v];
+    if (n < completeMin) return false;
+  }
+  return true;
+}
+
+export interface LastSeenHeredityReadout extends HeredityReadout {
+  /** Daughters whose delayed read was made / that were gone by then, with a last-seen trait and a parent trait. */
+  readonly read: number;
+  readonly gone: number;
+  /**
+   * Left out: merged with another compartment (as either part, whether or not it was still there at the
+   * delayed read), still pending at the end of the run, or no trait defined. `merged` is the merged ones.
+   */
+  readonly leftOut: number;
+  readonly merged: number;
+  /** Survivor bias, shown directly. Mean parent trait of the daughters that were read, and of those gone. */
+  readonly parentTraitRead: number | null;
+  readonly parentTraitGone: number | null;
+  /** Mean trait of the daughter at the split census, for the daughters that were read, and for those gone. */
+  readonly splitTraitRead: number | null;
+  readonly splitTraitGone: number | null;
+  /** Mean trait when last seen, for the daughters that were gone by the delayed read. */
+  readonly lastTraitGone: number | null;
+}
+
+/**
+ * Parent to daughter resemblance that does not condition on the daughter surviving the delay: each daughter
+ * is scored by the copies it held when last seen unmerged, up to the delayed read. A daughter that lasted the
+ * delay contributes its delayed read; one that dissolved contributes its last census. Daughters that merged
+ * with another compartment at any time before the delayed read (as either part) and unresolved ('pending')
+ * ones are left out and counted. The parent and control correlations are over the same daughters, as in
+ * `heredity`.
+ */
+export function heredityLastSeen(records: readonly FissionRecord[], trait: (copies: number[]) => number | null): LastSeenHeredityReadout {
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  let read = 0;
+  let gone = 0;
+  let leftOut = 0;
+  let merged = 0;
+  const isMerged = (r: FissionRecord, i: number) => r.delayedStatus[i] === 'fused' || (r.merged !== undefined && r.merged[i] === true);
+  const pRead: number[] = [];
+  const pGone: number[] = [];
+  const sRead: number[] = [];
+  const sGone: number[] = [];
+  const lGone: number[] = [];
+  for (const r of records) {
+    const pv = trait(r.parent);
+    r.delayedStatus.forEach((st, i) => {
+      const last = r.lastSeen ? r.lastSeen[i] : null;
+      const lv = last ? trait(last) : null;
+      if (isMerged(r, i)) merged++;
+      if ((st !== 'read' && st !== 'gone') || isMerged(r, i) || pv === null || lv === null) {
+        leftOut++;
+        return;
+      }
+      const sv = trait(r.daughters[i]);
+      if (st === 'read') {
+        read++;
+        pRead.push(pv);
+        if (sv !== null) sRead.push(sv);
+      } else {
+        gone++;
+        pGone.push(pv);
+        if (sv !== null) sGone.push(sv);
+        lGone.push(lv);
+      }
+    });
+  }
+  const usable = (r: FissionRecord) => r.delayedStatus.map((st, i) => ((st === 'read' || st === 'gone') && !isMerged(r, i) && r.lastSeen ? r.lastSeen[i] : null));
+  return {
+    ...correlate(records, trait, usable),
+    read,
+    gone,
+    leftOut,
+    merged,
+    parentTraitRead: mean(pRead),
+    parentTraitGone: mean(pGone),
+    splitTraitRead: mean(sRead),
+    splitTraitGone: mean(sGone),
+    lastTraitGone: mean(lGone),
+  };
+}
+
+export interface ResponseReadout {
+  /** Compartments at the start of the window with a defined trait. */
+  readonly n: number;
+  /**
+   * Mean number of descendants of a start compartment: compartments at the end of the window that descend from
+   * it and hold at least one copy (0 = line gone). A descendant with no copies has no level and cannot make
+   * wall; it is not counted, here or in zEnd, so both Price terms are over the same descendants.
+   */
+  readonly meanW: number;
+  /** Covariance, over the start compartments, of the trait with that number of descendants (population form). */
+  readonly cov: number | null;
+  /** cov / meanW: the change in the mean trait due to which compartments left descendants (Price's first term). */
+  readonly between: number | null;
+  /** Mean trait of the start compartments, and of the end compartments that descend from them. */
+  readonly zStart: number | null;
+  readonly zEnd: number | null;
+  /** zEnd - zStart - between: the change inside lines of descent (Price's second term). */
+  readonly within: number | null;
+  /** End compartments with no ancestor at the start by tracker id (tracking misses), not in the figures above. */
+  readonly orphans: number;
+  /** End compartments that descend from a start compartment but hold no copies, not in the figures above. */
+  readonly traitless: number;
+}
+
+/**
+ * Response check over one window. Each compartment at the start is one unit; its descendants are the
+ * compartments at the end that trace back to it by tracker id (a fission's other daughters carry their
+ * parent's uid as parentUid). A compartment absorbed by a fusion loses its line to the one that absorbed it.
+ * Compartments are weighted equally, not by copies. With descendants defined as above,
+ * zEnd - zStart = between + within exactly (Price's equation with compartments as the units).
+ */
+export class DescentWindow {
+  private readonly ancestor = new Map<number, number>();
+  private readonly startTrait = new Map<number, number>();
+
+  constructor(start: Census, private readonly trait: (copies: number[]) => number | null) {
+    for (const c of start.compartments) {
+      this.ancestor.set(c.uid, c.uid);
+      const z = trait(c.copies);
+      if (z !== null) this.startTrait.set(c.uid, z);
+    }
+  }
+
+  /** Call at every census after the start, in order. */
+  update(census: Census): void {
+    for (const c of census.compartments) {
+      if (this.ancestor.has(c.uid)) continue;
+      const a = this.ancestor.get(c.parentUid);
+      if (a !== undefined) this.ancestor.set(c.uid, a);
+    }
+  }
+
+  /** Call with the last census of the window (after update). */
+  finish(end: Census): ResponseReadout {
+    const w = new Map<number, number>();
+    for (const uid of this.startTrait.keys()) w.set(uid, 0);
+    let orphans = 0;
+    let traitless = 0;
+    let zEndSum = 0;
+    let zEndN = 0;
+    for (const c of end.compartments) {
+      const a = this.ancestor.get(c.uid);
+      if (a === undefined) {
+        orphans++;
+        continue;
+      }
+      if (!w.has(a)) continue; // its ancestor had no trait at the start
+      const z = this.trait(c.copies);
+      if (z === null) {
+        traitless++;
+        continue;
+      }
+      w.set(a, (w.get(a) ?? 0) + 1);
+      zEndSum += z;
+      zEndN++;
+    }
+    const n = this.startTrait.size;
+    if (n === 0) return { n: 0, meanW: 0, cov: null, between: null, zStart: null, zEnd: null, within: null, orphans, traitless };
+    let mz = 0;
+    let mw = 0;
+    for (const [uid, z] of this.startTrait) {
+      mz += z;
+      mw += w.get(uid) ?? 0;
+    }
+    mz /= n;
+    mw /= n;
+    let cov = 0;
+    for (const [uid, z] of this.startTrait) cov += (z - mz) * ((w.get(uid) ?? 0) - mw);
+    cov /= n;
+    const between = mw > 0 ? cov / mw : null;
+    const zEnd = zEndN > 0 ? zEndSum / zEndN : null;
+    return { n, meanW: mw, cov, between, zStart: mz, zEnd, within: between !== null && zEnd !== null ? zEnd - mz - between : null, orphans, traitless };
+  }
 }
