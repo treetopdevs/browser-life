@@ -18,6 +18,11 @@
  * A linked run counts a gene wherever it sits (complete, copies, heredity) and adds a `linked` block to the
  * summary and to each report row. Without linking the output is what it was.
  *
+ * Added for the second linked screen (docs/droplet-genes-linked2-2026-11-21/PLAN.md), new fields only:
+ *   summary.deathGenes        for compartments the tracker saw end: which genes were missing at their last census
+ *   summary.lastCompartments  what the arena held at the last census before the first census with no compartment
+ *   lengths (beside summary and rows, linked runs only): molecules by genes carried at every census, whole arena
+ *
  * "Held" for a run (docs/droplet-genes-2026-11-21/PLAN.md): over the last tenth of the run the mean number of
  * compartments is at least 10 and at least half of them carry every gene.
  */
@@ -25,6 +30,7 @@
 import { DG_SCALE, DropGenesKernel, defaultDropGenesConfig, type DropGenesConfig } from '../../apps/lab/src/dropgenes/kernel.ts';
 import { CompartmentTracker, gene0Share, heredity, heredityDelayed, parasiteShare, type Census } from '../../apps/lab/src/dropgenes/observe.ts';
 import { addLinkedCounts, geneCopiesWithLinked, linkedCounts, linkedReadout, type LinkedCounts, type LinkedReadout } from '../../apps/lab/src/dropgenes/observe.ts';
+import { deathReadout } from '../../apps/lab/src/dropgenes/observe.ts';
 
 function parseArgs(argv: string[]): Record<string, string> {
   const out: Record<string, string> = {};
@@ -178,6 +184,19 @@ function rowOf(c: Census): Row {
   };
 }
 
+/** Copies per species over the whole arena and inside compartments at one census (linked runs: a gene counted wherever it sits). */
+function holdings(c: Census): { step: number; compartments: number; complete: number; arena: number[]; inCompartments: number[] } {
+  const inCompartments = new Array<number>(S).fill(0);
+  for (const k of c.compartments) for (let s = 0; s < S; s++) inCompartments[s] += k.copies[s];
+  return {
+    step: c.step,
+    compartments: c.compartments.length,
+    complete: c.compartments.filter((k) => k.complete).length,
+    arena: inCompartments.map((v, s) => v + c.stranded[s]),
+    inCompartments,
+  };
+}
+
 const rows: Row[] = [];
 const lateFrom = steps - Math.floor(steps / 10);
 let lateN = 0;
@@ -189,18 +208,31 @@ let lastCensus = tracker.observe(0, world.W, copiesNow());
 /** Linked runs: counts summed over the censuses of the late window (pooled, so a census with more templates weighs more). */
 let lateLinked: LinkedCounts | null = null;
 let lateLinkedN = 0;
+/** Linked runs: molecules by genes carried (byLength[len - 1]) at every census from step 0, whole arena. */
+const lengthSeries: number[][] = [];
+if (linked) lengthSeries.push(linkedCounts(world.T, world.L, K).byLength);
+/** The last census that had a compartment, and (frozen at the first census with none) what the arena held then. */
+type Holdings = ReturnType<typeof holdings> & { byLength?: number[] };
+let lastWith: Holdings | null = lastCensus.compartments.length > 0 ? { ...holdings(lastCensus), ...(linked ? { byLength: lengthSeries[0] } : {}) } : null;
+let lastCompartments: Holdings | null = null;
 for (let s = 1; s <= steps; s++) {
   world.step();
   if (s % censusEvery === 0) {
     const c = tracker.observe(s, world.W, copiesNow());
     lastCensus = c;
-    if (linked && s > lateFrom) {
-      const lc = linkedCounts(world.T, world.L, K);
+    const lcNow = linked ? linkedCounts(world.T, world.L, K) : null;
+    if (lcNow) lengthSeries.push(lcNow.byLength.slice());
+    if (lcNow && s > lateFrom) {
+      const lc = lcNow;
       if (lateLinked === null) lateLinked = lc;
       else addLinkedCounts(lateLinked, lc);
       lateLinkedN++;
     }
-    if (c.compartments.length === 0 && extinctAt === null) extinctAt = s;
+    if (c.compartments.length === 0 && extinctAt === null) {
+      extinctAt = s;
+      lastCompartments = lastWith;
+    }
+    if (c.compartments.length > 0) lastWith = { ...holdings(c), ...(lcNow ? { byLength: lcNow.byLength.slice() } : {}) };
     if (s > lateFrom) {
       lateN++;
       lateComps += c.compartments.length;
@@ -280,6 +312,13 @@ const summary = {
   heredityGene0Delayed: K >= 2 ? heredityDelayed(tracker.fissionRecords, (c) => gene0Share(c, K)) : null,
   heredityParasiteDelayed: K >= 1 ? heredityDelayed(tracker.fissionRecords, (c) => parasiteShare(c, K)) : null,
   fissionRecordsKept: tracker.fissionRecords.length,
+  /** Compartments the tracker saw end: the genes missing at their last census (observe.ts, DeathReadout). */
+  deathGenes: deathReadout(tracker.deathRecords, K),
+  /**
+   * The last census that still had a compartment before the first census with none (null: the run never had
+   * none): copies per species over the whole arena and inside compartments, and for linked runs molecules by length.
+   */
+  lastCompartments,
   ...(linked
     ? {
         linked: {
@@ -321,7 +360,10 @@ if (args.out) {
   if (residual !== 0n) {
     await Deno.writeTextFile(`${args.out}.failed`, JSON.stringify({ summary, rows }, null, 1));
   } else {
-    await Deno.writeTextFile(`${args.out}.tmp`, JSON.stringify({ summary, rows }, null, 1));
+    // `lengths` is written on one line per census; summary and rows are laid out as before.
+    const body = JSON.stringify({ summary, rows }, null, 1);
+    const lengths = linked ? `,\n "lengths": {\n  "census": ${censusEvery},\n  "byLength": [\n${lengthSeries.map((r) => `   ${JSON.stringify(r)}`).join(',\n')}\n  ]\n }\n}` : null;
+    await Deno.writeTextFile(`${args.out}.tmp`, lengths === null ? body : body.slice(0, body.lastIndexOf('\n}')) + lengths);
     await Deno.rename(`${args.out}.tmp`, args.out);
   }
 }

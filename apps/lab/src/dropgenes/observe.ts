@@ -80,6 +80,28 @@ export interface TrackerTotals {
   absorbedAges: number[];
 }
 
+/**
+ * LINKED2. A compartment the tracker saw end (nothing overlaps it at the next census): what it held at its last
+ * census. Inferred from censuses, so "missing" means no copy on the compartment's tiles at a census, single or
+ * linked when the tracker is given gene copies; a gene lost and regained between two censuses is not seen.
+ */
+export interface DeathRecord {
+  /** The census at which it was gone. */
+  readonly step: number;
+  /** The census before: its last. */
+  readonly lastSeen: number;
+  readonly uid: number;
+  readonly bornStep: number;
+  readonly area: number;
+  /** Copies per species at its last census. */
+  readonly copies: number[];
+  /**
+   * Per essential gene: -1 when the gene was present at the last census; otherwise the first census of the
+   * unbroken run of censuses, up to the last, at which the compartment (or, at its birth, its parent) lacked it.
+   */
+  readonly missingSince: number[];
+}
+
 export interface TrackerOptions {
   readonly wallMin?: number; // wall fraction, default 0.125
   readonly bareMax?: number; // wall fraction at or below which a tile is bare, default 0.03 (the kernel's gateLo)
@@ -87,6 +109,7 @@ export interface TrackerOptions {
   readonly completeMin?: number; // copies, default 1
   readonly maxFissionRecords?: number; // default 20000
   readonly heredityDelay?: number; // steps after a split at which daughters are read again, default 500
+  readonly maxDeathRecords?: number; // default 50000 (LINKED2: see DeathRecord)
 }
 
 export function labelCompartments(
@@ -155,6 +178,14 @@ export class CompartmentTracker {
   private pending: { record: FissionRecord; index: number; uid: number; due: number }[] = [];
   /** uid -> step of the last census at which its holder overlapped two or more previous compartments. */
   private readonly lastFusion = new Map<number, number>();
+  // ---- LINKED2 (begin): which genes a compartment lacked when it ended. Additions only; nothing above reads them. ----
+  /** One record per observed death (the same events `totals.deaths` counts), up to `maxDeathRecords`. */
+  readonly deathRecords: DeathRecord[] = [];
+  private readonly maxDeathRecords: number;
+  private prevStep = 0;
+  /** uid -> per gene, the first census of the unbroken run of censuses in which the gene was below completeMin (-1: present). */
+  private missingSince = new Map<number, number[]>();
+  // ---- LINKED2 (end) ----
 
   constructor(
     private readonly width: number,
@@ -169,6 +200,7 @@ export class CompartmentTracker {
     this.completeMin = opts.completeMin ?? 1;
     this.maxRecords = opts.maxFissionRecords ?? 20000;
     this.heredityDelay = opts.heredityDelay ?? 500;
+    this.maxDeathRecords = opts.maxDeathRecords ?? 50000; // LINKED2
   }
 
   observe(step: number, W: Uint32Array, T: Uint32Array): Census {
@@ -322,6 +354,19 @@ export class CompartmentTracker {
           if (dead.complete) this.totals.deathsComplete++;
           else this.totals.deathsIncomplete++;
           this.totals.lifetimes.push(step - dead.bornStep);
+          // LINKED2: the genes it lacked at its last census, and since when.
+          if (this.deathRecords.length < this.maxDeathRecords) {
+            const since = this.missingSince.get(dead.uid);
+            this.deathRecords.push({
+              step,
+              lastSeen: this.prevStep,
+              uid: dead.uid,
+              bornStep: dead.bornStep,
+              area: dead.area,
+              copies: dead.copies,
+              missingSince: since ? since.slice() : new Array<number>(K).fill(-1),
+            });
+          }
         }
       }
     }
@@ -365,6 +410,21 @@ export class CompartmentTracker {
       }
       this.pending.splice(0, done);
     }
+    // ---- LINKED2 (begin): per compartment, since which census each gene has been missing ----
+    // A compartment born at this census by a split starts from its parent's record, so a gene the parent already
+    // lacked keeps its date. A gene that comes back (copies hop in) clears its date.
+    {
+      const next = new Map<number, number[]>();
+      for (const c of compartments) {
+        const before = this.missingSince.get(c.uid) ?? (c.bornStep === step && c.parentUid !== 0 ? this.missingSince.get(c.parentUid) : undefined);
+        const z = new Array<number>(K);
+        for (let k = 0; k < K; k++) z[k] = c.copies[k] >= this.completeMin ? -1 : before && before[k] >= 0 ? before[k] : step;
+        next.set(c.uid, z);
+      }
+      this.missingSince = next;
+      this.prevStep = step;
+    }
+    // ---- LINKED2 (end) ----
     this.prev = compartments;
     this.prevLabels = labels;
     return { step, compartments, stranded, strandedBare, strandedHalo, strandedSmall };
@@ -593,3 +653,55 @@ export function linkedReadout(c: LinkedCounts): LinkedReadout {
   };
 }
 // ---- LINKED (end) ----
+
+// ---- LINKED2 (begin): readout of the death records (docs/droplet-genes-linked2-2026-11-21/PLAN.md) ----
+
+export interface DeathReadout {
+  /** Death records read (the tracker keeps at most `maxDeathRecords`; compare with totals.deaths). */
+  readonly records: number;
+  /** Deaths with at least one essential gene missing at the compartment's last census. */
+  readonly withMissing: number;
+  /** Per gene: deaths at which that gene was missing at the last census. A death can count for several genes. */
+  readonly missingByGene: number[];
+  /** Deaths by the number of genes missing at the last census: byMissingCount[n], n = 0..genes. */
+  readonly byMissingCount: number[];
+  /**
+   * Over deaths with a gene missing: steps from the first census at which a still-missing gene was missing to the
+   * census at which the compartment was gone (the longest such span of the death). Median, and the share of these
+   * deaths where it is more than one census interval, that is where the gene was seen missing at two censuses or more.
+   */
+  readonly medianMissingSteps: number | null;
+  readonly missingAtTwoCensusesShare: number | null;
+}
+
+export function deathReadout(records: readonly DeathRecord[], genes: number): DeathReadout {
+  const missingByGene = new Array<number>(genes).fill(0);
+  const byMissingCount = new Array<number>(genes + 1).fill(0);
+  const spans: number[] = [];
+  let twoCensuses = 0;
+  for (const r of records) {
+    let n = 0;
+    let first = Infinity;
+    for (let k = 0; k < genes; k++) {
+      if (r.missingSince[k] < 0) continue;
+      n++;
+      missingByGene[k]++;
+      if (r.missingSince[k] < first) first = r.missingSince[k];
+    }
+    byMissingCount[n]++;
+    if (n > 0) {
+      spans.push(r.step - first);
+      if (first < r.lastSeen) twoCensuses++;
+    }
+  }
+  spans.sort((a, b) => a - b);
+  return {
+    records: records.length,
+    withMissing: spans.length,
+    missingByGene,
+    byMissingCount,
+    medianMissingSteps: spans.length ? spans[spans.length >> 1] : null,
+    missingAtTwoCensusesShare: spans.length ? twoCensuses / spans.length : null,
+  };
+}
+// ---- LINKED2 (end) ----
