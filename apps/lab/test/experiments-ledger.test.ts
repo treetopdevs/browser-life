@@ -104,7 +104,7 @@ describe("experiments ledger", () => {
     const elsewhere = new Set(["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/", "/story/", "/experiments/",
       "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/ecosystem/archive/"]);
     // Prototypes kept off the index on purpose (their pages carry noindex).
-    const unlisted = new Set(["/bodies/", "/vesicle/", "/oligomer/"]);
+    const unlisted = new Set(["/bodies/", "/vesicle/", "/oligomer/", "/dropgenes/"]);
     const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i) && !unlisted.has(i));
     expect(missing).toEqual([]);
   });
