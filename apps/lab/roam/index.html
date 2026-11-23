@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Roam · local probe</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0d1311; --ink: #e6ebe8; --dim: #93a09a; --line: #26302c; --accent: #f0be3e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    p { margin: 6px 0; color: var(--dim); max-width: 78ch; }
+    p b { color: var(--ink); }
+    .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 14px 0; }
+    button, select, input { font: inherit; color: var(--ink); background: #18211e; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+    button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
+    label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+    input[type=number] { width: 7em; }
+    canvas { width: 100%; max-width: 760px; aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; display: block; }
+    dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 16px; margin: 16px 0; }
+    dt { color: var(--dim); font-size: 12px; }
+    dd { margin: 0; font-variant-numeric: tabular-nums; font-size: 17px; }
+    table { border-collapse: collapse; width: 100%; max-width: 760px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--dim); font-weight: 500; font-size: 12px; }
+    td:first-child, th:first-child { text-align: left; }
+    .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+    #error { color: #f08a7a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Roam <small style="color:var(--dim);font-weight:400">· local probe, not on the site</small></h1>
+    <p>Each coloured piece is a <b>body</b>: a few cells joined together, outlined where it meets another body. A body moves as one piece, eats the <b>food</b> (green) under it, and shares what it eats among its cells. Cells that are full divide; while the body is small the new cell stays joined, and once it is adult size the new cell is let go as a new body. A body that runs short gives up cells one at a time and then dies.</p>
+    <p>Food comes only in <b>patches</b>. Everything bodies use up or leave behind goes to one store, and that store drops it back as a new patch somewhere else. A body cannot wait for food to come to it.</p>
+    <div class="bar">
+      <button id="play" class="primary" type="button">Pause</button>
+      <button id="reset" type="button">Start again</button>
+      <label>Seed <input id="seed" type="number" min="0" value="1" /></label>
+      <label>Start <select id="start">
+        <option value="chasers" selected>chasers: follow the smell of food</option>
+        <option value="chasers-sitters">chasers and sitters (pink, never move)</option>
+        <option value="chasers-wanderers">chasers and wanderers (blue, straight lines and random turns)</option>
+        <option value="all">all three</option>
+        <option value="wanderers">wanderers only</option>
+        <option value="sitters">sitters only</option>
+      </select></label>
+      <label>Copy errors <select id="mut">
+        <option value="0">none: children are exact copies</option>
+        <option value="0.02" selected>some: 1 gene in 50 changes</option>
+        <option value="0.1">many: 1 gene in 10 changes</option>
+      </select></label>
+      <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64</option></select></label>
+      <label>Colour <select id="paint"><option value="family" selected>by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
+      <label>Speed <select id="pace"><option value="10">very slow: 10 steps a second</option><option value="30" selected>slow: 30</option><option value="120">medium: 120</option><option value="600">fast: 600</option><option value="0">as fast as it goes</option></select></label>
+    </div>
+    <p id="error"></p>
+    <canvas id="view" width="640" height="640"></canvas>
+    <dl>
+      <div><dt>Step</dt><dd id="r-step">0</dd></div>
+      <div><dt>Steps per second</dt><dd id="r-rate">0</dd></div>
+      <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
+      <div><dt>Mean body size (largest), cells</dt><dd id="r-size">0</dd></div>
+      <div><dt>New bodies / deaths per 1,000 steps</dt><dd id="r-life">0 / 0</dd></div>
+      <div><dt>How far a cell got in the last 200 steps</dt><dd id="r-travel">0</dd></div>
+      <div><dt>Food</dt><dd id="r-food">0</dd></div>
+      <div><dt>Matter check</dt><dd id="r-res">balanced</dd></div>
+    </dl>
+    <table>
+      <thead><tr id="genes-head"></tr></thead>
+      <tbody id="families"></tbody>
+    </table>
+    <p>The table gives each family's average genes. <b>chase</b>: speed toward stronger food smell, as a share of top speed. <b>drive</b>: speed straight ahead. <b>turn</b>: how often the body picks a new heading (-1 never). <b>adult</b>: the size at which new cells are let go. <b>shape</b>: above 0 new cells go in front or behind (long bodies), below 0 to the side (wide bodies). A cell loses matter through every side that faces outward, so a compact body lasts longer between meals than the same cells strung out or apart.</p>
+  </main>
+  <script type="module" src="/src/roam/page.ts"></script>
+</body>
+</html>
