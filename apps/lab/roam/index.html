@@ -34,13 +34,23 @@
   <main>
     <h1>Roam <small style="color:var(--dim);font-weight:400">· local probe, not on the site</small></h1>
     <p>Each coloured piece is a <b>body</b>: a few cells joined together, outlined where it meets another body. A body moves as one piece, eats the <b>food</b> (green) under it, and shares what it eats among its cells. Cells that are full divide; while the body is small the new cell stays joined, and once it is adult size the new cell is let go as a new body. A body that runs short gives up cells one at a time and then dies.</p>
+    <p>With a <b>grown</b> start, a body's outline comes from a plan every one of its cells carries: a short list of steps that says where a cell puts its next daughter, whether it keeps her or lets her go as a new body, and which step each of them does next. The planted plans are written by hand. With copy errors on, a new body's plan sometimes differs from its parent's in one place, and the outlines that follow are ones nobody drew.</p>
+    <p>With <b>touch</b> feeding on, a body that is at least twice the size of one it touches takes matter from it through every side where they meet, so small bodies and half-grown ones are food for large ones. A new body is safe for its first 100 steps, and spends them moving straight away from its parent.</p>
     <p>Food comes only in <b>patches</b>. Everything bodies use up or leave behind goes to one store, and that store drops it back as a new patch somewhere else. A body cannot wait for food to come to it.</p>
     <div class="bar">
       <button id="play" class="primary" type="button">Pause</button>
       <button id="reset" type="button">Start again</button>
       <label>Seed <input id="seed" type="number" min="0" value="1" /></label>
       <label>Start <select id="start">
-        <option value="chasers" selected>chasers: follow the smell of food</option>
+        <option value="grown-blocks" selected>grown: blocks, two cells by four</option>
+        <option value="grown-four">grown: lines, plates, crosses and blocks together</option>
+        <option value="grown-all">grown: those four with specks (one cell) and bushes (up to 32 cells)</option>
+        <option value="grown-lines">grown: lines of eight</option>
+        <option value="grown-plates">grown: plates, three by three</option>
+        <option value="grown-crosses">grown: crosses</option>
+        <option value="grown-bushes">grown: bushes</option>
+        <option value="grown-specks">grown: specks</option>
+        <option value="chasers">sized by a gene: chasers, follow the smell of food</option>
         <option value="chasers-sitters">chasers and sitters (pink, never move)</option>
         <option value="chasers-wanderers">chasers and wanderers (blue, straight lines and random turns)</option>
         <option value="chasers-singles">chasers and single cells (teal: chasers that never stay joined)</option>
@@ -54,9 +64,13 @@
         <option value="0.02" selected>some: 1 gene in 50 changes</option>
         <option value="0.1">many: 1 gene in 10 changes</option>
       </select></label>
-      <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64</option></select></label>
-      <label>Colour <select id="paint"><option value="family" selected>by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
-      <label>Speed <select id="pace"><option value="10">very slow: 10 steps a second</option><option value="30" selected>slow: 30</option><option value="120">medium: 120</option><option value="600">fast: 600</option><option value="0">as fast as it goes</option></select></label>
+      <label>Touch <select id="drain">
+        <option value="2" selected>a body at least twice another's size feeds on it where they touch</option>
+        <option value="0">bodies only block each other</option>
+      </select></label>
+      <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64 (bodies drawn twice as large)</option></select></label>
+      <label>Colour <select id="paint"><option value="plan" selected>by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
+      <label>Speed <select id="pace"><option value="10">very slow: 10 steps a second</option><option value="30">slow: 30</option><option value="120" selected>medium: 120</option><option value="600">fast: 600</option><option value="0">as fast as it goes</option></select></label>
     </div>
     <p id="error"></p>
     <canvas id="view" width="640" height="640"></canvas>
@@ -68,13 +82,17 @@
       <div><dt>New bodies / deaths per 1,000 steps</dt><dd id="r-life">0 / 0</dd></div>
       <div><dt>How far a cell got in the last 200 steps</dt><dd id="r-travel">0</dd></div>
       <div><dt>Food</dt><dd id="r-food">0</dd></div>
+      <div><dt>Matter taken by touch</dt><dd id="r-drained">0</dd></div>
       <div><dt>Matter check</dt><dd id="r-res">balanced</dd></div>
+      <div><dt>Kinds of body</dt><dd id="r-kinds">0</dd></div>
     </dl>
+    <p>The body outlines that hold the most cells right now, with how many bodies have each (a body still growing shows as a part of its adult outline):</p>
+    <canvas id="shapes" width="1008" height="104" style="max-width:1008px;aspect-ratio:auto;image-rendering:auto"></canvas>
     <table>
       <thead><tr id="genes-head"></tr></thead>
       <tbody id="families"></tbody>
     </table>
-    <p>The table gives each family's average genes. <b>chase</b>: speed toward stronger food smell, as a share of top speed. <b>drive</b>: speed straight ahead. <b>turn</b>: how often the body picks a new heading (-1 never). <b>adult</b>: the size at which new cells are let go. <b>shape</b>: above 0 new cells go in front or behind (long bodies), below 0 to the side (wide bodies). A cell loses matter through every side that faces outward, so a compact body lasts longer between meals than the same cells strung out or apart.</p>
+    <p>The table gives each family's average genes. <b>chase</b>: speed toward stronger food smell, as a share of top speed. <b>drive</b>: speed straight ahead. <b>turn</b>: how often the body picks a new heading (-1 never). <b>adult</b>: the size at which new cells are let go. <b>shape</b>: above 0 new cells go in front or behind (long bodies), below 0 to the side (wide bodies). In a grown start the plan decides both, and those two genes do nothing. A cell loses matter through every side that faces outward, so a compact body lasts longer between meals than the same cells strung out or apart.</p>
   </main>
   <script type="module" src="/src/roam/page.ts"></script>
 </body>

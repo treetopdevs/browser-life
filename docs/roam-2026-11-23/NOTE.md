@@ -82,3 +82,92 @@ next missing rung here as it was in the droplets.
   down from 8 to 6 or 7 cells, and nothing grew past 9 cells.
 - No rotation: a long body heading sideways moves broadside.
 - One arena size, one matter total, one patch size were tried.
+
+# Second probe, same day: bodies grown by a plan, and feeding by touch
+
+The user watched the first probe and said it was "pretty interesting ... in the direction of what I was looking
+for", "only like a hint", and to keep going. This is the next rung in the same world: heredity that can invent.
+Intent, as stated before building: if it works completely, you will see bodies with outlines nobody drew,
+different outlines winning on different runs, and descendants that look unlike the founders.
+
+Both additions are config switches that are absent by default; a pinned-digest test holds the first probe's
+histories unchanged.
+
+## What was added
+
+**Growth by plan** (`plan`). Every cell carries a plan: a table of 16 modes. A cell is in one mode, and when it
+holds enough to divide, its mode says where the daughter goes (in front, right, behind or left of the way the
+cell faces), whether she is kept or let go as a new body, which mode a kept daughter starts in, and which mode
+the cell moves to. A cell faces away from its mother. A new body starts as one cell in mode 0. A cell whose tile
+is taken waits. A body at 32 cells lets go of a daughter its plan says to keep. Copy errors happen only when a
+new body is let go: one entry of the plan changes (chance 0.05 per new body in these runs), and the three
+movement genes change as before (0.02 each). The adult and shape genes do nothing in this mode. Six plans are
+written by hand as founders: a line of 8, a 3 x 3 plate, a cross, a 2 x 4 block, a speck (always one cell) and a
+bush (branches until the size limit).
+
+**Feeding by touch** (`drain`). Where cells of two bodies touch and one body is at least twice the other's size,
+2 units of matter per step pass through that side from the smaller body's cell to the larger one's. A new body is
+exempt both ways for its first 100 steps and spends them moving straight away from its parent at top speed.
+
+## What happened (seeds 1 and 2, 128 x 128, runs after all fixes)
+
+Without touch feeding:
+
+- All six planted shapes together, no copy errors, 100,000 steps: the compact ones win. Plates take 1,156 and
+  1,002 of about 1,200 cells; lines, crosses and bushes are gone; blocks and specks hang on.
+- Blocks with copy errors, 150,000 steps: nothing bigger than the block appears. About a fifth of bodies are
+  full blocks at any time, and 14 to 30 plans are alive at a time, most of them giving smaller outlines (two or three cells,
+  an L). The drive gene rises from 64 to 191 and 185, as in the first probe.
+- In an earlier run of the same kind (before the last fairness fix, so not reproducible from this commit) with
+  all six founders, specks took 1,361 of 1,444 cells, and on one seed blocks gave way to two- and three-cell
+  bodies. With grazing alone, heritable outlines drift small.
+- A check on the first probe's world gave the same sign: a 16-cell type planted against the 8-cell chasers was
+  gone by step 100,000 on both seeds, and in three other food layouts it was gone or still falling on five of six runs. A rigid body
+  only reaches fresh food along its leading edge, so a bigger blob eats less per cell.
+
+With touch feeding:
+
+- All six planted shapes, no copy errors: bushes (the 32-cell plan) take everything within 20,000 steps and hold
+  about 1,000 to 1,100 cells.
+- All six with copy errors, 150,000 steps, both seeds: 35 to 130 bodies, about 1,000 to 1,150 cells, most of them
+  in 32-cell bodies with 34 to 50 different outlines alive at once (a body's outline also depends on what was in
+  its way while it grew and on cells it lost when hungry). 100 to 175 body deaths per 1,000 steps, most of them
+  new one-cell bodies. 2 to 12 plans alive at a time; about 1,200 plans appeared in each run. Around 20,000 units
+  of matter per 1,000 steps pass by touch.
+- Blocks with copy errors: on seed 1 the blocks hold for about 55,000 steps, then a plan appears that grows a
+  ladder two cells wide and 16 long, and by step 80,000 the world is 20 or so ladders and their young; it stays
+  that way to step 150,000. On seed 2 no such plan had appeared by step 150,000 and the world is still blocks.
+
+![blocks, the ladder plan spreading, and the world it leaves (seed 1, steps 54,000, 68,000 and 88,000)](grown-blocks-to-ladders.png)
+
+![all six founders with copy errors and touch feeding, seed 2, steps 100,000 and 101,500, coloured by plan](grown-all-late-1500-steps-apart.png)
+
+## How to read this
+
+- The plan is a heredity that makes outlines nobody listed: the ladder, and the spiked 32-cell bodies, are not
+  among the six planted plans. That part of the intent is met on seen seeds.
+- Bodies got big only once being big was made to pay by a rule we wrote (the larger feeds on the smaller), and
+  they then ran to the 32-cell limit we set. Size here is selected by our rule and capped by our number. Which
+  outline a 32-cell body has is not what is being selected, as far as these runs show.
+- "Different on different runs" is seen once (ladders on seed 1, blocks still on seed 2) on two seeds.
+- Two versions of the touch rule were tried and dropped the same day: any larger body feeding on any smaller one
+  (a few 32-cell bodies ate everything and the world froze), and a size-limit rule under which a cell moved to
+  its next mode when it let a daughter go at the limit (bodies at the limit ran out of dividing cells and became
+  sterile; three of four runs ended as one to three bodies that never reproduced). The numbers above are with the
+  cell staying in its mode at the limit.
+
+Review: two more Codex passes (Sol 6.1, High). The first found one bug (a new body that was blocked while running
+from its parent turned round), a remaining walk-order favour in which cell of a body divides first (now a hash
+per cell), an outline count that could split one outline in two on a tiny arena, and four tests weaker than their
+names. The second found no bug in the rules and two small points in the reporting code. All are fixed, and the
+last two small fixes were not re-reviewed. 27 tests in `apps/lab/test/roam.test.ts`.
+
+Videos (in the worktree's `runs/roam/`, not committed): `v-grown-start-s1` (all six founders with touch feeding,
+steps 0 to 20,000), `v-grown-invasion-s1` (blocks, steps 50,000 to 90,000: the ladders arrive),
+`v-grown-late-s2` (all six, steps 100,000 to 103,000 at three steps a frame).
+
+## Where this leaves the ladder
+
+Heredity that can invent: a first version exists and does produce new outlines, on seen seeds. Creatures that
+visibly differ from their ancestors and between runs: seen once each way, on two seeds, and only with a
+size-pays rule and a size limit that we wrote. Not shown: that an outline matters to the body that has it.

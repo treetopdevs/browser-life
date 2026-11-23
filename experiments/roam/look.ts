@@ -5,8 +5,9 @@
  *   deno run -A --no-lock experiments/roam/look.ts --seed 1 --steps 20000 --start chasers --out runs/roam/a
  *
  * Options: --seed, --steps, --size (128), --start (chasers | wanderers | sitters | singles | chasers-sitters | chasers-singles |
- * chasers-wanderers | all), --founders, --mut (chance per gene per division), --report (1000), --frames,
- * --scale (4), --movie N (with --movieFrom S to start the frames at step S), --paint (family | genes), --ov '{json}' (config overrides), --out dir.
+ * chasers-wanderers | all | grown-lines | grown-plates | grown-crosses | grown-blocks | grown-specks | grown-bushes |
+ * grown-four | grown-all; the grown starts use growth by plan), --planMut, --founders, --mut (chance per gene per division), --report (1000), --frames,
+ * --scale (4), --movie N (with --movieFrom S to start the frames at step S), --paint (family | genes | plan), --ov '{json}' (config overrides), --out dir.
  * Each row's "travel" is the mean straight-line distance, in tiles, that cells alive at both ends moved over the last
  * --lag steps (200), and "moved" the share of them that ended 2 or more tiles away.
  * A probe, not an experiment runner: no arms, no summary beyond rows.json.
@@ -14,7 +15,7 @@
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { ROAM_GENE_NAMES, type RoamConfig } from '../../apps/lab/src/roam/kernel.ts';
-import { foundRoam, paintRoam, roamFamilies, type RoamPaint, type RoamStart, ROAM_STARTS, roamTravel } from '../../apps/lab/src/roam/view.ts';
+import { foundRoam, paintRoam, roamFamilies, type RoamPaint, roamShapes, type RoamStart, ROAM_STARTS, roamTravel } from '../../apps/lab/src/roam/view.ts';
 import { writePng } from '../bodies/png.ts';
 
 const args: Record<string, string> = {};
@@ -40,13 +41,13 @@ const scale = int('scale', 4, 1);
 const movie = int('movie', 0, 0);
 const movieFrom = int('movieFrom', 0, 0);
 const paint = (args.paint ?? 'family') as RoamPaint;
-if (paint !== 'family' && paint !== 'genes') throw new Error(`--paint ${paint}: family or genes`);
+if (paint !== 'family' && paint !== 'genes' && paint !== 'plan') throw new Error(`--paint ${paint}: family, genes or plan`);
 const start = (args.start ?? 'chasers') as RoamStart;
 if (!(start in ROAM_STARTS)) throw new Error(`--start ${start}: one of ${Object.keys(ROAM_STARTS).join(', ')}`);
 const out = args.out ?? 'runs/roam/look';
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<RoamConfig>;
 
-const world = foundRoam({ seed: num('seed', 1), size: args.size === undefined ? undefined : num('size', 128), start, founders: args.founders === undefined ? undefined : int('founders', 48, 1), mut: args.mut === undefined ? undefined : num('mut', 0.02), overrides });
+const world = foundRoam({ seed: num('seed', 1), size: args.size === undefined ? undefined : num('size', 128), start, founders: args.founders === undefined ? undefined : int('founders', 48, 1), mut: args.mut === undefined ? undefined : num('mut', 0.02), planMut: args.planMut === undefined ? undefined : num('planMut', 0.05), overrides });
 const side = world.size * scale;
 const bodyOf = new Int32Array(world.n);
 
@@ -72,7 +73,7 @@ const t0 = performance.now();
 const fmt = (x: number) => x.toFixed(0).padStart(5);
 
 console.log(`roam ${start} seed ${world.cfg.seed} size ${world.size} matter ${world.total} mut ${world.cfg.mut}`);
-console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k newb/k travel moved  ' + ROAM_GENE_NAMES.join('  '));
+console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k newb/k taken/k travel moved  ' + ROAM_GENE_NAMES.join('  '));
 let prev = world.census();
 for (let s = 0; s <= steps; s++) {
   if (movie > 0 && s >= movieFrom && (s - movieFrom) % movie === 0) writePng(`${out}/frames/f${String(movieN++).padStart(5, '0')}.png`, side, side, picture());
@@ -86,10 +87,16 @@ for (let s = 0; s <= steps; s++) {
     const fams = roamFamilies(world).filter((f) => f.cells > 0).map((f) => `${f.name} ${f.cells}`).join(', ');
     console.log(
       `${String(s).padStart(7)} ${fmt(c.bodies)} ${fmt(c.singles)} ${fmt(c.cells)} ${fmt(c.largest)} ${String(c.food).padStart(6)} ${String(c.held).padStart(6)} ${String(c.reservoir).padStart(6)} ${c.residual}  ` +
-        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.bodyDeaths - prev.bodyDeaths) * per)} ${fmt((c.newbornDeaths - prev.newbornDeaths) * per)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
+        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.bodyDeaths - prev.bodyDeaths) * per)} ${fmt((c.newbornDeaths - prev.newbornDeaths) * per)} ${String(Math.round((c.drained - prev.drained) * per)).padStart(7)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
         c.genes.map((g) => g.toFixed(0).padStart(5)).join(' ') + `  | ${fams}`,
     );
-    rows.push({ ...c, travel: lastTravel, families: roamFamilies(world) });
+    const sh = roamShapes(world, 6);
+    if (world.cfg.plan) {
+      // The outlines holding the most cells, each as rows of # and . with the number of bodies that have it.
+      const art = (cells: number[][], w: number, h: number) => Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells.some((p) => p[0] === x && p[1] === y) ? '#' : '.')).join('')).join('/');
+      console.log(`        ${sh.plans} plans alive of ${world.plans.length - 1} ever, ${sh.outlines} outlines: ` + sh.shapes.map((q) => `${q.count}x ${art(q.cells, q.w, q.h)}`).join('  '));
+    }
+    rows.push({ ...c, travel: lastTravel, families: roamFamilies(world), plans: sh.plans, outlines: sh.outlines, shapes: sh.shapes });
     prev = c;
   }
   if (s < steps) world.stepOnce();
