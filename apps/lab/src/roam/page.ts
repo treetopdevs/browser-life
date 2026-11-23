@@ -85,7 +85,7 @@ function show(f: RoamFrame): void {
     .map((row) => {
       const g = row.genes;
       const share = (v: number) => `${v >= 0 ? '+' : ''}${(v / ROAM_GENE_MAX).toFixed(2)}`;
-      return `<tr><td><span class="sw" style="background:rgb(${row.colour.join(',')})"></span>${row.name}</td><td>${fmt(row.cells)}</td><td>${share(g[0])}</td><td>${share(g[1])}</td><td>${share(g[2])}</td><td>${adultCells(g[G_ADULT])} cells</td><td>${share(g[4])}</td></tr>`;
+      return `<tr><td><span class="sw" style="background:rgb(${row.colour.join(',')})"></span>${row.name}</td><td>${fmt(row.cells)}</td><td>${share(g[0])}</td><td>${share(g[1])}</td><td>${share(g[2])}</td><td>${adultCells(g[G_ADULT]) === 1 ? '1 cell' : `${adultCells(g[G_ADULT])} cells`}</td><td>${share(g[4])}</td></tr>`;
     })
     .join('');
 }
