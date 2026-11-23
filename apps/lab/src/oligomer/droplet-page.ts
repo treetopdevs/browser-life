@@ -27,7 +27,8 @@ import {
   renderDropletPhage,
 } from './droplet-render.ts';
 import { type BuildResult, DropletRun, type RunOpts, parseSeed } from './droplet-run.ts';
-import { DROPLET_WORLD_OPTIONS, buildDropletWorld, describeDropletArm, dropletIdOfValue, isDropletOptionValue } from './droplet-worlds.ts';
+import { dropletPageNote } from './droplet-wording.ts';
+import { DROPLET_WORLD_OPTIONS, buildDropletWorld, dropletIdOfValue, isDropletOptionValue } from './droplet-worlds.ts';
 import { WALL_COLOUR_NAMES, WALL_NAMES, WALL_PALETTE, rampInto, stepTile, tileAt, zoomFor } from './render.ts';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -53,9 +54,9 @@ for (const o of DROPLET_WORLD_OPTIONS) {
 }
 
 const VIEW_NOTES: Record<string, string> = {
-  pattern: 'Each droplet takes the colour of its main wall pattern, brighter where the wall is thicker. Edges fade out; the thin wall between droplets is not drawn.',
-  phage: 'Droplets are dimmed. A bright dot marks phage, coloured by the pattern it infects and brighter where there is more of it. A bright dot inside a dim droplet of the same colour is a phage sitting in its own host. On the 256 grid dots are drawn as a checkerboard. Brightness is a weak cue: the inspector gives the numbers.',
-  chem: 'The loose matter between and inside droplets, per square. Choose food or leftovers. A coloured dot marks the main pattern of a droplet core. The brightest value is rescaled as the run goes on and written under the grid.',
+  pattern: 'Each square takes the colour of its main wall pattern, brighter where the wall is thicker. Thin wall is not drawn, so the picture shows only the thicker patches, not the thin wall around them.',
+  phage: 'Wall is dimmed. A bright dot marks phage, coloured by the pattern it grows in (one colour for all phage in the world where phage ignores the pattern) and brighter where there is more of it. A bright dot on dim wall of the same colour is phage sitting in wall of that pattern. On the 256 grid dots are drawn as a checkerboard. Brightness is a weak cue: the inspector gives the numbers.',
+  chem: 'The loose matter between and inside wall patches, per square. Choose food or leftovers. A coloured dot marks the main pattern of a square with thick wall. The brightest value is rescaled as the run goes on and written under the grid.',
 };
 
 let active = false;
@@ -133,10 +134,10 @@ function buildLegend(): void {
   if (view === 'pattern') WALL_PALETTE.forEach((c, i) => items.push(sw(`background:${rgb(c)}`, `${WALL_NAMES[i]} ${WALL_COLOUR_NAMES[i]}`)));
   else if (view === 'phage') {
     WALL_PALETTE.forEach((c, i) => items.push(sw(`background:${rgb(c)}`, `phage of ${WALL_NAMES[i]} (${WALL_COLOUR_NAMES[i]})`)));
-    items.push(sw('background:#2a3a40', 'dim square: a droplet, in its own pattern colour'));
+    items.push(sw('background:#2a3a40', 'dim square: wall, in its main pattern colour'));
   } else {
     const stops = [0, 0.25, 0.5, 0.75, 1].map((t) => { const d = [0, 0, 0]; rampInto(t, d); return rgb(d); });
-    items.push(`<li><i class="sw ramp" style="background:linear-gradient(90deg,${stops.join(',')})"></i>0 to max <span id="legend-max">${Math.round(chemScale[dchemSel.value as DropletChannel])}</span> (square colour; the dot inside a droplet core is its main wall pattern)</li>`);
+    items.push(`<li><i class="sw ramp" style="background:linear-gradient(90deg,${stops.join(',')})"></i>0 to max <span id="legend-max">${Math.round(chemScale[dchemSel.value as DropletChannel])}</span> (square colour; a dot marks the main wall pattern of a square with thick wall)</li>`);
   }
   el('legend').innerHTML = items.join('');
 }
@@ -164,7 +165,7 @@ function drawCharts(): void {
   };
   const maxDrops = Math.max(8, ...rows.map((r) => r.droplets));
   line(h2, (r) => r.droplets, 0, maxDrops, '#cfd8dc'); line(h3, (r) => r.hillD1, 1, 6, '#9aa7b0');
-  el('h2-note').textContent = `Droplets: 0 to ${maxDrops}`;
+  el('h2-note').textContent = `Wall patches: 0 to ${maxDrops}`;
   el('h3-note').textContent = 'Pattern diversity: 1 to 6';
   const last = rows[n - 1], shares = el('shares');
   if (!last) {
@@ -175,8 +176,8 @@ function drawCharts(): void {
   }
   shares.innerHTML = WALL_NAMES.map((nm, i) => `<li><i class="sw" style="background:${rgb(WALL_PALETTE[i])}"></i>${nm} ${WALL_COLOUR_NAMES[i]} ${(last.shares[i] * 100).toFixed(0)}%</li>`).join('');
   const lead = last.dominant >= 0 ? `${WALL_NAMES[last.dominant]} at ${(last.dominantShare * 100).toFixed(0)} percent` : 'none';
-  hist.setAttribute('aria-label', `Wall pattern shares over the last ${fmt(n * 100)} steps; leading pattern ${lead}; ${last.droplets} droplets`);
-  el('history-note').textContent = `Share of all wall matter by pattern (the thin wall between droplets counts), last ${fmt(n * 100)} steps, one column per 100 steps.`;
+  hist.setAttribute('aria-label', `Wall pattern shares over the last ${fmt(n * 100)} steps; leading pattern ${lead}; ${last.droplets} wall patches`);
+  el('history-note').textContent = `Share of all wall matter by pattern (the thin wall outside the patches counts), last ${fmt(n * 100)} steps, one column per 100 steps.`;
 }
 
 function renderInspector(): void {
@@ -241,7 +242,7 @@ function sync(): void {
     canvas.width = overlay.width = buf.w * zoom; canvas.height = overlay.height = buf.h * zoom;
     pScale = 8; chemScale.food = chemScale.waste = 64;
     selected = null; renderInspector();
-    say(`${pendingNote ? `${pendingNote} ` : ''}${s.text}. Paused · new droplet world`);
+    say(`${pendingNote ? `${pendingNote} ` : ''}${s.text}. Paused · new world`);
     pendingNote = '';
   }
   const l = s.latest, b = s.res === 0n;
@@ -272,14 +273,14 @@ function viewChanged(): void {
   buildLegend(); draw(false); buildLegend();
 }
 
-function noteFor(): void { el('world-note').textContent = describeDropletArm(dropletIdOfValue(startSel.value)); }
+function noteFor(): void { el('world-note').textContent = dropletPageNote(dropletIdOfValue(startSel.value)); }
 
 const FAMILY_HIDE_A = ['intro-a', 'size-label', 'view-label', 'pace-label', 'chem-label', 'readout-a', 'help-a', 'explain-a'];
 const FAMILY_SHOW_D = ['intro-d', 'dsize-label', 'dview-label', 'dpace-label', 'engine-label', 'readout-d', 'help-d', 'explain-d'];
 
 const NAME_KEYS: [string, string, string][] = [
-  ['world', 'Oligomer world, a grid of droplets. Click or use arrow keys to inspect a square.', ''],
-  ['history2', 'Number of droplets over time.', ''],
+  ['world', 'Oligomer world, a grid of squares holding wall matter. Click or use arrow keys to inspect a square.', ''],
+  ['history2', 'Number of wall patches over time.', ''],
 ];
 for (const k of NAME_KEYS) k[2] = el(k[0]).getAttribute('aria-label') ?? '';
 
@@ -306,7 +307,7 @@ export const dropletFamily = {
     const keep = Number(dsizeSel.value);
     const size = kindShown !== null && ENGINE_SIZES[kindShown].sizes.includes(keep) ? keep : 0;
     pendingNote = replaced ? 'Seed was not a whole number from 0 to 2147483647, so seed 1 is used.' : '';
-    say(`${pendingNote} Building the new droplet world`.trim());
+    say(`${pendingNote} Building the new world`.trim());
     void run.reset(currentOpts(size, seed));
   },
   leave(): void {
@@ -342,7 +343,7 @@ function startReset(size: number): void {
   seedInput.value = String(seed);
   announced = null; drawnStep = -1; chartsStep = -1;
   pendingNote = replaced ? 'Seed was not a whole number from 0 to 2147483647, so seed 1 is used.' : '';
-  say(`${pendingNote} Building the new droplet world`.trim());
+  say(`${pendingNote} Building the new world`.trim());
   void run.reset(currentOpts(size, seed));
 }
 dviewSel.addEventListener('change', () => { if (active) viewChanged(); });

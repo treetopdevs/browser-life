@@ -142,6 +142,12 @@ function watchErrors(page: Page): string[] {
   return errors;
 }
 
+/** Nothing a visitor reads on these worlds says "droplet" (docs/b2-compartment-check-2026-11-21): text, and the names read to a screen reader. */
+async function noDropletWording(page: Page, when: string): Promise<void> {
+  for (const id of ['#intro-d', '#readout-d', '#help-d', '#explain-d', '#dview', '#world-note', '#view-note', '#legend', '#h2-note', '#history-note', '#inspector', '#live', '#scale']) expect(await page.locator(id).textContent(), `${id} ${when}`).not.toMatch(/droplet/i);
+  for (const id of ['#world', '#history', '#history2']) expect(await page.locator(id).getAttribute('aria-label'), `${id} ${when}`).not.toMatch(/droplet/i);
+}
+
 test('droplet worlds run on the graphics card when there is one, keep the matter check at res 0, and every world, view and square works', async ({ page }) => {
   test.setTimeout(420_000);
   const errors = watchErrors(page);
@@ -179,9 +185,14 @@ test('droplet worlds run on the graphics card when there is one, keep the matter
     await expect(page.locator('#d-res-step')).toHaveText('checked at step 1');
     const note = (await page.locator('#world-note').textContent()) ?? '';
     expect(note.length).toBeGreaterThan(20);
+    // the page shows the note in the compartment check's wording (droplet-wording.ts), not the frozen text
+    expect(note).not.toMatch(/droplet/i);
+    expect(note).toMatch(/held \d+ to \d+ wall patches late/);
     notes.add(note);
   }
   expect(notes.size).toBe(4);
+  await noDropletWording(page, 'step 1');
+  expect(await page.locator('#start-droplets').getAttribute('label')).toContain('Wall-patch worlds');
 
   // play the default world, sampling the matter check while it runs
   await page.locator('#start').selectOption('D_PHAGE');
@@ -207,6 +218,11 @@ test('droplet worlds run on the graphics card when there is one, keep the matter
   await expect.poll(async () => Number((await page.locator('#d-drops').textContent()) ?? '0')).toBeGreaterThan(0);
   expect(Number(await page.locator('#d-sw').textContent())).toBeGreaterThanOrEqual(0);
   await expect(page.locator('#d-res-step')).toHaveText(`checked at step ${await dStep(page)}`);
+  // after a census the chart note and the chart's name carry the patch count
+  await expect(page.locator('#history')).toHaveAttribute('aria-label', /\d+ wall patches$/);
+  await expect(page.locator('#history-note')).toContainText('the thin wall outside the patches counts');
+  await expect(page.locator('#h2-note')).toContainText('Wall patches: 0 to');
+  await noDropletWording(page, 'after a census');
   if (shot) {
     await page.screenshot({ path: shot, fullPage: true });
   }
@@ -229,6 +245,7 @@ test('droplet worlds run on the graphics card when there is one, keep the matter
     await expect(page.locator('#view-note')).not.toBeEmpty();
     expect(await page.locator('#legend').innerText()).not.toBe(prevLegend);
     prevLegend = await page.locator('#legend').innerText();
+    await noDropletWording(page, `${v} view`);
     await expect.poll(() => url(page)).not.toBe(patternUrl);
     expect(await dStep(page)).toBe(stepNow);
   }
@@ -251,6 +268,8 @@ test('droplet worlds run on the graphics card when there is one, keep the matter
   for (const t of ['Loose pieces (A)', 'Food (F)', '0011', 'Phage', 'All matter on this square']) await expect(page.locator('#inspector')).toContainText(t);
   expect(((await page.locator('#inspector').innerText()).match(/0011 \(orange\)/g) ?? []).length).toBeGreaterThanOrEqual(2); // one wall line and one phage line, plus the main pattern when it is 0011
   await expect(page.locator('#live')).toContainText('Tile (');
+  await expect(page.locator('#inspector')).toContainText('Thick wall?');
+  await noDropletWording(page, 'a square selected');
   await page.locator('#world').focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#inspector')).toContainText('square (');
