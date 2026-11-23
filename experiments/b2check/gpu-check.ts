@@ -11,6 +11,7 @@ import { buildDropletWorld } from '../../apps/lab/src/oligomer/droplet-worlds.ts
 import { argOf, assertFrozen } from '../confirm/io.ts';
 
 const steps = Number(argOf('steps', '100'));
+if (!Number.isSafeInteger(steps) || steps <= 0) throw new Error(`--steps ${steps} must be a positive whole number`);
 await assertFrozen('droplets');
 const adapter = await navigator.gpu.requestAdapter();
 if (!adapter) throw new Error('No WebGPU adapter available');

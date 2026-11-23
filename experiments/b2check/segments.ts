@@ -8,6 +8,10 @@ export interface Segment {
 
 /** Untracked stretches are cut every `chunk` steps so a stopped job loses little. */
 export function buildSegments(steps: number, track: readonly (readonly [number, number])[], census: number, chunk = 20_000): Segment[] {
+  const whole = (x: number) => Number.isSafeInteger(x) && x > 0;
+  if (!whole(census) || !whole(chunk) || chunk % census !== 0 || !whole(steps) || steps % census !== 0) {
+    throw new Error(`bad segment grid: steps ${steps}, census ${census}, chunk ${chunk} must be positive whole numbers, chunk and steps multiples of census`);
+  }
   const windows = [...track].sort((a, b) => a[0] - b[0]);
   let at = 0;
   for (const [a, b] of windows) {

@@ -2,10 +2,12 @@
 
 **Outcome: no listed setting reads *bodies with turnover*. The spot regime does carry to six walls, and with
 phage the bodies stay and the phage lives, but at all three settings that got that far the world is a
-*frozen mosaic*: a fixed lattice of bodies with no sustained division (no new body by fission in any settled
-window), the six patterns held near equal shares, and pattern turnover within about a tenth of the same world
-without phage (0.86 to 1.12 times). At the default rates the world is waves, as known. Nothing is frozen for
-seeds 33 to 40.**
+*frozen mosaic*: a fixed lattice of bodies with no sustained division (after the founding window, steps 0 to
+10,000, the only new bodies by fission at MIX50, MIX75 or SPOT are one on seed 2 and one on seed 4 of MIX75
+with phage, both in steps 20,000 to 40,000; none in the final reading window, steps 80,000 to 100,000), the six
+patterns held near equal shares, and pattern turnover within about a tenth of the same world without phage
+(0.86 to 1.12 times). At the default rates the world is waves, as known. Nothing is frozen for seeds 33 to
+40.**
 
 Every run here is on seeds 1 to 4, which had been used before. None of this is evidence; it is a calibration
 that says where a confirmation would or would not be worth running. Plan, thresholds and named outcomes:
@@ -333,7 +335,7 @@ experiments/spot6/run-all.sh stage3 "MIX50"
 experiments/spot6/run-all.sh stage3 "MIX75"
 experiments/spot6/run-all.sh stage3 "SPOT"
 deno run -A --no-lock experiments/spot6/summarize.ts --runs runs/spot6 --json docs/six-wall-spot-2026-11-22/summary.json > docs/six-wall-spot-2026-11-22/tables.md
-deno run -A --no-lock experiments/spot6/regrowth.ts --runs runs/spot6 --settings MIX50,MIX75,SPOT --from 80000 > docs/six-wall-spot-2026-11-22/regrowth.md
+deno run -A --no-lock experiments/spot6/regrowth.ts --runs runs/spot6 --settings MIX50,MIX75,SPOT --from 80000 --arms PHAGE,NO_PHAGE,NEUTRAL_PHAGE,SINGLE_WALL > docs/six-wall-spot-2026-11-22/regrowth.md
 for st in B2 MIX25 DIFF_ONLY; do experiments/spot6/run-all.sh snap $st NO_PHAGE 1 30000 $st-NO_PHAGE-seed1-30k; done
 experiments/spot6/run-all.sh snap B2 PHAGE 1 30000 B2-PHAGE-seed1-30k
 for st in MIX50 MIX75 SPOT; do for a in PHAGE NO_PHAGE; do experiments/spot6/run-all.sh snap $st $a 1 90000 $st-$a-seed1-90k; done; done

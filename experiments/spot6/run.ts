@@ -26,6 +26,8 @@ import { BodyLog } from './bodylog.ts';
 import type { Row, SegmentFile } from './rule.ts';
 import { buildSpec, CENSUS, emergenceBound } from './settings.ts';
 
+const BODY_STRIDE = 10;
+
 const setting = argOf('setting');
 const arm = argOf('arm');
 const seed = Number(argOf('seed'));
@@ -36,6 +38,9 @@ const track = argOf('track', '').split(',').filter((s) => s.length > 0).map((s) 
 const snaps = new Set(argOf('snap', '').split(',').filter((s) => s.length > 0).map(Number));
 // The tracker reads objects again 100, 500 and 1,000 steps later, so a frame must fall on each of those.
 if (!Number.isInteger(seed) || !Number.isInteger(steps) || steps % CENSUS !== 0 || !Number.isInteger(dt) || dt <= 0 || 100 % dt !== 0) throw new Error('bad --seed, --steps or --dt (dt must divide 100)');
+// The body log keeps 20 frames of history and takes a series sample every 50 steps; both assume a 10-step stride,
+// so any other stride would record a different cadence than the log reports. Every recorded run used 10.
+if (dt !== BODY_STRIDE) throw new Error(`--dt ${dt}: the body log is built for a ${BODY_STRIDE}-step stride, so only ${BODY_STRIDE} is accepted`);
 for (const t of snaps) if (t % CENSUS !== 0) throw new Error(`--snap ${t} is not a multiple of ${CENSUS}`);
 
 const frozen = await assertFrozen('droplets');

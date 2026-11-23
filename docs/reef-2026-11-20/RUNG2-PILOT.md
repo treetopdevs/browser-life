@@ -21,7 +21,7 @@ All runs: `40×20` vertical water column, `20,000` steps, 4 seeds/arm, late-half
 - **Change:** `pigment + digest + contract` compete for finite cellular volume (`load > 1` scales all three by `1 / load`).
 - **Result:** Immediately broke the photosynthetic-cannibal generalist: `GRAZE_FULL` shifted to **negative `r(P, D)` in 4/4 seeds (`-0.01, -0.50, -0.16, -0.47`)** and `GRAZE_NO_SWIM` held **`MC% = 80–95%`** with `Arm` climbing up to `0.37`. Linear swimming still lifted baseline `contract ≈ 0.16` cells off the seabed (`CanH90 = 77–96`, `MC% = 5–15%`).
 
-## Iteration 3 (+ Quadratic Contractile Thrust `effCon^2` — Current Kernel)
+## Iteration 3 (+ Quadratic Contractile Thrust `effCon^2` — Historical; the runner now uses `effCon^1.65`, see Iteration 5)
 - **Change:** Propulsion thrust and power scale with `effCon^2` (`kSwim = 0.36`, ATP cost `0.22 * effCon^2 * agility`), so passive phototrophs (`effCon ≈ 0.15`) sink and must build anchored stalks, while dedicated swimmers (`effCon > 0.45`) easily overcome gravity.
 - **Results (`40×20`, 20,000 steps, 4 seeds/arm, 39.7s total):**
 
@@ -55,6 +55,6 @@ All runs: `40×20` vertical water column, `20,000` steps, 4 seeds/arm, late-half
 
 ### Key Takeaways (Iteration 5)
 1. **4/4 coexistence + 4/4 trait specialization in `GRAZE_FULL`:** Every seed sustained **54–92% multicellular kelp towers** (`Span = 20–30`, `MaxSz = 24–39`) alongside **14–38% active grazers** (`55k–106k` mass grazed) with **negative `r(P, D)` in 4 of 4 seeds (`−0.12` to `−0.30`)** and `Res = 0`.
-2. **Pelagic swimmers cruising above kelp towers (seed 4):** `GRAZE_FULL` seed 4 spontaneously evolved both **pelagic cruising (`CanH90 = 62.6`, `Con = 0.23`, `r(A, C) = −0.25`)** AND a **54%-multicellular kelp forest (`Span = 20.3`, `MaxSz = 24`, `Gr% = 14%`)** in the same tank.
-3. **Pneumatocyst buoyancy doubled kelp tower height:** `SWIM_NO_GRAZE` reached vertical spans up to **`41.6` world units** (`MaxSz = 50`).
+2. **Seed 4 run-level aggregates (not cell-level observations):** `GRAZE_FULL` seed 4 shows a high canopy percentile (`CanH90 = 62.6`), `Con = 0.23` and `r(A, C) = −0.25` together with a 54%-multicellular population (`Span = 20.3`, `MaxSz = 24`, `Gr% = 14%`) in the same tank. These are late-half means over the whole run; they do not show that the same cells swim high, move or graze, so "pelagic swimmers cruising above the kelp" is a reading of the aggregates, not an observed behavior.
+3. **Vertical span with pneumatocyst buoyancy:** `SWIM_NO_GRAZE` reached vertical spans up to **`41.6` world units** (`MaxSz = 50`). This log has no matched buoyancy-off run, and thrust settings also changed between iterations, so the span is reported as measured; no doubling is claimed.
 

@@ -216,6 +216,12 @@ describe('the pre-stated reading', () => {
     // "Within 0.10 of chance" cuts both ways: far below chance is not a wave reading either.
     expect(classifyWindow({ ...wave, keepMask1000: 0, chance1000: 0.8 }).checks.V2).toBe(false);
     expect(classifyWindow({ ...wave, keepMask1000: 0.1, chance1000: 0.2 }).checks.V2).toBe(true);
+    // A difference of exactly 0.10 on either side of chance is inside, whatever the floating-point rounding (0.8 - 0.7 is 0.10000000000000009).
+    expect(classifyWindow({ ...wave, keepMask1000: 0.8, chance1000: 0.7 }).checks.V2).toBe(true);
+    expect(classifyWindow({ ...wave, keepMask1000: 0.7, chance1000: 0.8 }).checks.V2).toBe(true);
+    expect(classifyWindow({ ...wave, keepMask1000: 0.8, chance1000: 0.7 }).label).toBe('wave patches');
+    expect(classifyWindow({ ...wave, keepMask1000: 0.81, chance1000: 0.7 }).checks.V2).toBe(false);
+    expect(classifyWindow({ ...wave, keepMask1000: 0.69, chance1000: 0.8 }).checks.V2).toBe(false);
     expect(classifyWindow({ ...wave, isolated: 0.3 }).label).toBe('mixed');
     expect(classifyWindow({ ...base, samples: 0 }).label).toBe('no objects');
   });

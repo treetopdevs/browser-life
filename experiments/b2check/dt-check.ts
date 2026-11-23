@@ -16,6 +16,11 @@ const dir = argOf('dir');
 const from = Number(argOf('from'));
 const steps = Number(argOf('steps', '5000'));
 const dts = argOf('dts', '1,2,5,10').split(',').map(Number);
+if (!Number.isSafeInteger(from) || from < 0) throw new Error(`--from ${from} must be a non-negative whole number`);
+// Every spacing must end on the same step, or a difference between rows could come from the window, not the tracking.
+if (!Number.isSafeInteger(steps) || steps <= 0 || dts.some((dt) => !Number.isSafeInteger(dt) || dt <= 0 || steps % dt !== 0)) {
+  throw new Error(`--steps ${steps} must be a positive whole number divisible by every --dts value (${dts.join(',')})`);
+}
 await assertFrozen('droplets');
 const segName = [...Deno.readDirSync(dir)].map((e) => e.name).find((n) => n.startsWith('seg-') && n.endsWith('.json'));
 if (!segName) throw new Error(`no segment file in ${dir}`);

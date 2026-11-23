@@ -68,7 +68,11 @@ const track = argOf('track', '').split(',').filter((s) => s.length > 0).map((s) 
 const snaps = new Set(argOf('snap', '').split(',').filter((s) => s.length > 0).map(Number));
 // The tracker reads objects again 100, 500 and 1,000 steps later, so a frame must fall on each of those.
 if (!Number.isInteger(seed) || !Number.isInteger(steps) || steps % CENSUS !== 0 || !Number.isInteger(dt) || dt <= 0 || 100 % dt !== 0) throw new Error('bad --seed, --steps or --dt (dt must divide 100)');
-for (const t of snaps) if (t % CENSUS !== 0) throw new Error(`--snap ${t} is not a multiple of ${CENSUS}`);
+for (const t of snaps) {
+  if (t % CENSUS !== 0) throw new Error(`--snap ${t} is not a multiple of ${CENSUS}`);
+  // Snapshots are written after a step is taken, so step 0 and steps past the end are never saved.
+  if (!(t > 0 && t <= steps)) throw new Error(`--snap ${t} must be after step 0 and no later than --steps ${steps}`);
+}
 
 const frozen = await assertFrozen('droplets');
 const spec = worldSpec(world, seed);

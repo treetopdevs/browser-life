@@ -494,7 +494,7 @@ for (const setting of settingNames) {
   const outcome = stage3Outcome(seeds, RULE);
   const foundingDivision = readDivision(founding);
   const allSeeds = readDivision(seeds.map((x) => x.ledger));
-  const noPhageDivision = readDivision(noPhage);
+  const noPhageDivision = readDivision(noPhage, RULE.minBirths, RULE.need);
   console.log(`\n| Endpoint (final 20% of the run) | Seeds ${SEEDS[0]} to ${SEEDS[SEEDS.length - 1]} | Wins |`);
   console.log('|---|---|---|');
   for (const e of eps) console.log(`| ${e.id} | ${SEEDS.map((s) => (e.perSeed[s] === null ? 'not run' : e.perSeed[s] ? 'yes' : 'no')).join(', ')} | ${e.wins} of ${e.of} |`);

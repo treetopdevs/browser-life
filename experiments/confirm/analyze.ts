@@ -3,6 +3,10 @@
  * the frozen code, and incomplete or non-conserving runs.
  *
  *   deno run -A --no-lock experiments/confirm/analyze.ts --out <dir> [--json <file>]
+ *
+ * Directory convention: the two runners write `<out>/<arm>/seed-<n>.jsonl` for the one world they run, and this
+ * analyzer reads `<dir>/droplets/<arm>/...` and `<dir>/reef/<arm>/...`. So give run-droplets.ts `--out <dir>/droplets`,
+ * run-reef.ts `--out <dir>/reef`, and this analyzer `--out <dir>`.
  */
 
 import { argOf, assertFrozen, dropletMeta, readRows, reefMeta, runPath } from './io.ts';

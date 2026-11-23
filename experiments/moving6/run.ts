@@ -34,6 +34,7 @@ import { buildSegments, type Segment } from '../b2check/segments.ts';
 import { BodyLog } from '../spot6/bodylog.ts';
 import type { Row } from '../spot6/rule.ts';
 import { buildSpec as storedSpec } from '../spot6/settings.ts';
+import { L } from './ledger.ts';
 import { MoveLog, type MovingSegmentFile } from './movelog.ts';
 import { buildSpec, CENSUS, emergenceBound } from './settings.ts';
 
@@ -44,6 +45,9 @@ const out = argOf('out');
 const replay = argOf('replay', '');
 const dt = Number(argOf('dt', '10'));
 if (!Number.isInteger(seed) || !Number.isInteger(dt) || dt <= 0 || 100 % dt !== 0) throw new Error('bad --seed or --dt (dt must divide 100)');
+// The body log (20 frames of history, a series sample every 50 steps) and the move log (a frame every 50 steps)
+// both assume a 10-step stride, so any other stride would make the logs' recorded spacing wrong. Every recorded run used 10.
+if (dt !== 10) throw new Error(`--dt ${dt}: the body log and move log are built for a 10-step stride, so only 10 is accepted`);
 
 const frozen = await assertFrozen('droplets');
 // A replay builds the world exactly as the earlier screen did; a new run only at this line's settings. Both refuse a seed outside 1 to 4.
@@ -210,8 +214,28 @@ if (replay) {
   const snaps = new Set(argOf('snap', '').split(',').filter((s) => s.length > 0).map(Number));
   // The tracker reads objects again 100, 500 and 1,000 steps later, so a frame must fall on each of those.
   if (!Number.isInteger(steps) || steps % CENSUS !== 0) throw new Error('bad --steps');
-  for (const t of snaps) if (t % CENSUS !== 0) throw new Error(`--snap ${t} is not a multiple of ${CENSUS}`);
-  for (const seg of buildSegments(steps, track, CENSUS)) {
+  // A snapshot is written at a census after a step is taken: step 0 and steps past the end are never saved.
+  for (const t of snaps) {
+    if (t % CENSUS !== 0) throw new Error(`--snap ${t} is not a multiple of ${CENSUS}`);
+    if (!(t > 0 && t <= steps)) throw new Error(`--snap ${t} must be after step 0 and no later than --steps ${steps}`);
+  }
+  // The ledger leaves out a window's first and last stretch (its margins), so a tracked window must be longer than both.
+  for (const [a, b] of track) {
+    if (!(b - a > L.marginStart + L.marginEnd)) throw new Error(`--track ${a}-${b}: a tracked window must be longer than ${L.marginStart + L.marginEnd} steps (the ledger's margins) to leave a ledger interval`);
+  }
+  const layout = buildSegments(steps, track, CENSUS);
+  // A saved segment that overlaps a requested one without being the same segment would leave two segments over the
+  // same steps for the summarizer; reuse exact matches only, and ask for a new --out otherwise.
+  for (const e of Deno.readDirSync(dir)) {
+    const m = /^seg-(\d+)-(\d+)\.json$/.exec(e.name);
+    if (!m) continue;
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (layout.some((s) => s.from === a && s.to === b)) continue;
+    const clash = layout.find((s) => a < s.to && s.from < b);
+    if (clash) throw new Error(`saved segment ${e.name} overlaps the requested ${clash.from}-${clash.to} without matching it: use a new --out`);
+  }
+  for (const seg of layout) {
     const path = `${dir}/${segName(seg)}`;
     if (await exists(path)) {
       const have = JSON.parse(await Deno.readTextFile(path)) as MovingSegmentFile;

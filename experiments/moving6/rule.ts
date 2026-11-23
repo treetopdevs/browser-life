@@ -335,7 +335,7 @@ export function settingOutcome(s: SettingState): { outcome: Outcome; notes: stri
   if (!s.gate) return { outcome: 'mixed / unclear', notes: [`did not pass the gate on the no-phage world (${s.gateNote}); no phage world was read`] };
   if (s.stage2 === null) return s.notRunWhy ? { outcome: 'mixed / unclear', notes: [`passed the gate on the no-phage world; the two-seed stage was not run (${s.notRunWhy})`] } : null;
   if (!s.stage2.advance) return { outcome: s.stage2.outcome as Outcome, notes: s.stage2.notes };
-  if (s.stage3 === null) return { outcome: 'mixed / unclear', notes: [`sent on by the two-seed stage; the four-seed stage was not run to the end for this setting${s.notRunWhy ? ` (${s.notRunWhy})` : ''}`] };
+  if (s.stage3 === null) return s.notRunWhy ? { outcome: 'mixed / unclear', notes: [`sent on by the two-seed stage; the four-seed stage was not run to the end for this setting (${s.notRunWhy})`] } : null;
   return { outcome: s.stage3.outcome, notes: s.stage3.notes };
 }
 

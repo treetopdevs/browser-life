@@ -13,7 +13,11 @@ mkdir -p "$OUT"
 run() { deno run -A --no-lock experiments/b2check/run.ts --out "$OUT" "$@"; }
 case "${1:-}" in
   a)
-    [ -f "$OUT/gpu-check.txt" ] || { deno run -A --no-lock experiments/b2check/gpu-check.ts | tee "$OUT/gpu-check.tmp" && mv "$OUT/gpu-check.tmp" "$OUT/gpu-check.txt"; }
+    # A failed parity check stops the queue (a pipeline on the left of && would not trip set -e).
+    if [ ! -f "$OUT/gpu-check.txt" ]; then
+      deno run -A --no-lock experiments/b2check/gpu-check.ts | tee "$OUT/gpu-check.tmp"
+      mv "$OUT/gpu-check.tmp" "$OUT/gpu-check.txt"
+    fi
     for s in 13 14 15 16; do
       run --world PHAGE --seed $s --steps 80000 --track 0-10000,60000-80000 --snap 70000,71000,72000
       run --world SINGLE_WALL --seed $s --steps 80000 --track 0-10000,60000-80000 --snap 70000,71000,72000
@@ -43,7 +47,7 @@ case "${1:-}" in
     png NO_PHAGE 230000,231000,232000 128 3 230k
     png ONE64_B2 20000,21000,22000 64 6 20k
     png ONE64_SPOT 20000,21000,22000 64 6 20k
-    if [ -f "$OUT/PHAGE/seed-13/snap-230000.bin" ]; then png PHAGE 230000,231000,232000 128 3 230k; fi
+    if [ -f "$OUT/PHAGE/seed-13/snap-230000.bin" ] && [ -f "$OUT/PHAGE/seed-13/snap-231000.bin" ] && [ -f "$OUT/PHAGE/seed-13/snap-232000.bin" ]; then png PHAGE 230000,231000,232000 128 3 230k; fi
     ;;
   *) echo "usage: $0 a|b|c|snaps" >&2; exit 2 ;;
 esac

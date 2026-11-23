@@ -31,6 +31,9 @@ export const THRESHOLDS = {
   settledWithin: 0.1,
 } as const;
 
+/** Slack for floating-point rounding, so a difference of exactly 0.10 (0.8 - 0.7 is 0.10000000000000009) is inside the tolerance. */
+const V2_ROUNDING = 1e-9;
+
 export function classifyWindow(r: WindowReadouts): Reading {
   const T = THRESHOLDS;
   const ge = (x: number | null, t: number) => (x === null ? null : x >= t);
@@ -41,7 +44,7 @@ export function classifyWindow(r: WindowReadouts): Reading {
     B2: ge(r.keepUid1000, T.b2TilesKept1000),
     B3: b3,
     V1: le(r.surv1000, T.v1KeptId1000),
-    V2: r.keepMask1000 === null || r.chance1000 === null ? null : Math.abs(r.keepMask1000 - r.chance1000) <= T.v2OverChance,
+    V2: r.keepMask1000 === null || r.chance1000 === null ? null : Math.abs(r.keepMask1000 - r.chance1000) <= T.v2OverChance + V2_ROUNDING,
     V3: le(r.isolated, T.v3Isolated),
   };
   const hi = Math.max(r.countFirstHalf, r.countSecondHalf);

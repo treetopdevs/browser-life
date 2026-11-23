@@ -497,7 +497,7 @@ describe('phage load', () => {
     const W = rect(rect(field(), 4, 4, 2, 2, 0, 400), 12, 4, 2, 2, 0, 800);
     const P = rect(rect(field(), 4, 4, 2, 2, 0, 10), 12, 4, 2, 2, 3, 100);
     const { log } = run(Array.from({ length: 11 }, () => W), () => P);
-    const l = phageLoad(log, { t: 100, phage: 440 * 4 });
+    const l = phageLoad(log, { t: 100, phage: 440 }); // 40 units of type 0 and 400 of type 3 in the dish
     expect(l.samples).toBe(6); // two bodies at steps 0, 50 and 100
     expect(l.withPhage1).toBe(0.5);
     expect(l.withPhage10).toBe(0.5);
@@ -505,7 +505,7 @@ describe('phage load', () => {
     expect(l.wallLoaded).toBeCloseTo(400 / 1024, 12);
     expect(l.wallClean).toBeCloseTo(800 / 1024, 12);
     expect(l.areaLoaded).toBe(4);
-    expect(l.onFootprints).toBeCloseTo(40 / 1760, 12);
+    expect(l.onFootprints).toBeCloseTo(40 / 440, 12);
     expect(phageLoad(log, { t: 100, phage: 0 }).onFootprints).toBeNull();
   });
 });

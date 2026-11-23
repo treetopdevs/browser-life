@@ -13,6 +13,7 @@ import { argOf, assertFrozen } from '../confirm/io.ts';
 import { buildSpec } from './settings.ts';
 
 const steps = Number(argOf('steps', '100'));
+if (!Number.isSafeInteger(steps) || steps <= 0) throw new Error(`--steps ${steps} must be a positive whole number`);
 const settings = argOf('settings').split(',');
 const arms = argOf('arms').split(',');
 await assertFrozen('droplets');

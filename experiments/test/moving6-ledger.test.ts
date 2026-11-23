@@ -267,6 +267,17 @@ describe('moving6 ledger: the balance', () => {
       const owned = new Map<number, number>();
       for (const c of chains.chains) for (const part of c.parts) owned.set(part.uid, (owned.get(part.uid) ?? 0) + (part.to ?? r.tr.lastStep + 10) - part.from);
       for (const rec of r.tr.records) expect(owned.get(rec.uid)).toBe((rec.end ?? r.tr.lastStep + 10) - rec.born);
+      // At every observed step of a record, exactly one chain holds that id (no overlap, no gap).
+      const open = r.tr.lastStep + 10;
+      for (const rec of r.tr.records) {
+        for (let t = rec.born; t < (rec.end ?? open); t += 10) {
+          let owners = 0;
+          for (const c of chains.chains) {
+            if (c.parts.some((part) => part.uid === rec.uid && part.from <= t && t < (part.to ?? open))) owners++;
+          }
+          expect(owners, `id ${rec.uid} at step ${t}`).toBe(1);
+        }
+      }
     }
   });
 });

@@ -65,7 +65,7 @@ describe('Reef Rung 0: conservation, thermodynamics, shadows, symplastic bridge,
     const g = createStalkTestGenome();
     const makePair = (shadows: boolean) => {
       const w = new ReefWorld(
-        defaultReefConfig({ gw: 16, gh: 16, shadows, gravity: false, seed: 3 }),
+        defaultReefConfig({ gw: 16, gh: 16, shadows, gravity: false, waterAtten: 0, seed: 3 }), // no clear-water loss: only cell shadows can dim a cell
       );
       const top = w.seedCell(64, 24, g, 1, 16, 4, 8)!;
       const bot = w.seedCell(64, 80, g, 2, 16, 4, 8)!;
@@ -138,16 +138,34 @@ describe('Reef Rung 0: conservation, thermodynamics, shadows, symplastic bridge,
     a.seedDefaultFounders(10);
     b.seedDefaultFounders(10);
 
-    for (let t = 0; t < 300; t++) {
-      a.step();
-      if (t % 25 === 0) {
-        observeMatter(a);
-        observeBodies(a);
-        observeNiches(a);
-      }
-    }
-    b.stepN(300);
+    // Everything that can change the next step: every field of every cell (velocities, genome weights), the bonds'
+    // endpoints and rest geometry, both matter fields and the generator state (a private field, read here only).
+    const snapshot = (w: ReefWorld): string =>
+      JSON.stringify(
+        {
+          step: w.stepCount,
+          rng: (w as unknown as { rng: { state: number } }).rng.state,
+          cells: w.cells,
+          bonds: w.bonds.map((bd) => ({ a: bd.a.id, b: bd.b.id, restLen: bd.restLen, phiA: bd.phiA, phiB: bd.phiB, age: bd.age })),
+          nut: w.nut,
+          det: w.det,
+        },
+        (_k, v) => (ArrayBuffer.isView(v) ? Array.from(v as unknown as ArrayLike<number>) : v),
+      );
+    expect(snapshot(a)).toBe(snapshot(b));
 
+    // `a` is stepped one step at a time and observed along the way; `b` is advanced with stepN and never observed.
+    // They must agree exactly after every block of 25 steps, not only at the end.
+    for (let block = 0; block < 12; block++) {
+      observeMatter(a);
+      observeBodies(a);
+      observeNiches(a);
+      for (let k = 0; k < 25; k++) a.step();
+      b.stepN(25);
+      expect(snapshot(a), `step ${a.stepCount}`).toBe(snapshot(b));
+    }
+    expect(a.cells.length).toBeGreaterThan(0);
+    expect(a.stepCount).toBe(300);
     expect(observeDigest(a)).toBe(observeDigest(b));
   });
 });

@@ -348,6 +348,8 @@ describe('moving6 setting outcome', () => {
     expect(sentOn.advance).toBe(true);
     const notRun = settingOutcome({ gate: true, gateNote: '', stage2: sentOn, stage3: null, notRunWhy: 'the plan\'s rank sends MIX37 on, not this one' });
     expect(notRun?.outcome).toBe('mixed / unclear');
+    // Sent on, four-seed stage not finished and no reason given for stopping: still pending, not an outcome.
+    expect(settingOutcome({ gate: true, gateNote: '', stage2: sentOn, stage3: null })).toBeNull();
     expect(notRun?.notes[0]).toMatch(/four-seed stage was not run.*MIX37/);
     expect(settingOutcome({ gate: true, gateNote: '', stage2: sentOn, stage3: stage3Outcome(four()) })?.outcome).toBe('bodies with turnover');
   });

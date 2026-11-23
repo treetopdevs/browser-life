@@ -28,13 +28,13 @@ const ARMS: ArmDef[] = [
   { name: 'GRAZE_NO_SWIM', overrides: { shadows: true, gravity: true, bonds: true, grazing: true, swimming: false } },
 ];
 
+/** A whole number >= 1. A value that is given but invalid stops the run; only an absent option takes the default. */
 function parseArg(name: string, fallback: number): number {
   const idx = Deno.args.indexOf(`--${name}`);
-  if (idx >= 0 && idx + 1 < Deno.args.length) {
-    const v = Number(Deno.args[idx + 1]);
-    if (Number.isFinite(v)) return v;
-  }
-  return fallback;
+  if (idx < 0) return fallback;
+  const v = idx + 1 < Deno.args.length ? Number(Deno.args[idx + 1]) : NaN;
+  if (!Number.isSafeInteger(v) || v < 1) throw new Error(`--${name} must be a positive whole number, got ${Deno.args[idx + 1] ?? '(nothing)'}`);
+  return v;
 }
 
 const steps = parseArg('steps', 20000);
@@ -73,8 +73,12 @@ for (const arm of ARMS) {
     let sumArm = 0, sumDig = 0, sumCon = 0, sumRPD = 0, sumRAC = 0;
     let maxAbsRes = 0;
 
-    for (let t = censusEvery; t <= steps; t += censusEvery) {
-      world.stepN(censusEvery);
+    // Census every `censusEvery` steps, with a last (shorter) leg so the run always ends at `steps`.
+    // When censusEvery divides steps this is the same schedule as before.
+    for (let t = 0; t < steps;) {
+      const leg = Math.min(censusEvery, steps - t);
+      world.stepN(leg);
+      t += leg;
       const m = observeMatter(world);
       if (Math.abs(m.residual) > maxAbsRes) maxAbsRes = Math.abs(m.residual);
       if (t >= steps / 2) {
