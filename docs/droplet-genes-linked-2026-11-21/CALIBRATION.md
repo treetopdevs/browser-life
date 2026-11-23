@@ -205,11 +205,18 @@ deno run -A --no-lock experiments/dropgenes/sweep.ts --dir runs/dropgenes/linked
 
 ## What the numbers show
 
+*Note, 2026-11-22 (review of PR 183), on PLAN.md L3: "matter grows `len` times more slowly" compares the rate per
+unit of matter already present. At the nominal rates the template's copy rate is divided by `len` and each copy
+adds `len` units, so the absolute matter added per step is the same as for one single gene; its growth per unit of
+its own matter is `len` times lower. PLAN.md is frozen and is not edited.*
+
 1. **The stop rule fired.** Linked K = 4 with the parasite was held gated on 0 of 2 seeds at each of the 12
    settings; the last compartment was gone between step 350 and 3,550. The unlinked arm on the same seeds
    lasted to step 6,300 and 7,850. Linking, as built and at these settings, made four genes last less long.
-2. **The parasite is not what ends the listed settings.** Without it all 12 still lose every compartment on
-   both seeds (G1). With linked founders under one site per molecule (c01 to c08), breaking at 1e-3 ends the
+2. **The parasite is not needed for the listed settings to collapse.** Without it all 12 still lose every
+   compartment on both seeds (G1). This does not show what ended the runs that had the parasite: at breaking 1e-4 they ended
+   earlier than the runs without it (below), so an effect of the parasite on them is not excluded. (Wording corrected 2026-11-22 after review
+   of PR 183; the numbers are unchanged.) With linked founders under one site per molecule (c01 to c08), breaking at 1e-3 ends the
    world at step 550 to 2,800 with the parasite and 600 to 900 without; breaking at 1e-4 ends it at 1,800 to
    3,550 with the parasite and 7,900 to 15,800 without.
 3. **A four-gene template that cannot break, lose a gene on copy, or be joined is carried well without the

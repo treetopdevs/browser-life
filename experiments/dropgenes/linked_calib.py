@@ -50,12 +50,34 @@ def path(tag, seed):
     return os.path.join(DIR, f'{tag}-K4-cap16-{ARM}-s{seed}.json')
 
 
+PROTOCOL = {'census': 50, 'report': 2000, 'heredityDelay': 500, 'founders': 'grid', 'spacing': 16, 'seedPerGene': 2}
+
+
+def check(tag, seed, s):
+    """A file on disk counts only if it is a finished run of this request: the override keys, steps, protocol, founders and residual. (sweep.ts checks the whole configuration when it is asked to run a seed.)"""
+    want = {**json.loads(ov(tag)), 'genes': 4, 'capPerTile': 16, 'seed': seed, 'gated': ARM.startswith('GATED'),
+            'mutPar': 1e-4 if ARM.endswith('_PAR') else 0}
+    wrong = [k for k, v in want.items() if s['config'].get(k) != v]
+    if s.get('steps') != STEPS:
+        wrong.append('steps')
+    if s.get('protocol') != PROTOCOL:
+        wrong.append('protocol')
+    if s.get('residual') != '0':
+        wrong.append('residual')
+    if (s.get('linked') or {}).get('founders') != SETTINGS[tag][1]:
+        wrong.append('founders')
+    if wrong:
+        raise SystemExit(f'{path(tag, seed)} exists but is not this run (differs in: {", ".join(wrong)}); remove it or use another directory')
+
+
 def summary(tag, seed):
     try:
         with open(path(tag, seed)) as f:
-            return json.load(f)['summary']
+            s = json.load(f)['summary']
     except FileNotFoundError:
         return None
+    check(tag, seed, s)
+    return s
 
 
 def sweep(tag, seeds, jobs):
@@ -100,14 +122,20 @@ def screen():
             sweep(tag, [1, 2], 2)
     todo = [tag for tag in SETTINGS if held_count(tag)[1] < 2]
     lock = threading.Lock()
+    failures = []
 
     def worker():
         while True:
             with lock:
-                if not todo:
+                if not todo or failures:
                     return
                 tag = todo.pop(0)
-            finish(tag)
+            try:
+                finish(tag)
+            except BaseException as e:  # SystemExit from sweep() included: report it from the main thread
+                with lock:
+                    failures.append(f'{tag}: {e!r}')
+                return
 
     threads = [threading.Thread(target=worker) for _ in range(2)]
     for t in threads:
@@ -115,6 +143,9 @@ def screen():
     for t in threads:
         t.join()
     table()
+    if failures:  # finished runs stay on disk, so the next invocation resumes
+        sys.stdout.write('SCREEN INCOMPLETE: ' + '; '.join(failures) + '\n')
+        sys.exit(1)
 
 
 def table():

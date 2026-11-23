@@ -197,6 +197,12 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
   if (seedList && (seedList.some((s) => !Number.isInteger(s)) || new Set(seedList).size !== seedList.length)) throw new Error('--seeds must be distinct whole numbers');
   const onlySeeds = seedList ? new Set(seedList) : null;
   if (confirm && (!seedList || seedList.length === 0 || seedList.length % 4 !== 0)) throw new Error('--confirm needs --seeds with one or more blocks of four seeds');
+  // PLAN.md: the unseen seeds are 25 to 32 in two blocks of four. The selections read so far are block 1, block 2
+  // and both in that order; calibration seeds or a mixture of the blocks are not the confirmation.
+  const PREREGISTERED = ['25,26,27,28', '29,30,31,32', '25,26,27,28,29,30,31,32'];
+  if (confirm && !PREREGISTERED.includes((seedList ?? []).join(','))) {
+    throw new Error(`--confirm reads the preregistered seed blocks only: ${PREREGISTERED.map((x) => `--seeds ${x}`).join(', or ')}`);
+  }
 
   const names: string[] = [];
   for await (const e of Deno.readDir(dir)) if (e.isFile && e.name.endsWith('.json')) names.push(e.name);
@@ -260,6 +266,9 @@ export async function traitSummary(dir: string, argv: string[]): Promise<void> {
       if (r.l.levels !== FROZEN_CONFIG.ladderLevels) throw new Error(`--confirm: ${r.name}: ladder section says ${r.l.levels} levels, the frozen setting has ${FROZEN_CONFIG.ladderLevels}`);
       if (r.l.responseWindowSteps !== FROZEN_PROTOCOL.report) throw new Error(`--confirm: ${r.name}: response window of ${r.l.responseWindowSteps} steps, the frozen protocol has ${FROZEN_PROTOCOL.report}`);
       if (typeof r.s.held !== 'boolean') throw new Error(`--confirm: ${r.name}: no held verdict recorded`);
+      // The frozen held rule (PLAN.md): at least 10 compartments and at least half complete over the last tenth.
+      const heldByFigures = r.s.lateMeanCompartments >= 10 && r.s.lateCompleteShare >= 0.5;
+      if (r.s.held !== heldByFigures) throw new Error(`--confirm: ${r.name}: recorded held=${r.s.held} disagrees with its late figures (${r.s.lateMeanCompartments} compartments, complete share ${r.s.lateCompleteShare})`);
       // A run may stop before its planned steps only because the world ended (no compartments, no wall left).
       const ranAll = r.s.stepsRun === r.s.steps;
       const endedEarly = Number.isInteger(r.s.stepsRun) && r.s.stepsRun > 0 && r.s.stepsRun < r.s.steps && typeof r.s.extinctAt === 'number' && r.s.extinctAt <= r.s.stepsRun;

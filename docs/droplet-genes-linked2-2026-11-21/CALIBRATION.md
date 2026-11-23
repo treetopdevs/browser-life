@@ -323,9 +323,11 @@ not seen.
 ## What the numbers show
 
 1. **The second stop rule fired.** Nine settings pass the clean gate at 200,000 steps; with the parasite each
-   is held on 0 of 2 seeds at 50,000 steps. A clean no for these nine: linked K = 4 at breaking and loss of
-   k = 1 and k = 4 (1.5e-5 and 6.1e-5), both site rules, `linkJoin` 0.05 and 1, capacity matched for full
-   templates.
+   is held on 0 of 2 seeds at 50,000 steps. A clean no for these nine: linked K = 4, loss of k = 1 and k = 4
+   (1.5e-5 and 6.1e-5), `linkJoin` 0.05 and 1, capacity matched for full templates, under one site per molecule
+   at breaking k = 1 and k = 4 (s01 to s04, s09, s10) and under one site per gene at breaking k = 1 (s05, s06,
+   s11). One site per gene at breaking k = 4 (s07, s08, s12) failed the clean gate and was never run with the
+   parasite, so this result does not cover it. (Wording corrected 2026-11-22 after review of PR 183.)
 2. **Below 1e-4 the linked genome is viable without the parasite.** This is new against the first screen and
    it removes that screen's confound. Under one site per molecule, worlds at k = 4 (the run files record
    `linkBreak` x 65536 = 4 exactly) are alive at 200,000 steps on four seeds, and the first screen's at k = 7

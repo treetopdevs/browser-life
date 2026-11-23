@@ -90,7 +90,9 @@ def seed_verdict(runs, seed):
     if held and all(v is not None for v in nl):
         above = min(gl) - max(nl)   # how far the lower selected level is above the higher neutral level
         below = min(nl) - max(gl)   # how far the higher selected level is below the lower neutral level
-        off = above >= 0.4 or below >= 0.4
+        # The verdict compares against the shifted neutral bounds, as the summariser does: a subtraction can land one
+        # ulp under 0.4 where 2.4 >= 2.0 + 0.4 holds. The subtractions stay for the displayed margin.
+        off = min(gl) >= max(nl) + 0.4 or max(gl) <= min(nl) - 0.4
         off_margin = max(above, below)
     bg, bn, bu, bt = [between_of(x) for x in g], [between_of(x) for x in n], [between_of(x) for x in u], [between_of(x) for x in t]
     def resp(sel, neu):
@@ -269,12 +271,14 @@ def main():
         with open(against) as fh:
             j = json.load(fh)
         bad = []
+        if len(V) != len(j['verdicts']): bad.append(('verdict count', len(V), len(j['verdicts'])))
         for v, w in zip(V, j['verdicts']):
             for k in ['seed', 'held', 'converged', 'offNeutral', 'response', 'G', 'U', 'ungatedMatchesGated', 'ungatedResponse', 'T']:
                 if v[k] != w[k]: bad.append((v['seed'], k, v[k], w[k]))
             for k in ['gatedLow', 'gatedHigh', 'apart', 'neutralLow', 'neutralHigh']:
                 if not close(v[k], w[k]): bad.append((v['seed'], k, v[k], w[k]))
             for k in ['betweenSelected', 'betweenNeutral']:
+                if len(v[k]) != len(w[k]): bad.append((v['seed'], k + ' length', len(v[k]), len(w[k])))
                 for a_, b_ in zip(v[k], w[k]):
                     if not close(a_, b_): bad.append((v['seed'], k, a_, b_))
         c = j['confirmation']

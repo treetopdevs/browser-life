@@ -202,6 +202,32 @@ describe('droplet genes observer', () => {
     expect(rec.neighbour).toEqual([8, 8, 0]);
     expect(rec.unrelated).toEqual([12, 4, 0]);
   });
+  it('the unrelated control skips a sister that has a new uid of its own (the direct-parent test alone would not)', () => {
+    const t = new CompartmentTracker(SIZE, SIZE, S, K, { wallMin: 0.125, bareMax: 0.03, heredityDelay: 100 });
+    // One bar splits three ways in a single census: the left piece keeps the parent's uid, the middle and right
+    // pieces both get new uids with the same parent uid, so they are sisters. A far compartment sits below.
+    const W0 = walls([1, 1, 11, 3], [5, 7, 7, 9]);
+    t.observe(0, W0, genesOn(W0));
+    const W1 = walls([1, 1, 3, 3], [5, 1, 7, 3], [9, 1, 11, 3], [5, 7, 7, 9]);
+    const T1 = genesOn(W1);
+    T1[(8 * SIZE + 6) * S] = 9; // mark the far compartment: gene 0 is 17 in all
+    const c1 = t.observe(50, W1, T1);
+    expect(t.totals.fissions).toBe(2);
+    const [keeper, mid, right] = c1.compartments;
+    expect(mid.parentUid).toBe(keeper.uid);
+    expect(right.parentUid).toBe(keeper.uid); // sisters: the same parent, neither of them the parent's uid
+    expect(mid.uid).not.toBe(keeper.uid);
+    expect(right.uid).not.toBe(keeper.uid);
+    // The middle sister now splits in two; the nearest other compartments are the keeper and the right sister.
+    const W2 = walls([1, 1, 3, 3], [5, 1, 5, 3], [7, 1, 7, 3], [9, 1, 11, 3], [5, 7, 7, 9]);
+    t.observe(100, W2, (() => { const T = genesOn(W2); T[(8 * SIZE + 6) * S] = 9; return T; })());
+    expect(t.totals.fissions).toBe(3);
+    const rec = t.fissionRecords[t.fissionRecords.length - 1];
+    expect(rec.parentUid).toBe(mid.uid);
+    expect(rec.neighbour).toEqual([9, 9, 0]); // the keeper or the right sister
+    // The keeper is excluded as the parent's parent and the right sister as a sister, so the control is the far one.
+    expect(rec.unrelated).toEqual([17, 9, 0]);
+  });
   it('a daughter that overlaps a second compartment in the census of its own split is fused, not read', () => {
     const t = new CompartmentTracker(SIZE, SIZE, S, K, { wallMin: 0.125, bareMax: 0.03, heredityDelay: 100 });
     // A blob about to split, and a bystander just below where its right half will be.

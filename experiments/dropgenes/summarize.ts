@@ -87,7 +87,9 @@ if (Deno.args.includes('--trait')) {
 const perSeed = Deno.args.includes('--per-seed');
 const CELL_KEYS = new Set(['seed', 'genes', 'capPerTile', 'gated', 'mutPar']);
 
-interface Cell { tag: string; genes: number; cap: number; arm: string; runs: { s: Summary; rows: Row[] }[] }
+/** Linked runs also carry the molecule counts by genes carried at every census (byLength[n] is step n * census). */
+interface Lengths { census: number; byLength: number[][] }
+interface Cell { tag: string; genes: number; cap: number; arm: string; runs: { s: Summary; rows: Row[]; lengths?: Lengths }[] }
 const cells = new Map<string, Cell>();
 const sharedByTag = new Map<string, string>();
 let protocol: Summary['protocol'] | null = null;
@@ -97,7 +99,7 @@ const names: string[] = [];
 for await (const e of Deno.readDir(dir)) if (e.isFile && e.name.endsWith('.json')) names.push(e.name);
 names.sort();
 for (const name of names) {
-  const { summary, rows } = JSON.parse(await Deno.readTextFile(`${dir}/${name}`)) as { summary: Summary; rows: Row[] };
+  const { summary, rows, lengths } = JSON.parse(await Deno.readTextFile(`${dir}/${name}`)) as { summary: Summary; rows: Row[]; lengths?: Lengths };
   const m = /^(?:(.+)-)?K(\d+)-cap(\d+)-([A-Z_]+)-s(\d+)\.json$/.exec(name);
   if (!m) throw new Error(`Unexpected file name ${name}`);
   const tag = m[1] ?? '';
@@ -131,7 +133,7 @@ for (const name of names) {
   let cell = cells.get(key);
   if (!cell) { cell = { tag, genes: c.genes as number, cap: c.capPerTile as number, arm, runs: [] }; cells.set(key, cell); }
   if (cell.runs.some((r) => r.s.config.seed === c.seed)) throw new Error(`${name}: seed ${c.seed} appears twice in its cell`);
-  cell.runs.push({ s: summary, rows });
+  cell.runs.push({ s: summary, rows, ...(lengths ? { lengths } : {}) });
 }
 
 const f = (v: number | null | undefined, d = 2) => (v === null || v === undefined || !Number.isFinite(v) ? 'n/a' : v.toFixed(d));
@@ -277,8 +279,19 @@ if (perSeed) {
 // of at least 2,000 steps; it reads the report rows, which linked runs have always carried.
 const AT_STEPS = [2000, 10000, 50000, 200000];
 const linkedCells = sorted.filter((c) => c.runs.some((r) => r.s.linked));
+// A report row when the run has one at this step; otherwise the census series (a run whose --report is longer than
+// its --census still has every census), whose entry gives the molecule counts and so the full-template share.
+const rowAt = (r: { rows: Row[]; lengths?: Lengths }, step: number): LinkedReadout | null => {
+  const row = r.rows.find((x) => x.step === step)?.linked;
+  if (row) return row;
+  const L = r.lengths;
+  if (!L || !(L.census > 0) || step % L.census !== 0) return null;
+  const by = L.byLength[step / L.census];
+  if (!by) return null;
+  const molecules = by.reduce((a, b) => a + b, 0);
+  return { linkedShare: [], meanLength: null, shortenedShare: null, fullShare: molecules > 0 && by.length >= 2 ? by[by.length - 1] / molecules : molecules > 0 ? 0 : null, byLength: by.slice() };
+};
 if (linkedCells.length > 0) {
-  const rowAt = (r: { rows: Row[] }, step: number): LinkedReadout | null => r.rows.find((x) => x.step === step)?.linked ?? null;
   console.log('\nFull templates over time: the share of gene-carrying molecules that carry every gene, whole arena, per seed in seed order (n/a: the run had ended, or was not planned that long).\n');
   console.log(`| setting | K | sites/tile | arm | ${AT_STEPS.map((t) => `step ${t}`).join(' | ')} |`);
   console.log(`|---|---|---|---|${AT_STEPS.map(() => '---').join('|')}|`);
@@ -353,7 +366,7 @@ for (const c of sorted) {
       ...(r.s.linked ? { linked: r.s.linked } : {}),
       ...(r.s.deathGenes ? { deathGenes: r.s.deathGenes } : {}),
       ...(r.s.lastCompartments !== undefined ? { lastCompartments: r.s.lastCompartments } : {}),
-      ...(r.s.linked ? { fullShareAt: Object.fromEntries(AT_STEPS.map((t) => [t, r.rows.find((x) => x.step === t)?.linked?.fullShare ?? null])) } : {}),
+      ...(r.s.linked ? { fullShareAt: Object.fromEntries(AT_STEPS.map((t) => [t, rowAt(r, t)?.fullShare ?? null])) } : {}),
     })),
   });
 }

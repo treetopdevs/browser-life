@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DropletKernelRef, KERNEL_MOTIFS, defaultDropletKernelConfig } from '../src/oligomer/droplets-kernel.ts';
 import {
   DG_SCALE,
+  DG_WALL_MAX,
   DropGenesKernel,
   defaultDropGenesConfig,
   dgGateQ10,
@@ -411,5 +412,63 @@ describe('droplet genes sandbox kernel', () => {
     expect(bad({ mobility: 0.5 })).toThrow();
     expect(bad({ kRep: 1.5 })).toThrow();
     expect(bad({ width: 2 })).toThrow();
+  });
+
+  it('refuses grid dimensions that would wrap when packed, whatever the initial matter', () => {
+    const bad = (ov: Partial<DropGenesConfig>) => () => packDropGenesParams(defaultDropGenesConfig({ initMatterPerTile: 0, ...ov }));
+    expect(bad({ width: 2 ** 32 + 3, height: 3 })).toThrow(/grid dimensions/); // packed it would become 3
+    expect(bad({ width: 3, height: 2 ** 32 + 3 })).toThrow(/grid dimensions/);
+    expect(bad({ width: 2 ** 31, height: 2 ** 31 })).toThrow(/grid dimensions/); // too many tiles to allocate
+    expect(() => packDropGenesParams(defaultDropGenesConfig({ width: 64, height: 64 }))).not.toThrow();
+    // the arrays are the packed size
+    const k = new DropGenesKernel(defaultDropGenesConfig({ width: 8, height: 8 }));
+    expect(k.nTiles).toBe(k.p.width * k.p.height);
+  });
+
+  describe('seedDroplet', () => {
+    const world = (ov: Partial<DropGenesConfig> = {}) => new DropGenesKernel(defaultDropGenesConfig({ width: 8, height: 8, initMatterPerTile: 4096, ...ov }));
+
+    it('seeds the grid it was built for, not whatever the caller\'s config object says afterwards', () => {
+      const cfg = defaultDropGenesConfig({ width: 8, height: 8, initMatterPerTile: 4096 });
+      const k = new DropGenesKernel(cfg);
+      (cfg as { width: number }).width = 16; // a caller edits its object after construction
+      const before = k.totalMatter();
+      k.seedDroplet(12, 6, 0);
+      expect(k.totalMatter()).toBe(before);
+      expect(k.W.length).toBe(64);
+      expect(k.W.reduce((a, b) => a + b, 0)).toBe(Math.round(0.85 * DG_SCALE)); // one tile of wall, and its matter was debited
+      expect(k.W[6 * 8 + 4]).toBe(Math.round(0.85 * DG_SCALE)); // 12 wraps to column 4 of the 8-wide grid
+    });
+
+    it('a centre outside the grid is the tile it wraps to', () => {
+      const a = world();
+      const b = world();
+      a.seedDroplet(16, 0, 0);
+      b.seedDroplet(0, 0, 0);
+      expect(Array.from(a.W)).toEqual(Array.from(b.W));
+      expect(a.W[0]).toBe(Math.round(0.85 * DG_SCALE));
+      const c = world();
+      const d = world();
+      c.seedDroplet(-1, -9, 1);
+      d.seedDroplet(7, 7, 1);
+      expect(Array.from(c.W)).toEqual(Array.from(d.W));
+    });
+
+    it('checks the resulting wall before debiting anything: the third call that would pass the bound changes nothing', () => {
+      const k = world();
+      k.seedDroplet(1, 1, 0, 32);
+      k.seedDroplet(1, 1, 0, 32); // 2 x 32768 is exactly the bound
+      expect(k.W[9]).toBe(DG_WALL_MAX);
+      const A = Array.from(k.A);
+      const F = Array.from(k.F);
+      const W = Array.from(k.W);
+      const matter = k.totalMatter();
+      expect(() => k.seedDroplet(1, 1, 0, 32)).toThrow(/above the bound/);
+      expect(Array.from(k.A)).toEqual(A);
+      expect(Array.from(k.F)).toEqual(F);
+      expect(Array.from(k.W)).toEqual(W);
+      expect(k.totalMatter()).toBe(matter);
+      expect(k.stepCount).toBe(0);
+    });
   });
 });

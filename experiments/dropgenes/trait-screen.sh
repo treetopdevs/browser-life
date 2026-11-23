@@ -6,7 +6,12 @@
 # so the script can be re-invoked after an interruption. Calibration seeds are 1 to 4 only.
 set -eu
 name=$1; levels=$2; sat=$3; mut=$4; high=$5; steps=$6; seeds=$7; arms=${8:-GATED_SEL}; jobs=${9:-2}
-case ",$seeds," in *,[5-9],*|*,[1-9][0-9]*,*) echo "calibration uses seeds 1 to 4 only" >&2; exit 2;; esac
+# Check the values sweep.ts will run: it trims each one and reads it as a number, so " 5" and "05" are seed 5.
+for sd in $(printf '%s' "$seeds" | tr ',' ' '); do
+  case $sd in ''|*[!0-9]*) echo "calibration seeds must be whole numbers, got '$sd'" >&2; exit 2;; esac
+  n=$(printf '%s' "$sd" | sed 's/^0*//'); n=${n:-0}
+  if [ "$n" -lt 1 ] || [ "$n" -gt 4 ]; then echo "calibration uses seeds 1 to 4 only" >&2; exit 2; fi
+done
 here=$(cd "$(dirname "$0")" && pwd)
 for start in 0 "$high"; do
   deno run -A --no-lock "$here/sweep.ts" --dir "runs/dropgenes/trait/screen/$name" --genes 2 --caps 16 --seeds "$seeds" \

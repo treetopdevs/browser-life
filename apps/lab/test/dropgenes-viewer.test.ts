@@ -209,7 +209,11 @@ describe('droplet genes viewer: founding and readouts against experiments/dropge
       const chunks = [1, 7, 64, 13, 16, 4];
       let n = 0;
       for (const [step, comps, complete, copies, par, fissions, deaths] of rows) {
-        while (s.world.stepCount < step) s.advance(Math.min(chunks[n++ % chunks.length], step - s.world.stepCount));
+        while (s.world.stepCount < step) {
+          // A session that stopped early would return 0 for ever and this synchronous loop could not time out.
+          const did = s.advance(Math.min(chunks[n++ % chunks.length], step - s.world.stepCount));
+          expect(did, `the session stopped advancing at step ${s.world.stepCount}, before ${step}`).toBeGreaterThan(0);
+        }
         const f = s.frame();
         expect(f.step).toBe(step);
         expect(f.censusStep).toBe(step);

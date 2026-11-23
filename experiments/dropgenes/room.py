@@ -427,12 +427,17 @@ def jobs_for(mode):
 _steps = {}
 
 
+# The screen's own stage directories: the confirmation (made with sweep.ts into a directory of its own, for
+# example runs/dropgenes/room/confirm) is not charged to the screen's allocation.
+SCREEN_STAGES = {f'{src}-{part}' for src in 'ab' for part in ('gate-50k', 'par-50k', 'front-200k')} | {'carry-check'}
+
+
 def steps_spent():
-    """Steps actually run, summed over every finished run file under the output directory."""
+    """Steps actually run, summed over every finished run file in the screen's stage directories."""
     total = 0
     for sub in sorted(os.listdir(BASE)) if os.path.isdir(BASE) else []:
         d = os.path.join(BASE, sub)
-        if not os.path.isdir(d) or sub == 'logs':
+        if not os.path.isdir(d) or sub not in SCREEN_STAGES:
             continue
         for name in os.listdir(d):
             if name.endswith('.json'):
@@ -462,12 +467,23 @@ def orphans():
 
 
 _lockfile = None
+_checkout_lockfile = None
+CHECKOUT_LOCK = os.path.join(REAL_BASE, '..', '.room-checkout.lock')  # beside the real output directory: one per checkout
 
 
 def take_lock():
-    """One running driver per output directory, so two invocations cannot pass four runs between them or race on a file."""
-    global _lockfile
+    """One running driver per output directory, so two invocations cannot pass four runs between them or race on a file.
+    And one per checkout whatever its output directory: the four-run limit and the orphan check are about this
+    checkout's processes, so a driver on another ROOM_BASE must not pass its own four beside ours. Both locks are
+    taken before the orphan check and held until this process exits."""
+    global _lockfile, _checkout_lockfile
     import fcntl
+    os.makedirs(os.path.dirname(os.path.abspath(CHECKOUT_LOCK)), exist_ok=True)
+    _checkout_lockfile = open(os.path.abspath(CHECKOUT_LOCK), 'w')
+    try:
+        fcntl.flock(_checkout_lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        raise SystemExit('another room.py is running in this checkout')
     os.makedirs(BASE, exist_ok=True)
     _lockfile = open(os.path.join(BASE, '.lock'), 'w')
     try:
@@ -553,12 +569,15 @@ def execute(mode, dry):
             run = next_run()
             if run is None:
                 return
-            ok = run_one(run)
-            with _lock:
-                del state['flying'][run.path]
-                if not ok:
-                    state['failed'] += 1
-                    state['stop'] = state['stop'] or 'failure'
+            ok = False
+            try:
+                ok = run_one(run)
+            finally:  # a raise inside run_one still frees the reservation and counts as a failure (the other workers stop)
+                with _lock:
+                    del state['flying'][run.path]
+                    if not ok:
+                        state['failed'] += 1
+                        state['stop'] = state['stop'] or 'failure'
 
     threads = [threading.Thread(target=worker) for _ in range(JOBS)]
     for t in threads:
@@ -655,9 +674,12 @@ def build():
                                'largestHeld': max(held_raw) if held_raw else None, 'largestInEffect': max(in_effect) if in_effect else None,
                                'inEffectNotEstablished': not_est, 'open': open_ks, 'labels': {str(K): c['label'] for K, c in cells.items()}})
         for K, c in cells.items():
-            data['cells'].append({**{k: c[k] for k in ('phys', 'setting', 'K', 'cap', 'held', 'lost', 'against', 'known', 'status', 'complete', 'carryLost', 'label')},
-                                  'seeds': {str(s): strip(m) for s, m in c['seeds'].items()}})
             cl = cell(phys, CLEAN_OF[src], K, cap)
+            # PLAN.md: a held cell whose no-source control is not held is flagged; the cell's own label does not change.
+            # Only a control that is settled as not held counts, not one that is still open.
+            data['cells'].append({**{k: c[k] for k in ('phys', 'setting', 'K', 'cap', 'held', 'lost', 'against', 'known', 'status', 'complete', 'carryLost', 'label')},
+                                  **({'controlNotHeld': True} if c['status'] == 'held' and cl['status'] == 'not held' else {}),
+                                  'seeds': {str(s): strip(m) for s, m in c['seeds'].items()}})
             if not any(x['phys'] == phys and x['setting'] == CLEAN_OF[src] and x['K'] == K and x['cap'] == cap for x in data['clean']):
                 data['clean'].append({**{k: cl[k] for k in ('phys', 'setting', 'K', 'cap', 'held', 'lost', 'known', 'status', 'complete')},
                                       'seeds': {str(s): strip(m) for s, m in cl['seeds'].items()}})
@@ -683,7 +705,13 @@ def build():
                 comps = [m['lateCompartments'] for m in c['seeds'].values() if m and m['against']]
                 cands.append((c['against'], sum(comps) / len(comps), c))
         cands.sort(key=lambda t: (-t[0], -t[1]))
-        out['confirm'] = [{'setting': c['setting'], 'phys': c['phys'], 'cap': c['cap'], 'K': c['K'], 'against': a, 'meanLateCompartments': m} for a, m, c in cands]
+        # The ranking can still change while a cell at this K has seeds outstanding: a candidate's own mean moves with
+        # its fourth seed, and an open cell can become a candidate. The settled outcome name is not touched.
+        cand_cells = [c for _a, _m, c in cands]
+        outstanding = [c for c in data['cells'] if kstar and c['K'] == kstar and (c['setting'], c['phys'], c['cap']) in keys and not c['complete'] and c['label'] != 'not held']
+        provisional = bool(cands) and bool(outstanding) and (len(cands) > 1 or any(c not in cand_cells for c in outstanding))
+        out['confirm'] = [{'setting': c['setting'], 'phys': c['phys'], 'cap': c['cap'], 'K': c['K'], 'against': a, 'meanLateCompartments': m, **({'provisional': True} if provisional else {})}
+                          for a, m, c in cands]
         return out
 
     # The outcome is named on the coordinator's grid; the same reading with the added rate is given beside it.
@@ -782,7 +810,8 @@ def table(md_path, json_path):
         cells = [c for c in d['cells'] if (c['setting'], c['phys'], c['cap']) == (g['setting'], g['phys'], g['cap'])]
         cells.sort(key=lambda c: c['K'])
         desc = '; '.join(f'K {c["K"]}: not run yet' if c['known'] == 0 else
-                         f'K {c["K"]}: {c["held"]} of {c["known"]}{"" if c["complete"] else " (seeds run so far)"}, {c["against"]} against, {c["label"] or "open"}' for c in cells)
+                         f'K {c["K"]}: {c["held"]} of {c["known"]}{"" if c["complete"] else " (seeds run so far)"}, {c["against"]} against, {c["label"] or "open"}'
+                         + (', FLAG: the no-source control is not held' if c.get('controlNotHeld') else '') for c in cells)
         passed = [str(x['K']) for x in d['gate'] if (x['source'], x['phys'], x['cap']) == (g['source'], g['phys'], g['cap']) and x['passed']]
         eff = g['largestInEffect'] or ('not established (a held cell does not count; nothing below it was run)' if g['inEffectNotEstablished'] else 'none')
         L.append(f'| {NAMES[g["setting"]]}{" (added)" if g["added"] else ""} | {PHYS_NAMES[g["phys"]]} | {g["cap"]} | {", ".join(map(str, g["aliveAfterStage2"])) or "none"} | '
@@ -839,7 +868,8 @@ def table(md_path, json_path):
         if o['confirm']:
             c = o['confirm'][0]
             L.append(f'\n## {title}\n\n{NAMES[c["setting"]]}, {PHYS_NAMES[c["phys"]]}, {c["cap"]} sites, K = {c["K"]} '
-                     f'({c["against"]} of 4 seeds holding against the parasite, {c["meanLateCompartments"]:.1f} late compartments). Candidates at this K: {len(o["confirm"])}.')
+                     f'({c["against"]} of 4 seeds holding against the parasite, {c["meanLateCompartments"]:.1f} late compartments). Candidates at this K: {len(o["confirm"])}.'
+                     + (' PROVISIONAL: a cell at this K still has seeds outstanding, and they can change which regime ranks first.' if c.get('provisional') else ''))
     text = '\n'.join(L) + '\n'
     print(text)
     if md_path:
@@ -874,6 +904,7 @@ def confirm_read(rest):
     probe = Run(LONG, phys, st, K, cap, True, 1)
 
     def load(arm_key, seed):
+        is_with = arm_key == 'with'
         gated = arm_key != 'ungated'
         setting = CLEAN_OF[src] if arm_key == 'without' else st
         r = Run(LONG, phys, setting, K, cap, gated, 1)
@@ -891,7 +922,9 @@ def confirm_read(rest):
         wrong = sorted(k for k in set(want) | set(s_['config']) if s_['config'].get(k, missing) != want.get(k, missing))
         if s_.get('protocol') != PROTOCOL or s_['steps'] != LONG or s_['residual'] != '0':
             wrong.append('protocol, steps or residual')
-        if s_['stepsRun'] > LONG or (s_['stepsRun'] < LONG and s_['lateMeanCompartments'] >= HELD_COMPARTMENTS):
+        # The arm that feeds the pass rule may not be an early stop that still clears the bar on post-end zeros. A control
+        # is only reported, with its stop step beside it: held or not by run.ts's rule (both thresholds).
+        if s_['stepsRun'] > LONG or (is_with and s_['stepsRun'] < LONG and s_['lateMeanCompartments'] >= HELD_COMPARTMENTS):
             wrong.append('stepsRun (a run that stopped early cannot be held)')
         # A full-length run must carry every report row, and so all ten late rows (steps 182,000 to 200,000);
         # a late mean over whichever rows happen to be there is not the pass rule's figure.
@@ -924,7 +957,8 @@ def confirm_read(rest):
             n_ungated += bool(u and u['held'])
             run_without += c is not None
             run_ungated += u is not None
-            show = lambda m: 'not run' if m is None else 'held' if m['held'] else f'not held (ran {m["stepsRun"]:,})'
+            show = lambda m: ('not run' if m is None else (f'held by the rule, but ended at step {m["stepsRun"]:,} (post-end censuses count as zeros)' if m['stepsRun'] < LONG else 'held')
+                              if m is None or m['held'] else f'not held (ran {m["stepsRun"]:,})')
             print(f'| {b // 4 + 1} | {seed} | {show(w)} | {fmt(w and w["lateCompartments"], 1)} | {fmt(w and w["lateParasiteShare"], 4)} | '
                   f'{"n/a" if w is None else "yes" if w["against"] else "no" + (" (" + w["guard"] + ")" if w["guard"] else "")} | {show(c)} | {show(u)} |')
         verdicts.append((block, n, done, n_without, run_without, n_ungated, run_ungated))

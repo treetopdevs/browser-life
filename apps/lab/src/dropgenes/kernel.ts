@@ -186,6 +186,11 @@ export function packDropGenesParams(cfg: DropGenesConfig): PackedDropGenesParams
   if (!Number.isSafeInteger(cfg.width) || cfg.width < 3 || !Number.isSafeInteger(cfg.height) || cfg.height < 3) {
     throw new Error(`Invalid grid dimensions: ${cfg.width}x${cfg.height}`);
   }
+  // The packed dimensions are `>>> 0`: a side above 2^32 - 1 would wrap there while the arrays are sized from the
+  // config. The tile count has to stay allocatable and below the matter bound's own scale.
+  if (cfg.width > 0xffffffff || cfg.height > 0xffffffff || cfg.width * cfg.height > 0x3fffffff) {
+    throw new Error(`Invalid grid dimensions: ${cfg.width}x${cfg.height} (each side at most 4294967295 and at most 1073741823 tiles)`);
+  }
   if (!Number.isSafeInteger(cfg.initMatterPerTile) || cfg.initMatterPerTile < 0) {
     throw new Error(`Invalid initMatterPerTile: ${cfg.initMatterPerTile}`);
   }
@@ -548,7 +553,7 @@ export class DropGenesKernel {
   constructor(cfg: DropGenesConfig) {
     this.cfg = cfg;
     this.p = packDropGenesParams(cfg);
-    const n = cfg.width * cfg.height;
+    const n = this.p.width * this.p.height;
     this.nTiles = n;
     this.A = new Uint32Array(n);
     this.F = new Uint32Array(n);
@@ -599,17 +604,21 @@ export class DropGenesKernel {
     if (!Number.isSafeInteger(cx) || !Number.isSafeInteger(cy)) throw new Error(`Invalid droplet coordinates: (${cx}, ${cy})`);
     if (!Number.isFinite(radius) || radius < 0) throw new Error(`Invalid droplet radius: ${radius}`);
     if (!Number.isFinite(density) || density < 0 || density > 32) throw new Error(`Invalid droplet density: ${density} (expected [0, 32])`);
-    const W = this.cfg.width;
-    const H = this.cfg.height;
+    // The grid the arrays were allocated for, not whatever the caller's config object says now.
+    const W = this.p.width;
+    const H = this.p.height;
     const target = Math.round(density * DG_SCALE);
     const r2 = radius * radius;
+    // The centre is taken modulo the grid, so a centre outside it names the tile it wraps to.
+    const cxn = ((cx % W) + W) % W;
+    const cyn = ((cy % H) + H) % H;
     const targets: number[] = [];
     let needed = 0;
     for (let y = 0; y < H; y++) {
-      let dy = Math.abs(y - cy);
+      let dy = Math.abs(y - cyn);
       if (dy > H * 0.5) dy = H - dy;
       for (let x = 0; x < W; x++) {
-        let dx = Math.abs(x - cx);
+        let dx = Math.abs(x - cxn);
         if (dx > W * 0.5) dx = W - dx;
         if (dx * dx + dy * dy <= r2) {
           targets.push(y * W + x);
@@ -617,10 +626,14 @@ export class DropGenesKernel {
         }
       }
     }
+    // Refuse before any pool is debited: a tile may not end above the wall bound the flux arithmetic is proven for.
+    for (const i of targets) {
+      if (this.W[i] + target > DG_WALL_MAX) throw new Error(`Seeding tile ${i} would put its wall at ${this.W[i] + target}, above the bound ${DG_WALL_MAX}`);
+    }
     let totalSoluble = 0;
     for (let i = 0; i < this.nTiles; i++) totalSoluble += this.A[i] + this.F[i];
     if (totalSoluble < needed) throw new Error(`Not enough soluble matter (need ${needed}, have ${totalSoluble})`);
-    const startOff = (((cy % H) + H) % H) * W + (((cx % W) + W) % W);
+    const startOff = cyn * W + cxn;
     let rem = needed;
     for (let pass = 0; pass < 2 && rem > 0; pass++) {
       const pool = pass === 0 ? this.A : this.F;

@@ -214,19 +214,38 @@ def step0_more():
 
 # ---- step 2: the clean gate ----
 
-def need_step0():
-    """The screen is at this K only if the unlinked arm with the parasite is held on at most 1 of 4 (2 of 8) here."""
+def control_verdict():
+    """At the current K: 'go' when the unlinked arm with the parasite is held on at most 1 of 4 (2 of 8, or the unclear
+    middle), 'escalate' when capacity suffices here. Stops while step 0 is incomplete."""
     first = step0_count('GATED_PAR', [1, 2, 3, 4])
     if first is None or step0_count('GATED_CLEAN', [1, 2, 3, 4]) is None:
-        raise SystemExit('step 0 is not complete: step0, then step0-200')
+        raise SystemExit(f'step 0 is not complete at K = {K}: step0, then step0-200')
     if first == 2:
         more = step0_count('GATED_PAR', [5, 6, 7, 8])
         if more is None or step0_count('GATED_CLEAN', [5, 6, 7, 8]) is None:
-            raise SystemExit('step 0 is held on 2 of 4: step0-more first')
-        if first + more >= 6:
-            raise SystemExit(f'step 0: unlinked GATED_PAR is held on {first + more} of 8 at K = {K}; capacity suffices at this K (PLAN.md, step 0)')
-    elif first >= 3:
-        raise SystemExit(f'step 0: unlinked GATED_PAR is held on {first} of 4 at K = {K}; capacity suffices at this K (PLAN.md, step 0)')
+            raise SystemExit(f'step 0 is held on 2 of 4 at K = {K}: step0-more first')
+        return ('escalate', first + more) if first + more >= 6 else ('go', first + more)
+    return ('escalate', first) if first >= 3 else ('go', first)
+
+
+def need_step0():
+    """The screen is at this K only if every smaller K's control sent it up and this K's control lets it stay
+    (PLAN.md, step 0: the smallest K where the unlinked arm with the parasite is held on at most 1 of 4, 2 of 8)."""
+    global K, G_SITES
+    k0, g0 = K, G_SITES
+    try:
+        for lower in (4, 6, 8):
+            if lower >= k0:
+                break
+            K, G_SITES = lower, 16 * lower
+            verdict, held_n = control_verdict()
+            if verdict != 'escalate':
+                raise SystemExit(f'step 0 at K = {lower} did not call for a larger K (unlinked GATED_PAR held on {held_n}); the screen is not opened at K = {k0}')
+    finally:
+        K, G_SITES = k0, g0
+    verdict, held_n = control_verdict()
+    if verdict == 'escalate':
+        raise SystemExit(f'step 0: unlinked GATED_PAR is held on {held_n} at K = {K}; capacity suffices at this K (PLAN.md, step 0)')
 
 
 def gate_survivors():

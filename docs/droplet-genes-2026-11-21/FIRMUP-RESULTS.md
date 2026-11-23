@@ -53,9 +53,11 @@ deno run -A --no-lock experiments/dropgenes/summarize.ts <first-rung worktree>/r
 (`<first-rung worktree>` is PLAN.md's `../browser-life-dropgenes`, beside the main checkout; rows
 `large | 2 | 16`; the tables this prints that TABLES.md already has are byte-identical to TABLES.md).
 
+*Note, 2026-11-22 (review of PR 183): in the tables, a run that ended before the last tenth of the planned run shows 0.0 late compartments and 0.00 complete share (the `UNGATED_PAR` rows), not n/a. That is run.ts's rule, which counts the censuses after a world has ended as zeros, and the held count depends on it; the generated tables are unchanged. The "n/a where a run ended before it" in the table headings does not apply to those figures.*
+
 A few figures below are not printed by the summariser: the same-seed ratios and differences, the share of
 daughters read at 500 steps, and the speeds. They come from the run files' summaries by a short script kept
-with the raw runs (not in git), run on both directories:
+with the raw runs (not in git), run on both directories. *(Note, 2026-11-22, review of PR 183: byte-identical copies of `derived.py`, `compare_repro.py` and `derived_b.py` are now in git under `experiments/dropgenes/firmup/`; the commands below name the copies kept with the raw runs.)*
 
 ```bash
 python3 -I runs/dropgenes/firmup/derived.py runs/dropgenes/firmup/a-gate

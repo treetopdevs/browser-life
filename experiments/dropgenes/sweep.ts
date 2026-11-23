@@ -39,7 +39,9 @@ function parseArgs(argv: string[]): Record<string, string> {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (!a.startsWith('--')) throw new Error(`Unexpected argument: ${a}`);
-    out[a.slice(2)] = argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[++i] : 'true';
+    // Every option of this sweep takes an operand; a bare one is a mistake, not the string 'true'.
+    if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) throw new Error(`Option ${a} needs a value`);
+    out[a.slice(2)] = argv[++i];
   }
   return out;
 }
@@ -52,10 +54,18 @@ for (const k of ['dir', 'genes', 'caps', 'seeds', 'steps', 'mutPar']) if (args[k
 
 const list = (s: string) => s.split(',').map((v) => v.trim()).filter(Boolean);
 const dir = args.dir;
-const genesList = list(args.genes).map(Number);
-const caps = list(args.caps).map(Number);
-const seeds = list(args.seeds).map(Number);
-const arms = list(args.arms ?? Object.keys(ARMS).join(','));
+// Numbers are normalised before names are built ("1" and "01" are one seed), and a repeated value is queued once:
+// two queue entries with one --out path could run side by side and fight over the same .tmp file.
+const uniq = <T,>(xs: T[]): T[] => [...new Set(xs)];
+const genesList = uniq(list(args.genes).map(Number));
+const caps = uniq(list(args.caps).map(Number));
+const seeds = uniq(list(args.seeds).map(Number));
+const arms = uniq(list(args.arms ?? Object.keys(ARMS).join(',')));
+for (const [k, v] of [['genes', genesList], ['caps', caps], ['seeds', seeds], ['arms', arms]] as const) {
+  if (v.length === 0) throw new Error(`--${k} has no values`);
+}
+// The kernel reads the seed as a u32: 1 and 4294967297 would be one trajectory under two names.
+for (const sd of seeds) if (!Number.isInteger(sd) || sd < 0 || sd > 0xffffffff) throw new Error(`Seed must be an integer in 0..4294967295, got ${sd}`);
 const steps = Number(args.steps);
 const mutPar = Number(args.mutPar);
 const jobs = Number(args.jobs ?? 6);
@@ -64,6 +74,8 @@ const tag = args.tag ? `${args.tag}-` : '';
 // Ladder worlds: with --levels every arm is a ladder arm (and is registered in ARMS as a gated or ungated arm
 // with no parasite origin, which is what the existing loop below reads); without it none is.
 const ladderLevels = args.levels === undefined ? 0 : Number(args.levels);
+// A supplied --levels is checked before it decides whether the ladder is on: a typo must not run the first-rung grid.
+if (args.levels !== undefined && (!Number.isInteger(ladderLevels) || ladderLevels < 0)) throw new Error(`--levels must be a non-negative integer, got ${args.levels}`);
 const ladderMut = Number(args.mutLevel ?? 0);
 const ladderStart = Number(args.startLevel ?? 0);
 if (ladderLevels > 0) {
@@ -71,7 +83,7 @@ if (ladderLevels > 0) {
   if (Number(args.mutPar) !== 0) throw new Error('--levels needs --mutPar 0');
   if (![ladderLevels, ladderMut, ladderStart].every(Number.isFinite)) throw new Error('Non-numeric ladder option');
   for (const a of arms) {
-    if (!LADDER_ARMS[a]) throw new Error(`Arm ${a} is not a ladder arm`);
+    if (!Object.hasOwn(LADDER_ARMS, a)) throw new Error(`Arm ${a} is not a ladder arm`);
     ARMS[a] = { gated: LADDER_ARMS[a].gated, par: false };
   }
 } else if (args.mutLevel !== undefined || args.startLevel !== undefined) {
@@ -80,7 +92,7 @@ if (ladderLevels > 0) {
 /** The ladder keys of an arm's configuration, exactly as run.ts builds them (none for a first-rung arm). */
 const ladderWant = (arm: string): Partial<DropGenesConfig> =>
   ladderLevels > 0 ? { ladderLevels, mutLevel: ladderMut, ladderNeutral: LADDER_ARMS[arm].neutral } : {};
-for (const a of arms) if (!ARMS[a]) throw new Error(`Unknown arm ${a}`);
+for (const a of arms) if (!Object.hasOwn(ARMS, a)) throw new Error(`Unknown arm ${a}`);
 if (![...genesList, ...caps, ...seeds, steps, mutPar, jobs, size].every(Number.isFinite)) throw new Error('Non-numeric option');
 const ovObj = (args.ov ? JSON.parse(args.ov) : {}) as Record<string, unknown>;
 /** Linked runs: the founders' template form this sweep asks for (run.ts default: linked when linking is on). */

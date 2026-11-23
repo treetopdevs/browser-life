@@ -9,7 +9,7 @@
  * it is "incomplete".
  */
 interface Ladder { levels: number; mutLevel: number; startLevel: number; lateLevelMean: number | null; lateTopShare: number | null; lateCompLevelSd: number | null }
-interface Summary { config: { gated: boolean; ladderNeutral?: boolean; geneSat: number }; seed: number; steps: number; held: boolean; extinctAt: number | null; lateMeanCompartments: number; ladder: Ladder }
+interface Summary { config: { gated: boolean; ladderNeutral?: boolean; geneSat: number; [k: string]: unknown }; protocol?: unknown; seed: number; steps: number; held: boolean; extinctAt: number | null; lateMeanCompartments: number; ladder: Ladder }
 
 const root = Deno.args[0];
 if (!root) throw new Error('usage: trait-screen-read.ts <screen dir> [--horizon steps]');
@@ -48,7 +48,15 @@ for (const name of settings) {
   const get = (start: number, seed: number) => runs.find((r) => r.ladder.startLevel === start && r.seed === seed);
   const notHeld = runs.filter((r) => !r.held).length;
   // Two different start levels are needed: with one, a run would be compared with itself and "qualify".
-  const complete = starts.length === 2 && wantSeeds.every((s) => get(lo, s) && get(hi, s)) && seeds.every((s) => wantSeeds.includes(s));
+  // Both starts must be runs of one calibration setting: one run per start and seed, one effective configuration
+  // and protocol apart from seed, and one planned horizon (--horizon only sets the neutral prediction below).
+  const one = new Set(runs.map((r) => `${r.ladder.startLevel}|${r.seed}`)).size === runs.length;
+  const sameSetting = (r: Summary) => {
+    const { seed: _s, ...cfg } = r.config as Record<string, unknown>;
+    return JSON.stringify([Object.entries(cfg).sort(([a], [b]) => a.localeCompare(b)), r.protocol ?? null, r.steps, r.ladder.levels, r.ladder.mutLevel]);
+  };
+  const consistent = one && new Set(runs.map(sameSetting)).size === 1;
+  const complete = consistent && starts.length === 2 && wantSeeds.every((s) => get(lo, s) && get(hi, s)) && seeds.every((s) => wantSeeds.includes(s));
   let moved = false;
   let converging = true;
   const gaps: number[] = [];

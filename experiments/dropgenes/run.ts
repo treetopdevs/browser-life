@@ -72,9 +72,13 @@ for (const k of Object.keys(args)) if (!KNOWN.has(k)) throw new Error(`Unknown o
 const size = num(args, 'size', 64);
 const steps = num(args, 'steps', 20000);
 const seed = num(args, 'seed', 1);
+// The kernel reads the seed as a u32, so 1 and 4294967297 would run the same trajectory under two recorded seeds.
+if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error(`--seed must be an integer in 0..4294967295, got ${args.seed}`);
 const genes = num(args, 'genes', 2);
 const censusEvery = num(args, 'census', 50);
 const reportEvery = num(args, 'report', 2000);
+if (!Number.isInteger(censusEvery) || censusEvery < 1) throw new Error(`--census must be a positive integer, got ${args.census}`);
+if (!Number.isInteger(reportEvery) || reportEvery < 1) throw new Error(`--report must be a positive integer, got ${args.report}`);
 const founders = args.founders ?? 'grid';
 const spacing = num(args, 'spacing', 16);
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<DropGenesConfig>;
@@ -143,6 +147,8 @@ const copiesNow = (): Uint32Array => (copiesBuf ? geneCopiesWithLinked(world.T, 
 
 /** Steps after a split at which daughters are read again for the heredity readout (PLAN.md amendment 1). */
 const HEREDITY_DELAY = 500;
+// A split seen at census s is read at s + HEREDITY_DELAY, which is only observed when that is a census step.
+if (HEREDITY_DELAY % censusEvery !== 0) throw new Error(`--census must divide the heredity delay ${HEREDITY_DELAY}, got ${censusEvery}`);
 const tracker = new CompartmentTracker(size, size, S, K, {
   wallMin: cfg.gateHi, bareMax: cfg.gateLo, completeMin: 1, heredityDelay: HEREDITY_DELAY,
   ...(ladderOn ? { ladderLevels, ladderNeutral } : {}),

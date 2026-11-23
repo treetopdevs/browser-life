@@ -20,7 +20,9 @@ function parseArgs(argv: string[]): Record<string, string> {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (!a.startsWith('--')) throw new Error(`Unexpected argument: ${a}`);
-    out[a.slice(2)] = argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[++i] : 'true';
+    // Every option takes an operand; a bare one (for example a trailing --out) is a mistake, not the string 'true'.
+    if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) throw new Error(`Option ${a} needs a value`);
+    out[a.slice(2)] = argv[++i];
   }
   return out;
 }
@@ -43,9 +45,39 @@ for (const k of ['seed', 'width', 'height', 'genes', 'capPerTile', 'gated', 'mut
 const slash = args.out.lastIndexOf('/');
 if (slash > 0) await Deno.mkdir(args.out.slice(0, slash), { recursive: true });
 const done = new Set<string>();
-try {
-  for (const line of (await Deno.readTextFile(args.out)).split('\n')) if (line.trim()) done.add(JSON.parse(line).key);
-} catch { /* no file yet */ }
+{
+  // Resume from the rows already there. A crash can leave a half-written last line: cut it off at the last intact
+  // row, so that the next append does not join onto it. A complete last row without its newline gets one. Any
+  // other read or parse failure is reported rather than treated as a missing file.
+  let text = '';
+  try {
+    text = await Deno.readTextFile(args.out);
+  } catch (e) {
+    if (!(e instanceof Deno.errors.NotFound)) throw e;
+  }
+  const lines = text.split('\n');
+  const tail = lines.pop() ?? ''; // what follows the last newline: '' for a file that ends in one
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    try {
+      done.add(JSON.parse(line).key);
+    } catch {
+      throw new Error(`${args.out}: a row before the end of the file is not valid JSON: ${line.slice(0, 80)}`);
+    }
+  }
+  if (tail.trim()) {
+    let ok = true;
+    try {
+      done.add(JSON.parse(tail).key);
+    } catch {
+      ok = false;
+    }
+    if (ok) await Deno.writeTextFile(args.out, '\n', { append: true });
+    else await Deno.truncate(args.out, new TextEncoder().encode(text).length - new TextEncoder().encode(tail).length);
+  } else if (tail !== '') {
+    await Deno.truncate(args.out, new TextEncoder().encode(text).length - new TextEncoder().encode(tail).length);
+  }
+}
 
 /** Gene function per tile by the kernel's ladder rule, from the state (the kernel keeps its own copy private). */
 function geneQOf(w: DropGenesKernel, i: number): number {

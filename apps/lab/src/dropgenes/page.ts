@@ -93,8 +93,12 @@ function startWorker(): Worker {
     manualInFlight = false;
     if (m.type === 'error') fail(m.message);
     else {
-      show(m.frame);
-      if (manual && !playing && !m.frame.ended) say(`Paused at step ${fmt(m.frame.step)}.`);
+      // One announcement per answer: a world notice (ended, no compartments left) and, for a step taken by hand,
+      // the pause message, together, so that the second does not replace the first in the live region.
+      const notice = show(m.frame);
+      const pause = manual && !playing && !m.frame.ended ? `Paused at step ${fmt(m.frame.step)}.` : null;
+      const message = [notice, pause].filter(Boolean).join(' ');
+      if (message) say(message);
     }
   };
   w.onerror = (event) => { if (w === worker) fail(event.message || 'the worker could not run'); };
@@ -120,6 +124,7 @@ function reset(note = ''): void {
   }
   gen++;
   frame = null;
+  clearDisplay();
   stepsWanted = 0;
   manualInFlight = false;
   emptyAnnounced = false;
@@ -132,6 +137,17 @@ function reset(note = ''): void {
   renderRecorded();
   renderLegend();
   syncButtons();
+}
+
+/** The picture, readouts and charts belong to the world that was replaced: blank them until the new world's first frame. */
+function clearDisplay(): void {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const id of ['r-step', 'r-comps', 'r-complete', 'r-complete-n', 'r-copies', 'r-par', 'r-fis', 'r-dead']) set(id, '');
+  set('r-res', 'res ...');
+  el('r-res').className = 'badge-res';
+  set('r-res-word', '');
+  set('summary', 'Building the new world.');
+  drawCharts(true);
 }
 
 function fail(message: string): void {
@@ -168,7 +184,9 @@ function syncButtons(): void {
 
 let summaryAt = 0;
 
-function show(f: Frame): void {
+/** Draws a frame. Returns the notice about the world's state that this frame calls for, or null; the caller announces it. */
+function show(f: Frame): string | null {
+  let notice: string | null = null;
   const first = frame === null;
   frame = f;
   ctx.putImageData(new ImageData(new Uint8ClampedArray(f.rgba), ARENA, ARENA), 0, 0);
@@ -201,18 +219,20 @@ function show(f: Frame): void {
     set('summary', summarise(f));
   }
   if (f.ended) {
-    if (!endAnnounced) say(`The world ended at step ${fmt(f.step)}: no wall is left, and wall is only made where there is wall, so no compartment can form again. Start again, or change a setting.`);
+    if (!endAnnounced) notice = `The world ended at step ${fmt(f.step)}: no wall is left, and wall is only made where there is wall, so no compartment can form again. Start again, or change a setting.`;
     endAnnounced = true;
     playing = false;
     set('r-rate', 'ended');
-  } else if (f.emptySince !== null && !emptyAnnounced) {
+  } else if (f.emptySince !== null && f.readouts.compartments === 0 && !emptyAnnounced) {
+    // The frame's own count decides: emptySince is the last census's, and the frame can be a later step.
     emptyAnnounced = true;
-    say(`No compartments are left as of step ${fmt(f.emptySince)}. Thin wall remains and is still fading.`);
+    notice = `No compartments are left as of step ${fmt(f.emptySince)}. Thin wall remains and is still fading.`;
   } else if (f.emptySince === null) {
     emptyAnnounced = false;
   }
   drawCharts(false);
   syncButtons();
+  return notice;
 }
 
 function summarise(f: Frame): string {
