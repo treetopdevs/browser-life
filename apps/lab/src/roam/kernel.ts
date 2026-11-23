@@ -118,6 +118,9 @@ const CH_TICK_X = 6;
 const CH_TICK_Y = 7;
 const CH_BUMP = 8;
 const CH_PLACE = 9;
+const CH_TIP = 10;
+const CH_SHARE = 11;
+const CH_TURNS = 12;
 const CH_MUT = 16; // + gene index
 const CH_FOUND = 40;
 
@@ -140,8 +143,9 @@ export interface RoamCensus {
   step: number;
   bodies: number;
   cells: number;
-  /** Largest body, in cells. */
+  /** Largest body, in cells, and how many bodies are a single cell. */
   largest: number;
+  singles: number;
   /** Matter on the ground, in cells, and in the reservoir. */
   food: number;
   held: number;
@@ -155,6 +159,8 @@ export interface RoamCensus {
   releases: number;
   cellDeaths: number;
   bodyDeaths: number;
+  /** Body deaths of a cell that was let go at birth and never divided: it was never part of a larger body. */
+  newbornDeaths: number;
   /** Tiles moved, summed over cells. */
   cellMoves: number;
   blocked: number;
@@ -180,6 +186,8 @@ export class RoamWorld {
   /** Founder family (for colour) and a serial number no two cells ever share. */
   readonly fam: Uint16Array;
   readonly cid: Uint32Array;
+  /** 1 once the cell has divided or has been joined to another cell. */
+  readonly grew: Uint8Array;
   nextCid = 1;
   scent: Uint32Array;
   private scentNext: Uint32Array;
@@ -203,6 +211,7 @@ export class RoamWorld {
   releases = 0;
   cellDeaths = 0;
   bodyDeaths = 0;
+  newbornDeaths = 0;
   cellMoves = 0;
   blocked = 0;
   patches = 0;
@@ -251,6 +260,7 @@ export class RoamWorld {
     this.bondS = new Uint8Array(n);
     this.fam = new Uint16Array(n);
     this.cid = new Uint32Array(n);
+    this.grew = new Uint8Array(n);
     this.scent = new Uint32Array(n);
     this.scentNext = new Uint32Array(n);
     this.label = new Int32Array(n);
@@ -389,6 +399,7 @@ export class RoamWorld {
     this.store[c] = 0;
     this.label[c] = 0;
     this.cid[c] = 0;
+    this.grew[c] = 0;
     this.bondE[c] = 0;
     this.bondS[c] = 0;
     this.bondE[this.nb(c, 2)] = 0;
@@ -405,6 +416,7 @@ export class RoamWorld {
     let len = this.bodyLen[k];
     const anchor = this.cells[start];
     const label = this.label;
+    const newborn = len === 1 && this.grew[anchor] === 0;
 
     // A new heading for the whole body, at the mean rate its cells ask for.
     let turnSum = 0;
@@ -476,20 +488,32 @@ export class RoamWorld {
     pool -= pay;
     this.reservoir += pay;
 
-    // Starve: give up the cell found last (a tip of the body) until the rest can be kept.
+    // Starve: give up a tip of the body (a cell with one bond), which tip by a hash, until the rest can be kept.
     while (len > 0 && pool < len * cfg.minStore) {
-      this.removeCell(this.cells[start + len - 1]);
+      let at = len - 1;
+      let best = -1;
+      for (let j = 0; j < len && len > 1; j++) {
+        const c = this.cells[start + j];
+        if (this.bondE[c] + this.bondS[c] + this.bondE[this.nb(c, 2)] + this.bondS[this.nb(c, 3)] !== 1) continue;
+        const h = roamHash(seed, t, c, CH_TIP);
+        if (best < 0 || h < best) { best = h; at = j; }
+      }
+      this.removeCell(this.cells[start + at]);
+      this.cells[start + at] = this.cells[start + len - 1];
       len--;
     }
     this.bodyLen[k] = len;
     if (len === 0) {
       this.reservoir += pool;
       this.bodyDeaths++;
+      if (newborn) this.newbornDeaths++;
       return;
     }
     const each = Math.floor(pool / len);
     const extra = pool - each * len;
-    for (let j = 0; j < len; j++) this.store[this.cells[start + j]] = each + (j < extra ? 1 : 0);
+    // The odd units go to a run of cells that starts at a hash-chosen place in the walk.
+    const from = roamHash(seed, t, anchor, CH_SHARE) % len;
+    for (let j = 0; j < len; j++) this.store[this.cells[start + ((from + j) % len)]] = each + (j < extra ? 1 : 0);
   }
 
   /** Slide body `k` one tile; false (and nothing changes) when a tile it needs holds another body's cell. */
@@ -508,11 +532,12 @@ export class RoamWorld {
       const c = cells[start + j];
       this.mStore[j] = this.store[c];
       this.mCid[j] = this.cid[c];
-      this.mMeta[j] = this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4);
+      this.mMeta[j] = this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20);
       for (let g = 0; g < ROAM_GENES; g++) this.mGenes[j * ROAM_GENES + g] = this.genes[c * ROAM_GENES + g];
       this.alive[c] = 0;
       this.store[c] = 0;
       this.cid[c] = 0;
+      this.grew[c] = 0;
       this.bondE[c] = 0;
       this.bondS[c] = 0;
       this.label[c] = 0;
@@ -528,7 +553,8 @@ export class RoamWorld {
       this.heading[to] = meta & 3;
       this.bondE[to] = (meta >>> 2) & 1;
       this.bondS[to] = (meta >>> 3) & 1;
-      this.fam[to] = meta >>> 4;
+      this.fam[to] = (meta >>> 4) & 0xffff;
+      this.grew[to] = (meta >>> 20) & 1;
       for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.mGenes[j * ROAM_GENES + g];
       this.label[to] = k;
       cells[start + j] = to;
@@ -579,8 +605,10 @@ export class RoamWorld {
     const start = this.bodyStart[k];
     const len = this.bodyLen[k];
     let size = len;
+    // Which cell gets the first turn is drawn afresh each step.
+    const from = len > 0 ? roamHash(seed, t, this.moveKey[k], CH_TURNS) % len : 0;
     for (let j = 0; j < len; j++) {
-      const c = this.cells[start + j];
+      const c = this.cells[start + ((from + j) % len)];
       if (this.store[c] < 2 * cfg.birthStore) continue;
       const head = this.heading[c];
       const shape = this.genes[c * ROAM_GENES + G_SHAPE];
@@ -613,6 +641,8 @@ export class RoamWorld {
         this.genes[to * ROAM_GENES + g] = v;
       }
       this.divisions++;
+      this.grew[c] = 1;
+      this.grew[to] = 0;
       if (size < this.adultSize(this.genes[c * ROAM_GENES + G_ADULT])) {
         if (d === 0) this.bondE[c] = 1;
         else if (d === 1) this.bondS[c] = 1;
@@ -620,6 +650,7 @@ export class RoamWorld {
         else this.bondS[to] = 1;
         this.heading[to] = head;
         this.label[to] = k;
+        this.grew[to] = 1;
         size++;
       } else {
         // Let go: a new body of one cell, heading away from its parent.
@@ -644,7 +675,7 @@ export class RoamWorld {
     }
     if (count > 0) {
       // The order bodies move and divide in is drawn afresh each step: sorted by a hash of where each one was.
-      if (this.order.length < count) { this.order = new Int32Array(this.bodyStart.length); this.orderKey = new Float64Array(this.bodyStart.length); }
+      if (this.order.length <= count) { this.order = new Int32Array(this.bodyStart.length); this.orderKey = new Float64Array(this.bodyStart.length); }
       const order = this.order.subarray(0, count);
       const key = this.orderKey;
       for (let q = 0; q < count; q++) { order[q] = q + 1; key[q + 1] = roamHash(cfg.seed, t, this.moveKey[q + 1], CH_ORDER); }
@@ -675,12 +706,17 @@ export class RoamWorld {
     }
     const sizes = this.bodySizes();
     let largest = 0;
-    for (const s of sizes) if (s > largest) largest = s;
+    let singles = 0;
+    for (const s of sizes) {
+      if (s > largest) largest = s;
+      if (s === 1) singles++;
+    }
     return {
       step: this.step,
       bodies: sizes.length,
       cells,
       largest,
+      singles,
       food,
       held,
       reservoir: this.reservoir,
@@ -690,6 +726,7 @@ export class RoamWorld {
       releases: this.releases,
       cellDeaths: this.cellDeaths,
       bodyDeaths: this.bodyDeaths,
+      newbornDeaths: this.newbornDeaths,
       cellMoves: this.cellMoves,
       blocked: this.blocked,
       patches: this.patches,
@@ -739,7 +776,7 @@ export class RoamWorld {
       if (!this.alive[i]) continue;
       mix(i);
       mix(this.store[i]);
-      mix(this.heading[i] | (this.bondE[i] << 2) | (this.bondS[i] << 3) | (this.fam[i] << 4));
+      mix(this.heading[i] | (this.bondE[i] << 2) | (this.bondS[i] << 3) | (this.fam[i] << 4) | (this.grew[i] << 20));
       mix(this.cid[i]);
       for (let g = 0; g < ROAM_GENES; g++) mix(this.genes[i * ROAM_GENES + g]);
     }

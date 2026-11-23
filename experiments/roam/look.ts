@@ -4,7 +4,7 @@
  *
  *   deno run -A --no-lock experiments/roam/look.ts --seed 1 --steps 20000 --start chasers --out runs/roam/a
  *
- * Options: --seed, --steps, --size (128), --start (chasers | wanderers | sitters | chasers-sitters |
+ * Options: --seed, --steps, --size (128), --start (chasers | wanderers | sitters | singles | chasers-sitters | chasers-singles |
  * chasers-wanderers | all), --founders, --mut (chance per gene per division), --report (1000), --frames,
  * --scale (4), --movie N (with --movieFrom S to start the frames at step S), --paint (family | genes), --ov '{json}' (config overrides), --out dir.
  * Each row's "travel" is the mean straight-line distance, in tiles, that cells alive at both ends moved over the last
@@ -46,7 +46,7 @@ if (!(start in ROAM_STARTS)) throw new Error(`--start ${start}: one of ${Object.
 const out = args.out ?? 'runs/roam/look';
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<RoamConfig>;
 
-const world = foundRoam({ seed: num('seed', 1), size: args.size === undefined ? undefined : num('size', 128), start, founders: args.founders === undefined ? undefined : num('founders', 48), mut: args.mut === undefined ? undefined : num('mut', 0.02), overrides });
+const world = foundRoam({ seed: num('seed', 1), size: args.size === undefined ? undefined : num('size', 128), start, founders: args.founders === undefined ? undefined : int('founders', 48, 1), mut: args.mut === undefined ? undefined : num('mut', 0.02), overrides });
 const side = world.size * scale;
 const bodyOf = new Int32Array(world.n);
 
@@ -72,7 +72,7 @@ const t0 = performance.now();
 const fmt = (x: number) => x.toFixed(0).padStart(5);
 
 console.log(`roam ${start} seed ${world.cfg.seed} size ${world.size} matter ${world.total} mut ${world.cfg.mut}`);
-console.log('   step bodies cells  big   food  held  resv res  div/k rel/k die/k travel moved  ' + ROAM_GENE_NAMES.join('  '));
+console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k newb/k travel moved  ' + ROAM_GENE_NAMES.join('  '));
 let prev = world.census();
 for (let s = 0; s <= steps; s++) {
   if (movie > 0 && s >= movieFrom && (s - movieFrom) % movie === 0) writePng(`${out}/frames/f${String(movieN++).padStart(5, '0')}.png`, side, side, picture());
@@ -85,8 +85,8 @@ for (let s = 0; s <= steps; s++) {
     const per = 1000 / report;
     const fams = roamFamilies(world).filter((f) => f.cells > 0).map((f) => `${f.name} ${f.cells}`).join(', ');
     console.log(
-      `${String(s).padStart(7)} ${fmt(c.bodies)} ${fmt(c.cells)} ${fmt(c.largest)} ${String(c.food).padStart(6)} ${String(c.held).padStart(6)} ${String(c.reservoir).padStart(6)} ${c.residual}  ` +
-        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.bodyDeaths - prev.bodyDeaths) * per)} ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
+      `${String(s).padStart(7)} ${fmt(c.bodies)} ${fmt(c.singles)} ${fmt(c.cells)} ${fmt(c.largest)} ${String(c.food).padStart(6)} ${String(c.held).padStart(6)} ${String(c.reservoir).padStart(6)} ${c.residual}  ` +
+        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.bodyDeaths - prev.bodyDeaths) * per)} ${fmt((c.newbornDeaths - prev.newbornDeaths) * per)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
         c.genes.map((g) => g.toFixed(0).padStart(5)).join(' ') + `  | ${fams}`,
     );
     rows.push({ ...c, travel: lastTravel, families: roamFamilies(world) });

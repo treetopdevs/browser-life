@@ -24,9 +24,9 @@ describe('roam world', () => {
     expect(w.census().residual).toBe(0);
     for (let s = 0; s < 3000; s++) {
       w.stepOnce();
-      if (s % 10 !== 0) continue;
       const c = w.census();
       expect(c.residual).toBe(0);
+      if (s % 10 !== 0) continue;
       expect(bondsSound(w)).toBe(true);
       const ids = new Set<number>();
       for (let i = 0; i < w.n; i++) if (w.alive[i]) ids.add(w.cid[i]);
@@ -143,13 +143,42 @@ describe('roam world', () => {
       const genes = [0, 0, -512, 0, 0];
       genes[G_ADULT] = gene;
       expect(w.found(200, genes, 3)).toBe(true);
+      let biggest = 1;
       for (let s = 0; s < 600; s++) {
         for (let i = 0; i < w.n; i++) if (w.alive[i] && w.reservoir > 0) { w.food[i]++; w.reservoir--; }
+        const before = w.census().releases;
         w.stepOnce();
+        biggest = Math.max(biggest, ...w.bodySizes());
+        // A daughter is let go only in a step by whose end her mother's body has its adult size.
+        if (w.census().releases > before) expect(biggest).toBe(adult);
       }
-      expect(Math.max(...w.bodySizes())).toBe(adult);
-      expect(w.census().releases > 0).toBe(true);
+      expect(biggest).toBe(adult);
+      expect(w.census().releases).toBeGreaterThan(0);
     }
+  });
+
+  it('counts one-cell bodies, and counts a death as a newborn\'s only when the cell never divided', () => {
+    // A lone cell with no food: one single, and its death is a newborn's.
+    const lone = new RoamWorld(small({ startPatches: 0, mut: 0, patchEvery: 1_000_000 }));
+    expect(lone.found(300, [0, 0, -512, -512, 0], 3, 40)).toBe(true);
+    expect(lone.census().singles).toBe(1);
+    lone.advance(2000);
+    expect(lone.census()).toMatchObject({ cells: 0, bodyDeaths: 1, newbornDeaths: 1, singles: 0 });
+    // A cell that divides once and lets the daughter go: two singles; the mother's death is not a newborn's.
+    const pair = new RoamWorld(small({ startPatches: 0, mut: 0, patchEvery: 1_000_000 }));
+    expect(pair.found(300, [0, 0, -512, -512, 0], 3, 2 * pair.cfg.birthStore)).toBe(true);
+    pair.stepOnce();
+    expect(pair.census()).toMatchObject({ cells: 2, bodies: 2, singles: 2, releases: 1 });
+    expect(pair.grew[300]).toBe(1);
+    pair.advance(4000);
+    expect(pair.census()).toMatchObject({ cells: 0, bodyDeaths: 2, newbornDeaths: 1 });
+    // A bonded pair is one body and no single.
+    const body = new RoamWorld(small({ startPatches: 0, mut: 0, patchEvery: 1_000_000 }));
+    expect(body.found(300, [0, 0, -512, 512, 0], 3, 2 * body.cfg.birthStore)).toBe(true);
+    body.stepOnce();
+    expect(body.census()).toMatchObject({ cells: 2, bodies: 1, singles: 0, releases: 0 });
+    body.advance(6000);
+    expect(body.census()).toMatchObject({ cells: 0, bodyDeaths: 1, newbornDeaths: 0 });
   });
 
   it('a copy error moves a gene by exactly one step, and with none every descendant matches its founder', () => {
@@ -184,6 +213,7 @@ describe('roam world', () => {
     expect(() => new RoamWorld(small({ minStore: 0 }))).toThrow('Invalid minStore');
     expect(() => new RoamWorld(small({ patchFood: 30_000 }))).toThrow('Invalid patchFood');
     expect(() => foundRoam({ seed: 1, start: 'nobody' as never })).toThrow('Unknown start');
+    expect(() => foundRoam({ seed: 1, founders: 1.5 })).toThrow('Invalid founders');
     const w = new RoamWorld(small());
     expect(() => w.found(0, [0, 0, 0, 0], 1)).toThrow('found needs 5 genes');
     expect(() => w.found(0, [0, 0, 0, 0, 900], 1)).toThrow('Invalid gene');

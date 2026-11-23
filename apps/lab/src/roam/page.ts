@@ -74,9 +74,9 @@ function show(f: RoamFrame): void {
   }
   set('r-step', fmt(c.step));
   set('r-rate', fmt(rate));
-  set('r-bodies', `${fmt(c.bodies)} (${fmt(c.cells)} cells)`);
+  set('r-bodies', `${fmt(c.bodies)} (${fmt(c.cells)} cells; ${fmt(c.singles)} are one cell)`);
   set('r-size', `${c.bodies ? (c.cells / c.bodies).toFixed(1) : '0'} (${c.largest})`);
-  set('r-life', `${fmt(f.rates.releases)} / ${fmt(f.rates.bodyDeaths)}`);
+  set('r-life', `${fmt(f.rates.releases)} / ${fmt(f.rates.bodyDeaths)} (${fmt(f.rates.newbornDeaths)} of them one cell that never divided)`);
   set('r-travel', `${f.rates.travel.toFixed(1)} tiles (${Math.round(f.rates.movedShare * 100)}% moved 2 or more)`);
   set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting`);
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);

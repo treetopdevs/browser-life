@@ -31,19 +31,25 @@ runner `experiments/roam/look.ts`, tests `apps/lab/test/roam.test.ts`.
 
 ![first 6,000 steps, a column every 750](first-6000-steps.png)
 
-- **Against the sentence: yes on all three parts, by my reading of frames; the user's eye decides.** Bodies travel
-  (cells alive at both ends of a 200-step window end a mean 4 to 6 tiles away, 51 to 82% of them 2 or more tiles),
-  a patch is eaten to nothing in a few hundred steps, and bodies die on the way (about 40 to 85 body deaths and as
-  many new bodies per 1,000 steps among about 340 to 410 bodies of 1 to 9 cells).
-- **The arena does not fill.** About 1,400 to 1,500 cells on 16,384 tiles (9%), held there by the total matter.
+- **Against the sentence: bodies travel and patches are eaten empty; "some starving" is true but a third of it
+  is newborns.** Cells alive at both ends of a 200-step window end a mean 4 to 6 tiles away (59 to 77% of them 2
+  or more tiles), a patch is eaten to nothing in a few hundred steps, and about 55 to 80 bodies die per 1,000
+  steps among 350 to 390 bodies of 1 to 9 cells, with as many new bodies. About a third of those deaths (19 to
+  32 per 1,000 steps) are cells let go at birth that never joined or made another cell; the rest had been part of
+  a larger body. This is my reading of frames and counts; the user's eye decides.
+- **The arena does not fill.** About 1,450 cells on 16,384 tiles (9%), held there by the total matter. About a
+  quarter of bodies are single cells at any time.
+- **Eight-cell bodies against one-cell bodies** (same genes except adult size, no copy errors, 160,000 steps):
+  the one-cell type booms first, then the eight-cell type overtakes it. On seed 2 the one-cell type is extinct by
+  step 160,000. On seed 1 it is behind (486 cells against 994) and not gone. This is the contest the droplet world
+  lost. The reason is a rule we wrote (a cell leaks through every outward side), not something found.
 - **Sitters and random wanderers lose to chasers** on both seeds, with no copy errors: sitters are gone by step
-  8,000 and wanderers by 12,000. For sitters this is true by construction (food never comes to them), so it shows
-  the old flaw is absent, not that anything was discovered.
-- **With copy errors, bodies evolve to roam more.** Over 100,000 steps the mean drive gene rose from 64 to 200
-  (seed 1) and 214 (seed 2), and travel per 200 steps from about 5 to 9 to 10 tiles. Drive moved furthest of the
-  five genes on both seeds and in the same direction (the others: chase +28 and +6, turn -52 and -17, adult -73
-  and -24, shape +84 and +27). There is no drift control, so this is consistent with selection and not a test of
-  it. Adult size is still 7 to 8 cells.
+  8,000 and wanderers by 16,000. For sitters this is true by construction (food never comes to them).
+- **With copy errors, bodies evolve to roam more.** Over 100,000 steps the mean drive gene rose from 64 to 201
+  (seed 1) and 194 (seed 2), and travel per 200 steps from about 5 to 8 to 10 tiles. Drive moved furthest of the
+  five genes on both seeds and in the same direction (the others: chase +29 and +1, turn +1 and -19, adult -63
+  and -110, shape -3 and +62). There is no drift control, so this is consistent with selection and not a test of
+  it. The adult size asked for fell from 8 cells to 7 and 6.
 
 ![a herd, three frames 100 steps apart](herd-100-steps-apart.png)
 
@@ -51,16 +57,17 @@ runner `experiments/roam/look.ts`, tests `apps/lab/test/roam.test.ts`.
 
 ![the evolved world, four frames 40 steps apart](evolved-40-steps-apart.png)
 
-Review: one Codex pass (Sol 6.1, High) before the commit found no conservation or overlap bug. It found that the
+Review: two Codex passes (Sol 6.1, High), neither found a conservation or overlap bug. The first found that the
 order bodies moved in favoured low tile numbers (now a fresh hash order each step), an axis preference when a
-diagonal move is blocked (now a coin), two tests weaker than their names, unchecked fractional runner options and
-lost steps in the page's pacing. All were fixed and every number and picture here is from runs after the fixes;
-the fixes were not re-reviewed.
+diagonal move is blocked (now a coin), weak tests, unchecked runner options and lost steps in the page's pacing.
+The second found the same kind of tile-order favour among the cells of one body (which cell divides first, which
+tip a starving body gives up, who gets the odd unit; all now by hash) and more weak tests. Every number and
+picture here is from runs after all the fixes. The last fixes were not re-reviewed.
 
 ## Where this leaves the ladder
 
 In this world, on seen seeds only: individuals that divide and die (yes), heredity (yes, genes copy with errors),
-selection between individuals (chasers displace the other types; the drive result is suggestive). None of this is
+selection between individuals (chasers displace sitters and wanderers, eight-cell bodies overtake one-cell ones; the drive result is suggestive). None of this is
 confirmed on unseen seeds. The genes are still five dials we wrote, so rung 4 (heredity that can invent) is the
 next missing rung here as it was in the droplets.
 
@@ -68,6 +75,7 @@ next missing rung here as it was in the droplets.
 
 - Bodies crowd into a jam on each patch, and from a distance the herd reads as one blob; whether single bodies
   read as creatures is the user's call.
-- Does being bigger pay? Not tested. The leak rule favours compact bodies on paper; the adult gene did not rise.
+- Being bigger pays against single cells (above), but within the evolving runs the adult size asked for drifted
+  down from 8 to 6 or 7 cells, and nothing grew past 9 cells.
 - No rotation: a long body heading sideways moves broadside.
 - One arena size, one matter total, one patch size were tried.

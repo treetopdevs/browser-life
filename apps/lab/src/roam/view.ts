@@ -7,6 +7,8 @@ export const ROAM_TYPES = {
   chaser: { name: 'chasers', genes: [384, 64, -256, 0, 0], colour: [240, 190, 62] },
   wanderer: { name: 'wanderers', genes: [0, 384, 0, 0, 0], colour: [96, 176, 255] },
   sitter: { name: 'sitters', genes: [0, 0, -512, 0, 0], colour: [232, 110, 150] },
+  /** A chaser that lets every daughter go: a body is always one cell. */
+  single: { name: 'single cells', genes: [384, 64, -256, -512, 0], colour: [120, 220, 200] },
 } as const;
 export type RoamTypeId = keyof typeof ROAM_TYPES;
 
@@ -16,12 +18,14 @@ export const ROAM_STARTS = {
   sitters: ['sitter'],
   'chasers-sitters': ['chaser', 'sitter'],
   'chasers-wanderers': ['chaser', 'wanderer'],
+  'chasers-singles': ['chaser', 'single'],
+  singles: ['single'],
   all: ['chaser', 'wanderer', 'sitter'],
 } as const satisfies Record<string, readonly RoamTypeId[]>;
 export type RoamStart = keyof typeof ROAM_STARTS;
 
-const TYPE_ORDER: readonly RoamTypeId[] = ['chaser', 'wanderer', 'sitter'];
-/** Family number of a founder type (1, 2, 3), which every descendant keeps. */
+const TYPE_ORDER: readonly RoamTypeId[] = ['chaser', 'wanderer', 'sitter', 'single'];
+/** Family number of a founder type (1 to 4), which every descendant keeps. */
 export const roamFamily = (t: RoamTypeId): number => TYPE_ORDER.indexOf(t) + 1;
 
 export interface RoamOptions {
@@ -57,6 +61,7 @@ export function foundRoam(o: RoamOptions): RoamWorld {
   const world = new RoamWorld(roamConfig(o));
   const types = ROAM_STARTS[start];
   const founders = o.founders ?? Math.max(types.length, Math.round((48 * world.n) / (128 * 128)));
+  if (!Number.isSafeInteger(founders) || founders < 1) throw new Error(`Invalid founders: ${founders}`);
   let placed = 0;
   for (let tries = 0; placed < founders && tries < founders * 20; tries++) {
     const tile = roamHash(world.cfg.seed, 0, tries, 41) % world.n;
@@ -174,7 +179,7 @@ export interface RoamFrame {
   census: RoamCensus;
   families: RoamFamilyRow[];
   /** Splits, releases and body deaths per 1,000 steps over the last stretch, and how far cells travelled in it. */
-  rates: { steps: number; divisions: number; releases: number; bodyDeaths: number; patches: number; travel: number; movedShare: number };
+  rates: { steps: number; divisions: number; releases: number; bodyDeaths: number; newbornDeaths: number; patches: number; travel: number; movedShare: number };
 }
 
 export type RoamToWorker = { type: 'reset'; gen: number; opts: RoamOptions; scale: number; paint: RoamPaint } | { type: 'tick'; gen: number; steps: number; paint: RoamPaint };
@@ -189,7 +194,7 @@ export class RoamSession {
   private readonly bodyOf: Int32Array;
   private readonly travel: () => { cells: number; mean: number; movedShare: number };
   private last: RoamCensus;
-  private rates: RoamFrame['rates'] = { steps: 0, divisions: 0, releases: 0, bodyDeaths: 0, patches: 0, travel: 0, movedShare: 0 };
+  private rates: RoamFrame['rates'] = { steps: 0, divisions: 0, releases: 0, bodyDeaths: 0, newbornDeaths: 0, patches: 0, travel: 0, movedShare: 0 };
 
   constructor(opts: RoamOptions, scale: number) {
     this.world = foundRoam(opts);
@@ -214,6 +219,7 @@ export class RoamSession {
           divisions: (c.divisions - this.last.divisions) * per,
           releases: (c.releases - this.last.releases) * per,
           bodyDeaths: (c.bodyDeaths - this.last.bodyDeaths) * per,
+          newbornDeaths: (c.newbornDeaths - this.last.newbornDeaths) * per,
           patches: (c.patches - this.last.patches) * per,
           travel: tr.mean,
           movedShare: tr.movedShare,
