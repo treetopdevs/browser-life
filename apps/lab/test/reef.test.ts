@@ -139,12 +139,14 @@ describe('Reef Rung 0: conservation, thermodynamics, shadows, symplastic bridge,
     b.seedDefaultFounders(10);
 
     // Everything that can change the next step: every field of every cell (velocities, genome weights), the bonds'
-    // endpoints and rest geometry, both matter fields and the generator state (a private field, read here only).
+    // endpoints and rest geometry, both matter fields, the id counters and the generator state (a private field, read here only).
     const snapshot = (w: ReefWorld): string =>
       JSON.stringify(
         {
           step: w.stepCount,
           rng: (w as unknown as { rng: { state: number } }).rng.state,
+          nextCellId: w.nextCellId,
+          nextLineageId: w.nextLineageId,
           cells: w.cells,
           bonds: w.bonds.map((bd) => ({ a: bd.a.id, b: bd.b.id, restLen: bd.restLen, phiA: bd.phiA, phiB: bd.phiB, age: bd.age })),
           nut: w.nut,
