@@ -96,6 +96,10 @@ export interface RoamOptions {
   kinds?: boolean;
   /** With kinds and touch feeding: a shell cracks after this many hits from mouths. */
   crack?: number;
+  /** With crack: shells' toughness can change through plan copy errors. */
+  toughness?: boolean;
+  /** With kinds: a lone shell eats half the usual bite. */
+  halfBite?: boolean;
   overrides?: Partial<RoamConfig>;
 }
 
@@ -121,6 +125,8 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     if (merged.flow !== undefined && o.compost === true && merged.compost === undefined) merged.compost = true;
     if (merged.flow !== undefined && o.kinds === true && merged.kinds === undefined) merged.kinds = true;
     if (merged.kinds && merged.drain !== undefined && o.crack !== undefined && o.crack > 0 && merged.crack === undefined) merged.crack = o.crack;
+    if (merged.crack !== undefined && o.toughness === true && merged.toughness === undefined) merged.toughness = true;
+    if (merged.kinds && o.halfBite === true && merged.halfBite === undefined) merged.halfBite = true;
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }
@@ -135,10 +141,13 @@ export function foundRoam(o: RoamOptions): RoamWorld {
   const types: readonly RoamTypeId[] = ROAM_STARTS[start];
   if (world.cfg.plan && !types.every((t) => planOf(t))) throw new Error(`Start ${start} mixes grown and gene-sized bodies`);
   const planIds = types.map((t) => (world.cfg.plan ? world.addPlan(planOf(t)!) : 0));
-  // With kinds, every other founder of a type is a hunter: the daughter its plan's first mode keeps is a mouth.
+  // With kinds, every other founder of a type is a hunter: the daughter its plan's first mode keeps is a mouth. A
+  // type whose first mode lets its daughter go (specks) cannot hunt; its other half is armoured instead: every
+  // daughter it lets go is a shell.
   const hunterIds = types.map((t, j) => {
     const plan = planOf(t);
-    if (!world.cfg.kinds || !plan || (plan[0] & 15) >= 4) return planIds[j];
+    if (!world.cfg.kinds || !plan || (plan[0] & 15) >= PLAN_REST) return planIds[j];
+    if ((plan[0] & 15) >= 4) return world.addPlan(plan.map((e) => ((e & 15) >= 4 && (e & 15) < PLAN_REST ? e | (KIND_SHELL << 12) : e)), planIds[j]);
     return world.addPlan(plan.map((e, m) => (m === 0 ? e | (KIND_MOUTH << 12) : e)), planIds[j]);
   });
   const founders = o.founders ?? Math.max(types.length, Math.round((48 * world.n) / (128 * 128)));

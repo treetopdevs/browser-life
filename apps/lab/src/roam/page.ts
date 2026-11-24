@@ -19,7 +19,7 @@ let lastTime = performance.now();
 let rate = 0;
 
 function options(): RoamOptions {
-  return { seed: Math.max(0, Math.floor(Number(value('seed')) || 0)), size: Number(value('size')), start: value('start') as RoamStart, mut: Number(value('mut')), drain: Number(value('drain')), flow: Number(value('flow')) || undefined, life: Number(value('life')) || undefined, compost: value('compost') === '1', kinds: value('kinds') === '1', crack: Number(value('crack')) || undefined };
+  return { seed: Math.max(0, Math.floor(Number(value('seed')) || 0)), size: Number(value('size')), start: value('start') as RoamStart, mut: Number(value('mut')), drain: Number(value('drain')), flow: Number(value('flow')) || undefined, life: Number(value('life')) || undefined, compost: value('compost') === '1', kinds: value('kinds') === '1', crack: Number(value('crack')) || undefined, toughness: value('toughness') === '1', halfBite: value('halfbite') === '1' };
 }
 
 function send(m: RoamToWorker): void {
@@ -147,7 +147,7 @@ el('play').addEventListener('click', () => {
   lastTime = performance.now();
 });
 el('reset').addEventListener('click', reset);
-for (const id of ['seed', 'start', 'mut', 'size', 'drain', 'flow', 'life', 'compost', 'kinds', 'crack']) el(id).addEventListener('change', reset);
+for (const id of ['seed', 'start', 'mut', 'size', 'drain', 'flow', 'life', 'compost', 'kinds', 'crack', 'toughness', 'halfbite']) el(id).addEventListener('change', reset);
 el('genes-head').innerHTML = ['Family', 'cells', ...ROAM_GENE_NAMES].map((h) => `<th>${h}</th>`).join('');
 
 reset();

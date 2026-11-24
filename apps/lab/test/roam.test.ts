@@ -850,6 +850,71 @@ describe('roam world, matter that travels through the body (flow)', () => {
       w.stepOnce();
       expect(w.hits[at + 3]).toBe(0);
     });
+    it('with toughness a shell takes crack << level hits to crack, pays more upkeep per level, and gets its level from the plan', () => {
+      const at = 20 * 64 + 10;
+      const hitsToCrack = (level: number) => {
+        const w = kq({ drain: 2, seal: 0, crack: 2, toughness: true });
+        const rest = w.addPlan(restAll);
+        line(w, at, [100, 100, 100], rest, [9, 9, 9], [0, 0, 0]);
+        line(w, at + 3, [100], rest, [9], [0]);
+        w.kind[at + 2] = KIND_MOUTH;
+        w.kind[at + 3] = KIND_SHELL;
+        w.tough[at + 3] = level;
+        let s = 0;
+        while (w.kind[at + 3] === KIND_SHELL && s < 100) { w.stepOnce(); s++; }
+        expect(w.census().residual).toBe(0);
+        return s;
+      };
+      expect(hitsToCrack(0)).toBe(2);
+      expect(hitsToCrack(1)).toBe(4);
+      expect(hitsToCrack(3)).toBe(16);
+      const paid = (level: number) => {
+        const w = kq({ leakSide: 1, leakCell: 0, drain: 2, crack: 2, toughness: true });
+        const rest = w.addPlan(restAll);
+        line(w, at, [100], rest, [9], [0]);
+        w.kind[at] = KIND_SHELL;
+        w.tough[at] = level;
+        w.stepOnce();
+        return 100 - w.store[at];
+      };
+      expect(paid(0)).toBe(1);
+      expect(paid(3)).toBe(4);
+      const w = kq({ drain: 2, crack: 2, toughness: true });
+      const plan = w.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => (m === 0 ? planEntry(4, 1, 1, KIND_SHELL, 2) : planEntry(PLAN_REST, 0, m))));
+      line(w, at, [300], plan, [0], [0]);
+      w.stepOnce();
+      expect(w.kind[at + 1]).toBe(KIND_SHELL);
+      expect(w.tough[at + 1]).toBe(2);
+      // Without toughness a plan cannot carry a level, and toughness needs crack.
+      expect(() => kq({ drain: 2, crack: 2 }).addPlan(Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m, KIND_SHELL, 1)))).toThrow(/plan mode/);
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, kinds: true, toughness: true }))).toThrow(/toughness needs crack/);
+    });
+    it('with halfBite a lone shell eats half the bite, other cells the whole bite, and matter still adds up', () => {
+      const ate = (kind: number, over: Partial<RoamConfig>) => {
+        const w = kq(over);
+        const rest = w.addPlan(restAll);
+        const at = 20 * w.size + 10;
+        line(w, at, [100], rest, [9], [0]);
+        w.kind[at] = kind;
+        w.food[at] += 50; w.reservoir -= 50;
+        w.stepOnce();
+        expect(w.census().residual).toBe(0);
+        return 50 - w.food[at];
+      };
+      expect(ate(KIND_SHELL, { bite: 2 })).toBe(2);
+      expect(ate(KIND_SHELL, { bite: 2, halfBite: true })).toBe(1);
+      expect(ate(KIND_PLAIN, { bite: 2, halfBite: true })).toBe(2);
+      expect(ate(KIND_MOUTH, { bite: 2, halfBite: true })).toBe(2);
+      expect([1, 2]).toContain(ate(KIND_SHELL, { bite: 3, halfBite: true }));
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, halfBite: true }))).toThrow(/halfBite needs kinds/);
+    });
+    it('with kinds a speck start splits into plain specks and armoured specks, whose released daughters are shells', () => {
+      const w = foundRoam({ seed: 3, size: 48, start: 'grown-all', drain: 2, flow: 1 / 64, kinds: true });
+      const specks = ROAM_PLANS.speck;
+      const armoured = w.plans.find((p) => Array.from(p).every((e, m) => ((specks[m] & 15) >= 4 && (specks[m] & 15) < PLAN_REST ? e === (specks[m] | (KIND_SHELL << 12)) : e === specks[m])));
+      expect(armoured).toBeDefined();
+      expect(w.plans.some((p) => Array.from(p).every((e, m) => e === specks[m]))).toBe(true);
+    });
     it('refuses crack without kinds and touch feeding', () => {
       expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, kinds: true, crack: 8 }))).toThrow(/crack needs/);
       expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, crack: 8 }))).toThrow(/crack needs/);

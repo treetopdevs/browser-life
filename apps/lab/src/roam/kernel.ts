@@ -39,9 +39,10 @@ export const ROAM_GENE_MAX = 512;
 export const PLAN_MODES = 16;
 export const PLAN_REST = 8;
 /** One mode of a plan as a number: act, then the kept daughter's mode, then the cell's own next mode. */
-export const planEntry = (act: number, child: number, next: number, kind = 0): number => act | (child << 4) | (next << 8) | (kind << 12);
+export const planEntry = (act: number, child: number, next: number, kind = 0, tough = 0): number => act | (child << 4) | (next << 8) | (kind << 12) | (tough << 14);
 
-/** With `kinds`, what a kept daughter becomes (bits 12-13 of a plan entry): plain, shell or mouth. */
+/** With `kinds`, what a daughter becomes (bits 12-13 of a plan entry): plain, shell or mouth. With `crack`, bits 14-15
+ * are a shell's toughness level 0-3: it cracks after crack << level hits and pays (1 + level) / 4 of the side upkeep. */
 export const KIND_PLAIN = 0;
 export const KIND_SHELL = 1;
 export const KIND_MOUTH = 2;
@@ -130,9 +131,20 @@ export interface RoamConfig {
   /**
    * With kinds (and drain): a shell cracks after this many hits. Each step, each side where a mouth of a body at least
    * twice its body's size presses on a shell is one hit; hits add up over the shell's life, and at this many the shell
-   * becomes a plain cell (which can then be fed on). Absent means shells never crack.
+   * becomes a plain cell (which can then be fed on). See `toughness`. Absent means shells never crack.
    */
   crack?: number;
+  /**
+   * With crack: shells have toughness levels (0-3) in their plan entries, which plan copy errors can change. A level
+   * multiplies the hits to crack by 2^level and costs (1 + level) / 4 of the side upkeep. Absent means every shell is
+   * level 0.
+   */
+  toughness?: boolean;
+  /**
+   * With kinds: a shell that eats (a body of one cell) takes half the usual bite, so armour slows feeding. An odd bite
+   * is halved up or down by a hash. Absent means a lone shell takes the full bite.
+   */
+  halfBite?: boolean;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -190,6 +202,7 @@ const CH_PLAN_NEW = 31;
 const CH_PLAN_FIELD = 32;
 const CH_FOUND = 40;
 const CH_WEAR = 41;
+const CH_BITE = 42;
 
 const SCENT_FOOD_CAP = 4095;
 const DX = [1, 0, -1, 0];
@@ -244,6 +257,8 @@ export interface RoamCensus {
   mouths: number;
   /** With crack: shells cracked into plain cells since step 0. */
   cracked: number;
+  /** With crack: mean toughness level of live shells. */
+  shellTough: number;
 }
 
 export class RoamWorld {
@@ -301,6 +316,11 @@ export class RoamWorld {
   /** With crack: hits each shell has taken. */
   readonly hits: Uint16Array;
   private readonly crackN: number;
+  private readonly toughOn: boolean;
+  private readonly halfBite: boolean;
+  /** With crack: each cell's toughness level (0-3). */
+  readonly tough: Uint8Array;
+  private readonly mTough: Uint8Array;
   cracked = 0;
   /** With kinds: each cell's kind (KIND_PLAIN, KIND_SHELL, KIND_MOUTH). */
   readonly kind: Uint8Array;
@@ -390,6 +410,10 @@ export class RoamWorld {
     this.kinds = cfg.kinds === true;
     if (cfg.crack !== undefined && (!this.kinds || cfg.drain === undefined)) throw new Error('crack needs kinds and drain');
     this.crackN = cfg.crack === undefined ? 0 : whole(cfg.crack, 'crack', 1, 60000);
+    if (cfg.toughness !== undefined && this.crackN === 0) throw new Error('toughness needs crack');
+    this.toughOn = cfg.toughness === true;
+    if (cfg.halfBite !== undefined && !this.kinds) throw new Error('halfBite needs kinds');
+    this.halfBite = cfg.halfBite === true;
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
@@ -423,6 +447,8 @@ export class RoamWorld {
     this.mPid = new Uint32Array(n);
     this.mKind = new Uint8Array(n);
     this.mHits = new Uint16Array(n);
+    this.tough = new Uint8Array(n);
+    this.mTough = new Uint8Array(n);
     this.hits = new Uint16Array(n);
     this.kind = new Uint8Array(n);
     this.mSince = new Uint32Array(n);
@@ -474,9 +500,9 @@ export class RoamWorld {
     whole(parent, 'parent plan', 0, this.plans.length - 1);
     const plan = new Uint16Array(PLAN_MODES);
     for (let m = 0; m < PLAN_MODES; m++) {
-      const e = whole(entries[m], 'plan mode', 0, this.kinds ? 0x2fff : 0xfff);
+      const e = whole(entries[m], 'plan mode', 0, this.toughOn ? 0xffff : this.kinds ? 0x2fff : 0xfff);
       if ((e & 15) > PLAN_REST) throw new Error(`Invalid act in mode ${m}: ${e & 15}`);
-      if (e >>> 12 > KIND_MOUTH) throw new Error(`Invalid kind in mode ${m}: ${e >>> 12}`);
+      if (((e >>> 12) & 3) > KIND_MOUTH) throw new Error(`Invalid kind in mode ${m}: ${(e >>> 12) & 3}`);
       plan[m] = e;
     }
     this.plans.push(plan);
@@ -612,6 +638,7 @@ export class RoamWorld {
     this.mom[c] = 0;
     this.kind[c] = 0;
     this.hits[c] = 0;
+    this.tough[c] = 0;
     this.bondE[c] = 0;
     this.bondS[c] = 0;
     this.bondE[this.nb(c, 2)] = 0;
@@ -751,6 +778,8 @@ export class RoamWorld {
       this.mMeta[j] = (this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20) | (this.orient[c] << 21) | (this.mode[c] << 23) | (this.made[c] << 27) | (this.mom[c] << 31)) >>> 0;
       this.mPid[j] = this.pid[c];
       this.mKind[j] = this.kind[c];
+      this.mTough[j] = this.tough[c];
+      this.tough[c] = 0;
       this.mHits[j] = this.hits[c];
       this.hits[c] = 0;
       this.kind[c] = 0;
@@ -789,6 +818,7 @@ export class RoamWorld {
       this.mom[to] = meta >>> 31;
       this.pid[to] = this.mPid[j];
       this.kind[to] = this.mKind[j];
+      this.tough[to] = this.mTough[j];
       this.hits[to] = this.mHits[j];
       this.since[to] = this.mSince[j];
       for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.mGenes[j * ROAM_GENES + g];
@@ -941,7 +971,8 @@ export class RoamWorld {
       this.orient[to] = d;
       this.made[to] = this.mode[c];
       this.mom[to] = keep ? 1 : 0;
-      this.kind[to] = this.kinds ? entry >>> 12 : KIND_PLAIN;
+      this.kind[to] = this.kinds ? (entry >>> 12) & 3 : KIND_PLAIN;
+      this.tough[to] = this.toughOn ? entry >>> 14 : 0;
       if (!full) this.mode[c] = (entry >>> 8) & 15;
       this.divisions++;
       this.grew[c] = 1;
@@ -999,21 +1030,23 @@ export class RoamWorld {
     const pid = this.pid[c];
     const r = roamHash(seed, t, c, CH_PLAN);
     if ((r & 0xffff) >= rateQ16) return pid;
-    // One place of the plan changes to a different value: a mode's act, its daughter's mode, its next mode, or (with
-    // kinds) its daughter's kind.
+    // One place of the plan changes to a different value: a mode's act, its daughter's mode, its next mode, (with
+    // kinds) its daughter's kind, or (with toughness) its daughter's toughness.
     const next = Uint16Array.from(this.plans[pid]);
     const m = (r >>> 16) & 15;
-    const field = roamHash(seed, t, c, CH_PLAN_FIELD) % (this.kinds ? 4 : 3);
+    const field = roamHash(seed, t, c, CH_PLAN_FIELD) % (this.toughOn ? 5 : this.kinds ? 4 : 3);
     const h = roamHash(seed, t, c, CH_PLAN_NEW);
     const e = next[m];
     const act0 = e & 15;
     const child0 = (e >>> 4) & 15;
     const next0 = (e >>> 8) & 15;
-    const kind0 = e >>> 12;
-    if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0, kind0);
-    else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0, kind0);
-    else if (field === 2) next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15, kind0);
-    else next[m] = planEntry(act0, child0, next0, (kind0 + 1 + (h % 2)) % 3);
+    const kind0 = (e >>> 12) & 3;
+    const tough0 = e >>> 14;
+    if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0, kind0, tough0);
+    else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0, kind0, tough0);
+    else if (field === 2) next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15, kind0, tough0);
+    else if (field === 3) next[m] = planEntry(act0, child0, next0, (kind0 + 1 + (h % 2)) % 3, tough0);
+    else next[m] = planEntry(act0, child0, next0, kind0, (tough0 + 1 + (h % 3)) & 3);
     return this.addPlan(next, pid);
   }
 
@@ -1063,7 +1096,7 @@ export class RoamWorld {
         }
         if (sides === 0) continue;
         const h = this.hits[b] + sides;
-        if (h >= this.crackN) {
+        if (h >= Math.min(60000, this.crackN << this.tough[b])) {
           this.kind[b] = KIND_PLAIN;
           this.hits[b] = 0;
           this.cracked++;
@@ -1172,16 +1205,17 @@ export class RoamWorld {
     for (let j = 0; j < len; j++) {
       const c = this.cells[start + j];
       // With kinds neither a shell nor a mouth eats from the ground, unless it is a body of one cell (a seed feeds
-      // itself until it has grown); a shell pays a quarter of the side upkeep.
+      // itself until it has grown); a shell pays a quarter of the side upkeep, and with halfBite eats half the bite.
       const shell = this.kinds && this.kind[c] === KIND_SHELL;
       let take = this.kinds && this.kind[c] !== KIND_PLAIN && len > 1 ? 0 : this.food[c];
-      if (take > this.biteN) take = this.biteN;
+      const bite = shell && this.halfBite ? (this.biteN + (roamHash(seed, t, c, CH_BITE) & 1)) >>> 1 : this.biteN;
+      if (take > bite) take = bite;
       if (take > cap - this.store[c]) take = Math.max(0, cap - this.store[c]);
       this.food[c] -= take;
       this.store[c] += take;
       let exposed = 0;
       for (let d = 0; d < 4; d++) if (label[this.nb(c, d)] !== k) exposed++;
-      const costQ16 = exposed * (shell ? this.leakSideQ16 >>> 2 : this.leakSideQ16) + this.leakCellQ16 + moveQ16;
+      const costQ16 = exposed * (shell ? (this.leakSideQ16 * (1 + this.tough[c])) >>> 2 : this.leakSideQ16) + this.leakCellQ16 + moveQ16;
       let pay = Math.floor((costQ16 + (roamHash(seed, t, c, CH_COST) & 0xffff)) / 65536);
       if (pay > this.store[c]) pay = this.store[c];
       this.store[c] -= pay;
@@ -1274,13 +1308,14 @@ export class RoamWorld {
     let held = 0;
     let cells = 0;
     let shells = 0;
+    let shellTough = 0;
     let mouths = 0;
     const genes = new Array<number>(ROAM_GENES).fill(0);
     for (let i = 0; i < n; i++) {
       food += this.food[i];
       if (!this.alive[i]) continue;
       cells++;
-      if (this.kind[i] === KIND_SHELL) shells++;
+      if (this.kind[i] === KIND_SHELL) { shells++; shellTough += this.tough[i]; }
       else if (this.kind[i] === KIND_MOUTH) mouths++;
       held += this.store[i];
       for (let g = 0; g < ROAM_GENES; g++) genes[g] += this.genes[i * ROAM_GENES + g];
@@ -1318,6 +1353,7 @@ export class RoamWorld {
       shells,
       mouths,
       cracked: this.cracked,
+      shellTough: shells ? shellTough / shells : 0,
       splits: this.splits,
     };
   }
@@ -1375,7 +1411,7 @@ export class RoamWorld {
     if (this.cfg.plan) for (const plan of this.plans) for (let m = 0; m < PLAN_MODES; m++) mix(plan[m]);
     if (this.flowQ16 > 0) { mix(this.splits); mix(this.worn); }
     if (this.compost) mix(this.composted);
-    if (this.kinds) for (let i = 0; i < this.n; i++) if (this.alive[i]) mix(this.kind[i] | (this.hits[i] << 2));
+    if (this.kinds) for (let i = 0; i < this.n; i++) if (this.alive[i]) mix(this.kind[i] | (this.hits[i] << 2) | (this.tough[i] << 18));
     if (this.crackN > 0) mix(this.cracked);
     return h >>> 0;
   }

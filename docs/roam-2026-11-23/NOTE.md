@@ -361,3 +361,59 @@ to 63,000, hunters on the rise).
 
 Review: Codex (Sol 6.1, High), no functional findings; asked for stronger crack tests (size rule, tile reuse, upper
 bound added). 44 tests.
+
+## Toughness, and a correction about seed 2 (2026-11-24, night)
+
+The user asked for the swing to hold over a wider range of the crack number. Tried first: shells with a toughness
+level (config `toughness`, needs crack), 0 to 3, held in two new bits of each plan entry. A level multiplies the hits
+to crack by 2^level (capped at 60,000 hits) and the shell's side upkeep by (1 + level), so tougher armour costs more. Plan copy errors gain a
+fifth field that changes a level.
+
+**Correction.** Adding that fifth copy-error field changed every history, and seed 2's shells vanished: the armoured
+world seen at 2,000 hits came from one lucky early copy error, not from the rule. So the "swing on seed 2" above is
+a single history and should not be read as a property of crack 2,000. To compare like with like, founders now carry
+armour from the start: with kinds, every other speck founder is armoured (every daughter it lets go is a shell).
+
+The sweep (seeds 1 and 2, 120,000 steps, armour planted; `experiments/roam/swing.ts` reads the logs: "swings" means
+both shells and mouths at 20 or more in at least 80% of reports from step 20,000 and at least two turns in the shell
+count; "armour takes over" means mouths under 20, or shells at least three times mouths, through the last quarter):
+
+| Hits to crack | Toughness off | Toughness on |
+|---|---|---|
+| never | armour takes over (both seeds) | not run |
+| 500 | seed 1 swings; seed 2 armour mostly wins, hunters hang on | seed 1 mixed; seed 2 swings |
+| 1,000 / 2,000 / 4,000 / 8,000 | armour takes over (both seeds) | armour takes over (both seeds) |
+
+Mean shell toughness ends at 0.00 to 0.16 of 3: tougher armour does not spread. The band moved (to about 500)
+instead of widening. The reason looks simple: a lone shell is a strictly better single cell. It grazes like any
+lone cell, pays a quarter of the upkeep, and cannot be eaten, so once armour is planted it wins unless it cracks
+very fast.
+
+## Armour that slows feeding (2026-11-24, night)
+
+The user's idea: give armour a real cost. With `halfBite` (needs kinds), a shell that grazes (one alone as a body of
+one cell) takes half the usual bite (1 instead of 2; an odd bite is halved up or down by a hash). So an armoured seed
+is safe but grows slowly, and a plain one grows fast but can be eaten. Stated before running: the same sweep, and it
+passes if hunters and armour swing or live side by side (swing.ts "swings", or "mixed" with both present in at least
+80% of reports) at three or more of the five crack numbers, on both seeds, with toughness off.
+
+Results (`runs/roam/sweep-half/`):
+
+| Hits to crack | Seed 1, toughness off | Seed 2, toughness off |
+|---|---|---|
+| never | swings (2 turns) | armour takes over |
+| 500 | side by side (both present 100%) | hunters win by 80,000 |
+| 1,000 | swings (5 turns), shells gone by 120,000 | armour takes over (hunters hang on, 40 to 80 mouths) |
+| 2,000 | armour takes over | armour takes over |
+| 4,000 | side by side (both present 81%) | armour fades, both near nothing at the end |
+| 8,000 | swings (2 turns) | armour takes over |
+
+(swing.ts was fixed after review so a rise counts at 30%, as its header says, not 43%; no verdict in either
+sweep changed, only turn counts.) Seed 1 passes at 4 of 5 crack numbers (before: 1 of 5); seed 2 at 0 of 5. **Fails** the stated test. With toughness
+on the picture is no better (seed 1: armour takes over at 1,000, 4,000 and 8,000; seed 2 mixed at 4,000 and 8,000
+with hunters rising late), and mean toughness still ends at 0.00 to 0.04. At 8,000 hits cracking almost never
+happens, so those runs are close to the never-crack runs. Half bite clearly widens the range on seed 1; on seed 2 the
+early armour bloom (900+ shells by 20,000) still decides the run. Seen seeds only, one history each.
+
+This is a follow-up of a follow-up (crack, then toughness, then half bite), a tripwire, so this line stops here
+until the user has watched it. On the page, half bite is on by default and toughness off.

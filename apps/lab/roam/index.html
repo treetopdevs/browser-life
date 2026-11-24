@@ -39,6 +39,7 @@
     <p><b>New, later the same day: the dead feed the ground.</b> With this on, a cell that dies leaves what it held on the ground where it died, as food. Busy bodies lose many cells, so they leave a trail behind them, and patches come a little less often (the same matter is now on the ground instead). A slower body that follows the trail can live on it. Kept daughters can now also get copy errors in their genes, so how much a body chases and moves can change over a run.</p>
     <p><b>New, 2026-11-24 evening: kinds of cell.</b> Each step of a growth plan now also says what the daughter becomes. A <b>shell</b> (drawn pale) does not eat, costs a quarter of the usual upkeep on its open sides, and cannot be fed on. A <b>mouth</b> (drawn red) does not eat from the ground either, but is the only kind of cell that can feed on another body by touch (still only on one at most half its size, and never through a shell). Plain cells eat from the ground and can be fed on. So a body that hunts must also carry cells that graze, and shells cost a body its grazing. A cell that is let go keeps the kind its plan gives it, and a body of one cell feeds itself from the ground whatever its kind, so a shell let go is an armoured seed: it grazes, cannot be eaten, and stops grazing once it has grown a body. Every other founder of each type is a hunter: the daughter its plan's first step keeps is a mouth (one mouth at the front of a line, plate, cross or block; on a bush every forward tip, since its daughters run that step again; specks keep no daughters, so have no hunters). No founder has shells. Shells, and mouths anywhere else, appear only through copy errors in plans.</p>
     <p><b>New: shells crack.</b> Each step a mouth of a body at least twice as large presses on a shell, the shell takes a hit (one per side pressed). After 2,000 hits it cracks into a plain cell, which can then be eaten. Hits add up over the shell's life and never heal; a hunter pressed against a shell for a long time does break it. So hunters with more mouths on their edge crack armour faster, and armour that comes in layers, or is regrown, holds longer.</p>
+    <p><b>New: armour has a cost.</b> Every other speck founder is now armoured: every daughter it lets go is a shell. A shell let go grazes at half the usual bite, so an armoured seed is safe from hunters but grows slowly, while a plain one grows fast but can be eaten. On seed 1 this keeps armour and hunters side by side at most crack numbers; on seed 2 one side still wins.</p>
     <p>With <b>touch</b> feeding on, a body that is at least twice the size of one it touches takes matter from it through every side where they meet, so small bodies and half-grown ones are food for large ones. A new body is safe for its first 100 steps, and spends them moving straight away from its parent.</p>
     <p>Food comes only in <b>patches</b>. Everything bodies use up goes to one store, and that store drops it back as a new patch somewhere else (with "the dead feed the ground" on, what dead cells held stays where they died instead). A body cannot wait for a patch to come to it.</p>
     <div class="bar">
@@ -92,10 +93,19 @@
         <option value="0">every cell is the same: any larger body feeds on a smaller one it touches</option>
       </select></label>
       <label>Shells under attack (with kinds and touch) <select id="crack">
-        <option value="2000" selected>new: a shell cracks after 2,000 hits from mouths, then can be eaten (armour and hunters swing on seed 2)</option>
-        <option value="1000">a shell cracks after 1,000 hits (armour never gets going)</option>
-        <option value="4000">a shell cracks after 4,000 hits (armour mostly wins where it starts)</option>
+        <option value="2000" selected>a shell cracks after 2,000 hits from mouths, then can be eaten</option>
+        <option value="500">a shell cracks after 500 hits (hunters do best)</option>
+        <option value="1000">a shell cracks after 1,000 hits</option>
+        <option value="4000">a shell cracks after 4,000 hits</option>
         <option value="0">shells never crack</option>
+      </select></label>
+      <label>Shell toughness (with cracking) <select id="toughness">
+        <option value="0" selected>every shell is equally tough</option>
+        <option value="1">plans give shells a toughness 0 to 3: each level doubles the hits to crack (up to 60,000) and costs more upkeep (tougher armour did not spread in tests)</option>
+      </select></label>
+      <label>Armour slows feeding (with kinds) <select id="halfbite">
+        <option value="1" selected>new: a lone shell eats half as much as other cells, so armour is safe but grows slowly</option>
+        <option value="0">a lone shell eats as much as any cell</option>
       </select></label>
       <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64 (bodies drawn twice as large)</option></select></label>
       <label>Colour <select id="paint"><option value="garden" selected>garden look: soft bodies with pale rims, lit by how full they are, tinted by plan; blue haze is food</option><option value="plan">by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
