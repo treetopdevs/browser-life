@@ -808,6 +808,54 @@ describe('roam world, matter that travels through the body (flow)', () => {
       expect(sawMouth).toBe(true);
       expect(a.census().drained).toBeGreaterThan(0);
     });
+    it('a shell pressed by a mouth of a body twice its size cracks after the set number of hits, then can be fed on', () => {
+      const w = kq({ drain: 2, seal: 0, crack: 3 });
+      const rest = w.addPlan(restAll);
+      const at = 20 * w.size + 10;
+      line(w, at, [100, 100, 100], rest, [9, 9, 9], [0, 0, 0]);
+      line(w, at + 3, [100], rest, [9], [0]);
+      w.kind[at + 2] = KIND_MOUTH;
+      w.kind[at + 3] = KIND_SHELL;
+      w.stepOnce();
+      expect(w.hits[at + 3]).toBe(1);
+      expect(w.census().drained).toBe(0);
+      w.stepOnce();
+      expect(w.hits[at + 3]).toBe(2);
+      w.stepOnce();
+      expect(w.kind[at + 3]).toBe(KIND_PLAIN);
+      expect(w.census().cracked).toBe(1);
+      expect(w.census().drained).toBe(0);
+      w.stepOnce();
+      expect(w.census().drained).toBe(2);
+      expect(w.census().residual).toBe(0);
+      // A plain cell pressing does not hit.
+      const v = kq({ drain: 2, seal: 0, crack: 3 });
+      const r2 = v.addPlan(restAll);
+      line(v, at, [100, 100, 100], r2, [9, 9, 9], [0, 0, 0]);
+      line(v, at + 3, [100], r2, [9], [0]);
+      v.kind[at + 3] = KIND_SHELL;
+      for (let i = 0; i < 4; i++) v.stepOnce();
+      expect(v.kind[at + 3]).toBe(KIND_SHELL);
+      expect(v.hits[at + 3]).toBe(0);
+      // A mouth of a body less than twice the shell's body does not hit.
+      const u = kq({ drain: 2, seal: 0, crack: 3 });
+      const r3 = u.addPlan(restAll);
+      line(u, at, [100], r3, [9], [0]);
+      line(u, at + 1, [100], r3, [9], [0]);
+      u.kind[at] = KIND_MOUTH;
+      u.kind[at + 1] = KIND_SHELL;
+      u.stepOnce();
+      expect(u.hits[at + 1]).toBe(0);
+      // A cracked or dead shell's tile starts the next cell at 0 hits.
+      w.stepOnce();
+      expect(w.hits[at + 3]).toBe(0);
+    });
+    it('refuses crack without kinds and touch feeding', () => {
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, kinds: true, crack: 8 }))).toThrow(/crack needs/);
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, crack: 8 }))).toThrow(/crack needs/);
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, kinds: true, crack: 0 }))).toThrow(/crack/);
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, kinds: true, crack: 60001 }))).toThrow(/crack/);
+    });
     it('refuses kinds without flow and a kind above mouth in a plan', () => {
       expect(() => new RoamWorld(small({ plan: true, kinds: true }))).toThrow(/kinds needs flow/);
       const w = kq();

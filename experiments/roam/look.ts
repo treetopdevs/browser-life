@@ -109,7 +109,7 @@ for (let s = 0; s <= steps; s++) {
         const tot = rows.reduce((a2, r) => a2 + r.z, 0);
         return [0.1, 0.5, 0.9].map((q) => { let acc = 0; for (const r of rows) { acc += r.z; if (acc >= q * tot) return Math.round(r.v); } return 0; }).join('/');
       };
-      if (world.cfg.kinds) console.log(`        kinds: ${c.shells} shells, ${c.mouths} mouths of ${c.cells} cells; taken by touch/k ${Math.round((c.drained - prev.drained) * per)}`);
+      if (world.cfg.kinds) console.log(`        kinds: ${c.shells} shells, ${c.mouths} mouths of ${c.cells} cells; cracked/k ${Math.round((c.cracked - prev.cracked) * per)}; taken by touch/k ${Math.round((c.drained - prev.drained) * per)}`);
       console.log(`        spread by body (p10/p50/p90, cell-weighted): chase ${pct(0)}, drive ${pct(1)}`);
       console.log(`        flow: splits/k ${Math.round((c.splits - prev.splits) * per)}, buds/k ${Math.round((c.releases - prev.releases) * per)}, cell deaths/k ${Math.round((c.cellDeaths - prev.cellDeaths) * per)} (worn ${Math.round((c.worn - prev.worn) * per)}), left on the ground/k ${Math.round((c.composted - prev.composted) * per)}, moved along bonds/k ${Math.round((c.flowed - prev.flowed) * per)}; bodies of 8+ cells ${big}; ten largest ${sizes.slice(0, 10).join(' ')}`);
     }

@@ -335,3 +335,29 @@ this world that seeds settle on clearly different ways of living. Seen seeds onl
 `runs/roam/v-shells-s2/` (seed 2, steps 40,000 to 43,000).
 
 Review: Codex (Sol 6.1, High), no findings. 42 tests.
+
+## Shells that crack under attack (2026-11-24, night)
+
+The user's idea: shells that degrade, over time or under attack. Built as under attack only (config `crack`, needs
+kinds and touch feeding). Each step, each side where a mouth of a body at least twice as large presses on a shell is
+one hit. Hits add up over the shell's life and never heal. At `crack` hits the shell becomes plain and can be fed
+on. Stated before building: "on seed 2, once shells have spread, hunters with more mouths rise and predation climbs
+back; then shells respond, at least one swing back in 120,000 steps."
+
+Hits come at one per step of contact, and a hunter can sit against a lone shell for hundreds of steps. So the hit
+count decides when armour can get started at all (seeds 1 and 2, 120,000 steps):
+
+- 8, 32, 64, 255 or 1,000 hits: armour never establishes on either seed. Early shells crack before they spread
+  (with 255, the first crack on seed 2 is at step 2,164).
+- 4,000 hits: seed 2 goes as without cracking (shells take over), with one small dip around 70,000 to 80,000.
+- 2,000 hits (the page default): seed 2 swings. Shells 328 and mouths 138 at 40,000; shells 182 and mouths 301 at
+  70,000; shells 416 and mouths 161 at 90,000; shells 282 and mouths 182 at 120,000. About 20 to 30 shells crack per
+  1,000 steps. On seed 1 a small group of shells (about 10) now persists beside the hunters.
+
+Against the best case: one swing back and forth on seed 2, plus coexistence on seed 1. But the swing appears only in
+a narrow band of the crack number, which I chose (about 2,000, between "never starts" and "takes over"). So the swing
+is real in these runs but tuned, not robust. Seen seeds only. Video: `runs/roam/v-crack-s2/` (seed 2, steps 60,000
+to 63,000, hunters on the rise).
+
+Review: Codex (Sol 6.1, High), no functional findings; asked for stronger crack tests (size rule, tile reuse, upper
+bound added). 44 tests.

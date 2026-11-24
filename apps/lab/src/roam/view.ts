@@ -94,6 +94,8 @@ export interface RoamOptions {
   compost?: boolean;
   /** With flow: plain, shell and mouth cells, chosen by the plan. */
   kinds?: boolean;
+  /** With kinds and touch feeding: a shell cracks after this many hits from mouths. */
+  crack?: number;
   overrides?: Partial<RoamConfig>;
 }
 
@@ -118,6 +120,7 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     if (merged.flow !== undefined && o.life !== undefined && o.life > 0 && merged.life === undefined) merged.life = o.life;
     if (merged.flow !== undefined && o.compost === true && merged.compost === undefined) merged.compost = true;
     if (merged.flow !== undefined && o.kinds === true && merged.kinds === undefined) merged.kinds = true;
+    if (merged.kinds && merged.drain !== undefined && o.crack !== undefined && o.crack > 0 && merged.crack === undefined) merged.crack = o.crack;
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }

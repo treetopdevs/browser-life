@@ -127,6 +127,12 @@ export interface RoamConfig {
    * can change a daughter's kind.
    */
   kinds?: boolean;
+  /**
+   * With kinds (and drain): a shell cracks after this many hits. Each step, each side where a mouth of a body at least
+   * twice its body's size presses on a shell is one hit; hits add up over the shell's life, and at this many the shell
+   * becomes a plain cell (which can then be fed on). Absent means shells never crack.
+   */
+  crack?: number;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -236,6 +242,8 @@ export interface RoamCensus {
   /** With kinds: live shell and mouth cells. */
   shells: number;
   mouths: number;
+  /** With crack: shells cracked into plain cells since step 0. */
+  cracked: number;
 }
 
 export class RoamWorld {
@@ -289,6 +297,11 @@ export class RoamWorld {
   private readonly mCid: Uint32Array;
   private readonly mPid: Uint32Array;
   private readonly mKind: Uint8Array;
+  private readonly mHits: Uint16Array;
+  /** With crack: hits each shell has taken. */
+  readonly hits: Uint16Array;
+  private readonly crackN: number;
+  cracked = 0;
   /** With kinds: each cell's kind (KIND_PLAIN, KIND_SHELL, KIND_MOUTH). */
   readonly kind: Uint8Array;
   private readonly kinds: boolean;
@@ -375,6 +388,8 @@ export class RoamWorld {
     this.compost = cfg.compost === true;
     if (cfg.flow === undefined && cfg.kinds !== undefined) throw new Error('kinds needs flow');
     this.kinds = cfg.kinds === true;
+    if (cfg.crack !== undefined && (!this.kinds || cfg.drain === undefined)) throw new Error('crack needs kinds and drain');
+    this.crackN = cfg.crack === undefined ? 0 : whole(cfg.crack, 'crack', 1, 60000);
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
@@ -407,6 +422,8 @@ export class RoamWorld {
     this.mCid = new Uint32Array(n);
     this.mPid = new Uint32Array(n);
     this.mKind = new Uint8Array(n);
+    this.mHits = new Uint16Array(n);
+    this.hits = new Uint16Array(n);
     this.kind = new Uint8Array(n);
     this.mSince = new Uint32Array(n);
     this.takePer = new Uint32Array(n);
@@ -594,6 +611,7 @@ export class RoamWorld {
     this.made[c] = 0;
     this.mom[c] = 0;
     this.kind[c] = 0;
+    this.hits[c] = 0;
     this.bondE[c] = 0;
     this.bondS[c] = 0;
     this.bondE[this.nb(c, 2)] = 0;
@@ -733,6 +751,8 @@ export class RoamWorld {
       this.mMeta[j] = (this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20) | (this.orient[c] << 21) | (this.mode[c] << 23) | (this.made[c] << 27) | (this.mom[c] << 31)) >>> 0;
       this.mPid[j] = this.pid[c];
       this.mKind[j] = this.kind[c];
+      this.mHits[j] = this.hits[c];
+      this.hits[c] = 0;
       this.kind[c] = 0;
       this.mSince[j] = this.since[c];
       this.since[c] = 0;
@@ -769,6 +789,7 @@ export class RoamWorld {
       this.mom[to] = meta >>> 31;
       this.pid[to] = this.mPid[j];
       this.kind[to] = this.mKind[j];
+      this.hits[to] = this.mHits[j];
       this.since[to] = this.mSince[j];
       for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.mGenes[j * ROAM_GENES + g];
       this.label[to] = k;
@@ -1030,6 +1051,25 @@ export class RoamWorld {
         this.drained += each;
       }
     }
+    // With crack: every side where a mouth of a body at least twice as large presses on a shell is a hit. Counted
+    // after the feeding above, from kinds as they were at its start, so a shell cracked now is fed on from next step.
+    if (this.crackN > 0) {
+      for (let b = 0; b < n; b++) {
+        if (!this.alive[b] || this.kind[b] !== KIND_SHELL || t - this.since[b] < seal) continue;
+        let sides = 0;
+        for (let d = 0; d < 4; d++) {
+          const a = this.nb(b, d);
+          if (this.alive[a] === 1 && label[a] !== label[b] && len[label[a]] >= 2 * len[label[b]] && t - this.since[a] >= seal && this.kind[a] === KIND_MOUTH) sides++;
+        }
+        if (sides === 0) continue;
+        const h = this.hits[b] + sides;
+        if (h >= this.crackN) {
+          this.kind[b] = KIND_PLAIN;
+          this.hits[b] = 0;
+          this.cracked++;
+        } else this.hits[b] = h;
+      }
+    }
   }
 
   /** True when the cell at `a` is bonded to its neighbour in direction `d`. */
@@ -1277,6 +1317,7 @@ export class RoamWorld {
       composted: this.composted,
       shells,
       mouths,
+      cracked: this.cracked,
       splits: this.splits,
     };
   }
@@ -1334,7 +1375,8 @@ export class RoamWorld {
     if (this.cfg.plan) for (const plan of this.plans) for (let m = 0; m < PLAN_MODES; m++) mix(plan[m]);
     if (this.flowQ16 > 0) { mix(this.splits); mix(this.worn); }
     if (this.compost) mix(this.composted);
-    if (this.kinds) for (let i = 0; i < this.n; i++) if (this.alive[i]) mix(this.kind[i]);
+    if (this.kinds) for (let i = 0; i < this.n; i++) if (this.alive[i]) mix(this.kind[i] | (this.hits[i] << 2));
+    if (this.crackN > 0) mix(this.cracked);
     return h >>> 0;
   }
 }
