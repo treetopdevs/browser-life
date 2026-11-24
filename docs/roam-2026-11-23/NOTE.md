@@ -276,3 +276,39 @@ So the ground change moves the balance (slower bodies) but does not, in these nu
 life. Seen seeds only. Video: `runs/roam/v-compost-s1/` (seed 1, steps 50,000 to 53,000).
 
 Review: Codex (Sol 6.1, High), no findings. 37 tests.
+
+## Kinds of cell: shells and mouths (2026-11-24, evening)
+
+The user chose the next step: kinds of cell inside a body, chosen by the plan. Each plan entry now also says what a
+kept daughter becomes (config `kinds`, needs flow, on by default on the page). A shell does not eat, pays a quarter of
+the side upkeep, and cannot be fed on. A mouth is the only kind that feeds on another body by touch (still only on one
+at most half its size). Plain cells eat and can be fed on. A copy error in a plan can change a daughter's kind.
+Stated before building: "armoured slow bodies and fast hunters coexist on at least one seed, and the balance between
+them swings over a run."
+
+Two changes after the first look, both from the data (seeds 1 and 2, 60,000 steps):
+
+- First version: every founder all plain, mouths also grazing. On seed 1 no mouth arose, so nothing fed by touch, and
+  single cells took the arena (1,223 bodies of 1,240 cells), as in the first probes without touch feeding. On seed 2
+  mouths arose and spread to half of all cells: a mouth that also grazes is a plain cell with a bonus.
+- Now a mouth does not graze. A body that hunts must carry grazers, so mouths cost something. And every other founder
+  of each type is a hunter (the daughter its plan's first step keeps is a mouth). This was not in the user's
+  wording; it is in the page text.
+
+Seen with both changes (seeds 1 and 2, 60,000 steps, wear 2,000, compost on):
+
+- Touch feeding runs all the time: about 75,000 to 100,000 matter taken per 1,000 steps. A third of all cells are
+  mouths (160 to 235). There are fewer cells overall (470 to 650, against 750 to 830 without kinds).
+- Movement calms further. Drive falls from 64 to about 30 on both seeds, where without kinds it climbed. Chase
+  falls a little (to 340 to 360). Distance travelled is 3 to 4.5.
+- The picture: a few large hunters (bushes with red mouth tips, 40 to 100 cells) among many small grazing bodies and
+  single cells. Video: `runs/roam/v-kinds-s1/` (seed 1, steps 30,000 to 33,000).
+- Shells: almost none. At most one shell at a time at the default plan copy-error rate. With copy errors in plans 8
+  times more often (planMut 0.4), at most 8 shells at a time, and none kept. So shells do not pay as set up, and
+  copy errors are not what holds them back.
+
+Against the best case: hunters and grazers coexist on both seeds, and hunting changed what movement evolves toward.
+Not seen: armour. It is still one kind of hunter against unarmoured prey. Seen seeds only.
+
+Review: Codex (Sol 6.1, High) found a page readout overwritten every frame (a duplicate id) and page text that
+misdescribed which founders carry mouths; both fixed. No kernel findings; old pins hold. 42 tests.

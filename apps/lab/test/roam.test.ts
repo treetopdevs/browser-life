@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultRoamConfig, G_ADULT, PLAN_MODES, PLAN_REST, planEntry, ROAM_GENES, type RoamConfig, RoamWorld } from '../src/roam/kernel.ts';
+import { defaultRoamConfig, G_ADULT, KIND_MOUTH, KIND_PLAIN, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, ROAM_GENES, type RoamConfig, RoamWorld } from '../src/roam/kernel.ts';
 import { foundRoam, ROAM_PLANS, ROAM_TYPES, roamShapes } from '../src/roam/view.ts';
 
 const small = (over: Partial<RoamConfig> = {}): RoamConfig => ({ ...defaultRoamConfig(), size: 48, matter: 24_000, startPatches: 2, patchEvery: 100, ...over });
@@ -722,6 +722,98 @@ describe('roam world, matter that travels through the body (flow)', () => {
       }
     }
     expect(changed).toBe(true);
+  });
+
+  describe('kinds of cell', () => {
+    const kq = (over: Partial<RoamConfig> = {}) => quiet({ flow: 1 / 65536, kinds: true, ...over });
+    it('only plain cells eat from the ground; a shell pays a quarter of the side upkeep', () => {
+      const ate = (kind: number) => {
+        const w = kq();
+        const rest = w.addPlan(restAll);
+        const at = 20 * w.size + 10;
+        line(w, at, [100], rest, [9], [0]);
+        w.kind[at] = kind;
+        w.food[at] += 50; w.reservoir -= 50;
+        w.stepOnce();
+        expect(w.census().residual).toBe(0);
+        return 50 - w.food[at];
+      };
+      expect(ate(KIND_PLAIN)).toBeGreaterThan(0);
+      expect(ate(KIND_SHELL)).toBe(0);
+      expect(ate(KIND_MOUTH)).toBe(0);
+      const paid = (kind: number) => {
+        const w = kq({ leakSide: 1, leakCell: 0 });
+        const rest = w.addPlan(restAll);
+        const at = 20 * w.size + 10;
+        line(w, at, [100], rest, [9], [0]);
+        w.kind[at] = kind;
+        w.stepOnce();
+        return 100 - w.store[at];
+      };
+      expect(paid(KIND_PLAIN)).toBe(4);
+      expect(paid(KIND_SHELL)).toBe(1);
+    });
+    it('a larger body feeds on a smaller one only through a mouth, and never through a shell', () => {
+      const taken = (bigKind: number, smallKind: number) => {
+        const w = kq({ drain: 2, seal: 0 });
+        const rest = w.addPlan(restAll);
+        const at = 20 * w.size + 10;
+        line(w, at, [100, 100, 100], rest, [9, 9, 9], [0, 0, 0]);
+        line(w, at + 3, [100], rest, [9], [0]);
+        w.kind[at + 2] = bigKind;
+        w.kind[at + 3] = smallKind;
+        w.stepOnce();
+        expect(w.census().residual).toBe(0);
+        return w.census().drained;
+      };
+      expect(taken(KIND_MOUTH, KIND_PLAIN)).toBe(2);
+      expect(taken(KIND_PLAIN, KIND_PLAIN)).toBe(0);
+      expect(taken(KIND_MOUTH, KIND_SHELL)).toBe(0);
+      // Without kinds the same touch feeds as before.
+      const w = quiet({ flow: 1 / 65536, drain: 2, seal: 0 });
+      const rest = w.addPlan(restAll);
+      const at = 20 * w.size + 10;
+      line(w, at, [100, 100, 100], rest, [9, 9, 9], [0, 0, 0]);
+      line(w, at + 3, [100], rest, [9], [0]);
+      w.stepOnce();
+      expect(w.census().drained).toBe(2);
+    });
+    it('a kept daughter becomes the kind her plan entry says; a let-go daughter is plain', () => {
+      const made = (act: number) => {
+        const w = kq();
+        const plan = w.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => (m === 0 ? planEntry(act, 1, 1, KIND_SHELL) : planEntry(PLAN_REST, 0, m))));
+        const at = 20 * w.size + 10;
+        line(w, at, [300], plan, [0], [0]);
+        w.stepOnce();
+        expect(w.alive[at + 1]).toBe(1);
+        expect(w.census().residual).toBe(0);
+        return w.kind[at + 1];
+      };
+      expect(made(0)).toBe(KIND_SHELL);
+      expect(made(4)).toBe(KIND_PLAIN);
+    });
+    it('conserves matter, keeps bonds sound and one history per seed, and mouths feed', () => {
+      const make = () => foundRoam({ seed: 5, size: 48, start: 'grown-all', mut: 0.05, planMut: 0.4, drain: 2, flow: 1 / 64, life: 2000, compost: true, kinds: true, overrides: { matter: 24_000, startPatches: 2, patchEvery: 100 } });
+      const a = make();
+      const b = make();
+      let sawMouth = false;
+      for (let s = 0; s < 3000; s++) {
+        a.stepOnce(); b.stepOnce();
+        expect(a.census().residual).toBe(0);
+        if (a.census().mouths > 0) sawMouth = true;
+        if (s % 50 === 0) expect(bondsSound(a)).toBe(true);
+      }
+      expect(a.digest()).toBe(b.digest());
+      expect(sawMouth).toBe(true);
+      expect(a.census().drained).toBeGreaterThan(0);
+    });
+    it('refuses kinds without flow and a kind above mouth in a plan', () => {
+      expect(() => new RoamWorld(small({ plan: true, kinds: true }))).toThrow(/kinds needs flow/);
+      const w = kq();
+      expect(() => w.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m, 3)))).toThrow(/plan mode|kind/);
+      const plain = quiet();
+      expect(() => plain.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m, KIND_SHELL)))).toThrow();
+    });
   });
 
   it('a mother regrows a lost daughter where her plan puts it', () => {

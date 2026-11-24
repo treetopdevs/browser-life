@@ -1,6 +1,6 @@
 /** Starting line-ups, pictures and readouts for the roam world, shared by the local page and the headless look. */
 
-import { defaultRoamConfig, G_ADULT, PLAN_MODES, PLAN_REST, planEntry, roamHash, ROAM_GENE_MAX, ROAM_GENES, type RoamCensus, type RoamConfig, RoamWorld } from './kernel.ts';
+import { defaultRoamConfig, G_ADULT, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, roamHash, ROAM_GENE_MAX, ROAM_GENES, type RoamCensus, type RoamConfig, RoamWorld } from './kernel.ts';
 
 /** Acts of a plan mode: keep the daughter in front, to the right, behind, to the left; or let it go there; or rest. */
 const KF = 0, KR = 1, KB = 2, KL = 3, GF = 4, GR = 5, GB = 6, GL = 7;
@@ -92,6 +92,8 @@ export interface RoamOptions {
   life?: number;
   /** With flow: dead cells leave their matter on the ground as food. */
   compost?: boolean;
+  /** With flow: plain, shell and mouth cells, chosen by the plan. */
+  kinds?: boolean;
   overrides?: Partial<RoamConfig>;
 }
 
@@ -115,6 +117,7 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     if (o.flow !== undefined && o.flow > 0 && merged.flow === undefined) merged.flow = o.flow;
     if (merged.flow !== undefined && o.life !== undefined && o.life > 0 && merged.life === undefined) merged.life = o.life;
     if (merged.flow !== undefined && o.compost === true && merged.compost === undefined) merged.compost = true;
+    if (merged.flow !== undefined && o.kinds === true && merged.kinds === undefined) merged.kinds = true;
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }
@@ -129,13 +132,21 @@ export function foundRoam(o: RoamOptions): RoamWorld {
   const types: readonly RoamTypeId[] = ROAM_STARTS[start];
   if (world.cfg.plan && !types.every((t) => planOf(t))) throw new Error(`Start ${start} mixes grown and gene-sized bodies`);
   const planIds = types.map((t) => (world.cfg.plan ? world.addPlan(planOf(t)!) : 0));
+  // With kinds, every other founder of a type is a hunter: the daughter its plan's first mode keeps is a mouth.
+  const hunterIds = types.map((t, j) => {
+    const plan = planOf(t);
+    if (!world.cfg.kinds || !plan || (plan[0] & 15) >= 4) return planIds[j];
+    return world.addPlan(plan.map((e, m) => (m === 0 ? e | (KIND_MOUTH << 12) : e)), planIds[j]);
+  });
   const founders = o.founders ?? Math.max(types.length, Math.round((48 * world.n) / (128 * 128)));
   if (!Number.isSafeInteger(founders) || founders < 1) throw new Error(`Invalid founders: ${founders}`);
   let placed = 0;
   for (let tries = 0; placed < founders && tries < founders * 20; tries++) {
     const tile = roamHash(world.cfg.seed, 0, tries, 41) % world.n;
     const type = types[placed % types.length];
-    if (world.found(tile, ROAM_TYPES[type].genes, roamFamily(type), undefined, planIds[placed % types.length])) placed++;
+    const j = placed % types.length;
+    const plan = Math.floor(placed / types.length) % 2 === 1 ? hunterIds[j] : planIds[j];
+    if (world.found(tile, ROAM_TYPES[type].genes, roamFamily(type), undefined, plan)) placed++;
   }
   return world;
 }
@@ -253,6 +264,9 @@ function paintRoamGarden(world: RoamWorld, scale: number, out: Uint8ClampedArray
     tint[i * 4 + 1] = 0.55 * 0.85 + 0.45 * (c[1] / 255);
     tint[i * 4 + 2] = 0.55 * 0.35 + 0.45 * (c[2] / 255);
     tint[i * 4 + 3] = 0.25 + 0.75 * Math.min(1, world.store[i] / full);
+    // With kinds: shells are pale bone, mouths red, both at a steady brightness so they read at a glance.
+    if (world.kind[i] === KIND_SHELL) { tint[i * 4] = 0.8; tint[i * 4 + 1] = 0.78; tint[i * 4 + 2] = 0.66; tint[i * 4 + 3] = 0.85; }
+    else if (world.kind[i] === KIND_MOUTH) { tint[i * 4] = 1.0; tint[i * 4 + 1] = 0.22; tint[i * 4 + 2] = 0.18; tint[i * 4 + 3] = 1.0; }
   }
   const nb9 = new Int32Array(9);
   const ids = new Int32Array(9), fs = new Float64Array(9), cr = new Float64Array(9), cg = new Float64Array(9), cb = new Float64Array(9);
@@ -490,6 +504,8 @@ export interface RoamFrame {
   flowing: boolean;
   /** Dead cells leave their matter on the ground. */
   compost: boolean;
+  /** Cells come in kinds. */
+  kinds: boolean;
   /** Plans there have ever been in this run. */
   plansEver: number;
 }
@@ -552,6 +568,6 @@ export class RoamSession {
     const pixels = new Uint8ClampedArray(side * side * 4);
     paintRoam(this.world, this.scale, paint, pixels, this.bodyOf);
     const sh = roamShapes(this.world, 12);
-    return { side, pixels, census: this.world.census(), families: roamFamilies(this.world), rates: this.rates, shapes: sh.shapes, outlines: sh.outlines, plans: sh.plans, planned: !!this.world.cfg.plan, flowing: this.world.cfg.flow !== undefined, compost: this.world.cfg.compost === true, plansEver: this.world.plans.length - 1 };
+    return { side, pixels, census: this.world.census(), families: roamFamilies(this.world), rates: this.rates, shapes: sh.shapes, outlines: sh.outlines, plans: sh.plans, planned: !!this.world.cfg.plan, flowing: this.world.cfg.flow !== undefined, compost: this.world.cfg.compost === true, kinds: this.world.cfg.kinds === true, plansEver: this.world.plans.length - 1 };
   }
 }

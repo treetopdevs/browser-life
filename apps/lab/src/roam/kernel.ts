@@ -39,7 +39,13 @@ export const ROAM_GENE_MAX = 512;
 export const PLAN_MODES = 16;
 export const PLAN_REST = 8;
 /** One mode of a plan as a number: act, then the kept daughter's mode, then the cell's own next mode. */
-export const planEntry = (act: number, child: number, next: number): number => act | (child << 4) | (next << 8);
+export const planEntry = (act: number, child: number, next: number, kind = 0): number => act | (child << 4) | (next << 8) | (kind << 12);
+
+/** With `kinds`, what a kept daughter becomes (bits 12-13 of a plan entry): plain, shell or mouth. */
+export const KIND_PLAIN = 0;
+export const KIND_SHELL = 1;
+export const KIND_MOUTH = 2;
+export const ROAM_KIND_NAMES = ['plain', 'shell', 'mouth'] as const;
 
 export interface RoamConfig {
   /** Side of the square torus, in tiles. */
@@ -113,6 +119,13 @@ export interface RoamConfig {
    * body leaves food behind where its cells die. Absent means back to the reservoir.
    */
   compost?: boolean;
+  /**
+   * With flow: cells come in kinds, set by the plan entry that made them (kept daughters only; founders and let-go
+   * cells are plain). A shell does not eat, pays a quarter of the side upkeep, and cannot be fed on by touch; a mouth
+   * does not eat from the ground either, but is the only kind that can feed on another body by touch. Plain cells eat
+   * and can be fed on. Plan copy errors can change a daughter's kind.
+   */
+  kinds?: boolean;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -219,6 +232,9 @@ export interface RoamCensus {
   /** With compost: matter left on the ground as food by dead cells, since step 0. */
   composted: number;
   splits: number;
+  /** With kinds: live shell and mouth cells. */
+  shells: number;
+  mouths: number;
 }
 
 export class RoamWorld {
@@ -271,6 +287,10 @@ export class RoamWorld {
   private readonly mMeta: Uint32Array;
   private readonly mCid: Uint32Array;
   private readonly mPid: Uint32Array;
+  private readonly mKind: Uint8Array;
+  /** With kinds: each cell's kind (KIND_PLAIN, KIND_SHELL, KIND_MOUTH). */
+  readonly kind: Uint8Array;
+  private readonly kinds: boolean;
   private readonly mSince: Uint32Array;
   private readonly takePer: Uint32Array;
   /** Matter taken by larger bodies from smaller ones since step 0. */
@@ -352,6 +372,8 @@ export class RoamWorld {
     if (cfg.flow !== undefined && this.flowQ16 < 1) throw new Error(`Invalid flow: ${cfg.flow}`);
     if (cfg.flow === undefined && cfg.compost !== undefined) throw new Error('compost needs flow');
     this.compost = cfg.compost === true;
+    if (cfg.flow === undefined && cfg.kinds !== undefined) throw new Error('kinds needs flow');
+    this.kinds = cfg.kinds === true;
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
@@ -383,6 +405,8 @@ export class RoamWorld {
     this.mMeta = new Uint32Array(n);
     this.mCid = new Uint32Array(n);
     this.mPid = new Uint32Array(n);
+    this.mKind = new Uint8Array(n);
+    this.kind = new Uint8Array(n);
     this.mSince = new Uint32Array(n);
     this.takePer = new Uint32Array(n);
     this.made = new Uint8Array(n);
@@ -432,8 +456,9 @@ export class RoamWorld {
     whole(parent, 'parent plan', 0, this.plans.length - 1);
     const plan = new Uint16Array(PLAN_MODES);
     for (let m = 0; m < PLAN_MODES; m++) {
-      const e = whole(entries[m], 'plan mode', 0, 0xfff);
+      const e = whole(entries[m], 'plan mode', 0, this.kinds ? 0x2fff : 0xfff);
       if ((e & 15) > PLAN_REST) throw new Error(`Invalid act in mode ${m}: ${e & 15}`);
+      if (e >>> 12 > KIND_MOUTH) throw new Error(`Invalid kind in mode ${m}: ${e >>> 12}`);
       plan[m] = e;
     }
     this.plans.push(plan);
@@ -567,6 +592,7 @@ export class RoamWorld {
     this.since[c] = 0;
     this.made[c] = 0;
     this.mom[c] = 0;
+    this.kind[c] = 0;
     this.bondE[c] = 0;
     this.bondS[c] = 0;
     this.bondE[this.nb(c, 2)] = 0;
@@ -705,6 +731,8 @@ export class RoamWorld {
       this.mCid[j] = this.cid[c];
       this.mMeta[j] = (this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20) | (this.orient[c] << 21) | (this.mode[c] << 23) | (this.made[c] << 27) | (this.mom[c] << 31)) >>> 0;
       this.mPid[j] = this.pid[c];
+      this.mKind[j] = this.kind[c];
+      this.kind[c] = 0;
       this.mSince[j] = this.since[c];
       this.since[c] = 0;
       this.pid[c] = 0;
@@ -739,6 +767,7 @@ export class RoamWorld {
       this.made[to] = (meta >>> 27) & 15;
       this.mom[to] = meta >>> 31;
       this.pid[to] = this.mPid[j];
+      this.kind[to] = this.mKind[j];
       this.since[to] = this.mSince[j];
       for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.mGenes[j * ROAM_GENES + g];
       this.label[to] = k;
@@ -890,6 +919,7 @@ export class RoamWorld {
       this.orient[to] = d;
       this.made[to] = this.mode[c];
       this.mom[to] = keep ? 1 : 0;
+      this.kind[to] = keep && this.kinds ? entry >>> 12 : KIND_PLAIN;
       if (!full) this.mode[c] = (entry >>> 8) & 15;
       this.divisions++;
       this.grew[c] = 1;
@@ -947,18 +977,21 @@ export class RoamWorld {
     const pid = this.pid[c];
     const r = roamHash(seed, t, c, CH_PLAN);
     if ((r & 0xffff) >= rateQ16) return pid;
-    // One place of the plan changes to a different value: a mode's act, its daughter's mode, or its next mode.
+    // One place of the plan changes to a different value: a mode's act, its daughter's mode, its next mode, or (with
+    // kinds) its daughter's kind.
     const next = Uint16Array.from(this.plans[pid]);
     const m = (r >>> 16) & 15;
-    const field = roamHash(seed, t, c, CH_PLAN_FIELD) % 3;
+    const field = roamHash(seed, t, c, CH_PLAN_FIELD) % (this.kinds ? 4 : 3);
     const h = roamHash(seed, t, c, CH_PLAN_NEW);
     const e = next[m];
     const act0 = e & 15;
     const child0 = (e >>> 4) & 15;
     const next0 = (e >>> 8) & 15;
-    if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0);
-    else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0);
-    else next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15);
+    const kind0 = e >>> 12;
+    if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0, kind0);
+    else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0, kind0);
+    else if (field === 2) next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15, kind0);
+    else next[m] = planEntry(act0, child0, next0, (kind0 + 1 + (h % 2)) % 3);
     return this.addPlan(next, pid);
   }
 
@@ -973,8 +1006,11 @@ export class RoamWorld {
     const t = this.step;
     const seal = this.sealN;
     const take = this.takePer;
+    // With kinds only a mouth feeds, and never through a shell.
+    const kinds = this.kinds;
     const loses = (b: number, a: number): boolean =>
-      this.alive[a] === 1 && label[a] !== label[b] && len[label[a]] >= 2 * len[label[b]] && t - this.since[a] >= seal;
+      this.alive[a] === 1 && label[a] !== label[b] && len[label[a]] >= 2 * len[label[b]] && t - this.since[a] >= seal &&
+      (!kinds || (this.kind[a] === KIND_MOUTH && this.kind[b] !== KIND_SHELL));
     for (let b = 0; b < n; b++) {
       take[b] = 0;
       if (!this.alive[b] || t - this.since[b] < seal) continue;
@@ -1094,14 +1130,16 @@ export class RoamWorld {
     const dying: number[] = [];
     for (let j = 0; j < len; j++) {
       const c = this.cells[start + j];
-      let take = this.food[c];
+      // With kinds neither a shell nor a mouth eats from the ground, and a shell pays a quarter of the side upkeep.
+      const shell = this.kinds && this.kind[c] === KIND_SHELL;
+      let take = this.kinds && this.kind[c] !== KIND_PLAIN ? 0 : this.food[c];
       if (take > this.biteN) take = this.biteN;
       if (take > cap - this.store[c]) take = Math.max(0, cap - this.store[c]);
       this.food[c] -= take;
       this.store[c] += take;
       let exposed = 0;
       for (let d = 0; d < 4; d++) if (label[this.nb(c, d)] !== k) exposed++;
-      const costQ16 = exposed * this.leakSideQ16 + this.leakCellQ16 + moveQ16;
+      const costQ16 = exposed * (shell ? this.leakSideQ16 >>> 2 : this.leakSideQ16) + this.leakCellQ16 + moveQ16;
       let pay = Math.floor((costQ16 + (roamHash(seed, t, c, CH_COST) & 0xffff)) / 65536);
       if (pay > this.store[c]) pay = this.store[c];
       this.store[c] -= pay;
@@ -1193,11 +1231,15 @@ export class RoamWorld {
     let food = 0;
     let held = 0;
     let cells = 0;
+    let shells = 0;
+    let mouths = 0;
     const genes = new Array<number>(ROAM_GENES).fill(0);
     for (let i = 0; i < n; i++) {
       food += this.food[i];
       if (!this.alive[i]) continue;
       cells++;
+      if (this.kind[i] === KIND_SHELL) shells++;
+      else if (this.kind[i] === KIND_MOUTH) mouths++;
       held += this.store[i];
       for (let g = 0; g < ROAM_GENES; g++) genes[g] += this.genes[i * ROAM_GENES + g];
     }
@@ -1231,6 +1273,8 @@ export class RoamWorld {
       flowed: this.flowed,
       worn: this.worn,
       composted: this.composted,
+      shells,
+      mouths,
       splits: this.splits,
     };
   }
@@ -1288,6 +1332,7 @@ export class RoamWorld {
     if (this.cfg.plan) for (const plan of this.plans) for (let m = 0; m < PLAN_MODES; m++) mix(plan[m]);
     if (this.flowQ16 > 0) { mix(this.splits); mix(this.worn); }
     if (this.compost) mix(this.composted);
+    if (this.kinds) for (let i = 0; i < this.n; i++) if (this.alive[i]) mix(this.kind[i]);
     return h >>> 0;
   }
 }
