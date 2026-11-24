@@ -120,10 +120,11 @@ export interface RoamConfig {
    */
   compost?: boolean;
   /**
-   * With flow: cells come in kinds, set by the plan entry that made them (kept daughters only; founders and let-go
-   * cells are plain). A shell does not eat, pays a quarter of the side upkeep, and cannot be fed on by touch; a mouth
-   * does not eat from the ground either, but is the only kind that can feed on another body by touch. Plain cells eat
-   * and can be fed on. Plan copy errors can change a daughter's kind.
+   * With flow: cells come in kinds, set by the plan entry that made them, kept or let go (founders are plain). A shell
+   * does not eat, pays a quarter of the side upkeep, and cannot be fed on by touch; a mouth does not eat from the
+   * ground either, but is the only kind that can feed on another body by touch. Plain cells eat and can be fed on. A
+   * body of one cell eats from the ground whatever its kind (a seed feeds itself until it has grown). Plan copy errors
+   * can change a daughter's kind.
    */
   kinds?: boolean;
 }
@@ -919,7 +920,7 @@ export class RoamWorld {
       this.orient[to] = d;
       this.made[to] = this.mode[c];
       this.mom[to] = keep ? 1 : 0;
-      this.kind[to] = keep && this.kinds ? entry >>> 12 : KIND_PLAIN;
+      this.kind[to] = this.kinds ? entry >>> 12 : KIND_PLAIN;
       if (!full) this.mode[c] = (entry >>> 8) & 15;
       this.divisions++;
       this.grew[c] = 1;
@@ -1130,9 +1131,10 @@ export class RoamWorld {
     const dying: number[] = [];
     for (let j = 0; j < len; j++) {
       const c = this.cells[start + j];
-      // With kinds neither a shell nor a mouth eats from the ground, and a shell pays a quarter of the side upkeep.
+      // With kinds neither a shell nor a mouth eats from the ground, unless it is a body of one cell (a seed feeds
+      // itself until it has grown); a shell pays a quarter of the side upkeep.
       const shell = this.kinds && this.kind[c] === KIND_SHELL;
-      let take = this.kinds && this.kind[c] !== KIND_PLAIN ? 0 : this.food[c];
+      let take = this.kinds && this.kind[c] !== KIND_PLAIN && len > 1 ? 0 : this.food[c];
       if (take > this.biteN) take = this.biteN;
       if (take > cap - this.store[c]) take = Math.max(0, cap - this.store[c]);
       this.food[c] -= take;

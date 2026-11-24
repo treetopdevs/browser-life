@@ -726,21 +726,22 @@ describe('roam world, matter that travels through the body (flow)', () => {
 
   describe('kinds of cell', () => {
     const kq = (over: Partial<RoamConfig> = {}) => quiet({ flow: 1 / 65536, kinds: true, ...over });
-    it('only plain cells eat from the ground; a shell pays a quarter of the side upkeep', () => {
-      const ate = (kind: number) => {
+    it('in a body of two or more only plain cells eat from the ground; a lone cell eats whatever its kind; a shell pays a quarter of the side upkeep', () => {
+      const ate = (kind: number, cells: number) => {
         const w = kq();
         const rest = w.addPlan(restAll);
         const at = 20 * w.size + 10;
-        line(w, at, [100], rest, [9], [0]);
+        line(w, at, Array(cells).fill(100), rest, Array(cells).fill(9), Array(cells).fill(0));
         w.kind[at] = kind;
         w.food[at] += 50; w.reservoir -= 50;
         w.stepOnce();
         expect(w.census().residual).toBe(0);
         return 50 - w.food[at];
       };
-      expect(ate(KIND_PLAIN)).toBeGreaterThan(0);
-      expect(ate(KIND_SHELL)).toBe(0);
-      expect(ate(KIND_MOUTH)).toBe(0);
+      expect(ate(KIND_PLAIN, 2)).toBeGreaterThan(0);
+      expect(ate(KIND_SHELL, 2)).toBe(0);
+      expect(ate(KIND_MOUTH, 2)).toBe(0);
+      for (const kind of [KIND_PLAIN, KIND_SHELL, KIND_MOUTH]) expect(ate(kind, 1)).toBeGreaterThan(0);
       const paid = (kind: number) => {
         const w = kq({ leakSide: 1, leakCell: 0 });
         const rest = w.addPlan(restAll);
@@ -778,7 +779,7 @@ describe('roam world, matter that travels through the body (flow)', () => {
       w.stepOnce();
       expect(w.census().drained).toBe(2);
     });
-    it('a kept daughter becomes the kind her plan entry says; a let-go daughter is plain', () => {
+    it('a daughter, kept or let go, becomes the kind her plan entry says', () => {
       const made = (act: number) => {
         const w = kq();
         const plan = w.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => (m === 0 ? planEntry(act, 1, 1, KIND_SHELL) : planEntry(PLAN_REST, 0, m))));
@@ -790,7 +791,7 @@ describe('roam world, matter that travels through the body (flow)', () => {
         return w.kind[at + 1];
       };
       expect(made(0)).toBe(KIND_SHELL);
-      expect(made(4)).toBe(KIND_PLAIN);
+      expect(made(4)).toBe(KIND_SHELL);
     });
     it('conserves matter, keeps bonds sound and one history per seed, and mouths feed', () => {
       const make = () => foundRoam({ seed: 5, size: 48, start: 'grown-all', mut: 0.05, planMut: 0.4, drain: 2, flow: 1 / 64, life: 2000, compost: true, kinds: true, overrides: { matter: 24_000, startPatches: 2, patchEvery: 100 } });

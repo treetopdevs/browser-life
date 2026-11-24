@@ -312,3 +312,26 @@ Not seen: armour. It is still one kind of hunter against unarmoured prey. Seen s
 
 Review: Codex (Sol 6.1, High) found a page readout overwritten every frame (a duplicate id) and page text that
 misdescribed which founders carry mouths; both fixed. No kernel findings; old pins hold. 42 tests.
+
+## Armoured seeds (2026-11-24, night)
+
+On the user's yes: a let-go cell now keeps the kind its plan gives it. Alone that did nothing (no shells on either
+seed to 60,000 steps): a lone shell or mouth cannot graze, so it never grows. One more rule makes it matter: a body
+of one cell eats from the ground whatever its kind (a seed feeds itself). A shell let go is then an armoured seed:
+it grazes, cannot be eaten, and pays less upkeep. It stops grazing only if it grows into a body.
+
+Seen (seeds 1 and 2, 120,000 steps):
+
+- Seed 2: shells arrive about step 20,000 and spread to more than half of all cells (581 of 1,048 at 120,000),
+  almost all as lone armoured cells. Touch feeding falls from about 92,000 to about 22,000 matter per 1,000 steps.
+  Hunters shrink (largest body from about 60 to about 10 cells) but last (about 100 mouths to the end). Movement
+  climbs again (drive 70 to 188, chase 395 to 489).
+- Seed 1: no shell takes hold in 120,000 steps (at most 3 at a time). Hunters keep the arena: 225 to 365 cells,
+  about 60,000 matter taken per 1,000 steps throughout.
+- No swing back on seed 2: nothing can eat a shell, so hunters have no counter, and the shells hold.
+
+So two seeds, two worlds from the same rules: a hunters' world and an armoured world. That is the first time in
+this world that seeds settle on clearly different ways of living. Seen seeds only, rules written by me. Video:
+`runs/roam/v-shells-s2/` (seed 2, steps 40,000 to 43,000).
+
+Review: Codex (Sol 6.1, High), no findings. 42 tests.
