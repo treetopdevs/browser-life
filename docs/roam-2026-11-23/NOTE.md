@@ -394,8 +394,8 @@ very fast.
 The user's idea: give armour a real cost. With `halfBite` (needs kinds), a shell that grazes (one alone as a body of
 one cell) takes half the usual bite (1 instead of 2; an odd bite is halved up or down by a hash). So an armoured seed
 is safe but grows slowly, and a plain one grows fast but can be eaten. Stated before running: the same sweep, and it
-passes if hunters and armour swing or live side by side (swing.ts "swings", or "mixed" with both present in at least
-80% of reports) at three or more of the five crack numbers, on both seeds, with toughness off.
+passes if hunters and armour swing or live side by side (how "side by side" is read, swing.ts "swings" or "mixed"
+with both present in at least 80% of reports, was fixed after the results came in) at three or more of the five crack numbers, on both seeds, with toughness off.
 
 Results (`runs/roam/sweep-half/`):
 
@@ -409,10 +409,14 @@ Results (`runs/roam/sweep-half/`):
 | 8,000 | swings (2 turns) | armour takes over |
 
 (swing.ts was fixed after review so a rise counts at 30%, as its header says, not 43%; no verdict in either
-sweep changed, only turn counts.) Seed 1 passes at 4 of 5 crack numbers (before: 1 of 5); seed 2 at 0 of 5. **Fails** the stated test. With toughness
+sweep changed, only turn counts.) Seed 1 passes at 4 of 5 crack numbers (before: 1 of 5); seed 2 at 0 of 5. **Fails** the stated test. Seed 1 is
+weaker than 4 of 5 sounds: three of its passes sit at 81% both present (17 of 21 reports, one report from the bar),
+at 1,000 the shells are gone by the end, and the 8,000 run matches the never-crack run report for report until
+about 100,000, so it is not an independent point. Only 500 and 4,000 end with both sides alive. Each cell is one
+history. Matter: the residual is 0 in all 550 reports. With toughness
 on the picture is no better (seed 1: armour takes over at 1,000, 4,000 and 8,000; seed 2 mixed at 4,000 and 8,000
 with hunters rising late), and mean toughness still ends at 0.00 to 0.04. At 8,000 hits cracking almost never
-happens, so those runs are close to the never-crack runs. Half bite clearly widens the range on seed 1; on seed 2 the
+happens, so those runs are close to the never-crack runs. Half bite may widen the range on seed 1; on seed 2 the
 early armour bloom (900+ shells by 20,000) still decides the run. Seen seeds only, one history each.
 
 This is a follow-up of a follow-up (crack, then toughness, then half bite), a tripwire, so this line stops here
