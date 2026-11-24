@@ -18,7 +18,7 @@
     button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
     label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
     input[type=number] { width: 7em; }
-    canvas { width: 100%; max-width: 760px; aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; display: block; }
+    canvas { width: 100%; max-width: 768px; aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; display: block; }
     dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 16px; margin: 16px 0; }
     dt { color: var(--dim); font-size: 12px; }
     dd { margin: 0; font-variant-numeric: tabular-nums; font-size: 17px; }
@@ -33,7 +33,7 @@
 <body>
   <main>
     <h1>Roam <small style="color:var(--dim);font-weight:400">· local probe, not on the site</small></h1>
-    <p>Each coloured piece is a <b>body</b>: a few cells joined together, outlined where it meets another body. A body moves as one piece, eats the <b>food</b> (green) under it, and shares what it eats among its cells. Cells that are full divide; while the body is small the new cell stays joined, and once it is adult size the new cell is let go as a new body. A body that runs short gives up cells one at a time and then dies.</p>
+    <p>Each coloured piece is a <b>body</b>: a few cells joined together, outlined where it meets another body. A body moves as one piece, eats the <b>food</b> under it (a blue haze in the garden look, green in the others), and shares what it eats among its cells. Cells that are full divide; while the body is small the new cell stays joined, and once it is adult size the new cell is let go as a new body. A body that runs short gives up cells one at a time and then dies.</p>
     <p>With a <b>grown</b> start, a body's outline comes from a plan every one of its cells carries: a short list of steps that says where a cell puts its next daughter, whether it keeps her or lets her go as a new body, and which step each of them does next. The planted plans are written by hand. With copy errors on, a new body's plan sometimes differs from its parent's in one place, and the outlines that follow are ones nobody drew.</p>
     <p>With <b>touch</b> feeding on, a body that is at least twice the size of one it touches takes matter from it through every side where they meet, so small bodies and half-grown ones are food for large ones. A new body is safe for its first 100 steps, and spends them moving straight away from its parent.</p>
     <p>Food comes only in <b>patches</b>. Everything bodies use up or leave behind goes to one store, and that store drops it back as a new patch somewhere else. A body cannot wait for food to come to it.</p>
@@ -69,7 +69,7 @@
         <option value="0">bodies only block each other</option>
       </select></label>
       <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64 (bodies drawn twice as large)</option></select></label>
-      <label>Colour <select id="paint"><option value="plan" selected>by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
+      <label>Colour <select id="paint"><option value="garden" selected>garden look: soft bodies with pale rims, lit by how full they are, tinted by plan; blue haze is food</option><option value="plan">by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
       <label>Speed <select id="pace"><option value="10">very slow: 10 steps a second</option><option value="30">slow: 30</option><option value="120" selected>medium: 120</option><option value="600">fast: 600</option><option value="0">as fast as it goes</option></select></label>
     </div>
     <p id="error"></p>

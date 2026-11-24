@@ -191,3 +191,7 @@ one (the narrower bush) on seen seeds. Creatures that visibly differ from their 
 once each way, on two seeds, and only with a size-pays rule and a size limit that we wrote. Not shown: that an
 outline matters to the body that has it. Rungs 1 to 3 in this world are still on seen seeds only; the
 unseen-seed check was put off because the rules were about to change, and is still owed.
+
+## The garden look (2026-11-24)
+
+On the user's ask, the page now opens in a "garden look" modelled on the main garden world's composite view: a near-black ground with a blue haze where food lies, each body drawn as one soft blob (a field summed over its cells, so cells of one body run together and two bodies pressed together keep a seam) with a pale rim, lit inside by how full its store is, tinted part-way toward its plan's colour, and a soft glow over everything. Picture only; the world's rules and digests are unchanged. Painting costs about 44 ms a frame at 128 x 128 (6 pixels a tile) against 6 ms for the flat paints. Pictures: `garden-look.png`, `garden-look-zoom.png` (seed 2, six founders, touch feeding, step 101,500). Review: Codex found only a stale food-colour legend (fixed).

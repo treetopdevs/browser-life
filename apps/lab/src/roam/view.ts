@@ -131,7 +131,7 @@ export function foundRoam(o: RoamOptions): RoamWorld {
   return world;
 }
 
-export type RoamPaint = 'family' | 'genes' | 'plan';
+export type RoamPaint = 'garden' | 'family' | 'genes' | 'plan';
 
 /** A colour for a plan number: neighbours in number are far apart in hue. */
 export function roamPlanColour(pid: number): [number, number, number] {
@@ -150,6 +150,7 @@ export function roamPlanColour(pid: number): [number, number, number] {
  * hungry. A dark line separates cells of different bodies.
  */
 export function paintRoam(world: RoamWorld, scale: number, paint: RoamPaint, out: Uint8ClampedArray | Uint8Array, bodyOf: Int32Array): void {
+  if (paint === 'garden') return paintRoamGarden(world, scale, out, bodyOf);
   const s = world.size;
   const side = s * scale;
   if (out.length !== side * side * 4) throw new Error('paintRoam: wrong buffer size');
@@ -191,6 +192,143 @@ export function paintRoam(world: RoamWorld, scale: number, paint: RoamPaint, out
         }
       }
     }
+  }
+}
+
+/** Light to a 0..255 channel, a little lifted (power 0.8), as a table: light 0 to 1.5 in 2,048 steps. */
+const GAMMA_N = 2048, GAMMA_STEP = GAMMA_N / 1.5;
+const GAMMA = Uint8ClampedArray.from({ length: GAMMA_N }, (_, k) => Math.min(255, 255 * ((k + 0.5) / GAMMA_STEP) ** 0.8));
+
+const gardenBuffers = new Map<number, { col: Float32Array; tmp: Float32Array; glow: Float32Array }>();
+
+/**
+ * The main garden's look, drawn from roam's state: a dark ground hazed blue where food lies, each body one soft blob
+ * with a pale rim (its outward sides, corners rounded), lit inside by how full its store is and tinted by its plan
+ * (or founder family), and a soft glow over everything. Pixels between bodies that touch keep both rims, so two
+ * bodies pressed together read as two. Only the picture differs from the other paints; the world is the same.
+ */
+function paintRoamGarden(world: RoamWorld, scale: number, out: Uint8ClampedArray | Uint8Array, bodyOf: Int32Array): void {
+  const s = world.size;
+  const side = s * scale;
+  if (out.length !== side * side * 4) throw new Error('paintRoam: wrong buffer size');
+  world.bodySizes(bodyOf);
+  const full = 2 * world.cfg.birthStore;
+  const famColours = TYPE_ORDER.map((t) => ROAM_TYPES[t].colour);
+  let buf = gardenBuffers.get(side);
+  if (!buf) gardenBuffers.set(side, (buf = { col: new Float32Array(side * side * 3), tmp: new Float32Array(side * side * 3), glow: new Float32Array(side * side * 3) }));
+  const { col, tmp } = buf;
+  const at = (x: number, y: number) => (((y + s) % s) * s + ((x + s) % s));
+  const foodN = new Float32Array(world.n);
+  for (let i = 0; i < world.n; i++) foodN[i] = Math.min(1, world.food[i] / 120);
+  const foodAt = (x: number, y: number) => foodN[at(x, y)];
+  // Tiles with a live cell in their 3 x 3 block; the rest show only ground.
+  const near = new Uint8Array(world.n);
+  for (let i = 0; i < world.n; i++) {
+    if (!world.alive[i]) continue;
+    const x = i % s, y = (i - x) / s;
+    for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) near[at(x + ox, y + oy)] = 1;
+  }
+  const smooth = (a: number, b: number, v: number) => {
+    const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  // Each cell adds a soft bump (radius KR tiles) to its body's field; a body's outline is where its field, less the
+  // strongest other body's, crosses T. Cells of one body run together; neighbouring bodies keep a dark seam.
+  const KR = 1.25, T = 0.5;
+  const tint = new Float32Array(world.n * 4);
+  for (let i = 0; i < world.n; i++) {
+    if (!world.alive[i]) continue;
+    const c = world.cfg.plan ? roamPlanColour(world.pid[i]) : (famColours[(world.fam[i] - 1) % famColours.length] ?? [200, 200, 200]);
+    // Mostly the garden's biomass green, part the plan's own colour so kinds stay apart.
+    tint[i * 4] = 0.55 * 0.2 + 0.45 * (c[0] / 255);
+    tint[i * 4 + 1] = 0.55 * 0.85 + 0.45 * (c[1] / 255);
+    tint[i * 4 + 2] = 0.55 * 0.35 + 0.45 * (c[2] / 255);
+    tint[i * 4 + 3] = 0.25 + 0.75 * Math.min(1, world.store[i] / full);
+  }
+  const nb9 = new Int32Array(9);
+  const ids = new Int32Array(9), fs = new Float64Array(9), cr = new Float64Array(9), cg = new Float64Array(9), cb = new Float64Array(9);
+  for (let ty = 0; ty < s; ty++) {
+    for (let tx = 0; tx < s; tx++) {
+      const busy = near[ty * s + tx] === 1;
+      if (busy) for (let oy = -1, k = 0; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++, k++) nb9[k] = at(tx + ox, ty + oy);
+      const f00 = foodAt(tx - 1, ty - 1), f10 = foodAt(tx, ty - 1), f20 = foodAt(tx + 1, ty - 1);
+      const f01 = foodAt(tx - 1, ty), f11 = foodAt(tx, ty), f21 = foodAt(tx + 1, ty);
+      const f02 = foodAt(tx - 1, ty + 1), f12 = foodAt(tx, ty + 1), f22 = foodAt(tx + 1, ty + 1);
+      for (let py = 0; py < scale; py++) {
+        const fy = (py + 0.5) / scale;
+        for (let px = 0; px < scale; px++) {
+          const fx = (px + 0.5) / scale;
+          // Food as a haze: bilinear between tile centres.
+          const left = fx < 0.5, top = fy < 0.5;
+          const ax = left ? fx + 0.5 : fx - 0.5, ay = top ? fy + 0.5 : fy - 0.5;
+          const a0 = top ? (left ? f00 : f10) : left ? f01 : f11, a1 = top ? (left ? f10 : f20) : left ? f11 : f21;
+          const b0 = top ? (left ? f01 : f11) : left ? f02 : f12, b1 = top ? (left ? f11 : f21) : left ? f12 : f22;
+          const food = (a0 * (1 - ax) + a1 * ax) * (1 - ay) + (b0 * (1 - ax) + b1 * ax) * ay;
+          let r = 0.006 + 0.02 * food, g = 0.01 + 0.06 * food, bl = 0.04 + 0.2 * food;
+          let m = 0;
+          if (busy) for (let oy = -1, n9 = 0; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++, n9++) {
+              const j = nb9[n9];
+              if (!world.alive[j]) continue;
+              const q = 1 - ((ox + 0.5 - fx) ** 2 + (oy + 0.5 - fy) ** 2) / (KR * KR);
+              if (q <= 0) continue;
+              const f = q * q;
+              let k = 0;
+              while (k < m && ids[k] !== bodyOf[j]) k++;
+              if (k === m) { ids[m] = bodyOf[j]; fs[m] = 0; cr[m] = 0; cg[m] = 0; cb[m] = 0; m++; }
+              fs[k] += f;
+              const lit = tint[j * 4 + 3] * f;
+              cr[k] += tint[j * 4] * lit; cg[k] += tint[j * 4 + 1] * lit; cb[k] += tint[j * 4 + 2] * lit;
+            }
+          }
+          if (m > 0) {
+            let best = 0, second = 0;
+            for (let k = 1; k < m; k++) if (fs[k] > fs[best]) best = k;
+            for (let k = 0; k < m; k++) if (k !== best && fs[k] > second) second = fs[k];
+            const F = fs[best] - second;
+            const inside = smooth(T - 0.04, T + 0.04, F);
+            const rim = Math.exp(-(((F - T - 0.1) / 0.1) ** 2));
+            const depth = 0.22 + 0.6 * smooth(T + 0.3, T + 1.4, F);
+            const w = inside * depth / fs[best];
+            r = r * (1 - inside) + cr[best] * w + 0.45 * rim;
+            g = g * (1 - inside) + cg[best] * w + 0.8 * rim;
+            bl = bl * (1 - inside) + cb[best] * w + 0.5 * rim;
+          }
+          const o = ((ty * scale + py) * side + tx * scale + px) * 3;
+          col[o] = r; col[o + 1] = g; col[o + 2] = bl;
+        }
+      }
+    }
+  }
+  // Glow: a wide soft blur (two box passes each way, wrapping like the torus) added back over the picture.
+  const rad = Math.max(1, Math.round(scale * 0.9));
+  const pass = (src: Float32Array, dst: Float32Array, horiz: boolean) => {
+    const norm = 1 / (2 * rad + 1);
+    const step = horiz ? 3 : side * 3;
+    for (let line = 0; line < side; line++) {
+      const base = horiz ? line * side * 3 : line * 3;
+      for (let ch = 0; ch < 3; ch++) {
+        const b0 = base + ch;
+        let sum = 0;
+        for (let k = -rad; k <= rad; k++) sum += src[b0 + (((k % side) + side) % side) * step];
+        let add = rad + 1, drop = side - rad;
+        for (let k = 0; k < side; k++) {
+          dst[b0 + k * step] = sum * norm;
+          sum += src[b0 + add * step] - src[b0 + drop * step];
+          if (++add === side) add = 0;
+          if (++drop === side) drop = 0;
+        }
+      }
+    }
+  };
+  const glow = buf.glow;
+  glow.set(col);
+  pass(glow, tmp, true); pass(tmp, glow, false); pass(glow, tmp, true); pass(tmp, glow, false);
+  for (let p = 0, q = 0; p < side * side; p++, q += 3) {
+    out[p * 4] = GAMMA[Math.min(GAMMA_N - 1, ((col[q] + 0.9 * glow[q]) * GAMMA_STEP) | 0)];
+    out[p * 4 + 1] = GAMMA[Math.min(GAMMA_N - 1, ((col[q + 1] + 0.9 * glow[q + 1]) * GAMMA_STEP) | 0)];
+    out[p * 4 + 2] = GAMMA[Math.min(GAMMA_N - 1, ((col[q + 2] + 0.9 * glow[q + 2]) * GAMMA_STEP) | 0)];
+    out[p * 4 + 3] = 255;
   }
 }
 

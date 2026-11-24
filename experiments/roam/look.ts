@@ -7,7 +7,7 @@
  * Options: --seed, --steps, --size (128), --start (chasers | wanderers | sitters | singles | chasers-sitters | chasers-singles |
  * chasers-wanderers | all | grown-lines | grown-plates | grown-crosses | grown-blocks | grown-specks | grown-bushes |
  * grown-four | grown-all; the grown starts use growth by plan), --planMut, --founders, --mut (chance per gene per division), --report (1000), --frames,
- * --scale (4), --movie N (with --movieFrom S to start the frames at step S), --paint (family | genes | plan), --ov '{json}' (config overrides), --out dir.
+ * --scale (4), --movie N (with --movieFrom S to start the frames at step S), --paint (garden | family | genes | plan), --ov '{json}' (config overrides), --out dir.
  * Each row's "travel" is the mean straight-line distance, in tiles, that cells alive at both ends moved over the last
  * --lag steps (200), and "moved" the share of them that ended 2 or more tiles away.
  * A probe, not an experiment runner: no arms, no summary beyond rows.json.
@@ -41,7 +41,7 @@ const scale = int('scale', 4, 1);
 const movie = int('movie', 0, 0);
 const movieFrom = int('movieFrom', 0, 0);
 const paint = (args.paint ?? 'family') as RoamPaint;
-if (paint !== 'family' && paint !== 'genes' && paint !== 'plan') throw new Error(`--paint ${paint}: family, genes or plan`);
+if (!['garden', 'family', 'genes', 'plan'].includes(paint)) throw new Error(`--paint ${paint}: garden, family, genes or plan`);
 const start = (args.start ?? 'chasers') as RoamStart;
 if (!(start in ROAM_STARTS)) throw new Error(`--start ${start}: one of ${Object.keys(ROAM_STARTS).join(', ')}`);
 const out = args.out ?? 'runs/roam/look';

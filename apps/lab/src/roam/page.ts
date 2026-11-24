@@ -51,7 +51,7 @@ function reset(): void {
   lastStep = 0;
   lastTime = performance.now();
   const opts = options();
-  send({ type: 'reset', gen, opts, scale: opts.size! > 128 ? 3 : opts.size! < 128 ? 10 : 5, paint: value('paint') as RoamPaint });
+  send({ type: 'reset', gen, opts, scale: opts.size! > 128 ? 3 : opts.size! < 128 ? 12 : 6, paint: value('paint') as RoamPaint });
 }
 
 function adultCells(gene: number): number {
@@ -104,7 +104,7 @@ function showShapes(f: RoamFrame): void {
   g.fillRect(0, 0, shapesCanvas.width, shapesCanvas.height);
   g.font = '13px system-ui, sans-serif';
   g.textAlign = 'center';
-  const byPlan = f.planned && value('paint') === 'plan';
+  const byPlan = f.planned && (value('paint') === 'plan' || value('paint') === 'garden');
   f.shapes.forEach((shape, k) => {
     const x0 = k * SHAPE_BOX;
     const cell = Math.max(1, Math.min(10, Math.floor((SHAPE_BOX - 16) / Math.max(shape.w, shape.h))));
