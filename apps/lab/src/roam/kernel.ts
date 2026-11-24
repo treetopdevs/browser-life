@@ -108,6 +108,11 @@ export interface RoamConfig {
   flow?: number;
   /** With flow: each cell dies by wear with chance 1/life per step. Absent means cells do not wear out. */
   life?: number;
+  /**
+   * With flow: a dead cell's store stays on its tile as food (true) instead of going back to the reservoir, so a
+   * body leaves food behind where its cells die. Absent means back to the reservoir.
+   */
+  compost?: boolean;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -211,6 +216,8 @@ export interface RoamCensus {
   drained: number;
   flowed: number;
   worn: number;
+  /** With compost: matter left on the ground as food by dead cells, since step 0. */
+  composted: number;
   splits: number;
 }
 
@@ -281,6 +288,8 @@ export class RoamWorld {
   /** With flow: matter moved along bonds, cells dead by wear, and bodies that broke into more than one. */
   flowed = 0;
   worn = 0;
+  composted = 0;
+  private readonly compost: boolean;
   splits = 0;
 
   divisions = 0;
@@ -341,6 +350,8 @@ export class RoamWorld {
     if (cfg.flow === undefined && cfg.life !== undefined) throw new Error('life needs flow');
     this.flowQ16 = cfg.flow === undefined ? 0 : q16(cfg.flow, 'flow', 8192);
     if (cfg.flow !== undefined && this.flowQ16 < 1) throw new Error(`Invalid flow: ${cfg.flow}`);
+    if (cfg.flow === undefined && cfg.compost !== undefined) throw new Error('compost needs flow');
+    this.compost = cfg.compost === true;
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
@@ -883,9 +894,20 @@ export class RoamWorld {
       this.divisions++;
       this.grew[c] = 1;
       if (keep) {
-        for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.genes[c * ROAM_GENES + g];
-        // With flow, a kept daughter's plan can change too (at an eighth of the rate), so a piece that breaks off
-        // can carry a new plan; without flow kept daughters are exact copies.
+        // With flow, a kept daughter's genes can change (at the let-go rate) and her plan too (at an eighth of it),
+        // so a piece that breaks off can carry new genes or a new plan; without flow kept daughters are exact copies.
+        // (With flow bodies reproduce almost only by breaking, so without this the genes would never change.)
+        for (let g = 0; g < ROAM_GENES; g++) {
+          let v = this.genes[c * ROAM_GENES + g];
+          if (this.flowQ16 > 0) {
+            const r = roamHash(seed, t, c, CH_MUT + g);
+            if ((r & 0xffff) < this.mutQ16) {
+              v += (r >>> 16) & 1 ? cfg.mutStep : -cfg.mutStep;
+              v = v > ROAM_GENE_MAX ? ROAM_GENE_MAX : v < -ROAM_GENE_MAX ? -ROAM_GENE_MAX : v;
+            }
+          }
+          this.genes[to * ROAM_GENES + g] = v;
+        }
         this.pid[to] = this.flowQ16 > 0 ? this.copyPlan(c, this.planMutQ16 >>> 3) : this.pid[c];
         this.mode[to] = (entry >>> 4) & 15;
         if (d === 0) this.bondE[c] = 1;
@@ -983,7 +1005,7 @@ export class RoamWorld {
    * the mode that made it, so she regrows it, and each one's daughters (bonded, facing away from it) start their plans
    * again from mode 0. All resets are read with every bond still in place and settled before any cell is removed, so
    * the order of the dying makes no difference: a survivor whose mother died starts from 0; one that lost only
-   * daughters returns to the earliest mode among those that made them. Their stores go back to the reservoir.
+   * daughters returns to the earliest mode among those that made them. Their stores go back to the reservoir, or with compost stay on their tiles as food.
    */
   private dieFlow(dying: number[]): void {
     const gone = new Set(dying);
@@ -1006,7 +1028,10 @@ export class RoamWorld {
     for (const [o, m] of back) this.mode[o] = m;
     for (const o of zero) { this.mode[o] = 0; this.mom[o] = 0; }
     for (const c of dying) {
-      this.reservoir += this.store[c];
+      if (this.compost) {
+        this.food[c] += this.store[c];
+        this.composted += this.store[c];
+      } else this.reservoir += this.store[c];
       this.removeCell(c);
     }
   }
@@ -1205,6 +1230,7 @@ export class RoamWorld {
       drained: this.drained,
       flowed: this.flowed,
       worn: this.worn,
+      composted: this.composted,
       splits: this.splits,
     };
   }
@@ -1261,6 +1287,7 @@ export class RoamWorld {
     }
     if (this.cfg.plan) for (const plan of this.plans) for (let m = 0; m < PLAN_MODES; m++) mix(plan[m]);
     if (this.flowQ16 > 0) { mix(this.splits); mix(this.worn); }
+    if (this.compost) mix(this.composted);
     return h >>> 0;
   }
 }

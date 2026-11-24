@@ -90,6 +90,8 @@ export interface RoamOptions {
   flow?: number;
   /** With flow: mean steps before a cell wears out (absent: never). */
   life?: number;
+  /** With flow: dead cells leave their matter on the ground as food. */
+  compost?: boolean;
   overrides?: Partial<RoamConfig>;
 }
 
@@ -112,6 +114,7 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     merged.plan = true;
     if (o.flow !== undefined && o.flow > 0 && merged.flow === undefined) merged.flow = o.flow;
     if (merged.flow !== undefined && o.life !== undefined && o.life > 0 && merged.life === undefined) merged.life = o.life;
+    if (merged.flow !== undefined && o.compost === true && merged.compost === undefined) merged.compost = true;
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }
@@ -478,13 +481,15 @@ export interface RoamFrame {
   census: RoamCensus;
   families: RoamFamilyRow[];
   /** Splits, releases and body deaths per 1,000 steps over the last stretch, and how far cells travelled in it. */
-  rates: { steps: number; divisions: number; releases: number; bodyDeaths: number; newbornDeaths: number; patches: number; travel: number; movedShare: number; drained: number; splits: number; cellDeaths: number; worn: number };
+  rates: { steps: number; divisions: number; releases: number; bodyDeaths: number; newbornDeaths: number; patches: number; travel: number; movedShare: number; drained: number; splits: number; cellDeaths: number; worn: number; composted: number };
   /** The most common body outlines, how many outlines and plans are alive, and whether bodies grow by plan. */
   shapes: RoamShape[];
   outlines: number;
   plans: number;
   planned: boolean;
   flowing: boolean;
+  /** Dead cells leave their matter on the ground. */
+  compost: boolean;
   /** Plans there have ever been in this run. */
   plansEver: number;
 }
@@ -501,7 +506,7 @@ export class RoamSession {
   private readonly bodyOf: Int32Array;
   private readonly travel: () => { cells: number; mean: number; movedShare: number };
   private last: RoamCensus;
-  private rates: RoamFrame['rates'] = { steps: 0, divisions: 0, releases: 0, bodyDeaths: 0, newbornDeaths: 0, patches: 0, travel: 0, movedShare: 0, drained: 0, splits: 0, cellDeaths: 0, worn: 0 };
+  private rates: RoamFrame['rates'] = { steps: 0, divisions: 0, releases: 0, bodyDeaths: 0, newbornDeaths: 0, patches: 0, travel: 0, movedShare: 0, drained: 0, splits: 0, cellDeaths: 0, worn: 0, composted: 0 };
 
   constructor(opts: RoamOptions, scale: number) {
     this.world = foundRoam(opts);
@@ -532,6 +537,7 @@ export class RoamSession {
           splits: (c.splits - this.last.splits) * per,
           cellDeaths: (c.cellDeaths - this.last.cellDeaths) * per,
           worn: (c.worn - this.last.worn) * per,
+          composted: (c.composted - this.last.composted) * per,
           travel: tr.mean,
           movedShare: tr.movedShare,
         };
@@ -546,6 +552,6 @@ export class RoamSession {
     const pixels = new Uint8ClampedArray(side * side * 4);
     paintRoam(this.world, this.scale, paint, pixels, this.bodyOf);
     const sh = roamShapes(this.world, 12);
-    return { side, pixels, census: this.world.census(), families: roamFamilies(this.world), rates: this.rates, shapes: sh.shapes, outlines: sh.outlines, plans: sh.plans, planned: !!this.world.cfg.plan, flowing: this.world.cfg.flow !== undefined, plansEver: this.world.plans.length - 1 };
+    return { side, pixels, census: this.world.census(), families: roamFamilies(this.world), rates: this.rates, shapes: sh.shapes, outlines: sh.outlines, plans: sh.plans, planned: !!this.world.cfg.plan, flowing: this.world.cfg.flow !== undefined, compost: this.world.cfg.compost === true, plansEver: this.world.plans.length - 1 };
   }
 }

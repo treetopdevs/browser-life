@@ -14,7 +14,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { ROAM_GENE_NAMES, type RoamConfig } from '../../apps/lab/src/roam/kernel.ts';
+import { ROAM_GENE_NAMES, ROAM_GENES, type RoamConfig } from '../../apps/lab/src/roam/kernel.ts';
 import { foundRoam, paintRoam, roamFamilies, type RoamPaint, roamShapes, type RoamStart, ROAM_STARTS, roamTravel } from '../../apps/lab/src/roam/view.ts';
 import { writePng } from '../bodies/png.ts';
 
@@ -94,7 +94,23 @@ for (let s = 0; s <= steps; s++) {
     if (world.cfg.flow !== undefined) {
       const sizes = world.bodySizes().sort((x, y) => y - x);
       const big = sizes.filter((x) => x >= 8).length;
-      console.log(`        flow: splits/k ${Math.round((c.splits - prev.splits) * per)}, buds/k ${Math.round((c.releases - prev.releases) * per)}, cell deaths/k ${Math.round((c.cellDeaths - prev.cellDeaths) * per)} (worn ${Math.round((c.worn - prev.worn) * per)}), moved along bonds/k ${Math.round((c.flowed - prev.flowed) * per)}; bodies of 8+ cells ${big}; ten largest ${sizes.slice(0, 10).join(' ')}`);
+      // Spread of the movement genes over bodies (each body's cell average, weighted by its cells): two kinds of body
+      // would show as a wide gap between the 10th and 90th percentile.
+      const groups = new Int32Array(world.n);
+      const gs = world.bodySizes(groups);
+      const sum = gs.map(() => [0, 0]);
+      for (let i = 0; i < world.n; i++) {
+        if (!world.alive[i]) continue;
+        sum[groups[i] - 1][0] += world.genes[i * ROAM_GENES + 0];
+        sum[groups[i] - 1][1] += world.genes[i * ROAM_GENES + 1];
+      }
+      const pct = (gi: number) => {
+        const rows = gs.map((z, g) => ({ v: sum[g][gi] / z, z })).sort((x, y) => x.v - y.v);
+        const tot = rows.reduce((a2, r) => a2 + r.z, 0);
+        return [0.1, 0.5, 0.9].map((q) => { let acc = 0; for (const r of rows) { acc += r.z; if (acc >= q * tot) return Math.round(r.v); } return 0; }).join('/');
+      };
+      console.log(`        spread by body (p10/p50/p90, cell-weighted): chase ${pct(0)}, drive ${pct(1)}`);
+      console.log(`        flow: splits/k ${Math.round((c.splits - prev.splits) * per)}, buds/k ${Math.round((c.releases - prev.releases) * per)}, cell deaths/k ${Math.round((c.cellDeaths - prev.cellDeaths) * per)} (worn ${Math.round((c.worn - prev.worn) * per)}), left on the ground/k ${Math.round((c.composted - prev.composted) * per)}, moved along bonds/k ${Math.round((c.flowed - prev.flowed) * per)}; bodies of 8+ cells ${big}; ten largest ${sizes.slice(0, 10).join(' ')}`);
     }
     if (world.cfg.plan) {
       // The outlines holding the most cells, each as rows of # and . with the number of bodies that have it.

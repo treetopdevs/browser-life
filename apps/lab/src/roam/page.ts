@@ -19,7 +19,7 @@ let lastTime = performance.now();
 let rate = 0;
 
 function options(): RoamOptions {
-  return { seed: Math.max(0, Math.floor(Number(value('seed')) || 0)), size: Number(value('size')), start: value('start') as RoamStart, mut: Number(value('mut')), drain: Number(value('drain')), flow: Number(value('flow')) || undefined, life: Number(value('life')) || undefined };
+  return { seed: Math.max(0, Math.floor(Number(value('seed')) || 0)), size: Number(value('size')), start: value('start') as RoamStart, mut: Number(value('mut')), drain: Number(value('drain')), flow: Number(value('flow')) || undefined, life: Number(value('life')) || undefined, compost: value('compost') === '1' };
 }
 
 function send(m: RoamToWorker): void {
@@ -80,7 +80,7 @@ function show(f: RoamFrame): void {
   set('r-travel', `${f.rates.travel.toFixed(1)} tiles (${Math.round(f.rates.movedShare * 100)}% moved 2 or more)`);
   set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting`);
   set('r-drained', `${fmt(f.rates.drained)} per 1,000 steps`);
-  set('r-flow', f.flowing ? `${fmt(f.rates.splits)} bodies broke in two; ${fmt(f.rates.releases)} budded; ${fmt(f.rates.cellDeaths)} cells died (${fmt(f.rates.worn)} worn out)` : 'off');
+  set('r-flow', f.flowing ? `${fmt(f.rates.splits)} bodies broke in two; ${fmt(f.rates.releases)} budded; ${fmt(f.rates.cellDeaths)} cells died (${fmt(f.rates.worn)} worn out)${f.compost ? `; ${fmt(f.rates.composted)} matter left on the ground by them` : ''}` : 'off');
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
   showShapes(f);
   el('families').innerHTML = f.families
@@ -146,7 +146,7 @@ el('play').addEventListener('click', () => {
   lastTime = performance.now();
 });
 el('reset').addEventListener('click', reset);
-for (const id of ['seed', 'start', 'mut', 'size', 'drain', 'flow', 'life']) el(id).addEventListener('change', reset);
+for (const id of ['seed', 'start', 'mut', 'size', 'drain', 'flow', 'life', 'compost']) el(id).addEventListener('change', reset);
 el('genes-head').innerHTML = ['Family', 'cells', ...ROAM_GENE_NAMES].map((h) => `<th>${h}</th>`).join('');
 
 reset();

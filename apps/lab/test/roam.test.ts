@@ -690,6 +690,40 @@ describe('roam world, matter that travels through the body (flow)', () => {
     expect(w.census().residual).toBe(0);
   });
 
+  it('with compost a dead cell leaves its store on its tile as food, and matter still adds up', () => {
+    const w = quiet({ flow: 1 / 65536, compost: true });
+    const rest = w.addPlan(restAll);
+    const at = 20 * w.size + 10;
+    line(w, at, [150, 10, 150], rest, [9, 9, 9], [0, 5, 3]);
+    const before = w.food[at + 1];
+    w.stepOnce();
+    expect(w.alive[at + 1]).toBe(0);
+    expect(w.food[at + 1]).toBe(before + 10);
+    expect(w.census().composted).toBe(10);
+    expect(w.census().residual).toBe(0);
+    const big = foundRoam({ seed: 5, size: 48, start: 'grown-all', mut: 0.05, drain: 2, flow: 1 / 64, life: 2000, compost: true, overrides: { matter: 24_000, startPatches: 2, patchEvery: 100 } });
+    expect(big.cfg.compost).toBe(true);
+    for (let s = 0; s < 3000; s++) { big.stepOnce(); expect(big.census().residual).toBe(0); }
+    expect(big.census().composted).toBeGreaterThan(0);
+    expect(bondsSound(big)).toBe(true);
+  });
+
+  it('with flow a kept daughter can carry changed genes', () => {
+    const w = foundRoam({ seed: 2, size: 48, start: 'grown-bushes', mut: 0.2, drain: 2, flow: 1 / 64, overrides: { matter: 24_000, startPatches: 4, patchEvery: 50 } });
+    const first = w.genes.slice(0, ROAM_GENES);
+    for (let i = 0; i < w.n; i++) if (w.alive[i]) { first.set(w.genes.subarray(i * ROAM_GENES, (i + 1) * ROAM_GENES)); break; }
+    let changed = false;
+    for (let s = 0; s < 2000 && !changed; s++) {
+      w.stepOnce();
+      if (w.census().releases > 0) break;
+      for (let i = 0; i < w.n && !changed; i++) {
+        if (!w.alive[i]) continue;
+        for (let g = 0; g < ROAM_GENES; g++) if (w.genes[i * ROAM_GENES + g] !== first[g]) changed = true;
+      }
+    }
+    expect(changed).toBe(true);
+  });
+
   it('a mother regrows a lost daughter where her plan puts it', () => {
     const w = quiet({ flow: 1 / 65536 });
     // Mode 0: keep a daughter in front (she rests); then rest.
@@ -729,5 +763,6 @@ describe('roam world, matter that travels through the body (flow)', () => {
     expect(() => new RoamWorld(small({ plan: true, flow: 0 }))).toThrow(/flow/);
     expect(() => new RoamWorld(small({ plan: true, flow: 0.2 }))).toThrow(/flow/);
     expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, life: 1 }))).toThrow(/life/);
+    expect(() => new RoamWorld(small({ plan: true, compost: true }))).toThrow(/compost needs flow/);
   });
 });

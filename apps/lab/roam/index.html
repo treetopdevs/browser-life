@@ -36,8 +36,9 @@
     <p>Each coloured piece is a <b>body</b>: a few cells joined together, outlined where it meets another body. A body moves as one piece, eats the <b>food</b> under it (a blue haze in the garden look, green in the others), and shares what it eats among its cells. Cells that are full divide; while the body is small the new cell stays joined, and once it is adult size the new cell is let go as a new body. A body that runs short gives up cells one at a time and then dies.</p>
     <p>With a <b>grown</b> start, a body's outline comes from a plan every one of its cells carries: a short list of steps that says where a cell puts its next daughter, whether it keeps her or lets her go as a new body, and which step each of them does next. The planted plans are written by hand. With copy errors on, a new body's plan sometimes differs from its parent's in one place, and the outlines that follow are ones nobody drew.</p>
     <p><b>New, 2026-11-24: matter has to travel.</b> With seeping on, a body no longer shares one store. Each cell eats into its own store and pays its own upkeep, and matter seeps along bonds from fuller cells to emptier ones. A cell that runs short dies. So a big body reaches more food and wins more touch contests, but its far parts are fed slowly, and when a cell that held two parts together dies, the body breaks in two. When a cell dies, its mother goes back to the step of her plan that made it and grows it again, and a piece cut off starts its plan again, like a cutting. There is no size limit.</p>
+    <p><b>New, later the same day: the dead feed the ground.</b> With this on, a cell that dies leaves what it held on the ground where it died, as food. Busy bodies lose many cells, so they leave a trail behind them, and patches come a little less often (the same matter is now on the ground instead). A slower body that follows the trail can live on it. Kept daughters can now also get copy errors in their genes, so how much a body chases and moves can change over a run.</p>
     <p>With <b>touch</b> feeding on, a body that is at least twice the size of one it touches takes matter from it through every side where they meet, so small bodies and half-grown ones are food for large ones. A new body is safe for its first 100 steps, and spends them moving straight away from its parent.</p>
-    <p>Food comes only in <b>patches</b>. Everything bodies use up or leave behind goes to one store, and that store drops it back as a new patch somewhere else. A body cannot wait for food to come to it.</p>
+    <p>Food comes only in <b>patches</b>. Everything bodies use up goes to one store, and that store drops it back as a new patch somewhere else (with "the dead feed the ground" on, what dead cells held stays where they died instead). A body cannot wait for a patch to come to it.</p>
     <div class="bar">
       <button id="play" class="primary" type="button">Pause</button>
       <button id="reset" type="button">Start again</button>
@@ -79,6 +80,10 @@
         <option value="2000" selected>cells wear out after about 2,000 steps</option>
         <option value="0">cells live until they starve (bodies settle into a few large ones)</option>
         <option value="500">cells wear out after about 500 steps</option>
+      </select></label>
+      <label>When a cell dies (with seeping) <select id="compost">
+        <option value="1" selected>new: its matter stays where it died, as food (bodies leave a trail others can eat)</option>
+        <option value="0">its matter goes back to the world's store and falls again in a new patch</option>
       </select></label>
       <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64 (bodies drawn twice as large)</option></select></label>
       <label>Colour <select id="paint"><option value="garden" selected>garden look: soft bodies with pale rims, lit by how full they are, tinted by plan; blue haze is food</option><option value="plan">by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>

@@ -247,3 +247,32 @@ saying whether the cell behind it is its mother. It also found that the fate too
 most old cells rather than the largest one; fixed. Tests cover the two rule fixes; the tool fix has no test (it is a probe tool, not part of the world). Numbers above are from after the fixes
 (both seeds, wear 2,000, 60,000 steps: about 380 splits and 1,200 cell deaths per 1,000 steps, largest bodies 45
 to 53 cells). 35 tests in `apps/lab/test/roam.test.ts`.
+
+## Genes that change again, and the dead feeding the ground (2026-11-24, later)
+
+The user watched flow mode: "this feels much better", but everything is frenetic and the chase gene looks dominant.
+The check showed the movement genes had not evolved at all. With flow, bodies reproduce almost only by breaking,
+and genes only took copy errors when a single cell was let go. Every body still carried the founders' genes (chase
+384, drive 64). Now, in flow mode, a kept daughter's genes take copy errors at the let-go rate. With that, seed 1
+climbs to chase 470 and drive 227 by step 60,000, and distance travelled more than doubles. Seed 2 climbs less (chase
+420, drive 82). Faster won: moving costs little next to reaching food first.
+
+Added: `compost` (needs flow, on by default on the page). A dead cell's store stays on its tile as food instead of
+going back to the store that drops patches. Stated before building: "at least one seed splits into two kinds
+instead of all climbing together (fast foragers and slower trailers living on what they shed), and the balance
+between them shifts over a run."
+
+Seen (seeds 1 and 2, 60,000 steps, wear 2,000), compost on against off:
+
+- Bodies calm down. Distance travelled is 3.7 and 5.3 against 11.5 and 7.8. On seed 1, drive climbs to about 110
+  instead of 227. Chase still climbs on both (451 and 413).
+- More matter lies on the ground (36,000 to 42,000 against about 21,000), and there are fewer cells (750 to 830
+  against about 1,000). About 70,000 to 77,000 matter is left on the ground per 1,000 steps. The largest body
+  reached 107 cells on seed 1.
+- Two kinds: not seen. The spread of drive across bodies (10th to 90th percentile, cell-weighted) stays narrow
+  (about 60 to 130 on seed 1, 0 to 190 on seed 2), as without compost. No split shows in the numbers.
+
+So the ground change moves the balance (slower bodies) but does not, in these numbers, make a second way of
+life. Seen seeds only. Video: `runs/roam/v-compost-s1/` (seed 1, steps 50,000 to 53,000).
+
+Review: Codex (Sol 6.1, High), no findings. 37 tests.
