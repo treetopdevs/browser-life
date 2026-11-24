@@ -753,6 +753,19 @@ describe('roam world, matter that travels through the body (flow)', () => {
       };
       expect(paid(KIND_PLAIN)).toBe(4);
       expect(paid(KIND_SHELL)).toBe(1);
+      const paidAt = (shellLeak: number) => {
+        const w = kq({ leakSide: 1, leakCell: 0, shellLeak });
+        const rest = w.addPlan(restAll);
+        const at = 20 * w.size + 10;
+        line(w, at, [100], rest, [9], [0]);
+        w.kind[at] = KIND_SHELL;
+        w.stepOnce();
+        return 100 - w.store[at];
+      };
+      expect(paidAt(0.25)).toBe(1);
+      expect(paidAt(0.5)).toBe(2);
+      expect(paidAt(1)).toBe(4);
+      expect(paidAt(0)).toBe(0);
     });
     it('a larger body feeds on a smaller one only through a mouth, and never through a shell', () => {
       const taken = (bigKind: number, smallKind: number) => {
@@ -889,7 +902,7 @@ describe('roam world, matter that travels through the body (flow)', () => {
       expect(() => kq({ drain: 2, crack: 2 }).addPlan(Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m, KIND_SHELL, 1)))).toThrow(/plan mode/);
       expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, drain: 2, kinds: true, toughness: true }))).toThrow(/toughness needs crack/);
     });
-    it('with halfBite a lone shell eats half the bite, other cells the whole bite, and matter still adds up', () => {
+    it('with shellBite a lone shell eats that share of the bite, other cells the whole bite, and matter still adds up', () => {
       const ate = (kind: number, over: Partial<RoamConfig>) => {
         const w = kq(over);
         const rest = w.addPlan(restAll);
@@ -902,11 +915,18 @@ describe('roam world, matter that travels through the body (flow)', () => {
         return 50 - w.food[at];
       };
       expect(ate(KIND_SHELL, { bite: 2 })).toBe(2);
-      expect(ate(KIND_SHELL, { bite: 2, halfBite: true })).toBe(1);
-      expect(ate(KIND_PLAIN, { bite: 2, halfBite: true })).toBe(2);
-      expect(ate(KIND_MOUTH, { bite: 2, halfBite: true })).toBe(2);
-      expect([1, 2]).toContain(ate(KIND_SHELL, { bite: 3, halfBite: true }));
-      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, halfBite: true }))).toThrow(/halfBite needs kinds/);
+      expect(ate(KIND_SHELL, { bite: 2, shellBite: 0.5 })).toBe(1);
+      expect(ate(KIND_PLAIN, { bite: 2, shellBite: 0.5 })).toBe(2);
+      expect(ate(KIND_MOUTH, { bite: 2, shellBite: 0.5 })).toBe(2);
+      expect([1, 2]).toContain(ate(KIND_SHELL, { bite: 3, shellBite: 0.5 }));
+      expect(ate(KIND_SHELL, { bite: 4, shellBite: 0.25 })).toBe(1);
+      expect(ate(KIND_SHELL, { bite: 2, shellBite: 0 })).toBe(0);
+      // Over many draws a fractional share holds on average: bite 3 at 0.5 is 1.5.
+      let sum = 0;
+      for (let seed = 1; seed <= 200; seed++) sum += ate(KIND_SHELL, { bite: 3, shellBite: 0.5, seed });
+      expect(Math.abs(sum / 200 - 1.5)).toBeLessThan(0.15);
+      expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, shellBite: 0.5 }))).toThrow(/need kinds/);
+      expect(() => kq({ shellBite: 1.5 })).toThrow(/shellBite/);
     });
     it('with kinds a speck start splits into plain specks and armoured specks, whose released daughters are shells', () => {
       const w = foundRoam({ seed: 3, size: 48, start: 'grown-all', drain: 2, flow: 1 / 64, kinds: true });

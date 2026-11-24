@@ -421,3 +421,15 @@ early armour bloom (900+ shells by 20,000) still decides the run. Seen seeds onl
 
 This is a follow-up of a follow-up (crack, then toughness, then half bite), a tripwire, so this line stops here
 until the user has watched it. On the page, half bite is on by default and toughness off.
+
+## Dials on the page (2026-11-24, night)
+
+The user found the half-bite world "kinda cool" and asked for finer control than dropdowns. `halfBite` is now
+`shellBite` (the share of the bite a lone shell eats, 0 to 1; 0.5 at bite 2 gives the same histories as `halfBite`,
+checked against the sweep log) and the quarter side upkeep of shells is now `shellLeak` (default 0.25, same
+histories). The page has a dials panel beside the world: twenty sliders with exact number boxes, each with a line
+saying what the value means, greyed when a switch makes it do nothing. Dials at their defaults give the page's usual
+world exactly (tested). The settings live in the address, so a link brings the same world back. Values typed or
+linked are snapped to what the world accepts. Review: Codex (Sol 6.1, High), no kernel findings; six page findings
+fixed (crossing store limits, unsnapped values, links opened in the same tab, a stale number box, dials not greyed
+for gene-sized starts, an oversized seed).

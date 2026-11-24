@@ -1,6 +1,7 @@
 /** The local /roam/ page: a canvas, a few choices, and readouts. The world steps in a worker. */
 
 import { G_ADULT, ROAM_GENE_MAX, ROAM_GENE_NAMES, defaultRoamConfig } from './kernel.ts';
+import { dialDefaults, dialOptions, fixDial, ROAM_DIALS, type DialValues, type RoamSwitches } from './dials.ts';
 import { roamPlanColour, type RoamFrame, type RoamFromWorker, type RoamOptions, type RoamPaint, type RoamStart, type RoamToWorker } from './view.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -18,8 +19,87 @@ let lastStep = 0;
 let lastTime = performance.now();
 let rate = 0;
 
+function switches(): RoamSwitches {
+  return { seed: Math.min(0xffffffff, Math.max(0, Math.floor(Number(value('seed')) || 0))), size: Number(value('size')), start: value('start') as RoamStart, compost: value('compost') === '1', kinds: value('kinds') === '1', toughness: value('toughness') === '1' };
+}
+
+// Dials: a slider and an exact number box each, with a line saying what the value means. Values live here; the URL
+// hash keeps the ones that differ from the defaults (and the switches), so a link brings the same world back.
+const dials: DialValues = dialDefaults();
+const SWITCH_IDS = ['seed', 'start', 'size', 'compost', 'kinds', 'toughness'];
+
+function buildDials(): void {
+  const box = el('dials');
+  let group = '';
+  for (const d of ROAM_DIALS) {
+    if (d.group !== group) {
+      group = d.group;
+      const h = document.createElement('h3');
+      h.textContent = group;
+      box.append(h);
+    }
+    const row = document.createElement('div');
+    row.className = 'dial';
+    row.id = `dial-${d.id}`;
+    row.innerHTML = `<span>${d.label}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" aria-label="${d.label}" /><input type="number" min="${d.min}" max="${d.max}" step="any" aria-label="${d.label}, exact" /><small></small>`;
+    const [range, num] = row.querySelectorAll('input');
+    range.addEventListener('input', () => { dials[d.id] = fixDial(d, Number(range.value)); showDials(); });
+    range.addEventListener('change', () => { dials[d.id] = fixDial(d, Number(range.value)); changed(); });
+    num.addEventListener('change', () => {
+      if (num.value.trim() !== '') dials[d.id] = fixDial(d, Number(num.value));
+      num.value = String(dials[d.id]);
+      changed();
+    });
+    box.append(row);
+  }
+}
+
+function showDials(): void {
+  const sw = switches();
+  for (const d of ROAM_DIALS) {
+    const row = el(`dial-${d.id}`);
+    const [range, num] = row.querySelectorAll('input');
+    const v = dials[d.id];
+    range.value = String(v);
+    if (document.activeElement !== num) num.value = String(v);
+    const idle = d.idle?.(dials, sw) ?? null;
+    row.classList.toggle('off', idle !== null);
+    row.classList.toggle('changed', v !== d.def);
+    row.querySelector('small')!.textContent = idle ? `${d.say(v, dials)} (off: ${idle})` : d.say(v, dials);
+  }
+}
+
+function saveHash(): void {
+  const q = new URLSearchParams();
+  for (const id of SWITCH_IDS) q.set(id, value(id));
+  for (const d of ROAM_DIALS) if (dials[d.id] !== d.def) q.set(d.id, String(dials[d.id]));
+  history.replaceState(null, '', `#${q}`);
+}
+
+function loadHash(): void {
+  const q = new URLSearchParams(location.hash.slice(1));
+  for (const id of SWITCH_IDS) {
+    const v = q.get(id);
+    if (v === null) continue;
+    const input = el<HTMLSelectElement | HTMLInputElement>(id);
+    if (input instanceof HTMLSelectElement && ![...input.options].some((o) => o.value === v)) continue;
+    input.value = v;
+  }
+  Object.assign(dials, dialDefaults());
+  for (const d of ROAM_DIALS) {
+    const raw = q.get(d.id);
+    if (raw !== null && raw.trim() !== '') dials[d.id] = fixDial(d, Number(raw));
+  }
+}
+
+function changed(): void {
+  showDials();
+  saveHash();
+  reset();
+}
+
 function options(): RoamOptions {
-  return { seed: Math.max(0, Math.floor(Number(value('seed')) || 0)), size: Number(value('size')), start: value('start') as RoamStart, mut: Number(value('mut')), drain: Number(value('drain')), flow: Number(value('flow')) || undefined, life: Number(value('life')) || undefined, compost: value('compost') === '1', kinds: value('kinds') === '1', crack: Number(value('crack')) || undefined, toughness: value('toughness') === '1', halfBite: value('halfbite') === '1' };
+  return dialOptions(switches(), dials);
 }
 
 function send(m: RoamToWorker): void {
@@ -147,8 +227,18 @@ el('play').addEventListener('click', () => {
   lastTime = performance.now();
 });
 el('reset').addEventListener('click', reset);
-for (const id of ['seed', 'start', 'mut', 'size', 'drain', 'flow', 'life', 'compost', 'kinds', 'crack', 'toughness', 'halfbite']) el(id).addEventListener('change', reset);
+for (const id of SWITCH_IDS) el(id).addEventListener('change', changed);
+// A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
+window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });
+el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults()); changed(); });
+el('dials-link').addEventListener('click', () => {
+  saveHash();
+  navigator.clipboard?.writeText(location.href).then(() => set('dials-note', 'link copied'), () => set('dials-note', 'copy the address bar'));
+});
 el('genes-head').innerHTML = ['Family', 'cells', ...ROAM_GENE_NAMES].map((h) => `<th>${h}</th>`).join('');
 
+loadHash();
+buildDials();
+showDials();
 reset();
 requestAnimationFrame(loop);

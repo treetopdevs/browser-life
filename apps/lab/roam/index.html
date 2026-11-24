@@ -9,7 +9,7 @@
     :root { color-scheme: dark; --bg: #0d1311; --ink: #e6ebe8; --dim: #93a09a; --line: #26302c; --accent: #f0be3e; }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
-    main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+    main { max-width: 1480px; margin: 0 auto; padding: 20px 16px 48px; }
     h1 { font-size: 22px; margin: 0 0 6px; }
     p { margin: 6px 0; color: var(--dim); max-width: 78ch; }
     p b { color: var(--ink); }
@@ -28,6 +28,21 @@
     td:first-child, th:first-child { text-align: left; }
     .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
     #error { color: #f08a7a; }
+    .stage { display: grid; grid-template-columns: minmax(0, 768px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .stage .dials { margin: 0; max-height: min(768px, calc(100vh - 24px)); overflow: auto; position: sticky; top: 12px; }
+    @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } .stage .dials { max-height: none; position: static; } }
+    .dials { margin: 10px 0 16px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px 12px; }
+    .dials summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 6px 0; }
+    .dials h3 { font-size: 13px; color: var(--accent); margin: 14px 0 4px; font-weight: 600; letter-spacing: .02em; }
+    .dial { display: grid; grid-template-columns: minmax(120px, 170px) 1fr 6em; gap: 2px 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .dial > span { color: var(--ink); font-size: 14px; }
+    .dial input[type=range] { width: 100%; accent-color: var(--accent); padding: 0; }
+    .dial input[type=number] { width: 100%; padding: 3px 6px; }
+    .dial small { grid-column: 1 / -1; color: var(--dim); font-size: 12.5px; }
+    .dial.off { opacity: .45; }
+    .dial.changed > span::after { content: ' •'; color: var(--accent); }
+    .dials .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    @media (max-width: 560px) { .dial { grid-template-columns: 1fr 6em; } .dial > span { grid-column: 1 / -1; } }
   </style>
 </head>
 <body>
@@ -64,26 +79,6 @@
         <option value="sitters">sitters only</option>
         <option value="singles">single cells only</option>
       </select></label>
-      <label>Copy errors <select id="mut">
-        <option value="0">none: children are exact copies</option>
-        <option value="0.02" selected>some: 1 gene in 50 changes</option>
-        <option value="0.1">many: 1 gene in 10 changes</option>
-      </select></label>
-      <label>Touch <select id="drain">
-        <option value="2" selected>a body at least twice another's size feeds on it where they touch</option>
-        <option value="0">bodies only block each other</option>
-      </select></label>
-      <label>Inside a body (grown starts) <select id="flow">
-        <option value="0.015625" selected>new: each cell keeps its own store; matter seeps along bonds (1/64 of the difference a step); starved cells die, lost parts regrow</option>
-        <option value="0.0625">new, faster seeping (1/16)</option>
-        <option value="0.00390625">new, slower seeping (1/256)</option>
-        <option value="0">one shared store, size limit 32 (yesterday's rules)</option>
-      </select></label>
-      <label>Wear (with seeping) <select id="life">
-        <option value="2000" selected>cells wear out after about 2,000 steps</option>
-        <option value="0">cells live until they starve (bodies settle into a few large ones)</option>
-        <option value="500">cells wear out after about 500 steps</option>
-      </select></label>
       <label>When a cell dies (with seeping) <select id="compost">
         <option value="1" selected>new: its matter stays where it died, as food (bodies leave a trail others can eat)</option>
         <option value="0">its matter goes back to the world's store and falls again in a new patch</option>
@@ -92,27 +87,23 @@
         <option value="1" selected>new: plans can make shells (pale: don't eat, can't be eaten, cheap upkeep) and mouths (red: don't graze, the only cells that feed on other bodies)</option>
         <option value="0">every cell is the same: any larger body feeds on a smaller one it touches</option>
       </select></label>
-      <label>Shells under attack (with kinds and touch) <select id="crack">
-        <option value="2000" selected>a shell cracks after 2,000 hits from mouths, then can be eaten</option>
-        <option value="500">a shell cracks after 500 hits (hunters do best)</option>
-        <option value="1000">a shell cracks after 1,000 hits</option>
-        <option value="4000">a shell cracks after 4,000 hits</option>
-        <option value="0">shells never crack</option>
-      </select></label>
       <label>Shell toughness (with cracking) <select id="toughness">
         <option value="0" selected>every shell is equally tough</option>
         <option value="1">plans give shells a toughness 0 to 3: each level doubles the hits to crack (up to 60,000) and costs more upkeep (tougher armour did not spread in tests)</option>
-      </select></label>
-      <label>Armour slows feeding (with kinds) <select id="halfbite">
-        <option value="1" selected>new: a lone shell eats half as much as other cells, so armour is safe but grows slowly</option>
-        <option value="0">a lone shell eats as much as any cell</option>
       </select></label>
       <label>Arena <select id="size"><option value="128" selected>128 x 128</option><option value="192">192 x 192 (slower)</option><option value="64">64 x 64 (bodies drawn twice as large)</option></select></label>
       <label>Colour <select id="paint"><option value="garden" selected>garden look: soft bodies with pale rims, lit by how full they are, tinted by plan; blue haze is food</option><option value="plan">by plan: every new plan gets its own colour (grown starts)</option><option value="family">by founder family</option><option value="genes">by genes: red chase, green drive, blue adult size</option></select></label>
       <label>Speed <select id="pace"><option value="10">very slow: 10 steps a second</option><option value="30">slow: 30</option><option value="120" selected>medium: 120</option><option value="600">fast: 600</option><option value="0">as fast as it goes</option></select></label>
     </div>
     <p id="error"></p>
-    <canvas id="view" width="640" height="640"></canvas>
+    <div class="stage">
+      <canvas id="view" width="640" height="640"></canvas>
+    <details class="dials" open>
+      <summary>Dials: drag a slider or type an exact number; the world starts again when you let go</summary>
+      <div id="dials"></div>
+      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" style="color:var(--dim)"></span></div>
+    </details>
+    </div>
     <dl>
       <div><dt>Step</dt><dd id="r-step">0</dd></div>
       <div><dt>Steps per second</dt><dd id="r-rate">0</dd></div>

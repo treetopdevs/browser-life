@@ -98,8 +98,10 @@ export interface RoamOptions {
   crack?: number;
   /** With crack: shells' toughness can change through plan copy errors. */
   toughness?: boolean;
-  /** With kinds: a lone shell eats half the usual bite. */
-  halfBite?: boolean;
+  /** With kinds: the share of the usual bite a lone shell eats (absent: all of it). */
+  shellBite?: number;
+  /** With kinds: the share of the side upkeep a shell pays (absent: a quarter). */
+  shellLeak?: number;
   overrides?: Partial<RoamConfig>;
 }
 
@@ -126,7 +128,8 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     if (merged.flow !== undefined && o.kinds === true && merged.kinds === undefined) merged.kinds = true;
     if (merged.kinds && merged.drain !== undefined && o.crack !== undefined && o.crack > 0 && merged.crack === undefined) merged.crack = o.crack;
     if (merged.crack !== undefined && o.toughness === true && merged.toughness === undefined) merged.toughness = true;
-    if (merged.kinds && o.halfBite === true && merged.halfBite === undefined) merged.halfBite = true;
+    if (merged.kinds && o.shellBite !== undefined && merged.shellBite === undefined) merged.shellBite = o.shellBite;
+    if (merged.kinds && o.shellLeak !== undefined && merged.shellLeak === undefined) merged.shellLeak = o.shellLeak;
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }

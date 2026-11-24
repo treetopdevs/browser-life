@@ -141,10 +141,13 @@ export interface RoamConfig {
    */
   toughness?: boolean;
   /**
-   * With kinds: a shell that eats (a body of one cell) takes half the usual bite, so armour slows feeding. An odd bite
-   * is halved up or down by a hash. Absent means a lone shell takes the full bite.
+   * With kinds: the share of the usual bite (0-1) a shell that eats (a body of one cell) takes, so armour slows
+   * feeding; a fraction of a unit is rounded up or down by a hash, so the share holds on average. Absent means the
+   * whole bite.
    */
-  halfBite?: boolean;
+  shellBite?: number;
+  /** With kinds: the share (0-1) of the side upkeep a shell pays, before toughness. Absent means a quarter. */
+  shellLeak?: number;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -317,7 +320,8 @@ export class RoamWorld {
   readonly hits: Uint16Array;
   private readonly crackN: number;
   private readonly toughOn: boolean;
-  private readonly halfBite: boolean;
+  private readonly shellBiteQ16: number;
+  private readonly shellLeakQ16: number;
   /** With crack: each cell's toughness level (0-3). */
   readonly tough: Uint8Array;
   private readonly mTough: Uint8Array;
@@ -412,8 +416,9 @@ export class RoamWorld {
     this.crackN = cfg.crack === undefined ? 0 : whole(cfg.crack, 'crack', 1, 60000);
     if (cfg.toughness !== undefined && this.crackN === 0) throw new Error('toughness needs crack');
     this.toughOn = cfg.toughness === true;
-    if (cfg.halfBite !== undefined && !this.kinds) throw new Error('halfBite needs kinds');
-    this.halfBite = cfg.halfBite === true;
+    if ((cfg.shellBite !== undefined || cfg.shellLeak !== undefined) && !this.kinds) throw new Error('shellBite and shellLeak need kinds');
+    this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
+    this.shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
@@ -1205,17 +1210,21 @@ export class RoamWorld {
     for (let j = 0; j < len; j++) {
       const c = this.cells[start + j];
       // With kinds neither a shell nor a mouth eats from the ground, unless it is a body of one cell (a seed feeds
-      // itself until it has grown); a shell pays a quarter of the side upkeep, and with halfBite eats half the bite.
+      // itself until it has grown); a shell pays shellLeak of the side upkeep (a quarter) and eats shellBite of the bite.
       const shell = this.kinds && this.kind[c] === KIND_SHELL;
       let take = this.kinds && this.kind[c] !== KIND_PLAIN && len > 1 ? 0 : this.food[c];
-      const bite = shell && this.halfBite ? (this.biteN + (roamHash(seed, t, c, CH_BITE) & 1)) >>> 1 : this.biteN;
+      let bite = this.biteN;
+      if (shell && this.shellBiteQ16 < 65536) {
+        const part = this.biteN * this.shellBiteQ16;
+        bite = Math.floor(part / 65536) + ((roamHash(seed, t, c, CH_BITE) & 0xffff) < part % 65536 ? 1 : 0);
+      }
       if (take > bite) take = bite;
       if (take > cap - this.store[c]) take = Math.max(0, cap - this.store[c]);
       this.food[c] -= take;
       this.store[c] += take;
       let exposed = 0;
       for (let d = 0; d < 4; d++) if (label[this.nb(c, d)] !== k) exposed++;
-      const costQ16 = exposed * (shell ? (this.leakSideQ16 * (1 + this.tough[c])) >>> 2 : this.leakSideQ16) + this.leakCellQ16 + moveQ16;
+      const costQ16 = exposed * (shell ? Math.floor((this.leakSideQ16 * (1 + this.tough[c]) * this.shellLeakQ16) / 65536) : this.leakSideQ16) + this.leakCellQ16 + moveQ16;
       let pay = Math.floor((costQ16 + (roamHash(seed, t, c, CH_COST) & 0xffff)) / 65536);
       if (pay > this.store[c]) pay = this.store[c];
       this.store[c] -= pay;
