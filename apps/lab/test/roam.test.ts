@@ -590,3 +590,144 @@ describe('roam world, feeding by touch', () => {
     expect(() => new RoamWorld(small({ drain: 1.5 }))).toThrow(/drain/);
   });
 });
+
+describe('roam world, matter that travels through the body (flow)', () => {
+  const still = [0, 0, -512, 0, 0];
+  function quiet(over: Partial<RoamConfig> = {}): RoamWorld {
+    return new RoamWorld(small({ plan: true, flow: 1 / 8, startPatches: 0, mut: 0, leakSide: 0, leakCell: 0, moveCost: 0, patchFood: 24_000, ...over }));
+  }
+  /** Lay cells in a row eastward from `tile`, each the daughter of the one before (facing east), with the given stores. */
+  function line(w: RoamWorld, tile: number, stores: number[], plan: number, modes: number[], made: number[]): void {
+    stores.forEach((st, j) => {
+      const c = tile + j;
+      w.alive[c] = 1; w.store[c] = st; w.reservoir -= st; w.cid[c] = w.nextCid++; w.fam[c] = 2; w.pid[c] = plan; w.grew[c] = 1;
+      w.mode[c] = modes[j]; w.made[c] = made[j]; w.mom[c] = j > 0 ? 1 : 0; w.orient[c] = 0; w.heading[c] = 0;
+      for (let g = 0; g < ROAM_GENES; g++) w.genes[c * ROAM_GENES + g] = still[g];
+      if (j > 0) w.bondE[c - 1] = 1;
+    });
+  }
+  const restAll = Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m));
+
+  it('conserves matter exactly, keeps bonds sound, gives one history per seed, and bodies do break', () => {
+    const make = () => foundRoam({ seed: 5, size: 48, start: 'grown-all', mut: 0.05, drain: 2, flow: 1 / 64, life: 2000, overrides: { matter: 24_000, startPatches: 2, patchEvery: 100 } });
+    const a = make();
+    const b = make();
+    expect(a.cfg.flow).toBe(1 / 64);
+    expect(a.cfg.life).toBe(2000);
+    for (let s = 0; s < 4000; s++) {
+      a.stepOnce();
+      b.stepOnce();
+      expect(a.census().residual).toBe(0);
+      if (s % 20 === 0) expect(bondsSound(a)).toBe(true);
+    }
+    expect(a.digest()).toBe(b.digest());
+    const c = a.census();
+    expect(c.flowed).toBeGreaterThan(0);
+    expect(c.splits).toBeGreaterThan(0);
+    expect(c.worn).toBeGreaterThan(0);
+  });
+
+  it('moves the set share of the difference along a bond each step, from fuller to emptier', () => {
+    const w = quiet();
+    const rest = w.addPlan(restAll);
+    const at = 20 * w.size + 10;
+    line(w, at, [300, 100], rest, [0, 0], [0, 0]);
+    w.stepOnce();
+    expect(w.store[at]).toBe(275);
+    expect(w.store[at + 1]).toBe(125);
+    expect(w.census().flowed).toBe(25);
+    expect(w.census().residual).toBe(0);
+  });
+
+  it('a starved link dies and the body breaks; its mother returns to the mode that made it, its daughter starts again', () => {
+    const w = quiet({ flow: 1 / 65536 });
+    const rest = w.addPlan(restAll);
+    const at = 20 * w.size + 10;
+    line(w, at, [150, 10, 150], rest, [9, 9, 9], [0, 5, 3]);
+    w.stepOnce();
+    expect(w.alive[at + 1]).toBe(0);
+    expect(w.mode[at]).toBe(5);
+    expect(w.mode[at + 2]).toBe(0);
+    expect(w.bondE[at]).toBe(0);
+    w.stepOnce();
+    expect(w.census().splits).toBe(1);
+    expect(w.census().bodies).toBe(2);
+    expect(w.census().residual).toBe(0);
+  });
+
+  it('deaths in one body come out the same whatever order its cells are listed in', () => {
+    type Inner = { liveFlow(k: number): void; labelBodies(): void; bodyStart: Int32Array; bodyLen: Int32Array; cells: Int32Array };
+    const run = (stores: number[], leakSide: number, reverse: boolean) => {
+      const w = quiet({ flow: 1 / 65536, leakSide, minStore: 16 });
+      const rest = w.addPlan(restAll);
+      const at = 20 * w.size + 10;
+      line(w, at, stores, rest, stores.map(() => 9), stores.map(() => 5));
+      const inner = w as unknown as Inner;
+      inner.labelBodies();
+      const k = w.label[at];
+      if (reverse) inner.cells.subarray(inner.bodyStart[k], inner.bodyStart[k] + inner.bodyLen[k]).reverse();
+      inner.liveFlow(k);
+      expect(w.census().residual).toBe(0);
+      return stores.map((_, j) => [w.alive[at + j], w.store[at + j], w.mode[at + j]]);
+    };
+    // A neighbour that dies this step still shields its side this step: the cell with 19 pays 3, keeps 16, lives (and, motherless, starts from 0).
+    for (const reverse of [false, true]) expect(run([16, 19], 1, reverse)).toEqual([[0, 0, 0], [1, 16, 0]]);
+    // Both ends die: the middle lost its mother (so starts from 0) and its daughter (made at 5); losing the mother wins.
+    for (const reverse of [false, true]) expect(run([10, 150, 10], 0, reverse)).toEqual([[0, 0, 0], [1, 150, 0], [0, 0, 0]]);
+  });
+
+  it('a daughter kept behind her mother (the two back to back) is still known as the daughter when she dies', () => {
+    const w = quiet({ flow: 1 / 65536 });
+    const rest = w.addPlan(restAll);
+    const at = 20 * w.size + 10;
+    // Mother at `at`, facing east; her daughter at `at - 1`, kept behind her, faces west, made in mode 5.
+    line(w, at - 1, [10, 150], rest, [9, 9], [5, 0]);
+    w.orient[at - 1] = 2; w.mom[at - 1] = 1;
+    w.orient[at] = 0; w.mom[at] = 0;
+    w.stepOnce();
+    expect(w.alive[at - 1]).toBe(0);
+    expect(w.mode[at]).toBe(5);
+    expect(w.census().residual).toBe(0);
+  });
+
+  it('a mother regrows a lost daughter where her plan puts it', () => {
+    const w = quiet({ flow: 1 / 65536 });
+    // Mode 0: keep a daughter in front (she rests); then rest.
+    const plan = w.addPlan(Array.from({ length: PLAN_MODES }, (_, m) => (m === 0 ? planEntry(0, 1, 1) : planEntry(PLAN_REST, 0, m))));
+    const at = 20 * w.size + 10;
+    line(w, at, [300, 10], plan, [1, 1], [0, 0]);
+    w.stepOnce();
+    // The daughter starved, her mother went back to mode 0, and divided into the same tile in the same step.
+    expect(w.alive[at + 1]).toBe(1);
+    expect(w.bondE[at]).toBe(1);
+    expect(w.mode[at]).toBe(1);
+    expect(w.store[at] + w.store[at + 1]).toBe(300);
+    expect(w.census().residual).toBe(0);
+  });
+
+  it('with flow a kept daughter can carry a changed plan, so one body can hold two plans', () => {
+    const w = foundRoam({ seed: 2, size: 48, start: 'grown-bushes', mut: 0, planMut: 1, drain: 2, flow: 1 / 64, overrides: { matter: 24_000, startPatches: 4, patchEvery: 50 } });
+    const groups = new Int32Array(w.n);
+    let mixed = false;
+    for (let s = 0; s < 3000 && !mixed; s++) {
+      w.stepOnce();
+      w.bodySizes(groups);
+      const pidOf = new Map<number, number>();
+      for (let i = 0; i < w.n && !mixed; i++) {
+        if (!w.alive[i]) continue;
+        const p = pidOf.get(groups[i]);
+        if (p === undefined) pidOf.set(groups[i], w.pid[i]);
+        else if (p !== w.pid[i]) mixed = true;
+      }
+    }
+    expect(mixed).toBe(true);
+  });
+
+  it('refuses flow without plans, wear without flow, and a flow of nothing or above an eighth', () => {
+    expect(() => new RoamWorld(small({ flow: 1 / 64 }))).toThrow(/flow needs plan/);
+    expect(() => new RoamWorld(small({ plan: true, life: 100 }))).toThrow(/life needs flow/);
+    expect(() => new RoamWorld(small({ plan: true, flow: 0 }))).toThrow(/flow/);
+    expect(() => new RoamWorld(small({ plan: true, flow: 0.2 }))).toThrow(/flow/);
+    expect(() => new RoamWorld(small({ plan: true, flow: 1 / 64, life: 1 }))).toThrow(/life/);
+  });
+});

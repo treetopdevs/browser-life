@@ -91,6 +91,11 @@ for (let s = 0; s <= steps; s++) {
         c.genes.map((g) => g.toFixed(0).padStart(5)).join(' ') + `  | ${fams}`,
     );
     const sh = roamShapes(world, 6);
+    if (world.cfg.flow !== undefined) {
+      const sizes = world.bodySizes().sort((x, y) => y - x);
+      const big = sizes.filter((x) => x >= 8).length;
+      console.log(`        flow: splits/k ${Math.round((c.splits - prev.splits) * per)}, buds/k ${Math.round((c.releases - prev.releases) * per)}, cell deaths/k ${Math.round((c.cellDeaths - prev.cellDeaths) * per)} (worn ${Math.round((c.worn - prev.worn) * per)}), moved along bonds/k ${Math.round((c.flowed - prev.flowed) * per)}; bodies of 8+ cells ${big}; ten largest ${sizes.slice(0, 10).join(' ')}`);
+    }
     if (world.cfg.plan) {
       // The outlines holding the most cells, each as rows of # and . with the number of bodies that have it.
       const art = (cells: number[][], w: number, h: number) => Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells.some((p) => p[0] === x && p[1] === y) ? '#' : '.')).join('')).join('/');

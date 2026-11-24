@@ -98,6 +98,16 @@ export interface RoamConfig {
    * moves at top speed straight away from its parent.
    */
   seal?: number;
+  /**
+   * With plans: each cell keeps its own store instead of the body sharing one, and this share of the difference
+   * between two bonded cells' stores flows from the fuller to the emptier each step (at most 1/8). A cell that falls
+   * below minStore dies, so a body whose far parts are fed too slowly loses them, and breaks where a link dies. A cell
+   * whose daughter dies goes back to the mode that made her, and a cell whose mother dies starts its plan again from
+   * mode 0, so lost parts regrow and a broken-off piece grows like a cutting. There is no size limit. Absent means off.
+   */
+  flow?: number;
+  /** With flow: each cell dies by wear with chance 1/life per step. Absent means cells do not wear out. */
+  life?: number;
 }
 
 export function defaultRoamConfig(): RoamConfig {
@@ -154,6 +164,7 @@ const CH_PLAN = 30;
 const CH_PLAN_NEW = 31;
 const CH_PLAN_FIELD = 32;
 const CH_FOUND = 40;
+const CH_WEAR = 41;
 
 const SCENT_FOOD_CAP = 4095;
 const DX = [1, 0, -1, 0];
@@ -198,6 +209,9 @@ export interface RoamCensus {
   patches: number;
   /** Matter larger bodies have taken from smaller ones they touch. */
   drained: number;
+  flowed: number;
+  worn: number;
+  splits: number;
 }
 
 export class RoamWorld {
@@ -254,6 +268,20 @@ export class RoamWorld {
   private readonly takePer: Uint32Array;
   /** Matter taken by larger bodies from smaller ones since step 0. */
   drained = 0;
+  /** With flow: the mode a cell's mother was in when she made it. */
+  readonly made: Uint8Array;
+  /**
+   * 1 when the bonded cell behind this one is its mother (a kept daughter), 0 for founders, let-go cells and cells
+   * whose mother died. Needed because a daughter kept behind her mother faces away from her, as a mother does.
+   */
+  readonly mom: Uint8Array;
+  private readonly flowSnap: Uint32Array;
+  private prevLabel: Int32Array;
+  private splitSeen: Int32Array = new Int32Array(1024);
+  /** With flow: matter moved along bonds, cells dead by wear, and bodies that broke into more than one. */
+  flowed = 0;
+  worn = 0;
+  splits = 0;
 
   divisions = 0;
   releases = 0;
@@ -275,6 +303,8 @@ export class RoamWorld {
   private readonly maxBody: number;
   private readonly drainN: number;
   private readonly sealN: number;
+  private readonly flowQ16: number;
+  private readonly wearQ32: number;
   private readonly patchTiles: Int32Array;
 
   constructor(cfg: RoamConfig) {
@@ -307,6 +337,11 @@ export class RoamWorld {
     if (cfg.drain === undefined && cfg.seal !== undefined) throw new Error('seal needs drain');
     this.drainN = cfg.drain === undefined ? 0 : whole(cfg.drain, 'drain', 1, 1 << 20);
     this.sealN = whole(cfg.seal ?? 100, 'seal', 0, 1_000_000);
+    if (cfg.flow !== undefined && !cfg.plan) throw new Error('flow needs plan');
+    if (cfg.flow === undefined && cfg.life !== undefined) throw new Error('life needs flow');
+    this.flowQ16 = cfg.flow === undefined ? 0 : q16(cfg.flow, 'flow', 8192);
+    if (cfg.flow !== undefined && this.flowQ16 < 1) throw new Error(`Invalid flow: ${cfg.flow}`);
+    this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
 
     this.size = size;
     const n = (this.n = size * size);
@@ -339,6 +374,10 @@ export class RoamWorld {
     this.mPid = new Uint32Array(n);
     this.mSince = new Uint32Array(n);
     this.takePer = new Uint32Array(n);
+    this.made = new Uint8Array(n);
+    this.mom = new Uint8Array(n);
+    this.flowSnap = new Uint32Array(this.flowQ16 > 0 ? n : 0);
+    this.prevLabel = new Int32Array(this.flowQ16 > 0 ? n : 0);
 
     // The tiles of a patch as offsets from its centre, nearest first (the centre takes the remainder).
     const r = cfg.patchRadius;
@@ -447,6 +486,8 @@ export class RoamWorld {
     const n = this.n;
     const label = this.label;
     const cells = this.cells;
+    const flow = this.flowQ16 > 0;
+    if (flow) this.prevLabel.set(label);
     label.fill(0);
     let count = 0;
     let fill = 0;
@@ -472,6 +513,27 @@ export class RoamWorld {
       this.bodyLen[count] = fill - start;
     }
     this.bodyCount = count;
+    if (flow) {
+      // A body broke when two of this step's bodies hold cells that were one body's last step.
+      let seen = this.splitSeen;
+      let most = 0;
+      for (let k = 1; k <= count; k++) {
+        for (let j = 0; j < this.bodyLen[k]; j++) {
+          const old = this.prevLabel[cells[this.bodyStart[k] + j]];
+          if (old > most) most = old;
+        }
+      }
+      if (seen.length <= most) seen = this.splitSeen = new Int32Array(2 * most + 2);
+      seen.fill(0, 0, most + 1);
+      for (let k = 1; k <= count; k++) {
+        for (let j = 0; j < this.bodyLen[k]; j++) {
+          const old = this.prevLabel[cells[this.bodyStart[k] + j]];
+          if (old <= 0) continue;
+          if (seen[old] === 0) seen[old] = k;
+          else if (seen[old] !== k) { this.splits++; seen[old] = k; }
+        }
+      }
+    }
   }
 
   private growBodies(): void {
@@ -492,6 +554,8 @@ export class RoamWorld {
     this.mode[c] = 0;
     this.orient[c] = 0;
     this.since[c] = 0;
+    this.made[c] = 0;
+    this.mom[c] = 0;
     this.bondE[c] = 0;
     this.bondS[c] = 0;
     this.bondE[this.nb(c, 2)] = 0;
@@ -501,6 +565,7 @@ export class RoamWorld {
 
   /** One body's step before moving: where it wants to go, eating, paying, starving, sharing. */
   private live(k: number): void {
+    if (this.flowQ16 > 0) return this.liveFlow(k);
     const cfg = this.cfg;
     const seed = cfg.seed;
     const t = this.step;
@@ -627,13 +692,15 @@ export class RoamWorld {
       const c = cells[start + j];
       this.mStore[j] = this.store[c];
       this.mCid[j] = this.cid[c];
-      this.mMeta[j] = (this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20) | (this.orient[c] << 21) | (this.mode[c] << 23)) >>> 0;
+      this.mMeta[j] = (this.heading[c] | (this.bondE[c] << 2) | (this.bondS[c] << 3) | (this.fam[c] << 4) | (this.grew[c] << 20) | (this.orient[c] << 21) | (this.mode[c] << 23) | (this.made[c] << 27) | (this.mom[c] << 31)) >>> 0;
       this.mPid[j] = this.pid[c];
       this.mSince[j] = this.since[c];
       this.since[c] = 0;
       this.pid[c] = 0;
       this.mode[c] = 0;
       this.orient[c] = 0;
+      this.made[c] = 0;
+      this.mom[c] = 0;
       for (let g = 0; g < ROAM_GENES; g++) this.mGenes[j * ROAM_GENES + g] = this.genes[c * ROAM_GENES + g];
       this.alive[c] = 0;
       this.store[c] = 0;
@@ -658,6 +725,8 @@ export class RoamWorld {
       this.grew[to] = (meta >>> 20) & 1;
       this.orient[to] = (meta >>> 21) & 3;
       this.mode[to] = (meta >>> 23) & 15;
+      this.made[to] = (meta >>> 27) & 15;
+      this.mom[to] = meta >>> 31;
       this.pid[to] = this.mPid[j];
       this.since[to] = this.mSince[j];
       for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.mGenes[j * ROAM_GENES + g];
@@ -793,9 +862,13 @@ export class RoamWorld {
       const act = entry & 15;
       const d = (this.orient[c] + (act & 3)) & 3;
       const to = this.nb(c, d);
-      if (this.alive[to]) continue;
+      if (this.alive[to]) {
+        // With flow, a daughter's tile already held by the cell's own body counts as done (a regrown part's place).
+        if (this.flowQ16 > 0 && act < 4 && this.label[to] === k) this.mode[c] = (entry >>> 8) & 15;
+        continue;
+      }
       // At the size limit a daughter the plan says to keep is let go instead, and the cell stays in its mode.
-      const full = act < 4 && size >= this.maxBody;
+      const full = act < 4 && this.flowQ16 === 0 && size >= this.maxBody;
       const keep = act < 4 && !full;
       const half = this.store[c] >>> 1;
       this.store[c] -= half;
@@ -804,12 +877,16 @@ export class RoamWorld {
       this.fam[to] = this.fam[c];
       this.cid[to] = this.nextCid++;
       this.orient[to] = d;
+      this.made[to] = this.mode[c];
+      this.mom[to] = keep ? 1 : 0;
       if (!full) this.mode[c] = (entry >>> 8) & 15;
       this.divisions++;
       this.grew[c] = 1;
       if (keep) {
         for (let g = 0; g < ROAM_GENES; g++) this.genes[to * ROAM_GENES + g] = this.genes[c * ROAM_GENES + g];
-        this.pid[to] = this.pid[c];
+        // With flow, a kept daughter's plan can change too (at an eighth of the rate), so a piece that breaks off
+        // can carry a new plan; without flow kept daughters are exact copies.
+        this.pid[to] = this.flowQ16 > 0 ? this.copyPlan(c, this.planMutQ16 >>> 3) : this.pid[c];
         this.mode[to] = (entry >>> 4) & 15;
         if (d === 0) this.bondE[c] = 1;
         else if (d === 1) this.bondS[c] = 1;
@@ -831,24 +908,7 @@ export class RoamWorld {
         }
         this.genes[to * ROAM_GENES + g] = v;
       }
-      let pid = this.pid[c];
-      const r = roamHash(seed, t, c, CH_PLAN);
-      if ((r & 0xffff) < this.planMutQ16) {
-        // One place of the plan changes to a different value: a mode's act, its daughter's mode, or its next mode.
-        const next = Uint16Array.from(this.plans[pid]);
-        const m = (r >>> 16) & 15;
-        const field = roamHash(seed, t, c, CH_PLAN_FIELD) % 3;
-        const h = roamHash(seed, t, c, CH_PLAN_NEW);
-        const e = next[m];
-        const act0 = e & 15;
-        const child0 = (e >>> 4) & 15;
-        const next0 = (e >>> 8) & 15;
-        if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0);
-        else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0);
-        else next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15);
-        pid = this.addPlan(next, pid);
-      }
-      this.pid[to] = pid;
+      this.pid[to] = this.copyPlan(c, this.planMutQ16);
       this.since[to] = t;
       this.mode[to] = 0;
       this.heading[to] = d;
@@ -856,6 +916,28 @@ export class RoamWorld {
       this.grew[to] = 0;
       this.releases++;
     }
+  }
+
+  /** Cell `c`'s plan as a daughter gets it: with chance rateQ16/65536 one place changes to a different value. */
+  private copyPlan(c: number, rateQ16: number): number {
+    const seed = this.cfg.seed;
+    const t = this.step;
+    const pid = this.pid[c];
+    const r = roamHash(seed, t, c, CH_PLAN);
+    if ((r & 0xffff) >= rateQ16) return pid;
+    // One place of the plan changes to a different value: a mode's act, its daughter's mode, or its next mode.
+    const next = Uint16Array.from(this.plans[pid]);
+    const m = (r >>> 16) & 15;
+    const field = roamHash(seed, t, c, CH_PLAN_FIELD) % 3;
+    const h = roamHash(seed, t, c, CH_PLAN_NEW);
+    const e = next[m];
+    const act0 = e & 15;
+    const child0 = (e >>> 4) & 15;
+    const next0 = (e >>> 8) & 15;
+    if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0);
+    else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0);
+    else next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15);
+    return this.addPlan(next, pid);
   }
 
   /**
@@ -891,6 +973,163 @@ export class RoamWorld {
     }
   }
 
+  /** True when the cell at `a` is bonded to its neighbour in direction `d`. */
+  private bonded(a: number, d: number): boolean {
+    return d === 0 ? this.bondE[a] === 1 : d === 1 ? this.bondS[a] === 1 : d === 2 ? this.bondE[this.nb(a, 2)] === 1 : this.bondS[this.nb(a, 3)] === 1;
+  }
+
+  /**
+   * With flow, the cells of one body that die this step: each one's mother (bonded, the way it faces back) returns to
+   * the mode that made it, so she regrows it, and each one's daughters (bonded, facing away from it) start their plans
+   * again from mode 0. All resets are read with every bond still in place and settled before any cell is removed, so
+   * the order of the dying makes no difference: a survivor whose mother died starts from 0; one that lost only
+   * daughters returns to the earliest mode among those that made them. Their stores go back to the reservoir.
+   */
+  private dieFlow(dying: number[]): void {
+    const gone = new Set(dying);
+    const zero = new Set<number>();
+    const back = new Map<number, number>();
+    for (const c of dying) {
+      for (let d = 0; d < 4; d++) {
+        if (!this.bonded(c, d)) continue;
+        const o = this.nb(c, d);
+        if (gone.has(o)) continue;
+        // A daughter faces away from her mother, so her mother is behind her; `mom` says whether the cell behind is
+        // a mother at all (two cells back to back each have the other behind them, and only one is the daughter).
+        if (this.mom[o] === 1 && this.orient[o] === d) zero.add(o);
+        else if (this.mom[c] === 1 && d === ((this.orient[c] + 2) & 3)) {
+          const m = back.get(o);
+          if (m === undefined || this.made[c] < m) back.set(o, this.made[c]);
+        }
+      }
+    }
+    for (const [o, m] of back) this.mode[o] = m;
+    for (const o of zero) { this.mode[o] = 0; this.mom[o] = 0; }
+    for (const c of dying) {
+      this.reservoir += this.store[c];
+      this.removeCell(c);
+    }
+  }
+
+  /** One body's step with flow: heading and speed as without it, then each cell eats, pays, and may die on its own. */
+  private liveFlow(k: number): void {
+    const cfg = this.cfg;
+    const seed = cfg.seed;
+    const t = this.step;
+    const start = this.bodyStart[k];
+    let len = this.bodyLen[k];
+    const anchor = this.cells[start];
+    const label = this.label;
+    const newborn = len === 1 && this.grew[anchor] === 0;
+
+    let turnSum = 0;
+    for (let j = 0; j < len; j++) turnSum += this.genes[this.cells[start + j] * ROAM_GENES + G_TURN] + ROAM_GENE_MAX;
+    const turnQ16 = Math.floor((Math.floor(turnSum / len) * this.turnMaxQ16) / (2 * ROAM_GENE_MAX));
+    let head = this.heading[anchor];
+    const dash = this.drainN > 0 && t - this.since[anchor] < this.sealN;
+    if (!dash && (roamHash(seed, t, anchor, CH_TURN) & 0xffff) < turnQ16) head = roamHash(seed, t, anchor, CH_HEAD) & 3;
+
+    let ux = 0;
+    let uy = 0;
+    const gain = cfg.scentGain;
+    for (let j = 0; j < len; j++) {
+      const c = this.cells[start + j];
+      this.heading[c] = head;
+      const chase = this.genes[c * ROAM_GENES + G_CHASE];
+      if (chase !== 0) {
+        const se = this.scent[this.nb(c, 0)];
+        const sw = this.scent[this.nb(c, 2)];
+        const ss = this.scent[this.nb(c, 1)];
+        const sn = this.scent[this.nb(c, 3)];
+        let gx = Math.trunc(((se - sw) * 1024 * gain) / (se + sw + 1));
+        let gy = Math.trunc(((ss - sn) * 1024 * gain) / (ss + sn + 1));
+        gx = gx > 1024 ? 1024 : gx < -1024 ? -1024 : gx;
+        gy = gy > 1024 ? 1024 : gy < -1024 ? -1024 : gy;
+        ux += Math.trunc((chase * gx) / 1024);
+        uy += Math.trunc((chase * gy) / 1024);
+      }
+      const drive = this.genes[c * ROAM_GENES + G_DRIVE];
+      ux += drive * DX[head];
+      uy += drive * DY[head];
+    }
+    const top = this.moveMaxQ16;
+    let vx = Math.trunc((top * Math.trunc(ux / len)) / ROAM_GENE_MAX);
+    let vy = Math.trunc((top * Math.trunc(uy / len)) / ROAM_GENE_MAX);
+    vx = vx > top ? top : vx < -top ? -top : vx;
+    vy = vy > top ? top : vy < -top ? -top : vy;
+    if (dash) { vx = top * DX[head]; vy = top * DY[head]; }
+    this.bodyVx[k] = vx;
+    this.bodyVy[k] = vy;
+    const effortQ16 = top > 0 ? Math.min(65536, Math.floor(((Math.abs(vx) + Math.abs(vy)) * 65536) / top)) : 0;
+    const moveQ16 = Math.floor((this.moveCostQ16 * effortQ16) / 65536);
+    const cap = 4 * cfg.birthStore;
+
+    // Each cell eats from its own tile into its own store, pays its own leak, and dies when it runs low or wears out.
+    // Fates are decided with the body whole and the dead removed after, so the order of cells makes no difference.
+    const dying: number[] = [];
+    for (let j = 0; j < len; j++) {
+      const c = this.cells[start + j];
+      let take = this.food[c];
+      if (take > this.biteN) take = this.biteN;
+      if (take > cap - this.store[c]) take = Math.max(0, cap - this.store[c]);
+      this.food[c] -= take;
+      this.store[c] += take;
+      let exposed = 0;
+      for (let d = 0; d < 4; d++) if (label[this.nb(c, d)] !== k) exposed++;
+      const costQ16 = exposed * this.leakSideQ16 + this.leakCellQ16 + moveQ16;
+      let pay = Math.floor((costQ16 + (roamHash(seed, t, c, CH_COST) & 0xffff)) / 65536);
+      if (pay > this.store[c]) pay = this.store[c];
+      this.store[c] -= pay;
+      this.reservoir += pay;
+      const worn = this.wearQ32 > 0 && roamHash(seed, t, c, CH_WEAR) < this.wearQ32;
+      if (this.store[c] < cfg.minStore || worn) {
+        if (worn && this.store[c] >= cfg.minStore) this.worn++;
+        dying.push(c);
+      }
+    }
+    if (dying.length > 0) {
+      this.dieFlow(dying);
+      let w = 0;
+      for (let j = 0; j < len; j++) {
+        const c = this.cells[start + j];
+        if (this.alive[c]) this.cells[start + w++] = c;
+      }
+      len = w;
+    }
+    this.bodyLen[k] = len;
+    if (len === 0) {
+      this.bodyDeaths++;
+      if (newborn) this.newbornDeaths++;
+    }
+  }
+
+  /**
+   * With flow: along every bond, a share of the difference between the two stores moves to the emptier cell, each
+   * amount settled from the stores before any moved (so tile order makes no difference). A cell has at most four
+   * bonds and gives at most an eighth of the difference through each, so no store goes below zero.
+   */
+  private flowAlongBonds(): void {
+    const n = this.n;
+    const snap = this.flowSnap;
+    snap.set(this.store);
+    const q = this.flowQ16;
+    for (let a = 0; a < n; a++) {
+      if (!this.alive[a]) continue;
+      for (let d = 0; d < 2; d++) {
+        if (!(d === 0 ? this.bondE[a] : this.bondS[a])) continue;
+        const b = this.nb(a, d);
+        const sa = snap[a];
+        const sb = snap[b];
+        const diff = sa > sb ? sa - sb : sb - sa;
+        const amount = Math.floor((diff * q) / 65536);
+        if (amount === 0) continue;
+        if (sa > sb) { this.store[a] -= amount; this.store[b] += amount; }
+        else { this.store[b] -= amount; this.store[a] += amount; }
+        this.flowed += amount;
+      }
+    }
+  }
+
   stepOnce(): void {
     const cfg = this.cfg;
     const t = this.step;
@@ -912,6 +1151,7 @@ export class RoamWorld {
       order.sort((a, b) => key[a] - key[b] || a - b);
       for (let q = 0; q < count; q++) this.move(order[q]);
       if (this.drainN > 0) this.drainSmaller();
+      if (this.flowQ16 > 0) this.flowAlongBonds();
       if (cfg.plan) { for (let q = 0; q < count; q++) if (this.bodyLen[order[q]] > 0) this.dividePlan(order[q]); }
       else for (let q = 0; q < count; q++) if (this.bodyLen[order[q]] > 0) this.divide(order[q]);
     }
@@ -963,6 +1203,9 @@ export class RoamWorld {
       blocked: this.blocked,
       patches: this.patches,
       drained: this.drained,
+      flowed: this.flowed,
+      worn: this.worn,
+      splits: this.splits,
     };
   }
 
@@ -1014,8 +1257,10 @@ export class RoamWorld {
       for (let g = 0; g < ROAM_GENES; g++) mix(this.genes[i * ROAM_GENES + g]);
       if (this.cfg.plan) { mix(this.pid[i]); mix(this.mode[i] | (this.orient[i] << 4)); }
       if (this.drainN > 0) mix(this.since[i]);
+      if (this.flowQ16 > 0) mix(this.made[i] | (this.mom[i] << 4));
     }
     if (this.cfg.plan) for (const plan of this.plans) for (let m = 0; m < PLAN_MODES; m++) mix(plan[m]);
+    if (this.flowQ16 > 0) { mix(this.splits); mix(this.worn); }
     return h >>> 0;
   }
 }

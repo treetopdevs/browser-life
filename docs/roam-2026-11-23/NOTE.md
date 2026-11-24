@@ -195,3 +195,55 @@ unseen-seed check was put off because the rules were about to change, and is sti
 ## The garden look (2026-11-24)
 
 On the user's ask, the page now opens in a "garden look" modelled on the main garden world's composite view: a near-black ground with a blue haze where food lies, each body drawn as one soft blob (a field summed over its cells, so cells of one body run together and two bodies pressed together keep a seam) with a pale rim, lit inside by how full its store is, tinted part-way toward its plan's colour, and a soft glow over everything. Picture only; the world's rules and digests are unchanged. Painting costs about 44 ms a frame at 128 x 128 (6 pixels a tile) against 6 ms for the flat paints. Pictures: `garden-look.png`, `garden-look-zoom.png` (seed 2, six founders, touch feeding, step 101,500). Review: Codex found only a stale food-colour legend (fixed).
+
+## Matter that travels, cells that die, bodies that break (2026-11-24)
+
+The user's point after the garden look: the look is better, but nothing comes and goes. Growth needs a push and a
+balance that is not just a size limit. Stated before building: "bodies that grow, lose starving limbs, and pinch
+into pieces that wander off and regrow; sizes and shapes that rise and fall within one run with no size limit we
+set; lineages settling on different growth plans on different seeds because the shapes that survive their own
+breakups differ."
+
+What was added (config `flow`, needs `plan`; old configs hash as before, checked on six configs over 1,500 steps):
+
+- Each cell keeps its own store, eats into it from its own tile (up to four birth stores), and pays its own leak.
+  There is no shared body store any more. A share of the difference between two bonded cells' stores moves along
+  their bond each step (`flow`, 1/64 on the page), settled from the stores before any moved.
+- A cell whose store falls below the minimum dies on its own. Its mother goes back to the mode that made it, so
+  she regrows it if she can. Its daughters start their plans again. If the dead cell was a link, the body breaks
+  in two. Splits are counted.
+- Wear (`life`, 2,000 on the page): each cell dies with chance 1/2,000 each step, store or not, so no body is
+  forever.
+- With flow there is no 32-cell limit. A kept daughter can carry a copy error in her plan, at an eighth of the
+  let-go rate, so one body can hold two plans.
+
+What was seen (seeds 1 and 2 only, 128 x 128, six grown founders, touch feeding):
+
+- Flow without wear: bodies grow to 100 to 330 cells and stop by themselves (no limit is set). Matter cannot
+  travel far enough to feed the far end. By 60,000 steps the world settles into 6 to 13 large bodies that split
+  rarely: static again.
+- Flow with wear 2,000: both seeds stay busy to 60,000 steps. There are 120 to 145 bodies, the largest 40 to 65
+  cells. Per 1,000 steps there are about 380 splits and 1,200 cell deaths (about 450 from wear). Five to thirteen
+  plans are alive out of 550 to 600 ever made. Budding (letting a single cell go) stops: bodies reproduce by
+  breaking.
+- Wear 500: bodies stay small (1 to 15 cells) and budding comes back.
+- Fate of pieces (seed 1, steps 10,000 to 30,000, `experiments/roam/pieces.ts`; the largest piece keeps the
+  body's name): with wear, 7,647 bodies were born by breaking. Most are crumbs (median one cell). Of the 1,158 born
+  with 4 or more cells, 218 grew to twice their birth size, and the longest line of bodies each broken from the one
+  before ran 16 generations. Without wear: 106 pieces of 4+ cells, 9 doubled, longest line 4. "Broke off pieces of
+  their own" in that tool counts any piece, so a piece shedding crumbs counts the same as one that splits in half.
+
+Against the best case: growth and breakup with no size limit, and sizes that rise and fall, happen (with wear).
+Not shown: that plans or outlines change because of it, or that different seeds settle on different plans. Seen
+seeds only, and these rules are mine. Video: `runs/roam/v-flow-wear-s1/` (seed 1, steps 50,000 to 53,000).
+
+Review: two Codex passes (Sol 6.1, High). The first found that a cell dying partway through its body's turn
+changed what cells after it in the same body saw: an extra exposed side, and a missing bond for mode resets. Now
+all fates in a body are decided with the body whole, resets are read with every bond in place (a cell whose mother
+died starts from 0; otherwise one that lost daughters goes back to the earliest mode that made them), and then the
+dead are removed. The second found that a daughter kept behind her mother (the two back to back) was taken for the
+mother when she died, so the mother restarted her plan instead of regrowing her. Each cell now carries one bit
+saying whether the cell behind it is its mother. It also found that the fate tool gave the name to the piece with
+most old cells rather than the largest one; fixed. Tests cover the two rule fixes; the tool fix has no test (it is a probe tool, not part of the world). Numbers above are from after the fixes
+(both seeds, wear 2,000, 60,000 steps: about 380 splits and 1,200 cell deaths per 1,000 steps, largest bodies 45
+to 53 cells). 35 tests in `apps/lab/test/roam.test.ts`.
