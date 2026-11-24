@@ -118,9 +118,10 @@ Without touch feeding:
 - Blocks with copy errors, 150,000 steps: nothing bigger than the block appears. About a fifth of bodies are
   full blocks at any time, and 14 to 30 plans are alive at a time, most of them giving smaller outlines (two or three cells,
   an L). The drive gene rises from 64 to 191 and 185, as in the first probe.
-- In an earlier run of the same kind (before the last fairness fix, so not reproducible from this commit) with
-  all six founders, specks took 1,361 of 1,444 cells, and on one seed blocks gave way to two- and three-cell
-  bodies. With grazing alone, heritable outlines drift small.
+- All six founders with copy errors, 150,000 steps: specks take everything on both seeds (1,455 of 1,455 cells
+  and 1,449 of 1,449); the largest body left is four cells. Without copy errors the specks lose to the plates
+  (above), so copy errors change who wins; why was not looked into. With grazing alone, heritable outlines stay
+  small or go to single cells.
 - A check on the first probe's world gave the same sign: a 16-cell type planted against the 8-cell chasers was
   gone by step 100,000 on both seeds, and in three other food layouts it was gone or still falling on five of six runs. A rigid body
   only reaches fresh food along its leading edge, so a bigger blob eats less per cell.
@@ -144,8 +145,20 @@ With touch feeding:
 
 ## How to read this
 
-- The plan is a heredity that makes outlines nobody listed: the ladder, and the spiked 32-cell bodies, are not
-  among the six planted plans. That part of the intent is met on seen seeds.
+- One clearly new form appeared and took over: the ladder. Grown alone, its plan makes a strip two cells wide and
+  16 long; it is the planted block with a single entry changed. At step 150,000 on seed 1 all 1,033 cells carry
+  it or a near copy that grows the same strip. That is the part of the intent that is met, once, on a seen seed.
+- The spiked 32-cell bodies in the all-six runs are mostly not new. At step 150,000 every survivor on both seeds
+  descends from the planted bush. Each surviving plan was grown alone and its outline set beside the bush's
+  (`experiments/roam/plans.ts`): on seed 1, 1,087 of 1,090 cells are in plans that grow exactly the bush; on
+  seed 2, 702 of 1,030 are, and the other 328 are in plans with one entry changed that grow something else: a
+  taller, narrower bush (261 cells), a straight line 32 long (41 cells), and one 26-cell slab that never lets a
+  daughter go. So new forms do arise and persist there, as a minority.
+- The many outlines counted in those runs (34 to 50) come mostly from what was in a body's way while it grew and
+  from cells lost when hungry, not from different plans. Colour by plan also overstates variety: a change in an
+  entry a body never uses gets a new colour and grows the same thing.
+- Blocks on seed 2 (no ladder): 1,086 of 1,107 cells still grow the planted block; 21 are in near-blocks of
+  seven cells.
 - Bodies got big only once being big was made to pay by a rule we wrote (the larger feeds on the smaller), and
   they then ran to the 32-cell limit we set. Size here is selected by our rule and capped by our number. Which
   outline a 32-cell body has is not what is being selected, as far as these runs show.
@@ -156,11 +169,16 @@ With touch feeding:
   sterile; three of four runs ended as one to three bodies that never reproduced). The numbers above are with the
   cell staying in its mode at the limit.
 
-Review: two more Codex passes (Sol 6.1, High). The first found one bug (a new body that was blocked while running
+Review: three more Codex passes (Sol 6.1, High). The first found one bug (a new body that was blocked while running
 from its parent turned round), a remaining walk-order favour in which cell of a body divides first (now a hash
 per cell), an outline count that could split one outline in two on a tiny arena, and four tests weaker than their
-names. The second found no bug in the rules and two small points in the reporting code. All are fixed, and the
-last two small fixes were not re-reviewed. 27 tests in `apps/lab/test/roam.test.ts`.
+names. The second found no bug in the rules and two small points in the reporting code. The third looked at those two
+fixes and at the plan-growing tool, and found two ways the tool could mislead (stopping a slow grower early, and
+calling a mode used when it can only be reached on paper); both are fixed, and the tool's fixes were not
+re-reviewed. 29 tests in `apps/lab/test/roam.test.ts`.
+
+The page (`/roam/`) now opens on the six founders with copy errors and touch feeding. To see the ladders arrive,
+choose "grown: blocks", seed 1, and "as fast as it goes": the first ladders show around step 55,000.
 
 Videos (in the worktree's `runs/roam/`, not committed): `v-grown-start-s1` (all six founders with touch feeding,
 steps 0 to 20,000), `v-grown-invasion-s1` (blocks, steps 50,000 to 90,000: the ladders arrive),
@@ -168,6 +186,8 @@ steps 0 to 20,000), `v-grown-invasion-s1` (blocks, steps 50,000 to 90,000: the l
 
 ## Where this leaves the ladder
 
-Heredity that can invent: a first version exists and does produce new outlines, on seen seeds. Creatures that
-visibly differ from their ancestors and between runs: seen once each way, on two seeds, and only with a
-size-pays rule and a size limit that we wrote. Not shown: that an outline matters to the body that has it.
+Heredity that can invent: a first version exists; it produced one clearly new form (the ladder) and one modest
+one (the narrower bush) on seen seeds. Creatures that visibly differ from their ancestors and between runs: seen
+once each way, on two seeds, and only with a size-pays rule and a size limit that we wrote. Not shown: that an
+outline matters to the body that has it. Rungs 1 to 3 in this world are still on seen seeds only; the
+unseen-seed check was put off because the rules were about to change, and is still owed.
