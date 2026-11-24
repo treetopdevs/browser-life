@@ -175,7 +175,7 @@ per cell), an outline count that could split one outline in two on a tiny arena,
 names. The second found no bug in the rules and two small points in the reporting code. The third looked at those two
 fixes and at the plan-growing tool, and found two ways the tool could mislead (stopping a slow grower early, and
 calling a mode used when it can only be reached on paper); both are fixed, and the tool's fixes were not
-re-reviewed. 29 tests in `apps/lab/test/roam.test.ts`.
+re-reviewed. 27 tests in `apps/lab/test/roam.test.ts`.
 
 The page (`/roam/`) now opens on the six founders with copy errors and touch feeding. To see the ladders arrive,
 choose "grown: blocks", seed 1, and "as fast as it goes": the first ladders show around step 55,000.
