@@ -20,6 +20,7 @@ describe('roam page dials', () => {
         if (d.id === 'minStore') vals.birthStore = Math.max(vals.birthStore, v);
         if (d.id === 'birthStore') vals.minStore = Math.min(vals.minStore, v);
         const w = foundRoam(dialOptions(sw, vals));
+        expect(w.census().cells, `${d.id} = ${v}`).toBeGreaterThan(0);
         for (let s = 0; s < 20; s++) w.stepOnce();
         expect(w.census().residual).toBe(0);
       }

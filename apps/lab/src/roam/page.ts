@@ -14,6 +14,10 @@ const ctx = canvas.getContext('2d')!;
 let worker: Worker | null = null;
 let gen = 0;
 let waiting = false;
+// The worker dropped its world after an error: Play starts a fresh one rather than asking a worker with no world.
+let failed = false;
+// Colour changed while paused: the next free moment asks for the same step painted again.
+let repaint = false;
 let playing = true;
 let lastStep = 0;
 let lastTime = performance.now();
@@ -115,7 +119,8 @@ function reset(): void {
     if (m.gen !== gen) return;
     waiting = false;
     if (m.type === 'error') {
-      set('error', m.message);
+      set('error', `${m.message} (press Play to start again)`);
+      failed = true;
       playing = false;
       el('play').textContent = 'Play';
       return;
@@ -124,6 +129,8 @@ function reset(): void {
   };
   worker.onerror = (event) => { set('error', event.message); };
   gen++;
+  failed = false;
+  repaint = false;
   owed = 0;
   asked = 0;
   shownStep = 0;
@@ -161,7 +168,7 @@ function show(f: RoamFrame): void {
   set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting`);
   set('r-drained', `${fmt(f.rates.drained)} per 1,000 steps`);
   set('r-cellkinds', f.kinds ? `${fmt(f.census.shells)} shells, ${fmt(f.census.mouths)} mouths, of ${fmt(f.census.cells)} cells; ${fmt(f.census.cracked)} shells cracked so far` : 'off');
-  set('r-flow', f.flowing ? `${fmt(f.rates.splits)} bodies broke in two; ${fmt(f.rates.releases)} budded; ${fmt(f.rates.cellDeaths)} cells died (${fmt(f.rates.worn)} worn out)${f.compost ? `; ${fmt(f.rates.composted)} matter left on the ground by them` : ''}` : 'off');
+  set('r-flow', f.flowing ? `${fmt(f.rates.splits)} new pieces from broken bodies; ${fmt(f.rates.releases)} budded; ${fmt(f.rates.cellDeaths)} cells died (${fmt(f.rates.worn)} worn out)${f.compost ? `; ${fmt(f.rates.composted)} matter left on the ground by them` : ''}` : 'off');
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
   showShapes(f);
   el('families').innerHTML = f.families
@@ -217,16 +224,28 @@ function loop(): void {
     owed -= asked;
     askedAt = shownStep;
     send({ type: 'tick', gen, steps: asked, paint: value('paint') as RoamPaint });
+    repaint = false;
+  } else if (repaint && !waiting && worker && !failed) {
+    repaint = false;
+    asked = 0;
+    send({ type: 'tick', gen, steps: 0, paint: value('paint') as RoamPaint });
   }
   requestAnimationFrame(loop);
 }
 
 el('play').addEventListener('click', () => {
+  if (failed) {
+    playing = true;
+    el('play').textContent = 'Pause';
+    reset();
+    return;
+  }
   playing = !playing;
   el('play').textContent = playing ? 'Pause' : 'Play';
   lastTime = performance.now();
 });
 el('reset').addEventListener('click', reset);
+el('paint').addEventListener('change', () => { repaint = true; });
 for (const id of SWITCH_IDS) el(id).addEventListener('change', changed);
 // A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
 window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });

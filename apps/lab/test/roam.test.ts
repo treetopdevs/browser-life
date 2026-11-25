@@ -148,9 +148,12 @@ describe('roam world', () => {
         for (let i = 0; i < w.n; i++) if (w.alive[i] && w.reservoir > 0) { w.food[i]++; w.reservoir--; }
         const before = w.census().releases;
         w.stepOnce();
-        biggest = Math.max(biggest, ...w.bodySizes());
-        // A daughter is let go only in a step by whose end her mother's body has its adult size.
-        if (w.census().releases > before) expect(biggest).toBe(adult);
+        const sizes = w.bodySizes();
+        biggest = Math.max(biggest, ...sizes);
+        // A daughter is let go only in a step by whose end her mother's body has its adult size: every body shares
+        // the one adult size (no copy errors), so a step with a release needs a body of that size now (not only some
+        // time earlier in the run). One body can let several daughters go in a step.
+        if (w.census().releases > before) expect(sizes).toContain(adult);
       }
       expect(biggest).toBe(adult);
       expect(w.census().releases).toBeGreaterThan(0);
@@ -300,6 +303,12 @@ describe('roam world, growth by plan', () => {
       const full = (w: RoamWorld) => outlines(w).some((o) => o.cells.length === want.cells);
       const w = grow(want.plan, full);
       const all = outlines(w);
+      // Keep feeding a while after the outline is reached: no bonded body may grow past it.
+      for (let s = 0; s < 400; s++) {
+        for (let i = 0; i < w.n; i++) if (w.alive[i] && w.reservoir > 0) { w.food[i]++; w.reservoir--; }
+        w.stepOnce();
+        for (const o of outlines(w)) expect(o.cells.length).toBeLessThanOrEqual(want.cells);
+      }
       expect(Math.max(...all.map((o) => o.cells.length))).toBe(want.cells);
       const o = all.find((q) => q.cells.length === want.cells)!;
       expect([o.w, o.h].sort()).toEqual(want.box);

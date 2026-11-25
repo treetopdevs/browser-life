@@ -133,6 +133,9 @@ export function roamConfig(o: RoamOptions): RoamConfig {
     // Unless a rate for plans is given, it follows the gene rate as finally set.
     if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? Math.min(1, 2.5 * merged.mut);
   }
+  // The first patches may use at most half the matter, so the founders can always be paid for (large patches in a
+  // small arena would otherwise take it all and leave an empty world). The usual worlds are far inside this.
+  if (merged.patchFood > 0) merged.startPatches = Math.min(merged.startPatches, Math.floor(merged.matter / (2 * merged.patchFood)));
   return merged;
 }
 
@@ -155,14 +158,18 @@ export function foundRoam(o: RoamOptions): RoamWorld {
   });
   const founders = o.founders ?? Math.max(types.length, Math.round((48 * world.n) / (128 * 128)));
   if (!Number.isSafeInteger(founders) || founders < 1) throw new Error(`Invalid founders: ${founders}`);
+  // Tries are bounded by the tiles there are, and stop once the reservoir cannot pay for another founder.
+  const cost = 2 * world.cfg.birthStore - 1;
+  const maxTries = 20 * Math.min(founders, world.n);
   let placed = 0;
-  for (let tries = 0; placed < founders && tries < founders * 20; tries++) {
+  for (let tries = 0; placed < founders && tries < maxTries && world.reservoir >= cost; tries++) {
     const tile = roamHash(world.cfg.seed, 0, tries, 41) % world.n;
     const type = types[placed % types.length];
     const j = placed % types.length;
     const plan = Math.floor(placed / types.length) % 2 === 1 ? hunterIds[j] : planIds[j];
     if (world.found(tile, ROAM_TYPES[type].genes, roamFamily(type), undefined, plan)) placed++;
   }
+  if (placed === 0) throw new Error(`No founder could be placed: ${world.reservoir} matter left after the first patches, a founder needs ${cost}`);
   return world;
 }
 
@@ -418,7 +425,6 @@ export function roamShapes(world: RoamWorld, top: number): { shapes: RoamShape[]
   const queue: number[] = [];
   for (let i = 0; i < world.n; i++) {
     if (!world.alive[i] || seen[i]) continue;
-    plans.add(world.pid[i]);
     xs.length = ys.length = queue.length = 0;
     seen[i] = 1;
     queue.push(i); xs.push(0); ys.push(0);
@@ -430,6 +436,7 @@ export function roamShapes(world: RoamWorld, top: number): { shapes: RoamShape[]
       const so = ((y + 1) % s) * s + x;
       const w = y * s + ((x + s - 1) % s);
       const no = ((y + s - 1) % s) * s + x;
+      plans.add(world.pid[c]);
       if (world.bondE[c] && !seen[e]) { seen[e] = 1; queue.push(e); xs.push(xs[q] + 1); ys.push(ys[q]); }
       if (world.bondS[c] && !seen[so]) { seen[so] = 1; queue.push(so); xs.push(xs[q]); ys.push(ys[q] + 1); }
       if (world.bondE[w] && !seen[w]) { seen[w] = 1; queue.push(w); xs.push(xs[q] - 1); ys.push(ys[q]); }

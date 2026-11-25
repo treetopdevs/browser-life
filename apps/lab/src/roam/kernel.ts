@@ -254,6 +254,7 @@ export interface RoamCensus {
   worn: number;
   /** With compost: matter left on the ground as food by dead cells, since step 0. */
   composted: number;
+  /** With flow: new pieces from broken bodies since step 0 (a body broken into three adds two). */
   splits: number;
   /** With kinds: live shell and mouth cells. */
   shells: number;
@@ -265,7 +266,8 @@ export interface RoamCensus {
 }
 
 export class RoamWorld {
-  readonly cfg: RoamConfig;
+  /** The config as validated, frozen so nothing can change it during a run. */
+  readonly cfg: Readonly<RoamConfig>;
   readonly size: number;
   readonly n: number;
   readonly total: number;
@@ -375,7 +377,7 @@ export class RoamWorld {
   private readonly patchTiles: Int32Array;
 
   constructor(cfg: RoamConfig) {
-    this.cfg = { ...cfg };
+    this.cfg = Object.freeze({ ...cfg });
     const size = whole(cfg.size, 'size', 8, 1024);
     whole(cfg.seed, 'seed', 0, 0xffffffff);
     this.total = whole(cfg.matter, 'matter', 1, 0x7fffffff);
@@ -599,7 +601,7 @@ export class RoamWorld {
     }
     this.bodyCount = count;
     if (flow) {
-      // A body broke when two of this step's bodies hold cells that were one body's last step.
+      // Each extra piece counts: a body of last step whose cells now sit in m bodies adds m - 1.
       let seen = this.splitSeen;
       let most = 0;
       for (let k = 1; k <= count; k++) {
@@ -1236,6 +1238,9 @@ export class RoamWorld {
       }
     }
     if (dying.length > 0) {
+      // A death can cut the body in two. The pieces stay one body (one label, one length) until the next step's
+      // labelling, so for the rest of this step they move, feed by touch and divide as the body they were. That
+      // one-step lag is part of the rules every recorded run was made with.
       this.dieFlow(dying);
       let w = 0;
       for (let j = 0; j < len; j++) {
