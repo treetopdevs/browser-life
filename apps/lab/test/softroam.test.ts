@@ -388,7 +388,7 @@ describe('soft roam: stability', () => {
     for (let s = 0; s < 600; s++) {
       w.stepOnce();
       for (const c of live(w)) {
-        if (w.bornStep[c] === w.step - 1) continue;
+        if (w.bornStep[c] === w.step) continue;
         seen = Math.max(seen, Math.hypot(w.dlt(w.prevX[c], w.x[c]), w.dlt(w.prevY[c], w.y[c])));
         expect(Math.hypot(w.vx[c], w.vy[c])).toBeLessThanOrEqual(cfg.vMax);
       }

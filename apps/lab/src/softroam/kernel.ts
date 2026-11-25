@@ -33,6 +33,23 @@
  * with drain is live as soon as drain is set: a new body cannot turn and thrusts at full along its heading). The kind, tough,
  * hits, lastHitStep and lastDrainStep arrays and the kind bits of plan entries are carried so that milestone 2 only
  * adds rules.
+ *
+ * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
+ * - The scent field is shorter. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food (cap
+ *   4095); Soft Roam relaxes 1 pass with 1/32 lost (at most 1/256 is legal) and adds the food itself (cap 1023). The slope
+ *   is read as a ratio, so a longer field needs more than 31 bits in the slope arithmetic and more range per tile than the
+ *   decay can resolve; the reach is therefore about 2 tiles at the default (about 6 at the widest legal setting) against
+ *   about 16 in Roam. A chaser feels a patch only near it. Whether that is the right balance is a tuning question for a run.
+ * - There is no blocked-turn rule. Roam gives a body that cannot step a new random heading; here thrust into another
+ *   body is projected away (the body slides, or stalls when boxed in) and only the hashed turn event changes a heading.
+ * - The census has no newbornDeaths or cellMoves/blocked (they need a per-cell "has divided" flag or tiles); it has
+ *   shellTough, travel and the alarms.
+ * - isqrt starts from the double sqrt and corrects it with integer tests, so it is exact for every n below 2^31; a WGSL
+ *   port should use an integer method instead.
+ * - The events carry different units: deaths in units (and where the cell began the step), patches in tiles, births as
+ *   slots (see SoftDeathEvent).
+ * - bornStep is 0 for a founder and, for a daughter, the world step at which she first exists (the step after the one that
+ *   made her), so a daughter of the very first step is not taken for a founder.
  */
 
 import { G_CHASE, G_DRIVE, G_TURN, KIND_MOUTH, KIND_PLAIN, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, roamHash, ROAM_GENE_MAX, ROAM_GENES } from '../roam/kernel.ts';
@@ -271,13 +288,21 @@ export interface SoftRoamCensus {
   patches: number;
   /** Units moved, summed over cells and steps (length of each cell's displacement over a step). */
   travel: number;
+  /** Mean toughness of the shells alive now (0 with no shell). */
+  shellTough: number;
   /** Alarms that must stay 0: bonds longer than 2 L now; pairs of different bodies overlapping by more than D/4 for 50 steps running; cells at the speed clamp for 50 steps running. */
   alarmBonds: number;
   alarmOverlap: number;
   alarmSpeed: number;
 }
 
-export interface SoftDeathEvent { x: number; y: number; kind: number; store: number }
+/**
+ * What a step did, for the picture; read-only, cleared at the start of the next step. Units differ by event, on purpose:
+ * `deaths` give the cell's place in UNITS (0 to size * 1024), both where it died (x, y) and where it began the step
+ * (fromX, fromY); `patches` give the patch centre in TILES (0 to size - 1); `births` and `cracks` list SLOTS.
+ */
+export interface SoftDeathEvent { x: number; y: number; fromX: number; fromY: number; kind: number; store: number }
+/** A place in tiles (the centre tile of a patch). */
 export interface SoftPointEvent { x: number; y: number }
 
 // Lattice offsets (dx, dy, rest length) a new cell may be braced to.
@@ -324,6 +349,7 @@ export class SoftRoamWorld {
   readonly fam: Uint16Array;
   readonly cid: Uint32Array;
   readonly since: Uint32Array;
+  /** 0 for a founder; for a daughter the world step from which she exists (the step after her birth step). */
   readonly bornStep: Uint32Array;
   readonly lastHitStep: Uint32Array;
   readonly lastDrainStep: Uint32Array;
@@ -781,7 +807,7 @@ export class SoftRoamWorld {
     this.tough[c] = 0;
     this.hits[c] = 0;
     this.since[c] = this.step;
-    this.bornStep[c] = this.step;
+    this.bornStep[c] = 0;
     this.lastHitStep[c] = 0;
     this.lastDrainStep[c] = 0;
     this.turnLeft[c] = 0;
@@ -1386,7 +1412,7 @@ export class SoftRoamWorld {
       if (killed[l] > 0 && killed[l] === this.bodySize[l]) { this.bodyDeaths++; killed[l] = 0; }
     }
     for (const c of dead) {
-      this.events.deaths.push({ x: this.x[c], y: this.y[c], kind: this.kind[c], store: this.store[c] });
+      this.events.deaths.push({ x: this.x[c], y: this.y[c], fromX: this.prevX[c], fromY: this.prevY[c], kind: this.kind[c], store: this.store[c] });
       if (this.compost) {
         this.food[(this.y[c] >>> 10) * this.size + (this.x[c] >>> 10)] += this.store[c];
         this.composted += this.store[c];
@@ -1576,6 +1602,8 @@ export class SoftRoamWorld {
       this.mode[c] = (entry >>> 8) & 15;
       this.divisions++;
       this.events.births.push(to);
+      // bornStep is the world step at which the daughter first exists (the step after the one that made her); 0 is only a founder.
+      this.bornStep[to] = t + 1;
       this.newTargets.push(px, py);
       if (keep) {
         this.pid[to] = this.copyPlan(c, this.planMutQ16 >>> 3);
@@ -1690,33 +1718,43 @@ export class SoftRoamWorld {
     return out;
   }
 
+  /** The three alarms as of now (cheap enough to read every step): long bonds, pairs overlapping for 50 steps, cells at the clamp for 50 steps. */
+  alarms(): { bonds: number; overlap: number; speed: number } {
+    let bonds = 0;
+    let speed = 0;
+    for (let c = 0; c < this.cap; c++) {
+      if (!this.alive[c]) continue;
+      if (this.clampRun[c] >= SPEED_RUN) speed++;
+      const m = this.mother[c];
+      if (m >= 0) {
+        const dx = this.dlt(this.x[c], this.x[m]);
+        const dy = this.dlt(this.y[c], this.y[m]);
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 2 * L || dx * dx + dy * dy > 4 * L * L) bonds++;
+      }
+    }
+    let overlap = 0;
+    for (const v of this.pairRun.values()) if (v.run >= SPEED_RUN) overlap++;
+    return { bonds, overlap, speed };
+  }
+
   census(): SoftRoamCensus {
     let food = 0;
     for (let i = 0; i < this.n; i++) food += this.food[i];
     let held = 0;
     let cells = 0;
     let shells = 0;
+    let shellTough = 0;
     let mouths = 0;
-    let alarmBonds = 0;
-    let alarmSpeed = 0;
     const genes = new Array<number>(ROAM_GENES).fill(0);
     for (let c = 0; c < this.cap; c++) {
       if (!this.alive[c]) continue;
       cells++;
       held += this.store[c];
-      if (this.kind[c] === KIND_SHELL) shells++;
+      if (this.kind[c] === KIND_SHELL) { shells++; shellTough += this.tough[c]; }
       else if (this.kind[c] === KIND_MOUTH) mouths++;
       for (let g = 0; g < ROAM_GENES; g++) genes[g] += this.genes[c * ROAM_GENES + g];
-      if (this.clampRun[c] >= SPEED_RUN) alarmSpeed++;
-      const m = this.mother[c];
-      if (m >= 0) {
-        const dx = this.dlt(this.x[c], this.x[m]);
-        const dy = this.dlt(this.y[c], this.y[m]);
-        if (Math.max(Math.abs(dx), Math.abs(dy)) > 2 * L || dx * dx + dy * dy > 4 * L * L) alarmBonds++;
-      }
     }
-    let alarmOverlap = 0;
-    for (const v of this.pairRun.values()) if (v.run >= SPEED_RUN) alarmOverlap++;
+    const al = this.alarms();
     const sizes = this.bodySizes();
     let largest = 0;
     let singles = 0;
@@ -1749,9 +1787,10 @@ export class SoftRoamWorld {
       flowed: this.flowed,
       patches: this.patches,
       travel: this.travel,
-      alarmBonds,
-      alarmOverlap,
-      alarmSpeed,
+      shellTough: shells ? shellTough / shells : 0,
+      alarmBonds: al.bonds,
+      alarmOverlap: al.overlap,
+      alarmSpeed: al.speed,
     };
   }
 

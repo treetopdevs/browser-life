@@ -363,7 +363,7 @@ describe('soft roam props: arithmetic bounds', () => {
       if (s % 3 === 0) w.checkInvariants();
       for (const c of live(w)) {
         const d = Math.hypot(w.dlt(w.prevX[c], w.x[c]), w.dlt(w.prevY[c], w.y[c]));
-        if (w.bornStep[c] !== s && d > w.cfg.substeps * (w.cfg.vMax / 16 + 1)) throw new Error(`cell ${c} moved ${d} at step ${s}`);
+        if (w.bornStep[c] !== s + 1 && d > w.cfg.substeps * (w.cfg.vMax / 16 + 1)) throw new Error(`cell ${c} moved ${d} at step ${s}`);
       }
     }
     expect(w.census().residual).toBe(0);
