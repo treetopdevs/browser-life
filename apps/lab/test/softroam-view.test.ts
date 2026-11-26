@@ -335,19 +335,19 @@ describe('soft roam view: kinds', () => {
     // Levels are 0..1 and move by less than the whole range in one step: the thread's first step lifts the mouth's warmth and the
     // prey's dimming to about half (1 - exp(-1 / 1.5)), neither zero nor a jump to full.
     const FEED = 1, PREY = 2;
-    expect(mem.lvCur[m * 6 + FEED]).toBeGreaterThan(0.3);
-    expect(mem.lvCur[m * 6 + FEED]).toBeLessThan(0.75);
-    expect(mem.lvCur[p * 6 + PREY]).toBeGreaterThan(0.3);
-    expect(mem.lvCur[p * 6 + PREY]).toBeLessThan(0.75);
-    const seen: number[] = [mem.lvCur[m * 6 + FEED]];
-    const dim: number[] = [mem.lvCur[p * 6 + PREY]];
+    expect(mem.lvCur[m * 7 + FEED]).toBeGreaterThan(0.3);
+    expect(mem.lvCur[m * 7 + FEED]).toBeLessThan(0.75);
+    expect(mem.lvCur[p * 7 + PREY]).toBeGreaterThan(0.3);
+    expect(mem.lvCur[p * 7 + PREY]).toBeLessThan(0.75);
+    const seen: number[] = [mem.lvCur[m * 7 + FEED]];
+    const dim: number[] = [mem.lvCur[p * 7 + PREY]];
     let more = 0;
     for (let k = 0; k < 8; k++) {
       w.stepOnce();
       mem.observe(w);
       if (!w.alive[m] || !w.alive[p] || !mem.threads.some((t) => t.seen && t.ms === m && t.ps === p)) break;
-      seen.push(mem.lvCur[m * 6 + FEED]);
-      dim.push(mem.lvCur[p * 6 + PREY]);
+      seen.push(mem.lvCur[m * 7 + FEED]);
+      dim.push(mem.lvCur[p * 7 + PREY]);
       more++;
     }
     for (let k = 1; k < seen.length; k++) {
@@ -837,16 +837,18 @@ describe('soft roam view: the sky', () => {
     expect(run(true)).toBeGreaterThan(run(false) + 8);
   });
 
+  // Pinned from the painter before the sun was added; the garden pins re-pinned on purpose in chunk 4 (grazing motes, the muted idle mouth,
+  // attack beads and bite marks: CONTRACT-4.md), the plain pin untouched. What this guards still holds: without a day the sun adds nothing.
   it('a world without a day paints exactly as the painter before the sun was added did (pinned from that painter)', () => {
     const fnv = (b: Uint8Array) => { let h = 0x811c9dc5; for (const x of b) { h ^= x; h = Math.imul(h, 0x01000193) >>> 0; } return h; };
     const grown = foundSoftRoam({ seed: 3, size: 32, start: 'grown-all' });
     grown.advance(120);
     const side = 32 * SCALE;
     const px = (w: SoftRoamWorld, paint: 'garden' | 'plain', alpha: number) => { const o = new Uint8Array(side * side * 4); paintSoftRoam(w, paint, SCALE, alpha, o, new SoftPaintMemory()); return o; };
-    expect(fnv(px(grown, 'garden', 0.4))).toBe(3063900015);
+    expect(fnv(px(grown, 'garden', 0.4))).toBe(3315934054);
     expect(fnv(px(grown, 'plain', 0.4))).toBe(3348190510);
     const gar = foundSoftRoam({ seed: 5, size: 32, start: 'garden' });
     gar.advance(400);
-    expect(fnv(px(gar, 'garden', 0.7))).toBe(840419211);
+    expect(fnv(px(gar, 'garden', 0.7))).toBe(1208747482);
   });
 });

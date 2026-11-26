@@ -44,7 +44,7 @@ describe('soft roam page dials', () => {
   });
   it('the big bodies start has every chunk 3 key, and each of its dials off leaves the key out (the start would fill it otherwise)', () => {
     const bod: SoftSwitches = { ...sw, start: 'bodies' };
-    const keys = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost'];
+    const keys = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost', 'pace', 'shellThrust'];
     const cfg = softRoamConfig(dialOptions(bod, dialDefaults('bodies'))) as unknown as Record<string, unknown>;
     for (const k of keys) expect(cfg[k], k).toBeDefined();
     expect(cfg.patchSun).toBeUndefined();
@@ -55,6 +55,15 @@ describe('soft roam page dials', () => {
       if (k === 'leafPool') expect(off.leafPoolMax).toBeUndefined();
       expect(checkDials(bod, { ...dialDefaults('bodies'), [k]: 0 }), k).toBeNull();
     }
+    // Chunk 4's: at 1 the key is left out (the start would fill it otherwise), and the founders' spread goes to the start as the dial shows it.
+    for (const k of ['pace', 'shellThrust']) {
+      const off = softRoamConfig(dialOptions(bod, { ...dialDefaults('bodies'), [k]: 1 })) as unknown as Record<string, unknown>;
+      expect(off[k], k).toBeUndefined();
+    }
+    expect([cfg.pace, cfg.shellThrust]).toEqual([0.25, 0.5]);
+    expect(dialOptions(bod, dialDefaults('bodies')).driveSpread).toBe(2);
+    expect(dialOptions(bod, { ...dialDefaults('bodies'), driveSpread: 1 }).driveSpread).toBe(1);
+    expect(dialOptions({ ...sw, start: 'seasons' }, dialDefaults('seasons')).driveSpread).toBeUndefined();
     // Seeing off takes steer and crowd with it (idle), with no refusal.
     const blind = softRoamConfig(dialOptions(bod, { ...dialDefaults('bodies'), sight: 0, fear: 0 })) as unknown as Record<string, unknown>;
     for (const k of ['sight', 'fear', 'steer', 'crowd']) expect(blind[k], k).toBeUndefined();
@@ -211,6 +220,8 @@ describe('soft roam page dials', () => {
       // Chunk 3's dials, on the seasons start (which does not fill them): off leaves the key out.
       patchSeason: (v) => (v === 0 ? undefined : true), winterCost: (v) => (v === 0 ? undefined : v / 1000), leafPool: (v) => (v === 0 ? undefined : v),
       leafPoolMax: () => undefined, steer: (v) => (v === 0 ? undefined : true), pack: (v) => (v === 0 ? undefined : v), crowd: (v) => (v === 0 ? undefined : v), heal: (v) => (v === 0 ? undefined : true),
+      // Chunk 4's: at 1 the key is left out; the founders' spread is a start option, never in the config.
+      pace: (v) => (v === 1 ? undefined : v), shellThrust: (v) => (v === 1 ? undefined : v), driveSpread: () => undefined,
     };
     expect(Object.keys(want).sort()).toEqual(SOFT_DIALS.map((x) => x.id).sort());
     for (const d of SOFT_DIALS) {

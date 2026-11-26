@@ -7,8 +7,8 @@
  * Options: --seed, --steps, --size (128), --start (garden, the default, as before: grown-all with kinds, touch feeding, shells and cracking on | bodies, the page's own start: the seasons with herds, groves and pack hunters of 21 to 25 cells that heal, steer as one body and hunt in packs, a leaf pool and a winter upkeep | seasons, chunk 2's start: armoured grazers, leaf bushes, hunters and plates, with a day and a year, leaves, sight, fear, truce, jaws and a release cap on |
  * grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
  * grown-specks | grown-bushes), --planMut, --founders, --mut, --report (1000), --frames, --scale (4), --movie N (with
- * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K), --paint (garden | plain),
- * --ov '{json}' (config overrides), --lag (200), --out dir, --series FILE (a TSV with one row every --every steps, default 50: step, cells, bodies, singles,
+ * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K),  --paint (garden | plain),
+ * --ov '{json}' (config overrides), --opt '{json}' (start options, e.g. '{"pace":false,"shellThrust":false,"driveSpread":1}' for the bodies start without chunk 4), --lag (200), --out dir, --series FILE (a TSV with one row every --every steps, default 50: step, cells, bodies, singles,
  * largest, plain, shells, mouths, leaves, food, reservoir, leafIncome, drained, hunting, targets, fleeing, releasesHeld, meanLight, seasonLight, splits, steering, leafPool; the cumulative
  * columns leafIncome, drained and releasesHeld are totals so far; meanLight is the light over the world now, 0 to 1, seasonLight the year's light as a share of
  * midsummer's, 1 with no year).
@@ -27,10 +27,10 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { SoftRoamConfig } from '../../apps/lab/src/softroam/kernel.ts';
-import { foundSoftRoam, paintSoftRoam, type SoftPaint, SoftPaintMemory, softFamilies, softSky, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel, softYearLight } from '../../apps/lab/src/softroam/view.ts';
+import { foundSoftRoam, paintSoftRoam, type SoftRoamOptions, type SoftPaint, SoftPaintMemory, softFamilies, softSky, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel, softYearLight } from '../../apps/lab/src/softroam/view.ts';
 import { writePng } from '../bodies/png.ts';
 
-const KNOWN = ['series', 'every', 'seed', 'steps', 'size', 'start', 'planMut', 'founders', 'mut', 'report', 'frames', 'scale', 'movie', 'movieFrom', 'sub', 'paint', 'ov', 'lag', 'out'];
+const KNOWN = ['series', 'every', 'seed', 'steps', 'size', 'start', 'planMut', 'founders', 'mut', 'report', 'frames', 'scale', 'movie', 'movieFrom', 'sub', 'paint', 'ov', 'opt', 'lag', 'out'];
 const args: Record<string, string> = {};
 for (let i = 0; i < Deno.args.length; i += 2) {
   const name = Deno.args[i];
@@ -72,6 +72,9 @@ const every = int('every', 50, 1);
 if (seriesFile) for (const f of ['rows.json', 'sheet.png']) if (resolve(seriesFile) === resolve(`${out}/${f}`)) throw new Error(`--series ${seriesFile} is the run's own ${f}; pick another file`);
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
 if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new Error(`--ov ${args.ov} must be a JSON object`);
+// Start options (SoftRoamOptions, e.g. '{"pace":false,"driveSpread":1}' for the bodies start without chunk 4), applied over the ones above.
+const startOpts = JSON.parse(args.opt ?? '{}') as Partial<SoftRoamOptions>;
+if (startOpts === null || typeof startOpts !== 'object' || Array.isArray(startOpts)) throw new Error(`--opt ${args.opt} must be a JSON object`);
 
 const world = foundSoftRoam({
   seed: num('seed', 1),
@@ -81,6 +84,7 @@ const world = foundSoftRoam({
   mut: args.mut === undefined ? undefined : num('mut', 0.02),
   planMut: args.planMut === undefined ? undefined : num('planMut', 0.05),
   overrides,
+  ...startOpts,
 });
 const side = world.size * scale;
 const memory = new SoftPaintMemory();

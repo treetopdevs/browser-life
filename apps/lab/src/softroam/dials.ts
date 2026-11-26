@@ -145,6 +145,14 @@ export const SOFT_DIALS: readonly Dial[] = [
     idle: needsSight },
   { id: 'heal', whole: true, group: 'Bodies', label: 'Bodies heal', min: 0, max: 1, step: 1, def: 0, bodiesDef: 1,
     say: (v) => (v === 0 ? 'a cell dying inside a body splits it in two for good' : 'the cross-braces hold a body together where a cell has died, and the cell that made it grows it again: big bodies keep their shape') },
+  // Chunk 4: speeds that differ.
+  { id: 'pace', group: 'Bodies', label: 'Speed when well fed', min: 0, max: 1, step: 0.05, def: 1, bodiesDef: 0.25,
+    say: (v) => (v === 1 ? 'a body swims as fast fed as hungry' : `a hungry body swims at full speed and slows as it fills, to ${share(v)} of it when ready to divide: bodies dawdle where they have eaten and hurry when they are hungry (a body chasing prey or fleeing never slows)`) },
+  { id: 'shellThrust', group: 'Bodies', label: 'Shell swimming', min: 0, max: 1, step: 0.05, def: 1, bodiesDef: 0.5,
+    say: (v) => (v === 1 ? 'a shell cell swims as hard as any other' : `a shell cell pushes at ${share(v)} of the usual strength (armour is heavy), so armoured bodies are slower`),
+    idle: noKinds },
+  { id: 'driveSpread', group: 'Bodies', label: 'Founder speeds vary', min: 1, max: 4, step: 0.25, def: 1, bodiesDef: 2,
+    say: (v) => (v === 1 ? 'every founder of a type has the same speed gene' : `each founder's speed gene is drawn between ${n(1 / v, 2)} and ${n(v, 2)} times its type's, and its offspring inherit it (takes effect at the start)`) },
   { id: 'releaseGap', whole: true, group: 'Senses and manners', label: 'Steps between releases', min: 0, max: 3000, step: 10, def: 0, seasonsDef: 200,
     say: (v) => (v === 0 ? 'a body can release as often as it divides' : `a body lets a new body go at most once in ${n(v)} steps, even when it loses a tip or splits in two`) },
   // Armour and hunting
@@ -308,6 +316,11 @@ export function dialOptions(sw: SoftSwitches, a: DialValues): SoftRoamOptions {
   // The cap goes with the pool: passed as the dial shows it whenever the pool is on (so the value shown is the value used, whatever the patch size).
   if (!idleDial('leafPoolMax')) sun.leafPoolMax = a.leafPoolMax;
   sun.winterCost = !idleDial('winterCost') && a.winterCost > 0 ? a.winterCost / 1000 : off3;
+  // Chunk 4. At 1 (no slowing) the key is left out, as the earlier starts have it.
+  sun.pace = a.pace < 1 ? a.pace : off3;
+  sun.shellThrust = !idleDial('shellThrust') && a.shellThrust < 1 ? a.shellThrust : off3;
+  if (a.driveSpread !== 1) out.driveSpread = a.driveSpread;
+  else if (bodies) out.driveSpread = 1;
   for (const [k, v] of Object.entries(sun)) if (v !== undefined) (out as unknown as Record<string, unknown>)[k] = v;
   // The two copy-error dials are independent: each is always passed as the dial shows it.
   if (differs('mut')) out.mut = a.mut;

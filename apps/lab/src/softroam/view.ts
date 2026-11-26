@@ -17,6 +17,7 @@
  */
 
 import { ROAM_PLANS, ROAM_STARTS, ROAM_TYPES, roamPlanColour, type RoamTypeId } from '../roam/view.ts';
+import { ROAM_GENE_MAX } from '../roam/kernel.ts';
 import { defaultSoftRoamConfig, KIND_LEAF, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld, softRoamLight } from './kernel.ts';
 
 export { ROAM_PLANS };
@@ -188,6 +189,11 @@ export interface SoftRoamOptions {
   leafPoolMax?: number;
   patchSeason?: boolean;
   winterCost?: number;
+  /** Chunk 4 switches: the bodies start turns them on at BODIES_DEFAULTS; any start takes them when given. */
+  pace?: number;
+  shellThrust?: number;
+  /** Chunk 4, a start option (not a kernel key): each founder's drive gene is its type's times 2^u, u drawn evenly from -log2(spread) to log2(spread). 1 is none; the bodies start's default is BODIES_DRIVE_SPREAD. */
+  driveSpread?: number;
   overrides?: Partial<SoftRoamConfig>;
 }
 
@@ -220,11 +226,13 @@ const SEASON_KEYS = ['day', 'year', 'winter', 'patchSun', 'leaf', 'sight', 'fear
  * winter and a winter upkeep; and over the seasons' values softer shells (2000 hits to crack) and patches that land whatever the hour (with them gated by the
  * day band too, the reservoir holds a third of the matter idle and the world starves; the year's swing comes from the winter upkeep instead).
  */
-export const BODIES_DEFAULTS = { heal: true, steer: true, pack: 6, crowd: 1, leafPool: 0.3, leafPoolMax: 2000, patchSeason: true, winterCost: 0.03 } as const;
+export const BODIES_DEFAULTS = { heal: true, steer: true, pack: 6, crowd: 1, leafPool: 0.3, leafPoolMax: 2000, patchSeason: true, winterCost: 0.03, pace: 0.25, shellThrust: 0.5 } as const;
+/** Chunk 4: the bodies start's founders have drives from half to twice their type's (see `driveSpread`). */
+export const BODIES_DRIVE_SPREAD = 2;
 export const BODIES_OVER_SEASONS = { releaseMin: 8, crack: 2000, patchSun: false } as const;
 /** The bodies start's economy over the seasons': cells wear out more slowly (a 25-cell body at the page's life of 8000 loses a cell every 320 steps). */
 export const BODIES_ECONOMY = { life: 20000 } as const;
-const BODY_KEYS = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost'] as const;
+const BODY_KEYS = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost', 'pace', 'shellThrust'] as const;
 
 /**
  * The page's usual world, over the kernel's neutral defaults (which the kernel tests rely on): chosen by looking at 12000-step
@@ -260,7 +268,7 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
     const sightOn = on(pick('sight', o.sight));
     const fearOn = on(pick('fear', o.fear));
     const leafOn = pick('leaf', o.leaf) !== undefined && (pick('leaf', o.leaf) as unknown) !== false && kindsOn && dayOn;
-    const bodyNeeds: Record<(typeof BODY_KEYS)[number], boolean> = { heal: true, steer: (sightOn && o.sight !== undefined) || (fearOn && o.fear !== undefined), pack: kindsOn && drainOn, crowd: sightOn && o.sight !== undefined, leafPool: leafOn, leafPoolMax: leafOn && o.leafPool !== (false as unknown as number), patchSeason: dayOn && yearOn, winterCost: dayOn && yearOn };
+    const bodyNeeds: Record<(typeof BODY_KEYS)[number], boolean> = { heal: true, steer: (sightOn && o.sight !== undefined) || (fearOn && o.fear !== undefined), pack: kindsOn && drainOn, crowd: sightOn && o.sight !== undefined, leafPool: leafOn, leafPoolMax: leafOn && o.leafPool !== (false as unknown as number), patchSeason: dayOn && yearOn, winterCost: dayOn && yearOn, pace: true, shellThrust: kindsOn };
     for (const k of BODY_KEYS) if (o[k] === undefined && bodyNeeds[k]) (o as unknown as Record<string, unknown>)[k] = BODIES_DEFAULTS[k];
   }
   const { crack: _crack, ...economy } = SEASONS_ECONOMY;
@@ -332,6 +340,8 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
     return world.addPlan(plan.map((e, m) => (m === 0 ? e | KIND_MOUTH_BITS : e)), planIds[j]);
   });
   const founders = o.founders ?? Math.max(types.length, Math.round((120 * world.n) / (128 * 128)));
+  const spread = o.driveSpread ?? (start === 'bodies' ? BODIES_DRIVE_SPREAD : 1);
+  if (!(typeof spread === 'number' && spread >= 1 && spread <= 8)) throw new Error(`Invalid driveSpread: ${spread} (1 to 8)`);
   if (!Number.isSafeInteger(founders) || founders < 1) throw new Error(`Invalid founders: ${founders}`);
   const cost = 2 * world.cfg.birthStore - 1;
   const maxTries = 40 * Math.min(founders, world.n);
@@ -355,7 +365,14 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
     // Variants (hunters, armoured) alternate by type and round, starting with the first type: even a small arena's first
     // round holds some of each (with the garden's six types: lines and crosses hunting, specks armoured).
     const plan = (j + Math.floor(placed / types.length)) % 2 === 0 ? hunterIds[j] : planIds[j];
-    if (world.found(px, py, typeInfo(type).genes, softFamily(type), undefined, plan) >= 0) {
+    let genes = typeInfo(type).genes;
+    if (spread !== 1) {
+      // A drive drawn on the seed and the founder's number: the type's times 2^u, u even in [-log2 spread, log2 spread], a whole gene within the gene's range.
+      const u = ((roamHash(world.cfg.seed, 0, placed, 43) % 2049) / 1024 - 1) * Math.log2(spread);
+      const d = Math.max(-ROAM_GENE_MAX, Math.min(ROAM_GENE_MAX, Math.round(genes[1] * 2 ** u)));
+      genes = genes.map((g, k) => (k === 1 ? d : g));
+    }
+    if (world.found(px, py, genes, softFamily(type), undefined, plan) >= 0) {
       placed++;
       placedAt.push(px, py);
     }
@@ -402,11 +419,15 @@ interface Ring { x: number; y: number; step: number }
 interface Thread { mc: number; pc: number; ms: number; ps: number; lvl: number; prv: number; seen: boolean }
 
 /** Per-cell eased levels the picture is drawn from (kept by serial number): hit flash, feeding, being fed on, shell damage, how shell-like, how mouth-like, how leaf-like, the light it is in. */
-const NLV = 6;
-const LV_HIT = 0, LV_FEED = 1, LV_PREY = 2, LV_DMG = 3, LV_SHELL = 4, LV_MOUTH = 5;
+const NLV = 7;
+/** LV_GRAZE (chunk 4): the cell took food from the ground in the last step. */
+const LV_HIT = 0, LV_FEED = 1, LV_PREY = 2, LV_DMG = 3, LV_SHELL = 4, LV_MOUTH = 5, LV_GRAZE = 6;
 /** Steps for a level to ease 63% of the way up, and down. */
-const LV_UP = [0.8, 1.5, 1.5, 3, 3, 3];
-const LV_DOWN = [4, 6, 6, 3, 3, 3];
+const LV_UP = [0.8, 1.5, 1.5, 3, 3, 3, 1.5];
+const LV_DOWN = [4, 6, 6, 3, 3, 3, 5];
+/** Grazing motes: pale like the food haze they come out of. Attack beads and bite marks: warm. */
+const SIP = [0.72, 0.9, 1] as const;
+const BITE = [1, 0.42, 0.22] as const;
 /** Two more levels kept apart (stride NLX): how leaf-like a cell is, and the light it stands in; the light moves slowly, so a day sweeping over a leaf is a gradual brightening. */
 const NLX = 2;
 const LX_LEAF = 0, LX_LIT = 1;
@@ -653,7 +674,7 @@ export class SoftPaintMemory {
       if (snap) th.prv = th.lvl = th.seen ? 1 : 0;
     }
     this.threads = this.threads.filter((th) => th.seen || th.lvl > 0.01);
-    const tgt = [0, 0, 0, 0, 0, 0];
+    const tgt = [0, 0, 0, 0, 0, 0, 0];
     const tx2 = [0, 0];
     const sunny = world.cfg.day !== undefined && world.cfg.leaf !== undefined;
     for (let c = 0; c < world.cap; c++) {
@@ -668,6 +689,7 @@ export class SoftPaintMemory {
       tgt[LV_DMG] = kind === KIND_SHELL && crack > 0 ? Math.min(1, world.hits[c] / Math.min(60000, crack << world.tough[c])) : 0;
       tgt[LV_SHELL] = kind === KIND_SHELL ? 1 : 0;
       tgt[LV_MOUTH] = kind === KIND_MOUTH ? 1 : 0;
+      tgt[LV_GRAZE] = world.step > 0 && world.ateFromGround(c) > 0 ? 1 : 0;
       tx2[0] = kind === KIND_LEAF ? 1 : 0;
       // How lit a leaf looks is what the kernel actually paid it this step (LEAF_GLOW or more shows full; 0 shows none), so a leaf in light on an empty reservoir stays dark.
       tx2[1] = sunny && kind === KIND_LEAF ? Math.min(1, world.leafPaid[c] / LEAF_GLOW) : 0;
@@ -896,15 +918,17 @@ function cellTint(world: SoftRoamWorld, c: number, full: number, rgb: Float32Arr
   const pl = 1 - sh - mo - lf;
   const dmg = level(mem, c, LV_DMG, alpha), feed = level(mem, c, LV_FEED, alpha) * pulseOf(world, c, alpha), prey = level(mem, c, LV_PREY, alpha), hit = level(mem, c, LV_HIT, alpha);
   const dk = 1 - 0.6 * dmg;
-  // Shell: pale bone, darker and browner with damage. Mouth: red, warmer and brighter while feeding.
+  // Shell: pale bone, darker and browner with damage. Mouth: a dusky rose at rest (chunk 4: so red means feeding, not just "a mouth"),
+  // turning to a bright warm red, pulsing, while it feeds.
   const sr = 0.84 * dk, sg = 0.82 * (dk - 0.04 * dmg), sb = 0.7 * (dk - 0.1 * dmg);
-  const mr = 1, mg = 0.24 + 0.2 * feed, mb = 0.18 + 0.04 * feed;
+  const f0 = level(mem, c, LV_FEED, alpha);
+  const mr = 0.74 + 0.26 * f0, mg = 0.44 - 0.2 * f0 + 0.2 * feed, mb = 0.46 - 0.28 * f0 + 0.04 * feed;
   // Leaf: green; the light it stands in (eased over many steps) brightens it and warms it toward yellow-green, so a day sweeping over a bush is a slow glow, never a flash.
   const ll = levelX(mem, c, LX_LIT, alpha);
   rgb[0] = pl * PLAIN[0] + sh * sr + mo * mr + lf * (0.16 + 0.22 * ll);
   rgb[1] = pl * PLAIN[1] + sh * sg + mo * mg + lf * (0.78 + 0.2 * ll);
   rgb[2] = pl * PLAIN[2] + sh * sb + mo * mb + lf * (0.2 - 0.04 * ll);
-  let lit = pl * (0.5 + 0.5 * Math.min(1, world.store[c] / full)) + sh * 0.85 + mo * (1 + 0.4 * feed) + lf * (0.45 + 0.75 * ll);
+  let lit = pl * (0.5 + 0.5 * Math.min(1, world.store[c] / full)) + sh * 0.85 + mo * (0.8 + 0.6 * feed) + lf * (0.45 + 0.75 * ll);
   lit *= 1 - 0.5 * prey;
   if (hit > 0) {
     const fl = hit * (1 - 0.5 * dmg);
@@ -1029,7 +1053,8 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
       const feed = level(mem, c, LV_FEED, alpha), hit = level(mem, c, LV_HIT, alpha);
       stamp(mem.px[c], mem.py[c], rad, 0.6 + 0.4 * e, tintBuf[0] * lit, tintBuf[1] * lit, tintBuf[2] * lit, shl, shl * level(mem, c, LV_DMG, alpha));
       splat(mem.px[c], mem.py[c], GLOW_R, 0.2 * tintBuf[0] * lit * e, 0.2 * tintBuf[1] * lit * e, 0.2 * tintBuf[2] * lit * e);
-      if (mol > 0.001) splat(mem.px[c], mem.py[c], GLOW_R, 0.3 * e * mol, 0.06 * e * mol, 0.04 * e * mol);
+      // A mouth's own glow: faint at rest, the full warm glow while it feeds (chunk 4).
+      if (mol > 0.001) { const w8 = 0.35 + 0.65 * Math.min(1, feed); splat(mem.px[c], mem.py[c], GLOW_R, 0.3 * e * mol * w8, 0.06 * e * mol * w8, 0.04 * e * mol * w8); }
       // A feeding mouth: a warm red halo that pulses. A shell that was just hit: a short white flare.
       if (feed > 0.001) {
         const pu = feed * pulseOf(world, c, alpha) * e;
@@ -1221,12 +1246,29 @@ function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint
       }
     }
   }
-  // Mouths: a small warm core on top of the body, so a hunter reads at a glance; it brightens and pulses while feeding.
+  const tNow = world.step + alpha;
+  // Grazing (chunk 4): a cell that took food from the ground draws in three pale motes, the cool colour of the food haze, that spiral in
+  // from more than a tile out and fade as they reach its rim (on the dark ground, where they show). Cool and inward: eating from the ground.
+  const moteSigma = Math.max(0.09, 0.9 / scale);
+  for (const c of cells) {
+    const g = level(mem, c, LV_GRAZE, alpha) * ease(mem.grow[c]);
+    if (g < 0.03) continue;
+    const base = (world.cid[c] % 997) * 0.37;
+    for (let k = 0; k < 3; k++) {
+      const ph = (tNow / 14 + k / 3 + (world.cid[c] % 13) / 13) % 1;
+      const r = 0.45 + 0.75 * (1 - ph);
+      const ang = base + (2 * Math.PI * k) / 3 + 1.4 * ph;
+      const a = 0.9 * g * Math.sin(Math.PI * ph);
+      const x = mem.px[c] + r * Math.cos(ang), y = mem.py[c] + r * Math.sin(ang);
+      stroke(out, scale, side, ((x % s) + s) % s, ((y % s) + s) % s, 0, 0, moteSigma, a, false, SIP[0], SIP[1], SIP[2]);
+    }
+  }
+  // Mouths: a small warm core on top of the body. Idle it is faint, so red means "feeding" more than "a mouth"; it brightens and pulses while feeding.
   for (const c of cells) {
     const mo = level(mem, c, LV_MOUTH, alpha);
     if (mo < 0.05) continue;
     const feed = level(mem, c, LV_FEED, alpha) * pulseOf(world, c, alpha);
-    const a = mo * ease(mem.grow[c]) * (0.5 + 0.5 * feed);
+    const a = mo * ease(mem.grow[c]) * (0.17 + 0.83 * feed);
     stroke(out, scale, side, mem.px[c], mem.py[c], 0, 0, Math.max(0.12, 0.7 / scale) * (1 + 0.35 * feed), a, false, 1, 0.3 + 0.2 * feed, 0.12);
   }
   // Feeding threads: a thin red line from the mouth to the cell it feeds on, brighter at the mouth end.
@@ -1243,6 +1285,20 @@ function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint
     // Two halves: the mouth's half stronger, so the thread reads as running from the mouth to its prey.
     stroke(out, scale, side, ax, ay, dx * 0.5, dy * 0.5, sigma * 1.2, 0.95 * a, false, 1, 0.22, 0.14);
     stroke(out, scale, side, ax + dx * 0.5, ay + dy * 0.5, dx * 0.5, dy * 0.5, sigma, 0.6 * a, false, 1, 0.3, 0.2);
+    // Chunk 4: two beads of matter run from the prey to the mouth (who eats whom), and a warm bite mark flickers on the prey's rim facing the mouth.
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len > 1e-3) {
+      const px = ax + dx, py = ay + dy;
+      for (let k = 0; k < 2; k++) {
+        const ph = (tNow / 6 + k / 2 + (th.pc % 7) / 7) % 1;
+        const bx = px - dx * ph, by = py - dy * ph;
+        stroke(out, scale, side, ((bx % s) + s) % s, ((by % s) + s) % s, 0, 0, sigma * 1.7, 0.9 * a * Math.sin(Math.PI * ph), false, BITE[0], BITE[1], BITE[2]);
+      }
+      const ux = -dx / len, uy = -dy / len;
+      const mx = px + ux * 0.3, my = py + uy * 0.3;
+      const flick = 0.55 + 0.45 * Math.sin(tNow * 2.3 + (th.pc % 11));
+      stroke(out, scale, side, ((mx - uy * 0.13) % s + s) % s, ((my + ux * 0.13) % s + s) % s, uy * 0.26, -ux * 0.26, sigma * 1.3, 0.85 * a * flick, false, BITE[0], BITE[1], BITE[2]);
+    }
   }
   // Cracks: a ring of bone-white arcs, with gaps, that opens out and fades.
   for (const rg of mem.rings) {
