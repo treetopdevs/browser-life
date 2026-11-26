@@ -65,9 +65,19 @@ function buildDials(): void {
     const [range, num] = row.querySelectorAll('input');
     // An exact value off the slider's grid (a day of 16 on a slider in tens) is shown as it is (step "any"); touching the
     // slider puts it back on its grid.
-    const onGrid = (): void => { range.step = String(d.step); };
-    range.addEventListener('pointerdown', onGrid);
-    range.addEventListener('keydown', onGrid);
+    // Only a key that moves the slider, or a primary press on it, restores the grid (Tab or a right click would snap it silently).
+    // Restoring may snap the value to the grid with no input event: then the dial takes the snapped value, so the box, the
+    // slider and the world always agree.
+    const MOVE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'];
+    const onGrid = (): void => {
+      if (range.step === String(d.step)) return;
+      range.step = String(d.step);
+      const v = fixDial(d, Number(range.value));
+      // The box is written too: it may still hold focus, and showDials leaves a focused box alone.
+      if (v !== dials[d.id]) { dials[d.id] = v; num.value = String(v); changed(); }
+    };
+    range.addEventListener('pointerdown', (e) => { if (e.button === 0) onGrid(); });
+    range.addEventListener('keydown', (e) => { if (MOVE_KEYS.includes(e.key)) onGrid(); });
     range.addEventListener('input', () => { dials[d.id] = fixDial(d, Number(range.value)); showDials(); });
     range.addEventListener('change', () => { dials[d.id] = fixDial(d, Number(range.value)); changed(); });
     num.addEventListener('change', () => {

@@ -25,7 +25,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import type { SoftRoamConfig } from '../../apps/lab/src/softroam/kernel.ts';
 import { foundSoftRoam, paintSoftRoam, type SoftRoamOptions, type SoftPaint, SoftPaintMemory, softFamilies, softSky, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel, softYearLight } from '../../apps/lab/src/softroam/view.ts';
 import { writePng } from '../bodies/png.ts';
@@ -73,7 +73,8 @@ if (seriesFile) for (const f of ['rows.json', 'sheet.png']) if (resolve(seriesFi
 // With --movie the frames are written into out/frames; a series file inside that folder would replace a frame with TSV text.
 if (seriesFile && movie > 0) {
   const rel = relative(resolve(out, 'frames'), resolve(seriesFile));
-  if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) throw new Error(`--series ${seriesFile} is inside the movie frames folder ${out}/frames; pick a path outside it`);
+  // Outside means a first path segment of exactly '..' (a name like '..notes.tsv' is inside), or another root.
+  if (rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel))) throw new Error(`--series ${seriesFile} is inside the movie frames folder ${out}/frames; pick a path outside it`);
 }
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
 if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new Error(`--ov ${args.ov} must be a JSON object`);

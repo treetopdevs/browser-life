@@ -512,7 +512,7 @@ describe('soft roam kinds: the picture shows what touch did', () => {
     expect(w.events.cracks.length).toBe(1);
     mem.observe(w);
     expect(mem.rings.length).toBe(1);
-    expect(mem.lvCur[shell * 6]).toBeGreaterThan(0.3);
+    expect(mem.lvCur[shell * 7]).toBeGreaterThan(0.3);
     void h;
   });
 });

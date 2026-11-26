@@ -49,7 +49,7 @@ const q = (a: number[], p: number) => { const s = [...a].sort((x, y) => x - y); 
 const f3 = (x: number) => x.toFixed(3);
 const mv = rows.filter((r) => r.v >= 0.01);
 const sp = mv.map((r) => r.v);
-console.log(`seed ${seed} looks ${at},+1500,+3000: bodies ${rows.length}, stopped ${(100 * (1 - mv.length / rows.length)).toFixed(0)}%; moving p10 ${f3(q(sp, .1))} p50 ${f3(q(sp, .5))} p90 ${f3(q(sp, .9))} max ${f3(q(sp, 1))} p90/p10 ${(q(sp, .9) / q(sp, .1)).toFixed(2)}`);
+console.log(`seed ${w.cfg.seed} looks ${at},+1500,+3000: bodies ${rows.length}, stopped ${(100 * (1 - mv.length / rows.length)).toFixed(0)}%; moving p10 ${f3(q(sp, .1))} p50 ${f3(q(sp, .5))} p90 ${f3(q(sp, .9))} max ${f3(q(sp, 1))} p90/p10 ${(q(sp, .9) / q(sp, .1)).toFixed(2)}`);
 const hist = new Array(10).fill(0); for (const v of sp) hist[Math.min(9, Math.floor(v / 0.025))]++;
 console.log(`  histogram (0.025 tiles/step bins, last open): ${hist.join(' ')}`);
 const sizes: [number, number][] = [[1, 1], [2, 5], [6, 12], [13, 99]];

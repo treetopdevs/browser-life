@@ -310,7 +310,7 @@ describe('soft roam view: kinds', () => {
         mem.rings = kept;
         expect(noRing.some((v, i) => v !== withRing[i])).toBe(true);
       }
-      if (k % 10 === 0) for (let c = 0; c < w.cap; c++) if (w.alive[c] && mem.lvCur[c * 6] > 0.5) { flashes++; break; }
+      if (k % 10 === 0) for (let c = 0; c < w.cap; c++) if (w.alive[c] && mem.lvCur[c * 7] > 0.5) { flashes++; break; }
     }
     expect(threads).toBeGreaterThan(0);
     expect(rings).toBeGreaterThan(0);
