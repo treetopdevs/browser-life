@@ -35,3 +35,13 @@ describe('soft roam: the seasons start is unchanged', () => {
     });
   }
 });
+
+// The bodies start as it stood at commit be4430ac (2026-11-26), before chunk 4: with pace and shellThrust off and no founder drive
+// spread it must still make the same history.
+describe('soft roam: the bodies start with chunk 4 switched off is chunk 3', () => {
+  it('seed 2, bodies, 64 tiles, 800 steps', () => {
+    const w = foundSoftRoam({ seed: 2, size: 64, start: 'bodies', pace: false as unknown as number, shellThrust: false as unknown as number, driveSpread: 1 });
+    w.advance(800);
+    expect(w.digest()).toBe(3291049832);
+  });
+});

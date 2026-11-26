@@ -11,7 +11,7 @@
  *
  * Kinds are drawn with eased "levels" the paint memory keeps per cell (by serial number, never by slot) and moves a little
  * toward its target each step, so nothing pops: a shell's pale thick bone rim darkens and gains fracture lines as its hits
- * approach the crack count, and flashes when hit; a mouth glows warm red and pulses for some steps after it feeds, the prey
+ * approach the crack count, and flashes when hit; a mouth is a dusky rose at rest and glows warm red and pulses for some steps after it feeds, the prey
  * cell it feeds on dims, and a thin red thread joins them; a crack leaves a short broken ring. The painter reads the world
  * and never writes to it.
  */
@@ -902,7 +902,7 @@ const pulseOf = (world: SoftRoamWorld, c: number, alpha: number): number => 0.87
 const PLAIN = [0, 0, 0];
 /**
  * A cell's colour and how lit it is: family and plan hue with the store as inner brightness; shells pale bone (darker as they
- * are hit, white for a moment when hit), mouths red (warm and bright while feeding), a cell being fed on dimmer. The mix of
+ * are hit, white for a moment when hit), mouths a dusky rose (warm red and bright while feeding), a cell being fed on dimmer. The mix of
  * shell, mouth and plain follows the eased kind levels, so a cell that cracks changes over a few steps.
  */
 function cellTint(world: SoftRoamWorld, c: number, full: number, rgb: Float32Array | number[], mem: SoftPaintMemory, alpha: number): number {

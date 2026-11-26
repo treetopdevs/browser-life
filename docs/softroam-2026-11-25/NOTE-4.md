@@ -42,7 +42,11 @@ little smaller (12 to 19 cells against 17 to 22); no alarms.
 
 - The family separation the bar asked for: a per-type speed would need the spread to keep the type's mean, or a bigger type gap.
 - If the world now feels slow, the "Top thrust" dial (thrustMax) puts the median back; not tuned.
-- The picture was judged on still crops of the movie at page scale; the motion of the motes and beads is for watching on the page.
+- The picture was judged on still crops of the movie at page scale (seed 1, steps 6000 to 6240). Seen: idle mouths dusky rose against
+  a hot orange-red spot where a mouth feeds, and faint pale sparkles at the rims of grazing cells. Not seen at that scale: the beads and
+  the bite mark (a feeding mouth and its prey sit less than a cell apart, so the thread is a few pixels long); they show only zoomed in.
+  Eating from the ground is rare in this start (about 6 of 438 cells a step at step 6000, against about 2 feedings by touch), so the
+  grazing cue is sparse.
 
 ## Review (Codex Sol 6.1 High, runs/softroam/c4/review1.txt)
 
