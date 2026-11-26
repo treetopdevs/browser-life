@@ -4,12 +4,12 @@
  *
  *   deno run -A --no-lock experiments/softroam/look.ts --seed 1 --steps 6000 --start grown-all --out runs/softroam/a
  *
- * Options: --seed, --steps, --size (128), --start (garden, the default, as before: grown-all with kinds, touch feeding, shells and cracking on | seasons, the page's own start: armoured grazers, leaf bushes, hunters and plates, with a day and a year, leaves, sight, fear, truce, jaws and a release cap on |
+ * Options: --seed, --steps, --size (128), --start (garden, the default, as before: grown-all with kinds, touch feeding, shells and cracking on | bodies, the page's own start: the seasons with herds, groves and pack hunters of 21 to 25 cells that heal, steer as one body and hunt in packs, a leaf pool and a winter upkeep | seasons, chunk 2's start: armoured grazers, leaf bushes, hunters and plates, with a day and a year, leaves, sight, fear, truce, jaws and a release cap on |
  * grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
  * grown-specks | grown-bushes), --planMut, --founders, --mut, --report (1000), --frames, --scale (4), --movie N (with
  * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K), --paint (garden | plain),
  * --ov '{json}' (config overrides), --lag (200), --out dir, --series FILE (a TSV with one row every --every steps, default 50: step, cells, bodies, singles,
- * largest, plain, shells, mouths, leaves, food, reservoir, leafIncome, drained, hunting, targets, fleeing, releasesHeld, meanLight, seasonLight; the cumulative
+ * largest, plain, shells, mouths, leaves, food, reservoir, leafIncome, drained, hunting, targets, fleeing, releasesHeld, meanLight, seasonLight, splits, steering, leafPool; the cumulative
  * columns leafIncome, drained and releasesHeld are totals so far; meanLight is the light over the world now, 0 to 1, seasonLight the year's light as a share of
  * midsummer's, 1 with no year).
  * Each row's "travel" is the mean straight-line distance, in tiles, that cells alive at both ends moved over the last
@@ -123,7 +123,7 @@ const alarmEver = { bonds: 0, overlap: 0, speed: 0, first: -1 };
 
 console.log(`softroam ${start} seed ${world.cfg.seed} size ${world.size} matter ${world.total} mut ${world.cfg.mut} paint ${paint} scale ${scale}`);
 console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k worn/k shell mouth drain/k crack/k leaf leafInc/k hunt targ flee rhold/k light year%  travel moved  smooth(max/mean)  alarms(b/o/s)  ' + 'genes');
-const series: string[] = seriesFile ? ['step\tcells\tbodies\tsingles\tlargest\tplain\tshells\tmouths\tleaves\tfood\treservoir\tleafIncome\tdrained\thunting\ttargets\tfleeing\treleasesHeld\tmeanLight\tseasonLight'] : [];
+const series: string[] = seriesFile ? ['step\tcells\tbodies\tsingles\tlargest\tplain\tshells\tmouths\tleaves\tfood\treservoir\tleafIncome\tdrained\thunting\ttargets\tfleeing\treleasesHeld\tmeanLight\tseasonLight\tsplits\tsteering\tleafPool'] : [];
 let prev = world.census();
 for (let s = 0; s <= steps; s++) {
   if (movie > 0 && s >= movieFrom && (s - movieFrom) % movie === 0) {
@@ -134,7 +134,7 @@ for (let s = 0; s <= steps; s++) {
   if (seriesFile && s % every === 0) {
     const c = world.census();
     const sky = softSky(world);
-    series.push([s, c.cells, c.bodies, c.singles, c.largest, c.cells - c.shells - c.mouths - c.leaves, c.shells, c.mouths, c.leaves, c.food, c.reservoir, c.leafIncome, c.drained, c.hunting, c.targets, c.fleeing, c.releasesHeld, sky.meanLight.toFixed(4), softYearLight(world.cfg, s).toFixed(4)].join('\t'));
+    series.push([s, c.cells, c.bodies, c.singles, c.largest, c.cells - c.shells - c.mouths - c.leaves, c.shells, c.mouths, c.leaves, c.food, c.reservoir, c.leafIncome, c.drained, c.hunting, c.targets, c.fleeing, c.releasesHeld, sky.meanLight.toFixed(4), softYearLight(world.cfg, s).toFixed(4), c.splits, c.steering, c.leafPool].join('\t'));
   }
   if (s % report === report - lag) travel();
   if (s % report === 0) {

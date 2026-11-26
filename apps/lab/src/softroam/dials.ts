@@ -24,9 +24,12 @@ export const SWITCH_IDS = ['seed', 'start', 'kinds', 'toughness'];
 /** The switches that start a new world as soon as they change; the start switch has its own handler, which sets kinds with it. */
 export const CHANGE_IDS = SWITCH_IDS.filter((id) => id !== 'start');
 
-/** The switches after a start is picked: the seasons and the garden have kinds on, every other start is the plain grown line-up (kinds off). */
+/** The starts that turn on the sun, senses and manners (and the seasons' economy); the bodies start adds chunk 3's rules over the seasons'. */
+export const sunStart = (start: SoftRoamStart): boolean => start === 'seasons' || start === 'bodies';
+
+/** The switches after a start is picked: the bodies, the seasons and the garden have kinds on, every other start is the plain grown line-up (kinds off). */
 export function startPick(sw: SoftSwitches, start: SoftRoamStart): SoftSwitches {
-  return { ...sw, start, kinds: start === 'garden' || start === 'seasons' };
+  return { ...sw, start, kinds: start === 'garden' || sunStart(start) };
 }
 
 /**
@@ -59,6 +62,8 @@ export interface Dial {
   def: number;
   /** The value when the start is `seasons` (which defines the sun, senses and manners); `def` is the value for every other start. */
   seasonsDef?: number;
+  /** The value when the start is `bodies`, where it differs from `seasonsDef` (or the dial is chunk 3's own). */
+  bodiesDef?: number;
   /** Whole numbers only. */
   whole?: boolean;
   /** Smallest value above 0 the world accepts (values between 0 and this become this). */
@@ -72,7 +77,7 @@ export interface Dial {
 const n = (x: number, digits = 0) => x.toLocaleString('en-US', { maximumFractionDigits: digits });
 const share = (x: number) => (x === 0 ? 'none' : x === 1 ? 'all' : `${n(x * 100, 1)}%`);
 /** The plain grown world: a start other than the garden and the seasons, with kinds of cell off. Touch feeding and its rules are not part of it. */
-export const plainWorld = (sw: SoftSwitches): boolean => sw.start !== 'garden' && sw.start !== 'seasons' && !sw.kinds;
+export const plainWorld = (sw: SoftSwitches): boolean => sw.start !== 'garden' && !sunStart(sw.start) && !sw.kinds;
 const noKinds = (_a: DialValues, sw: SoftSwitches) => (sw.kinds ? null : 'needs kinds of cell on');
 const noDrain = (a: DialValues, sw: SoftSwitches) => noKinds(a, sw) ?? (a.drain > 0 ? null : 'needs touch feeding on (above 0)');
 const notPlain = (_a: DialValues, sw: SoftSwitches) => (plainWorld(sw) ? 'the plain start has no touch feeding: turn kinds of cell on, or pick the garden' : null);
@@ -80,6 +85,9 @@ const notPlain = (_a: DialValues, sw: SoftSwitches) => (plainWorld(sw) ? 'the pl
 const needsDay = (a: DialValues) => (a.day > 0 ? null : 'needs a day length (above 0)');
 const needsYear = (a: DialValues) => needsDay(a) ?? (a.year > 0 ? null : 'needs a year length (above 0)');
 const needsLeafGround = (a: DialValues, sw: SoftSwitches) => noKinds(a, sw) ?? needsDay(a);
+const needsSense = (a: DialValues, sw: SoftSwitches) => noDrain(a, sw) ?? (a.sight > 0 || a.fear > 0 ? null : 'needs hunters to see prey or prey to see hunters (above 0)');
+const needsSight = (a: DialValues, sw: SoftSwitches) => noDrain(a, sw) ?? (a.sight > 0 ? null : 'needs hunters to see prey (above 0)');
+const needsLeaves = (a: DialValues, sw: SoftSwitches) => needsLeafGround(a, sw) ?? (a.leaf >= 0 && sunStart(sw.start) || a.leaf > 0 ? null : 'needs leaf income');
 const hours = (v: number, a: DialValues) => (a.day > 0 ? ` (a year of ${n(v / a.day, 1)} days)` : '');
 
 export const SOFT_DIALS: readonly Dial[] = [
@@ -92,12 +100,24 @@ export const SOFT_DIALS: readonly Dial[] = [
   { id: 'winter', group: 'Sun and seasons', label: 'Winter light', min: 0, max: 1, step: 0.05, def: 0.3, seasonsDef: 0.1,
     say: (v) => (v === 0 ? 'winter is pitch dark at its deepest: no leaf income, no patches in the sun' : `in the depth of winter the light is ${share(v)} of midsummer's, so winter thins whatever lives on light`),
     idle: (a) => needsYear(a) },
-  { id: 'patchSun', whole: true, group: 'Sun and seasons', label: 'Patches follow the sun', min: 0, max: 1, step: 1, def: 0, seasonsDef: 1,
+  { id: 'patchSun', whole: true, group: 'Sun and seasons', label: 'Patches follow the sun', min: 0, max: 1, step: 1, def: 0, seasonsDef: 1, bodiesDef: 0,
     say: (v) => (v === 0 ? 'new food patches fall anywhere, any time' : 'a new food patch lands only in proportion to the light where it would fall, so the food follows the sun round and is scarce in winter nights (matter not dropped waits in the store)'),
     idle: needsDay },
   { id: 'leaf', group: 'Sun and seasons', label: 'Leaf income', min: 0, max: 4, step: 0.1, def: 0, seasonsDef: 1.3,
     say: (v) => (v === 0 ? 'green leaf cells earn nothing from the light (a start that has no leaves has no green cells at all)' : `a green leaf cell with all four sides bare earns up to ${n(v, 2)} matter a step in full light (a leaf buried inside its body earns nothing, and a leaf cannot eat from the ground)`),
     idle: needsLeafGround },
+  { id: 'patchSeason', whole: true, group: 'Sun and seasons', label: 'Patches shrink in winter', min: 0, max: 1, step: 1, def: 0, bodiesDef: 1,
+    say: (v) => (v === 0 ? 'every food patch is the same size, whatever the season' : 'a food patch holds less in winter, in proportion to the year\'s light (a full patch at midsummer)'),
+    idle: needsYear },
+  { id: 'winterCost', group: 'Sun and seasons', label: 'Winter upkeep', min: 0, max: 200, step: 1, def: 0, bodiesDef: 30,
+    say: (v) => (v === 0 ? 'cells cost the same to keep all year' : `every cell pays up to ${n(v)} matter per 1,000 steps more in deep winter, less as the light comes back, nothing at midsummer: winter thins bodies`),
+    idle: needsYear },
+  { id: 'leafPool', group: 'Sun and seasons', label: 'Upkeep kept for leaves', min: 0, max: 1, step: 0.05, def: 0, bodiesDef: 0.3,
+    say: (v) => (v === 0 ? 'leaves are paid from the same store as the food patches' : `${share(v)} of the upkeep cells pay goes to a store only leaves draw on (up to 2,000 in the bodies start), so leaves do not compete with patches`),
+    idle: needsLeaves },
+  { id: 'leafPoolMax', whole: true, group: 'Sun and seasons', label: 'Most kept for leaves', min: 100, max: 20000, step: 100, def: 4000, seasonsDef: 1000, bodiesDef: 2000,
+    say: (v) => `the store kept for leaves holds at most ${n(v)} matter; past that the upkeep goes back to the food store`,
+    idle: (a, sw) => needsLeaves(a, sw) ?? (a.leafPool > 0 ? null : 'needs some upkeep kept for leaves (above 0)') },
   // Senses and manners
   { id: 'sight', whole: true, group: 'Senses and manners', label: 'Hunters see prey', min: 0, max: 8, step: 1, def: 0, seasonsDef: 8,
     say: (v) => (v === 0 ? 'mouths cannot see: they find prey by smell of food and by bumping into it' : `a mouth sees prey it could eat up to ${v} tiles away and swims straight at the nearest one (if its body has a chase gene)`),
@@ -114,10 +134,21 @@ export const SOFT_DIALS: readonly Dial[] = [
     idle: noDrain },
   { id: 'releaseMin', whole: true, group: 'Senses and manners', label: 'Fewest cells before a release', min: 0, max: 40, step: 1, def: 0, seasonsDef: 8,
     say: (v) => (v === 0 ? 'a body of any size can let a daughter go as a new body, so single crumbs are common' : `a body lets a daughter go as a new body only when it has at least ${v} cells (a plan that never grows that large never releases)`) },
+  { id: 'steer', whole: true, group: 'Senses and manners', label: 'Bodies hunt as one', min: 0, max: 1, step: 1, def: 0, bodiesDef: 1,
+    say: (v) => (v === 0 ? 'each mouth steers on its own, and a one-mouth body barely bends toward prey' : 'a body with a mouth that sees prey (or a cell that sees a hunter) turns as a whole toward the prey (or away), and every cell of it with a chase gene swims that way'),
+    idle: needsSense },
+  { id: 'pack', whole: true, group: 'Senses and manners', label: 'Mouths open big bodies', min: 0, max: 16, step: 1, def: 0, bodiesDef: 6,
+    say: (v) => (v === 0 ? 'a body can only feed on bodies half its size or less' : `a body may also feed on a body of up to ${v} cells for each of its mouths touching it; two bodies that could each eat the other leave each other alone`),
+    idle: noDrain },
+  { id: 'crowd', whole: true, group: 'Senses and manners', label: 'Hunters spread out', min: 0, max: 4, step: 1, def: 0, bodiesDef: 1,
+    say: (v) => (v === 0 ? 'hunters all go for the nearest prey, even when others are already at it' : `a hunter counts prey with another hunter's mouth beside it as ${v} tile${v === 1 ? '' : 's'} further off for each such mouth, so hunters share out the prey`),
+    idle: needsSight },
+  { id: 'heal', whole: true, group: 'Bodies', label: 'Bodies heal', min: 0, max: 1, step: 1, def: 0, bodiesDef: 1,
+    say: (v) => (v === 0 ? 'a cell dying inside a body splits it in two for good' : 'the cross-braces hold a body together where a cell has died, and the cell that made it grows it again: big bodies keep their shape') },
   { id: 'releaseGap', whole: true, group: 'Senses and manners', label: 'Steps between releases', min: 0, max: 3000, step: 10, def: 0, seasonsDef: 200,
     say: (v) => (v === 0 ? 'a body can release as often as it divides' : `a body lets a new body go at most once in ${n(v)} steps, even when it loses a tip or splits in two`) },
   // Armour and hunting
-  { id: 'crack', whole: true, group: 'Armour and hunting', label: 'Hits to crack a shell', min: 0, max: 20000, step: 50, def: 300, seasonsDef: 10000,
+  { id: 'crack', whole: true, group: 'Armour and hunting', label: 'Hits to crack a shell', min: 0, max: 20000, step: 50, def: 300, seasonsDef: 10000, bodiesDef: 2000,
     say: (v) => (v === 0 ? 'shells never crack' : `a shell turns plain (and can be eaten) after ${n(v)} hits from mouths of bodies twice its size; never healed`),
     idle: noDrain },
   { id: 'shellBite', group: 'Armour and hunting', label: 'Lone shell eats', min: 0, max: 1, step: 0.05, def: 1,
@@ -138,7 +169,7 @@ export const SOFT_DIALS: readonly Dial[] = [
   // Bodies
   { id: 'flow', group: 'Bodies', label: 'Seeping along bonds', min: 0.1, max: 12.5, step: 0.1, def: 1.5625, least: 0.1,
     say: (v) => `each cell keeps its own store and ${n(v, 2)}% of a difference seeps across each bond a step` },
-  { id: 'life', whole: true, group: 'Bodies', label: 'Cells wear out after', min: 0, max: 20000, step: 100, def: 8000, least: 2,
+  { id: 'life', whole: true, group: 'Bodies', label: 'Cells wear out after', min: 0, max: 40000, step: 100, def: 8000, bodiesDef: 20000, least: 2,
     say: (v) => (v === 0 ? 'cells live until they starve' : `about ${n(v)} steps on average`) },
   { id: 'birthStore', whole: true, group: 'Bodies', label: 'Matter to divide', min: 10, max: 256, step: 2, def: 150, seasonsDef: 60,
     say: (v) => `a cell holding ${n(v * 2)} divides, each half starting with about ${n(v)}` },
@@ -214,28 +245,33 @@ export function dialMoved(d: Dial, typed: string, kept: number): string | null {
 }
 
 /** A dial's value with nothing moved, for a start: the seasons start defines the sun, senses and manners; every other start has them off. */
-export const defFor = (d: Dial, start: SoftRoamStart): number => (start === 'seasons' && d.seasonsDef !== undefined ? d.seasonsDef : d.def);
-/** The dials the seasons start defines (the ones a start sets when it is picked). */
-export const START_DIAL_IDS: readonly string[] = SOFT_DIALS.filter((d) => d.seasonsDef !== undefined).map((d) => d.id);
+export const defFor = (d: Dial, start: SoftRoamStart): number =>
+  start === 'bodies' && d.bodiesDef !== undefined ? d.bodiesDef : sunStart(start) && d.seasonsDef !== undefined ? d.seasonsDef : d.def;
+const startDefined = (d: Dial): boolean => d.seasonsDef !== undefined || d.bodiesDef !== undefined;
+/** The dials the seasons or bodies start defines (the ones a start sets when it is picked). */
+export const START_DIAL_IDS: readonly string[] = SOFT_DIALS.filter(startDefined).map((d) => d.id);
 /** The start's own values for the dials it defines. */
-export const startDials = (start: SoftRoamStart): DialValues => Object.fromEntries(SOFT_DIALS.filter((d) => d.seasonsDef !== undefined).map((d) => [d.id, defFor(d, start)]));
+export const startDials = (start: SoftRoamStart): DialValues => Object.fromEntries(SOFT_DIALS.filter(startDefined).map((d) => [d.id, defFor(d, start)]));
 /** What to tell a visitor after picking a start: what the start set, and by name which dials it moved from where they were (the economy ones too, not only the sun and the senses). */
 export function startNote(before: DialValues, start: SoftRoamStart): string {
   const after = startDials(start);
   const moved = SOFT_DIALS.filter((d) => d.id in after && after[d.id] !== before[d.id]).map((d) => d.label);
-  const what = start === 'seasons'
+  const what = start === 'bodies'
+    ? 'The big bodies start sets the sun, senses and manners, the seasons\' economy, and its own rules (bodies that heal, hunt as one and open big bodies with several mouths, hunters that spread out, upkeep kept for leaves, a winter that costs) to its own values.'
+    : start === 'seasons'
     ? 'The seasons start sets the sun, senses, manners and its own economy (matter to divide, upkeep, food patches, shell cracking) to its own values.'
-    : 'This start has no sun, seasons, leaves, senses or manners, and the garden economy (matter to divide, upkeep, food patches, shell cracking): those dials are set to that (turn them up to add the sun and senses).';
+    : 'This start has no sun, seasons, leaves, senses or manners, none of the big bodies\' rules, and the garden economy (matter to divide, upkeep, food patches, shell cracking): those dials are set to that (turn them up to add the sun and senses).';
   return moved.length === 0 ? what : `${what} Dials that moved: ${moved.join(', ')}.`;
 }
-/** Every dial at its default for a start (the page's own start is the seasons). */
-export const dialDefaults = (start: SoftRoamStart = 'seasons'): DialValues => Object.fromEntries(SOFT_DIALS.map((d) => [d.id, defFor(d, start)]));
+/** Every dial at its default for a start (the page's own start is the big bodies). */
+export const dialDefaults = (start: SoftRoamStart = 'bodies'): DialValues => Object.fromEntries(SOFT_DIALS.map((d) => [d.id, defFor(d, start)]));
 
 /** Options for a world from the switches and dials. Dials left at their defaults add nothing to the config. */
 export function dialOptions(sw: SoftSwitches, a: DialValues): SoftRoamOptions {
   const area = (sw.size * sw.size) / (128 * 128);
   const differs = (id: string) => a[id] !== defFor(SOFT_DIALS.find((d) => d.id === id)!, sw.start);
-  const seasons = sw.start === 'seasons';
+  const seasons = sunStart(sw.start);
+  const bodies = sw.start === 'bodies';
   const over: Partial<SoftRoamConfig> = {};
   const plain = ['bite', 'birthStore', 'patchFood', 'patchRadius', 'keep', 'kBond', 'kBrace', 'kRep', 'thrustMax', 'scentDecayShift', 'scentIters', 'scentGain'] as const;
   for (const id of plain) if (differs(id)) over[id] = a[id];
@@ -264,6 +300,14 @@ export function dialOptions(sw: SoftSwitches, a: DialValues): SoftRoamOptions {
   sun.leaf = idleDial('leaf') ? off : a.leaf > 0 || (seasons && a.leaf === 0) ? a.leaf : off;
   sun.winter = idleDial('winter') ? off : a.winter;
   for (const id of ['patchSun', 'truce', 'jaws']) sun[id] = !idleDial(id) && a[id] > 0 ? true : seasons ? false : undefined;
+  // Chunk 3. The bodies start fills these itself, so there an off dial is `false` too; on the seasons start they are simply absent when off.
+  const off3 = (bodies ? false : undefined) as unknown as number;
+  for (const id of ['heal', 'steer', 'patchSeason']) sun[id] = !idleDial(id) && a[id] > 0 ? true : off3;
+  for (const id of ['pack', 'crowd']) sun[id] = !idleDial(id) && a[id] > 0 ? a[id] : off3;
+  sun.leafPool = !idleDial('leafPool') && a.leafPool > 0 ? a.leafPool : off3;
+  // The cap goes with the pool: passed as the dial shows it whenever the pool is on (so the value shown is the value used, whatever the patch size).
+  if (!idleDial('leafPoolMax')) sun.leafPoolMax = a.leafPoolMax;
+  sun.winterCost = !idleDial('winterCost') && a.winterCost > 0 ? a.winterCost / 1000 : off3;
   for (const [k, v] of Object.entries(sun)) if (v !== undefined) (out as unknown as Record<string, unknown>)[k] = v;
   // The two copy-error dials are independent: each is always passed as the dial shows it.
   if (differs('mut')) out.mut = a.mut;

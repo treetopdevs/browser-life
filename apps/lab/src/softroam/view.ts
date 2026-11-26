@@ -74,11 +74,47 @@ export const SOFT_PLANS = {
   }),
 } as const;
 
+/**
+ * A body of 25 cells (chunk 3): a spine of five cells along the way the founder faces, a side cell to the right and left of each, and an outer cell
+ * beyond each side. The spine is built first (each spine cell keeps the next in front), then each spine cell its two sides, each side its outer cell.
+ * The front spine cell lets daughters go straight ahead from a release loop, once its own sides are in; nothing is in front of it, so the release
+ * place is never one of the body's own. Kinds: `side` and `outer` for the sides and outer cells, `front` for the front spine cell, `frontSide` for its
+ * sides, which get outer cells only when `frontOuter`.
+ */
+function turtle(side: number, outer: number, front: number, frontSide: number, frontOuter: boolean): number[] {
+  return softPlan({
+    0: [KF, 1, 5, PL], 1: [KF, 2, 5, PL], 2: [KF, 3, 5, PL], 3: [KF, 4, 5, front],
+    4: [KR, frontOuter ? 7 : R, 11, frontSide], 11: [KL, frontOuter ? 7 : R, 12, frontSide], 12: [GF, 0, 12, PL],
+    5: [KR, 7, 6, side], 6: [KL, 7, R, side], 7: [KF, R, R, outer],
+  });
+}
+
+/**
+ * Chunk 3's founder plans of 20 or more cells (the `bodies` start):
+ * - `herd`, 25 cells: a plain spine and plain sides that eat, a shell on every outer place (ten shells down the two flanks).
+ * - `grove`, 21 cells: a plain spine and plain sides that eat, and a leaf beyond the sides of every other spine cell (the first, third and fifth), so
+ *   each of the six leaves has three bare sides to take the light through (a full row of outer leaves would touch each other and earn a quarter).
+ * - `pack`, 23 cells: three mouths across the front (the front spine cell and its two sides), plain everywhere else.
+ */
+export const BIG_PLANS = {
+  herd: turtle(PL, SHELL, PL, PL, true),
+  grove: softPlan({
+    0: [KF, 1, 5, PL], 1: [KF, 2, 13, PL], 2: [KF, 3, 5, PL], 3: [KF, 4, 13, PL],
+    4: [KR, 7, 11, PL], 11: [KL, 7, 12, PL], 12: [GF, 0, 12, PL],
+    5: [KR, 7, 6, PL], 6: [KL, 7, R, PL], 7: [KF, R, R, LEAF],
+    13: [KR, R, 14, PL], 14: [KL, R, R, PL],
+  }),
+  pack: turtle(PL, PL, MOUTH, MOUTH, false),
+} as const;
+
 /** Founder types of Soft Roam's own. Numbers are chase, drive, turn, adult, shape (each -512..512); a plan is written out for each, so no founder is a variant. */
 export const SOFT_OWN = {
   grazer: { name: 'armoured grazers', genes: [160, 64, -256, 0, 0], colour: [236, 140, 48], plan: SOFT_PLANS.grazer },
   leafbush: { name: 'leaf bushes', genes: [64, 0, -512, 0, 0], colour: [186, 148, 104], plan: SOFT_PLANS.leafbush },
   hunter: { name: 'hunters', genes: [384, 96, -128, 0, 0], colour: [100, 92, 206], plan: SOFT_PLANS.hunter },
+  herd: { name: 'armoured herds', genes: [160, 64, -256, 0, 0], colour: [196, 168, 64], plan: BIG_PLANS.herd },
+  grove: { name: 'groves', genes: [64, 64, -512, 0, 0], colour: [156, 112, 168], plan: BIG_PLANS.grove },
+  pack: { name: 'pack hunters', genes: [384, 96, -128, 0, 0], colour: [64, 136, 196], plan: BIG_PLANS.pack },
 } as const satisfies Record<string, { name: string; genes: readonly number[]; colour: readonly number[]; plan: readonly number[] }>;
 export type SoftOwnId = keyof typeof SOFT_OWN;
 export type SoftTypeId = RoamTypeId | SoftOwnId;
@@ -94,6 +130,11 @@ export const SOFT_STARTS = {
    * the garden's plates (a plain body that is food for the hunters and grazers' neighbours; the garden's specks never release under a release cap, so are left out).
    */
   seasons: ['grazer', 'leafbush', 'hunter', 'plate'],
+  /**
+   * Big bodies (chunk 3): the seasons with bodies of 23 to 25 cells that heal, hunters that steer as one body and hunt in packs, a leaf pool and a
+   * winter that bites. Only the three big types.
+   */
+  bodies: ['herd', 'grove', 'pack'],
   /** The default: the grown founders as in 'grown-all', with kinds, touch feeding, shells and cracking on (Roam's page line-up). */
   garden: ROAM_STARTS['grown-all'],
   'grown-all': ROAM_STARTS['grown-all'],
@@ -138,6 +179,15 @@ export interface SoftRoamOptions {
   jaws?: boolean;
   releaseMin?: number;
   releaseGap?: number;
+  /** Chunk 3 switches (see the kernel): the bodies start turns them all on at BODIES_DEFAULTS; any start takes them when given. */
+  heal?: boolean;
+  steer?: boolean;
+  pack?: number;
+  crowd?: number;
+  leafPool?: number;
+  leafPoolMax?: number;
+  patchSeason?: boolean;
+  winterCost?: number;
   overrides?: Partial<SoftRoamConfig>;
 }
 
@@ -164,6 +214,17 @@ export const SEASONS_DEFAULTS = { day: 400, year: 12000, winter: 0.1, patchSun: 
  */
 export const SEASONS_ECONOMY = { birthStore: 60, minStore: 15, patchFood: 1000, patchEvery: 12, leakSide: 0.008, leakCell: 0.004, crack: 10000 } as const;
 const SEASON_KEYS = ['day', 'year', 'winter', 'patchSun', 'leaf', 'sight', 'fear', 'truce', 'jaws', 'releaseMin', 'releaseGap'] as const;
+/**
+ * What the bodies start adds to the seasons' (chunk 3, tuned by looking: see NOTE-3.md): bodies held together by braces, one aim per body, three mouths in
+ * touch opening a body of up to 18, a seeing mouth that keeps off prey another hunter is at, a third of upkeep set aside for leaves, patches that shrink in
+ * winter and a winter upkeep; and over the seasons' values softer shells (2000 hits to crack) and patches that land whatever the hour (with them gated by the
+ * day band too, the reservoir holds a third of the matter idle and the world starves; the year's swing comes from the winter upkeep instead).
+ */
+export const BODIES_DEFAULTS = { heal: true, steer: true, pack: 6, crowd: 1, leafPool: 0.3, leafPoolMax: 2000, patchSeason: true, winterCost: 0.03 } as const;
+export const BODIES_OVER_SEASONS = { releaseMin: 8, crack: 2000, patchSun: false } as const;
+/** The bodies start's economy over the seasons': cells wear out more slowly (a 25-cell body at the page's life of 8000 loses a cell every 320 steps). */
+export const BODIES_ECONOMY = { life: 20000 } as const;
+const BODY_KEYS = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost'] as const;
 
 /**
  * The page's usual world, over the kernel's neutral defaults (which the kernel tests rely on): chosen by looking at 12000-step
@@ -176,8 +237,9 @@ export const PAGE_WORLD = { matter: 100_000, bite: 4, birthStore: 150, minStore:
 
 export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   const startName = input.start ?? 'seasons';
-  const garden = startName === 'garden' || startName === 'seasons';
-  const seasons = startName === 'seasons';
+  const bodies = startName === 'bodies';
+  const seasons = startName === 'seasons' || bodies;
+  const garden = startName === 'garden' || seasons;
   // The seasons start fills in what the caller left out, but only what its prerequisites allow (the kernel refuses a sight or a leaf without kinds, a year without a day):
   // a start with kinds or touch feeding off, or no day, is a world with those left out. A key the caller gives itself is kept, and refused if it cannot work.
   // An override wins over the option (it is applied last), so the prerequisites are read through it: `--ov '{"kinds":false}'` is a world with kinds off.
@@ -188,11 +250,21 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   const dayOn = on(ov.day ?? input.day);
   const yearOn = on(ov.year ?? input.year);
   const needs: Partial<Record<(typeof SEASON_KEYS)[number], boolean>> = { sight: kindsOn && drainOn, fear: kindsOn && drainOn, leaf: kindsOn && dayOn, year: dayOn, patchSun: dayOn, winter: dayOn && yearOn };
+  const seasonDef = (k: (typeof SEASON_KEYS)[number]) => (bodies && k in BODIES_OVER_SEASONS ? BODIES_OVER_SEASONS[k as keyof typeof BODIES_OVER_SEASONS] : SEASONS_DEFAULTS[k]);
   const o: SoftRoamOptions = garden
-    ? { ...input, ...(seasons ? Object.fromEntries(SEASON_KEYS.map((k) => [k, input[k] ?? (needs[k] === false ? undefined : SEASONS_DEFAULTS[k])])) : {}), kinds: input.kinds ?? GARDEN_DEFAULTS.kinds, drain: input.drain ?? GARDEN_DEFAULTS.drain, seal: input.seal ?? GARDEN_DEFAULTS.seal, crack: input.crack ?? (seasons ? SEASONS_ECONOMY.crack : GARDEN_DEFAULTS.crack), shellBite: input.shellBite ?? GARDEN_DEFAULTS.shellBite, shellLeak: input.shellLeak ?? GARDEN_DEFAULTS.shellLeak, grip: input.grip ?? GARDEN_DEFAULTS.grip }
+    ? { ...input, ...(seasons ? Object.fromEntries(SEASON_KEYS.map((k) => [k, input[k] ?? (needs[k] === false ? undefined : seasonDef(k))])) : {}), kinds: input.kinds ?? GARDEN_DEFAULTS.kinds, drain: input.drain ?? GARDEN_DEFAULTS.drain, seal: input.seal ?? GARDEN_DEFAULTS.seal, crack: input.crack ?? (bodies ? BODIES_OVER_SEASONS.crack : seasons ? SEASONS_ECONOMY.crack : GARDEN_DEFAULTS.crack), shellBite: input.shellBite ?? GARDEN_DEFAULTS.shellBite, shellLeak: input.shellLeak ?? GARDEN_DEFAULTS.shellLeak, grip: input.grip ?? GARDEN_DEFAULTS.grip }
     : input;
+  if (bodies) {
+    // The bodies start fills its own keys too, again only where what they need is on (as read through the overrides and the seasons' keys just filled).
+    const pick = <T,>(k: keyof SoftRoamConfig, v: T | undefined): T | undefined => (ov[k] !== undefined ? (ov[k] as T) : v);
+    const sightOn = on(pick('sight', o.sight));
+    const fearOn = on(pick('fear', o.fear));
+    const leafOn = pick('leaf', o.leaf) !== undefined && (pick('leaf', o.leaf) as unknown) !== false && kindsOn && dayOn;
+    const bodyNeeds: Record<(typeof BODY_KEYS)[number], boolean> = { heal: true, steer: (sightOn && o.sight !== undefined) || (fearOn && o.fear !== undefined), pack: kindsOn && drainOn, crowd: sightOn && o.sight !== undefined, leafPool: leafOn, leafPoolMax: leafOn && o.leafPool !== (false as unknown as number), patchSeason: dayOn && yearOn, winterCost: dayOn && yearOn };
+    for (const k of BODY_KEYS) if (o[k] === undefined && bodyNeeds[k]) (o as unknown as Record<string, unknown>)[k] = BODIES_DEFAULTS[k];
+  }
   const { crack: _crack, ...economy } = SEASONS_ECONOMY;
-  const cfg: SoftRoamConfig = { ...defaultSoftRoamConfig(), ...PAGE_WORLD, ...(seasons ? economy : {}) };
+  const cfg: SoftRoamConfig = { ...defaultSoftRoamConfig(), ...PAGE_WORLD, ...(seasons ? economy : {}), ...(bodies ? BODIES_ECONOMY : {}) };
   cfg.seed = o.seed;
   if (o.size !== undefined) {
     // Matter and the patch rhythm follow the area, so a bigger arena is the same world with more room.
@@ -216,7 +288,7 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   if (merged.kinds && o.shellLeak !== undefined && merged.shellLeak === undefined) merged.shellLeak = o.shellLeak;
   if (merged.kinds && merged.drain !== undefined && o.grip !== undefined && o.grip > 0 && merged.grip === undefined) merged.grip = o.grip;
   // Chunk 2 keys: an option given sets the key (false and undefined leave it absent, so a start without them keeps the old path); an override wins over it.
-  for (const k of SEASON_KEYS) {
+  for (const k of [...SEASON_KEYS, ...BODY_KEYS]) {
     const v = o[k];
     if (v !== undefined && v !== false && (merged as unknown as Record<string, unknown>)[k] === undefined) (merged as unknown as Record<string, unknown>)[k] = v;
   }
@@ -297,8 +369,8 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
 
 export type SoftPaint = 'garden' | 'plain';
 
-/** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them; 12 to 14 are Soft Roam's own types. */
-const FAMILY_ORDER: readonly SoftTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush', 'grazer', 'leafbush', 'hunter'];
+/** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them; 12 to 17 are Soft Roam's own types. */
+const FAMILY_ORDER: readonly SoftTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush', 'grazer', 'leafbush', 'hunter', 'herd', 'grove', 'pack'];
 const FAM_COLOUR: readonly (readonly number[])[] = FAMILY_ORDER.map((t) => typeInfo(t).colour);
 /** Family number of a founder type, which every descendant keeps (the garden's types keep Roam's numbers). */
 export const softFamily = (t: SoftTypeId): number => FAMILY_ORDER.indexOf(t) + 1;

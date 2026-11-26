@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSoftRoamConfig, ROAM_GENES, SOFT_U, type SoftRoamConfig, SoftRoamWorld } from '../src/softroam/kernel.ts';
-import { foundSoftRoam, paintSoftRoam, softTimeWords, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig, foodTone, softFamilies, softFamily, SOFT_OWN, SEASONS_DEFAULTS, softSeason, softSky, softYearLight } from '../src/softroam/view.ts';
+import { foundSoftRoam, paintSoftRoam, softTimeWords, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig, foodTone, softFamilies, softFamily, SOFT_OWN, SEASONS_DEFAULTS, BODIES_DEFAULTS, softSeason, softSky, softYearLight } from '../src/softroam/view.ts';
 import { KIND_LEAF, KIND_MOUTH, KIND_SHELL, softRoamLight } from '../src/softroam/kernel.ts';
 import { ROAM_PLANS, ROAM_TYPES } from '../src/roam/view.ts';
 
@@ -530,6 +530,57 @@ describe('soft roam view: the seasons start and its founders', () => {
     expect(w.census().releasesHeld).toBeGreaterThan(0);
     expect(w.census().residual).toBe(0);
     w.checkInvariants();
+  });
+});
+
+describe('soft roam view: the big bodies start (chunk 3)', () => {
+  it('each big type grows alone to its full plan (25, 21, 23 cells) with the kinds it says, and releases a daughter that grows to 20 cells or more and releases in turn', () => {
+    const want = { herd: { size: 25, shells: 10, mouths: 0, leaves: 0 }, grove: { size: 21, shells: 0, mouths: 0, leaves: 6 }, pack: { size: 23, shells: 0, mouths: 3, leaves: 0 } } as const;
+    for (const id of ['herd', 'grove', 'pack'] as const) {
+      const cfg = softRoamConfig({ seed: 1, size: 40, start: 'bodies', mut: 0, planMut: 0, overrides: { startPatches: 0, patchEvery: 1_000_000, matter: 400_000, maxCells: 200 } });
+      delete cfg.life;
+      const w = new SoftRoamWorld(cfg);
+      const info = SOFT_OWN[id];
+      const f = w.found(20 * U, 20 * U, info.genes, softFamily(id), undefined, w.addPlan(info.plan));
+      const founderCid = w.cid[f];
+      for (let i = 0; i < w.n; i++) { w.food[i] += 200; w.reservoir -= 200; }
+      // Until a body that does not hold the founder (a released daughter grown up: with heal and no wear the founder's body does not split) reaches 20 cells.
+      let grown = false;
+      let t = 0;
+      for (; t < 3000 && !grown; t++) {
+        const releases = w.census().releases;
+        const fb = [...Array(w.cap).keys()].find((c) => w.alive[c] && w.cid[c] === founderCid);
+        w.stepOnce();
+        if (w.census().releases > releases) {
+          const sizes = new Map<number, number>();
+          for (let c = 0; c < w.cap; c++) if (w.alive[c]) sizes.set(w.body[c], (sizes.get(w.body[c]) ?? 0) + 1);
+          const founderBody = fb !== undefined && w.alive[fb] ? w.body[fb] : -1;
+          for (const [b, s2] of sizes) if (b !== founderBody && s2 >= 20) grown = true;
+        }
+      }
+      expect(grown, `${id} (step ${t})`).toBe(true);
+      // The founder's body is whole, with its kinds.
+      const fb = [...Array(w.cap).keys()].find((c) => w.alive[c] && w.cid[c] === founderCid)!;
+      const k = [0, 0, 0, 0];
+      let size = 0;
+      for (let c = 0; c < w.cap; c++) if (w.alive[c] && w.body[c] === w.body[fb]) { size++; k[w.kind[c]]++; }
+      expect({ size, shells: k[KIND_SHELL], mouths: k[KIND_MOUTH], leaves: k[KIND_LEAF] }, id).toEqual(want[id]);
+      // Then the founder's body is taken away (its cells starve this step, matter kept): a release after that comes from a descendant.
+      for (let c = 0; c < w.cap; c++) if (w.alive[c] && w.body[c] === w.body[fb]) { w.reservoir += w.store[c]; w.store[c] = 0; }
+      w.stepOnce();
+      expect(w.alive[fb]).toBe(0);
+      const before = w.census().releases;
+      for (let u = 0; u < 2000 && w.census().releases === before; u++) w.stepOnce();
+      expect(w.census().releases, `${id}: a descendant releases`).toBeGreaterThan(before);
+      expect(w.census().residual).toBe(0);
+    }
+  });
+
+  it('the bodies start is the seasons plus the chunk 3 keys, with its own release, shell, patch and life values', () => {
+    const cfg = softRoamConfig({ seed: 1, size: 64, start: 'bodies' });
+    expect(cfg).toMatchObject({ ...BODIES_DEFAULTS, releaseMin: 8, crack: 2000, life: 20000, day: 400, year: 12000, sight: 8, fear: 4 });
+    expect(cfg.patchSun).toBeUndefined();
+    expect(foundSoftRoam({ seed: 1, size: 64, start: 'bodies' }).census().cells).toBeGreaterThan(0);
   });
 });
 

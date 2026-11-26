@@ -36,7 +36,7 @@ function fail(message: string): void {
 
 // Dials: a slider and an exact number box each, with a line saying what the value means. Values live here; the URL
 // hash keeps the ones that differ from the defaults (and the switches), so a link brings the same world back.
-const dials: DialValues = dialDefaults('seasons');
+const dials: DialValues = dialDefaults('bodies');
 
 function switches(): SoftSwitches {
   return {
@@ -170,11 +170,11 @@ function show(f: SoftRoamFrame): void {
   set('r-bodies', fmt(c.bodies));
   set('r-cells', `${fmt(c.cells)} (${fmt(c.singles)} of them single)`);
   set('r-largest', `${fmt(c.largest)} cells`);
-  set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting to drop as a new patch`);
+  set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting to drop as a new patch${c.leafPool > 0 ? `, ${fmt(c.leafPool)} kept for leaves` : ''}`);
   set('r-time', timeWords(f));
   const plain = c.cells - c.shells - c.mouths - c.leaves;
   set('r-kinds', `${fmt(plain)} plain, ${fmt(c.shells)} shell, ${fmt(c.mouths)} mouth, ${fmt(c.leaves)} leaf`);
-  set('r-chase', f.sky.day === 0 && c.hunting + c.fleeing === 0 ? 'none' : `${fmt(c.hunting)} mouths hunting ${fmt(c.targets)} prey cells, ${fmt(c.fleeing)} cells fleeing`);
+  set('r-chase', f.sky.day === 0 && c.hunting + c.fleeing === 0 ? 'none' : `${fmt(c.hunting)} ${c.steering > 0 ? 'cells' : 'mouths'} hunting ${fmt(c.targets)} prey cells, ${fmt(c.fleeing)} cells fleeing${c.steering > 0 ? `; ${fmt(c.steering)} bodies turning as one` : ''}`);
   set('r-light', f.sky.day === 0 ? 'full everywhere' : `${fmt(f.sky.meanLight * 100)}% of full across the arena`);
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
 }
@@ -203,7 +203,7 @@ el('paint').addEventListener('change', () => { pacer.wantRepaint(); });
 for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
 // Picking a start also sets the kinds switch to what that start is: the garden has kinds on, every other start is the plain grown
 // line-up (kinds off). The switch can still be turned the other way afterwards.
-// It also sets the dials the start defines (the sun, senses and manners) to that start's values: the garden has them off, the seasons has them on.
+// It also sets the dials the start defines (the sun, senses and manners, and the big bodies' rules) to that start's values: the garden has them off, the seasons the sun ones, the big bodies all of them.
 el('start').addEventListener('change', () => {
   const start = value('start') as SoftRoamStart;
   el<HTMLSelectElement>('kinds').value = startPick(switches(), start).kinds ? '1' : '0';
