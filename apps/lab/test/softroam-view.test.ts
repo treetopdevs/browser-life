@@ -622,6 +622,17 @@ describe('soft roam view: the seasons start, edges', () => {
     expect(usual.winter).toBe(SEASONS_DEFAULTS.winter);
     // A year the caller gives is kept, and still refused if it cannot hold the day.
     expect(() => foundSoftRoam({ seed: 1, size: 32, day: 20000, year: 12000 })).toThrow(/year/);
+    // The bodies start leaves out its year-bound keys (patchSeason, winterCost) along with the year.
+    const bodies = softRoamConfig({ seed: 1, start: 'bodies', day: 20000 });
+    expect(bodies.year).toBeUndefined();
+    expect(bodies.patchSeason).toBeUndefined();
+    expect(bodies.winterCost).toBeUndefined();
+    expect(() => foundSoftRoam({ seed: 1, size: 32, start: 'bodies', day: 20000 })).not.toThrow();
+    const bodiesUsual = softRoamConfig({ seed: 1, start: 'bodies' });
+    expect(bodiesUsual.patchSeason).toBe(BODIES_DEFAULTS.patchSeason);
+    expect(bodiesUsual.winterCost).toBe(BODIES_DEFAULTS.winterCost);
+    // Given explicitly, they are still refused without a year.
+    expect(() => foundSoftRoam({ seed: 1, size: 32, start: 'bodies', day: 20000, winterCost: 0.03 })).toThrow();
   });
 
   it('the time in words counts a short last day of a year that is not a whole number of days', () => {

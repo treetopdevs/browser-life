@@ -271,8 +271,10 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
     const pick = <T,>(k: keyof SoftRoamConfig, v: T | undefined): T | undefined => (ov[k] !== undefined ? (ov[k] as T) : v);
     const sightOn = on(pick('sight', o.sight));
     const fearOn = on(pick('fear', o.fear));
+    // The year as it will reach the kernel (the seasons' implicit year may have been left out because it could not hold the day).
+    const yearSet = pick('year', o.year) !== undefined && on(pick('year', o.year));
     const leafOn = pick('leaf', o.leaf) !== undefined && (pick('leaf', o.leaf) as unknown) !== false && kindsOn && dayOn;
-    const bodyNeeds: Record<(typeof BODY_KEYS)[number], boolean> = { heal: true, steer: (sightOn && o.sight !== undefined) || (fearOn && o.fear !== undefined), pack: kindsOn && drainOn, crowd: sightOn && o.sight !== undefined, leafPool: leafOn, leafPoolMax: leafOn && o.leafPool !== (false as unknown as number), patchSeason: dayOn && yearOn, winterCost: dayOn && yearOn, pace: true, shellThrust: kindsOn };
+    const bodyNeeds: Record<(typeof BODY_KEYS)[number], boolean> = { heal: true, steer: (sightOn && o.sight !== undefined) || (fearOn && o.fear !== undefined), pack: kindsOn && drainOn, crowd: sightOn && o.sight !== undefined, leafPool: leafOn, leafPoolMax: leafOn && o.leafPool !== (false as unknown as number), patchSeason: dayOn && yearSet, winterCost: dayOn && yearSet, pace: true, shellThrust: kindsOn };
     for (const k of BODY_KEYS) if (o[k] === undefined && bodyNeeds[k]) (o as unknown as Record<string, unknown>)[k] = BODIES_DEFAULTS[k];
   }
   const { crack: _crack, ...economy } = SEASONS_ECONOMY;
