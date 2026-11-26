@@ -47,8 +47,10 @@ describe('soft roam view: painter', () => {
     const out = (w: SoftRoamWorld, mem?: SoftPaintMemory) => { const o = new Uint8Array(32 * SCALE * 32 * SCALE * 4); paintSoftRoam(w, 'garden', SCALE, 0.4, o, mem); return o; };
     const m1 = new SoftPaintMemory();
     const m2 = new SoftPaintMemory();
-    expect(out(a, m1)).toEqual(out(b, m2));
-    // Painting again must not change anything (the buffers are left clean).
+    const first = out(a, m1);
+    expect(first).toEqual(out(b, m2));
+    // Painting again must not change anything (the buffers are left clean): compare with the first picture from the same memory.
+    expect(out(a, m1)).toEqual(first);
     expect(out(a, m1)).toEqual(out(b, m2));
     // ... and the picture is a picture: many distinct colours, with bodies lit well above the dark ground.
     const px = out(a, m1);
@@ -508,10 +510,8 @@ describe('soft roam view: the seasons start and its founders', () => {
     const w = foundSoftRoam({ seed: 1, size: 128, start: 'seasons' });
     let releases = 0;
     for (let t = 0; t < 4000; t++) {
-      // The size of each cell's body as the step starts, by cell serial: a body only loses cells (and may split) before its release, so the releaser's size now is at least what it had then.
-      const was = new Map<number, number>();
-      for (let c = 0; c < w.cap; c++) if (w.alive[c]) was.set(w.cid[c], w.bodySize[w.body[c]]);
       const before = w.census().releases;
+      const start = (w as unknown as { bodyStart: Int32Array }).bodyStart;
       w.stepOnce();
       const made = w.census().releases - before;
       if (made > 0) {
@@ -520,8 +520,9 @@ describe('soft roam view: the seasons start and its founders', () => {
         let seen = 0;
         for (let c = 0; c < w.cap; c++) {
           if (!w.alive[c] || w.relRec[c] !== w.step) continue;
-          const size = was.get(w.cid[c]);
-          if (size !== undefined) { seen++; expect(size, `step ${t}`).toBeGreaterThanOrEqual(SEASONS_DEFAULTS.releaseMin); }
+          // The size the releaser's body had as the division stage began (deaths come before it), which is what releaseMin tests.
+          seen++;
+          expect(start[w.body[c]], `step ${t}`).toBeGreaterThanOrEqual(SEASONS_DEFAULTS.releaseMin);
         }
         expect(seen, `step ${t}`).toBeGreaterThan(0);
       }
@@ -610,9 +611,26 @@ describe('soft roam view: the seasons start, edges', () => {
     expect(dist(SOFT_OWN.grazer.colour, kinds.shell)).toBeGreaterThan(90);
   });
 
+  it('the seasons start adds its implicit year (and winter) only when that year can hold the day asked for', () => {
+    const long = softRoamConfig({ seed: 1, day: 20000 });
+    expect(long.day).toBe(20000);
+    expect(long.year).toBeUndefined();
+    expect(long.winter).toBeUndefined();
+    expect(() => foundSoftRoam({ seed: 1, size: 32, day: 20000 })).not.toThrow();
+    const usual = softRoamConfig({ seed: 1, day: 400 });
+    expect(usual.year).toBe(SEASONS_DEFAULTS.year);
+    expect(usual.winter).toBe(SEASONS_DEFAULTS.winter);
+    // A year the caller gives is kept, and still refused if it cannot hold the day.
+    expect(() => foundSoftRoam({ seed: 1, size: 32, day: 20000, year: 12000 })).toThrow(/year/);
+  });
+
   it('the time in words counts a short last day of a year that is not a whole number of days', () => {
     const f = (step: number, day: number, year: number) => ({ step, sky: { day, year, dayShare: (step % day) / day, yearShare: (step % year) / year } });
-    expect(softTimeWords(f(400, 400, 401))).toMatch(/day 2 of the year's 2, the last one cut short/);
+    expect(softTimeWords(f(400, 400, 401))).toMatch(/day 2 of the year's 2, days running on over the turn of the year/);
+    // Step 401 starts year 2 inside the day that began at step 400 (the sky does not restart its day there): still that day, now day 1 of year 2.
+    expect(softTimeWords(f(401, 400, 401))).toMatch(/day 1 of the year's 2.* \(year 2\)/);
+    expect(softTimeWords(f(799, 400, 401))).toMatch(/day 1 of the year's 2/);
+    expect(softTimeWords(f(800, 400, 401))).toMatch(/day 2 of the year's 2/);
     expect(softTimeWords(f(0, 400, 12000))).toMatch(/day 1 of the year's 30 \(year 1\)/);
     expect(softTimeWords(f(12000 + 11999 % 12000, 400, 12000))).toMatch(/day 30 of the year's 30/);
     for (const [day, year] of [[400, 401], [64, 1000], [100, 250], [16, 17]]) {

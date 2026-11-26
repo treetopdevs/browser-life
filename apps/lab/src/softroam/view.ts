@@ -257,7 +257,11 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   const on = (v: unknown): boolean => v === undefined || (typeof v === 'number' && v > 0);
   const dayOn = on(ov.day ?? input.day);
   const yearOn = on(ov.year ?? input.year);
-  const needs: Partial<Record<(typeof SEASON_KEYS)[number], boolean>> = { sight: kindsOn && drainOn, fear: kindsOn && drainOn, leaf: kindsOn && dayOn, year: dayOn, patchSun: dayOn, winter: dayOn && yearOn };
+  // The implicit year is added only when it can hold the day (the kernel refuses a year shorter than a day); without it there is no implicit winter either.
+  const dayVal = ov.day ?? input.day;
+  const yearFits = typeof dayVal !== 'number' || dayVal <= SEASONS_DEFAULTS.year;
+  const yearGiven = (ov.year ?? input.year) !== undefined;
+  const needs: Partial<Record<(typeof SEASON_KEYS)[number], boolean>> = { sight: kindsOn && drainOn, fear: kindsOn && drainOn, leaf: kindsOn && dayOn, year: dayOn && yearFits, patchSun: dayOn, winter: dayOn && yearOn && (yearGiven || yearFits) };
   const seasonDef = (k: (typeof SEASON_KEYS)[number]) => (bodies && k in BODIES_OVER_SEASONS ? BODIES_OVER_SEASONS[k as keyof typeof BODIES_OVER_SEASONS] : SEASONS_DEFAULTS[k]);
   const o: SoftRoamOptions = garden
     ? { ...input, ...(seasons ? Object.fromEntries(SEASON_KEYS.map((k) => [k, input[k] ?? (needs[k] === false ? undefined : seasonDef(k))])) : {}), kinds: input.kinds ?? GARDEN_DEFAULTS.kinds, drain: input.drain ?? GARDEN_DEFAULTS.drain, seal: input.seal ?? GARDEN_DEFAULTS.seal, crack: input.crack ?? (bodies ? BODIES_OVER_SEASONS.crack : seasons ? SEASONS_ECONOMY.crack : GARDEN_DEFAULTS.crack), shellBite: input.shellBite ?? GARDEN_DEFAULTS.shellBite, shellLeak: input.shellLeak ?? GARDEN_DEFAULTS.shellLeak, grip: input.grip ?? GARDEN_DEFAULTS.grip }
@@ -493,10 +497,12 @@ export function softTimeWords(f: { step: number; sky: { day: number; year: numbe
   if (year === 0) return `day ${num(Math.floor(f.step / day) + 1)} (no seasons); ${band}`;
   const q = ((yearShare + 0.125) % 1) * 4;
   const season = `${PHASE_WORDS[Math.min(2, Math.floor((q % 1) * 3))]} ${SEASON_NAMES[Math.floor(q)]}`;
-  const days = Math.floor((f.step % year) / day) + 1;
-  // A year that is not a whole number of days ends with a short day: count it (the last day number is the year divided by the day, rounded up).
-  const total = Math.ceil(year / day);
-  const short = year % day === 0 ? '' : ', the last one cut short';
+  // Days follow the sky's own clock, which runs on over the turn of the year (it does not restart there): when a year is not a whole
+  // number of days, the day in progress at the turn is day 1 of the new year, and the count of days a year touches varies by one.
+  const y0 = f.step - (f.step % year);
+  const days = Math.floor(f.step / day) - Math.floor(y0 / day) + 1;
+  const total = Math.floor((y0 + year - 1) / day) - Math.floor(y0 / day) + 1;
+  const short = year % day === 0 ? '' : ', days running on over the turn of the year';
   return `${season}, day ${num(days)} of the year's ${num(total)}${short} (year ${num(Math.floor(f.step / year) + 1)}); ${band}`;
 }
 

@@ -45,7 +45,8 @@ Look (headless, native WebGPU not needed): from the worktree root,
       --movie 1 --movieFrom 19100 --out runs/softroam/m2-s1
 
 It prints a row every `--report` steps and writes `sheet.png`, `rows.json` and, with `--movie`, `frames/`. The movie is
-`ffmpeg -framerate 30 -i frames/f%05d.png -c:v libx264 -pix_fmt yuv420p movie.mp4`.
+`ffmpeg -framerate 30 -i runs/softroam/m2-s1/frames/f%05d.png -c:v libx264 -pix_fmt yuv420p runs/softroam/m2-s1/movie.mp4`
+(or `cd runs/softroam/m2-s1` first and use the shorter paths).
 
 ## The gate
 

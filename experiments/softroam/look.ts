@@ -25,7 +25,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import type { SoftRoamConfig } from '../../apps/lab/src/softroam/kernel.ts';
 import { foundSoftRoam, paintSoftRoam, type SoftRoamOptions, type SoftPaint, SoftPaintMemory, softFamilies, softSky, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel, softYearLight } from '../../apps/lab/src/softroam/view.ts';
 import { writePng } from '../bodies/png.ts';
@@ -70,6 +70,11 @@ const seriesFile = args.series;
 const every = int('every', 50, 1);
 // The report files are written after the series, so a series path that is one of them would be overwritten at the end.
 if (seriesFile) for (const f of ['rows.json', 'sheet.png']) if (resolve(seriesFile) === resolve(`${out}/${f}`)) throw new Error(`--series ${seriesFile} is the run's own ${f}; pick another file`);
+// With --movie the frames are written into out/frames; a series file inside that folder would replace a frame with TSV text.
+if (seriesFile && movie > 0) {
+  const rel = relative(resolve(out, 'frames'), resolve(seriesFile));
+  if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) throw new Error(`--series ${seriesFile} is inside the movie frames folder ${out}/frames; pick a path outside it`);
+}
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
 if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new Error(`--ov ${args.ov} must be a JSON object`);
 // Start options (SoftRoamOptions, e.g. '{"pace":false,"driveSpread":1}' for the bodies start without chunk 4), applied over the ones above.

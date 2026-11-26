@@ -534,6 +534,44 @@ describe('soft roam hunting: truce and jaws change what pairs do, not which pair
       expect(pairs.filter((p) => p.startsWith('1,')).length).toBe(4);
     }
   });
+
+  it('a refused mouth among the four places is not replaced by an eligible mouth outside them, when feeding', () => {
+    // A prey singleton ringed by six two-cell hunters, mouth to the prey. Three share the prey's family (refused under truce), three do not.
+    const build = (over: Partial<SoftRoamConfig>): { w: SoftRoamWorld; prey: number; mouths: number[] } => {
+      const w = new SoftRoamWorld(still(over));
+      const plan = restPlan(w);
+      const c = 8 * U + 512;
+      const prey = spawn(w, c, c, SITTER, 150, plan, 3);
+      const mouths: number[] = [];
+      for (let k = 0; k < 6; k++) {
+        const a = (k * 2 * Math.PI) / 6;
+        const fam = k % 2 === 0 ? 3 : 4;
+        const h = chain(w, plan, c + Math.round(1100 * Math.cos(a)), c + Math.round(1100 * Math.sin(a)), Math.round(U * Math.cos(a)), Math.round(U * Math.sin(a)), [M, P], 150, SITTER, fam);
+        mouths.push(h[0]);
+      }
+      return { w, prey, mouths };
+    };
+    const { w, prey, mouths } = build({ truce: true });
+    const preyCid = w.cid[prey];
+    const eligible = new Set(mouths.filter((m) => w.fam[m] === 4).map((m) => w.cid[m]));
+    const refused = new Set(mouths.filter((m) => w.fam[m] === 3).map((m) => w.cid[m]));
+    let crowdedOut = 0;
+    for (let s = 0; s < 12; s++) {
+      const chosen = new Set<number>();
+      for (const p of w._touchPairs()) {
+        const [a, b] = p.split(',').map(Number);
+        if (a === preyCid) chosen.add(b);
+        else if (b === preyCid) chosen.add(a);
+      }
+      w.stepOnce();
+      const fed = new Set(w.events.feeds.filter((f) => f.pc === preyCid).map((f) => f.mc));
+      // Exactly the eligible mouths among the chosen four feed; a refused one that was chosen leaves its place empty.
+      const want = new Set([...chosen].filter((m) => eligible.has(m)));
+      expect([...fed].sort()).toEqual([...want].sort());
+      if ([...chosen].some((m) => refused.has(m)) && want.size < eligible.size) crowdedOut++;
+    }
+    expect(crowdedOut).toBeGreaterThan(0);
+  });
 });
 
 describe('soft roam hunting: truce and jaws stop feeding, hits and grip exactly', () => {

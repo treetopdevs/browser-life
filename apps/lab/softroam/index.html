@@ -86,13 +86,13 @@
         <option value="plain">plain: a disc per cell and a line from each daughter to her mother, for checking</option>
       </select></label>
     </div>
-    <p id="error"></p>
+    <p id="error" role="alert"></p>
     <div class="stage">
     <canvas id="view" width="768" height="768"></canvas>
     <details class="dials" open>
       <summary>Dials: drag a slider or type an exact number; the world starts again when you let go</summary>
       <div id="dials"></div>
-      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" style="color:var(--dim)"></span></div>
+      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" role="status" aria-live="polite" style="color:var(--dim)"></span></div>
     </details>
     </div>
     <dl>

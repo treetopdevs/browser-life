@@ -57,6 +57,56 @@ describe('soft roam fixes: kernel', () => {
     put(w, 4 * U, 4 * U);
     expect(w.alarms()).toEqual({ bonds: 0, overlap: 0, speed: 0 });
   });
+
+  it('flow is bounded on the value given (1/1024 to 1/8), not on its rounding', () => {
+    expect(() => bare({ flow: 0.0009 })).toThrow(/Invalid flow/);
+    expect(() => bare({ flow: 0.1251 })).toThrow(/Invalid flow/);
+    expect(() => bare({ flow: Number.NaN })).toThrow(/Invalid flow/);
+    expect(() => bare({ flow: 1 / 1024 })).not.toThrow();
+    expect(() => bare({ flow: 1 / 8 })).not.toThrow();
+  });
+
+  it('foodSpread 0 is the off setting (same world as leaving it out); out of range or not a number is refused', () => {
+    const a = bare({ foodSpread: 0 });
+    const b = bare();
+    for (const w of [a, b]) { put(w, 4 * U, 4 * U); w.food[3] = 50; w.advance(20); }
+    expect(a.digest()).toBe(b.digest());
+    expect(() => bare({ foodSpread: -0.1 })).toThrow(/foodSpread/);
+    expect(() => bare({ foodSpread: Number.NaN })).toThrow(/foodSpread/);
+    expect(() => bare({ foodSpread: 1.01 })).toThrow(/foodSpread/);
+  });
+
+  it('travel counts a cell that moved and then died in the same step', () => {
+    const w = bare({ minStore: 16, leakCell: 0.5 });
+    const c = put(w, 8 * U, 8 * U);
+    w.store[c] = 1;
+    w.vx[c] = 4096;
+    w.stepOnce();
+    expect(w.alive[c]).toBe(0);
+    expect(w.census().travel).toBeGreaterThan(0);
+  });
+
+  it('the overlap alarm counts only pairs whose cells are still those recorded and still overlap now', () => {
+    const w = bare();
+    const a = put(w, 4 * U, 4 * U);
+    const b = put(w, 4 * U + 2 * U, 4 * U); // founding refuses an overlap: move her in afterwards
+    expect(b).toBeGreaterThanOrEqual(0);
+    w.x[b] = 4 * U + U / 4;
+    const runs = (w as unknown as { pairRun: Map<number, { ca: number; cb: number; run: number }> }).pairRun;
+    const key = a * w.cap + b;
+    runs.set(key, { ca: w.cid[a], cb: w.cid[b], run: 50 });
+    expect(w.alarms().overlap).toBe(1);
+    // Parted by the last integration.
+    w.x[b] = 4 * U + 2 * U;
+    expect(w.alarms().overlap).toBe(0);
+    w.x[b] = 4 * U + U / 4;
+    // The slot now holds another cell.
+    runs.set(key, { ca: w.cid[a], cb: w.cid[b] + 1, run: 50 });
+    expect(w.alarms().overlap).toBe(0);
+    runs.set(key, { ca: w.cid[a], cb: w.cid[b], run: 50 });
+    w.alive[b] = 0;
+    expect(w.alarms().overlap).toBe(0);
+  });
 });
 
 describe('soft roam fixes: readouts', () => {

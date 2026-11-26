@@ -63,6 +63,11 @@ function buildDials(): void {
     row.id = `dial-${d.id}`;
     row.innerHTML = `<span>${d.label}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" aria-label="${d.label}" /><input type="number" min="${d.min}" max="${d.max}" step="any" aria-label="${d.label}, exact" /><small></small>`;
     const [range, num] = row.querySelectorAll('input');
+    // An exact value off the slider's grid (a day of 16 on a slider in tens) is shown as it is (step "any"); touching the
+    // slider puts it back on its grid.
+    const onGrid = (): void => { range.step = String(d.step); };
+    range.addEventListener('pointerdown', onGrid);
+    range.addEventListener('keydown', onGrid);
     range.addEventListener('input', () => { dials[d.id] = fixDial(d, Number(range.value)); showDials(); });
     range.addEventListener('change', () => { dials[d.id] = fixDial(d, Number(range.value)); changed(); });
     num.addEventListener('change', () => {
@@ -83,6 +88,8 @@ function showDials(): void {
     const row = el(`dial-${d.id}`);
     const [range, num] = row.querySelectorAll('input');
     const v = dials[d.id];
+    const k = (v - d.min) / d.step;
+    range.step = Math.abs(k - Math.round(k)) < 1e-9 ? String(d.step) : 'any';
     range.value = String(v);
     if (document.activeElement !== num) num.value = String(v);
     const idle = d.idle?.(dials, sw) ?? null;
@@ -123,7 +130,8 @@ function loadHash(): void {
   Object.assign(dials, dialDefaults(start));
   for (const d of SOFT_DIALS) {
     const raw = q.get(d.id);
-    if (raw !== null && raw.trim() !== '') dials[d.id] = fixDial(d, Number(raw));
+    // An empty or malformed value keeps the chosen start's own setting.
+    if (raw !== null && raw.trim() !== '' && Number.isFinite(Number(raw))) dials[d.id] = fixDial(d, Number(raw));
   }
 }
 
@@ -152,6 +160,9 @@ function reset(): void {
   worker.onerror = (event) => { if (mine === gen) fail(event.message || 'The world could not be started'); };
   worker.onmessageerror = () => { if (mine === gen) fail('The worker sent something unreadable'); };
   pacer.reset(performance.now());
+  // A failure disabled One step; a new world that is paused can be stepped again at once.
+  el('play').textContent = pacer.playing ? 'Pause' : 'Play';
+  el<HTMLButtonElement>('step').disabled = pacer.playing;
   set('r-rate', '0');
   set('error', '');
   post({ type: 'reset', gen: mine, opts: dialOptions(switches(), dials), scale: SCALE, paint: paintChoice() });

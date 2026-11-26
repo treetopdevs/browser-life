@@ -713,12 +713,24 @@ describe('soft roam props: fix round 2', () => {
     for (const off of [0, -1, 1]) {
       const w = new SoftRoamWorld(one({ scentGain: 8 }));
       const plan = w.addPlan(rest());
-      for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) w.scent[j * 16 + i] = 1000 - 100 * (Math.abs(i - 8) + Math.abs(j - 8));
+      // The chaser reads the fine field (scentHi), so the peak goes there.
+      const fine = (w as unknown as { scentHi: Uint32Array }).scentHi;
+      for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) { fine[j * 16 + i] = 1000 - 100 * (Math.abs(i - 8) + Math.abs(j - 8)); w.scent[j * 16 + i] = fine[j * 16 + i] >>> 3; }
       const c = w.found(8 * U + 512 + off, 8 * U + 512 + off, [512, 0, -512, 0, 0], 1, 150, plan);
       w.stepOnce();
       expect(Math.abs(w.vx[c])).toBeLessThanOrEqual(2);
       expect(Math.abs(w.vy[c])).toBeLessThanOrEqual(2);
     }
+  });
+
+  it('the same peak does push a chaser that sits a tile or more off its centre (the field is read, not empty)', () => {
+    const w = new SoftRoamWorld(one({ scentGain: 8 }));
+    const plan = w.addPlan(rest());
+    const fine = (w as unknown as { scentHi: Uint32Array }).scentHi;
+    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) { fine[j * 16 + i] = 1000 - 100 * (Math.abs(i - 8) + Math.abs(j - 8)); w.scent[j * 16 + i] = fine[j * 16 + i] >>> 3; }
+    const c = w.found(6 * U + 512, 8 * U + 512, [512, 0, -512, 0, 0], 1, 150, plan);
+    w.stepOnce();
+    expect(w.vx[c]).toBeGreaterThan(20);
   });
 
   it('the matter a thrust costs is paid by the contract rule: floor(n / 65536) plus one when hash % 65536 is below n % 65536', () => {

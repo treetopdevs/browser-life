@@ -758,11 +758,13 @@ export class SoftRoamWorld {
     this.mutQ16 = q16(cfg.mut, 'mut');
     this.planMutQ16 = q16(cfg.planMut, 'planMut');
     // Flow is a share out of 1024 (at most 1/8): diff * share stays below 2^27.
+    // Bounds are checked on the value itself (1/1024 to 1/8 inclusive), before rounding to Q10.
+    if (!Number.isFinite(cfg.flow) || cfg.flow < 1 / 1024 || cfg.flow > 1 / 8) throw new Error(`Invalid flow: ${cfg.flow}`);
     this.flowQ10 = Math.round(cfg.flow * 1024);
-    if (!Number.isFinite(cfg.flow) || this.flowQ10 < 1 || this.flowQ10 > 128) throw new Error(`Invalid flow: ${cfg.flow}`);
     this.wearQ32 = cfg.life === undefined ? 0 : Math.floor(0x100000000 / whole(cfg.life, 'life', 2, 1 << 30));
     this.spreadQ10 = cfg.foodSpread === undefined ? 0 : Math.round(cfg.foodSpread * 1024);
-    if (cfg.foodSpread !== undefined && (!(cfg.foodSpread > 0) || cfg.foodSpread > 1)) throw new Error(`Invalid foodSpread: ${cfg.foodSpread}`);
+    // 0 is the documented off setting and behaves like omission (spreadQ10 0).
+    if (cfg.foodSpread !== undefined && (!Number.isFinite(cfg.foodSpread) || cfg.foodSpread < 0 || cfg.foodSpread > 1)) throw new Error(`Invalid foodSpread: ${cfg.foodSpread}`);
     this.compost = cfg.compost === true;
     this.kinds = cfg.kinds === true;
     this.toughOn = cfg.toughness === true;
@@ -2560,6 +2562,7 @@ export class SoftRoamWorld {
         if (this.relRec[c] > this.bodyRelMax[this.body[c]]) this.bodyRelMax[this.body[c]] = this.relRec[c];
       }
     }
+    let relBodies = 0;
     for (const c of ready) {
       const entry = this.plans[this.pid[c]][this.mode[c]];
       const act = entry & 15;
@@ -2638,14 +2641,21 @@ export class SoftRoamWorld {
         this.offsetMap.set(this.offKey(l, 0, 0), to);
         this.releases++;
         if (this.relGapN > 0) {
-          // The record belongs to the whole releasing body.
-          const l = this.body[c];
-          this.bodyRelMax[l] = t + 1;
-          for (let q = 0; q < this.liveN; q++) if (this.body[this.live[q]] === l) this.relRec[this.live[q]] = t + 1;
-          this.relRec[c] = t + 1;
+          // The record belongs to the whole releasing body. bodyRelMax holds the body for the rest of the step at once;
+          // its members' records are written in one pass after the loop (nothing in the loop reads them), so a step costs
+          // one scan of the live cells however many bodies release.
+          this.bodyRelMax[this.body[c]] = t + 1;
+          relBodies++;
         }
       }
       this.live[this.liveN++] = to;
+    }
+    // A record of t + 1 can only have been written this step (records are at most the step), so it marks exactly the bodies that released.
+    if (relBodies > 0) {
+      for (let q = 0; q < this.liveN; q++) {
+        const c = this.live[q];
+        if (this.bodyRelMax[this.body[c]] === t + 1) this.relRec[c] = t + 1;
+      }
     }
   }
 
@@ -2697,6 +2707,16 @@ export class SoftRoamWorld {
     this.markMouths();
     this.commands();
     this.mechanics();
+    // Travel is summed here, after the last movement and before life: a cell that moves and then dies this step still counts,
+    // and a daughter born later in the step (perhaps in a dead cell's slot) does not.
+    let moved = 0;
+    for (let q = 0; q < this.liveN; q++) {
+      const c = this.live[q];
+      const dx = this.dlt(this.prevX[c], this.x[c]);
+      const dy = this.dlt(this.prevY[c], this.y[c]);
+      moved += isqrt(dx * dx + dy * dy);
+    }
+    this.travel += moved;
     // Life.
     this.buildBuckets();
     this.buildOffsets();
@@ -2722,14 +2742,6 @@ export class SoftRoamWorld {
     }
     if (this.spreadQ10 > 0) this.spreadFood();
     this.relaxScent();
-    let moved = 0;
-    for (let q = 0; q < this.liveN; q++) {
-      const c = this.live[q];
-      const dx = this.dlt(this.prevX[c], this.x[c]);
-      const dy = this.dlt(this.prevY[c], this.y[c]);
-      moved += isqrt(dx * dx + dy * dy);
-    }
-    this.travel += moved;
     this.step++;
   }
 
@@ -2761,7 +2773,18 @@ export class SoftRoamWorld {
       }
     }
     let overlap = 0;
-    for (const v of this.pairRun.values()) if (v.run >= SPEED_RUN) overlap++;
+    // A pair counts only while both slots still hold the recorded cells and they still overlap at the positions reported now
+    // (a cell can die in life, or the last integration can part them, after the run was counted).
+    const near = D - (D >>> 2);
+    for (const [key, v] of this.pairRun) {
+      if (v.run < SPEED_RUN) continue;
+      const a = Math.floor(key / this.cap);
+      const b = key - a * this.cap;
+      if (!this.alive[a] || !this.alive[b] || this.cid[a] !== v.ca || this.cid[b] !== v.cb) continue;
+      const dx = this.dlt(this.x[a], this.x[b]);
+      const dy = this.dlt(this.y[a], this.y[b]);
+      if (dx * dx + dy * dy < near * near) overlap++;
+    }
     return { bonds, overlap, speed };
   }
 

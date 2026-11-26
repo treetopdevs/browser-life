@@ -26,6 +26,21 @@ function rig(pace: number) {
 }
 
 describe('soft roam pacer', () => {
+  it('keeps the picture at the end of a manual step queued behind a pending frame when Play is pressed (slow pace)', () => {
+    const r = rig(5);
+    for (let i = 0; i < 25; i++) r.tick(16.7);
+    r.p.toggle(); // pause, picture part way between two steps
+    expect(r.p.alpha).toBeGreaterThan(0);
+    expect(r.p.alpha).toBeLessThan(1);
+    r.p.wantRepaint();
+    r.tick(16.7, false); // a frame is pending
+    r.p.stepOnce(); // queued behind it
+    r.p.toggle(); // play before the worker replies
+    r.answerPending();
+    for (let i = 0; i < 40; i++) r.tick(16.7);
+    for (let k = 1; k < r.log.length; k++) expect(r.log[k].time).toBeGreaterThanOrEqual(r.log[k - 1].time - 1e-9);
+  });
+
   it('never moves the picture backwards over Pause, One step and Play (time is step + alpha)', () => {
     const r = rig(5);
     for (let i = 0; i < 30; i++) r.tick(16.7);

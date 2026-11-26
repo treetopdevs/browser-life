@@ -59,7 +59,9 @@ b. Upkeep to the reservoir: `leakCell + leakSide x exposed`, `exposed = 4 -` the
    offsets (+-1, 0), (0, +-1): exactly Roam's value, and it does not flicker when a body bends.
 c. (Milestone 2) Touch: cells of different bodies within `1.25 D`, at most 4 contacts per cell chosen by pair-hash
    rank; from snapshot stores a mouth of a body at least twice the other's size takes
-   `min(drain, floor(preyStore / contacts))` from a plain or mouth cell; a mouth on a shell is one hit; shells crack to
+   `min(drain, floor(preyStore / takers))` from a plain or mouth cell, where `takers` counts the eligible contacts that
+   drain that prey cell (a contact the eligibility rule refuses neither takes nor divides the store, though it still
+   uses one of the four places); a mouth on a shell is one hit; shells crack to
    plain at `crack << tough` hits (edible from the next step); `seal` exempts new bodies. Optional `grip`: a mouth
    touching eligible prey is pulled gently toward contact distance, so hunters hold on.
 d. Flow: per mother link, a Q10 share of the store difference from the fuller to the emptier, from snapshot stores,

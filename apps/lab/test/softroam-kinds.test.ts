@@ -571,7 +571,9 @@ describe('soft roam kinds: grip', () => {
 
   it('is refused without kinds and drain', () => {
     expect(() => new SoftRoamWorld(still({ grip: 10, kinds: false }))).toThrow();
-    expect(() => new SoftRoamWorld({ ...still({ grip: 10 }), drain: undefined, crack: undefined })).toThrow();
+    // seal is cleared so the seal guard ('seal needs drain') cannot fire first: only the grip guard can refuse this.
+    expect(() => new SoftRoamWorld({ ...still({ grip: 10 }), seal: undefined, drain: undefined, crack: undefined })).toThrow(/grip needs kinds and drain/);
+    expect(() => new SoftRoamWorld(still({ grip: 10, kinds: false }))).toThrow(/grip needs kinds and drain/);
   });
 });
 

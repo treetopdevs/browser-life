@@ -84,6 +84,8 @@ export class SoftRoamPacer {
       this.manual = 0;
       this.send(k, true);
       this.alpha = 1;
+      // Play pressed while these clicks were queued: carry on from the end of the manual step (alpha 1), keeping any larger credit.
+      if (this.playing) this.owed = Math.max(this.owed, 1);
       this.repaint = false;
       return { kind: 'advance', steps: k, alpha: 1 };
     }

@@ -212,7 +212,9 @@ histories diverge so differences between rows of a few tens of cells are within 
 - **Patches not gated by the sun:** the cycle is gone (1.08), the reservoir is pinned near 0 from step 1,000, and cells settle
   at 700 to 750 plain with 100 mouths. The year's light is still there, but with this off nothing in the numbers follows it.
 
-(Plots: `c2-ctl-nopatchsun.png`, `c2-ctl-noyear.png`, and `runs/softroam/c2-ctl-*-s1/series.png`.)
+(Plots: only `c2-ctl-nopatchsun.png` and `c2-ctl-noyear.png` are kept beside this note. The other controls' series and
+plots were made under `runs/softroam/c2-ctl-*-s1/`, which is not in the repository, so for those the numbers above are
+the record.)
 
 ![seed 1, patches not gated by the sun: no cycle, reservoir at 0](c2-ctl-nopatchsun.png)
 
@@ -220,7 +222,7 @@ histories diverge so differences between rows of a few tens of cells are within 
 
 What each mechanism turned out to do, plainly:
 
-- **The sun's gate on patches is what makes the year.** Turn it off, or turn the year off, and the cycle disappears
+- **The sun's gate on patches looks like what makes the year, from two one-factor controls.** Turn it off, or turn the year off, and the cycle disappears
   (cycle ratio 1.08 and 1.13) and the reservoir runs empty. With it on, patches land fewer in winter, so the reservoir
   fills; in summer they come faster and the reservoir drains. It works as a tuned buffer (see below), not as a general law.
 - **Sight and fear are what drive predation.** Predation goes down by more than half without sight and up 3.5 times without
@@ -229,11 +231,11 @@ What each mechanism turned out to do, plainly:
   (about 650 over the whole run); with truce off it is 1,025 and with jaws off 754. By these seed 1 numbers truce cuts it by
   about a quarter and jaws by under 10 percent, and neither is large enough to tell from seed noise on one seed.
 - **Target concentration does not show piling.** Hunting / targets is about 2.1 by default, 1.6 to 1.7 with truce, jaws or
-  the year off. That is two mouths per target cell, which is what one two-mouthed hunter body does to a prey crumb; it
-  would be much higher (and rise) if hunters were crowding one prey. By a second count (mouths of other bodies within 1.5
+  the year off. That is two mouths per target cell, which is what one two-mouthed hunter body does to a prey crumb. By a second count (mouths of other bodies within 1.5
   tiles of a non-mouth cell that has any) the mean is 1.2 to 1.35 in every control. But the targets are nearly all crumbs:
   only about 1 percent of target cells are in a body of 4 or more cells (default), so hunters are not hunting
-  armoured bodies at all. The kernel's own old caution holds: this ratio is not a spacing measure, and no rule here
+  armoured bodies at all. The kernel's own old caution holds: this ratio is not a spacing measure (hunters could crowd one
+  prey body while their mouths target different cells of it, and the ratio would not show it), and no rule here
   spreads hunters out. Earlier explorer runs on other settings saw 3 to 7 hunters on one grazer by eye; I did not look for
   that in the movies.
 - **The release cap does not make bodies bigger** (cells in bodies of 10 or more: 0.1% with it, 0.1% without, largest 12
@@ -310,9 +312,11 @@ Why, from the three explorers and the combined runs (six settings, A to F, both 
 - The swing is carried by a tuned buffer (small frequent patches, leaky cells, a 12,000-step year, a reservoir that holds
   20 to 60 percent of the matter), is sensitive to it, and a year is 12,000 steps, which is minutes at the page's pace.
 - The contract asked for one control with constant full light, ungated patches and leaves still earning. It was not run:
-  the year and the patch gate were turned off in separate runs instead, and day and night stayed on in both.
+  the year and the patch gate were turned off in separate runs instead, and day and night stayed on in both. So neither run
+  isolates the sun mechanism as a whole, and this note does not separate what comes from the sun from what comes from the year
+  or the patch gate; that control is still owed.
 - Known and left: at winter 0 in deepest winter the painter still draws a faint moving band on ground the kernel calls
-  fully dark; `look.ts --series` pointed at a movie frame's path would overwrite that frame.
+  fully dark.
 - The first year is a start-up, not a cycle: cells grow from 120 and the reservoir drains from about 80,000.
 - The values were tuned with a 6-cell hunter plan; a review fix then grew it to 8 cells (at releaseMin 8 the 6-cell hunter
   could never release). Every run in this note is on the 8-cell plan, but the tuning was not repeated.
