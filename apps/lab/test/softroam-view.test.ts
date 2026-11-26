@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSoftRoamConfig, ROAM_GENES, SOFT_U, type SoftRoamConfig, SoftRoamWorld } from '../src/softroam/kernel.ts';
-import { foundSoftRoam, paintSoftRoam, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig, foodTone } from '../src/softroam/view.ts';
+import { foundSoftRoam, paintSoftRoam, softTimeWords, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig, foodTone, softFamilies, softFamily, SOFT_OWN, SEASONS_DEFAULTS, softSeason, softSky, softYearLight } from '../src/softroam/view.ts';
+import { KIND_LEAF, KIND_MOUTH, KIND_SHELL, softRoamLight } from '../src/softroam/kernel.ts';
 import { ROAM_PLANS, ROAM_TYPES } from '../src/roam/view.ts';
 
 const U = SOFT_U;
@@ -237,10 +238,17 @@ describe('soft roam view: kinds', () => {
     return o;
   };
 
-  it('the garden start turns kinds, touch feeding, seal, cracking and shell costs on, and is the default', () => {
-    const a = softRoamConfig({ seed: 1 });
+  it('the garden start turns kinds, touch feeding, seal, cracking and shell costs on (and the seasons start, the default, is the garden with more)', () => {
+    const a = softRoamConfig({ seed: 1, start: 'garden' });
     const b = softRoamConfig({ seed: 1, start: 'garden' });
     expect(a).toEqual(b);
+    const d = softRoamConfig({ seed: 1 });
+    expect(d).toEqual(softRoamConfig({ seed: 1, start: 'seasons' }));
+    for (const k of ['kinds', 'drain', 'seal', 'shellBite', 'shellLeak', 'grip'] as const) expect(d[k]).toBe(a[k]);
+    // The seasons has its own economy (cheaper cells, small frequent patches, hard shells); the garden keeps the page world.
+    expect(d.crack).toBe(10000);
+    expect([d.birthStore, d.minStore, d.patchFood, d.patchEvery, d.leakSide, d.leakCell]).toEqual([60, 15, 1000, 12, 0.008, 0.004]);
+    expect([a.birthStore, a.minStore, a.patchFood, a.patchEvery, a.leakSide, a.leakCell]).toEqual([150, 30, 4000, 20, 0.002, 0.001]);
     expect([a.kinds, a.drain, a.seal, a.crack, a.shellBite, a.shellLeak]).toEqual([true, 1, 200, 300, 1, 0.1]);
     expect(a.toughness).toBeUndefined();
     // An option given wins over the line-up; the plain grown starts keep no kinds.
@@ -250,12 +258,12 @@ describe('soft roam view: kinds', () => {
       const c = softRoamConfig({ seed: 1, start });
       expect([c.kinds, c.drain, c.crack, c.shellBite, c.seal]).toEqual([undefined, undefined, undefined, undefined, undefined]);
     }
-    const w = foundSoftRoam({ seed: 1, size: 32 });
+    const w = foundSoftRoam({ seed: 1, size: 32, start: 'garden' });
     expect(w.cfg.kinds).toBe(true);
   });
 
   it('hunters and armoured founders both exist in the garden, and the plain start makes neither', () => {
-    const w = foundSoftRoam({ seed: 1 });
+    const w = foundSoftRoam({ seed: 1, start: 'garden' });
     w.advance(600);
     const c = w.census();
     expect(c.mouths).toBeGreaterThan(0);
@@ -266,7 +274,7 @@ describe('soft roam view: kinds', () => {
   });
 
   it('painting never touches the world, and feeding, hits and cracks show in the memory and the picture', () => {
-    const w = foundSoftRoam({ seed: 1, overrides: { crack: 3 } });
+    const w = foundSoftRoam({ seed: 1, start: 'garden', overrides: { crack: 3 } });
     const mem = new SoftPaintMemory();
     mem.observe(w);
     let threads = 0, rings = 0, flashes = 0;
@@ -311,7 +319,7 @@ describe('soft roam view: kinds', () => {
   });
 
   it('a fed-on cell dims and its mouth warms, eased in over a few steps and never in one jump', () => {
-    const w = foundSoftRoam({ seed: 1 });
+    const w = foundSoftRoam({ seed: 1, start: 'garden' });
     const mem = new SoftPaintMemory();
     mem.observe(w);
     let found: { m: number; p: number } | null = null;
@@ -353,7 +361,7 @@ describe('soft roam view: kinds', () => {
   });
 
   it('the picture with kinds on stays steady from frame to frame', () => {
-    const w = foundSoftRoam({ seed: 2, overrides: { crack: 3 } });
+    const w = foundSoftRoam({ seed: 2, start: 'garden', overrides: { crack: 3 } });
     const mem = new SoftPaintMemory();
     mem.observe(w);
     w.advance(900);
@@ -403,5 +411,391 @@ describe('food haze tone', () => {
     expect(blueAt(8, 8)).toBeGreaterThan(empty + 6);
     expect(blueAt(3, 3)).toBeGreaterThan(blueAt(8, 8) + 20);
     expect(w.digest()).toBe(d0);
+  });
+});
+
+describe('soft roam view: the seasons start and its founders', () => {
+  it('the seasons start is the default, has every chunk 2 key on, and the garden has none of them', () => {
+    const c = softRoamConfig({ seed: 1, start: 'seasons' });
+    expect(softRoamConfig({ seed: 1 })).toEqual(c);
+    for (const [k, v] of Object.entries(SEASONS_DEFAULTS)) expect((c as unknown as Record<string, unknown>)[k], k).toBe(v);
+    const g = softRoamConfig({ seed: 1, start: 'garden' }) as unknown as Record<string, unknown>;
+    for (const k of Object.keys(SEASONS_DEFAULTS)) expect(g[k], k).toBeUndefined();
+    // An explicit option wins, and false or an override does too; any start takes the keys when given.
+    expect(softRoamConfig({ seed: 1, start: 'seasons', day: 600, leaf: 0, truce: false }).day).toBe(600);
+    expect(softRoamConfig({ seed: 1, start: 'seasons', leaf: 0 }).leaf).toBe(0);
+    expect(softRoamConfig({ seed: 1, start: 'seasons', truce: false }).truce).toBeUndefined();
+    expect(softRoamConfig({ seed: 1, start: 'seasons', overrides: { sight: 2 } }).sight).toBe(2);
+    expect(softRoamConfig({ seed: 1, start: 'garden', day: 400 }).day).toBe(400);
+    expect(softRoamConfig({ seed: 1, start: 'seasons', size: 64 }).matter).toBe(softRoamConfig({ seed: 1, start: 'seasons' }).matter / 4);
+  });
+
+  it('seasons founders hold all four types, well apart, with their own family numbers; the garden rows are unchanged', () => {
+    const w = foundSoftRoam({ seed: 3, size: 64, start: 'seasons' });
+    w.checkInvariants();
+    const rows = softFamilies(w);
+    expect(rows.slice(0, 11).map((r) => r.name)).toEqual(['chasers', 'wanderers', 'sitters', 'single cells', 'big bodies', 'lines', 'plates', 'crosses', 'blocks', 'specks', 'bushes']);
+    for (const id of ['grazer', 'leafbush', 'hunter'] as const) {
+      const row = rows[softFamily(id) - 1];
+      expect(row.name).toBe(SOFT_OWN[id].name);
+      expect(softFamily(id)).toBeGreaterThan(11);
+      expect(row.cells).toBeGreaterThan(0);
+    }
+    expect(rows[softFamily('plate' as never) - 1].cells).toBeGreaterThan(0);
+  });
+
+  /** One founder of a type of its own alone in plenty of food; the body it grows and the size it had when it first let a daughter go. */
+  function grownAlone(id: 'grazer' | 'leafbush' | 'hunter'): { size: number; atRelease: number; kinds: string[] } {
+    const cfg = softRoamConfig({ seed: 1, size: 32, start: 'seasons', overrides: { startPatches: 0, patchEvery: 1_000_000, matter: 400_000, releaseGap: 100_000 } });
+    delete cfg.life;
+    const w = new SoftRoamWorld(cfg);
+    const info = SOFT_OWN[id];
+    w.found(16 * U, 16 * U, info.genes, softFamily(id), undefined, w.addPlan(info.plan));
+    for (let i = 0; i < 1024; i++) { w.food[i] += 150; w.reservoir -= 150; }
+    let atRelease = 0;
+    for (let t = 0; t < 600 && atRelease === 0; t++) {
+      let big = 0;
+      for (let c = 0; c < w.cap; c++) if (w.alive[c]) big = Math.max(big, w.bodySize[w.body[c]]);
+      const before = w.census().releases;
+      w.stepOnce();
+      if (w.census().releases > before) atRelease = big;
+    }
+    for (let t = 0; t < 100; t++) w.stepOnce();
+    let best = -1, bs = 0;
+    for (let c = 0; c < w.cap; c++) if (w.alive[c] && w.bodySize[w.body[c]] > bs) { bs = w.bodySize[w.body[c]]; best = c; }
+    const kinds: string[] = [];
+    for (let c = 0; c < w.cap; c++) if (w.alive[c] && w.body[c] === w.body[best]) kinds.push('.SML'[w.kind[c]]);
+    return { size: bs, atRelease, kinds };
+  }
+
+  it('the armoured grazer grows to 12 cells (plain eaters inside shells) before it lets any daughter go', () => {
+    const g = grownAlone('grazer');
+    expect(g.atRelease).toBeGreaterThanOrEqual(9);
+    expect(g.size).toBe(12);
+    expect(g.kinds.filter((k) => k === 'S').length).toBe(8);
+    expect(g.kinds.filter((k) => k === '.').length).toBe(4);
+  });
+  it('the leaf bush grows to 12 cells (five plain, seven leaves) before it lets any daughter go', () => {
+    const g = grownAlone('leafbush');
+    expect(g.atRelease).toBeGreaterThanOrEqual(9);
+    expect(g.kinds.filter((k) => k === 'L').length).toBeGreaterThanOrEqual(6);
+    expect(g.kinds.filter((k) => k === '.').length).toBeGreaterThanOrEqual(5);
+  });
+  it('the hunter grows to 8 cells (two mouths in front, six plain behind) before it lets any daughter go', () => {
+    const g = grownAlone('hunter');
+    expect(g.atRelease).toBeGreaterThanOrEqual(8);
+    expect(g.size).toBe(8);
+    expect(g.kinds.filter((k) => k === 'M').length).toBe(2);
+    expect(g.kinds.filter((k) => k === '.').length).toBe(6);
+    expect(KIND_SHELL + KIND_MOUTH + KIND_LEAF).toBe(6);
+  });
+
+  it('every founder type of its own releases at the page defaults (releaseMin 8), unmutated: a plan smaller than the release cap would be sterile', () => {
+    for (const id of ['grazer', 'leafbush', 'hunter'] as const) {
+      const cfg = softRoamConfig({ seed: 1, size: 32, start: 'seasons', mut: 0, planMut: 0, overrides: { startPatches: 0, patchEvery: 1_000_000, matter: 400_000 } });
+      expect(cfg.releaseMin, id).toBe(SEASONS_DEFAULTS.releaseMin);
+      delete cfg.life;
+      const w = new SoftRoamWorld(cfg);
+      const info = SOFT_OWN[id];
+      w.found(16 * U, 16 * U, info.genes, softFamily(id), undefined, w.addPlan(info.plan));
+      for (let i = 0; i < 1024; i++) { w.food[i] += 150; w.reservoir -= 150; }
+      for (let t = 0; t < 1500; t++) w.stepOnce();
+      expect(w.census().releases, id).toBeGreaterThan(0);
+    }
+  });
+
+  it('a seasons world keeps matter whole, releases happen, and a body is at least releaseMin cells when it releases', () => {
+    const w = foundSoftRoam({ seed: 1, size: 128, start: 'seasons' });
+    let releases = 0;
+    for (let t = 0; t < 4000; t++) {
+      // The size of each cell's body as the step starts, by cell serial: a body only loses cells (and may split) before its release, so the releaser's size now is at least what it had then.
+      const was = new Map<number, number>();
+      for (let c = 0; c < w.cap; c++) if (w.alive[c]) was.set(w.cid[c], w.bodySize[w.body[c]]);
+      const before = w.census().releases;
+      w.stepOnce();
+      const made = w.census().releases - before;
+      if (made > 0) {
+        releases += made;
+        // A release writes this step's record into every cell of the releasing body; a released daughter starts with none. Each releasing body must have held releaseMin cells.
+        let seen = 0;
+        for (let c = 0; c < w.cap; c++) {
+          if (!w.alive[c] || w.relRec[c] !== w.step) continue;
+          const size = was.get(w.cid[c]);
+          if (size !== undefined) { seen++; expect(size, `step ${t}`).toBeGreaterThanOrEqual(SEASONS_DEFAULTS.releaseMin); }
+        }
+        expect(seen, `step ${t}`).toBeGreaterThan(0);
+      }
+    }
+    expect(releases).toBeGreaterThan(0);
+    expect(w.census().releasesHeld).toBeGreaterThan(0);
+    expect(w.census().residual).toBe(0);
+    w.checkInvariants();
+  });
+});
+
+describe('soft roam view: the seasons start, edges', () => {
+  it('a seasons start with kinds off, or touch feeding off, or no day, is a world with the keys that need them left out (and an explicit key that cannot work is still refused)', () => {
+    const noKinds = foundSoftRoam({ seed: 1, size: 32, kinds: false });
+    expect(noKinds.cfg.kinds).toBeUndefined();
+    for (const k of ['sight', 'fear', 'leaf'] as const) expect(noKinds.cfg[k], k).toBeUndefined();
+    expect(noKinds.cfg.day).toBe(SEASONS_DEFAULTS.day);
+    noKinds.advance(50);
+    expect(noKinds.census().residual).toBe(0);
+    const noDrain = foundSoftRoam({ seed: 1, size: 32, drain: 0 });
+    for (const k of ['sight', 'fear'] as const) expect(noDrain.cfg[k], k).toBeUndefined();
+    expect(noDrain.cfg.leaf).toBe(SEASONS_DEFAULTS.leaf);
+    const noDay = foundSoftRoam({ seed: 1, size: 32, day: false as unknown as number });
+    for (const k of ['day', 'year', 'winter', 'patchSun', 'leaf'] as const) expect(noDay.cfg[k], k).toBeUndefined();
+    expect(noDay.cfg.sight).toBe(SEASONS_DEFAULTS.sight);
+    expect(() => foundSoftRoam({ seed: 1, size: 32, kinds: false, sight: 3 })).toThrow(/sight and fear need kinds and drain/);
+  });
+
+  it('the family colours of the seasons types are not the kind colours drawn over them (a leaf bush is not leaf green, a hunter is not mouth red)', () => {
+    const dist = (a: readonly number[], b: readonly number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const kinds = { mouth: [255, 60, 50], leaf: [70, 220, 80], shell: [215, 210, 180] };
+    // Each body's plain cells sit beside the kind that is drawn in the same body: a bush beside its leaves, a hunter beside its mouths, a grazer beside its shells.
+    expect(dist(SOFT_OWN.leafbush.colour, kinds.leaf)).toBeGreaterThan(90);
+    expect(dist(SOFT_OWN.hunter.colour, kinds.mouth)).toBeGreaterThan(90);
+    expect(dist(SOFT_OWN.grazer.colour, kinds.shell)).toBeGreaterThan(90);
+  });
+
+  it('the time in words counts a short last day of a year that is not a whole number of days', () => {
+    const f = (step: number, day: number, year: number) => ({ step, sky: { day, year, dayShare: (step % day) / day, yearShare: (step % year) / year } });
+    expect(softTimeWords(f(400, 400, 401))).toMatch(/day 2 of the year's 2, the last one cut short/);
+    expect(softTimeWords(f(0, 400, 12000))).toMatch(/day 1 of the year's 30 \(year 1\)/);
+    expect(softTimeWords(f(12000 + 11999 % 12000, 400, 12000))).toMatch(/day 30 of the year's 30/);
+    for (const [day, year] of [[400, 401], [64, 1000], [100, 250], [16, 17]]) {
+      for (let t = 0; t < 3 * year; t += 7) {
+        const m = /day (\d+) of the year's (\d+)/.exec(softTimeWords(f(t, day, year)));
+        expect(Number(m![1]), `${day}/${year} at ${t}`).toBeLessThanOrEqual(Number(m![2]));
+      }
+    }
+    expect(softTimeWords(f(5, 0, 0))).toMatch(/^no sun/);
+  });
+
+  it('the time in words does not place a lit band in complete darkness', () => {
+    const dark = { step: 0, sky: { day: 400, year: 12000, dayShare: 0, yearShare: 0, meanLight: 0 } };
+    expect(softTimeWords(dark)).toMatch(/dark everywhere/);
+    expect(softTimeWords(dark)).not.toMatch(/lit band/);
+    expect(softTimeWords({ ...dark, sky: { ...dark.sky, meanLight: 0.3 } })).toMatch(/lit band/);
+    // A real world with a winter of 0 at step 0 has no light on any tile, and says so.
+    const w = foundSoftRoam({ seed: 1, size: 16, start: 'seasons', winter: 0 });
+    expect(softSky(w).meanLight).toBe(0);
+    expect(softTimeWords({ step: w.step, sky: { day: w.cfg.day!, year: w.cfg.year!, dayShare: 0, yearShare: 0, meanLight: softSky(w).meanLight } })).toMatch(/dark everywhere/);
+  });
+
+  it('an override that turns kinds off on the seasons start gives a world without kinds, sight, fear or leaves rather than a refusal', () => {
+    const w = foundSoftRoam({ seed: 1, size: 32, start: 'seasons', overrides: { kinds: false } });
+    expect(w.cfg.kinds).toBe(false);
+    expect(w.cfg.sight).toBeUndefined();
+    expect(w.cfg.fear).toBeUndefined();
+    expect(w.cfg.leaf).toBeUndefined();
+    expect(w.cfg.day).toBe(SEASONS_DEFAULTS.day);
+  });
+});
+
+describe('soft roam view: the sky', () => {
+  const sky = (over: Partial<SoftRoamConfig> = {}): SoftRoamWorld => bare({ kinds: true, drain: 1, day: 64, ...over });
+  const column = (px: Uint8Array, tx: number, ty = 2): number => {
+    const p = ((ty * SCALE + 2) * SIDE + tx * SCALE + 3) * 4;
+    return px[p] + px[p + 1] + px[p + 2];
+  };
+  const brightest = (px: Uint8Array): number => {
+    let best = 0, bv = -1;
+    for (let tx = 0; tx < SIZE; tx++) { const v = column(px, tx); if (v > bv) { bv = v; best = tx; } }
+    return best;
+  };
+
+  it('year and day shares: winter floor at the start of a year, midsummer halfway, and the kernel light never above them', () => {
+    const cfg = { size: 64, day: 64, year: 1024, winter: 0.25 };
+    expect(softSeason(cfg, 0)).toBe(0);
+    expect(softSeason(cfg, 512)).toBe(1);
+    expect(softSeason({}, 5)).toBe(1);
+    expect(softYearLight(cfg, 0)).toBeCloseTo(0.25, 6);
+    expect(softYearLight(cfg, 512)).toBe(1);
+    expect(softYearLight({}, 7)).toBe(1);
+    for (const t of [0, 100, 512, 777]) {
+      let max = 0;
+      for (let tx = 0; tx < 64; tx++) max = Math.max(max, softRoamLight(cfg, tx, 0, t));
+      expect(max / 256).toBeLessThanOrEqual(softYearLight(cfg, t) + 1e-9);
+      expect(max / 256).toBeGreaterThan(softYearLight(cfg, t) - 0.05);
+    }
+    const w = sky({ year: 128 });
+    expect(softSky(w).yearShare).toBe(0);
+    expect(softSky(w).meanLight).toBeGreaterThan(0);
+    expect(softSky(bare()).meanLight).toBe(1);
+  });
+
+  it('night dims the ground and food haze, day warms it, and the band visibly sweeps round the world', () => {
+    const w = sky();
+    const mem = new SoftPaintMemory();
+    const a = image(w, 1, mem);
+    const lit0 = brightest(a);
+    let dim = 1e9, bright = 0;
+    for (let tx = 0; tx < SIZE; tx++) { const v = column(a, tx); dim = Math.min(dim, v); bright = Math.max(bright, v); }
+    expect(bright).toBeGreaterThan(dim + 40);
+    // The warm side is redder than it is blue; the night side is not.
+    const p = (tx: number) => ((2 * SCALE + 2) * SIDE + tx * SCALE + 3) * 4;
+    let lo = 0;
+    for (let tx = 0; tx < SIZE; tx++) if (column(a, tx) === dim) lo = tx;
+    expect(a[p(lit0)] - a[p(lit0) + 2]).toBeGreaterThan(a[p(lo)] - a[p(lo) + 2]);
+    for (let i = 0; i < 16; i++) w.stepOnce();
+    const b = image(w, 1, mem);
+    const shift = (brightest(b) - lit0 + SIZE) % SIZE;
+    expect(shift).toBeGreaterThanOrEqual(3);
+    expect(shift).toBeLessThanOrEqual(5);
+  });
+
+  it('shows no column edges: neighbouring pixels of the ground never jump, and a half-step frame sits between its neighbours', () => {
+    const w = sky();
+    for (let i = 0; i < 5; i++) w.stepOnce();
+    const mem = new SoftPaintMemory();
+    const f0 = image(w, 0, mem), fh = image(w, 0.5, mem), f1 = image(w, 1, mem);
+    for (const f of [f0, fh, f1]) {
+      let worst = 0;
+      for (let x = 1; x < SIDE; x++) { const p = (40 * SIDE + x) * 4, q = p - 4; worst = Math.max(worst, Math.abs(f[p] - f[q]) + Math.abs(f[p + 1] - f[q + 1]) + Math.abs(f[p + 2] - f[q + 2])); }
+      expect(worst).toBeLessThanOrEqual(20);
+    }
+    for (let x = 0; x < SIDE; x += 7) {
+      const p = (40 * SIDE + x) * 4;
+      const s = (i: number) => f0[p + i] + f1[p + i];
+      for (let i = 0; i < 3; i++) expect(Math.abs(2 * fh[p + i] - s(i))).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it('winter is cooler and dimmer than summer at the same hour of the day', () => {
+    const cfg = { year: 400, winter: 0.2 };
+    const win = sky(cfg);
+    const sum = sky(cfg);
+    // Year step 0 is deepest winter, step 200 midsummer; both at day step 0 mod 64 is not needed: compare the brightest column of each.
+    while (sum.step < 192) sum.stepOnce();
+    while (win.step < 0) win.stepOnce();
+    const a = image(win, 1, new SoftPaintMemory()), b = image(sum, 1, new SoftPaintMemory());
+    let wm = 0, sm = 0;
+    for (let tx = 0; tx < SIZE; tx++) { wm = Math.max(wm, column(a, tx)); sm = Math.max(sm, column(b, tx)); }
+    expect(sm).toBeGreaterThan(wm + 20);
+  });
+
+  it('a leaf is green, brighter in the light than in the dark, and eases rather than pops', () => {
+    const w = bare({ kinds: true, drain: 1, day: 64, leaf: 1, size: SIZE });
+    // A founder with a plain plan, then flip its kind to a leaf for the picture (found makes plain cells).
+    const c = put(w, 8 * U, 8 * U);
+    w.kind[c] = KIND_LEAF;
+    const mem = new SoftPaintMemory();
+    const at = [0, 0];
+    const cellPix = (px: Uint8Array) => { softCellPosition(w, c, 1, at); const p = ((Math.floor(at[1] * SCALE)) * SIDE + Math.floor(at[0] * SCALE)) * 4; return [px[p], px[p + 1], px[p + 2]]; };
+    const px0 = cellPix(image(w, 1, mem));
+    expect(px0[1]).toBeGreaterThan(px0[0] + 15);
+    expect(px0[1]).toBeGreaterThan(px0[2] + 15);
+    let lastG = px0[1];
+    let maxJump = 0;
+    for (let i = 0; i < 40; i++) {
+      w.stepOnce();
+      const g = cellPix(image(w, 1, mem))[1];
+      maxJump = Math.max(maxJump, Math.abs(g - lastG));
+      lastG = g;
+    }
+    expect(maxJump).toBeLessThan(25);
+  });
+
+  it('a world without a day paints exactly as before: no sky work, the ground untouched', () => {
+    const a = image(bare(), 1, new SoftPaintMemory());
+    expect(a).toEqual(BASE);
+  });
+  it('food haze is dimmed by night and shows through it: the same food is brighter in the light, and brighter than bare ground in the same light', () => {
+    const mk = (): SoftRoamWorld => {
+      const w = sky();
+      // The same heap of food on two tiles in one row: one under the lit band and one in the night.
+      const lit = [...Array(SIZE).keys()].filter((tx) => softRoamLight(w.cfg, tx, 2, w.step) === 256);
+      const dark = [...Array(SIZE).keys()].filter((tx) => softRoamLight(w.cfg, tx, 2, w.step) === 0);
+      expect(lit.length).toBeGreaterThan(0);
+      expect(dark.length).toBeGreaterThan(0);
+      return Object.assign(w, { litTile: lit[0], darkTile: dark[0] });
+    };
+    const w = mk() as SoftRoamWorld & { litTile: number; darkTile: number };
+    const bareW = mk() as SoftRoamWorld & { litTile: number; darkTile: number };
+    for (const tx of [w.litTile, w.darkTile]) { w.food[2 * SIZE + tx] += 200; w.reservoir -= 200; }
+    const withFood = image(w, 1, new SoftPaintMemory());
+    const without = image(bareW, 1, new SoftPaintMemory());
+    const at = (px: Uint8Array, tx: number) => { const p = ((2 * SCALE + 2) * SIDE + tx * SCALE + 3) * 4; return px[p] + px[p + 1] + px[p + 2]; };
+    expect(at(withFood, w.litTile)).toBeGreaterThan(at(without, w.litTile) + 25);
+    expect(at(withFood, w.darkTile)).toBeGreaterThan(at(without, w.darkTile) + 5);
+    expect(at(withFood, w.litTile)).toBeGreaterThan(at(withFood, w.darkTile) + 25);
+  });
+
+  it('the winter floor shows: a winter of 0 is dark all over at the bottom of the year, a winter of 1 looks like midsummer', () => {
+    const spread = (px: Uint8Array): number => { let lo = 1e9, hi = 0; for (let tx = 0; tx < SIZE; tx++) { const v = column(px, tx); lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
+    const dark = image(sky({ year: 384, winter: 0 }), 1, new SoftPaintMemory());
+    const full = image(sky({ year: 384, winter: 1 }), 1, new SoftPaintMemory());
+    const some = image(sky({ year: 384, winter: 0.5 }), 1, new SoftPaintMemory());
+    expect(spread(dark)).toBeLessThanOrEqual(6);
+    expect(spread(full)).toBeGreaterThan(40);
+    expect(spread(some)).toBeGreaterThan(spread(dark) + 10);
+    expect(spread(some)).toBeLessThan(spread(full));
+    // Winter 1 is no winter: the bottom of the year is the same picture as the top (192 is midsummer at the same hour of a 64-step day).
+    const w = sky({ year: 384, winter: 1 });
+    while (w.step < 192) w.stepOnce();
+    expect(image(w, 1, new SoftPaintMemory())).toEqual(full);
+    // Brightness follows the floor in order.
+    const mean = (px: Uint8Array) => { let t = 0; for (let tx = 0; tx < SIZE; tx++) t += column(px, tx); return t; };
+    expect(mean(dark)).toBeLessThan(mean(some));
+    expect(mean(some)).toBeLessThan(mean(full));
+  });
+
+  it('a leaf shows what it earns: brighter in the light than in the dark, and not at all lit when leaf income is 0', () => {
+    const leafWorld = (leaf: number, lit: boolean) => {
+      const w = bare({ kinds: true, drain: 1, day: 64, leaf, size: SIZE });
+      const tx = [...Array(SIZE).keys()].find((t) => softRoamLight(w.cfg, t, 8, 0) === (lit ? 256 : 0))!;
+      const c = put(w, tx * U + U / 2, 8 * U);
+      w.kind[c] = KIND_LEAF;
+      return { w, c };
+    };
+    const green = (leaf: number, lit: boolean): number => {
+      const { w, c } = leafWorld(leaf, lit);
+      const mem = new SoftPaintMemory();
+      // The light the leaf stands in eases over many steps; the day moves on meanwhile, so hold the cell's light by taking the picture at once and again after some steps.
+      for (let i = 0; i < 3; i++) w.stepOnce();
+      const at = [0, 0];
+      let g = 0;
+      const frame = image(w, 1, mem);
+      softCellPosition(w, c, 1, at);
+      const p = ((Math.floor(at[1] * SCALE)) * SIDE + Math.floor(at[0] * SCALE)) * 4;
+      g = frame[p + 1];
+      return g;
+    };
+    expect(green(2, true)).toBeGreaterThan(green(2, false) + 8);
+    expect(green(4, true)).toBeGreaterThan(green(0, true) + 8);
+    expect(green(1, true)).toBeGreaterThan(green(0, true) + 8);
+    expect(green(0, true)).toBeLessThanOrEqual(green(0, false) + 1);
+  });
+
+  it('a leaf shows what it was paid, not what it could have been: a lit leaf on an empty reservoir looks like an unlit one', () => {
+    const run = (funded: boolean): number => {
+      const w = bare({ kinds: true, drain: 1, day: 64, leaf: 4, size: SIZE });
+      const tx = [...Array(SIZE).keys()].find((t) => softRoamLight(w.cfg, t, 8, 0) === 256)!;
+      const c = put(w, tx * U + U / 2, 8 * U);
+      w.kind[c] = KIND_LEAF;
+      if (!funded) { w.food[0] += w.reservoir; w.reservoir = 0; }
+      const mem = new SoftPaintMemory();
+      for (let i = 0; i < 3; i++) w.stepOnce();
+      const at = [0, 0];
+      const frame = image(w, 1, mem);
+      softCellPosition(w, c, 1, at);
+      return frame[((Math.floor(at[1] * SCALE)) * SIDE + Math.floor(at[0] * SCALE)) * 4 + 1];
+    };
+    expect(run(true)).toBeGreaterThan(run(false) + 8);
+  });
+
+  it('a world without a day paints exactly as the painter before the sun was added did (pinned from that painter)', () => {
+    const fnv = (b: Uint8Array) => { let h = 0x811c9dc5; for (const x of b) { h ^= x; h = Math.imul(h, 0x01000193) >>> 0; } return h; };
+    const grown = foundSoftRoam({ seed: 3, size: 32, start: 'grown-all' });
+    grown.advance(120);
+    const side = 32 * SCALE;
+    const px = (w: SoftRoamWorld, paint: 'garden' | 'plain', alpha: number) => { const o = new Uint8Array(side * side * 4); paintSoftRoam(w, paint, SCALE, alpha, o, new SoftPaintMemory()); return o; };
+    expect(fnv(px(grown, 'garden', 0.4))).toBe(3063900015);
+    expect(fnv(px(grown, 'plain', 0.4))).toBe(3348190510);
+    const gar = foundSoftRoam({ seed: 5, size: 32, start: 'garden' });
+    gar.advance(400);
+    expect(fnv(px(gar, 'garden', 0.7))).toBe(840419211);
   });
 });

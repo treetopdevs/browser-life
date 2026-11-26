@@ -16,8 +16,8 @@
  * and never writes to it.
  */
 
-import { ROAM_PLANS, ROAM_STARTS, ROAM_TYPES, roamFamily, roamPlanColour, type RoamTypeId } from '../roam/view.ts';
-import { defaultSoftRoamConfig, KIND_MOUTH, KIND_SHELL, PLAN_REST, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld } from './kernel.ts';
+import { ROAM_PLANS, ROAM_STARTS, ROAM_TYPES, roamPlanColour, type RoamTypeId } from '../roam/view.ts';
+import { defaultSoftRoamConfig, KIND_LEAF, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld, softRoamLight } from './kernel.ts';
 
 export { ROAM_PLANS };
 
@@ -25,8 +25,75 @@ const U = SOFT_U;
 
 // ---------------------------------------------------------------------------------------------------- starts
 
+// ---------------------------------------------------------------------------------------------------- founder types of its own
+
+/** Acts of a plan mode (as in Roam): keep the daughter in front, to the right, behind, to the left; or let it go there; or rest. */
+const KF = 0, KR = 1, KB = 2, KL = 3, GF = 4;
+const R = 15; // a mode that rests
+const PL = 0, SHELL = KIND_SHELL, MOUTH = KIND_MOUTH, LEAF = KIND_LEAF;
+
+/**
+ * A plan from the modes that do something: mode -> [act, kept (or released) daughter's mode, own next mode, the daughter's kind].
+ * The rest only rest. A released daughter should be plain (a leaf cannot eat, so a one-cell leaf body starves), and always starts in mode 0.
+ */
+export function softPlan(modes: Record<number, readonly [act: number, child: number, next: number, kind?: number]>): number[] {
+  const plan = Array.from({ length: PLAN_MODES }, (_, m) => planEntry(PLAN_REST, 0, m));
+  for (const [m, [act, child, next, kind]] of Object.entries(modes)) plan[Number(m)] = planEntry(act, child, next, kind ?? PL);
+  return plan;
+}
+
+/**
+ * Plans of Soft Roam's own, each written as the body it grows (x runs along the way the founder faces, y to its right; a cell's own front is the
+ * way it was placed from its mother). Kinds are the kinds of the daughter an entry makes.
+ *
+ * - `grazer`, 12 cells: a row of four plain cells that eat, each with a shell above and below it. The front cell of the row lets daughters go
+ *   ahead only after its own two shells are in.
+ * - `leafbush`, 12 cells: a plain cross of five that eats (the middle cell builds its four arms) and leaves around it: a tip on three arms and a
+ *   leaf in each corner of the cross, where their bare sides catch the light. The fourth arm builds its two corner leaves and lets daughters go
+ *   from its free tip.
+ * - `hunter`, 8 cells: two columns of three (the front pair are mouths, the rest plain) and two more plain cells on the right-hand column's side. The
+ *   body is built one cell after the other (each builder's own work in order) and the last cell's plain parent lets daughters go; it must be at
+ *   least as big as SEASONS_DEFAULTS.releaseMin (8), or a release cap would hold it for ever (a test grows every founder alone at the page defaults).
+ */
+export const SOFT_PLANS = {
+  grazer: softPlan({
+    0: [KF, 1, 4, PL], 1: [KF, 2, 4, PL], 2: [KF, 3, 4, PL],
+    3: [KR, R, 9, SHELL], 9: [KL, R, 10, SHELL], 10: [GF, 0, 10, PL],
+    4: [KR, R, 5, SHELL], 5: [KL, R, 6, SHELL],
+  }),
+  leafbush: softPlan({
+    0: [KF, 1, 2, PL], 2: [KR, 1, 3, PL], 3: [KB, 1, 4, PL], 4: [KL, 8, R, PL],
+    1: [KF, R, 5, LEAF], 5: [KR, R, 6, LEAF], 6: [KL, R, R, LEAF],
+    8: [KR, R, 9, LEAF], 9: [KL, R, 10, LEAF], 10: [GF, 0, 10, PL],
+  }),
+  hunter: softPlan({
+    0: [KF, 1, 2, PL], 2: [KR, 8, R, PL],
+    1: [KF, R, 3, MOUTH], 3: [KR, 5, R, PL],
+    5: [KL, R, 7, MOUTH], 7: [GF, 0, 7, PL],
+    8: [KF, R, 9, PL], 9: [KR, R, R, PL],
+  }),
+} as const;
+
+/** Founder types of Soft Roam's own. Numbers are chase, drive, turn, adult, shape (each -512..512); a plan is written out for each, so no founder is a variant. */
+export const SOFT_OWN = {
+  grazer: { name: 'armoured grazers', genes: [160, 64, -256, 0, 0], colour: [236, 140, 48], plan: SOFT_PLANS.grazer },
+  leafbush: { name: 'leaf bushes', genes: [64, 0, -512, 0, 0], colour: [186, 148, 104], plan: SOFT_PLANS.leafbush },
+  hunter: { name: 'hunters', genes: [384, 96, -128, 0, 0], colour: [100, 92, 206], plan: SOFT_PLANS.hunter },
+} as const satisfies Record<string, { name: string; genes: readonly number[]; colour: readonly number[]; plan: readonly number[] }>;
+export type SoftOwnId = keyof typeof SOFT_OWN;
+export type SoftTypeId = RoamTypeId | SoftOwnId;
+
+function typeInfo(t: SoftTypeId): { name: string; genes: readonly number[]; colour: readonly number[]; plan: readonly number[] } {
+  return t in SOFT_OWN ? SOFT_OWN[t as SoftOwnId] : (ROAM_TYPES[t as RoamTypeId] as unknown as { name: string; genes: readonly number[]; colour: readonly number[]; plan: readonly number[] });
+}
+
 /** The grown starts (bodies by plan) Soft Roam offers; each is a list of founder types taking turns. */
 export const SOFT_STARTS = {
+  /**
+   * The seasons: a sun and a year, leaves, sight and fear, bodies of several kinds of cell, and a cap on releases. Three types of its own and
+   * the garden's plates (a plain body that is food for the hunters and grazers' neighbours; the garden's specks never release under a release cap, so are left out).
+   */
+  seasons: ['grazer', 'leafbush', 'hunter', 'plate'],
   /** The default: the grown founders as in 'grown-all', with kinds, touch feeding, shells and cracking on (Roam's page line-up). */
   garden: ROAM_STARTS['grown-all'],
   'grown-all': ROAM_STARTS['grown-all'],
@@ -36,7 +103,7 @@ export const SOFT_STARTS = {
   'grown-blocks': ROAM_STARTS['grown-blocks'],
   'grown-specks': ROAM_STARTS['grown-specks'],
   'grown-bushes': ROAM_STARTS['grown-bushes'],
-} as const satisfies Record<string, readonly RoamTypeId[]>;
+} as const satisfies Record<string, readonly SoftTypeId[]>;
 export type SoftRoamStart = keyof typeof SOFT_STARTS;
 
 export interface SoftRoamOptions {
@@ -59,6 +126,18 @@ export interface SoftRoamOptions {
   /** Steps a new body is sealed from touch feeding (needs drain), and how hard a mouth holds on to prey (out of 256). */
   seal?: number;
   grip?: number;
+  /** Chunk 2 switches (see the kernel): the seasons start turns them all on at SEASONS_DEFAULTS; any start takes them when given. */
+  day?: number;
+  year?: number;
+  winter?: number;
+  patchSun?: boolean;
+  leaf?: number;
+  sight?: number;
+  fear?: number;
+  truce?: boolean;
+  jaws?: boolean;
+  releaseMin?: number;
+  releaseGap?: number;
   overrides?: Partial<SoftRoamConfig>;
 }
 
@@ -71,6 +150,22 @@ export interface SoftRoamOptions {
 export const GARDEN_DEFAULTS = { kinds: true, drain: 1, seal: 200, crack: 300, shellBite: 1, shellLeak: 0.1, grip: 96 } as const;
 
 /**
+ * What the seasons start adds to the garden's: a day of 400 steps (a lit band half the world wide sweeps round once), a year of 12000 (light swings to
+ * 0.1 of midsummer's in winter), scheduled patches that land only in the light, leaves that earn 1.3 a step in full light through bare sides, mouths that see 8 tiles
+ * and plain or shell cells that see hunters 4 tiles off, no feeding on or hitting one's own founder family, no feeding on a body that holds a mouth, and bodies that
+ * release only from 8 cells and once in 200 steps (tuned by looking: see SEASONS_ECONOMY for the economy that goes with them).
+ */
+export const SEASONS_DEFAULTS = { day: 400, year: 12000, winter: 0.1, patchSun: true, leaf: 1.3, sight: 8, fear: 4, truce: true, jaws: true, releaseMin: 8, releaseGap: 200 } as const;
+/**
+ * The seasons start's own economy, under the page world (the garden keeps PAGE_WORLD and GARDEN_DEFAULTS untouched). Chosen by looking at three-year runs on
+ * seeds 1 and 2 (runs/softroam/c2-combined, setting E): cheaper, leakier cells (so there are more of them and winter starves them within a year), small frequent
+ * food patches (a patch lands only in the light, so the store fills in winter and drains in summer and the year shows in the numbers), shells that take 10000 hits
+ * to crack (at 300 they all wear away within five years). Without these the year does not show: cells settle and the store sits at 2 to 5 thousand.
+ */
+export const SEASONS_ECONOMY = { birthStore: 60, minStore: 15, patchFood: 1000, patchEvery: 12, leakSide: 0.008, leakCell: 0.004, crack: 10000 } as const;
+const SEASON_KEYS = ['day', 'year', 'winter', 'patchSun', 'leaf', 'sight', 'fear', 'truce', 'jaws', 'releaseMin', 'releaseGap'] as const;
+
+/**
  * The page's usual world, over the kernel's neutral defaults (which the kernel tests rely on): chosen by looking at 12000-step
  * runs on seeds 1 and 2. Weak pull toward food (`scentGain` 1 where Roam's formula uses 8, so a chase gene is worth roughly a tenth of a
  * drive gene of the same size here, about 0.9 of one by Roam's formula) so bodies cross open water, cheap moving, long lives and low upkeep so bodies hold
@@ -80,11 +175,24 @@ export const GARDEN_DEFAULTS = { kinds: true, drain: 1, seal: 200, crack: 300, s
 export const PAGE_WORLD = { matter: 100_000, bite: 4, birthStore: 150, minStore: 30, leakSide: 0.002, leakCell: 0.001, moveCost: 0.01, life: 8000, scentGain: 1, planMut: 0.01, foodSpread: 0.05 } as const satisfies Partial<SoftRoamConfig>;
 
 export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
-  const garden = (input.start ?? 'garden') === 'garden';
+  const startName = input.start ?? 'seasons';
+  const garden = startName === 'garden' || startName === 'seasons';
+  const seasons = startName === 'seasons';
+  // The seasons start fills in what the caller left out, but only what its prerequisites allow (the kernel refuses a sight or a leaf without kinds, a year without a day):
+  // a start with kinds or touch feeding off, or no day, is a world with those left out. A key the caller gives itself is kept, and refused if it cannot work.
+  // An override wins over the option (it is applied last), so the prerequisites are read through it: `--ov '{"kinds":false}'` is a world with kinds off.
+  const ov = input.overrides ?? {};
+  const kindsOn = (ov.kinds !== undefined ? ov.kinds : input.kinds ?? GARDEN_DEFAULTS.kinds) === true;
+  const drainOn = (ov.drain ?? input.drain ?? GARDEN_DEFAULTS.drain) > 0;
+  const on = (v: unknown): boolean => v === undefined || (typeof v === 'number' && v > 0);
+  const dayOn = on(ov.day ?? input.day);
+  const yearOn = on(ov.year ?? input.year);
+  const needs: Partial<Record<(typeof SEASON_KEYS)[number], boolean>> = { sight: kindsOn && drainOn, fear: kindsOn && drainOn, leaf: kindsOn && dayOn, year: dayOn, patchSun: dayOn, winter: dayOn && yearOn };
   const o: SoftRoamOptions = garden
-    ? { ...input, kinds: input.kinds ?? GARDEN_DEFAULTS.kinds, drain: input.drain ?? GARDEN_DEFAULTS.drain, seal: input.seal ?? GARDEN_DEFAULTS.seal, crack: input.crack ?? GARDEN_DEFAULTS.crack, shellBite: input.shellBite ?? GARDEN_DEFAULTS.shellBite, shellLeak: input.shellLeak ?? GARDEN_DEFAULTS.shellLeak, grip: input.grip ?? GARDEN_DEFAULTS.grip }
+    ? { ...input, ...(seasons ? Object.fromEntries(SEASON_KEYS.map((k) => [k, input[k] ?? (needs[k] === false ? undefined : SEASONS_DEFAULTS[k])])) : {}), kinds: input.kinds ?? GARDEN_DEFAULTS.kinds, drain: input.drain ?? GARDEN_DEFAULTS.drain, seal: input.seal ?? GARDEN_DEFAULTS.seal, crack: input.crack ?? (seasons ? SEASONS_ECONOMY.crack : GARDEN_DEFAULTS.crack), shellBite: input.shellBite ?? GARDEN_DEFAULTS.shellBite, shellLeak: input.shellLeak ?? GARDEN_DEFAULTS.shellLeak, grip: input.grip ?? GARDEN_DEFAULTS.grip }
     : input;
-  const cfg: SoftRoamConfig = { ...defaultSoftRoamConfig(), ...PAGE_WORLD };
+  const { crack: _crack, ...economy } = SEASONS_ECONOMY;
+  const cfg: SoftRoamConfig = { ...defaultSoftRoamConfig(), ...PAGE_WORLD, ...(seasons ? economy : {}) };
   cfg.seed = o.seed;
   if (o.size !== undefined) {
     // Matter and the patch rhythm follow the area, so a bigger arena is the same world with more room.
@@ -107,6 +215,11 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   if (merged.kinds && o.shellBite !== undefined && merged.shellBite === undefined) merged.shellBite = o.shellBite;
   if (merged.kinds && o.shellLeak !== undefined && merged.shellLeak === undefined) merged.shellLeak = o.shellLeak;
   if (merged.kinds && merged.drain !== undefined && o.grip !== undefined && o.grip > 0 && merged.grip === undefined) merged.grip = o.grip;
+  // Chunk 2 keys: an option given sets the key (false and undefined leave it absent, so a start without them keeps the old path); an override wins over it.
+  for (const k of SEASON_KEYS) {
+    const v = o[k];
+    if (v !== undefined && v !== false && (merged as unknown as Record<string, unknown>)[k] === undefined) (merged as unknown as Record<string, unknown>)[k] = v;
+  }
   if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? (o.mut === undefined ? cfg.planMut : Math.min(1, 2.5 * merged.mut));
   // The first patches may use at most half the matter, so the founders can always be paid for.
   if (merged.patchFood > 0) merged.startPatches = Math.min(merged.startPatches, Math.floor(merged.matter / (2 * merged.patchFood)));
@@ -125,14 +238,23 @@ const KIND_MOUTH_BITS = KIND_MOUTH << 12;
  * alternates by round, and the first round already holds some of each when the start has six types.
  */
 export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
-  const start = o.start ?? 'garden';
+  const start = o.start ?? 'seasons';
   if (!(start in SOFT_STARTS)) throw new Error(`Unknown start: ${start}`);
   const world = new SoftRoamWorld(softRoamConfig({ ...o, start }));
-  const types: readonly RoamTypeId[] = SOFT_STARTS[start];
-  const planOf = (t: RoamTypeId): readonly number[] => (ROAM_TYPES[t] as unknown as { plan: readonly number[] }).plan;
+  const types: readonly SoftTypeId[] = SOFT_STARTS[start];
+  // A plan of Soft Roam's own keeps its kinds only where the world allows them: no kinds, all plain; no leaf, a leaf is plain.
+  const planOf = (t: SoftTypeId): readonly number[] => {
+    const plan = typeInfo(t).plan;
+    if (!(t in SOFT_OWN)) return plan;
+    return plan.map((e) => {
+      const kind = (e >>> 12) & 3;
+      return !world.cfg.kinds || (kind === KIND_LEAF && world.cfg.leaf === undefined) ? e & 0xfff : e;
+    });
+  };
   const planIds = types.map((t) => world.addPlan(planOf(t)));
   const hunterIds = types.map((t, j) => {
     const plan = planOf(t);
+    if (t in SOFT_OWN) return planIds[j];
     if (!world.cfg.kinds || (plan[0] & 15) >= PLAN_REST) return planIds[j];
     if ((plan[0] & 15) >= 4) return world.addPlan(plan.map((e) => ((e & 15) >= 4 && (e & 15) < PLAN_REST ? e | KIND_SHELL_BITS : e)), planIds[j]);
     return world.addPlan(plan.map((e, m) => (m === 0 ? e | KIND_MOUTH_BITS : e)), planIds[j]);
@@ -161,7 +283,7 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
     // Variants (hunters, armoured) alternate by type and round, starting with the first type: even a small arena's first
     // round holds some of each (with the garden's six types: lines and crosses hunting, specks armoured).
     const plan = (j + Math.floor(placed / types.length)) % 2 === 0 ? hunterIds[j] : planIds[j];
-    if (world.found(px, py, ROAM_TYPES[type].genes, roamFamily(type), undefined, plan) >= 0) {
+    if (world.found(px, py, typeInfo(type).genes, softFamily(type), undefined, plan) >= 0) {
       placed++;
       placedAt.push(px, py);
     }
@@ -175,9 +297,11 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
 
 export type SoftPaint = 'garden' | 'plain';
 
-/** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them. */
-const FAMILY_ORDER: readonly RoamTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush'];
-const FAM_COLOUR: readonly (readonly number[])[] = FAMILY_ORDER.map((t) => ROAM_TYPES[t].colour);
+/** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them; 12 to 14 are Soft Roam's own types. */
+const FAMILY_ORDER: readonly SoftTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush', 'grazer', 'leafbush', 'hunter'];
+const FAM_COLOUR: readonly (readonly number[])[] = FAMILY_ORDER.map((t) => typeInfo(t).colour);
+/** Family number of a founder type, which every descendant keeps (the garden's types keep Roam's numbers). */
+export const softFamily = (t: SoftTypeId): number => FAMILY_ORDER.indexOf(t) + 1;
 
 /** Light to a 0..255 channel, a little lifted (power 0.8), as a table: light 0 to 1.5 in 2,048 steps. */
 const GAMMA_N = 2048, GAMMA_STEP = GAMMA_N / 1.5;
@@ -205,12 +329,19 @@ interface Ring { x: number; y: number; step: number }
 /** A thread from a feeding mouth to the cell it fed on, by serial numbers (slots only to find them again quickly). */
 interface Thread { mc: number; pc: number; ms: number; ps: number; lvl: number; prv: number; seen: boolean }
 
-/** Per-cell eased levels the picture is drawn from (kept by serial number): hit flash, feeding, being fed on, shell damage, how shell-like, how mouth-like. */
+/** Per-cell eased levels the picture is drawn from (kept by serial number): hit flash, feeding, being fed on, shell damage, how shell-like, how mouth-like, how leaf-like, the light it is in. */
 const NLV = 6;
 const LV_HIT = 0, LV_FEED = 1, LV_PREY = 2, LV_DMG = 3, LV_SHELL = 4, LV_MOUTH = 5;
 /** Steps for a level to ease 63% of the way up, and down. */
 const LV_UP = [0.8, 1.5, 1.5, 3, 3, 3];
 const LV_DOWN = [4, 6, 6, 3, 3, 3];
+/** Two more levels kept apart (stride NLX): how leaf-like a cell is, and the light it stands in; the light moves slowly, so a day sweeping over a leaf is a gradual brightening. */
+const NLX = 2;
+const LX_LEAF = 0, LX_LIT = 1;
+const LX_UP = [3, 12];
+const LX_DOWN = [3, 12];
+/** Leaf income (matter a step in full light) at which a leaf shows its fullest glow; less shows proportionally less. */
+const LEAF_GLOW = 1;
 const RING_STEPS = 14;
 const RING_KEEP = 16;
 const BONE = [0.95, 0.91, 0.76] as const;
@@ -219,6 +350,62 @@ const smooth = (a: number, b: number, v: number): number => {
   const t = v <= a ? 0 : v >= b ? 1 : (v - a) / (b - a);
   return t * t * (3 - 2 * t);
 };
+
+/**
+ * How far the year has brought the light up from winter at `step`, 0 (deepest winter) to 1 (midsummer); 1 for a world with no year. The same
+ * triangle wave as the kernel's own (`softRoamLight`), taken without the day.
+ */
+export function softSeason(cfg: Pick<SoftRoamConfig, 'year'>, step: number): number {
+  if (cfg.year === undefined) return 1;
+  const p = Math.floor(((step % cfg.year) * 1024) / cfg.year);
+  return (p < 512 ? p >> 1 : (1024 - p) >> 1) / 256;
+}
+
+/** The year's light as a share of midsummer's, 0 to 1 (winter to 1): `winter` at the bottom of the year. */
+export function softYearLight(cfg: Pick<SoftRoamConfig, 'year' | 'winter'>, step: number): number {
+  if (cfg.year === undefined) return 1;
+  const w = Math.round((cfg.winter ?? 0.25) * 256);
+  return (w + (((256 - w) * Math.round(softSeason(cfg, step) * 256)) >> 8)) / 256;
+}
+
+/**
+ * What the sky is doing at the world's step, for the readouts: the mean light over the world (0 to 1), the year's light as a share of
+ * midsummer's (1 with no year), and how far through the year it is (0 to 1; 0 with no year).
+ */
+export function softSky(world: SoftRoamWorld): { meanLight: number; yearLight: number; yearShare: number; dayShare: number } {
+  const cfg = world.cfg;
+  if (cfg.day === undefined) return { meanLight: 1, yearLight: 1, yearShare: 0, dayShare: 0 };
+  let sum = 0;
+  for (let tx = 0; tx < world.size; tx++) sum += softRoamLight(cfg, tx, 0, world.step);
+  return {
+    meanLight: sum / (256 * world.size),
+    yearLight: softYearLight(cfg, world.step),
+    yearShare: cfg.year === undefined ? 0 : (world.step % cfg.year) / cfg.year,
+    dayShare: (world.step % cfg.day) / cfg.day,
+  };
+}
+
+const num = (x: number): string => Math.round(x).toLocaleString('en-US');
+const SEASON_NAMES = ['winter', 'spring', 'summer', 'autumn'];
+const PHASE_WORDS = ['early', 'mid', 'late'];
+
+/** The time in plain words: how far through the year, the season, and where the lit band is. */
+export function softTimeWords(f: { step: number; sky: { day: number; year: number; dayShare: number; yearShare: number; meanLight?: number } }): string {
+  const { day, year, dayShare, yearShare } = f.sky;
+  if (day === 0) return 'no sun: the light is full everywhere, always';
+  const centre = (dayShare + 0.5) % 1;
+  const where = centre < 0.17 || centre >= 0.83 ? (centre < 0.5 ? 'left edge' : 'right edge') : centre < 0.38 ? 'left side' : centre < 0.62 ? 'middle' : 'right side';
+  // With no light anywhere (a winter of 0 at the bottom of the year) there is no band to place.
+  const band = f.sky.meanLight === 0 ? 'it is dark everywhere' : `the lit band is over the ${where} of the arena`;
+  if (year === 0) return `day ${num(Math.floor(f.step / day) + 1)} (no seasons); ${band}`;
+  const q = ((yearShare + 0.125) % 1) * 4;
+  const season = `${PHASE_WORDS[Math.min(2, Math.floor((q % 1) * 3))]} ${SEASON_NAMES[Math.floor(q)]}`;
+  const days = Math.floor((f.step % year) / day) + 1;
+  // A year that is not a whole number of days ends with a short day: count it (the last day number is the year divided by the day, rounded up).
+  const total = Math.ceil(year / day);
+  const short = year % day === 0 ? '' : ', the last one cut short';
+  return `${season}, day ${num(days)} of the year's ${num(total)}${short} (year ${num(Math.floor(f.step / year) + 1)}); ${band}`;
+}
 
 /**
  * What the painter remembers between frames, and its scratch buffers: the haze of food eased over time, the ghosts of
@@ -265,12 +452,69 @@ export class SoftPaintMemory {
   /** Per slot and level: where the eased level is now and where it was a step ago; the serial number it belongs to. */
   lvCur = new Float32Array(0);
   lvPrv = new Float32Array(0);
+  lxCur = new Float32Array(0);
+  lxPrv = new Float32Array(0);
   lvCid = new Uint32Array(0);
   feedT = new Uint8Array(0);
   hitT = new Uint8Array(0);
   preyT = new Uint8Array(0);
   seenStep = -1;
+  /** The sky: per tile column the day's light (0..1, the band) at the step before the last and at the last, the year's light (0..1) at each, and per pixel block of the frame what it does to the ground. */
+  dayA = new Float32Array(0);
+  dayB = new Float32Array(0);
+  seaA = 1;
+  seaB = 1;
+  skyStep = -1;
+  mulR = new Float32Array(0);
+  mulG = new Float32Array(0);
+  mulB = new Float32Array(0);
+  addR = new Float32Array(0);
+  addG = new Float32Array(0);
+  addB = new Float32Array(0);
   private sized = false;
+
+  /**
+   * The ground's light for a frame at `alpha` between the last two steps, one entry per pixel block column (even pixel columns): what to
+   * multiply the haze by and add to it. The band's light is taken per tile column at the two steps and eased between them, and across
+   * columns it follows the same interpolation as the haze, so no column edge shows. Only for a world with a day.
+   */
+  prepareSky(world: SoftRoamWorld, alpha: number): void {
+    const cfg = world.cfg;
+    const s = world.size;
+    if (this.dayA.length !== s) { this.dayA = new Float32Array(s); this.dayB = new Float32Array(s); this.skyStep = -1; }
+    if (this.mulR.length !== this.side) {
+      this.mulR = new Float32Array(this.side); this.mulG = new Float32Array(this.side); this.mulB = new Float32Array(this.side);
+      this.addR = new Float32Array(this.side); this.addG = new Float32Array(this.side); this.addB = new Float32Array(this.side);
+    }
+    if (this.skyStep !== world.step) {
+      const dayOnly = { size: cfg.size, day: cfg.day };
+      const before = Math.max(0, world.step - 1);
+      for (let tx = 0; tx < s; tx++) {
+        this.dayA[tx] = softRoamLight(dayOnly, tx, 0, before) / 256;
+        this.dayB[tx] = softRoamLight(dayOnly, tx, 0, world.step) / 256;
+      }
+      // The year's light as the kernel has it, floor included (`winter`), so a winter of 0 is dark and a winter of 1 looks like midsummer.
+      this.seaA = softYearLight(cfg, before);
+      this.seaB = softYearLight(cfg, world.step);
+      this.skyStep = world.step;
+    }
+    const sv = this.seaA + (this.seaB - this.seaA) * alpha;
+    const { x0, x1, wx } = this;
+    for (let ix = 0; ix < this.side; ix += 2) {
+      const a = x0[ix], b = x1[ix], w = wx[ix];
+      const d = (this.dayA[a] + (this.dayA[b] - this.dayA[a]) * w) * (1 - alpha) + (this.dayB[a] + (this.dayB[b] - this.dayB[a]) * w) * alpha;
+      const warm = d * sv;
+      const cool = 0.6 * (1 - d) + 0.4 * (1 - sv);
+      // The band's contrast follows the light it really has (a dark winter has no bright band), eased by a square root so a faint winter still reads.
+      const B = (0.34 + 0.66 * d * Math.sqrt(sv)) * (0.78 + 0.22 * sv);
+      this.mulR[ix] = B * (1 + 0.3 * warm - 0.12 * cool);
+      this.mulG[ix] = B * (1 + 0.06 * warm);
+      this.mulB[ix] = B * (1 - 0.18 * warm + 0.1 * cool);
+      this.addR[ix] = 0.15 * warm;
+      this.addG[ix] = 0.12 * warm + 0.004 * cool;
+      this.addB[ix] = 0.05 * warm + 0.014 * cool;
+    }
+  }
 
   /** Note what the last step did: ease the food haze, keep the deaths as ghosts. Does nothing twice for one step. */
   observe(world: SoftRoamWorld): void {
@@ -338,6 +582,8 @@ export class SoftPaintMemory {
     }
     this.threads = this.threads.filter((th) => th.seen || th.lvl > 0.01);
     const tgt = [0, 0, 0, 0, 0, 0];
+    const tx2 = [0, 0];
+    const sunny = world.cfg.day !== undefined && world.cfg.leaf !== undefined;
     for (let c = 0; c < world.cap; c++) {
       if (!world.alive[c]) continue;
       const o = c * NLV;
@@ -350,6 +596,16 @@ export class SoftPaintMemory {
       tgt[LV_DMG] = kind === KIND_SHELL && crack > 0 ? Math.min(1, world.hits[c] / Math.min(60000, crack << world.tough[c])) : 0;
       tgt[LV_SHELL] = kind === KIND_SHELL ? 1 : 0;
       tgt[LV_MOUTH] = kind === KIND_MOUTH ? 1 : 0;
+      tx2[0] = kind === KIND_LEAF ? 1 : 0;
+      // How lit a leaf looks is what the kernel actually paid it this step (LEAF_GLOW or more shows full; 0 shows none), so a leaf in light on an empty reservoir stays dark.
+      tx2[1] = sunny && kind === KIND_LEAF ? Math.min(1, world.leafPaid[c] / LEAF_GLOW) : 0;
+      for (let j = 0; j < NLX; j++) {
+        const q = c * NLX + j;
+        const cur = fresh ? tx2[j] : this.lxCur[q];
+        this.lxPrv[q] = cur;
+        const k = 1 - Math.exp(-dt / (tx2[j] > cur ? LX_UP[j] : LX_DOWN[j]));
+        this.lxCur[q] = fresh ? tx2[j] : cur + (tx2[j] - cur) * k;
+      }
       for (let j = 0; j < NLV; j++) {
         const cur = fresh ? tgt[j] : this.lvCur[o + j];
         this.lvPrv[o + j] = cur;
@@ -394,6 +650,8 @@ export class SoftPaintMemory {
       this.order = new Int32Array(world.cap);
       this.lvCur = new Float32Array(world.cap * NLV);
       this.lvPrv = new Float32Array(world.cap * NLV);
+      this.lxCur = new Float32Array(world.cap * NLX);
+      this.lxPrv = new Float32Array(world.cap * NLX);
       this.lvCid = new Uint32Array(world.cap);
       this.feedT = new Uint8Array(world.cap);
       this.hitT = new Uint8Array(world.cap);
@@ -533,6 +791,11 @@ export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: num
   if (paint === 'plain') paintPlain(world, scale, alpha, out, mem, cells);
   else paintGarden(world, scale, alpha, out, mem, cells);
 }
+/** A cell's eased extra level `j` (leaf-likeness, light) at `alpha` between the last two steps. */
+function levelX(mem: SoftPaintMemory, c: number, j: number, alpha: number): number {
+  const o = c * NLX + j;
+  return mem.lxPrv[o] + (mem.lxCur[o] - mem.lxPrv[o]) * alpha;
+}
 /** A cell's eased level `j` at `alpha` between the last two steps. */
 function level(mem: SoftPaintMemory, c: number, j: number, alpha: number): number {
   const o = c * NLV + j;
@@ -555,19 +818,21 @@ function cellTint(world: SoftRoamWorld, c: number, full: number, rgb: Float32Arr
   PLAIN[0] = 0.12 * 0.2 + 0.58 * (f[0] / 255) + 0.3 * (p[0] / 255);
   PLAIN[1] = 0.12 * 0.85 + 0.58 * (f[1] / 255) + 0.3 * (p[1] / 255);
   PLAIN[2] = 0.12 * 0.35 + 0.58 * (f[2] / 255) + 0.3 * (p[2] / 255);
-  let sh = level(mem, c, LV_SHELL, alpha), mo = level(mem, c, LV_MOUTH, alpha);
-  const both = sh + mo;
-  if (both > 1) { sh /= both; mo /= both; }
-  const pl = 1 - sh - mo;
+  let sh = level(mem, c, LV_SHELL, alpha), mo = level(mem, c, LV_MOUTH, alpha), lf = levelX(mem, c, LX_LEAF, alpha);
+  const both = sh + mo + lf;
+  if (both > 1) { sh /= both; mo /= both; lf /= both; }
+  const pl = 1 - sh - mo - lf;
   const dmg = level(mem, c, LV_DMG, alpha), feed = level(mem, c, LV_FEED, alpha) * pulseOf(world, c, alpha), prey = level(mem, c, LV_PREY, alpha), hit = level(mem, c, LV_HIT, alpha);
   const dk = 1 - 0.6 * dmg;
   // Shell: pale bone, darker and browner with damage. Mouth: red, warmer and brighter while feeding.
   const sr = 0.84 * dk, sg = 0.82 * (dk - 0.04 * dmg), sb = 0.7 * (dk - 0.1 * dmg);
   const mr = 1, mg = 0.24 + 0.2 * feed, mb = 0.18 + 0.04 * feed;
-  rgb[0] = pl * PLAIN[0] + sh * sr + mo * mr;
-  rgb[1] = pl * PLAIN[1] + sh * sg + mo * mg;
-  rgb[2] = pl * PLAIN[2] + sh * sb + mo * mb;
-  let lit = pl * (0.5 + 0.5 * Math.min(1, world.store[c] / full)) + sh * 0.85 + mo * (1 + 0.4 * feed);
+  // Leaf: green; the light it stands in (eased over many steps) brightens it and warms it toward yellow-green, so a day sweeping over a bush is a slow glow, never a flash.
+  const ll = levelX(mem, c, LX_LIT, alpha);
+  rgb[0] = pl * PLAIN[0] + sh * sr + mo * mr + lf * (0.16 + 0.22 * ll);
+  rgb[1] = pl * PLAIN[1] + sh * sg + mo * mg + lf * (0.78 + 0.2 * ll);
+  rgb[2] = pl * PLAIN[2] + sh * sb + mo * mb + lf * (0.2 - 0.04 * ll);
+  let lit = pl * (0.5 + 0.5 * Math.min(1, world.store[c] / full)) + sh * 0.85 + mo * (1 + 0.4 * feed) + lf * (0.45 + 0.75 * ll);
   lit *= 1 - 0.5 * prey;
   if (hit > 0) {
     const fl = hit * (1 - 0.5 * dmg);
@@ -728,6 +993,8 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
   const { hazeRowA, hazeRowB, glowRowA, glowRowB, x0, x1, wx, tileOf } = mem;
   const out32 = out.byteOffset % 4 === 0 ? new Uint32Array(out.buffer, out.byteOffset, out.length >> 2) : null;
   let cachedRow = -2;
+  const sky = world.cfg.day !== undefined;
+  if (sky) mem.prepareSky(world, alpha);
   const T = THRESH;
   const grd = [0, 0, 0];
   for (let iy = 0; iy < side; iy += 2) {
@@ -753,9 +1020,10 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     const yEnd = Math.min(side, iy + 2);
     for (let ix = 0; ix < side; ix += 2) {
       const o = ix * 3;
-      const hr = hazeRowA[o] + (hazeRowB[o] - hazeRowA[o]) * fy;
-      const hg = hazeRowA[o + 1] + (hazeRowB[o + 1] - hazeRowA[o + 1]) * fy;
-      const hb = hazeRowA[o + 2] + (hazeRowB[o + 2] - hazeRowA[o + 2]) * fy;
+      let hr = hazeRowA[o] + (hazeRowB[o] - hazeRowA[o]) * fy;
+      let hg = hazeRowA[o + 1] + (hazeRowB[o + 1] - hazeRowA[o + 1]) * fy;
+      let hb = hazeRowA[o + 2] + (hazeRowB[o + 2] - hazeRowA[o + 2]) * fy;
+      if (sky) { hr = hr * mem.mulR[ix] + mem.addR[ix]; hg = hg * mem.mulG[ix] + mem.addG[ix]; hb = hb * mem.mulB[ix] + mem.addB[ix]; }
       const gr = glowRowA[o] + (glowRowB[o] - glowRowA[o]) * fy;
       const gg = glowRowA[o + 1] + (glowRowB[o + 1] - glowRowA[o + 1]) * fy;
       const gb = glowRowA[o + 2] + (glowRowB[o + 2] - glowRowA[o + 2]) * fy;
@@ -994,7 +1262,7 @@ function paintPlain(world: SoftRoamWorld, scale: number, alpha: number, out: Uin
   const rad = 0.5;
   for (const c of cells) {
     const lit = 0.45 + 0.55 * Math.min(1, world.store[c] / full);
-    const col = world.kind[c] === KIND_MOUTH ? [255, 60, 50] : world.kind[c] === KIND_SHELL ? [215, 210, 180] : famColour(world.fam[c]);
+    const col = world.kind[c] === KIND_MOUTH ? [255, 60, 50] : world.kind[c] === KIND_SHELL ? [215, 210, 180] : world.kind[c] === KIND_LEAF ? [70, 220, 80] : famColour(world.fam[c]);
     const cx = mem.px[c], cy = mem.py[c];
     const x0 = Math.floor((cx - rad) * scale), x1 = Math.ceil((cx + rad) * scale);
     const y0 = Math.floor((cy - rad) * scale), y1 = Math.ceil((cy + rad) * scale);
@@ -1022,7 +1290,7 @@ function paintPlain(world: SoftRoamWorld, scale: number, alpha: number, out: Uin
 export interface SoftFamilyRow { family: number; name: string; colour: readonly number[]; cells: number }
 
 export function softFamilies(world: SoftRoamWorld): SoftFamilyRow[] {
-  const rows = FAMILY_ORDER.map((t, k) => ({ family: k + 1, name: ROAM_TYPES[t].name, colour: ROAM_TYPES[t].colour, cells: 0 }));
+  const rows = FAMILY_ORDER.map((t, k) => ({ family: k + 1, name: typeInfo(t).name, colour: typeInfo(t).colour, cells: 0 }));
   for (let c = 0; c < world.cap; c++) {
     if (!world.alive[c]) continue;
     const row = rows[world.fam[c] - 1];
@@ -1098,6 +1366,8 @@ export interface SoftRoamFrame {
   census: SoftRoamCensus;
   step: number;
   readouts: SoftRoamReadouts;
+  /** The sky for the time readout: the day and year lengths in steps (0 for none), how far through each it is (0 to 1), the year's light as a share of midsummer's, and the mean light over the arena. */
+  sky: { day: number; year: number; dayShare: number; yearShare: number; yearLight: number; meanLight: number };
 }
 
 export type SoftRoamToWorker =
@@ -1185,6 +1455,7 @@ export class SoftRoamSession {
       census: this.world.census(),
       step: this.world.step,
       readouts: { families: softFamilies(this.world), rates: this.rates, smooth: this.smoothNow, plansEver: this.world.plans.length - 1 },
+      sky: { day: this.world.cfg.day ?? 0, year: this.world.cfg.year ?? 0, ...softSky(this.world) },
     };
   }
 }

@@ -4,26 +4,33 @@
  *
  *   deno run -A --no-lock experiments/softroam/look.ts --seed 1 --steps 6000 --start grown-all --out runs/softroam/a
  *
- * Options: --seed, --steps, --size (128), --start (garden, the default: grown-all with kinds, touch feeding, shells and cracking on | grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
+ * Options: --seed, --steps, --size (128), --start (garden, the default, as before: grown-all with kinds, touch feeding, shells and cracking on | seasons, the page's own start: armoured grazers, leaf bushes, hunters and plates, with a day and a year, leaves, sight, fear, truce, jaws and a release cap on |
+ * grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
  * grown-specks | grown-bushes), --planMut, --founders, --mut, --report (1000), --frames, --scale (4), --movie N (with
  * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K), --paint (garden | plain),
- * --ov '{json}' (config overrides), --lag (200), --out dir.
+ * --ov '{json}' (config overrides), --lag (200), --out dir, --series FILE (a TSV with one row every --every steps, default 50: step, cells, bodies, singles,
+ * largest, plain, shells, mouths, leaves, food, reservoir, leafIncome, drained, hunting, targets, fleeing, releasesHeld, meanLight, seasonLight; the cumulative
+ * columns leafIncome, drained and releasesHeld are totals so far; meanLight is the light over the world now, 0 to 1, seasonLight the year's light as a share of
+ * midsummer's, 1 with no year).
  * Each row's "travel" is the mean straight-line distance, in tiles, that cells alive at both ends moved over the last
  * --lag steps, and "moved" the share that ended 2 or more tiles away. "smooth" is the largest and mean displacement of a
  * cell in one step, in tiles, taken over the steps since the last row (the largest is the worst step of any cell).
  * "alarms" are bonds past 2 L / overlapping pairs / cells at the speed clamp, and must stay 0: they are read every step and a row
  * shows the most of each at once since the previous row (the last line says when the first alarm came). Unknown options, an option
  * without a value or one given twice stop the run with a message.
- * Rows also show shells and mouths alive, matter taken by touch feeding (drained/k) and shells cracked (cracked/k) per 1000 steps.
+ * Rows also show shells and mouths alive, matter taken by touch feeding (drained/k) and shells cracked (cracked/k) per 1000 steps, then leaves alive, leaf income
+ * (leafInc/k), mouths hunting and distinct cells they steer toward (hunt, targ: their ratio is the target concentration), cells fleeing (flee), releases held back by the
+ * release cap per 1000 steps (held/k, 'rhold'), the mean light over the world (light, 0 to 1) and how far through the year it is (year%, '-' with no year).
  * The last line reports milliseconds per frame of the painter. A probe, not an experiment runner.
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type { SoftRoamConfig } from '../../apps/lab/src/softroam/kernel.ts';
-import { foundSoftRoam, paintSoftRoam, type SoftPaint, SoftPaintMemory, softFamilies, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel } from '../../apps/lab/src/softroam/view.ts';
+import { foundSoftRoam, paintSoftRoam, type SoftPaint, SoftPaintMemory, softFamilies, softSky, SOFT_STARTS, type SoftRoamStart, softSmoothness, softTravel, softYearLight } from '../../apps/lab/src/softroam/view.ts';
 import { writePng } from '../bodies/png.ts';
 
-const KNOWN = ['seed', 'steps', 'size', 'start', 'planMut', 'founders', 'mut', 'report', 'frames', 'scale', 'movie', 'movieFrom', 'sub', 'paint', 'ov', 'lag', 'out'];
+const KNOWN = ['series', 'every', 'seed', 'steps', 'size', 'start', 'planMut', 'founders', 'mut', 'report', 'frames', 'scale', 'movie', 'movieFrom', 'sub', 'paint', 'ov', 'lag', 'out'];
 const args: Record<string, string> = {};
 for (let i = 0; i < Deno.args.length; i += 2) {
   const name = Deno.args[i];
@@ -55,9 +62,14 @@ const movieFrom = int('movieFrom', 0, 0);
 const sub = int('sub', 1, 1);
 const paint = (args.paint ?? 'garden') as SoftPaint;
 if (!['garden', 'plain'].includes(paint)) throw new Error(`--paint ${paint}: garden or plain`);
+// The garden by default, as this tool has always run (the notes' commands name no --start); the page's own start, the seasons, is `--start seasons`.
 const start = (args.start ?? 'garden') as SoftRoamStart;
 if (!(start in SOFT_STARTS)) throw new Error(`--start ${start}: one of ${Object.keys(SOFT_STARTS).join(', ')}`);
 const out = args.out ?? 'runs/softroam/look';
+const seriesFile = args.series;
+const every = int('every', 50, 1);
+// The report files are written after the series, so a series path that is one of them would be overwritten at the end.
+if (seriesFile) for (const f of ['rows.json', 'sheet.png']) if (resolve(seriesFile) === resolve(`${out}/${f}`)) throw new Error(`--series ${seriesFile} is the run's own ${f}; pick another file`);
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
 if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new Error(`--ov ${args.ov} must be a JSON object`);
 
@@ -75,6 +87,8 @@ const memory = new SoftPaintMemory();
 memory.observe(world);
 
 mkdirSync(out, { recursive: true });
+// The series file's folder is made now, so a long run is not lost at the end to a missing one.
+if (seriesFile) mkdirSync(dirname(seriesFile), { recursive: true });
 if (movie > 0) {
   const dir = `${out}/frames`;
   if (existsSync(dir) && readdirSync(dir).some((f) => f.endsWith('.png'))) throw new Error(`${dir} already holds frames; pick a fresh --out`);
@@ -108,7 +122,8 @@ const alarmSeen = { bonds: 0, overlap: 0, speed: 0 };
 const alarmEver = { bonds: 0, overlap: 0, speed: 0, first: -1 };
 
 console.log(`softroam ${start} seed ${world.cfg.seed} size ${world.size} matter ${world.total} mut ${world.cfg.mut} paint ${paint} scale ${scale}`);
-console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k worn/k shell mouth drain/k crack/k  travel moved  smooth(max/mean)  alarms(b/o/s)  ' + 'genes');
+console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k worn/k shell mouth drain/k crack/k leaf leafInc/k hunt targ flee rhold/k light year%  travel moved  smooth(max/mean)  alarms(b/o/s)  ' + 'genes');
+const series: string[] = seriesFile ? ['step\tcells\tbodies\tsingles\tlargest\tplain\tshells\tmouths\tleaves\tfood\treservoir\tleafIncome\tdrained\thunting\ttargets\tfleeing\treleasesHeld\tmeanLight\tseasonLight'] : [];
 let prev = world.census();
 for (let s = 0; s <= steps; s++) {
   if (movie > 0 && s >= movieFrom && (s - movieFrom) % movie === 0) {
@@ -116,6 +131,11 @@ for (let s = 0; s <= steps; s++) {
     for (let k = s === 0 ? sub : 1; k <= sub; k++) writePng(`${out}/frames/f${String(movieN++).padStart(5, '0')}.png`, side, side, picture(k / sub));
   }
   if (s % framesEvery === 0) columns.push(picture(1));
+  if (seriesFile && s % every === 0) {
+    const c = world.census();
+    const sky = softSky(world);
+    series.push([s, c.cells, c.bodies, c.singles, c.largest, c.cells - c.shells - c.mouths - c.leaves, c.shells, c.mouths, c.leaves, c.food, c.reservoir, c.leafIncome, c.drained, c.hunting, c.targets, c.fleeing, c.releasesHeld, sky.meanLight.toFixed(4), softYearLight(world.cfg, s).toFixed(4)].join('\t'));
+  }
   if (s % report === report - lag) travel();
   if (s % report === 0) {
     if (s > 0) lastTravel = travel();
@@ -124,14 +144,15 @@ for (let s = 0; s <= steps; s++) {
     const per = 1000 / report;
     const fams = softFamilies(world).filter((f) => f.cells > 0).map((f) => `${f.name} ${f.cells}`).join(', ');
     const meanSm = smoothN ? smoothSum / smoothN : 0;
+    const sky = softSky(world);
     console.log(
       `${String(s).padStart(7)} ${fmt(c.bodies)} ${fmt(c.singles)} ${fmt(c.cells)} ${fmt(c.largest)} ${String(c.food).padStart(6)} ${String(c.held).padStart(6)} ${String(c.reservoir).padStart(6)} ${c.residual}  ` +
-        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.cellDeaths - prev.cellDeaths) * per)} ${fmt((c.worn - prev.worn) * per)} ${fmt(c.shells)} ${fmt(c.mouths)} ${fmt((c.drained - prev.drained) * per)} ${fmt((c.cracked - prev.cracked) * per)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
+        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.cellDeaths - prev.cellDeaths) * per)} ${fmt((c.worn - prev.worn) * per)} ${fmt(c.shells)} ${fmt(c.mouths)} ${fmt((c.drained - prev.drained) * per)} ${fmt((c.cracked - prev.cracked) * per)} ${fmt(c.leaves)} ${fmt((c.leafIncome - prev.leafIncome) * per)} ${fmt(c.hunting)} ${fmt(c.targets)} ${fmt(c.fleeing)} ${fmt((c.releasesHeld - prev.releasesHeld) * per)} ${sky.meanLight.toFixed(2)} ${(world.cfg.year === undefined ? '-' : (sky.yearShare * 100).toFixed(0)).padStart(4)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
         `${smoothMax.toFixed(2)}/${meanSm.toFixed(3)}  ${alarmSeen.bonds}/${alarmSeen.overlap}/${alarmSeen.speed}  ` +
         c.genes.map((g) => g.toFixed(0).padStart(5)).join(' ') + `  | ${fams}`,
     );
     if (alarmSeen.bonds > 0 || alarmSeen.overlap > 0 || alarmSeen.speed > 0) console.log(`        ALARM since the last row (most at once): bonds ${alarmSeen.bonds}, overlaps ${alarmSeen.overlap}, speed ${alarmSeen.speed}`);
-    rows.push({ ...c, shells: c.shells, mouths: c.mouths, drainedPerK: (c.drained - prev.drained) * per, crackedPerK: (c.cracked - prev.cracked) * per, alarmsSince: { ...alarmSeen }, travelLag: lastTravel, smooth: { max: smoothMax, mean: meanSm }, families: softFamilies(world) });
+    rows.push({ ...c, sky, shells: c.shells, mouths: c.mouths, drainedPerK: (c.drained - prev.drained) * per, crackedPerK: (c.cracked - prev.cracked) * per, alarmsSince: { ...alarmSeen }, travelLag: lastTravel, smooth: { max: smoothMax, mean: meanSm }, families: softFamilies(world) });
     smoothMax = 0; smoothSum = 0; smoothN = 0;
     alarmSeen.bonds = 0; alarmSeen.overlap = 0; alarmSeen.speed = 0;
     prev = c;
@@ -163,6 +184,7 @@ columns.forEach((col, k) => {
   for (let y = 0; y < side; y++) sheet.set(col.subarray(y * side * 4, (y + 1) * side * 4), (y * w + k * (side + gap)) * 4);
 });
 writePng(`${out}/sheet.png`, w, side, sheet);
+if (seriesFile) writeFileSync(seriesFile, series.join('\n') + '\n');
 writeFileSync(`${out}/rows.json`, JSON.stringify({ config: world.cfg, start, rows }, null, 1));
 const secs = (performance.now() - t0) / 1000;
 console.log(`${steps} steps in ${secs.toFixed(1)} s (${Math.round(steps / secs)} steps/s); digest ${world.digest().toString(16)}; worst single-step displacement ${worstMax.toFixed(2)} tiles; alarms: ${alarmEver.first < 0 ? 'none' : `first at step ${alarmEver.first}, most at once bonds ${alarmEver.bonds} / overlaps ${alarmEver.overlap} / speed ${alarmEver.speed}`}; ${out}/sheet.png has a column every ${framesEvery} steps`);

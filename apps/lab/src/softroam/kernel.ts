@@ -574,6 +574,8 @@ export class SoftRoamWorld {
   private readonly sunPatch: boolean;
   /** Leaf cells whose centres share a tile (scratch, zero between steps), and the stage's lists. */
   private readonly leafOnTile: Uint16Array;
+  /** Per slot, what the leaf stage paid it this step (for the picture; not dynamics, not in the digest). Empty without leaves. */
+  readonly leafPaid: Uint8Array;
   private readonly leafCells: number[] = [];
   private readonly leafAsks: number[] = [];
   private readonly shellBiteQ16: number;
@@ -774,6 +776,7 @@ export class SoftRoamWorld {
     this.body = new Int32Array(cap);
     this.relRec = new Float64Array(cap);
     this.leafOnTile = new Uint16Array(this.leafOn ? n : 0);
+    this.leafPaid = new Uint8Array(this.leafOn ? this.cap : 0);
     this.bodyMouth = new Uint8Array(cap + 2);
     this.tgtMark = new Uint32Array(this.sightN > 0 ? cap : 0);
     this.bodyStart = new Int32Array(this.relMinN > 0 ? cap + 2 : 0);
@@ -1052,6 +1055,7 @@ export class SoftRoamWorld {
   /** Common fields of a new cell in slot c (the caller sets links, plan state and kind). */
   private place(c: number, px: number, py: number, genes: ArrayLike<number>, family: number, store: number, plan: number): void {
     this.alive[c] = 1;
+    if (c < this.leafPaid.length) this.leafPaid[c] = 0; // picture only: a reused slot must not show the dead leaf's glow
     this.x[c] = this.prevX[c] = px;
     this.y[c] = this.prevY[c] = py;
     this.vx[c] = 0;
@@ -1688,6 +1692,7 @@ export class SoftRoamWorld {
     const onTile = this.leafOnTile;
     cells.length = 0;
     asks.length = 0;
+    this.leafPaid.fill(0);
     for (let q = 0; q < this.liveN; q++) {
       const c = this.live[q];
       if (this.kind[c] !== KIND_LEAF) continue;
@@ -1718,6 +1723,7 @@ export class SoftRoamWorld {
       const ask = asks[i];
       const paid = total <= R ? ask : Math.floor((ask * R) / total);
       this.store[c] += paid;
+      this.leafPaid[c] = paid;
       paidAll += paid;
       onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)] = 0;
     }

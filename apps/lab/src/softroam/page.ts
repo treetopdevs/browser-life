@@ -1,8 +1,8 @@
 /** The local /softroam/ page: a canvas, a few choices, and readouts. The world steps in a worker. */
 
 import { SoftRoamPacer } from './pacer.ts';
-import { CHANGE_IDS, checkDials, dialDefaults, dialMoved, dialOptions, fixDial, SOFT_DIALS, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
-import type { SoftPaint, SoftRoamFrame, SoftRoamFromWorker, SoftRoamStart, SoftRoamToWorker } from './view.ts';
+import { CHANGE_IDS, checkDials, defFor, dialDefaults, dialMoved, dialOptions, fixDial, linkSwitches, SOFT_DIALS, startDials, startNote, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
+import { softTimeWords as timeWords, type SoftPaint, type SoftRoamFrame, type SoftRoamFromWorker, type SoftRoamStart, type SoftRoamToWorker } from './view.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const set = (id: string, text: string) => { el(id).textContent = text; };
@@ -36,7 +36,7 @@ function fail(message: string): void {
 
 // Dials: a slider and an exact number box each, with a line saying what the value means. Values live here; the URL
 // hash keeps the ones that differ from the defaults (and the switches), so a link brings the same world back.
-const dials: DialValues = dialDefaults();
+const dials: DialValues = dialDefaults('seasons');
 
 function switches(): SoftSwitches {
   return {
@@ -87,7 +87,7 @@ function showDials(): void {
     if (document.activeElement !== num) num.value = String(v);
     const idle = d.idle?.(dials, sw) ?? null;
     row.classList.toggle('off', idle !== null);
-    row.classList.toggle('changed', v !== d.def);
+    row.classList.toggle('changed', v !== defFor(d, sw.start));
     row.querySelector('small')!.textContent = idle ? `${d.say(v, dials)} (off: ${idle})` : d.say(v, dials);
   }
 }
@@ -97,20 +97,30 @@ function saveHash(): void {
   if (checkDials(switches(), dials) !== null) return;
   const q = new URLSearchParams();
   for (const id of SWITCH_IDS) q.set(id, value(id));
-  for (const d of SOFT_DIALS) if (dials[d.id] !== d.def) q.set(d.id, String(dials[d.id]));
+  // Dials that differ from what the chosen start sets: the start itself is in the link, so a dial left as the start made it is not.
+  const start = value('start') as SoftRoamStart;
+  for (const d of SOFT_DIALS) if (dials[d.id] !== defFor(d, start)) q.set(d.id, String(dials[d.id]));
   history.replaceState(null, '', `#${q}`);
 }
 
+/** What a switch holds when the page is first opened (the markup's own default). */
+function switchDefault(id: string): string {
+  const input = el<HTMLSelectElement | HTMLInputElement>(id);
+  if (input instanceof HTMLSelectElement) return (input.options[[...input.options].findIndex((o) => o.defaultSelected)] ?? input.options[0]).value;
+  return input.defaultValue;
+}
+
 function loadHash(): void {
-  const q = new URLSearchParams(location.hash.slice(1));
-  for (const id of SWITCH_IDS) {
-    const v = q.get(id);
-    if (v === null) continue;
+  const defaults = Object.fromEntries(SWITCH_IDS.map((id) => [id, switchDefault(id)]));
+  const allowed = (id: string, v: string): boolean => {
     const input = el<HTMLSelectElement | HTMLInputElement>(id);
-    if (input instanceof HTMLSelectElement && ![...input.options].some((o) => o.value === v)) continue;
-    input.value = v;
-  }
-  Object.assign(dials, dialDefaults());
+    return !(input instanceof HTMLSelectElement) || [...input.options].some((o) => o.value === v);
+  };
+  const got = linkSwitches(location.hash, defaults, allowed);
+  for (const id of SWITCH_IDS) el<HTMLSelectElement | HTMLInputElement>(id).value = got[id];
+  const start = got.start as SoftRoamStart;
+  const q = new URLSearchParams(location.hash.slice(1));
+  Object.assign(dials, dialDefaults(start));
   for (const d of SOFT_DIALS) {
     const raw = q.get(d.id);
     if (raw !== null && raw.trim() !== '') dials[d.id] = fixDial(d, Number(raw));
@@ -161,6 +171,11 @@ function show(f: SoftRoamFrame): void {
   set('r-cells', `${fmt(c.cells)} (${fmt(c.singles)} of them single)`);
   set('r-largest', `${fmt(c.largest)} cells`);
   set('r-food', `${fmt(c.food)} on the ground, ${fmt(c.reservoir)} waiting to drop as a new patch`);
+  set('r-time', timeWords(f));
+  const plain = c.cells - c.shells - c.mouths - c.leaves;
+  set('r-kinds', `${fmt(plain)} plain, ${fmt(c.shells)} shell, ${fmt(c.mouths)} mouth, ${fmt(c.leaves)} leaf`);
+  set('r-chase', f.sky.day === 0 && c.hunting + c.fleeing === 0 ? 'none' : `${fmt(c.hunting)} mouths hunting ${fmt(c.targets)} prey cells, ${fmt(c.fleeing)} cells fleeing`);
+  set('r-light', f.sky.day === 0 ? 'full everywhere' : `${fmt(f.sky.meanLight * 100)}% of full across the arena`);
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
 }
 
@@ -188,10 +203,18 @@ el('paint').addEventListener('change', () => { pacer.wantRepaint(); });
 for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
 // Picking a start also sets the kinds switch to what that start is: the garden has kinds on, every other start is the plain grown
 // line-up (kinds off). The switch can still be turned the other way afterwards.
-el('start').addEventListener('change', () => { el<HTMLSelectElement>('kinds').value = startPick(switches(), value('start') as SoftRoamStart).kinds ? '1' : '0'; changed(); });
+// It also sets the dials the start defines (the sun, senses and manners) to that start's values: the garden has them off, the seasons has them on.
+el('start').addEventListener('change', () => {
+  const start = value('start') as SoftRoamStart;
+  el<HTMLSelectElement>('kinds').value = startPick(switches(), start).kinds ? '1' : '0';
+  const before = { ...dials };
+  Object.assign(dials, startDials(start));
+  changed();
+  set('dials-note', startNote(before, start));
+});
 // A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
 window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });
-el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults()); changed(); });
+el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults(value('start') as SoftRoamStart)); changed(); });
 el('dials-link').addEventListener('click', () => {
   // Refused settings make no world, and the address may hold them (a link typed or opened by hand): hand out no link to a refusal.
   if (checkDials(switches(), dials) !== null) { set('dials-note', 'these settings are refused, so there is no link to copy: move a dial back first'); return; }

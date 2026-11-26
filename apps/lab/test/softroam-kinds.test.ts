@@ -487,7 +487,7 @@ describe('soft roam kinds: the picture shows what touch did', () => {
     expect(mem.preyT[prey]).toBe(1);
     void h;
     // A garden run: after every step the threads in view are exactly the pairs the kernel fed.
-    const g = foundSoftRoam({ seed: 1 });
+    const g = foundSoftRoam({ seed: 1, start: 'garden' });
     const gm = new SoftPaintMemory();
     gm.observe(g);
     let fed = 0;
