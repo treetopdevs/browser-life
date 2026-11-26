@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSoftRoamConfig, ROAM_GENES, SOFT_U, type SoftRoamConfig, SoftRoamWorld } from '../src/softroam/kernel.ts';
-import { foundSoftRoam, paintSoftRoam, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig } from '../src/softroam/view.ts';
+import { foundSoftRoam, paintSoftRoam, SOFT_STARTS, type SoftRoamStart, SoftPaintMemory, SoftRoamSession, softCellPosition, softRoamConfig, foodTone } from '../src/softroam/view.ts';
 import { ROAM_PLANS, ROAM_TYPES } from '../src/roam/view.ts';
 
 const U = SOFT_U;
@@ -372,5 +372,36 @@ describe('soft roam view: kinds', () => {
       prev = o;
     }
     expect(worst).toBeLessThan(0.02);
+  });
+});
+
+describe('food haze tone', () => {
+  it('is compressive: thin food reads, a fresh patch does not blow out, and it never falls', () => {
+    expect(foodTone(0)).toBe(0);
+    expect(foodTone(1)).toBeGreaterThan(0.2);
+    expect(foodTone(1)).toBeGreaterThan((1 / 120) * 10); // far above a straight line
+    expect(foodTone(4000)).toBe(1);
+    expect(foodTone(120)).toBeLessThan(1);
+    let prev = -1;
+    for (let f = 0; f <= 400; f += 0.5) {
+      const t = foodTone(f);
+      expect(t).toBeGreaterThanOrEqual(prev);
+      prev = t;
+    }
+  });
+
+  it('shows spread food as a visible haze, and a fresh patch brighter still, without touching the world', () => {
+    const w = bare();
+    const mem = new SoftPaintMemory();
+    w.food[8 * SIZE + 8] = 1;
+    w.food[3 * SIZE + 3] = 150;
+    const d0 = w.digest();
+    mem.observe(w);
+    const o = image(w, 1, mem);
+    const blueAt = (tx: number, ty: number): number => o[((ty * SCALE + SCALE / 2) * SIDE + tx * SCALE + SCALE / 2) * 4 + 2];
+    const empty = blueAt(13, 13);
+    expect(blueAt(8, 8)).toBeGreaterThan(empty + 6);
+    expect(blueAt(3, 3)).toBeGreaterThan(blueAt(8, 8) + 20);
+    expect(w.digest()).toBe(d0);
   });
 });

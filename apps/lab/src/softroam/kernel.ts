@@ -47,9 +47,10 @@
  *   (cap 4095), so the field reaches about 16 tiles from a patch (the reach is sqrt(2^shift / 8) tiles: it follows the decay, not the passes, which
  *   only set how fast the field catches up). Soft Roam uses the same 4 passes and shift 11 and adds 8 per unit of food (cap 1023), so the ratios
  *   the slope reads are Roam's to within a few percent (a calibration against a Roam world with a lone patch gives -0.49, -1.04, -0.84, -0.69, -0.58, -0.47
- *   of the read at 2, 4, 8, 12, 16, 20 tiles; Soft Roam -0.50, -1.05, -0.85, -0.70, -0.59, -0.48), and the field is held at 2^20 - 1 so that tile
- *   value x 1024 (the interpolation) and (east - west) x gain x 1024 (the slope, taken only when it is below east + west + 1) stay inside 31 bits
- *   at the widest legal dials (shift 12, gain 16). A tile with more than about 64 food a tile over a wide area saturates the field; the slope is
+ *   of the read at 2, 4, 8, 12, 16, 20 tiles; Soft Roam -0.50, -1.05, -0.85, -0.70, -0.59, -0.48), and the field as shown is held at 2^20 - 1. The slope
+ *   is read from the fine field behind it (8 times finer, under 2^23, Roam's own scale), so a weak far gradient survives as it does in Roam; its
+ *   interpolation and slope sums pass 2^31 (tile value x 1024, then (east - west) x gain x 1024 only where below east + west + 1) and are plain
+ *   numbers, exact far below 2^53, cut with Math.floor and Math.trunc: the one place the 31-bit rule is not kept. A tile with more than about 64 food a tile over a wide area saturates the field; the slope is
  *   then flat there. Below 2^shift a tile does not lose to decay (floor), as in Roam, only to the averaging.
  * - There is no blocked-turn rule. Roam gives a body that cannot step a new random heading; here thrust into another
  *   body is projected away (the body slides, or stalls when boxed in) and only the hashed turn event changes a heading.
@@ -251,6 +252,7 @@ const CH_FOUND = 40;
 const CH_BITE = 42;
 const CH_TOUCH = 50;
 const CH_TOUCH_TIE = 51;
+const CH_TOUCH_TIE3 = 52;
 const CH_PAIR = 100; // + substep
 /** Velocity is only taken off contacts at least this near-touching (squared distance of three quarters of D); deeper overlaps may decompress freely. */
 const SHALLOW2 = (3 * D / 4) * (3 * D / 4);
@@ -258,7 +260,7 @@ const SHALLOW2 = (3 * D / 4) * (3 * D / 4);
 const SCENT_FOOD_CAP = 1023;
 /** Scent added per pass for each unit of food on a tile (food capped at SCENT_FOOD_CAP): Roam's 64, relaxed with Roam's own arithmetic; what is read is this field over 8, so it fits 20 bits. */
 const SCENT_SCALE = 64;
-/** The field never goes above this, so every read and product below stays inside 31 bits (see `scentSlope`). */
+/** The field as shown (`scent`) never goes above this, 20 bits (see `scentAt` for the arithmetic on the fine field). */
 const SCENT_MAX = (1 << 20) - 1;
 /** The relaxed field is held 8 times finer and cut here, so that what is read (over 8) never passes SCENT_MAX. */
 const SCENT_HI_MAX = ((SCENT_MAX + 1) << 3) - 1;
@@ -722,13 +724,19 @@ export class SoftRoamWorld {
     return roamHash(this.cfg.seed, this.step, (Math.imul(hi ^ 0x5bd1e995, 0x27d4eb2f) + inner) >>> 0, CH_TOUCH_TIE);
   }
 
-  /** Whether candidate b (hash h) ranks ahead of the held candidate p (hash hp) for cell a: lower hash, then lower second draw, then lower cid. */
+  /**
+   * Whether candidate b (hash h) ranks ahead of the held candidate p (hash hp) for cell a: lower hash, then lower second draw, then lower
+   * third draw. The third is a draw on each candidate's own cid (the hash is a bijection of the key, so two cids never tie on it) and
+   * is fresh every step: a pair that collides on both pair draws is settled by a different coin each step, never by the lower cid.
+   */
   private ranksAhead(a: number, b: number, h: number, p: number, hp: number): boolean {
     if (h !== hp) return h < hp;
     const tb = this.pairTie(a, b);
     const tp = this.pairTie(a, p);
     if (tb !== tp) return tb < tp;
-    return this.cid[b] < this.cid[p];
+    const seed = this.cfg.seed;
+    const t = this.step;
+    return roamHash(seed, t, this.cid[b], CH_TOUCH_TIE3) < roamHash(seed, t, this.cid[p], CH_TOUCH_TIE3);
   }
 
   /** Fill the 9 tiles around tile coordinates (tx, ty), in the scan order in force. */
@@ -1040,7 +1048,7 @@ export class SoftRoamWorld {
       const r = this.bodyRoot[l];
       let h = this.heading[r];
       let tl = this.turnLeft[r];
-      const sealed = this.drainN > 0 && t - this.since[r] < this.sealN;
+      const sealed = this.drainN > 0 && ((t - this.since[r]) >>> 0) < this.sealN;
       if (sealed) tl = 0;
       else {
         const turnQ16 = Math.floor((Math.floor(this.bodyTurnSum[l] / this.bodySize[l]) * this.turnMaxQ16) / (2 * ROAM_GENE_MAX));
@@ -1065,7 +1073,7 @@ export class SoftRoamWorld {
       this.turnLeft[c] = this.bodyTurn[l];
       const ch = softRoamCos(h);
       const sh = softRoamSin(h);
-      const sealed = this.drainN > 0 && t - this.since[this.bodyRoot[l]] < this.sealN;
+      const sealed = this.drainN > 0 && ((t - this.since[this.bodyRoot[l]]) >>> 0) < this.sealN;
       let ux = 0;
       let uy = 0;
       if (sealed) {
@@ -1102,32 +1110,37 @@ export class SoftRoamWorld {
   }
 
   private readonly slope = new Int32Array(2);
-  /** The scent at a position, interpolated between tile centres (whole scent units, rounded down); every product stays below 2^31 (scent is under 2^15). */
+  /**
+   * The scent at a position, interpolated between tile centres, read from the fine field (8 times what `scent` shows, so a weak far
+   * gradient of 1 against 0 in Roam's units is not rounded away). The field is under 2^23, so a weighted sum can pass 2^31: the sums are
+   * plain numbers (exact far below 2^53) cut with Math.floor, never with a 32-bit shift.
+   */
   private scentAt(px: number, py: number): number {
-    // Offset by two tiles so the shifts act on non-negative numbers (px runs from -1024 to the torus end plus 1024).
+    // Offset by two tiles so the coordinates are non-negative (px runs from -1024 to the torus end plus 1024).
     const qx = px - 512 + 2048;
     const qy = py - 512 + 2048;
     const i0 = (qx >> 10) - 2;
     const j0 = (qy >> 10) - 2;
     const fx = qx & 1023;
     const fy = qy & 1023;
-    const a = this.scent;
-    const top = (a[this.tileAt(i0, j0)] * (1024 - fx) + a[this.tileAt(i0 + 1, j0)] * fx) >> 10;
-    const bot = (a[this.tileAt(i0, j0 + 1)] * (1024 - fx) + a[this.tileAt(i0 + 1, j0 + 1)] * fx) >> 10;
-    return (top * (1024 - fy) + bot * fy) >> 10;
+    const a = this.scentHi;
+    const top = Math.floor((a[this.tileAt(i0, j0)] * (1024 - fx) + a[this.tileAt(i0 + 1, j0)] * fx) / 1024);
+    const bot = Math.floor((a[this.tileAt(i0, j0 + 1)] * (1024 - fx) + a[this.tileAt(i0 + 1, j0 + 1)] * fx) / 1024);
+    return Math.floor((top * (1024 - fy) + bot * fy) / 1024);
   }
   /**
    * The smooth slope of the scent at a position, each component in [-1024, 1024] (1024 is a relative slope of 1/gain per tile): Roam's
    * (east - west) * 1024 * gain / (east + west + 1), with east and west read one tile either side of the position from the
-   * interpolated field, so it is exactly Roam's at a tile centre and a symmetric peak gives no slope anywhere on its axis.
+   * interpolated fine field, so it is Roam's at a tile centre (the fine field is Roam's own arithmetic) and a symmetric peak gives no
+   * slope anywhere on its axis.
    */
   private scentSlope(px: number, py: number, gain: number): Int32Array {
     const se = this.scentAt(px + 1024, py);
     const sw = this.scentAt(px - 1024, py);
     const ss = this.scentAt(px, py + 1024);
     const sn = this.scentAt(px, py - 1024);
-    // Scent is under 2^18 (256 times the food cap at the widest decay). A slope of 1/gain per tile or more is the full 1024, so only the smaller
-    // ones are scaled, and then (east - west) * gain * 1024 stays below (east + west + 1) * 1024.
+    // A relative slope of 1/gain per tile or more is the full 1024, so only the smaller ones are scaled: there (east - west) * gain is
+    // below east + west + 1, under 2^24, and its product with 1024 stays exact far below 2^53.
     const sx = se + sw + 1;
     const sy = ss + sn + 1;
     const ex = (se - sw) * gain;
@@ -1469,7 +1482,8 @@ export class SoftRoamWorld {
 
   /** True while a body is within `seal` steps of release (the same test as the dash in `commands`). */
   private sealedCell(c: number): boolean {
-    return this.step - this.since[this.bodyRoot[this.body[c]]] < this.sealN;
+    // `since` is a Uint32: a release at step 2^32 - 1 stores 0, so the age is taken modulo 2^32.
+    return ((this.step - this.since[this.bodyRoot[this.body[c]]]) >>> 0) < this.sealN;
   }
 
   /**

@@ -191,6 +191,13 @@ const GHOST_STEPS = 14; // a death fades over this many steps
 const GHOST_KEEP = 20;
 const FOOD_TAU = 6.5; // steps for the food haze to ease 63% of the way to a new level
 const FOOD_FULL = 120;
+const TONE_KNEE = 0.25; // food per tile at which the haze tone is about a third of the way up
+const TONE_TOP = 240; // food per tile that shows as the full haze
+const TONE_NORM = Math.log1p(TONE_TOP / TONE_KNEE);
+/** How bright the haze of a tile with this much food shows, 0..1: a log curve, so thin spread food reads and a fresh patch does not blow out. */
+export function foodTone(food: number): number {
+  return Math.min(1, Math.log1p(Math.max(0, food) / TONE_KNEE) / TONE_NORM);
+}
 const GLOW_R = 1.9;
 
 interface Ghost { x: number; y: number; kind: number; step: number; compost: boolean }
@@ -271,7 +278,7 @@ export class SoftPaintMemory {
     if (world.step === this.seenStep) return;
     if (world.step < this.seenStep || this.seenStep < 0) {
       // A new world, or the first look: show the food as it is, no bloom.
-      for (let i = 0; i < world.n; i++) this.foodShown[i] = this.foodPrev[i] = Math.min(1, world.food[i] / FOOD_FULL);
+      for (let i = 0; i < world.n; i++) this.foodShown[i] = this.foodPrev[i] = foodTone(world.food[i]);
       this.ghosts.length = 0;
       this.rings.length = 0;
     } else {
@@ -280,7 +287,7 @@ export class SoftPaintMemory {
       for (let i = 0; i < world.n; i++) {
         const v = this.foodShown[i];
         this.foodPrev[i] = v;
-        this.foodShown[i] = v + (Math.min(1, world.food[i] / FOOD_FULL) - v) * k;
+        this.foodShown[i] = v + (foodTone(world.food[i]) - v) * k;
       }
     }
     // The deaths of the step just done are still in the world's events, even at a first look.
@@ -591,10 +598,10 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     }
   }
   for (let i = 0; i < n; i++) {
-    const f = Math.min(1, mem.foodBlur[i] * 1.15);
-    haze[i * 3] = 0.006 + 0.02 * f;
-    haze[i * 3 + 1] = 0.01 + 0.06 * f;
-    haze[i * 3 + 2] = 0.04 + 0.2 * f;
+    const f = Math.min(1, mem.foodBlur[i]);
+    haze[i * 3] = 0.006 + 0.045 * f;
+    haze[i * 3 + 1] = 0.01 + 0.15 * f;
+    haze[i * 3 + 2] = 0.04 + 0.46 * f;
   }
   glow.fill(0);
   const splat = (cx: number, cy: number, rad: number, r: number, g: number, b: number): void => {

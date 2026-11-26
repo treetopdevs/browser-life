@@ -138,6 +138,21 @@ export function fixDial(d: Dial, v: number): number {
   return x;
 }
 
+/**
+ * What to tell a visitor when the number they typed into a dial's box is not the one the dial took (past its range, rounded, in the gap
+ * above 0, or not a number at all), or null when it was taken as typed. `kept` is the value the dial had before.
+ */
+export function dialMoved(d: Dial, typed: string, kept: number): string | null {
+  const v = typed.trim() === '' ? NaN : Number(typed);
+  if (!Number.isFinite(v)) return `"${d.label}" needs a number, so it stays at ${kept}.`;
+  const x = fixDial(d, v);
+  if (x === v) return null;
+  if (v > d.max) return `"${d.label}" can go no higher than ${d.max}, so it is ${x}.`;
+  if (v < d.min) return `"${d.label}" can go no lower than ${d.min}, so it is ${x}.`;
+  if (d.whole && Math.round(v) !== v) return `"${d.label}" takes whole numbers, so it is ${x}.`;
+  return `"${d.label}" is ${x}: it cannot sit between 0 and ${d.least}.`;
+}
+
 export const dialDefaults = (): DialValues => Object.fromEntries(SOFT_DIALS.map((d) => [d.id, d.def]));
 
 /** Options for a world from the switches and dials. Dials left at their defaults add nothing to the config. */

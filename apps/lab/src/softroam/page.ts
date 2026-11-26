@@ -1,7 +1,7 @@
 /** The local /softroam/ page: a canvas, a few choices, and readouts. The world steps in a worker. */
 
 import { SoftRoamPacer } from './pacer.ts';
-import { CHANGE_IDS, checkDials, dialDefaults, dialOptions, fixDial, SOFT_DIALS, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
+import { CHANGE_IDS, checkDials, dialDefaults, dialMoved, dialOptions, fixDial, SOFT_DIALS, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
 import type { SoftPaint, SoftRoamFrame, SoftRoamFromWorker, SoftRoamStart, SoftRoamToWorker } from './view.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -66,9 +66,12 @@ function buildDials(): void {
     range.addEventListener('input', () => { dials[d.id] = fixDial(d, Number(range.value)); showDials(); });
     range.addEventListener('change', () => { dials[d.id] = fixDial(d, Number(range.value)); changed(); });
     num.addEventListener('change', () => {
+      // A number the dial could not take as typed is moved to the nearest one it can, and the visitor is told.
+      const moved = dialMoved(d, num.value, dials[d.id]);
       if (num.value.trim() !== '') dials[d.id] = fixDial(d, Number(num.value));
       num.value = String(dials[d.id]);
       changed();
+      if (moved !== null) set('dials-note', moved);
     });
     box.append(row);
   }
@@ -89,7 +92,9 @@ function showDials(): void {
   }
 }
 
+/** Write the settings into the address, but only when the kernel accepts them: the address always names the world that is running. */
 function saveHash(): void {
+  if (checkDials(switches(), dials) !== null) return;
   const q = new URLSearchParams();
   for (const id of SWITCH_IDS) q.set(id, value(id));
   for (const d of SOFT_DIALS) if (dials[d.id] !== d.def) q.set(d.id, String(dials[d.id]));
@@ -113,6 +118,7 @@ function loadHash(): void {
 }
 
 function changed(): void {
+  set('dials-note', '');
   showDials();
   saveHash();
   reset();
@@ -187,6 +193,8 @@ el('start').addEventListener('change', () => { el<HTMLSelectElement>('kinds').va
 window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });
 el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults()); changed(); });
 el('dials-link').addEventListener('click', () => {
+  // Refused settings make no world, and the address may hold them (a link typed or opened by hand): hand out no link to a refusal.
+  if (checkDials(switches(), dials) !== null) { set('dials-note', 'these settings are refused, so there is no link to copy: move a dial back first'); return; }
   saveHash();
   navigator.clipboard?.writeText(location.href).then(() => set('dials-note', 'link copied'), () => set('dials-note', 'copy the address bar'));
 });

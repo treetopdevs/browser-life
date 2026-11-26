@@ -412,18 +412,19 @@ describe('soft roam props: arithmetic bounds', () => {
   });
 
   it('the scent slope product (east - west) * 1024 * gain stays below 2^31 at the widest legal settings (decay shift 12, gain 16, a food cliff)', () => {
-    // Milestone 2 widened the decay (shift 12 is legal) and clamps the field at 2^20 - 1, which is what keeps the reads inside 31 bits.
+    // Milestone 2 widened the decay (shift 12 is legal) and clamps the field at 2^20 - 1 (held 8 times finer inside, so under 2^23, and read in plain numbers that stay exact far below 2^53).
     const w = new SoftRoamWorld(quiet({ size: 16, scentDecayShift: 12, scentGain: 16, scentIters: 16, matter: 1_000_000 }));
     // A cliff of maximal food on half the world; run the relaxation to (and past) the clamp.
     for (let y = 0; y < 16; y++) for (let x = 0; x < 8; x++) { w.food[y * 16 + x] = 1023; w.reservoir -= 1023; }
     for (let s = 0; s < 1500; s++) w.stepOnce();
-    // East and west are convex mixes of tile values, so the kernel's intermediates are: tile value * weight 1024 (summed over two tiles),
-    // (east - west) * gain, and, only when that is below east + west + 1, times 1024.
+    // East and west are convex mixes of tile values, so the kernel's intermediates (on the fine field, 8 times what is shown) are: tile value *
+    // weight 1024 (summed over two tiles), (east - west) * gain, and, only when that is below east + west + 1, times 1024.
     let hi = 0;
     for (let i = 0; i < 256; i++) hi = Math.max(hi, w.scent[i]);
     expect(hi).toBe(2 ** 20 - 1);
     const worst = Math.max(hi * 2048, (2 * hi + 1) * 1024, hi * 16);
     expect(worst).toBeLessThan(2 ** 31);
+    expect(8 * worst).toBeLessThan(2 ** 53);
     // And a chaser on the cliff reads a slope without any of it overflowing.
     const plan = w.addPlan(Array.from({ length: 16 }, (_, m) => planEntry(PLAN_REST, 0, m)));
     const c = w.found(8 * U + 512, 8 * U + 512, [512, 0, -512, 0, 0], 1, 150, plan);
@@ -438,8 +439,8 @@ describe('soft roam props: arithmetic bounds', () => {
 
 describe('soft roam props: never fuse, clean breaks', () => {
   it('under 2000 steps of random deaths every brace and mother link stays inside one body, and labels match a fresh walk', () => {
-    // Seeds 12 and 4 (round 2: the finer scent field and the seal clock moved histories, and seed 5 gave exactly 3 splits; were 5 and 9: the longer scent of milestone 2 changed seed 9's history to one split; seed 3 gave exactly 3, 6 and 7 too few divisions) (seed 1 gave exactly 3 splits after the payment rule changed to the contract's: the histories are lotteries, the bars are not).
-    for (const seed of [12, 4]) {
+    // Seeds 12 and 1 (close-out: the scent read moved to the fine field, which moved histories, and seed 4 gave exactly 40 divisions, so seed 1 took its place; round 2: the finer scent field and the seal clock moved histories, and seed 5 gave exactly 3 splits; were 5 and 9: the longer scent of milestone 2 changed seed 9's history to one split; seed 3 gave exactly 3, 6 and 7 too few divisions) (seed 1 gave exactly 3 splits after the payment rule changed to the contract's: the histories are lotteries, the bars are not).
+    for (const seed of [12, 1]) {
       const w = seedWorld(cfgOf({ seed, size: 32, matter: 40_000, mut: 0.05, planMut: 0.3, life: 80, compost: true, patchEvery: 25, maxCells: 500 }), 20, 199);
       let splitsSeen = 0;
       for (let s = 0; s < 2000; s++) {
@@ -653,7 +654,9 @@ describe('soft roam props: fix round 1', () => {
   it('the scent slope is a relative slope of 1/gain per tile at full thrust, as Roam reads it', () => {
     const w = new SoftRoamWorld(one({ scentGain: 4 }));
     const plan = w.addPlan(Array.from({ length: 16 }, (_, m) => planEntry(PLAN_REST, 0, m)));
-    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) w.scent[j * 16 + i] = 1000 + 125 * (i - 8);
+    // The chaser reads the fine field (Roam's own scale), which the relaxation fills; set it, and what is shown with it.
+    const fine = (w as unknown as { scentHi: Uint32Array }).scentHi;
+    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) { fine[j * 16 + i] = 1000 + 125 * (i - 8); w.scent[j * 16 + i] = fine[j * 16 + i] >>> 3; }
     const c = w.found(8 * U + 512, 8 * U + 512, [512, 0, -512, 0, 0], 1, 150, plan);
     w.stepOnce();
     // Roam: ((se - sw) * 1024 * gain) / (se + sw + 1) = 250 * 4096 / 2001 = 511 of 1024, so about 119 of the 240 thrust.

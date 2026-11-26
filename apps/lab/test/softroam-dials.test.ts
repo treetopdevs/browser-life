@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkDials, CHANGE_IDS, dialDefaults, dialOptions, fixDial, SOFT_DIALS, startPick, type SoftSwitches } from '../src/softroam/dials.ts';
+import { checkDials, CHANGE_IDS, dialDefaults, dialMoved, dialOptions, fixDial, SOFT_DIALS, startPick, type SoftSwitches } from '../src/softroam/dials.ts';
 import { foundSoftRoam, SOFT_STARTS, softRoamConfig, type SoftRoamStart } from '../src/softroam/view.ts';
 
 const sw: SoftSwitches = { seed: 2, size: 64, start: 'garden', kinds: true, toughness: false };
@@ -150,5 +150,23 @@ describe('soft roam page dials', () => {
     expect(checkDials({ ...from, start: 'garden' }, d)).toBeNull();
     expect(CHANGE_IDS).not.toContain('start');
     expect(startPick(garden, 'grown-lines')).toEqual({ ...garden, start: 'grown-lines', kinds: false });
+  });
+
+  it('a number typed past a dial\'s range, fractional for a whole dial, in the gap above 0, or not a number, is told what it became', () => {
+    const by = (id: string) => SOFT_DIALS.find((d) => d.id === id)!;
+    expect(dialMoved(by('birthStore'), '150', 150)).toBeNull();
+    expect(dialMoved(by('birthStore'), '999999', 150)).toBe('"Matter to divide" can go no higher than 256, so it is 256.');
+    expect(dialMoved(by('birthStore'), '-5', 150)).toBe('"Matter to divide" can go no lower than 10, so it is 10.');
+    expect(dialMoved(by('birthStore'), '120.5', 150)).toBe('"Matter to divide" takes whole numbers, so it is 121.');
+    expect(dialMoved(by('birthStore'), '', 150)).toBe('"Matter to divide" needs a number, so it stays at 150.');
+    expect(dialMoved(by('birthStore'), 'many', 150)).toBe('"Matter to divide" needs a number, so it stays at 150.');
+    expect(dialMoved(by('life'), '1', 8000)).toBe('"Cells wear out after" is 2: it cannot sit between 0 and 2.');
+    expect(dialMoved(by('life'), '0', 8000)).toBeNull();
+    // Every message agrees with what fixDial does with the same text.
+    for (const d of SOFT_DIALS) for (const typed of ['', 'x', '-1e9', '1e9', String(d.min), String(d.max)]) {
+      const m = dialMoved(d, typed, d.def);
+      const v = typed === '' ? NaN : Number(typed);
+      if (m === null) expect(fixDial(d, v)).toBe(v);
+    }
   });
 });

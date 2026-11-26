@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSoftRoamConfig, KIND_MOUTH, KIND_PLAIN, KIND_SHELL, PLAN_REST, planEntry, roamHash, SOFT_U, type SoftRoamConfig, SoftRoamWorld } from '../src/softroam/kernel.ts';
 import { ROAM_PLANS, ROAM_TYPES } from '../src/roam/view.ts';
+import { defaultRoamConfig, RoamWorld } from '../src/roam/kernel.ts';
 import { foundSoftRoam, SoftPaintMemory } from '../src/softroam/view.ts';
 
 /**
@@ -363,6 +364,38 @@ describe('soft roam kinds: touch', () => {
   });
 });
 
+describe('soft roam kinds: contacts are mutual', () => {
+  it('in a packed patch where most cells have six candidates, a pair is kept only when each keeps the other: no cell holds more than four', () => {
+    // 37 cells on a triangular lattice at 1100 units: each interior cell has six neighbours within touch, and no body is large enough to matter.
+    const build = (order: readonly number[] | null): SoftRoamWorld => {
+      const w = new SoftRoamWorld(still({ maxCells: 64, size: 16 }));
+      if (order) w._testSlotOrder(order);
+      const plan = restPlan(w);
+      const c = 8 * U;
+      for (let r = -3; r <= 3; r++) {
+        for (let q = -3; q <= 3; q++) {
+          if (Math.abs(r + q) > 3) continue;
+          spawn(w, c + 1100 * q + Math.round(550 * r), c + Math.round(952.6 * r), SITTER, 150, plan);
+        }
+      }
+      return w;
+    };
+    const w = build(null);
+    expect(w.census().cells).toBe(37);
+    let sawFour = 0;
+    for (let s = 0; s < 20; s++, w.step++) {
+      const pairs = w._touchPairs();
+      const count = new Map<number, number>();
+      for (const pr of pairs) for (const id of pr.split(',')) count.set(Number(id), (count.get(Number(id)) ?? 0) + 1);
+      for (const k of count.values()) {
+        expect(k).toBeLessThanOrEqual(4);
+        if (k === 4) sawFour++;
+      }
+    }
+    expect(sawFour).toBeGreaterThan(100);
+  });
+});
+
 describe('soft roam kinds: touch ties', () => {
   it('two mouths whose pair draws with a prey collide are not ranked by age: each wins about half the contested places', () => {
     // cids 6068 and 57348 against 56617 give the same pair-hash input (imul(6068, K) ^ 56617 === imul(56617, K) ^ 57348).
@@ -624,11 +657,24 @@ describe('soft roam kinds: the whole ecology', () => {
       ecology(21, {}, (w) => { w._testSlotOrder(perm.slice().reverse()); w._reverseScan = true; }),
     ];
     expect(worlds[0].x[0] === worlds[1].x[0] && worlds[0].y[0] === worlds[1].y[0]).toBe(false);
+    // The digest leaves the event lists out, so their order (the picture's, listed by serial) is compared too, as serials and units.
+    const events = (w: SoftRoamWorld): string => {
+      const e = w.events;
+      return JSON.stringify([e.feeds.map((f) => [f.mc, f.pc]), e.hits.map((h) => h.c), e.cracks.map((q) => [q.x, q.y]), e.deaths.map((q) => [q.x, q.y, q.kind, q.store]), e.patches.map((q) => [q.x, q.y])]);
+    };
+    let multiFeeds = 0;
     for (let s = 0; s < 800; s++) {
       for (const w of worlds) w.stepOnce();
       const d = worlds[0].digest();
-      for (let k = 1; k < worlds.length; k++) if (worlds[k].digest() !== d) throw new Error(`world ${k} differs at step ${s + 1}`);
+      const ev = events(worlds[0]);
+      for (let k = 1; k < worlds.length; k++) {
+        if (worlds[k].digest() !== d) throw new Error(`world ${k} differs at step ${s + 1}`);
+        if (events(worlds[k]) !== ev) throw new Error(`world ${k} lists its events differently at step ${s + 1}`);
+      }
+      if (worlds[0].events.feeds.length > 1) multiFeeds++;
     }
+    // The comparison only bites where a step lists several of a kind.
+    expect(multiFeeds).toBeGreaterThan(20);
     const c = worlds[0].census();
     expect(c.drained).toBeGreaterThan(1000);
     expect(c.cracked).toBeGreaterThan(0);
@@ -685,16 +731,36 @@ describe('soft roam kinds: scent reach', () => {
     expect(a.digest()).toBe(b.digest());
   });
 
-  it('a symmetric peak still gives no slope: a chaser midway between two equal patches is not pushed either way', () => {
+  it('a symmetric peak gives no slope: a chaser on a lone patch\'s centre is not pushed at all', () => {
+    const w = LONE();
+    patchAt(w, 32);
+    w.advance(1200);
+    // A real peak: the centre is higher than every neighbour on the row, and the field is mirrored about it.
+    const row = 32 * w.size + 32;
+    expect(w.scent[row]).toBeGreaterThan(w.scent[row + 1]);
+    expect(w.scent[row + 1]).toBe(w.scent[row - 1]);
+    const plan = restPlan(w);
+    const c = spawn(w, 32 * U + 512, 32 * U + 512, CHASER, 150, plan);
+    w.stepOnce();
+    expect(w.vx[c]).toBe(0);
+    expect(w.vy[c]).toBe(0);
+  });
+
+  it('midway between two equal patches (a saddle: lower than both sides along x, a ridge along y) the chaser is not pushed either way', () => {
     const w = LONE();
     patchAt(w, 20);
     patchAt(w, 44);
     w.advance(1200);
+    const row = 32 * w.size + 32;
+    // Lower than both sides along x, mirrored; and the column through it is mirrored in y.
+    expect(w.scent[row + 1]).toBeGreaterThan(w.scent[row]);
+    expect(w.scent[row - 1]).toBe(w.scent[row + 1]);
+    expect(w.scent[row + w.size]).toBe(w.scent[row - w.size]);
     const plan = restPlan(w);
     const c = spawn(w, 32 * U + 512, 32 * U + 512, CHASER, 150, plan);
     w.stepOnce();
-    expect(Math.abs(w.vx[c])).toBeLessThanOrEqual(2);
-    expect(Math.abs(w.vy[c])).toBeLessThanOrEqual(2);
+    expect(w.vx[c]).toBe(0);
+    expect(w.vy[c]).toBe(0);
   });
 
   it('keeps every scent value inside 20 bits and the dials work: more passes catch up faster, more decay reaches less far', () => {
@@ -707,6 +773,22 @@ describe('soft roam kinds: scent reach', () => {
     };
     expect(at(8, 11, 200, 8)).toBeGreaterThan(at(2, 11, 200, 8));
     expect(at(4, 9, 1500, 16) / at(4, 9, 1500, 2)).toBeLessThan(at(4, 11, 1500, 16) / at(4, 11, 1500, 2));
+  });
+
+  it('the 20-bit cut is what holds the field there: all the matter of a legal world on one patch, the widest dials, reaches it and stops', () => {
+    const w = new SoftRoamWorld({ ...defaultSoftRoamConfig(), size: 8, matter: 1_048_575, maxCells: 16, startPatches: 0, patchEvery: 1_000_000, patchFood: 1_048_575, patchRadius: 3, scentIters: 16, scentDecayShift: 12, mut: 0, planMut: 0 });
+    w.food.fill(0);
+    // Every unit of matter on the tiles of one radius-3 patch, from the reservoir as `patchFood` does it.
+    const each = Math.floor(1_048_575 / 29);
+    let put = 0;
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy <= 9) { w.food[((4 + dy) & 7) * 8 + ((4 + dx) & 7)] += each; put += each; }
+    w.food[4 * 8 + 4] += 1_048_575 - put;
+    w.reservoir -= 1_048_575;
+    w.advance(200);
+    let top = 0;
+    for (let i = 0; i < w.n; i++) top = Math.max(top, w.scent[i]);
+    expect(top).toBe(2 ** 20 - 1);
+    expect(w.census().residual).toBe(0);
   });
 });
 
@@ -752,14 +834,47 @@ describe('soft roam kinds: fix round 2', () => {
     expect(a).toEqual(a.slice().sort((x, y) => Number(x.split(',')[0]) - Number(y.split(',')[0]) || Number(x.split(',')[1]) - Number(y.split(',')[1])));
   });
 
+  it('the hits are listed in cid order whichever slots the cells sit in', () => {
+    const run = (perm: readonly number[]): number[] => {
+      const w = new SoftRoamWorld(still({ crack: 50 }));
+      w._testSlotOrder(perm);
+      const plan = restPlan(w);
+      // Three shells, each with a mouth beside it, created so that their slots run opposite to their serials.
+      const shells: number[] = [];
+      for (let k = 0; k < 3; k++) {
+        const h = hunter(w, plan, 2, 3 * U + k * 4 * U, 8 * U);
+        const sh = spawn(w, 3 * U + k * 4 * U + 1100, 8 * U, SITTER, 150, plan);
+        w.kind[sh] = S;
+        expect(h.length).toBe(2);
+        shells.push(sh);
+      }
+      const base = 1000;
+      shells.forEach((sh, k) => { w.cid[sh] = base + (k === 1 ? 0 : k === 0 ? 2 : 1); });
+      w.stepOnce();
+      return w.events.hits.map((e) => e.c);
+    };
+    const fwd = Array.from({ length: 16 }, (_, i) => i);
+    const a = run(fwd);
+    const b = run(fwd.slice().reverse());
+    expect(a).toEqual([1000, 1001, 1002]);
+    expect(b).toEqual(a);
+  });
+
   it('a weak lone source (32 food on one tile) still gives a chaser 12 tiles away the full slope toward it, as Roam does', () => {
     const w = new SoftRoamWorld(still({ size: 64, kinds: false, drain: undefined, seal: undefined, flow: 1 / 64 }));
     w.food[32 * w.size + 32] += 32;
     w.reservoir -= 32;
     w.advance(1200);
     const g = (w as unknown as { scentSlope(px: number, py: number, gain: number): Int32Array }).scentSlope((32 + 12) * U + 512, 32 * U + 512, 8);
-    expect(g[0]).toBeLessThan(-512);
-    expect(Math.abs(g[1])).toBeLessThanOrEqual(2);
+    // Full slope: 1/8 per tile at gain 8 is already 1024, and Roam reads 1024 here too.
+    expect(g[0]).toBe(-1024);
+    expect(g[1]).toBe(0);
+    const plan = restPlan(w);
+    const c = spawn(w, (32 + 12) * U + 512, 32 * U + 512, CHASER, 150, plan);
+    w.stepOnce();
+    // Pushed toward the source at the full chase thrust (the chase gene is 512 of 512), straight along the row.
+    expect(w.vx[c]).toBeLessThan(-200);
+    expect(w.vy[c]).toBe(0);
   });
 
   it('a feed that kills the prey still pulses both mouths in the picture', () => {
@@ -776,5 +891,104 @@ describe('soft roam kinds: fix round 2', () => {
     mem.observe(w);
     expect(mem.feedT[left[1]]).toBe(1);
     expect(mem.feedT[right[0]]).toBe(1);
+  });
+});
+
+describe('soft roam kinds: close-out fixes', () => {
+  /** The held-out world's private pieces, reached the way the other tests reach them. */
+  type Priv = { pairHash(a: number, b: number, ch: number): number; pairTie(a: number, b: number): number; ranksAhead(a: number, b: number, h: number, p: number, hp: number): boolean; sealedCell(c: number): boolean; tx: Int32Array; ty: Int32Array };
+
+  it('a tie on both pair draws is settled by a fresh coin each step, not by the lower cid', () => {
+    // Both symmetric pair draws are forced to tie, as they do for two pairs whose keys collide on both (a 2^-32 chance a step, found at seed
+    // 2572920988, step 70000, cids 6068 and 57348 against 56617).
+    const w = new SoftRoamWorld(still());
+    const plan = restPlan(w);
+    const prey = spawn(w, 4 * U, 4 * U, SITTER, 150, plan);
+    const a = spawn(w, 8 * U, 4 * U, SITTER, 150, plan);
+    const b = spawn(w, 8 * U, 8 * U, SITTER, 150, plan);
+    w.cid[prey] = 56617;
+    w.cid[a] = 6068;
+    w.cid[b] = 57348;
+    const k = w as unknown as Priv;
+    k.pairHash = () => 77;
+    k.pairTie = () => 99;
+    let aWins = 0;
+    for (let s = 0; s < 400; s++) {
+      w.step = 70000 + s;
+      const ab = k.ranksAhead(prey, a, 77, b, 77);
+      const ba = k.ranksAhead(prey, b, 77, a, 77);
+      // A strict order: exactly one of the two comes first.
+      expect(ab).not.toBe(ba);
+      if (ab) aWins++;
+    }
+    expect(aWins).toBeGreaterThan(140);
+    expect(aWins).toBeLessThan(260);
+  });
+
+  it('the real draws do collide for those cids at that seed and step (so the case above is not a made-up one)', () => {
+    const w = new SoftRoamWorld(still({ seed: 2572920988 }));
+    const plan = restPlan(w);
+    const prey = spawn(w, 4 * U, 4 * U, SITTER, 150, plan);
+    const a = spawn(w, 8 * U, 4 * U, SITTER, 150, plan);
+    const b = spawn(w, 8 * U, 8 * U, SITTER, 150, plan);
+    w.cid[prey] = 56617;
+    w.cid[a] = 6068;
+    w.cid[b] = 57348;
+    const k = w as unknown as Priv;
+    w.step = 70000;
+    expect(k.pairHash(prey, a, 50)).toBe(k.pairHash(prey, b, 50));
+    expect(k.pairTie(prey, a)).toBe(k.pairTie(prey, b));
+    // The next step the second draw already differs.
+    w.step = 70001;
+    expect(k.pairTie(prey, a)).not.toBe(k.pairTie(prey, b));
+  });
+
+  it('a daughter released by division is sealed for exactly `seal` steps, dashing all of them, also across the 2^32 step counter', () => {
+    for (const start of [500, 4294967295]) {
+      const w = new SoftRoamWorld(still({ seal: 100 }));
+      const plan = w.addPlan(Array.from({ length: 16 }, (_, m) => planEntry(m === 0 ? 4 : PLAN_REST, 0, PLAN_REST)));
+      const mother = spawn(w, 8 * U + 512, 8 * U + 512, SITTER, 300, plan);
+      w.step = start;
+      w.stepOnce();
+      expect(w.releases).toBe(1);
+      expect(w.events.births.length).toBe(1);
+      const d = w.events.births[0];
+      expect(d).not.toBe(mother);
+      expect(w.mother[d]).toBe(-1);
+      // First exists at the next step, sealed from then.
+      expect(w.since[d]).toBe((start + 1) % 2 ** 32);
+      const k = w as unknown as Priv;
+      for (let age = 0; age < 105; age++) {
+        const sealed = age < 100;
+        w.stepOnce();
+        expect(w.alive[d]).toBe(1);
+        // The dash: a full thrust along the release direction while sealed, none after (the cell has no drive or chase of its own).
+        expect(k.tx[d] !== 0 || k.ty[d] !== 0).toBe(sealed);
+      }
+    }
+  });
+
+  it('a lone source of 5 food still gives a chaser 12 tiles away the slope toward it that Roam reads', () => {
+    const w = new SoftRoamWorld(still({ size: 64, kinds: false, drain: undefined, seal: undefined, flow: 1 / 64 }));
+    w.food[32 * w.size + 32] += 5;
+    w.reservoir -= 5;
+    w.advance(1200);
+    const r = new RoamWorld({ ...defaultRoamConfig(), size: 64, matter: 700_000, startPatches: 0, patchEvery: 1_000_000 });
+    r.food[32 * 64 + 32] += 5;
+    r.reservoir -= 5;
+    r.advance(1200);
+    const at = 32 * 64 + 44;
+    const se = r.scent[at + 1];
+    const sw = r.scent[at - 1];
+    const roamSlope = Math.max(-1024, Math.min(1024, Math.trunc(((se - sw) * 1024 * 8) / (se + sw + 1))));
+    // Roam does keep a gradient here (1 against 0), the full slope at the default gain.
+    expect(roamSlope).toBe(-1024);
+    const g = (w as unknown as { scentSlope(px: number, py: number, gain: number): Int32Array }).scentSlope(44 * U + 512, 32 * U + 512, 8);
+    expect(g[0]).toBe(roamSlope);
+    expect(g[1]).toBe(0);
+    const plan = restPlan(w);
+    const c = spawn(w, 44 * U + 512, 32 * U + 512, CHASER, 150, plan);
+    w.stepOnce();
+    expect(w.vx[c]).toBeLessThan(-100);
   });
 });
