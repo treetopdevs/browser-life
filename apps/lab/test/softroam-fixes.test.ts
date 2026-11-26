@@ -24,7 +24,7 @@ function image(w: SoftRoamWorld, alpha: number, mem?: SoftPaintMemory): Uint8Arr
 
 describe('soft roam fixes: kernel', () => {
   it('a daughter born in the very first step is not mistaken for a founder (bornStep 0 means founder only)', () => {
-    const w = foundSoftRoam({ seed: 1 });
+    const w = foundSoftRoam({ seed: 1, start: 'grown-all' });
     for (let c = 0; c < w.cap; c++) if (w.alive[c]) expect(w.bornStep[c]).toBe(0);
     w.stepOnce();
     expect(w.step).toBe(1);
@@ -61,7 +61,7 @@ describe('soft roam fixes: kernel', () => {
 
 describe('soft roam fixes: readouts', () => {
   it('smoothness skips cells born in the last step, and counts a cell that moved and then died', () => {
-    const w = foundSoftRoam({ seed: 1, size: 32 });
+    const w = foundSoftRoam({ seed: 1, size: 32, start: 'grown-all' });
     let n = 0;
     while (w.events.births.length === 0 && n++ < 100) w.stepOnce();
     const fresh = w.events.births.filter((c) => w.alive[c]).length;
@@ -83,7 +83,7 @@ describe('soft roam fixes: readouts', () => {
   });
 
   it('a session can paint into a buffer it is handed back instead of allocating', () => {
-    const s = new SoftRoamSession({ seed: 1, size: 32 }, 4);
+    const s = new SoftRoamSession({ seed: 1, size: 32, start: 'grown-all' }, 4);
     const a = s.frame('garden', 1);
     s.recycle(a.pixels);
     const b = s.frame('garden', 1);
@@ -96,18 +96,18 @@ describe('soft roam fixes: readouts', () => {
 
   it('a size the kernel supports can be started (patches follow the matter), and a founder count that cannot be met says so', () => {
     for (const size of [8, 12, 16, 24]) {
-      const cfg = softRoamConfig({ seed: 1, size });
+      const cfg = softRoamConfig({ seed: 1, size, start: 'grown-all' });
       expect(() => new SoftRoamWorld(cfg)).not.toThrow();
-      expect(() => foundSoftRoam({ seed: 1, size })).not.toThrow();
+      expect(() => foundSoftRoam({ seed: 1, size, start: 'grown-all' })).not.toThrow();
     }
-    expect(() => foundSoftRoam({ seed: 1, size: 32, founders: 2, overrides: { maxCells: 1 } })).toThrow(/founder/i);
-    expect(() => foundSoftRoam({ seed: 1, size: 32, founders: 5 })).not.toThrow();
+    expect(() => foundSoftRoam({ seed: 1, size: 32, start: 'grown-all', founders: 2, overrides: { maxCells: 1 } })).toThrow(/founder/i);
+    expect(() => foundSoftRoam({ seed: 1, size: 32, start: 'grown-all', founders: 5 })).not.toThrow();
   });
 });
 
 describe('soft roam fixes: the painter', () => {
   it('a first-step daughter is drawn grown-in from her mother, not full size', () => {
-    const w = foundSoftRoam({ seed: 1 });
+    const w = foundSoftRoam({ seed: 1, start: 'grown-all' });
     const mem = new SoftPaintMemory();
     mem.observe(w);
     w.stepOnce();

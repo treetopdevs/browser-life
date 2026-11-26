@@ -39,8 +39,8 @@ function centre(px: Uint8Array): { x: number; y: number; sum: number } {
 
 describe('soft roam view: painter', () => {
   it('is deterministic, alike with and without a long-lived memory', () => {
-    const a = foundSoftRoam({ seed: 3, size: 32 });
-    const b = foundSoftRoam({ seed: 3, size: 32 });
+    const a = foundSoftRoam({ seed: 3, size: 32, start: 'grown-all' });
+    const b = foundSoftRoam({ seed: 3, size: 32, start: 'grown-all' });
     a.advance(120);
     b.advance(120);
     const out = (w: SoftRoamWorld, mem?: SoftPaintMemory) => { const o = new Uint8Array(32 * SCALE * 32 * SCALE * 4); paintSoftRoam(w, 'garden', SCALE, 0.4, o, mem); return o; };
@@ -49,6 +49,13 @@ describe('soft roam view: painter', () => {
     expect(out(a, m1)).toEqual(out(b, m2));
     // Painting again must not change anything (the buffers are left clean).
     expect(out(a, m1)).toEqual(out(b, m2));
+    // ... and the picture is a picture: many distinct colours, with bodies lit well above the dark ground.
+    const px = out(a, m1);
+    const colours = new Set<number>();
+    let brightest = 0;
+    for (let i = 0; i < px.length; i += 4) { colours.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]); brightest = Math.max(brightest, px[i] + px[i + 1] + px[i + 2]); }
+    expect(colours.size).toBeGreaterThan(200);
+    expect(brightest).toBeGreaterThan(300);
     for (const paint of ['plain'] as const) {
       const o1 = new Uint8Array(32 * SCALE * 32 * SCALE * 4);
       const o2 = new Uint8Array(32 * SCALE * 32 * SCALE * 4);
@@ -118,7 +125,7 @@ describe('soft roam view: painter', () => {
   });
 
   it('never draws a cell born in the last step from a stale previous position', () => {
-    const w = foundSoftRoam({ seed: 2, size: 32 });
+    const w = foundSoftRoam({ seed: 2, size: 32, start: 'grown-all' });
     w.advance(60);
     const born = w.events.births.filter((c) => w.alive[c]);
     // Run on until a step has a birth.
@@ -199,12 +206,13 @@ describe('soft roam view: starts and session', () => {
     const a = softRoamConfig({ seed: 1 });
     const b = softRoamConfig({ seed: 1, size: 64 });
     expect(b.matter).toBe(Math.round(a.matter / 4));
-    expect(b.planMut).toBeCloseTo(Math.min(1, 2.5 * b.mut), 9);
+    expect(b.planMut).toBe(a.planMut);
+    expect(softRoamConfig({ seed: 1, size: 64, mut: 0.04 }).planMut).toBeCloseTo(0.1, 9);
     expect(ROAM_GENES).toBe(5);
   });
 
   it('a session steps, paints at an alpha without stepping, and returns transferable pixels', () => {
-    const s = new SoftRoamSession({ seed: 4, size: 32 }, 4);
+    const s = new SoftRoamSession({ seed: 4, size: 32, start: 'grown-all' }, 4);
     const done = s.advance(30, 10_000);
     expect(done).toBe(30);
     const f1 = s.frame('garden', 0.5);
@@ -219,5 +227,150 @@ describe('soft roam view: starts and session', () => {
     const f3 = s.frame('plain', 1);
     expect(f3.step).toBe(30);
     expect(f1.readouts.families.reduce((a, r) => a + r.cells, 0)).toBe(f1.census.cells);
+  });
+});
+
+describe('soft roam view: kinds', () => {
+  const paintAt = (w: SoftRoamWorld, mem: SoftPaintMemory, alpha: number): Uint8Array => {
+    const o = new Uint8Array(w.size * SCALE * w.size * SCALE * 4);
+    paintSoftRoam(w, 'garden', SCALE, alpha, o, mem);
+    return o;
+  };
+
+  it('the garden start turns kinds, touch feeding, seal, cracking and shell costs on, and is the default', () => {
+    const a = softRoamConfig({ seed: 1 });
+    const b = softRoamConfig({ seed: 1, start: 'garden' });
+    expect(a).toEqual(b);
+    expect([a.kinds, a.drain, a.seal, a.crack, a.shellBite, a.shellLeak]).toEqual([true, 1, 200, 300, 1, 0.1]);
+    expect(a.toughness).toBeUndefined();
+    // An option given wins over the line-up; the plain grown starts keep no kinds.
+    expect(softRoamConfig({ seed: 1, crack: 500, kinds: true, drain: 4 }).crack).toBe(500);
+    expect(softRoamConfig({ seed: 1, kinds: false }).kinds).toBeUndefined();
+    for (const start of ['grown-all', 'grown-lines', 'grown-specks'] as const) {
+      const c = softRoamConfig({ seed: 1, start });
+      expect([c.kinds, c.drain, c.crack, c.shellBite, c.seal]).toEqual([undefined, undefined, undefined, undefined, undefined]);
+    }
+    const w = foundSoftRoam({ seed: 1, size: 32 });
+    expect(w.cfg.kinds).toBe(true);
+  });
+
+  it('hunters and armoured founders both exist in the garden, and the plain start makes neither', () => {
+    const w = foundSoftRoam({ seed: 1 });
+    w.advance(600);
+    const c = w.census();
+    expect(c.mouths).toBeGreaterThan(0);
+    expect(c.shells).toBeGreaterThan(0);
+    const p = foundSoftRoam({ seed: 1, start: 'grown-all' });
+    p.advance(600);
+    expect(p.census().mouths + p.census().shells).toBe(0);
+  });
+
+  it('painting never touches the world, and feeding, hits and cracks show in the memory and the picture', () => {
+    const w = foundSoftRoam({ seed: 1, overrides: { crack: 3 } });
+    const mem = new SoftPaintMemory();
+    mem.observe(w);
+    let threads = 0, rings = 0, flashes = 0;
+    let withFeed: Uint8Array | null = null;
+    let ringSeen = false;
+    for (let k = 0; k < 1800; k++) {
+      w.stepOnce();
+      mem.observe(w);
+      threads = Math.max(threads, mem.threads.filter((t) => t.seen).length);
+      rings = Math.max(rings, mem.rings.length);
+      if (!withFeed && mem.threads.some((t) => t.seen)) {
+        const digest = w.digest();
+        withFeed = paintAt(w, mem, 0.5);
+        expect(w.digest()).toBe(digest);
+        // The feeding picture is not the picture of the same cells without the kind effects.
+        const plain = paintAt(w, new SoftPaintMemory(), 0.5);
+        expect(plain.length).toBe(withFeed.length);
+        // The threads themselves are in the picture: the same memory with them taken out paints different pixels.
+        const kept = mem.threads;
+        mem.threads = [];
+        const noThreads = paintAt(w, mem, 0.5);
+        mem.threads = kept;
+        expect(noThreads.some((v, i) => v !== withFeed![i])).toBe(true);
+      }
+      if (!ringSeen && mem.rings.some((r) => r.step === w.step)) {
+        ringSeen = true;
+        const withRing = paintAt(w, mem, 0.5);
+        const kept = mem.rings;
+        mem.rings = [];
+        const noRing = paintAt(w, mem, 0.5);
+        mem.rings = kept;
+        expect(noRing.some((v, i) => v !== withRing[i])).toBe(true);
+      }
+      if (k % 10 === 0) for (let c = 0; c < w.cap; c++) if (w.alive[c] && mem.lvCur[c * 6] > 0.5) { flashes++; break; }
+    }
+    expect(threads).toBeGreaterThan(0);
+    expect(rings).toBeGreaterThan(0);
+    expect(ringSeen).toBe(true);
+    expect(flashes).toBeGreaterThan(0);
+    expect(w.census().cracked).toBeGreaterThan(0);
+    expect(w.census().residual).toBe(0);
+  });
+
+  it('a fed-on cell dims and its mouth warms, eased in over a few steps and never in one jump', () => {
+    const w = foundSoftRoam({ seed: 1 });
+    const mem = new SoftPaintMemory();
+    mem.observe(w);
+    let found: { m: number; p: number } | null = null;
+    let steps = 0;
+    while (!found && steps < 1500) {
+      w.stepOnce(); steps++;
+      mem.observe(w);
+      const th = mem.threads.find((t) => t.seen && t.prv === 0 && w.alive[t.ms] && w.alive[t.ps] && mem.feedT[t.ps] === 0);
+      if (th) found = { m: th.ms, p: th.ps };
+    }
+    expect(found).not.toBeNull();
+    const { m, p } = found!;
+    // Levels are 0..1 and move by less than the whole range in one step: the thread's first step lifts the mouth's warmth and the
+    // prey's dimming to about half (1 - exp(-1 / 1.5)), neither zero nor a jump to full.
+    const FEED = 1, PREY = 2;
+    expect(mem.lvCur[m * 6 + FEED]).toBeGreaterThan(0.3);
+    expect(mem.lvCur[m * 6 + FEED]).toBeLessThan(0.75);
+    expect(mem.lvCur[p * 6 + PREY]).toBeGreaterThan(0.3);
+    expect(mem.lvCur[p * 6 + PREY]).toBeLessThan(0.75);
+    const seen: number[] = [mem.lvCur[m * 6 + FEED]];
+    const dim: number[] = [mem.lvCur[p * 6 + PREY]];
+    let more = 0;
+    for (let k = 0; k < 8; k++) {
+      w.stepOnce();
+      mem.observe(w);
+      if (!w.alive[m] || !w.alive[p] || !mem.threads.some((t) => t.seen && t.ms === m && t.ps === p)) break;
+      seen.push(mem.lvCur[m * 6 + FEED]);
+      dim.push(mem.lvCur[p * 6 + PREY]);
+      more++;
+    }
+    for (let k = 1; k < seen.length; k++) {
+      expect(Math.abs(seen[k] - seen[k - 1])).toBeLessThan(0.75);
+      expect(seen[k]).toBeGreaterThanOrEqual(seen[k - 1] - 1e-9);
+      expect(dim[k]).toBeGreaterThanOrEqual(dim[k - 1] - 1e-9);
+    }
+    // While the feeding goes on the levels keep rising toward 1.
+    if (more >= 2) { expect(seen[seen.length - 1]).toBeGreaterThan(seen[0]); expect(dim[dim.length - 1]).toBeGreaterThan(dim[0]); }
+    expect(Math.max(...seen)).toBeLessThanOrEqual(1);
+  });
+
+  it('the picture with kinds on stays steady from frame to frame', () => {
+    const w = foundSoftRoam({ seed: 2, overrides: { crack: 3 } });
+    const mem = new SoftPaintMemory();
+    mem.observe(w);
+    w.advance(900);
+    mem.observe(w);
+    let prev: Uint8Array | null = null;
+    let worst = 0;
+    for (let k = 0; k < 60; k++) {
+      w.stepOnce();
+      mem.observe(w);
+      const o = paintAt(w, mem, 1);
+      if (prev) {
+        let changed = 0;
+        for (let i = 0; i < o.length; i += 4) if (Math.abs(o[i] - prev[i]) + Math.abs(o[i + 1] - prev[i + 1]) + Math.abs(o[i + 2] - prev[i + 2]) > 150) changed++;
+        worst = Math.max(worst, changed / (o.length / 4));
+      }
+      prev = o;
+    }
+    expect(worst).toBeLessThan(0.02);
   });
 });

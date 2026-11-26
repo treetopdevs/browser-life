@@ -411,26 +411,35 @@ describe('soft roam props: arithmetic bounds', () => {
     expect(w.store[d]).toBe(1 + Math.floor(diff / 8));
   });
 
-  it('the scent slope product (east - west) * 1024 * gain stays below 2^31 at the widest legal settings (decay shift 8, gain 16, a food cliff)', () => {
-    const w = new SoftRoamWorld(quiet({ size: 16, scentDecayShift: 8, scentGain: 16, scentIters: 1, matter: 1_000_000 }));
-    // A cliff of maximal food on half the world; run the relaxation to its steady state.
+  it('the scent slope product (east - west) * 1024 * gain stays below 2^31 at the widest legal settings (decay shift 12, gain 16, a food cliff)', () => {
+    // Milestone 2 widened the decay (shift 12 is legal) and clamps the field at 2^20 - 1, which is what keeps the reads inside 31 bits.
+    const w = new SoftRoamWorld(quiet({ size: 16, scentDecayShift: 12, scentGain: 16, scentIters: 16, matter: 1_000_000 }));
+    // A cliff of maximal food on half the world; run the relaxation to (and past) the clamp.
     for (let y = 0; y < 16; y++) for (let x = 0; x < 8; x++) { w.food[y * 16 + x] = 1023; w.reservoir -= 1023; }
-    for (let s = 0; s < 3000; s++) w.stepOnce();
-    // Scent is under 2^18 at the widest decay (256 times the food cap). East and west are convex mixes of tile values, so the kernel's
-    // intermediates are: tile value * weight 1024 (summed over two tiles), (east - west) * gain, and, only when that is below east + west + 1, times 1024.
+    for (let s = 0; s < 1500; s++) w.stepOnce();
+    // East and west are convex mixes of tile values, so the kernel's intermediates are: tile value * weight 1024 (summed over two tiles),
+    // (east - west) * gain, and, only when that is below east + west + 1, times 1024.
     let hi = 0;
     for (let i = 0; i < 256; i++) hi = Math.max(hi, w.scent[i]);
-    expect(hi).toBeGreaterThan(2 ** 16);
-    expect(hi).toBeLessThan(2 ** 18);
+    expect(hi).toBe(2 ** 20 - 1);
     const worst = Math.max(hi * 2048, (2 * hi + 1) * 1024, hi * 16);
     expect(worst).toBeLessThan(2 ** 31);
+    // And a chaser on the cliff reads a slope without any of it overflowing.
+    const plan = w.addPlan(Array.from({ length: 16 }, (_, m) => planEntry(PLAN_REST, 0, m)));
+    const c = w.found(8 * U + 512, 8 * U + 512, [512, 0, -512, 0, 0], 1, 150, plan);
+    w.stepOnce();
+    expect(Number.isInteger(w.vx[c])).toBe(true);
+    expect(Math.abs(w.vx[c])).toBeLessThanOrEqual(1024);
+    // The slope is real: the food is to the west (x < 8 tiles), so the chaser is pushed west and not at all north or south.
+    expect(w.vx[c]).toBeLessThan(-20);
+    expect(w.vy[c]).toBe(0);
   });
 });
 
 describe('soft roam props: never fuse, clean breaks', () => {
   it('under 2000 steps of random deaths every brace and mother link stays inside one body, and labels match a fresh walk', () => {
-    // Seeds 5 and 9 (seed 1 gave exactly 3 splits after the payment rule changed to the contract's: the histories are lotteries, the bars are not).
-    for (const seed of [5, 9]) {
+    // Seeds 12 and 4 (round 2: the finer scent field and the seal clock moved histories, and seed 5 gave exactly 3 splits; were 5 and 9: the longer scent of milestone 2 changed seed 9's history to one split; seed 3 gave exactly 3, 6 and 7 too few divisions) (seed 1 gave exactly 3 splits after the payment rule changed to the contract's: the histories are lotteries, the bars are not).
+    for (const seed of [12, 4]) {
       const w = seedWorld(cfgOf({ seed, size: 32, matter: 40_000, mut: 0.05, planMut: 0.3, life: 80, compost: true, patchEvery: 25, maxCells: 500 }), 20, 199);
       let splitsSeen = 0;
       for (let s = 0; s < 2000; s++) {

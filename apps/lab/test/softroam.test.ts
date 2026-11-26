@@ -508,7 +508,8 @@ describe('soft roam: growth by plan', () => {
           expect(w.gx[slot]).toBe(0);
           expect(w.gy[slot]).toBe(0);
           expect(w.bodySize[w.body[slot]]).toBe(1);
-          expect(w.since[slot]).toBe(w.step - 1);
+          // The daughter first exists at the step after the one that released her, and that is her first sealed step.
+          expect(w.since[slot]).toBe(w.step);
         }
       }
     }

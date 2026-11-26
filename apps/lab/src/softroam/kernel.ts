@@ -29,25 +29,38 @@
  * a tile, never on a slot, and every force, contest and count is a sum from a snapshot or settled in the hash order of
  * cids, so slot order, bucket order and evaluation order change nothing: one seed gives one history.
  *
- * Milestone 1 (this file): everything except touch, drain, crack and grip and the kinds' eating rules (the seal that goes
- * with drain is live as soon as drain is set: a new body cannot turn and thrusts at full along its heading). The kind, tough,
- * hits, lastHitStep and lastDrainStep arrays and the kind bits of plan entries are carried so that milestone 2 only
- * adds rules.
+ * Milestone 2 adds kinds, touch, crack, toughness, shellBite, shellLeak and grip, all optional and absent from the default config
+ * (so a world without them is the milestone 1 world, apart from the longer scent below). The seal that goes with drain is live as soon as
+ * drain is set: a new body cannot turn and thrusts at full along its heading. With kinds, only plain cells and one-cell bodies eat from the
+ * ground (a one-cell shell takes shellBite of the bite, rounded by a hash); a shell pays floor(leakSide (1 + tough) shellLeak) a bare side.
+ * Touch (once a step, in the life stage after upkeep, from stores, sizes and kinds as they stand when it starts): cells of different bodies
+ * within 1.25 D are in contact when neither body is sealed; each cell keeps the four contacts of lowest pair-hash rank (the hash is symmetric
+ * in the two cids and fresh each step, ties to the lower cid), and a pair counts only when it is in both cells' lists, so no cell has more than
+ * four. A mouth (any cell without kinds) of a body at least twice the other's size takes min(drain, floor(preyStore / takers)) from a plain or
+ * mouth cell (`takers` is the number of such contacts on that cell, so a short store is split floor-equal); a mouth on a shell is one hit, and the
+ * shell becomes plain at crack << tough hits (at most 60000), fed on from the next step. Grip pulls a mouth toward a cell it could act on (a shell
+ * counts when crack is set) while they are between D and 1.25 D apart, by one integer added to one and taken from the other; it links nothing.
+ * Mouths find prey only by bumping into it: there is no prey scent.
  *
  * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
- * - The scent field is shorter. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food (cap
- *   4095); Soft Roam relaxes 1 pass with 1/32 lost (at most 1/256 is legal) and adds the food itself (cap 1023). The slope
- *   is read as a ratio, so a longer field needs more than 31 bits in the slope arithmetic and more range per tile than the
- *   decay can resolve; the reach is therefore about 2 tiles at the default (about 6 at the widest legal setting) against
- *   about 16 in Roam. A chaser feels a patch only near it. Whether that is the right balance is a tuning question for a run.
+ * - The scent field has Roam's reach but not its numbers. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food
+ *   (cap 4095), so the field reaches about 16 tiles from a patch (the reach is sqrt(2^shift / 8) tiles: it follows the decay, not the passes, which
+ *   only set how fast the field catches up). Soft Roam uses the same 4 passes and shift 11 and adds 8 per unit of food (cap 1023), so the ratios
+ *   the slope reads are Roam's to within a few percent (a calibration against a Roam world with a lone patch gives -0.49, -1.04, -0.84, -0.69, -0.58, -0.47
+ *   of the read at 2, 4, 8, 12, 16, 20 tiles; Soft Roam -0.50, -1.05, -0.85, -0.70, -0.59, -0.48), and the field is held at 2^20 - 1 so that tile
+ *   value x 1024 (the interpolation) and (east - west) x gain x 1024 (the slope, taken only when it is below east + west + 1) stay inside 31 bits
+ *   at the widest legal dials (shift 12, gain 16). A tile with more than about 64 food a tile over a wide area saturates the field; the slope is
+ *   then flat there. Below 2^shift a tile does not lose to decay (floor), as in Roam, only to the averaging.
  * - There is no blocked-turn rule. Roam gives a body that cannot step a new random heading; here thrust into another
  *   body is projected away (the body slides, or stalls when boxed in) and only the hashed turn event changes a heading.
  * - The census has no newbornDeaths or cellMoves/blocked (they need a per-cell "has divided" flag or tiles); it has
  *   shellTough, travel and the alarms.
  * - isqrt starts from the double sqrt and corrects it with integer tests, so it is exact for every n below 2^31; a WGSL
  *   port should use an integer method instead.
- * - The events carry different units: deaths in units (and where the cell began the step), patches in tiles, births as
- *   slots (see SoftDeathEvent).
+ * - `events.feeds` and `events.hits` list what touch actually did this step (cells by slot and serial), so the picture never has to
+ *   rebuild pairs from timestamps (lastHitStep and lastDrainStep use 0 for a first-step event and for never).
+ * - The events carry different units: deaths in units (and where the cell began the step), cracks in units, patches in tiles,
+ *   births as slots (see SoftDeathEvent).
  * - bornStep is 0 for a founder and, for a daughter, the world step at which she first exists (the step after the one that
  *   made her), so a daughter of the very first step is not taken for a founder.
  */
@@ -152,7 +165,7 @@ export interface SoftRoamConfig {
   compost?: boolean;
   /** Share (0 to 1) of a tile's food that is shared out evenly to its four neighbours each step. Absent means food stays put. */
   foodSpread?: number;
-  /** Scent: passes per step, the share lost per pass as a power of two, and how strongly a slope is read (1 to 16). */
+  /** Scent: passes per step (0 to 16), the share lost per pass as a power of two (1 to 12; the reach is about sqrt(2^shift / 8) tiles), and how strongly a slope is read (1 to 16). */
   scentIters: number;
   scentDecayShift: number;
   scentGain: number;
@@ -168,20 +181,20 @@ export interface SoftRoamConfig {
   vMax: number;
   /** Force of full thrust, in sixteenths of a unit per substep each substep (its steady speed is this / (1 - keep / 256)). */
   thrustMax: number;
-  /** Milestone 2 (read and checked, not yet applied): cells come in kinds, set by the plan entry that made them. */
+  /** Cells come in kinds, set by the plan entry that made them: only plain cells and one-cell bodies eat from the ground, and only a mouth takes from another body by touch. */
   kinds?: boolean;
-  /** Milestone 2: shells have toughness levels in their plan entries. */
+  /** Shells have toughness levels in their plan entries: a level multiplies the hits to crack by 2^level and the side upkeep by (1 + level). */
   toughness?: boolean;
-  /** Milestone 2: matter a larger body takes through each touch from a smaller one's cell per step. The touch itself is not applied yet, but setting drain already turns on the seal (below): every new body dashes along its heading for `seal` steps. */
+  /** Matter a body at least twice the size takes through each touch from a smaller one's cell per step (at most the prey cell's store shared by its touches). Setting drain also turns on the seal (below). */
   drain?: number;
   /** With drain: steps a new body is sealed (it neither takes nor loses by touch, and thrusts at full along its release direction). 100 when absent. */
   seal?: number;
-  /** Milestone 2: a shell cracks after this many hits. */
+  /** A shell cracks (becomes plain) after this many hits (times 2^toughness level). Needs kinds and drain. */
   crack?: number;
-  /** Milestone 2: the share of the usual bite a shell that eats takes, and the share of the side upkeep it pays. */
+  /** The share (0 to 1) of the usual bite a shell that eats (a one-cell body) takes, rounded by a hash so the share holds on average (default all), and the share of the side upkeep a shell pays, before toughness (default a quarter). Need kinds. */
   shellBite?: number;
   shellLeak?: number;
-  /** Milestone 2: how hard a mouth touching prey is pulled toward contact distance, out of 256. */
+  /** How hard a mouth in touch with prey it could act on is pulled toward contact distance D, out of 256. Absent or 0 is off. Needs kinds and drain. */
   grip?: number;
 }
 
@@ -208,8 +221,8 @@ export function defaultSoftRoamConfig(): SoftRoamConfig {
     flow: 1 / 64,
     life: 2000,
     compost: true,
-    scentIters: 1,
-    scentDecayShift: 5,
+    scentIters: 4,
+    scentDecayShift: 11,
     scentGain: 8,
     substeps: 4,
     keep: 192,
@@ -235,12 +248,26 @@ const CH_PLAN = 30;
 const CH_PLAN_NEW = 31;
 const CH_PLAN_FIELD = 32;
 const CH_FOUND = 40;
+const CH_BITE = 42;
+const CH_TOUCH = 50;
+const CH_TOUCH_TIE = 51;
 const CH_PAIR = 100; // + substep
 /** Velocity is only taken off contacts at least this near-touching (squared distance of three quarters of D); deeper overlaps may decompress freely. */
 const SHALLOW2 = (3 * D / 4) * (3 * D / 4);
 
 const SCENT_FOOD_CAP = 1023;
+/** Scent added per pass for each unit of food on a tile (food capped at SCENT_FOOD_CAP): Roam's 64, relaxed with Roam's own arithmetic; what is read is this field over 8, so it fits 20 bits. */
+const SCENT_SCALE = 64;
+/** The field never goes above this, so every read and product below stays inside 31 bits (see `scentSlope`). */
+const SCENT_MAX = (1 << 20) - 1;
+/** The relaxed field is held 8 times finer and cut here, so that what is read (over 8) never passes SCENT_MAX. */
+const SCENT_HI_MAX = ((SCENT_MAX + 1) << 3) - 1;
 const SENSE = 717;
+/** Touch and grip reach: cells of different bodies within 1.25 D. */
+const TOUCH_R = D + (D >>> 2);
+const TOUCH_R2 = TOUCH_R * TOUCH_R;
+/** Contacts one cell keeps for touch and grip. */
+const TOUCH_CAP = 4;
 const SPEED_RUN = 50;
 
 function q16(x: number, name: string, max = 65536): number {
@@ -299,11 +326,15 @@ export interface SoftRoamCensus {
 /**
  * What a step did, for the picture; read-only, cleared at the start of the next step. Units differ by event, on purpose:
  * `deaths` give the cell's place in UNITS (0 to size * 1024), both where it died (x, y) and where it began the step
- * (fromX, fromY); `patches` give the patch centre in TILES (0 to size - 1); `births` and `cracks` list SLOTS.
+ * (fromX, fromY); `patches` give the patch centre in TILES (0 to size - 1); `births` list SLOTS; `cracks` give the shell's place in UNITS.
  */
 export interface SoftDeathEvent { x: number; y: number; fromX: number; fromY: number; kind: number; store: number }
-/** A place in tiles (the centre tile of a patch). */
+/** A place: a patch's centre tile in tiles, a crack's shell in units. */
 export interface SoftPointEvent { x: number; y: number }
+/** A touch feeding that moved matter: the taker and the cell it took from, as slots (valid until the next step; check `cid`) and serial numbers. */
+export interface SoftFeedEvent { ms: number; ps: number; mc: number; pc: number }
+/** A shell that took at least one hit: its slot and serial number. */
+export interface SoftHitEvent { s: number; c: number }
 
 // Lattice offsets (dx, dy, rest length) a new cell may be braced to.
 const BRACE_OFFSETS: readonly (readonly [number, number, number])[] = [
@@ -364,8 +395,11 @@ export class SoftRoamWorld {
 
   // Per tile.
   readonly food: Uint32Array;
+  /** What the chasers sense: the relaxed field below, in units of 1/8. */
   scent: Uint32Array;
-  private scentNext: Uint32Array;
+  /** The field itself, at Roam's scale (food adds 64 a pass), so a weak tail is not rounded away; `scent` is this over 8. */
+  private scentHi: Uint32Array;
+  private scentHiNext: Uint32Array;
 
   readonly plans: Uint16Array[] = [new Uint16Array(PLAN_MODES)];
   readonly planParent: number[] = [0];
@@ -381,6 +415,9 @@ export class SoftRoamWorld {
     births: [] as number[],
     cracks: [] as SoftPointEvent[],
     patches: [] as SoftPointEvent[],
+    /** Every touch that moved matter this step (taker, prey), and every shell that was hit: exactly what the rules did, for the picture. */
+    feeds: [] as SoftFeedEvent[],
+    hits: [] as SoftHitEvent[],
   };
 
   // Counters since step 0.
@@ -415,6 +452,11 @@ export class SoftRoamWorld {
   private readonly toughOn: boolean;
   private readonly drainN: number;
   private readonly sealN: number;
+  private readonly crackN: number;
+  private readonly gripN: number;
+  private readonly shellBiteQ16: number;
+  /** Side upkeep (Q16) of a shell by toughness level, from shellLeak: precomputed once, host side. */
+  private readonly shellSideQ16 = new Int32Array(4);
   private readonly patchTiles: Int32Array;
 
   private readonly freeList: Int32Array;
@@ -469,6 +511,15 @@ export class SoftRoamWorld {
   private contNx: Int32Array;
   private contNy: Int32Array;
   private newTargets: number[] = [];
+  // Touch scratch: up to four chosen contacts per cell (slot or -1, with the pair hash that ranked it), stores as they were, and per-prey counts.
+  private readonly selB: Int32Array;
+  private readonly selH: Uint32Array;
+  private readonly touchStore: Uint32Array;
+  private readonly takers: Uint16Array;
+  private readonly hitCount: Uint16Array;
+  private readonly tiles25 = new Int32Array(25);
+  private readonly pairA: number[] = [];
+  private readonly pairB: number[] = [];
 
   constructor(cfg: SoftRoamConfig) {
     this.cfg = Object.freeze({ ...cfg });
@@ -485,7 +536,7 @@ export class SoftRoamWorld {
     whole(cfg.minStore, 'minStore', 1, cfg.birthStore);
     whole(cfg.mutStep, 'mutStep', 1, 2 * ROAM_GENE_MAX);
     whole(cfg.scentIters, 'scentIters', 0, 16);
-    whole(cfg.scentDecayShift, 'scentDecayShift', 1, 8);
+    whole(cfg.scentDecayShift, 'scentDecayShift', 1, 12);
     whole(cfg.scentGain, 'scentGain', 1, 16);
     whole(cfg.substeps, 'substeps', 1, 8);
     whole(cfg.keep, 'keep', 0, 255);
@@ -496,7 +547,8 @@ export class SoftRoamWorld {
     whole(cfg.vMax, 'vMax', 1, 2048);
     whole(cfg.thrustMax, 'thrustMax', 0, 1024);
     // Explicit Euler with this damping is stable while (stiffness on one cell) / 16 < 2 (1 + keep / 256).
-    const stiff = (2 * (4 * cfg.kBond + 4 * cfg.kBrace + 6 * cfg.kRep)) / 256;
+    // Grip adds at most four springs to a cell (touch keeps four contacts).
+    const stiff = (2 * (4 * cfg.kBond + 4 * cfg.kBrace + 6 * cfg.kRep + 4 * (cfg.grip ?? 0))) / 256;
     if (stiff / 16 >= 2 * (1 + cfg.keep / 256)) throw new Error(`Springs too stiff for keep ${cfg.keep}: ${stiff.toFixed(2)}`);
     this.leakSideQ16 = q16(cfg.leakSide, 'leakSide');
     this.leakCellQ16 = q16(cfg.leakCell, 'leakCell');
@@ -520,7 +572,13 @@ export class SoftRoamWorld {
     if (cfg.seal !== undefined && cfg.drain === undefined) throw new Error('seal needs drain');
     this.drainN = cfg.drain === undefined ? 0 : whole(cfg.drain, 'drain', 1, 1 << 20);
     this.sealN = whole(cfg.seal ?? 100, 'seal', 0, 1_000_000);
-    if (cfg.grip !== undefined) whole(cfg.grip, 'grip', 0, 256);
+    this.crackN = cfg.crack === undefined ? 0 : cfg.crack;
+    this.gripN = cfg.grip === undefined ? 0 : whole(cfg.grip, 'grip', 0, 256);
+    if (this.gripN > 0 && (!this.kinds || this.drainN === 0)) throw new Error('grip needs kinds and drain');
+    this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
+    const shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
+    // Roam's rule: a shell pays floor(leakSide * (1 + tough) * shellLeak) per exposed side (the product is below 2^34, so it is done here, in doubles).
+    for (let k = 0; k < 4; k++) this.shellSideQ16[k] = Math.floor((this.leakSideQ16 * (1 + k) * shellLeakQ16) / 65536);
 
     this.size = size;
     this.n = size * size;
@@ -561,7 +619,8 @@ export class SoftRoamWorld {
     this.body = new Int32Array(cap);
     this.food = new Uint32Array(n);
     this.scent = new Uint32Array(n);
-    this.scentNext = new Uint32Array(n);
+    this.scentHi = new Uint32Array(n);
+    this.scentHiNext = new Uint32Array(n);
     this.bodySize = new Int32Array(cap + 2);
     this.freeList = new Int32Array(cap);
     for (let i = 0; i < cap; i++) this.freeList[i] = cap - 1 - i;
@@ -596,6 +655,11 @@ export class SoftRoamWorld {
     this.tieX = new Int32Array(pool0);
     this.tieY = new Int32Array(pool0);
     this.prevBody = new Int32Array(cap);
+    this.selB = new Int32Array(cap * TOUCH_CAP).fill(-1);
+    this.selH = new Uint32Array(cap * TOUCH_CAP);
+    this.touchStore = new Uint32Array(cap);
+    this.takers = new Uint16Array(cap);
+    this.hitCount = new Uint16Array(cap);
     this.askTile = new Uint32Array(n);
     this.askCell = new Uint32Array(cap);
     this.gotCell = new Uint32Array(cap);
@@ -612,7 +676,8 @@ export class SoftRoamWorld {
 
     this.reservoir = this.total;
     for (let k = 0; k < cfg.startPatches && this.reservoir >= cfg.patchFood; k++) this.dropPatch(roamHash(cfg.seed, 0, k, CH_FOUND), false);
-    this.relaxScent(1);
+    // With no scent passes there is no scent at all (a field built once and never updated would steer cells forever).
+    if (cfg.scentIters > 0) this.relaxScent(1);
   }
 
   // ------------------------------------------------------------------ small helpers
@@ -643,6 +708,29 @@ export class SoftRoamWorld {
     return roamHash(this.cfg.seed, this.step, (Math.imul(lo, 0x9e3779b1) ^ hi) >>> 0, ch);
   }
 
+  /**
+   * A second pair draw built another way (the pair key above can collide for different pairs), used only to settle a tie in
+   * `pairHash`: the same whichever of the two cells is named first.
+   */
+  private pairTie(a: number, b: number): number {
+    const ca = this.cid[a];
+    const cb = this.cid[b];
+    const lo = ca < cb ? ca : cb;
+    const hi = ca < cb ? cb : ca;
+    // Nested, so two pairs that collide in the plain key above collide here only by chance of this step's draw, not at every step.
+    const inner = roamHash(this.cfg.seed, this.step, lo, CH_TOUCH_TIE);
+    return roamHash(this.cfg.seed, this.step, (Math.imul(hi ^ 0x5bd1e995, 0x27d4eb2f) + inner) >>> 0, CH_TOUCH_TIE);
+  }
+
+  /** Whether candidate b (hash h) ranks ahead of the held candidate p (hash hp) for cell a: lower hash, then lower second draw, then lower cid. */
+  private ranksAhead(a: number, b: number, h: number, p: number, hp: number): boolean {
+    if (h !== hp) return h < hp;
+    const tb = this.pairTie(a, b);
+    const tp = this.pairTie(a, p);
+    if (tb !== tp) return tb < tp;
+    return this.cid[b] < this.cid[p];
+  }
+
   /** Fill the 9 tiles around tile coordinates (tx, ty), in the scan order in force. */
   private around(tx: number, ty: number): Int32Array {
     const t = this.tiles9;
@@ -650,6 +738,16 @@ export class SoftRoamWorld {
     const st = this._reverseScan ? -1 : 1;
     let k = 0;
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) t[k++] = this.tileAt(tx + o0 + j * st, ty + o0 + i * st);
+    return t;
+  }
+
+  /** Fill the 25 tiles around tile coordinates (tx, ty), in the scan order in force (touch reaches 1.25 D, which can be two tiles away). */
+  private around25(tx: number, ty: number): Int32Array {
+    const t = this.tiles25;
+    const o0 = this._reverseScan ? 2 : -2;
+    const st = this._reverseScan ? -1 : 1;
+    let k = 0;
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) t[k++] = this.tileAt(tx + o0 + j * st, ty + o0 + i * st);
     return t;
   }
 
@@ -859,8 +957,8 @@ export class SoftRoamWorld {
     const n = this.n;
     const shift = 1 << this.cfg.scentDecayShift;
     for (let it = 0; it < iters; it++) {
-      const a = this.scent;
-      const b = this.scentNext;
+      const a = this.scentHi;
+      const b = this.scentHiNext;
       for (let i = 0; i < n; i++) {
         const xx = i % s;
         const row = i - xx;
@@ -870,11 +968,15 @@ export class SoftRoamWorld {
         const no = a[i - s < 0 ? i - s + n : i - s];
         const m = Math.floor((4 * a[i] + e + w + so + no) / 8);
         const f = this.food[i];
-        b[i] = m - Math.floor(m / shift) + (f > SCENT_FOOD_CAP ? SCENT_FOOD_CAP : f);
+        const v = m - Math.floor(m / shift) + (f > SCENT_FOOD_CAP ? SCENT_FOOD_CAP : f) * SCENT_SCALE;
+        b[i] = v > SCENT_HI_MAX ? SCENT_HI_MAX : v;
       }
-      this.scent = b;
-      this.scentNext = a;
+      this.scentHi = b;
+      this.scentHiNext = a;
     }
+    const hi = this.scentHi;
+    const out = this.scent;
+    for (let i = 0; i < n; i++) out[i] = hi[i] >>> 3;
   }
 
   // ------------------------------------------------------------------ bodies
@@ -1133,6 +1235,7 @@ export class SoftRoamWorld {
         }
       }
       if (nextRun !== null) this.pairRun = nextRun;
+      if (this.gripN > 0) this.gripPull(sub);
       // Thrust, with the part pointing into another body's cell removed, from the positions at the start of the substep.
       for (let q = 0; q < N; q++) {
         const c = live[q];
@@ -1309,10 +1412,21 @@ export class SoftRoamWorld {
     const cap4 = 4 * this.cfg.birthStore;
     const ask = this.askTile;
     ask.fill(0);
+    const seed = this.cfg.seed;
+    const t = this.step;
     for (let q = 0; q < this.liveN; q++) {
       const c = this.live[q];
       const room = cap4 > this.store[c] ? cap4 - this.store[c] : 0;
-      const a = room < this.biteN ? room : this.biteN;
+      let bite = this.biteN;
+      if (this.kinds && this.kind[c] !== KIND_PLAIN) {
+        // Only plain cells and one-cell bodies eat; a one-cell shell takes shellBite of the bite, rounded by a hash.
+        if (this.bodySize[this.body[c]] > 1) bite = 0;
+        else if (this.kind[c] === KIND_SHELL && this.shellBiteQ16 < 65536) {
+          const part = this.biteN * this.shellBiteQ16;
+          bite = (part >>> 16) + ((roamHash(seed, t, this.cid[c], CH_BITE) & 0xffff) < (part & 0xffff) ? 1 : 0);
+        }
+      }
+      const a = room < bite ? room : bite;
       this.askCell[c] = a;
       if (a > 0) ask[(this.y[c] >>> 10) * this.size + (this.x[c] >>> 10)] += a;
     }
@@ -1342,12 +1456,198 @@ export class SoftRoamWorld {
       const c = this.live[q];
       let exposed = 4;
       for (let d = 0; d < 4; d++) if (m.has(this.offKey(this.body[c], this.gx[c] + DX[d], this.gy[c] + DY[d]))) exposed--;
-      const costQ16 = exposed * this.leakSideQ16 + this.leakCellQ16;
+      const side = this.kinds && this.kind[c] === KIND_SHELL ? this.shellSideQ16[this.tough[c]] : this.leakSideQ16;
+      const costQ16 = exposed * side + this.leakCellQ16;
       let pay = (costQ16 >>> 16) + ((roamHash(seed, t, this.cid[c], CH_UPKEEP) & 0xffff) < (costQ16 & 0xffff) ? 1 : 0);
       if (pay > this.store[c]) pay = this.store[c];
       this.store[c] -= pay;
       this.reservoir += pay;
     }
+  }
+
+  // ------------------------------------------------------------------ touch and grip
+
+  /** True while a body is within `seal` steps of release (the same test as the dash in `commands`). */
+  private sealedCell(c: number): boolean {
+    return this.step - this.since[this.bodyRoot[this.body[c]]] < this.sealN;
+  }
+
+  /**
+   * Pick each cell's contacts: of the cells of other bodies within 1.25 D (neither body sealed), the four of lowest pair-hash rank
+   * (the hash is symmetric in the two cids and fresh each step; a tie is settled by a second symmetric draw, then by the lower cid). A pair is a contact only when it is in
+   * both cells' lists, so no cell ever has more than four. Needs buckets, labels and `bodyRoot` current.
+   */
+  private selectContacts(): void {
+    const sel = this.selB;
+    const selH = this.selH;
+    sel.fill(-1);
+    const x = this.x;
+    const y = this.y;
+    for (let q = 0; q < this.liveN; q++) {
+      const a = this.live[q];
+      if (this.sealedCell(a)) continue;
+      const base = a * TOUCH_CAP;
+      const ts = this.around25(x[a] >>> 10, y[a] >>> 10);
+      for (let ti = 0; ti < 25; ti++) {
+        for (let b = this.head[ts[ti]]; b >= 0; b = this.nextInTile[b]) {
+          if (b === a || this.body[b] === this.body[a]) continue;
+          const dx = this.dlt(x[a], x[b]);
+          if (dx > TOUCH_R || dx < -TOUCH_R) continue;
+          const dy = this.dlt(y[a], y[b]);
+          if (dy > TOUCH_R || dy < -TOUCH_R) continue;
+          if (dx * dx + dy * dy > TOUCH_R2) continue;
+          if (this.sealedCell(b)) continue;
+          const h = this.pairHash(a, b, CH_TOUCH);
+          const last = sel[base + TOUCH_CAP - 1];
+          if (last >= 0 && !this.ranksAhead(a, b, h, last, selH[base + TOUCH_CAP - 1])) continue;
+          let k = TOUCH_CAP - 1;
+          while (k > 0) {
+            const p = sel[base + k - 1];
+            if (p >= 0 && !this.ranksAhead(a, b, h, p, selH[base + k - 1])) break;
+            sel[base + k] = p;
+            selH[base + k] = selH[base + k - 1];
+            k--;
+          }
+          sel[base + k] = b;
+          selH[base + k] = h;
+        }
+      }
+    }
+  }
+
+  private inContacts(a: number, b: number): boolean {
+    const o = a * TOUCH_CAP;
+    return this.selB[o] === b || this.selB[o + 1] === b || this.selB[o + 2] === b || this.selB[o + 3] === b;
+  }
+
+  /** The chosen contacts as pairs (pairA[i], pairB[i]) with cid[pairA] < cid[pairB], each once. */
+  private collectPairs(): void {
+    const pa = this.pairA;
+    const pb = this.pairB;
+    pa.length = 0;
+    pb.length = 0;
+    for (let q = 0; q < this.liveN; q++) {
+      const a = this.live[q];
+      for (let k = 0; k < TOUCH_CAP; k++) {
+        const b = this.selB[a * TOUCH_CAP + k];
+        if (b < 0) break;
+        if (this.cid[a] < this.cid[b] && this.inContacts(b, a)) { pa.push(a); pb.push(b); }
+      }
+    }
+  }
+
+  /** Whether cell x, by what it is and what its body is, may act on cell y by touch: a body at least twice the size, and with kinds only a mouth. */
+  private mayAct(xc: number, yc: number): boolean {
+    return this.bodySize[this.body[xc]] >= 2 * this.bodySize[this.body[yc]] && (!this.kinds || this.kind[xc] === KIND_MOUTH);
+  }
+
+  /** What touch does to the prey cell: its store is drained (not a shell), or it takes a hit (a shell, with crack set). */
+  private drainable(yc: number): boolean {
+    return !this.kinds || this.kind[yc] !== KIND_SHELL;
+  }
+
+  private hittable(yc: number): boolean {
+    return this.kinds && this.crackN > 0 && this.kind[yc] === KIND_SHELL;
+  }
+
+  /**
+   * Touch, once a step, from the stores, sizes and kinds as they stand when it starts (nothing it changes is read back):
+   * a mouth of a body at least twice the other's size takes min(drain, floor(preyStore / takers)) from a plain or mouth cell,
+   * `takers` being the mouths pressing that cell; a mouth pressing a shell is one hit; a shell becomes plain at crack << tough hits
+   * and is fed on from the next step.
+   */
+  private touch(): void {
+    const t = this.step;
+    this.selectContacts();
+    this.collectPairs();
+    const pa = this.pairA;
+    const pb = this.pairB;
+    if (pa.length === 0) return;
+    this.touchStore.set(this.store);
+    const n = pa.length;
+    const takeX: number[] = [];
+    const takeY: number[] = [];
+    const hitY: number[] = [];
+    for (let i = 0; i < n; i++) {
+      let xc = pa[i];
+      let yc = pb[i];
+      if (!this.mayAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.mayAct(xc, yc)) continue; }
+      if (this.drainable(yc)) { takeX.push(xc); takeY.push(yc); this.takers[yc]++; }
+      else if (this.hittable(yc)) { hitY.push(yc); this.hitCount[yc]++; }
+    }
+    const feedsFrom = this.events.feeds.length;
+    for (let i = 0; i < takeX.length; i++) {
+      const xc = takeX[i];
+      const yc = takeY[i];
+      const each = Math.min(this.drainN, Math.floor(this.touchStore[yc] / this.takers[yc]));
+      if (each === 0) continue;
+      this.store[yc] -= each;
+      this.store[xc] += each;
+      this.drained += each;
+      this.lastDrainStep[xc] = t;
+      this.lastDrainStep[yc] = t;
+      this.events.feeds.push({ ms: xc, ps: yc, mc: this.cid[xc], pc: this.cid[yc] });
+    }
+    // Listed by serial, not by the slots the pairs were found in.
+    if (this.events.feeds.length - feedsFrom > 1) {
+      const mine = this.events.feeds.splice(feedsFrom);
+      mine.sort((a, b) => a.mc - b.mc || a.pc - b.pc);
+      for (const f of mine) this.events.feeds.push(f);
+    }
+    for (const yc of takeY) this.takers[yc] = 0;
+    if (hitY.length > 0) {
+      const shells: number[] = [];
+      for (const yc of hitY) if (this.hitCount[yc] > 0) { if (shells.indexOf(yc) < 0) shells.push(yc); }
+      shells.sort((a, b) => this.cid[a] - this.cid[b]);
+      for (const yc of shells) {
+        const h = this.hits[yc] + this.hitCount[yc];
+        this.hitCount[yc] = 0;
+        this.lastHitStep[yc] = t;
+        this.events.hits.push({ s: yc, c: this.cid[yc] });
+        if (h >= Math.min(60000, this.crackN << this.tough[yc])) {
+          this.kind[yc] = KIND_PLAIN;
+          this.hits[yc] = 0;
+          this.cracked++;
+          this.events.cracks.push({ x: this.x[yc], y: this.y[yc] });
+        } else this.hits[yc] = h;
+      }
+    }
+  }
+
+  /**
+   * Grip: a mouth in touch with a cell it could act on is pulled toward contact distance D by a spring of stiffness grip/256 while
+   * the two are between D and 1.25 D apart (nearer, the cells' own repulsion rules). The same integer is added to one and taken from
+   * the other, so momentum is kept, and nothing is linked: labels come from mother links alone. Shells count as prey when they can be hit.
+   * Uses the touch contacts (four a cell), found afresh from this substep's positions.
+   */
+  private gripPull(sub: number): void {
+    this.selectContacts();
+    this.collectPairs();
+    const pa = this.pairA;
+    const pb = this.pairB;
+    for (let i = 0; i < pa.length; i++) {
+      let xc = pa[i];
+      let yc = pb[i];
+      if (!this.mayAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.mayAct(xc, yc)) continue; }
+      if (!this.drainable(yc) && !this.hittable(yc)) continue;
+      const dx = this.dlt(this.x[xc], this.x[yc]);
+      const dy = this.dlt(this.y[xc], this.y[yc]);
+      const d2 = dx * dx + dy * dy;
+      if (d2 <= D * D) continue;
+      this.applySpring(xc, yc, dx, dy, isqrt(d2), D, this.gripN, sub);
+    }
+  }
+
+  /** Test only: the contacts touch would use now, as sorted "lower cid,higher cid" strings (the same whatever slots cells sit in). */
+  _touchPairs(): string[] {
+    this.rebuildLive();
+    this.labelBodies();
+    this.buildBuckets();
+    this.selectContacts();
+    this.collectPairs();
+    const out: string[] = [];
+    for (let i = 0; i < this.pairA.length; i++) out.push(`${this.cid[this.pairA[i]]},${this.cid[this.pairB[i]]}`);
+    return out.sort();
   }
 
   private flowAlongLinks(): void {
@@ -1625,7 +1925,8 @@ export class SoftRoamWorld {
         this.gx[to] = 0;
         this.gy[to] = 0;
         this.heading[to] = softRoamAngle(ox, oy);
-        this.since[to] = t;
+        // Sealed from the first step she exists (t + 1), for `seal` steps.
+        this.since[to] = t + 1;
         const l = ++this.labelHi;
         this.body[to] = l;
         this.bodySize[l] = 1;
@@ -1675,6 +1976,8 @@ export class SoftRoamWorld {
     ev.births.length = 0;
     ev.cracks.length = 0;
     ev.patches.length = 0;
+    ev.feeds.length = 0;
+    ev.hits.length = 0;
     this.prevX.set(this.x);
     this.prevY.set(this.y);
     this.rebuildLive();
@@ -1686,6 +1989,7 @@ export class SoftRoamWorld {
     this.buildOffsets();
     this.eat();
     this.upkeep();
+    if (this.drainN > 0) this.touch();
     this.flowAlongLinks();
     this.die();
     this.buildOffsets();
@@ -1812,6 +2116,7 @@ export class SoftRoamWorld {
     for (let i = 0; i < this.n; i++) {
       mix(this.food[i]);
       mix(this.scent[i]);
+      mix(this.scentHi[i]);
     }
     for (const c of this.slotsByCid()) {
       mix(this.cid[c]);
@@ -1848,6 +2153,7 @@ export class SoftRoamWorld {
     mix(this.divisions);
     mix(this.releases);
     mix(this.flowed);
+    if (this.drainN > 0) { mix(this.drained); mix(this.cracked); }
     return h >>> 0;
   }
 

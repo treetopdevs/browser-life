@@ -4,7 +4,7 @@
  *
  *   deno run -A --no-lock experiments/softroam/look.ts --seed 1 --steps 6000 --start grown-all --out runs/softroam/a
  *
- * Options: --seed, --steps, --size (128), --start (grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
+ * Options: --seed, --steps, --size (128), --start (garden, the default: grown-all with kinds, touch feeding, shells and cracking on | grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
  * grown-specks | grown-bushes), --planMut, --founders, --mut, --report (1000), --frames, --scale (4), --movie N (with
  * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K), --paint (garden | plain),
  * --ov '{json}' (config overrides), --lag (200), --out dir.
@@ -14,6 +14,7 @@
  * "alarms" are bonds past 2 L / overlapping pairs / cells at the speed clamp, and must stay 0: they are read every step and a row
  * shows the most of each at once since the previous row (the last line says when the first alarm came). Unknown options, an option
  * without a value or one given twice stop the run with a message.
+ * Rows also show shells and mouths alive, matter taken by touch feeding (drained/k) and shells cracked (cracked/k) per 1000 steps.
  * The last line reports milliseconds per frame of the painter. A probe, not an experiment runner.
  */
 
@@ -54,7 +55,7 @@ const movieFrom = int('movieFrom', 0, 0);
 const sub = int('sub', 1, 1);
 const paint = (args.paint ?? 'garden') as SoftPaint;
 if (!['garden', 'plain'].includes(paint)) throw new Error(`--paint ${paint}: garden or plain`);
-const start = (args.start ?? 'grown-all') as SoftRoamStart;
+const start = (args.start ?? 'garden') as SoftRoamStart;
 if (!(start in SOFT_STARTS)) throw new Error(`--start ${start}: one of ${Object.keys(SOFT_STARTS).join(', ')}`);
 const out = args.out ?? 'runs/softroam/look';
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
@@ -107,7 +108,7 @@ const alarmSeen = { bonds: 0, overlap: 0, speed: 0 };
 const alarmEver = { bonds: 0, overlap: 0, speed: 0, first: -1 };
 
 console.log(`softroam ${start} seed ${world.cfg.seed} size ${world.size} matter ${world.total} mut ${world.cfg.mut} paint ${paint} scale ${scale}`);
-console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k worn/k  travel moved  smooth(max/mean)  alarms(b/o/s)  ' + 'genes');
+console.log('   step bodies   one cells   big   food   held   resv res  div/k rel/k die/k worn/k shell mouth drain/k crack/k  travel moved  smooth(max/mean)  alarms(b/o/s)  ' + 'genes');
 let prev = world.census();
 for (let s = 0; s <= steps; s++) {
   if (movie > 0 && s >= movieFrom && (s - movieFrom) % movie === 0) {
@@ -125,12 +126,12 @@ for (let s = 0; s <= steps; s++) {
     const meanSm = smoothN ? smoothSum / smoothN : 0;
     console.log(
       `${String(s).padStart(7)} ${fmt(c.bodies)} ${fmt(c.singles)} ${fmt(c.cells)} ${fmt(c.largest)} ${String(c.food).padStart(6)} ${String(c.held).padStart(6)} ${String(c.reservoir).padStart(6)} ${c.residual}  ` +
-        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.cellDeaths - prev.cellDeaths) * per)} ${fmt((c.worn - prev.worn) * per)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
+        `${fmt((c.divisions - prev.divisions) * per)} ${fmt((c.releases - prev.releases) * per)} ${fmt((c.cellDeaths - prev.cellDeaths) * per)} ${fmt((c.worn - prev.worn) * per)} ${fmt(c.shells)} ${fmt(c.mouths)} ${fmt((c.drained - prev.drained) * per)} ${fmt((c.cracked - prev.cracked) * per)}  ${lastTravel.mean.toFixed(1).padStart(6)} ${(lastTravel.movedShare * 100).toFixed(0).padStart(4)}%  ` +
         `${smoothMax.toFixed(2)}/${meanSm.toFixed(3)}  ${alarmSeen.bonds}/${alarmSeen.overlap}/${alarmSeen.speed}  ` +
         c.genes.map((g) => g.toFixed(0).padStart(5)).join(' ') + `  | ${fams}`,
     );
     if (alarmSeen.bonds > 0 || alarmSeen.overlap > 0 || alarmSeen.speed > 0) console.log(`        ALARM since the last row (most at once): bonds ${alarmSeen.bonds}, overlaps ${alarmSeen.overlap}, speed ${alarmSeen.speed}`);
-    rows.push({ ...c, alarmsSince: { ...alarmSeen }, travelLag: lastTravel, smooth: { max: smoothMax, mean: meanSm }, families: softFamilies(world) });
+    rows.push({ ...c, shells: c.shells, mouths: c.mouths, drainedPerK: (c.drained - prev.drained) * per, crackedPerK: (c.cracked - prev.cracked) * per, alarmsSince: { ...alarmSeen }, travelLag: lastTravel, smooth: { max: smoothMax, mean: meanSm }, families: softFamilies(world) });
     smoothMax = 0; smoothSum = 0; smoothN = 0;
     alarmSeen.bonds = 0; alarmSeen.overlap = 0; alarmSeen.speed = 0;
     prev = c;

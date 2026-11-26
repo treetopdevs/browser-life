@@ -1,6 +1,7 @@
 /** The local /softroam/ page: a canvas, a few choices, and readouts. The world steps in a worker. */
 
 import { SoftRoamPacer } from './pacer.ts';
+import { CHANGE_IDS, checkDials, dialDefaults, dialOptions, fixDial, SOFT_DIALS, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
 import type { SoftPaint, SoftRoamFrame, SoftRoamFromWorker, SoftRoamStart, SoftRoamToWorker } from './view.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -33,7 +34,94 @@ function fail(message: string): void {
   el<HTMLButtonElement>('step').disabled = true;
 }
 
+// Dials: a slider and an exact number box each, with a line saying what the value means. Values live here; the URL
+// hash keeps the ones that differ from the defaults (and the switches), so a link brings the same world back.
+const dials: DialValues = dialDefaults();
+
+function switches(): SoftSwitches {
+  return {
+    seed: Math.min(0xffffffff, Math.max(0, Math.floor(Number(value('seed')) || 0))),
+    size: SIZE,
+    start: value('start') as SoftRoamStart,
+    kinds: value('kinds') === '1',
+    toughness: value('toughness') === '1',
+  };
+}
+
+function buildDials(): void {
+  const box = el('dials');
+  let group = '';
+  for (const d of SOFT_DIALS) {
+    if (d.group !== group) {
+      group = d.group;
+      const h = document.createElement('h3');
+      h.textContent = group;
+      box.append(h);
+    }
+    const row = document.createElement('div');
+    row.className = 'dial';
+    row.id = `dial-${d.id}`;
+    row.innerHTML = `<span>${d.label}</span><input type="range" min="${d.min}" max="${d.max}" step="${d.step}" aria-label="${d.label}" /><input type="number" min="${d.min}" max="${d.max}" step="any" aria-label="${d.label}, exact" /><small></small>`;
+    const [range, num] = row.querySelectorAll('input');
+    range.addEventListener('input', () => { dials[d.id] = fixDial(d, Number(range.value)); showDials(); });
+    range.addEventListener('change', () => { dials[d.id] = fixDial(d, Number(range.value)); changed(); });
+    num.addEventListener('change', () => {
+      if (num.value.trim() !== '') dials[d.id] = fixDial(d, Number(num.value));
+      num.value = String(dials[d.id]);
+      changed();
+    });
+    box.append(row);
+  }
+}
+
+function showDials(): void {
+  const sw = switches();
+  for (const d of SOFT_DIALS) {
+    const row = el(`dial-${d.id}`);
+    const [range, num] = row.querySelectorAll('input');
+    const v = dials[d.id];
+    range.value = String(v);
+    if (document.activeElement !== num) num.value = String(v);
+    const idle = d.idle?.(dials, sw) ?? null;
+    row.classList.toggle('off', idle !== null);
+    row.classList.toggle('changed', v !== d.def);
+    row.querySelector('small')!.textContent = idle ? `${d.say(v, dials)} (off: ${idle})` : d.say(v, dials);
+  }
+}
+
+function saveHash(): void {
+  const q = new URLSearchParams();
+  for (const id of SWITCH_IDS) q.set(id, value(id));
+  for (const d of SOFT_DIALS) if (dials[d.id] !== d.def) q.set(d.id, String(dials[d.id]));
+  history.replaceState(null, '', `#${q}`);
+}
+
+function loadHash(): void {
+  const q = new URLSearchParams(location.hash.slice(1));
+  for (const id of SWITCH_IDS) {
+    const v = q.get(id);
+    if (v === null) continue;
+    const input = el<HTMLSelectElement | HTMLInputElement>(id);
+    if (input instanceof HTMLSelectElement && ![...input.options].some((o) => o.value === v)) continue;
+    input.value = v;
+  }
+  Object.assign(dials, dialDefaults());
+  for (const d of SOFT_DIALS) {
+    const raw = q.get(d.id);
+    if (raw !== null && raw.trim() !== '') dials[d.id] = fixDial(d, Number(raw));
+  }
+}
+
+function changed(): void {
+  showDials();
+  saveHash();
+  reset();
+}
+
 function reset(): void {
+  // An impossible combination (the kernel refuses it) says why and leaves the world that is running.
+  const why = checkDials(switches(), dials);
+  if (why !== null) { set('error', why); return; }
   worker?.terminate();
   gen++;
   const mine = gen;
@@ -50,8 +138,7 @@ function reset(): void {
   pacer.reset(performance.now());
   set('r-rate', '0');
   set('error', '');
-  const seed = Math.min(0xffffffff, Math.max(0, Math.floor(Number(value('seed')) || 0)));
-  post({ type: 'reset', gen: mine, opts: { seed, size: SIZE, start: value('start') as SoftRoamStart }, scale: SCALE, paint: paintChoice() });
+  post({ type: 'reset', gen: mine, opts: dialOptions(switches(), dials), scale: SCALE, paint: paintChoice() });
 }
 
 function show(f: SoftRoamFrame): void {
@@ -92,9 +179,21 @@ el('play').addEventListener('click', () => {
 el('step').addEventListener('click', () => { pacer.stepOnce(); });
 el('reset').addEventListener('click', () => { if (pacer.failed) pacer.toggle(); el('play').textContent = pacer.playing ? 'Pause' : 'Play'; el<HTMLButtonElement>('step').disabled = pacer.playing; reset(); });
 el('paint').addEventListener('change', () => { pacer.wantRepaint(); });
-el('seed').addEventListener('change', reset);
-el('start').addEventListener('change', reset);
+for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
+// Picking a start also sets the kinds switch to what that start is: the garden has kinds on, every other start is the plain grown
+// line-up (kinds off). The switch can still be turned the other way afterwards.
+el('start').addEventListener('change', () => { el<HTMLSelectElement>('kinds').value = startPick(switches(), value('start') as SoftRoamStart).kinds ? '1' : '0'; changed(); });
+// A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
+window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });
+el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults()); changed(); });
+el('dials-link').addEventListener('click', () => {
+  saveHash();
+  navigator.clipboard?.writeText(location.href).then(() => set('dials-note', 'link copied'), () => set('dials-note', 'copy the address bar'));
+});
 el<HTMLButtonElement>('step').disabled = pacer.playing;
 
+loadHash();
+buildDials();
+showDials();
 reset();
 requestAnimationFrame(loop);
