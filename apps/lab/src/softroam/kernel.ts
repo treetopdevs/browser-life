@@ -65,6 +65,18 @@
  * most 16 counted) and capped by its room; the asks are paid from the reservoir as it stands then, split in proportion when it is short. Leaves
  * are fed on like plain cells and otherwise live like them. The census counts `leaves` and a cumulative `leafIncome`.
  *
+ * Chunk 3 (big bodies, body steering, a leaf pool, a winter; again every key optional and absent from every start before it, so those worlds run the
+ * old path with no new draw). `heal`: bodies are the groups joined by mother links or braces, so a cell dying inside a body leaves a hole (its
+ * mother goes back and rebuilds it, as always) instead of splitting the body; a cell whose mother dies starts its plan again only when it heads a
+ * body of its own after the relabel. `steer` (needs sight or fear): each body takes one aim, the lowest over its seeing mouths and fleeing cells
+ * (a flee before a hunt, then score, two pair draws, target cid, own cid); the body turns toward it (away for a flee, no turn draw that step)
+ * and every cell of it with a chase gene steers by it from where it is. `pack` (1 to 16): a mouth may also act on a body of up to pack cells
+ * per mouth of its own body in touch with it (in sight and fear: per mouth its body holds); a pair that could act both ways does neither, a
+ * standoff. `crowd` (1 to 4 tiles): a seeing mouth counts each mouth of another body within 1.25 D of a candidate as that many tiles farther.
+ * `leafPool`: that share of all upkeep paid goes to a pool (up to `leafPoolMax`, default patchFood) that only leaves are paid from. `patchSeason`:
+ * a scheduled patch holds patchFood times the year's light. `winterCost`: each cell pays that much more a step in proportion to how far the
+ * year's light is below midsummer's. The census adds `steering` and `leafPool`; the residual counts the pool.
+ *
  * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
  * - The scent field has Roam's reach but not its numbers. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food
  *   (cap 4095), so the field reaches about 16 tiles from a patch (the reach is sqrt(2^shift / 8) tiles: it follows the decay, not the passes, which
@@ -242,6 +254,22 @@ export interface SoftRoamConfig {
   patchSun?: boolean;
   /** Matter a step a fully bare leaf earns in full light (0 to 4); adds the leaf kind to plans. Needs kinds and `day`. */
   leaf?: number;
+  /** Chunk 3. Braces hold a body together as mother links do, so a cell that dies inside a body leaves a hole its mother can fill instead of splitting the body. */
+  heal?: boolean;
+  /** One aim per body: a body with a seeing mouth or a fleeing cell turns toward the prey (or away from the threat) and all its cells with a chase gene steer by it. Needs sight or fear. */
+  steer?: boolean;
+  /** Whole, 1 to 16: a mouth may also act on a body of up to `pack` cells for each mouth of its own body in touch with it (in sight: each mouth its body holds). Needs kinds and drain. */
+  pack?: number;
+  /** Whole, 1 to 4 tiles: a seeing mouth counts each mouth of another body next to a candidate as this many tiles farther off. Needs sight. */
+  crowd?: number;
+  /** Share (0 to 1) of what cells pay in upkeep that goes to a pool only leaves draw on (instead of the reservoir). Needs leaf. */
+  leafPool?: number;
+  /** Most the leaf pool holds (whole, 1 to 2^20; default patchFood); the rest of the share goes to the reservoir. Needs leafPool. */
+  leafPoolMax?: number;
+  /** Scheduled patches hold patchFood times the season's light (at least 1). Needs year. */
+  patchSeason?: boolean;
+  /** Matter a step (0 to 1) each cell pays in deepest darkness of the year, in proportion to how far the season's light is below midsummer's. Needs year. */
+  winterCost?: number;
 }
 
 export function defaultSoftRoamConfig(): SoftRoamConfig {
@@ -420,6 +448,9 @@ export interface SoftRoamCensus {
   /** Chunk 2: live leaf cells, and the matter leaves have earned in all. */
   leaves: number;
   leafIncome: number;
+  /** Chunk 3: bodies steering by one aim (as of the last commands stage); matter in the leaves' pool. */
+  steering: number;
+  leafPool: number;
 }
 
 /**
@@ -493,6 +524,8 @@ export class SoftRoamWorld {
   readonly body: Int32Array;
   /** With `releaseGap`: one more than the step of the last release the cell's body made as the cell last heard of it (0 = never). */
   readonly relRec: Float64Array;
+  /** With `leafPool`: matter that only leaves draw on. */
+  leafPool = 0;
 
   // Per tile.
   readonly food: Uint32Array;
@@ -570,6 +603,15 @@ export class SoftRoamWorld {
   private readonly relMinN: number;
   private readonly relGapN: number;
   private readonly leafOn: boolean;
+  private readonly healOn: boolean;
+  private readonly steerOn: boolean;
+  private readonly packN: number;
+  private readonly crowdN: number;
+  private readonly leafPoolQ8: number;
+  private readonly leafPoolMaxN: number;
+  private readonly seasonPatch: boolean;
+  private readonly winterQ16: number;
+  private steering = 0;
   private readonly leafQ: number;
   private readonly sunPatch: boolean;
   /** Leaf cells whose centres share a tile (scratch, zero between steps), and the stage's lists. */
@@ -646,6 +688,16 @@ export class SoftRoamWorld {
   private readonly pairB: number[] = [];
   // Hunting scratch: whether a body holds a mouth (by label), distinct targets this step, body size and last release as the division stage began.
   private readonly bodyMouth: Uint8Array;
+  /** With `pack`: mouths per body as the step starts; and, in touch and grip, distinct mouths of body x in a chosen pair with body y (key x * 65536 + y). */
+  private readonly bodyMouthN: Uint16Array;
+  private packTouch = new Map<number, number>();
+  private packUseTouch = false;
+  /** With `steer`: each body's one aim (target slot or -1, the cell that found it, flee or hunt, score). */
+  private readonly bodyAimT: Int32Array;
+  private readonly bodyAimSrc: Int32Array;
+  private readonly bodyAimAway: Uint8Array;
+  private readonly bodyAimScore: Int32Array;
+  private lastScore = 0;
   private readonly tgtMark: Uint32Array;
   private tgtGen = 0;
   private readonly bodyStart: Int32Array;
@@ -732,6 +784,26 @@ export class SoftRoamWorld {
       if (!(typeof cfg.leaf === 'number' && cfg.leaf >= 0 && cfg.leaf <= 4)) throw new Error(`Invalid leaf: ${cfg.leaf}`);
       this.leafQ = Math.round(cfg.leaf * LEAF_Q);
     }
+    // Chunk 3.
+    if (cfg.heal !== undefined && typeof cfg.heal !== 'boolean') throw new Error('heal is true or false');
+    this.healOn = cfg.heal === true;
+    if (cfg.steer !== undefined && typeof cfg.steer !== 'boolean') throw new Error('steer is true or false');
+    if (cfg.steer !== undefined && this.sightN === 0 && this.fearN === 0) throw new Error('steer needs sight or fear');
+    this.steerOn = cfg.steer === true;
+    if (cfg.pack !== undefined && (!this.kinds || this.drainN === 0)) throw new Error('pack needs kinds and drain');
+    this.packN = cfg.pack === undefined ? 0 : whole(cfg.pack, 'pack', 1, 16);
+    if (cfg.crowd !== undefined && this.sightN === 0) throw new Error('crowd needs sight');
+    this.crowdN = cfg.crowd === undefined ? 0 : whole(cfg.crowd, 'crowd', 1, 4);
+    if (cfg.leafPool !== undefined && !this.leafOn) throw new Error('leafPool needs leaf');
+    if (cfg.leafPool !== undefined && !(typeof cfg.leafPool === 'number' && cfg.leafPool >= 0 && cfg.leafPool <= 1)) throw new Error(`Invalid leafPool: ${cfg.leafPool}`);
+    this.leafPoolQ8 = cfg.leafPool === undefined ? -1 : Math.round(cfg.leafPool * 256);
+    if (cfg.leafPoolMax !== undefined && cfg.leafPool === undefined) throw new Error('leafPoolMax needs leafPool');
+    this.leafPoolMaxN = cfg.leafPoolMax === undefined ? cfg.patchFood : whole(cfg.leafPoolMax, 'leafPoolMax', 1, 1 << 20);
+    if (cfg.patchSeason !== undefined && typeof cfg.patchSeason !== 'boolean') throw new Error('patchSeason is true or false');
+    if (cfg.patchSeason !== undefined && cfg.year === undefined) throw new Error('patchSeason needs year');
+    this.seasonPatch = cfg.patchSeason === true;
+    if (cfg.winterCost !== undefined && cfg.year === undefined) throw new Error('winterCost needs year');
+    this.winterQ16 = cfg.winterCost === undefined ? 0 : q16(cfg.winterCost, 'winterCost');
     this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
     const shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
     // Roam's rule: a shell pays floor(leakSide * (1 + tough) * shellLeak) per exposed side (the product is below 2^34, so it is done here, in doubles).
@@ -778,6 +850,11 @@ export class SoftRoamWorld {
     this.leafOnTile = new Uint16Array(this.leafOn ? n : 0);
     this.leafPaid = new Uint8Array(this.leafOn ? this.cap : 0);
     this.bodyMouth = new Uint8Array(cap + 2);
+    this.bodyMouthN = new Uint16Array(this.packN > 0 ? cap + 2 : 0);
+    this.bodyAimT = new Int32Array(this.steerOn ? cap + 2 : 0);
+    this.bodyAimSrc = new Int32Array(this.steerOn ? cap + 2 : 0);
+    this.bodyAimAway = new Uint8Array(this.steerOn ? cap + 2 : 0);
+    this.bodyAimScore = new Int32Array(this.steerOn ? cap + 2 : 0);
     this.tgtMark = new Uint32Array(this.sightN > 0 ? cap : 0);
     this.bodyStart = new Int32Array(this.relMinN > 0 ? cap + 2 : 0);
     this.bodyRelMax = new Float64Array(this.relGapN > 0 ? cap + 2 : 0);
@@ -1112,15 +1189,15 @@ export class SoftRoamWorld {
     this.freeList[this.freeN++] = c;
   }
 
-  private dropPatch(rnd: number, event = true): void {
+  private dropPatch(rnd: number, event = true, amount = this.cfg.patchFood): void {
     const s = this.size;
     const cx = rnd % s;
     const cy = (rnd >>> 16) % s;
     const k = this.patchTiles.length >> 1;
-    const each = Math.floor(this.cfg.patchFood / k);
+    const each = Math.floor(amount / k);
     for (let j = 0; j < k; j++) this.food[this.tileAt(cx + this.patchTiles[2 * j], cy + this.patchTiles[2 * j + 1])] += each;
-    this.food[this.tileAt(cx, cy)] += this.cfg.patchFood - each * k;
-    this.reservoir -= this.cfg.patchFood;
+    this.food[this.tileAt(cx, cy)] += amount - each * k;
+    this.reservoir -= amount;
     this.patches++;
     if (event) this.events.patches.push({ x: cx, y: cy });
   }
@@ -1173,6 +1250,19 @@ export class SoftRoamWorld {
       const b = find(m);
       if (a !== b) uf[a] = b;
     }
+    if (this.healOn) {
+      // With `heal`, braces join a body too (the groups found do not depend on the order links are taken in).
+      for (let q = 0; q < this.liveN; q++) {
+        const c = live[q];
+        for (let k = 0; k < 4; k++) {
+          const p = this.braceTo[c * 4 + k];
+          if (p < 0) continue;
+          const a = find(c);
+          const b = find(p);
+          if (a !== b) uf[a] = b;
+        }
+      }
+    }
     this.rootLabel.fill(0);
     this.bodySize.fill(0);
     let count = 0;
@@ -1203,6 +1293,16 @@ export class SoftRoamWorld {
     const t = this.step;
     const live = this.live;
     const hi = this.labelHi;
+    const senses = this.sightN > 0 || this.fearN > 0;
+    if (senses) {
+      // Newborns count and freed slots do not: buckets from the positions as the step starts.
+      this.buildBuckets();
+      this.hunting = 0;
+      this.targets = 0;
+      this.fleeing = 0;
+      if (++this.tgtGen > 0xffffffff) { this.tgtMark.fill(0); this.tgtGen = 1; }
+    }
+    if (this.steerOn) this.findAims();
     this.bodyTurnSum.fill(0, 0, hi + 1);
     for (let q = 0; q < this.liveN; q++) {
       const c = live[q];
@@ -1215,7 +1315,20 @@ export class SoftRoamWorld {
       let tl = this.turnLeft[r];
       const sealed = this.drainN > 0 && ((t - this.since[r]) >>> 0) < this.sealN;
       if (sealed) tl = 0;
-      else {
+      else if (this.steerOn && this.bodyAimT[l] >= 0) {
+        // One aim for the body: turn toward the target (away from the threat), no turn draw this step.
+        const a = this.bodyAimSrc[l];
+        const b = this.bodyAimT[l];
+        const dx = this.dlt(this.x[a], this.x[b]);
+        const dy = this.dlt(this.y[a], this.y[b]);
+        if (dx !== 0 || dy !== 0) {
+          const ang = this.bodyAimAway[l] ? softRoamAngle(-dx, -dy) : softRoamAngle(dx, dy);
+          tl = ((ang - h + 512) & 1023) - 512;
+        } else tl = 0;
+        const stp = tl > 16 ? 16 : tl < -16 ? -16 : tl;
+        h = (h + stp + 1024) & 1023;
+        tl -= stp;
+      } else {
         const turnQ16 = Math.floor((Math.floor(this.bodyTurnSum[l] / this.bodySize[l]) * this.turnMaxQ16) / (2 * ROAM_GENE_MAX));
         if ((roamHash(seed, t, this.cid[r], CH_TURN) & 0xffff) < turnQ16) {
           tl += (roamHash(seed, t, this.cid[r], CH_TURNAMT) % 513) - 256;
@@ -1230,15 +1343,6 @@ export class SoftRoamWorld {
     }
     const gain = cfg.scentGain;
     const costQ16 = this.moveCostQ16;
-    const senses = this.sightN > 0 || this.fearN > 0;
-    if (senses) {
-      // Newborns count and freed slots do not: buckets from the positions as the step starts.
-      this.buildBuckets();
-      this.hunting = 0;
-      this.targets = 0;
-      this.fleeing = 0;
-      if (++this.tgtGen > 0xffffffff) { this.tgtMark.fill(0); this.tgtGen = 1; }
-    }
     for (let q = 0; q < this.liveN; q++) {
       const c = live[q];
       const l = this.body[c];
@@ -1269,7 +1373,11 @@ export class SoftRoamWorld {
         if (chase !== 0) {
           let aim = -1;
           let away = false;
-          if (senses) {
+          if (this.steerOn) {
+            // With `steer` every cell with a chase gene steers by its body's one aim, from where it is.
+            aim = this.bodyAimT[l];
+            away = this.bodyAimAway[l] !== 0;
+          } else if (senses) {
             // A mouth sees prey it could act on; a plain or shell cell sees the mouths that could act on it. Either steers by the size of the gene.
             if (this.sightN > 0 && this.kind[c] === KIND_MOUTH) aim = this.nearestTarget(c, this.sightN, false, CH_SIGHT_A, CH_SIGHT_B);
             else if (this.fearN > 0 && (this.kind[c] === KIND_PLAIN || this.kind[c] === KIND_SHELL)) { aim = this.nearestTarget(c, this.fearN, true, CH_FEAR_A, CH_FEAR_B); away = true; }
@@ -1317,6 +1425,58 @@ export class SoftRoamWorld {
           this.hunting++;
           if (this.tgtMark[steerAim] !== this.tgtGen) { this.tgtMark[steerAim] = this.tgtGen; this.targets++; }
         }
+      }
+    }
+  }
+
+  /**
+   * With `steer`: every seeing mouth and fleeing cell of an unsealed body with a chase gene finds its own target as in chunk 2; then each body
+   * takes one aim, the lowest over its cells by (flee before hunt, score, pair draw, second pair draw, target cid, own cid), where the score is the
+   * squared distance (with the crowd term for a hunt). The tuple is total, so the slot order of the cells does not matter.
+   */
+  private findAims(): void {
+    const t = this.step;
+    const hi = this.labelHi;
+    this.bodyAimT.fill(-1, 0, hi + 1);
+    this.steering = 0;
+    for (let q = 0; q < this.liveN; q++) {
+      const c = this.live[q];
+      const l = this.body[c];
+      if (this.drainN > 0 && ((t - this.since[this.bodyRoot[l]]) >>> 0) < this.sealN) continue;
+      if (this.genes[c * ROAM_GENES + G_CHASE] === 0) continue;
+      let aim = -1;
+      let away = 0;
+      if (this.sightN > 0 && this.kind[c] === KIND_MOUTH) aim = this.nearestTarget(c, this.sightN, false, CH_SIGHT_A, CH_SIGHT_B);
+      else if (this.fearN > 0 && (this.kind[c] === KIND_PLAIN || this.kind[c] === KIND_SHELL)) { aim = this.nearestTarget(c, this.fearN, true, CH_FEAR_A, CH_FEAR_B); away = 1; }
+      if (aim < 0) continue;
+      const cur = this.bodyAimT[l];
+      let take = cur < 0;
+      if (!take) {
+        const ca = this.bodyAimAway[l];
+        if (away !== ca) take = away > ca;
+        else if (this.lastScore !== this.bodyAimScore[l]) take = this.lastScore < this.bodyAimScore[l];
+        else {
+          const chA = away ? CH_FEAR_A : CH_SIGHT_A;
+          const chB = away ? CH_FEAR_B : CH_SIGHT_B;
+          const src = this.bodyAimSrc[l];
+          const h = this.pairHash(c, aim, chA);
+          const hb = this.pairHash(src, cur, chA);
+          if (h !== hb) take = h < hb;
+          else {
+            const g = this.pairHash2(c, aim, chB);
+            const gb = this.pairHash2(src, cur, chB);
+            if (g !== gb) take = g < gb;
+            else if (this.cid[aim] !== this.cid[cur]) take = this.cid[aim] < this.cid[cur];
+            else take = this.cid[c] < this.cid[src];
+          }
+        }
+      }
+      if (take) {
+        if (cur < 0) this.steering++;
+        this.bodyAimT[l] = aim;
+        this.bodyAimSrc[l] = c;
+        this.bodyAimAway[l] = away;
+        this.bodyAimScore[l] = this.lastScore;
       }
     }
   }
@@ -1716,7 +1876,8 @@ export class SoftRoamWorld {
       asks.push(ask);
       total += ask;
     }
-    const R = this.reservoir;
+    const pool = this.leafPoolQ8 >= 0;
+    const R = pool ? this.leafPool : this.reservoir;
     let paidAll = 0;
     for (let i = 0; i < cells.length; i++) {
       const c = cells[i];
@@ -1727,7 +1888,8 @@ export class SoftRoamWorld {
       paidAll += paid;
       onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)] = 0;
     }
-    this.reservoir -= paidAll;
+    if (pool) this.leafPool -= paidAll;
+    else this.reservoir -= paidAll;
     this.leafIncome += paidAll;
   }
 
@@ -1735,17 +1897,38 @@ export class SoftRoamWorld {
     const seed = this.cfg.seed;
     const t = this.step;
     const m = this.offsetMap;
+    // With `winterCost`: an extra cost in proportion to how far the season's light is below midsummer's (the same for every cell this step).
+    const winterQ16 = this.winterQ16 > 0 ? Math.floor((this.winterQ16 * (256 - this.seasonLight(t))) / 256) : 0;
+    const pool = this.leafPoolQ8 >= 0;
+    let paidAll = 0;
     for (let q = 0; q < this.liveN; q++) {
       const c = this.live[q];
       let exposed = 4;
       for (let d = 0; d < 4; d++) if (m.has(this.offKey(this.body[c], this.gx[c] + DX[d], this.gy[c] + DY[d]))) exposed--;
       const side = this.kinds && this.kind[c] === KIND_SHELL ? this.shellSideQ16[this.tough[c]] : this.leakSideQ16;
-      const costQ16 = exposed * side + this.leakCellQ16;
+      const costQ16 = exposed * side + this.leakCellQ16 + winterQ16;
       let pay = (costQ16 >>> 16) + ((roamHash(seed, t, this.cid[c], CH_UPKEEP) & 0xffff) < (costQ16 & 0xffff) ? 1 : 0);
       if (pay > this.store[c]) pay = this.store[c];
       this.store[c] -= pay;
-      this.reservoir += pay;
+      if (pool) paidAll += pay;
+      else this.reservoir += pay;
     }
+    if (pool) {
+      // A share of all that was paid goes to the leaves' pool, up to its cap; the rest to the reservoir. paidAll is at most 16384 cells times about 20, under 2^19, so the product is under 2^27.
+      let toPool = Math.floor((paidAll * this.leafPoolQ8) / 256);
+      const room = this.leafPoolMaxN > this.leafPool ? this.leafPoolMaxN - this.leafPool : 0;
+      if (toPool > room) toPool = room;
+      this.leafPool += toPool;
+      this.reservoir += paidAll - toPool;
+    }
+  }
+
+  /** The year's term of the light at `step`, 0 to 256 (256 without a year): the day band left out. */
+  private seasonLight(step: number): number {
+    const cfg = this.cfg;
+    if (cfg.year === undefined) return 256;
+    const w = Math.round((cfg.winter ?? 0.25) * 256);
+    return w + (((256 - w) * tri10(phase10(step, cfg.year))) >> 8);
   }
 
   // ------------------------------------------------------------------ touch and grip
@@ -1831,7 +2014,12 @@ export class SoftRoamWorld {
     const by = this.body[yc];
     if (bx === by) return false;
     if (this.sealedCell(xc) || this.sealedCell(yc)) return false;
-    if (this.bodySize[bx] < 2 * this.bodySize[by]) return false;
+    if (this.bodySize[bx] < 2 * this.bodySize[by]) {
+      // With `pack`: or `pack` prey cells for each mouth of x's body in touch with y's body (in sight and fear: each mouth x's body holds).
+      if (this.packN === 0) return false;
+      const m = this.packUseTouch ? (this.packTouch.get(bx * 65536 + by) ?? 0) : this.bodyMouthN[bx];
+      if (this.packN * m < this.bodySize[by]) return false;
+    }
     if (this.kinds) {
       if (this.kind[xc] !== KIND_MOUTH) return false;
       if (this.kind[yc] === KIND_SHELL && this.crackN === 0) return false;
@@ -1843,12 +2031,40 @@ export class SoftRoamWorld {
 
   /** With `jaws`: which bodies hold a mouth now (labels and kinds as the step starts). */
   private markMouths(): void {
+    if (this.packN > 0) {
+      this.bodyMouthN.fill(0, 0, this.labelHi + 1);
+      for (let q = 0; q < this.liveN; q++) {
+        const c = this.live[q];
+        if (this.kind[c] === KIND_MOUTH) this.bodyMouthN[this.body[c]]++;
+      }
+    }
     if (!this.jawsOn) return;
     this.bodyMouth.fill(0, 0, this.labelHi + 1);
     for (let q = 0; q < this.liveN; q++) {
       const c = this.live[q];
       if (this.kind[c] === KIND_MOUTH) this.bodyMouth[this.body[c]] = 1;
     }
+  }
+
+  /**
+   * With `pack`, from the chosen pairs (pairA, pairB) of this stage or substep and before any acts: for each ordered pair of bodies (x, y) the
+   * number of distinct mouth cells of x in a chosen pair with a cell of y. Counts, so the order the pairs were found in does not matter.
+   */
+  private countPackTouch(): void {
+    const m = this.packTouch;
+    m.clear();
+    if (this.packN === 0) return;
+    const seen = new Set<number>();
+    const add = (x: number, y: number): void => {
+      if (this.kind[x] !== KIND_MOUTH) return;
+      const key = this.body[x] * 65536 + this.body[y];
+      // One mouth counts once per prey body: a key of (mouth slot, prey body).
+      const k2 = x * 65536 + this.body[y];
+      if (seen.has(k2)) return;
+      seen.add(k2);
+      m.set(key, (m.get(key) ?? 0) + 1);
+    };
+    for (let i = 0; i < this.pairA.length; i++) { add(this.pairA[i], this.pairB[i]); add(this.pairB[i], this.pairA[i]); }
   }
 
   /**
@@ -1885,7 +2101,8 @@ export class SoftRoamWorld {
       const dy = this.dlt(py, this.y[b]);
       if (dy > lim || dy < -lim) return;
       if (!(fear ? this.canAct(b, c) : this.canAct(c, b))) return;
-      const d2 = dx * dx + dy * dy;
+      let d2 = dx * dx + dy * dy;
+      if (!fear && this.crowdN > 0) d2 += this.crowdAt(b, this.body[c]) * this.crowdN * this.crowdN * D * D;
       let take = best < 0 || d2 < bestD2;
       if (!take && d2 === bestD2) {
         const h = this.pairHash(c, b, chA);
@@ -1899,6 +2116,7 @@ export class SoftRoamWorld {
       }
       if (take) { best = b; bestD2 = d2; }
     };
+    this.lastScore = 0;
     const scan = (tile: number): void => { for (let b = this.head[tile]; b >= 0; b = this.nextInTile[b]) consider(b); };
     if (2 * r + 1 >= s) {
       // The window wraps round the torus: every tile once.
@@ -1908,7 +2126,25 @@ export class SoftRoamWorld {
       const ty = py >>> 10;
       for (let i = -r; i <= r; i++) for (let j = -r; j <= r; j++) scan(this.tileAt(tx + (rev ? -j : j), ty + (rev ? -i : i)));
     }
+    this.lastScore = bestD2;
     return best;
+  }
+
+  /** With `crowd`: mouth cells of bodies other than `own` within 1.25 D of cell `b` (not b itself), at most 8, from the buckets of now. */
+  private crowdAt(b: number, own: number): number {
+    const ts = this.around25(this.x[b] >>> 10, this.y[b] >>> 10);
+    let n = 0;
+    for (let ti = 0; ti < 25; ti++) {
+      for (let o = this.head[ts[ti]]; o >= 0; o = this.nextInTile[o]) {
+        if (o === b || !this.alive[o] || this.kind[o] !== KIND_MOUTH || this.body[o] === own) continue;
+        const dx = this.dlt(this.x[b], this.x[o]);
+        if (dx > TOUCH_R || dx < -TOUCH_R) continue;
+        const dy = this.dlt(this.y[b], this.y[o]);
+        if (dy > TOUCH_R || dy < -TOUCH_R) continue;
+        if (dx * dx + dy * dy <= TOUCH_R2 && ++n === 8) return 8;
+      }
+    }
+    return n;
   }
 
   /** Test only: the commands stage on its own, from the labels and buckets of now. */
@@ -1941,6 +2177,8 @@ export class SoftRoamWorld {
     const pa = this.pairA;
     const pb = this.pairB;
     if (pa.length === 0) return;
+    this.countPackTouch();
+    this.packUseTouch = this.packN > 0;
     this.touchStore.set(this.store);
     const n = pa.length;
     const takeX: number[] = [];
@@ -1950,6 +2188,8 @@ export class SoftRoamWorld {
       let xc = pa[i];
       let yc = pb[i];
       if (!this.canAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.canAct(xc, yc)) continue; }
+      // With `pack` two bodies can each be able to act on the other: then neither does (a standoff).
+      else if (this.packN > 0 && this.canAct(yc, xc)) continue;
       if (this.drainable(yc)) { takeX.push(xc); takeY.push(yc); this.takers[yc]++; }
       else if (this.hittable(yc)) { hitY.push(yc); this.hitCount[yc]++; }
     }
@@ -1973,6 +2213,7 @@ export class SoftRoamWorld {
       for (const f of mine) this.events.feeds.push(f);
     }
     for (const yc of takeY) this.takers[yc] = 0;
+    this.packUseTouch = false;
     if (hitY.length > 0) {
       const shells: number[] = [];
       for (const yc of hitY) if (this.hitCount[yc] > 0) { if (shells.indexOf(yc) < 0) shells.push(yc); }
@@ -2003,16 +2244,21 @@ export class SoftRoamWorld {
     this.collectPairs();
     const pa = this.pairA;
     const pb = this.pairB;
+    this.countPackTouch();
+    this.packUseTouch = this.packN > 0;
     for (let i = 0; i < pa.length; i++) {
       let xc = pa[i];
       let yc = pb[i];
       if (!this.canAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.canAct(xc, yc)) continue; }
+      // With `pack` two bodies can each be able to act on the other: then neither does (a standoff).
+      else if (this.packN > 0 && this.canAct(yc, xc)) continue;
       const dx = this.dlt(this.x[xc], this.x[yc]);
       const dy = this.dlt(this.y[xc], this.y[yc]);
       const d2 = dx * dx + dy * dy;
       if (d2 <= D * D) continue;
       this.applySpring(xc, yc, dx, dy, isqrt(d2), D, this.gripN, sub);
     }
+    this.packUseTouch = false;
   }
 
   /** Test only: the contacts touch would use now, as sorted "lower cid,higher cid" strings (the same whatever slots cells sit in). */
@@ -2074,11 +2320,21 @@ export class SoftRoamWorld {
       }
     }
     for (const m of back) { this.mode[m] = this.backMode[m] - 1; this.backMode[m] = 0; }
+    // With `heal` the restart waits for the relabel: a cell starts again only when the relabel makes it the head of a body it did not head
+    // before (an orphan of this death, or of an earlier one that a brace kept in its body until now).
+    let heads: Set<number> | undefined;
+    if (this.healOn) {
+      heads = new Set();
+      for (let l = 1; l <= this.labelHi; l++) if (this.bodySize[l] > 0) heads.add(this.cid[this.bodyRoot[l]]);
+    }
     for (let q = 0; q < this.liveN; q++) {
       const o = this.live[q];
       if (this.dying[o]) continue;
       const m = this.mother[o];
-      if (m >= 0 && this.dying[m]) { this.mode[o] = 0; this.mother[o] = -1; }
+      if (m >= 0 && this.dying[m]) {
+        this.mother[o] = -1;
+        if (!this.healOn) this.mode[o] = 0;
+      }
     }
     // Bodies lost entirely.
     const killed = this.bodyTmp;
@@ -2102,6 +2358,7 @@ export class SoftRoamWorld {
     this.rebuildLive();
     this.prevBody.set(this.body);
     this.labelBodies();
+    if (heads !== undefined) for (let l = 1; l <= this.labelHi; l++) if (!heads.has(this.cid[this.bodyRoot[l]])) this.mode[this.bodyRoot[l]] = 0;
     // Each piece beyond the first of an old body counts as a split.
     const pieces = this.bodyTmp;
     pieces.fill(0);
@@ -2398,15 +2655,17 @@ export class SoftRoamWorld {
     this.buildOffsets();
     this.divide();
     this.countBodies();
-    if (t > 0 && t % cfg.patchEvery === 0 && this.reservoir >= cfg.patchFood) {
+    // With `patchSeason` a patch holds patchFood times the season's light (at least 1).
+    const patchAmt = this.seasonPatch ? Math.max(1, Math.floor((cfg.patchFood * this.seasonLight(t)) / 256)) : cfg.patchFood;
+    if (t > 0 && t % cfg.patchEvery === 0 && this.reservoir >= patchAmt) {
       const rnd = roamHash(cfg.seed, t, 0, CH_PATCH);
       if (this.sunPatch) {
         // The centre draw is kept; the patch lands only as the light there allows, else the reservoir keeps the matter and the next date tries again.
         const cx = rnd % this.size;
         const cy = (rnd >>> 16) % this.size;
-        if ((roamHash(cfg.seed, t, cy * this.size + cx, CH_PATCH_SUN) & 255) < softRoamLight(cfg, cx, cy, t)) this.dropPatch(rnd);
+        if ((roamHash(cfg.seed, t, cy * this.size + cx, CH_PATCH_SUN) & 255) < softRoamLight(cfg, cx, cy, t)) this.dropPatch(rnd, true, patchAmt);
         else this.patchesSkipped++;
-      } else this.dropPatch(rnd);
+      } else this.dropPatch(rnd, true, patchAmt);
     }
     if (this.spreadQ10 > 0) this.spreadFood();
     this.relaxScent();
@@ -2489,7 +2748,7 @@ export class SoftRoamWorld {
       food,
       held,
       reservoir: this.reservoir,
-      residual: this.total - food - held - this.reservoir,
+      residual: this.total - food - held - this.reservoir - this.leafPool,
       genes: genes.map((g) => (cells ? g / cells : 0)),
       divisions: this.divisions,
       releases: this.releases,
@@ -2515,6 +2774,8 @@ export class SoftRoamWorld {
       releasesHeld: this.releasesHeld,
       leaves,
       leafIncome: this.leafIncome,
+      steering: this.steering,
+      leafPool: this.leafPool,
     };
   }
 
@@ -2577,6 +2838,7 @@ export class SoftRoamWorld {
     if (this.drainN > 0) { mix(this.drained); mix(this.cracked); }
     if (this.relMinN > 0 || this.relGapN > 0) mix(this.releasesHeld);
     if (this.leafOn) { mix(this.leafIncome); mix(Math.floor(this.leafIncome / 4294967296)); }
+    if (this.leafPoolQ8 >= 0) mix(this.leafPool);
     return h >>> 0;
   }
 

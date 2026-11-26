@@ -19,3 +19,19 @@ describe('soft roam: the worlds before seasons are unchanged', () => {
     });
   }
 });
+
+// The seasons start as it stood at commit b62f26c2 (2026-11-26), before chunk 3 (big bodies): every chunk 3 key is absent from it.
+const SEASON_PINS: [number, number][] = [
+  [1, 4007348550],
+  [2, 2171747202],
+];
+
+describe('soft roam: the seasons start is unchanged', () => {
+  for (const [seed, digest] of SEASON_PINS) {
+    it(`seed ${seed}, seasons, 64 tiles, 1500 steps`, () => {
+      const w = foundSoftRoam({ seed, size: 64, start: 'seasons' });
+      w.advance(1500);
+      expect(w.digest()).toBe(digest);
+    });
+  }
+});
