@@ -98,7 +98,7 @@ describe("island reports a task whose schedule cannot be applied as failed", () 
     expect(logged.find((m) => /cannot apply the schedule as given, leaving the task/.test(m))).toMatch(/past MATTER_MAX/);
     expect(logged.find((m) => /reported r #0 as failed/.test(m))).toBeDefined();
     // No checkpoint, file, completion or rejection went out: the join, the task, its failure report, the next ask.
-    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next"]);
+    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next", "DELETE /api/islands/isl"]);
     expect(bodies).toHaveLength(1);
     expect(bodies[0].lease).toBe("L");
     expect(bodies[0].reason).toMatch(/the feed at t=0 failed: feed refused: \d+ quanta would take the world past MATTER_MAX/);
@@ -108,7 +108,7 @@ describe("island reports a task whose schedule cannot be applied as failed", () 
   it("a feed whose named matter the world does not reproduce is reported the same way", async () => {
     const { done, calls, bodies } = await failing(wrongMatter, () => json({ ok: true }));
     expect(done).toBe(0);
-    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next"]);
+    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next", "DELETE /api/islands/isl"]);
     expect(bodies[0].reason).toMatch(/not the observed history/);
   });
 
@@ -116,7 +116,7 @@ describe("island reports a task whose schedule cannot be applied as failed", () 
     const { done, calls, logged } = await failing(pastMatterMax, () => json({ error: "segment not assigned to this island/lease" }, 409));
     expect(done).toBe(0);
     expect(logged.find((m) => /task abandoned: POST \/api\/segments\/seg-0\/fail: 409/.test(m))).toBeDefined();
-    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next"]);
+    expect(calls).toEqual(["POST /api/islands", "POST /api/next", "POST /api/segments/seg-0/fail", "POST /api/next", "DELETE /api/islands/isl"]);
   });
 
   it("any other failure to report (here a 500) still throws out of the island", async () => {
@@ -340,7 +340,7 @@ describe("island idle wait", () => {
       throw new Error(`unexpected ${path}`);
     });
     await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
-    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
+    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1", "picks-v1"];
     expect(ISLAND_CAPABILITIES).toEqual(caps);
     expect(bodies).toEqual([{ capabilities: caps }, { capabilities: caps }]);
   });

@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:5606/docs/creative-prototypes/food-schedule-769.html",
+  "viewport": {
+    "width": 1760,
+    "height": 1440
+  },
+  "clip": {
+    "x": 188,
+    "y": 418.46875,
+    "width": 1384,
+    "height": 1021.03125
+  },
+  "dimensions": {
+    "width": 1384,
+    "height": 1022
+  },
+  "rawSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+  "htmlSha256": "a0479be4929920fcb0c906e84c0b9f742c64ff4dae11026a8aeb42e0417cc3d1",
+  "pngSha256": "26b0fb6d1c6a280562efe3e5d02e797d51a52cff53a354bf2d99d27eaffa6fc5"
+}

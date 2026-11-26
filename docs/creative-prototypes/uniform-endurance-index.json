@@ -1,0 +1,42 @@
+{
+  "runs": [
+    {
+      "seed": 1203,
+      "url": "uniform-endurance-seed-1203.json",
+      "sha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d"
+    },
+    {
+      "seed": 1201,
+      "url": "uniform-endurance-seed-1201.json",
+      "sha256": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221"
+    },
+    {
+      "seed": 1202,
+      "url": "uniform-endurance-seed-1202.json",
+      "sha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602"
+    }
+  ],
+  "decisions": [
+    {
+      "seed": 1203,
+      "artifactSha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+      "status": "pass",
+      "title": "Seed 1203 passes the endurance screen",
+      "summary": "The fragile purple family persists: five bodies at 6,000, eight at 9,000. This first pass earned seeds 1201 and 1202; both also passed. This screen stops at 9,000."
+    },
+    {
+      "seed": 1201,
+      "artifactSha256": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221",
+      "status": "pass",
+      "title": "Seed 1201 passes the endurance screen",
+      "summary": "Two families remain at 9,000, late births and deaths continue, ceiling occupancy stays below the limit, and all three spatial comparisons pass. This screen stops at 9,000."
+    },
+    {
+      "seed": 1202,
+      "artifactSha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602",
+      "status": "pass",
+      "title": "Seed 1202 passes the endurance screen",
+      "summary": "Two families remain at 9,000, late births and deaths continue, ceiling occupancy stays below the limit, and all three spatial comparisons pass. This screen stops at 9,000."
+    }
+  ]
+}

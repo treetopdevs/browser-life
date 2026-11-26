@@ -544,6 +544,29 @@ describe("exportRefusal", () => {
   });
 });
 
+// Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md, section 4): the wounded breeder worlds are presets, so their sessions export as any preset's
+// do, and the replay command names them. A weather laid over another preset by override is the thing the file cannot hold.
+describe("exportRefusal and replayCommand for the wounded breeder worlds", () => {
+  const worlds = ["breeder-wounded", "breeder-wounded-shell"].map((id) => PRESETS.find((p) => p.id === id)!);
+  const plantedOf = (p: (typeof worlds)[number]) => ({ presetId: p.id, seed: 7, cfg: presetConfig(p, 7), startHash: "0123456789abcdef", edgesFrom: 0 });
+
+  it.each(worlds.map((p) => [p.id, p] as const))("allows %s as planted, and the replay command names it", (id, p) => {
+    expect(exportRefusal(plantedOf(p))).toBeNull();
+    // A hand wound and a hand pick in its history are the usual things a session holds.
+    expect(exportRefusal({ ...plantedOf(p), interventions: [{ step: 6, kind: "lesion", x: 1, y: 1, r: 2 }, { step: 5000, kind: "pick", cycle: 1, donors: [2, 0] }] })).toBeNull();
+    const command = replayCommand({ presetId: id, seed: 7, settings: { censusEvery: 100, deepEvery: 5, activityThreshold: null }, interventions: [], final: { step: 5000, stateHash: "0123456789abcdef" } }, "x.session.json");
+    expect(command).toContain(`--preset ${id} `);
+    expect(command).toContain("--picks-from x.session.json");
+  });
+
+  it("refuses a weather laid over a preset by override, in the words it uses for any changed setting", () => {
+    const [wounded, shelled] = worlds;
+    const calm = PRESETS.find((p) => p.id === "breeder")!;
+    expect(exportRefusal({ presetId: wounded.id, seed: 7, cfg: presetConfig(wounded, 7, { injuryShell: 2 }), startHash: "0123456789abcdef", edgesFrom: 0 })).toMatch(/settings changed from its preset/);
+    expect(exportRefusal({ presetId: shelled.id, seed: 7, cfg: presetConfig(calm, 7), startHash: "0123456789abcdef", edgesFrom: 0 })).toMatch(/settings changed from its preset/);
+  });
+});
+
 describe("RewindStore", () => {
   const record = (n: number): RewindRecord => ({ firsts: new FirstsDetector(firstsContext(defaultConfig(), 100)).snapshot(), picks: [[n, true]], hash: `${n}` });
 

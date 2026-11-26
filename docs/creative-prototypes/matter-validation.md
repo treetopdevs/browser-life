@@ -1,0 +1,15 @@
+# Matter aquarium validation
+
+Reviewed local prototype; no merge or deployment. Claude Sonnet 5.5 High and Codex Sol 6.1 High reviewed the plan and implementation. Follow-up fixes strengthened evidence validation, fixture truth, immutable phases, extinction semantics, shared chart scales and rendering. The final scoped Codex closure review reports no remaining actionable findings. Review records are in `reviews/matter-*.md`.
+
+Both specified pre-batch fixtures passed exactly: B57 after 24 ticks, and N6/sediment14 after 100 ticks with biomass absent from initialization. Final focused validation passes 39 tests across model, clock, packaging and evidence. Typecheck and production build pass. Evidence tests also pass on Node 24.2.0 and 26.12.0; strict runner compilation with noUnusedLocals passes. All nine previous evidence freshness guards pass unchanged.
+
+All 10 browser checks pass. The browser suite covers the real four-tank clock, controls, export, hidden-page pause, mobile layout and public route exclusion. It explicitly checks rain reservoirs of 64 at tick 4095 and zero at 4096, and continued physical updates through 6000 after extinction. Production built-file removal smoke confirms the Docker removal patterns exclude the matter page and chunks while retaining the public entry. This is not Docker/Caddy runtime proof.
+
+The first batch completed all 12 worlds but hit a Markdown table delimiter error after writing JSON. That partial pair was not accepted. The report was fixed to render before writing either file. Subsequent fresh batches preserve every original JSON value excluding source hashes and the added 3001 physical hashes per run; `matter-replay-comparison.json` records the comparison. The core dynamics were never tuned after observing outcomes. Final source freshness checks pass, and a full fresh replay on Node 24.2.0 exactly matches both saved JSON and Markdown.
+
+All 12 biomass extinctions occur at 790/1000/790 per seed regardless of mode. Every sampled biomass total and the four saved biomass fields match across modes within each seed. Sampled peak biomass is 792/927/834, not a whole-run maximum. Burial is active (534/964/548 units), first paired divergence 32. Rain diverges at 8 and continues nutrient relocation after biomass loss. The before-500 stop rule was not triggered. This is a negative survival result for the supplied rules.
+
+Ignored browser captures under `runs/matter/browser/` include a 52.52-second initial-renderer video and final-renderer stills at actual ticks 403 and 3015. Independent visual review found no clipping, overlap or chart blockers. The scene shows sparse patches followed by nutrient gradients, not sustained rich life. Limitations: charts lack tick-axis labels and extinction markers; burial-zone tint can resemble detritus; composite stills do not verify alternate channels. No full independent video review is claimed. Final captures report no browser errors.
+
+The next proposed experiment is a deliberately supplied recirculating current, preserving this negative baseline. It has not been implemented or shown to improve survival.

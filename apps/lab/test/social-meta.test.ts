@@ -9,7 +9,7 @@ import cardManifest from "../public/og/worlds/manifest.json";
 import cardDataUrl from "../public/social-card.jpg?inline";
 import caddyfile from "../../../deploy/Caddyfile?raw";
 
-const sources = import.meta.glob<string>(["../*.html", "../*/index.html", "../public/*.{xml,txt,webmanifest}"],
+const sources = import.meta.glob<string>(["../*.html", "../*/index.html", "../{particles,ecosystem,opponents}/*/index.html", "../public/*.{xml,txt,webmanifest}"],
   { query: "?raw", import: "default", eager: true });
 const publicFiles = Object.keys(import.meta.glob("../public/*", { query: "?url", eager: true })).map((k) => k.slice("../public".length));
 const read = (p: string) => {
@@ -18,7 +18,9 @@ const read = (p: string) => {
   return text;
 };
 const PUBLIC = ["index.html", "lab/index.html", "worlds/index.html", "how-it-works/index.html", "research/index.html",
-  "about/index.html", "participate/index.html", "status/index.html", "privacy/index.html"];
+  "about/index.html", "participate/index.html", "status/index.html", "privacy/index.html", "soup/index.html",
+  // The experiment pages: each says what it is, once, and is listed in the sitemap.
+  ...["story", "experiments", "garden", "slab", "particles", "particles/picker", "particles/oases", "particles/seasons", "particles/bonds", "particles/motifs", "boundaries", "development", "hungry-shapes", "food-bands", "matter", "currents", "spatial", "predictability", "mycelium", "mycelium3d", "assembly", "niche", "moving-light", "controller-locality", "opponents", "opponents/archive", "ecosystem", "ecosystem/archive", "playground", "vision-screen"].map((p) => `${p}/index.html`)];
 const UNSHARED = ["selftest.html", "island.html", "social-card.html", "discovery/index.html"];
 const worldCards = import.meta.glob<string>("../public/og/worlds/*.jpg", { query: "?inline", import: "default", eager: true });
 const bytesOf = (dataUrl: string) => Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(",") + 1)), (c) => c.charCodeAt(0));

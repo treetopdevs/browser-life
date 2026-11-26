@@ -1,0 +1,330 @@
+{
+  "2": {
+    "historicalRows": 705,
+    "repeatRows": 198,
+    "matchingRows": 185,
+    "differences": [
+      {
+        "epoch": 11841,
+        "differences": {
+          "brotli_size": {
+            "historical": "1315802",
+            "repeat": "1292352"
+          },
+          "higher_entropy": {
+            "historical": "3.863896",
+            "repeat": "3.870110"
+          },
+          "distinct": {
+            "historical": "44735",
+            "repeat": "43837"
+          },
+          "top_share": {
+            "historical": "0.004181",
+            "repeat": "0.004562"
+          },
+          "ops_per_run": {
+            "historical": "1014.7",
+            "repeat": "1079.9"
+          }
+        }
+      },
+      {
+        "epoch": 11905,
+        "differences": {
+          "brotli_size": {
+            "historical": "1296040",
+            "repeat": "1284685"
+          },
+          "higher_entropy": {
+            "historical": "3.933487",
+            "repeat": "3.941251"
+          },
+          "distinct": {
+            "historical": "37247",
+            "repeat": "37141"
+          },
+          "top_share": {
+            "historical": "0.001633",
+            "repeat": "0.001762"
+          },
+          "ops_per_run": {
+            "historical": "1236.0",
+            "repeat": "1253.3"
+          }
+        }
+      },
+      {
+        "epoch": 11969,
+        "differences": {
+          "brotli_size": {
+            "historical": "1321769",
+            "repeat": "1314430"
+          },
+          "higher_entropy": {
+            "historical": "3.982862",
+            "repeat": "3.969769"
+          },
+          "distinct": {
+            "historical": "36594",
+            "repeat": "36288"
+          },
+          "top_share": {
+            "historical": "0.001022",
+            "repeat": "0.000877"
+          },
+          "ops_per_run": {
+            "historical": "1244.1",
+            "repeat": "1265.7"
+          }
+        }
+      },
+      {
+        "epoch": 12033,
+        "differences": {
+          "brotli_size": {
+            "historical": "1350603",
+            "repeat": "1345383"
+          },
+          "higher_entropy": {
+            "historical": "4.024195",
+            "repeat": "4.017161"
+          },
+          "distinct": {
+            "historical": "37102",
+            "repeat": "37921"
+          },
+          "top_share": {
+            "historical": "0.000954",
+            "repeat": "0.000992"
+          },
+          "ops_per_run": {
+            "historical": "1168.9",
+            "repeat": "1257.0"
+          }
+        }
+      },
+      {
+        "epoch": 12097,
+        "differences": {
+          "brotli_size": {
+            "historical": "1378766",
+            "repeat": "1370396"
+          },
+          "higher_entropy": {
+            "historical": "4.070042",
+            "repeat": "4.070805"
+          },
+          "distinct": {
+            "historical": "38308",
+            "repeat": "39305"
+          },
+          "top_share": {
+            "historical": "0.000954",
+            "repeat": "0.000793"
+          },
+          "ops_per_run": {
+            "historical": "1234.8",
+            "repeat": "1243.4"
+          }
+        }
+      },
+      {
+        "epoch": 12161,
+        "differences": {
+          "brotli_size": {
+            "historical": "1398920",
+            "repeat": "1394632"
+          },
+          "higher_entropy": {
+            "historical": "4.117434",
+            "repeat": "4.100030"
+          },
+          "distinct": {
+            "historical": "40220",
+            "repeat": "40547"
+          },
+          "top_share": {
+            "historical": "0.000847",
+            "repeat": "0.000885"
+          },
+          "ops_per_run": {
+            "historical": "1219.1",
+            "repeat": "1223.5"
+          }
+        }
+      },
+      {
+        "epoch": 12225,
+        "differences": {
+          "brotli_size": {
+            "historical": "1377533",
+            "repeat": "1414152"
+          },
+          "higher_entropy": {
+            "historical": "4.181387",
+            "repeat": "4.130962"
+          },
+          "distinct": {
+            "historical": "38519",
+            "repeat": "41829"
+          },
+          "top_share": {
+            "historical": "0.000877",
+            "repeat": "0.000732"
+          },
+          "ops_per_run": {
+            "historical": "1231.8",
+            "repeat": "1209.0"
+          }
+        }
+      },
+      {
+        "epoch": 12289,
+        "differences": {
+          "brotli_size": {
+            "historical": "1384264",
+            "repeat": "1427257"
+          },
+          "higher_entropy": {
+            "historical": "4.207764",
+            "repeat": "4.179404"
+          },
+          "distinct": {
+            "historical": "42525",
+            "repeat": "41958"
+          },
+          "ops_per_run": {
+            "historical": "1659.3",
+            "repeat": "1192.1"
+          }
+        }
+      },
+      {
+        "epoch": 12353,
+        "differences": {
+          "brotli_size": {
+            "historical": "1416988",
+            "repeat": "1437011"
+          },
+          "higher_entropy": {
+            "historical": "4.230480",
+            "repeat": "4.218459"
+          },
+          "distinct": {
+            "historical": "44001",
+            "repeat": "43273"
+          },
+          "top_share": {
+            "historical": "0.000946",
+            "repeat": "0.000961"
+          },
+          "ops_per_run": {
+            "historical": "1735.5",
+            "repeat": "1180.9"
+          }
+        }
+      },
+      {
+        "epoch": 12417,
+        "differences": {
+          "brotli_size": {
+            "historical": "1441312",
+            "repeat": "1438895"
+          },
+          "higher_entropy": {
+            "historical": "4.253948",
+            "repeat": "4.270768"
+          },
+          "distinct": {
+            "historical": "44355",
+            "repeat": "43231"
+          },
+          "top_share": {
+            "historical": "0.000786",
+            "repeat": "0.000916"
+          },
+          "ops_per_run": {
+            "historical": "1653.2",
+            "repeat": "1177.1"
+          }
+        }
+      },
+      {
+        "epoch": 12481,
+        "differences": {
+          "brotli_size": {
+            "historical": "1446954",
+            "repeat": "1451262"
+          },
+          "higher_entropy": {
+            "historical": "4.287577",
+            "repeat": "4.308875"
+          },
+          "distinct": {
+            "historical": "45736",
+            "repeat": "44966"
+          },
+          "top_share": {
+            "historical": "0.000717",
+            "repeat": "0.000870"
+          },
+          "ops_per_run": {
+            "historical": "1666.8",
+            "repeat": "1160.6"
+          }
+        }
+      },
+      {
+        "epoch": 12545,
+        "differences": {
+          "brotli_size": {
+            "historical": "1454609",
+            "repeat": "1463208"
+          },
+          "higher_entropy": {
+            "historical": "4.334252",
+            "repeat": "4.337047"
+          },
+          "distinct": {
+            "historical": "46040",
+            "repeat": "47295"
+          },
+          "top_share": {
+            "historical": "0.001106",
+            "repeat": "0.000832"
+          },
+          "ops_per_run": {
+            "historical": "1719.4",
+            "repeat": "1138.6"
+          }
+        }
+      },
+      {
+        "epoch": 12609,
+        "differences": {
+          "brotli_size": {
+            "historical": "1478128",
+            "repeat": "1493049"
+          },
+          "higher_entropy": {
+            "historical": "4.360385",
+            "repeat": "4.345291"
+          },
+          "distinct": {
+            "historical": "48564",
+            "repeat": "50374"
+          },
+          "top_share": {
+            "historical": "0.000656",
+            "repeat": "0.000877"
+          },
+          "ops_per_run": {
+            "historical": "1814.0",
+            "repeat": "1107.1"
+          }
+        }
+      }
+    ]
+  }
+}

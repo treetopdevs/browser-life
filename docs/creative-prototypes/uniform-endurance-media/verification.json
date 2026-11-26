@@ -1,0 +1,26 @@
+{
+  "verification": "Recomputed final delivered source and MP4 digests; browser playback checked separately.",
+  "runs": [
+    {
+      "seed": 1201,
+      "currentSourcesMatch": true,
+      "videoSha256": "1ea0a372c4677c6d22742e1d93aacb5be45863251db3f43f6c277aa653edd09f",
+      "frameCount": 151,
+      "durationSeconds": 15.1
+    },
+    {
+      "seed": 1202,
+      "currentSourcesMatch": true,
+      "videoSha256": "d231540608834a8ee98e0b3671ac688f4a8cf07a8c1aa708d9a8a3aae0cf12ab",
+      "frameCount": 151,
+      "durationSeconds": 15.1
+    },
+    {
+      "seed": 1203,
+      "currentSourcesMatch": true,
+      "videoSha256": "e31835171e6c31b004c8b3617dadf1288b0babe1b6c5abb6b0be19cfce141a86",
+      "frameCount": 151,
+      "durationSeconds": 15.1
+    }
+  ]
+}

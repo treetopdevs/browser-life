@@ -1,0 +1,4622 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-food-floor-longevity-video",
+  "seed": 1203,
+  "timeline": {
+    "ticks": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000,
+      1020,
+      1040,
+      1060,
+      1080,
+      1100,
+      1120,
+      1140,
+      1160,
+      1180,
+      1200,
+      1220,
+      1240,
+      1260,
+      1280,
+      1300,
+      1320,
+      1340,
+      1360,
+      1380,
+      1400,
+      1420,
+      1440,
+      1460,
+      1480,
+      1500,
+      1520,
+      1540,
+      1560,
+      1580,
+      1600,
+      1620,
+      1640,
+      1660,
+      1680,
+      1700,
+      1720,
+      1740,
+      1760,
+      1780,
+      1800,
+      1820,
+      1840,
+      1860,
+      1880,
+      1900,
+      1920,
+      1940,
+      1960,
+      1980,
+      2000,
+      2020,
+      2040,
+      2060,
+      2080,
+      2100,
+      2120,
+      2140,
+      2160,
+      2180,
+      2200,
+      2220,
+      2240,
+      2260,
+      2280,
+      2300,
+      2320,
+      2340,
+      2360,
+      2380,
+      2400,
+      2420,
+      2440,
+      2460,
+      2480,
+      2500,
+      2520,
+      2540,
+      2560,
+      2580,
+      2600,
+      2620,
+      2640,
+      2660,
+      2680,
+      2700,
+      2720,
+      2740,
+      2760,
+      2780,
+      2800,
+      2820,
+      2840,
+      2860,
+      2880,
+      2900,
+      2920,
+      2940,
+      2960,
+      2980,
+      3000,
+      3020,
+      3040,
+      3060,
+      3080,
+      3100,
+      3120,
+      3140,
+      3160,
+      3180,
+      3200,
+      3220,
+      3240,
+      3260,
+      3280,
+      3300,
+      3320,
+      3340,
+      3360,
+      3380,
+      3400,
+      3420,
+      3440,
+      3460,
+      3480,
+      3500,
+      3520,
+      3540,
+      3560,
+      3580,
+      3600,
+      3620,
+      3640,
+      3660,
+      3680,
+      3700,
+      3720,
+      3740,
+      3760,
+      3780,
+      3800,
+      3820,
+      3840,
+      3860,
+      3880,
+      3900,
+      3920,
+      3940,
+      3960,
+      3980,
+      4000,
+      4020,
+      4040,
+      4060,
+      4080,
+      4100,
+      4120,
+      4140,
+      4160,
+      4180,
+      4200,
+      4220,
+      4240,
+      4260,
+      4280,
+      4300,
+      4320,
+      4340,
+      4360,
+      4380,
+      4400,
+      4420,
+      4440,
+      4460,
+      4480,
+      4500,
+      4520,
+      4540,
+      4560,
+      4580,
+      4600,
+      4620,
+      4640,
+      4660,
+      4680,
+      4700,
+      4720,
+      4740,
+      4760,
+      4780,
+      4800,
+      4820,
+      4840,
+      4860,
+      4880,
+      4900,
+      4920,
+      4940,
+      4960,
+      4980,
+      5000,
+      5020,
+      5040,
+      5060,
+      5080,
+      5100,
+      5120,
+      5140,
+      5160,
+      5180,
+      5200,
+      5220,
+      5240,
+      5260,
+      5280,
+      5300,
+      5320,
+      5340,
+      5360,
+      5380,
+      5400,
+      5420,
+      5440,
+      5460,
+      5480,
+      5500,
+      5520,
+      5540,
+      5560,
+      5580,
+      5600,
+      5620,
+      5640,
+      5660,
+      5680,
+      5700,
+      5720,
+      5740,
+      5760,
+      5780,
+      5800,
+      5820,
+      5840,
+      5860,
+      5880,
+      5900,
+      5920,
+      5940,
+      5960,
+      5980,
+      6000
+    ],
+    "frameCount": 301,
+    "fps": 10,
+    "interpolation": false,
+    "modelSimulation": false,
+    "terminalTick": 6000,
+    "prefixThroughTick": 3000,
+    "labels": [
+      {
+        "requestedTick": 0,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 0 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · before first pulse"
+      },
+      {
+        "requestedTick": 20,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 20 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 20"
+      },
+      {
+        "requestedTick": 40,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 40 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 40"
+      },
+      {
+        "requestedTick": 60,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 60 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 60"
+      },
+      {
+        "requestedTick": 80,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 80 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 80"
+      },
+      {
+        "requestedTick": 100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 100"
+      },
+      {
+        "requestedTick": 120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 120"
+      },
+      {
+        "requestedTick": 140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 140"
+      },
+      {
+        "requestedTick": 160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 160"
+      },
+      {
+        "requestedTick": 180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 180"
+      },
+      {
+        "requestedTick": 200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 200"
+      },
+      {
+        "requestedTick": 220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 220"
+      },
+      {
+        "requestedTick": 240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 240"
+      },
+      {
+        "requestedTick": 260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 260"
+      },
+      {
+        "requestedTick": 280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 280"
+      },
+      {
+        "requestedTick": 300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 300"
+      },
+      {
+        "requestedTick": 320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 320"
+      },
+      {
+        "requestedTick": 340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 340"
+      },
+      {
+        "requestedTick": 360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 360"
+      },
+      {
+        "requestedTick": 380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 380"
+      },
+      {
+        "requestedTick": 400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 400"
+      },
+      {
+        "requestedTick": 420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 420"
+      },
+      {
+        "requestedTick": 440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 440"
+      },
+      {
+        "requestedTick": 460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 460"
+      },
+      {
+        "requestedTick": 480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 480"
+      },
+      {
+        "requestedTick": 500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 500"
+      },
+      {
+        "requestedTick": 520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 520"
+      },
+      {
+        "requestedTick": 540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 540"
+      },
+      {
+        "requestedTick": 560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 560"
+      },
+      {
+        "requestedTick": 580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 580"
+      },
+      {
+        "requestedTick": 600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 600"
+      },
+      {
+        "requestedTick": 620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 620"
+      },
+      {
+        "requestedTick": 640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 640"
+      },
+      {
+        "requestedTick": 660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 660"
+      },
+      {
+        "requestedTick": 680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 680"
+      },
+      {
+        "requestedTick": 700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 700"
+      },
+      {
+        "requestedTick": 720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 720"
+      },
+      {
+        "requestedTick": 740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 740"
+      },
+      {
+        "requestedTick": 760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 760"
+      },
+      {
+        "requestedTick": 780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 780"
+      },
+      {
+        "requestedTick": 800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 800"
+      },
+      {
+        "requestedTick": 820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 820"
+      },
+      {
+        "requestedTick": 840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 840"
+      },
+      {
+        "requestedTick": 860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 860"
+      },
+      {
+        "requestedTick": 880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 880"
+      },
+      {
+        "requestedTick": 900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 900"
+      },
+      {
+        "requestedTick": 920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 920"
+      },
+      {
+        "requestedTick": 940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 940"
+      },
+      {
+        "requestedTick": 960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 960"
+      },
+      {
+        "requestedTick": 980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 980"
+      },
+      {
+        "requestedTick": 1000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,000"
+      },
+      {
+        "requestedTick": 1020,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,020 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,020"
+      },
+      {
+        "requestedTick": 1040,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,040 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,040"
+      },
+      {
+        "requestedTick": 1060,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,060 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,060"
+      },
+      {
+        "requestedTick": 1080,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,080 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,080"
+      },
+      {
+        "requestedTick": 1100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,100"
+      },
+      {
+        "requestedTick": 1120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,120"
+      },
+      {
+        "requestedTick": 1140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,140"
+      },
+      {
+        "requestedTick": 1160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,160"
+      },
+      {
+        "requestedTick": 1180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,180"
+      },
+      {
+        "requestedTick": 1200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,200"
+      },
+      {
+        "requestedTick": 1220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,220"
+      },
+      {
+        "requestedTick": 1240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,240"
+      },
+      {
+        "requestedTick": 1260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,260"
+      },
+      {
+        "requestedTick": 1280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,280"
+      },
+      {
+        "requestedTick": 1300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,300"
+      },
+      {
+        "requestedTick": 1320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,320"
+      },
+      {
+        "requestedTick": 1340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,340"
+      },
+      {
+        "requestedTick": 1360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,360"
+      },
+      {
+        "requestedTick": 1380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,380"
+      },
+      {
+        "requestedTick": 1400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,400"
+      },
+      {
+        "requestedTick": 1420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,420"
+      },
+      {
+        "requestedTick": 1440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,440"
+      },
+      {
+        "requestedTick": 1460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,460"
+      },
+      {
+        "requestedTick": 1480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,480"
+      },
+      {
+        "requestedTick": 1500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 1,500"
+      },
+      {
+        "requestedTick": 1520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,520"
+      },
+      {
+        "requestedTick": 1540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,540"
+      },
+      {
+        "requestedTick": 1560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,560"
+      },
+      {
+        "requestedTick": 1580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,580"
+      },
+      {
+        "requestedTick": 1600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,600"
+      },
+      {
+        "requestedTick": 1620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,620"
+      },
+      {
+        "requestedTick": 1640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,640"
+      },
+      {
+        "requestedTick": 1660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,660"
+      },
+      {
+        "requestedTick": 1680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,680"
+      },
+      {
+        "requestedTick": 1700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,700"
+      },
+      {
+        "requestedTick": 1720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,720"
+      },
+      {
+        "requestedTick": 1740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,740"
+      },
+      {
+        "requestedTick": 1760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,760"
+      },
+      {
+        "requestedTick": 1780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,780"
+      },
+      {
+        "requestedTick": 1800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,800"
+      },
+      {
+        "requestedTick": 1820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,820"
+      },
+      {
+        "requestedTick": 1840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,840"
+      },
+      {
+        "requestedTick": 1860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,860"
+      },
+      {
+        "requestedTick": 1880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,880"
+      },
+      {
+        "requestedTick": 1900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,900"
+      },
+      {
+        "requestedTick": 1920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,920"
+      },
+      {
+        "requestedTick": 1940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,940"
+      },
+      {
+        "requestedTick": 1960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,960"
+      },
+      {
+        "requestedTick": 1980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 1,980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 1,980"
+      },
+      {
+        "requestedTick": 2000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,000"
+      },
+      {
+        "requestedTick": 2020,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,020 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,020"
+      },
+      {
+        "requestedTick": 2040,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,040 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,040"
+      },
+      {
+        "requestedTick": 2060,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,060 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,060"
+      },
+      {
+        "requestedTick": 2080,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,080 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,080"
+      },
+      {
+        "requestedTick": 2100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,100"
+      },
+      {
+        "requestedTick": 2120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,120"
+      },
+      {
+        "requestedTick": 2140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,140"
+      },
+      {
+        "requestedTick": 2160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,160"
+      },
+      {
+        "requestedTick": 2180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,180"
+      },
+      {
+        "requestedTick": 2200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,200"
+      },
+      {
+        "requestedTick": 2220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,220"
+      },
+      {
+        "requestedTick": 2240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,240"
+      },
+      {
+        "requestedTick": 2260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,260"
+      },
+      {
+        "requestedTick": 2280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,280"
+      },
+      {
+        "requestedTick": 2300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,300"
+      },
+      {
+        "requestedTick": 2320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,320"
+      },
+      {
+        "requestedTick": 2340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,340"
+      },
+      {
+        "requestedTick": 2360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,360"
+      },
+      {
+        "requestedTick": 2380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,380"
+      },
+      {
+        "requestedTick": 2400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,400"
+      },
+      {
+        "requestedTick": 2420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,420"
+      },
+      {
+        "requestedTick": 2440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,440"
+      },
+      {
+        "requestedTick": 2460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,460"
+      },
+      {
+        "requestedTick": 2480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,480"
+      },
+      {
+        "requestedTick": 2500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 2,500"
+      },
+      {
+        "requestedTick": 2520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,520"
+      },
+      {
+        "requestedTick": 2540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,540"
+      },
+      {
+        "requestedTick": 2560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,560"
+      },
+      {
+        "requestedTick": 2580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,580"
+      },
+      {
+        "requestedTick": 2600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,600"
+      },
+      {
+        "requestedTick": 2620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,620"
+      },
+      {
+        "requestedTick": 2640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,640"
+      },
+      {
+        "requestedTick": 2660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,660"
+      },
+      {
+        "requestedTick": 2680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,680"
+      },
+      {
+        "requestedTick": 2700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,700"
+      },
+      {
+        "requestedTick": 2720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,720"
+      },
+      {
+        "requestedTick": 2740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,740"
+      },
+      {
+        "requestedTick": 2760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,760"
+      },
+      {
+        "requestedTick": 2780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,780"
+      },
+      {
+        "requestedTick": 2800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,800"
+      },
+      {
+        "requestedTick": 2820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,820"
+      },
+      {
+        "requestedTick": 2840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,840"
+      },
+      {
+        "requestedTick": 2860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,860"
+      },
+      {
+        "requestedTick": 2880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,880"
+      },
+      {
+        "requestedTick": 2900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,900"
+      },
+      {
+        "requestedTick": 2920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,920"
+      },
+      {
+        "requestedTick": 2940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,940"
+      },
+      {
+        "requestedTick": 2960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,960"
+      },
+      {
+        "requestedTick": 2980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 2,980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 2,980"
+      },
+      {
+        "requestedTick": 3000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "Verified historical prefix · no new outcome",
+        "alternating": "Tick 3,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,000"
+      },
+      {
+        "requestedTick": 3020,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,020 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,020"
+      },
+      {
+        "requestedTick": 3040,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,040 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,040"
+      },
+      {
+        "requestedTick": 3060,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,060 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,060"
+      },
+      {
+        "requestedTick": 3080,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,080 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,080"
+      },
+      {
+        "requestedTick": 3100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,100"
+      },
+      {
+        "requestedTick": 3120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,120"
+      },
+      {
+        "requestedTick": 3140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,140"
+      },
+      {
+        "requestedTick": 3160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,160"
+      },
+      {
+        "requestedTick": 3180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,180"
+      },
+      {
+        "requestedTick": 3200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,200"
+      },
+      {
+        "requestedTick": 3220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,220"
+      },
+      {
+        "requestedTick": 3240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,240"
+      },
+      {
+        "requestedTick": 3260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,260"
+      },
+      {
+        "requestedTick": 3280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,280"
+      },
+      {
+        "requestedTick": 3300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,300"
+      },
+      {
+        "requestedTick": 3320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,320"
+      },
+      {
+        "requestedTick": 3340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,340"
+      },
+      {
+        "requestedTick": 3360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,360"
+      },
+      {
+        "requestedTick": 3380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,380"
+      },
+      {
+        "requestedTick": 3400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,400"
+      },
+      {
+        "requestedTick": 3420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,420"
+      },
+      {
+        "requestedTick": 3440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,440"
+      },
+      {
+        "requestedTick": 3460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,460"
+      },
+      {
+        "requestedTick": 3480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,480"
+      },
+      {
+        "requestedTick": 3500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 3,500"
+      },
+      {
+        "requestedTick": 3520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,520"
+      },
+      {
+        "requestedTick": 3540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,540"
+      },
+      {
+        "requestedTick": 3560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,560"
+      },
+      {
+        "requestedTick": 3580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,580"
+      },
+      {
+        "requestedTick": 3600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,600"
+      },
+      {
+        "requestedTick": 3620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,620"
+      },
+      {
+        "requestedTick": 3640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,640"
+      },
+      {
+        "requestedTick": 3660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,660"
+      },
+      {
+        "requestedTick": 3680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,680"
+      },
+      {
+        "requestedTick": 3700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,700"
+      },
+      {
+        "requestedTick": 3720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,720"
+      },
+      {
+        "requestedTick": 3740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,740"
+      },
+      {
+        "requestedTick": 3760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,760"
+      },
+      {
+        "requestedTick": 3780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,780"
+      },
+      {
+        "requestedTick": 3800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,800"
+      },
+      {
+        "requestedTick": 3820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,820"
+      },
+      {
+        "requestedTick": 3840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,840"
+      },
+      {
+        "requestedTick": 3860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,860"
+      },
+      {
+        "requestedTick": 3880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,880"
+      },
+      {
+        "requestedTick": 3900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,900"
+      },
+      {
+        "requestedTick": 3920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,920"
+      },
+      {
+        "requestedTick": 3940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,940"
+      },
+      {
+        "requestedTick": 3960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,960"
+      },
+      {
+        "requestedTick": 3980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 3,980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 3,980"
+      },
+      {
+        "requestedTick": 4000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,000"
+      },
+      {
+        "requestedTick": 4020,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,020 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,020"
+      },
+      {
+        "requestedTick": 4040,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,040 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,040"
+      },
+      {
+        "requestedTick": 4060,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,060 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,060"
+      },
+      {
+        "requestedTick": 4080,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,080 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,080"
+      },
+      {
+        "requestedTick": 4100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,100"
+      },
+      {
+        "requestedTick": 4120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,120"
+      },
+      {
+        "requestedTick": 4140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,140"
+      },
+      {
+        "requestedTick": 4160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,160"
+      },
+      {
+        "requestedTick": 4180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,180"
+      },
+      {
+        "requestedTick": 4200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,200"
+      },
+      {
+        "requestedTick": 4220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,220"
+      },
+      {
+        "requestedTick": 4240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,240"
+      },
+      {
+        "requestedTick": 4260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,260"
+      },
+      {
+        "requestedTick": 4280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,280"
+      },
+      {
+        "requestedTick": 4300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,300"
+      },
+      {
+        "requestedTick": 4320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,320"
+      },
+      {
+        "requestedTick": 4340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,340"
+      },
+      {
+        "requestedTick": 4360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,360"
+      },
+      {
+        "requestedTick": 4380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,380"
+      },
+      {
+        "requestedTick": 4400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,400"
+      },
+      {
+        "requestedTick": 4420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,420"
+      },
+      {
+        "requestedTick": 4440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,440"
+      },
+      {
+        "requestedTick": 4460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,460"
+      },
+      {
+        "requestedTick": 4480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,480"
+      },
+      {
+        "requestedTick": 4500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 4,500"
+      },
+      {
+        "requestedTick": 4520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,520"
+      },
+      {
+        "requestedTick": 4540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,540"
+      },
+      {
+        "requestedTick": 4560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,560"
+      },
+      {
+        "requestedTick": 4580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,580"
+      },
+      {
+        "requestedTick": 4600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,600"
+      },
+      {
+        "requestedTick": 4620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,620"
+      },
+      {
+        "requestedTick": 4640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,640"
+      },
+      {
+        "requestedTick": 4660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,660"
+      },
+      {
+        "requestedTick": 4680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,680"
+      },
+      {
+        "requestedTick": 4700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,700"
+      },
+      {
+        "requestedTick": 4720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,720"
+      },
+      {
+        "requestedTick": 4740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,740"
+      },
+      {
+        "requestedTick": 4760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,760"
+      },
+      {
+        "requestedTick": 4780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,780"
+      },
+      {
+        "requestedTick": 4800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,800"
+      },
+      {
+        "requestedTick": 4820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,820"
+      },
+      {
+        "requestedTick": 4840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,840"
+      },
+      {
+        "requestedTick": 4860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,860"
+      },
+      {
+        "requestedTick": 4880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,880"
+      },
+      {
+        "requestedTick": 4900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,900"
+      },
+      {
+        "requestedTick": 4920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,920"
+      },
+      {
+        "requestedTick": 4940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,940"
+      },
+      {
+        "requestedTick": 4960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,960"
+      },
+      {
+        "requestedTick": 4980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 4,980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 4,980"
+      },
+      {
+        "requestedTick": 5000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,000"
+      },
+      {
+        "requestedTick": 5020,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,020 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,020"
+      },
+      {
+        "requestedTick": 5040,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,040 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,040"
+      },
+      {
+        "requestedTick": 5060,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,060 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,060"
+      },
+      {
+        "requestedTick": 5080,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,080 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,080"
+      },
+      {
+        "requestedTick": 5100,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,100 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,100"
+      },
+      {
+        "requestedTick": 5120,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,120 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,120"
+      },
+      {
+        "requestedTick": 5140,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,140 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,140"
+      },
+      {
+        "requestedTick": 5160,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,160 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,160"
+      },
+      {
+        "requestedTick": 5180,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,180 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,180"
+      },
+      {
+        "requestedTick": 5200,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,200 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,200"
+      },
+      {
+        "requestedTick": 5220,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,220 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,220"
+      },
+      {
+        "requestedTick": 5240,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,240 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,240"
+      },
+      {
+        "requestedTick": 5260,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,260 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,260"
+      },
+      {
+        "requestedTick": 5280,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,280 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,280"
+      },
+      {
+        "requestedTick": 5300,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,300 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,300"
+      },
+      {
+        "requestedTick": 5320,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,320 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,320"
+      },
+      {
+        "requestedTick": 5340,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,340 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,340"
+      },
+      {
+        "requestedTick": 5360,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,360 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,360"
+      },
+      {
+        "requestedTick": 5380,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,380 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,380"
+      },
+      {
+        "requestedTick": 5400,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,400 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,400"
+      },
+      {
+        "requestedTick": 5420,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,420 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,420"
+      },
+      {
+        "requestedTick": 5440,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,440 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,440"
+      },
+      {
+        "requestedTick": 5460,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,460 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,460"
+      },
+      {
+        "requestedTick": 5480,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,480 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,480"
+      },
+      {
+        "requestedTick": 5500,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,500 · saved sample",
+        "activeBand": "Band 0 · majority 672; other band 96 per pulse · last pulse 5,500"
+      },
+      {
+        "requestedTick": 5520,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,520 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,520"
+      },
+      {
+        "requestedTick": 5540,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,540 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,540"
+      },
+      {
+        "requestedTick": 5560,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,560 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,560"
+      },
+      {
+        "requestedTick": 5580,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,580 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,580"
+      },
+      {
+        "requestedTick": 5600,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,600 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,600"
+      },
+      {
+        "requestedTick": 5620,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,620 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,620"
+      },
+      {
+        "requestedTick": 5640,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,640 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,640"
+      },
+      {
+        "requestedTick": 5660,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,660 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,660"
+      },
+      {
+        "requestedTick": 5680,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,680 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,680"
+      },
+      {
+        "requestedTick": 5700,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,700 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,700"
+      },
+      {
+        "requestedTick": 5720,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,720 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,720"
+      },
+      {
+        "requestedTick": 5740,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,740 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,740"
+      },
+      {
+        "requestedTick": 5760,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,760 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,760"
+      },
+      {
+        "requestedTick": 5780,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,780 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,780"
+      },
+      {
+        "requestedTick": 5800,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,800 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,800"
+      },
+      {
+        "requestedTick": 5820,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,820 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,820"
+      },
+      {
+        "requestedTick": 5840,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,840 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,840"
+      },
+      {
+        "requestedTick": 5860,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,860 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,860"
+      },
+      {
+        "requestedTick": 5880,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,880 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,880"
+      },
+      {
+        "requestedTick": 5900,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,900 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,900"
+      },
+      {
+        "requestedTick": 5920,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,920 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,920"
+      },
+      {
+        "requestedTick": 5940,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,940 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,940"
+      },
+      {
+        "requestedTick": 5960,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,960 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,960"
+      },
+      {
+        "requestedTick": 5980,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 5,980 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 5,980"
+      },
+      {
+        "requestedTick": 6000,
+        "scrollY": 1073,
+        "worlds": {
+          "x": 28,
+          "y": 93.78125,
+          "width": 1384,
+          "height": 1042.03125,
+          "bottom": 1135.8125
+        },
+        "phase": "New continuation · after the verified 3,000-tick prefix",
+        "alternating": "Tick 6,000 · saved sample",
+        "activeBand": "Band 1 · majority 672; other band 96 per pulse · last pulse 6,000"
+      }
+    ]
+  },
+  "playback": {
+    "durationSeconds": 30.1,
+    "frameCount": 301,
+    "frameRate": "10/1",
+    "width": 1440,
+    "height": 1320,
+    "fullDecodeVerified": true
+  },
+  "artifact": {
+    "path": "docs/creative-prototypes/food-floor-longevity-media/seed-1203.mp4",
+    "sha256": "a80c39a87017cf31b40121a38ba9e9a3c770b273ca029b2543b23da15ca6ba6d"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/food-floor-longevity-plan.md",
+      "sha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7"
+    },
+    "model": {
+      "path": "apps/lab/src/food-band-foothold/model.ts",
+      "sha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403"
+    },
+    "runner": {
+      "path": "tools/food-floor-longevity/explore.ts",
+      "sha256": "cc3fa45e873eb8cd485eafc2a139fac39248fd30b63b2c39ec11860be20b75d9"
+    },
+    "launcher": {
+      "path": "tools/food-floor-longevity/launch.sh",
+      "sha256": "c67419b1ea35fc850a90283fb2998c1624f74d4cac09eb35a31fcd9fb677be74"
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/food-floor-replication-seed-1203.json",
+      "rawSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+      "dataSha256": "16d01d50bd909e3058295d23719d161722952b1349f2a5ebd16780d9a5b88bc2"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/food-floor-replication-index-1203.json",
+      "sha256": "0f792ca72c287d5cb09c12a9daa7290aaed40dd53e2eab86008ab0f1df69994f"
+    },
+    "baselineRunner": {
+      "path": "tools/food-floor-replication/explore.ts",
+      "sha256": "17ffccbdc1be97b4859f9bbbc082f6449497f86f00eb1db01987439c16d3b09b"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/food-floor-replication-validation.md",
+      "sha256": "72a2d688217fa0d3369ac00f652cff097bdd811bceb6996493ceab358e471ed3"
+    },
+    "alternating": {
+      "path": "docs/creative-prototypes/food-floor-longevity-seed-1203.json",
+      "rawSha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+      "dataSha256": "74cdc92b5cb64b2450f239edcc437768f75c6b46959556d14990cf2d45c4dd6a"
+    },
+    "pairIndex": {
+      "path": "docs/creative-prototypes/food-floor-longevity-index-1203.json",
+      "sha256": "fbb7c378c1a208721aaae2f71f9b3130876a929d76f570ebcb6491f7cb157e0e"
+    },
+    "receipt": {
+      "path": "docs/creative-prototypes/food-floor-longevity-visual-receipt-1203.json",
+      "sha256": "aa15a068d511f768836ccfb4318bed013cc7c992d1b8f0810008a9d4b1d8258b"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/food-floor-longevity.js",
+      "sha256": "82531b12f2b2cf4507584c08c1de2d07753642dbee16024eb38220e816ca08c0"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/food-floor-longevity.css",
+      "sha256": "9320edf8bd45f854bb6449e69f656c87a19c17e06f505719933220b9390fd89c"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/food-floor-longevity-media/capture-viewer.html",
+      "sha256": "65ad3694f01f01a3f692a937bc0973f7c53d0f69976e7bede0c5916f5896b493",
+      "originalServedPath": "docs/creative-prototypes/food-floor-longevity.html",
+      "note": "Exact committed HTML served during capture; later editorial may be added to the live page."
+    }
+  },
+  "capture": {
+    "url": "http://127.0.0.1:59854/docs/creative-prototypes/food-floor-longevity.html",
+    "viewport": {
+      "width": 1440,
+      "height": 1320
+    },
+    "region": "full viewport after scrolling replay heading to y=20; complete canvas, trajectory and metrics asserted visible for every frame",
+    "firstFramePngSha256": "c6468f30e63c51f3882480ffba6766f262a14b764e1d239aa26ee37503f65386",
+    "screenshotSourceSize": {
+      "width": 1440,
+      "height": 1320
+    },
+    "browser": "Chrome",
+    "savedFramesOnly": true,
+    "livePageMayLaterIncludeResultsEditorial": true
+  }
+}

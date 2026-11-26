@@ -1,0 +1,81 @@
+{
+ "date": "2026-11-18",
+ "posture": "exploratory, 3 seeds per arm, no statistics; skeptic re-runs on seeds 4 and 5",
+ "headline": [
+  "Recognition marks plus a contact gate wall clades apart (11 to 43 separate pieces vs 1 connected mat) but not bodies; the pieces are clade patches made by a lottery of foreign-mark buds and they freeze once the world is full.",
+  "The one-component-vs-many contrast is true by construction (the tag-blind control is the plain mat; its big mark-patch count is sometimes higher and sometimes lower than the gated run, depending on seed); body-scale measures get worse under the gate (basin median about 77 to 100 vs about 173 in control).",
+  "No arm reached turnover with discrete bodies: rung 3 appears only as border churn (about 10x control, two-way) or a jammed mosaic."
+ ],
+ "arms": [
+  {
+   "arm": "share-only",
+   "rung": 1,
+   "failureMode": "sweep-to-mat",
+   "note": "pair stays 2 patches but so does ungated control; crowd 1 component"
+  },
+  {
+   "arm": "grow-only",
+   "rung": 2,
+   "failureMode": "jammed-mosaic / clade sweep",
+   "note": "B 11/33/14 and D 38/35/28 components vs 1 in control; mark-patch counts vs control flip by seed; patch births/deaths about 0"
+  },
+  {
+   "arm": "signal-only",
+   "rung": 1,
+   "failureMode": "sweep-to-mat / basin dust",
+   "note": "one mat; per-body marks shatter basins to median 34/44/31 vs 165/128/143"
+  },
+  {
+   "arm": "all-three-fixed",
+   "rung": 2,
+   "failureMode": "sweep-to-mat plus frozen enclosed founders",
+   "note": "3 patches, one at 79-96%; bud-only rate 20000 gives 7-15 components, seam 0"
+  },
+  {
+   "arm": "all-three-evolvable-tol",
+   "rung": 1,
+   "failureMode": "sweep-to-mat",
+   "note": "tolerance stays near 16, frozen after t~10000"
+  },
+  {
+   "arm": "seam-conflict",
+   "rung": 3,
+   "failureMode": "sweep-to-mat without GATE_GROW; jammed-mosaic with it",
+   "note": "config C skeptic 12.2 and 19.5 components vs 1.0 and 1.1 (tol 128); border churn about 10x control, symmetric"
+  },
+  {
+   "arm": "wildcard",
+   "rung": 3,
+   "failureMode": "jammed-mosaic",
+   "note": "config F 34.9/38.1/31.8 components (seeds 1/4/5), seam 0, patch turnover about 0; sizes broad, 19-22 big components hold 2+ roots"
+  }
+ ],
+ "modelBugs": {
+  "fixedBeforeArms": [
+   "GATE_GROW judged parent mark",
+   "growth order bias under GATE_GROW",
+   "turnover blind to in-place mark replacement"
+  ],
+  "newBugsFromExplorersOrSkeptics": "none",
+  "confound": "GATE_GROW switches to a random-permutation scan, so tag-blind (raster scan) is not a matched control for GATE_GROW arms; use --tol 128 or --tags same",
+  "couldAffectResults": "fixed bugs affected gate-on runs only; skeptics reproduced current-model hashes bit for bit; per-run pre-fix audit not done"
+ },
+ "bestFrames": [
+  "v3/_skeptic/seam-conflict/frames/FRAME1_C_s4_t20000_marks_components_basins.png",
+  "v3/_skeptic/seam-conflict/frames/FRAME2_control_tol128_s4_t20000_marks_components_basins.png",
+  "v3/_skeptic/wildcard/runs/Fs5b/frame-end.png",
+  "v3/_skeptic/wildcard/runs/Bs5b/frame-end.png"
+ ],
+ "open": [
+  "root-born mark mutation so patches can equal basins",
+  "matched GATE_GROW control with fixed scan on 5+ seeds",
+  "any regime with whole-clade births and deaths and compact patches",
+  "tolerance evolution needs longer than 20000 steps",
+  "torus size fixed at 96x96"
+ ],
+ "nextMoves": [
+  "root-born mark mutation, score patches against basins, control --tol 128",
+  "fix controls (gate-off permutation scan or --tol 128) and re-measure components, basin median, cell turnover on 5+ seeds",
+  "share+signal gates with seam cost under scarcity and 40000+ steps, ask for clade replacement"
+ ]
+}

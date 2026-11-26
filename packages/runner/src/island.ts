@@ -11,21 +11,23 @@
 // the run there instead of offering the segment to the next island.
 //
 // Cancellation (IslandOptions.signal, docs/island-cancel-2026-10-18.md): the
-// coordinator offers no way to give a task back, so an aborted island gives it
-// back by saying nothing. The join, `/next`, downloads, heartbeats and uploads
+// island stops local work before requesting a bounded best-effort leave.
+// The join, `/next`, downloads, heartbeats and uploads
 // are aborted with the signal, the run stops at its next census-chunk boundary
 // (RunOptions.signal), and no PUT, reject, fail, complete or heartbeat leaves
-// after the abort; the lease lapses and the coordinator offers the segment
-// again. Each such request is checked against the signal immediately before it
+// after the abort. Leave releases unfinished leases; if it fails, they expire
+// normally. Each task request is checked against the signal immediately before it
 // is sent, after any log callback (which may itself stop the island). A
 // complete, reject or fail already sent is waited for, never aborted:
 // the coordinator applies each atomically, so nothing is ever torn. runIsland
-// then resolves with the tasks completed; an abort never makes it reject.
+// then leaves and resolves with the tasks completed; an abort never makes it reject.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
-import { continuationError, decodeArtifact, immigrantError, runExperiment, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { continuationError, decodeArtifact, immigrantError, pickedConfigError, runExperiment, specConfig, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { InterventionError } from "./interventions.ts";
+import { PICKS_FILE, PickError, picksPreflightError, verifiedPickLog, type PickEntry } from "./picks.ts";
 import { observationDigests } from "./stitch.ts";
+import { IslandBackoff, islandDelay } from "./island-backoff.ts";
 
 /** What this island's code can run, sent as the JSON body of every
  * `POST /api/next`. The coordinator offers segments and verify tasks of a
@@ -49,26 +51,31 @@ import { observationDigests } from "./stitch.ts";
  * `"ponds-v1"`, never instead of it. Older code has none of those condition
  * ids nor the score columns, so it throws on them, and on a continuation would
  * report a valid predecessor as invalid; the controls are gated as well as the
- * arm for that reason. Only the rule's own donors are distributed: a picked or
- * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md).
+ * arm for that reason. Only the rule's own donors are distributed, and picks the island can fetch:
+ * `"picks-v1"` is a picked run (RunSpec.picked) whose donors are a fixed, content-addressed pick log
+ * (RunSpec.pickLog, fetched from `GET /api/pick-logs/:sha`, checked against that SHA-256 and applied at its pond
+ * boundaries); the coordinator asks for it in addition to `"ponds-v1"` and `"breed-v1"`. Older code refuses such a
+ * spec outright (`specRefusal`), so it would never run one unpicked. A picked run without a log and a
+ * pressured run are still refused below (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02).
  * `"sun-v1"` is a schedule holding a sun (kind "sun", docs/garden-sun-2026-10-18.md), asked for in addition to
  * `"interventions-v1"`: code without it refuses the kind, or (older still) would run the segment under the world's own light. */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1", "picks-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way, and so is a pressured run
- * (RunSpec.pressures, the lab's pond keeper: a picked run too). A run with scheduled interventions
+ * carries, so it is refused the same way, unless its record is a content-addressed
+ * pick log the island can fetch (RunSpec.pickLog); a pressured run
+ * (RunSpec.pressures, the lab's pond keeper: a picked run too) is always refused. A run with scheduled interventions
  * (RunSpec.interventions) is not refused: the coordinator carries the
  * schedule (capability `"interventions-v1"` above), `runExperiment` applies
  * only the entries this segment owns, and its interventions.jsonl is a
  * verified segment file that stitchRun joins. */
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
-  if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  if ((spec as { picked?: unknown }).picked !== undefined && (spec as { pickLog?: unknown }).pickLog === undefined) return "the spec is a picked run (spec.picked) without a pick log (spec.pickLog); only picked runs with a content-addressed pick log are distributed, so an island does not run it";
   if ((spec as { pressures?: unknown }).pressures !== undefined) return "the spec carries pressures (spec.pressures); a pressured run is not distributed, so an island does not run it";
   return null;
 }
@@ -94,7 +101,7 @@ export interface IslandOptions {
   idleMs?: number;
   heartbeatMs?: number;
   /** Stops the island (see the header comment): resolves with the tasks
-   * completed so far, leaving any task in hand to lapse with its lease. */
+   * completed so far, requesting release of any task still in hand. */
   signal?: AbortSignal;
   /** Reuse an already-joined island (id + bearer token) instead of calling
    * `/api/islands` again. The caller is responsible for having confirmed the
@@ -431,12 +438,52 @@ async function joinAnswer(res: Response, gardenToken?: string): Promise<{ id: st
 /** What the island page and tools/island.ts say when Stop or a signal lands. Phase-neutral: Stop may land while idle
  * (no task in hand) or while a complete is in flight (that task then counts as completed); runIsland's own log line
  * says which happened. */
-export const STOP_MESSAGE = "stopping: a task in hand stops at its next census chunk and is offered again once its lease lapses; a result already being sent finishes";
+export const STOP_MESSAGE = "stopping: a task in hand stops at its next census chunk; a result already being sent finishes, then the island requests immediate release (lease expiry is the fallback)";
+
+/** Cleanup is independent of Stop and cannot replace the run's result or error.
+ * Race the transport as well as aborting it: even a stalled implementation has
+ * a bounded cleanup lifetime. Never read or log a response body or credentials. */
+async function leaveIsland(base: string, identity: { id: string; token: string }, log: (message: string) => void): Promise<void> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let released = false;
+  try {
+    const timeout = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => {
+        resolve(false);
+        controller.abort();
+      }, 2_000);
+    });
+    const id = encodeURIComponent(identity.id);
+    released = await Promise.race([
+      fetch(`${base}/api/islands/${id}?island=${id}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${identity.token}` },
+        redirect: "error",
+        signal: controller.signal,
+      }).then((response) => response.status === 204),
+      timeout,
+    ]);
+  } catch {
+    // Old coordinators, lost connections and authorization failures all fall
+    // back to ordinary lease expiry; cleanup must not hide an earlier error.
+  } finally {
+    clearTimeout(timer);
+  }
+  try {
+    log(released
+      ? "left island: registration removed and unfinished work released"
+      : "leave could not be confirmed; any unfinished work becomes available when its lease expires");
+  } catch {
+    // A caller's logging callback must not turn cleanup into a new failure.
+  }
+}
 
 export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<number> {
   const log = opt.log ?? (() => {});
   const base = opt.coordinator.replace(/\/$/, "");
   const signal = opt.signal;
+  const backoff = new IslandBackoff();
   // An engine without `AbortSignal.reason` (none that has WebGPU) carries no reason to match by identity.
   const noReason = !!signal && !("reason" in signal);
   // A fetch or body read aborted by `signal` rethrows as the signal's own reason (not every engine does), so
@@ -452,13 +499,14 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   };
   if (signal?.aborted) return 0;
   let done = 0;
+  let identity: { id: string; token: string } | undefined;
   try {
     let id: string, token: string;
     if (opt.identity) {
       ({ id, token } = opt.identity);
     } else {
       try {
-        const joined = await fetch(`${base}/api/islands`, {
+        const joinRequest: RequestInit = {
           method: "POST",
           headers: { "content-type": "application/json" },
           // The coordinator only offers a segment to an island whose declared
@@ -471,20 +519,23 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
           // points, past every origin rule: a join with a token follows none.
           ...(opt.gardenToken ? { redirect: "manual" as const } : {}),
           signal,
-        });
+        };
+        const joined = await backoff.request(() => fetch(`${base}/api/islands`, joinRequest), signal);
         if (!joined.ok) throw new Error(await joinFailure(joined, opt.gardenToken));
         ({ id, token } = await joinAnswer(joined, opt.gardenToken));
       } catch (e) {
         throw asStop(e);
       }
     }
+    identity = { id, token };
     // A join answered as the abort landed is not reported: the caller asked to stop.
     stopIfAborted();
     opt.onJoined?.({ id, token });
     const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;
-    const call = async <T>(path: string, init: RequestInit = {}, raw = false): Promise<T> => {
+    const call = async <T>(path: string, init: RequestInit = {}, raw = false, retrySignal = signal): Promise<T> => {
       try {
-        const res = await fetch(`${base}${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } });
+        const request = { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } };
+        const res = await backoff.request(() => fetch(`${base}${path}`, request), retrySignal);
         if (!res.ok) throw new HttpError(res.status, `${init.method ?? "GET"} ${path.split("?")[0]}: ${res.status} ${await res.text()}`);
         const ct = res.headers.get("content-type") ?? "";
         return (await (ct.includes("json") && !raw ? res.json() : res.arrayBuffer())) as T;
@@ -496,8 +547,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     };
     // `abortable`: `/next` and heartbeats only. A complete, reject or fail, once
     // sent, is waited for: the island cannot know whether the coordinator applied it.
-    const postJson = <T>(path: string, body: unknown, abortable = false) =>
-      call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), ...(abortable ? { signal } : {}) });
+    const postJson = <T>(path: string, body: unknown, abortable = false, attemptSignal = signal) =>
+      call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), ...(abortable ? { signal: attemptSignal } : {}) }, false, attemptSignal);
 
     log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
     let waiting = false;
@@ -529,12 +580,23 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       const refusal = specRefusal(task.spec);
       if (refusal) throw new Error(`refusing ${seg.run} #${seg.index}: ${refusal}`);
       log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);
-      const beat = setInterval(() => {
-        if (signal?.aborted) return;
-        postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }, true).catch((e) => {
-          if (!stopped(e)) log(`  heartbeat: ${e.message}`);
-        });
-      }, opt.heartbeatMs ?? 60_000);
+      // One task-scoped heartbeat worker: no overlapping attempts, and no
+      // delayed retry can escape task teardown or ignore the shared cooldown.
+      const heartbeat = new AbortController();
+      const stopHeartbeat = () => heartbeat.abort();
+      if (signal?.aborted) stopHeartbeat();
+      else signal?.addEventListener("abort", stopHeartbeat, { once: true });
+      const beat = (async () => {
+        while (!heartbeat.signal.aborted) {
+          try {
+            await islandDelay(opt.heartbeatMs ?? 60_000, heartbeat.signal);
+            await postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }, true, heartbeat.signal);
+          } catch (e) {
+            if (heartbeat.signal.aborted) break;
+            log(`  heartbeat: ${(e as Error).message}`);
+          }
+        }
+      })();
       try {
         let start: WorldState | undefined;
         let observer: ObserverState | undefined;
@@ -601,11 +663,36 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
             continue;
           }
         }
+        // A picked run's donors: the content-addressed pick log, fetched, checked against the spec's digest, cut to this
+        // segment's window and checked against the world before any state is built. A log that does not hash to its name,
+        // does not parse or does not fit the window is the same on every island: reported as a failed segment, not retried.
+        let picks: PickEntry[] | undefined;
+        if (task.spec.picked === true && task.spec.pickLog !== undefined) {
+          let bytes: Uint8Array;
+          try {
+            bytes = new Uint8Array(await call<ArrayBuffer>(`/api/pick-logs/${task.spec.pickLog}?${q()}`, { signal }));
+          } catch (e) {
+            // The coordinator does not have (or no longer serves) the blob the experiment names: the same on every island, so a
+            // terminal failure. Any other error (network, 5xx, a stop) propagates and the task is released as before.
+            if (e instanceof HttpError && e.status === 404) throw new PickError(`pick log ${task.spec.pickLog}: ${e.message}`);
+            throw e;
+          }
+          let all: PickEntry[];
+          try {
+            all = verifiedPickLog(new TextDecoder("utf-8", { fatal: true }).decode(bytes), task.spec.pickLog);
+          } catch (e) {
+            throw new PickError(`pick log ${task.spec.pickLog}: ${(e as Error).message}`);
+          }
+          picks = all.filter((e) => e.step > seg.startStep && e.step <= seg.startStep + seg.steps);
+          const cfg = specConfig(task.spec);
+          const bad = pickedConfigError(task.spec, cfg) ?? picksPreflightError(picks, cfg, seg.startStep, seg.steps, task.spec.pickImplicit === true);
+          if (bad) throw new PickError(bad);
+        }
         const sink = new MemorySink();
-        const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, keepFinal: task.kind === "run", signal });
+        const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, picks, implicitRule: picks !== undefined && task.spec.pickImplicit === true, keepFinal: task.kind === "run", signal });
         const lq = q(`&lease=${encodeURIComponent(lease)}`);
         if (task.kind === "run") {
-          // Encode once, PUT once: the checkpoint and observer state travel as
+          // Encode once; explicit-refusal retries reuse those bytes. The checkpoint and observer travel as
           // one artifact. Verify attempts upload nothing — they replay locally
           // and report the digest they computed for the coordinator to compare.
           // Uploads belong to this attempt and are aborted with it: nothing
@@ -614,6 +701,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
           stopIfAborted();
           await call(`/api/segments/${seg.id}/checkpoint?${lq}`, { method: "PUT", headers: octet, body: encodeCheckpoint(out.final!, out.observer) as BodyInit, signal });
           for (const [name, text] of sink.files) {
+            // picks.jsonl is the island's own record of who chose: derived from the pick log, in no bundle and never uploaded.
+            if (name === PICKS_FILE) continue;
             const safe = name.replace(/[^a-z0-9_.-]/gi, "-").toLowerCase();
             stopIfAborted();
             await call(`/api/segments/${seg.id}/files/${safe}?${lq}`, { method: "PUT", headers: octet, body: text, signal });
@@ -639,7 +728,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         done++;
       } catch (e) {
         if (stopped(e)) {
-          log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+          log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
           break;
         }
         // A lost lease (reassigned after a long stall, or the run was blocked) is not fatal.
@@ -653,25 +742,31 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         // segments and never offers it again, so the experiment stops there, visibly. Only a
         // lost lease (409: reclaimed meanwhile, or the segment was blocked) is not fatal here
         // either; a coordinator that cannot be reached still throws.
-        else if (e instanceof InterventionError) {
+        else if (e instanceof InterventionError || e instanceof PickError) {
           // Unless the island was stopped meanwhile: then it reports nothing, and the
           // next island meets the same refusal once the lease lapses. Checked
           // again after the log line, whose callback may itself stop the island.
-          if (!signal?.aborted) log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
+          if (!signal?.aborted) log(e instanceof PickError ? `  cannot apply the picks as given, leaving the task: ${e.message}` : `  cannot apply the schedule as given, leaving the task: ${e.message}`);
           if (signal?.aborted) {
-            log(`stopped: left ${seg.run} #${seg.index}; the coordinator offers it again once its lease lapses`);
+            log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
             break;
           }
           try {
             await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
             log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
           } catch (f) {
+            if (stopped(f)) {
+              log(`stopped local work: ${seg.run} #${seg.index}; requesting release`);
+              break;
+            }
             if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
             else throw f;
           }
         } else throw e;
       } finally {
-        clearInterval(beat);
+        stopHeartbeat();
+        signal?.removeEventListener("abort", stopHeartbeat);
+        await beat;
       }
     }
   } catch (e) {
@@ -681,6 +776,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       return done;
     }
     throw e;
+  } finally {
+    if (identity) await leaveIsland(base, identity, log);
   }
   return done;
 }

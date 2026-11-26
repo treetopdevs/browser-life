@@ -1,0 +1,17 @@
+{
+  "allRecordedNumericOutcomesAndSnapshotsExactlyEqual": true,
+  "oldFileSha256": "ad3bc4e41d2eb13594ccdf0177627617959de38f9daffa158bda47e10f3ad5ca",
+  "newFileSha256": "a6f06a7e3cc4efd017651d71896710173873fca2592028ab029264bd843b8e5c",
+  "comparisonExclusions": [
+    "sourceSha256",
+    "integritySha256"
+  ],
+  "oldSourceSha256": {
+    "apps/lab/src/spatial/model.ts": "d7c666ceb6969a52e7ac151625f03864cc583a742e17104913f12ad9e7f3fe30",
+    "tools/spatial/explore.ts": "a990e5135a56728ed98068db8f3a46ca9c7f37dcc1721941ac52007006b76d0a"
+  },
+  "newSourceSha256": {
+    "apps/lab/src/spatial/model.ts": "d7c666ceb6969a52e7ac151625f03864cc583a742e17104913f12ad9e7f3fe30",
+    "tools/spatial/explore.ts": "947d75661a58428a91e9bfde455873822ba20f08b50ddb4b7516f7835e217ffb"
+  }
+}

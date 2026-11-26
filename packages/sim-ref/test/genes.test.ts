@@ -303,4 +303,83 @@ describe("capability genes", () => {
       expect(a.state.heatOut).toBeGreaterThan(b.state.heatOut);
     });
   });
+
+  describe("Gene v2: geneDrive, a floor on a build carrier's BUILD output", () => {
+    const ladder: WorldConfig = { ...base, genes: "ladder", kGene: 100, geneFlip: 0 };
+    const carrying = (genes: number): Genome[] => M3_FOUNDERS.map((f) => ({ ...founderGenome(f), ...(genes ? { genes } : {}) }));
+    const mixed = M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), ...(k % 4 ? { genes: k % 4 } : {}) }));
+
+    it("validateConfig: only with genes, an integer in 0..127", () => {
+      expect(validateConfig({ ...base, geneDrive: 32 })).toEqual(["geneDrive is set only with genes"]);
+      expect(validateConfig({ ...ladder, geneDrive: 128 })).toContain("geneDrive must be an integer in 0..127");
+      expect(validateConfig({ ...ladder, geneDrive: -1 })).toContain("geneDrive must be an integer in 0..127");
+      expect(validateConfig({ ...ladder, geneDrive: 1.5 })).toContain("geneDrive must be an integer in 0..127");
+      expect(validateConfig({ ...ladder, geneDrive: 0 })).toEqual([]);
+      expect(validateConfig({ ...ladder, geneDrive: 127 })).toEqual([]);
+    });
+
+    it("geneDrive 0 is the key absent to the bit", () => {
+      const cfg: WorldConfig = { ...ladder, geneFlip: 2 ** 31 };
+      const zero = new RefSim(m3World({ ...cfg, geneDrive: 0 }, 12, 32, 64, mixed));
+      const absent = new RefSim(m3World(cfg, 12, 32, 64, mixed));
+      zero.run(60);
+      absent.run(60);
+      expect(zero.state.cells).toEqual(absent.state.cells);
+      expect(zero.state.flux).toEqual(absent.state.flux);
+      expect(zero.state.lightIn).toBe(absent.state.lightIn);
+      expect(zero.state.heatOut).toBe(absent.state.heatOut);
+      expect(zero.state.genome).toEqual(absent.state.genome);
+    });
+
+    it("a build carrier whose controller never drives BUILD builds only through the floor", () => {
+      // M3 founder 10 puts 0 on BUILD over the whole probe grid; without mutation its weights stay so.
+      const cfg: WorldConfig = { ...ladder, mutRate: 0 };
+      const f10: Genome = { ...founderGenome(M3_FOUNDERS[10]), genes: 2 };
+      const floored = new RefSim(m3World({ ...cfg, geneDrive: 32 }, 12, 32, 64, f10));
+      const plain = new RefSim(m3World(cfg, 12, 32, 64, f10));
+      floored.run(60);
+      plain.run(60);
+      expect(floored.state.flux[FX_BUILD]).toBeGreaterThan(0n);
+      expect(plain.state.flux[FX_BUILD]).toBe(0n);
+    });
+
+    it("non-carriers of the build gene are unchanged by the floor", () => {
+      const at = (geneDrive: number) => {
+        const sim = new RefSim(m3World({ ...ladder, geneDrive }, 12, 32, 64, carrying(1)));
+        sim.run(60);
+        return sim.state;
+      };
+      const [hi, lo] = [at(127), at(0)];
+      expect(hi.cells).toEqual(lo.cells);
+      expect(hi.flux).toEqual(lo.flux);
+    });
+
+    it('under the "decomp" set no cell carries the build gene, so the floor touches nothing', () => {
+      // The carrier guard, not the v1 build gate, is what keeps the floor off non-carriers: under
+      // "decomp" the build mask is 0, every cell passes the gate with its own output, and a floor
+      // applied without the guard would make every cell build.
+      const decomp: WorldConfig = { ...base, genes: "decomp", kGene: 100, geneFlip: 0 };
+      const at = (geneDrive: number) => {
+        const sim = new RefSim(m3World({ ...decomp, geneDrive }, 12, 32, 64, founders(true)));
+        sim.run(60);
+        return sim.state;
+      };
+      const [hi, lo] = [at(127), at(0)];
+      expect(hi.cells).toEqual(lo.cells);
+      expect(hi.flux).toEqual(lo.flux);
+      expect(hi.heatOut).toBe(lo.heatOut);
+    });
+
+    it("with kBuild 0 the floor still costs its carriers the work term", () => {
+      // The cost-matched null's cost: the floored output is in the work sum even when building makes nothing.
+      const cfg: WorldConfig = { ...ladder, kBuild: 0 };
+      const heat = (geneDrive: number) => {
+        const sim = new RefSim(m3World({ ...cfg, geneDrive }, 12, 32, 64, carrying(2)));
+        sim.step();
+        expect(sim.state.flux[FX_BUILD]).toBe(0n);
+        return sim.state.heatOut;
+      };
+      expect(heat(127)).toBeGreaterThan(heat(0));
+    });
+  });
 });

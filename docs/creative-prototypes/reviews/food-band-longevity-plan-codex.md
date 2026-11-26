@@ -1,0 +1,9 @@
+**Clear — no concrete plan blockers found.** This clears the plan, not the future implementation.
+
+- **6,000 ticks fit unchanged history:** 301 cadence samples fit capacity 451; an off-cadence extinction terminal also stays within 301. The model’s SHA256 matches the plan.
+- **Both arms require exact historical prefixes:** all 151 samples, 151 frames, 3,000 tick rows and five snapshots. Longer-run metadata, summaries and repeat totals are deliberately excluded from whole-run equality. [Prefix contract](/Users/nicholas/.codex/worktrees/food-band-longevity/browser-life/docs/creative-prototypes/food-band-longevity-plan.md:25)
+- **New gates are frozen:** turnover and saturation in each specified late window, plus occupied-body change from 5,500–6,000. Partial windows and biologically unreached endpoints fail; assay-caused missing data invalidates the pair. [Gates](/Users/nicholas/.codex/worktrees/food-band-longevity/browser-life/docs/creative-prototypes/food-band-longevity-plan.md:15)
+- **Stops preserve authorization:** correctness or prefix failures halt outcomes; valid moving-arm biological failure still permits the scheduled stationary arm. Stop after the single seed-1201 pair with its specified repeats; further replication requires a separate reviewed plan. [Stops and interpretation](/Users/nicholas/.codex/worktrees/food-band-longevity/browser-life/docs/creative-prototypes/food-band-longevity-plan.md:13)
+- **Interpretation is appropriately limited:** historical prefixes and repeats are not independent trials; visual uncertainty is distinguished from biological failure; motion remains confounded with replenishment coverage.
+
+Stayed within six tool calls. No edits, tests or simulations.

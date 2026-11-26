@@ -1,0 +1,4479 @@
+{
+ "answers": {
+  "PHAGE": {
+   "settledWindow": [
+    60000,
+    80000
+   ],
+   "perSeed": {
+    "13": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "14": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "15": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "16": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    }
+   },
+   "division": {
+    "lasting": 6400,
+    "withParent": 4231,
+    "share": 0.66109375,
+    "label": "division does not hold"
+   },
+   "answer": "wave patches"
+  },
+  "NO_PHAGE": {
+   "settledWindow": [
+    220000,
+    240000
+   ],
+   "perSeed": {
+    "13": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "14": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "15": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "16": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    }
+   },
+   "division": {
+    "lasting": 967,
+    "withParent": 599,
+    "share": 0.6194415718717684,
+    "label": "division does not hold"
+   },
+   "answer": "wave patches"
+  },
+  "SINGLE_WALL": {
+   "settledWindow": [
+    60000,
+    80000
+   ],
+   "perSeed": {
+    "13": {
+     "label": "mixed",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": false,
+      "V2": true,
+      "V3": false
+     },
+     "settled": false
+    },
+    "14": {
+     "label": "mixed",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": false,
+      "V2": true,
+      "V3": false
+     },
+     "settled": true
+    },
+    "15": {
+     "label": "mixed",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": false,
+      "V2": true,
+      "V3": false
+     },
+     "settled": false
+    },
+    "16": {
+     "label": "mixed",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": false,
+      "V2": true,
+      "V3": false
+     },
+     "settled": false
+    }
+   },
+   "division": {
+    "lasting": 2088,
+    "withParent": 1033,
+    "share": 0.49473180076628354,
+    "label": "division does not hold"
+   },
+   "answer": "mixed"
+  },
+  "ONE64_B2": {
+   "settledWindow": [
+    10000,
+    30000
+   ],
+   "perSeed": {
+    "13": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "14": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "15": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    },
+    "16": {
+     "label": "wave patches",
+     "checks": {
+      "B1": false,
+      "B2": false,
+      "B3": false,
+      "V1": true,
+      "V2": true,
+      "V3": true
+     },
+     "settled": true
+    }
+   },
+   "division": {
+    "lasting": 16,
+    "withParent": 8,
+    "share": 0.5,
+    "label": "division not observed"
+   },
+   "answer": "wave patches"
+  },
+  "ONE64_SPOT": {
+   "settledWindow": [
+    10000,
+    30000
+   ],
+   "perSeed": {
+    "13": {
+     "label": "bodies",
+     "checks": {
+      "B1": true,
+      "B2": true,
+      "B3": true,
+      "V1": false,
+      "V2": false,
+      "V3": false
+     },
+     "settled": true
+    },
+    "14": {
+     "label": "bodies",
+     "checks": {
+      "B1": true,
+      "B2": true,
+      "B3": true,
+      "V1": false,
+      "V2": false,
+      "V3": false
+     },
+     "settled": true
+    },
+    "15": {
+     "label": "bodies",
+     "checks": {
+      "B1": true,
+      "B2": true,
+      "B3": true,
+      "V1": false,
+      "V2": false,
+      "V3": false
+     },
+     "settled": true
+    },
+    "16": {
+     "label": "bodies",
+     "checks": {
+      "B1": true,
+      "B2": true,
+      "B3": true,
+      "V1": false,
+      "V2": false,
+      "V3": false
+     },
+     "settled": true
+    }
+   },
+   "division": {
+    "lasting": 496,
+    "withParent": 427,
+    "share": 0.8608870967741935,
+    "label": "division holds"
+   },
+   "answer": "compartments"
+  }
+ },
+ "summaries": [
+  {
+   "world": "PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 76.7,
+    "countMin": 59,
+    "countMax": 124,
+    "countFirstHalf": 80.6,
+    "countSecondHalf": 72.8,
+    "samples": 1559,
+    "surv100": 0.5848032564450475,
+    "surv500": 0.13297150610583447,
+    "surv1000": 0.017106200997861726,
+    "read1000": 1403,
+    "disp100": 3.211431441681011,
+    "disp1000": 12.794791765109455,
+    "disp1000N": 24,
+    "keepUid1000": 0.0013782437572784274,
+    "keepMask100": 0.203067532670788,
+    "keepMask1000": 0.09546632657259226,
+    "chance1000": 0.032033470738560395,
+    "solid": 0.8704297626683771,
+    "isolated": 0.042976266837716486,
+    "moatMedian": 0.19230769230769232,
+    "peakMedian": 0.2548828125,
+    "peakP90": 0.3056640625,
+    "meanDensityMedian": 0.22377232142857142,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 73.57142857142857,
+    "lowComps": 5.619047619047619,
+    "lowLargestShare": 0.9054641692007055,
+    "lowCover": 0.6719040643601191,
+    "cover": 0.15520949590773808,
+    "births": {
+     "fission": 3486,
+     "switch": 696,
+     "denovo": 1787
+    },
+    "ends": {
+     "fade": 3010,
+     "absorbed": 2835,
+     "switch": 64
+    },
+    "objectKiloSteps": 727.09,
+    "birthRate": 8.209437621202326,
+    "endRate": 8.126916887868077,
+    "daughters": 3328,
+    "daughtersHeld500": 0.052584134615384616,
+    "daughtersRejoined500": 0.12530048076923078,
+    "lastingBirths": {
+     "fission": 175,
+     "switch": 45,
+     "denovo": 101
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 5884
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.96698289567959,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 70.6,
+    "countMin": 55,
+    "countMax": 85,
+    "countFirstHalf": 69.7,
+    "countSecondHalf": 71.5,
+    "samples": 2894,
+    "surv100": 0.6025459688826026,
+    "surv500": 0.1492220650636492,
+    "surv1000": 0.023180007243752264,
+    "read1000": 2761,
+    "disp100": 3.0762872334407767,
+    "disp1000": 11.988092088736483,
+    "disp1000N": 64,
+    "keepUid1000": 0.0015468359066945299,
+    "keepMask100": 0.18986106043723067,
+    "keepMask1000": 0.08085873385090979,
+    "chance1000": 0.03282189081828875,
+    "solid": 0.8597097442985487,
+    "isolated": 0.051831375259156875,
+    "moatMedian": 0.2288690476190476,
+    "peakMedian": 0.2587890625,
+    "peakP90": 0.3076171875,
+    "meanDensityMedian": 0.2252922344924812,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.4267578125,
+    "maxPeak": 0.443359375,
+    "dropBlind": 69.63414634146342,
+    "lowComps": 7.2926829268292686,
+    "lowLargestShare": 0.9455375205503384,
+    "lowCover": 0.6689646651105183,
+    "cover": 0.15510670731707318,
+    "births": {
+     "fission": 6457,
+     "switch": 1250,
+     "denovo": 3264
+    },
+    "ends": {
+     "fade": 5595,
+     "absorbed": 5281,
+     "switch": 99
+    },
+    "objectKiloSteps": 1408.51,
+    "birthRate": 7.789082079644447,
+    "endRate": 7.791921960085481,
+    "daughters": 6346,
+    "daughtersHeld500": 0.06287425149700598,
+    "daughtersRejoined500": 0.12464544595020485,
+    "lastingBirths": {
+     "fission": 399,
+     "switch": 67,
+     "denovo": 216
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 10905
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.595852049115989,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 67.675,
+    "countMin": 53,
+    "countMax": 81,
+    "countFirstHalf": 66.9,
+    "countSecondHalf": 68.45,
+    "samples": 2772,
+    "surv100": 0.6031099592743429,
+    "surv500": 0.13994816734542762,
+    "surv1000": 0.021755725190839695,
+    "read1000": 2620,
+    "disp100": 2.9933763740996295,
+    "disp1000": 14.129596263203892,
+    "disp1000N": 57,
+    "keepUid1000": 0.00139454217986902,
+    "keepMask100": 0.18670605315159092,
+    "keepMask1000": 0.08027515828831713,
+    "chance1000": 0.03438336602192313,
+    "solid": 0.8575036075036075,
+    "isolated": 0.050865800865800864,
+    "moatMedian": 0.23255813953488372,
+    "peakMedian": 0.2578125,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.22541577888257575,
+    "purityMedian": 1,
+    "areaMedian": 22,
+    "maxW": 0.3818359375,
+    "maxPeak": 0.484375,
+    "dropBlind": 67,
+    "lowComps": 7.2439024390243905,
+    "lowLargestShare": 0.9394436569902823,
+    "lowCover": 0.6638258026867379,
+    "cover": 0.1518971512957317,
+    "births": {
+     "fission": 6322,
+     "switch": 1329,
+     "denovo": 3346
+    },
+    "ends": {
+     "fade": 5653,
+     "absorbed": 5241,
+     "switch": 97
+    },
+    "objectKiloSteps": 1364.57,
+    "birthRate": 8.05894897293653,
+    "endRate": 8.054551983408693,
+    "daughters": 6175,
+    "daughtersHeld500": 0.05198380566801619,
+    "daughtersRejoined500": 0.12048582995951417,
+    "lastingBirths": {
+     "fission": 321,
+     "switch": 76,
+     "denovo": 237
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 10926
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.388860309375437,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 75.6,
+    "countMin": 64,
+    "countMax": 123,
+    "countFirstHalf": 79.5,
+    "countSecondHalf": 71.7,
+    "samples": 1537,
+    "surv100": 0.5514655760054533,
+    "surv500": 0.12338104976141787,
+    "surv1000": 0.01789549033643522,
+    "read1000": 1397,
+    "disp100": 3.145603020281026,
+    "disp1000": 9.929970679935877,
+    "disp1000N": 25,
+    "keepUid1000": 0.0009649644796284376,
+    "keepMask100": 0.20687374788477622,
+    "keepMask1000": 0.10095091340402668,
+    "chance1000": 0.03427102305163495,
+    "solid": 0.8653220559531555,
+    "isolated": 0.04163955757970072,
+    "moatMedian": 0.19402985074626866,
+    "peakMedian": 0.25390625,
+    "peakP90": 0.3056640625,
+    "meanDensityMedian": 0.22374306955645162,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 72.04761904761905,
+    "lowComps": 5.714285714285714,
+    "lowLargestShare": 0.9230581937843505,
+    "lowCover": 0.6766531808035714,
+    "cover": 0.15694754464285715,
+    "births": {
+     "fission": 3522,
+     "switch": 748,
+     "denovo": 1776
+    },
+    "ends": {
+     "fade": 3004,
+     "absorbed": 2953,
+     "switch": 44
+    },
+    "objectKiloSteps": 712.74,
+    "birthRate": 8.48275668546735,
+    "endRate": 8.41962005780509,
+    "daughters": 3378,
+    "daughtersHeld500": 0.04203670811130847,
+    "daughtersRejoined500": 0.13114268798105388,
+    "lastingBirths": {
+     "fission": 142,
+     "switch": 40,
+     "denovo": 107
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 5976
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.851681938955771,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 66.8,
+    "countMin": 54,
+    "countMax": 84,
+    "countFirstHalf": 67.55,
+    "countSecondHalf": 66.05,
+    "samples": 2736,
+    "surv100": 0.5868913857677902,
+    "surv500": 0.12059925093632959,
+    "surv1000": 0.019585253456221197,
+    "read1000": 2604,
+    "disp100": 3.2651302347840954,
+    "disp1000": 14.480456974661676,
+    "disp1000N": 51,
+    "keepUid1000": 0.0016831410211038576,
+    "keepMask100": 0.1761997621878716,
+    "keepMask1000": 0.09629925556378376,
+    "chance1000": 0.036195271421343954,
+    "solid": 0.8421052631578947,
+    "isolated": 0.039108187134502925,
+    "moatMedian": 0.2222222222222222,
+    "peakMedian": 0.2587890625,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.22543834109730848,
+    "purityMedian": 1,
+    "areaMedian": 22,
+    "maxW": 0.3974609375,
+    "maxPeak": 0.462890625,
+    "dropBlind": 66.04878048780488,
+    "lowComps": 5.7073170731707314,
+    "lowLargestShare": 0.9497278991487671,
+    "lowCover": 0.6891122213224086,
+    "cover": 0.16065644054878048,
+    "births": {
+     "fission": 6638,
+     "switch": 1339,
+     "denovo": 3427
+    },
+    "ends": {
+     "fade": 5735,
+     "absorbed": 5539,
+     "switch": 128
+    },
+    "objectKiloSteps": 1355.18,
+    "birthRate": 8.41511828686964,
+    "endRate": 8.41364246815921,
+    "daughters": 6489,
+    "daughtersHeld500": 0.05116350747418708,
+    "daughtersRejoined500": 0.1214362767760826,
+    "lastingBirths": {
+     "fission": 332,
+     "switch": 73,
+     "denovo": 194
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 11338
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.445657481749331,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 69.925,
+    "countMin": 54,
+    "countMax": 86,
+    "countFirstHalf": 69.75,
+    "countSecondHalf": 70.1,
+    "samples": 2870,
+    "surv100": 0.5918513223731237,
+    "surv500": 0.13152251608291637,
+    "surv1000": 0.019801980198019802,
+    "read1000": 2727,
+    "disp100": 2.998324728788972,
+    "disp1000": 15.744878526377036,
+    "disp1000N": 54,
+    "keepUid1000": 0.000431269222298652,
+    "keepMask100": 0.19056508870016056,
+    "keepMask1000": 0.07846230158730158,
+    "chance1000": 0.03263599940708705,
+    "solid": 0.8529616724738676,
+    "isolated": 0.04425087108013937,
+    "moatMedian": 0.23076923076923078,
+    "peakMedian": 0.2587890625,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.22542443987966954,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.453125,
+    "maxPeak": 0.47265625,
+    "dropBlind": 69.2439024390244,
+    "lowComps": 6.902439024390244,
+    "lowLargestShare": 0.948984243138736,
+    "lowCover": 0.6661287633384146,
+    "cover": 0.15757937547637196,
+    "births": {
+     "fission": 6550,
+     "switch": 1394,
+     "denovo": 3260
+    },
+    "ends": {
+     "fade": 5750,
+     "absorbed": 5331,
+     "switch": 124
+    },
+    "objectKiloSteps": 1420.97,
+    "birthRate": 7.884754780185366,
+    "endRate": 7.885458524810517,
+    "daughters": 6391,
+    "daughtersHeld500": 0.05460804255984979,
+    "daughtersRejoined500": 0.12736660929432014,
+    "lastingBirths": {
+     "fission": 349,
+     "switch": 81,
+     "denovo": 225
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 11132
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.697080863837018,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 73.55,
+    "countMin": 59,
+    "countMax": 105,
+    "countFirstHalf": 73.6,
+    "countSecondHalf": 73.5,
+    "samples": 1496,
+    "surv100": 0.5746478873239437,
+    "surv500": 0.13732394366197184,
+    "surv1000": 0.017923823749066467,
+    "read1000": 1339,
+    "disp100": 3.219359932686385,
+    "disp1000": 12.450352076173647,
+    "disp1000N": 24,
+    "keepUid1000": 0.0008158135936623417,
+    "keepMask100": 0.2074127877650667,
+    "keepMask1000": 0.08639904897361327,
+    "chance1000": 0.030557711522687048,
+    "solid": 0.8649732620320856,
+    "isolated": 0.05548128342245989,
+    "moatMedian": 0.21428571428571427,
+    "peakMedian": 0.255859375,
+    "peakP90": 0.30859375,
+    "meanDensityMedian": 0.22406133905157344,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 70.23809523809524,
+    "lowComps": 7.904761904761905,
+    "lowLargestShare": 0.8976989732626871,
+    "lowCover": 0.6507074265252977,
+    "cover": 0.1532534644717262,
+    "births": {
+     "fission": 3389,
+     "switch": 705,
+     "denovo": 1687
+    },
+    "ends": {
+     "fade": 2953,
+     "absorbed": 2731,
+     "switch": 46
+    },
+    "objectKiloSteps": 715.29,
+    "birthRate": 8.082036656461016,
+    "endRate": 8.010736903913099,
+    "daughters": 3227,
+    "daughtersHeld500": 0.051750852184691665,
+    "daughtersRejoined500": 0.1375890920359467,
+    "lastingBirths": {
+     "fission": 167,
+     "switch": 38,
+     "denovo": 103
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 5705
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 5.107837065436277,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 69.7,
+    "countMin": 51,
+    "countMax": 82,
+    "countFirstHalf": 70.95,
+    "countSecondHalf": 68.45,
+    "samples": 2860,
+    "surv100": 0.5837217640731445,
+    "surv500": 0.11545356758694873,
+    "surv1000": 0.019152854511970532,
+    "read1000": 2715,
+    "disp100": 2.962126617471621,
+    "disp1000": 10.815832177778319,
+    "disp1000N": 52,
+    "keepUid1000": 0.0019260871233597943,
+    "keepMask100": 0.18861917239333564,
+    "keepMask1000": 0.08906682283567924,
+    "chance1000": 0.033873412891192965,
+    "solid": 0.8517482517482518,
+    "isolated": 0.05419580419580419,
+    "moatMedian": 0.225,
+    "peakMedian": 0.2568359375,
+    "peakP90": 0.3056640625,
+    "meanDensityMedian": 0.22488129918280872,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.4033203125,
+    "maxPeak": 0.4716796875,
+    "dropBlind": 68.65853658536585,
+    "lowComps": 7.2682926829268295,
+    "lowLargestShare": 0.9477411952027884,
+    "lowCover": 0.6778772865853658,
+    "cover": 0.15488191930259146,
+    "births": {
+     "fission": 6454,
+     "switch": 1345,
+     "denovo": 3368
+    },
+    "ends": {
+     "fade": 5637,
+     "absorbed": 5408,
+     "switch": 123
+    },
+    "objectKiloSteps": 1379.06,
+    "birthRate": 8.097544704363843,
+    "endRate": 8.09826983597523,
+    "daughters": 6326,
+    "daughtersHeld500": 0.051375276636104965,
+    "daughtersRejoined500": 0.13136263041416377,
+    "lastingBirths": {
+     "fission": 325,
+     "switch": 56,
+     "denovo": 217
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 11096
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.543988336727856,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 70.35,
+    "countMin": 56,
+    "countMax": 81,
+    "countFirstHalf": 68.45,
+    "countSecondHalf": 72.25,
+    "samples": 2885,
+    "surv100": 0.6007806955287438,
+    "surv500": 0.13520227111426544,
+    "surv1000": 0.028291621327529923,
+    "read1000": 2757,
+    "disp100": 2.8570957042245904,
+    "disp1000": 11.266152271515303,
+    "disp1000N": 78,
+    "keepUid1000": 0.0026272875203337963,
+    "keepMask100": 0.19152827204428627,
+    "keepMask1000": 0.07721284437295108,
+    "chance1000": 0.03401888221504125,
+    "solid": 0.8720970537261699,
+    "isolated": 0.03986135181975736,
+    "moatMedian": 0.2222222222222222,
+    "peakMedian": 0.2587890625,
+    "peakP90": 0.3076171875,
+    "meanDensityMedian": 0.2255859375,
+    "purityMedian": 1,
+    "areaMedian": 20,
+    "maxW": 0.41015625,
+    "maxPeak": 0.4638671875,
+    "dropBlind": 69.14634146341463,
+    "lowComps": 6.512195121951219,
+    "lowLargestShare": 0.9587581526369026,
+    "lowCover": 0.6774708817644817,
+    "cover": 0.1549265791730183,
+    "births": {
+     "fission": 6606,
+     "switch": 1360,
+     "denovo": 3430
+    },
+    "ends": {
+     "fade": 5831,
+     "absorbed": 5457,
+     "switch": 112
+    },
+    "objectKiloSteps": 1415.56,
+    "birthRate": 8.050524174178417,
+    "endRate": 8.05334991098929,
+    "daughters": 6439,
+    "daughtersHeld500": 0.051716104985246154,
+    "daughtersRejoined500": 0.13061034322099704,
+    "lastingBirths": {
+     "fission": 333,
+     "switch": 81,
+     "denovo": 212
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 11329
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.538381732035915,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 72.7,
+    "countMin": 53,
+    "countMax": 118,
+    "countFirstHalf": 80,
+    "countSecondHalf": 65.4,
+    "samples": 1479,
+    "surv100": 0.5898353614889048,
+    "surv500": 0.14101646385110952,
+    "surv1000": 0.01882530120481928,
+    "read1000": 1328,
+    "disp100": 2.9163575460328186,
+    "disp1000": 11.634625035458056,
+    "disp1000N": 25,
+    "keepUid1000": 0.000199662285505659,
+    "keepMask100": 0.21532498888112334,
+    "keepMask1000": 0.07543103448275862,
+    "chance1000": 0.026741632650723206,
+    "solid": 0.8627450980392157,
+    "isolated": 0.06220419202163624,
+    "moatMedian": 0.225,
+    "peakMedian": 0.2548828125,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.22433035714285715,
+    "purityMedian": 1,
+    "areaMedian": 21,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 69.85714285714286,
+    "lowComps": 8.047619047619047,
+    "lowLargestShare": 0.870712640392012,
+    "lowCover": 0.6311122349330357,
+    "cover": 0.14479573567708334,
+    "births": {
+     "fission": 3319,
+     "switch": 646,
+     "denovo": 1687
+    },
+    "ends": {
+     "fade": 2924,
+     "absorbed": 2621,
+     "switch": 50
+    },
+    "objectKiloSteps": 701.49,
+    "birthRate": 8.057135525809349,
+    "endRate": 7.975879912757131,
+    "daughters": 3165,
+    "daughtersHeld500": 0.05181674565560822,
+    "daughtersRejoined500": 0.13807266982622432,
+    "lastingBirths": {
+     "fission": 164,
+     "switch": 40,
+     "denovo": 107
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 5570
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 5.274546403801152,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 71.975,
+    "countMin": 56,
+    "countMax": 83,
+    "countFirstHalf": 71.8,
+    "countSecondHalf": 72.15,
+    "samples": 2940,
+    "surv100": 0.6225626740947076,
+    "surv500": 0.1469359331476323,
+    "surv1000": 0.026699893200427198,
+    "read1000": 2809,
+    "disp100": 2.791575523944032,
+    "disp1000": 12.833210868887154,
+    "disp1000N": 75,
+    "keepUid1000": 0.0015493968320486552,
+    "keepMask100": 0.19731452898331417,
+    "keepMask1000": 0.07094126646130947,
+    "chance1000": 0.029857114921324243,
+    "solid": 0.860204081632653,
+    "isolated": 0.05204081632653061,
+    "moatMedian": 0.24634111515670737,
+    "peakMedian": 0.259765625,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.22614397321428573,
+    "purityMedian": 1,
+    "areaMedian": 20,
+    "maxW": 0.4072265625,
+    "maxPeak": 0.4541015625,
+    "dropBlind": 70.6829268292683,
+    "lowComps": 7.7073170731707314,
+    "lowLargestShare": 0.9411596956065578,
+    "lowCover": 0.6495450647865854,
+    "cover": 0.15220530440167682,
+    "births": {
+     "fission": 6234,
+     "switch": 1300,
+     "denovo": 3225
+    },
+    "ends": {
+     "fade": 5661,
+     "absorbed": 4969,
+     "switch": 122
+    },
+    "objectKiloSteps": 1433.63,
+    "birthRate": 7.504725766062372,
+    "endRate": 7.499843055739626,
+    "daughters": 6081,
+    "daughtersHeld500": 0.06018746916625555,
+    "daughtersRejoined500": 0.1322150962012827,
+    "lastingBirths": {
+     "fission": 366,
+     "switch": 86,
+     "denovo": 240
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 10691
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.955753381610547,
+   "phageAlive": true
+  },
+  {
+   "world": "PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 71.025,
+    "countMin": 55,
+    "countMax": 86,
+    "countFirstHalf": 68.8,
+    "countSecondHalf": 73.25,
+    "samples": 2905,
+    "surv100": 0.6036671368124118,
+    "surv500": 0.1569111424541608,
+    "surv1000": 0.03147612156295224,
+    "read1000": 2764,
+    "disp100": 2.859495957300892,
+    "disp1000": 12.06553901906661,
+    "disp1000N": 87,
+    "keepUid1000": 0.001919780397554659,
+    "keepMask100": 0.1889052028086577,
+    "keepMask1000": 0.0756089844985764,
+    "chance1000": 0.031103865301365368,
+    "solid": 0.8640275387263339,
+    "isolated": 0.05094664371772806,
+    "moatMedian": 0.23809523809523808,
+    "peakMedian": 0.2587890625,
+    "peakP90": 0.3076171875,
+    "meanDensityMedian": 0.2255859375,
+    "purityMedian": 1,
+    "areaMedian": 20,
+    "maxW": 0.4150390625,
+    "maxPeak": 0.474609375,
+    "dropBlind": 70.09756097560975,
+    "lowComps": 7.7317073170731705,
+    "lowLargestShare": 0.9150815478299943,
+    "lowCover": 0.6538711175685976,
+    "cover": 0.1524851729230183,
+    "births": {
+     "fission": 6184,
+     "switch": 1315,
+     "denovo": 3150
+    },
+    "ends": {
+     "fade": 5613,
+     "absorbed": 4904,
+     "switch": 127
+    },
+    "objectKiloSteps": 1413.32,
+    "birthRate": 7.5347408937820175,
+    "endRate": 7.531203124557779,
+    "daughters": 6080,
+    "daughtersHeld500": 0.06315789473684211,
+    "daughtersRejoined500": 0.13338815789473685,
+    "lastingBirths": {
+     "fission": 384,
+     "switch": 91,
+     "denovo": 210
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 10580
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 4.7623095336716075,
+   "phageAlive": true
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 76.65,
+    "countMin": 62,
+    "countMax": 122,
+    "countFirstHalf": 81.4,
+    "countSecondHalf": 71.9,
+    "samples": 1558,
+    "surv100": 0.4425016812373907,
+    "surv500": 0.04169468728984533,
+    "surv1000": 0.0035236081747709656,
+    "read1000": 1419,
+    "disp100": 5.184330706699762,
+    "disp1000": 7.231834322215502,
+    "disp1000N": 5,
+    "keepUid1000": 0.0006534691524120699,
+    "keepMask100": 0.19371923272789,
+    "keepMask1000": 0.20420656940839524,
+    "chance1000": 0.03523340569201423,
+    "solid": 0.8543003851091142,
+    "isolated": 0.017329910141206675,
+    "moatMedian": 0.10235732009925558,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.28515625,
+    "meanDensityMedian": 0.2173828125,
+    "purityMedian": 1,
+    "areaMedian": 24,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 73.14285714285714,
+    "lowComps": 2.8095238095238093,
+    "lowLargestShare": 0.9536476597981024,
+    "lowCover": 0.8227480933779762,
+    "cover": 0.17919921875,
+    "births": {
+     "fission": 5109,
+     "switch": 818,
+     "denovo": 2963
+    },
+    "ends": {
+     "fade": 4237,
+     "absorbed": 4567,
+     "switch": 40
+    },
+    "objectKiloSteps": 731.72,
+    "birthRate": 12.14945607609468,
+    "endRate": 12.086590499098016,
+    "daughters": 4854,
+    "daughtersHeld500": 0.012154923774206839,
+    "daughtersRejoined500": 0.1096003296250515,
+    "lastingBirths": {
+     "fission": 59,
+     "switch": 11,
+     "denovo": 47
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 8819
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 5.581700306559763,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 50.425,
+    "countMin": 41,
+    "countMax": 59,
+    "countFirstHalf": 51.4,
+    "countSecondHalf": 49.45,
+    "samples": 2069,
+    "surv100": 0.38743196437407224,
+    "surv500": 0.014844136566056407,
+    "surv1000": 0.0010126582278481013,
+    "read1000": 1975,
+    "disp100": 6.874703568444387,
+    "disp1000": 2.8274466005296586,
+    "disp1000N": 2,
+    "keepUid1000": 0.00021940928270042194,
+    "keepMask100": 0.11069621302429128,
+    "keepMask1000": 0.19801019954578886,
+    "chance1000": 0.057264116304820284,
+    "solid": 0.7849202513291446,
+    "isolated": 0,
+    "moatMedian": 0.09090909090909091,
+    "peakMedian": 0.244140625,
+    "peakP90": 0.2822265625,
+    "meanDensityMedian": 0.2180488782051282,
+    "purityMedian": 1,
+    "areaMedian": 33,
+    "maxW": 0.3525390625,
+    "maxPeak": 0.4111328125,
+    "dropBlind": 49.53658536585366,
+    "lowComps": 1.2439024390243902,
+    "lowLargestShare": 0.9998728180309009,
+    "lowCover": 0.8806971108041158,
+    "cover": 0.19347251333841464,
+    "births": {
+     "fission": 8364,
+     "switch": 1623,
+     "denovo": 5331
+    },
+    "ends": {
+     "fade": 6840,
+     "absorbed": 8435,
+     "switch": 47
+    },
+    "objectKiloSteps": 1040.71,
+    "birthRate": 14.718797743847949,
+    "endRate": 14.722641273745808,
+    "daughters": 8147,
+    "daughtersHeld500": 0.0077329078188290165,
+    "daughtersRejoined500": 0.08285258377316804,
+    "lastingBirths": {
+     "fission": 63,
+     "switch": 4,
+     "denovo": 27
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 15270
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 3.7493706879285433,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 32.8,
+    "countMin": 23,
+    "countMax": 42,
+    "countFirstHalf": 34.3,
+    "countSecondHalf": 31.3,
+    "samples": 1341,
+    "surv100": 0.27557251908396946,
+    "surv500": 0.0061068702290076335,
+    "surv1000": 0,
+    "read1000": 1281,
+    "disp100": 8.843440814167526,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.05873420385948295,
+    "keepMask1000": 0.20461086230512335,
+    "chance1000": 0.20047557430477803,
+    "solid": 0.6465324384787472,
+    "isolated": 0.0007457121551081282,
+    "moatMedian": 0.06666666666666667,
+    "peakMedian": 0.24609375,
+    "peakP90": 0.2890625,
+    "meanDensityMedian": 0.2196018949468085,
+    "purityMedian": 1,
+    "areaMedian": 60,
+    "maxW": 0.349609375,
+    "maxPeak": 0.4052734375,
+    "dropBlind": 31.414634146341463,
+    "lowComps": 1.1219512195121952,
+    "lowLargestShare": 0.9999072992073891,
+    "lowCover": 0.8815218297446646,
+    "cover": 0.2029270079077744,
+    "births": {
+     "fission": 6010,
+     "switch": 1650,
+     "denovo": 4466
+    },
+    "ends": {
+     "fade": 5061,
+     "absorbed": 7048,
+     "switch": 15
+    },
+    "objectKiloSteps": 662.14,
+    "birthRate": 18.313347630410487,
+    "endRate": 18.31032712115263,
+    "daughters": 5851,
+    "daughtersHeld500": 0.0037600410186292943,
+    "daughtersRejoined500": 0.06750982737993505,
+    "lastingBirths": {
+     "fission": 22,
+     "switch": 2,
+     "denovo": 15
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 12095
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1.0877621976860081,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 76.2,
+    "countMin": 64,
+    "countMax": 127,
+    "countFirstHalf": 81.4,
+    "countSecondHalf": 71,
+    "samples": 1549,
+    "surv100": 0.4395678595543552,
+    "surv500": 0.04929101958136394,
+    "surv1000": 0.008504606661941885,
+    "read1000": 1411,
+    "disp100": 4.851979806106191,
+    "disp1000": 2.0655476469994083,
+    "disp1000N": 12,
+    "keepUid1000": 0.003294851806901525,
+    "keepMask100": 0.20077819712100464,
+    "keepMask1000": 0.20068668016550753,
+    "chance1000": 0.03397246027551116,
+    "solid": 0.8457069076823758,
+    "isolated": 0.017430600387346677,
+    "moatMedian": 0.1111111111111111,
+    "peakMedian": 0.244140625,
+    "peakP90": 0.2880859375,
+    "meanDensityMedian": 0.21809895833333334,
+    "purityMedian": 1,
+    "areaMedian": 24,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 72.28571428571429,
+    "lowComps": 2.4285714285714284,
+    "lowLargestShare": 0.9539112379790133,
+    "lowCover": 0.8188592819940477,
+    "cover": 0.18276250930059523,
+    "births": {
+     "fission": 4994,
+     "switch": 840,
+     "denovo": 2908
+    },
+    "ends": {
+     "fade": 4164,
+     "absorbed": 4491,
+     "switch": 44
+    },
+    "objectKiloSteps": 738.77,
+    "birthRate": 11.833182181193065,
+    "endRate": 11.77497732717896,
+    "daughters": 4747,
+    "daughtersHeld500": 0.01748472719612387,
+    "daughtersRejoined500": 0.11207078154623973,
+    "lastingBirths": {
+     "fission": 83,
+     "switch": 10,
+     "denovo": 51
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 8674
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 5.822551496779978,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 48.65,
+    "countMin": 38,
+    "countMax": 67,
+    "countFirstHalf": 48.65,
+    "countSecondHalf": 48.65,
+    "samples": 1993,
+    "surv100": 0.36499741868869384,
+    "surv500": 0.014971605575632421,
+    "surv1000": 0.0015806111696522655,
+    "read1000": 1898,
+    "disp100": 7.248570393215987,
+    "disp1000": 1.9373944691023501,
+    "disp1000N": 3,
+    "keepUid1000": 0.0008434992299586609,
+    "keepMask100": 0.09978195097292118,
+    "keepMask1000": 0.20320614835228817,
+    "chance1000": 0.0809551340736958,
+    "solid": 0.7686904164576016,
+    "isolated": 0.0015052684395383843,
+    "moatMedian": 0.08620689655172414,
+    "peakMedian": 0.2451171875,
+    "peakP90": 0.287109375,
+    "meanDensityMedian": 0.21864897629310345,
+    "purityMedian": 1,
+    "areaMedian": 36,
+    "maxW": 0.3603515625,
+    "maxPeak": 0.4140625,
+    "dropBlind": 47.53658536585366,
+    "lowComps": 1.2195121951219512,
+    "lowLargestShare": 0.9993129013595072,
+    "lowCover": 0.8753081531059451,
+    "cover": 0.20133711652057926,
+    "births": {
+     "fission": 8141,
+     "switch": 1635,
+     "denovo": 5190
+    },
+    "ends": {
+     "fade": 6708,
+     "absorbed": 8206,
+     "switch": 43
+    },
+    "objectKiloSteps": 988.05,
+    "birthRate": 15.147006730428624,
+    "endRate": 15.137897879661962,
+    "daughters": 7922,
+    "daughtersHeld500": 0.00618530674072204,
+    "daughtersRejoined500": 0.08886644786670032,
+    "lastingBirths": {
+     "fission": 49,
+     "switch": 5,
+     "denovo": 28
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 14910
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 3.1076175472077705,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 32.85,
+    "countMin": 20,
+    "countMax": 42,
+    "countFirstHalf": 32.6,
+    "countSecondHalf": 33.1,
+    "samples": 1349,
+    "surv100": 0.2813918305597579,
+    "surv500": 0.006051437216338881,
+    "surv1000": 0,
+    "read1000": 1289,
+    "disp100": 8.255579267374985,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.053441036874771815,
+    "keepMask1000": 0.20189042999086787,
+    "chance1000": 0.19889462087309942,
+    "solid": 0.6553002223869533,
+    "isolated": 0.0007412898443291327,
+    "moatMedian": 0.05309734513274336,
+    "peakMedian": 0.244140625,
+    "peakP90": 0.287109375,
+    "meanDensityMedian": 0.2187957763671875,
+    "purityMedian": 1,
+    "areaMedian": 57,
+    "maxW": 0.3330078125,
+    "maxPeak": 0.4287109375,
+    "dropBlind": 31.341463414634145,
+    "lowComps": 1.0975609756097562,
+    "lowLargestShare": 0.9996929560944599,
+    "lowCover": 0.8888832650533537,
+    "cover": 0.20026230230564024,
+    "births": {
+     "fission": 5827,
+     "switch": 1612,
+     "denovo": 4547
+    },
+    "ends": {
+     "fade": 4927,
+     "absorbed": 7057,
+     "switch": 10
+    },
+    "objectKiloSteps": 652.04,
+    "birthRate": 18.382307833875224,
+    "endRate": 18.394577019814736,
+    "daughters": 5681,
+    "daughtersHeld500": 0.0029924309100510475,
+    "daughtersRejoined500": 0.07498679809892625,
+    "lastingBirths": {
+     "fission": 17,
+     "switch": 3,
+     "denovo": 14
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 11959
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1.0832555132452604,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 78.25,
+    "countMin": 69,
+    "countMax": 107,
+    "countFirstHalf": 80.4,
+    "countSecondHalf": 76.1,
+    "samples": 1590,
+    "surv100": 0.44224422442244227,
+    "surv500": 0.042244224422442245,
+    "surv1000": 0.004178272980501393,
+    "read1000": 1436,
+    "disp100": 5.250960637708805,
+    "disp1000": 1.579941669616272,
+    "disp1000N": 6,
+    "keepUid1000": 0.0020833584552247503,
+    "keepMask100": 0.19714280934776426,
+    "keepMask1000": 0.2041602740214793,
+    "chance1000": 0.032817838262336876,
+    "solid": 0.8616352201257862,
+    "isolated": 0.016981132075471698,
+    "moatMedian": 0.09556425309849967,
+    "peakMedian": 0.2412109375,
+    "peakP90": 0.287109375,
+    "meanDensityMedian": 0.2171032475490196,
+    "purityMedian": 1,
+    "areaMedian": 24,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 74.42857142857143,
+    "lowComps": 2.7142857142857144,
+    "lowLargestShare": 0.9524291149213142,
+    "lowCover": 0.8220650809151786,
+    "cover": 0.18233816964285715,
+    "births": {
+     "fission": 5213,
+     "switch": 820,
+     "denovo": 2871
+    },
+    "ends": {
+     "fade": 4239,
+     "absorbed": 4573,
+     "switch": 42
+    },
+    "objectKiloSteps": 731.22,
+    "birthRate": 12.176909821941413,
+    "endRate": 12.108530948278219,
+    "daughters": 4925,
+    "daughtersHeld500": 0.01299492385786802,
+    "daughtersRejoined500": 0.11187817258883248,
+    "lastingBirths": {
+     "fission": 64,
+     "switch": 5,
+     "denovo": 45
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 8829
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 5.905125290417979,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 45.6,
+    "countMin": 36,
+    "countMax": 58,
+    "countFirstHalf": 45.65,
+    "countSecondHalf": 45.55,
+    "samples": 1880,
+    "surv100": 0.33769776322967815,
+    "surv500": 0.011456628477905073,
+    "surv1000": 0.0005586592178770949,
+    "read1000": 1790,
+    "disp100": 7.9812782159832745,
+    "disp1000": 5.489563879318649,
+    "disp1000N": 1,
+    "keepUid1000": 0.00003604253018561903,
+    "keepMask100": 0.09449173641903588,
+    "keepMask1000": 0.19652855996823518,
+    "chance1000": 0.09496053002194339,
+    "solid": 0.7404255319148936,
+    "isolated": 0.0026595744680851063,
+    "moatMedian": 0.07977272727272727,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.283203125,
+    "meanDensityMedian": 0.21789306640625,
+    "purityMedian": 1,
+    "areaMedian": 39,
+    "maxW": 0.3515625,
+    "maxPeak": 0.4306640625,
+    "dropBlind": 44.53658536585366,
+    "lowComps": 1.3902439024390243,
+    "lowLargestShare": 0.9994430607124773,
+    "lowCover": 0.8808385337271342,
+    "cover": 0.19290979897103658,
+    "births": {
+     "fission": 7657,
+     "switch": 1658,
+     "denovo": 5144
+    },
+    "ends": {
+     "fade": 6397,
+     "absorbed": 8036,
+     "switch": 35
+    },
+    "objectKiloSteps": 916.42,
+    "birthRate": 15.777700181139652,
+    "endRate": 15.787521005652431,
+    "daughters": 7438,
+    "daughtersHeld500": 0.004571121269158376,
+    "daughtersRejoined500": 0.0797257327238505,
+    "lastingBirths": {
+     "fission": 34,
+     "switch": 4,
+     "denovo": 32
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 14412
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 2.4416118850574215,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 32.5,
+    "countMin": 22,
+    "countMax": 41,
+    "countFirstHalf": 32.7,
+    "countSecondHalf": 32.3,
+    "samples": 1333,
+    "surv100": 0.29552469135802467,
+    "surv500": 0.006172839506172839,
+    "surv1000": 0.000794912559618442,
+    "read1000": 1258,
+    "disp100": 8.338480899915035,
+    "disp1000": 0.7990256153787746,
+    "disp1000N": 1,
+    "keepUid1000": 0.0006114711997064939,
+    "keepMask100": 0.05798055840336449,
+    "keepMask1000": 0.2032848557140891,
+    "chance1000": 0.2032777717680054,
+    "solid": 0.6631657914478619,
+    "isolated": 0.0015003750937734434,
+    "moatMedian": 0.06315789473684211,
+    "peakMedian": 0.244140625,
+    "peakP90": 0.2880859375,
+    "meanDensityMedian": 0.2190563725490196,
+    "purityMedian": 1,
+    "areaMedian": 60,
+    "maxW": 0.3388671875,
+    "maxPeak": 0.4365234375,
+    "dropBlind": 31.195121951219512,
+    "lowComps": 1.1219512195121952,
+    "lowLargestShare": 0.9998445363236252,
+    "lowCover": 0.881642411394817,
+    "cover": 0.20476103991996952,
+    "births": {
+     "fission": 5813,
+     "switch": 1678,
+     "denovo": 4678
+    },
+    "ends": {
+     "fade": 5022,
+     "absorbed": 7121,
+     "switch": 22
+    },
+    "objectKiloSteps": 656.34,
+    "birthRate": 18.54069537130146,
+    "endRate": 18.534600969009965,
+    "daughters": 5656,
+    "daughtersHeld500": 0.004066478076379066,
+    "daughtersRejoined500": 0.07408062234794908,
+    "lastingBirths": {
+     "fission": 23,
+     "switch": 5,
+     "denovo": 16
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 12132
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1.0867753913536538,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 75.85,
+    "countMin": 62,
+    "countMax": 118,
+    "countFirstHalf": 81.6,
+    "countSecondHalf": 70.1,
+    "samples": 1542,
+    "surv100": 0.43546195652173914,
+    "surv500": 0.035326086956521736,
+    "surv1000": 0.0014184397163120568,
+    "read1000": 1410,
+    "disp100": 5.409201243753099,
+    "disp1000": 2.0853871772777293,
+    "disp1000N": 2,
+    "keepUid1000": 0.0008699763593380614,
+    "keepMask100": 0.19968423822471712,
+    "keepMask1000": 0.19981454005934718,
+    "chance1000": 0.03287380909000023,
+    "solid": 0.8553826199740596,
+    "isolated": 0.018158236057068743,
+    "moatMedian": 0.1,
+    "peakMedian": 0.2412109375,
+    "peakP90": 0.2861328125,
+    "meanDensityMedian": 0.21738255277593085,
+    "purityMedian": 1,
+    "areaMedian": 24,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 72.80952380952381,
+    "lowComps": 2.7142857142857144,
+    "lowLargestShare": 0.950865115197957,
+    "lowCover": 0.8214431036086309,
+    "cover": 0.17343866257440477,
+    "births": {
+     "fission": 5049,
+     "switch": 764,
+     "denovo": 2983
+    },
+    "ends": {
+     "fade": 4229,
+     "absorbed": 4484,
+     "switch": 38
+    },
+    "objectKiloSteps": 709.04,
+    "birthRate": 12.405506036330815,
+    "endRate": 12.342039941329121,
+    "daughters": 4779,
+    "daughtersHeld500": 0.015275162167817534,
+    "daughtersRejoined500": 0.1052521448001674,
+    "lastingBirths": {
+     "fission": 73,
+     "switch": 2,
+     "denovo": 40
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 8726
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 5.726307778766406,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 46.25,
+    "countMin": 30,
+    "countMax": 57,
+    "countFirstHalf": 49.15,
+    "countSecondHalf": 43.35,
+    "samples": 1897,
+    "surv100": 0.35306781485468247,
+    "surv500": 0.01883745963401507,
+    "surv1000": 0.006067291781577496,
+    "read1000": 1813,
+    "disp100": 7.206794939826399,
+    "disp1000": 1.5089419482101554,
+    "disp1000N": 11,
+    "keepUid1000": 0.0018700391240711717,
+    "keepMask100": 0.09446400880014055,
+    "keepMask1000": 0.20017863998558344,
+    "chance1000": 0.09754716611480313,
+    "solid": 0.7643647865050079,
+    "isolated": 0.0015814443858724301,
+    "moatMedian": 0.08256880733944955,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.2841796875,
+    "meanDensityMedian": 0.21797820060483872,
+    "purityMedian": 1,
+    "areaMedian": 37,
+    "maxW": 0.419921875,
+    "maxPeak": 0.4287109375,
+    "dropBlind": 44.853658536585364,
+    "lowComps": 1.2926829268292683,
+    "lowLargestShare": 0.9997610014043423,
+    "lowCover": 0.8762594083460366,
+    "cover": 0.19988418206935976,
+    "births": {
+     "fission": 7782,
+     "switch": 1669,
+     "denovo": 5054
+    },
+    "ends": {
+     "fade": 6407,
+     "absorbed": 8081,
+     "switch": 25
+    },
+    "objectKiloSteps": 925.3,
+    "birthRate": 15.675996973954394,
+    "endRate": 15.684642818545337,
+    "daughters": 7587,
+    "daughtersHeld500": 0.005140371688414393,
+    "daughtersRejoined500": 0.0844866218531699,
+    "lastingBirths": {
+     "fission": 39,
+     "switch": 7,
+     "denovo": 34
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 14466
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": false,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 2.5699944139209987,
+   "phageAlive": false
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 34.5,
+    "countMin": 23,
+    "countMax": 44,
+    "countFirstHalf": 34.65,
+    "countSecondHalf": 34.35,
+    "samples": 1411,
+    "surv100": 0.2893401015228426,
+    "surv500": 0.00870195794053662,
+    "surv1000": 0.0007390983000739098,
+    "read1000": 1353,
+    "disp100": 8.020081194766313,
+    "disp1000": 3.172708509664049,
+    "disp1000N": 1,
+    "keepUid1000": 0.00011370743078060151,
+    "keepMask100": 0.05887207702888583,
+    "keepMask1000": 0.201421353355055,
+    "chance1000": 0.1973131424221357,
+    "solid": 0.6725726435152374,
+    "isolated": 0.001417434443656981,
+    "moatMedian": 0.06060606060606061,
+    "peakMedian": 0.244140625,
+    "peakP90": 0.287109375,
+    "meanDensityMedian": 0.21881975446428573,
+    "purityMedian": 1,
+    "areaMedian": 57,
+    "maxW": 0.330078125,
+    "maxPeak": 0.4052734375,
+    "dropBlind": 33.048780487804876,
+    "lowComps": 1.2926829268292683,
+    "lowLargestShare": 0.9996473746576623,
+    "lowCover": 0.8788109756097561,
+    "cover": 0.19965641673018292,
+    "births": {
+     "fission": 5916,
+     "switch": 1708,
+     "denovo": 4512
+    },
+    "ends": {
+     "fade": 5088,
+     "absorbed": 7030,
+     "switch": 17
+    },
+    "objectKiloSteps": 669.49,
+    "birthRate": 18.12723117596977,
+    "endRate": 18.125737501680383,
+    "daughters": 5761,
+    "daughtersHeld500": 0.002256552681826072,
+    "daughtersRejoined500": 0.0711681999652838,
+    "lastingBirths": {
+     "fission": 13,
+     "switch": 2,
+     "denovo": 19
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 12104
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1.098740051571417,
+   "phageAlive": false
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 32.75,
+    "countMin": 19,
+    "countMax": 79,
+    "countFirstHalf": 41.8,
+    "countSecondHalf": 23.7,
+    "samples": 680,
+    "surv100": 0.7047184170471842,
+    "surv500": 0.3150684931506849,
+    "surv1000": 0.12283464566929134,
+    "read1000": 635,
+    "disp100": 1.2570900891676,
+    "disp1000": 10.145844277612518,
+    "disp1000N": 78,
+    "keepUid1000": 0.000974878140232471,
+    "keepMask100": 0.25166554382813083,
+    "keepMask1000": 0.04169551503961843,
+    "chance1000": 0.04963535356085084,
+    "solid": 0.8735294117647059,
+    "isolated": 0.5014705882352941,
+    "moatMedian": 0.3689931350114416,
+    "peakMedian": 0.2421875,
+    "peakP90": 0.2822265625,
+    "meanDensityMedian": 0.22096470424107142,
+    "purityMedian": 1,
+    "areaMedian": 14,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 32.38095238095238,
+    "lowComps": 22.238095238095237,
+    "lowLargestShare": 0.25438585626393106,
+    "lowCover": 0.22463553292410715,
+    "cover": 0.03968157087053571,
+    "births": {
+     "fission": 767,
+     "switch": 0,
+     "denovo": 713
+    },
+    "ends": {
+     "fade": 1038,
+     "absorbed": 444,
+     "switch": 0
+    },
+    "objectKiloSteps": 307.66,
+    "birthRate": 4.810505103035818,
+    "endRate": 4.817005785607488,
+    "daughters": 748,
+    "daughtersHeld500": 0.12566844919786097,
+    "daughtersRejoined500": 0.07085561497326204,
+    "lastingBirths": {
+     "fission": 94,
+     "switch": 0,
+     "denovo": 82
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 1457
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 14.575,
+    "countMin": 5,
+    "countMax": 23,
+    "countFirstHalf": 18,
+    "countSecondHalf": 11.15,
+    "samples": 594,
+    "surv100": 0.8370118845500849,
+    "surv500": 0.45500848896434637,
+    "surv1000": 0.21269296740994853,
+    "read1000": 583,
+    "disp100": 1.3062542215616693,
+    "disp1000": 9.866485377465647,
+    "disp1000N": 124,
+    "keepUid1000": 0,
+    "keepMask100": 0.348467254993033,
+    "keepMask1000": 0.007736490446606494,
+    "chance1000": 0.014773977751637411,
+    "solid": 0.9141414141414141,
+    "isolated": 0.6262626262626263,
+    "moatMedian": 0.42857142857142855,
+    "peakMedian": 0.2451171875,
+    "peakP90": 0.27734375,
+    "meanDensityMedian": 0.22181306061921297,
+    "purityMedian": 1,
+    "areaMedian": 13,
+    "maxW": 0.384765625,
+    "maxPeak": 0.4306640625,
+    "dropBlind": 14.487804878048781,
+    "lowComps": 12.902439024390244,
+    "lowLargestShare": 0.22170959195049747,
+    "lowCover": 0.059655166253810975,
+    "cover": 0.012915634527439025,
+    "births": {
+     "fission": 524,
+     "switch": 0,
+     "denovo": 285
+    },
+    "ends": {
+     "fade": 695,
+     "absorbed": 120,
+     "switch": 0
+    },
+    "objectKiloSteps": 292.43,
+    "birthRate": 2.766474027972506,
+    "endRate": 2.7869917587114865,
+    "daughters": 519,
+    "daughtersHeld500": 0.18689788053949905,
+    "daughtersRejoined500": 0.08863198458574181,
+    "lastingBirths": {
+     "fission": 97,
+     "switch": 0,
+     "denovo": 100
+    },
+    "lifetimeMedian": 50,
+    "lifetimeN": 804
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 13,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 0,
+    "countMin": 0,
+    "countMax": 0,
+    "countFirstHalf": 0,
+    "countSecondHalf": 0,
+    "samples": 0,
+    "surv100": null,
+    "surv500": null,
+    "surv1000": null,
+    "read1000": 0,
+    "disp100": null,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": null,
+    "keepMask100": null,
+    "keepMask1000": null,
+    "chance1000": null,
+    "solid": null,
+    "isolated": null,
+    "moatMedian": null,
+    "peakMedian": null,
+    "peakP90": null,
+    "meanDensityMedian": null,
+    "purityMedian": null,
+    "areaMedian": null,
+    "maxW": 0,
+    "maxPeak": 0,
+    "dropBlind": 0,
+    "lowComps": 0,
+    "lowLargestShare": 0,
+    "lowCover": 0,
+    "cover": 0,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "ends": {
+     "fade": 0,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 0,
+    "birthRate": 0,
+    "endRate": 0,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": null,
+    "lifetimeN": 0
+   },
+   "reading": {
+    "label": "no objects",
+    "checks": {
+     "B1": null,
+     "B2": null,
+     "B3": null,
+     "V1": null,
+     "V2": null,
+     "V3": null
+    },
+    "settled": false
+   },
+   "d1": 0,
+   "phageAlive": false
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 33.5,
+    "countMin": 23,
+    "countMax": 75,
+    "countFirstHalf": 40,
+    "countSecondHalf": 27,
+    "samples": 695,
+    "surv100": 0.7529761904761905,
+    "surv500": 0.34375,
+    "surv1000": 0.16203703703703703,
+    "read1000": 648,
+    "disp100": 1.4042405162842693,
+    "disp1000": 10.485630481568208,
+    "disp1000N": 105,
+    "keepUid1000": 0,
+    "keepMask100": 0.2566897918731417,
+    "keepMask1000": 0.029788897576231432,
+    "chance1000": 0.043733884619026095,
+    "solid": 0.8877697841726618,
+    "isolated": 0.49640287769784175,
+    "moatMedian": 0.39473684210526316,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.2841796875,
+    "meanDensityMedian": 0.22126116071428573,
+    "purityMedian": 1,
+    "areaMedian": 14,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 33.095238095238095,
+    "lowComps": 23.38095238095238,
+    "lowLargestShare": 0.24340641244777636,
+    "lowCover": 0.22413853236607142,
+    "cover": 0.039059593563988096,
+    "births": {
+     "fission": 782,
+     "switch": 0,
+     "denovo": 691
+    },
+    "ends": {
+     "fade": 1019,
+     "absorbed": 456,
+     "switch": 0
+    },
+    "objectKiloSteps": 320.87,
+    "birthRate": 4.590644186118989,
+    "endRate": 4.59687724000374,
+    "daughters": 768,
+    "daughtersHeld500": 0.1328125,
+    "daughtersRejoined500": 0.09635416666666667,
+    "lastingBirths": {
+     "fission": 102,
+     "switch": 0,
+     "denovo": 85
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 1450
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 18.15,
+    "countMin": 7,
+    "countMax": 28,
+    "countFirstHalf": 17.35,
+    "countSecondHalf": 18.95,
+    "samples": 732,
+    "surv100": 0.8295774647887324,
+    "surv500": 0.45774647887323944,
+    "surv1000": 0.20719424460431654,
+    "read1000": 695,
+    "disp100": 1.2604198786858392,
+    "disp1000": 10.022819375697473,
+    "disp1000N": 144,
+    "keepUid1000": 0,
+    "keepMask100": 0.3362175525339926,
+    "keepMask1000": 0.006880959402339526,
+    "chance1000": 0.01761006151201403,
+    "solid": 0.9002732240437158,
+    "isolated": 0.6830601092896175,
+    "moatMedian": 0.4444444444444444,
+    "peakMedian": 0.248046875,
+    "peakP90": 0.2822265625,
+    "meanDensityMedian": 0.22372698102678573,
+    "purityMedian": 1,
+    "areaMedian": 13,
+    "maxW": 0.3974609375,
+    "maxPeak": 0.4765625,
+    "dropBlind": 17.853658536585368,
+    "lowComps": 16,
+    "lowLargestShare": 0.1712233621436835,
+    "lowCover": 0.07239662728658537,
+    "cover": 0.016171339081554877,
+    "births": {
+     "fission": 608,
+     "switch": 0,
+     "denovo": 368
+    },
+    "ends": {
+     "fade": 850,
+     "absorbed": 110,
+     "switch": 0
+    },
+    "objectKiloSteps": 355.79,
+    "birthRate": 2.743191208297029,
+    "endRate": 2.6982208606200286,
+    "daughters": 581,
+    "daughtersHeld500": 0.19793459552495696,
+    "daughtersRejoined500": 0.04819277108433735,
+    "lastingBirths": {
+     "fission": 115,
+     "switch": 0,
+     "denovo": 127
+    },
+    "lifetimeMedian": 60,
+    "lifetimeN": 954
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 14,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 0,
+    "countMin": 0,
+    "countMax": 0,
+    "countFirstHalf": 0,
+    "countSecondHalf": 0,
+    "samples": 0,
+    "surv100": null,
+    "surv500": null,
+    "surv1000": null,
+    "read1000": 0,
+    "disp100": null,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": null,
+    "keepMask100": null,
+    "keepMask1000": null,
+    "chance1000": null,
+    "solid": null,
+    "isolated": null,
+    "moatMedian": null,
+    "peakMedian": null,
+    "peakP90": null,
+    "meanDensityMedian": null,
+    "purityMedian": null,
+    "areaMedian": null,
+    "maxW": 0,
+    "maxPeak": 0,
+    "dropBlind": 0,
+    "lowComps": 0,
+    "lowLargestShare": 0,
+    "lowCover": 0,
+    "cover": 0,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "ends": {
+     "fade": 0,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 0,
+    "birthRate": 0,
+    "endRate": 0,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": null,
+    "lifetimeN": 0
+   },
+   "reading": {
+    "label": "no objects",
+    "checks": {
+     "B1": null,
+     "B2": null,
+     "B3": null,
+     "V1": null,
+     "V2": null,
+     "V3": null
+    },
+    "settled": false
+   },
+   "d1": 0,
+   "phageAlive": false
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 34.35,
+    "countMin": 22,
+    "countMax": 76,
+    "countFirstHalf": 38.5,
+    "countSecondHalf": 30.2,
+    "samples": 712,
+    "surv100": 0.7631578947368421,
+    "surv500": 0.34941520467836257,
+    "surv1000": 0.1465648854961832,
+    "read1000": 655,
+    "disp100": 1.3842046148631384,
+    "disp1000": 10.073373001856048,
+    "disp1000N": 96,
+    "keepUid1000": 0.000612932195779075,
+    "keepMask100": 0.260371065249114,
+    "keepMask1000": 0.03317157963351923,
+    "chance1000": 0.048419489611530836,
+    "solid": 0.8609550561797753,
+    "isolated": 0.5323033707865169,
+    "moatMedian": 0.39568825441039923,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.2822265625,
+    "meanDensityMedian": 0.22131856282552081,
+    "purityMedian": 1,
+    "areaMedian": 14,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 33.904761904761905,
+    "lowComps": 25.19047619047619,
+    "lowLargestShare": 0.25611873928476975,
+    "lowCover": 0.23480224609375,
+    "cover": 0.042887369791666664,
+    "births": {
+     "fission": 813,
+     "switch": 0,
+     "denovo": 756
+    },
+    "ends": {
+     "fade": 1029,
+     "absorbed": 537,
+     "switch": 0
+    },
+    "objectKiloSteps": 335.87,
+    "birthRate": 4.671450263494805,
+    "endRate": 4.662518236222348,
+    "daughters": 776,
+    "daughtersHeld500": 0.13917525773195877,
+    "daughtersRejoined500": 0.08247422680412371,
+    "lastingBirths": {
+     "fission": 108,
+     "switch": 0,
+     "denovo": 90
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 1541
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 19.9,
+    "countMin": 7,
+    "countMax": 35,
+    "countFirstHalf": 23.65,
+    "countSecondHalf": 16.15,
+    "samples": 820,
+    "surv100": 0.8107098381070984,
+    "surv500": 0.43711083437110837,
+    "surv1000": 0.19540229885057472,
+    "read1000": 783,
+    "disp100": 1.2637927016416401,
+    "disp1000": 10.364013822817686,
+    "disp1000N": 153,
+    "keepUid1000": 0.00005321413367390378,
+    "keepMask100": 0.3325170987080976,
+    "keepMask1000": 0.012152029647504956,
+    "chance1000": 0.019190935474998384,
+    "solid": 0.8987804878048781,
+    "isolated": 0.6451219512195122,
+    "moatMedian": 0.43859649122807015,
+    "peakMedian": 0.248046875,
+    "peakP90": 0.28125,
+    "meanDensityMedian": 0.22426757812499998,
+    "purityMedian": 1,
+    "areaMedian": 12,
+    "maxW": 0.4697265625,
+    "maxPeak": 0.4697265625,
+    "dropBlind": 20,
+    "lowComps": 17.853658536585368,
+    "lowLargestShare": 0.1815833501390162,
+    "lowCover": 0.0825731230945122,
+    "cover": 0.01829714891387195,
+    "births": {
+     "fission": 707,
+     "switch": 0,
+     "denovo": 412
+    },
+    "ends": {
+     "fade": 955,
+     "absorbed": 171,
+     "switch": 0
+    },
+    "objectKiloSteps": 393.97,
+    "birthRate": 2.840317790694723,
+    "endRate": 2.8580856410386577,
+    "daughters": 684,
+    "daughtersHeld500": 0.16228070175438597,
+    "daughtersRejoined500": 0.05701754385964912,
+    "lastingBirths": {
+     "fission": 111,
+     "switch": 0,
+     "denovo": 143
+    },
+    "lifetimeMedian": 60,
+    "lifetimeN": 1102
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 15,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 21.625,
+    "countMin": 11,
+    "countMax": 35,
+    "countFirstHalf": 21.45,
+    "countSecondHalf": 21.8,
+    "samples": 881,
+    "surv100": 0.8029953917050692,
+    "surv500": 0.41589861751152074,
+    "surv1000": 0.18457943925233644,
+    "read1000": 856,
+    "disp100": 1.2982768073727242,
+    "disp1000": 9.956678245735704,
+    "disp1000N": 158,
+    "keepUid1000": 0.0004370907241401233,
+    "keepMask100": 0.328655892786756,
+    "keepMask1000": 0.013194722111155539,
+    "chance1000": 0.020221481719812074,
+    "solid": 0.9012485811577753,
+    "isolated": 0.6356413166855845,
+    "moatMedian": 0.43137254901960786,
+    "peakMedian": 0.24609375,
+    "peakP90": 0.2802734375,
+    "meanDensityMedian": 0.22271728515625,
+    "purityMedian": 1,
+    "areaMedian": 12,
+    "maxW": 0.4150390625,
+    "maxPeak": 0.45703125,
+    "dropBlind": 21.48780487804878,
+    "lowComps": 19.024390243902438,
+    "lowLargestShare": 0.1537986921952248,
+    "lowCover": 0.08781023723323171,
+    "cover": 0.019223096894054877,
+    "births": {
+     "fission": 756,
+     "switch": 0,
+     "denovo": 472
+    },
+    "ends": {
+     "fade": 1039,
+     "absorbed": 192,
+     "switch": 0
+    },
+    "objectKiloSteps": 422.07,
+    "birthRate": 2.9094699931291017,
+    "endRate": 2.9165778188452154,
+    "daughters": 745,
+    "daughtersHeld500": 0.18791946308724833,
+    "daughtersRejoined500": 0.08322147651006712,
+    "lastingBirths": {
+     "fission": 140,
+     "switch": 0,
+     "denovo": 140
+    },
+    "lifetimeMedian": 60,
+    "lifetimeN": 1215
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 31.2,
+    "countMin": 18,
+    "countMax": 82,
+    "countFirstHalf": 38.3,
+    "countSecondHalf": 24.1,
+    "samples": 649,
+    "surv100": 0.7253634894991923,
+    "surv500": 0.3037156704361874,
+    "surv1000": 0.11317567567567567,
+    "read1000": 592,
+    "disp100": 1.4723567470312864,
+    "disp1000": 10.184829875029061,
+    "disp1000N": 67,
+    "keepUid1000": 0,
+    "keepMask100": 0.24522542266750155,
+    "keepMask1000": 0.036283185840707964,
+    "chance1000": 0.045498193202245074,
+    "solid": 0.8705701078582434,
+    "isolated": 0.5007704160246533,
+    "moatMedian": 0.3888888888888889,
+    "peakMedian": 0.2431640625,
+    "peakP90": 0.283203125,
+    "meanDensityMedian": 0.22126116071428573,
+    "purityMedian": 1,
+    "areaMedian": 14,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 30.904761904761905,
+    "lowComps": 21.142857142857142,
+    "lowLargestShare": 0.24482695601036952,
+    "lowCover": 0.21450950985863096,
+    "cover": 0.038510277157738096,
+    "births": {
+     "fission": 727,
+     "switch": 0,
+     "denovo": 694
+    },
+    "ends": {
+     "fade": 961,
+     "absorbed": 455,
+     "switch": 0
+    },
+    "objectKiloSteps": 290.76,
+    "birthRate": 4.887192185995323,
+    "endRate": 4.869995872884854,
+    "daughters": 704,
+    "daughtersHeld500": 0.12215909090909091,
+    "daughtersRejoined500": 0.09375,
+    "lastingBirths": {
+     "fission": 86,
+     "switch": 0,
+     "denovo": 81
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 1391
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 60000,
+    "to": 80000,
+    "count": 8.925,
+    "countMin": 4,
+    "countMax": 21,
+    "countFirstHalf": 7.6,
+    "countSecondHalf": 10.25,
+    "samples": 377,
+    "surv100": 0.8264462809917356,
+    "surv500": 0.45179063360881544,
+    "surv1000": 0.2254335260115607,
+    "read1000": 346,
+    "disp100": 1.2526069919736735,
+    "disp1000": 10.333024667968711,
+    "disp1000N": 78,
+    "keepUid1000": 0,
+    "keepMask100": 0.361714621256606,
+    "keepMask1000": 0.011904761904761904,
+    "chance1000": 0.008010926896519653,
+    "solid": 0.8938992042440318,
+    "isolated": 0.7029177718832891,
+    "moatMedian": 0.4411764705882353,
+    "peakMedian": 0.248046875,
+    "peakP90": 0.2763671875,
+    "meanDensityMedian": 0.22389322916666668,
+    "purityMedian": 1,
+    "areaMedian": 12,
+    "maxW": 0.36328125,
+    "maxPeak": 0.4609375,
+    "dropBlind": 9.195121951219512,
+    "lowComps": 8.487804878048781,
+    "lowLargestShare": 0.25283962549932676,
+    "lowCover": 0.03646776152820122,
+    "cover": 0.007924149676067074,
+    "births": {
+     "fission": 331,
+     "switch": 0,
+     "denovo": 168
+    },
+    "ends": {
+     "fade": 441,
+     "absorbed": 64,
+     "switch": 0
+    },
+    "objectKiloSteps": 178.53,
+    "birthRate": 2.795048451240688,
+    "endRate": 2.828656248249594,
+    "daughters": 316,
+    "daughtersHeld500": 0.17088607594936708,
+    "daughtersRejoined500": 0.0759493670886076,
+    "lastingBirths": {
+     "fission": 54,
+     "switch": 0,
+     "denovo": 57
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 485
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 16,
+   "size": 128,
+   "readouts": {
+    "from": 220000,
+    "to": 240000,
+    "count": 20.675,
+    "countMin": 12,
+    "countMax": 30,
+    "countFirstHalf": 22.6,
+    "countSecondHalf": 18.75,
+    "samples": 844,
+    "surv100": 0.8319018404907975,
+    "surv500": 0.4368098159509202,
+    "surv1000": 0.19083969465648856,
+    "read1000": 786,
+    "disp100": 1.3071375876972495,
+    "disp1000": 10.20084795347156,
+    "disp1000N": 150,
+    "keepUid1000": 0.00031936438697616453,
+    "keepMask100": 0.32524389260662745,
+    "keepMask1000": 0.012245918027324226,
+    "chance1000": 0.019566709778381163,
+    "solid": 0.9004739336492891,
+    "isolated": 0.6433649289099526,
+    "moatMedian": 0.44590643274853803,
+    "peakMedian": 0.248046875,
+    "peakP90": 0.2822265625,
+    "meanDensityMedian": 0.22422960069444442,
+    "purityMedian": 1,
+    "areaMedian": 13,
+    "maxW": 0.419921875,
+    "maxPeak": 0.4853515625,
+    "dropBlind": 20.585365853658537,
+    "lowComps": 18.195121951219512,
+    "lowLargestShare": 0.1714928771053656,
+    "lowCover": 0.08308671160442073,
+    "cover": 0.01908762862042683,
+    "births": {
+     "fission": 707,
+     "switch": 0,
+     "denovo": 395
+    },
+    "ends": {
+     "fade": 933,
+     "absorbed": 157,
+     "switch": 0
+    },
+    "objectKiloSteps": 402.48,
+    "birthRate": 2.7380242496521565,
+    "endRate": 2.7082091035579405,
+    "daughters": 686,
+    "daughtersHeld500": 0.1836734693877551,
+    "daughtersRejoined500": 0.08600583090379009,
+    "lastingBirths": {
+     "fission": 126,
+     "switch": 0,
+     "denovo": 150
+    },
+    "lifetimeMedian": 60,
+    "lifetimeN": 1073
+   },
+   "reading": {
+    "label": "mixed",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": false,
+     "V2": true,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": true
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 13,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 6.9,
+    "countMin": 2,
+    "countMax": 25,
+    "countFirstHalf": 8,
+    "countSecondHalf": 5.8,
+    "samples": 147,
+    "surv100": 0.28368794326241137,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 135,
+    "disp100": 6.516104278860146,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.05387760485360063,
+    "keepMask1000": 0.18518518518518517,
+    "chance1000": 0.19211851011167416,
+    "solid": 0.7210884353741497,
+    "isolated": 0.08843537414965986,
+    "moatMedian": 0,
+    "peakMedian": 0.234375,
+    "peakP90": 0.2978515625,
+    "meanDensityMedian": 0.21478515625,
+    "purityMedian": 1,
+    "areaMedian": 60,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 7,
+    "lowComps": 1.5238095238095237,
+    "lowLargestShare": 0.9276263156324663,
+    "lowCover": 0.8584798177083334,
+    "cover": 0.18605840773809523,
+    "births": {
+     "fission": 519,
+     "switch": 0,
+     "denovo": 587
+    },
+    "ends": {
+     "fade": 464,
+     "absorbed": 645,
+     "switch": 0
+    },
+    "objectKiloSteps": 68.45,
+    "birthRate": 16.157779401022644,
+    "endRate": 16.201607012417824,
+    "daughters": 490,
+    "daughtersHeld500": 0,
+    "daughtersRejoined500": 0.0673469387755102,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 2
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 1100
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 13,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 6.8,
+    "countMin": 3,
+    "countMax": 10,
+    "countFirstHalf": 6.5,
+    "countSecondHalf": 7.1,
+    "samples": 278,
+    "surv100": 0.34798534798534797,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 267,
+    "disp100": 6.599951038832754,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.02785447704584762,
+    "keepMask1000": 0.19550366414110049,
+    "chance1000": 0.2010686891210137,
+    "solid": 0.6007194244604317,
+    "isolated": 0,
+    "moatMedian": 0,
+    "peakMedian": 0.240234375,
+    "peakP90": 0.271484375,
+    "meanDensityMedian": 0.21695088813224156,
+    "purityMedian": 1,
+    "areaMedian": 82.5,
+    "maxW": 0.3056640625,
+    "maxPeak": 0.3154296875,
+    "dropBlind": 6.780487804878049,
+    "lowComps": 1,
+    "lowLargestShare": 1,
+    "lowCover": 0.9311642530487805,
+    "cover": 0.20169588414634146,
+    "births": {
+     "fission": 1170,
+     "switch": 0,
+     "denovo": 1106
+    },
+    "ends": {
+     "fade": 892,
+     "absorbed": 1385,
+     "switch": 0
+    },
+    "objectKiloSteps": 133.92,
+    "birthRate": 16.995221027479094,
+    "endRate": 17.002688172043012,
+    "daughters": 1141,
+    "daughtersHeld500": 0.0026292725679228747,
+    "daughtersRejoined500": 0.06485539000876424,
+    "lastingBirths": {
+     "fission": 3,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 2271
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 14,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 6.6,
+    "countMin": 1,
+    "countMax": 25,
+    "countFirstHalf": 6.9,
+    "countSecondHalf": 6.3,
+    "samples": 141,
+    "surv100": 0.26119402985074625,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 132,
+    "disp100": 7.472529453557297,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.05488828619398166,
+    "keepMask1000": 0.2085889570552147,
+    "chance1000": 0.1894815326221824,
+    "solid": 0.7588652482269503,
+    "isolated": 0.0851063829787234,
+    "moatMedian": 0,
+    "peakMedian": 0.232421875,
+    "peakP90": 0.3017578125,
+    "meanDensityMedian": 0.21393694196428573,
+    "purityMedian": 1,
+    "areaMedian": 56,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 6.714285714285714,
+    "lowComps": 1.4761904761904763,
+    "lowLargestShare": 0.942412952867736,
+    "lowCover": 0.8589564732142857,
+    "cover": 0.1905459449404762,
+    "births": {
+     "fission": 540,
+     "switch": 0,
+     "denovo": 555
+    },
+    "ends": {
+     "fade": 442,
+     "absorbed": 655,
+     "switch": 0
+    },
+    "objectKiloSteps": 65.24,
+    "birthRate": 16.7841814837523,
+    "endRate": 16.81483752299203,
+    "daughters": 515,
+    "daughtersHeld500": 0.003883495145631068,
+    "daughtersRejoined500": 0.0854368932038835,
+    "lastingBirths": {
+     "fission": 2,
+     "switch": 0,
+     "denovo": 3
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 1088
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 14,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 6.6,
+    "countMin": 1,
+    "countMax": 12,
+    "countFirstHalf": 6.75,
+    "countSecondHalf": 6.45,
+    "samples": 271,
+    "surv100": 0.28517110266159695,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 259,
+    "disp100": 10.126360659388077,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.02999840434019467,
+    "keepMask1000": 0.19565707658107542,
+    "chance1000": 0.19678546892367263,
+    "solid": 0.6162361623616236,
+    "isolated": 0.0036900369003690036,
+    "moatMedian": 0,
+    "peakMedian": 0.2373046875,
+    "peakP90": 0.2783203125,
+    "meanDensityMedian": 0.216796875,
+    "purityMedian": 1,
+    "areaMedian": 73,
+    "maxW": 0.314453125,
+    "maxPeak": 0.326171875,
+    "dropBlind": 6.609756097560975,
+    "lowComps": 1,
+    "lowLargestShare": 1,
+    "lowCover": 0.9241556307164634,
+    "cover": 0.19365115282012196,
+    "births": {
+     "fission": 1151,
+     "switch": 0,
+     "denovo": 1125
+    },
+    "ends": {
+     "fade": 893,
+     "absorbed": 1382,
+     "switch": 0
+    },
+    "objectKiloSteps": 132.47,
+    "birthRate": 17.18124858458519,
+    "endRate": 17.17369970559372,
+    "daughters": 1127,
+    "daughtersHeld500": 0,
+    "daughtersRejoined500": 0.0771960958296362,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 2268
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 15,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 6.75,
+    "countMin": 2,
+    "countMax": 24,
+    "countFirstHalf": 6.8,
+    "countSecondHalf": 6.7,
+    "samples": 144,
+    "surv100": 0.32116788321167883,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 130,
+    "disp100": 4.102690998282037,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.04435084241823588,
+    "keepMask1000": 0.21651411628206782,
+    "chance1000": 0.20445647441927453,
+    "solid": 0.6597222222222222,
+    "isolated": 0.09722222222222222,
+    "moatMedian": 0,
+    "peakMedian": 0.2373046875,
+    "peakP90": 0.306640625,
+    "meanDensityMedian": 0.21565673001822444,
+    "purityMedian": 1,
+    "areaMedian": 62.5,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 6.857142857142857,
+    "lowComps": 1.5714285714285714,
+    "lowLargestShare": 0.9272212667975046,
+    "lowCover": 0.8659086681547619,
+    "cover": 0.19623093377976192,
+    "births": {
+     "fission": 499,
+     "switch": 0,
+     "denovo": 582
+    },
+    "ends": {
+     "fade": 413,
+     "absorbed": 670,
+     "switch": 0
+    },
+    "objectKiloSteps": 67.54,
+    "birthRate": 16.00533017471128,
+    "endRate": 16.034942256440626,
+    "daughters": 480,
+    "daughtersHeld500": 0.0020833333333333333,
+    "daughtersRejoined500": 0.06875,
+    "lastingBirths": {
+     "fission": 1,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 30,
+    "lifetimeN": 1074
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 15,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 6.25,
+    "countMin": 1,
+    "countMax": 11,
+    "countFirstHalf": 6.3,
+    "countSecondHalf": 6.2,
+    "samples": 257,
+    "surv100": 0.3055555555555556,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 248,
+    "disp100": 7.701952162815725,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.031918537663874445,
+    "keepMask1000": 0.208354608118458,
+    "chance1000": 0.19782394787046048,
+    "solid": 0.5875486381322957,
+    "isolated": 0.0038910505836575876,
+    "moatMedian": 0,
+    "peakMedian": 0.2392578125,
+    "peakP90": 0.2763671875,
+    "meanDensityMedian": 0.21559734013728324,
+    "purityMedian": 1,
+    "areaMedian": 85,
+    "maxW": 0.306640625,
+    "maxPeak": 0.3125,
+    "dropBlind": 6.2682926829268295,
+    "lowComps": 1,
+    "lowLargestShare": 1,
+    "lowCover": 0.9295386337652439,
+    "cover": 0.19684284489329268,
+    "births": {
+     "fission": 1115,
+     "switch": 0,
+     "denovo": 1155
+    },
+    "ends": {
+     "fade": 851,
+     "absorbed": 1421,
+     "switch": 0
+    },
+    "objectKiloSteps": 131.54,
+    "birthRate": 17.257108103998785,
+    "endRate": 17.272312604530942,
+    "daughters": 1085,
+    "daughtersHeld500": 0,
+    "daughtersRejoined500": 0.0663594470046083,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 2
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 2265
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 16,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 7.6,
+    "countMin": 3,
+    "countMax": 25,
+    "countFirstHalf": 8.6,
+    "countSecondHalf": 6.6,
+    "samples": 161,
+    "surv100": 0.24025974025974026,
+    "surv500": 0.006493506493506494,
+    "surv1000": 0,
+    "read1000": 142,
+    "disp100": 2.0870262376886717,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.035988628803000064,
+    "keepMask1000": 0.22247019065229867,
+    "chance1000": 0.20330122086813748,
+    "solid": 0.6583850931677019,
+    "isolated": 0.08074534161490683,
+    "moatMedian": 0,
+    "peakMedian": 0.234375,
+    "peakP90": 0.2900390625,
+    "meanDensityMedian": 0.21504480698529413,
+    "purityMedian": 1,
+    "areaMedian": 60,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 7.666666666666667,
+    "lowComps": 1.5238095238095237,
+    "lowLargestShare": 0.9340303151999543,
+    "lowCover": 0.8906831287202381,
+    "cover": 0.19930013020833334,
+    "births": {
+     "fission": 555,
+     "switch": 0,
+     "denovo": 582
+    },
+    "ends": {
+     "fade": 473,
+     "absorbed": 666,
+     "switch": 0
+    },
+    "objectKiloSteps": 68.89,
+    "birthRate": 16.504572506895048,
+    "endRate": 16.53360429670489,
+    "daughters": 521,
+    "daughtersHeld500": 0,
+    "daughtersRejoined500": 0.08061420345489444,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 1
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 1130
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 16,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 6.95,
+    "countMin": 4,
+    "countMax": 12,
+    "countFirstHalf": 6.6,
+    "countSecondHalf": 7.3,
+    "samples": 285,
+    "surv100": 0.30324909747292417,
+    "surv500": 0,
+    "surv1000": 0,
+    "read1000": 269,
+    "disp100": 6.950710966572902,
+    "disp1000": null,
+    "disp1000N": 0,
+    "keepUid1000": 0,
+    "keepMask100": 0.029470497294511722,
+    "keepMask1000": 0.1868505261768878,
+    "chance1000": 0.19393156272680037,
+    "solid": 0.6175438596491228,
+    "isolated": 0,
+    "moatMedian": 0,
+    "peakMedian": 0.2392578125,
+    "peakP90": 0.2734375,
+    "meanDensityMedian": 0.21692288306451613,
+    "purityMedian": 1,
+    "areaMedian": 71,
+    "maxW": 0.3125,
+    "maxPeak": 0.326171875,
+    "dropBlind": 6.951219512195122,
+    "lowComps": 1,
+    "lowLargestShare": 0.9999937668684122,
+    "lowCover": 0.9328732374237805,
+    "cover": 0.19104897103658536,
+    "births": {
+     "fission": 1088,
+     "switch": 0,
+     "denovo": 1237
+    },
+    "ends": {
+     "fade": 918,
+     "absorbed": 1406,
+     "switch": 0
+    },
+    "objectKiloSteps": 132.22,
+    "birthRate": 17.58432914838905,
+    "endRate": 17.57676599606716,
+    "daughters": 1059,
+    "daughtersHeld500": 0.0018885741265344666,
+    "daughtersRejoined500": 0.06704438149197356,
+    "lastingBirths": {
+     "fission": 2,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 2317
+   },
+   "reading": {
+    "label": "wave patches",
+    "checks": {
+     "B1": false,
+     "B2": false,
+     "B3": false,
+     "V1": true,
+     "V2": true,
+     "V3": true
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 13,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 114.55,
+    "countMin": 41,
+    "countMax": 122,
+    "countFirstHalf": 108,
+    "countSecondHalf": 121.1,
+    "samples": 2300,
+    "surv100": 0.9977043158861341,
+    "surv500": 0.990358126721763,
+    "surv1000": 0.983957219251337,
+    "read1000": 2057,
+    "disp100": 0.007227630942565715,
+    "disp1000": 0.008101617621258696,
+    "disp1000N": 2024,
+    "keepUid1000": 0.9400117100530321,
+    "keepMask100": 0.9706314243759178,
+    "keepMask1000": 0.9018474558777996,
+    "chance1000": 0.13179718341998659,
+    "solid": 0.9960869565217392,
+    "isolated": 0.7626086956521739,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.5390625,
+    "peakP90": 0.5693359375,
+    "meanDensityMedian": 0.46923828125,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 109.52380952380952,
+    "lowComps": 97.42857142857143,
+    "lowLargestShare": 0.03408541259962299,
+    "lowCover": 0.3616303943452381,
+    "cover": 0.12491861979166667,
+    "births": {
+     "fission": 126,
+     "switch": 0,
+     "denovo": 32
+    },
+    "ends": {
+     "fade": 33,
+     "absorbed": 12,
+     "switch": 0
+    },
+    "objectKiloSteps": 1118.62,
+    "birthRate": 0.14124546315996497,
+    "endRate": 0.040228138241762176,
+    "daughters": 126,
+    "daughtersHeld500": 0.873015873015873,
+    "daughtersRejoined500": 0.07142857142857142,
+    "lastingBirths": {
+     "fission": 110,
+     "switch": 0,
+     "denovo": 17
+    },
+    "lifetimeMedian": 70,
+    "lifetimeN": 45
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 13,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 122.025,
+    "countMin": 122,
+    "countMax": 123,
+    "countFirstHalf": 122.05,
+    "countSecondHalf": 122,
+    "samples": 5003,
+    "surv100": 0.9997951239500102,
+    "surv500": 0.9997951239500102,
+    "surv1000": 0.9997898718218113,
+    "read1000": 4759,
+    "disp100": 0.006695578774297212,
+    "disp1000": 0.006892833096858373,
+    "disp1000N": 4758,
+    "keepUid1000": 0.9986341668417735,
+    "keepMask100": 0.9981132075471698,
+    "keepMask1000": 0.9983551040154813,
+    "chance1000": 0.13278123535392478,
+    "solid": 1,
+    "isolated": 0.8019188486907856,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.537109375,
+    "peakP90": 0.5576171875,
+    "meanDensityMedian": 0.47021484375,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.6337890625,
+    "maxPeak": 0.6240234375,
+    "dropBlind": 122.02439024390245,
+    "lowComps": 113.1219512195122,
+    "lowLargestShare": 0.023750033033166282,
+    "lowCover": 0.390625,
+    "cover": 0.12938262195121952,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 3
+    },
+    "ends": {
+     "fade": 3,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 2441.31,
+    "birthRate": 0.0012288484461211399,
+    "endRate": 0.0012288484461211399,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 3
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 14,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 114.7,
+    "countMin": 34,
+    "countMax": 121,
+    "countFirstHalf": 108.4,
+    "countSecondHalf": 121,
+    "samples": 2303,
+    "surv100": 0.9963336388634281,
+    "surv500": 0.9912923923006416,
+    "surv1000": 0.9844735565259582,
+    "read1000": 2061,
+    "disp100": 0.007366889037183172,
+    "disp1000": 0.00822997737464104,
+    "disp1000N": 2029,
+    "keepUid1000": 0.9382497078639724,
+    "keepMask100": 0.9693341121495327,
+    "keepMask1000": 0.8982146521649907,
+    "chance1000": 0.13275661268885952,
+    "solid": 0.995223621363439,
+    "isolated": 0.6951801997394702,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.5400390625,
+    "peakP90": 0.5673828125,
+    "meanDensityMedian": 0.4632161458333333,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 109.66666666666667,
+    "lowComps": 94.19047619047619,
+    "lowLargestShare": 0.0345616774362402,
+    "lowCover": 0.36478097098214285,
+    "cover": 0.12552315848214285,
+    "births": {
+     "fission": 127,
+     "switch": 0,
+     "denovo": 46
+    },
+    "ends": {
+     "fade": 49,
+     "absorbed": 12,
+     "switch": 0
+    },
+    "objectKiloSteps": 1120.65,
+    "birthRate": 0.15437469325837683,
+    "endRate": 0.054432695310757145,
+    "daughters": 127,
+    "daughtersHeld500": 0.8267716535433071,
+    "daughtersRejoined500": 0.08661417322834646,
+    "lastingBirths": {
+     "fission": 105,
+     "switch": 0,
+     "denovo": 20
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 59
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": false
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 14,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 121,
+    "countMin": 121,
+    "countMax": 121,
+    "countFirstHalf": 121,
+    "countSecondHalf": 121,
+    "samples": 4961,
+    "surv100": 1,
+    "surv500": 1,
+    "surv1000": 1,
+    "read1000": 4719,
+    "disp100": 0.006681246893055886,
+    "disp1000": 0.007060843777115454,
+    "disp1000N": 4719,
+    "keepUid1000": 0.9978915024369568,
+    "keepMask100": 0.9979558851492679,
+    "keepMask1000": 0.9971721111652853,
+    "chance1000": 0.13259332099814114,
+    "solid": 1,
+    "isolated": 0.7611368675670228,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.5380859375,
+    "peakP90": 0.55859375,
+    "meanDensityMedian": 0.46728515625,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.6923828125,
+    "maxPeak": 0.6201171875,
+    "dropBlind": 121,
+    "lowComps": 110.21951219512195,
+    "lowLargestShare": 0.023603214229701817,
+    "lowCover": 0.3917921112804878,
+    "cover": 0.12839415015243902,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 10
+    },
+    "ends": {
+     "fade": 10,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 2421.36,
+    "birthRate": 0.0041299104635411504,
+    "endRate": 0.0041299104635411504,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 10,
+    "lifetimeN": 10
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 15,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 111.35,
+    "countMin": 36,
+    "countMax": 120,
+    "countFirstHalf": 105.5,
+    "countSecondHalf": 117.2,
+    "samples": 2236,
+    "surv100": 0.9957527135441245,
+    "surv500": 0.9915054270882492,
+    "surv1000": 0.9845154845154845,
+    "read1000": 2002,
+    "disp100": 0.00720507692498267,
+    "disp1000": 0.008200286930775721,
+    "disp1000N": 1971,
+    "keepUid1000": 0.9379068934858733,
+    "keepMask100": 0.9666799283867118,
+    "keepMask1000": 0.8989305934158105,
+    "chance1000": 0.13162709462315214,
+    "solid": 0.9937388193202147,
+    "isolated": 0.7584973166368515,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.54296875,
+    "peakP90": 0.5830078125,
+    "meanDensityMedian": 0.4644775390625,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 106.47619047619048,
+    "lowComps": 94.71428571428571,
+    "lowLargestShare": 0.03797562430853449,
+    "lowCover": 0.3615838913690476,
+    "cover": 0.12287248883928571,
+    "births": {
+     "fission": 122,
+     "switch": 0,
+     "denovo": 66
+    },
+    "ends": {
+     "fade": 74,
+     "absorbed": 6,
+     "switch": 0
+    },
+    "objectKiloSteps": 1091.54,
+    "birthRate": 0.17223372482914048,
+    "endRate": 0.07329094673580447,
+    "daughters": 122,
+    "daughtersHeld500": 0.8524590163934426,
+    "daughtersRejoined500": 0.03278688524590164,
+    "lastingBirths": {
+     "fission": 104,
+     "switch": 0,
+     "denovo": 18
+    },
+    "lifetimeMedian": 40,
+    "lifetimeN": 80
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 15,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 117.075,
+    "countMin": 117,
+    "countMax": 118,
+    "countFirstHalf": 117.05,
+    "countSecondHalf": 117.1,
+    "samples": 4800,
+    "surv100": 0.9993593850096092,
+    "surv500": 0.9993593850096092,
+    "surv1000": 0.9993429697766097,
+    "read1000": 4566,
+    "disp100": 0.006796935382770543,
+    "disp1000": 0.007064776199117011,
+    "disp1000N": 4563,
+    "keepUid1000": 0.9980080512274995,
+    "keepMask100": 0.9978669769245685,
+    "keepMask1000": 0.9980112365136976,
+    "chance1000": 0.13171710208416199,
+    "solid": 1,
+    "isolated": 0.8177083333333334,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.541015625,
+    "peakP90": 0.5712890625,
+    "meanDensityMedian": 0.4697265625,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.6328125,
+    "maxPeak": 0.6376953125,
+    "dropBlind": 117.07317073170732,
+    "lowComps": 110.02439024390245,
+    "lowLargestShare": 0.024452665044500763,
+    "lowCover": 0.38671875,
+    "cover": 0.12588724275914634,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 88
+    },
+    "ends": {
+     "fade": 88,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 2343.62,
+    "birthRate": 0.03754874937063176,
+    "endRate": 0.03754874937063176,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 0
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 88
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 16,
+   "size": 64,
+   "readouts": {
+    "from": 0,
+    "to": 10000,
+    "count": 112.5,
+    "countMin": 49,
+    "countMax": 119,
+    "countFirstHalf": 109.1,
+    "countSecondHalf": 115.9,
+    "samples": 2259,
+    "surv100": 0.9953358208955224,
+    "surv500": 0.9874067164179104,
+    "surv1000": 0.9807787087235091,
+    "read1000": 2029,
+    "disp100": 0.007132165454244093,
+    "disp1000": 0.008070341611149423,
+    "disp1000N": 1990,
+    "keepUid1000": 0.9314827962684048,
+    "keepMask100": 0.9668788541873881,
+    "keepMask1000": 0.8994659126610116,
+    "chance1000": 0.13115216989344433,
+    "solid": 0.9951305887560867,
+    "isolated": 0.768481629039398,
+    "moatMedian": 0.90625,
+    "peakMedian": 0.54296875,
+    "peakP90": 0.5810546875,
+    "meanDensityMedian": 0.462890625,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.849609375,
+    "maxPeak": 0.849609375,
+    "dropBlind": 107.57142857142857,
+    "lowComps": 98.04761904761905,
+    "lowLargestShare": 0.032976681261249315,
+    "lowCover": 0.3599214099702381,
+    "cover": 0.12276785714285714,
+    "births": {
+     "fission": 132,
+     "switch": 0,
+     "denovo": 59
+    },
+    "ends": {
+     "fade": 70,
+     "absorbed": 15,
+     "switch": 0
+    },
+    "objectKiloSteps": 1092.75,
+    "birthRate": 0.17478837794555022,
+    "endRate": 0.07778540379775795,
+    "daughters": 132,
+    "daughtersHeld500": 0.8181818181818182,
+    "daughtersRejoined500": 0.05303030303030303,
+    "lastingBirths": {
+     "fission": 108,
+     "switch": 0,
+     "denovo": 12
+    },
+    "lifetimeMedian": 60,
+    "lifetimeN": 84
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 16,
+   "size": 64,
+   "readouts": {
+    "from": 10000,
+    "to": 30000,
+    "count": 114.825,
+    "countMin": 114,
+    "countMax": 116,
+    "countFirstHalf": 115.15,
+    "countSecondHalf": 114.5,
+    "samples": 4708,
+    "surv100": 0.999346832135859,
+    "surv500": 0.9982582190289571,
+    "surv1000": 0.9977673587854432,
+    "read1000": 4479,
+    "disp100": 0.006586378204593903,
+    "disp1000": 0.007154390325262623,
+    "disp1000N": 4469,
+    "keepUid1000": 0.9965394061174371,
+    "keepMask100": 0.9984632163394804,
+    "keepMask1000": 0.9976106959483504,
+    "chance1000": 0.13004614383165575,
+    "solid": 1,
+    "isolated": 0.8415463041631266,
+    "moatMedian": 0.9285714285714286,
+    "peakMedian": 0.5419921875,
+    "peakP90": 0.5732421875,
+    "meanDensityMedian": 0.46728515625,
+    "purityMedian": 1,
+    "areaMedian": 4,
+    "maxW": 0.701171875,
+    "maxPeak": 0.6904296875,
+    "dropBlind": 114.82926829268293,
+    "lowComps": 112.21951219512195,
+    "lowLargestShare": 0.02291684928099403,
+    "lowCover": 0.38352110327743905,
+    "cover": 0.12311833079268293,
+    "births": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 93
+    },
+    "ends": {
+     "fade": 93,
+     "absorbed": 0,
+     "switch": 0
+    },
+    "objectKiloSteps": 2298.65,
+    "birthRate": 0.040458530006743085,
+    "endRate": 0.040458530006743085,
+    "daughters": 0,
+    "daughtersHeld500": null,
+    "daughtersRejoined500": null,
+    "lastingBirths": {
+     "fission": 0,
+     "switch": 0,
+     "denovo": 2
+    },
+    "lifetimeMedian": 20,
+    "lifetimeN": 91
+   },
+   "reading": {
+    "label": "bodies",
+    "checks": {
+     "B1": true,
+     "B2": true,
+     "B3": true,
+     "V1": false,
+     "V2": false,
+     "V3": false
+    },
+    "settled": true
+   },
+   "d1": 1,
+   "phageAlive": false
+  }
+ ],
+ "countSeries": [
+  {
+   "world": "PHAGE",
+   "seed": 13,
+   "censuses": 480
+  },
+  {
+   "world": "PHAGE",
+   "seed": 14,
+   "censuses": 480
+  },
+  {
+   "world": "PHAGE",
+   "seed": 15,
+   "censuses": 480
+  },
+  {
+   "world": "PHAGE",
+   "seed": 16,
+   "censuses": 480
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 13,
+   "censuses": 480
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 14,
+   "censuses": 480
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 15,
+   "censuses": 480
+  },
+  {
+   "world": "NO_PHAGE",
+   "seed": 16,
+   "censuses": 480
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 13,
+   "censuses": 480
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 14,
+   "censuses": 480
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 15,
+   "censuses": 480
+  },
+  {
+   "world": "SINGLE_WALL",
+   "seed": 16,
+   "censuses": 480
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 13,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 14,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 15,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_B2",
+   "seed": 16,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 13,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 14,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 15,
+   "censuses": 60
+  },
+  {
+   "world": "ONE64_SPOT",
+   "seed": 16,
+   "censuses": 60
+  }
+ ]
+}

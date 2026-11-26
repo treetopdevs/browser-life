@@ -1,0 +1,82 @@
+p-tol8-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 8
+p-tol16-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 16
+p-tol16-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 16
+p-tol8-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 8
+p-tol0-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 0
+p-tol0-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 0
+p-tol8-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 8
+p-tol0-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 0
+p-tol16-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 16
+p-tol32-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 32
+p-tol32-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 32
+p-tol32-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 32
+p-tol64-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 64
+p-tol64-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 64
+p-tol64-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 64
+p-ctrl-nogate-s1: --scenario pair --seed 1 --steps 12000 --no-frames
+p-ctrl-tol128-s1: --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol0-s1: --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 0 c2-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 c2-tol64-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 64 c2-nogate-s1 --scenario crowd --seed 1 --steps 20000 c2-same-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+p-ctrl-nogate-s2: --scenario pair --seed 2 --steps 12000 --no-frames
+p-ctrl-tol128-s2: --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol64-s2: --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-tol0-s2: --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 0 --no-frames
+c2-tol16-s2: --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-nogate-s2: --scenario crowd --seed 2 --steps 20000 --no-frames
+c2-same-tol16-s2: --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+p-ctrl-nogate-s3: --scenario pair --seed 3 --steps 12000 --no-frames
+p-ctrl-tol128-s3: --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol0-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 0 --no-frames
+c2-tol16-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-tol64-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-nogate-s3: --scenario crowd --seed 3 --steps 20000 --no-frames
+c2-same-tol16-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+c2-tol64-s1: --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 64
+c2-tol0-s1: --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 0
+c2-tol16-s1: --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16
+c2-nogate-s1: --scenario crowd --seed 1 --steps 20000
+c2-same-tol16-s1: --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+m-A-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 400
+m-Dblind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+m-D-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8
+m-Csame-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tags same --no-frames
+m-Ablind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-blind
+m-E-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64
+m-Eblind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+m-A-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --no-frames
+m-Ablind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-blind --no-frames
+m-Csame-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tags same --no-frames
+m-D-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8 --no-frames
+m-Dblind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+m-E-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64 --no-frames
+m-Eblind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+m-A-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --no-frames
+m-Ablind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-blind --no-frames
+m-Csame-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tags same --no-frames
+m-D-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8 --no-frames
+m-Dblind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 0 --tag-mut-rate 400 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+m-E-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64 --no-frames
+m-Eblind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 400 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+n-F-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8
+n-Fblind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+n-G-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64
+n-Gblind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+n-H-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8
+n-Hblind-s1: --scenario crowd --steps 20000 --mut on --seed 1 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8 --tag-blind --no-frames
+c2-tol16-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-tol64-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-same-tol16-s3: --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+n-F-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --no-frames
+n-Fblind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+n-G-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64 --no-frames
+n-Gblind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+n-H-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8 --no-frames
+n-Hblind-s2: --scenario crowd --steps 20000 --mut on --seed 2 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8 --tag-blind --no-frames
+n-F-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --no-frames
+n-Fblind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --tag-blind --no-frames
+n-G-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64 --no-frames
+n-Gblind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 20000 --tag-mut-bud --tag-step 64 --tag-blind --no-frames
+n-H-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8 --no-frames
+n-Hblind-s3: --scenario crowd --steps 20000 --mut on --seed 3 --gates share,grow,signal --tol 16 --tag-mut-rate 4000 --tag-step 8 --tag-blind --no-frames
+w-F-s1: --scenario wound-in-crowd --seed 1 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end
+w-F-s2: --scenario wound-in-crowd --seed 2 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end
+w-F-s3: --scenario wound-in-crowd --seed 3 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end

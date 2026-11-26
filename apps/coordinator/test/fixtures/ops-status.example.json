@@ -407,5 +407,16 @@
       "islands": 1,
       "live": 1
     }
+  },
+  "operatorEvents": {
+    "since": "2026-10-24T12:34:56.123456Z",
+    "rateRefusals": {
+      "join": 12,
+      "next": 34,
+      "segment": 56,
+      "requests": 78
+    },
+    "capacityRefusals": 9,
+    "prunedIslands": 10
   }
 }

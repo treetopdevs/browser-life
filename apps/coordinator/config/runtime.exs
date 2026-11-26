@@ -86,6 +86,10 @@ with {:ok, n} <- env_count.("BL_ISLAND_JOINS_PER_ADDRESS", true),
 # The bound on the island table (Coordinator.Queue; default 20,000).
 with {:ok, n} <- env_count.("BL_MAX_ISLANDS", false), do: config(:coordinator, max_islands: n)
 
+# Normal island run/verify attempt lease (Queue default: ten minutes), in ms.
+# Useful for short-lease development and tests; discovery leases are separate.
+with {:ok, ms} <- env_count.("BL_LEASE_MS", false), do: config(:coordinator, lease_ms: ms)
+
 # Release switch: stop both dawn release and assignment of existing garden days.
 case System.get_env("BL_GARDEN_SCHEDULING") do
   nil -> :ok
@@ -116,8 +120,43 @@ if dir = System.get_env("BL_DATA_DIR"), do: config(:coordinator, data_dir: dir)
 if dir = System.get_env("BL_DISCOVERY_DATA_DIR"),
   do: config(:coordinator, discovery_data_dir: dir)
 
+if dir = System.get_env("BL_SOUP_DATA_DIR"), do: config(:coordinator, soup_data_dir: dir)
+
+# The shared soup (Coordinator.Soup) is opt-in in production: it starts only
+# when BL_SOUP_DATA_DIR names its own writable, persistent directory. The
+# release default `data-soup` would resolve inside the read-only /app, and
+# the deployment has no soup volume yet; /api/soup answers 404 while it is off.
+if config_env() == :prod,
+  do: config(:coordinator, start_soup: System.get_env("BL_SOUP_DATA_DIR") not in [nil, ""])
+
+# The shared soup's segment lease (ms).
+with {:ok, ms} <- env_count.("BL_SOUP_LEASE_MS", false),
+     do: config(:coordinator, soup_lease_ms: ms)
+
 if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
   do: config(:coordinator, discovery_join_token: token)
+
+# Without a join token the discovery plane admits loopback joins (a local
+# convenience, DiscoveryController.require_join). Under the release's
+# dual-stack bind that includes [::1] from inside the container, so production
+# refuses to start without one rather than lean on Compose's check alone.
+# A whitespace-only value counts as unset. A token must also survive an HTTP
+# Authorization header unchanged (clients strip surrounding whitespace, so a
+# trailing newline would make every join fail): visible ASCII only.
+if config_env() == :prod do
+  join_token = System.get_env("BL_DISCOVERY_JOIN_TOKEN") || ""
+
+  cond do
+    String.trim(join_token) == "" ->
+      raise("BL_DISCOVERY_JOIN_TOKEN must be set in production")
+
+    not String.match?(join_token, ~r/\A[\x21-\x7E]+\z/) ->
+      raise("BL_DISCOVERY_JOIN_TOKEN must be visible ASCII with no spaces or control characters")
+
+    true ->
+      :ok
+  end
+end
 
 # The discovery lease (ms); a lease has no "off".
 with {:ok, ms} <- env_count.("BL_DISCOVERY_LEASE_MS", false),

@@ -1,0 +1,40 @@
+{
+ "source": "/Users/nicholas/develop/browser-life/runs/bootstrap-200",
+ "codeSha": "8d577be4a616d6b6f45f36332abbb05675e7eae2",
+ "versions": {
+  "schema": 3,
+  "rule": 1,
+  "metrics": 2
+ },
+ "archive": "mass-speed",
+ "archiveSpec": {
+  "bins": 8,
+  "massRange": [
+   7,
+   13
+  ],
+  "speedRange": [
+   0,
+   4
+  ]
+ },
+ "files": {
+  "viable.jsonl": "e6eaebf84ada1410a0591d7383a32eeb1eea4da97d212b1e63eea2c8d7032645",
+  "archive.json": "9504ecb73592c396e9fd73d7af424099a423353ce6edbda5ff9210dd5a882fc6"
+ },
+ "evaluated": 4800,
+ "viable": 1990,
+ "nonViableNotLogged": 2810,
+ "withProvenance": 0,
+ "provenanceRegenerated": 0,
+ "inserted": 77,
+ "currentElites": 47,
+ "displaced": 30,
+ "passersDistinct": 839,
+ "passingOffers": 839,
+ "duplicateGenomes": 0,
+ "duplicateRate": 0,
+ "noCell": 0,
+ "cellsEverOccupied": 47,
+ "stepStoneNote": "the ledger keeps every viable offer; cells hold only the current elite. Non-viable proposals (quality 0) are counted, not logged."
+}

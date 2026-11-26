@@ -1,0 +1,76 @@
+{
+ "kind": "assembly-destruction-manifest",
+ "payloadFileSha256": "8baf5a8445f20cdc316d24ca28bf19fd89f00089527bc1d4d8f83879439e7348",
+ "integritySha256": "f3ad0c5c5a2163f9eb14e1e87e14d5873425fd2de6c1f190cb7591f2852c7c03",
+ "versions": {
+  "assembly": 1,
+  "destruction": 1,
+  "rule": 1,
+  "metrics": 2
+ },
+ "freezeCommit": "01fb4660551b2338bc3fd9895845ca023944638f",
+ "sources": {
+  "docs/assembly-destruction-2026-11-02/PROTOCOL.md": "6680b61dc51e285c47f7d97b08e6e76611e41e609ffa98b9b4f71db0bbb1b28b",
+  "packages/metrics/src/assembly/destruction/protocol.ts": "c68912d589b554cdc278cb6075b61908ace2fef7b71015b84e1e98957eba19ed",
+  "packages/metrics/src/assembly/destruction/damage.ts": "f2a3bd41c3a056c6b6aef41f631479b4cc5d36bea79e38dcda8c3706b880c3f2",
+  "packages/metrics/src/assembly/destruction/regrow.ts": "fb13cf7de6524298eb01f3f1c582715d460f3a220b36ef8ee9a91c3fbadfb7e0",
+  "packages/metrics/src/assembly/destruction/processes.ts": "d824b91c483421c31cc63af330136b67bbea1d5be29bace9ba466cbd982f94a1",
+  "packages/metrics/src/assembly/destruction/readouts.ts": "a6bd78f49ee2362be6b43ca19acb646864a3fd0948037bdf1347dcca3d139f0d",
+  "packages/metrics/src/assembly/destruction/verdict.ts": "7e17182e1dcecca7bceb6ce37a888a5018f815ccef39a0aecc20dcf9ca001c4d",
+  "packages/metrics/src/assembly/destruction/observer.ts": "c1362c8a939de97a517eff8c950c278ab6bbe009fbadeb94a41ff82f9fee6c95",
+  "tools/assembly/destruction.ts": "e3a486d1d4ae500a3d66bf2008a06f648895a818e1e1f3756f6d4063083f6683",
+  "docs/assembly-observer-2026-11-02/GRAMMAR.md": "4c78a0749f3776d687f3bcac39afaf7cd6b5f43223bcfca3ff3eeea8d6f1bb4e",
+  "packages/metrics/src/assembly/version.ts": "c3b3d16f73da096fcf94457fa4c3a32766c5312e9f52f0a8c3c8279d4152b1ff",
+  "packages/metrics/src/assembly/protocol.ts": "46318fb63c796ff465f6fc263c2f7a06c71384194a384da604cd7d65ff31072f",
+  "packages/metrics/src/assembly/grammar.ts": "968e87914caebee221cbe86c30fe1738e116eead8660f0d104935a6b3cdc48b6",
+  "packages/metrics/src/assembly/segment.ts": "11fc12d1015e3eeac46a8b4aebd01aafef837e15318cff160e86d891e9c679b8",
+  "packages/metrics/src/assembly/exact.ts": "a78a42a609037ba5675aded821a33a6697a56e716c9d6daad0aa1ae0fd030a6e",
+  "packages/metrics/src/assembly/bound.ts": "9581593e6c4ebd7db472141de0ff1391a110f260fffe03cac74a420bdd877e6b",
+  "packages/metrics/src/assembly/construct.ts": "d86965b6b1efc32494d728ba2c958aa3bdcf50cc9c4f17466a08705bd96a33a5",
+  "packages/metrics/src/assembly/readouts.ts": "2d094aaefe4d667c02664028f5fa0ccea2fdcd49491049e04746d50565da2866",
+  "packages/metrics/src/assembly/fixtures.ts": "cdb1e6da128180d4ae98ea7510050a82a6ef81ed840cdcb58e3f39d8f7cdaba6",
+  "packages/metrics/src/predictability/movie.ts": "84239d1b96d968696f56c80bc459d1111013b2fdd389bd6a868252585c06e3f7",
+  "packages/metrics/src/predictability/losses.ts": "f4c90bacc9fe5099ed054d919cdbef73899e906449341695d2b1f8fd2064c7bb"
+ },
+ "rows": [
+  {
+   "process": "builder-hier12",
+   "sha256": "989af60689607d77eb3e11668c2d5e6958ccc1e541914e311f4be9eb9355e611"
+  },
+  {
+   "process": "template-hier12",
+   "sha256": "f3f97dac21886971c63ddfdb87e5a94f25aceebf79164cc28051037034401e0c"
+  },
+  {
+   "process": "template-dup12",
+   "sha256": "aa8521b503cacdada426411e3e4e6cd15831e7a75f4316367cf494793cecdc95"
+  },
+  {
+   "process": "fresh-random-dup12",
+   "sha256": "ea29fe82831566696eddaff4ed81fb8469bc20393e6a92f4c9920f653f929691"
+  },
+  {
+   "process": "accretion-crystal",
+   "sha256": "f9b0f513a4b7c4fe4c11ab9464d45caf7fa350be1179fdc66629421c6b3ccda0"
+  },
+  {
+   "process": "inert-scatter",
+   "sha256": "1bac28fbfc77c9304165b9c6c17fe3c49e26974b460ee37b1cb5f90bf84390be"
+  },
+  {
+   "process": "stored-image-renderer",
+   "sha256": "0d80dfd33b8888649f9a74f54e7e621bdc38237ced815e619f052d93a008dec3"
+  },
+  {
+   "process": "wrong-store-builder",
+   "sha256": "a611c3e53e1b3ed1bcb748cd81347db46057e06156f740aa25f7351d7201656c"
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "f94bb52b568e33ec0bbe429370b1fbd3aad4ed8a",
+  "node": "v24.2.0",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-03T01:06:10.296Z"
+ }
+}

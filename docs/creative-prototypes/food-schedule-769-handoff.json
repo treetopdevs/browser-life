@@ -1,0 +1,31 @@
+{
+  "branch": "codex/food-schedule-769",
+  "base": "9085497e1561606d6209f42a7df43f05d165e0c7",
+  "planCommit": "bcaaeccc",
+  "sourceCommit": "cd160b44",
+  "gateCommit": "ec3d3b3c",
+  "evidenceCommit": "f01bb789",
+  "status": "Completed Valid Stop; PR117 open dependent on PR116",
+  "attemptCount": 1,
+  "outcomeCount": 1,
+  "runId": "20261027T214231Z-97616",
+  "sourceHashes": {
+    "docs/creative-prototypes/food-schedule-769-plan.md": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "apps/lab/src/food-schedule-769/model.ts": "0b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6",
+    "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
+    "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
+    "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "docs/creative-prototypes/food-floor-longevity-replication-index-1202.json": "666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19",
+    "docs/creative-prototypes/food-floor-longevity-replication-validation.md": "4a57bf9ebb50736dc6109e4c4b4dc8b9a6f8f01d13017e71fafc9f9bfb0a1095",
+    "tools/food-schedule-769/launch.sh": "eddc4386e6da5c16ddb54d94cc68413fc74009e334d03323ac84fe3070669010",
+    "package.json": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpm-lock.yaml": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "tools/test/food-schedule-769.test.ts": "0b6c500941fe28ccfb2424180b7144a3c229c64c4ff4a2f45c2ae69faa124002",
+    "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d"
+  },
+  "next": "Slice complete. Preserve all frozen source, evidence, receipts and media. Further work needs a separate reviewed plan. No automatic retry, tuning, extra seed, horizon extension, merge or deployment.",
+  "updatedAtUTC": "2026-10-27T22:00:06.921303+00:00",
+  "deliveryCommit": "fefb9ab6b571af4cbb2a4b8e9e517e8c94e962c0",
+  "pullRequest": "https://github.com/treetopdevs/browser-life/pull/117"
+}

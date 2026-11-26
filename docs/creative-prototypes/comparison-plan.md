@@ -1,0 +1,17 @@
+# Compare before deepening — 26 October 2026
+
+Fresh branch from PR98 tip 637b6f59. The immediate task is to compare the existing portfolio and choose the next behavior to deepen, not merge/deploy or silently tune another model.
+
+1. Audit existing pilot/validation records across the portfolio. Shortlist worlds with sustained visible change, legible individual or family behavior, and a specific limitation a small next slice could improve. This is editorial judgment, not a calibrated score or human preference study.
+2. Inspect representative existing footage and fixed-camera stills. Preserve the less diverse ecosystem outcome. Do not present unequal horizons, seeds or renderings as a controlled survival competition; note capped populations and supplied food/age limits.
+3. Produce a portable HTML comparison in docs, with compact re-encoded copies of selected existing recordings, source path/hash/media metadata and observation limits. No invented frames, model changes or new simulations. Start movies paused; native controls suffice. Include links to existing local app paths and original reports. Keep comparison outside production entrypoints and packaging.
+4. Record a clear choice, why alternatives rank lower for this user's current goal, and one bounded next implementation plan with fixed cases and creative stop rules. No automatic restart of the failed vision judge or regime diagnostic.
+5. Claude Sonnet 5.5 High plan/content review and Codex Sol 6.1 High before commit; validate artifact links/media and responsive layout, commit/open dependent PR on codex/ecosystem-prototype-library. Update HTML decision log. No deployment.
+
+## Plan-review resolutions
+
+Use the same qualitative fields across candidates: visible spatial/shape variety, continued recorded activity, legibility, and a bounded actionable limitation. These are editorial criteria stated in step 1, not retroactively claimed preregistration or a numerical rubric. Do not rank down a candidate because its footage is missing. Bonds/boundaries have existing records but no surviving video found in the searched locations; their absence is a visual-evidence limitation, not a negative behavior finding. The comparison table retains nonselected outcomes and the rationale for each.
+
+Footage was located before delivery in sibling worktrees. Named pursuit and colonies files actually exist at spatial/browser in the current filesystem; the review's contrary location observation is not adopted. The delivered manifest pins source/delivered hashes and metadata. Spatial footage predates a heading-only edit; label that. Inspect representative frames only and state that full-video viewing is not claimed. Reuse ecosystem movies directly with no further re-encoding. New comparison assets budget: 4 MiB (excluding already-committed reused ecosystem media). Native controls, metadata-only preload, text descriptions and keyboard access; phone layout and local/report/media links checked separately.
+
+The portable document requires the repository-relative media alongside it, not a single standalone HTML file. Local app links explicitly require the existing server on 5390. Markdown links open source text. The HTML log gets a new comparison anchor and preserves all prior sections. Exact Hungry shapes allocations, fixed cases and stop rules must be reviewed before that future implementation; this slice delivers the comparison and decision, not a new physics variant.

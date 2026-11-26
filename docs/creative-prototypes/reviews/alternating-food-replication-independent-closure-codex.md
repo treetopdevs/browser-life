@@ -1,0 +1,5 @@
+# Independent implementation closure — CLEAR
+
+Independent Codex Sol 6.1 High, read-only, following the explicitly authorized reviewer substitution. All three reported blockers are resolved. Browser tick histories enforce population transitions, preterminal extinction rejection, lineage events and sampled cumulative bindings. Every frame enforces genome.maxCells and living-lineage identity. Five rehashed rejection tests cover the gaps. Core tests contain no biology stepping; validation discloses prior partial simulations separately from the scheduled attempt. Reviewer made no edits and ran no tests or simulations.
+
+Reviewed viewer SHA256: 744ca23fbd69a5707d49cecc598a2f33f2895beaa64b035c01064a11bc9cc458. Fix agent confirms 15 core and 15 synthetic browser tests pass, with two actual/media cases pending; typecheck and diff checks pass. Handoff viewer hash has been refreshed. Actual outcome/media verification remains pending. This closure authorizes the explicit approval commit before the one scheduled launch, not any extra seed or retry.

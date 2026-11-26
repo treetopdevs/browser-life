@@ -1,0 +1,41 @@
+[
+  {
+    "seed": 1201,
+    "file": "seed-1201-milestones.png",
+    "sha256": "68850b1d309581acadbfe22c602a7f05c8be1be76860f3dd41885305055a24e2",
+    "sourceArtifactSha256": "6b480bced89b1c7bf9ab759c84fb28c9bfdcd1f9c2a6ecc7e922ddba1a590221",
+    "ticksInReadingOrder": [
+      6000,
+      7000,
+      8000,
+      9000
+    ],
+    "method": "Actual replay canvas screenshots, scaled to420px per panel, arranged2x2. No simulation or interpolation."
+  },
+  {
+    "seed": 1202,
+    "file": "seed-1202-milestones.png",
+    "sha256": "ad18658f32412ae871dde2cd28af304ff8f6b770099ecd761388aa3aa70d9067",
+    "sourceArtifactSha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602",
+    "ticksInReadingOrder": [
+      6000,
+      7000,
+      8000,
+      9000
+    ],
+    "method": "Actual replay canvas screenshots, scaled to420px per panel, arranged2x2. No simulation or interpolation."
+  },
+  {
+    "seed": 1203,
+    "file": "seed-1203-milestones.png",
+    "sha256": "7caa4c4f23e55752cb5fb3d87bd4fe785eb060712c2c08f6e8e80da5c383e9d1",
+    "sourceArtifactSha256": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+    "ticksInReadingOrder": [
+      6000,
+      7000,
+      8000,
+      9000
+    ],
+    "method": "Actual replay canvas screenshots, scaled to420px per panel, arranged2x2. No simulation or interpolation."
+  }
+]

@@ -1,0 +1,12 @@
+**Not CLEAR — one concrete execution blocker.** Review limited to the supplied packet; no tools, tests or simulations used.
+
+1. **P1 — The reserved launch rejects its own preflight output.**  
+   `launch.sh` redirects the entire `--write` invocation into the attempt’s `stdout.log` and `stderr.log`. Inside that invocation, `writeEvidence()` calls `preflight()` **before** `verifyAttemptReservation()`. Its required pnpm/Vitest/Playwright commands use `stdio:'inherit'`, so their normal output populates those logs. Then `claimAttemptStart()` requires both logs to be empty and throws `attempt stdout.log is nonempty before runner start` (or the stderr equivalent).
+
+   Consequently, passing preflight consumes the sticky reservation but prevents either historical regression from starting. The launcher retains the failure, and another launch is prohibited.
+
+   Retain the repeated preflight output separately until the empty-runner-log check and exclusive start claim complete. Update any attempt-file allowlist accordingly, preserving retry rejection. Add a synthetic launch-order test in which successful mocked preflight emits stdout/stderr, the first claim succeeds, and a second claim fails; no biological stepping is needed.
+
+The tick-zero ledger, every-tick body-count bounds, and parent-chronology repairs address the corresponding previous findings. The complete rehashed fixture and malformed tests are present. Required preflight checks are now invoked, but their interaction with the reservation guard blocks execution.
+
+No execution or outcome approval is asserted.

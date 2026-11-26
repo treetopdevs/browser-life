@@ -1,0 +1,32 @@
+{
+  "artifact": "seed-1203-ticks-6000-9000.mp4",
+  "artifactSha256": "e31835171e6c31b004c8b3617dadf1288b0babe1b6c5abb6b0be19cfce141a86",
+  "capture": {
+    "method": "Screenshot of the actual uniform-endurance viewer world panel; no simulation or interpolation",
+    "viewerUrl": "http://localhost:5416/docs/creative-prototypes/uniform-endurance.html",
+    "seed": 1203,
+    "firstActualTick": 6000,
+    "lastActualTick": 9000,
+    "cadenceTicks": 20,
+    "frameCount": 151,
+    "playbackFramesPerSecond": 10,
+    "recordedTicksPerSecond": 200,
+    "durationSeconds": 15.1,
+    "sourceScreenshotSize": "687x789",
+    "encodedVideoSize": "688x790",
+    "encoding": "H.264, yuv420p, CRF 30; one black pixel row/column padded to meet even-dimension codec requirement"
+  },
+  "sourceHashesCapturedAtCapture": true,
+  "sourceSha256": {
+    "manifest": "356401afcb3989c82f33ae271801b6cac0a389d36fee7c8d902e7c2138828a0b",
+    "rawEvidenceFile": "94fa6328fb74038793f859d629ef9535e5f610dd22eceeaa74d4677218b2b15d",
+    "evidenceData": "8c3ac66e4d3699e423a58597411c05b187dc56fdf9dab7b2550296da2fc95b33",
+    "viewerHtml": "076a38904859ebd3e43c2a8f70e656944626339390ab6cc6fee2aaf00e0157ae",
+    "viewerJavaScript": "9eb47c6844d17d567701387ba308ddad7c597856376ae56efa3568fdfd442549",
+    "viewerCss": "53f4019e5efab231209d05558558639438d9c88031d477047cffc82eee4df85d",
+    "model": "b83de32cf42f58c13977dbbd3c74bf9d3068f90b40ec09600b9125ddb0a72009",
+    "runner": "99099663fd619a644c29ff639bca1e6c884bc9d07161f3ba40fe3ec2f0fd7f77"
+  },
+  "note": "All source hashes were measured for this recapture against the frozen final page and manifest. Later changes to page prose or decision text do not change the recorded frames. Raw evidence, evidence-data digest, viewer JavaScript/CSS, model, and runner hashes bind the displayed states and rendering.",
+  "encodingTool": "FFmpeg 9.0.2"
+}

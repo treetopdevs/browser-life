@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-band-longevity-pair",
+  "seed": 1201,
+  "planSha256": "ed1e1a0bf7c997868409b72a0481c5c2cbd60a58ab58a21780350803ab0597f3",
+  "arms": {
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "food-band-longevity-moving-band-seed-1201.json",
+      "rawSha256": "17696e963d1112254207ad0ec6f36927709a9b9859c498ca276ae0bf0358bf43"
+    },
+    "stationaryBand": {
+      "mode": "stationary-band",
+      "url": "food-band-longevity-stationary-band-seed-1201.json",
+      "rawSha256": "8e6a43d01a3b1a78820eac403c320822ea22efc00cb89917087924254052b468"
+    }
+  },
+  "decision": {
+    "status": "both",
+    "summary": "Both worlds pass the 6,000-tick screen and visibly change late in the run. This one seed does not establish equality, superiority or lasting diversity.",
+    "movingBandArtifactSha256": "17696e963d1112254207ad0ec6f36927709a9b9859c498ca276ae0bf0358bf43",
+    "stationaryBandArtifactSha256": "8e6a43d01a3b1a78820eac403c320822ea22efc00cb89917087924254052b468",
+    "visualReceiptUrl": "food-band-longevity-visual-receipt-1201.json",
+    "visualReceiptSha256": "b1c0b82eac60d11f51003f9a3af9f5ac97023bedd373a29a3e2db9bd2065ad0c"
+  }
+}

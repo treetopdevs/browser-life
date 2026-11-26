@@ -1,0 +1,3 @@
+w-F-s1 --scenario wound-in-crowd --seed 1 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end
+w-F-s2 --scenario wound-in-crowd --seed 2 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end
+w-F-s3 --scenario wound-in-crowd --seed 3 --steps 9600 --wound-at 8000 --mut on --gates share,grow,signal --tol 0 --tag-mut-rate 20000 --tag-mut-bud --tag-step 8 --frames end

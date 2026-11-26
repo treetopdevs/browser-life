@@ -404,3 +404,5 @@ seam).
 Left as it is: the CLI test for an edited `source.runId` is refused by the re-derivation before the guard is reached, so it
 would not catch a guard that went back to the body's `runId`; a unit test now calls the guard with the manifest's spec as
 the key, which is what `approve` and `run` pass.
+
+2026-11-01: the v0 rule proposer is also scored as a baseline (`v0Rules`, through `fromRulesProposal`) in the prediction-envelope harness, `docs/prediction-envelope-2026-11-01/`; nothing in v0's frozen section or identities changed.

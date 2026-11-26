@@ -180,3 +180,12 @@ A third Codex pass (Sol 6.1, xhigh) confirmed those five fixes and found no P0 o
 
 Further follow-ups outside this slice: a coordinator `DELETE /api/islands/:id` (or leave on release) so a stopped
 island's row goes at once; and `apps/lab/island.html`'s static copy (above).
+
+## Amendment 2026-10-24: runtime task lease
+
+The runtime-setting follow-up is implemented: `BL_LEASE_MS` configures the normal
+island run/verify lease at coordinator startup. Unset/blank keeps the ten-minute
+default; supplied values must be positive whole milliseconds. This supersedes
+the historical no-runtime-setting statement above. Reclamation and cancellation
+semantics are unchanged; the separate immediate release route remains outside
+this slice. See [design and validation](island-lease-config-2026-10-24.md).

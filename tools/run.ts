@@ -16,9 +16,17 @@
 // writes the state before each listed boundary's cycle to checkpoints/b<NNN>-pre.blck, with its hash
 // in the manifest (RunSpec.preCycleCheckpoints); without it the bundle is as before.
 //
-// --override sets RunSpec.overrides from a comma list of key=integer, the keys mutRate and pondDeath only: the
-// transition hunt's D3 runs (--override mutRate=0) and G1 fallback (e = 1, --override pondDeath=65536, for the
-// conditions pond-nat and pond-shuf, whose own pondDeath it replaces). Without it the spec has no overrides.
+// --override sets RunSpec.overrides from a comma list of key=integer, the keys mutRate, pondDeath, defaultMu, defaultSigma and
+// lightK only: the transition hunt's D3 runs (--override mutRate=0) and G1 fallback (e = 1, --override pondDeath=65536, for the
+// conditions pond-nat and pond-shuf, whose own pondDeath it replaces), and the slab check's three parameters (defaultMu,
+// defaultSigma, lightK; lightK only with a slab preset). Without it the spec has no overrides.
+//
+// Slab preset (--preset slab-spots, rung 1b; docs/3d-rung1b-m5-plan.md): a 256 x 256 x 8 world on GpuSim3. One whole history from step 0
+// with a bundle of its own: besides the usual files, layers.tsv (step, z, photo, grow, decomp, resp, saturated: the role buffer's
+// sums per layer, at every deep census) and a manifest with `layers` and `absentMetrics` (what a slab bundle leaves out). Refused with
+// exit 2: --lineage-obs, species census, --pre-cycle, --branch-from, --picker/--picks-from, --lesion/--feed/--sun/--interventions,
+// --start-from. A slab checkpoint is about 120 MB, so --checkpoint is for forensics only. Run the check with tools/slab-screen.ts and
+// read it with tools/slab-readout.ts.
 // --branch-from DIR --branch-boundary B (both, with --conditions pond-nat or pond-shuf) starts each run from the
 // pre-cycle checkpoint of boundary B in the bundle at DIR (its manifest's preCycleCheckpoints entry, whose hash the
 // file must match) and applies that boundary's transform under the run's own seed first (RunSpec.branch, the hunt's
@@ -130,9 +138,9 @@
 //                                     look identical).
 //                                     Without these flags nothing here changes.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { PRESETS, RULE_VERSION, initWorld, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
+import { cellCount, genomeChannels, isSlab, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
 import { join as joinPath } from "node:path";
-import { requestDevice } from "@bl/sim-gpu";
+import { requestDeviceFor } from "@bl/sim-gpu";
 import {
   INTERVENTIONS_FILE,
   InterventionError,
@@ -142,7 +150,6 @@ import {
   continuationError,
   decodeArtifact,
   interventionsError,
-  labHistory,
   parseInterventionLog,
   parseOverrides,
   mergePickLogs,
@@ -156,7 +163,7 @@ import {
   runExperiment,
   runId,
   sameCompletedRun,
-  sameConfig,
+  slabSpecError,
   specConfig,
   validateInterventions,
   validateSpec,
@@ -170,6 +177,7 @@ import {
   type Sink,
 } from "@bl/runner";
 import { branchFlagsError, branchSource } from "./lib/branch-source.ts";
+import { loadPickRecord, type LabRecord, type PickRecord } from "./lib/pick-record.ts";
 import { claimPickDir, commandAnswerer, denoIo, denoRun, dirPicker, fileAnswerer, pickDirTaken, randomPicker, rulePicker } from "./lib/pickers.ts";
 
 const a = parseArgs(Deno.args, {
@@ -336,69 +344,24 @@ if (picking && specs.length !== 1) die("a --picker or --picks-from run takes one
 if (a["verify-against"] !== undefined && specs.length !== 1) die("--verify-against takes one run per invocation");
 
 /** The record named by --picks-from: a picks.jsonl or a lab run manifest (then a boundary without an entry takes the rule's donors). */
-let record: { entries: PickEntry[]; text?: string; implicit: boolean } | undefined;
-/**
- * A lab run manifest's other half (packages/runner/src/interventions.ts `labHistory`): its lesions and feeds, which become the run's
- * schedule, and what the lab recorded to compare the replay with (its checkpoints, and every logged intervention of any kind, which a
- * checkpoint counts). `pondPicks`: the manifest's config is a pond config whose arm chooses donors, or the manifest holds picks, so
- * the replay is a picked run; a plain (fed or wounded) world is not.
- */
-let lab: { scheduled: ScheduledIntervention[]; pressures: PressureEntry[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
+let record: PickRecord | undefined;
+/** A lab run manifest's other half (tools/lib/pick-record.ts `LabRecord`): its lesions and feeds, pressures, and what the lab recorded to compare the replay with. */
+let lab: LabRecord | undefined;
 if (a["picks-from"] !== undefined) {
+  let text: string;
   try {
-    const text = await Deno.readTextFile(a["picks-from"]);
-    let manifest: Record<string, unknown> | undefined;
-    if (text.trimStart().startsWith("{")) {
-      try {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed?.interventions)) manifest = parsed;
-      } catch { /* several JSON lines: a pick log */ }
-    }
-    if (manifest) {
-      if (scheduled.length > 0) die("--lesion, --feed and --interventions cannot be combined with a lab run manifest in --picks-from: the manifest is the history, and its lesions and feeds are the schedule");
-      // The start world is the preset's, which the lab planted and whose hash is checked below; a founder option would build
-      // another world under the same config, which that check cannot see (it hashes the preset's start).
-      if (a["solo-founder"] !== undefined || a["solo-genome"] !== undefined || a["founder-set"] !== undefined)
-        die("--solo-founder, --solo-genome and --founder-set cannot be combined with a lab run manifest in --picks-from: the manifest is the history, and its start world is the preset's");
-      const spec = specs[0];
-      const labPreset = PRESETS.find((x) => x.id === spec.presetId);
-      const mismatches = [
-        manifest.presetId !== spec.presetId && "presetId",
-        manifest.seed !== spec.seed && "seed",
-        manifest.ruleVersion !== RULE_VERSION && "ruleVersion",
-        !sameConfig(manifest.cfg as WorldConfig, specConfig(spec)) && "cfg",
-        JSON.stringify(manifest.init) !== JSON.stringify(labPreset?.init) && "init",
-      ].filter(Boolean);
-      if (mismatches.length) die(`the lab manifest does not describe this run: ${mismatches.join(", ")} differ`);
-      // The lab recorded the hash of the world it planted. Its lesions and feeds are at absolute coordinates, so a start world that this
-      // checkout builds differently (initWorld or a founder set drifted without a RULE_VERSION bump) would take them on another world.
-      if (typeof manifest.startHash === "string" && labPreset !== undefined) {
-        const here = stateHash(initWorld(specConfig(spec), labPreset.init));
-        if (manifest.startHash !== here)
-          die(`the lab planted a start world with hash ${manifest.startHash}, but this checkout builds ${here} from the same preset, config and seed: the start world has changed since, so the manifest's lesions and feeds would land on another world`);
-      }
-      const settings = manifest.settings as { censusEvery?: number; deepEvery?: number } | undefined;
-      if (settings && (settings.censusEvery !== spec.censusEvery || settings.deepEvery !== spec.deepEvery))
-        console.error(`note: the lab observed with census ${settings.censusEvery} / deep ${settings.deepEvery}, this run with ${spec.censusEvery} / ${spec.deepEvery}: the physics replays, but summary.finalHash can differ from the lab's`);
-      const history = labHistory(manifest); // refuses edgesFrom > 0 and a lesion or feed that does not validate
-      record = { entries: history.picks, implicit: true }; // no pick lines of its own: a recovery copy gets them written out
-      const labCfg = specConfig(spec);
-      lab = {
-        scheduled: history.scheduled,
-        pressures: history.pressures,
-        checkpoints: Array.isArray(manifest.checkpoints) ? manifest.checkpoints : [],
-        logged: manifest.interventions as { step?: unknown }[],
-        pondPicks: history.picks.length > 0 || (labCfg.pondPeriod !== undefined && (labCfg.pondArm === "scaf" || labCfg.pondArm === "rand" || labCfg.pondArm === "breed")),
-      };
-    } else {
-      // A log cut mid-record by a crash is replayed up to its last complete line; any other damage is an error.
-      const log = parsePickLogPrefix(text);
-      if (log.torn !== null) console.error(`note: ${a["picks-from"]} ends in a torn record (${log.torn.length} bytes, not JSON); replaying its ${log.entries.length} complete picks`);
-      record = { entries: log.entries, text: log.text, implicit: false };
-    }
+    text = await Deno.readTextFile(a["picks-from"]);
   } catch (e) {
     die(`--picks-from ${a["picks-from"]}: ${(e as Error).message}`);
   }
+  ({ record, lab } = loadPickRecord(text!, {
+    file: a["picks-from"],
+    spec: specs[0],
+    scheduledCount: scheduled.length,
+    founderOption: a["solo-founder"] !== undefined || a["solo-genome"] !== undefined || a["founder-set"] !== undefined,
+    die,
+    note: (m) => console.error(m),
+  }));
 }
 if (picking) {
   const only = specs[0];
@@ -570,6 +533,13 @@ for (const spec of specs) {
     console.error(`invalid spec for ${runId(spec)}: ${branchBad}`);
     Deno.exit(2);
   }
+  // A slab (preset slab-spots) is one whole history from step 0; its refusals are named before any GPU work, like a branch's.
+  const slabBad = slabSpecError(spec, cfg, { branchFrom: source?.state, start: startFrom?.state, observer: startFrom?.observer });
+  if (slabBad) {
+    console.error(`invalid spec for ${runId(spec)}: ${slabBad}`);
+    Deno.exit(2);
+  }
+  if (isSlab(cfg) && spec.checkpointEvery > 0) console.warn(`warning: each checkpoint of a slab is about ${Math.round((cellCount(cfg) * (7 + genomeChannels(cfg)) * 4) / 1e6)} MB; --checkpoint is for forensics only`);
   const preCycleBad = preCycleError(spec, cfg, source?.state.step ?? 0); // every run here starts from its preset at step 0, or a branch from its source's step
   if (preCycleBad) {
     console.error(`invalid spec for ${runId(spec)}: ${preCycleBad}`);
@@ -622,7 +592,7 @@ if (specs[0].picked) {
     if (taken) die(taken);
   }
 }
-const device = await requestDevice(navigator.gpu, specConfig(specs[0]));
+const device = await requestDeviceFor(navigator.gpu, specConfig(specs[0]));
 for (const spec of specs) {
   const dir = `${a.out}/${runId(spec)}`;
   // A fork claims its directory with a mkdir that fails when it exists (atomic), so a run that appeared there after its start checks, or a

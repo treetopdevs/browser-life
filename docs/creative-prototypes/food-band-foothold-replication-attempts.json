@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "completed single reserved attempt",
+  "sourceCommit": "fee9cc485775a24a5b4f01e8e2127fa54501bba7",
+  "attemptId": "run-20261027T224410Z-45508",
+  "initialPreflightStop": {
+    "reserved": false,
+    "biologyStepped": false,
+    "reason": "git show ENOBUFS; separately reviewed repair before reservation"
+  },
+  "archive": {
+    "path": "food-band-foothold-replication-attempt-20261027T224410Z.tar.gz",
+    "sha256": "8b12fb2b341afa52c4d905fde2b20aaa7268617e76d6233069e89bbf25c75443"
+  },
+  "files": {
+    "reservation.json": "0748c7a08c8ca6e227424ba978d1d4c09c460d97b34a32fc96a96108c6472080",
+    "run-20261027T224410Z-45508/attempt-status.json": "61202175983ab363edfb20b56498e1214f015f2e61ccd5e7b3dd3dec3102daa9",
+    "run-20261027T224410Z-45508/baseline-samples.jsonl": "1e9935c5ba1caaa0f21b40d7e4a9ee81ae17a4e5dc50d3fe36a05aecd8511a08",
+    "run-20261027T224410Z-45508/baseline-snapshots.jsonl": "f6fdc1f5e6a4dbab544918d0f851b709bd9936f9e18928c37b7a26acd9df4c55",
+    "run-20261027T224410Z-45508/baseline-ticks.jsonl": "3531654a3c42dfe002134f141519e41deebd5b3f48e581d29b846d3a233e0cd1",
+    "run-20261027T224410Z-45508/candidate-evidence.json": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+    "run-20261027T224410Z-45508/historical-foothold-regression.json": "db6491cfdf156b2f266e29b473d082cdaad88ea08849f800b782a68075b3a49a",
+    "run-20261027T224410Z-45508/historical-foothold-samples.jsonl": "088132e3a3df59e30a169fefb95c71fc8d3053fd2096ce148a5cb10b47451ac0",
+    "run-20261027T224410Z-45508/historical-foothold-snapshots.jsonl": "08836732205577b748cb34ddc453ad21c2ad6d4fc67a75909e14cbd73f3c3c85",
+    "run-20261027T224410Z-45508/historical-foothold-ticks.jsonl": "862373606fec07587d56c163db5f0b971f5b154c9265e8d2c70f51f29afbd124",
+    "run-20261027T224410Z-45508/intent.json": "56f14dd55c20ee865ca5b91ca71bb56c3aabd4206356134c8dac22b5a6ee2bcd",
+    "run-20261027T224410Z-45508/regression-complete.json": "0f0c77a201a7f535368b8f44673ce678f60b5dcc33c6926c54455abe78679995",
+    "run-20261027T224410Z-45508/result.json": "e3f2580ee2596fb0c36a7f70530a382a10e8eda4033378c96d8581de305fdaf5",
+    "run-20261027T224410Z-45508/runner-start.json": "1e062a9f1c83b7f015017a963d46635108aa45f6d6d18c8dd442fea0540e4eaa",
+    "run-20261027T224410Z-45508/samples.jsonl": "999042719b55c319d69653f8a6be234a41bf4e06a1c5af2ca22958c7b100a95f",
+    "run-20261027T224410Z-45508/snapshots.jsonl": "95598491c7151f4c9ef26390e745bf2cf61977f75c592b89b3e4db6e6996d875",
+    "run-20261027T224410Z-45508/stages.jsonl": "7f1472f6785598ac1c87cab18014a049ebab40441fe36bacb5f4aaf4c2dc92cd",
+    "run-20261027T224410Z-45508/stderr.log": "29c5ee0f6b0b20dbb259b99d01276198c3d28190090706394608d4deda6d2c0b",
+    "run-20261027T224410Z-45508/stdout.log": "013bc7835bf9c8950a69bc02cfa3d9036b84e0ad9d4b0b7ecec550424d3a9b18",
+    "run-20261027T224410Z-45508/ticks.jsonl": "cdcfbd21ea7286568036a07081cfeb77c90b6efbc281570169f804e35b3103ff"
+  },
+  "artifactSha256": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+  "dataSha256": "575624dbb482812c23350074b9a919d2650ad7bf5d9e4065e655753c4da732e7",
+  "evidenceSha256": {
+    "food-band-foothold-replication-seed-1203.json": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+    "food-band-foothold-replication-index-1203.json": "bdaf6c4ab1f36281587bf1d5726d0869b0b0b31b686e7af0ea74d9b111670072",
+    "food-band-foothold-replication-summary.json": "dc998ca0227cc9a80648c399c5c04136c4712b080af74189b89464a666d7b1e5",
+    "food-band-foothold-replication-visual-receipt-1203.json": "3e8752bac14497a2a6e52ad9e3e939aadf4bf0c346b16d78a3b80ceb20574d38",
+    "food-band-foothold-replication-plan.md": "2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99",
+    "food-band-foothold-replication-inputs.json": "684b61f793c804cd551065c2b6cd65abe53e763df5b4a424e013fe8283e018af",
+    "foothold-replication-review/pre-reservation-buffer-stop.log": "f86f857805ab1792abf44c503f71c425c9337c9f81f16f6a8ffddf4109583b51",
+    "foothold-replication-review/evidence-clear.md": "8da8698a58ef0eafb51460be758fce48307767773c6cb66c8b7cde1b70a6be2f"
+  }
+}

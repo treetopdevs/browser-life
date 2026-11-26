@@ -1,0 +1,15 @@
+
+## Second pass (Sol 6.1 High, read-only, exit 0), 14 Nov 2026
+- **P2 — Correlated ghosts still support PAY.** [bootstrap-analyze.ts:243](tools/mycelium/bootstrap-analyze.ts:243) ignores `ghostCorr`. With correlation `0.9`, intake 20% higher on than ghost, unchanged safeguards, and zero null-seed noise, both checkpoints pass. This can support `KEPT-AND-PAYS`; the design requires votes using this void control to be unresolved.
+
+- **P2 — Short branches can earn the full F label.** [bootstrap-analyze.ts:230](tools/mycelium/bootstrap-analyze.ts:230) judges arbitrary branch lengths. Two **100-step** branches with a 20% intake gain, plus otherwise passing controls, produce `KEPT-AND-PAYS` in an in-memory probe. The required minimum is 2,000 steps.
+
+- **P2 — Joint-vote enforcement remains incomplete.** [observe-bootstrap.ts:558](tools/mycelium/observe-bootstrap.ts:558) returns `KEPT-STATIC-SPONGE` when `(a,b,d)` pass on seeds 1–6 and `(H,!G)` pass on seeds 3–8: only four seeds satisfy the conjunction. Similarly, [observe-bootstrap.ts:593](tools/mycelium/observe-bootstrap.ts:593) can return `KEPT-AND-USED` with K on seeds 1–6 and `(b,c,d)` on seeds 3–8. Both violate the same-seed requirement.
+
+- **P2 — One blocked pair can establish D selection.** [bootstrap-analyze.ts:214](tools/mycelium/bootstrap-analyze.ts:214) reduces the blocked cohort to available pairs. With eight passing inherit slots but only one blocked on/off pair showing no deposit lift, SELECT becomes Y and the label becomes `PAYS-AND-SELECTED`. The missing seven comparisons never enter the completeness check.
+
+- **P2 — A mismatched diffusion twin can establish TRANSIENT.** [bootstrap-analyze.ts:123](tools/mycelium/bootstrap-analyze.ts:123) never checks realised conduction matching. A complete cohort with realised PW mean `Dd=50`, twin `diffA=42`, rows intake +30%, flat controls, and positive flux can receive `TRANSIENT`. The mismatch exceeds 15%, so the twin must be void and the mechanism unresolved.
+
+- **P2 — F import evidence ignores census coverage.** [bootstrap-analyze.ts:338](tools/mycelium/bootstrap-analyze.ts:338) checks only averaged imports. If layers meet the 20-particle minimum at just **1 of 100** late censuses, `impLayer=1` there and null elsewhere still averages to 1. With `impNon=0`, predicate (b) passes and can enable `KEPT-AND-PAYS`, despite failing the required 50% coverage.
+
+- **P2 — Resume validation still ignores branch settings.** [bootstrap-arms.ts:323](tools/mycelium/bootstrap-arms.ts:323) accepts matching files without comparing checkpoint plans, branch lengths, or grids. Finish a run using `--no-branch`, then rerun the same output directory with default branching: it skips the existing file and can report clean completion while all required branches remain absent.

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-alternating-food-pair",
+  "seed": 1203,
+  "planSha256": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8",
+  "arms": {
+    "baseline": {
+      "kind": "hungry-shapes-split-food-replication-arm",
+      "mode": "split-band",
+      "url": "split-food-replication-seed-1203.json",
+      "rawSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+      "dataSha256": "d9e546968191c29d35d4e096cc891d0576d68531870643d6f44e144ced35e343"
+    },
+    "alternating": {
+      "kind": "hungry-shapes-alternating-food-arm",
+      "mode": "alternating-band",
+      "url": "alternating-food-seed-1203.json",
+      "rawSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "One alternating-food trajectory passes the frozen screen: a strong1500\u20132000 growth/retreat shift, then a population trough and recovery to31 bodies with families7/2/22. Only one of three late seasonal blocks passes. Static bands also exhibit a qualifying block; no causation, adaptation or superiority claim. Stop after this seed.",
+    "baselineArtifactSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+    "alternatingArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+    "visualReceiptUrl": "alternating-food-visual-receipt-1203.json",
+    "visualReceiptSha256": "a8e246ce1d6290c07325292a9651a9283b487df60da47e57432416976010a22b"
+  }
+}

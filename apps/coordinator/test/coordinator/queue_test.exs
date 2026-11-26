@@ -34,6 +34,141 @@ defmodule Coordinator.QueueTest do
   defp done(t, island, digest),
     do: Queue.complete(t.segment.id, island, t.lease, "run", digest, %{})
 
+  test "leave abandons a run, persists removal, refuses stale decisions and reassigns", %{
+    dir: dir
+  } do
+    {:ok, 3} = Queue.create_experiment(@spec_ok)
+    {:ok, a} = Queue.join(%{})
+    {:ok, b} = Queue.join(%{})
+    {:ok, task} = Queue.next_task(a.id)
+    assert {:error, :unauthorized} = Queue.leave(a.id, b.token)
+    assert Queue.authenticate(a.id, a.token)
+    assert :ok = Queue.leave(a.id, a.token)
+    assert :ok = Queue.leave(a.id, a.token)
+    assert nil == Queue.island_info(a.id)
+    assert {:ok, %{kind: "idle"}} = Queue.next_task(a.id)
+    assert {:error, _} = done(task, a.id, "h0")
+    assert {:error, _} = Queue.heartbeat(task.segment.id, a.id, task.lease)
+
+    assert {:error, "lease lost"} =
+             Queue.publish_checkpoint(
+               task.segment.id,
+               a.id,
+               task.lease,
+               "unused-staged-file",
+               "h0",
+               "0000000000000000"
+             )
+
+    state = :sys.get_state(Queue)
+    assert state.segments[task.segment.id].status == "pending"
+    assert hd(state.segments[task.segment.id].attempts).outcome == "abandoned"
+    persisted = dir |> Path.join("state.bin") |> File.read!() |> :erlang.binary_to_term()
+    refute Map.has_key?(persisted.islands, a.id)
+    assert persisted.segments == state.segments
+    {:ok, next} = Queue.next_task(b.id)
+    assert next.segment.id == task.segment.id
+    refute next.lease == task.lease
+  end
+
+  test "leave preserves a completed run and releases only its pending verifier", %{dir: dir} do
+    {:ok, 3} = Queue.create_experiment(@spec_ok)
+    {:ok, a} = Queue.join(%{})
+    {:ok, b} = Queue.join(%{})
+    {:ok, c} = Queue.join(%{})
+    {:ok, task} = Queue.next_task(a.id)
+    upload(dir, task, a.id, "h0")
+    assert {:ok, "done"} = done(task, a.id, "h0")
+    {:ok, verify} = Queue.next_task(b.id)
+    assert verify.kind == "verify"
+    before = :sys.get_state(Queue).segments[task.segment.id]
+    assert :ok = Queue.leave(a.id, a.token)
+    assert :sys.get_state(Queue).segments[task.segment.id] == before
+    assert :ok = Queue.leave(b.id, b.token)
+    seg = :sys.get_state(Queue).segments[task.segment.id]
+    assert seg.status == "done"
+
+    assert Enum.find(seg.attempts, &(&1.id == task.lease)) ==
+             Enum.find(before.attempts, &(&1.id == task.lease))
+
+    assert Enum.find(seg.attempts, &(&1.id == verify.lease)).outcome == "abandoned"
+
+    assert {:error, _} =
+             Queue.complete(verify.segment.id, b.id, verify.lease, "verify", "h0", %{})
+
+    {:ok, next} = Queue.next_task(c.id)
+    assert next.kind == "verify"
+    assert next.segment.id == verify.segment.id
+
+    assert {:ok, "verified"} =
+             Queue.complete(next.segment.id, c.id, next.lease, "verify", "h0", %{})
+
+    completed = :sys.get_state(Queue).segments[next.segment.id]
+    assert :ok = Queue.leave(c.id, c.token)
+    assert :sys.get_state(Queue).segments[next.segment.id] == completed
+  end
+
+  test "leaving retains producer and verifier provenance across restart, but no idle history", %{
+    dir: dir
+  } do
+    {:ok, 3} = Queue.create_experiment(@spec_ok)
+    {:ok, a} = Queue.join(%{"adapter" => "producer GPU"})
+    {:ok, b} = Queue.join(%{"adapter" => "verifier GPU"})
+    {:ok, idle} = Queue.join(%{})
+    {:ok, task} = Queue.next_task(a.id)
+    upload(dir, task, a.id, "h0")
+    assert {:ok, "done"} = done(task, a.id, "h0")
+    {:ok, verify} = Queue.next_task(b.id)
+
+    assert {:ok, "verified"} =
+             Queue.complete(verify.segment.id, b.id, verify.lease, "verify", "h0", %{})
+
+    for island <- [a, b, idle], do: assert(:ok == Queue.leave(island.id, island.token))
+
+    assert :sys.get_state(Queue).historical_islands == %{
+             a.id => %{adapter: "producer GPU"},
+             b.id => %{adapter: "verifier GPU"}
+           }
+
+    stop_supervised!(Queue)
+    start_supervised!({Queue, data_dir: dir})
+    [first | _] = Queue.experiment("t1").segments
+    assert first.producedBy == "producer GPU"
+    assert first.verifiedBy == "verifier GPU"
+    assert Queue.status().islands == []
+    for island <- [a, b, idle], do: refute(Queue.authenticate(island.id, island.token))
+    # Model history removal, then exercise the normal persistence boundary.
+    :sys.replace_state(Queue, fn s ->
+      %{
+        s
+        | segments: Map.new(s.segments, fn {id, seg} -> {id, Coordinator.Segment.reset(seg)} end)
+      }
+    end)
+
+    assert {:ok, _} = Queue.join(%{})
+    assert :sys.get_state(Queue).historical_islands == %{}
+  end
+
+  test "complete and leave have one serialized outcome", %{dir: dir} do
+    {:ok, 3} = Queue.create_experiment(@spec_ok)
+    {:ok, a} = Queue.join(%{})
+    {:ok, task} = Queue.next_task(a.id)
+    upload(dir, task, a.id, "h0")
+    completion = Task.async(fn -> done(task, a.id, "h0") end)
+    leaving = Task.async(fn -> Queue.leave(a.id, a.token) end)
+    result = Task.await(completion)
+    assert :ok = Task.await(leaving)
+    seg = :sys.get_state(Queue).segments[task.segment.id]
+
+    case result do
+      {:ok, "done"} -> assert seg.status == "done"
+      {:error, _} -> assert seg.status == "pending"
+    end
+
+    refute Enum.any?(seg.attempts, &(&1.outcome == "pending"))
+    assert nil == Queue.island_info(a.id)
+  end
+
   test "validates specs before any arithmetic or allocation" do
     assert {:ok, 3} = Queue.create_experiment(@spec_ok)
     assert {:error, "experiment exists"} = Queue.create_experiment(@spec_ok)

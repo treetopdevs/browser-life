@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="description" content="Runs the food-schedule screens live and draws where food is offered as it moves. An exploration, not evidence." />
+  <title>Food bands · Cadence Garden</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="canonical" href="https://cadence.garden/food-bands/" />
+</head>
+<body class="food-bands-page">
+  <a class="skip" href="#main">Skip to the worlds</a>
+  <header class="siteheader"><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Engineered world · prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Exploration, not evidence</p>
+      <h1>Watch where the food goes.</h1>
+      <p>Each screen below was run once as a saved experiment. This page runs the same worlds again, live, on your computer, and draws where food is offered: the band that slides east, the two fixed columns, the side that switches every 100 pulses, the small floor that never switches. Nothing here is a result. The saved results stay on their own pages.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> bodies, growth, food, reproduction and inheritance are explicit rules, and every food band is a rule too. Nothing here was discovered by the bodies.</p>
+    </section>
+
+    <section class="setup" aria-labelledby="setup-title">
+      <h2 id="setup-title" class="visually-hidden">Choose a screen and a seed</h2>
+      <fieldset id="screen-picker" class="picker">
+        <legend>1. Pick a screen</legend>
+        <p class="hint">Each choice says which worlds run side by side and what is different between them.</p>
+        <div id="screen-choices" class="choices"></div>
+      </fieldset>
+      <div class="seedbox">
+        <fieldset id="seed-picker" class="picker">
+          <legend>2. Pick a seed</legend>
+          <p class="hint">A seed fixes the starting positions and every random draw. These are the seeds the screen was run on.</p>
+          <div id="seed-choices" class="choices seed-choices"></div>
+          <form id="other-seed-form" class="other-seed" hidden>
+            <label for="other-seed">Other seed</label>
+            <input id="other-seed" name="seed" type="text" inputmode="numeric" autocomplete="off" aria-describedby="other-seed-note other-seed-error" />
+            <button type="submit">Use this seed</button>
+            <p id="other-seed-note" class="warning">Exploration only: this seed was not part of the screen, so there is no recorded run to compare with and nothing here counts toward the screen's result.</p>
+            <p id="other-seed-error" class="error" role="alert"></p>
+          </form>
+        </fieldset>
+        <div id="optional-arm" class="optional" hidden>
+          <label class="check"><input id="optional-arm-toggle" type="checkbox" /> <span id="optional-arm-label"></span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Playback controls">
+      <div class="transport">
+        <button id="play" class="primary" type="button">Play</button>
+        <button id="step" type="button">One tick</button>
+        <button id="reset" type="button">Reset to tick 0</button>
+        <label for="pace">Pace
+          <select id="pace">
+            <option value="1">Slow: 30 ticks a second</option>
+            <option value="4">Medium: 120 ticks a second</option>
+            <option value="16">Fast: 480 ticks a second</option>
+            <option value="max">Maximum: as fast as the page stays smooth</option>
+          </select>
+        </label>
+      </div>
+      <div class="clock" aria-live="off"><span>Shared time</span><strong>Tick <span id="tick">0</span> <small>/ <span id="horizon">3,000</span></small></strong><span id="status" role="status" aria-live="polite">Paused · ready</span></div>
+    </section>
+
+    <section id="screen-summary" class="summary" aria-live="polite"></section>
+
+    <section class="worlds" id="worlds" aria-label="Worlds"></section>
+
+    <section class="compare" id="compare-section" aria-labelledby="compare-title" hidden>
+      <h2 id="compare-title">Check this page against the recorded run</h2>
+      <p class="hint">A saved recording of this screen is available on this computer. The check replays the same world from tick 0 and compares it with the recording at every tick it saved.</p>
+      <div class="compare-row"><button id="compare" type="button">Compare with the recorded run</button><span id="compare-progress" role="status"></span></div>
+      <ul id="compare-result" class="compare-result"></ul>
+    </section>
+
+    <section class="accounting" aria-labelledby="accounting-title">
+      <h2 id="accounting-title">Accounting</h2>
+      <p class="hint">Food units offered, taken up and left over, and what happened to the bodies, from the model's own counters.</p>
+      <div class="table-wrap"><table id="accounting"><caption class="visually-hidden">Accounting for each running world</caption><thead></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="explanation" aria-labelledby="read-title">
+      <h2 id="read-title">How to read the pictures</h2>
+      <ul>
+        <li><span class="swatch swatch-eligible"></span><strong>Green tint:</strong> where this world may offer food right now.</li>
+        <li><span class="swatch swatch-offered"></span><strong>Gold squares:</strong> the tiles the most recent food pulse actually picked. A pulse offers 768 units; a tile picked twice shows once. Before the first pulse there are none.</li>
+        <li><span class="swatch swatch-outline"></span><strong>Outline:</strong> the band's edges. A dashed outline is a band that is not receiving the main share now.</li>
+        <li><strong>Faint green wash:</strong> food on the tile (brighter is fuller). <strong>Coloured squares:</strong> body cells, one colour per founding family.</li>
+      </ul>
+      <div class="toolbar-end"><button id="export" type="button">Download the current counts (JSON)</button><span id="file-status" role="status">Saves only when you press the button. Nothing else is written.</span></div>
+    </section>
+  </main>
+  <script type="module" src="/src/food-bands/page.ts"></script>
+</body>
+</html>

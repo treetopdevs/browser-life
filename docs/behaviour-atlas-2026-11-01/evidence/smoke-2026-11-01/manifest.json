@@ -1,0 +1,441 @@
+{
+ "tool": "atlas compare",
+ "command": [
+  "deno",
+  "run",
+  "-A",
+  "tools/atlas.ts",
+  "compare",
+  "--out",
+  "runs/atlas/smoke-2026-11-01",
+  "--histories",
+  "1,2",
+  "--budget",
+  "64",
+  "--batch",
+  "16"
+ ],
+ "gitHead": "42cad5dd9aa5eebaf1dc380795e5d53996338b1b",
+ "versions": {
+  "schemaVersion": 3,
+  "ruleVersion": 1,
+  "metricsVersion": 2,
+  "descriptors": "atlas-physical-v1",
+  "founderSet": "m3-50886563ec90fb39"
+ },
+ "eval": {
+  "tile": 64,
+  "side": 8,
+  "reps": 4,
+  "growSteps": 3000,
+  "recoverSteps": 2000,
+  "darkSteps": 2000,
+  "censusEvery": 100,
+  "lesionFrac": 0.31,
+  "world": {
+   "defaultMu": 60,
+   "defaultSigma": 20,
+   "kernelRadius": 9,
+   "lightMode": "uniform",
+   "lightBase": 40,
+   "lightAmp": 160
+  },
+  "nutrient": 32,
+  "biomass": 64,
+  "seed": 1
+ },
+ "atlasSpec": {
+  "descriptors": "atlas-physical-v1",
+  "interval": 100,
+  "bins": 8,
+  "displacementRange": [
+   0,
+   0.4
+  ],
+  "persistenceRange": [
+   0.4,
+   1
+  ]
+ },
+ "massSpeedSpec": {
+  "bins": 8,
+  "massRange": [
+   7,
+   13
+  ],
+  "speedRange": [
+   0,
+   4
+  ]
+ },
+ "selectorReads": {
+  "random-viable": [
+   "screen:survived",
+   "screen:reps"
+  ],
+  "mass-speed": [
+   "screen:survived",
+   "screen:reps",
+   "screen:recovery",
+   "screen:recovered",
+   "screen:regenerated",
+   "screen:lightDependent",
+   "screen:meanMass",
+   "screen:speed"
+  ],
+  "physical": [
+   "screen:survived",
+   "screen:reps",
+   "screen:descriptor.displacement",
+   "screen:descriptor.persistence"
+  ],
+  "embedding": []
+ },
+ "panel": {
+  "version": "atlas-panel-v1",
+  "tests": [
+   {
+    "id": "sweep-survival",
+    "version": "atlas-panel-v1",
+    "reads": [
+     "sweep-light:survived",
+     "sweep-light:reps"
+    ]
+   },
+   {
+    "id": "lean-survival",
+    "version": "atlas-panel-v1",
+    "reads": [
+     "lean-medium:survived",
+     "lean-medium:reps"
+    ]
+   },
+   {
+    "id": "fresh-reproduction",
+    "version": "atlas-panel-v1",
+    "reads": [
+     "screen:reproduction"
+    ]
+   }
+  ],
+  "assays": {
+   "lean-medium": {
+    "tile": 64,
+    "side": 8,
+    "reps": 4,
+    "growSteps": 3000,
+    "recoverSteps": 2000,
+    "darkSteps": 2000,
+    "censusEvery": 100,
+    "lesionFrac": 0.31,
+    "world": {
+     "defaultMu": 60,
+     "defaultSigma": 20,
+     "kernelRadius": 9,
+     "lightMode": "uniform",
+     "lightBase": 40,
+     "lightAmp": 160
+    },
+    "nutrient": 16,
+    "biomass": 64,
+    "seed": null
+   },
+   "screen": {
+    "tile": 64,
+    "side": 8,
+    "reps": 4,
+    "growSteps": 3000,
+    "recoverSteps": 2000,
+    "darkSteps": 2000,
+    "censusEvery": 100,
+    "lesionFrac": 0.31,
+    "world": {
+     "defaultMu": 60,
+     "defaultSigma": 20,
+     "kernelRadius": 9,
+     "lightMode": "uniform",
+     "lightBase": 40,
+     "lightAmp": 160
+    },
+    "nutrient": 32,
+    "biomass": 64,
+    "seed": null
+   },
+   "sweep-light": {
+    "tile": 64,
+    "side": 8,
+    "reps": 4,
+    "growSteps": 3000,
+    "recoverSteps": 2000,
+    "darkSteps": 2000,
+    "censusEvery": 100,
+    "lesionFrac": 0.31,
+    "world": {
+     "defaultMu": 60,
+     "defaultSigma": 20,
+     "kernelRadius": 9,
+     "lightMode": "sweep",
+     "lightBase": 20,
+     "lightAmp": 220,
+     "dayPeriod": 1024
+    },
+    "nutrient": 32,
+    "biomass": 64,
+    "seed": null
+   }
+  }
+ },
+ "spec": {
+  "arms": [
+   "random-viable",
+   "mass-speed",
+   "physical",
+   "embedding"
+  ],
+  "histories": [
+   1,
+   2
+  ],
+  "budget": 64,
+  "batchSize": 16,
+  "randomFraction": 0.25,
+  "pool": "M3 founder set",
+  "coverageSeed": 1
+ },
+ "unimplemented": [
+  {
+   "arm": "embedding",
+   "history": 1
+  },
+  {
+   "arm": "embedding",
+   "history": 2
+  }
+ ],
+ "calls": [
+  {
+   "split": "screen",
+   "seed": 100000,
+   "n": 12
+  },
+  {
+   "split": "screen",
+   "seed": 120100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 120200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 120300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 120400,
+   "n": 4
+  },
+  {
+   "split": "screen",
+   "seed": 140100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 140200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 140300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 140400,
+   "n": 4
+  },
+  {
+   "split": "screen",
+   "seed": 160100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 160200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 160300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 160400,
+   "n": 4
+  },
+  {
+   "split": "screen",
+   "seed": 200000,
+   "n": 12
+  },
+  {
+   "split": "screen",
+   "seed": 220100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 220200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 220300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 220400,
+   "n": 4
+  },
+  {
+   "split": "screen",
+   "seed": 240100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 240200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 240300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 240400,
+   "n": 4
+  },
+  {
+   "split": "screen",
+   "seed": 260100,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 260200,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 260300,
+   "n": 16
+  },
+  {
+   "split": "screen",
+   "seed": 260400,
+   "n": 4
+  },
+  {
+   "split": "held-out",
+   "seed": 900100000,
+   "n": 16,
+   "assay": "lean-medium"
+  },
+  {
+   "split": "held-out",
+   "seed": 900100001,
+   "n": 16,
+   "assay": "lean-medium"
+  },
+  {
+   "split": "held-out",
+   "seed": 900100002,
+   "n": 4,
+   "assay": "lean-medium"
+  },
+  {
+   "split": "held-out",
+   "seed": 900110000,
+   "n": 16,
+   "assay": "screen"
+  },
+  {
+   "split": "held-out",
+   "seed": 900110001,
+   "n": 16,
+   "assay": "screen"
+  },
+  {
+   "split": "held-out",
+   "seed": 900110002,
+   "n": 4,
+   "assay": "screen"
+  },
+  {
+   "split": "held-out",
+   "seed": 900120000,
+   "n": 16,
+   "assay": "sweep-light"
+  },
+  {
+   "split": "held-out",
+   "seed": 900120001,
+   "n": 16,
+   "assay": "sweep-light"
+  },
+  {
+   "split": "held-out",
+   "seed": 900120002,
+   "n": 4,
+   "assay": "sweep-light"
+  },
+  {
+   "split": "held-out",
+   "seed": 900200000,
+   "n": 16,
+   "assay": "lean-medium"
+  },
+  {
+   "split": "held-out",
+   "seed": 900200001,
+   "n": 13,
+   "assay": "lean-medium"
+  },
+  {
+   "split": "held-out",
+   "seed": 900210000,
+   "n": 16,
+   "assay": "screen"
+  },
+  {
+   "split": "held-out",
+   "seed": 900210001,
+   "n": 13,
+   "assay": "screen"
+  },
+  {
+   "split": "held-out",
+   "seed": 900220000,
+   "n": 16,
+   "assay": "sweep-light"
+  },
+  {
+   "split": "held-out",
+   "seed": 900220001,
+   "n": 13,
+   "assay": "sweep-light"
+  }
+ ],
+ "seconds": {
+  "search": 534.1443914590001,
+  "total": 1042.287701042
+ }
+}

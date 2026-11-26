@@ -33,9 +33,11 @@ The Vite development and preview servers forward `/api/*` to the local coordinat
 
 To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `PORT` and `LAB_PORT` override the default ports, 4000 and 5173.
 
+`bin/dev` and `bin/garden-dev` stop their children on Ctrl-C (`bin/dev` sends TERM once and waits; `bin/garden-dev` escalates to KILL after about 20 seconds) and also on SIGINT or SIGTERM sent from another process (they re-exec once with SIGINT reset, which needs `perl`, present on macOS and most Linux). Under a bare `pnpm dev` with no coordinator running, `/api/*` answers a `503` with `{"error":"coordinator_unavailable",...}` when the connection is refused (any other proxy failure stays Vite's `502`). Vite still logs one proxy-error line per refused request and Chrome still prints its console line for a 5xx; `/status/` shows its unavailable text, and `/garden/` shows "The garden is busy; try again in a moment" (it retries a 503 once after a second) where it used to say the garden answered 502. Run `bin/dev` to have a coordinator.
+
 To run a small shared garden on this machine, use `bin/garden-dev`. It starts a dev coordinator on a scratch directory, the lab, a garden on `spots` (one day a minute) and two headless islands, and prints the `/garden/` page's address. Ctrl-C stops everything and removes the scratch directory. `apps/coordinator/README.md`, "Run a garden locally", has the settings, letters, export and `tests/deno/garden_e2e.ts`, which runs a garden end to end, usually in under a minute (up to three minutes more near the top of an hour), and `tests/deno/garden_dev_smoke.ts`, which checks the launcher itself.
 
-What each app does today, how to try it locally and what waits on you: [docs/prototypes-2026-10-18.md](docs/prototypes-2026-10-18.md).
+What each app does today, how to try it locally and what waits on you: [docs/prototypes-2026-10-24.md](docs/prototypes-2026-10-24.md).
 
 ## Test
 
@@ -76,7 +78,7 @@ A scheduled run is distributed too: give the experiment spec an `"interventions"
 
 A run can also be put under a sun (docs/garden-sun-2026-10-18.md): `--sun STEP:PERCENT,SPAN`, repeatable, sets the world's light to PERCENT (50, 75, 125 or 150) of its own (base, amplitude and season, floored) for SPAN steps from STEP, then lets its own light return; matter stays closed. Suns do not overlap, a sun must end by the run's last step, and a world whose scaled light would leave 0..255 refuses that percent (exit 2). The log holds one line per sun, `{"step":4000,"kind":"sun","percent":50,"span":2000}`, and a checkpoint taken during one carries it in its observer state, so a continuation runs under the same light. An experiment spec takes the same entry in `"interventions"`; the coordinator checks the percent against the preset's light (`:world_light` in its config) and hands such a run only to islands that advertise `sun-v1` as well as `interventions-v1`.
 
-A bred pond world is distributed too: an experiment may name the breeder's conditions (`pond-breed-<score>`, `pond-mass-<score>`, `pond-drift-<score>`; `docs/sandbox-wild.md`) on any pond preset, or use the `breeder` preset itself, and the coordinator hands those segments, run or verify, only to islands that advertise `breed-v1` in addition to `ponds-v1` (never instead of it). Only the rule's own donor picks travel: picked and pressured runs stay with the lab and `tools/run.ts`. The donors the rule chose are verified as physics (their cells are in the checkpoint a second island must reproduce), and the record of them, `ponds.tsv`'s `donor` and score columns, is compared against the verifier's; `tools/stitch.ts` will not export a bred run whose record the verifier regenerated differently. A coordinator spec takes no overrides, so selection shows only where the preset makes ponds score: on `breeder` (mutation × 10) it does, while `ponds-small` or `ponds` under `pond-breed-*` at stock mutation may never score, and is then its mass control (`docs/archipelago-breed-2026-10-18.md`).
+A bred pond world is distributed too: an experiment may name the breeder's conditions (`pond-breed-<score>`, `pond-mass-<score>`, `pond-drift-<score>`; `docs/sandbox-wild.md`) on any pond preset, or use the `breeder` preset itself, and the coordinator hands those segments, run or verify, only to islands that advertise `breed-v1` in addition to `ponds-v1` (never instead of it). The rule's own donors travel, and so do hand picks fixed in advance (next paragraph); pressured runs and live pickers stay with the lab and `tools/run.ts`. The donors the rule chose are verified as physics (their cells are in the checkpoint a second island must reproduce), and the record of them, `ponds.tsv`'s `donor` and score columns, is compared against the verifier's; `tools/stitch.ts` will not export a bred run whose record the verifier regenerated differently. A coordinator spec takes no overrides, so selection shows only where the preset makes ponds score: on `breeder` (mutation × 10) it does, while `ponds-small` or `ponds` under `pond-breed-*` at stock mutation may never score, and is then its mass control (`docs/archipelago-breed-2026-10-18.md`).
 
 ```bash
 deno run -A tools/analyze.ts runs/pilot/gradient
@@ -104,6 +106,8 @@ Either dossier renders as a static panel, an HTML fragment ready to publish as a
 deno run -A tools/report-html.ts lineage dossier.json --out dossier.html
 ```
 
+The 3D slab (rung 1b, `docs/3d-rung1b-plan-2026-10-23.md`) is headless only: `--preset slab-spots` runs the 256 x 256 x 8 slab on `GpuSim3` from step 0 and writes a bundle with `layers.tsv` (the role buffer summed per layer) beside the usual files. `deno run -A --no-lock tools/slab-screen.ts --out DIR --mu M --sigma S --light-k K` runs the depth check's twelve histories (skipping finished ones), and `tools/slab-readout.ts --out DIR` applies the fixed readout to them (`docs/3d-rung1b-m5-plan.md`).
+
 ### Archipelago
 
 ```bash
@@ -125,3 +129,17 @@ deno run -A tools/stitch.ts --experiment a1
 ```bash
 deno run -A tools/analyze.ts runs/a1/gradient
 ```
+
+### Creative world prototypes
+
+The [creative prototype queue and decision log](docs/creative-prototypes/decisions.html) tracks deliberately engineered life-like sandboxes. Start with the local particle playground at `/particles/` (`pnpm dev`); see the [guide](docs/creative-prototypes/README.md). These experiments are separate from the conserved-matter research kernel and are excluded from the production site image.
+
+A picked breeder run is distributed when its picks are a fixed, content-addressed pick log (docs/archipelago-breed-2026-10-18.md, amendment 4). Take the picks a lab breeder world exported (a `<runId>.run.json`, a `.session.json` or a `picks.jsonl`; lesions, feeds, suns and pressures are refused) and submit them to a local coordinator (`LAB_PORT=5381 PORT=6381 bin/dev`, tokenless on loopback):
+
+```bash
+deno run -A tools/submit-picks.ts --coordinator http://localhost:6381 --picks-from tests/e2e/fixtures/picks-only-session.json --experiment picked-demo --steps 15000 --segment-steps 5000 --verify-fraction 1
+deno run -A tools/island.ts --coordinator http://localhost:6381   # twice, in two terminals: one runs, the other verifies by state hash
+deno run -A tools/stitch.ts --coordinator http://localhost:6381 --experiment picked-demo --out /tmp/picked-demo
+```
+
+The coordinator stores the log under its SHA-256, islands that advertise `picks-v1` fetch it and apply the picks at their pond boundaries, and the stitched bundle is meant to equal `tools/run.ts --picks-from` on the same file (the GPU check of that equality has not been run yet; see amendment 4's Status).

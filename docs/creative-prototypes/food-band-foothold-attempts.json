@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "attemptCount": 1,
+  "newOutcomeArms": 1,
+  "reservation": {
+    "schemaVersion": 1,
+    "status": "reserved",
+    "runId": "20261027T145212Z-77802",
+    "attemptDir": "run-20261027T145212Z-77802",
+    "prelaunchUtc": "2026-10-27T14:52:12Z",
+    "gitHead": "46caddc5b85b8088ae974842cd2ba2a66d546998",
+    "intentSha256": "39ecee12395c0fc4a6b12dee7e75767df9b24bc6b38cd00e4ace5a4369e73bda"
+  },
+  "intent": {
+    "schemaVersion": 1,
+    "status": "intent-recorded-before-launch",
+    "runId": "20261027T145212Z-77802",
+    "gitHead": "46caddc5b85b8088ae974842cd2ba2a66d546998",
+    "prelaunchUtc": "2026-10-27T14:52:12Z",
+    "intentDurability": "fsynced-before-runner",
+    "seed": 1202,
+    "mode": "foothold-band",
+    "maxTick": 3000,
+    "stop": "actual extinction or tick 3000",
+    "planSha256": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27",
+    "modelSha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "runnerSha256": "66b7dcf4e9844abcd6fc448557a55a950967ef4c6c0c93cb59d90c35c514fa3d",
+    "packageJsonSha256": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpmLockSha256": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "historicalArtifactSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+    "historicalDataSha256": "7ceae251dc216935c5dc72dad091958ec4d2d8d84ef9ea1610fa50745a86fec6",
+    "historicalIndexSha256": "28d9880651da421c0fe8a11b7d15c819106598280ee177e0443fb4ede8c18d1a",
+    "historicalValidationSha256": "dcffcae8fda5c852b9fb3c6db5bb61d758f7b6e9b895d33a634e67ca7ccb06b2",
+    "copySourceModelSha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31",
+    "historicalRunnerSha256": "f616b0b1fa6ab1194e224ad7040f972c7b55ad65b6a5a2425e16b81a2ce7c162",
+    "launcherSha256": "24036351704f71fd3d16a372f294b19701e036e4a174acfa4052c62aa6c87490",
+    "nodeVersion": "24.2.0",
+    "environment": {
+      "NODE_NO_WARNINGS": "1"
+    },
+    "command": [
+      "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+      "--experimental-strip-types",
+      "tools/food-band-foothold/explore.ts",
+      "--write",
+      "--seed",
+      "1202",
+      "--attempt-dir",
+      "/Users/nicholas/.codex/worktrees/food-band-foothold/browser-life/runs/food-band-foothold/attempts/run-20261027T145212Z-77802"
+    ]
+  },
+  "result": {
+    "status": "completed",
+    "exitStatus": 0,
+    "finishedUtc": "2026-10-27T14:53:30Z",
+    "classification": "completed",
+    "stdout": "stdout.log",
+    "stderr": "stderr.log"
+  },
+  "localAttemptDirectory": "runs/food-band-foothold/attempts/run-20261027T145212Z-77802",
+  "files": {
+    "attempt-status.json": {
+      "sha256": "fc4dec8c6d6055c74b8669f1a7b1c83a801cee71d9382d76f073881ba8c9f08e",
+      "bytes": 233
+    },
+    "baseline-samples.jsonl": {
+      "sha256": "71f444c8e5fd9cfdda47eb22276d8768ca5e016199dfc7001816604fbfe6b46a",
+      "bytes": 2924289
+    },
+    "baseline-snapshots.jsonl": {
+      "sha256": "a7aa340c2d475c3e9f977bcc7d42afa14bc05a851c5e50548c1697b07efe1ad7",
+      "bytes": 1034370
+    },
+    "baseline-ticks.jsonl": {
+      "sha256": "24af446d6813879e81eebba7efb5b20aa6dde967a2bbe2c7db05b539e616eaea",
+      "bytes": 2551643
+    },
+    "candidate-evidence.json": {
+      "sha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+      "bytes": 5193411
+    },
+    "intent.json": {
+      "sha256": "39ecee12395c0fc4a6b12dee7e75767df9b24bc6b38cd00e4ace5a4369e73bda",
+      "bytes": 1843
+    },
+    "result.json": {
+      "sha256": "2b0a95324a281a8226b58881ffd6c09687e9c7fe59f8c175a09c073b2f4a4062",
+      "bytes": 173
+    },
+    "runner-start.json": {
+      "sha256": "6667fd4cc43b4c42b2fdba00e79760bfe4da51a4c4894cff291301c98b4fa2a6",
+      "bytes": 68
+    },
+    "samples.jsonl": {
+      "sha256": "088132e3a3df59e30a169fefb95c71fc8d3053fd2096ce148a5cb10b47451ac0",
+      "bytes": 3426453
+    },
+    "snapshots.jsonl": {
+      "sha256": "08836732205577b748cb34ddc453ad21c2ad6d4fc67a75909e14cbd73f3c3c85",
+      "bytes": 1261106
+    },
+    "stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stdout.log": {
+      "sha256": "fc867c2613d4da8e090952b5acb218507ee3c7140f04622e4a6c3b1390fd75d2",
+      "bytes": 8195
+    },
+    "ticks.jsonl": {
+      "sha256": "862373606fec07587d56c163db5f0b971f5b154c9265e8d2c70f51f29afbd124",
+      "bytes": 2688505
+    }
+  },
+  "note": "One scheduled new trajectory with independent repeat; exact historical alternating regression is known correctness evidence. No retries, extra seeds, tuning or extension; preflight tests use pure helpers/fixtures and initialization only."
+}

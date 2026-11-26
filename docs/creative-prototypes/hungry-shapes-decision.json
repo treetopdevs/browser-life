@@ -1,0 +1,194 @@
+{
+  "seed": 1201,
+  "sourceArtifactSha256": "2cb6366595e43e2f5f215448bd13a67925e21f2ea11e4747790f6f61470b6520",
+  "dataSha256": "0a99689d96d576e5fff3437c7d31ed6a1e078497fa27b71400deff4823e523c6",
+  "decision": "stop-after-first-seed",
+  "extensionEarned": false,
+  "foodRevisionEligible": false,
+  "reason": "Patches extinct at2040 after generation8; uniform survives. Patch-alive prerequisite fails; neither agreed revision trigger applies. No further seeds or v2.",
+  "runs": [
+    {
+      "mode": "original",
+      "endTick": 3000,
+      "population": 48,
+      "maxEverGeneration": 7,
+      "late": {
+        "fromTick": 2501,
+        "toTick": 3000,
+        "denominatorTicks": 500,
+        "executedTicks": 500,
+        "births": 48,
+        "deaths": 48,
+        "cap48Ticks": 340,
+        "nearCap47Ticks": 340,
+        "capBlockedTicks": 6,
+        "capBlockedAttempts": 131,
+        "spaceBlockedAttempts": 0,
+        "cap48FractionOfFixedWindow": 0.68
+      },
+      "deaths": {
+        "age": 191,
+        "starvation": 3
+      },
+      "snapshots": [
+        {
+          "actualTick": 500,
+          "terminal": false,
+          "bodies": 48,
+          "occupiedCells": 1131,
+          "cellsInsideCommonPatchMask": 398,
+          "insideShare": 0.35190097259062775
+        },
+        {
+          "actualTick": 1500,
+          "terminal": false,
+          "bodies": 36,
+          "occupiedCells": 693,
+          "cellsInsideCommonPatchMask": 102,
+          "insideShare": 0.1471861471861472
+        },
+        {
+          "actualTick": 3000,
+          "terminal": false,
+          "bodies": 48,
+          "occupiedCells": 1057,
+          "cellsInsideCommonPatchMask": 132,
+          "insideShare": 0.12488174077578051
+        }
+      ],
+      "foodAtCommonTick2040": {
+        "version": 1,
+        "mode": "original",
+        "pulseBudget": 9216,
+        "targetCount": 9216,
+        "pulses": 408,
+        "offered": 3760128,
+        "accepted": 432820,
+        "overflow": 3327308,
+        "initialFoodPerTile": 20
+      }
+    },
+    {
+      "mode": "uniform",
+      "endTick": 3000,
+      "population": 39,
+      "maxEverGeneration": 15,
+      "late": {
+        "fromTick": 2501,
+        "toTick": 3000,
+        "denominatorTicks": 500,
+        "executedTicks": 500,
+        "births": 94,
+        "deaths": 94,
+        "cap48Ticks": 6,
+        "nearCap47Ticks": 24,
+        "capBlockedTicks": 3,
+        "capBlockedAttempts": 13,
+        "spaceBlockedAttempts": 0,
+        "cap48FractionOfFixedWindow": 0.012
+      },
+      "deaths": {
+        "age": 0,
+        "starvation": 439
+      },
+      "snapshots": [
+        {
+          "actualTick": 500,
+          "terminal": false,
+          "bodies": 22,
+          "occupiedCells": 326,
+          "cellsInsideCommonPatchMask": 50,
+          "insideShare": 0.15337423312883436
+        },
+        {
+          "actualTick": 1500,
+          "terminal": false,
+          "bodies": 32,
+          "occupiedCells": 576,
+          "cellsInsideCommonPatchMask": 40,
+          "insideShare": 0.06944444444444445
+        },
+        {
+          "actualTick": 3000,
+          "terminal": false,
+          "bodies": 39,
+          "occupiedCells": 629,
+          "cellsInsideCommonPatchMask": 58,
+          "insideShare": 0.09220985691573927
+        }
+      ],
+      "foodAtCommonTick2040": {
+        "version": 1,
+        "mode": "uniform",
+        "pulseBudget": 768,
+        "targetCount": 9216,
+        "pulses": 408,
+        "offered": 313344,
+        "accepted": 229313,
+        "overflow": 84031,
+        "initialFoodPerTile": 20
+      }
+    },
+    {
+      "mode": "patches",
+      "endTick": 2040,
+      "population": 0,
+      "maxEverGeneration": 8,
+      "late": {
+        "fromTick": 2501,
+        "toTick": 3000,
+        "denominatorTicks": 500,
+        "executedTicks": 0,
+        "births": 0,
+        "deaths": 0,
+        "cap48Ticks": 0,
+        "nearCap47Ticks": 0,
+        "capBlockedTicks": 0,
+        "capBlockedAttempts": 0,
+        "spaceBlockedAttempts": 0,
+        "cap48FractionOfFixedWindow": 0
+      },
+      "deaths": {
+        "age": 20,
+        "starvation": 186
+      },
+      "snapshots": [
+        {
+          "actualTick": 500,
+          "terminal": false,
+          "bodies": 46,
+          "occupiedCells": 804,
+          "cellsInsideCommonPatchMask": 372,
+          "insideShare": 0.4626865671641791
+        },
+        {
+          "actualTick": 1500,
+          "terminal": false,
+          "bodies": 12,
+          "occupiedCells": 210,
+          "cellsInsideCommonPatchMask": 65,
+          "insideShare": 0.30952380952380953
+        },
+        {
+          "actualTick": 2040,
+          "terminal": true,
+          "bodies": 0,
+          "occupiedCells": 0,
+          "cellsInsideCommonPatchMask": 0,
+          "insideShare": null
+        }
+      ],
+      "foodAtCommonTick2040": {
+        "version": 1,
+        "mode": "patches",
+        "pulseBudget": 768,
+        "targetCount": 972,
+        "pulses": 408,
+        "offered": 313344,
+        "accepted": 83086,
+        "overflow": 230258,
+        "initialFoodPerTile": 20
+      }
+    }
+  ]
+}

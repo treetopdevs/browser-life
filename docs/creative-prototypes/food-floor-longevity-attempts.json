@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "attemptCount": 1,
+  "newOutcomeArms": 1,
+  "reservation": {
+    "schemaVersion": 1,
+    "status": "reserved",
+    "runId": "20261027T175755Z-96975",
+    "attemptDir": "run-20261027T175755Z-96975",
+    "prelaunchUtc": "2026-10-27T17:57:55Z",
+    "gitHead": "d34fd2977166af165bb04e56e36a9ac4a25ae2be",
+    "intentSha256": "06735334d9d63b8a92498cb52887653bfd4f6c450716ca78e0354740d8fe78ec"
+  },
+  "intent": {
+    "schemaVersion": 1,
+    "status": "intent-recorded-before-launch",
+    "runId": "20261027T175755Z-96975",
+    "gitHead": "d34fd2977166af165bb04e56e36a9ac4a25ae2be",
+    "prelaunchUtc": "2026-10-27T17:57:55Z",
+    "intentDurability": "fsynced-before-runner",
+    "seed": 1203,
+    "mode": "foothold-band",
+    "maxTick": 6000,
+    "stop": "actual extinction or tick 6000",
+    "planSha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
+    "modelSha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "runnerSha256": "cc3fa45e873eb8cd485eafc2a139fac39248fd30b63b2c39ec11860be20b75d9",
+    "packageJsonSha256": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpmLockSha256": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "historicalArtifactSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+    "historicalDataSha256": "16d01d50bd909e3058295d23719d161722952b1349f2a5ebd16780d9a5b88bc2",
+    "historicalIndexSha256": "0f792ca72c287d5cb09c12a9daa7290aaed40dd53e2eab86008ab0f1df69994f",
+    "historicalValidationSha256": "72a2d688217fa0d3369ac00f652cff097bdd811bceb6996493ceab358e471ed3",
+    "historicalModelSha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "historicalRunnerSha256": "17ffccbdc1be97b4859f9bbbc082f6449497f86f00eb1db01987439c16d3b09b",
+    "launcherSha256": "c67419b1ea35fc850a90283fb2998c1624f74d4cac09eb35a31fcd9fb677be74",
+    "nodeVersion": "24.2.0",
+    "environment": {
+      "NODE_NO_WARNINGS": "1"
+    },
+    "command": [
+      "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+      "--experimental-strip-types",
+      "tools/food-floor-longevity/explore.ts",
+      "--write",
+      "--seed",
+      "1203",
+      "--attempt-dir",
+      "/Users/nicholas/.codex/worktrees/food-floor-longevity/browser-life/runs/food-floor-longevity/attempts/run-20261027T175755Z-96975"
+    ]
+  },
+  "result": {
+    "status": "completed",
+    "exitStatus": 0,
+    "finishedUtc": "2026-10-27T17:59:12Z",
+    "classification": "completed",
+    "stdout": "stdout.log",
+    "stderr": "stderr.log"
+  },
+  "localAttemptDirectory": "runs/food-floor-longevity/attempts/run-20261027T175755Z-96975",
+  "prefixVerified": {
+    "status": "verified",
+    "seed": 1203,
+    "throughTick": 3000,
+    "normalization": "none",
+    "comparedSamples": 151,
+    "comparedFrames": 151,
+    "comparedTickRows": 3000,
+    "comparedSnapshots": 7,
+    "checkpoints": [
+      {
+        "tick": 0,
+        "stateSha256": "748e7e29d6db5013c66248730cade7a61b674c7089fcd07caecd8ed7157c4994",
+        "compared": true
+      },
+      {
+        "tick": 500,
+        "stateSha256": "d0d4c150d277ee521363807d1f6cb48dfa9d794b5b0a6b66f501880f10c8991a",
+        "compared": true
+      },
+      {
+        "tick": 1000,
+        "stateSha256": "35405737eabca03e1802f4a3e03d6a34eeee9a4aed209cffc32c57f4f4c4d86f",
+        "compared": true
+      },
+      {
+        "tick": 1500,
+        "stateSha256": "873ff715088bbe2cdf9efd2e601d4f7bd2f77ff16af66da1bcb6c1916bf817a5",
+        "compared": true
+      },
+      {
+        "tick": 2000,
+        "stateSha256": "3deff8f302799dfcbdc6aafa26fd81d8c76542fb077602a3f65df11bf03cb6fb",
+        "compared": true
+      },
+      {
+        "tick": 2500,
+        "stateSha256": "063cb79c85eb7929380ac875f37dfeb80da538b454a3f446454f0f1a12557f3d",
+        "compared": true
+      },
+      {
+        "tick": 3000,
+        "stateSha256": "dfb62e9511ddc99c524f8ae687a8cedf2721c7d039fbc9748223ea1ccd475f8a",
+        "compared": true
+      }
+    ]
+  },
+  "files": {
+    "attempt-status.json": {
+      "sha256": "826161bef38d4eedd0611d447af744a11ff9c2c2cc0bf42dff879e7336837049",
+      "bytes": 235
+    },
+    "candidate-evidence.json": {
+      "sha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+      "bytes": 9908912
+    },
+    "intent.json": {
+      "sha256": "06735334d9d63b8a92498cb52887653bfd4f6c450716ca78e0354740d8fe78ec",
+      "bytes": 1849
+    },
+    "prefix-verified.json": {
+      "sha256": "644d0c7a0a2a5b58c7f429659add5deb5b380bc5b3d5e3c23d7f0e425b16da17",
+      "bytes": 954
+    },
+    "result.json": {
+      "sha256": "f84080970d8b6ffa5171e0b476a47c8abe918c592a3d62fa7234b971d52ca24a",
+      "bytes": 173
+    },
+    "runner-start.json": {
+      "sha256": "3169064c61622387b50436ffbdc87b058975f3a891b1d6527c8639506846d200",
+      "bytes": 68
+    },
+    "samples.jsonl": {
+      "sha256": "cca55a691b86f0c1d4a722cf009507eae5be0593ae469965e2ee8bb2a956c84d",
+      "bytes": 5967939
+    },
+    "snapshots.jsonl": {
+      "sha256": "5eaff00fd52afe36c2740f08acdf714669be95799d574f5f084fe684baf8563f",
+      "bytes": 2994198
+    },
+    "stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stdout.log": {
+      "sha256": "d230f041b07f26c56d883d1bf3178a4aef7243dd61259703793007811cd9fa63",
+      "bytes": 13417
+    },
+    "ticks.jsonl": {
+      "sha256": "b288729b58e2d98c1493a6948bbf18114829a479ae69369dec35bd46d81a7823",
+      "bytes": 5404876
+    }
+  },
+  "note": "One scheduled continuation and independently initialized repeat, with exact historical prefix before3001. No additional control world, retry, extra seed, tuning or extension."
+}

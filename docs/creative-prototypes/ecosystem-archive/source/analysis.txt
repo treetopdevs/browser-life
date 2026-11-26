@@ -1,0 +1,230 @@
+[
+  {
+    "seed": 1101,
+    "final": [
+      1106,
+      1995,
+      1437,
+      2834,
+      887
+    ],
+    "late": {
+      "families": [
+        {
+          "name": "Jade",
+          "minimum": 652,
+          "maximum": 1901,
+          "mean": 1149.5294117647059,
+          "cv": 0.23972989805571607,
+          "attackStart": 0.7639168343393695,
+          "attackEnd": 1.1600361663652803,
+          "defenseStart": 1.2930918846411805,
+          "defenseEnd": 1.3282097649186257
+        },
+        {
+          "name": "Amber",
+          "minimum": 1298,
+          "maximum": 2217,
+          "mean": 1789.921568627451,
+          "cv": 0.12169682091382518,
+          "attackStart": 0.7531359759157049,
+          "attackEnd": 0.5884711779448621,
+          "defenseStart": 1.8003010536879076,
+          "defenseEnd": 1.6215538847117794
+        },
+        {
+          "name": "Violet",
+          "minimum": 1312,
+          "maximum": 2680,
+          "mean": 1940.9803921568628,
+          "cv": 0.13050743345908727,
+          "attackStart": 0.43767441860465117,
+          "attackEnd": 0.721642310368824,
+          "defenseStart": 1.0869767441860465,
+          "defenseEnd": 1.0125260960334028
+        },
+        {
+          "name": "Protected",
+          "minimum": 1791,
+          "maximum": 3599,
+          "mean": 2708.098039215686,
+          "cv": 0.1599425381752342,
+          "attackStart": 0.41248665955176095,
+          "attackEnd": 0.40825688073394495,
+          "defenseStart": 1.9423692636072571,
+          "defenseEnd": 1.7304163726182076
+        },
+        {
+          "name": "Hunter",
+          "minimum": 254,
+          "maximum": 1065,
+          "mean": 674.9803921568628,
+          "cv": 0.26990683206101357,
+          "attackStart": 1.5199449793672628,
+          "attackEnd": 1.9943630214205186,
+          "defenseStart": 1.5378266850068776,
+          "defenseEnd": 0.9661781285231116
+        }
+      ],
+      "births": 1177308,
+      "deaths": 1177284,
+      "mutations": 46674,
+      "spatialChangePer25": 0.5280126953125,
+      "newObservedTraits": 1,
+      "classesMin": 64,
+      "classesMax": 79
+    }
+  },
+  {
+    "seed": 1102,
+    "final": [
+      1377,
+      1954,
+      2096,
+      2223,
+      614
+    ],
+    "late": {
+      "families": [
+        {
+          "name": "Jade",
+          "minimum": 351,
+          "maximum": 1621,
+          "mean": 1006.156862745098,
+          "cv": 0.2623306695237592,
+          "attackStart": 0.768791627021884,
+          "attackEnd": 1.2091503267973855,
+          "defenseStart": 1.4319695528068506,
+          "defenseEnd": 1.0697167755991286
+        },
+        {
+          "name": "Amber",
+          "minimum": 1222,
+          "maximum": 2574,
+          "mean": 1931.4313725490197,
+          "cv": 0.15698446959196705,
+          "attackStart": 1.107936507936508,
+          "attackEnd": 0.838792221084954,
+          "defenseStart": 1.4947845804988662,
+          "defenseEnd": 1.5204708290685773
+        },
+        {
+          "name": "Violet",
+          "minimum": 1229,
+          "maximum": 2428,
+          "mean": 1922,
+          "cv": 0.1367463536089329,
+          "attackStart": 0.5048268029528676,
+          "attackEnd": 0.5505725190839694,
+          "defenseStart": 1.1118682566723452,
+          "defenseEnd": 1.1822519083969465
+        },
+        {
+          "name": "Protected",
+          "minimum": 1938,
+          "maximum": 4053,
+          "mean": 2699.529411764706,
+          "cv": 0.17990835614462847,
+          "attackStart": 0.3285528031290743,
+          "attackEnd": 0.4318488529014845,
+          "defenseStart": 1.9356801390699696,
+          "defenseEnd": 1.7422402159244263
+        },
+        {
+          "name": "Hunter",
+          "minimum": 298,
+          "maximum": 1272,
+          "mean": 661.2352941176471,
+          "cv": 0.3184821806952728,
+          "attackStart": 1.9548156956004756,
+          "attackEnd": 2.185667752442997,
+          "defenseStart": 1.2984542211652794,
+          "defenseEnd": 1.1237785016286646
+        }
+      ],
+      "births": 1296701,
+      "deaths": 1296596,
+      "mutations": 51604,
+      "spatialChangePer25": 0.5596348741319445,
+      "newObservedTraits": 1,
+      "classesMin": 61,
+      "classesMax": 81
+    }
+  },
+  {
+    "seed": 1103,
+    "final": [
+      0,
+      672,
+      2116,
+      5851,
+      0
+    ],
+    "late": {
+      "families": [
+        {
+          "name": "Jade",
+          "minimum": 0,
+          "maximum": 0,
+          "mean": 0,
+          "cv": 0,
+          "attackStart": null,
+          "attackEnd": null,
+          "defenseStart": null,
+          "defenseEnd": null
+        },
+        {
+          "name": "Amber",
+          "minimum": 509,
+          "maximum": 1310,
+          "mean": 825.9411764705883,
+          "cv": 0.16770086223378822,
+          "attackStart": 0.22441860465116278,
+          "attackEnd": 0.27529761904761907,
+          "defenseStart": 1.1441860465116278,
+          "defenseEnd": 1.0491071428571428
+        },
+        {
+          "name": "Violet",
+          "minimum": 1957,
+          "maximum": 3084,
+          "mean": 2357.294117647059,
+          "cv": 0.10970016354034584,
+          "attackStart": 0.3311036789297659,
+          "attackEnd": 0.3757088846880907,
+          "defenseStart": 0.9055183946488294,
+          "defenseEnd": 0.8506616257088847
+        },
+        {
+          "name": "Protected",
+          "minimum": 4673,
+          "maximum": 5851,
+          "mean": 5375.333333333333,
+          "cv": 0.06016544649549909,
+          "attackStart": 0.1523720930232558,
+          "attackEnd": 0.11075029909417193,
+          "defenseStart": 1.9067906976744187,
+          "defenseEnd": 1.8916424542813195
+        },
+        {
+          "name": "Hunter",
+          "minimum": 0,
+          "maximum": 0,
+          "mean": 0,
+          "cv": 0,
+          "attackStart": null,
+          "attackEnd": null,
+          "defenseStart": null,
+          "defenseEnd": null
+        }
+      ],
+      "births": 669006,
+      "deaths": 668994,
+      "mutations": 26978,
+      "spatialChangePer25": 0.29754177517361113,
+      "newObservedTraits": 2,
+      "classesMin": 26,
+      "classesMax": 36
+    }
+  }
+]

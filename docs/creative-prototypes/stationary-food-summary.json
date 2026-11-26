@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "seed": 1202,
+  "planSha256": "ba835f94fddbd48a823fb6264d3e4f9d8a815014c5bc5e4997fec56e6f7aaa51",
+  "pairManifestSha256": "3462a1e0ecd74c98a465395dceebbe4d1c28e19f272a451a8abb3edd18b3ac0c",
+  "visualReceiptSha256": "de89473b0c3d1b8eea302a16c59d8332dd11ffccab0f477c9b2899dfc0b91b32",
+  "decision": "both",
+  "summary": "Both arms pass this within-world screen in one seed; not equality, superiority or independent reconfirmation of the historical moving result.",
+  "newStationarySeedsRun": [
+    1202
+  ],
+  "movingReferenceIsIndependentEvidence": false,
+  "arms": [
+    {
+      "mode": "moving-band",
+      "rawSha256": "1ba5caec32d22feef2482e13eab9550552bec974a6f9f7791c21714d375e598a",
+      "dataSha256": "1a554a54e2eeb5d4d83d06f52d21380cdc81eaad1d942d3048015577c15d0700",
+      "run": {
+        "seed": 1202,
+        "mode": "moving-band",
+        "mutation": true,
+        "maxTick": 3000,
+        "finalTick": 3000,
+        "extinctionTick": null
+      },
+      "census": {
+        "tick": 3000,
+        "population": 38,
+        "cells": 635,
+        "familyCounts": [
+          3,
+          9,
+          26
+        ],
+        "births": 454,
+        "growths": 8372,
+        "deaths": 428,
+        "effectiveMutations": 94,
+        "attemptedMutations": 102,
+        "maxGeneration": 13,
+        "totalCells": 635,
+        "totalEnergy": 7014,
+        "meanBodyCells": 16.710526315789473,
+        "meanEnergy": 184.57894736842104,
+        "blockedBirths": 214,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 214,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 10
+      },
+      "maxEverGeneration": 13,
+      "environment": {
+        "version": 1,
+        "mode": "moving-band",
+        "pulseBudget": 768,
+        "targetCount": 4608,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 304428,
+        "overflow": 156372,
+        "initialFoodPerTile": 20,
+        "bandLeft": 60,
+        "bandWidth": 48
+      },
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      }
+    },
+    {
+      "mode": "stationary-band",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+      "dataSha256": "3c3ee5857d3f1f3f4eb2cad6eed6a1863db324e6bc5ed19635532a69b3f25bcf",
+      "run": {
+        "seed": 1202,
+        "mode": "stationary-band",
+        "mutation": true,
+        "maxTick": 3000,
+        "finalTick": 3000,
+        "extinctionTick": null
+      },
+      "census": {
+        "tick": 3000,
+        "population": 28,
+        "cells": 470,
+        "familyCounts": [
+          0,
+          26,
+          2
+        ],
+        "births": 432,
+        "growths": 8058,
+        "deaths": 416,
+        "effectiveMutations": 87,
+        "attemptedMutations": 98,
+        "maxGeneration": 14,
+        "totalCells": 470,
+        "totalEnergy": 4926,
+        "meanBodyCells": 16.785714285714285,
+        "meanEnergy": 175.92857142857142,
+        "blockedBirths": 180,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 180,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 11
+      },
+      "maxEverGeneration": 14,
+      "environment": {
+        "version": 1,
+        "mode": "stationary-band",
+        "pulseBudget": 768,
+        "targetCount": 4608,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 284691,
+        "overflow": 176109,
+        "initialFoodPerTile": 20,
+        "bandLeft": 0,
+        "bandWidth": 48
+      },
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      }
+    }
+  ],
+  "nextProposal": "Separate reviewed unchanged replication at1201 and1203, horizon3000; not run in this slice."
+}

@@ -1,0 +1,19 @@
+**Not CLEAR — four source blockers remain, including an incomplete repair of prior blocker 2.** Review is limited to the supplied packet; no tools, tests or simulations used.
+
+1. **P1 — The launch path does not enforce the required preflight gates.**  
+   `launch.sh` checks that `node_modules` exists and runs historical validators, but neither it nor `writeEvidence()` requires successful typecheck and relevant core/browser synthetic checks, or verifies a source-bound receipt for those checks. It can reserve the sole attempt and begin regression stepping without these required prerequisites. Run the required checks before reservation, or verify retained passing results bound to the exact execution inputs and installed dependencies.
+
+2. **P2 — Initial energy is still anchored to submitted evidence rather than initialization.**  
+   `validateLedgerProgress()` trusts `value.frames[0].ledger`. Nothing requires tick-zero `dissipated` and `deathLoss` to be zero or `initialEnergy` to equal tick-zero actual energy. Adding the same positive constant to **both `initialEnergy` and `dissipated` in every ledger**, then updating affected hashes, preserves every new energy-bound and transition check. This leaves fictitious initialization energy admissible. Validate the tick-zero ledger against initialization, including zero cumulative losses, and add a fully rehashed synthetic-record rejection test. The body-energy upper bound and cross-observation equality repairs are present.
+
+3. **P2 — Unsampled tick rows can contain impossible body counts.**  
+   `validateTickRows()` bounds population and cells separately. A non-sampled row such as tick 1 can retain positive population while changing `cells` to zero; updating the artifact digest leaves the other checks satisfied. It also permits cells exceeding the population’s aggregate body capacity. Require  
+   `population <= cells <= min(RULES.maxOccupied, population * RULES.maxCellsPerOrganism)`  
+   on every row, including zero cells at extinction. Cover this through the complete evidence validator with rehashed synthetic evidence.
+
+4. **P2 — Lineage validation omits parent chronology.**  
+   `validateLineage()` checks parent existence, family, generation and genome inheritance, but never checks whether the parent existed and was alive when its child was born. A child can therefore reference a parent born later or dead before the child’s birth while satisfying the implemented lineage checks. Enforce parent birth/death chronology using the model’s event ordering and add synthetic malformed-lineage coverage through evidence validation.
+
+The other prior repairs are present: stepping functions are private, runtime/platform checks precede regression stepping, stage entries are fsynced, initialization/repeat mismatch catches retain the relevant states and environments, and check-only measures raw bytes before parsing with a separate raw hash.
+
+The normal execution order remains correct: **foothold1202 → alternating1203 → primary and repeat foothold1203**. Source approval remains withheld; no execution or outcome validation is asserted.

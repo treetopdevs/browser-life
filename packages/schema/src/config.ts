@@ -3,7 +3,8 @@
 // power of two named in the comment.
 import type { PondArm } from "./ponds.ts";
 import { SHAPE_MAX_REACH } from "./kernel.ts";
-import { GENE_BIT, GENE_SHIFT } from "./layout.ts";
+import { GENE_BIT, GENE_SHIFT, GENOME_CHANNELS } from "./layout.ts";
+import { GENOME_CHANNELS3 } from "./layout3d.ts";
 
 export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
@@ -22,6 +23,17 @@ export const METRICS_VERSION = 2;
 export type LightMode = "uniform" | "gradient" | "patches" | "sweep";
 
 export interface WorldConfig {
+  /** Opt-in vacancy predation, Amendment 3. All four keys together; mutation disabled. */
+  rpsTypes?: number;
+  rpsRate?: number;
+  rpsMin?: number;
+  rpsKill?: "vacancy";
+  /**
+   * Share of mutation events (in 1/65536, 0..65536) sent to the RPS type operator instead of the controller mutation
+   * (docs/rules.md, "Optional slab levers"). Only with the four vacancy keys; it lifts their `mutRate 0` requirement.
+   * Absent: the vacancy kill is mutation-free as before.
+   */
+  rpsMutate?: number;
   ruleVersion: number;
   seed: number;
   /** One tile is an independent torus; tiles let many small worlds share one dispatch. */
@@ -327,6 +339,15 @@ export interface WorldConfig {
   injuryRadius?: number;
   /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
   injuryProb?: number;
+  /**
+   * Polymer shell (polymer-world line, optional, valid only with the three injury
+   * keys; integer 1..65535). At an injury step a wounded cell whose polymer, after
+   * the passive decays, is at least `injuryShell` loses exactly that much polymer
+   * to waste C (heat += injuryShell * (eP - eC)) and keeps its B, E, motility and
+   * lineage; a cell with less polymer is lesioned as above. Absent = every wound
+   * is a lesion. Absent from `defaultConfig()` so existing configs hash identically.
+   */
+  injuryShell?: number;
 
   /**
    * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
@@ -386,7 +407,41 @@ export interface WorldConfig {
   kGene?: number;
   /** Share of mutation events that flip a gene bit, /2^32 (0..2^32-1), when `genes` is set. */
   geneFlip?: number;
+  /**
+   * Gene v2 (docs/evolution-game-brainstorm-2026-10-16.md "Gene v2"): a floor (0..127) on the
+   * rectified BUILD output of a cell that carries the build gene, in its building capacity and its
+   * catalysis work term, so a carrier builds whether or not its weights say so. Non-carriers and
+   * the decomposition gene are unchanged. Only with `genes`, and only the "ladder" set has the
+   * build gene, so under "decomp" it is accepted and changes nothing; absent or 0 is Gene v1 to
+   * the bit, and the floored output is still <= 127, so no bound changes.
+   */
+  geneDrive?: number;
+  /**
+   * The slab (rung 1b, docs/3d-rung1b-plan-2026-10-23.md): present, the world is one tileW x tileH tile that is
+   * `tileD` layers deep (a multiple of 4 up to 32, or 64 for the jar; x and y wrap, z is closed), run by the slab rules (RefSim3 / GpuSim3) with the
+   * 49-word genome of layout3d.ts. Absent from `defaultConfig()`, so every 2D config hashes as before.
+   * Set together with `lightK`; `validateSlab` lists what a slab cannot combine with.
+   */
+  tileD?: number;
+  /** Slab light shading half-saturation: T(m) = floor(256 * lightK / (lightK + m)) per layer. Slab only; set with `tileD`. */
+  lightK?: number;
+  /**
+   * Slab levers (step A2 of docs/3d-expansion-plan-2026-11-15.md; docs/rules.md, "Optional slab levers"), all optional and
+   * absent from `defaultConfig()`. `sinkShift` (1..16): each step a cell above the floor sends `C / 2^sinkShift` of its waste
+   * (stochastic rounding) to the cell below. `floorDecay` (0..65535, /65536): floor waste decays to nutrient, the energy
+   * difference leaving as heat. `upwellPeriod` (1..2^31-1) with `upwellShift` (1..16): every `upwellPeriod` steps each cell
+   * exchanges `1 / 2^upwellShift` of its A and kept C with its mirror cell `(x, y, D - 1 - z)`.
+   */
+  sinkShift?: number;
+  floorDecay?: number;
+  upwellPeriod?: number;
+  upwellShift?: number;
 }
+
+/** Draw slots of the slab levers and of `rpsMutate` (docs/3d-rung1b-step-spec.md section 17); drawn only when their key is set. */
+export const RND3_LEVER = { RPS_FLIP: 41, SINK: 42, FLOOR: 43, UPWELL_A: 44, UPWELL_C: 45 } as const;
+/** Within an `rpsMutate` event, the share (in 1/256 of `which & 0xff`) that flips a mask bit; the rest relabel the type. */
+export const RPS_EDGE_SHARE = 128;
 
 /**
  * The named gene sets of WorldConfig.genes: "decomp" has one gene, decomposition (GENE_BIT.DECOMP);
@@ -518,7 +573,13 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
 
 export const worldW = (c: WorldConfig) => c.tileW * c.tilesX;
 export const worldH = (c: WorldConfig) => c.tileH * c.tilesY;
-export const cellCount = (c: WorldConfig) => worldW(c) * worldH(c);
+export const cellCount = (c: WorldConfig) => worldW(c) * worldH(c) * (c.tileD ?? 1);
+
+/** True when the config is a slab (WorldConfig.tileD present). */
+export const isSlab = (c: Pick<WorldConfig, "tileD">): boolean => c.tileD !== undefined;
+
+/** Genome words per cell: 44 for a 2D config, 49 for a slab. */
+export const genomeChannels = (c: Pick<WorldConfig, "tileD">): number => (c.tileD !== undefined ? GENOME_CHANNELS3 : GENOME_CHANNELS);
 
 /** Numeric view of the config used for WGSL constants and validation. */
 export function lightModeId(m: LightMode): number {
@@ -536,6 +597,8 @@ export function lightModeId(m: LightMode): number {
  */
 export const MATTER_MAX = 2 ** 26;
 export const POOL_MAX = 2 ** 28;
+/** The slab's per-cell cap on E and S: transport sums up to 27 sources (docs/3d-rung1b-plan-2026-10-23.md section 4). */
+export const POOL_MAX3 = 2 ** 27;
 /** Cumulative ledger ceiling for accepted states; steps that would cross 2^64 raise an overflow flag. */
 export const LEDGER_MAX = 1n << 63n;
 /** Last step index that can be taken; lineage ids use step + 1 as a u32. */
@@ -676,6 +739,8 @@ export function validateConfig(c: WorldConfig): string[] {
     ["pondK", POND_K_RANGE],
     ["pondDeath", POND_DEATH_RANGE],
     ["pondExport", POND_EXPORT_RANGE],
+    ["tileD", [4, 64] as Range],
+    ["lightK", [1, 65536] as Range],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
@@ -731,12 +796,55 @@ export function validateConfig(c: WorldConfig): string[] {
   errs.push(...validateShape(c));
   errs.push(...validateCells(c));
   errs.push(...validateGenes(c));
+  errs.push(...validateSlab(c));
+  errs.push(...validateRps(c));
+  errs.push(...validateLevers(c));
+  return errs;
+}
+
+/** The slab levers (WorldConfig.sinkShift ...): slab only, integer ranges, the two upwelling keys together. */
+function validateLevers(c: WorldConfig): string[] {
+  const errs: string[] = [];
+  const keys = [["sinkShift", 1, 16], ["floorDecay", 0, 65535], ["upwellPeriod", 1, 2 ** 31 - 1], ["upwellShift", 1, 16]] as const;
+  for (const [key, lo, hi] of keys) {
+    const v = c[key];
+    if (v === undefined) continue;
+    if (!isSlab(c)) errs.push(`${key} is a slab lever (tileD set)`);
+    if (typeof v !== "number" || !Number.isInteger(v) || v < lo || v > hi) errs.push(`${key} must be an integer in ${lo}..${hi}`);
+  }
+  if ((c.upwellPeriod === undefined) !== (c.upwellShift === undefined)) errs.push("upwellPeriod and upwellShift are set together");
+  return errs;
+}
+
+/**
+ * Keys a slab may not set: each is a 2D-only mechanism with no slab rule in v1. The other 2D keys a slab admits
+ * (lightBase, lightAmp, seasonPeriod, seasonAmp, eventCap, motility, signalGain, neutral) are deliberate: they
+ * are slab rules too (seasons act on uniform and gradient light), so M1 and M2 must implement them, not reject them.
+ */
+export const SLAB_EXCLUDED_KEYS = [
+  "migrationPeriod", "migrantCount", "ringNamespace", "pondPeriod", "pondK", "pondArm", "pondDeath", "pondExport", "pondScore",
+  "takeover", "takeoverKin", "takeoverTol", "cellPeriod", "cellMutProb", "shapeReach", "injuryPeriod", "injuryRadius", "injuryProb",
+  "adhesion", "kAdhesion", "genes", "kGene", "geneFlip", "wanderPeriod", "wanderAmp", "dayPeriod",
+] as const satisfies readonly (keyof WorldConfig)[];
+
+function validateSlab(c: WorldConfig): string[] {
+  if (c.tileD === undefined && c.lightK === undefined) return [];
+  if (c.tileD === undefined || c.lightK === undefined) return ["tileD and lightK are set together"];
+  const errs: string[] = [];
+  if (c.tileD % 4 !== 0) errs.push("tileD must be a multiple of 4");
+  // The jar (docs/3d-rung2-plan-2026-10-23.md): 64 is allowed beside 4..32. Every slab bound is per cell or per
+  // neighbourhood, and the light pass walks a column one layer at a time, so none depends on D (docs/rules.md, the slab).
+  if (c.tileD > 32 && c.tileD !== 64) errs.push("tileD above 32 must be 64 (the jar)");
+  if (c.tilesX !== 1 || c.tilesY !== 1) errs.push("a slab (tileD set) is one tile: tilesX and tilesY must be 1");
+  if (c.kernelRadius !== 3) errs.push("a slab (tileD set) needs kernelRadius 3");
+  if (c.lightMode !== "uniform" && c.lightMode !== "gradient") errs.push("a slab (tileD set) needs lightMode uniform or gradient");
+  for (const key of SLAB_EXCLUDED_KEYS) if (c[key] !== undefined) errs.push(`${key} is not defined for a slab (tileD set)`);
   return errs;
 }
 
 function validateGenes(c: WorldConfig): string[] {
   const keys = [c.genes, c.kGene, c.geneFlip];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) return c.geneDrive === undefined ? [] : ["geneDrive is set only with genes"];
   if (keys.some((k) => k === undefined)) return ["genes, kGene and geneFlip are set together"];
   const errs: string[] = [];
   if (!GENE_SETS.includes(c.genes as GeneSet)) errs.push(`genes must be one of ${GENE_SETS.join(", ")}`);
@@ -744,6 +852,8 @@ function validateGenes(c: WorldConfig): string[] {
   // Bounded like kMaint: mulFrac(B, kGene, 16) is exact for kGene < 2^16 and B <= MATTER_MAX.
   if (!int(c.kGene, 0, 65535)) errs.push("kGene must be an integer in 0..65535");
   if (!int(c.geneFlip, 0, 2 ** 32 - 1)) errs.push("geneFlip must be an integer in 0..2^32-1");
+  // A floor on a rectified output, so it stays inside the outputs' own 0..127.
+  if (c.geneDrive !== undefined && !int(c.geneDrive, 0, 127)) errs.push("geneDrive must be an integer in 0..127");
   if (c.shapeReach !== undefined) errs.push("genes and shapeReach are exclusive (both use PARAM1 byte 3)");
   if (c.neutral) errs.push("genes are not defined with the neutral shadow (the reference genome has none)");
   // Declared cells mutate at a cell's birth through mutateInPlace alone (mutRate 0), so no flip could ever happen.
@@ -782,7 +892,9 @@ export const INJURY_MAX_RADIUS = 16;
 
 function validateInjury(c: WorldConfig): string[] {
   const keys = [c.injuryPeriod, c.injuryRadius, c.injuryProb];
-  if (keys.every((k) => k === undefined)) return [];
+  if (keys.every((k) => k === undefined)) {
+    return c.injuryShell === undefined ? [] : ["injuryShell needs injuryPeriod, injuryRadius and injuryProb"];
+  }
   if (keys.some((k) => k === undefined)) return ["injuryPeriod, injuryRadius and injuryProb are set together"];
   const errs: string[] = [];
   const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
@@ -790,6 +902,7 @@ function validateInjury(c: WorldConfig): string[] {
   const maxR = Math.min(INJURY_MAX_RADIUS, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
   if (!int(c.injuryRadius, 0, maxR)) errs.push(`injuryRadius must be an integer in 0..${maxR} (a disc must not wrap onto itself)`);
   if (!int(c.injuryProb, 1, 2 ** 32 - 1)) errs.push("injuryProb must be an integer in 1..2^32-1");
+  if (c.injuryShell !== undefined && !int(c.injuryShell, 1, 65535)) errs.push("injuryShell must be an integer in 1..65535");
   return errs;
 }
 
@@ -829,4 +942,25 @@ export function maxLesionRadius(c: WorldConfig): number {
 
 export function clampLesionRadius(c: WorldConfig, r: number): number {
   return Math.max(0, Math.min(Math.floor(r), maxLesionRadius(c)));
+}
+
+/** Narrow vacancy-only transfer: mutation operators require a later amendment. */
+export function validateRps(c: WorldConfig): string[] {
+  const extra = c as WorldConfig & { rpsFlip?: unknown; rpsEdge?: unknown };
+  const errors: string[] = [];
+  if (extra.rpsFlip !== undefined || extra.rpsEdge !== undefined) errors.push("rpsFlip and rpsEdge are unsupported in the vacancy transfer");
+  const keys = [c.rpsTypes, c.rpsRate, c.rpsMin, c.rpsKill];
+  if (keys.every(v => v === undefined)) return c.rpsMutate === undefined ? errors : [...errors, "rpsMutate is set only with the vacancy keys"];
+  if (keys.some(v => v === undefined)) errors.push("rpsTypes, rpsRate, rpsMin and rpsKill are set together");
+  if (!isSlab(c)) errors.push("RPS requires a slab");
+  // rpsMutate (docs/rules.md, "Optional slab levers") is the one key that lifts the transfer's mutation-off rule.
+  if (c.rpsMutate === undefined && c.mutRate !== 0) errors.push("RPS transfer requires mutRate 0");
+  if (c.rpsMutate !== undefined && (typeof c.rpsMutate !== "number" || !Number.isInteger(c.rpsMutate) || c.rpsMutate < 0 || c.rpsMutate > 65536))
+    errors.push("rpsMutate must be an integer in 0..65536");
+  if (c.rpsKill !== "vacancy") errors.push("rpsKill must be vacancy");
+  for (const [key, max] of [["rpsTypes", 8], ["rpsRate", 16384], ["rpsMin", 255]] as const) {
+    const v = c[key], min = key === "rpsTypes" ? 3 : key === "rpsMin" ? 1 : 0;
+    if (typeof v !== "number" || !Number.isInteger(v) || v < min || v > max) errors.push(`${key} must be an integer in ${min}..${max}`);
+  }
+  return errors;
 }

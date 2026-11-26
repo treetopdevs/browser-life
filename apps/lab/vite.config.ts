@@ -3,11 +3,16 @@ import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { WORLD_LINK_PAGES, withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
+import { SCREENS } from "./src/food-bands/screens.ts";
+import { apiProxy } from "./dev-proxy.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
 // port, which would make /api proxy to itself. bin/dev sets COORDINATOR_PORT.
 const coordinatorUrl = `http://localhost:${process.env.COORDINATOR_PORT ?? "4000"}`;
+
+// Model copies the /food-bands/ page can load (hungry-shapes keeps its own chunk name below).
+const FOOD_BANDS_MODELS = ["uniform-endurance", "moving-food", "stationary-food", "split-food", "alternating-food", "food-band-foothold", "food-schedule-769"];
 
 const alias = {
   "@bl/schema": r("../../packages/schema/src/index.ts"),
@@ -132,6 +137,30 @@ export default defineConfig({
       }
     },
   }, {
+    // Dev only (`apply: "serve"`, so it never exists in `vite build`): /food-bands/ can compare a live run with the
+    // recorded replay files that docs/creative-prototypes/ARTIFACTS.md keeps out of git. Only the file names the screens
+    // table lists are served, read-only, from that one folder; an absent file answers 404.
+    name: "food-bands-replays",
+    apply: "serve",
+    configureServer(server) {
+      const allowed = new Set(SCREENS.flatMap((s) => s.arms.flatMap((a) => Object.values(a.replays).flat())));
+      const folder = r("../../docs/creative-prototypes/");
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? "").split("?")[0] ?? "";
+        const match = /^\/docs\/creative-prototypes\/([A-Za-z0-9._-]+\.json)$/.exec(path);
+        if (!match) return next();
+        const name = match[1]!;
+        const file = join(folder, name);
+        if ((req.method !== "GET" && req.method !== "HEAD") || !allowed.has(name) || !existsSync(file)) {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }).end("not found");
+          return;
+        }
+        const body = readFileSync(file);
+        res.writeHead(200, { "Content-Type": "application/json", "Content-Length": body.length, "Cache-Control": "no-store" });
+        res.end(req.method === "HEAD" ? undefined : body);
+      });
+    },
+  }, {
     name: "not-found",
     configureServer(server) {
       const handle = notFound(server.config.root, () => server.transformIndexHtml("/404.html", readFileSync(join(server.config.root, "404.html"), "utf8")));
@@ -148,25 +177,79 @@ export default defineConfig({
   // "mpa": an unknown path is not rewritten to the home page, so the not-found plugin above can answer it.
   appType: "mpa",
   resolve: { alias },
-  server: { port: 5173, strictPort: true, proxy: { "/api": coordinatorUrl } },
-  preview: { proxy: { "/api": coordinatorUrl } },
+  server: { port: 5173, strictPort: true, proxy: { "/api": apiProxy(coordinatorUrl) } },
+  preview: { proxy: { "/api": apiProxy(coordinatorUrl) } },
   worker: { format: "es" },
   build: {
     target: "es2023",
-    rollupOptions: { input: {
+    rollupOptions: { output: { manualChunks(id) {
+      if (id.includes("/src/opponents/archive/")) return "opponents-archive";
+      if (id.includes("/src/vision-screen/")) return "vision-screen-core";
+      if (id.includes("/src/ecosystem/model.ts")) return "ecosystem-model";
+      if (id.includes("/docs/creative-prototypes/ecosystem-archive/source/")) return "ecosystemArchiveData";
+      if (id.includes("/src/spatial/model.ts")) return "spatial-model";
+      if (id.includes("/src/currents/model.ts")) return "currents-model";
+      if (id.includes("/src/matter/model.ts")) return "matter-model";
+      if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
+      for (const key of FOOD_BANDS_MODELS) if (id.includes(`/src/${key}/model.ts`)) return `food-bands-model-${key}`;
+      if (id.includes("/src/development/model.ts")) return "development-model";
+      if (id.includes("/src/bodies/model.ts")) return "bodies-model";
+      if (id.includes("/src/vesicle/model.ts")) return "vesicle-model";
+      if (id.includes("/src/oligomer/model.ts")) return "oligomer-model";
+      if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
+      if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
+      if (id.includes("/src/particles/environment-page.ts")) return "particles-environment-page";
+      if (id.includes("/src/particles/bonded-model.ts")) return "particles-bonded-model";
+      if (id.includes("/src/particles/model.ts")) return "particles-model";
+      if (id.includes("/src/particles/comparison-clock.ts")) return "particles-clock";
+    } }, input: {
       home: r("./index.html"),
       lab: r("./lab/index.html"),
       worlds: r("./worlds/index.html"),
       howItWorks: r("./how-it-works/index.html"),
       research: r("./research/index.html"),
+      story: r("./story/index.html"),
+      experiments: r("./experiments/index.html"),
       about: r("./about/index.html"),
       privacy: r("./privacy/index.html"),
       participate: r("./participate/index.html"),
       status: r("./status/index.html"),
       garden: r("./garden/index.html"),
+      particles: r("./particles/index.html"),
+      particlePicker: r("./particles/picker/index.html"),
+      particleOases: r("./particles/oases/index.html"),
+      particleSeasons: r("./particles/seasons/index.html"),
+      particleBonds: r("./particles/bonds/index.html"),
+      particleMotifs: r("./particles/motifs/index.html"),
+      boundaries: r("./boundaries/index.html"),
+      development: r("./development/index.html"),
+      bodies: r("./bodies/index.html"),
+      vesicle: r("./vesicle/index.html"),
+      oligomer: r("./oligomer/index.html"),
+      dropgenes: r("./dropgenes/index.html"),
+      hungryShapes: r("./hungry-shapes/index.html"),
+      foodBands: r("./food-bands/index.html"),
+      matter: r("./matter/index.html"),
+      currents: r("./currents/index.html"),
+      spatial: r("./spatial/index.html"),
+      soup: r("./soup/index.html"),
+      predictability: r("./predictability/index.html"),
+      mycelium: r("./mycelium/index.html"),
+      assembly: r("./assembly/index.html"),
+      niche: r("./niche/index.html"),
+      movingLight: r("./moving-light/index.html"),
+      controllerLocality: r("./controller-locality/index.html"),
+      opponents: r("./opponents/index.html"),
+      opponentsArchive: r("./opponents/archive/index.html"),
+      ecosystem: r("./ecosystem/index.html"),
+      ecosystemArchive: r("./ecosystem/archive/index.html"),
+      playground: r("./playground/index.html"),
+      visionScreen: r("./vision-screen/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
       notFound: r("./404.html"),
+      slab: r("./slab/index.html"),
+      mycelium3d: r("./mycelium3d/index.html"),
     } },
   },
 });

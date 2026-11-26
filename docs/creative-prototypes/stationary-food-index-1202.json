@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-stationary-food-pair",
+  "seed": 1202,
+  "planSha256": "ba835f94fddbd48a823fb6264d3e4f9d8a815014c5bc5e4997fec56e6f7aaa51",
+  "arms": {
+    "movingBand": {
+      "mode": "moving-band",
+      "url": "stationary-food-moving-band-seed-1202.json",
+      "rawSha256": "1ba5caec32d22feef2482e13eab9550552bec974a6f9f7791c21714d375e598a"
+    },
+    "stationaryBand": {
+      "mode": "stationary-band",
+      "url": "stationary-food-stationary-band-seed-1202.json",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39"
+    }
+  },
+  "decision": {
+    "status": "both",
+    "summary": "Both worlds pass this seed\u2019s survival, turnover and within-world visual-change screen at3,000. Moving ends with38 bodies and3 families; stationary with28 and2. Stationary still changes, but its smaller family has only2 bodies. This screen did not distinguish the arms; it does not establish equal behavior or no benefit from movement. Stop after this pair.",
+    "movingBandArtifactSha256": "1ba5caec32d22feef2482e13eab9550552bec974a6f9f7791c21714d375e598a",
+    "stationaryBandArtifactSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+    "visualReceiptUrl": "stationary-food-visual-receipt-1202.json",
+    "visualReceiptSha256": "de89473b0c3d1b8eea302a16c59d8332dd11ffccab0f477c9b2899dfc0b91b32"
+  }
+}

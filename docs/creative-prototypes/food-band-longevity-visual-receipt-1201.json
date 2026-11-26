@@ -1,0 +1,36 @@
+{
+  "seed": 1201,
+  "planSha256": "ed1e1a0bf7c997868409b72a0481c5c2cbd60a58ab58a21780350803ab0597f3",
+  "movingBandArtifactSha256": "17696e963d1112254207ad0ec6f36927709a9b9859c498ca276ae0bf0358bf43",
+  "stationaryBandArtifactSha256": "8e6a43d01a3b1a78820eac403c320822ea22efc00cb89917087924254052b468",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: historical moving media and the 3,000-tick prefix were already available. From 5,500 to 6,000, the middle-left occupied group expands upward and rightward into a much broader branching cluster. The lower-left groups clear and reform as a narrower descending chain nearer the center, with a new broad group at the bottom-center edge. These are occupied-shape changes, not color or food-outline changes."
+    },
+    "stationaryBand": {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "The dense upper-middle cluster at 5,500 largely clears, leaving a thin upper chain and a wider gap below it. A broad branching group develops along the middle-left edge. The large lower-middle/right groups clear into separated small groups, opening a broad lower gap by 6,000."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 3000,
+      "observation": "Moving groups occupy mainly the right half; stationary groups are mostly on the left, with isolated lower-middle branches. This is the exact historical prefix."
+    },
+    {
+      "tick": 5500,
+      "observation": "Moving has a middle-left cluster and scattered upper/lower groups; stationary has a dense upper-middle cluster and separate lower-middle groups."
+    },
+    {
+      "tick": 6000,
+      "observation": "Moving has a broad upper-middle branching cluster and descending lower chain; stationary has a middle-left cluster and widely separated groups. This difference is descriptive, not an advantage gate."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T01:59:46.751620+00:00"
+}

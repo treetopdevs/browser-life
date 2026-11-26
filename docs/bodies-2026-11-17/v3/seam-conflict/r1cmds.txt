@@ -1,0 +1,7 @@
+plain
+allgates --gates share,grow,signal --seam-cost 1 --raid 2
+sc1 --seam-cost 1
+sc3 --seam-cost 3
+raid2 --raid 2
+sc1raid2 --seam-cost 1 --raid 2
+ssg_sc1raid2 --gates share,signal --seam-cost 1 --raid 2

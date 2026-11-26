@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "attemptCount": 1,
+  "newOutcomeArms": 1,
+  "intentSha256": "6c05696cf64ddf721cf60433599fb055182caac684ea3cdf7cb8049f18fe7432",
+  "reservation": {
+    "schemaVersion": 1,
+    "status": "reserved",
+    "runId": "20261027T214231Z-97616",
+    "attemptDir": "run-20261027T214231Z-97616",
+    "intentSha256": "6c05696cf64ddf721cf60433599fb055182caac684ea3cdf7cb8049f18fe7432"
+  },
+  "intent": {
+    "schemaVersion": 1,
+    "status": "intent-recorded-before-launch",
+    "runId": "20261027T214231Z-97616",
+    "gitHead": "cd160b440765160817e6881695930b27d55236bf",
+    "prelaunchUtc": "2026-10-27T21:42:31.437Z",
+    "seed": 1202,
+    "mode": "schedule-769",
+    "maxTick": 6000,
+    "gateTick": 3000,
+    "sourceSha256": {
+      "docs/creative-prototypes/food-schedule-769-plan.md": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+      "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+      "apps/lab/src/food-schedule-769/model.ts": "0b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6",
+      "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
+      "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
+      "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+      "docs/creative-prototypes/food-floor-longevity-replication-index-1202.json": "666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19",
+      "docs/creative-prototypes/food-floor-longevity-replication-validation.md": "4a57bf9ebb50736dc6109e4c4b4dc8b9a6f8f01d13017e71fafc9f9bfb0a1095",
+      "tools/food-schedule-769/launch.sh": "eddc4386e6da5c16ddb54d94cc68413fc74009e334d03323ac84fe3070669010",
+      "package.json": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+      "pnpm-lock.yaml": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+      "tools/test/food-schedule-769.test.ts": "0b6c500941fe28ccfb2424180b7144a3c229c64c4ff4a2f45c2ae69faa124002",
+      "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d"
+    },
+    "nodeVersion": "24.2.0",
+    "environment": {
+      "NODE_NO_WARNINGS": "1"
+    },
+    "packageJsonSha256": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpmLockSha256": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "command": [
+      "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+      "--experimental-strip-types",
+      "tools/food-schedule-769/explore.ts",
+      "--write",
+      "--seed",
+      "1202",
+      "--attempt-dir",
+      "/Users/nicholas/.codex/worktrees/food-schedule-769/browser-life/runs/food-schedule-769/attempts/run-20261027T214231Z-97616"
+    ]
+  },
+  "result": {
+    "status": "completed",
+    "classification": "completed",
+    "exitStatus": 0,
+    "finishedUtc": "2026-10-27T21:45:58.901Z",
+    "stdout": "stdout.log",
+    "stderr": "stderr.log"
+  },
+  "localAttemptDirectory": "runs/food-schedule-769/attempts/run-20261027T214231Z-97616",
+  "regressionVerified": {
+    "status": "verified",
+    "seed": 1202,
+    "mode": "foothold-band",
+    "throughTick": 6000,
+    "normalization": "none",
+    "comparedSamples": 301,
+    "comparedFrames": 301,
+    "comparedTickRows": 6000,
+    "comparedSnapshots": 13,
+    "artifactSha256": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60"
+  },
+  "gate3000": {
+    "status": "passed",
+    "artifactSha256": "12c11952eeb15c61f86a7fd32fb04d12cd5bf4c9fd3991b4352988a869ee0a9e",
+    "receiptSha256": "fc86101ebb3b4410edf665f18b15bf14c7642ec29211b46274aded42fad3f67d",
+    "receiptCommit": "ec3d3b3cb39b4d23289a056688f0d4959f364788"
+  },
+  "retainedCounts": {
+    "samples": 301,
+    "frames": 301,
+    "tickRows": 6000,
+    "snapshots": 13
+  },
+  "lineageCount": 737,
+  "repeat": {
+    "verified": true,
+    "comparedThroughTick": 6000,
+    "stateChecks": 301,
+    "frameChecks": 301
+  },
+  "files": {
+    "attempt-status.json": "b850f737a514b01f92bd1a681ebedd593c8120958a282aa88fda2acb32268498",
+    "candidate-evidence.json": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+    "gate-decision.json": "c17724592b467501a491eb30770ffc10ef47221295b0d96b331bbbdbdbd94fe2",
+    "gate-pass.json": "214e3455f592c8dbcad1c125dec96c76304e10e61f546516206c82c3fd5accc8",
+    "gate-ready.json": "4b83ece7a17c410d524ea960dff5d61aa4f71be7ebd0cb808140c53c48ddd5d8",
+    "intent.json": "6c05696cf64ddf721cf60433599fb055182caac684ea3cdf7cb8049f18fe7432",
+    "regression-verified.json": "d36cf1253a1560bcb45aaf6dfc194546119e6e427a45f32c60b70c239d5b84f5",
+    "result.json": "54124b3f5960e5091723dfde5a5820b0a78f21adb41901ba70d470ecbb80c2ca",
+    "runner-start.json": "9206d9a837733d36c6bc4af3867a87fde21871980369d4f2270d3676e44edf4f",
+    "samples.jsonl": "28c583661b39c2920d697f99a7042432b00a67cff5a84cdde6bb11684c4c880c",
+    "snapshots.jsonl": "3d2f42ba2e9d09cdff4b312dc5d4b8177a3c1886fc534ff9264831d005eaac75",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "4792d7b631e0a951bd0c4b86b63efba929dd8ee4eef51b41b1a74696bf30be2c",
+    "ticks.jsonl": "a9dcf7d268f729a3ba67d978b9ff55f10db9a303863cf8298307291a1931b91b"
+  },
+  "artifactSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+  "visualReceiptSha256": "e48e66bfac8396ac32d3afd4b0a0ca0df5c83699404c766c9eecb5b2a989f02e"
+}

@@ -1,0 +1,584 @@
+{
+  "status": "TECHNICAL-STOP-AUDITED",
+  "failure": {
+    "status": "TECHNICAL-STOP",
+    "error": "Error: tracked component disagreement at 100",
+    "elapsedMs": 459745,
+    "scientificSeedsRun": 0
+  },
+  "selections": [
+    {
+      "seed": 2026102401,
+      "parent": {
+        "enumerated": 651,
+        "doseRejected": 647,
+        "collateralRejected": 0,
+        "noEligibleRemnant": 0,
+        "fragmented": 0,
+        "eligible": 4
+      },
+      "mutant": {
+        "enumerated": 589,
+        "doseRejected": 587,
+        "collateralRejected": 0,
+        "noEligibleRemnant": 0,
+        "fragmented": 0,
+        "eligible": 2
+      },
+      "selected": {
+        "parent": {
+          "center": 26,
+          "radius": 2,
+          "damage": 1576,
+          "originalMass": 4063,
+          "collateral": 69,
+          "survivingMass": 2487,
+          "remnantLabel": 3,
+          "remnantMass": 2487,
+          "remnantTargetMass": 2487,
+          "remnantOverlapCells": 14
+        },
+        "mutant": {
+          "center": 2246,
+          "radius": 2,
+          "damage": 1601,
+          "originalMass": 4015,
+          "collateral": 74,
+          "survivingMass": 2414,
+          "remnantLabel": 2,
+          "remnantMass": 2313,
+          "remnantTargetMass": 2313,
+          "remnantOverlapCells": 11
+        }
+      }
+    },
+    {
+      "seed": 2026102402,
+      "parent": {
+        "enumerated": 651,
+        "doseRejected": 648,
+        "collateralRejected": 0,
+        "noEligibleRemnant": 0,
+        "fragmented": 0,
+        "eligible": 3
+      },
+      "mutant": {
+        "enumerated": 620,
+        "doseRejected": 618,
+        "collateralRejected": 0,
+        "noEligibleRemnant": 0,
+        "fragmented": 0,
+        "eligible": 2
+      },
+      "selected": {
+        "parent": {
+          "center": 1599,
+          "radius": 2,
+          "damage": 1683,
+          "originalMass": 4200,
+          "collateral": 108,
+          "survivingMass": 2517,
+          "remnantLabel": 1,
+          "remnantMass": 2517,
+          "remnantTargetMass": 2517,
+          "remnantOverlapCells": 14
+        },
+        "mutant": {
+          "center": 4065,
+          "radius": 1,
+          "damage": 1594,
+          "originalMass": 4174,
+          "collateral": 0,
+          "survivingMass": 2580,
+          "remnantLabel": 0,
+          "remnantMass": 2463,
+          "remnantTargetMass": 2463,
+          "remnantOverlapCells": 14
+        }
+      }
+    }
+  ],
+  "auditedBranches": [
+    "2026102401-parent-legacy",
+    "2026102401-parent-mass-targeted",
+    "2026102401-parent-sham",
+    "2026102401-mutant-legacy",
+    "2026102401-mutant-mass-targeted",
+    "2026102401-mutant-sham",
+    "2026102402-parent-legacy",
+    "2026102402-parent-mass-targeted",
+    "2026102402-parent-sham",
+    "2026102402-mutant-legacy",
+    "2026102402-mutant-mass-targeted"
+  ],
+  "missingBranches": [
+    "2026102402-mutant-sham"
+  ],
+  "cadenceDisagreements": [
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 100,
+      "fast": {
+        "label": 2,
+        "mass": 1766
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 150,
+      "fast": {
+        "label": 2,
+        "mass": 732
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 200,
+      "fast": {
+        "label": 2,
+        "mass": 490
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 250,
+      "fast": {
+        "label": 2,
+        "mass": 483
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 300,
+      "fast": {
+        "label": 2,
+        "mass": 218
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    },
+    {
+      "id": "2026102402-mutant-mass-targeted",
+      "offset": 350,
+      "fast": {
+        "label": 2,
+        "mass": 170
+      },
+      "slow": {
+        "label": null,
+        "mass": 0
+      }
+    }
+  ],
+  "physicalAgreement": true,
+  "continuityEvidenceValidated": true,
+  "firstPairReplayAgreement": true,
+  "artifacts": [
+    {
+      "path": "2026102401-parent-sham-replay25.json",
+      "bytes": 123638,
+      "sha256": "700371e7267c643da1d39e1b77e0cdd11379189d439417246ad2eb4173c5a806"
+    },
+    {
+      "path": "2026102402-parent-legacy-post.blck",
+      "bytes": 836320,
+      "sha256": "bc1a6dbcefd61cf4f1a738d020a266a02550b85228d6bf1c82a275b28dafe56c"
+    },
+    {
+      "path": "2026102401-mutant-legacy-gpu50.json",
+      "bytes": 62420,
+      "sha256": "edd2e417df5f8d3001dd62856770c5e3415b0169bd1dc7d466d8258740f8490e"
+    },
+    {
+      "path": "2026102401-mutant-legacy-cpu25.json",
+      "bytes": 123638,
+      "sha256": "76ff0f867737c71733b96b90e205b8c088989e35f6634a881b1c8d58f76a213e"
+    },
+    {
+      "path": "2026102402-parent-grown.blck",
+      "bytes": 836320,
+      "sha256": "ec0cd868134ce3491e05807cdf35cfc739c016e24894f071162d0a96ee0c5c13"
+    },
+    {
+      "path": "2026102402-parent-mass-targeted-gpu25.json",
+      "bytes": 117041,
+      "sha256": "2428ab7554518ef38c2222626c770f6f0395887fdef2350ebeab3febd77d6b2f"
+    },
+    {
+      "path": "2026102401-parent-sham-gpu25.json",
+      "bytes": 123638,
+      "sha256": "700371e7267c643da1d39e1b77e0cdd11379189d439417246ad2eb4173c5a806"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-gpu25.json",
+      "bytes": 123638,
+      "sha256": "924305cb4a3e58d91a3d7edff096d53a28d30941b677d5327926afd9cbe50f93"
+    },
+    {
+      "path": "2026102401-parent-sham-post.blck",
+      "bytes": 836320,
+      "sha256": "e044fa01502a3ee8e8e8a1acba904a7950043138d45c9d5897a3b62f1754a14c"
+    },
+    {
+      "path": "2026102401-mutant-sham-final.blck",
+      "bytes": 836320,
+      "sha256": "eee40fefd7e2cbbb60b8d901a27f41f8aae3504e85b39597e0e9736c7521f371"
+    },
+    {
+      "path": "2026102402-parent-legacy-gpu50.json",
+      "bytes": 62420,
+      "sha256": "3bb0114c1683c1d2c58032b899209ff309027fa6a0c0564926ff949f515af1a7"
+    },
+    {
+      "path": "2026102401-mutant-sham-replay50.json",
+      "bytes": 62420,
+      "sha256": "71bf2bbc03faa691ece5bdaa773f900b438f07b870487afc66f84aa25acfa8d1"
+    },
+    {
+      "path": "2026102402-parent-legacy-cpu25.json",
+      "bytes": 123638,
+      "sha256": "c4b61c456b8facb80cc0671bb577d0fdf82e6b41cdd768f95073db5561f33926"
+    },
+    {
+      "path": "2026102401-mutant-sham-post.blck",
+      "bytes": 836320,
+      "sha256": "80804b3415455d64cc7773a08519556cdb449f8d9b5fd8ed0bb81df67b26f3aa"
+    },
+    {
+      "path": "2026102402-parent-sham-gpu25.json",
+      "bytes": 123638,
+      "sha256": "80e2fe1ac464b9f469bc02be07aa36b8cafef57d98bc3dd3785729acdf818df1"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-replay25.json",
+      "bytes": 123638,
+      "sha256": "f2fcb45cc912a3f419d18103dc7acf1b3a93cf68141f4e84e9340746d9d1228d"
+    },
+    {
+      "path": "2026102401-parent-legacy-gpu25.json",
+      "bytes": 123638,
+      "sha256": "7df872a4c63af2cb265a56d41337ad2991fbdf07bb3a38576e07e3b491f590fc"
+    },
+    {
+      "path": "2026102401-mutant-legacy-final.blck",
+      "bytes": 836320,
+      "sha256": "a638a3461d6db166aa1b739017ba830526d6d1af6447365efe7eb57e76845de4"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-replay50.json",
+      "bytes": 62419,
+      "sha256": "0f303d7e9a4751738345bdf21ad9525ff937d39a3dc00963f35c9cff894ec818"
+    },
+    {
+      "path": "2026102401-mutant-legacy-replay50.json",
+      "bytes": 62420,
+      "sha256": "edd2e417df5f8d3001dd62856770c5e3415b0169bd1dc7d466d8258740f8490e"
+    },
+    {
+      "path": "2026102402-parent-mass-targeted-post.blck",
+      "bytes": 836320,
+      "sha256": "a7cb84de23ec8d16ea9de6c5132809345d858b294d6e35ac3e1a7aeee1fad6eb"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-post.blck",
+      "bytes": 836320,
+      "sha256": "8956ccae51967b25046069788861e735f6a218e28d36c18256c1c8437849a637"
+    },
+    {
+      "path": "2026102402-parent-legacy-final.blck",
+      "bytes": 836320,
+      "sha256": "e781e87854ef8e9be1682cd02a382c4b67bf92a7ef507194c5ea588e425e03f8"
+    },
+    {
+      "path": "2026102401-mutant-sham-cpu25.json",
+      "bytes": 123638,
+      "sha256": "c224f542237f57a7a38ed556bcdd4f8057fb1e8ef7d00d5f18fc7221ba236dc5"
+    },
+    {
+      "path": "2026102401-mutant-sham-gpu50.json",
+      "bytes": 62420,
+      "sha256": "71bf2bbc03faa691ece5bdaa773f900b438f07b870487afc66f84aa25acfa8d1"
+    },
+    {
+      "path": "2026102401-parent-legacy-replay50.json",
+      "bytes": 62419,
+      "sha256": "a76b7c039ce8fe54fa0b1339ec1219ee440ffe139c6474eff4679ccd79b7ca01"
+    },
+    {
+      "path": "2026102402-mutant-legacy-gpu25.json",
+      "bytes": 116198,
+      "sha256": "dc5dcdfa600c6dabcc641eebcb8fdfa0b1e7a2af25f9fe725293ad95de32869d"
+    },
+    {
+      "path": "2026102401-parent-grown.blck",
+      "bytes": 836320,
+      "sha256": "e044fa01502a3ee8e8e8a1acba904a7950043138d45c9d5897a3b62f1754a14c"
+    },
+    {
+      "path": "2026102401-parent-legacy-post.blck",
+      "bytes": 836320,
+      "sha256": "9df3acf574fc7df8ed28e23d03cf7766549380db58d13bd0a6456618bb54c531"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-gpu25.json",
+      "bytes": 123638,
+      "sha256": "f2fcb45cc912a3f419d18103dc7acf1b3a93cf68141f4e84e9340746d9d1228d"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-gpu25.json",
+      "bytes": 110624,
+      "sha256": "d7e3950f7ed14da9d9fe31007d3b557d91812cff9633a96ec4be8ff0899dee54"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-post.blck",
+      "bytes": 836320,
+      "sha256": "1e73bcae16ecd7426890982e9c6d090f9c0538848d72a1d86802ae194bfd3fb3"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-post.blck",
+      "bytes": 836320,
+      "sha256": "5499fbe6a6a1bea37c595784ab91cd6cdec8d187e5e56e6f2525a3991f66160f"
+    },
+    {
+      "path": "2026102401-mutant-legacy-replay25.json",
+      "bytes": 123638,
+      "sha256": "76ff0f867737c71733b96b90e205b8c088989e35f6634a881b1c8d58f76a213e"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-final.blck",
+      "bytes": 836320,
+      "sha256": "b719a3b22ccd89adcfe8040c590c146453a0037cfa92cc84608b732bdc7191fb"
+    },
+    {
+      "path": "2026102401-mutant-legacy-post.blck",
+      "bytes": 836320,
+      "sha256": "e0b9edba599e11678468d40e7ab82659c130eb325dc74cecc5540fa88dd50f1d"
+    },
+    {
+      "path": "2026102402-parent-mass-targeted-final.blck",
+      "bytes": 836320,
+      "sha256": "f665faf3caefb5398313bb4f0b2212dafa994e9921113438f86e2229e7f14084"
+    },
+    {
+      "path": "2026102401-parent-sham-final.blck",
+      "bytes": 836320,
+      "sha256": "eb7ca934ac1c8d690503f838c0044a279f231ba439e2bbfa1dbb7f648d0d00f2"
+    },
+    {
+      "path": "2026102401-parent-legacy-cpu25.json",
+      "bytes": 123638,
+      "sha256": "7df872a4c63af2cb265a56d41337ad2991fbdf07bb3a38576e07e3b491f590fc"
+    },
+    {
+      "path": "2026102401-parent-legacy-gpu50.json",
+      "bytes": 62419,
+      "sha256": "a76b7c039ce8fe54fa0b1339ec1219ee440ffe139c6474eff4679ccd79b7ca01"
+    },
+    {
+      "path": "2026102402-parent-sham-post.blck",
+      "bytes": 836320,
+      "sha256": "ec0cd868134ce3491e05807cdf35cfc739c016e24894f071162d0a96ee0c5c13"
+    },
+    {
+      "path": "inputs.json",
+      "bytes": 903,
+      "sha256": "0af6504785f2de6aa731747314d676935b6ea064da300f1d52f04a10e93ec9e7"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-replay25.json",
+      "bytes": 123638,
+      "sha256": "924305cb4a3e58d91a3d7edff096d53a28d30941b677d5327926afd9cbe50f93"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-cpu25.json",
+      "bytes": 123638,
+      "sha256": "f2fcb45cc912a3f419d18103dc7acf1b3a93cf68141f4e84e9340746d9d1228d"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-gpu50.json",
+      "bytes": 62419,
+      "sha256": "18c9f60d42bd192016ed8f01c5543af5475e339c166f2433c904b8e5480b4f5a"
+    },
+    {
+      "path": "execution-source/budget.ts",
+      "bytes": 1577,
+      "sha256": "65c082b54426261e9d660f20224c7b261046b9457e7d77749f883eb39b254332"
+    },
+    {
+      "path": "execution-source/parity.ts",
+      "bytes": 5966,
+      "sha256": "1ec535a1b2f2f6176513b74a76664298d7543dd4c031aca805c8ffcc232aa5ed"
+    },
+    {
+      "path": "execution-source/stage0.ts",
+      "bytes": 10869,
+      "sha256": "805eb49b17b3a847033f097ef6998fe77a881d2999aaf9e3493b14fd13789b4d"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-cpu25.json",
+      "bytes": 110624,
+      "sha256": "d7e3950f7ed14da9d9fe31007d3b557d91812cff9633a96ec4be8ff0899dee54"
+    },
+    {
+      "path": "2026102401-mutant-grown.blck",
+      "bytes": 836320,
+      "sha256": "80804b3415455d64cc7773a08519556cdb449f8d9b5fd8ed0bb81df67b26f3aa"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-gpu50.json",
+      "bytes": 55951,
+      "sha256": "308c022dc30aa0747601cd858bb0aac400efc6b147557163ccc44c03cc5f5d99"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 27032,
+      "sha256": "37347efe571e44acd632f296c1b9af2d9823f64cf22c447bb3bcf51264625115"
+    },
+    {
+      "path": "2026102401-mutant-sham-gpu25.json",
+      "bytes": 123638,
+      "sha256": "c224f542237f57a7a38ed556bcdd4f8057fb1e8ef7d00d5f18fc7221ba236dc5"
+    },
+    {
+      "path": "2026102401-parent-legacy-replay25.json",
+      "bytes": 123638,
+      "sha256": "7df872a4c63af2cb265a56d41337ad2991fbdf07bb3a38576e07e3b491f590fc"
+    },
+    {
+      "path": "2026102402-mutant-legacy-cpu25.json",
+      "bytes": 116198,
+      "sha256": "dc5dcdfa600c6dabcc641eebcb8fdfa0b1e7a2af25f9fe725293ad95de32869d"
+    },
+    {
+      "path": "2026102402-parent-sham-final.blck",
+      "bytes": 836320,
+      "sha256": "fbb29c47de34d4a55a836633091ad9cc8690cc6a1c99ab51290de6c752662509"
+    },
+    {
+      "path": "2026102402-mutant-legacy-gpu50.json",
+      "bytes": 58700,
+      "sha256": "2cbbc13a065668745c215134c177abb43240a20aad77e23ecaa7e250d4f868ba"
+    },
+    {
+      "path": "2026102401-parent-sham-cpu25.json",
+      "bytes": 123638,
+      "sha256": "700371e7267c643da1d39e1b77e0cdd11379189d439417246ad2eb4173c5a806"
+    },
+    {
+      "path": "2026102402-parent-mass-targeted-gpu50.json",
+      "bytes": 59117,
+      "sha256": "67f70c59e9c65df6a762d61f50fe7678e80663cd4363adb5e222540e62d99686"
+    },
+    {
+      "path": "2026102402-parent-mass-targeted-cpu25.json",
+      "bytes": 117041,
+      "sha256": "2428ab7554518ef38c2222626c770f6f0395887fdef2350ebeab3febd77d6b2f"
+    },
+    {
+      "path": "2026102401-parent-sham-gpu50.json",
+      "bytes": 62420,
+      "sha256": "18ba3efa7a7c883d64f15ef825920f064af1ea7d8ae54e37165a866cd75f6868"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-gpu50.json",
+      "bytes": 62419,
+      "sha256": "0f303d7e9a4751738345bdf21ad9525ff937d39a3dc00963f35c9cff894ec818"
+    },
+    {
+      "path": "2026102401-mutant-mass-targeted-cpu25.json",
+      "bytes": 123638,
+      "sha256": "924305cb4a3e58d91a3d7edff096d53a28d30941b677d5327926afd9cbe50f93"
+    },
+    {
+      "path": "2026102402-mutant-grown.blck",
+      "bytes": 836320,
+      "sha256": "4a9fedcaa44d663761c026cf862de502e2dfb9ed924d4863f9ce7971ab9126e6"
+    },
+    {
+      "path": "2026102401-parent-sham-replay50.json",
+      "bytes": 62420,
+      "sha256": "18ba3efa7a7c883d64f15ef825920f064af1ea7d8ae54e37165a866cd75f6868"
+    },
+    {
+      "path": "failure.json",
+      "bytes": 142,
+      "sha256": "ebb26647ef4f442f6a5ad10206ceeface9d6bcb09d533a1c50530bcbd7b4fc33"
+    },
+    {
+      "path": "2026102401-parent-legacy-final.blck",
+      "bytes": 836320,
+      "sha256": "1af69d567b6a47b97bfc27203aeb4d0844972f4d5aa0d1917c89ad0aa8396332"
+    },
+    {
+      "path": "2026102401-mutant-legacy-gpu25.json",
+      "bytes": 123638,
+      "sha256": "76ff0f867737c71733b96b90e205b8c088989e35f6634a881b1c8d58f76a213e"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-replay50.json",
+      "bytes": 62419,
+      "sha256": "18c9f60d42bd192016ed8f01c5543af5475e339c166f2433c904b8e5480b4f5a"
+    },
+    {
+      "path": "2026102402-mutant-mass-targeted-final.blck",
+      "bytes": 836320,
+      "sha256": "f862f9a980ad10f1b42afa8e3dd3dc92e03cdb31ff8a4aa03add0522e9c6c112"
+    },
+    {
+      "path": "2026102401-parent-mass-targeted-final.blck",
+      "bytes": 836320,
+      "sha256": "234a81298104e4923c223b618513edff54e9c3ba6fc1e8c6dfc084699243a99e"
+    },
+    {
+      "path": "2026102402-parent-legacy-gpu25.json",
+      "bytes": 123638,
+      "sha256": "c4b61c456b8facb80cc0671bb577d0fdf82e6b41cdd768f95073db5561f33926"
+    },
+    {
+      "path": "2026102401-mutant-sham-replay25.json",
+      "bytes": 123638,
+      "sha256": "c224f542237f57a7a38ed556bcdd4f8057fb1e8ef7d00d5f18fc7221ba236dc5"
+    },
+    {
+      "path": "2026102402-parent-sham-gpu50.json",
+      "bytes": 62420,
+      "sha256": "3e86a8285545d0e6b5d705c838ebf595df6010a852ce31ac35914c1a5c18ea16"
+    },
+    {
+      "path": "2026102402-parent-sham-cpu25.json",
+      "bytes": 123638,
+      "sha256": "80e2fe1ac464b9f469bc02be07aa36b8cafef57d98bc3dd3785729acdf818df1"
+    },
+    {
+      "path": "2026102402-mutant-legacy-post.blck",
+      "bytes": 836320,
+      "sha256": "f5f9be1f512f112a4a688dacb0386c8dd3acfa950b99b452a6303bb3d9ff29b9"
+    },
+    {
+      "path": "2026102402-mutant-legacy-final.blck",
+      "bytes": 836320,
+      "sha256": "a4a1ddc5beba2a417d53ccd28cb1c80829d7fbb751e7965ba493a3ebd98aca28"
+    }
+  ],
+  "aggregateSpentMs": 989751,
+  "aggregateSpentBytes": 94403653,
+  "scientificSeedsRun": 0
+}

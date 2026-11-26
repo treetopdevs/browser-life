@@ -1,0 +1,1 @@
+pair seed 3 steps 10000: cells 512 basins 3 patches(>=10) 2 seam 8 permille distinct marks 2 residual 0 validate [] hash 1053016157 step 73606 ms observe 246 ms -> docs/bodies-2026-11-17/v3/wildcard/r1-plain-s3/readout.json

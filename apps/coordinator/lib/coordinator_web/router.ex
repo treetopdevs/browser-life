@@ -22,6 +22,7 @@ defmodule CoordinatorWeb.Router do
     get "/experiments/:name", ApiController, :experiment
     post "/islands", ApiController, :join
     get "/islands/me", ApiController, :me
+    delete "/islands/:id", ApiController, :leave
     post "/experiments", ApiController, :create_experiment
     post "/next", ApiController, :next
     post "/segments/:id/heartbeat", ApiController, :heartbeat
@@ -62,11 +63,29 @@ defmodule CoordinatorWeb.Router do
     put "/leases/:id/files/:name", DiscoveryController, :put_file
   end
 
+  # The shared soup (Coordinator.Soup): its own data directory; the queue's islands.
+  scope "/api/soup", CoordinatorWeb do
+    pipe_through :api
+    post "/worlds", SoupController, :register
+    get "/status", SoupController, :status
+    post "/next", SoupController, :next
+    post "/segments/:id/complete", SoupController, :complete
+  end
+
+  scope "/api/soup", CoordinatorWeb do
+    pipe_through :raw
+    get "/segments/:id/start", SoupController, :start
+    get "/segments/:id/snapshot", SoupController, :snapshot
+    put "/segments/:id/snapshot", SoupController, :put_snapshot
+  end
+
   scope "/api", CoordinatorWeb do
     pipe_through :raw
     put "/segments/:id/checkpoint", ApiController, :put_checkpoint
     get "/segments/:id/start", ApiController, :get_checkpoint
     put "/segments/:id/files/:name", ApiController, :put_file
+    put "/pick-logs/:sha", ApiController, :put_pick_log
+    get "/pick-logs/:sha", ApiController, :get_pick_log
     get "/segments/:id/files/:name", ApiController, :get_file
     get "/public/gardens/:name/checkpoints/:digest", GardenController, :checkpoint
   end

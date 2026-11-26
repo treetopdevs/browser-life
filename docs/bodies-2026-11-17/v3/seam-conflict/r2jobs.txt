@@ -1,0 +1,8 @@
+r2 plain
+r2 allgates --gates share,grow,signal --seam-cost 1 --raid 2
+r2 sc1raid2 --seam-cost 1 --raid 2
+r2 ssg_sc1raid2 --gates share,signal --seam-cost 1 --raid 2
+r2 sc3raid4 --seam-cost 3 --raid 4
+r2 f5plain --founders 5
+r2 f5ssg_sc1raid2 --founders 5 --gates share,signal --seam-cost 1 --raid 2
+r2 f5sc3raid4 --founders 5 --seam-cost 3 --raid 4

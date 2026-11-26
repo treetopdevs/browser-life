@@ -1,0 +1,13 @@
+Four actionable findings remain, all **P2 evidence-validation gaps**:
+
+1. **Late metrics are accepted without reconciliation.** [explore.ts:436](/Users/nicholas/.codex/worktrees/matter-flow-aquarium/browser-life/tools/matter/explore.ts:436) checks window metadata but never recomputes activity or counter deltas. An in-memory mutation setting activity to `-99` and growth delta to `999999999` passed. Invalid history interval endpoints and negative activity also passed after updating hashes. Validate interval fields and compare the complete late summary against values derived from retained history.
+
+2. **Divergence claims can contradict retained physical states.** [explore.ts:439](/Users/nicholas/.codex/worktrees/matter-flow-aquarium/browser-life/tools/matter/explore.ts:439) only checks marker ranges. Replacing known rain/control divergences with `null` passed despite differing snapshots and stocks. At minimum, reject null markers contradicted by retained paired snapshots and reconcile recorded event ticks with their controls.
+
+3. **Fixture observations are disconnected from their passing results.** [explore.ts:376](/Users/nicholas/.codex/worktrees/matter-flow-aquarium/browser-life/tools/matter/explore.ts:376) validates expected/actual summaries, census tick labels and snapshot hashes separately. Setting the empty fixture’s tick-100 biomass and final nutrient census to `999999` still passed. Validate every fixture census and reconcile initial/final snapshots, final census, history and measured gate results.
+
+4. **Fixed phases and extinction semantics are not enforced across observations.** [explore.ts:313](/Users/nicholas/.codex/worktrees/matter-flow-aquarium/browser-life/tools/matter/explore.ts:313) validates individual snapshot bounds, without enforcing unchanged phases or consistent extinction metadata. A changed tick-1000 phase passed after rehashing; a living census marked extinct also passed. Enforce immutable metadata and the relationship between biomass, extinction tick and subsequent observations.
+
+The static model review found no correctness blocker in signed synchronous relaxation, material identities, phase ordering, finite rain, copying/bounds or post-extinction continuation. UI source uses current fields and shared scales; packaging changes appear consistent.
+
+Executed: both exact pre-batch gates passed, scoped strict compilation passed, and bounded tampering probes reproduced the findings. No full pilot rerun or browser/runtime verification was performed. The Markdown defect was fixed concurrently and its generator now succeeds. At the final check, JSON had an older runner hash; pilot Markdown and validation records were absent, so evidence remains provisional. No files were changed by this review.

@@ -153,6 +153,8 @@ export function prelude(c: WorldConfig): string {
   consts.INJURY_PERIOD = u(c.injuryPeriod ?? 1);
   consts.INJURY_R = i(c.injuryRadius ?? 0);
   consts.INJURY_PROB = u(c.injuryProb ?? 0);
+  // Polymer shell (WorldConfig.injuryShell): constant-folded away when absent.
+  consts.INJURY_SHELL = u(c.injuryShell ?? 0);
   // Heritable shape (WorldConfig.shapeReach): constant-folded away when absent.
   const sk = c.shapeReach === undefined ? null : buildShapeKernel(c.kernelRadius, c.shapeReach);
   consts.SHAPE_RINGS = u(shapeRings(c));
@@ -165,6 +167,8 @@ export function prelude(c: WorldConfig): string {
   consts.GENES = c.genes !== undefined ? "true" : "false";
   consts.K_GENE = u(c.kGene ?? 0);
   consts.GENE_FLIP = u(c.geneFlip ?? 0);
+  // Gene v2's floor on a build carrier's BUILD output: max with 0 is the output itself.
+  consts.GENE_DRIVE = u(c.geneDrive ?? 0);
   consts.GENE_SHIFT = u(GENE_SHIFT);
   consts.GENE_COUNT = u(Math.max(1, geneCount(c)));
   // Masks in the PARAM1 word, 0 when absent so the gates fold to true (see geneMasks).
@@ -814,6 +818,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       let word = genome[G_PARAM1 + i];
       let decomp = GENE_DECOMP_MASK == 0u || (word & GENE_DECOMP_MASK) != 0u;
       let build = GENE_BUILD_MASK == 0u || (word & GENE_BUILD_MASK) != 0u;
+      // Gene v2 (WorldConfig.geneDrive): a build carrier's BUILD output floored (see sim-ref).
+      let r_build = select(r[OUT_BUILD], max(r[OUT_BUILD], GENE_DRIVE), (word & GENE_BUILD_MASK) != 0u);
       if (decomp) {
         t = mul_shr(cat(B), r[OUT_DECOMP], 7u);
         q = min(C, mul_frac(t, K_DECOMP, 12u, draw(base, RND_DECOMP)));
@@ -828,7 +834,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
 
       if (build) {
         g = E_P - E_B;
-        t = mul_shr(cat(B), r[OUT_BUILD], 7u);
+        t = mul_shr(cat(B), r_build, 7u);
         q = min(min(B, E / g), mul_frac(t, K_BUILD, 12u, draw(base, RND_BUILD)));
         B -= q; P += q; E -= q * g; F[FX_BUILD] = q;
       }
@@ -838,7 +844,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       E -= q; S += q; F[FX_EMIT] = q;
       if (S > POOL_MAX) { hadd(S - POOL_MAX); S = POOL_MAX; }
 
-      let sumr = r[0] + r[1] + select(0u, r[2], decomp) + r[3] + select(0u, r[4], build) + r[5];
+      let sumr = r[0] + r[1] + select(0u, r[2], decomp) + r[3] + select(0u, r_build, build) + r[5];
       t = mul_shr(cat(B), sumr, 7u);
       var cost = mul_frac(t, K_COST, 16u, draw(base, RND_COST)) + mul_frac(B, K_MAINT, 16u, draw(base, RND_MAINT));
       if (GENES) {
@@ -904,18 +910,26 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     q = min(C, mul_frac(ta, K_ABIO, 16u, draw(base, RND_ABIO2)));
     C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] = q;
 
+    var shelled = false;
     if (INJURY && (step + 1u) % INJURY_PERIOD == 0u && injured(x, y, step)) {
-      hadd(B * (E_B - E_C));
-      hadd(P * (E_P - E_C));
-      hadd(E);
-      C += B + P;
-      B = 0u;
-      P = 0u;
-      E = 0u;
-      mot = MOT_ZERO;
+      if (INJURY_SHELL > 0u && P >= INJURY_SHELL) {
+        shelled = true;
+        P -= INJURY_SHELL;
+        C += INJURY_SHELL;
+        hadd(INJURY_SHELL * (E_P - E_C));
+      } else {
+        hadd(B * (E_B - E_C));
+        hadd(P * (E_P - E_C));
+        hadd(E);
+        C += B + P;
+        B = 0u;
+        P = 0u;
+        E = 0u;
+        mot = MOT_ZERO;
+      }
     }
 
-    if (living && B == 0u && P == 0u) {
+    if (living && B == 0u && P == 0u && !shelled) {
       genome[G_LIN_HI + i] = 0u;
       genome[G_LIN_LO + i] = 0u;
     }

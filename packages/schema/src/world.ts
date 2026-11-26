@@ -1,5 +1,6 @@
-import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, geneMasks, maxPackableRaw, packLineageLo, validateConfig, worldW, type PondScore, type WorldConfig } from "./config.ts";
+import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, POOL_MAX3, RING_CELL_MASK, cellCount, genomeChannels, isSlab, geneMasks, maxPackableRaw, packLineageLo, validateConfig, worldW, type PondScore, type WorldConfig } from "./config.ts";
 import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENE_SHIFT, GENOME_CHANNELS } from "./layout.ts";
+import { NN_PAD3 } from "./layout3d.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
 import { founderGenome, M3_FOUNDERS } from "./founders.ts";
 import { divi, draw, lowbias32 } from "./int.ts";
@@ -62,6 +63,7 @@ export interface InitSpec {
 export function allocState(cfg: WorldConfig): WorldState {
   const errs = validateConfig(cfg);
   if (errs.length) throw new Error(`invalid config: ${errs.join("; ")}`);
+  if (isSlab(cfg)) throw new Error("allocState is 2D only: a slab config (tileD set) is built with allocState3 / buildWorld3");
   const n = cellCount(cfg);
   return {
     cfg,
@@ -91,6 +93,7 @@ export const motilityTerm = (byte: number, gain: number): number => divi((byte -
  */
 export function motilityReader(state: WorldState): (i: number) => [number, number] {
   const cfg = state.cfg;
+  if (isSlab(cfg)) throw new Error("motilityReader is 2D only: a slab has a third motility axis");
   const n = cellCount(cfg);
   const { cells, genome } = state;
   const refGain = cfg.neutral ? encodeGenome(generalistGenome(cfg.defaultMu, cfg.defaultSigma), 0, 0)[G.PARAM1] & 0xff : null;
@@ -158,7 +161,10 @@ export function validateState(s: WorldState): string[] {
   if (errs.length) return errs;
   const n = cellCount(s.cfg);
   if (s.cells.length !== n * CELL_CHANNELS) errs.push("cell buffer size mismatch");
-  if (s.genome.length !== n * GENOME_CHANNELS) errs.push("genome buffer size mismatch");
+  const gc = genomeChannels(s.cfg);
+  const slab = isSlab(s.cfg);
+  const pool = slab ? POOL_MAX3 : POOL_MAX;
+  if (s.genome.length !== n * gc) errs.push("genome buffer size mismatch");
   if (!Number.isInteger(s.step) || s.step < 0 || s.step > MAX_STEP) errs.push(`step must be in 0..${MAX_STEP}`);
   if (errs.length) return errs;
   let matter = 0;
@@ -166,8 +172,8 @@ export function validateState(s: WorldState): string[] {
   if (matter > MATTER_MAX) errs.push(`total matter ${matter} exceeds ${MATTER_MAX}`);
   for (const ch of [CH.E, CH.S])
     for (let i = ch * n; i < (ch + 1) * n; i++)
-      if (s.cells[i] > POOL_MAX) {
-        errs.push(`${ch === CH.E ? "E" : "S"} at cell ${i - ch * n} exceeds ${POOL_MAX}`);
+      if (s.cells[i] > pool) {
+        errs.push(`${ch === CH.E ? "E" : "S"} at cell ${i - ch * n} exceeds ${pool}`);
         break;
       }
   // Cumulative ledgers must leave headroom: one step adds < 2^58 (2^24 cells x < 2^34 each).
@@ -182,7 +188,23 @@ export function validateState(s: WorldState): string[] {
   const seen = new Map<string, number>();
   for (let i = 0; i < n && errs.length === 0; i++) {
     const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
+    if (s.cfg.rpsTypes !== undefined) {
+      const p1 = s.genome[G.PARAM1 * n + i], type = (p1 >>> 8) & 255, mask = (p1 >>> 16) & 255;
+      const living = (hi | lo) !== 0, mirror = s.cells[CH.MOT * n + i] >>> 24;
+      if (living && (type >= s.cfg.rpsTypes || (mask & ~((1 << s.cfg.rpsTypes) - 1)) || (mask & (1 << type)))) errs.push(`invalid RPS type/mask at cell ${i}`);
+      if (mirror !== (living ? mask : 0)) errs.push(`invalid RPS mirror at cell ${i}`);
+      if (!living && (s.cells[CH.B * n + i] !== 0 || s.cells[CH.P * n + i] !== 0)) errs.push(`RPS bound matter without lineage at cell ${i}`);
+      if (errs.length) break;
+    }
     if ((hi | lo) === 0) continue;
+    if (slab) {
+      // PARAM1 bytes 1..3 (rings, genes) and the padding bytes of the last weight word are undefined in a slab and must stay 0.
+      const padMask = NN_PAD3 === 0 ? 0 : (0xffffffff << (8 * (4 - NN_PAD3))) >>> 0;
+      if ((s.genome[G.PARAM1 * n + i] >>> (s.cfg.rpsTypes === undefined ? 8 : 24)) !== 0 || (s.genome[(gc - 1) * n + i] & padMask) !== 0) {
+        errs.push(`lineage ${hi}:${lo} at cell ${i} has nonzero reserved genome bytes`);
+        break;
+      }
+    }
     if ((s.genome[G.PARAM1 * n + i] & foreignGenes) !== 0) {
       errs.push(`lineage ${hi}:${lo} at cell ${i} carries gene bits outside the gene set ${s.cfg.genes}`);
       break;
@@ -203,7 +225,7 @@ export function validateState(s: WorldState): string[] {
       seen.set(key, i);
       continue;
     }
-    for (let g = 2; g < GENOME_CHANNELS; g++)
+    for (let g = 2; g < gc; g++)
       if (s.genome[g * n + i] !== s.genome[g * n + j]) {
         errs.push(`lineage ${key} has differing genome words at cells ${j} and ${i}`);
         break;

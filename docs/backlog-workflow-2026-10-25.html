@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlog workflow — 25 October 2026</title>
+<style>body{font:17px/1.6 system-ui;margin:3rem auto;padding:0 1rem;max-width:76ch;color:#172c2a;background:#f5f6ef}h1,h2{line-height:1.2}a{color:#075b66}article{border-top:1px solid #becbc0;padding:1rem 0}code{overflow-wrap:anywhere}table{border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:.5rem;border-bottom:1px solid #becbc0}</style>
+<main>
+<h1>Backlog workflow</h1>
+<p>Started 25 October 2026. Base: <code>904a05a1</code>, fetched origin/main. Branch: <code>codex/backlog-proxy-readiness</code>. First-slice status: PR84 merged on 26 October 2026 at <code>4730417a</code>. Site-image verification completed in <a href="https://github.com/treetopdevs/browser-life/pull/89">PR89</a>. Current slice (30 October): coordinator-image verification, from main <code>3c0c0afa</code> in <code>claude/backlog-project-workflow-45cc4d</code>. Verified in PR124 (D19).</p>
+<h2>Operating loop</h2>
+<ol>
+<li>Fetch main and reconcile planned work against merged code and held PRs.</li>
+<li>Choose the smallest useful unblocked slice; make a fresh worktree from that tip.</li>
+<li>Record scope, decisions and observable acceptance gates before implementation; review the plan.</li>
+<li>Implement with Claude, agy or Cursor, run meaningful checks, and get independent Sonnet 5.5 High and required Sol reviews.</li>
+<li>Fix assessed findings, publish a focused PR, inspect hosted checks, and update this decision log with evidence and remaining boundaries.</li>
+<li>Reconcile the backlog again before selecting the next slice; distinguish shipped code from live deployment, human validation and new scientific results.</li>
+</ol>
+<p>Earlier history: <a href="decisions-2026-10-17-backlog-run.html">prototype backlog decisions</a>. First publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> at implementation commit <code>7e803de5</code>.</p>
+<h2>Backlog routing</h2>
+<p>The <a href="prototypes-2026-10-24.html">seven-surface prototype inventory</a> records the previous implementation backlog as merged. Existing PR60 (opening-day copy) and PR69 (new scientific protocol) remain held. The next engineering slice closes the actual-image verification gap in <a href="../deploy/README.md">deployment follow-ups</a>: <a href="site-image-gate-2026-10-26.md">site image gate plan</a>.</p>
+<table>
+<tr>
+<th>Work</th>
+<th>Disposition</th>
+</tr>
+<tr>
+<td>Compose settings and proxy address forwarding</td>
+<td>Merged as PR84 after local checks and independent Sonnet/Sol review.</td>
+</tr>
+<tr>
+<td>Actual site-image verification in CI</td>
+<td>Implemented and verified in PR89: actual packaged-image checks, native extracted-Caddy matrix, two expected-failure canaries and observable cleanup.</td>
+</tr>
+<tr>
+<td>Actual coordinator-image verification in CI</td>
+<td>Implemented and verified in PR124 (D19): 27 tests against the actual image on hosted amd64 and on local arm64, two canaries, clean cleanup.</td>
+</tr>
+<tr>
+<td>Refuse a production start without the discovery join token</td>
+<td>Follow-up from D19: the coordinator admits IPv6-loopback joins when the token is unset, and only Compose's required-variable check prevents that. Coordinator runtime refusal in draft PR125.</td>
+</tr>
+<tr>
+<td>Live deployment and host verification</td>
+<td>Separate operational step; local checks cannot establish host topology.</td>
+</tr>
+<tr>
+<td>Public garden opening</td>
+<td>Retain the existing release safeguards and opening checklist.</td>
+</tr>
+<tr>
+<td>New scientific trials and human playtests</td>
+<td>Retain protocol and participant requirements; automated engineering tests supply neither.</td>
+</tr>
+</table>
+<h2>Decisions</h2>
+<article id="d1">
+<h3>D1 — Complete the next operational gap</h3>
+<p>Expose supported coordinator settings in Compose and provide an opt-in client-address path through Caddy. This makes documented configuration usable without inventing a new scientific feature.</p>
+</article>
+<article id="d2">
+<h3>D2 — Trust no upstream by default</h3>
+<p>Use an empty static proxy allowlist by default, strict right-to-left parsing of X-Forwarded-For, and replace the upstream header with the single resolved client address. Document explicit Traefik CIDRs, isolated coordinator networking, and separate live verification before enabling per-address join limits. Do not default to all private networks.</p>
+</article>
+<article id="d3">
+<h3>D3 — Preserve release defaults</h3>
+<p>Pass through only existing runtime settings: BL_TRUST_FORWARDED_FOR, BL_ISLAND_JOINS_PER_ADDRESS, BL_MAX_ISLANDS, BL_CORS_ORIGINS and BL_LEASE_MS. Blank values retain coordinator defaults. Garden scheduling stays off, garden routes stay private, coordinator has no published port.</p>
+</article>
+<article id="d4">
+<h3>D4 — Use the requested reviewer directly</h3>
+<p>agy lists Claude Sonnet 5.5 High but returns RESOURCE_EXHAUSTED; Cursor requires authentication. Direct Claude CLI returned modelUsage claude-sonnet-5-5 successfully with --effort high. Use direct Claude for planning, implementation and adversarial review, plus the repository-required read-only Codex Sol 6.1 High phase/precommit review.</p>
+</article>
+<article id="d5">
+<h3>D5 — Resolve the phase review findings</h3>
+<p>Sol plan review required replacing broad private-range guidance, checking both Compose modes and live-host isolation, exercising production-line Caddy, updating the existing test harness, proving budget separation, and documenting lease headroom. The local gate uses the official Caddy 2.10.2 binary; the Alpine container and actual host networks remain separate live checks. Local tests will verify configuration and forwarding; existing Phoenix limiter tests plus a local Caddy/Phoenix check will distinguish address delivery from budget behavior. BL_LEASE_MS is milliseconds, default ten minutes; operators must leave heartbeat and retry headroom.</p>
+</article>
+<article id="d6">
+<h3>D6 — Adversarial review repairs</h3>
+<p>Sonnet 5.5 High found no blockers. Added a preflight using the actual mounted Caddyfile and release image: malformed CIDRs prevent site startup, unlike stale but valid entries. Clarified space-separated lists. Tests now pin alternate headers as untrusted pass-through data while address selection uses only XFF. Added explicit untrusted-peer, mixed-family allowlist and invalid-CIDR checks. Conditional tool checks, live network attachments and the unrun Alpine image remain explicit limitations.</p>
+</article>
+<article id="d7">
+<h3>D7 — Repair full-suite fallout from graceful leave</h3>
+<p>The initial full suite exposed two old runner assertions that allowed only join/next and rejected the new cleanup DELETE. Updated both to require exactly POST join, POST next, authenticated DELETE leave; unsupported work must still fetch no state and submit no task. Their 92 tests pass. The existing leave smoke also lacked the required no-lock Deno shim for its coordinator; reused the shared helper and retained the smoke's behavior. Both reviewers then caught credential/query assertions inside a caught fetch; these now run after the rejected island run, outside cleanup, and the 92-test rerun passes. These are test-only repairs to the previously merged leave feature, with no new runner behavior.</p>
+</article>
+<article id="d8">
+<h3>D8 — Preserve the test contract during verification</h3>
+<p>The initial broad run had three stale leave checks and two unchanged CPU-heavy timeouts. Fix only the stale tests. Re-run with two workers while retaining test limits, physics, rules, hash pins and scientific registration unchanged. A focused conservation run passed. The final full run passed all 3,791 tests across 154 files; this completes the local verification gate.</p>
+</article>
+<article id="d9">
+<h3>D9 — Merge the completed configuration slice</h3>
+<p>User authorized merging PR84 if green. GitHub reported CLEAN/MERGEABLE, the exact reviewed head <code>7f71f910</code> and a successful CodeRabbit status. CodeRabbit's message was review rate limited, not a completed review. No inline findings or failed checks were present; the substantive review evidence remained the completed Sonnet/Sol reviews and local gates. Merged without deleting branches at <code>4730417a66cd4d67e40c1b4d88969f61391f57ae</code>, 26 October 2026 04:46:21 UTC.</p>
+</article>
+<article id="d10">
+<h3>D10 — Close the actual-image verification gap next</h3>
+<p>Build and test the production Alpine site image in a fresh worktree from the merge tip. Add a repeatable Linux gate and a GitHub Actions check instead of treating native Caddy evidence as container proof. This is implementation verification; Traefik topology, production deployment, public opening and new science retain their existing boundaries.</p>
+</article>
+<article id="d11">
+<h3>D11 — Keep CI authority narrow and failures observable</h3>
+<p>Use read-only contents permission, no persisted checkout credentials, pinned action revisions, no deployment secrets and no registry publishing. Build one image, retain its immutable local image ID, require Docker/Compose checks, and clean up only containers and scratch data created by that gate. Existing private ci-deploy workflows remain untouched and unpublished.</p>
+</article>
+<article id="d12">
+<h3>D12 — Test the packaged site, not a mounted replacement</h3>
+<p>Both plan reviews found a P1 in the initial wrapper proposal: the existing fixtures replace the image's content and Caddyfile. Replace that proposal with a dedicated default-startup image smoke suite on an isolated Docker bridge with a synthetic coordinator. Extract the built image's Caddy binary for the existing native forwarding matrix. The image suite checks packaged pages/assets, complete uncached 404s, private garden routes, health rewrite and upstream status preservation. A disposable image missing its packaged lab page must fail the named content check; a generic tool crash does not count as a successful canary.</p>
+</article>
+<article id="d13">
+<h3>D13 — Keep scope and evidence proportional</h3>
+<p>This slice changes CI, verification fixtures and documentation. Use focused launcher/image/configuration checks, root and tooling typechecks, and a site build. Do not repeat the unchanged 3,791-test physics run merely to validate workflow wiring. The native local checks, missing-image refusal and hosted image/canary execution have separate evidence records. Container lifecycle, cancellation cleanup and foreign-listener readiness are explicit review targets.</p>
+</article>
+<article id="d14">
+<h3>D14 — Cleanup failures must remain failures</h3>
+<p>Both Sol source reviews and Sonnet found that Docker failures could be treated as empty/absent resources. The helper now requires successful invocation-labelled enumeration; the workflow preserves all query/removal/postcheck statuses. Fault probes confirm failed queries or survivors exit nonzero and retain scratch evidence. Only confirmed empty state permits deletion. Diagnostics are logged before resource removal; forced local termination and platform cancellation limits are explicit.</p>
+</article>
+<article id="d15">
+<h3>D15 — Prove both packaging and HTTP sensitivity</h3>
+<p>Require two disposable canaries: missing packaged lab page and missing served assets. Each must fail its named assertion with the expected content failure; a generic Docker/startup error is not accepted. Tighten the forwarded-address test's final forged IP, compare complete error bodies, and preserve failure reports. No canary image is published.</p>
+</article>
+<article id="d16">
+<h3>D16 — Reject ambiguous canary and teardown outcomes</h3>
+<p>The final Sol CLI review found that an expected content failure could hide a cleanup/runtime error, and native teardown could silently accept a live process. Require canary exit 1 plus a named JSON assertion and JUnit showing exactly one failure with zero errors. Fault probes accept only the assertion-only case and reject extra hook/runtime errors. Native Caddy escalates TERM to KILL and confirms exit; a TERM-ignoring probe is stopped. No timeout or signal alone qualifies as a passing canary.</p>
+</article>
+<article id="d17">
+<h3>D17 — Clear readiness from actual hosted evidence</h3>
+<p><a href="https://github.com/treetopdevs/browser-life/actions/runs/40274844856">Linux run 40274844856</a> passed on source <code>e25bfc7b</code>:53 primary tests, zero skips,12 against the actual started image; both damaged-image canaries failed exactly as intended with no additional hook/runtime errors. Cleanup passed. Tested image: <code>sha256:81b44d68930eeaf80bf7964f086050dce2f17d04f2398d1071e6bc0bba4957bf</code>. Best-effort base RepoDigests warnings and the unprivileged extraction xattr warning are recorded with the resolved build inputs in the review note. This closes the site-image gap, not live deployment or coordinator-image verification.</p>
+</article>
+<article id="d18">
+<h3>D18 — Apply the hosted documentation review</h3>
+<p>CodeRabbit posted two minor README findings after its full review. Clarify that the probe uses HTTP and checks <code>X-Forwarded-Proto: https</code>, rather than proving TLS. Replace the stale hosted-run-pending claim with the completed53-test, two-canary and cleanup evidence. Both are documentation-only corrections. The final-head CI rerun also passed; current checks and review state are on PR89.</p>
+</article>
+<article id="d19">
+<h3>D19 — Coordinator image gate, proven on hosted Linux</h3>
+<p>A sibling workflow, <code>coordinator-image.yml</code>, builds <code>Dockerfile.coordinator</code> and tests the image by ID, started as <code>compose.dokploy.yaml</code> deploys it (plan: <a href="coordinator-image-gate-2026-10-30.md">coordinator image gate</a>). It adds ten refusal cases, two canaries (validator cache removed, root user) and label-scoped cleanup, and records that an unset join token leaves the discovery plane guarded only by Compose's required-variable check; whether an in-container request is then treated as loopback under the release's dual-stack <code>::</code> bind was not established before the first runs, so the control prints it rather than asserting it. A local arm64 run against the actual image (Docker Desktop, 30 October) passed all 27 tests, 13 of them against the started image. Both canaries failed only on their named assertions, and cleanup left nothing behind. The printed control showed an unauthenticated join refused through <code>127.0.0.1</code> but admitted through <code>[::1]</code>, which confirms the finding. Hosted amd64 run <a href="https://github.com/treetopdevs/browser-life/actions/runs/41091103109">41091103109</a> on PR124 matched it: 27 of 27 tests, both canaries and clean cleanup (<a href="coordinator-image-gate-review-2026-10-30.md">record</a>). This closes the coordinator-image gap that D17 left open. Live-host checks remain external. The join-token refusal is draft PR125.</p>
+</article>
+<h2>First-slice acceptance gates</h2>
+<ol>
+<li>Review the plan before implementation.</li>
+<li>Exercise the actual Caddy configuration against a synthetic local HTTP upstream: untrusted spoofing, trusted append-only chains, multiple visitors, absent/malformed headers, both API and health routes, private garden routes.</li>
+<li>Resolve Compose with synthetic secrets only: defaults, explicit values, isolated coordinator and garden safeguards.</li>
+<li>Run focused tests, typecheck, full unit suite and site build. Record installed Caddy version separately from the deployed 2.10 image.</li>
+<li>Adversarial Sonnet and required Sol reviews; repair concrete findings, rerun affected checks, commit and publish PR. Inspect hosted checks and repair failures.</li>
+</ol>
+<h2>First-slice evidence</h2>
+<ul>
+<li>Claude Sonnet 5.5 High planned, implemented the configuration/docs and independently reviewed the full slice. <a href="backlog-proxy-review-2026-10-25.md">Review dispositions</a> record the findings and repairs.</li>
+<li>Test-first check: 6 failures / 12 passes on the pre-implementation configuration. Final expanded deployment gate: 35 passes using official Caddy 2.10.2 and Docker Compose 5.6.0, with required-tools mode enabled.</li>
+<li>Actual Caddy 2.10.2 → Phoenix: eight passes for separate budgets, attacker prefixes, duplicate fields, IPv6 normalization and peer fallback. Existing Phoenix limiter suite: 21 passes.</li>
+<li>Chrome public-not-found suite against Caddy 2.10.2 and the production build: all ten pass. Typecheck and site build pass.</li>
+<li>Independent Sol 6.1 High Standards: no findings. Spec: no findings. The test repairs received both Sonnet and Sol follow-up review; all findings are closed.</li>
+<li>Coordinator <code>mix precommit</code>: 575 tests pass, plus warnings-as-errors compilation and formatting. The actual island-leave smoke passes with the shared no-lock shim.</li>
+<li>Initial full unit run: 3779 pass, three stale graceful-leave checks fail, and two unchanged CPU-heavy tests time out. All three stale checks are repaired and pass focused reruns; the conservation suite passes in isolation. Final full rerun passed <strong>3,791 tests across 154 files</strong> with <code>--maxWorkers=2</code>, Caddy 2.10.2 and required-tools mode. Test time limits were not changed.</li>
+<li>HTML checked at 1280px and 375px: no horizontal overflow, zero axe violations; local links resolve. Node typecheck of the new tooling test and Deno checks of both smoke scripts pass.</li>
+<li>Publication: <a href="https://github.com/treetopdevs/browser-life/pull/84">PR84</a> published implementation <code>7e803de5</code>, mergeable against unchanged <code>904a05a1</code> main. This evidence-only follow-up leaves all implementation and test files identical. The first GitHub snapshot reported CodeRabbit success with draft review skipped; this was not independent hosted review or CI evidence. Current readiness/check state is on the PR. No hosted test workflow was configured at that first snapshot; the current slice below adds one.</li>
+</ul>
+<p>First-slice boundary: no live deployment or scientific experiment was performed. The Alpine site image was unverified at PR84 publication; the current slice below closes that site-image gap. The actual host/network remain unverified; the deployment runbook gives the required external checks. Plain tests may skip proxy tools when unavailable; release checks must set <code>BL_REQUIRE_DEPLOY_TOOLS=1</code>.</p>
+<h2>Current slice evidence</h2>
+<p>Plan: <a href="site-image-gate-2026-10-26.md">site image verification gate</a>. Claude Sonnet 5.5 High and Sol 6.1 High plan reviews completed; their artifact-proof and lifecycle findings are incorporated (D12–D13). Implementation and native checks are complete. <a href="site-image-gate-review-2026-10-26.md">Review dispositions</a>: source and final repair findings are closed by Sonnet 5.5 High and Sol 6.1 High. Locally, 41 tests pass and 12 actual-image cases skip; missing required image/tag probes fail as intended. Root/tooling typechecks and actionlint pass. Cleanup fault probes reject failed queries and survivors. The <a href="https://github.com/treetopdevs/browser-life/actions/runs/40274844856">Linux PR job</a> now passes all 53 tests without skips, including 12 packaged-image cases; both canaries and cleanup pass. Exact source/image IDs and warning dispositions are in the review record. All source and final repair reviews are clear. Current PR89 state is linked above; live-host and real coordinator-image checks remain external.</p>
+</main>
+</html>

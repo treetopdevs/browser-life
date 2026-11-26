@@ -568,6 +568,22 @@ defmodule Coordinator.Segment do
     end
   end
 
+  @doc "Abandons only this island's pending attempts, preserving accepted results."
+  def leave(seg, island) do
+    run =
+      Enum.any?(
+        seg.attempts,
+        &(&1.island == island and &1.kind == "run" and Attempt.pending?(&1))
+      )
+
+    attempts =
+      Enum.map(seg.attempts, fn a ->
+        if a.island == island and Attempt.pending?(a), do: %{a | outcome: "abandoned"}, else: a
+      end)
+
+    %{seg | attempts: attempts, status: if(run, do: "pending", else: seg.status)}
+  end
+
   # ---- whole-run (cross-segment) events ----
 
   @doc """

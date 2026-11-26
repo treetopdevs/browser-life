@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-floor-longevity-manifest",
+  "seed": 1203,
+  "planSha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
+  "arm": {
+    "kind": "hungry-shapes-food-floor-longevity-arm",
+    "mode": "foothold-band",
+    "url": "food-floor-longevity-seed-1203.json",
+    "rawSha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+    "dataSha256": "74cdc92b5cb64b2450f239edcc437768f75c6b46959556d14990cf2d45c4dd6a"
+  },
+  "prefix": {
+    "url": "food-floor-replication-seed-1203.json",
+    "rawSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+    "dataSha256": "16d01d50bd909e3058295d23719d161722952b1349f2a5ebd16780d9a5b88bc2",
+    "indexUrl": "food-floor-replication-index-1203.json",
+    "indexSha256": "0f792ca72c287d5cb09c12a9daa7290aaed40dd53e2eab86008ab0f1df69994f",
+    "throughTick": 3000
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "Promising at6000: the population fell to5 then rebounded to34, with two families and two qualifying late growth/retreat blocks. First32 at5600; final500 mean26.182 does not meet the chosen sustained-population summary. Descriptive recovery, not adaptation or durable coexistence. Stop after this outcome.",
+    "artifactSha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+    "visualReceiptUrl": "food-floor-longevity-visual-receipt-1203.json",
+    "visualReceiptSha256": "aa15a068d511f768836ccfb4318bed013cc7c992d1b8f0810008a9d4b1d8258b"
+  }
+}

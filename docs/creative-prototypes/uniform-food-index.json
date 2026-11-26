@@ -1,0 +1,42 @@
+{
+  "runs": [
+    {
+      "seed": 1201,
+      "url": "uniform-food-seed-1201.json",
+      "sha256": "af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850"
+    },
+    {
+      "seed": 1202,
+      "url": "uniform-food-seed-1202.json",
+      "sha256": "9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7"
+    },
+    {
+      "seed": 1203,
+      "url": "uniform-food-seed-1203.json",
+      "sha256": "96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae"
+    }
+  ],
+  "decisions": [
+    {
+      "seed": 1201,
+      "artifactSha256": "af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850",
+      "status": "pass",
+      "title": "Seed 1201 earns two more frozen seeds",
+      "summary": "Seed 1201 earned the two additional frozen seeds, which have now completed. Both remaining families survived to 6,000, late births and deaths continued, and each fixed-camera comparison showed changed occupied regions and gaps."
+    },
+    {
+      "seed": 1202,
+      "artifactSha256": "9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7",
+      "status": "pass",
+      "title": "Seed 1202 passes the longevity screen",
+      "summary": "Alive at 6000 with two families, continuing late births/deaths, low ceiling occupancy and concrete spatial changes in all three late comparisons. This screen stops at 6000."
+    },
+    {
+      "seed": 1203,
+      "artifactSha256": "96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae",
+      "status": "pass",
+      "title": "Seed 1203 passes the longevity screen",
+      "summary": "Alive at 6000 with two families, continuing late births/deaths, low ceiling occupancy and concrete spatial changes in all three late comparisons. This screen stops at 6000."
+    }
+  ]
+}

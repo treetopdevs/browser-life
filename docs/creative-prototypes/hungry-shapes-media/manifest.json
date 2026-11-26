@@ -1,0 +1,133 @@
+{
+  "seed": 1201,
+  "sourceRecording": {
+    "path": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-ui.webm",
+    "sha256": "3ce4a0c6547d6258fcd62006a236d5441221f63792546252c5d9bdb27beb777f",
+    "bytes": 12291528
+  },
+  "video": {
+    "path": "docs/creative-prototypes/hungry-shapes-media/seed-1201.mp4",
+    "sha256": "3567079df26ef06f19a4605ac5c382972f3e7526849f2cfa198145a3ca6b1400",
+    "bytes": 4488619
+  },
+  "poster": {
+    "path": "docs/creative-prototypes/hungry-shapes-media/seed-1201-final.png",
+    "sha256": "0a770864845fa92e665ec6d48fa2ddbd448f0082f63a8f06c51563d9d9344fd0",
+    "bytes": 209138
+  },
+  "rawEvidence": {
+    "path": "docs/creative-prototypes/hungry-shapes-seed-1201.json",
+    "sha256": "2cb6366595e43e2f5f215448bd13a67925e21f2ea11e4747790f6f61470b6520",
+    "bytes": 3045614
+  },
+  "timing": {
+    "kind": "synthetic presentation clock driving real requestAnimationFrame callbacks",
+    "initialTimestampMs": 1,
+    "deltaMs": 33.334,
+    "pace": 1,
+    "callbacksPerBatch": 10,
+    "interBatchWaitMs": 75,
+    "note": "Simulation states are produced by the real browser model. Only requestAnimationFrame timestamps are synthetic."
+  },
+  "comparisons": [
+    {
+      "mode": "original",
+      "observedTick": 3000,
+      "extinctAt": null,
+      "censusMatches": true,
+      "environmentMatches": true
+    },
+    {
+      "mode": "uniform",
+      "observedTick": 3000,
+      "extinctAt": null,
+      "censusMatches": true,
+      "environmentMatches": true
+    },
+    {
+      "mode": "patches",
+      "observedTick": 2040,
+      "extinctAt": 2040,
+      "censusMatches": true,
+      "environmentMatches": true
+    }
+  ],
+  "viewport": {
+    "width": 1920,
+    "height": 1200
+  },
+  "milestones": [
+    {
+      "targetTick": 160,
+      "actualSharedTick": 160,
+      "actualWorldTicks": [
+        160,
+        160,
+        160
+      ],
+      "callbacks": 161,
+      "screenshot": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-tick-0160.png"
+    },
+    {
+      "targetTick": 500,
+      "actualSharedTick": 500,
+      "actualWorldTicks": [
+        500,
+        500,
+        500
+      ],
+      "callbacks": 501,
+      "screenshot": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-tick-0500.png"
+    },
+    {
+      "targetTick": 1500,
+      "actualSharedTick": 1500,
+      "actualWorldTicks": [
+        1500,
+        1500,
+        1500
+      ],
+      "callbacks": 1501,
+      "screenshot": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-tick-1500.png"
+    },
+    {
+      "targetTick": 2500,
+      "actualSharedTick": 2500,
+      "actualWorldTicks": [
+        2500,
+        2500,
+        2040
+      ],
+      "callbacks": 2501,
+      "screenshot": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-tick-2500.png"
+    },
+    {
+      "targetTick": 3000,
+      "actualSharedTick": 3000,
+      "actualWorldTicks": [
+        3000,
+        3000,
+        2040
+      ],
+      "callbacks": 3001,
+      "screenshot": "runs/hungry-shapes/ui/seed-1201/hungry-shapes-seed-1201-tick-3000.png"
+    }
+  ],
+  "encoding": "ffmpeg libx264 CRF28 medium yuv420p faststart; no cropping, speed change or simulation edits",
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1200
+      }
+    ],
+    "format": {
+      "duration": "105.360000",
+      "size": "4488619"
+    }
+  },
+  "localOnlyArtifacts": "Source WebM and milestone screenshots under runs/ are local, gitignored artifacts. Delivered MP4 and poster are committed alongside this manifest."
+}

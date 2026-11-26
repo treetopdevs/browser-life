@@ -1,0 +1,38 @@
+{
+  "seed": 1203,
+  "planSha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
+  "prefixArtifactSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+  "artifactSha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+  "ownChange": {
+    "from": 5500,
+    "to": 6000,
+    "pass": true,
+    "observation": "Not blind: the accepted history and numerical outcome are known. The dense central-left lattice at5500 clears almost completely to two small separated groups by6000. Band1 gains broad upper-edge branching and a dense bottom-edge cluster with clear new gaps between groups. Occupied-body structure changes, not just food, colors or outlines."
+  },
+  "seasonalChanges": [
+    {
+      "from": 4500,
+      "to": 5000,
+      "pass": false,
+      "observation": "Not blind: the accepted history and numerical outcome are known. Majority-fed band1 grows an upper branching cluster and larger middle groups. Band0 changes its scattered fragments, but the frozen numerical loss is only12 tiles, below20, so this interval does not qualify."
+    },
+    {
+      "from": 5000,
+      "to": 5500,
+      "pass": true,
+      "observation": "Not blind: the accepted history and numerical outcome are known. Majority-fed band0 expands sparse left-side fragments into a dense central-left lattice and branching group. Minority-fed band1 loses its broad top-edge cluster and part of its middle branching mass, leaving more open space and separated smaller groups."
+    },
+    {
+      "from": 5500,
+      "to": 6000,
+      "pass": true,
+      "observation": "Not blind: the accepted history and numerical outcome are known. Majority-fed band1 expands upper-edge branching and develops a dense bottom-edge cluster. Minority-fed band0 loses the central-left lattice, leaving two small widely separated groups. This matches the qualifying growth and retreat."
+    }
+  ],
+  "reference3000": {
+    "tick": 3000,
+    "observation": "Not blind: the accepted history and numerical outcome are known. The accepted3000 endpoint has small left-side fragments and several central-right branching bodies. At4500 the world is still sparse; the later5500 and6000 endpoints show larger clusters alternating between bands. Tick3000 is historical context, not a simultaneous untreated control."
+  },
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T18:00:08.743100+00:00"
+}

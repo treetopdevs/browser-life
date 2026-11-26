@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-floor-replication-pair",
+  "seed": 1203,
+  "planSha256": "0786ea89b9cfa99470d64de2856a7372b821ae5ce2572cb80bb8c222ce03e1fd",
+  "arms": {
+    "baseline": {
+      "kind": "hungry-shapes-alternating-food-arm",
+      "mode": "alternating-band",
+      "url": "alternating-food-seed-1203.json",
+      "rawSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4"
+    },
+    "alternating": {
+      "kind": "hungry-shapes-food-floor-replication-arm",
+      "mode": "foothold-band",
+      "url": "food-floor-replication-seed-1203.json",
+      "rawSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+      "dataSha256": "16d01d50bd909e3058295d23719d161722952b1349f2a5ebd16780d9a5b88bc2"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "All four frozen gates pass on seed1203. Two late growth/retreat blocks pass; the third loses tiles in both bands. End16 bodies, families0/9/7. The full screen recurs in two selected food-floor trajectories, but the earlier all-three-block result does not. Historical alternating1203 already passed one block and the screen; no superiority or causal claim.",
+    "baselineArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+    "alternatingArtifactSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+    "visualReceiptUrl": "food-floor-replication-visual-receipt-1203.json",
+    "visualReceiptSha256": "b4c332a7a34e8aa494c1b749c00844eed1aabc5646d52a6bc0e2d49b281f0345"
+  }
+}

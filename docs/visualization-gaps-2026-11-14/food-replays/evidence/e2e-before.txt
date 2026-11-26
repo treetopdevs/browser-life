@@ -1,0 +1,284 @@
+
+Running 278 tests using 5 workers
+
+  ✓    4 [chrome] › tests/e2e/food-band-foothold.spec.ts:235:1 › does not invent a new outcome when only the historical reference exists (1.8s)
+  ✓    3 [chrome] › tests/e2e/alternating-food-replication.spec.ts:231:1 › does not invent a new outcome when only the static reference exists (1.8s)
+  ✓    2 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:216:1 › default seed 1202 requests only its index and leaves the selector usable (1.9s)
+  ✓    5 [chrome] › tests/e2e/alternating-food.spec.ts:216:1 › does not invent a new outcome when only the static reference exists (1.9s)
+  ✓    1 [chrome] › tests/e2e/food-band-foothold-replication.spec.ts:22:1 › fails closed when evidence bytes disagree with the frozen index (2.0s)
+  -    6 [chrome] › tests/e2e/food-band-foothold.spec.ts:242:1 › verifies the pending pair and keeps same-age saved replay paused
+  -   11 [chrome] › tests/e2e/food-band-foothold.spec.ts:268:1 › refuses an alternating record with the wrong active-band schedule
+  -    7 [chrome] › tests/e2e/alternating-food-replication.spec.ts:238:1 › verifies the pending pair and keeps same-age saved replay paused
+  -    9 [chrome] › tests/e2e/alternating-food.spec.ts:223:1 › verifies the pending pair and keeps same-age saved replay paused
+  -   10 [chrome] › tests/e2e/food-band-foothold-replication.spec.ts:26:1 › actual saved replay binds exact evidence and all late ages
+  -   12 [chrome] › tests/e2e/food-band-foothold.spec.ts:284:1 › rejects a rehashed foothold floor or eligible-area mismatch
+  -   14 [chrome] › tests/e2e/alternating-food.spec.ts:249:1 › refuses an alternating record with the wrong active-band schedule
+  -   13 [chrome] › tests/e2e/alternating-food-replication.spec.ts:264:1 › refuses an alternating record with the wrong active-band schedule
+  -   15 [chrome] › tests/e2e/food-band-foothold.spec.ts:295:1 › rejects a rehashed missing continuous minority offer
+  ✓   16 [chrome] › tests/e2e/food-band-longevity.spec.ts:184:1 › empty page requests only the seed-1201 index (497ms)
+  ✓    8 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:224:1 › a selected seed-1203 pair loads only its listed arms and starts paused (1.7s)
+  -   17 [chrome] › tests/e2e/alternating-food.spec.ts:265:1 › rejects a seasonal gate that disagrees with the saved body tiles
+  -   18 [chrome] › tests/e2e/alternating-food-replication.spec.ts:280:1 › rejects a seasonal gate that disagrees with the saved body tiles
+  -   19 [chrome] › tests/e2e/food-band-foothold.spec.ts:306:1 › rejects rehashed cumulative food transfers between bands
+  -   22 [chrome] › tests/e2e/alternating-food.spec.ts:279:1 › rejects population rows whose cap flags contradict the recorded body count
+  -   23 [chrome] › tests/e2e/alternating-food-replication.spec.ts:294:1 › rejects population rows whose cap flags contradict the recorded body count
+  -   24 [chrome] › tests/e2e/food-band-foothold.spec.ts:320:1 › rejects a seasonal gate that disagrees with the saved body tiles
+  -   25 [chrome] › tests/e2e/alternating-food.spec.ts:290:1 › rejects a rehashed full snapshot whose food differs from its saved frame
+  -   26 [chrome] › tests/e2e/alternating-food-replication.spec.ts:306:3 › rejects rehashed tick history with invented trough
+  -   28 [chrome] › tests/e2e/alternating-food.spec.ts:302:1 › accepts a complete SHA-bound manual receipt only after all new screens pass
+  -   29 [chrome] › tests/e2e/alternating-food-replication.spec.ts:306:3 › rejects rehashed tick history with invented lineage events
+  -   27 [chrome] › tests/e2e/food-band-foothold.spec.ts:334:1 › rejects population rows whose cap flags contradict the recorded body count
+  -   30 [chrome] › tests/e2e/alternating-food.spec.ts:318:1 › records a manual seasonal failure as stop even when the numerical screen passes
+  -   31 [chrome] › tests/e2e/alternating-food-replication.spec.ts:306:3 › rejects rehashed tick history with sample cell mismatch
+  ✓   20 [chrome] › tests/e2e/food-band-longevity.spec.ts:190:1 › full-horizon fixture validates paused saved frames and the three gated windows (2.0s)
+  ✓   21 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:235:1 › seed picker reads its current value and discards a late seed-1202 response (2.0s)
+  -   34 [chrome] › tests/e2e/alternating-food-replication.spec.ts:326:3 › rejects a rehashed intermediate frame violating its genome cap
+  -   33 [chrome] › tests/e2e/alternating-food.spec.ts:333:1 › rejects a mismatched raw artifact digest
+  -   32 [chrome] › tests/e2e/food-band-foothold.spec.ts:346:3 › rejects rehashed tick history with invented trough
+  -   35 [chrome] › tests/e2e/food-band-longevity.spec.ts:210:1 › actual seed-1201 records replay their saved 3,000/5,500/6,000 frames
+  -   37 [chrome] › tests/e2e/alternating-food-replication.spec.ts:326:3 › rejects a rehashed intermediate frame violating its living lineage
+  -   38 [chrome] › tests/e2e/alternating-food.spec.ts:342:1 › keeps the paired replay usable at mobile width and passes axe checks
+  -   39 [chrome] › tests/e2e/food-band-foothold.spec.ts:346:3 › rejects rehashed tick history with invented lineage events
+  -   41 [chrome] › tests/e2e/alternating-food-replication.spec.ts:349:1 › rejects a rehashed full snapshot whose food differs from its saved frame
+  -   42 [chrome] › tests/e2e/alternating-food.spec.ts:353:1 › published seed-1203 alternating evidence is bound to its actual summary and receipt
+  -   44 [chrome] › tests/e2e/alternating-food-replication.spec.ts:361:1 › accepts a complete SHA-bound manual receipt only after all new screens pass
+  -   45 [chrome] › tests/e2e/alternating-food.spec.ts:421:1 › published alternating replay video plays and the final result remains accessible on mobile
+  -   47 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:50:1 › does not invent a continuation from the historical prefix
+  -   48 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:51:1 › single-world replay marks exact prefix and new tail, remains paused, and renders all six windows
+  -   49 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:52:1 › off-cadence extinction preserves the prefix, null unreached windows, and truthful terminal holds
+  -   50 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed invented threshold attainment
+  -   51 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed invented sustained recovery
+  -   52 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed wrong attainment interpretation
+  -   53 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed invented tail minimum
+  -   54 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed late minimum tie
+  -   55 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed invented tail endpoint
+  -   56 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed altered population path
+  -   57 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed altered historical prefix
+  -   58 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed wrong source pin
+  -   59 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed lineage maximum drift
+  -   60 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed full rules drift
+  -   61 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed window population lie
+  -   62 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:67:4 › rejects rehashed unreached endpoint invention
+  -   63 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:68:1 › rejects manual own-change pass with missing 5500 and 6000 endpoints
+  -   64 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:69:1 › single-world replay and trajectory remain usable on mobile and pass axe
+  -   65 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:70:1 › published continuation binds its actual summary and receipt
+  -   66 [chrome] › tests/e2e/food-floor-longevity-replication.spec.ts:71:1 › published animation plays and final page remains accessible on mobile
+  -   67 [chrome] › tests/e2e/food-floor-longevity.spec.ts:50:1 › does not invent a continuation from the historical prefix
+  -   68 [chrome] › tests/e2e/food-floor-longevity.spec.ts:51:1 › single-world replay marks exact prefix and new tail, remains paused, and renders all six windows
+  -   69 [chrome] › tests/e2e/food-floor-longevity.spec.ts:52:1 › off-cadence extinction preserves the prefix, null unreached windows, and truthful terminal holds
+  -   70 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed invented rebound
+  -   71 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed invented sustained recovery
+  -   72 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed altered historical prefix
+  -   73 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed wrong source pin
+  -   74 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed lineage maximum drift
+  -   75 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed full rules drift
+  -   76 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed window population lie
+  -   77 [chrome] › tests/e2e/food-floor-longevity.spec.ts:62:4 › rejects rehashed unreached endpoint invention
+  -   78 [chrome] › tests/e2e/food-floor-longevity.spec.ts:63:1 › rejects manual own-change pass with missing 5500 and 6000 endpoints
+  -   79 [chrome] › tests/e2e/food-floor-longevity.spec.ts:64:1 › single-world replay and trajectory remain usable on mobile and pass axe
+  -   80 [chrome] › tests/e2e/food-floor-longevity.spec.ts:65:1 › published continuation binds its actual summary and receipt
+  -   81 [chrome] › tests/e2e/food-floor-longevity.spec.ts:66:1 › published animation plays and final page remains accessible on mobile
+  -   43 [chrome] › tests/e2e/food-band-foothold.spec.ts:346:3 › rejects rehashed tick history with sample cell mismatch
+  ✓   36 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:249:1 › seed picker ignores seed-1202 after its headers arrive but before its body parses (1.8s)
+  -   46 [chrome] › tests/e2e/alternating-food-replication.spec.ts:377:1 › records a manual seasonal failure as stop even when the numerical screen passes
+  -   83 [chrome] › tests/e2e/food-band-foothold.spec.ts:366:3 › rejects a rehashed intermediate frame violating its genome cap
+  ✓   82 [chrome] › tests/e2e/food-floor-replication.spec.ts:235:1 › does not invent a new outcome when only the historical reference exists (509ms)
+  -   85 [chrome] › tests/e2e/alternating-food-replication.spec.ts:392:1 › rejects a mismatched raw artifact digest
+  ✓   40 [chrome] › tests/e2e/food-band-longevity.spec.ts:257:1 › accepted paired receipt is SHA-bound to both numerical and visual screens (1.8s)
+  -   87 [chrome] › tests/e2e/food-floor-replication.spec.ts:242:1 › verifies the pending pair and keeps same-age saved replay paused
+  -   86 [chrome] › tests/e2e/food-band-foothold.spec.ts:366:3 › rejects a rehashed intermediate frame violating its living lineage
+  -   88 [chrome] › tests/e2e/alternating-food-replication.spec.ts:401:1 › keeps the paired replay usable at mobile width and passes axe checks
+  -   90 [chrome] › tests/e2e/food-floor-replication.spec.ts:268:1 › refuses an alternating record with the wrong active-band schedule
+  -   92 [chrome] › tests/e2e/alternating-food-replication.spec.ts:412:1 › published seed-1202 alternating evidence is bound to its actual summary and receipt
+  -   91 [chrome] › tests/e2e/food-band-foothold.spec.ts:389:1 › rejects a rehashed full snapshot whose food differs from its saved frame
+  -   93 [chrome] › tests/e2e/food-floor-replication.spec.ts:284:1 › rejects a rehashed foothold floor or eligible-area mismatch
+  -   94 [chrome] › tests/e2e/alternating-food-replication.spec.ts:480:1 › published alternating replay video plays and the final result remains accessible on mobile
+  -   97 [chrome] › tests/e2e/food-schedule-769.spec.ts:32:1 › missing outcome does not invent a trial
+  -   98 [chrome] › tests/e2e/food-schedule-769.spec.ts:33:1 › pending 3000 gate stops timeline and labels every new-rule tick novel
+  -   99 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed wrong food schedule
+  -  100 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed wrong source pin
+  -  101 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented population minimum
+  -  102 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented late food count
+  -  103 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented 6000 gate horizon
+  -  104 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented continuation authorization
+  -  105 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented family gate
+  -  106 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented occupied band
+  -  107 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented seasonal pass
+  -  108 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed changed rules
+  -  109 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed invented lineage maximum
+  -  110 [chrome] › tests/e2e/food-schedule-769.spec.ts:47:4 › rejects rehashed changed known comparison
+  -  111 [chrome] › tests/e2e/food-schedule-769.spec.ts:48:1 › paired replay is accessible on mobile
+  -  112 [chrome] › tests/e2e/food-schedule-769.spec.ts:49:1 › actual saved outcome and parent decision load
+  -  113 [chrome] › tests/e2e/food-schedule-769.spec.ts:50:1 › actual animation plays and final mobile page passes axe
+  -  114 [chrome] › tests/e2e/food-schedule-769.spec.ts:52:1 › rejects a 3000 gate mislabeled as a final Promising outcome
+  -   96 [chrome] › tests/e2e/food-floor-replication.spec.ts:295:1 › rejects a rehashed missing continuous minority offer
+  ✓   84 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:263:1 › a fully gated fixture shows truthful paired sampled playback (1.7s)
+  -   95 [chrome] › tests/e2e/food-band-foothold.spec.ts:401:1 › accepts a complete SHA-bound manual receipt only after all new screens pass
+  ✓   89 [chrome] › tests/e2e/food-band-longevity.spec.ts:266:1 › an extinction at an exact visual endpoint is held at its actual terminal tick (1.3s)
+  -  116 [chrome] › tests/e2e/food-floor-replication.spec.ts:306:1 › rejects rehashed cumulative food transfers between bands
+  -  118 [chrome] › tests/e2e/food-band-foothold.spec.ts:417:1 › records a manual seasonal failure as stop even when the numerical screen passes
+  ✓  115 [chrome] › tests/e2e/moving-food-replication.spec.ts:273:1 › empty companion requests no arm artifact (549ms)
+  -  120 [chrome] › tests/e2e/food-floor-replication.spec.ts:320:1 › rejects a seasonal gate that disagrees with the saved body tiles
+  -  121 [chrome] › tests/e2e/food-band-foothold.spec.ts:432:1 › rejects rehashed biology rule drift mirrored into every snapshot
+  -  123 [chrome] › tests/e2e/food-floor-replication.spec.ts:334:1 › rejects population rows whose cap flags contradict the recorded body count
+  ✓  117 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:274:1 › rejects a passing visual receipt without the exact late endpoint frame (1.2s)
+  ✓  119 [chrome] › tests/e2e/food-band-longevity.spec.ts:275:1 › rejects a passing visual judgment when a required 6,000 endpoint is absent (1.2s)
+  ✓  122 [chrome] › tests/e2e/moving-food-replication.spec.ts:280:1 › loads and verifies both arms before showing the pending paired decision (925ms)
+  -  125 [chrome] › tests/e2e/food-floor-replication.spec.ts:346:3 › rejects rehashed tick history with invented trough
+  -  124 [chrome] › tests/e2e/food-band-foothold.spec.ts:443:1 › rejects a rehashed invented maximum-ever generation
+  -  129 [chrome] › tests/e2e/food-floor-replication.spec.ts:346:3 › rejects rehashed tick history with invented lineage events
+  -  130 [chrome] › tests/e2e/food-band-foothold.spec.ts:450:1 › rejects invalid final death semantics even when mirrored into snapshots
+  ✓  128 [chrome] › tests/e2e/moving-food-replication.spec.ts:297:1 › shared timeline visits an exact off-cadence terminal and holds that frame honestly (813ms)
+  ✓  127 [chrome] › tests/e2e/food-band-longevity.spec.ts:283:1 › requires receipt disclosure that this historical-media rejudgment is not blind (969ms)
+  ✓  126 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:281:1 › requires receipt disclosure of historical media and both seeds’ numerical outcomes (1.1s)
+  -  131 [chrome] › tests/e2e/food-floor-replication.spec.ts:346:3 › rejects rehashed tick history with sample cell mismatch
+  -  132 [chrome] › tests/e2e/food-band-foothold.spec.ts:465:1 › rejects a rehashed impossible parent generation
+  -  136 [chrome] › tests/e2e/food-floor-replication.spec.ts:366:3 › rejects a rehashed intermediate frame violating its genome cap
+  ✓  133 [chrome] › tests/e2e/moving-food-replication.spec.ts:318:1 › rejects pair decision when either artifact hash is not repeated exactly (542ms)
+  -  137 [chrome] › tests/e2e/food-band-foothold.spec.ts:475:1 › rejects a mismatched raw artifact digest
+  -  138 [chrome] › tests/e2e/food-floor-replication.spec.ts:366:3 › rejects a rehashed intermediate frame violating its living lineage
+  ✓  134 [chrome] › tests/e2e/food-band-longevity.spec.ts:294:1 › rejects a receipt that only says the media are historical (952ms)
+  ✓  139 [chrome] › tests/e2e/moving-food-replication.spec.ts:329:1 › rejects an unbound overall decision instead of using it as a pair result (442ms)
+  -  141 [chrome] › tests/e2e/food-floor-replication.spec.ts:389:1 › rejects a rehashed full snapshot whose food differs from its saved frame
+  -  140 [chrome] › tests/e2e/food-band-foothold.spec.ts:484:1 › keeps the paired replay usable at mobile width and passes axe checks
+  ✓  135 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:293:1 › rejects raw artifact hash mismatch before drawing either world (1.1s)
+  -  144 [chrome] › tests/e2e/food-floor-replication.spec.ts:401:1 › accepts a complete SHA-bound manual receipt only after all new screens pass
+  -  145 [chrome] › tests/e2e/food-band-foothold.spec.ts:495:1 › published seed-1202 alternating evidence is bound to its actual summary and receipt
+  ✓  143 [chrome] › tests/e2e/moving-food-replication.spec.ts:339:1 › rejects a raw SHA mismatch in either arm before exposing comparison or replay (761ms)
+  -  147 [chrome] › tests/e2e/food-floor-replication.spec.ts:417:1 › records a manual seasonal failure as stop even when the numerical screen passes
+  -  148 [chrome] › tests/e2e/food-band-foothold.spec.ts:563:1 › published alternating replay video plays and the final result remains accessible on mobile
+  ✓  142 [chrome] › tests/e2e/food-band-longevity.spec.ts:306:1 › rejects raw-file hash mismatch before rendering (1.1s)
+  -  150 [chrome] › tests/e2e/food-floor-replication.spec.ts:432:1 › rejects rehashed biology rule drift mirrored into every snapshot
+  ✓  146 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:302:1 › rejects an arm wrapped for the wrong selected seed (1.1s)
+  ✓  149 [chrome] › tests/e2e/moving-food-replication.spec.ts:349:1 › checks each recorded frame digest after the outer artifact digest succeeds (526ms)
+  ✓  151 [chrome] › tests/e2e/moving-food.spec.ts:203:1 › empty companion requests no arm artifact (625ms)
+  -  153 [chrome] › tests/e2e/food-floor-replication.spec.ts:443:1 › rejects a rehashed invented maximum-ever generation
+  ✓  155 [chrome] › tests/e2e/moving-food-replication.spec.ts:361:1 › rejects a missing 20-tick frame in a live arm (582ms)
+  -  157 [chrome] › tests/e2e/food-floor-replication.spec.ts:450:1 › rejects invalid final death semantics even when mirrored into snapshots
+  ✓  154 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:313:1 › rejects empty decision summaries and unbound title fields (782ms)
+  -  159 [chrome] › tests/e2e/food-floor-replication.spec.ts:465:1 › rejects a rehashed impossible parent generation
+  ✓  156 [chrome] › tests/e2e/moving-food.spec.ts:210:1 › loads and verifies both arms before showing the pending paired decision (930ms)
+  ✓  158 [chrome] › tests/e2e/moving-food-replication.spec.ts:374:1 › rejects a moving band whose saved geometry does not match actual tick (841ms)
+  -  161 [chrome] › tests/e2e/food-floor-replication.spec.ts:475:1 › rejects a mismatched raw artifact digest
+  -  164 [chrome] › tests/e2e/food-floor-replication.spec.ts:484:1 › keeps the paired replay usable at mobile width and passes axe checks
+  ✓  152 [chrome] › tests/e2e/food-band-longevity.spec.ts:313:1 › keyboard transport pauses on hidden pages and the phone view is accessible (2.3s)
+  ✓  166 [chrome] › tests/e2e/food-band-longevity.spec.ts:329:1 › fixtures use the runner's frozen per-mode baseline identities (15ms)
+  -  167 [chrome] › tests/e2e/food-band-longevity.spec.ts:341:1 › viewer source pins exactly match the runner's frozen loaded-source map
+  ✓  163 [chrome] › tests/e2e/moving-food-replication.spec.ts:384:1 › rejects zero population before the declared terminal tick (779ms)
+  -  165 [chrome] › tests/e2e/food-floor-replication.spec.ts:495:1 › published seed-1203 alternating evidence is bound to its actual summary and receipt
+  ✓  162 [chrome] › tests/e2e/moving-food.spec.ts:227:1 › shared timeline visits an exact off-cadence terminal and holds that frame honestly (1.1s)
+  -  170 [chrome] › tests/e2e/food-floor-replication.spec.ts:563:1 › published alternating replay video plays and the final result remains accessible on mobile
+  ✓  168 [chrome] › tests/e2e/food-band-longevity.spec.ts:346:1 › rejects an empty decision summary (707ms)
+  ✓  169 [chrome] › tests/e2e/moving-food-replication.spec.ts:396:1 › rejects an incomplete independent repeat proof (680ms)
+  ✓  160 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:322:1 › keyboard playback pauses in hidden tabs and passes phone accessibility checks (2.2s)
+  ✓  171 [chrome] › tests/e2e/moving-food.spec.ts:248:1 › rejects pair decision when either artifact hash is not repeated exactly (649ms)
+  ✓  172 [chrome] › tests/e2e/split-food-replication.spec.ts:228:1 › only checks seed 1203 index when no pair is published (539ms)
+  -  175 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:340:1 › published seed 1202 replays its accepted saved frames and metrics on phone
+  ✓  173 [chrome] › tests/e2e/food-band-longevity.spec.ts:354:1 › rejects an optional unbound decision title (616ms)
+  -  177 [chrome] › tests/e2e/split-food-replication.spec.ts:235:1 › synthetic pending fixture verifies the historical baseline and split-band saved frames
+  ✓  176 [chrome] › tests/e2e/moving-food.spec.ts:259:1 › rejects an unbound overall decision instead of using it as a pair result (590ms)
+  -  180 [chrome] › tests/e2e/split-food-replication.spec.ts:259:1 › truthfully holds an off-cadence extinction frame without inventing a later split state
+  ✓  174 [chrome] › tests/e2e/moving-food-replication.spec.ts:406:1 › keyboard controls step the pair and hidden pages pause without resuming (904ms)
+  -  178 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:345:1 › published seed 1203 replays its accepted saved frames and metrics on phone
+  -  184 [chrome] › tests/e2e/food-band-longevity-replication.spec.ts:498:1 › viewer source pins exactly match the runner's loaded source map
+  -  182 [chrome] › tests/e2e/split-food-replication.spec.ts:271:1 › rejects a split arm whose raw bytes differ from the pair index
+  ✓  179 [chrome] › tests/e2e/split-food.spec.ts:226:1 › only checks seed 1202 index when no pair is published (783ms)
+  -  183 [chrome] › tests/e2e/moving-food-replication.spec.ts:424:1 › paired viewer has no WCAG A/AA violations or horizontal overflow on desktop and phone
+  ✓  181 [chrome] › tests/e2e/moving-food.spec.ts:269:1 › rejects a raw SHA mismatch in either arm before exposing comparison or replay (748ms)
+  -  186 [chrome] › tests/e2e/split-food-replication.spec.ts:278:1 › rejects split-only fields that move either replenishment band
+  -  188 [chrome] › tests/e2e/moving-food-replication.spec.ts:438:1 › selector requests only its chosen seed and verifies a seed 1203 pair
+  ✓  185 [chrome] › tests/e2e/stationary-food-replication.spec.ts:212:1 › empty page asks only for the one seed-1201 index (724ms)
+  ✓  192 [chrome] › tests/e2e/stationary-food-replication.spec.ts:219:1 › fixture baseline identities match the stationary runner's reference table (2ms)
+  -  187 [chrome] › tests/e2e/split-food.spec.ts:233:1 › synthetic pending fixture verifies the historical baseline and split-band saved frames
+  -  190 [chrome] › tests/e2e/split-food-replication.spec.ts:288:1 › decision status cannot claim promising when receipt visual check fails
+  -  191 [chrome] › tests/e2e/moving-food-replication.spec.ts:468:1 › promising decision appears only after both raw arm hashes and its visual receipt verify
+  ✓  189 [chrome] › tests/e2e/moving-food.spec.ts:279:1 › checks each recorded frame digest after the outer artifact digest succeeds (579ms)
+  -  196 [chrome] › tests/e2e/moving-food-replication.spec.ts:477:1 › frozen visual gate accepts two of three comparisons and rejects only one
+  -  194 [chrome] › tests/e2e/split-food.spec.ts:257:1 › truthfully holds an off-cadence extinction frame without inventing a later split state
+  -  195 [chrome] › tests/e2e/split-food-replication.spec.ts:295:1 › rejects a visual receipt that is not bound to both listed arm hashes
+  -  198 [chrome] › tests/e2e/moving-food-replication.spec.ts:488:1 › promising decision is rejected when fewer than two visual comparisons pass
+  -  200 [chrome] › tests/e2e/split-food-replication.spec.ts:307:1 › every SHA-bound visual observation must disclose the known baseline and numerical outcome
+  ✓  193 [chrome] › tests/e2e/stationary-food-replication.spec.ts:231:1 › restored seed selection drives the initial request (1.1s)
+  ✓  197 [chrome] › tests/e2e/moving-food.spec.ts:291:1 › rejects a missing 20-tick frame in a live arm (817ms)
+  -  199 [chrome] › tests/e2e/split-food.spec.ts:269:1 › rejects a split arm whose raw bytes differ from the pair index
+  -  202 [chrome] › tests/e2e/split-food-replication.spec.ts:319:1 › keyboard controls, hidden-tab pause, and phone layout remain accessible
+  -  206 [chrome] › tests/e2e/split-food-replication.spec.ts:336:1 › viewer source pins match the import-safe split runner source map
+  ✓  201 [chrome] › tests/e2e/moving-food-replication.spec.ts:502:1 › accepted decision without a SHA-bound receipt fails closed (641ms)
+  -  207 [chrome] › tests/e2e/split-food-replication.spec.ts:343:1 › published seed-1203 evidence is SHA-bound and displays the actual three-tick comparison
+  ✓  204 [chrome] › tests/e2e/moving-food.spec.ts:304:1 › rejects a moving band whose saved geometry does not match actual tick (738ms)
+  -  205 [chrome] › tests/e2e/split-food.spec.ts:276:1 › rejects split-only fields that move either replenishment band
+  -  208 [chrome] › tests/e2e/moving-food-replication.spec.ts:511:1 › rejects a visual receipt whose raw SHA does not match
+  -  212 [chrome] › tests/e2e/moving-food-replication.spec.ts:521:1 › rejects a SHA-matched receipt that names a different seed or arm pair
+  ✓  209 [chrome] › tests/e2e/stationary-food.spec.ts:160:1 › empty page asks only for the one seed-1202 index (611ms)
+  -  211 [chrome] › tests/e2e/split-food.spec.ts:286:1 › decision status cannot claim promising when receipt visual check fails
+  ✓  203 [chrome] › tests/e2e/stationary-food-replication.spec.ts:242:1 › seed picker loads only the selected seed and replaces the paired replay (1.3s)
+  ✓  210 [chrome] › tests/e2e/moving-food.spec.ts:314:1 › rejects zero population before the declared terminal tick (748ms)
+  -  214 [chrome] › tests/e2e/stationary-food.spec.ts:167:1 › valid pending view of the actual saved arms loads paused and requests no other seed
+  -  215 [chrome] › tests/e2e/split-food.spec.ts:293:1 › rejects a visual receipt that is not bound to both listed arm hashes
+  -  216 [chrome] › tests/e2e/stationary-food-replication.spec.ts:261:1 › real seed 1201 and 1203 recordings replay from saved frames on desktop and phone
+  ✓  213 [chrome] › tests/e2e/moving-food-replication.spec.ts:540:1 › rejects a manifest for another seed and a stale replication-plan pin before loading arms (884ms)
+  -  219 [chrome] › tests/e2e/split-food.spec.ts:305:1 › keyboard controls, hidden-tab pause, and phone layout remain accessible
+  -  222 [chrome] › tests/e2e/split-food.spec.ts:322:1 › viewer source pins match the import-safe split runner source map
+  -  218 [chrome] › tests/e2e/stationary-food.spec.ts:187:1 › accepted actual decision binds both numerical gates and each arm's own visual pass
+  ✓  217 [chrome] › tests/e2e/moving-food.spec.ts:326:1 › rejects an incomplete independent repeat proof (912ms)
+  -  223 [chrome] › tests/e2e/split-food.spec.ts:329:1 › accepted saved evidence loads with bound hashes and its displayed 1500, 2500, and 3000 tick results
+  ✓  221 [chrome] › tests/e2e/moving-food-replication.spec.ts:553:1 › rejects an arm with a stale replication-plan provenance pin (1.0s)
+  ✓  220 [chrome] › tests/e2e/stationary-food-replication.spec.ts:307:1 › decision status mismatch with recomputed gates fails closed (1.2s)
+  ✓  224 [chrome] › tests/e2e/stationary-food.spec.ts:205:1 › decision status mismatch with recomputed gates fails closed (901ms)
+  ✓  226 [chrome] › tests/e2e/uniform-endurance.spec.ts:171:1 › empty companion makes no seed or future-seed request before evidence is listed (723ms)
+  ✓  225 [chrome] › tests/e2e/moving-food.spec.ts:336:1 › keyboard controls step the pair and hidden pages pause without resuming (1.2s)
+  ✓  227 [chrome] › tests/e2e/moving-food-replication.spec.ts:563:1 › rejects resealed evidence with a changed frozen dependency source identity (887ms)
+  ✓  229 [chrome] › tests/e2e/stationary-food.spec.ts:213:1 › a passing within-arm receipt requires exact saved frames at both endpoints (908ms)
+  ✓  228 [chrome] › tests/e2e/stationary-food-replication.spec.ts:315:1 › accepted fixture receipt passes with the historical-media disclosure (930ms)
+  ✓  230 [chrome] › tests/e2e/uniform-endurance.spec.ts:178:1 › loads only the explicitly listed seed 1203 and labels an off-cadence terminal frame honestly (1.3s)
+  ✓  232 [chrome] › tests/e2e/moving-food-replication.spec.ts:573:1 › rejects a resealed numericalPass claim that contradicts window evidence (946ms)
+  ✓  234 [chrome] › tests/e2e/stationary-food-replication.spec.ts:322:1 › rejects a SHA-matched receipt without the nonblind historical-media disclosure (982ms)
+  ✓  233 [chrome] › tests/e2e/stationary-food.spec.ts:221:1 › terminal extinction frame holds honestly and a false visual finding does not invalidate another passing arm (1.0s)
+  ✓  235 [chrome] › tests/e2e/uniform-endurance.spec.ts:205:1 › rejects an unbound overall pass in the manifest (609ms)
+  ✓  237 [chrome] › tests/e2e/stationary-food-replication.spec.ts:334:1 › a passing within-arm receipt requires exact saved frames at both endpoints (787ms)
+  ✓  236 [chrome] › tests/e2e/moving-food-replication.spec.ts:583:1 › a visual comparison with no exact frame must be false even if its receipt says pass (887ms)
+  ✓  238 [chrome] › tests/e2e/stationary-food.spec.ts:230:1 › rejects a raw artifact SHA mismatch before rendering either world (816ms)
+  ✓  231 [chrome] › tests/e2e/moving-food.spec.ts:354:1 › paired viewer has no WCAG A/AA violations or horizontal overflow on desktop and phone (2.5s)
+  ✓  241 [chrome] › tests/e2e/moving-food-replication.spec.ts:590:1 › missing third comparison and late moving frames are explicitly false in a stopped short run (798ms)
+  ✓  239 [chrome] › tests/e2e/uniform-endurance.spec.ts:215:1 › keyboard controls move one recorded frame and playback pauses when the page is hidden (1.3s)
+  ✓  240 [chrome] › tests/e2e/stationary-food-replication.spec.ts:342:1 › terminal extinction frame holds honestly and a false visual finding does not invalidate another passing arm (895ms)
+  ✓  242 [chrome] › tests/e2e/stationary-food.spec.ts:237:1 › rejects a changed band geometry even after artifact is resealed (870ms)
+  ✓  243 [chrome] › tests/e2e/uniform-food.spec.ts:128:1 › empty companion makes no seed or future-seed request before evidence is listed (568ms)
+  ✓  245 [chrome] › tests/e2e/stationary-food-replication.spec.ts:351:1 › rejects a raw artifact SHA mismatch before rendering either world (903ms)
+  ✓  246 [chrome] › tests/e2e/stationary-food.spec.ts:244:1 › rejects a changed frozen source identity after both digests are resealed (890ms)
+  ✓  247 [chrome] › tests/e2e/uniform-food.spec.ts:135:1 › loads only the explicitly listed seed 1201 and begins paused at its first exact frame (833ms)
+  ✓  250 [chrome] › tests/e2e/uniform-food.spec.ts:156:1 › rejects an unbound overall pass in the manifest (538ms)
+  ✓  248 [chrome] › tests/e2e/stationary-food-replication.spec.ts:358:1 › rejects a changed band geometry even after artifact is resealed (662ms)
+  ✓  249 [chrome] › tests/e2e/stationary-food.spec.ts:251:1 › rejects zero-population evidence before its stated terminal tick (735ms)
+  ✓  251 [chrome] › tests/e2e/uniform-food.spec.ts:166:1 › keyboard controls move one recorded frame and playback pauses when the page is hidden (545ms)
+  ✓  244 [chrome] › tests/e2e/uniform-endurance.spec.ts:233:1 › viewer has no WCAG A/AA axe violations on desktop or phone (2.2s)
+  ✓  252 [chrome] › tests/e2e/stationary-food-replication.spec.ts:365:1 › rejects a changed frozen source identity after both digests are resealed (660ms)
+  ✓  253 [chrome] › tests/e2e/stationary-food.spec.ts:259:1 › accepted decision without receipt, or receipt with the wrong arm SHA, is rejected (672ms)
+  ✓  256 [chrome] › tests/e2e/stationary-food-replication.spec.ts:372:1 › rejects zero-population evidence before its stated terminal tick (524ms)
+  ✓  255 [chrome] › tests/e2e/uniform-endurance.spec.ts:244:1 › malformed evidence is reported without drawing a plausible-looking frame (914ms)
+  ✓  257 [chrome] › tests/e2e/stationary-food.spec.ts:271:1 › keyboard steps saved frames and hidden-page playback pauses (809ms)
+  ✓  254 [chrome] › tests/e2e/uniform-food.spec.ts:184:1 › viewer has no WCAG A/AA axe violations on desktop or phone (1.4s)
+  -  260 [chrome] › tests/e2e/stationary-food.spec.ts:281:1 › actual saved pair has no axe violations or page overflow on desktop and phone
+  ✓  258 [chrome] › tests/e2e/stationary-food-replication.spec.ts:380:1 › accepted decision without receipt, or receipt with the wrong arm SHA, is rejected (839ms)
+  ✓  259 [chrome] › tests/e2e/uniform-endurance.spec.ts:254:1 › rejects a live record that ends before the fixed 9,000-tick horizon (614ms)
+  ✓  261 [chrome] › tests/e2e/uniform-food.spec.ts:195:1 › malformed evidence is reported without drawing a plausible-looking frame (395ms)
+  ✓  262 [chrome] › tests/e2e/stationary-food.spec.ts:292:1 › wrong seed and unbound overall fields are rejected before arm requests (570ms)
+  ✓  265 [chrome] › tests/e2e/uniform-food.spec.ts:205:1 › rejects a live record that ends before the fixed 6,000-tick horizon (609ms)
+  ✓  264 [chrome] › tests/e2e/uniform-endurance.spec.ts:261:1 › rejects a live recording that skips required 20-tick samples (954ms)
+  ✓  266 [chrome] › tests/e2e/uniform-food.spec.ts:212:1 › rejects a live recording that skips required 20-tick samples (293ms)
+  ✓  268 [chrome] › tests/e2e/uniform-food.spec.ts:223:1 › rejects an early zero-population frame before the declared extinction tick (515ms)
+  ✓  267 [chrome] › tests/e2e/uniform-endurance.spec.ts:271:1 › rejects an early zero-population frame before the declared extinction tick (762ms)
+  ✓  263 [chrome] › tests/e2e/stationary-food-replication.spec.ts:392:1 › fixture view has no axe violations or phone-width overflow (2.0s)
+  ✓  269 [chrome] › tests/e2e/uniform-food.spec.ts:242:1 › rejects family counts that do not match the bodies drawn in a frame (474ms)
+  ✓  270 [chrome] › tests/e2e/uniform-endurance.spec.ts:290:1 › rejects family counts that do not match the bodies drawn in a frame (888ms)
+  ✓  271 [chrome] › tests/e2e/stationary-food-replication.spec.ts:402:1 › keyboard steps saved frames and hidden-page playback pauses (708ms)
+  ✓  272 [chrome] › tests/e2e/uniform-food.spec.ts:251:1 › rejects a raw-file SHA mismatch before exposing its decision or replay (486ms)
+  ✓  275 [chrome] › tests/e2e/uniform-food.spec.ts:263:1 › rejects a seed decision bound to a different artifact SHA (554ms)
+  ✓  274 [chrome] › tests/e2e/stationary-food-replication.spec.ts:412:1 › wrong seed and unbound overall fields are rejected before arm requests (593ms)
+  ✓  276 [chrome] › tests/e2e/uniform-food.spec.ts:273:1 › rejects a changed frame whose frame SHA no longer matches (314ms)
+  ✓  273 [chrome] › tests/e2e/uniform-endurance.spec.ts:299:1 › rejects a raw-file SHA mismatch before exposing its decision or replay (1.1s)
+  ✓  277 [chrome] › tests/e2e/uniform-endurance.spec.ts:311:1 › rejects a seed decision bound to a different artifact SHA (310ms)
+  ✓  278 [chrome] › tests/e2e/uniform-endurance.spec.ts:321:1 › rejects a changed frame whose frame SHA no longer matches (478ms)
+
+  162 skipped
+  116 passed (43.1s)

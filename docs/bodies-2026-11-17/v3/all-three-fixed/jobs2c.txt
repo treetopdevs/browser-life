@@ -1,0 +1,3 @@
+c2-tol16-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-tol64-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-same-tol16-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames

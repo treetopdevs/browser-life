@@ -1,0 +1,21 @@
+{
+ "note": "outcome-exposed: hashes of every assembly source file after the source-review fixes (amendment 2). Post hoc, not a freeze.",
+ "outcomeExposed": true,
+ "pins": {
+  "packages/metrics/src/assembly/bound.ts": "9581593e6c4ebd7db472141de0ff1391a110f260fffe03cac74a420bdd877e6b",
+  "packages/metrics/src/assembly/clips.ts": "abdd18bc0a22d2caca58275a4de618ef520587998899e1f60e1ef911889d2bd5",
+  "packages/metrics/src/assembly/construct.ts": "d86965b6b1efc32494d728ba2c958aa3bdcf50cc9c4f17466a08705bd96a33a5",
+  "packages/metrics/src/assembly/exact.ts": "a78a42a609037ba5675aded821a33a6697a56e716c9d6daad0aa1ae0fd030a6e",
+  "packages/metrics/src/assembly/fixtures.ts": "cdb1e6da128180d4ae98ea7510050a82a6ef81ed840cdcb58e3f39d8f7cdaba6",
+  "packages/metrics/src/assembly/grammar.ts": "968e87914caebee221cbe86c30fe1738e116eead8660f0d104935a6b3cdc48b6",
+  "packages/metrics/src/assembly/index.ts": "e32a02279e864c5fab5d295453bfc003336093b75256c3458d3c74a973504c5a",
+  "packages/metrics/src/assembly/lazy.ts": "4499a3a24b7bd5f6e3238390ee5d649910915d7c859481edc31ba998094d66d9",
+  "packages/metrics/src/assembly/observer.ts": "1d8e0a8046a9cdfdea8006b156650cb76cce15f7abb1e5cfc8916d1907ff398f",
+  "packages/metrics/src/assembly/protocol.ts": "46318fb63c796ff465f6fc263c2f7a06c71384194a384da604cd7d65ff31072f",
+  "packages/metrics/src/assembly/readouts.ts": "2d094aaefe4d667c02664028f5fa0ccea2fdcd49491049e04746d50565da2866",
+  "packages/metrics/src/assembly/segment.ts": "11fc12d1015e3eeac46a8b4aebd01aafef837e15318cff160e86d891e9c679b8",
+  "packages/metrics/src/assembly/stream.ts": "91bf51b6a370b92e9d22b17633118c8fc6859c4745a09809b1028edc4ec3fd89",
+  "packages/metrics/src/assembly/verdict.ts": "057e5015716a12c70a0687093b2c618b9118534afa98987577e1b10603a8d34c",
+  "packages/metrics/src/assembly/version.ts": "c3b3d16f73da096fcf94457fa4c3a32766c5312e9f52f0a8c3c8279d4152b1ff"
+ }
+}

@@ -36,6 +36,7 @@ defmodule CoordinatorWeb.ApiController do
   plug :limit_requests
        when action in [
               :join,
+              :leave,
               :me,
               :next,
               :complete,
@@ -62,6 +63,9 @@ defmodule CoordinatorWeb.ApiController do
               :get_checkpoint
             ]
 
+  plug :require_leaving_island when action == :leave
+  plug :limit_leave when action == :leave
+
   plug :limit_next when action == :next
 
   plug :limit_segment
@@ -75,11 +79,12 @@ defmodule CoordinatorWeb.ApiController do
               :get_checkpoint
             ]
 
-  plug :require_admin when action in [:create_experiment, :experiment, :status]
+  plug :require_admin when action in [:create_experiment, :experiment, :status, :put_pick_log]
   # Islands read files to continue runs; administrators to export them (tools/stitch.ts).
-  plug :require_island_or_admin when action in [:get_file]
+  # Islands read a picked run's pick log; the exporter (an administrator) reads it back to stitch.
+  plug :require_island_or_admin when action in [:get_file, :get_pick_log]
   # An island's file download is a segment request; the administrator's is not.
-  plug :limit_island_download when action == :get_file
+  plug :limit_island_download when action in [:get_file, :get_pick_log]
 
   # The Queue's status plus the operator page's `limits` and `capabilityNeeds`
   # (CoordinatorWeb.OpsStatus), computed outside the Queue process.
@@ -149,6 +154,8 @@ defmodule CoordinatorWeb.ApiController do
       # The island table is at `max_islands` and nothing could be forgotten.
       {:error, :full} ->
         conn
+        |> put_resp_header("x-island-request-applied", "false")
+        |> put_resp_header("retry-after", "1")
         |> put_status(503)
         |> json(%{error: "the coordinator has no room for new islands"})
     end
@@ -164,6 +171,16 @@ defmodule CoordinatorWeb.ApiController do
     case Queue.island_info(conn.assigns.island) do
       nil -> conn |> put_status(401) |> json(%{error: "island authentication required"})
       info -> json(conn, info)
+    end
+  end
+
+  def leave(conn, %{"id" => id}) do
+    case Queue.leave(id, bearer(conn)) do
+      :ok ->
+        send_resp(conn, 204, "")
+
+      {:error, :unauthorized} ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"})
     end
   end
 
@@ -385,7 +402,78 @@ defmodule CoordinatorWeb.ApiController do
     end
   end
 
+  # A pick log (`Coordinator.PickLog`): stored once under its SHA-256 in the blob
+  # store, after the context-free check (what the request can know: the digest in
+  # the path, the canonical shape). Idempotent. The experiment that names it
+  # checks it again, in its own context, at creation.
+  def put_pick_log(conn, %{"sha" => sha}) do
+    if Coordinator.PickLog.sha?(sha) do
+      with_staged(conn, Coordinator.PickLog.max_bytes(), fn staged ->
+        with {:ok, bin} <- File.read(staged),
+             {:ok, entries} <- Coordinator.PickLog.validate_bytes(bin, sha) do
+          :ok = Store.put_blob(Queue.data_dir(), sha, staged)
+          {:ok, %{ok: true, sha256: sha, picks: length(entries)}}
+        else
+          {:error, why} when is_binary(why) -> {:error, why}
+          {:error, why} -> {:error, "could not read the staged pick log: #{inspect(why)}"}
+        end
+      end)
+    else
+      bad(conn, "pick log digest must be 64 lowercase hex digits")
+    end
+  end
+
+  # The digest is checked before it names a path (`Store.blob_path/2` does not),
+  # and the stored bytes are served only if they still validate against it. Pick
+  # logs share the blob namespace with bundle files, which may be far larger, so
+  # the size is bounded before anything is read.
+  def get_pick_log(conn, %{"sha" => sha}) do
+    max = Coordinator.PickLog.max_bytes()
+
+    with true <- Coordinator.PickLog.sha?(sha),
+         path = Store.blob_path(Queue.data_dir(), sha),
+         {:ok, %File.Stat{type: :regular, size: size}} when size <= max <- File.stat(path),
+         {:ok, bin} <- File.read(path),
+         {:ok, _} <- Coordinator.PickLog.validate_bytes(bin, sha) do
+      conn |> put_resp_content_type("application/octet-stream") |> send_resp(200, bin)
+    else
+      _ -> not_found(conn)
+    end
+  end
+
   # ---- plugs ----
+
+  # Missing ids are harmless retry no-ops; no tombstone/token survives leave.
+  # Existing identities authenticate before charging their segment budget.
+  # Queue.leave checks again while atomically releasing work and removing the row.
+  defp require_leaving_island(conn, _) do
+    id = conn.params["id"]
+    island = conn.params["island"]
+    token = bearer(conn)
+
+    cond do
+      not is_binary(island) or not is_binary(token) ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"}) |> halt()
+
+      id != island ->
+        conn |> put_status(403) |> json(%{error: "cannot leave another island"}) |> halt()
+
+      Queue.authenticate(id, token) ->
+        assign(conn, :island, id)
+
+      is_nil(Queue.island_info(id)) ->
+        conn
+
+      true ->
+        conn |> put_status(401) |> json(%{error: "island authentication required"}) |> halt()
+    end
+  end
+
+  # Unknown ids are unauthenticated no-ops: do not let arbitrary identifiers
+  # allocate authenticated-island limiter buckets. The coarse address budget
+  # still applies and Queue.leave always rechecks any live identity atomically.
+  defp limit_leave(%{assigns: %{island: _}} = conn, opts), do: limit_segment(conn, opts)
+  defp limit_leave(conn, _opts), do: conn
 
   defp require_island(conn, _) do
     island = conn.params["island"]

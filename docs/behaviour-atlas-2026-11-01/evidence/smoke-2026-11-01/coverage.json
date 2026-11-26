@@ -1,0 +1,135 @@
+{
+ "panel": "atlas-panel-v1",
+ "tests": [
+  "sweep-survival",
+  "lean-survival"
+ ],
+ "coverageSeed": 1,
+ "rescoredBy": "atlas score",
+ "rows": [
+  {
+   "history": 1,
+   "arm": "random-viable",
+   "size": 23,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 3,
+    "lean-survival": 5
+   },
+   "fullRate": {
+    "sweep-survival": 0.30434782608695654,
+    "lean-survival": 0.8260869565217391
+   }
+  },
+  {
+   "history": 1,
+   "arm": "mass-speed",
+   "size": 7,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 3,
+    "lean-survival": 7
+   },
+   "fullRate": {
+    "sweep-survival": 0.42857142857142855,
+    "lean-survival": 1
+   }
+  },
+  {
+   "history": 1,
+   "arm": "physical",
+   "size": 22,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 1,
+    "lean-survival": 7
+   },
+   "fullRate": {
+    "sweep-survival": 0.22727272727272727,
+    "lean-survival": 1
+   }
+  },
+  {
+   "history": 2,
+   "arm": "random-viable",
+   "size": 17,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 1,
+    "lean-survival": 7
+   },
+   "fullRate": {
+    "sweep-survival": 0.17647058823529413,
+    "lean-survival": 0.8823529411764706
+   }
+  },
+  {
+   "history": 2,
+   "arm": "mass-speed",
+   "size": 7,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 1,
+    "lean-survival": 7
+   },
+   "fullRate": {
+    "sweep-survival": 0.14285714285714285,
+    "lean-survival": 1
+   }
+  },
+  {
+   "history": 2,
+   "arm": "physical",
+   "size": 20,
+   "k": 7,
+   "covered": 2,
+   "perTest": {
+    "sweep-survival": 2,
+    "lean-survival": 7
+   },
+   "fullRate": {
+    "sweep-survival": 0.2,
+    "lean-survival": 0.95
+   }
+  }
+ ],
+ "summary": {
+  "physicalVsMassSpeed": {
+   "mean": {
+    "random-viable": 2,
+    "mass-speed": 2,
+    "physical": 2
+   },
+   "paired": {
+    "histories": 2,
+    "emptyHistories": 0,
+    "meanDiff": 0,
+    "diffs": [
+     0,
+     0
+    ]
+   }
+  },
+  "physicalVsRandom": {
+   "mean": {
+    "random-viable": 2,
+    "mass-speed": 2,
+    "physical": 2
+   },
+   "paired": {
+    "histories": 2,
+    "emptyHistories": 0,
+    "meanDiff": 0,
+    "diffs": [
+     0,
+     0
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,107 @@
+Reviewed `dc7dbbde` plus the untracked plan on the requested branch. No files changed. The plan needs revision before implementation.
+
+1. **P1 — The receiver reserve is underfunded, and its transfer residual is wrong.**  
+   [PLAN §§4.1–4.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:35) subtracts `B_r` from A and only `E_r` from E. But [accounting.ts:40](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/accounting.ts:40) values reserved biomass at `eB * B_r`, in addition to its free energy. With defaults, reserving B=100/E=100 this way creates 1,000 energy units. I reproduced that arithmetic in memory.
+
+   Likewise, inserting the reserve necessarily increases **lattice** matter and energy, so the stated lattice-only transfer residual cannot remain zero. **Fix:** audit lattice plus reserve before and after every transfer. Debit `(eB-eA)*B_r + E_r` when converting lattice A into that reserve. With cumulative simulation ledgers, the external invariant is:
+   `ledgerResidual({energy: energy0}, state) + reserveEnergy + cumulativeHeatAnalytic === 0n`.
+   [The helper itself counts neither external term](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/accounting.ts:48).
+
+2. **P1 — “Receiver growth” can be pure detritus relabelling.**  
+   [PLAN’s primary endpoint](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:77) counts all B carrying a receiver label. Transport chooses one genome for the destination’s entire incoming bound mass, including non-living material ([step.ts:366–402](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:366)). Clearing builder labels does not prevent receiver labels from taking over existing builder B.
+
+   In a one-step probe with synthesis, decay and maintenance disabled, seed 11 increased receiver-labelled B from **10,000 to 10,900**, with PHOTO=GROW=0. **Fix:** add this no-synthesis negative fixture; distinguish labelled inventory gains from synthesis and lottery takeover. Otherwise narrow the claim to receiver-labelled inventory, rather than growth.
+
+3. **P1 — d1 does not exclude the stored-resource explanation it claims to exclude.**  
+   [PLAN §4.2](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:51) reads extra bound matter inside the receiver footprint, while placement requires B=P=0 on every actual inoculation cell. That bound-matter adjustment is therefore zero there. Meanwhile, an E-rich annulus just outside the footprint can support the receiver, be disrupted by scrambling, and escape d1 entirely. E is transported independently through the same reintegration shares ([step.ts:345–375](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:345)).
+
+   **Fix:** define the matching region and baseline precisely; add an outside-footprint energy-gift fixture. Include separately varied biomass and free-energy inoculum controls, as [DESIGN:104](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/evolvability-discovery-2026-10-04/DESIGN.md:104) requires. Funding extra B also needs its chemical-energy debit.
+
+4. **P1 — Enumerating sign flips does not establish an exact confidence bound for the stated estimand.**  
+   [PLAN §5.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:85) supplies neither a randomization argument nor a symmetry assumption for paired differences. Shared physics seeds do not supply either. For example, a mean-zero difference distribution with +1 occurring 90% of the time and −9 occurring 10% can produce eight positive differences with probability 0.43; sign-flipping that observed vector produces a tiny p-value.
+
+   **Fix:** specify the estimand, null, statistic and confidence-bound inversion. Use an exact sign test for an explicitly defined probability/median claim, or justify the assumptions needed by the proposed sign-flip test.
+
+5. **P1 — Six valid blocks cannot pass the specified four-test Holm gate.**  
+   [PLAN §5.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:85) permits six valid blocks but specifies `2^8` enumeration. The minimum one-sided p-values are:
+
+   | Effective nonzero blocks | Minimum p |
+   |---|---:|
+   | 6 | 0.015625 |
+   | 7 | 0.0078125 |
+   | 8 | 0.00390625 |
+
+   Holm’s first threshold is **0.0125**. With six usable differences in every contrast, even unanimously positive effects cannot pass. Zero differences also reduce effective resolution. Placement exclusions additionally depend on the conditioned fields, so dropping invalid blocks can select on treatment outcomes.
+
+   **Fix:** reconcile completeness, exclusions and inference; preferably require all eight assigned blocks to be valid. Test six/seven/eight blocks, ties, zeros and missing blocks explicitly.
+
+6. **P1 — The physical fixtures cannot run at 12×12.**  
+   [PLAN §4.5](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:65) specifies 12×12 worlds. [Configuration validation](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/config.ts:677) requires dimensions divisible by eight. The default radius-nine kernel also does not fit. An actual validation probe returned both errors.
+
+   **Fix:** use, for example, 16×16 with an explicitly smaller kernel, or 24×24. Preserve schema validation.
+
+7. **P2 — The conjunction of D_poly and D_space does not isolate polymer structure.**  
+   [PLAN’s scramble](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:46) independently rearranges E, S and every matter channel. It changes E/B ratios, signal gradients and their alignment with receivers. Those are controller inputs ([step.ts:540–553](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:540)). Global scalar energy is preserved; its spatial distribution is not.
+
+   Meanwhile, P→C changes chemistry and exports chemical potential as heat. A polymer-presence effect and an unrelated energy-pattern effect can satisfy the two contrasts separately. **Fix:** add P-only and non-P reconstruction contrasts, or explicitly limit the conclusion to the combined conditioned field. These controls do not establish that polymer arrangement itself explains the benefit.
+
+8. **P2 — The proposed “noise floor” is normally exactly zero.**  
+   [PLAN §5.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:85) derives delta from identical-start nulls and nonbuilder swaps. Identical states under identical seeds replay exactly; a functionally identical label swap does not sample stochastic uncertainty. If “swap” instead changes physical positions, it measures position effects.
+
+   Thus delta can be zero, allowing a repeatable one-quantum difference to satisfy the practical-effect requirement. **Fix:** retain identical twins as correctness tests, and predeclare a positive practical threshold separately from a properly defined variability control.
+
+9. **P2 — The promised cost and saturation observations are unavailable through the stated APIs.**  
+   [PLAN §4.4](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:61) promises measured `kGene` maintenance from ledger/census deltas. That cost is mixed with catalytic work and ordinary maintenance inside `react` ([step.ts:613–632](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:613)); exported heat and cumulative flux counters do not separate it.
+
+   There is also **no `mulShr` clamp flag**: [mulShr](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/int.ts:62) returns an integer without diagnostics. Roles silently saturate at **65,535**, well below `MATTER_MAX`, and contain only PHOTO/GROW/DECOMP/RESP ([step.ts:703–705](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:703)). **Fix:** restrict claims to available measurements, prove role-counter bounds, and mark unavailable components explicitly; otherwise budget a reviewed instrumentation change.
+
+10. **P2 — Stage-2 clock alignment is unspecified and can confound the controls.**  
+    [PLAN §§4.1–4.2](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:36) does not say whether receiver-alone controls start at step zero or T1. The simulator keys random draws on absolute step and schedules injuries using `(step+1) % injuryPeriod` ([step.ts:493–506](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:493)).
+
+    For T1=201 and injuryPeriod=10, a nine-step assay can include an injury in one arm and none in another solely because their clocks differ. **Fix:** freeze the absolute assay clock, environmental phase, RNG convention and ledger baselines for every arm.
+
+11. **P2 — The hand-wall fixture is not yet a fair sensitivity qualification.**  
+    [PLAN §4.5](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:67) uses a tiny, short ring fixture to qualify a larger, longer assay. A ring surrounding the footprint supplies no direct injury shielding to cells inside it: `injuryShell` checks **local cell P**, after decay ([step.ts:668–679](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:668)). P also moves during transport.
+
+    **Fix:** demonstrate sensitivity under the frozen scientific grid, horizon, receiver and injury regime. Match wall construction budgets and separate polymer arrangement from other field changes. A passing short fixture should not automatically qualify the full assay.
+
+12. **P2 — Empty placement cells do not guarantee a valid transferred state.**  
+    [PLAN’s placement predicate](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:53) permits existing E and S. A B=P=0 cell already at `POOL_MAX` becomes invalid after adding one reserved E quantum, despite perfect conservation. I reproduced a zero transfer residual alongside `validateState` rejecting that state.
+
+    [Validation bounds E and S per cell](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/world.ts:164); conservation alone does not enforce them. **Fix:** check capacity before writing, validate every transferred state, and test insufficient debit inventory, pool limits and combined lattice-plus-reserve matter limits. Reject arithmetic before unsigned-buffer writes can wrap.
+
+13. **P2 — Multiplicity excludes the three-candidate discovery rule.**  
+    [PLAN §5.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:85) adjusts four contrasts within each candidate, then declares success if **any** of three candidates succeeds. That does not control the error rate of the overall claim. Shared seeds correlate candidates; they do not remove multiplicity or create 24 independent blocks.
+
+    **Fix:** predeclare the candidate-level testing family. One option is an intersection-union candidate p-value followed by Holm across candidates, with attainable resolution checked again.
+
+14. **P2 — The proposed canonical serializer rejects ordinary statistical outputs.**  
+    [PLAN §3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:24) proposes `canonicalJSON`, but [its number branch](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/discovery.ts:105) accepts only safe integers. Both `p=1/256` and `delta=1.5` throw; I checked them directly. The existing atlas’s serializer is a different implementation.
+
+    **Fix:** specify rational numerator/denominator fields or canonical decimal strings for p-values, half-integer medians, thresholds and intervals. Also encode external BigInt observer values explicitly before checkpointing: [encodeCheckpoint uses ordinary JSON.stringify](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/checkpoint.ts:29).
+
+15. **P2 — The aggregate verdict converts missing evidence into a negative result.**  
+    [PLAN §5.3](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:85) says “none supported” means “no causal benefit detected.” That includes all candidates being invalid or measurement-limited—for example, every block failing placement.
+
+    **Fix:** preserve an overall invalid/measurement-limited verdict. Only call the panel negative when adequately measured, valid candidates actually completed the declared tests. The discovery vocabulary explicitly separates technical failure from biological negatives ([discovery.ts:51](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/schema/src/discovery.ts:51)).
+
+16. **P2 — The seed check points at an incomplete reservation source.**  
+    [PLAN §5.1](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:74) names a `docs/plan.md` registry. The executable discovery workflow actually loads [experiments/discovery/seed-registry.json](/Users/nicholas/develop/browser-life-i06-niche-construction/tools/discovery.ts:141). Its reservations include 8,500,001–8,599,999, which are absent from `docs/plan.md`. `seedCollisions` checks only the registry supplied by its caller; it does not discover reservations.
+
+    **Fix:** reserve numeric dev/fresh ranges in the machine-readable registry before execution, reconcile newer slice reservations, and bind the complete seed lists and registry digest into the frozen protocol.
+
+17. **P3 — The protected-path command is informational, not an enforcing gate.**  
+    [PLAN §8](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:126) uses `git diff --stat`, which succeeds even when forbidden changes exist and omits untracked files. Thus a scripted G7 can pass while schema or physics files changed.
+
+    **Fix:** use a failing tracked-diff check plus an untracked-file check for protected paths. Include `docs/rules.md`, and add D7’s fresh-main rebase and focused rechecks before publication.
+
+18. **P3 — D13 does not exist in the cited decision log.**  
+    [PLAN’s source declaration](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/niche-construction-2026-11-01/PLAN.md:3) cites D13, but the checked [backlog-run log ends its decisions at D12](/Users/nicholas/develop/browser-life-i06-niche-construction/docs/backlog-run-2026-11-01.html:62). **Fix:** correct the reference or obtain the actual coordinator decision; do not imply it is present in this checkout.
+
+Verified correct:
+
+- The named state/accounting exports, discovery status/purpose types, hash helpers and `registerHooks` pattern exist. M3 clusters **0/4/9/12** and the stated founder-set ID exist. Base M3 founders have no capability genes; builder derivatives must explicitly add them.
+- `genes:"ladder"`, `geneMasks`, `geneDrive` and the injury keys behave as described. P gates A/C diffusion. The analytical P→C heat term matches [passive polymer decay accounting](/Users/nicholas/develop/browser-life-i06-niche-construction/packages/sim-ref/src/step.ts:652).
+- Clearing genomes and independently permuting valid channel values preserve global matter and pool bounds. These operations need no physics/schema change. In-memory edited-state checkpoint replays matched continuously resumed states.
+- The local-page deployment pattern is real: [Vite entry](/Users/nicholas/develop/browser-life-i06-niche-construction/apps/lab/vite.config.ts:195), [Docker removal](/Users/nicholas/develop/browser-life-i06-niche-construction/Dockerfile.site:6), [Caddy 404](/Users/nicholas/develop/browser-life-i06-niche-construction/deploy/Caddyfile:45), and an actual asset-graph packaging test exist.
+- Uninstrumented Node 24.2 probes measured approximately **3.7 ms/step at 24×24** and **4.9 ms at 32×32**. At T1=T2=200, the plan’s 100,800-step workload projects to **6.2–8.2 minutes before observation overhead**. The declared candidate-reduction fallback is therefore material and should be resolved before freezing fresh inputs.

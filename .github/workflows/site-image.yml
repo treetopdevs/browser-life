@@ -1,0 +1,203 @@
+# Builds the site image from Dockerfile.site on a Linux runner and tests that exact image: its embedded Caddyfile and
+# /srv started by default against a synthetic coordinator (tools/test/site-image.test.ts), plus the forwarding matrix
+# run on the Caddy binary taken out of it (tools/test/deployment-config.test.ts, site-build.test.ts). Nothing is
+# pushed or deployed and no secret is used. See "Image gate" in deploy/README.md.
+name: site-image
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-image-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  site-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      # Labels every container and network this run creates, so the last step can remove exactly those.
+      BL_SITE_IMAGE_CI_RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The action itself runs on Node 24; the build and the tests use Node 22, as Dockerfile.site does.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Prepare scratch directory
+        run: |
+          set -euo pipefail
+          scratch="$RUNNER_TEMP/bl-site-image-$BL_SITE_IMAGE_CI_RUN"
+          mkdir -p "$scratch"
+          echo "BL_SCRATCH=$scratch" >> "$GITHUB_ENV"
+          echo "TMPDIR=$scratch" >> "$GITHUB_ENV"
+
+      - name: Require Docker, Docker Compose and Python
+        run: |
+          set -euo pipefail
+          docker version
+          docker compose version
+          python3 --version
+
+      - name: Install pnpm and dependencies
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.14.0 --activate
+          node --version
+          pnpm --version
+          pnpm install --frozen-lockfile
+
+      - name: Build the site image
+        run: |
+          set -euo pipefail
+          docker build --pull --file Dockerfile.site \
+            --iidfile "$BL_SCRATCH/site.iid" \
+            --tag "bl-site-image:$BL_SITE_IMAGE_CI_RUN" \
+            --label "bl.site-image.ci=$BL_SITE_IMAGE_CI_RUN" .
+          iid="$(cat "$BL_SCRATCH/site.iid")"
+          if ! [[ "$iid" =~ ^sha256:[0-9a-f]{64}$ ]]; then echo "unexpected image ID: $iid"; exit 1; fi
+          echo "Built site image ID (tested by this ID, not by tag): $iid"
+          for base in node:22-alpine caddy:2.10-alpine; do
+            docker image inspect --format "base $base: {{json .RepoDigests}}" "$base" \
+              || echo "::warning::could not read the digest of $base"
+          done
+
+      # Caddy is a static Go binary: running it natively here exercises the image's own build of it.
+      - name: Extract Caddy from the site image
+        run: |
+          set -euo pipefail
+          cid="$(docker create --label "bl.site-image.ci=$BL_SITE_IMAGE_CI_RUN" "$(cat "$BL_SCRATCH/site.iid")")"
+          docker cp "$cid:/usr/bin/caddy" "$BL_SCRATCH/caddy"
+          docker rm -v "$cid"
+          chmod +x "$BL_SCRATCH/caddy"
+          "$BL_SCRATCH/caddy" version
+
+      - name: Test the site image and the deployment configuration
+        env:
+          BL_REQUIRE_DEPLOY_TOOLS: "1"
+          BL_REQUIRE_SITE_IMAGE: "1"
+        run: |
+          set -euo pipefail
+          BL_SITE_IMAGE="$(cat "$BL_SCRATCH/site.iid")"
+          BL_CADDY_BIN="$BL_SCRATCH/caddy"
+          export BL_SITE_IMAGE BL_CADDY_BIN
+          pnpm exec vitest run \
+            tools/test/deployment-config.test.ts tools/test/site-build.test.ts tools/test/site-image.test.ts \
+            --reporter=verbose --reporter=json --outputFile.json="$BL_SCRATCH/gate.json" --maxWorkers=2
+
+      - name: Require that all three suites ran and nothing was skipped
+        run: |
+          node - <<'EOF'
+          const fs = require("fs");
+          const r = JSON.parse(fs.readFileSync(process.env.BL_SCRATCH + "/gate.json", "utf8"));
+          const problems = [];
+          for (const file of ["deployment-config", "site-build", "site-image"]) {
+            const suite = r.testResults.find((t) => t.name.endsWith(`tools/test/${file}.test.ts`));
+            if (!suite) problems.push(`${file}: no result`);
+            else if (!suite.assertionResults.some((a) => a.status === "passed")) problems.push(`${file}: nothing passed`);
+          }
+          for (const key of ["numFailedTests", "numPendingTests", "numTodoTests"]) if (r[key] !== 0) problems.push(`${key} = ${r[key]}`);
+          const live = r.testResults.flatMap((t) => t.assertionResults).filter((a) => a.status === "passed" && a.fullName.includes("the site image, started as deployed"));
+          if (live.length < 10) problems.push(`only ${live.length} tests ran against the started image`);
+          console.log(`${r.numPassedTests} passed, ${live.length} against the started image`);
+          if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
+          EOF
+
+      # Two disposable images: packaging and HTTP content must each notice a damaged artifact.
+      - name: Check that the gate fails on broken images
+        run: |
+          set -euo pipefail
+          mkdir "$BL_SCRATCH/canary-context"
+          for variant in lab assets; do
+            case "$variant" in
+              lab) target=/srv/lab/index.html; pattern="packages the lab files" ;;
+              assets) target=/srv/assets; pattern="serves every page with the styles and scripts it names" ;;
+            esac
+            printf 'FROM %s\nRUN rm -rf %s\n' "bl-site-image:$BL_SITE_IMAGE_CI_RUN" "$target" \
+              | docker build --file - --iidfile "$BL_SCRATCH/canary-$variant.iid" \
+                  --tag "bl-site-image-canary-$variant:$BL_SITE_IMAGE_CI_RUN" \
+                  --label "bl.site-image.ci=$BL_SITE_IMAGE_CI_RUN" "$BL_SCRATCH/canary-context"
+            status=0
+            BL_SITE_IMAGE="$(cat "$BL_SCRATCH/canary-$variant.iid")" pnpm exec vitest run tools/test/site-image.test.ts \
+              -t "$pattern" --reporter=json --reporter=junit \
+              --outputFile.json="$BL_SCRATCH/canary-$variant.json" \
+              --outputFile.junit="$BL_SCRATCH/canary-$variant.xml" || status=$?
+            if [ "$status" -ne 1 ]; then echo "expected test failure (exit 1), got $status for $variant"; exit 1; fi
+            node - "$variant" <<'EOF'
+          const fs = require("fs");
+          const variant = process.argv[2];
+          const expected = {
+            lab: ["packages the lab files and the media", "packaged lab content: /srv/lab/index.html is missing from the image"],
+            assets: ["serves every page with the styles and scripts it names", "/assets/"]
+          }[variant];
+          const r = JSON.parse(fs.readFileSync(`${process.env.BL_SCRATCH}/canary-${variant}.json`, "utf8"));
+          const failed = r.testResults.flatMap((t) => t.assertionResults).filter((a) => a.status === "failed");
+          const ok = expected && failed.length === 1
+            && failed[0].fullName.includes(expected[0])
+            && failed[0].failureMessages.join("\n").includes(expected[1]);
+          console.log(failed.map((a) => `${a.fullName}\n${a.failureMessages.join("\n").slice(0, 300)}`).join("\n---\n") || "no failed test");
+          if (!ok) { console.error(`the ${variant} canary did not fail its named content assertion`); process.exit(1); }
+          EOF
+            # Vitest JSON omits unhandled runtime errors and can omit nested hook failures.
+            # JUnit explicitly includes both: accept exactly the named assertion, no extra error.
+            python3 - "$BL_SCRATCH/canary-$variant.xml" <<'PYXML'
+          import sys
+          import xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          failures = root.findall(".//failure")
+          errors = root.findall(".//error")
+          if root.tag != "testsuites" or len(failures) != 1 or errors or int(root.get("errors", "-1")) != 0 or int(root.get("failures", "-1")) != 1:
+              raise SystemExit("canary contains hook/runtime errors or an unexpected failure count")
+          print("Canary JUnit: exactly one assertion failure, no hook/runtime errors")
+          PYXML
+          done
+
+      - name: Print failure reports before cleanup
+        if: failure()
+        run: |
+          for report in gate canary-lab canary-assets; do
+            file="${BL_SCRATCH:-}/$report.json"
+            if [ -f "$file" ]; then echo "Report: $file"; cat "$file"; fi
+            xml="${BL_SCRATCH:-}/$report.xml"
+            if [ -f "$xml" ]; then echo "Report: $xml"; cat "$xml"; fi
+          done
+
+      # Also runs when the job fails or is cancelled. Removes only what carries this run's label, and the scratch directory.
+      - name: Remove this run's containers, networks and scratch files
+        if: always()
+        timeout-minutes: 5
+        run: |
+          set -uo pipefail
+          failed=0
+          label="label=bl.site-image.ci=$BL_SITE_IMAGE_CI_RUN"
+          containers="$(timeout 60 docker ps -aq --filter "$label")" || failed=1
+          if [ -n "$containers" ]; then
+            printf '%s\n' "$containers" | xargs -r timeout 120 docker rm -f -v || failed=1
+          fi
+          networks="$(timeout 60 docker network ls -q --filter "$label")" || failed=1
+          if [ -n "$networks" ]; then
+            printf '%s\n' "$networks" | xargs -r timeout 60 docker network rm || failed=1
+          fi
+          left_containers="$(timeout 60 docker ps -aq --filter "$label")" || failed=1
+          left_networks="$(timeout 60 docker network ls -q --filter "$label")" || failed=1
+          if [ -n "$left_containers$left_networks" ]; then
+            echo "left behind: $left_containers $left_networks"
+            failed=1
+          fi
+          if [ "$failed" -eq 0 ]; then
+            [ -z "${BL_SCRATCH:-}" ] || rm -rf "$BL_SCRATCH" || failed=1
+          else
+            echo "Cleanup could not be confirmed; scratch retained at ${BL_SCRATCH:-unset}"
+          fi
+          exit "$failed"

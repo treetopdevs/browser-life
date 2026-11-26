@@ -1,0 +1,8 @@
+No remaining actionable findings in the requested scope. Read the previous `picker-implementation-codex.md` and statically verified:
+
+- **Nesting guard:** canonicalization rejects depth above 12; the regression expects the controlled error and excludes `RangeError`. [Guard](apps/lab/src/particles/comparison.ts:47), [regression](apps/lab/test/particle-comparison.test.ts:42).
+- **Directional copy:** sign changes, zero crossings, weaker attraction and stronger/weaker repulsion receive accurate descriptions. Rows remain the responding family. [Copy](apps/lab/src/particles/picker.ts:84), [UI regression](tests/e2e/particle-picker.spec.ts:101).
+- **Comparison clock:** living worlds complete each shared tick; extinct worlds remain frozen; all-extinct stops advancement. Manual stepping and playback both use the helper. [Helper](apps/lab/src/particles/comparison-clock.ts:4), [integration](apps/lab/src/particles/picker.ts:136), [clock regression](apps/lab/test/particle-comparison-clock.test.ts:5). The [visibility regression](tests/e2e/particle-picker.spec.ts:123) accurately limits its claim to simulated events.
+- **Freshness-only check:** `--check` compares model/comparison hashes and rules version, then exits before simulation or writes; unsupported arguments fail. [Validation](tools/particles/explore-picker.ts:11).
+
+Static review only: no edits, tests, builds, simulations, network access, or large JSON reads. Parent-reported passes and numerical compatibility remain reported evidence, not independently executed or verified here. Browser timing and real OS background behavior remain unverified.

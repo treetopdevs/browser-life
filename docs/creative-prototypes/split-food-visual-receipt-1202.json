@@ -1,0 +1,28 @@
+{
+  "seed": 1202,
+  "planSha256": "134944138fc636b1c9677e9a40b5c2583d7184d608ce1e8d8c914e2ce8d93515",
+  "baselineArtifactSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+  "splitArtifactSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+  "splitChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: historical baseline media and the new numerical outcome are known. Between the split world's body-only frames at 2500 and 3000, the small upper-middle group develops into a broad branching group along the upper edge; the dense lower-middle cluster clears and separates, while a wider branching group appears in the lower-left. These are occupied-tile changes, not just colors or food outlines."
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Historical contiguous bodies are dispersed mainly across the left half; split bodies form left-side groups and a long branching group right of center, with a dense lower cluster."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Historical contiguous bodies include a dense lower-left group. Split bodies have small left groups and several separated groups in the central-right feeding band."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical baseline and numerical outcome are known. Historical contiguous bodies remain mostly in the left half, including lower-left branches. Split bodies form a broad upper group right of center and separated lower-left and lower-middle groups. This is a descriptive comparison of known baseline with new outcome, not a superiority test."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T04:54:32.915914+00:00"
+}

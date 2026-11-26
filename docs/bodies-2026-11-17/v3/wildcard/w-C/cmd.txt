@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario crowd --seed 1 --steps 8000 --no-frames --tag-mut-rate 65536 --tag-mut-bud --tag-step 40 --gates share,signal --seam-cost 2 --raid 2 --out docs/bodies-2026-11-17/v3/wildcard/w-C

@@ -1,0 +1,36 @@
+{
+  "seed": 1203,
+  "planSha256": "74dc68201c7fb51ed9a87ba75d13e0ad79b171ff0d73d7929af4ba4f03fa114a",
+  "movingBandArtifactSha256": "000e1ce6a3a60ab216707136ba97edf97bdcde826a63af2d3c27bf54e7810e3d",
+  "stationaryBandArtifactSha256": "234c3c0eb54b5d6875f400e155b95f9afaa20638b511c0a4285305c9aac2ba7c",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "Not blind: historical moving media already exist. From2500 to3000, the long middle-right vertical cluster becomes a sloping upper-middle-right chain, with a broad occupied group across the top-right edge. The lower-right groups clear and are replaced by dense branches at the bottom-right boundary."
+    },
+    "stationaryBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "From2500 to3000, the dense middle-left column and its branches mostly clear, opening a large central gap. A broad connected-looking group expands across the upper-middle area, and a separate large branching group appears near the lower-middle edge. This judgment concerns occupied tiles, not changes in family color."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "At1500 moving has a central vertical chain with middle and bottom branches; stationary has separated upper-left, upper-middle and lower-left groups with a broad empty middle gap."
+    },
+    {
+      "tick": 2500,
+      "observation": "At2500 moving has a vertical middle-right cluster and lower-right groups; stationary concentrates several branching clusters in the left half."
+    },
+    {
+      "tick": 3000,
+      "observation": "At3000 moving has top-right and bottom-right clusters and a sloping upper chain; stationary has upper-middle and lower-middle branching groups separated by a large gap. These are descriptive differences, not superiority."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T00:54:38.254014+00:00"
+}

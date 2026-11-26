@@ -1,0 +1,9 @@
+{
+  "arm": "inherit-c4",
+  "seed": 6004,
+  "steps": 100000,
+  "cpuDigest": "2c13ab79879fdb47",
+  "gpuDigest": "2c13ab79879fdb47",
+  "equal": true,
+  "codeHash": "f538f101d3ae53391a04630121d06f9c86ea2aafa425a6134eb9ed5240693a2a"
+}

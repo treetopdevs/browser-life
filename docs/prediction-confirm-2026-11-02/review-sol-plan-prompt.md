@@ -1,0 +1,19 @@
+You are an adversarial reviewer. Read-only. Repo: /Users/nicholas/develop/browser-life-i02-confirm (branch claude/i02-confirm).
+Review docs/prediction-confirm-2026-11-02/PLAN.md (slice I02b: held-out confirmation of the prediction envelope on fresh families) against:
+- docs/simulation-research-2026-11-01/report.md (section "I02 - A naturalist that predicts interventions" and "Agent execution contract")
+- docs/prediction-envelope-2026-11-01/{EVIDENCE.md,PLAN.md,REVIEW.md}, docs/backlog-run-2026-11-01.html (D11, D13, D14)
+- the actual code: tools/predict.ts, tools/lib/prediction/*.ts (run.ts, score.ts, splits.ts, proposers.ts, report-html.ts), experiments/prediction-envelope/*
+
+Coordinator scope: run the confirmation without --exploratory, with a dated amendment committed BEFORE the run; frozen protocol.json + freeze hash on main unchanged; no threshold/minEffect/readout/proposer change; >=10 test families; run < ~15 min loaded; RESULT.md applying a pre-stated reading mechanically; report.html shows failed predictions first; no changes to scoring logic.
+
+Find flaws. Verify claims against the code, do not trust the plan. Specifically probe:
+1. Wrong reuse: does the plan's second-protocol design (protocol.confirm.json, --protocol/--freeze plumbing) actually pass the existing confirmRefusal/protocolHash/splitPlanOf/generate paths? Are hard-coded paths (PROTOCOL, FREEZE, family builders, seed constants, salt use, cohort recipes in run.ts) going to ignore the new protocol? Does generate() derive families from protocol fields, or from code constants? Does "identity fields only" cover everything that identifies families (e.g. cohort recipes, donor assignment, seedVariantOffset)? Is the "frozen protocol unchanged" requirement honestly met, or is the plan quietly a new protocol that needs its own dev freeze (devPrior/minEffect carried over)?
+2. Metrics a null fixture would pass: can the pre-stated reading call POSITIVE/NEGATIVE for a degenerate, shuffled, or always-"none" proposer? Check the NEGATIVE rule ("point estimate vs priorMajority >= 0") and POSITIVE rule (all intervals below 0). Multiple-comparison / family-wise issues. Imputed Brier details. Is "every primary interval" well defined when an interval is null?
+3. Leakage between past and future windows / between families and splits: envelopes, donors, shuffledEvidence donors, devPrior reuse, seed variants, histories shared across families.
+4. Disjointness: is the claimed seed/id/salt disjointness actually true against v0 (check protocol.json, including seedVariantOffset and rising-cohort seeds)? Could the generated sim-ref world seeds collide through any derivation?
+5. Scope too big / budget: 20 families runtime claim; anything unneeded.
+6. Untestable or non-runnable gates: check each acceptance-gate command and test name for feasibility (e.g. does `predict.ts validate`, `confirm-analysis`, canonical.sha256 exist? is a committed-HEAD gate testable? does `git diff origin/main -- packages/` make sense given other edits?). Order-of-operations holes: can the run step happen before the commit? Can the run be done twice (rerun-until-favourable)? What stops an outcome peek during smoke timing, and does the plan's smoke timing leak outcomes?
+7. Physics or hash risk: any change that could touch golden pins, RULE_VERSION, defaultConfig.
+8. Anything in the amendment content that is ambiguous enough to allow post-hoc reinterpretation (e.g. the 25% measurement-limited override, degenerate proposer definition, the "uninformative" bucket, shuffledEvidence control semantics for numericTrend, fixedRule/v0Rules having no control).
+
+Output: a ranked list of findings, each tagged P1 (would invalidate the confirmation or break the protocol), P2 (real gap/ambiguity to fix before the run), or P3, with file/line references and a concrete fix. Be specific and terse; no praise.

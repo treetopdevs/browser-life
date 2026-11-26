@@ -112,7 +112,7 @@ test("worker: a wound, and a jump that replays it, are said to the naturalist at
       await wait(() => nat().find((m) => m.step === 1000), "the census at step 1,000");
       if (ready.storage !== null) {
         // No checkpoints in this browser: the live wound is still checked, the jump cannot be.
-        send({ type: "lesion", x: 10, y: 10, r: 4 });
+        send({ type: "lesion", x: 10, y: 10, r: 4, id: 77 });
         const live = await wait(() => touched()[0], "naturalistTouched");
         send({ type: "step", count: 100 });
         const after = await wait(() => nat().find((m) => m.step === 1100), "the census at step 1,100");
@@ -120,7 +120,7 @@ test("worker: a wound, and a jump that replays it, are said to the naturalist at
       }
       send({ type: "save" });
       await wait(() => messages.find((m) => m.type === "notice" && /Saved /.test(m.message)), "the save");
-      send({ type: "lesion", x: 10, y: 10, r: 4 });
+      send({ type: "lesion", x: 10, y: 10, r: 4, id: 77 });
       const live = await wait(() => touched()[0], "naturalistTouched");
       send({ type: "step", count: 100 });
       const after = await wait(() => nat().find((m) => m.step === 1100), "the census at step 1,100");
@@ -134,7 +134,7 @@ test("worker: a wound, and a jump that replays it, are said to the naturalist at
       worker.terminate();
     }
   });
-  expect(got.live).toEqual({ type: "naturalistTouched", world: got.first.world, runId: got.first.runId, step: 1000 });
+  expect(got.live).toEqual({ type: "naturalistTouched", world: got.first.world, runId: got.first.runId, step: 1000, id: 77 });
   expect(got.after).toEqual({ step: 1100, touched: 1000, world: got.first.world });
   if (got.storage !== null) test.info().annotations.push({ type: "skipped part", description: `no checkpoints here (${got.storage}): the jump was not checked` });
   else {
@@ -178,15 +178,20 @@ test("worker: a hand edit named for a replaced world is refused and changes noth
       const first = await wait(() => loaded()[0], "loaded");
       // A replant queued before a Try for the first world: the Try's edits reach the worker after the replacement.
       send({ type: "load", presetId: "gradient-m3", seed: 1 });
-      send({ type: "feed", x: 128, y: 128, r: 127, amount: 32, world: first.world });
-      send({ type: "lesion", x: 128, y: 128, r: 127, world: first.world });
+      send({ type: "feed", x: 128, y: 128, r: 127, amount: 32, world: first.world, id: 101 });
+      send({ type: "lesion", x: 128, y: 128, r: 127, world: first.world, id: 102 });
       const second = await wait(() => loaded()[1], "the replant's loaded");
       const no = await wait(() => (refused().length >= 2 ? refused() : undefined), "two refusals");
       const before = touched().length;
       // Named for the world on screen, the same edit is applied and logged.
-      send({ type: "feed", x: 10, y: 10, r: 4, amount: 4, world: second.world });
+      send({ type: "feed", x: 10, y: 10, r: 4, amount: 4, world: second.world, id: 103 });
       const yes = await wait(() => touched()[0], "naturalistTouched");
-      return { first: first.world, second: second.world, no: no.map((m) => ({ request: m.request, message: m.message })), before, yes, order: messages.indexOf(second) < messages.indexOf(no[0]) };
+      send({ type: "feed", x: 10, y: 10, r: 4, amount: 100_000, world: second.world, id: 104 });
+      const invalid = await wait(() => refused().find(m => m.id === 104), "invalid feed refusal");
+      // Existing callers omit IDs; the receipt must omit the property, not carry undefined.
+      send({ type: "lesion", x: 10, y: 10, r: 4 });
+      const untagged = await wait(() => touched()[1], "untagged wound receipt");
+      return { first: first.world, second: second.world, no: no.map((m) => ({ request: m.request, message: m.message, id: m.id })), before, yes, invalid, untagged, order: messages.indexOf(second) < messages.indexOf(no[0]) };
     } finally {
       worker.terminate();
     }
@@ -194,11 +199,15 @@ test("worker: a hand edit named for a replaced world is refused and changes noth
   expect(got.second).not.toBe(got.first);
   expect(got.order).toBe(true);
   expect(got.no).toEqual([
-    { request: "feed", message: "That suggestion was made for a world that has since been replaced, so nothing was applied" },
-    { request: "lesion", message: "That suggestion was made for a world that has since been replaced, so nothing was applied" },
+    { request: "feed", message: "That suggestion was made for a world that has since been replaced, so nothing was applied", id: 101 },
+    { request: "lesion", message: "That suggestion was made for a world that has since been replaced, so nothing was applied", id: 102 },
   ]);
   expect(got.before).toBe(0);
   expect(got.yes.world).toBe(got.second);
+  expect(got.yes.id).toBe(103);
+  expect(got.invalid.request).toBe("feed");
+  expect(got.invalid.message).toContain("feed amount");
+  expect(got.untagged).not.toHaveProperty("id");
 });
 
 test("page: gradient-m3 seed 1 rings on living cells with the bell's receipt", async ({ page }) => {

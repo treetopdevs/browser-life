@@ -100,6 +100,12 @@ defmodule Coordinator.Queue do
   segment's status), and tools/stitch.ts refuses to export a bred run whose
   record mismatches.
 
+  Picked breeder runs (`spec["pickLog"]`, `Coordinator.PickLog`): the SHA-256 of a pick log stored in the blob
+  store. Creation reads the stored bytes and checks them against the spec; a task then carries `picked`,
+  `pickLog` and `pickImplicit` (only for such an experiment), and its segments, run or verify, go only to an
+  island whose request carries `"picks-v1"` (`gated_experiments/2`; `CoordinatorWeb.OpsStatus.needs/2` is held
+  to it). Older islands would refuse the spec, so none runs one unpicked.
+
   Scheduled interventions (`spec["interventions"]`, the runner's
   `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
   lesions and feeds at absolute steps, the wounds and feedings a lab history
@@ -225,7 +231,8 @@ defmodule Coordinator.Queue do
 
   The island table is bounded by `:max_islands` (20,000 by default). At the
   bound a join first reclaims expired leases, then forgets every island that
-  never ran or verified anything, holds no pending attempt and was last seen
+  never ran or verified anything, holds no pending attempt (nor a hold from
+  another plane's live lease, `authenticate_and_hold/3`) and was last seen
   more than `:island_prune_after_ms` ago (a day); if there is none, the
   least recently seen such islands last seen more than
   `:island_prune_grace_ms` ago (ten minutes), a twentieth of the bound at once
@@ -315,7 +322,29 @@ defmodule Coordinator.Queue do
     GenServer.call(__MODULE__, {:join, info, garden})
   end
 
+  @doc "Atomically authenticates, abandons pending work and removes an island. Missing ids are a retry-safe no-op."
+  def leave(island, token), do: GenServer.call(__MODULE__, {:leave, island, token})
+
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
+
+  @doc """
+  Authenticates an island for another plane (`Coordinator.Soup`) and, in the
+  same call, records it as seen; with `hold_until` (ms since the epoch) it also
+  holds the island until then: pruning at the island bound skips it, as it
+  skips an island holding a queue attempt. `:ok`, or `:error` for an absent
+  island or a wrong token, so a plane never grants work to credentials pruned
+  a moment earlier. The hold and `last_seen` are saved with the queue's next
+  write, never on their own; a plane re-asserts its live holds after a restart.
+  """
+  def authenticate_and_hold(island, token, hold_until \\ nil),
+    do: GenServer.call(__MODULE__, {:auth_hold, island, token, hold_until})
+
+  @doc """
+  Holds a known island until `hold_until` without authenticating it: for a
+  plane re-asserting its live leases after its own restart, or topping up a
+  hold to a lease's exact end. `:ok`, or `:error` if the island is not there.
+  """
+  def hold(island, hold_until), do: GenServer.call(__MODULE__, {:hold, island, hold_until})
 
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
   def island_info(id), do: GenServer.call(__MODULE__, {:island_info, id})
@@ -652,8 +681,14 @@ defmodule Coordinator.Queue do
   @impl true
   def handle_call({:join, info, garden}, _from, s) do
     case make_room(s) do
-      {:ok, s} -> join_island(info, garden, s)
-      :full -> {:reply, {:error, :full}, s}
+      {:ok, room} ->
+        result = join_island(info, garden, room)
+        Coordinator.OperatorEvents.pruned_islands(map_size(s.islands) - map_size(room.islands))
+        result
+
+      :full ->
+        Coordinator.OperatorEvents.capacity_refusal()
+        {:reply, {:error, :full}, s}
     end
   end
 
@@ -670,14 +705,60 @@ defmodule Coordinator.Queue do
     {:reply, ok, s}
   end
 
+  def handle_call({:auth_hold, id, token, until}, _from, s) do
+    case s.islands[id] do
+      %{token_hash: h} when is_binary(token) ->
+        if Plug.Crypto.secure_compare(h, :crypto.hash(:sha256, token)) do
+          s = put_in(s, [:islands, id, :last_seen], now())
+          {:reply, :ok, raise_hold(s, id, until)}
+        else
+          {:reply, :error, s}
+        end
+
+      _ ->
+        {:reply, :error, s}
+    end
+  end
+
+  def handle_call({:hold, id, until}, _from, s) do
+    if Map.has_key?(s.islands, id),
+      do: {:reply, :ok, raise_hold(s, id, until)},
+      else: {:reply, :error, s}
+  end
+
+  def handle_call({:leave, id, token}, _from, s) do
+    case s.islands[id] do
+      nil ->
+        {:reply, :ok, s}
+
+      %{token_hash: h} when is_binary(token) ->
+        if Plug.Crypto.secure_compare(h, :crypto.hash(:sha256, token)) do
+          segments = Map.new(s.segments, fn {sid, seg} -> {sid, Segment.leave(seg, id)} end)
+
+          {:reply, :ok,
+           persist(
+             s
+             |> remember_island(id)
+             |> Map.put(:segments, segments)
+             |> Map.put(:islands, Map.delete(s.islands, id))
+           )}
+        else
+          {:reply, {:error, :unauthorized}, s}
+        end
+
+      _ ->
+        {:reply, {:error, :unauthorized}, s}
+    end
+  end
+
   def handle_call({:island_info, id}, _from, s) do
     # The recorded capabilities are the operator's (`status/0`) alone.
-    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities])
+    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities, :held_until])
     {:reply, info, s}
   end
 
   def handle_call({:create, spec}, _from, s) do
-    with {:ok, spec} <- validate(spec),
+    with {:ok, spec} <- validate(spec, s.dir),
          {:ok, s, count} <- add_experiment(s, spec, now()) do
       {:reply, {:ok, count}, persist(s)}
     else
@@ -775,7 +856,13 @@ defmodule Coordinator.Queue do
             shared_address: shared_address?()
           }
 
-          Garden.view(g, garden_segs(s, g), s.islands, now(), env)
+          Garden.view(
+            g,
+            garden_segs(s, g),
+            Map.merge(Map.get(s, :historical_islands, %{}), s.islands),
+            now(),
+            env
+          )
       end
 
     {:reply, view, s}
@@ -1148,7 +1235,7 @@ defmodule Coordinator.Queue do
 
     islands =
       for i <- Map.values(s.islands) do
-        i |> Map.drop([:token_hash]) |> Map.put(:stale, stale?(i.last_seen, now))
+        i |> Map.drop([:token_hash, :held_until]) |> Map.put(:stale, stale?(i.last_seen, now))
       end
 
     # A segment whose verify attempt's regenerated observation files disagree
@@ -1933,7 +2020,10 @@ defmodule Coordinator.Queue do
 
   # ---- validation ----
 
-  defp validate(spec) when is_map(spec) do
+  # `dir` is the data directory a pick log is read from (the Queue's own, passed by `{:create, _}`).
+  defp validate(spec, dir \\ nil)
+
+  defp validate(spec, dir) when is_map(spec) do
     presets = Application.get_env(:coordinator, :presets)
     conditions = Application.get_env(:coordinator, :conditions)
     int_in? = fn v, lo, hi -> is_integer(v) and v >= lo and v <= hi end
@@ -2008,6 +2098,10 @@ defmodule Coordinator.Queue do
       (bad = invalid_interventions(spec)) != nil ->
         {:error, bad}
 
+      # A picked run: its fixed, content-addressed pick log (Coordinator.PickLog).
+      (bad = invalid_pick_log(spec, dir)) != nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -2020,7 +2114,7 @@ defmodule Coordinator.Queue do
 
       true ->
         keep =
-          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions)
+          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions pickLog pickImplicit)
 
         # "metricsVersion" is deliberately not in `keep`: it is the
         # coordinator's own required version at creation time (like
@@ -2040,12 +2134,17 @@ defmodule Coordinator.Queue do
         # reads it so), and must leave no key behind: every segment's task
         # spec, and the stored spec, keep their shape from before the field.
         base = if base["interventions"] == nil, do: Map.delete(base, "interventions"), else: base
+        # Likewise the pick log's two keys: absent unless the experiment is picked.
+        base =
+          if base["pickLog"] == nil, do: Map.drop(base, ["pickLog", "pickImplicit"]), else: base
+
+        base = if base["pickImplicit"] == nil, do: Map.delete(base, "pickImplicit"), else: base
 
         {:ok, put_metapopulation(base, spec)}
     end
   end
 
-  defp validate(_), do: {:error, "spec must be an object"}
+  defp validate(_, _), do: {:error, "spec must be an object"}
 
   # Conditions that remove something the preset does not have (see
   # packages/runner/src/conditions.ts) would fail on every island.
@@ -2188,6 +2287,76 @@ defmodule Coordinator.Queue do
   end
 
   defp put_metapopulation(base, _spec), do: base
+
+  # ---- picked runs (see Coordinator.PickLog and the moduledoc) ----
+
+  # Why `spec["pickLog"]` cannot drive this experiment, or nil (no pick log, or
+  # nil, is an ordinary experiment). The blob must be stored and is validated
+  # again here, against this spec: a pick log's existence in the shared blob
+  # store says only that *some* context-free-valid log has that digest.
+  defp invalid_pick_log(%{"pickLog" => nil} = spec, _dir),
+    do: if(spec["pickImplicit"] != nil, do: "pickImplicit needs pickLog", else: nil)
+
+  defp invalid_pick_log(%{"pickLog" => _}, nil),
+    do: "a pick log belongs to an experiment created through POST /api/experiments"
+
+  defp invalid_pick_log(%{"pickLog" => sha} = spec, dir) do
+    conditions = spec["conditions"]
+    implicit = spec["pickImplicit"]
+
+    cond do
+      not Coordinator.PickLog.sha?(sha) ->
+        "pickLog must be 64 lowercase hex digits (the SHA-256 of a stored pick log)"
+
+      implicit not in [nil, true] ->
+        "pickImplicit must be true or absent"
+
+      Map.has_key?(spec, "overrides") ->
+        "a picked experiment takes no overrides"
+
+      not (is_list(conditions) and length(conditions) == 1) or
+          not (is_list(spec["seeds"]) and length(spec["seeds"]) == 1) ->
+        "a picked experiment is one condition and one seed (a pick log is the history of one world)"
+
+      not picked_condition?(spec["presetId"], hd(conditions)) ->
+        "a picked experiment needs the condition treatment on a breeder preset (#{Enum.join(Application.get_env(:coordinator, :breed_presets, []), ", ")}) or a pond-breed-<score> condition on a pond preset: the arms that choose donors"
+
+      not is_integer(spec["steps"]) ->
+        "steps must be an integer"
+
+      true ->
+        path = Store.blob_path(dir, sha)
+
+        with {:ok, bin} <- File.read(path),
+             {:ok, entries} <- Coordinator.PickLog.validate_bytes(bin, sha),
+             :ok <-
+               Coordinator.PickLog.validate_in_context(entries, %{
+                 preset: spec["presetId"],
+                 steps: spec["steps"],
+                 implicit: implicit == true
+               }) do
+          nil
+        else
+          {:error, :enoent} -> "pick log #{sha} is not stored; PUT /api/pick-logs/#{sha} first"
+          {:error, why} when is_binary(why) -> why
+          {:error, why} -> "pick log #{sha} cannot be read: #{inspect(why)}"
+        end
+    end
+  end
+
+  defp invalid_pick_log(%{"pickImplicit" => v}, _dir) when v != nil,
+    do: "pickImplicit needs pickLog"
+
+  defp invalid_pick_log(_spec, _dir), do: nil
+
+  # The arms that choose donors, as the runner's pickedConfigError sees them: the
+  # breeder preset's treatment is the breed arm, and pond-breed-<score> sets it on
+  # any pond preset. (The island still checks the arm it builds.)
+  defp picked_condition?(preset, condition) do
+    (condition == "treatment" and preset in Application.get_env(:coordinator, :breed_presets, [])) or
+      (is_binary(condition) and String.starts_with?(condition, "pond-breed-") and
+         pond_preset?(preset))
+  end
 
   # ---- scheduled interventions (see the moduledoc) ----
 
@@ -2588,6 +2757,10 @@ defmodule Coordinator.Queue do
       # The whole schedule, to every segment (see the moduledoc): the runner
       # keeps the entries this segment owns. Absent from every other payload.
       |> maybe_put(:interventions, spec["interventions"])
+      # A picked experiment's fixed pick log, by digest (see Coordinator.PickLog): present only then.
+      |> maybe_put(:picked, if(spec["pickLog"] != nil, do: true))
+      |> maybe_put(:pickLog, spec["pickLog"])
+      |> maybe_put(:pickImplicit, spec["pickImplicit"])
 
     %{
       kind: kind,
@@ -2661,6 +2834,9 @@ defmodule Coordinator.Queue do
   # A schedule holding a sun (see the moduledoc): asked for besides
   # `@interventions_capability`.
   @sun_capability "sun-v1"
+  # A picked experiment (`spec["pickLog"]`): its segments, run or verify, need the
+  # island code that fetches and applies the pick log (see the moduledoc).
+  @picks_capability "picks-v1"
 
   # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
   # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
@@ -2680,7 +2856,8 @@ defmodule Coordinator.Queue do
     @current_capability,
     @interventions_capability,
     @breed_capability,
-    @sun_capability
+    @sun_capability,
+    @picks_capability
   ]
   @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
   @stored_capability_bytes 32
@@ -2758,15 +2935,17 @@ defmodule Coordinator.Queue do
     breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
     sun? = @sun_capability in capabilities
+    picks? = @picks_capability in capabilities
 
-    if ponds? and breed? and scheduled? and sun? do
+    if ponds? and breed? and scheduled? and sun? and picks? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
             (not breed? and breed_preset?(exp.spec["presetId"])) or
             (not scheduled? and exp.spec["interventions"] != nil) or
-            (not sun? and sun_schedule?(exp.spec["interventions"])),
+            (not sun? and sun_schedule?(exp.spec["interventions"])) or
+            (not picks? and exp.spec["pickLog"] != nil),
           into: MapSet.new(),
           do: name
     end
@@ -2936,6 +3115,8 @@ defmodule Coordinator.Queue do
         for {id, i} <- reclaimed.islands,
             i.runs + i.verifies == 0,
             not MapSet.member?(holding, id),
+            # Held by another plane's live lease (authenticate_and_hold/3).
+            Map.get(i, :held_until, 0) <= now,
             do: {id, i.last_seen}
 
       forget =
@@ -2979,6 +3160,19 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # Raises an island's hold (another plane's lease end). It is kept in memory
+  # and saved with the queue's next write, never written on its own: a plane
+  # polling `next` would otherwise rewrite the whole queue state per request.
+  # After a restart the plane re-asserts its live leases (`Coordinator.Soup`'s
+  # init), so a hold that was not saved yet is not lost.
+  defp raise_hold(s, _id, nil), do: s
+
+  defp raise_hold(s, id, until) when is_integer(until) do
+    if until > Map.get(s.islands[id], :held_until, 0),
+      do: put_in(s, [:islands, id, :held_until], until),
+      else: s
+  end
+
   # Islands with a pending (assigned, not completed) attempt, in one pass.
   defp islands_holding_attempts(s) do
     for {_, seg} <- s.segments,
@@ -2989,7 +3183,26 @@ defmodule Coordinator.Queue do
   end
 
   defp host(_s, nil), do: "?"
-  defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter
+
+  defp host(s, id),
+    do:
+      (s.islands[id] || Map.get(Map.get(s, :historical_islands, %{}), id) || %{adapter: "?"}).adapter
+
+  # Preserve provenance without credentials or an active island row. Entries
+  # exist only for ids referenced by retained attempts, never idle join/leave.
+  # Optional key keeps existing snapshots readable without a schema migration.
+  defp remember_island(s, id) do
+    referenced =
+      Enum.any?(s.segments, fn {_, seg} -> Enum.any?(seg.attempts, &(&1.island == id)) end)
+
+    if referenced do
+      history = Map.get(s, :historical_islands, %{})
+      Map.put(s, :historical_islands, Map.put(history, id, Map.take(s.islands[id], [:adapter])))
+    else
+      s
+    end
+  end
+
   defp now, do: Coordinator.Clock.now()
   defp rand(n), do: Base.url_encode64(:crypto.strong_rand_bytes(n), padding: false)
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
@@ -3004,6 +3217,20 @@ defmodule Coordinator.Queue do
     do: [:dir, :index, :food_hands, :meteor_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
+    # Resetting downstream segments can discard attempts. Keep the adapter
+    # archive bounded by surviving history, including across restart.
+    history = Map.get(s, :historical_islands, %{})
+
+    s =
+      if map_size(history) == 0 do
+        s
+      else
+        referenced =
+          for {_, seg} <- s.segments, a <- seg.attempts, into: MapSet.new(), do: a.island
+
+        Map.put(s, :historical_islands, Map.take(history, MapSet.to_list(referenced)))
+      end
+
     path = Path.join(s.dir, "state.bin")
     tmp = path <> ".tmp"
     File.write!(tmp, :erlang.term_to_binary(Map.drop(s, persist_drops(s))))

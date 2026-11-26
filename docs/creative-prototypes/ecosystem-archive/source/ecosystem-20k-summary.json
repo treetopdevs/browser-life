@@ -1,0 +1,2349 @@
+[
+  {
+    "seed": 1101,
+    "sourceHash": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0",
+    "final": {
+      "tick": 20000,
+      "counts": [
+        1106,
+        1995,
+        1437,
+        2834,
+        887
+      ],
+      "population": 8259,
+      "attack": 0.777333817653469,
+      "defense": 1.4432740041167211,
+      "classes": 76,
+      "diversity": 3.4921561222090975,
+      "births": 5223912,
+      "deaths": 5220774,
+      "mutations": 209137,
+      "bins": [
+        9,
+        218,
+        133,
+        17,
+        0,
+        13,
+        166,
+        97,
+        3,
+        0,
+        49,
+        130,
+        153,
+        16,
+        0,
+        20,
+        79,
+        1,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        10,
+        276,
+        645,
+        101,
+        0,
+        71,
+        351,
+        286,
+        62,
+        0,
+        7,
+        86,
+        82,
+        0,
+        0,
+        12,
+        5,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        161,
+        344,
+        127,
+        12,
+        0,
+        140,
+        251,
+        207,
+        20,
+        0,
+        51,
+        55,
+        7,
+        0,
+        0,
+        28,
+        27,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0,
+        157,
+        207,
+        1447,
+        57,
+        1,
+        93,
+        110,
+        470,
+        105,
+        0,
+        56,
+        1,
+        123,
+        2,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16,
+        0,
+        40,
+        11,
+        1,
+        63,
+        92,
+        152,
+        49,
+        0,
+        2,
+        60,
+        5,
+        1,
+        0,
+        205,
+        94,
+        4,
+        0,
+        0,
+        72,
+        18,
+        2,
+        0,
+        0
+      ],
+      "spatialChangePer25": 0.5767144097222222,
+      "newlySeen": [],
+      "familyAttack": [
+        1.1600361663652803,
+        0.5884711779448621,
+        0.721642310368824,
+        0.40825688073394495,
+        1.9943630214205186
+      ],
+      "familyDefense": [
+        1.3282097649186257,
+        1.6215538847117794,
+        1.0125260960334028,
+        1.7304163726182076,
+        0.9661781285231116
+      ]
+    },
+    "windows": {
+      "0-3000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 796,
+            "maximum": 2827,
+            "mean": 1306.3548387096773,
+            "cv": 0.35041188949878427,
+            "attackStart": 2.0,
+            "attackEnd": 1.3505154639175259,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.1257731958762887
+          },
+          {
+            "name": "Amber",
+            "minimum": 1324,
+            "maximum": 2583,
+            "mean": 1789.516129032258,
+            "cv": 0.13162905603241107,
+            "attackStart": 2.0,
+            "attackEnd": 1.1387900355871887,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.4062023385866802
+          },
+          {
+            "name": "Violet",
+            "minimum": 1611,
+            "maximum": 2461,
+            "mean": 1915.4193548387098,
+            "cv": 0.1142012572042494,
+            "attackStart": 2.0,
+            "attackEnd": 0.6570754716981132,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.075943396226415
+          },
+          {
+            "name": "Protected",
+            "minimum": 0,
+            "maximum": 3351,
+            "mean": 2184.1290322580644,
+            "cv": 0.37513625785063637,
+            "attackStart": null,
+            "attackEnd": 0.4472210254200776,
+            "defenseStart": null,
+            "defenseEnd": 1.8022404136148211
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 951,
+            "mean": 536.9677419354839,
+            "cv": 0.49852122435259005,
+            "attackStart": null,
+            "attackEnd": 2.5358539765319428,
+            "defenseStart": null,
+            "defenseEnd": 0.9830508474576272
+          }
+        ],
+        "births": 974452,
+        "deaths": 971428,
+        "mutations": 38878,
+        "spatialChangePer25": 0.6505551938657408,
+        "newObservedTraits": 104,
+        "classesMin": 3,
+        "classesMax": 80
+      },
+      "3000-10000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 521,
+            "maximum": 1974,
+            "mean": 1260.338028169014,
+            "cv": 0.24394171484345556,
+            "attackStart": 1.3505154639175259,
+            "attackEnd": 0.4699386503067485,
+            "defenseStart": 1.1257731958762887,
+            "defenseEnd": 1.4220858895705522
+          },
+          {
+            "name": "Amber",
+            "minimum": 1233,
+            "maximum": 2786,
+            "mean": 1873.8450704225352,
+            "cv": 0.12348764632171436,
+            "attackStart": 1.1387900355871887,
+            "attackEnd": 0.7740011926058438,
+            "defenseStart": 1.4062023385866802,
+            "defenseEnd": 1.4669051878354205
+          },
+          {
+            "name": "Violet",
+            "minimum": 1397,
+            "maximum": 2612,
+            "mean": 1948.0704225352113,
+            "cv": 0.12480371595043238,
+            "attackStart": 0.6570754716981132,
+            "attackEnd": 0.5782805429864254,
+            "defenseStart": 1.075943396226415,
+            "defenseEnd": 1.218099547511312
+          },
+          {
+            "name": "Protected",
+            "minimum": 1858,
+            "maximum": 3493,
+            "mean": 2558.1971830985917,
+            "cv": 0.15641255369114326,
+            "attackStart": 0.4472210254200776,
+            "attackEnd": 0.36899747262005056,
+            "defenseStart": 1.8022404136148211,
+            "defenseEnd": 1.9435551811288965
+          },
+          {
+            "name": "Hunter",
+            "minimum": 174,
+            "maximum": 917,
+            "mean": 567.4084507042254,
+            "cv": 0.2772492896243973,
+            "attackStart": 2.5358539765319428,
+            "attackEnd": 2.1149425287356323,
+            "defenseStart": 0.9830508474576272,
+            "defenseEnd": 1.3620689655172413
+          }
+        ],
+        "births": 1794317,
+        "deaths": 1794049,
+        "mutations": 71866,
+        "spatialChangePer25": 0.5598733568948413,
+        "newObservedTraits": 8,
+        "classesMin": 60,
+        "classesMax": 79
+      },
+      "10000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 652,
+            "maximum": 1901,
+            "mean": 1181.0891089108911,
+            "cv": 0.2121107002313859,
+            "attackStart": 0.4699386503067485,
+            "attackEnd": 1.1600361663652803,
+            "defenseStart": 1.4220858895705522,
+            "defenseEnd": 1.3282097649186257
+          },
+          {
+            "name": "Amber",
+            "minimum": 1298,
+            "maximum": 2538,
+            "mean": 1848.4752475247524,
+            "cv": 0.1293576184365322,
+            "attackStart": 0.7740011926058438,
+            "attackEnd": 0.5884711779448621,
+            "defenseStart": 1.4669051878354205,
+            "defenseEnd": 1.6215538847117794
+          },
+          {
+            "name": "Violet",
+            "minimum": 1312,
+            "maximum": 2680,
+            "mean": 1932.029702970297,
+            "cv": 0.12418650810308912,
+            "attackStart": 0.5782805429864254,
+            "attackEnd": 0.721642310368824,
+            "defenseStart": 1.218099547511312,
+            "defenseEnd": 1.0125260960334028
+          },
+          {
+            "name": "Protected",
+            "minimum": 1791,
+            "maximum": 3599,
+            "mean": 2653.6435643564355,
+            "cv": 0.14170951477425353,
+            "attackStart": 0.36899747262005056,
+            "attackEnd": 0.40825688073394495,
+            "defenseStart": 1.9435551811288965,
+            "defenseEnd": 1.7304163726182076
+          },
+          {
+            "name": "Hunter",
+            "minimum": 254,
+            "maximum": 1065,
+            "mean": 617.980198019802,
+            "cv": 0.27692784456139735,
+            "attackStart": 2.1149425287356323,
+            "attackEnd": 1.9943630214205186,
+            "defenseStart": 1.3620689655172413,
+            "defenseEnd": 0.9661781285231116
+          }
+        ],
+        "births": 2455143,
+        "deaths": 2455297,
+        "mutations": 98393,
+        "spatialChangePer25": 0.5433786349826389,
+        "newObservedTraits": 4,
+        "classesMin": 64,
+        "classesMax": 82
+      },
+      "15000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 652,
+            "maximum": 1901,
+            "mean": 1149.5294117647059,
+            "cv": 0.23972989805571607,
+            "attackStart": 0.7639168343393695,
+            "attackEnd": 1.1600361663652803,
+            "defenseStart": 1.2930918846411805,
+            "defenseEnd": 1.3282097649186257
+          },
+          {
+            "name": "Amber",
+            "minimum": 1298,
+            "maximum": 2217,
+            "mean": 1789.921568627451,
+            "cv": 0.12169682091382518,
+            "attackStart": 0.7531359759157049,
+            "attackEnd": 0.5884711779448621,
+            "defenseStart": 1.8003010536879076,
+            "defenseEnd": 1.6215538847117794
+          },
+          {
+            "name": "Violet",
+            "minimum": 1312,
+            "maximum": 2680,
+            "mean": 1940.9803921568628,
+            "cv": 0.13050743345908727,
+            "attackStart": 0.43767441860465117,
+            "attackEnd": 0.721642310368824,
+            "defenseStart": 1.0869767441860465,
+            "defenseEnd": 1.0125260960334028
+          },
+          {
+            "name": "Protected",
+            "minimum": 1791,
+            "maximum": 3599,
+            "mean": 2708.098039215686,
+            "cv": 0.1599425381752342,
+            "attackStart": 0.41248665955176095,
+            "attackEnd": 0.40825688073394495,
+            "defenseStart": 1.9423692636072571,
+            "defenseEnd": 1.7304163726182076
+          },
+          {
+            "name": "Hunter",
+            "minimum": 254,
+            "maximum": 1065,
+            "mean": 674.9803921568628,
+            "cv": 0.26990683206101357,
+            "attackStart": 1.5199449793672628,
+            "attackEnd": 1.9943630214205186,
+            "defenseStart": 1.5378266850068776,
+            "defenseEnd": 0.9661781285231116
+          }
+        ],
+        "births": 1177308,
+        "deaths": 1177284,
+        "mutations": 46674,
+        "spatialChangePer25": 0.5280126953125,
+        "newObservedTraits": 1,
+        "classesMin": 64,
+        "classesMax": 79
+      }
+    },
+    "notices": [
+      {
+        "tick": 0,
+        "text": "World planted: three cyclic families. Food regrows from an external supply."
+      },
+      {
+        "tick": 100,
+        "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 300,
+        "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 2000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 2500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6130,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 6500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7410,
+        "text": "Hunter recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 7500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 9000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 9500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 14000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 14500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17200,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 17500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 19000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19050,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 19120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 19500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 20000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      }
+    ]
+  },
+  {
+    "seed": 1102,
+    "sourceHash": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0",
+    "final": {
+      "tick": 20000,
+      "counts": [
+        1377,
+        1954,
+        2096,
+        2223,
+        614
+      ],
+      "population": 8264,
+      "attack": 0.8180058083252663,
+      "defense": 1.3897628267182962,
+      "classes": 78,
+      "diversity": 3.616519083821893,
+      "births": 5271505,
+      "deaths": 5268340,
+      "mutations": 211303,
+      "bins": [
+        107,
+        113,
+        188,
+        10,
+        0,
+        150,
+        139,
+        131,
+        28,
+        0,
+        95,
+        222,
+        52,
+        0,
+        0,
+        9,
+        68,
+        12,
+        0,
+        0,
+        2,
+        51,
+        0,
+        0,
+        0,
+        67,
+        282,
+        401,
+        37,
+        55,
+        118,
+        197,
+        329,
+        33,
+        0,
+        48,
+        109,
+        186,
+        13,
+        0,
+        8,
+        47,
+        11,
+        0,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0,
+        156,
+        672,
+        274,
+        31,
+        0,
+        215,
+        278,
+        229,
+        70,
+        0,
+        4,
+        90,
+        57,
+        0,
+        0,
+        5,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        50,
+        263,
+        1154,
+        27,
+        0,
+        51,
+        98,
+        378,
+        66,
+        0,
+        0,
+        14,
+        26,
+        2,
+        0,
+        13,
+        64,
+        16,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        2,
+        6,
+        0,
+        0,
+        0,
+        27,
+        30,
+        149,
+        2,
+        0,
+        47,
+        90,
+        25,
+        2,
+        0,
+        1,
+        92,
+        36,
+        1,
+        0,
+        74,
+        23,
+        7,
+        0,
+        0
+      ],
+      "spatialChangePer25": 0.6163736979166666,
+      "newlySeen": [],
+      "familyAttack": [
+        1.2091503267973855,
+        0.838792221084954,
+        0.5505725190839694,
+        0.4318488529014845,
+        2.185667752442997
+      ],
+      "familyDefense": [
+        1.0697167755991286,
+        1.5204708290685773,
+        1.1822519083969465,
+        1.7422402159244263,
+        1.1237785016286646
+      ]
+    },
+    "windows": {
+      "0-3000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 804,
+            "maximum": 2694,
+            "mean": 1398.225806451613,
+            "cv": 0.28537037641751434,
+            "attackStart": 2.0,
+            "attackEnd": 1.5450733752620545,
+            "defenseStart": 1.0,
+            "defenseEnd": 0.9559748427672956
+          },
+          {
+            "name": "Amber",
+            "minimum": 1203,
+            "maximum": 2385,
+            "mean": 1808.6129032258063,
+            "cv": 0.14555522516291938,
+            "attackStart": 2.0,
+            "attackEnd": 0.7422907488986784,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.4052863436123348
+          },
+          {
+            "name": "Violet",
+            "minimum": 1379,
+            "maximum": 2621,
+            "mean": 1972.967741935484,
+            "cv": 0.14577003369174052,
+            "attackStart": 2.0,
+            "attackEnd": 0.5190294957183634,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.191722169362512
+          },
+          {
+            "name": "Protected",
+            "minimum": 0,
+            "maximum": 3358,
+            "mean": 2105.064516129032,
+            "cv": 0.3937342073684549,
+            "attackStart": null,
+            "attackEnd": 0.28939617083946984,
+            "defenseStart": null,
+            "defenseEnd": 1.9031664212076582
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 837,
+            "mean": 462.19354838709677,
+            "cv": 0.5422001154027274,
+            "attackStart": null,
+            "attackEnd": 3.239644970414201,
+            "defenseStart": null,
+            "defenseEnd": 0.3994082840236686
+          }
+        ],
+        "births": 940762,
+        "deaths": 937458,
+        "mutations": 37717,
+        "spatialChangePer25": 0.6322500723379629,
+        "newObservedTraits": 106,
+        "classesMin": 3,
+        "classesMax": 77
+      },
+      "3000-10000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 591,
+            "maximum": 1837,
+            "mean": 1172.5211267605634,
+            "cv": 0.23531886489537146,
+            "attackStart": 1.5450733752620545,
+            "attackEnd": 1.0510534846029174,
+            "defenseStart": 0.9559748427672956,
+            "defenseEnd": 1.173419773095624
+          },
+          {
+            "name": "Amber",
+            "minimum": 1158,
+            "maximum": 2426,
+            "mean": 1823.6338028169014,
+            "cv": 0.14378965869290355,
+            "attackStart": 0.7422907488986784,
+            "attackEnd": 0.8108108108108109,
+            "defenseStart": 1.4052863436123348,
+            "defenseEnd": 1.4980062029242358
+          },
+          {
+            "name": "Violet",
+            "minimum": 1444,
+            "maximum": 2512,
+            "mean": 1934.1267605633802,
+            "cv": 0.1515156833698559,
+            "attackStart": 0.5190294957183634,
+            "attackEnd": 0.5645885286783042,
+            "defenseStart": 1.191722169362512,
+            "defenseEnd": 1.2972568578553616
+          },
+          {
+            "name": "Protected",
+            "minimum": 1811,
+            "maximum": 3895,
+            "mean": 2693.7042253521126,
+            "cv": 0.15877587476700628,
+            "attackStart": 0.28939617083946984,
+            "attackEnd": 0.36178343949044584,
+            "defenseStart": 1.9031664212076582,
+            "defenseEnd": 1.8658174097664544
+          },
+          {
+            "name": "Hunter",
+            "minimum": 270,
+            "maximum": 1136,
+            "mean": 558.4929577464789,
+            "cv": 0.33898816691497113,
+            "attackStart": 3.239644970414201,
+            "attackEnd": 2.423076923076923,
+            "defenseStart": 0.3994082840236686,
+            "defenseEnd": 0.6474358974358975
+          }
+        ],
+        "births": 1829886,
+        "deaths": 1829970,
+        "mutations": 73871,
+        "spatialChangePer25": 0.5620260571676587,
+        "newObservedTraits": 9,
+        "classesMin": 64,
+        "classesMax": 82
+      },
+      "10000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 351,
+            "maximum": 1961,
+            "mean": 1149.09900990099,
+            "cv": 0.27237831852867017,
+            "attackStart": 1.0510534846029174,
+            "attackEnd": 1.2091503267973855,
+            "defenseStart": 1.173419773095624,
+            "defenseEnd": 1.0697167755991286
+          },
+          {
+            "name": "Amber",
+            "minimum": 1222,
+            "maximum": 2756,
+            "mean": 1952.069306930693,
+            "cv": 0.15961618488966686,
+            "attackStart": 0.8108108108108109,
+            "attackEnd": 0.838792221084954,
+            "defenseStart": 1.4980062029242358,
+            "defenseEnd": 1.5204708290685773
+          },
+          {
+            "name": "Violet",
+            "minimum": 1229,
+            "maximum": 2428,
+            "mean": 1930.1881188118812,
+            "cv": 0.12960282852940191,
+            "attackStart": 0.5645885286783042,
+            "attackEnd": 0.5505725190839694,
+            "defenseStart": 1.2972568578553616,
+            "defenseEnd": 1.1822519083969465
+          },
+          {
+            "name": "Protected",
+            "minimum": 1770,
+            "maximum": 4053,
+            "mean": 2594.1188118811883,
+            "cv": 0.17397467145327697,
+            "attackStart": 0.36178343949044584,
+            "attackEnd": 0.4318488529014845,
+            "defenseStart": 1.8658174097664544,
+            "defenseEnd": 1.7422402159244263
+          },
+          {
+            "name": "Hunter",
+            "minimum": 298,
+            "maximum": 1272,
+            "mean": 602.6435643564356,
+            "cv": 0.32257805304483866,
+            "attackStart": 2.423076923076923,
+            "attackEnd": 2.185667752442997,
+            "defenseStart": 0.6474358974358975,
+            "defenseEnd": 1.1237785016286646
+          }
+        ],
+        "births": 2500857,
+        "deaths": 2500912,
+        "mutations": 99715,
+        "spatialChangePer25": 0.5483051215277778,
+        "newObservedTraits": 1,
+        "classesMin": 60,
+        "classesMax": 81
+      },
+      "15000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 351,
+            "maximum": 1621,
+            "mean": 1006.156862745098,
+            "cv": 0.2623306695237592,
+            "attackStart": 0.768791627021884,
+            "attackEnd": 1.2091503267973855,
+            "defenseStart": 1.4319695528068506,
+            "defenseEnd": 1.0697167755991286
+          },
+          {
+            "name": "Amber",
+            "minimum": 1222,
+            "maximum": 2574,
+            "mean": 1931.4313725490197,
+            "cv": 0.15698446959196705,
+            "attackStart": 1.107936507936508,
+            "attackEnd": 0.838792221084954,
+            "defenseStart": 1.4947845804988662,
+            "defenseEnd": 1.5204708290685773
+          },
+          {
+            "name": "Violet",
+            "minimum": 1229,
+            "maximum": 2428,
+            "mean": 1922,
+            "cv": 0.1367463536089329,
+            "attackStart": 0.5048268029528676,
+            "attackEnd": 0.5505725190839694,
+            "defenseStart": 1.1118682566723452,
+            "defenseEnd": 1.1822519083969465
+          },
+          {
+            "name": "Protected",
+            "minimum": 1938,
+            "maximum": 4053,
+            "mean": 2699.529411764706,
+            "cv": 0.17990835614462847,
+            "attackStart": 0.3285528031290743,
+            "attackEnd": 0.4318488529014845,
+            "defenseStart": 1.9356801390699696,
+            "defenseEnd": 1.7422402159244263
+          },
+          {
+            "name": "Hunter",
+            "minimum": 298,
+            "maximum": 1272,
+            "mean": 661.2352941176471,
+            "cv": 0.3184821806952728,
+            "attackStart": 1.9548156956004756,
+            "attackEnd": 2.185667752442997,
+            "defenseStart": 1.2984542211652794,
+            "defenseEnd": 1.1237785016286646
+          }
+        ],
+        "births": 1296701,
+        "deaths": 1296596,
+        "mutations": 51604,
+        "spatialChangePer25": 0.5596348741319445,
+        "newObservedTraits": 1,
+        "classesMin": 61,
+        "classesMax": 81
+      }
+    },
+    "notices": [
+      {
+        "tick": 0,
+        "text": "World planted: three cyclic families. Food regrows from an external supply."
+      },
+      {
+        "tick": 100,
+        "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 300,
+        "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 2000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 2500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3240,
+        "text": "Hunter recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 3500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 9000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 9500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9520,
+        "text": "Hunter recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 9620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10230,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 10500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13890,
+        "text": "Hunter recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 14000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 14500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15360,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 15500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18460,
+        "text": "Hunter recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 18500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18840,
+        "text": "Jade recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 19000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 19500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 20000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      }
+    ]
+  },
+  {
+    "seed": 1103,
+    "sourceHash": "71b8cc9cd77651026430eac3913f9b0ad8ceafa4532c4bfa8703214ebccffed0",
+    "final": {
+      "tick": 20000,
+      "counts": [
+        0,
+        672,
+        2116,
+        5851,
+        0
+      ],
+      "population": 8639,
+      "attack": 0.18844773700659798,
+      "defense": 1.5711309179303161,
+      "classes": 30,
+      "diversity": 1.8479012549981146,
+      "births": 2797223,
+      "deaths": 2793700,
+      "mutations": 111715,
+      "bins": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        46,
+        369,
+        98,
+        0,
+        0,
+        29,
+        76,
+        28,
+        0,
+        0,
+        18,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        195,
+        1135,
+        112,
+        5,
+        0,
+        191,
+        313,
+        49,
+        1,
+        0,
+        93,
+        11,
+        0,
+        0,
+        0,
+        10,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        46,
+        549,
+        4541,
+        86,
+        0,
+        32,
+        26,
+        539,
+        13,
+        0,
+        1,
+        0,
+        18,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "spatialChangePer25": 0.3036566840277778,
+      "newlySeen": [],
+      "familyAttack": [
+        null,
+        0.27529761904761907,
+        0.3757088846880907,
+        0.11075029909417193,
+        null
+      ],
+      "familyDefense": [
+        null,
+        1.0491071428571428,
+        0.8506616257088847,
+        1.8916424542813195,
+        null
+      ]
+    },
+    "windows": {
+      "0-3000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 0,
+            "maximum": 2553,
+            "mean": 469.03225806451616,
+            "cv": 1.578862040443429,
+            "attackStart": 2.0,
+            "attackEnd": null,
+            "defenseStart": 1.0,
+            "defenseEnd": null
+          },
+          {
+            "name": "Amber",
+            "minimum": 575,
+            "maximum": 2193,
+            "mean": 1060.6451612903227,
+            "cv": 0.45322079107215185,
+            "attackStart": 2.0,
+            "attackEnd": 0.37305699481865284,
+            "defenseStart": 1.0,
+            "defenseEnd": 1.0466321243523315
+          },
+          {
+            "name": "Violet",
+            "minimum": 1370,
+            "maximum": 2592,
+            "mean": 1974.8709677419354,
+            "cv": 0.12750586207649767,
+            "attackStart": 2.0,
+            "attackEnd": 0.5429079590929302,
+            "defenseStart": 1.0,
+            "defenseEnd": 0.7029791018230325
+          },
+          {
+            "name": "Protected",
+            "minimum": 0,
+            "maximum": 5977,
+            "mean": 4594.741935483871,
+            "cv": 0.42033358110394486,
+            "attackStart": null,
+            "attackEnd": 0.13041219258746103,
+            "defenseStart": null,
+            "defenseEnd": 1.895566331832352
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 112,
+            "mean": 7.161290322580645,
+            "cv": 3.2727449500620738,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          }
+        ],
+        "births": 513072,
+        "deaths": 509586,
+        "mutations": 20594,
+        "spatialChangePer25": 0.37664478443287036,
+        "newObservedTraits": 77,
+        "classesMin": 3,
+        "classesMax": 68
+      },
+      "3000-10000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          },
+          {
+            "name": "Amber",
+            "minimum": 579,
+            "maximum": 1451,
+            "mean": 854.5352112676056,
+            "cv": 0.2112753269336987,
+            "attackStart": 0.37305699481865284,
+            "attackEnd": 0.1456953642384106,
+            "defenseStart": 1.0466321243523315,
+            "defenseEnd": 1.0529801324503312
+          },
+          {
+            "name": "Violet",
+            "minimum": 1757,
+            "maximum": 2903,
+            "mean": 2279.0704225352115,
+            "cv": 0.10628975518256509,
+            "attackStart": 0.5429079590929302,
+            "attackEnd": 0.28632148377125194,
+            "defenseStart": 0.7029791018230325,
+            "defenseEnd": 0.8643740340030912
+          },
+          {
+            "name": "Protected",
+            "minimum": 4472,
+            "maximum": 6070,
+            "mean": 5421.802816901409,
+            "cv": 0.05662162548884094,
+            "attackStart": 0.13041219258746103,
+            "attackEnd": 0.11976047904191617,
+            "defenseStart": 1.895566331832352,
+            "defenseEnd": 1.919065095615221
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          }
+        ],
+        "births": 939414,
+        "deaths": 939345,
+        "mutations": 37396,
+        "spatialChangePer25": 0.29822707403273807,
+        "newObservedTraits": 0,
+        "classesMin": 24,
+        "classesMax": 35
+      },
+      "10000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          },
+          {
+            "name": "Amber",
+            "minimum": 509,
+            "maximum": 1310,
+            "mean": 841.0990099009902,
+            "cv": 0.17660432587951777,
+            "attackStart": 0.1456953642384106,
+            "attackEnd": 0.27529761904761907,
+            "defenseStart": 1.0529801324503312,
+            "defenseEnd": 1.0491071428571428
+          },
+          {
+            "name": "Violet",
+            "minimum": 1947,
+            "maximum": 3084,
+            "mean": 2422.891089108911,
+            "cv": 0.1061557615714346,
+            "attackStart": 0.28632148377125194,
+            "attackEnd": 0.3757088846880907,
+            "defenseStart": 0.8643740340030912,
+            "defenseEnd": 0.8506616257088847
+          },
+          {
+            "name": "Protected",
+            "minimum": 4488,
+            "maximum": 5887,
+            "mean": 5293.079207920792,
+            "cv": 0.06226506914657044,
+            "attackStart": 0.11976047904191617,
+            "attackEnd": 0.11075029909417193,
+            "defenseStart": 1.919065095615221,
+            "defenseEnd": 1.8916424542813195
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          }
+        ],
+        "births": 1344737,
+        "deaths": 1344769,
+        "mutations": 53725,
+        "spatialChangePer25": 0.29989013671875,
+        "newObservedTraits": 3,
+        "classesMin": 26,
+        "classesMax": 36
+      },
+      "15000-20000": {
+        "families": [
+          {
+            "name": "Jade",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          },
+          {
+            "name": "Amber",
+            "minimum": 509,
+            "maximum": 1310,
+            "mean": 825.9411764705883,
+            "cv": 0.16770086223378822,
+            "attackStart": 0.22441860465116278,
+            "attackEnd": 0.27529761904761907,
+            "defenseStart": 1.1441860465116278,
+            "defenseEnd": 1.0491071428571428
+          },
+          {
+            "name": "Violet",
+            "minimum": 1957,
+            "maximum": 3084,
+            "mean": 2357.294117647059,
+            "cv": 0.10970016354034584,
+            "attackStart": 0.3311036789297659,
+            "attackEnd": 0.3757088846880907,
+            "defenseStart": 0.9055183946488294,
+            "defenseEnd": 0.8506616257088847
+          },
+          {
+            "name": "Protected",
+            "minimum": 4673,
+            "maximum": 5851,
+            "mean": 5375.333333333333,
+            "cv": 0.06016544649549909,
+            "attackStart": 0.1523720930232558,
+            "attackEnd": 0.11075029909417193,
+            "defenseStart": 1.9067906976744187,
+            "defenseEnd": 1.8916424542813195
+          },
+          {
+            "name": "Hunter",
+            "minimum": 0,
+            "maximum": 0,
+            "mean": 0,
+            "cv": 0,
+            "attackStart": null,
+            "attackEnd": null,
+            "defenseStart": null,
+            "defenseEnd": null
+          }
+        ],
+        "births": 669006,
+        "deaths": 668994,
+        "mutations": 26978,
+        "spatialChangePer25": 0.29754177517361113,
+        "newObservedTraits": 2,
+        "classesMin": 26,
+        "classesMax": 36
+      }
+    },
+    "notices": [
+      {
+        "tick": 0,
+        "text": "World planted: three cyclic families. Food regrows from an external supply."
+      },
+      {
+        "tick": 100,
+        "text": "Staged introduction: 24 Protected cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 300,
+        "text": "Staged introduction: 24 Hunter cells planted; occupants replaced, energy supplied."
+      },
+      {
+        "tick": 500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 640,
+        "text": "Hunter disappeared (census). No automatic rescue."
+      },
+      {
+        "tick": 1000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 1620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 1740,
+        "text": "Jade disappeared (census). No automatic rescue."
+      },
+      {
+        "tick": 2000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 2200,
+        "text": "Amber recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 2500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 2620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 3500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 3620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 4500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 4620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 5500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 5620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 6500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 6620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 7500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 7620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 8620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 8700,
+        "text": "Amber recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 9000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 9500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 9620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 10500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 10620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 11500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 11620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 12500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 12620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 13500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 13620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 14000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 14500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 14620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 15500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 15620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 16500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 16620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 17500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 17620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 18620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 18660,
+        "text": "Amber recovered from below 20% to above 50% of its earlier peak."
+      },
+      {
+        "tick": 19000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19120,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 19500,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      },
+      {
+        "tick": 19620,
+        "text": "Rain returns: drought patch begins refilling."
+      },
+      {
+        "tick": 20000,
+        "text": "Seasonal drought: one patch, 120 ticks. Food renewal slows; no cells are directly killed."
+      }
+    ]
+  }
+]

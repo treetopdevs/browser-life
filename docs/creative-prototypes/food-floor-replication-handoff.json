@@ -1,0 +1,22 @@
+{
+  "branch": "codex/food-floor-replication",
+  "base": "6ad255e1c43c710a30e9d9c25734d9d94e60700f",
+  "planCommit": "ab3c601c",
+  "status": "completed Promising replication; PR114 open dependent on PR113",
+  "attemptCount": 1,
+  "outcomeCount": 1,
+  "sourceHashes": {
+    "docs/creative-prototypes/food-floor-replication-plan.md": "0786ea89b9cfa99470d64de2856a7372b821ae5ce2572cb80bb8c222ce03e1fd",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "tools/food-floor-replication/explore.ts": "17ffccbdc1be97b4859f9bbbc082f6449497f86f00eb1db01987439c16d3b09b",
+    "tools/food-floor-replication/launch.sh": "dae498fee6887d45f3926b09b681f09b7497c97f6661f966a819058659f7c97e",
+    "docs/creative-prototypes/food-floor-replication.js": "38fcaaf61071aebcc1bee3fe7efe24d50a8917a25872d9c3a069c7ab3f48b643"
+  },
+  "updatedAtUTC": "2026-10-27T17:03:43.348997+00:00",
+  "sourceCommit": "1b49cc62",
+  "runId": "20261027T165600Z-38935",
+  "next": "Slice complete. Preserve frozen source/evidence/media. Any further experiment needs a separate reviewed plan; no automatic run, merge or deployment.",
+  "evidenceCommit": "72af793c",
+  "head": "e984f998",
+  "pullRequest": "https://github.com/treetopdevs/browser-life/pull/114"
+}

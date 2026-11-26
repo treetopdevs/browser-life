@@ -1,0 +1,52 @@
+{
+  "seed": 1202,
+  "planSha256": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27",
+  "baselineArtifactSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+  "alternatingArtifactSha256": "eb8da3c6df9e52d5a4d35a34837c611f737f9fa696fdc1fdbe982fd157803bad",
+  "alternatingChange": {
+    "from": 2500,
+    "to": 3000,
+    "pass": true,
+    "observation": "Not blind: the historical reference and numerical outcome are known. The dense upper-left cluster at 2500 breaks into separated small fragments by 3000, while band1 gains a tall upper-middle branching arrangement and more lower-edge occupied structure. The intervening gaps and occupied tiles visibly change, not just colors or food shading."
+  },
+  "seasonalChanges": [
+    {
+      "from": 1500,
+      "to": 2000,
+      "pass": true,
+      "observation": "Not blind: the historical reference and numerical outcome are known. In majority-fed band1, small lower clusters expand into a broad dense middle-lower branching mass, and an upper ladder-like cluster grows. In minority-fed band0, the large lower-left lattice and much of the upper-left branching mass clear into widely separated fragments. This matches the qualifying band1 growth and band0 retreat."
+    },
+    {
+      "from": 2000,
+      "to": 2500,
+      "pass": true,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Majority-fed band0 grows a dense upper-left branching cluster from a small upper fragment. Minority-fed band1 loses most of its central-lower dense mass, leaving large clear gaps and smaller upper and bottom clusters. This matches the qualifying band0 growth and band1 retreat."
+    },
+    {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "Not blind: the historical reference and numerical outcome are known. Majority-fed band1 develops a taller upper-middle branching arrangement and expanded lower-edge structure. Minority-fed band0 loses most of its dense upper-left cluster, leaving sparse disconnected groups of separate organisms. This matches qualifying band1 growth and band0 retreat."
+    }
+  ],
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "Not blind: the historical reference and numerical outcome are known. The historical world has a dense vertical belt near the left edge and no band1 bodies. The foothold world has distinct upper and lower groups in both bands, including a lower-left lattice and lower band1 branching cluster."
+    },
+    {
+      "tick": 2000,
+      "observation": "Not blind: the historical reference and numerical outcome are known. The historical world has only small upper-left and lower-left fragments and no band1 bodies. The foothold world retains left-side fragments and has substantial upper and middle-lower clusters in band1."
+    },
+    {
+      "tick": 2500,
+      "observation": "Not blind: the historical reference and numerical outcome are known. The historical world regrows upper-left branching bodies and a lower-left lattice but still has no band1 bodies. The foothold world has a dense upper-left cluster plus smaller upper and bottom groups in band1."
+    },
+    {
+      "tick": 3000,
+      "observation": "Not blind: the historical reference and numerical outcome are known. The historical world is sparse and band1 remains empty. The foothold world has sparse band0 groups and broad upper-middle and lower branching structures in band1. This is a one-seed descriptive difference, not general superiority."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T14:55:40.324107+00:00"
+}

@@ -1,0 +1,36 @@
+{
+  "seed": 1201,
+  "planSha256": "74dc68201c7fb51ed9a87ba75d13e0ad79b171ff0d73d7929af4ba4f03fa114a",
+  "movingBandArtifactSha256": "570aba2c02c52b7f949c60990b8bf33aa929a5352728c75d01d547666299c294",
+  "stationaryBandArtifactSha256": "65e160a97cd829b6e740db757eaee7364228c4890116a8cb2422f56795675d2b",
+  "withinArmChanges": {
+    "movingBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "Not blind: historical moving media already exist. From2500 to3000, the middle-right branching group spreads into a broader lower-right cluster; the large upper-right group loses its lower-left branches and leaves a wider gap below it. These are changes in occupied shapes, not just colors or the food outline."
+    },
+    "stationaryBand": {
+      "from": 2500,
+      "to": 3000,
+      "pass": true,
+      "observation": "From2500 to3000, the tall upper-middle chain breaks up and a broad cluster appears along the upper-left edge. The dense middle-left/lower-middle group clears into separated small groups, while a new branching cluster occupies the lower-middle-right."
+    }
+  },
+  "sameAgeComparisons": [
+    {
+      "tick": 1500,
+      "observation": "At1500 moving has a central vertical chain and broad middle branches; stationary groups sit mainly along the left side with a large empty right half."
+    },
+    {
+      "tick": 2500,
+      "observation": "At2500 moving clusters occupy the right half; stationary has a tall upper-middle chain and a dense lower-middle-left group."
+    },
+    {
+      "tick": 3000,
+      "observation": "At3000 moving has broad lower-right branching clusters; stationary has fragmented left-side groups and one lower-middle-right branching group. These differences are descriptive, not an advantage test."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "reviewedAtUTC": "2026-10-27T00:54:38.243749+00:00"
+}

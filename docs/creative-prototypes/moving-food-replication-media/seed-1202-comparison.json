@@ -1,0 +1,22 @@
+{
+  "seed": 1202,
+  "kind": "saved-frame-comparison",
+  "ticks": [
+    1500,
+    2500,
+    3000
+  ],
+  "description": "Occupied cells only; no new simulations or food-mask/band motion.",
+  "sources": [
+    {
+      "mode": "uniform",
+      "rawSha256": "008c047b984c55236dc8fcec27f39083cd028e7790f8eaa1b963ca88bc5cce9f"
+    },
+    {
+      "mode": "moving-band",
+      "rawSha256": "183d90f551dcaf6c29ab4f397bba52d93365c22ad3315787423a49926a792a83"
+    }
+  ],
+  "imageSha256": "a62402d1acd3f607b58f4cf1ebf10fe49ffd6bde2016e0b7ee73f328bdd844ee",
+  "renderer": "Occupied tile at x=tile%96,y=floor(tile/96); family color from frame.organisms by organism ID; no food or outline overlay."
+}

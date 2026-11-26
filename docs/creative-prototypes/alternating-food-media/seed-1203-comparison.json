@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-alternating-food-body-comparison",
+  "seed": 1203,
+  "ticks": [
+    1500,
+    2000,
+    2500,
+    3000
+  ],
+  "imageSha256": "4b70952c40a3aac2e595523e8b31e2ccf7432b86d8f33139ddf99e07ca10d7c0",
+  "plan": {
+    "path": "docs/creative-prototypes/alternating-food-plan.md",
+    "sha256": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8"
+  },
+  "sources": {
+    "baseline": {
+      "path": "docs/creative-prototypes/split-food-replication-seed-1203.json",
+      "rawSha256": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+      "dataSha256": "d9e546968191c29d35d4e096cc891d0576d68531870643d6f44e144ced35e343"
+    },
+    "outcome": {
+      "path": "docs/creative-prototypes/alternating-food-seed-1203.json",
+      "rawSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/split-food-replication-index-1203.json",
+      "rawSha256": "591ebadc051f55f7d8eeb774b9fab4694b820f814f719696029ad900fcde01f3"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/split-food-replication-validation.md",
+      "sha256": "22800cadbd42548600909444065853854fd68062a8a636201f2bc415a43a9461"
+    },
+    "model": {
+      "path": "apps/lab/src/alternating-food/model.ts",
+      "sha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31"
+    },
+    "runner": {
+      "path": "tools/alternating-food/explore.ts",
+      "sha256": "6a172232d875eaff523bc729c24026a3166818dab58f4d494d25ea3d343a769a"
+    },
+    "baselineRunner": {
+      "path": "tools/split-food-replication/explore.ts",
+      "sha256": "5f60e71043ee4335ff178ed5521897723adf782bc2e3fb17e15a2bb0884c5baf"
+    }
+  },
+  "pinnedSources": {
+    "docs/creative-prototypes/alternating-food-plan.md": "0233fb33daab0c1fa6198e3f1840f3fb0056add96bc4a1a7a82a2e110ce5c7c8",
+    "apps/lab/src/split-food/model.ts": "c6b5c37f20f8daa73858fd9e437d0b25d029c712c065ab11ef495c281b58b506",
+    "tools/split-food-replication/explore.ts": "5f60e71043ee4335ff178ed5521897723adf782bc2e3fb17e15a2bb0884c5baf",
+    "docs/creative-prototypes/split-food-replication-seed-1203.json": "edc38df48f5d08d198fe59d18a5eb9af0dbd068e37a30a49de82ab91797b5f14",
+    "docs/creative-prototypes/split-food-replication-index-1203.json": "591ebadc051f55f7d8eeb774b9fab4694b820f814f719696029ad900fcde01f3",
+    "docs/creative-prototypes/split-food-replication-validation.md": "22800cadbd42548600909444065853854fd68062a8a636201f2bc415a43a9461",
+    "tools/alternating-food/launch.sh": "1b113a8a03d02490b0d44179aa71888fda9f8bcfbd4b919961fa30aa0da958e8",
+    "apps/lab/src/alternating-food/model.ts": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31",
+    "tools/alternating-food/explore.ts": "6a172232d875eaff523bc729c24026a3166818dab58f4d494d25ea3d343a769a"
+  },
+  "frameLabels": [
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2000,
+        "actualTick": 2000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ],
+    [
+      {
+        "requestedTick": 1500,
+        "actualTick": 1500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2000,
+        "actualTick": 2000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 2500,
+        "actualTick": 2500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      }
+    ]
+  ],
+  "description": "Exact saved occupied body tiles for parent visual review before the SHA-bound receipt; no food, outlines, interpolation, or simulation. The static split arm is accepted historical evidence."
+}

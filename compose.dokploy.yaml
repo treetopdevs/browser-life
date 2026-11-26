@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: Dockerfile.site
     restart: unless-stopped
+    environment:
+      # Space-separated CIDRs of the proxies Caddy believes about X-Forwarded-For
+      # (deploy/README.md). Empty trusts none: every visitor is then one address.
+      BL_TRUSTED_PROXY_CIDRS: ${BL_TRUSTED_PROXY_CIDRS:-}
     expose:
       - "80"
     depends_on:
@@ -33,6 +37,13 @@ services:
       # Discovery workers join with this token. Without it the plane admits
       # loopback clients only, and behind Caddy no request is loopback.
       BL_DISCOVERY_JOIN_TOKEN: ${BL_DISCOVERY_JOIN_TOKEN:?Set BL_DISCOVERY_JOIN_TOKEN in Dokploy}
+      # Optional; blank keeps the coordinator's own default (deploy/README.md says
+      # what each does and which must be set together).
+      BL_TRUST_FORWARDED_FOR: ${BL_TRUST_FORWARDED_FOR:-}
+      BL_ISLAND_JOINS_PER_ADDRESS: ${BL_ISLAND_JOINS_PER_ADDRESS:-}
+      BL_MAX_ISLANDS: ${BL_MAX_ISLANDS:-}
+      BL_CORS_ORIGINS: ${BL_CORS_ORIGINS:-}
+      BL_LEASE_MS: ${BL_LEASE_MS:-}
     volumes:
       - coordinator_data:/data
       - discovery_data:/data-discovery

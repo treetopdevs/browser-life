@@ -551,3 +551,70 @@ test("limits: a budget limit that is not a number in the status is said, not thr
   await expect(row(page, "limits", "task requests (next) per island").nth(1)).toHaveText("not a number in the status");
   expect(mock.errors).toEqual([]);
 });
+
+const operatorEvents = () => ({
+  since: "2026-10-24T12:34:56.123456Z",
+  rateRefusals: { join: 12, next: 34, segment: 56, requests: 78 },
+  capacityRefusals: 9,
+  prunedIslands: 10,
+});
+const eventCounts = (page: Page) => page.locator("#operator-events tr td:nth-child(2)");
+
+for (const width of [1280, 375]) {
+  test(`operator counters show exact server totals and epoch at ${width} px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    const events = operatorEvents();
+    events.prunedIslands = Number.MAX_SAFE_INTEGER;
+    const mock = await serve(page, { status: () => [200, status((s) => { s.operatorEvents = events; })] });
+    await connect(page);
+    await expect(eventCounts(page)).toHaveText(["12", "34", "56", "78", "9", "9007199254740991"]);
+    await expect(page.locator("#operator-events-since")).toHaveText(`Since counter restart: ${events.since}`);
+    await expect(page.locator("#sec-limits")).toContainText("not rates or permanent history");
+    await expect(page.locator("#sec-limits")).toContainText("not all HTTP 503 responses");
+    await expect(page.locator("#operator-events")).toContainText("Pruned islands (rows removed)");
+    await noOverflow(page);
+    await page.locator("#sec-limits").screenshot({ path: testInfo.outputPath(`operator-counters-${width}.png`) });
+
+    // The next successful status replaces the entire epoch and its totals, including true zeroes.
+    mock.status = () => [200, status((s) => { s.operatorEvents = {
+      since: "2026-10-24T13:00:00Z", rateRefusals: { join: 0, next: 0, segment: 0, requests: 0 }, capacityRefusals: 0, prunedIslands: 0,
+    }; })];
+    await expect(page.locator("#operator-events-since")).toHaveText("Since counter restart: 2026-10-24T13:00:00Z", { timeout: 15_000 });
+    await expect(eventCounts(page)).toHaveText(["0", "0", "0", "0", "0", "0"]);
+    expect(mock.errors).toEqual([]);
+    // No new routes, local counter mutation or persistence are needed.
+    expect(mock.seen.every((request) => request.path === "/api/status" || request.path === "/api/discovery/status" || request.path.startsWith("/api/public/gardens/"))).toBe(true);
+    expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+  });
+}
+
+for (const [label, events] of [
+  ["missing", undefined], ["null", null], ["array", []], ["string", "invalid"],
+  ["missing epoch", { ...operatorEvents(), since: undefined }],
+  ["invalid epoch", { ...operatorEvents(), since: "not a date" }],
+  ["invalid calendar date", { ...operatorEvents(), since: "2026-02-30T12:00:00Z" }],
+  ["hostile epoch", { ...operatorEvents(), since: HOSTILE_A }],
+] as const) {
+  test(`operator counters are unavailable with ${label} data`, async ({ page }) => {
+    const mock = await serve(page, { status: () => [200, status((s) => { s.operatorEvents = events; })] });
+    await connect(page);
+    await expect(eventCounts(page)).toHaveText(Array(6).fill("unavailable"));
+    await expect(page.locator("#operator-events-since")).toContainText("Counter epoch unavailable");
+    await expect(page.locator("img")).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { __pwned?: unknown }).__pwned)).toBeUndefined();
+    expect(mock.errors).toEqual([]);
+  });
+}
+
+test("operator counters reject malformed counts without hiding valid siblings", async ({ page }) => {
+  const mock = await serve(page, { status: () => [200, status((s) => { s.operatorEvents = {
+    ...operatorEvents(), rateRefusals: { join: -1, next: 1.5, segment: "12", requests: HOSTILE_B },
+    capacityRefusals: Number.MAX_SAFE_INTEGER + 1, prunedIslands: 0,
+  }; })] });
+  await connect(page);
+  await expect(eventCounts(page)).toHaveText(["unavailable", "unavailable", "unavailable", "unavailable", "unavailable", "0"]);
+  mock.status = () => [200, status((s) => { s.operatorEvents = { since: operatorEvents().since, rateRefusals: null, capacityRefusals: null }; })];
+  await expect(eventCounts(page)).toHaveText(Array(6).fill("unavailable"), { timeout: 15_000 });
+  await expect(page.locator("script")).toHaveCount(1);
+  expect(mock.errors).toEqual([]);
+});

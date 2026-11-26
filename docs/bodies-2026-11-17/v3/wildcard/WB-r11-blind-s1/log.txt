@@ -1,0 +1,1 @@
+wound-in-crowd seed 1 steps 15000: cells 6806 basins 41 patches(>=10) 49 seam 133 permille distinct marks 18 residual 0 validate [] hash 1272839333 step 39962 ms observe 504 ms -> docs/bodies-2026-11-17/v3/wildcard/WB-r11-blind-s1/readout.json

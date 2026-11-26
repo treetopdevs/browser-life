@@ -1,0 +1,338 @@
+[
+ {
+  "name": "full v2",
+  "dmax": 12,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 105,
+     "2000": 105,
+     "4000": 105
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "full v2",
+  "dmax": 16,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 173,
+     "4000": 172
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 172,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 166,
+     "2000": 169,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "no transport (FLOW 0)",
+  "dmax": 12,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 467,
+     "2000": 690,
+     "4000": 1206
+    },
+    "comps": 1,
+    "roots": 8,
+    "rootsCreated": 51,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 368,
+     "2000": 580,
+     "4000": 1207
+    },
+    "comps": 1,
+    "roots": 8,
+    "rootsCreated": 41,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 181,
+     "2000": 414,
+     "4000": 764
+    },
+    "comps": 1,
+    "roots": 4,
+    "rootsCreated": 27,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "no transport (FLOW 0)",
+  "dmax": 16,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 932,
+     "2000": 1442,
+     "4000": 2819
+    },
+    "comps": 1,
+    "roots": 11,
+    "rootsCreated": 79,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 677,
+     "2000": 1215,
+     "4000": 2191
+    },
+    "comps": 1,
+    "roots": 8,
+    "rootsCreated": 62,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 279,
+     "2000": 670,
+     "4000": 1726
+    },
+    "comps": 1,
+    "roots": 7,
+    "rootsCreated": 31,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "no foraging (FORAGE 0)",
+  "dmax": 12,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 2,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "no foraging (FORAGE 0)",
+  "dmax": 16,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 2,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "neither (retuned constants only)",
+  "dmax": 12,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "neither (retuned constants only)",
+  "dmax": 16,
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 829,
+     "2000": 1373,
+     "4000": 2399
+    },
+    "comps": 5,
+    "roots": 11,
+    "rootsCreated": 71,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 0,
+     "2000": 0,
+     "4000": 0
+    },
+    "comps": 0,
+    "roots": 0,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ }
+]

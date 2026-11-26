@@ -1,0 +1,44 @@
+{
+  "seed": 1202,
+  "planSha256": "72f651acc7f221991b0ce89f7264eed9dd47df54e955d3d164406b4d0a17cc47",
+  "visualReceiptSha256": "21f554e0d21b0dab0a9aa8ce74caedab8d07e3c97a5c0c1b329831578e72f66e",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "comparison": "uniform-vs-moving-band",
+      "tick": 1500,
+      "occupiedA": 785,
+      "occupiedB": 703,
+      "sharedTiles": 27,
+      "unionTiles": 1461,
+      "jaccard": 0.018480492813141684
+    },
+    {
+      "comparison": "uniform-vs-moving-band",
+      "tick": 2500,
+      "occupiedA": 666,
+      "occupiedB": 679,
+      "sharedTiles": 81,
+      "unionTiles": 1264,
+      "jaccard": 0.06408227848101265
+    },
+    {
+      "comparison": "uniform-vs-moving-band",
+      "tick": 3000,
+      "occupiedA": 706,
+      "occupiedB": 635,
+      "sharedTiles": 30,
+      "unionTiles": 1311,
+      "jaccard": 0.02288329519450801
+    },
+    {
+      "comparison": "moving-band-late",
+      "from": 2500,
+      "to": 3000,
+      "occupiedA": 679,
+      "occupiedB": 635,
+      "sharedTiles": 51,
+      "unionTiles": 1263,
+      "jaccard": 0.040380047505938245
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-food-band-foothold-replication-pair",
+  "seed": 1203,
+  "planSha256": "2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99",
+  "arms": {
+    "historical": {
+      "mode": "alternating-band",
+      "url": "alternating-food-seed-1203.json",
+      "rawSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+      "dataSha256": "5f958ff21d67940e8d92c345de4b2fff58c74368ddaea7227cab98e7cbfc63e4"
+    },
+    "foothold": {
+      "mode": "foothold-band",
+      "url": "food-band-foothold-replication-seed-1203.json",
+      "rawSha256": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+      "dataSha256": "575624dbb482812c23350074b9a919d2650ad7bf5d9e4065e655753c4da732e7"
+    }
+  },
+  "receipt": {
+    "url": "food-band-foothold-replication-visual-receipt-1203.json",
+    "sha256": "3e8752bac14497a2a6e52ad9e3e939aadf4bf0c346b16d78a3b80ceb20574d38"
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "One unchanged selected-seed replication passes all four frozen screens:16 final organisms,families0/9/7,both bands retained,two late growth/retreat blocks pass;third fails. Historical alternating also passes this screen. Stop after this seed.",
+    "independentEvidenceReview": {
+      "path": "foothold-replication-review/evidence-clear.md",
+      "sha256": "8da8698a58ef0eafb51460be758fce48307767773c6cb66c8b7cde1b70a6be2f"
+    }
+  }
+}

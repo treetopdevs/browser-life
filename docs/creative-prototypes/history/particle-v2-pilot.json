@@ -1,0 +1,5691 @@
+{
+  "kind": "particle-playground-pilot",
+  "sourceSha256": "b30a8b83a2cf7d26e7d673478c108606abf140f32401f4f646d35c067e9c53fd",
+  "runtime": "v24.2.0",
+  "rules": {
+    "version": 2,
+    "populationMax": 240,
+    "initialPopulation": 120,
+    "speedMax": 0.008,
+    "interactionRadius": 0.12,
+    "repulsionRadius": 0.018,
+    "force": 0.0012,
+    "drag": 0.92,
+    "foodCapacity": 35,
+    "foodRenewal": 0.65,
+    "uptake": 0.11,
+    "upkeep": 0.028,
+    "movementCost": 3,
+    "birthEnergy": 8,
+    "maxEnergy": 10,
+    "mutationChance": 0.18,
+    "mutationSize": 0.15,
+    "foodSeekingForce": 0.000035,
+    "foodPatchRadius": 0.18,
+    "foodPatchInitial": 30,
+    "initialEnergy": 4,
+    "initialVelocityRange": 0.004,
+    "initialAgeRange": 300,
+    "lifespanBase": 900,
+    "lifespanRange": 500,
+    "birthOffset": 0.025,
+    "sampleEvery": 10,
+    "historyMax": 300
+  },
+  "settings": {
+    "seeds": [
+      1201,
+      1202,
+      1203
+    ],
+    "duration": 3000,
+    "mutation": true,
+    "sampleEvery": 100,
+    "binsPerAxis": 10
+  },
+  "definitions": {
+    "meanPerTickSpeed": "Mean of the population mean speed at every completed tick, in world widths per tick. Motion is not evidence of adaptation.",
+    "occupiedBins": "Number of occupied cells in a fixed 10 by 10 grid of the unit torus at census time.",
+    "capTicks": "Number of completed ticks whose ending population equals the configured hard cap.",
+    "maxGeneration": "Maximum generation among particles alive at this census, not the historical maximum.",
+    "traitSpread": "Population-wide standard deviation across attraction coordinates, including differences between founding families.",
+    "blockedBirths": "Repeated eligible birth attempts denied by the population cap, not unique parents.",
+    "maximumEnergyResidual": "Maximum absolute sum(particles + food + metabolic losses + death losses - initial energy - renewed food) over completed ticks."
+  },
+  "results": [
+    {
+      "preset": "flocks",
+      "seed": 1201,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.00037440223001143863,
+      "capTicks": 74,
+      "maximumEnergyResidual": 5.678884917870164e-9,
+      "final": {
+        "tick": 3000,
+        "population": 144,
+        "counts": [
+          49,
+          35,
+          60
+        ],
+        "births": 2625,
+        "deaths": 2601,
+        "mutations": 454,
+        "blockedBirths": 2195,
+        "maxGeneration": 5,
+        "meanSpeed": 0.0003062702813424036,
+        "traitSpread": 0.28634341129108515,
+        "particleEnergy": 441.67334826553457,
+        "foodEnergy": 70,
+        "occupiedBins": 10
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 15792.009999993857,
+        "consumed": 15992.010000032195,
+        "dissipated": 15282.08069897264,
+        "deathLoss": 748.2559527613622
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.001557187485869549,
+          "traitSpread": 0.28284271247462034,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 72
+        },
+        {
+          "tick": 100,
+          "population": 186,
+          "counts": [
+            59,
+            64,
+            63
+          ],
+          "births": 66,
+          "deaths": 0,
+          "mutations": 11,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0007562052111561901,
+          "traitSpread": 0.28258851624035786,
+          "particleEnergy": 879.2087859454596,
+          "foodEnergy": 0,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 200,
+          "population": 240,
+          "counts": [
+            72,
+            78,
+            90
+          ],
+          "births": 165,
+          "deaths": 45,
+          "mutations": 34,
+          "blockedBirths": 1381,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005735035671425513,
+          "traitSpread": 0.2819844576833984,
+          "particleEnergy": 772.1308251089075,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        },
+        {
+          "tick": 300,
+          "population": 223,
+          "counts": [
+            72,
+            61,
+            90
+          ],
+          "births": 272,
+          "deaths": 169,
+          "mutations": 51,
+          "blockedBirths": 1840,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00024284573122853898,
+          "traitSpread": 0.2801831258397071,
+          "particleEnergy": 704.9197197590182,
+          "foodEnergy": 0,
+          "occupiedBins": 17
+        },
+        {
+          "tick": 400,
+          "population": 200,
+          "counts": [
+            62,
+            55,
+            83
+          ],
+          "births": 372,
+          "deaths": 292,
+          "mutations": 68,
+          "blockedBirths": 2195,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00034435908075138396,
+          "traitSpread": 0.2810295802936065,
+          "particleEnergy": 637.8349362750063,
+          "foodEnergy": 0,
+          "occupiedBins": 17
+        },
+        {
+          "tick": 500,
+          "population": 217,
+          "counts": [
+            67,
+            59,
+            91
+          ],
+          "births": 480,
+          "deaths": 383,
+          "mutations": 89,
+          "blockedBirths": 2195,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00026104852125447697,
+          "traitSpread": 0.28000824414556824,
+          "particleEnergy": 634.5480362684397,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 600,
+          "population": 203,
+          "counts": [
+            64,
+            54,
+            85
+          ],
+          "births": 587,
+          "deaths": 504,
+          "mutations": 110,
+          "blockedBirths": 2195,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00030211636194865687,
+          "traitSpread": 0.2805190569270319,
+          "particleEnergy": 622.3975029700915,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 700,
+          "population": 205,
+          "counts": [
+            66,
+            54,
+            85
+          ],
+          "births": 695,
+          "deaths": 610,
+          "mutations": 133,
+          "blockedBirths": 2195,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00031134693831305507,
+          "traitSpread": 0.281820376425676,
+          "particleEnergy": 624.2174088418343,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 800,
+          "population": 194,
+          "counts": [
+            61,
+            55,
+            78
+          ],
+          "births": 793,
+          "deaths": 719,
+          "mutations": 150,
+          "blockedBirths": 2195,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002710252344891838,
+          "traitSpread": 0.2829886344411598,
+          "particleEnergy": 584.4523928532495,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 900,
+          "population": 180,
+          "counts": [
+            60,
+            55,
+            65
+          ],
+          "births": 885,
+          "deaths": 825,
+          "mutations": 160,
+          "blockedBirths": 2195,
+          "maxGeneration": 2,
+          "meanSpeed": 0.00032505800590549276,
+          "traitSpread": 0.28523503953367757,
+          "particleEnergy": 549.654817830433,
+          "foodEnergy": 0,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 1000,
+          "population": 174,
+          "counts": [
+            67,
+            50,
+            57
+          ],
+          "births": 974,
+          "deaths": 920,
+          "mutations": 175,
+          "blockedBirths": 2195,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0003482750158295942,
+          "traitSpread": 0.2827787699577248,
+          "particleEnergy": 549.7306988369231,
+          "foodEnergy": 0,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 1100,
+          "population": 182,
+          "counts": [
+            70,
+            52,
+            60
+          ],
+          "births": 1070,
+          "deaths": 1008,
+          "mutations": 185,
+          "blockedBirths": 2195,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0004108647102609775,
+          "traitSpread": 0.2845249442627859,
+          "particleEnergy": 582.5518717010339,
+          "foodEnergy": 0,
+          "occupiedBins": 17
+        },
+        {
+          "tick": 1200,
+          "population": 189,
+          "counts": [
+            66,
+            57,
+            66
+          ],
+          "births": 1168,
+          "deaths": 1099,
+          "mutations": 206,
+          "blockedBirths": 2195,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0004114404538123727,
+          "traitSpread": 0.283396684927625,
+          "particleEnergy": 562.1095422915955,
+          "foodEnergy": 0,
+          "occupiedBins": 19
+        },
+        {
+          "tick": 1300,
+          "population": 187,
+          "counts": [
+            69,
+            56,
+            62
+          ],
+          "births": 1262,
+          "deaths": 1195,
+          "mutations": 220,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005158797437522128,
+          "traitSpread": 0.2842833258408596,
+          "particleEnergy": 575.493964436979,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 1400,
+          "population": 182,
+          "counts": [
+            67,
+            58,
+            57
+          ],
+          "births": 1347,
+          "deaths": 1285,
+          "mutations": 234,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004995329459793573,
+          "traitSpread": 0.28265466061434336,
+          "particleEnergy": 575.5543321587954,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1500,
+          "population": 183,
+          "counts": [
+            66,
+            57,
+            60
+          ],
+          "births": 1442,
+          "deaths": 1379,
+          "mutations": 245,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00048216637139569595,
+          "traitSpread": 0.2803350588666672,
+          "particleEnergy": 560.057558136804,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1600,
+          "population": 176,
+          "counts": [
+            64,
+            55,
+            57
+          ],
+          "births": 1535,
+          "deaths": 1479,
+          "mutations": 260,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004346993901976739,
+          "traitSpread": 0.2812060916138635,
+          "particleEnergy": 538.1070432986459,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1700,
+          "population": 173,
+          "counts": [
+            58,
+            56,
+            59
+          ],
+          "births": 1624,
+          "deaths": 1571,
+          "mutations": 278,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00042931999209220656,
+          "traitSpread": 0.2795271373143808,
+          "particleEnergy": 526.7612234481777,
+          "foodEnergy": 35,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 1800,
+          "population": 169,
+          "counts": [
+            55,
+            59,
+            55
+          ],
+          "births": 1709,
+          "deaths": 1660,
+          "mutations": 289,
+          "blockedBirths": 2195,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003930081466118042,
+          "traitSpread": 0.27902686687349737,
+          "particleEnergy": 503.2568716838987,
+          "foodEnergy": 35,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 1900,
+          "population": 152,
+          "counts": [
+            50,
+            57,
+            45
+          ],
+          "births": 1782,
+          "deaths": 1750,
+          "mutations": 301,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00037200234578880923,
+          "traitSpread": 0.28060984395092314,
+          "particleEnergy": 477.94761354722215,
+          "foodEnergy": 68.23999999999997,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 2000,
+          "population": 146,
+          "counts": [
+            50,
+            53,
+            43
+          ],
+          "births": 1856,
+          "deaths": 1830,
+          "mutations": 311,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0003454244047974396,
+          "traitSpread": 0.2817642059285415,
+          "particleEnergy": 443.2537411704802,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2100,
+          "population": 139,
+          "counts": [
+            44,
+            49,
+            46
+          ],
+          "births": 1924,
+          "deaths": 1905,
+          "mutations": 322,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00031671481664810396,
+          "traitSpread": 0.2854964159304558,
+          "particleEnergy": 427.1138839639014,
+          "foodEnergy": 70,
+          "occupiedBins": 9
+        },
+        {
+          "tick": 2200,
+          "population": 142,
+          "counts": [
+            51,
+            44,
+            47
+          ],
+          "births": 1999,
+          "deaths": 1977,
+          "mutations": 337,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00037877490191946464,
+          "traitSpread": 0.28399977438516383,
+          "particleEnergy": 447.8352941273927,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2300,
+          "population": 155,
+          "counts": [
+            53,
+            46,
+            56
+          ],
+          "births": 2079,
+          "deaths": 2044,
+          "mutations": 350,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00034513555205846046,
+          "traitSpread": 0.2822556681925941,
+          "particleEnergy": 469.91750763766663,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2400,
+          "population": 151,
+          "counts": [
+            50,
+            44,
+            57
+          ],
+          "births": 2154,
+          "deaths": 2123,
+          "mutations": 364,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00034268896199914664,
+          "traitSpread": 0.28223227843151033,
+          "particleEnergy": 468.1957594569883,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2500,
+          "population": 151,
+          "counts": [
+            53,
+            43,
+            55
+          ],
+          "births": 2234,
+          "deaths": 2203,
+          "mutations": 381,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00029434887935545634,
+          "traitSpread": 0.28283185803304645,
+          "particleEnergy": 470.97193500584274,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2600,
+          "population": 151,
+          "counts": [
+            53,
+            45,
+            53
+          ],
+          "births": 2314,
+          "deaths": 2283,
+          "mutations": 395,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0003107450709107524,
+          "traitSpread": 0.2821238690035205,
+          "particleEnergy": 467.41378212776607,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2700,
+          "population": 152,
+          "counts": [
+            52,
+            47,
+            53
+          ],
+          "births": 2394,
+          "deaths": 2362,
+          "mutations": 413,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00033067292295280203,
+          "traitSpread": 0.28377330679049984,
+          "particleEnergy": 467.3383905220549,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2800,
+          "population": 153,
+          "counts": [
+            54,
+            44,
+            55
+          ],
+          "births": 2472,
+          "deaths": 2439,
+          "mutations": 425,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00031786440261227333,
+          "traitSpread": 0.28606850856565424,
+          "particleEnergy": 462.76515155463585,
+          "foodEnergy": 70,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 2900,
+          "population": 150,
+          "counts": [
+            52,
+            40,
+            58
+          ],
+          "births": 2551,
+          "deaths": 2521,
+          "mutations": 434,
+          "blockedBirths": 2195,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0003691426470116584,
+          "traitSpread": 0.2857557231856154,
+          "particleEnergy": 458.66886616229914,
+          "foodEnergy": 70,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 3000,
+          "population": 144,
+          "counts": [
+            49,
+            35,
+            60
+          ],
+          "births": 2625,
+          "deaths": 2601,
+          "mutations": 454,
+          "blockedBirths": 2195,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003062702813424036,
+          "traitSpread": 0.28634341129108515,
+          "particleEnergy": 441.67334826553457,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        }
+      ]
+    },
+    {
+      "preset": "flocks",
+      "seed": 1202,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0003791049991011953,
+      "capTicks": 59,
+      "maximumEnergyResidual": 6.046320777386427e-9,
+      "final": {
+        "tick": 3000,
+        "population": 121,
+        "counts": [
+          40,
+          4,
+          77
+        ],
+        "births": 2693,
+        "deaths": 2692,
+        "mutations": 490,
+        "blockedBirths": 1713,
+        "maxGeneration": 6,
+        "meanSpeed": 0.00029046144275601,
+        "traitSpread": 0.25358033198337815,
+        "particleEnergy": 382.3780366477375,
+        "foodEnergy": 105,
+        "occupiedBins": 14
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 16028.679999993728,
+        "consumed": 16193.680000033211,
+        "dissipated": 15588.777219896125,
+        "deathLoss": 702.5247434558985
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0016554898895466824,
+          "traitSpread": 0.28284271247462034,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 71
+        },
+        {
+          "tick": 100,
+          "population": 199,
+          "counts": [
+            66,
+            72,
+            61
+          ],
+          "births": 79,
+          "deaths": 0,
+          "mutations": 15,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.000757873794939737,
+          "traitSpread": 0.2831122063793355,
+          "particleEnergy": 860.4400087269659,
+          "foodEnergy": 0,
+          "occupiedBins": 36
+        },
+        {
+          "tick": 200,
+          "population": 240,
+          "counts": [
+            79,
+            85,
+            76
+          ],
+          "births": 180,
+          "deaths": 60,
+          "mutations": 39,
+          "blockedBirths": 1476,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0007892920680326668,
+          "traitSpread": 0.28355192242045113,
+          "particleEnergy": 739.5729491565935,
+          "foodEnergy": 0,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 300,
+          "population": 221,
+          "counts": [
+            80,
+            71,
+            70
+          ],
+          "births": 284,
+          "deaths": 183,
+          "mutations": 64,
+          "blockedBirths": 1477,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00033372908904295563,
+          "traitSpread": 0.28294512386955556,
+          "particleEnergy": 679.4063372598887,
+          "foodEnergy": 0,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 400,
+          "population": 202,
+          "counts": [
+            75,
+            65,
+            62
+          ],
+          "births": 384,
+          "deaths": 302,
+          "mutations": 87,
+          "blockedBirths": 1713,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002544411532309084,
+          "traitSpread": 0.2855408037956949,
+          "particleEnergy": 629.8298641375663,
+          "foodEnergy": 0,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 500,
+          "population": 212,
+          "counts": [
+            78,
+            68,
+            66
+          ],
+          "births": 493,
+          "deaths": 401,
+          "mutations": 110,
+          "blockedBirths": 1713,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002419111084248052,
+          "traitSpread": 0.28471924349226907,
+          "particleEnergy": 626.0055621259619,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 600,
+          "population": 211,
+          "counts": [
+            79,
+            69,
+            63
+          ],
+          "births": 602,
+          "deaths": 511,
+          "mutations": 133,
+          "blockedBirths": 1713,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002204763810002742,
+          "traitSpread": 0.28514819725171614,
+          "particleEnergy": 621.5071382717547,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 700,
+          "population": 213,
+          "counts": [
+            79,
+            71,
+            63
+          ],
+          "births": 710,
+          "deaths": 617,
+          "mutations": 147,
+          "blockedBirths": 1713,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00023905230427799358,
+          "traitSpread": 0.28419426864655184,
+          "particleEnergy": 614.5602221302638,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 800,
+          "population": 203,
+          "counts": [
+            73,
+            68,
+            62
+          ],
+          "births": 810,
+          "deaths": 727,
+          "mutations": 162,
+          "blockedBirths": 1713,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002586467729898651,
+          "traitSpread": 0.2834094653335472,
+          "particleEnergy": 600.0287625936793,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 900,
+          "population": 189,
+          "counts": [
+            66,
+            59,
+            64
+          ],
+          "births": 903,
+          "deaths": 834,
+          "mutations": 181,
+          "blockedBirths": 1713,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002684985645743148,
+          "traitSpread": 0.2862230919269627,
+          "particleEnergy": 568.4570232133664,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 1000,
+          "population": 185,
+          "counts": [
+            67,
+            54,
+            64
+          ],
+          "births": 996,
+          "deaths": 931,
+          "mutations": 198,
+          "blockedBirths": 1713,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002521006895573867,
+          "traitSpread": 0.28843143968385543,
+          "particleEnergy": 559.6115564574724,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 1100,
+          "population": 187,
+          "counts": [
+            74,
+            52,
+            61
+          ],
+          "births": 1089,
+          "deaths": 1022,
+          "mutations": 217,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00025631971694879593,
+          "traitSpread": 0.28821545078679617,
+          "particleEnergy": 566.6912605231893,
+          "foodEnergy": 0,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 1200,
+          "population": 188,
+          "counts": [
+            81,
+            43,
+            64
+          ],
+          "births": 1187,
+          "deaths": 1119,
+          "mutations": 237,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003108583796951187,
+          "traitSpread": 0.2887217677402321,
+          "particleEnergy": 575.3161388358328,
+          "foodEnergy": 0,
+          "occupiedBins": 17
+        },
+        {
+          "tick": 1300,
+          "population": 191,
+          "counts": [
+            88,
+            34,
+            69
+          ],
+          "births": 1283,
+          "deaths": 1212,
+          "mutations": 253,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003580797509768783,
+          "traitSpread": 0.282510100543461,
+          "particleEnergy": 577.3145277796715,
+          "foodEnergy": 0,
+          "occupiedBins": 19
+        },
+        {
+          "tick": 1400,
+          "population": 196,
+          "counts": [
+            93,
+            37,
+            66
+          ],
+          "births": 1381,
+          "deaths": 1305,
+          "mutations": 265,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00030770720552425213,
+          "traitSpread": 0.281597297026496,
+          "particleEnergy": 598.1747174200876,
+          "foodEnergy": 0,
+          "occupiedBins": 17
+        },
+        {
+          "tick": 1500,
+          "population": 204,
+          "counts": [
+            93,
+            41,
+            70
+          ],
+          "births": 1488,
+          "deaths": 1404,
+          "mutations": 284,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00038486214758513446,
+          "traitSpread": 0.28396731347306114,
+          "particleEnergy": 618.5517319359467,
+          "foodEnergy": 0,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 1600,
+          "population": 206,
+          "counts": [
+            92,
+            42,
+            72
+          ],
+          "births": 1593,
+          "deaths": 1507,
+          "mutations": 308,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003970054847788782,
+          "traitSpread": 0.28501988063873385,
+          "particleEnergy": 621.7998169074372,
+          "foodEnergy": 0,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1700,
+          "population": 203,
+          "counts": [
+            88,
+            43,
+            72
+          ],
+          "births": 1696,
+          "deaths": 1613,
+          "mutations": 328,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00043083790492991794,
+          "traitSpread": 0.2864867678532732,
+          "particleEnergy": 614.1313715903258,
+          "foodEnergy": 0.40000000000000036,
+          "occupiedBins": 18
+        },
+        {
+          "tick": 1800,
+          "population": 188,
+          "counts": [
+            81,
+            35,
+            72
+          ],
+          "births": 1785,
+          "deaths": 1717,
+          "mutations": 343,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003801282066706186,
+          "traitSpread": 0.2851620747845484,
+          "particleEnergy": 549.412936694026,
+          "foodEnergy": 35,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 1900,
+          "population": 167,
+          "counts": [
+            80,
+            20,
+            67
+          ],
+          "births": 1869,
+          "deaths": 1822,
+          "mutations": 353,
+          "blockedBirths": 1713,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003774959619287598,
+          "traitSpread": 0.2789631998144742,
+          "particleEnergy": 499.4614346873961,
+          "foodEnergy": 35,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2000,
+          "population": 166,
+          "counts": [
+            75,
+            21,
+            70
+          ],
+          "births": 1953,
+          "deaths": 1907,
+          "mutations": 368,
+          "blockedBirths": 1713,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0004278435964864844,
+          "traitSpread": 0.2795529618337557,
+          "particleEnergy": 496.7075873169771,
+          "foodEnergy": 35,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 2100,
+          "population": 151,
+          "counts": [
+            53,
+            24,
+            74
+          ],
+          "births": 2022,
+          "deaths": 1991,
+          "mutations": 378,
+          "blockedBirths": 1713,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00047971690455528217,
+          "traitSpread": 0.2832815807905191,
+          "particleEnergy": 443.3751001973332,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2200,
+          "population": 147,
+          "counts": [
+            47,
+            24,
+            76
+          ],
+          "births": 2097,
+          "deaths": 2070,
+          "mutations": 386,
+          "blockedBirths": 1713,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0003325469476257757,
+          "traitSpread": 0.28483465175808537,
+          "particleEnergy": 453.3332976512564,
+          "foodEnergy": 70,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 2300,
+          "population": 145,
+          "counts": [
+            49,
+            19,
+            77
+          ],
+          "births": 2169,
+          "deaths": 2144,
+          "mutations": 401,
+          "blockedBirths": 1713,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0003840334954592019,
+          "traitSpread": 0.2800946841777579,
+          "particleEnergy": 439.92943298792835,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2400,
+          "population": 148,
+          "counts": [
+            55,
+            11,
+            82
+          ],
+          "births": 2249,
+          "deaths": 2221,
+          "mutations": 409,
+          "blockedBirths": 1713,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003916038509025118,
+          "traitSpread": 0.27316899905605874,
+          "particleEnergy": 472.7898390497521,
+          "foodEnergy": 70,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 2500,
+          "population": 151,
+          "counts": [
+            55,
+            11,
+            85
+          ],
+          "births": 2327,
+          "deaths": 2296,
+          "mutations": 428,
+          "blockedBirths": 1713,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003193854088158584,
+          "traitSpread": 0.27154700266989984,
+          "particleEnergy": 476.8671624338526,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2600,
+          "population": 150,
+          "counts": [
+            52,
+            11,
+            87
+          ],
+          "births": 2407,
+          "deaths": 2377,
+          "mutations": 440,
+          "blockedBirths": 1713,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003542625860163666,
+          "traitSpread": 0.2702486509371207,
+          "particleEnergy": 471.21675639112016,
+          "foodEnergy": 70,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 2700,
+          "population": 156,
+          "counts": [
+            52,
+            11,
+            93
+          ],
+          "births": 2490,
+          "deaths": 2454,
+          "mutations": 452,
+          "blockedBirths": 1713,
+          "maxGeneration": 5,
+          "meanSpeed": 0.00035666955287528337,
+          "traitSpread": 0.26915864418525615,
+          "particleEnergy": 476.2052327960166,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2800,
+          "population": 151,
+          "counts": [
+            49,
+            13,
+            89
+          ],
+          "births": 2564,
+          "deaths": 2533,
+          "mutations": 466,
+          "blockedBirths": 1713,
+          "maxGeneration": 5,
+          "meanSpeed": 0.00046183655609886046,
+          "traitSpread": 0.27327411542338215,
+          "particleEnergy": 442.23236507710806,
+          "foodEnergy": 91.49,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 2900,
+          "population": 133,
+          "counts": [
+            43,
+            8,
+            82
+          ],
+          "births": 2630,
+          "deaths": 2617,
+          "mutations": 476,
+          "blockedBirths": 1713,
+          "maxGeneration": 6,
+          "meanSpeed": 0.00033970832814613335,
+          "traitSpread": 0.2637238811487439,
+          "particleEnergy": 398.80037629199506,
+          "foodEnergy": 105,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 3000,
+          "population": 121,
+          "counts": [
+            40,
+            4,
+            77
+          ],
+          "births": 2693,
+          "deaths": 2692,
+          "mutations": 490,
+          "blockedBirths": 1713,
+          "maxGeneration": 6,
+          "meanSpeed": 0.00029046144275601,
+          "traitSpread": 0.25358033198337815,
+          "particleEnergy": 382.3780366477375,
+          "foodEnergy": 105,
+          "occupiedBins": 14
+        }
+      ]
+    },
+    {
+      "preset": "flocks",
+      "seed": 1203,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.00036364786797143836,
+      "capTicks": 38,
+      "maximumEnergyResidual": 5.804395186714828e-9,
+      "final": {
+        "tick": 3000,
+        "population": 150,
+        "counts": [
+          32,
+          84,
+          34
+        ],
+        "births": 2512,
+        "deaths": 2482,
+        "mutations": 458,
+        "blockedBirths": 943,
+        "maxGeneration": 5,
+        "meanSpeed": 0.0003692619280253223,
+        "traitSpread": 0.2611269735134555,
+        "particleEnergy": 455.1751253104325,
+        "foodEnergy": 70,
+        "occupiedBins": 12
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 14966.23999999432,
+        "consumed": 15166.24000002802,
+        "dissipated": 14533.09375746581,
+        "deathLoss": 657.9711172238732
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0015206039182616678,
+          "traitSpread": 0.28284271247462034,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 68
+        },
+        {
+          "tick": 100,
+          "population": 182,
+          "counts": [
+            63,
+            61,
+            58
+          ],
+          "births": 62,
+          "deaths": 0,
+          "mutations": 9,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005911460055415606,
+          "traitSpread": 0.2824655483703854,
+          "particleEnergy": 849.1334502333792,
+          "foodEnergy": 34.67,
+          "occupiedBins": 46
+        },
+        {
+          "tick": 200,
+          "population": 237,
+          "counts": [
+            80,
+            81,
+            76
+          ],
+          "births": 160,
+          "deaths": 43,
+          "mutations": 26,
+          "blockedBirths": 775,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0006129218786380662,
+          "traitSpread": 0.2853969575573732,
+          "particleEnergy": 751.042668912736,
+          "foodEnergy": 34.89,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 300,
+          "population": 199,
+          "counts": [
+            66,
+            71,
+            62
+          ],
+          "births": 252,
+          "deaths": 173,
+          "mutations": 41,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00047240049223282106,
+          "traitSpread": 0.28572048588726673,
+          "particleEnergy": 625.2046183149502,
+          "foodEnergy": 35,
+          "occupiedBins": 20
+        },
+        {
+          "tick": 400,
+          "population": 177,
+          "counts": [
+            54,
+            67,
+            56
+          ],
+          "births": 343,
+          "deaths": 286,
+          "mutations": 60,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004148035997570912,
+          "traitSpread": 0.28503734734319824,
+          "particleEnergy": 557.3717510292468,
+          "foodEnergy": 35,
+          "occupiedBins": 16
+        },
+        {
+          "tick": 500,
+          "population": 172,
+          "counts": [
+            50,
+            66,
+            56
+          ],
+          "births": 438,
+          "deaths": 386,
+          "mutations": 76,
+          "blockedBirths": 943,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002763416416683739,
+          "traitSpread": 0.2859268396859345,
+          "particleEnergy": 552.2867620217563,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 600,
+          "population": 173,
+          "counts": [
+            51,
+            67,
+            55
+          ],
+          "births": 534,
+          "deaths": 481,
+          "mutations": 89,
+          "blockedBirths": 943,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0002860304789257414,
+          "traitSpread": 0.28340003565012034,
+          "particleEnergy": 552.711226156407,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 700,
+          "population": 179,
+          "counts": [
+            53,
+            68,
+            58
+          ],
+          "births": 631,
+          "deaths": 572,
+          "mutations": 108,
+          "blockedBirths": 943,
+          "maxGeneration": 1,
+          "meanSpeed": 0.00029435267111575623,
+          "traitSpread": 0.28601333291197306,
+          "particleEnergy": 543.3887985975447,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 800,
+          "population": 172,
+          "counts": [
+            51,
+            67,
+            54
+          ],
+          "births": 719,
+          "deaths": 667,
+          "mutations": 122,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.00026594318599838345,
+          "traitSpread": 0.2871460362481881,
+          "particleEnergy": 524.524496691932,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 900,
+          "population": 167,
+          "counts": [
+            47,
+            68,
+            52
+          ],
+          "births": 807,
+          "deaths": 760,
+          "mutations": 138,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002885208332765948,
+          "traitSpread": 0.284005669804661,
+          "particleEnergy": 526.4448659192723,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1000,
+          "population": 155,
+          "counts": [
+            47,
+            58,
+            50
+          ],
+          "births": 883,
+          "deaths": 848,
+          "mutations": 152,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002905824339241625,
+          "traitSpread": 0.28823117672849724,
+          "particleEnergy": 470.23968939297566,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1100,
+          "population": 153,
+          "counts": [
+            46,
+            54,
+            53
+          ],
+          "births": 965,
+          "deaths": 932,
+          "mutations": 164,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002660376208956586,
+          "traitSpread": 0.28916195357730434,
+          "particleEnergy": 503.51581701941194,
+          "foodEnergy": 35,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1200,
+          "population": 169,
+          "counts": [
+            47,
+            65,
+            57
+          ],
+          "births": 1054,
+          "deaths": 1005,
+          "mutations": 181,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0002333910626520137,
+          "traitSpread": 0.28700268334493156,
+          "particleEnergy": 523.2995641409046,
+          "foodEnergy": 35,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 1300,
+          "population": 167,
+          "counts": [
+            47,
+            67,
+            53
+          ],
+          "births": 1140,
+          "deaths": 1093,
+          "mutations": 202,
+          "blockedBirths": 943,
+          "maxGeneration": 2,
+          "meanSpeed": 0.00030405774568272845,
+          "traitSpread": 0.28818107930394693,
+          "particleEnergy": 505.8941861744295,
+          "foodEnergy": 35,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 1400,
+          "population": 172,
+          "counts": [
+            51,
+            69,
+            52
+          ],
+          "births": 1232,
+          "deaths": 1180,
+          "mutations": 216,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00028055268538373495,
+          "traitSpread": 0.29039562796457835,
+          "particleEnergy": 544.4820873901386,
+          "foodEnergy": 35,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 1500,
+          "population": 184,
+          "counts": [
+            54,
+            76,
+            54
+          ],
+          "births": 1328,
+          "deaths": 1264,
+          "mutations": 236,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00032361280861576623,
+          "traitSpread": 0.2924930625419369,
+          "particleEnergy": 553.3682491441151,
+          "foodEnergy": 35,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 1600,
+          "population": 178,
+          "counts": [
+            50,
+            74,
+            54
+          ],
+          "births": 1419,
+          "deaths": 1361,
+          "mutations": 251,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0002619018751085532,
+          "traitSpread": 0.29023651269934414,
+          "particleEnergy": 545.6024230918641,
+          "foodEnergy": 35,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 1700,
+          "population": 177,
+          "counts": [
+            45,
+            75,
+            57
+          ],
+          "births": 1511,
+          "deaths": 1454,
+          "mutations": 269,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003619306680436488,
+          "traitSpread": 0.28749346861088876,
+          "particleEnergy": 536.3698071200018,
+          "foodEnergy": 35,
+          "occupiedBins": 15
+        },
+        {
+          "tick": 1800,
+          "population": 170,
+          "counts": [
+            44,
+            70,
+            56
+          ],
+          "births": 1595,
+          "deaths": 1545,
+          "mutations": 281,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003946458766498723,
+          "traitSpread": 0.28693388674627224,
+          "particleEnergy": 513.7795842322671,
+          "foodEnergy": 46.02,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 1900,
+          "population": 154,
+          "counts": [
+            32,
+            66,
+            56
+          ],
+          "births": 1671,
+          "deaths": 1637,
+          "mutations": 296,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00041451679918133176,
+          "traitSpread": 0.284947132716309,
+          "particleEnergy": 459.0964916595967,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2000,
+          "population": 152,
+          "counts": [
+            30,
+            64,
+            58
+          ],
+          "births": 1752,
+          "deaths": 1720,
+          "mutations": 309,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00030370869116367856,
+          "traitSpread": 0.2820133019584955,
+          "particleEnergy": 463.0612201382732,
+          "foodEnergy": 70,
+          "occupiedBins": 10
+        },
+        {
+          "tick": 2100,
+          "population": 145,
+          "counts": [
+            31,
+            62,
+            52
+          ],
+          "births": 1822,
+          "deaths": 1797,
+          "mutations": 327,
+          "blockedBirths": 943,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0003092177183245199,
+          "traitSpread": 0.28086032259570226,
+          "particleEnergy": 421.91012564748655,
+          "foodEnergy": 70,
+          "occupiedBins": 12
+        },
+        {
+          "tick": 2200,
+          "population": 135,
+          "counts": [
+            29,
+            57,
+            49
+          ],
+          "births": 1888,
+          "deaths": 1873,
+          "mutations": 337,
+          "blockedBirths": 943,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00026537042391604855,
+          "traitSpread": 0.27665997314526974,
+          "particleEnergy": 425.5077980479379,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2300,
+          "population": 145,
+          "counts": [
+            30,
+            66,
+            49
+          ],
+          "births": 1962,
+          "deaths": 1937,
+          "mutations": 356,
+          "blockedBirths": 943,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0002868163414163024,
+          "traitSpread": 0.27525407136860797,
+          "particleEnergy": 456.6923688721087,
+          "foodEnergy": 70,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 2400,
+          "population": 151,
+          "counts": [
+            32,
+            72,
+            47
+          ],
+          "births": 2041,
+          "deaths": 2010,
+          "mutations": 373,
+          "blockedBirths": 943,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0002592554437953348,
+          "traitSpread": 0.27034958777417606,
+          "particleEnergy": 454.7091461371789,
+          "foodEnergy": 70,
+          "occupiedBins": 11
+        },
+        {
+          "tick": 2500,
+          "population": 154,
+          "counts": [
+            33,
+            77,
+            44
+          ],
+          "births": 2119,
+          "deaths": 2085,
+          "mutations": 388,
+          "blockedBirths": 943,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00032472726301945075,
+          "traitSpread": 0.268740246978976,
+          "particleEnergy": 459.8990992869669,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2600,
+          "population": 154,
+          "counts": [
+            31,
+            78,
+            45
+          ],
+          "births": 2198,
+          "deaths": 2164,
+          "mutations": 410,
+          "blockedBirths": 943,
+          "maxGeneration": 4,
+          "meanSpeed": 0.00030372806180617933,
+          "traitSpread": 0.2666230919590346,
+          "particleEnergy": 473.18376806376693,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2700,
+          "population": 157,
+          "counts": [
+            32,
+            84,
+            41
+          ],
+          "births": 2279,
+          "deaths": 2242,
+          "mutations": 425,
+          "blockedBirths": 943,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0002990461210526103,
+          "traitSpread": 0.2622092713382574,
+          "particleEnergy": 465.12054303324544,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2800,
+          "population": 153,
+          "counts": [
+            32,
+            86,
+            35
+          ],
+          "births": 2356,
+          "deaths": 2323,
+          "mutations": 438,
+          "blockedBirths": 943,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003652222038570712,
+          "traitSpread": 0.25790229087494376,
+          "particleEnergy": 463.81639559254774,
+          "foodEnergy": 70,
+          "occupiedBins": 13
+        },
+        {
+          "tick": 2900,
+          "population": 156,
+          "counts": [
+            34,
+            87,
+            35
+          ],
+          "births": 2437,
+          "deaths": 2401,
+          "mutations": 447,
+          "blockedBirths": 943,
+          "maxGeneration": 5,
+          "meanSpeed": 0.00037121879981910963,
+          "traitSpread": 0.26020226216631515,
+          "particleEnergy": 472.23161983775833,
+          "foodEnergy": 70,
+          "occupiedBins": 14
+        },
+        {
+          "tick": 3000,
+          "population": 150,
+          "counts": [
+            32,
+            84,
+            34
+          ],
+          "births": 2512,
+          "deaths": 2482,
+          "mutations": 458,
+          "blockedBirths": 943,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0003692619280253223,
+          "traitSpread": 0.2611269735134555,
+          "particleEnergy": 455.1751253104325,
+          "foodEnergy": 70,
+          "occupiedBins": 12
+        }
+      ]
+    },
+    {
+      "preset": "pursuit",
+      "seed": 1201,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0029536066604835126,
+      "capTicks": 0,
+      "maximumEnergyResidual": 4.3528416426852345e-9,
+      "final": {
+        "tick": 3000,
+        "population": 147,
+        "counts": [
+          64,
+          54,
+          29
+        ],
+        "births": 2041,
+        "deaths": 2014,
+        "mutations": 337,
+        "blockedBirths": 0,
+        "maxGeneration": 7,
+        "meanSpeed": 0.0026857786152384108,
+        "traitSpread": 0.7378152389060544,
+        "particleEnergy": 520.6925865462196,
+        "foodEnergy": 1.599999999999996,
+        "occupiedBins": 59
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17818.400000037323,
+        "dissipated": 16951.003631156167,
+        "deathLoss": 826.7037822950309
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.001557187485869549,
+          "traitSpread": 0.7597514213360994,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 72
+        },
+        {
+          "tick": 100,
+          "population": 178,
+          "counts": [
+            56,
+            62,
+            60
+          ],
+          "births": 58,
+          "deaths": 0,
+          "mutations": 10,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.004213450955402635,
+          "traitSpread": 0.7580162051767275,
+          "particleEnergy": 789.0698775018662,
+          "foodEnergy": 0,
+          "occupiedBins": 70
+        },
+        {
+          "tick": 200,
+          "population": 186,
+          "counts": [
+            66,
+            54,
+            66
+          ],
+          "births": 136,
+          "deaths": 70,
+          "mutations": 26,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0036789720532387654,
+          "traitSpread": 0.7573430054798704,
+          "particleEnergy": 592.6990502331452,
+          "foodEnergy": 0,
+          "occupiedBins": 69
+        },
+        {
+          "tick": 300,
+          "population": 154,
+          "counts": [
+            51,
+            40,
+            63
+          ],
+          "births": 198,
+          "deaths": 164,
+          "mutations": 40,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.003271235842674787,
+          "traitSpread": 0.75312734629768,
+          "particleEnergy": 541.426251077195,
+          "foodEnergy": 0,
+          "occupiedBins": 64
+        },
+        {
+          "tick": 400,
+          "population": 149,
+          "counts": [
+            52,
+            39,
+            58
+          ],
+          "births": 267,
+          "deaths": 238,
+          "mutations": 50,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.002771709470510272,
+          "traitSpread": 0.7551534083349991,
+          "particleEnergy": 544.2017329013452,
+          "foodEnergy": 0,
+          "occupiedBins": 50
+        },
+        {
+          "tick": 500,
+          "population": 154,
+          "counts": [
+            58,
+            42,
+            54
+          ],
+          "births": 335,
+          "deaths": 301,
+          "mutations": 58,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.003958371689308436,
+          "traitSpread": 0.7562264498985554,
+          "particleEnergy": 540.2831773556926,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 600,
+          "population": 156,
+          "counts": [
+            52,
+            43,
+            61
+          ],
+          "births": 406,
+          "deaths": 370,
+          "mutations": 75,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0029484260640513875,
+          "traitSpread": 0.7568460147476825,
+          "particleEnergy": 544.4796797443755,
+          "foodEnergy": 0,
+          "occupiedBins": 51
+        },
+        {
+          "tick": 700,
+          "population": 155,
+          "counts": [
+            54,
+            42,
+            59
+          ],
+          "births": 469,
+          "deaths": 434,
+          "mutations": 88,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0029592826997748493,
+          "traitSpread": 0.7554392886949427,
+          "particleEnergy": 564.992977964468,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 800,
+          "population": 156,
+          "counts": [
+            48,
+            44,
+            64
+          ],
+          "births": 539,
+          "deaths": 503,
+          "mutations": 99,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0028210955277473784,
+          "traitSpread": 0.7528416562536595,
+          "particleEnergy": 528.7985074531817,
+          "foodEnergy": 0,
+          "occupiedBins": 66
+        },
+        {
+          "tick": 900,
+          "population": 142,
+          "counts": [
+            42,
+            41,
+            59
+          ],
+          "births": 608,
+          "deaths": 586,
+          "mutations": 114,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.003230551985858541,
+          "traitSpread": 0.7530888420413243,
+          "particleEnergy": 487.34969697500253,
+          "foodEnergy": 8.589999999999918,
+          "occupiedBins": 59
+        },
+        {
+          "tick": 1000,
+          "population": 149,
+          "counts": [
+            44,
+            37,
+            68
+          ],
+          "births": 675,
+          "deaths": 646,
+          "mutations": 128,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00263880469605572,
+          "traitSpread": 0.7473245524919909,
+          "particleEnergy": 509.6343806297776,
+          "foodEnergy": 0,
+          "occupiedBins": 64
+        },
+        {
+          "tick": 1100,
+          "population": 150,
+          "counts": [
+            39,
+            34,
+            77
+          ],
+          "births": 735,
+          "deaths": 705,
+          "mutations": 137,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.002268884815324369,
+          "traitSpread": 0.7318823777184528,
+          "particleEnergy": 533.2621124414371,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 1200,
+          "population": 150,
+          "counts": [
+            39,
+            30,
+            81
+          ],
+          "births": 804,
+          "deaths": 774,
+          "mutations": 152,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0027744787404648166,
+          "traitSpread": 0.7243335634299379,
+          "particleEnergy": 525.9302049896351,
+          "foodEnergy": 7.509999999999997,
+          "occupiedBins": 58
+        },
+        {
+          "tick": 1300,
+          "population": 152,
+          "counts": [
+            43,
+            37,
+            72
+          ],
+          "births": 869,
+          "deaths": 837,
+          "mutations": 160,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0023823271228595217,
+          "traitSpread": 0.7448616398597978,
+          "particleEnergy": 530.2596114146318,
+          "foodEnergy": 0.989999999999999,
+          "occupiedBins": 57
+        },
+        {
+          "tick": 1400,
+          "population": 162,
+          "counts": [
+            55,
+            39,
+            68
+          ],
+          "births": 938,
+          "deaths": 896,
+          "mutations": 165,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0021709556982578517,
+          "traitSpread": 0.7515081197814473,
+          "particleEnergy": 564.163383849731,
+          "foodEnergy": 0,
+          "occupiedBins": 58
+        },
+        {
+          "tick": 1500,
+          "population": 158,
+          "counts": [
+            50,
+            46,
+            62
+          ],
+          "births": 1010,
+          "deaths": 972,
+          "mutations": 176,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.003279792467649187,
+          "traitSpread": 0.7560573192411427,
+          "particleEnergy": 540.7900712668991,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 1600,
+          "population": 144,
+          "counts": [
+            42,
+            42,
+            60
+          ],
+          "births": 1072,
+          "deaths": 1048,
+          "mutations": 184,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0038379311952518778,
+          "traitSpread": 0.7555043587552969,
+          "particleEnergy": 531.6591023532037,
+          "foodEnergy": 0.869999999999999,
+          "occupiedBins": 68
+        },
+        {
+          "tick": 1700,
+          "population": 154,
+          "counts": [
+            55,
+            44,
+            55
+          ],
+          "births": 1149,
+          "deaths": 1115,
+          "mutations": 201,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0032895418870571734,
+          "traitSpread": 0.7556435315627354,
+          "particleEnergy": 537.2358043815466,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 1800,
+          "population": 147,
+          "counts": [
+            50,
+            48,
+            49
+          ],
+          "births": 1219,
+          "deaths": 1192,
+          "mutations": 213,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.00225730342092936,
+          "traitSpread": 0.7593057794016397,
+          "particleEnergy": 512.1222818899133,
+          "foodEnergy": 2.4199999999999995,
+          "occupiedBins": 57
+        },
+        {
+          "tick": 1900,
+          "population": 145,
+          "counts": [
+            53,
+            45,
+            47
+          ],
+          "births": 1290,
+          "deaths": 1265,
+          "mutations": 224,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002114411126492783,
+          "traitSpread": 0.759664903073946,
+          "particleEnergy": 536.6124157566616,
+          "foodEnergy": 17.55000000000003,
+          "occupiedBins": 45
+        },
+        {
+          "tick": 2000,
+          "population": 162,
+          "counts": [
+            54,
+            52,
+            56
+          ],
+          "births": 1365,
+          "deaths": 1323,
+          "mutations": 234,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0032982873694877195,
+          "traitSpread": 0.7561858149554431,
+          "particleEnergy": 560.466119598475,
+          "foodEnergy": 0.20000000000000018,
+          "occupiedBins": 56
+        },
+        {
+          "tick": 2100,
+          "population": 147,
+          "counts": [
+            54,
+            44,
+            49
+          ],
+          "births": 1429,
+          "deaths": 1402,
+          "mutations": 243,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.003110698638329801,
+          "traitSpread": 0.7555501622225188,
+          "particleEnergy": 543.5264806441094,
+          "foodEnergy": 0,
+          "occupiedBins": 45
+        },
+        {
+          "tick": 2200,
+          "population": 154,
+          "counts": [
+            63,
+            46,
+            45
+          ],
+          "births": 1501,
+          "deaths": 1467,
+          "mutations": 251,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0029002497795153643,
+          "traitSpread": 0.7550802667996109,
+          "particleEnergy": 528.5396311861077,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 2300,
+          "population": 141,
+          "counts": [
+            58,
+            39,
+            44
+          ],
+          "births": 1565,
+          "deaths": 1544,
+          "mutations": 267,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0027612632116958765,
+          "traitSpread": 0.752361104141221,
+          "particleEnergy": 498.417758469626,
+          "foodEnergy": 0,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 2400,
+          "population": 147,
+          "counts": [
+            63,
+            42,
+            42
+          ],
+          "births": 1631,
+          "deaths": 1604,
+          "mutations": 277,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0025022228122544145,
+          "traitSpread": 0.7492684921491579,
+          "particleEnergy": 540.9643107557454,
+          "foodEnergy": 7.99999999999997,
+          "occupiedBins": 57
+        },
+        {
+          "tick": 2500,
+          "population": 161,
+          "counts": [
+            72,
+            45,
+            44
+          ],
+          "births": 1710,
+          "deaths": 1669,
+          "mutations": 286,
+          "blockedBirths": 0,
+          "maxGeneration": 8,
+          "meanSpeed": 0.0031782522545070334,
+          "traitSpread": 0.7443669006199689,
+          "particleEnergy": 563.9537341364013,
+          "foodEnergy": 0.20000000000000018,
+          "occupiedBins": 59
+        },
+        {
+          "tick": 2600,
+          "population": 150,
+          "counts": [
+            64,
+            46,
+            40
+          ],
+          "births": 1772,
+          "deaths": 1742,
+          "mutations": 296,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.002988800788999604,
+          "traitSpread": 0.7502124637332693,
+          "particleEnergy": 534.2991940267119,
+          "foodEnergy": 0,
+          "occupiedBins": 47
+        },
+        {
+          "tick": 2700,
+          "population": 146,
+          "counts": [
+            54,
+            52,
+            40
+          ],
+          "births": 1836,
+          "deaths": 1810,
+          "mutations": 305,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0034337897171196974,
+          "traitSpread": 0.7529180010844747,
+          "particleEnergy": 523.6798320995399,
+          "foodEnergy": 0,
+          "occupiedBins": 58
+        },
+        {
+          "tick": 2800,
+          "population": 156,
+          "counts": [
+            59,
+            61,
+            36
+          ],
+          "births": 1908,
+          "deaths": 1872,
+          "mutations": 316,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.002898592986253845,
+          "traitSpread": 0.7462855917262151,
+          "particleEnergy": 542.3711233645931,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        },
+        {
+          "tick": 2900,
+          "population": 155,
+          "counts": [
+            59,
+            60,
+            36
+          ],
+          "births": 1972,
+          "deaths": 1937,
+          "mutations": 327,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0025705666841190334,
+          "traitSpread": 0.7463446824461268,
+          "particleEnergy": 523.2217367025368,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 3000,
+          "population": 147,
+          "counts": [
+            64,
+            54,
+            29
+          ],
+          "births": 2041,
+          "deaths": 2014,
+          "mutations": 337,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0026857786152384108,
+          "traitSpread": 0.7378152389060544,
+          "particleEnergy": 520.6925865462196,
+          "foodEnergy": 1.599999999999996,
+          "occupiedBins": 59
+        }
+      ]
+    },
+    {
+      "preset": "pursuit",
+      "seed": 1202,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0026460179777065894,
+      "capTicks": 0,
+      "maximumEnergyResidual": 4.4674379751086235e-9,
+      "final": {
+        "tick": 3000,
+        "population": 141,
+        "counts": [
+          37,
+          49,
+          55
+        ],
+        "births": 2119,
+        "deaths": 2098,
+        "mutations": 386,
+        "blockedBirths": 0,
+        "maxGeneration": 7,
+        "meanSpeed": 0.0031728429657197346,
+        "traitSpread": 0.7473342909933345,
+        "particleEnergy": 510.62621066917245,
+        "foodEnergy": 0,
+        "occupiedBins": 66
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17820.000000037282,
+        "dissipated": 16946.892618277583,
+        "deathLoss": 842.4811710512654
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0016554898895466824,
+          "traitSpread": 0.7597514213360994,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 71
+        },
+        {
+          "tick": 100,
+          "population": 178,
+          "counts": [
+            63,
+            59,
+            56
+          ],
+          "births": 58,
+          "deaths": 0,
+          "mutations": 10,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0036309094979154535,
+          "traitSpread": 0.7587526003670336,
+          "particleEnergy": 792.7344852430651,
+          "foodEnergy": 0,
+          "occupiedBins": 68
+        },
+        {
+          "tick": 200,
+          "population": 183,
+          "counts": [
+            63,
+            61,
+            59
+          ],
+          "births": 129,
+          "deaths": 66,
+          "mutations": 31,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.004538669060371296,
+          "traitSpread": 0.7595847253468464,
+          "particleEnergy": 571.7240483359253,
+          "foodEnergy": 0,
+          "occupiedBins": 69
+        },
+        {
+          "tick": 300,
+          "population": 147,
+          "counts": [
+            54,
+            51,
+            42
+          ],
+          "births": 189,
+          "deaths": 162,
+          "mutations": 40,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.003469149074862978,
+          "traitSpread": 0.7562581801032525,
+          "particleEnergy": 536.6654166192668,
+          "foodEnergy": 0,
+          "occupiedBins": 64
+        },
+        {
+          "tick": 400,
+          "population": 159,
+          "counts": [
+            68,
+            38,
+            53
+          ],
+          "births": 257,
+          "deaths": 218,
+          "mutations": 57,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0033298896433026142,
+          "traitSpread": 0.7494997430635943,
+          "particleEnergy": 556.7033991901033,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 500,
+          "population": 152,
+          "counts": [
+            60,
+            49,
+            43
+          ],
+          "births": 322,
+          "deaths": 290,
+          "mutations": 74,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.003282413060516269,
+          "traitSpread": 0.7557340343219324,
+          "particleEnergy": 547.0096734373534,
+          "foodEnergy": 0,
+          "occupiedBins": 56
+        },
+        {
+          "tick": 600,
+          "population": 155,
+          "counts": [
+            66,
+            50,
+            39
+          ],
+          "births": 388,
+          "deaths": 353,
+          "mutations": 89,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0028989876808838727,
+          "traitSpread": 0.7511883982810882,
+          "particleEnergy": 554.383793491835,
+          "foodEnergy": 0,
+          "occupiedBins": 57
+        },
+        {
+          "tick": 700,
+          "population": 158,
+          "counts": [
+            68,
+            48,
+            42
+          ],
+          "births": 453,
+          "deaths": 415,
+          "mutations": 105,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0027359201620427817,
+          "traitSpread": 0.7499462762719996,
+          "particleEnergy": 545.0747128788008,
+          "foodEnergy": 0,
+          "occupiedBins": 59
+        },
+        {
+          "tick": 800,
+          "population": 158,
+          "counts": [
+            67,
+            44,
+            47
+          ],
+          "births": 523,
+          "deaths": 485,
+          "mutations": 116,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0023943388335835028,
+          "traitSpread": 0.7529289290319932,
+          "particleEnergy": 541.5942742100924,
+          "foodEnergy": 0,
+          "occupiedBins": 50
+        },
+        {
+          "tick": 900,
+          "population": 160,
+          "counts": [
+            72,
+            42,
+            46
+          ],
+          "births": 593,
+          "deaths": 553,
+          "mutations": 130,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.002419220396729919,
+          "traitSpread": 0.7466828989353522,
+          "particleEnergy": 541.511110694194,
+          "foodEnergy": 0,
+          "occupiedBins": 57
+        },
+        {
+          "tick": 1000,
+          "population": 151,
+          "counts": [
+            63,
+            33,
+            55
+          ],
+          "births": 664,
+          "deaths": 633,
+          "mutations": 138,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0019820814394320213,
+          "traitSpread": 0.7475599534167541,
+          "particleEnergy": 521.8210335951966,
+          "foodEnergy": 11.890000000000072,
+          "occupiedBins": 46
+        },
+        {
+          "tick": 1100,
+          "population": 150,
+          "counts": [
+            42,
+            43,
+            65
+          ],
+          "births": 734,
+          "deaths": 704,
+          "mutations": 152,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0026069262285511817,
+          "traitSpread": 0.7526926971190152,
+          "particleEnergy": 527.9746825369858,
+          "foodEnergy": 0,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 1200,
+          "population": 149,
+          "counts": [
+            42,
+            31,
+            76
+          ],
+          "births": 802,
+          "deaths": 773,
+          "mutations": 162,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0018191785471562282,
+          "traitSpread": 0.7300006303962777,
+          "particleEnergy": 523.7932966096918,
+          "foodEnergy": 5.999999999999997,
+          "occupiedBins": 45
+        },
+        {
+          "tick": 1300,
+          "population": 146,
+          "counts": [
+            44,
+            30,
+            72
+          ],
+          "births": 870,
+          "deaths": 844,
+          "mutations": 176,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.00275289962826287,
+          "traitSpread": 0.7337123964149929,
+          "particleEnergy": 515.4472294282745,
+          "foodEnergy": 22.160000000000142,
+          "occupiedBins": 56
+        },
+        {
+          "tick": 1400,
+          "population": 163,
+          "counts": [
+            51,
+            35,
+            77
+          ],
+          "births": 949,
+          "deaths": 906,
+          "mutations": 189,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0015907824460012268,
+          "traitSpread": 0.737862336095965,
+          "particleEnergy": 573.7628649773067,
+          "foodEnergy": 0,
+          "occupiedBins": 52
+        },
+        {
+          "tick": 1500,
+          "population": 163,
+          "counts": [
+            41,
+            32,
+            90
+          ],
+          "births": 1031,
+          "deaths": 988,
+          "mutations": 201,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002533844045274474,
+          "traitSpread": 0.7129618342792072,
+          "particleEnergy": 552.085211500807,
+          "foodEnergy": 0,
+          "occupiedBins": 54
+        },
+        {
+          "tick": 1600,
+          "population": 161,
+          "counts": [
+            35,
+            31,
+            95
+          ],
+          "births": 1104,
+          "deaths": 1063,
+          "mutations": 217,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.002537766269891173,
+          "traitSpread": 0.6987095911621045,
+          "particleEnergy": 567.6999201730005,
+          "foodEnergy": 0,
+          "occupiedBins": 50
+        },
+        {
+          "tick": 1700,
+          "population": 167,
+          "counts": [
+            41,
+            40,
+            86
+          ],
+          "births": 1174,
+          "deaths": 1127,
+          "mutations": 233,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002778319880042146,
+          "traitSpread": 0.7287976204200965,
+          "particleEnergy": 556.6204912637598,
+          "foodEnergy": 0,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 1800,
+          "population": 158,
+          "counts": [
+            38,
+            37,
+            83
+          ],
+          "births": 1245,
+          "deaths": 1207,
+          "mutations": 247,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0022675043466603368,
+          "traitSpread": 0.7238596923737673,
+          "particleEnergy": 554.4258894836586,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 1900,
+          "population": 152,
+          "counts": [
+            31,
+            44,
+            77
+          ],
+          "births": 1314,
+          "deaths": 1282,
+          "mutations": 254,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0023887022629401978,
+          "traitSpread": 0.7277855522584783,
+          "particleEnergy": 532.8557710318591,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 2000,
+          "population": 146,
+          "counts": [
+            29,
+            47,
+            70
+          ],
+          "births": 1380,
+          "deaths": 1354,
+          "mutations": 261,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0023582425729806863,
+          "traitSpread": 0.7320865080165507,
+          "particleEnergy": 525.6884176131147,
+          "foodEnergy": 3.3899999999999757,
+          "occupiedBins": 48
+        },
+        {
+          "tick": 2100,
+          "population": 159,
+          "counts": [
+            33,
+            53,
+            73
+          ],
+          "births": 1458,
+          "deaths": 1419,
+          "mutations": 274,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0023030473408719937,
+          "traitSpread": 0.7376195350480504,
+          "particleEnergy": 559.9279786552852,
+          "foodEnergy": 0,
+          "occupiedBins": 47
+        },
+        {
+          "tick": 2200,
+          "population": 152,
+          "counts": [
+            31,
+            57,
+            64
+          ],
+          "births": 1527,
+          "deaths": 1495,
+          "mutations": 289,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.002855869634182723,
+          "traitSpread": 0.7405427220623041,
+          "particleEnergy": 538.4634395526693,
+          "foodEnergy": 0.9399999999999958,
+          "occupiedBins": 51
+        },
+        {
+          "tick": 2300,
+          "population": 157,
+          "counts": [
+            32,
+            59,
+            66
+          ],
+          "births": 1604,
+          "deaths": 1567,
+          "mutations": 307,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.002780927601458033,
+          "traitSpread": 0.7394611857840009,
+          "particleEnergy": 550.6522979734042,
+          "foodEnergy": 0,
+          "occupiedBins": 52
+        },
+        {
+          "tick": 2400,
+          "population": 147,
+          "counts": [
+            31,
+            54,
+            62
+          ],
+          "births": 1677,
+          "deaths": 1650,
+          "mutations": 321,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.001642101391833127,
+          "traitSpread": 0.7410681322560932,
+          "particleEnergy": 549.193055845546,
+          "foodEnergy": 0,
+          "occupiedBins": 45
+        },
+        {
+          "tick": 2500,
+          "population": 170,
+          "counts": [
+            30,
+            65,
+            75
+          ],
+          "births": 1766,
+          "deaths": 1716,
+          "mutations": 333,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0018300033160591916,
+          "traitSpread": 0.7323395935471589,
+          "particleEnergy": 571.558776420833,
+          "foodEnergy": 1.5199999999999936,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 2600,
+          "population": 170,
+          "counts": [
+            25,
+            67,
+            78
+          ],
+          "births": 1847,
+          "deaths": 1797,
+          "mutations": 348,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0017010720015485684,
+          "traitSpread": 0.7217825436854857,
+          "particleEnergy": 553.5130984576897,
+          "foodEnergy": 0,
+          "occupiedBins": 47
+        },
+        {
+          "tick": 2700,
+          "population": 170,
+          "counts": [
+            28,
+            67,
+            75
+          ],
+          "births": 1924,
+          "deaths": 1874,
+          "mutations": 359,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0022958742553959733,
+          "traitSpread": 0.7267883721874923,
+          "particleEnergy": 556.3421109312686,
+          "foodEnergy": 3.970000000000003,
+          "occupiedBins": 51
+        },
+        {
+          "tick": 2800,
+          "population": 160,
+          "counts": [
+            32,
+            58,
+            70
+          ],
+          "births": 1994,
+          "deaths": 1954,
+          "mutations": 369,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.002860952565654319,
+          "traitSpread": 0.7363074309094682,
+          "particleEnergy": 553.6586442766516,
+          "foodEnergy": 0,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 2900,
+          "population": 153,
+          "counts": [
+            38,
+            55,
+            60
+          ],
+          "births": 2056,
+          "deaths": 2023,
+          "mutations": 378,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.003188052658606552,
+          "traitSpread": 0.7441502017003718,
+          "particleEnergy": 513.6879567784549,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 3000,
+          "population": 141,
+          "counts": [
+            37,
+            49,
+            55
+          ],
+          "births": 2119,
+          "deaths": 2098,
+          "mutations": 386,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0031728429657197346,
+          "traitSpread": 0.7473342909933345,
+          "particleEnergy": 510.62621066917245,
+          "foodEnergy": 0,
+          "occupiedBins": 66
+        }
+      ]
+    },
+    {
+      "preset": "pursuit",
+      "seed": 1203,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0028029144496661117,
+      "capTicks": 0,
+      "maximumEnergyResidual": 4.663888830691576e-9,
+      "final": {
+        "tick": 3000,
+        "population": 151,
+        "counts": [
+          33,
+          61,
+          57
+        ],
+        "births": 2075,
+        "deaths": 2044,
+        "mutations": 374,
+        "blockedBirths": 0,
+        "maxGeneration": 7,
+        "meanSpeed": 0.0036458751467323995,
+        "traitSpread": 0.7472610299121938,
+        "particleEnergy": 517.6640836268343,
+        "foodEnergy": 0,
+        "occupiedBins": 63
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17820.00000003736,
+        "dissipated": 16927.80168978512,
+        "deathLoss": 854.534226586042
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0015206039182616678,
+          "traitSpread": 0.7597514213360994,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 68
+        },
+        {
+          "tick": 100,
+          "population": 174,
+          "counts": [
+            57,
+            59,
+            58
+          ],
+          "births": 55,
+          "deaths": 1,
+          "mutations": 6,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0035756578459337097,
+          "traitSpread": 0.7598093845092366,
+          "particleEnergy": 801.3555225278703,
+          "foodEnergy": 0,
+          "occupiedBins": 66
+        },
+        {
+          "tick": 200,
+          "population": 197,
+          "counts": [
+            67,
+            64,
+            66
+          ],
+          "births": 139,
+          "deaths": 62,
+          "mutations": 25,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.004168817578672774,
+          "traitSpread": 0.7595051749878994,
+          "particleEnergy": 605.0699173485499,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 300,
+          "population": 157,
+          "counts": [
+            54,
+            56,
+            47
+          ],
+          "births": 210,
+          "deaths": 173,
+          "mutations": 36,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0029058050093685034,
+          "traitSpread": 0.7577786179870212,
+          "particleEnergy": 544.0575874989736,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 400,
+          "population": 161,
+          "counts": [
+            56,
+            60,
+            45
+          ],
+          "births": 287,
+          "deaths": 246,
+          "mutations": 47,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0029372629647058507,
+          "traitSpread": 0.7563174344302387,
+          "particleEnergy": 547.6105062934931,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 500,
+          "population": 146,
+          "counts": [
+            48,
+            54,
+            44
+          ],
+          "births": 352,
+          "deaths": 326,
+          "mutations": 62,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0034602577433101365,
+          "traitSpread": 0.7571158284036313,
+          "particleEnergy": 534.1981312612182,
+          "foodEnergy": 2.7300000000000004,
+          "occupiedBins": 59
+        },
+        {
+          "tick": 600,
+          "population": 159,
+          "counts": [
+            55,
+            56,
+            48
+          ],
+          "births": 420,
+          "deaths": 381,
+          "mutations": 72,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.003246226489803454,
+          "traitSpread": 0.7572169896751437,
+          "particleEnergy": 550.200393085282,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        },
+        {
+          "tick": 700,
+          "population": 161,
+          "counts": [
+            55,
+            60,
+            46
+          ],
+          "births": 494,
+          "deaths": 453,
+          "mutations": 86,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0027653282020243244,
+          "traitSpread": 0.7560521002129666,
+          "particleEnergy": 565.0868621162169,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 800,
+          "population": 150,
+          "counts": [
+            52,
+            56,
+            42
+          ],
+          "births": 557,
+          "deaths": 527,
+          "mutations": 92,
+          "blockedBirths": 0,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0035498807576772166,
+          "traitSpread": 0.7561331942240129,
+          "particleEnergy": 533.8944783743078,
+          "foodEnergy": 2.360000000000004,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 900,
+          "population": 149,
+          "counts": [
+            49,
+            51,
+            49
+          ],
+          "births": 620,
+          "deaths": 591,
+          "mutations": 104,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0032408814608782437,
+          "traitSpread": 0.7582715059734989,
+          "particleEnergy": 544.4775517066765,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        },
+        {
+          "tick": 1000,
+          "population": 152,
+          "counts": [
+            51,
+            51,
+            50
+          ],
+          "births": 687,
+          "deaths": 655,
+          "mutations": 119,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0024426677504065623,
+          "traitSpread": 0.7560050264077834,
+          "particleEnergy": 510.47794143188855,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 1100,
+          "population": 141,
+          "counts": [
+            33,
+            46,
+            62
+          ],
+          "births": 756,
+          "deaths": 735,
+          "mutations": 128,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0022964456104138126,
+          "traitSpread": 0.7452123511348676,
+          "particleEnergy": 515.2426365827488,
+          "foodEnergy": 2.6900000000000057,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 1200,
+          "population": 155,
+          "counts": [
+            38,
+            60,
+            57
+          ],
+          "births": 830,
+          "deaths": 795,
+          "mutations": 141,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0025467580494267315,
+          "traitSpread": 0.7482109544289217,
+          "particleEnergy": 521.8193147706589,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 1300,
+          "population": 138,
+          "counts": [
+            38,
+            54,
+            46
+          ],
+          "births": 886,
+          "deaths": 868,
+          "mutations": 152,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.002536084933051645,
+          "traitSpread": 0.7539613058397857,
+          "particleEnergy": 522.5022999145895,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 1400,
+          "population": 157,
+          "counts": [
+            39,
+            63,
+            55
+          ],
+          "births": 962,
+          "deaths": 925,
+          "mutations": 164,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0026763466063276804,
+          "traitSpread": 0.7509159754747633,
+          "particleEnergy": 528.3960068831939,
+          "foodEnergy": 12.690000000000005,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 1500,
+          "population": 154,
+          "counts": [
+            39,
+            64,
+            51
+          ],
+          "births": 1025,
+          "deaths": 991,
+          "mutations": 179,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0027755130838978343,
+          "traitSpread": 0.7504093165407508,
+          "particleEnergy": 540.3006638504345,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 1600,
+          "population": 160,
+          "counts": [
+            35,
+            72,
+            53
+          ],
+          "births": 1094,
+          "deaths": 1054,
+          "mutations": 189,
+          "blockedBirths": 0,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0015660272077987545,
+          "traitSpread": 0.7423228385376436,
+          "particleEnergy": 570.5653718124759,
+          "foodEnergy": 0,
+          "occupiedBins": 53
+        },
+        {
+          "tick": 1700,
+          "population": 157,
+          "counts": [
+            23,
+            80,
+            54
+          ],
+          "births": 1168,
+          "deaths": 1131,
+          "mutations": 207,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0023372179323882447,
+          "traitSpread": 0.7207663312689571,
+          "particleEnergy": 561.1863275320161,
+          "foodEnergy": 0,
+          "occupiedBins": 46
+        },
+        {
+          "tick": 1800,
+          "population": 160,
+          "counts": [
+            22,
+            84,
+            54
+          ],
+          "births": 1242,
+          "deaths": 1202,
+          "mutations": 218,
+          "blockedBirths": 0,
+          "maxGeneration": 4,
+          "meanSpeed": 0.002609586456565091,
+          "traitSpread": 0.7159845121331775,
+          "particleEnergy": 513.6885426285548,
+          "foodEnergy": 0,
+          "occupiedBins": 59
+        },
+        {
+          "tick": 1900,
+          "population": 146,
+          "counts": [
+            19,
+            79,
+            48
+          ],
+          "births": 1307,
+          "deaths": 1281,
+          "mutations": 229,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0028363193549638733,
+          "traitSpread": 0.7067559770327353,
+          "particleEnergy": 515.7697898120182,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 2000,
+          "population": 155,
+          "counts": [
+            22,
+            93,
+            40
+          ],
+          "births": 1385,
+          "deaths": 1350,
+          "mutations": 247,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002555514363362013,
+          "traitSpread": 0.6911294651257731,
+          "particleEnergy": 542.1867343606835,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        },
+        {
+          "tick": 2100,
+          "population": 156,
+          "counts": [
+            24,
+            93,
+            39
+          ],
+          "births": 1454,
+          "deaths": 1418,
+          "mutations": 256,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002931243924360014,
+          "traitSpread": 0.692437245515109,
+          "particleEnergy": 504.87209135804676,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 2200,
+          "population": 150,
+          "counts": [
+            24,
+            92,
+            34
+          ],
+          "births": 1523,
+          "deaths": 1493,
+          "mutations": 271,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002017813215397124,
+          "traitSpread": 0.6858464626797832,
+          "particleEnergy": 521.3863403667713,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 2300,
+          "population": 161,
+          "counts": [
+            23,
+            96,
+            42
+          ],
+          "births": 1598,
+          "deaths": 1557,
+          "mutations": 282,
+          "blockedBirths": 0,
+          "maxGeneration": 5,
+          "meanSpeed": 0.002396571703284282,
+          "traitSpread": 0.6932818794778803,
+          "particleEnergy": 541.5585423226121,
+          "foodEnergy": 0,
+          "occupiedBins": 64
+        },
+        {
+          "tick": 2400,
+          "population": 157,
+          "counts": [
+            26,
+            88,
+            43
+          ],
+          "births": 1673,
+          "deaths": 1636,
+          "mutations": 297,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0022429563476321014,
+          "traitSpread": 0.7106250518753531,
+          "particleEnergy": 521.8870587419023,
+          "foodEnergy": 0,
+          "occupiedBins": 56
+        },
+        {
+          "tick": 2500,
+          "population": 152,
+          "counts": [
+            20,
+            90,
+            42
+          ],
+          "births": 1735,
+          "deaths": 1703,
+          "mutations": 306,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0028776420876992954,
+          "traitSpread": 0.6960977645136137,
+          "particleEnergy": 535.4331256750856,
+          "foodEnergy": 0,
+          "occupiedBins": 54
+        },
+        {
+          "tick": 2600,
+          "population": 158,
+          "counts": [
+            24,
+            94,
+            40
+          ],
+          "births": 1805,
+          "deaths": 1767,
+          "mutations": 322,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0033970065549238262,
+          "traitSpread": 0.6975977102127158,
+          "particleEnergy": 538.3637637824241,
+          "foodEnergy": 0,
+          "occupiedBins": 54
+        },
+        {
+          "tick": 2700,
+          "population": 154,
+          "counts": [
+            26,
+            86,
+            42
+          ],
+          "births": 1876,
+          "deaths": 1842,
+          "mutations": 335,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0030220733749566453,
+          "traitSpread": 0.7137964184024455,
+          "particleEnergy": 548.7763208406662,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 2800,
+          "population": 163,
+          "counts": [
+            35,
+            84,
+            44
+          ],
+          "births": 1944,
+          "deaths": 1901,
+          "mutations": 352,
+          "blockedBirths": 0,
+          "maxGeneration": 6,
+          "meanSpeed": 0.002228607254822264,
+          "traitSpread": 0.7326597484503883,
+          "particleEnergy": 555.9640198191643,
+          "foodEnergy": 0,
+          "occupiedBins": 66
+        },
+        {
+          "tick": 2900,
+          "population": 148,
+          "counts": [
+            38,
+            63,
+            47
+          ],
+          "births": 2012,
+          "deaths": 1984,
+          "mutations": 362,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0028772250433759783,
+          "traitSpread": 0.7527344185580396,
+          "particleEnergy": 488.77360048723057,
+          "foodEnergy": 0,
+          "occupiedBins": 51
+        },
+        {
+          "tick": 3000,
+          "population": 151,
+          "counts": [
+            33,
+            61,
+            57
+          ],
+          "births": 2075,
+          "deaths": 2044,
+          "mutations": 374,
+          "blockedBirths": 0,
+          "maxGeneration": 7,
+          "meanSpeed": 0.0036458751467323995,
+          "traitSpread": 0.7472610299121938,
+          "particleEnergy": 517.6640836268343,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        }
+      ]
+    },
+    {
+      "preset": "colonies",
+      "seed": 1201,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0005987419817705058,
+      "capTicks": 44,
+      "maximumEnergyResidual": 6.819391273893416e-9,
+      "final": {
+        "tick": 3000,
+        "population": 179,
+        "counts": [
+          54,
+          65,
+          60
+        ],
+        "births": 2933,
+        "deaths": 2874,
+        "mutations": 425,
+        "blockedBirths": 1509,
+        "maxGeneration": 5,
+        "meanSpeed": 0.0005017691421541899,
+        "traitSpread": 0.7484702416469233,
+        "particleEnergy": 548.3022066105307,
+        "foodEnergy": 0,
+        "occupiedBins": 24
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17820.00000003737,
+        "dissipated": 16959.485613091936,
+        "deathLoss": 792.2121802977474
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.001557187485869549,
+          "traitSpread": 0.7542472332656505,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 72
+        },
+        {
+          "tick": 100,
+          "population": 181,
+          "counts": [
+            59,
+            60,
+            62
+          ],
+          "births": 61,
+          "deaths": 0,
+          "mutations": 9,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006180582652078178,
+          "traitSpread": 0.7528698624067092,
+          "particleEnergy": 868.3208718921695,
+          "foodEnergy": 0,
+          "occupiedBins": 61
+        },
+        {
+          "tick": 200,
+          "population": 239,
+          "counts": [
+            72,
+            84,
+            83
+          ],
+          "births": 165,
+          "deaths": 46,
+          "mutations": 29,
+          "blockedBirths": 1090,
+          "maxGeneration": 1,
+          "meanSpeed": 0.000622117250756185,
+          "traitSpread": 0.7519627626143515,
+          "particleEnergy": 763.2877831792256,
+          "foodEnergy": 0,
+          "occupiedBins": 50
+        },
+        {
+          "tick": 300,
+          "population": 213,
+          "counts": [
+            64,
+            76,
+            73
+          ],
+          "births": 270,
+          "deaths": 177,
+          "mutations": 43,
+          "blockedBirths": 1491,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005623943263895739,
+          "traitSpread": 0.7502636799815366,
+          "particleEnergy": 681.5284356967317,
+          "foodEnergy": 0,
+          "occupiedBins": 46
+        },
+        {
+          "tick": 400,
+          "population": 203,
+          "counts": [
+            63,
+            74,
+            66
+          ],
+          "births": 371,
+          "deaths": 288,
+          "mutations": 56,
+          "blockedBirths": 1509,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005683919711227846,
+          "traitSpread": 0.7508278815445171,
+          "particleEnergy": 614.2530958916145,
+          "foodEnergy": 0,
+          "occupiedBins": 40
+        },
+        {
+          "tick": 500,
+          "population": 198,
+          "counts": [
+            59,
+            73,
+            66
+          ],
+          "births": 475,
+          "deaths": 397,
+          "mutations": 76,
+          "blockedBirths": 1509,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0010023159775571487,
+          "traitSpread": 0.7501980970457559,
+          "particleEnergy": 610.6531321492816,
+          "foodEnergy": 0,
+          "occupiedBins": 41
+        },
+        {
+          "tick": 600,
+          "population": 199,
+          "counts": [
+            60,
+            74,
+            65
+          ],
+          "births": 581,
+          "deaths": 502,
+          "mutations": 92,
+          "blockedBirths": 1509,
+          "maxGeneration": 1,
+          "meanSpeed": 0.000560087303855381,
+          "traitSpread": 0.7508816845051665,
+          "particleEnergy": 606.2888751109389,
+          "foodEnergy": 0,
+          "occupiedBins": 36
+        },
+        {
+          "tick": 700,
+          "population": 200,
+          "counts": [
+            60,
+            73,
+            67
+          ],
+          "births": 686,
+          "deaths": 606,
+          "mutations": 113,
+          "blockedBirths": 1509,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006175634499366823,
+          "traitSpread": 0.7526400063554065,
+          "particleEnergy": 609.1307409004379,
+          "foodEnergy": 0,
+          "occupiedBins": 37
+        },
+        {
+          "tick": 800,
+          "population": 191,
+          "counts": [
+            54,
+            76,
+            61
+          ],
+          "births": 785,
+          "deaths": 714,
+          "mutations": 127,
+          "blockedBirths": 1509,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005064229949626852,
+          "traitSpread": 0.7504520474016446,
+          "particleEnergy": 580.550662636615,
+          "foodEnergy": 0,
+          "occupiedBins": 39
+        },
+        {
+          "tick": 900,
+          "population": 176,
+          "counts": [
+            50,
+            73,
+            53
+          ],
+          "births": 875,
+          "deaths": 819,
+          "mutations": 136,
+          "blockedBirths": 1509,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0004928474532953904,
+          "traitSpread": 0.7482247160888126,
+          "particleEnergy": 541.9693966784583,
+          "foodEnergy": 0,
+          "occupiedBins": 39
+        },
+        {
+          "tick": 1000,
+          "population": 171,
+          "counts": [
+            51,
+            67,
+            53
+          ],
+          "births": 964,
+          "deaths": 913,
+          "mutations": 148,
+          "blockedBirths": 1509,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0005320306757045631,
+          "traitSpread": 0.7502607946499859,
+          "particleEnergy": 550.025351980217,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1100,
+          "population": 181,
+          "counts": [
+            53,
+            63,
+            65
+          ],
+          "births": 1060,
+          "deaths": 999,
+          "mutations": 157,
+          "blockedBirths": 1509,
+          "maxGeneration": 2,
+          "meanSpeed": 0.000500527482607671,
+          "traitSpread": 0.7515291060718674,
+          "particleEnergy": 561.1200873314366,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1200,
+          "population": 187,
+          "counts": [
+            46,
+            64,
+            77
+          ],
+          "births": 1157,
+          "deaths": 1090,
+          "mutations": 173,
+          "blockedBirths": 1509,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0004430511224480842,
+          "traitSpread": 0.7424188284742242,
+          "particleEnergy": 561.2047143366285,
+          "foodEnergy": 0,
+          "occupiedBins": 35
+        },
+        {
+          "tick": 1300,
+          "population": 182,
+          "counts": [
+            43,
+            61,
+            78
+          ],
+          "births": 1250,
+          "deaths": 1188,
+          "mutations": 182,
+          "blockedBirths": 1509,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005773939144338745,
+          "traitSpread": 0.7397617446964898,
+          "particleEnergy": 563.8273613489774,
+          "foodEnergy": 0,
+          "occupiedBins": 36
+        },
+        {
+          "tick": 1400,
+          "population": 192,
+          "counts": [
+            48,
+            65,
+            79
+          ],
+          "births": 1350,
+          "deaths": 1278,
+          "mutations": 196,
+          "blockedBirths": 1509,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004982280739406145,
+          "traitSpread": 0.7420914746603677,
+          "particleEnergy": 596.5852894627566,
+          "foodEnergy": 0,
+          "occupiedBins": 39
+        },
+        {
+          "tick": 1500,
+          "population": 198,
+          "counts": [
+            48,
+            71,
+            79
+          ],
+          "births": 1453,
+          "deaths": 1375,
+          "mutations": 207,
+          "blockedBirths": 1509,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005217701159313125,
+          "traitSpread": 0.741137625157344,
+          "particleEnergy": 609.9732264939204,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1600,
+          "population": 196,
+          "counts": [
+            46,
+            70,
+            80
+          ],
+          "births": 1560,
+          "deaths": 1484,
+          "mutations": 227,
+          "blockedBirths": 1509,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005578523091965937,
+          "traitSpread": 0.7376343038635677,
+          "particleEnergy": 611.2056535203992,
+          "foodEnergy": 0,
+          "occupiedBins": 31
+        },
+        {
+          "tick": 1700,
+          "population": 200,
+          "counts": [
+            48,
+            72,
+            80
+          ],
+          "births": 1664,
+          "deaths": 1584,
+          "mutations": 242,
+          "blockedBirths": 1509,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0006419462087362882,
+          "traitSpread": 0.740320960800111,
+          "particleEnergy": 604.3203846261706,
+          "foodEnergy": 0,
+          "occupiedBins": 32
+        },
+        {
+          "tick": 1800,
+          "population": 193,
+          "counts": [
+            47,
+            67,
+            79
+          ],
+          "births": 1767,
+          "deaths": 1694,
+          "mutations": 252,
+          "blockedBirths": 1509,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005790906320682948,
+          "traitSpread": 0.7406716873213862,
+          "particleEnergy": 576.0249620390233,
+          "foodEnergy": 0,
+          "occupiedBins": 31
+        },
+        {
+          "tick": 1900,
+          "population": 185,
+          "counts": [
+            48,
+            62,
+            75
+          ],
+          "births": 1859,
+          "deaths": 1794,
+          "mutations": 263,
+          "blockedBirths": 1509,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005067714668104974,
+          "traitSpread": 0.742728273685454,
+          "particleEnergy": 559.1482175895453,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 2000,
+          "population": 175,
+          "counts": [
+            44,
+            59,
+            72
+          ],
+          "births": 1948,
+          "deaths": 1893,
+          "mutations": 274,
+          "blockedBirths": 1509,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0006178966353297843,
+          "traitSpread": 0.7439317867932248,
+          "particleEnergy": 559.7129734643961,
+          "foodEnergy": 0,
+          "occupiedBins": 28
+        },
+        {
+          "tick": 2100,
+          "population": 181,
+          "counts": [
+            44,
+            74,
+            63
+          ],
+          "births": 2043,
+          "deaths": 1982,
+          "mutations": 288,
+          "blockedBirths": 1509,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0004860730055028379,
+          "traitSpread": 0.743402073482358,
+          "particleEnergy": 563.8816916588687,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 2200,
+          "population": 179,
+          "counts": [
+            40,
+            81,
+            58
+          ],
+          "births": 2137,
+          "deaths": 2078,
+          "mutations": 304,
+          "blockedBirths": 1509,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005543492000364633,
+          "traitSpread": 0.7360629713647185,
+          "particleEnergy": 564.6418959116661,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 2300,
+          "population": 183,
+          "counts": [
+            41,
+            81,
+            61
+          ],
+          "births": 2235,
+          "deaths": 2172,
+          "mutations": 320,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005468100636009462,
+          "traitSpread": 0.7346665487418667,
+          "particleEnergy": 583.5229186727348,
+          "foodEnergy": 0,
+          "occupiedBins": 25
+        },
+        {
+          "tick": 2400,
+          "population": 191,
+          "counts": [
+            46,
+            80,
+            65
+          ],
+          "births": 2337,
+          "deaths": 2266,
+          "mutations": 332,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005741813947579327,
+          "traitSpread": 0.7395390970571675,
+          "particleEnergy": 588.354342113245,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        },
+        {
+          "tick": 2500,
+          "population": 195,
+          "counts": [
+            51,
+            84,
+            60
+          ],
+          "births": 2437,
+          "deaths": 2362,
+          "mutations": 350,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005577134602729725,
+          "traitSpread": 0.7408817179017877,
+          "particleEnergy": 588.2359727581392,
+          "foodEnergy": 0,
+          "occupiedBins": 27
+        },
+        {
+          "tick": 2600,
+          "population": 193,
+          "counts": [
+            50,
+            82,
+            61
+          ],
+          "births": 2539,
+          "deaths": 2466,
+          "mutations": 359,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005272232688442884,
+          "traitSpread": 0.7410683837638072,
+          "particleEnergy": 604.2505688455315,
+          "foodEnergy": 0,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 2700,
+          "population": 195,
+          "counts": [
+            53,
+            82,
+            60
+          ],
+          "births": 2643,
+          "deaths": 2568,
+          "mutations": 379,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.000522585718663265,
+          "traitSpread": 0.7435076583045287,
+          "particleEnergy": 599.5669161237147,
+          "foodEnergy": 0,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 2800,
+          "population": 190,
+          "counts": [
+            53,
+            76,
+            61
+          ],
+          "births": 2742,
+          "deaths": 2672,
+          "mutations": 393,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005412421245811213,
+          "traitSpread": 0.7469731318120636,
+          "particleEnergy": 589.6149918919452,
+          "foodEnergy": 0,
+          "occupiedBins": 28
+        },
+        {
+          "tick": 2900,
+          "population": 192,
+          "counts": [
+            53,
+            73,
+            66
+          ],
+          "births": 2842,
+          "deaths": 2770,
+          "mutations": 413,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005746023739109158,
+          "traitSpread": 0.7455177629307006,
+          "particleEnergy": 586.892852216016,
+          "foodEnergy": 0,
+          "occupiedBins": 27
+        },
+        {
+          "tick": 3000,
+          "population": 179,
+          "counts": [
+            54,
+            65,
+            60
+          ],
+          "births": 2933,
+          "deaths": 2874,
+          "mutations": 425,
+          "blockedBirths": 1509,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005017691421541899,
+          "traitSpread": 0.7484702416469233,
+          "particleEnergy": 548.3022066105307,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        }
+      ]
+    },
+    {
+      "preset": "colonies",
+      "seed": 1202,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0006047009410377236,
+      "capTicks": 49,
+      "maximumEnergyResidual": 6.7357177613303065e-9,
+      "final": {
+        "tick": 3000,
+        "population": 184,
+        "counts": [
+          60,
+          55,
+          69
+        ],
+        "births": 2934,
+        "deaths": 2870,
+        "mutations": 432,
+        "blockedBirths": 2211,
+        "maxGeneration": 6,
+        "meanSpeed": 0.0006547483257933885,
+        "traitSpread": 0.7519935500957657,
+        "particleEnergy": 571.6031815225791,
+        "foodEnergy": 0,
+        "occupiedBins": 22
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17820.000000037388,
+        "dissipated": 16922.605939472076,
+        "deathLoss": 805.7908790055676
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0016554898895466824,
+          "traitSpread": 0.7542472332656505,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 71
+        },
+        {
+          "tick": 100,
+          "population": 192,
+          "counts": [
+            66,
+            66,
+            60
+          ],
+          "births": 72,
+          "deaths": 0,
+          "mutations": 12,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006323661013292917,
+          "traitSpread": 0.7534450499932789,
+          "particleEnergy": 848.2176730149666,
+          "foodEnergy": 0,
+          "occupiedBins": 66
+        },
+        {
+          "tick": 200,
+          "population": 238,
+          "counts": [
+            77,
+            85,
+            76
+          ],
+          "births": 158,
+          "deaths": 40,
+          "mutations": 33,
+          "blockedBirths": 1802,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005627865867264362,
+          "traitSpread": 0.7524336540439734,
+          "particleEnergy": 728.39812526798,
+          "foodEnergy": 0,
+          "occupiedBins": 60
+        },
+        {
+          "tick": 300,
+          "population": 219,
+          "counts": [
+            68,
+            77,
+            74
+          ],
+          "births": 277,
+          "deaths": 178,
+          "mutations": 54,
+          "blockedBirths": 1878,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005656508150060599,
+          "traitSpread": 0.7533542931027775,
+          "particleEnergy": 697.2964204629327,
+          "foodEnergy": 0,
+          "occupiedBins": 55
+        },
+        {
+          "tick": 400,
+          "population": 202,
+          "counts": [
+            65,
+            67,
+            70
+          ],
+          "births": 377,
+          "deaths": 295,
+          "mutations": 72,
+          "blockedBirths": 2211,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006940679722065031,
+          "traitSpread": 0.752475261095188,
+          "particleEnergy": 626.5476074050526,
+          "foodEnergy": 0,
+          "occupiedBins": 51
+        },
+        {
+          "tick": 500,
+          "population": 219,
+          "counts": [
+            70,
+            71,
+            78
+          ],
+          "births": 484,
+          "deaths": 385,
+          "mutations": 91,
+          "blockedBirths": 2211,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005198262996124561,
+          "traitSpread": 0.750982805577825,
+          "particleEnergy": 616.3998891165913,
+          "foodEnergy": 0,
+          "occupiedBins": 45
+        },
+        {
+          "tick": 600,
+          "population": 207,
+          "counts": [
+            66,
+            69,
+            72
+          ],
+          "births": 591,
+          "deaths": 504,
+          "mutations": 110,
+          "blockedBirths": 2211,
+          "maxGeneration": 1,
+          "meanSpeed": 0.000592231639754132,
+          "traitSpread": 0.7519020666126521,
+          "particleEnergy": 614.2851013965854,
+          "foodEnergy": 0,
+          "occupiedBins": 43
+        },
+        {
+          "tick": 700,
+          "population": 199,
+          "counts": [
+            60,
+            70,
+            69
+          ],
+          "births": 693,
+          "deaths": 614,
+          "mutations": 121,
+          "blockedBirths": 2211,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006032594833797354,
+          "traitSpread": 0.751558652448698,
+          "particleEnergy": 591.5883067371574,
+          "foodEnergy": 0,
+          "occupiedBins": 40
+        },
+        {
+          "tick": 800,
+          "population": 193,
+          "counts": [
+            57,
+            70,
+            66
+          ],
+          "births": 794,
+          "deaths": 721,
+          "mutations": 134,
+          "blockedBirths": 2211,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0005840846997440097,
+          "traitSpread": 0.7516591936490485,
+          "particleEnergy": 587.4797644261711,
+          "foodEnergy": 0,
+          "occupiedBins": 39
+        },
+        {
+          "tick": 900,
+          "population": 186,
+          "counts": [
+            52,
+            70,
+            64
+          ],
+          "births": 886,
+          "deaths": 820,
+          "mutations": 147,
+          "blockedBirths": 2211,
+          "maxGeneration": 2,
+          "meanSpeed": 0.000570021959762571,
+          "traitSpread": 0.7491141143347422,
+          "particleEnergy": 570.2357033653333,
+          "foodEnergy": 0,
+          "occupiedBins": 38
+        },
+        {
+          "tick": 1000,
+          "population": 184,
+          "counts": [
+            49,
+            78,
+            57
+          ],
+          "births": 981,
+          "deaths": 917,
+          "mutations": 162,
+          "blockedBirths": 2211,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0006154478056487338,
+          "traitSpread": 0.7439198051620126,
+          "particleEnergy": 553.8196107000521,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1100,
+          "population": 177,
+          "counts": [
+            42,
+            81,
+            54
+          ],
+          "births": 1070,
+          "deaths": 1013,
+          "mutations": 178,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.000528931498046101,
+          "traitSpread": 0.7409132258988143,
+          "particleEnergy": 559.9770006357695,
+          "foodEnergy": 0,
+          "occupiedBins": 35
+        },
+        {
+          "tick": 1200,
+          "population": 178,
+          "counts": [
+            44,
+            83,
+            51
+          ],
+          "births": 1164,
+          "deaths": 1106,
+          "mutations": 193,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005216889081356726,
+          "traitSpread": 0.7391476802567731,
+          "particleEnergy": 558.0049710812415,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1300,
+          "population": 176,
+          "counts": [
+            45,
+            82,
+            49
+          ],
+          "births": 1256,
+          "deaths": 1200,
+          "mutations": 210,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005151833238628109,
+          "traitSpread": 0.7405822634448269,
+          "particleEnergy": 563.8593466610162,
+          "foodEnergy": 0,
+          "occupiedBins": 33
+        },
+        {
+          "tick": 1400,
+          "population": 188,
+          "counts": [
+            52,
+            89,
+            47
+          ],
+          "births": 1354,
+          "deaths": 1286,
+          "mutations": 216,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00048762169749659985,
+          "traitSpread": 0.7403254249040199,
+          "particleEnergy": 591.4611461974292,
+          "foodEnergy": 0,
+          "occupiedBins": 33
+        },
+        {
+          "tick": 1500,
+          "population": 197,
+          "counts": [
+            59,
+            90,
+            48
+          ],
+          "births": 1459,
+          "deaths": 1382,
+          "mutations": 230,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005283266116670005,
+          "traitSpread": 0.7402839351009365,
+          "particleEnergy": 608.9680920419033,
+          "foodEnergy": 0,
+          "occupiedBins": 33
+        },
+        {
+          "tick": 1600,
+          "population": 196,
+          "counts": [
+            62,
+            84,
+            50
+          ],
+          "births": 1563,
+          "deaths": 1487,
+          "mutations": 246,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005755395361930701,
+          "traitSpread": 0.7473006342075398,
+          "particleEnergy": 602.3350698438575,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1700,
+          "population": 192,
+          "counts": [
+            59,
+            83,
+            50
+          ],
+          "births": 1664,
+          "deaths": 1592,
+          "mutations": 266,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004915241669902975,
+          "traitSpread": 0.746364979422722,
+          "particleEnergy": 595.6327462327897,
+          "foodEnergy": 0,
+          "occupiedBins": 34
+        },
+        {
+          "tick": 1800,
+          "population": 193,
+          "counts": [
+            61,
+            84,
+            48
+          ],
+          "births": 1766,
+          "deaths": 1693,
+          "mutations": 276,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.000488295800150301,
+          "traitSpread": 0.7447187587888947,
+          "particleEnergy": 594.0810436406288,
+          "foodEnergy": 0,
+          "occupiedBins": 36
+        },
+        {
+          "tick": 1900,
+          "population": 187,
+          "counts": [
+            59,
+            81,
+            47
+          ],
+          "births": 1863,
+          "deaths": 1796,
+          "mutations": 287,
+          "blockedBirths": 2211,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005026043005721235,
+          "traitSpread": 0.7467806100921197,
+          "particleEnergy": 557.2013267592935,
+          "foodEnergy": 0,
+          "occupiedBins": 33
+        },
+        {
+          "tick": 2000,
+          "population": 181,
+          "counts": [
+            62,
+            71,
+            48
+          ],
+          "births": 1957,
+          "deaths": 1896,
+          "mutations": 301,
+          "blockedBirths": 2211,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005061440599527383,
+          "traitSpread": 0.7518532533082096,
+          "particleEnergy": 562.9613302604823,
+          "foodEnergy": 0,
+          "occupiedBins": 31
+        },
+        {
+          "tick": 2100,
+          "population": 179,
+          "counts": [
+            67,
+            63,
+            49
+          ],
+          "births": 2052,
+          "deaths": 1993,
+          "mutations": 310,
+          "blockedBirths": 2211,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005053570865273067,
+          "traitSpread": 0.7518599777425997,
+          "particleEnergy": 557.4921363913278,
+          "foodEnergy": 0,
+          "occupiedBins": 28
+        },
+        {
+          "tick": 2200,
+          "population": 180,
+          "counts": [
+            71,
+            56,
+            53
+          ],
+          "births": 2143,
+          "deaths": 2083,
+          "mutations": 319,
+          "blockedBirths": 2211,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005438490548216203,
+          "traitSpread": 0.7494346119938154,
+          "particleEnergy": 561.0586677353939,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 2300,
+          "population": 183,
+          "counts": [
+            71,
+            53,
+            59
+          ],
+          "births": 2243,
+          "deaths": 2180,
+          "mutations": 331,
+          "blockedBirths": 2211,
+          "maxGeneration": 4,
+          "meanSpeed": 0.000568807601681767,
+          "traitSpread": 0.7489847010155816,
+          "particleEnergy": 583.468462142547,
+          "foodEnergy": 0,
+          "occupiedBins": 25
+        },
+        {
+          "tick": 2400,
+          "population": 190,
+          "counts": [
+            69,
+            58,
+            63
+          ],
+          "births": 2345,
+          "deaths": 2275,
+          "mutations": 349,
+          "blockedBirths": 2211,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0006301318128170118,
+          "traitSpread": 0.7504865919213609,
+          "particleEnergy": 581.406678920629,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        },
+        {
+          "tick": 2500,
+          "population": 190,
+          "counts": [
+            66,
+            58,
+            66
+          ],
+          "births": 2446,
+          "deaths": 2376,
+          "mutations": 360,
+          "blockedBirths": 2211,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0006656395648097416,
+          "traitSpread": 0.7517707167257285,
+          "particleEnergy": 577.7771658694494,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        },
+        {
+          "tick": 2600,
+          "population": 193,
+          "counts": [
+            64,
+            56,
+            73
+          ],
+          "births": 2547,
+          "deaths": 2474,
+          "mutations": 375,
+          "blockedBirths": 2211,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0006015865528727837,
+          "traitSpread": 0.7515113738582706,
+          "particleEnergy": 587.3863168488507,
+          "foodEnergy": 0,
+          "occupiedBins": 25
+        },
+        {
+          "tick": 2700,
+          "population": 196,
+          "counts": [
+            65,
+            56,
+            75
+          ],
+          "births": 2646,
+          "deaths": 2570,
+          "mutations": 389,
+          "blockedBirths": 2211,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005557747739089205,
+          "traitSpread": 0.751619133616623,
+          "particleEnergy": 596.7655040563742,
+          "foodEnergy": 0,
+          "occupiedBins": 21
+        },
+        {
+          "tick": 2800,
+          "population": 191,
+          "counts": [
+            67,
+            55,
+            69
+          ],
+          "births": 2744,
+          "deaths": 2673,
+          "mutations": 407,
+          "blockedBirths": 2211,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005985944369977293,
+          "traitSpread": 0.7485740520424934,
+          "particleEnergy": 573.5342558066608,
+          "foodEnergy": 0,
+          "occupiedBins": 21
+        },
+        {
+          "tick": 2900,
+          "population": 190,
+          "counts": [
+            63,
+            57,
+            70
+          ],
+          "births": 2843,
+          "deaths": 2773,
+          "mutations": 420,
+          "blockedBirths": 2211,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0006779532966234714,
+          "traitSpread": 0.7503548098867772,
+          "particleEnergy": 553.0883083122816,
+          "foodEnergy": 0,
+          "occupiedBins": 22
+        },
+        {
+          "tick": 3000,
+          "population": 184,
+          "counts": [
+            60,
+            55,
+            69
+          ],
+          "births": 2934,
+          "deaths": 2870,
+          "mutations": 432,
+          "blockedBirths": 2211,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0006547483257933885,
+          "traitSpread": 0.7519935500957657,
+          "particleEnergy": 571.6031815225791,
+          "foodEnergy": 0,
+          "occupiedBins": 22
+        }
+      ]
+    },
+    {
+      "preset": "colonies",
+      "seed": 1203,
+      "ticksCompleted": 3000,
+      "extinctionTick": null,
+      "meanPerTickSpeed": 0.0005929033811901778,
+      "capTicks": 52,
+      "maximumEnergyResidual": 6.792106432840228e-9,
+      "final": {
+        "tick": 3000,
+        "population": 182,
+        "counts": [
+          78,
+          39,
+          65
+        ],
+        "births": 2931,
+        "deaths": 2869,
+        "mutations": 460,
+        "blockedBirths": 1690,
+        "maxGeneration": 6,
+        "meanSpeed": 0.0005594274017322345,
+        "traitSpread": 0.7405122828215205,
+        "particleEnergy": 563.7176448967393,
+        "foodEnergy": 0,
+        "occupiedBins": 23
+      },
+      "ledger": {
+        "initial": 750,
+        "renewed": 17549.999999996136,
+        "consumed": 17820.000000037377,
+        "dissipated": 16919.059823602012,
+        "deathLoss": 817.2225315014218
+      },
+      "history": [
+        {
+          "tick": 0,
+          "population": 120,
+          "counts": [
+            40,
+            40,
+            40
+          ],
+          "births": 0,
+          "deaths": 0,
+          "mutations": 0,
+          "blockedBirths": 0,
+          "maxGeneration": 0,
+          "meanSpeed": 0.0015206039182616678,
+          "traitSpread": 0.7542472332656505,
+          "particleEnergy": 480,
+          "foodEnergy": 270,
+          "occupiedBins": 68
+        },
+        {
+          "tick": 100,
+          "population": 184,
+          "counts": [
+            62,
+            65,
+            57
+          ],
+          "births": 64,
+          "deaths": 0,
+          "mutations": 8,
+          "blockedBirths": 0,
+          "maxGeneration": 1,
+          "meanSpeed": 0.000509904038328669,
+          "traitSpread": 0.7532030623300328,
+          "particleEnergy": 866.9248634863577,
+          "foodEnergy": 0,
+          "occupiedBins": 63
+        },
+        {
+          "tick": 200,
+          "population": 237,
+          "counts": [
+            81,
+            84,
+            72
+          ],
+          "births": 161,
+          "deaths": 44,
+          "mutations": 24,
+          "blockedBirths": 1390,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006643581790879885,
+          "traitSpread": 0.7524953591944231,
+          "particleEnergy": 762.8359452630114,
+          "foodEnergy": 0,
+          "occupiedBins": 62
+        },
+        {
+          "tick": 300,
+          "population": 216,
+          "counts": [
+            76,
+            77,
+            63
+          ],
+          "births": 269,
+          "deaths": 173,
+          "mutations": 39,
+          "blockedBirths": 1635,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006690402648146192,
+          "traitSpread": 0.7525313909533219,
+          "particleEnergy": 687.7459874127437,
+          "foodEnergy": 0,
+          "occupiedBins": 50
+        },
+        {
+          "tick": 400,
+          "population": 199,
+          "counts": [
+            70,
+            68,
+            61
+          ],
+          "births": 374,
+          "deaths": 295,
+          "mutations": 53,
+          "blockedBirths": 1690,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0006368123263531965,
+          "traitSpread": 0.7544770263411049,
+          "particleEnergy": 610.5285302983291,
+          "foodEnergy": 0,
+          "occupiedBins": 40
+        },
+        {
+          "tick": 500,
+          "population": 206,
+          "counts": [
+            76,
+            69,
+            61
+          ],
+          "births": 482,
+          "deaths": 396,
+          "mutations": 69,
+          "blockedBirths": 1690,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005377100782867273,
+          "traitSpread": 0.7504886030068398,
+          "particleEnergy": 612.3836501934386,
+          "foodEnergy": 0,
+          "occupiedBins": 42
+        },
+        {
+          "tick": 600,
+          "population": 204,
+          "counts": [
+            73,
+            70,
+            61
+          ],
+          "births": 585,
+          "deaths": 501,
+          "mutations": 81,
+          "blockedBirths": 1690,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005595132969209688,
+          "traitSpread": 0.7523506591486543,
+          "particleEnergy": 613.7799316672098,
+          "foodEnergy": 0,
+          "occupiedBins": 39
+        },
+        {
+          "tick": 700,
+          "population": 200,
+          "counts": [
+            71,
+            67,
+            62
+          ],
+          "births": 690,
+          "deaths": 610,
+          "mutations": 101,
+          "blockedBirths": 1690,
+          "maxGeneration": 1,
+          "meanSpeed": 0.0005268879627500895,
+          "traitSpread": 0.7522318182138622,
+          "particleEnergy": 597.8019798856271,
+          "foodEnergy": 0,
+          "occupiedBins": 41
+        },
+        {
+          "tick": 800,
+          "population": 193,
+          "counts": [
+            65,
+            64,
+            64
+          ],
+          "births": 790,
+          "deaths": 717,
+          "mutations": 112,
+          "blockedBirths": 1690,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0005490935825887903,
+          "traitSpread": 0.7545665488329817,
+          "particleEnergy": 578.6673140822918,
+          "foodEnergy": 0,
+          "occupiedBins": 38
+        },
+        {
+          "tick": 900,
+          "population": 192,
+          "counts": [
+            60,
+            65,
+            67
+          ],
+          "births": 890,
+          "deaths": 818,
+          "mutations": 130,
+          "blockedBirths": 1690,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0005306073833198946,
+          "traitSpread": 0.7542513392941158,
+          "particleEnergy": 584.4515849460853,
+          "foodEnergy": 0,
+          "occupiedBins": 36
+        },
+        {
+          "tick": 1000,
+          "population": 179,
+          "counts": [
+            57,
+            47,
+            75
+          ],
+          "births": 974,
+          "deaths": 915,
+          "mutations": 140,
+          "blockedBirths": 1690,
+          "maxGeneration": 2,
+          "meanSpeed": 0.0005170588645384227,
+          "traitSpread": 0.7486641141020467,
+          "particleEnergy": 521.1627078485582,
+          "foodEnergy": 0,
+          "occupiedBins": 29
+        },
+        {
+          "tick": 1100,
+          "population": 173,
+          "counts": [
+            59,
+            40,
+            74
+          ],
+          "births": 1060,
+          "deaths": 1007,
+          "mutations": 155,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005277760903233353,
+          "traitSpread": 0.7453227322794749,
+          "particleEnergy": 553.4441325544622,
+          "foodEnergy": 0,
+          "occupiedBins": 31
+        },
+        {
+          "tick": 1200,
+          "population": 183,
+          "counts": [
+            57,
+            50,
+            76
+          ],
+          "births": 1154,
+          "deaths": 1091,
+          "mutations": 175,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0004984156878744969,
+          "traitSpread": 0.7479821129433557,
+          "particleEnergy": 569.5595693777897,
+          "foodEnergy": 0,
+          "occupiedBins": 30
+        },
+        {
+          "tick": 1300,
+          "population": 181,
+          "counts": [
+            56,
+            57,
+            68
+          ],
+          "births": 1249,
+          "deaths": 1188,
+          "mutations": 190,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.00048139475286308075,
+          "traitSpread": 0.7518846149794179,
+          "particleEnergy": 576.4336369919494,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 1400,
+          "population": 192,
+          "counts": [
+            62,
+            62,
+            68
+          ],
+          "births": 1355,
+          "deaths": 1283,
+          "mutations": 209,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005345390974210925,
+          "traitSpread": 0.7529111073916231,
+          "particleEnergy": 607.749430325515,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 1500,
+          "population": 197,
+          "counts": [
+            65,
+            62,
+            70
+          ],
+          "births": 1460,
+          "deaths": 1383,
+          "mutations": 219,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005676192471342364,
+          "traitSpread": 0.7522439882717831,
+          "particleEnergy": 606.7653573104674,
+          "foodEnergy": 0,
+          "occupiedBins": 28
+        },
+        {
+          "tick": 1600,
+          "population": 192,
+          "counts": [
+            62,
+            62,
+            68
+          ],
+          "births": 1561,
+          "deaths": 1489,
+          "mutations": 233,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005254949598429566,
+          "traitSpread": 0.7521071834428151,
+          "particleEnergy": 604.2352526476643,
+          "foodEnergy": 0,
+          "occupiedBins": 30
+        },
+        {
+          "tick": 1700,
+          "population": 191,
+          "counts": [
+            58,
+            60,
+            73
+          ],
+          "births": 1665,
+          "deaths": 1594,
+          "mutations": 251,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005952299382067271,
+          "traitSpread": 0.752631534892523,
+          "particleEnergy": 598.1801682482926,
+          "foodEnergy": 0,
+          "occupiedBins": 28
+        },
+        {
+          "tick": 1800,
+          "population": 192,
+          "counts": [
+            60,
+            56,
+            76
+          ],
+          "births": 1768,
+          "deaths": 1696,
+          "mutations": 265,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005617275101611358,
+          "traitSpread": 0.7521521464315944,
+          "particleEnergy": 598.5742336378056,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 1900,
+          "population": 188,
+          "counts": [
+            59,
+            55,
+            74
+          ],
+          "births": 1866,
+          "deaths": 1798,
+          "mutations": 285,
+          "blockedBirths": 1690,
+          "maxGeneration": 3,
+          "meanSpeed": 0.0005715300103537609,
+          "traitSpread": 0.7531480696804825,
+          "particleEnergy": 580.3012790450198,
+          "foodEnergy": 0,
+          "occupiedBins": 23
+        },
+        {
+          "tick": 2000,
+          "population": 183,
+          "counts": [
+            62,
+            55,
+            66
+          ],
+          "births": 1965,
+          "deaths": 1902,
+          "mutations": 303,
+          "blockedBirths": 1690,
+          "maxGeneration": 4,
+          "meanSpeed": 0.000548002283284411,
+          "traitSpread": 0.7547376583180635,
+          "particleEnergy": 553.6876869060852,
+          "foodEnergy": 0,
+          "occupiedBins": 26
+        },
+        {
+          "tick": 2100,
+          "population": 177,
+          "counts": [
+            70,
+            50,
+            57
+          ],
+          "births": 2051,
+          "deaths": 1994,
+          "mutations": 318,
+          "blockedBirths": 1690,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005737358801674393,
+          "traitSpread": 0.7537670370799603,
+          "particleEnergy": 539.9835959687504,
+          "foodEnergy": 0,
+          "occupiedBins": 25
+        },
+        {
+          "tick": 2200,
+          "population": 185,
+          "counts": [
+            78,
+            48,
+            59
+          ],
+          "births": 2145,
+          "deaths": 2080,
+          "mutations": 339,
+          "blockedBirths": 1690,
+          "maxGeneration": 4,
+          "meanSpeed": 0.0005314979657004063,
+          "traitSpread": 0.7492421298716321,
+          "particleEnergy": 575.4897742663878,
+          "foodEnergy": 0,
+          "occupiedBins": 25
+        },
+        {
+          "tick": 2300,
+          "population": 188,
+          "counts": [
+            80,
+            48,
+            60
+          ],
+          "births": 2240,
+          "deaths": 2172,
+          "mutations": 358,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005421032839941589,
+          "traitSpread": 0.7493386815788144,
+          "particleEnergy": 570.183477286276,
+          "foodEnergy": 0,
+          "occupiedBins": 24
+        },
+        {
+          "tick": 2400,
+          "population": 191,
+          "counts": [
+            84,
+            48,
+            59
+          ],
+          "births": 2340,
+          "deaths": 2269,
+          "mutations": 375,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.000551679142466501,
+          "traitSpread": 0.747467421627199,
+          "particleEnergy": 587.8493715736297,
+          "foodEnergy": 0,
+          "occupiedBins": 23
+        },
+        {
+          "tick": 2500,
+          "population": 196,
+          "counts": [
+            88,
+            48,
+            60
+          ],
+          "births": 2439,
+          "deaths": 2363,
+          "mutations": 385,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005399203240185575,
+          "traitSpread": 0.7453845035287432,
+          "particleEnergy": 585.8021714076862,
+          "foodEnergy": 0,
+          "occupiedBins": 21
+        },
+        {
+          "tick": 2600,
+          "population": 195,
+          "counts": [
+            85,
+            48,
+            62
+          ],
+          "births": 2541,
+          "deaths": 2466,
+          "mutations": 398,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005620020617241077,
+          "traitSpread": 0.7466411015159385,
+          "particleEnergy": 601.1947695659047,
+          "foodEnergy": 0,
+          "occupiedBins": 20
+        },
+        {
+          "tick": 2700,
+          "population": 197,
+          "counts": [
+            84,
+            47,
+            66
+          ],
+          "births": 2643,
+          "deaths": 2566,
+          "mutations": 417,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005728480051617425,
+          "traitSpread": 0.7458843762914885,
+          "particleEnergy": 594.4499306581341,
+          "foodEnergy": 0,
+          "occupiedBins": 20
+        },
+        {
+          "tick": 2800,
+          "population": 185,
+          "counts": [
+            80,
+            43,
+            62
+          ],
+          "births": 2736,
+          "deaths": 2671,
+          "mutations": 431,
+          "blockedBirths": 1690,
+          "maxGeneration": 5,
+          "meanSpeed": 0.0005612879101077376,
+          "traitSpread": 0.744133978945905,
+          "particleEnergy": 571.27116797317,
+          "foodEnergy": 0,
+          "occupiedBins": 23
+        },
+        {
+          "tick": 2900,
+          "population": 184,
+          "counts": [
+            78,
+            43,
+            63
+          ],
+          "births": 2835,
+          "deaths": 2771,
+          "mutations": 450,
+          "blockedBirths": 1690,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0005353253000919058,
+          "traitSpread": 0.7439031787741996,
+          "particleEnergy": 576.2814764632685,
+          "foodEnergy": 0,
+          "occupiedBins": 23
+        },
+        {
+          "tick": 3000,
+          "population": 182,
+          "counts": [
+            78,
+            39,
+            65
+          ],
+          "births": 2931,
+          "deaths": 2869,
+          "mutations": 460,
+          "blockedBirths": 1690,
+          "maxGeneration": 6,
+          "meanSpeed": 0.0005594274017322345,
+          "traitSpread": 0.7405122828215205,
+          "particleEnergy": 563.7176448967393,
+          "foodEnergy": 0,
+          "occupiedBins": 23
+        }
+      ]
+    }
+  ]
+}

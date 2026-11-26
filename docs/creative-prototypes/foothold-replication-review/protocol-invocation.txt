@@ -1,0 +1,2 @@
+codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only -C /Users/nicholas/.codex/worktrees/foothold-seed-1203/browser-life -o /tmp/foothold1203-protocol-packet-review.txt - < docs/creative-prototypes/foothold-replication-review/protocol-packet.txt
+Read-only packet fallback followed a reviewer tool-access failure. Exact supplied packet and both verdicts retained. No biological stepping occurred. Historical check-only validators and 16 original pure foothold tests passed; pnpm typecheck passed; pnpm install --frozen-lockfile succeeded without lock changes.

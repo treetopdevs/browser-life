@@ -1,0 +1,9 @@
+- **P2 — Invalid readout denominators still pass artifact validation.** [observer.ts:160](/Users/nicholas/develop/browser-life-i07-assembly/packages/metrics/src/assembly/observer.ts:160). The validator does not check readout rationals. Replacing duplicated-negative reuse ratios with `{num:1, den:0}`, rederiving verdicts and consistently resealing the artifact makes `checkSaved()` return `[]` with “separates, adds value.” Positive *accuracy* denominators do not establish valid underlying measurements.
+
+- **P2 — Shallow history bypasses available freeze checks.** [tools/assembly/observer.ts:139](/Users/nicholas/develop/browser-life-i07-assembly/tools/assembly/observer.ts:139). In a shallow repository, failed ancestry returns success immediately—even when the supplied commit exists and its contents are available. This skips document-byte, changed-file and outcome-file checks. Simulating shallow status with an existing unrelated commit reproduced `[]`.
+
+- **P3 — The exact-search allowance is enforced through counter clamping.** [construct.ts:40](/Users/nicholas/develop/browser-life-i07-assembly/packages/metrics/src/assembly/construct.ts:40). An eight-cell line with allowance 5 visits 6 exact-search nodes, then records only 5. The claimed hard allowance remains off by one; the new test checks the clamped counter and misses this.
+
+- **P3 — Movie caption identifies the wrong column.** [index.html:46](/Users/nicholas/develop/browser-life-i07-assembly/apps/lab/assembly/index.html:46). “Next-to-last column” refers to reuse ratio, but the caption describes sampled persistence. For `life-glider`, that misdescribes `0.83`; its sampled persistence is `1.00`.
+
+`--check` and full `--replay-check` passed. All nine lazy fixtures match I14 bytes and hashes. Targeted probes confirmed inexact-score exclusion, corrected D4 diagnostics, and all 13 pictures drawing without SubtleCrypto. No files were modified.

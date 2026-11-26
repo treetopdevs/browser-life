@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>Mycelium line report</title>
+<style>
+:root{
+  --bg:#f7f4ec; --panel:#fffdf7; --ink:#1d2a2f; --muted:#5b6a6f; --line:#d9d3c3;
+  --accent:#2f6f5b; --warn:#a4532b; --kept:#2f6f5b; --lost:#d9d3c3; --note:#efe9d6;
+  --nut:#3f8f5f; --trail:#7a58b0; --waste:#c08a2e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101b21; --panel:#16252c; --ink:#e6eceb; --muted:#9db0b3; --line:#2b4049;
+    --accent:#6fc2a2; --warn:#e59a6d; --kept:#6fc2a2; --lost:#2b4049; --note:#1c2f37;
+    --nut:#6fc28c; --trail:#a98be0; --waste:#e0b45c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101b21; --panel:#16252c; --ink:#e6eceb; --muted:#9db0b3; --line:#2b4049;
+  --accent:#6fc2a2; --warn:#e59a6d; --kept:#6fc2a2; --lost:#2b4049; --note:#1c2f37;
+  --nut:#6fc28c; --trail:#a98be0; --waste:#e0b45c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Georgia,"Iowan Old Style","Palatino Linotype",serif}
+.wrap{max-width:46rem;margin:0 auto;padding:2rem 16px 4rem}
+h1{font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.15;margin:.3em 0 .4em}
+h2{font-size:1.5rem;line-height:1.25;margin:2.6em 0 .5em;padding-top:.4em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .3em}
+p{margin:.7em 0}
+a{color:var(--accent)}
+code,.mono{font:.86em ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.eyebrow{font:600 .8rem/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.15rem;color:var(--ink)}
+.verdict{display:inline-block;font:700 .78rem/1 system-ui,sans-serif;letter-spacing:.05em;padding:.35em .6em;border-radius:999px;border:1.5px solid currentColor;vertical-align:.1em;white-space:nowrap}
+.v-pass{color:var(--accent)} .v-limit{color:var(--warn)} .v-toll{color:var(--warn)} .v-explore{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.2rem 0}
+.note{background:var(--note);border-radius:10px;padding:.9rem 1.1rem;margin:1.2rem 0}
+.note strong:first-child{display:block;font:700 .78rem/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem}
+.table-scroll{overflow-x:auto;margin:1rem 0;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:30rem;font:.88rem/1.4 system-ui,sans-serif}
+th,td{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:650;color:var(--muted)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.fig{display:block;width:100%;height:auto;margin:1rem 0}
+.fig text{fill:var(--ink);font:13px system-ui,sans-serif}
+.fig .muted{fill:var(--muted)} .fig .lab{font-size:13px} .fig .num{font-size:13px;fill:var(--muted)}
+.fig .kept{fill:var(--kept)} .fig .lost{fill:var(--lost)}
+.fig .box{fill:var(--panel);stroke:var(--line);stroke-width:1.2}
+.fig .stroke{stroke:var(--ink);fill:none;stroke-width:1.5}
+.fig .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+.fig .tr{fill:var(--trail)} .fig .nu{fill:var(--nut)} .fig .wa{fill:var(--waste)}
+figcaption{font:.85rem/1.45 system-ui,sans-serif;color:var(--muted);margin-top:-.4rem}
+figure{margin:1.4rem 0}
+.k{display:inline-block;width:.8em;height:.8em;border-radius:2px;vertical-align:-.05em}
+ul{padding-left:1.2rem} li{margin:.35em 0}
+.small{font:.85rem/1.45 system-ui,sans-serif;color:var(--muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:620px){.cols{grid-template-columns:1fr} body{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="eyebrow">Mycelium world · line report · 14 November 2026</p>
+<h1>The Mycelium line: what was built, what was tested, and what it does not show</h1>
+<p class="lede">A small world of particles, each carrying a tiny neural controller, that eat, lay trail and split. Over two days it went from a conserved-matter simulation to a series of pre-registered questions about trail. This page tells the whole story in plain language. Every number is copied from a result document in the repository, named next to it. Nothing here shows that anything evolves.</p>
+
+<div class="note"><strong>The one-paragraph version</strong>
+The world is exact: matter and energy balance to zero error, and the GPU version matches the reference bit for bit. Two attempts to show that heredity matters were measurement-limited, meaning the experiment could not be set up to give a fair answer. A directional test then found that when laying trail is only a cost, inheritance purges it (R3, supported). Making trail pay a toll discount kept it, but the particles only paid the smallest toll and did not follow the trail (R4, toll-only). A last screen, the conduit, which lets nutrient flow along connected trail, lost its trail as well, but almost no trail was laid in those worlds, so it cannot say whether a trail that already existed would pay. The next step is a screen that starts with trail already laid.</div>
+
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-labelledby="lt ld" class="fig">
+<title id="lt">The rungs of the Mycelium line and how each one ended</title>
+<desc id="ld">A row of six steps. R0 reference world: done, exact. R1 GPU port: bit for bit. R2 and R2b: measurement-limited. R3: purge supported. R4: toll-only. Conduit screen: exploration, purged, no rung warranted.</desc>
+<line x1="30" y1="60" x2="690" y2="60" class="ln"/>
+<g>
+<circle cx="50" cy="60" r="9" class="kept"/><text x="50" y="92" text-anchor="middle">R0</text><text x="50" y="110" text-anchor="middle" class="muted">reference</text><text x="50" y="126" text-anchor="middle" class="muted">exact</text>
+<circle cx="168" cy="60" r="9" class="kept"/><text x="168" y="92" text-anchor="middle">R1</text><text x="168" y="110" text-anchor="middle" class="muted">GPU port</text><text x="168" y="126" text-anchor="middle" class="muted">bit for bit</text>
+<circle cx="286" cy="60" r="9" fill="var(--warn)"/><text x="286" y="92" text-anchor="middle">R2, R2b</text><text x="286" y="110" text-anchor="middle" class="muted">does heredity</text><text x="286" y="126" text-anchor="middle" class="muted">matter?</text><text x="286" y="146" text-anchor="middle" fill="var(--warn)">measurement-</text><text x="286" y="162" text-anchor="middle" fill="var(--warn)">limited</text>
+<circle cx="404" cy="60" r="9" class="kept"/><text x="404" y="92" text-anchor="middle">R3</text><text x="404" y="110" text-anchor="middle" class="muted">is costly trail</text><text x="404" y="126" text-anchor="middle" class="muted">purged?</text><text x="404" y="146" text-anchor="middle" fill="var(--kept)">PASS</text>
+<circle cx="522" cy="60" r="9" fill="var(--warn)"/><text x="522" y="92" text-anchor="middle">R4</text><text x="522" y="110" text-anchor="middle" class="muted">is kept trail</text><text x="522" y="126" text-anchor="middle" class="muted">used?</text><text x="522" y="146" text-anchor="middle" fill="var(--warn)">TOLL-ONLY</text>
+<circle cx="640" cy="60" r="9" fill="var(--muted)"/><text x="640" y="92" text-anchor="middle">Conduit</text><text x="640" y="110" text-anchor="middle" class="muted">can a pipe</text><text x="640" y="126" text-anchor="middle" class="muted">keep trail?</text><text x="640" y="146" text-anchor="middle" class="muted">exploration:</text><text x="640" y="162" text-anchor="middle" class="muted">purged</text>
+</g>
+<text x="360" y="215" text-anchor="middle" class="muted">Green: the question was answered in the direction asked. Amber: the test ran but could not answer, or answered "no use". Grey: an exploration, not a test.</text>
+</svg>
+<figcaption>Status of each rung. Source: <code>tools/mycelium/STATUS.md</code> and the result documents named below.</figcaption>
+</figure>
+
+<h2>1. The world</h2>
+<p>The world is a wrap-around grid of cells. Each cell holds three dissolved substances: <span class="k" style="background:var(--nut)"></span> nutrient, <span class="k" style="background:var(--waste)"></span> waste and <span class="k" style="background:var(--trail)"></span> trail. Particles move over it. Every particle has a body of matter, a store of energy and its own small neural controller (160 bytes, ten inputs, eight outputs). From what it senses, the controller decides how to move, how much to eat, how much trail to lay and whether to split. A child gets half its parent's matter and energy and, in the inherit setting, a copy of the controller that sometimes mutates. Light that turns waste back into nutrient is the only energy coming in, and heat is the only energy going out. Matter never enters or leaves.</p>
+<p>All arithmetic is whole numbers and the random draws are counter-based, so the same seed gives the same world on any machine. The rules in prose are in <code>tools/mycelium/RULES.md</code>.</p>
+<p>Nothing in the world declares an individual or a lineage. Nothing here is told which particles count as an organism, so a crowd or a web of trail is not an organism, and the number of families (sets of identical controllers) measures mutation and survival together.</p>
+
+<h2>2. R0 and R1: the world is exact, and the GPU copy is faithful <span class="verdict v-pass">DONE</span></h2>
+<p><strong>R0</strong> is the reference version that runs on the CPU. Its two books, matter and energy, close exactly: the residual is 0 after every step. Source: <code>tools/mycelium/STATUS.md</code>.</p>
+<p><strong>R1</strong> is the WebGPU port. It matches the reference bit for bit. When the line began, the parity script covered 30 cases; with the rule variants below it now covers 69 cases (<code>tests/deno/mycelium_gpu.ts</code>, quoted in <code>docs/mycelium-conduit-2026-11-14/SCREEN.md</code>, "all 69 cases match bit for bit"). That was checked on one Mac, which says the port is faithful there. It does not say it has been checked on other GPUs, and it says nothing about evolution.</p>
+
+<h2>3. R2 and R2b: does heredity matter? <span class="verdict v-limit">MEASUREMENT-LIMITED</span></h2>
+<p>The first big question was whether the inherit setting, where children copy a parent's controller, behaves differently from a control where every child gets a fresh random controller (heredity blocked). Two designs tried to answer it.</p>
+<ul>
+<li><strong>R2</strong> used five practice seeds. No readout was kept, so the confirmation was never run. It was not a fail and not evidence either way (<code>docs/mycelium-r2-2026-11-13/RESULT.md</code>).</li>
+<li><strong>R2b</strong> redesigned the test: 100 practice runs (5 arms of 20 seeds, 100,000 steps each, ledger residual 0 throughout). It found that inherit worlds mostly lose their trail before the measuring window (steps 50,000 to 100,000), so the hard-coded trail-following comparison could not be matched: the median deposit rate was 2e-6 against a floor of 1/16 that sat above every arm. The structure readout (Moran's I) was measurable in 1 of 20 seeds, and 8 were needed. A pass became unattainable, and the confirmation was never run (<code>docs/mycelium-r2b-2026-11-13/RESULT.md</code>, summarised in <code>tools/mycelium/STATUS.md</code>).</li>
+</ul>
+<div class="note"><strong>Why "measurement-limited" is not "no"</strong>
+The tests were set up before looking, and they could not give a fair answer: the thing they needed to measure was mostly gone. That says nothing about whether heredity matters. One observation was kept as a description only: heredity-blocked worlds kept far more trail than inherit worlds, which raised the question that R3 then asked.</div>
+
+<h2>4. R3: costly trail is purged <span class="verdict v-pass">PASS</span></h2>
+<p>R3 asked a narrower question: when laying trail is only a cost (it spends matter and energy and pays nothing back), does inheritance get rid of it? It ran on 16 fresh seeds per arm in 7 arms for 100,000 steps, with three predictions written down before the confirmation run (<code>docs/mycelium-r3-2026-11-13/RESULT.md</code>).</p>
+<div class="table-scroll"><table>
+<thead><tr><th>Question</th><th class="n">Effect</th><th class="n">Adjusted p</th><th>Reading</th></tr></thead>
+<tbody>
+<tr><td>Late deposit of inherit below blocked (D1)</td><td class="n">Cliff's delta -0.875</td><td class="n">6e-6</td><td>supported</td></tr>
+<tr><td>Inherit loses a larger share of its deposit over the run (D2)</td><td class="n">-0.883</td><td class="n">8e-6</td><td>supported</td></tr>
+<tr><td>Dose response: costlier laying, larger drop (D3, cost 1, 2, 4)</td><td class="n">tau +0.50</td><td class="n">2e-4</td><td>supported</td></tr>
+</tbody></table></div>
+<p>Median late deposit per particle per step was 8.2e-7 for inherit against 0.0199 for blocked. The early-window ratio of inherit to blocked fell from 0.72 at cost 1 to 0.44 at cost 2 and 0.32 at cost 4. A frozen arm with no mutation at all also ended with no late deposit in 13 of 16 runs, so the purge does not need mutation. That fits selection acting on the founders that happen to be around, but it does not separate selection from drift among founder lineages. Two analyses (TypeScript and an independent Python one) agreed on every decision.</p>
+<div class="note"><strong>What R3 does not show</strong>
+It is a direction-and-dose test, not a measurement of selection: no lineage's fitness was measured. It says nothing about heredity against a trail-following null, structure, individuals or open-endedness, and it does not rescue R2b.</div>
+<p><strong>What it means for the next step.</strong> If trail is only a cost, particles that inherit stop laying it. So if trail is ever to persist, something has to pay the particles for it, and the payment has to depend on the particle actually using a connected trail, not just on laying some.</p>
+
+<h2>5. The toll road, and R4 <span class="verdict v-toll">TOLL-ONLY</span></h2>
+<h3>The rule</h3>
+<p>A trail-use rule was added as optional keys (<code>trailMoveDiscount</code>, <code>trailDiscountMode</code>). Under the <strong>toll road</strong> setting, moving costs six times the default energy (<code>moveCost</code> 12), but a particle that is laying trail and standing on ground that holds at least 4 units of trail pays almost nothing to move. You pay a toll (lay trail) to use the road (cheap travel). The default world is unchanged, so every earlier digest still holds.</p>
+<p>An exploratory screen first tried the public form of the discount, where anyone on trail gets it. It mostly failed to keep trail: 1 of 4 inherited seeds at the default move cost, and 3 of 4 only at the strongest strength with <code>moveCost</code> 12 (<code>docs/mycelium-trail-use-2026-11-13/SCREEN.md</code>, as summarised in the conduit design). The toll form kept it.</p>
+
+<h3>R4: is the kept trail used or only paid for?</h3>
+<p>R4 ran 16 fresh seeds in each of 5 arms for 100,000 steps: inherit, a blind-gradient lesion, a matched hard-coded trail follower (physarum, used as the anchor for the margins), blocked, and a keyless control without the discount (<code>docs/mycelium-r4-2026-11-14/RESULT.md</code>).</p>
+<figure>
+<svg viewBox="0 0 640 160" role="img" aria-labelledby="t d" class="fig"><title id="t">Worlds that kept their trail under the toll rule (R4)</title><desc id="d">Filled squares are worlds that kept trail to the end of 100,000 steps. Toll road: 15 of 16 inherited worlds, 13 of 16 blind-gradient-lesion worlds, 16 of 16 physarum and blocked worlds; without the discount, 0 of 16.</desc>
+<text x="0" y="26" class="lab">R4 inherit, toll road</text>
+<rect x="210" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="230" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="250" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="290" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="310" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="330" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="350" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="370" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="390" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="410" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="430" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="450" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="470" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="490" y="14" width="16" height="16" rx="3" class="kept"/>
+<rect x="510" y="14" width="16" height="16" rx="3" class="lost"/>
+<text x="538" y="26" class="num">15 of 16</text>
+<text x="0" y="52" class="lab">R4 blind-gradient lesion, toll road</text>
+<rect x="210" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="230" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="250" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="290" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="310" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="330" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="350" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="370" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="390" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="410" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="430" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="450" y="40" width="16" height="16" rx="3" class="kept"/>
+<rect x="470" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="490" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="510" y="40" width="16" height="16" rx="3" class="lost"/>
+<text x="538" y="52" class="num">13 of 16</text>
+<text x="0" y="78" class="lab">R4 physarum follower, toll road</text>
+<rect x="210" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="230" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="250" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="290" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="310" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="330" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="350" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="370" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="390" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="410" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="430" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="450" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="470" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="490" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="510" y="66" width="16" height="16" rx="3" class="kept"/>
+<text x="538" y="78" class="num">16 of 16</text>
+<text x="0" y="104" class="lab">R4 blocked, toll road</text>
+<rect x="210" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="230" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="250" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="290" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="310" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="330" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="350" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="370" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="390" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="410" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="430" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="450" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="470" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="490" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="510" y="92" width="16" height="16" rx="3" class="kept"/>
+<text x="538" y="104" class="num">16 of 16</text>
+<text x="0" y="130" class="lab">R4 inherit, no discount</text>
+<rect x="210" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="230" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="250" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="270" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="330" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="350" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="370" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="390" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="410" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="430" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="450" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="470" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="490" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="510" y="118" width="16" height="16" rx="3" class="lost"/>
+<text x="538" y="130" class="num">0 of 16</text>
+</svg>
+<figcaption>Worlds that kept trail to the end under the toll rule. The toll keeps trail (15 of 16 against 0 of 16 without the discount, Fisher p 5e-8). Filled square = kept.</figcaption>
+</figure>
+
+<p>Keeping trail is not using it. Four readouts asked whether the evolved controllers move and act on the trail gradient the way the plain follower does. All four 95% intervals sit strictly inside a margin fixed beforehand at 15 percent of what the plain follower showed on dev data. That is equivalence to the margin (within it, around zero), not exact absence of use. The first two rows are inherit minus blind contrasts, the last two are inherit alone:</p>
+<div class="table-scroll"><table>
+<thead><tr><th>Readout (plain meaning)</th><th class="n">Evolved controllers (95% interval)</th><th class="n">Fixed margin (+-)</th></tr></thead>
+<tbody>
+<tr><td>ALIGN: does intended movement point up the trail gradient?</td><td class="n">+0.014 [-0.004, 0.038]</td><td class="n">0.162</td></tr>
+<tr><td>OCC: are particles concentrated on trail?</td><td class="n">-0.022 [-0.055, 0.005]</td><td class="n">0.919</td></tr>
+<tr><td>ACUTE: does behaviour change if the gradient inputs are zeroed?</td><td class="n">-0.003 [-0.007, -0.002]</td><td class="n">0.149</td></tr>
+<tr><td>SENS: do the outputs depend on those inputs?</td><td class="n">0.0031 [0.0027, 0.0040]</td><td class="n">0.0139</td></tr>
+</tbody></table></div>
+<p>The reason is visible in the state. 99.6 percent of particles request exactly one unit of trail per step, the minimum that earns the discount. The field becomes a carpet of about 99 trail per particle, the discount is complete at essentially every particle position (median 1.000), and so there is nothing left to follow. The readouts can see use when it exists: the follower scores ALIGN +0.993 and OCC 7.2 on the same instruments.</p>
+<div class="note"><strong>What R4 does not show</strong>
+It does not show that nothing reads the trail: use of the local trail level (input 2) is untested. It does not show that the controllers evolved because of the discount, or what happens at other strengths, other move costs or the public form. In-state comparisons are conditioned on the worlds that kept trail.</div>
+
+<figure>
+<svg viewBox="0 0 720 230" role="img" aria-labelledby="tt td2" class="fig">
+<title id="tt">Why the toll road produced a carpet and no use</title>
+<desc id="td2">Left: a thin trail with a gradient to follow. Right: the toll carpet, where every cell holds the minimum trail, the discount is complete everywhere and nothing varies to follow.</desc>
+<text x="170" y="22" text-anchor="middle">What a useful trail would look like</text>
+<text x="550" y="22" text-anchor="middle">What the toll road produced</text>
+<g>
+<rect x="30" y="40" width="280" height="130" rx="6" class="box"/>
+<rect x="40" y="95" width="24" height="24" class="tr" opacity=".15"/><rect x="64" y="95" width="24" height="24" class="tr" opacity=".3"/><rect x="88" y="95" width="24" height="24" class="tr" opacity=".5"/><rect x="112" y="95" width="24" height="24" class="tr" opacity=".7"/><rect x="136" y="95" width="24" height="24" class="tr" opacity=".9"/><rect x="160" y="95" width="24" height="24" class="tr"/>
+<rect x="184" y="71" width="24" height="24" class="tr" opacity=".8"/><rect x="208" y="47" width="24" height="24" class="tr" opacity=".6"/><rect x="232" y="47" width="24" height="24" class="tr" opacity=".4"/>
+<circle cx="102" cy="107" r="6" fill="var(--ink)"/><path d="M110 107 H146" class="stroke"/><path d="M142 102 L148 107 L142 112" class="stroke"/>
+</g>
+<g>
+<rect x="410" y="40" width="280" height="130" rx="6" class="box"/>
+<rect x="420" y="50" width="260" height="110" class="tr" opacity=".55"/>
+<circle cx="500" cy="80" r="5" fill="var(--ink)"/><circle cx="570" cy="125" r="5" fill="var(--ink)"/><circle cx="620" cy="70" r="5" fill="var(--ink)"/><circle cx="470" cy="135" r="5" fill="var(--ink)"/><circle cx="540" cy="100" r="5" fill="var(--ink)"/>
+</g>
+<text x="170" y="192" text-anchor="middle" class="muted">trail thickens toward a goal: a gradient to climb</text>
+<text x="550" y="192" text-anchor="middle" class="muted">about 99 per particle everywhere: nothing to climb</text>
+<text x="360" y="220" text-anchor="middle" class="muted">Schematic, not data. Numbers: R4 RESULT.md.</text>
+</svg>
+<figcaption>The lesson of R4: a benefit that saturates at the minimum payment leaves nothing to follow. The benefit has to depend on using a connected trail.</figcaption>
+</figure>
+
+<h2>6. The conduit: design and screen <span class="verdict v-explore">EXPLORATION</span></h2>
+<h3>The design</h3>
+<p>The conduit was written down, with its selection argument and the possible outcomes, before any code (<code>docs/mycelium-conduit-2026-11-14/DESIGN.md</code>). It is a rule where the nutrient spreads faster across an edge when both cells at its ends hold trail: a connected trail works like a pipe. Strength <code>g</code> sets how much faster; an optional cap limits how much trail counts. Two isolated cells of trail, or a one-cell gap, give no benefit. The rule redistributes nutrient and creates none, and matter and energy still balance to zero error.</p>
+<p>The benefit is meant to depend on trail being connected, so that laying the minimum is not enough, and a particle sitting on a thick connected run in a depleted spot gets nutrient from the whole catchment. The design also names the risk in advance: anyone on the network gets the import, so free riders benefit too.</p>
+
+<figure>
+<svg viewBox="0 0 720 220" role="img" aria-labelledby="ct cd" class="fig">
+<title id="ct">How the conduit works across a pair of cells</title>
+<desc id="cd">Top: two neighbouring cells that both hold trail spread nutrient quickly between them. Bottom: a trail cell next to a bare cell spreads at the ordinary slow rate.</desc>
+<g>
+<text x="20" y="30">Both cells hold trail</text>
+<rect x="230" y="12" width="70" height="40" class="box"/><rect x="230" y="12" width="70" height="40" class="tr" opacity=".6"/>
+<rect x="320" y="12" width="70" height="40" class="box"/><rect x="320" y="12" width="70" height="40" class="tr" opacity=".6"/>
+<path d="M300 26 H320" stroke="var(--ink)" stroke-width="5" fill="none"/>
+<text x="410" y="36">nutrient moves fast: the base rate plus extra</text>
+</g>
+<g>
+<text x="20" y="100">Trail beside bare ground</text>
+<rect x="230" y="82" width="70" height="40" class="box"/><rect x="230" y="82" width="70" height="40" class="tr" opacity=".6"/>
+<rect x="320" y="82" width="70" height="40" class="box"/>
+<path d="M300 102 H320" stroke="var(--muted)" stroke-width="1.5" fill="none"/>
+<text x="410" y="106">ordinary slow rate: no extra</text>
+</g>
+<g>
+<text x="20" y="170">Extra rate</text>
+<text x="230" y="170">= (smaller trail of the two cells, capped) x g / 16, with the total rate capped at 128</text>
+<text x="230" y="192" class="muted">integer arithmetic, no random draw, same on the CPU and the GPU</text>
+</g>
+</svg>
+<figcaption>The conduit rule in one picture. Source: <code>docs/mycelium-conduit-2026-11-14/DESIGN.md</code>, section 3.</figcaption>
+</figure>
+
+<h3>The screen</h3>
+<p>The screen was labelled <strong>exploration, not a test</strong>: no pre-registration, 4 seeds per cell, no noise floor, no multiplicity control. It ran 100 runs of 100,000 steps on the GPU, with the matter and energy books and the full-state check passing at all 100,000 of 100,000 checks and no run failed. The arms were: no rule, a bracket of uniform faster diffusion (three values) as a control for "just faster mixing", four conduit strengths (g = 2, 8, 32, 128), a gradient-light stratum, a toll-road reference pair, and two hard-coded follower anchors (physarum and blind) in which the conduit has trail to work on. The conduit strengths were fixed in the design; the strongest, g = 128, was added once during sizing, which is recorded as a deviation. Source for everything in this section: <code>docs/mycelium-conduit-2026-11-14/SCREEN.md</code>.</p>
+<p>An independent recomputation from the raw files confirmed the numbers and corrected five wording errors, which are fixed in that document.</p>
+
+<figure>
+<svg viewBox="0 0 720 212" role="img" aria-labelledby="kt kd" class="fig"><title id="kt">Worlds that kept their trail in the conduit screen</title><desc id="kd">Filled squares are worlds that held at least 0.1 trail per particle late in the run. Plain 0 of 4, faster diffusion 0 of 12, conduit 1 of 4 at g 2, 1 of 4 at g 8, 0 of 4 at g 32, 1 of 4 at g 128, toll road reference 4 of 4.</desc>
+<text x="0" y="26" class="lab">inherit, no rule</text>
+<rect x="250" y="14" width="16" height="16" rx="3" class="lost"/>
+<rect x="270" y="14" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="14" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="14" width="16" height="16" rx="3" class="lost"/>
+<text x="338" y="26" class="num">0 of 4</text>
+<text x="0" y="52" class="lab">inherit, faster diffusion everywhere</text>
+<rect x="250" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="270" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="330" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="350" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="370" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="390" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="410" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="430" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="450" y="40" width="16" height="16" rx="3" class="lost"/>
+<rect x="470" y="40" width="16" height="16" rx="3" class="lost"/>
+<text x="498" y="52" class="num">0 of 12</text>
+<text x="0" y="78" class="lab">inherit, conduit weak (g 2)</text>
+<rect x="250" y="66" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="66" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="66" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="66" width="16" height="16" rx="3" class="lost"/>
+<text x="338" y="78" class="num">1 of 4</text>
+<text x="0" y="104" class="lab">inherit, conduit medium (g 8)</text>
+<rect x="250" y="92" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="92" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="92" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="92" width="16" height="16" rx="3" class="lost"/>
+<text x="338" y="104" class="num">1 of 4</text>
+<text x="0" y="130" class="lab">inherit, conduit (g 32)</text>
+<rect x="250" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="270" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="118" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="118" width="16" height="16" rx="3" class="lost"/>
+<text x="338" y="130" class="num">0 of 4</text>
+<text x="0" y="156" class="lab">inherit, conduit strong (g 128)</text>
+<rect x="250" y="144" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="144" width="16" height="16" rx="3" class="lost"/>
+<rect x="290" y="144" width="16" height="16" rx="3" class="lost"/>
+<rect x="310" y="144" width="16" height="16" rx="3" class="lost"/>
+<text x="338" y="156" class="num">1 of 4</text>
+<text x="0" y="182" class="lab">inherit, toll road (reference)</text>
+<rect x="250" y="170" width="16" height="16" rx="3" class="kept"/>
+<rect x="270" y="170" width="16" height="16" rx="3" class="kept"/>
+<rect x="290" y="170" width="16" height="16" rx="3" class="kept"/>
+<rect x="310" y="170" width="16" height="16" rx="3" class="kept"/>
+<text x="338" y="182" class="num">4 of 4</text>
+</svg>
+<figcaption>Inherit worlds that kept at least 0.1 trail per particle late in the run (4 seeds per cell; the diffusion bracket pools 3 values). Filled square = kept.</figcaption>
+</figure>
+
+<div class="table-scroll"><table>
+<thead><tr><th>Arm (inherit)</th><th>Late trail per particle, by seed</th><th class="n">Kept</th></tr></thead>
+<tbody>
+<tr><td>conduit g = 2</td><td>0.00 / 0.19 / 0.00 / 0.00</td><td class="n">1 of 4</td></tr>
+<tr><td>conduit g = 8</td><td>0.00 / 0.16 / 0.00 / 0.00</td><td class="n">1 of 4</td></tr>
+<tr><td>conduit g = 32</td><td>0.00 / 0.08 / 0.00 / 0.00</td><td class="n">0 of 4</td></tr>
+<tr><td>conduit g = 128</td><td>0.00 / 0.44 / 0.00 / 0.00</td><td class="n">1 of 4</td></tr>
+<tr><td>no rule; each of three diffusion controls</td><td>all below 0.1 (largest: diffA 56 seed 8102 0.08, diffA 104 seed 8104 0.06)</td><td class="n">0 of 4 each</td></tr>
+<tr><td>toll-road reference</td><td>99.6 per particle (median)</td><td class="n">4 of 4</td></tr>
+</tbody></table></div>
+<p>By the rules written beforehand the label for every strength is <strong>PURGED</strong> (kept in at most 1 of 4 worlds). The one world that holds a trace, seed 8102, does so at all four strengths and without dose ordering, and also holds 0.08 under the weakest diffusion control (diffA 56) and 0.13 under keyless <code>moveCost</code> 12, so it is mostly a property of that world. A weak conduit effect there is not excluded, and one world cannot show it. Because the label is PURGED, the second variant in the design (hungry reach) was not built, as the design said it should not be.</p>
+
+<div class="note"><strong>The important caveat: the conduit almost never operated</strong>
+In all 16 inherited conduit runs the 90th percentile of trail per occupied cell was 0 and so was the 90th percentile of the extra conductance. Only seed 8102 had any depositing particles, 5 to 27 of about 6,000. A conduit only conducts across two trail cells, so a first layer on bare ground gets nothing for its deposit cost. The screen therefore tests whether a conduit can bootstrap trail from none. It does not test whether a connected trail that already exists would pay under inheritance, and it cannot reject that.</div>
+
+<h3>What the anchors say, and do not say</h3>
+<p>The only worlds with plenty of trail are the two hard-coded followers, which hold about 99 per particle and cannot show retention. There, switching the conduit off for 200 steps raised births by 2 to 5 percent (physarum) and 6 to 10 percent (blind) in every seed. Deaths rose by about the same amount in the blind world, mean population was 1.5 percent lower with the conduit off in 4 of 4 seeds, and nutrient intake per particle differed by under 0.5 percent. So the conduit damps turnover; it does not here make nutrient more available, and "does not help" is not established either way. In blocked worlds the branch differences ran from -9 to +7 percent, which is what noise predicts at 200 to 280 births per branch. Nothing resembling trail use (the ALIGN, OCC and ACUTE readouts) was seen in any inherited conduit world, but there was no gradient to follow.</p>
+<p>Counting kept worlds: 3 of 16 conduit worlds against 0 of 16 for no rule plus the diffusion controls (one-sided Fisher p 0.11, from 4 worlds). That is no evidence either way.</p>
+
+<h2>7. What the line shows and does not show</h2>
+<div class="cols">
+<div class="box"><strong>Shown</strong>
+<ul>
+<li>The world's two books close exactly, and the GPU port matches the CPU reference bit for bit on the cases tested, on one Mac.</li>
+<li>When trail is only a cost, inheritance purges it, with a dose response (R3).</li>
+<li>A toll discount keeps trail in 15 of 16 inherited worlds, against 0 of 16 without it (R4).</li>
+<li>The conduit rule, from zero trail, kept trail in at most 1 of 4 worlds at every strength tried (screen, exploratory).</li>
+</ul></div>
+<div class="box"><strong>Not shown</strong>
+<ul>
+<li>That anything evolves, or that heredity matters (R2 and R2b were measurement-limited).</li>
+<li>That the particles use trail. Under the toll rule they did not, to the margin tested (R4).</li>
+<li>That a connected trail would not be kept and used if it already existed: the conduit screen cannot say.</li>
+<li>Anything about individuals, structure or open-endedness: nothing in the world declares an individual, and the family count measures mutation and survival together.</li>
+</ul></div>
+</div>
+<p>Also worth saying: the default numbers (upkeep, light, sizes) were tuned by hand on the 128 by 128 world so a population lasts. They are choices, not findings, and the larger worlds are less tested. R3 and R4 ran 100,000 steps on one Mac. A rule variant was always compared with a keyless baseline at the same setting, never across settings.</p>
+
+<h2>8. The next step</h2>
+<p>The one screen the evidence points to is a version that starts with a laid trail, or removes the deposit cost for the first layer, so that a connected trail is there to be used. That tests the question the conduit screen could not: does a connected trail pay, and does anything follow it? It would be labelled exploration first. The design's other named route is an owner-weighted conduit, where only the depositor's own trail conducts, which goes after the free-rider problem. A pre-registered rung on any of these waits for a variant that is kept and used in a screen. No such candidate exists yet (<code>SCREEN.md</code>, "Candidate and primary endpoint"). That is, a test of the conduit as built is not warranted, and a test of a conduit that starts from trail is not yet ruled in or out.</p>
+<p>The <code>/mycelium/</code> page lets you plant any of these worlds yourself (a "Trail rule" choice: none, toll road, conduit medium or strong). It is a private local page, not part of the public site, and it is not deployed.</p>
+
+<h2>Where everything is</h2>
+<ul class="small">
+<li>Rules: <code>tools/mycelium/RULES.md</code>; status: <code>tools/mycelium/STATUS.md</code>.</li>
+<li>R2: <code>docs/mycelium-r2-2026-11-13/RESULT.md</code>; R2b: <code>docs/mycelium-r2b-2026-11-13/RESULT.md</code>.</li>
+<li>R3: <code>docs/mycelium-r3-2026-11-13/RESULT.md</code>; trail-use screen: <code>docs/mycelium-trail-use-2026-11-13/SCREEN.md</code>; R4: <code>docs/mycelium-r4-2026-11-14/RESULT.md</code>.</li>
+<li>Conduit: <code>docs/mycelium-conduit-2026-11-14/DESIGN.md</code>, <code>SCREEN.md</code>, <code>run-log.jsonl</code>; code <code>tools/mycelium/conduit-screen.ts</code>, <code>observe-conduit.ts</code>.</li>
+<li>The kernel files were edited for the toll and conduit rules, so their hashes no longer match the R2 to R4 freezes. Those rungs stay reproducible at their commits (R2b <code>edc25af9</code>, R3 <code>eef9c043</code>, R4 <code>88bd3002</code>), and the pinned digest <code>9a5461c07ef6fcde</code> is unchanged.</li>
+<li>Idea source: <code>docs/neural-mycelia-2026-11-13/report.html</code>.</li>
+</ul>
+
+</div>
+</body>
+</html>

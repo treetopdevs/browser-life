@@ -1,0 +1,41 @@
+{
+  "method": "Screenshots of actual verified viewer canvas at saved frames; scaled to420x420 and arranged2x2 with ffmpeg; no interpolation or simulation. Read across then down:3000,4000,5000,6000. Original screenshots/capture scripts are local gitignored runs/ artifacts.",
+  "items": [
+    {
+      "seed": 1201,
+      "artifactSha256": "af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850",
+      "image": "seed-1201-milestones.png",
+      "sha256": "0d6ca2bc19054266b33761608dd4f5881d77bc01c3a8e9cb0cf36ba67eecd358",
+      "sourceScreenshots": [
+        "runs/uniform-food/seed-1201/tick-3000-actual-3000.png",
+        "runs/uniform-food/seed-1201/tick-4000-actual-4000.png",
+        "runs/uniform-food/seed-1201/tick-5000-actual-5000.png",
+        "runs/uniform-food/seed-1201/tick-6000-actual-6000.png"
+      ]
+    },
+    {
+      "seed": 1202,
+      "artifactSha256": "9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7",
+      "image": "seed-1202-milestones.png",
+      "sha256": "22b189286e728d724e8d86b9127b203c3179e55e4529d523f204c48c21da9c91",
+      "sourceScreenshots": [
+        "runs/uniform-food/seed-1202/tick-3000-actual-3000.png",
+        "runs/uniform-food/seed-1202/tick-4000-actual-4000.png",
+        "runs/uniform-food/seed-1202/tick-5000-actual-5000.png",
+        "runs/uniform-food/seed-1202/tick-6000-actual-6000.png"
+      ]
+    },
+    {
+      "seed": 1203,
+      "artifactSha256": "96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae",
+      "image": "seed-1203-milestones.png",
+      "sha256": "89fe70d0155a76c07a0b3ea16213454946f094a565b436f58ee841a07b06d551",
+      "sourceScreenshots": [
+        "runs/uniform-food/seed-1203/tick-3000-actual-3000.png",
+        "runs/uniform-food/seed-1203/tick-4000-actual-4000.png",
+        "runs/uniform-food/seed-1203/tick-5000-actual-5000.png",
+        "runs/uniform-food/seed-1203/tick-6000-actual-6000.png"
+      ]
+    }
+  ]
+}

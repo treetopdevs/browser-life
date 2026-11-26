@@ -1,0 +1,24 @@
+R4 confirmation
+
+arm        n  kept  med tmL   med n  med d    med ALIGN  med ACUTE  med OCC   med req1  med sat   guard
+inherit    16   15     99.02  3926.882   1.000     -0.087     -0.003     1.030     0.996    1.000   0
+blocked    16   16     94.13  3525.730   0.951     -0.146    2.34e-4     1.078     0.884    0.999   0
+physarum   16   16     98.87  2544.297   0.998      0.993      0.994     7.156     1.000    1.000   0
+blind      16   13     98.94  4018.222   1.000     -0.115          0     1.065     0.998    1.000   0
+keyless    16    0   1.11e-4  5283.224       -          -          -         -         -        -   0
+
+runs in the toll state (late trail per particle >= 10): inherit 15/16, blocked 16/16, physarum 16/16, blind 13/16, keyless 0/16
+gate S (at least 8 in-state runs in inherit, blind, physarum): met
+fixed margins (0.15 x dev anchor): ALIGN 0.1623, OCC 0.9188, ACUTE 0.1491, SENS 0.01387
+anchor of this dataset (physarum minus blind, in-state): ALIGN span 1.109 (delta 1.000), OCC span 6.091 (delta 1.000), physarum acute effect 0.994, SENS 0.0924; gate G: met
+ALIGN shift 0.0139  95% CI [-0.0038, 0.0384]  margin 0.1623  delta +0.333  p 0.142335  Holm 0.159822  keeps  EQUIV
+OCC   shift -0.0225  95% CI [-0.0546, 0.0051]  margin 0.9188  delta -0.395  p 0.079911  Holm 0.159822  keeps  EQUIV
+ACUTE shift -0.0032  95% CI [-0.0073, -0.0018]  margin 0.1491  EQUIV
+SENS  shift 0.0031  95% CI [0.0027, 0.0040]  margin 0.0139  EQUIV
+floor (inherit in-state medians): req1 0.996 (>= 0.8), req2p 0.003 (<= 0.1), sat 1.000 (>= 0.9): met
+retention: inherit 15/16, blind 13/16, Fisher p 0.5996
+match: inherit median d 0.9995, physarum 0.9981, ratio 0.9986, within 10%: true
+secondary lesion contrasts, inherit against blind among in-state runs (descriptive, not in the label): n delta -0.026 p 0.9278; turn delta 0.015 p 0.9639; age delta 0.087 p 0.7168; d delta 0.179 p 0.4397; tmL delta 0.190 p 0.4130; speed delta 0.282 p 0.2174
+guard: 0 tripped run(s)
+LABEL TOLL-ONLY  (every endpoint is provably within the margin of no use, the state sits at the floor, and no retention difference is detected (ALIGN EQUIV, OCC EQUIV, ACUTE EQUIV, SENS EQUIV))
+wrote /Users/nicholas/develop/browser-life-mycelium-trail/docs/mycelium-r4-2026-11-14/RESULT.json

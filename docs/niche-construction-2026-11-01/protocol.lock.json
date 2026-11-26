@@ -1,0 +1,42 @@
+{
+ "kind": "niche-protocol-lock",
+ "protocolHash": "4d782009c08987a8177d6bee7d6d9c3ff4ab0260d49434626810e01243046f3d",
+ "registryDigest": "b512b2e22930336aa452cfcb8b949d0059f3a1f7f72ebf5df38bdfabef67da5b",
+ "seeds": {
+  "dev": [
+   8600001,
+   8600002,
+   8600003,
+   8600004
+  ],
+  "replicates": [
+   8600201,
+   8600202,
+   8600203,
+   8600204
+  ],
+  "wall": [
+   8600301,
+   8600302,
+   8600303,
+   8600304,
+   8600305,
+   8600306,
+   8600307,
+   8600308
+  ],
+  "fresh": [
+   8600501,
+   8600502,
+   8600503,
+   8600504,
+   8600505,
+   8600506,
+   8600507,
+   8600508
+  ]
+ },
+ "calibrationSha256": "096fda91606dbf81502941983e7b9049ec279d526e96624c3ebe38a9953150bd",
+ "note": "written before the fresh-seed run; fresh results never tune the protocol",
+ "frozenAt": "2026-11-02T05:50:24.110Z"
+}

@@ -41,6 +41,29 @@ defmodule Coordinator.GardenQueueTest do
     %{dir: dir}
   end
 
+  test "leave keeps garden device and verification provenance after restart", %{dir: dir} do
+    {:ok, _} = Queue.create_garden(params())
+    {:ok, a} = Queue.join(%{"adapter" => "producer"})
+    {:ok, b} = Queue.join(%{"adapter" => "verifier"})
+    task = next(a.id)
+    finish(dir, a.id, task)
+    verify = next(b.id)
+
+    assert {:ok, "verified"} =
+             Queue.complete(verify.segment.id, b.id, verify.lease, "verify", dg(0), %{})
+
+    before = Queue.garden_view("g1")
+    assert :ok = Queue.leave(a.id, a.token)
+    assert :ok = Queue.leave(b.id, b.token)
+    stop_supervised!(Queue)
+    start_supervised!({Queue, data_dir: dir})
+    after_leave = Queue.garden_view("g1")
+    assert after_leave.verification == before.verification
+    assert after_leave.tending.deviceTypesEver == before.tending.deviceTypesEver
+    assert after_leave.tending.deviceTypesEver == 2
+    assert after_leave.tending.activeNow == 0
+  end
+
   # ---- helpers ----
 
   defp params(over \\ %{}) do

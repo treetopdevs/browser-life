@@ -1,0 +1,265 @@
+{
+ "base": "http://localhost:5311",
+ "date": "2026-11-03T00:39:38.271Z",
+ "method": "Playwright chrome with WebGPU flags, fresh browser context, goto /selftest.html, wait for window.__golden.done, record window.__golden",
+ "rows": [
+  {
+   "w": 1280,
+   "done": true,
+   "error": null,
+   "adapter": "apple metal-3",
+   "results": [
+    {
+     "name": "soup",
+     "ok": true
+    },
+    {
+     "name": "tiled+mutation-heavy",
+     "ok": true
+    },
+    {
+     "name": "patches+seasons",
+     "ok": true
+    },
+    {
+     "name": "sweep",
+     "ok": true
+    },
+    {
+     "name": "signal-gain",
+     "ok": true
+    },
+    {
+     "name": "sweep-wander",
+     "ok": true
+    },
+    {
+     "name": "lesion+stats",
+     "ok": true
+    },
+    {
+     "name": "blocked-affinity",
+     "ok": true
+    },
+    {
+     "name": "extremes",
+     "ok": true
+    },
+    {
+     "name": "neutral-shadow",
+     "ok": true
+    },
+    {
+     "name": "adhesion",
+     "ok": true
+    },
+    {
+     "name": "adhesion-extremes",
+     "ok": true
+    },
+    {
+     "name": "adhesion-default-gain",
+     "ok": true
+    },
+    {
+     "name": "mutation-boundary",
+     "ok": true
+    },
+    {
+     "name": "ring-namespace",
+     "ok": true
+    },
+    {
+     "name": "takeover-lineage",
+     "ok": true
+    },
+    {
+     "name": "takeover-growth",
+     "ok": true
+    },
+    {
+     "name": "injury",
+     "ok": true
+    },
+    {
+     "name": "injury-shell",
+     "ok": true
+    },
+    {
+     "name": "takeover-genome",
+     "ok": true
+    },
+    {
+     "name": "injury-extremes",
+     "ok": true
+    },
+    {
+     "name": "shape-far",
+     "ok": true
+    },
+    {
+     "name": "shape-near",
+     "ok": true
+    },
+    {
+     "name": "wild-stack",
+     "ok": true
+    },
+    {
+     "name": "genes-decomp",
+     "ok": true
+    },
+    {
+     "name": "genes-bounds",
+     "ok": true
+    },
+    {
+     "name": "genes-ladder",
+     "ok": true
+    },
+    {
+     "name": "genes-ladder-bounds",
+     "ok": true
+    },
+    {
+     "name": "genes-drive",
+     "ok": true
+    },
+    {
+     "name": "genes-drive-bounds",
+     "ok": true
+    }
+   ],
+   "consoleErrors": []
+  },
+  {
+   "w": 375,
+   "done": true,
+   "error": null,
+   "adapter": "apple metal-3",
+   "results": [
+    {
+     "name": "soup",
+     "ok": true
+    },
+    {
+     "name": "tiled+mutation-heavy",
+     "ok": true
+    },
+    {
+     "name": "patches+seasons",
+     "ok": true
+    },
+    {
+     "name": "sweep",
+     "ok": true
+    },
+    {
+     "name": "signal-gain",
+     "ok": true
+    },
+    {
+     "name": "sweep-wander",
+     "ok": true
+    },
+    {
+     "name": "lesion+stats",
+     "ok": true
+    },
+    {
+     "name": "blocked-affinity",
+     "ok": true
+    },
+    {
+     "name": "extremes",
+     "ok": true
+    },
+    {
+     "name": "neutral-shadow",
+     "ok": true
+    },
+    {
+     "name": "adhesion",
+     "ok": true
+    },
+    {
+     "name": "adhesion-extremes",
+     "ok": true
+    },
+    {
+     "name": "adhesion-default-gain",
+     "ok": true
+    },
+    {
+     "name": "mutation-boundary",
+     "ok": true
+    },
+    {
+     "name": "ring-namespace",
+     "ok": true
+    },
+    {
+     "name": "takeover-lineage",
+     "ok": true
+    },
+    {
+     "name": "takeover-growth",
+     "ok": true
+    },
+    {
+     "name": "injury",
+     "ok": true
+    },
+    {
+     "name": "injury-shell",
+     "ok": true
+    },
+    {
+     "name": "takeover-genome",
+     "ok": true
+    },
+    {
+     "name": "injury-extremes",
+     "ok": true
+    },
+    {
+     "name": "shape-far",
+     "ok": true
+    },
+    {
+     "name": "shape-near",
+     "ok": true
+    },
+    {
+     "name": "wild-stack",
+     "ok": true
+    },
+    {
+     "name": "genes-decomp",
+     "ok": true
+    },
+    {
+     "name": "genes-bounds",
+     "ok": true
+    },
+    {
+     "name": "genes-ladder",
+     "ok": true
+    },
+    {
+     "name": "genes-ladder-bounds",
+     "ok": true
+    },
+    {
+     "name": "genes-drive",
+     "ok": true
+    },
+    {
+     "name": "genes-drive-bounds",
+     "ok": true
+    }
+   ],
+   "consoleErrors": []
+  }
+ ]
+}

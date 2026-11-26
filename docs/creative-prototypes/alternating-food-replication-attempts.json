@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "attemptCount": 1,
+  "newOutcomeArms": 1,
+  "reservation": {
+    "schemaVersion": 1,
+    "status": "reserved",
+    "runId": "20261027T140205Z-60560",
+    "attemptDir": "run-20261027T140205Z-60560",
+    "prelaunchUtc": "2026-10-27T14:02:05Z",
+    "gitHead": "06201b6b8e631cedbe0163fa0db514e77e4b085f",
+    "intentSha256": "fc60d82e93766dcdfd7b3340b3de51a376faac494c3034d2dfe8941a605c604e"
+  },
+  "intent": {
+    "schemaVersion": 1,
+    "status": "intent-recorded-before-launch",
+    "runId": "20261027T140205Z-60560",
+    "gitHead": "06201b6b8e631cedbe0163fa0db514e77e4b085f",
+    "prelaunchUtc": "2026-10-27T14:02:05Z",
+    "intentDurability": "fsynced-before-runner",
+    "seed": 1202,
+    "mode": "alternating-band",
+    "maxTick": 3000,
+    "stop": "actual extinction or tick 3000",
+    "planSha256": "2070ef956ca73855e9b032a7cbaa5e53e594dddaa9ed82f84f72c49256f5c743",
+    "modelSha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31",
+    "runnerSha256": "f616b0b1fa6ab1194e224ad7040f972c7b55ad65b6a5a2425e16b81a2ce7c162",
+    "packageJsonSha256": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpmLockSha256": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "historicalArtifactSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+    "historicalDataSha256": "1379b36370340873e531443ab8f9176a19a69d88b942d20e4d982ed81a81a349",
+    "historicalIndexSha256": "e3e3aa26ace9722ca15175d208ba0d5e2aaa09608e03af072695066c14089afc",
+    "historicalValidationSha256": "56a5a32d86286a425f1f0f0f83cd8b0b76cf4aaae351d0be52afdf14665ce7c5",
+    "copySourceModelSha256": "c6b5c37f20f8daa73858fd9e437d0b25d029c712c065ab11ef495c281b58b506",
+    "historicalRunnerSha256": "aa2d3aeca0cd7a1a58e405c681cc6e61b5b15da2b0b85262a12c4f6fa95009bd",
+    "launcherSha256": "4aababa0eff4be913debbecd9179ee769af165cdf69050051c25220734227429",
+    "nodeVersion": "24.2.0",
+    "environment": {
+      "NODE_NO_WARNINGS": "1"
+    },
+    "command": [
+      "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+      "--experimental-strip-types",
+      "tools/alternating-food-replication/explore.ts",
+      "--write",
+      "--seed",
+      "1202",
+      "--attempt-dir",
+      "/Users/nicholas/.codex/worktrees/alternating-food-replication/browser-life/runs/alternating-food-replication/attempts/run-20261027T140205Z-60560"
+    ]
+  },
+  "result": {
+    "status": "completed",
+    "exitStatus": 0,
+    "finishedUtc": "2026-10-27T14:03:11Z",
+    "classification": "completed",
+    "stdout": "stdout.log",
+    "stderr": "stderr.log"
+  },
+  "localAttemptDirectory": "runs/alternating-food-replication/attempts/run-20261027T140205Z-60560",
+  "files": {
+    "attempt-status.json": {
+      "sha256": "d35e144af42f22a23d4965f9d38c39e38779d00dc1d1d57f2190e8c7a0077298",
+      "bytes": 243
+    },
+    "baseline-samples.jsonl": {
+      "sha256": "bb09edc9daa079a989efca2a2ed0c80dee4fe4a8cfb7964763b23816d83e3fbc",
+      "bytes": 3368358
+    },
+    "baseline-snapshots.jsonl": {
+      "sha256": "c0d5441177ca5dafc15fe9fdff0a31b186309eb61944a60d17162a3dde24e08e",
+      "bytes": 813901
+    },
+    "baseline-ticks.jsonl": {
+      "sha256": "dff7696c240615b150f8dff9cccfd8634ef994dec48426ccef70d7d1512385f1",
+      "bytes": 2251658
+    },
+    "candidate-evidence.json": {
+      "sha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+      "bytes": 4422855
+    },
+    "intent.json": {
+      "sha256": "fc60d82e93766dcdfd7b3340b3de51a376faac494c3034d2dfe8941a605c604e",
+      "bytes": 1876
+    },
+    "result.json": {
+      "sha256": "a1a2cbd3e66a07650a2eb62d02d6c175759ad332d7f3322a333619fc458b167b",
+      "bytes": 173
+    },
+    "runner-start.json": {
+      "sha256": "6bc62b021be3e812fd287f2d0d3d56059b64a39b994d9391aabc201524361a31",
+      "bytes": 68
+    },
+    "samples.jsonl": {
+      "sha256": "71f444c8e5fd9cfdda47eb22276d8768ca5e016199dfc7001816604fbfe6b46a",
+      "bytes": 2924289
+    },
+    "snapshots.jsonl": {
+      "sha256": "a7aa340c2d475c3e9f977bcc7d42afa14bc05a851c5e50548c1697b07efe1ad7",
+      "bytes": 1034370
+    },
+    "stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stdout.log": {
+      "sha256": "cd1dbd63f3f3cd1dde225b43f3e354c908b370a6d10aac523e4f5a7b84ebd2ea",
+      "bytes": 6031
+    },
+    "ticks.jsonl": {
+      "sha256": "24af446d6813879e81eebba7efb5b20aa6dde967a2bbe2c7db05b539e616eaea",
+      "bytes": 2551643
+    }
+  },
+  "note": "One scheduled new trajectory with independent repeat; exact historical static regression is known correctness evidence. No scheduled retry, extra seed, tuning or extension. Prior partial unit-test biology advances are disclosed in validation and are not accepted outcomes."
+}

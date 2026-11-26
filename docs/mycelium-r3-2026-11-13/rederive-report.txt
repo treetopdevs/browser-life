@@ -1,0 +1,21 @@
+readout mismatches against the stored values (bit equality): 0 of 560
+inherit      n 16 median dE 0.034867 dL 8.2372e-07 tmE 3.9109 tmL 0.00017902
+blocked      n 16 median dE 0.076635 dL 0.019881 tmE 7.7916 tmL 1.9763
+frozen       n 16 median dE 0.052557 dL 0 tmE 5.7277 tmL 0
+inherit-c1   n 16 median dE 0.10945 dL 5.8062e-05 tmE 10.993 tmL 0.0057282
+inherit-c4   n 16 median dE 0.010786 dL 8.3084e-07 tmE 1.4919 tmL 4.8591e-05
+blocked-c1   n 16 median dE 0.15019 dL 0.11553 tmE 14.54 tmL 11.429
+blocked-c4   n 16 median dE 0.032493 dL 0.0063906 tmE 3.5356 tmL 0.6331
+D1: effect +0.8750  p 4.99998e-06  Holm 1.49999e-05  SUPPORT
+D2: effect +0.8828  p 4.99998e-06  Holm 1.49999e-05  SUPPORT
+D3: effect +0.5000  p 0.000159997  Holm 0.000159997  SUPPORT
+C1 delta -0.875
+frozen: vs blocked (-1.0, 4.9999750001249995e-06), inherit vs frozen (0.3125, 0.08347958260208699), inherit vs blocked (-0.875, 4.9999750001249995e-06): FROZEN-LOW -> FROZEN-SUFFICES
+guard-flagged runs: 0; label without them: None
+LABEL PASS
+D1: TS effect +0.875000 PY +0.875000 (diff 0.00e+00); TS p 2e-06 PY 4.99998e-06; verdict TS SUPPORT PY SUPPORT  OK
+D2: TS effect +0.882812 PY +0.882812 (diff 0.00e+00); TS p 4e-06 PY 4.99998e-06; verdict TS SUPPORT PY SUPPORT  OK
+D3: TS effect +0.500000 PY +0.500000 (diff 0.00e+00); TS p 0.000198 PY 0.000159997; verdict TS SUPPORT PY SUPPORT  OK
+frozen interpretation TS FROZEN-SUFFICES PY FROZEN-SUFFICES  OK
+label TS PASS PY PASS  OK
+ALL AGREE

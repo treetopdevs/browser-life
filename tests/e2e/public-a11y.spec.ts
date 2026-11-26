@@ -8,10 +8,9 @@
 // at t=500, reduced motion, and what a visitor sees without WebGPU. Run it with
 // `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`.
 import { AxeBuilder } from "@axe-core/playwright";
+import { isStandalone, sitemapRoutes } from "./experiment-pages.ts";
 import { METRICS_VERSION } from "@bl/schema";
 import { chromium, expect, test, type Browser, type Page, type TestInfo } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
 test.describe.configure({ mode: "parallel" });
@@ -20,12 +19,13 @@ test.describe.configure({ mode: "parallel" });
 test.skip(({ browserName }) => browserName !== "chromium", "accessibility release checks are Chrome-only (see criterion 5)");
 
 const FIXTURE = contractFixture as Record<string, any>;
-const SITEMAP = fileURLToPath(new URL("../../apps/lab/public/sitemap.xml", import.meta.url));
-/** Every page the sitemap lists, as paths, plus the shared garden (public but unlisted). */
-const ROUTES = [
-  ...[...readFileSync(SITEMAP, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname),
-  "/garden/",
-];
+/**
+ * Every page the sitemap lists that wears the site's shell (shared header, day and night colours, site.css), as paths;
+ * the shared garden is among them. The standalone experiment pages have their own single-theme shell, so the criteria
+ * here (two colour schemes, the site's skip link and smooth scroll) do not describe them: experiment-pages-a11y.spec.ts
+ * checks those, and experiment-pages.ts says which pages they are.
+ */
+const ROUTES = sitemapRoutes().filter((route) => !isStandalone(route));
 /** What an unknown path answers: the not-found page, with 404 (criterion 6). */
 const NOT_FOUND = "/no-such-page/";
 /** The island page is where Join in sends people; it is unlisted (noindex) but public. So is the not-found page. */
@@ -47,11 +47,11 @@ type AxeExclusion = { route: string; kind: "violation" | "incomplete"; rule: str
 const targetMatches = (e: AxeExclusion, target: string) => (typeof e.target === "string" ? e.target === target : e.target.test(target));
 const AXE_EXCLUSIONS: AxeExclusion[] = [
   // Reviewed by hand: at 375 the view picker scrolls sideways (DESIGN.md keeps view modes reachable that way, without
-  // page overflow) and clips these three, so axe cannot see what is behind them. They wear the same `.seg button`
+  // page overflow) and clips these four, so axe cannot see what is behind them. They wear the same `.seg button`
   // colours as the five view buttons axe passes beside them: --muted on the page's --bg, 6.3:1 by day and 7.4:1 at
   // night (from tokens.css); lit, ink on the sun as the composite button axe passes. scan() measures each one's text
   // against what is under it and fails under 4.5:1, so this reason cannot go stale.
-  ...["/lab/", "/lab/ (pond keeper)", "/lab/ (pond keeper, family tree in full)"].flatMap((route) => ["signal", "affinity", "light"].map((mode): AxeExclusion => (
+  ...["/lab/", "/lab/ (pond keeper)", "/lab/ (pond keeper, family tree in full)"].flatMap((route) => ["signal", "affinity", "light", "membrane"].map((mode): AxeExclusion => (
     { route, kind: "incomplete", rule: "color-contrast", target: `button[data-mode="${mode}"]`, widths: [375], reason: "reviewed: same colours as the view buttons axe passes" }))),
   // Reviewed by hand: the Session card's hint lines that wrap. axe finds the colours under each line of text through
   // its own model of what is stacked there, which for a modal dialog runs on into the inert page behind it; a page
@@ -794,6 +794,8 @@ function orderProblems(stops: Focused[]): string[] {
 const SKIP: Record<string, { link: string; target: string; header: string } | null> = {
   "/lab/": { link: ".skip-link", target: "#lab-main", header: "header.top" },
   [POND]: { link: ".skip-link", target: "#lab-main", header: "header.top" },
+  // The soup page's skip link goes past the intro to the soup itself (its own #soup-main), not to <main>.
+  "/soup/": { link: ".skip", target: "#soup-main", header: ".site-header" },
   // One short page whose `<main>` is the first thing in it: nothing to skip.
   "/island.html": null,
 };

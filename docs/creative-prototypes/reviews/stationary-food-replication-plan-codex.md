@@ -1,0 +1,8 @@
+**Clear verdict: no plan blockers found.** Reviewed six documents; no edits or simulations.
+
+- **Schedule and stops:** fixes 1201 → 1203, requires both despite valid biological failure, and halts further outcomes for assay failures. Unresolved invalid evidence closes inconclusive. [Plan:7](docs/creative-prototypes/stationary-food-replication-plan.md:7)
+- **Historical regression and preservation:** explicitly separates the 1201/1203 provenance schemas, requires exact simulation payload comparisons without state normalization, pins references/dependencies, and preserves historical bytes. [Plan:21](docs/creative-prototypes/stationary-food-replication-plan.md:21)
+- **Per-arm gates:** preserves the stationary screen’s numerical and within-arm visual criteria, fails unclear or missing endpoints, and commits SHA-bound judgments before overlap diagnostics. [Plan:13](docs/creative-prototypes/stationary-food-replication-plan.md:13)
+- **Interpretation:** aggregates only the two new stationary outcomes, treats moving trajectories as historical rejudgments, separates seed1202, and makes any invalid pair render the planned aggregate incomplete/inconclusive. [Plan:17](docs/creative-prototypes/stationary-food-replication-plan.md:17)
+
+This clears the **plan**. Actual historical schema mappings, hashes, comparator coverage and preservation remain implementation-review obligations; no new outcomes are established.

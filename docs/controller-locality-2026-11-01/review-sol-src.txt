@@ -1,0 +1,938 @@
+2026-11-01T23:24:37.724506Z ERROR codex_core::session::session: failed to load skill /Users/nicholas/.codex/skills/claude-second-opinion/SKILL.md: missing field `description`
+2026-11-01T23:24:37.725167Z ERROR codex_core::session::session: failed to load skill /Users/nicholas/.codex/skills/codex-claude-second-opinion/SKILL.md: missing field `description`
+OpenAI Codex v0.166.0
+--------
+workdir: /Users/nicholas/develop/browser-life-i05-controller-locality
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 01a1996d-d74d-71d1-b00b-6bc822e041c6
+--------
+user
+You are doing an ADVERSARIAL, read-only code review of the uncommitted work in this checkout (git diff plus untracked files) for slice I05, "Controller locality and useful mutations" (mutation-effect matrix over the existing controller, no new physics).
+
+Spec: docs/controller-locality-2026-11-01/PLAN.md. Also see docs/simulation-research-2026-11-01/report.md (section I05 and "Agent execution contract"). Evidence: docs/controller-locality-2026-11-01/{EVIDENCE.md,evidence.json,manifest.json}.
+
+Changed tracked files: Dockerfile.site, apps/lab/vite.config.ts, deploy/Caddyfile, package.json, packages/lineage/src/index.ts.
+Untracked: apps/lab/controller-locality/, apps/lab/src/controller-locality/, apps/lab/test/controller-locality-*.test.ts, packages/lineage/src/locality/, packages/lineage/test/locality.test.ts, tools/locality/, tools/test/locality-evidence.test.ts, docs/controller-locality-2026-11-01/.
+Use `git status`, `git diff`, and read the untracked files.
+
+Hunt for:
+1. Correctness bugs in neighbourhood generation, clamped/unchanged vs genuine edit separation, reversibility, stratification, descriptors, scenario assays.
+2. Determinism: any Math.random, Date, map/set iteration order, float nondeterminism, platform dependence; does `--check` replay actually recompute and compare, or just re-hash the file?
+3. Past-only prediction leakage / circularity: descriptors or labels computed from the same outcomes they are used to predict; train/test leakage across starting genomes or scenarios; transfer scenario not really independent.
+4. Null fixtures that would pass: shuffled-sensor-label negative fixture, neutral/silent edits; would the check pass for a broken implementation?
+5. Tests that cannot fail (tautologies, snapshot of own output, weak assertions).
+6. Misleading claims in EVIDENCE.md / UI / go-no-go argument: overclaiming beyond tested genomes/scenarios, missing "exploratory" label, numbers not matching evidence.json.
+7. Physics/hash risk: any change touching sim-ref, sim-gpu, schema config, RULE_VERSION, golden pins, defaultConfig; any new WorldConfig key; non-integer arithmetic in shared state.
+8. Scope creep and deploy risk: the view must stay off the deployed site (like /predictability/); check Dockerfile.site, deploy/Caddyfile, vite.config.ts changes. Runtime of evidence regeneration should be a few minutes; no large runs/ inputs; no paid calls.
+
+Output: findings grouped P1 (blocks merge), P2, P3. Each with file:line, a concrete failure scenario, and a suggested fix. If you run commands, keep them read-only (tests are fine). End with a one-paragraph overall verdict.
+
+2026-11-01T23:24:38.592316Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer error=\"invalid_token\", error_description=\"Missing Authorization header\", resource_metadata=\"https://mcp.expo.dev/.well-known/oauth-protected-resource/mcp\"" })
+2026-11-01T23:24:39.072338Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://plan.agent-native.com/.well-known/oauth-protected-resource?resource=%2F_agent-native%2Fmcp\", scope=\"mcp:read mcp:write mcp:apps\", error=\"invalid_token\", error_description=\"This bearer token could not be verified: it is malformed, expired, issued for another app, or older than a required reconnect. Reconnect at https://plan.agent-native.com/mcp/connect.\"" })
+hook: SessionStart
+hook: SessionStart
+hook: SessionStart Completed
+hook: SessionStart Completed
+hook: UserPromptSubmit
+hook: UserPromptSubmit
+hook: UserPromptSubmit Completed
+hook: UserPromptSubmit Completed
+codex
+I’ll inspect the diff, untracked files, spec, and evidence, then probe the checks for bugs, leakage, and false passes. I’ll keep the review read-only.
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+exec
+/opt/homebrew/bin/zsh -lc 'for p in /AGENTS.md /Users/AGENTS.md /Users/nicholas/AGENTS.md /Users/nicholas/develop/AGENTS.md /Users/nicholas/develop/browser-life-i05-controller-locality/AGENTS.md; do if [ -f "$p" ]; then printf '"'\\n%s\\n' \""'$p"; cat "$p"; fi; done' in /Users/nicholas/develop/browser-life-i05-controller-locality
+ succeeded in 0ms:
+exec
+/opt/homebrew/bin/zsh -lc 'cat /Users/nicholas/.agents/skills/code-review/SKILL.md' in /Users/nicholas/develop/browser-life-i05-controller-locality
+ succeeded in 0ms:
+---
+name: code-review
+description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/PRD asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+---
+
+Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
+
+- **Standards** — does the code conform to this repo's documented coding standards?
+- **Spec** — does the code faithfully implement the originating issue / PRD / spec?
+
+Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
+
+The issue tracker should have been provided to you — run `/setup-matt-pocock-skills` if `docs/agents/issue-tracker.md` is missing.
+
+## Process
+
+### 1. Pin the fixed point
+
+Whatever the user said is the fixed point — a commit SHA, branch name, tag, `main`, `HEAD~5`, etc. If they didn't specify one, ask for it.
+
+Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+
+Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here — not inside two parallel sub-agents.
+
+### 2. Identify the spec source
+
+Look for the originating spec, in this order:
+
+1. Issue references in the commit messages (`#123`, `Closes #45`, GitLab `!67`, etc.) — fetch via the workflow in `docs/agents/issue-tracker.md`.
+2. A path the user passed as an argument.
+3. A PRD/spec file under `docs/`, `specs/`, or `.scratch/` matching the branch name or feature.
+4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
+
+### 3. Identify the standards sources
+
+Anything in the repo that documents how code should be written, such as `CODING_STANDARDS.md` or `CONTRIBUTING.md`.
+
+On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below — a fixed set of Fowler code smells (_Refactoring_, ch.3) that applies even when a repo documents nothing. Two rules bind it:
+
+- **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
+- **Always a judgement call.** Each smell is a labelled heuristic ("possible Feature Envy"), never a hard violation — and, like any standard here, skip anything tooling already enforces.
+
+Each smell reads *what it is* → *how to fix*; match it against the diff:
+
+- **Mysterious Name** — a function, variable, or type whose name doesn't reveal what it does or holds. → rename it; if no honest name comes, the design's murky.
+- **Duplicated Code** — the same logic shape appears in more than one hunk or file in the change. → extract the shared shape, call it from both.
+- **Feature Envy** — a method that reaches into another object's data more than its own. → move the method onto the data it envies.
+- **Data Clumps** — the same few fields or params keep travelling together (a type wanting to be born). → bundle them into one type, pass that.
+- **Primitive Obsession** — a primitive or string standing in for a domain concept that deserves its own type. → give the concept its own small type.
+- **Repeated Switches** — the same `switch`/`if`-cascade on the same type recurs across the change. → replace with polymorphism, or one map both sites share.
+- **Shotgun Surgery** — one logical change forces scattered edits across many files in the diff. → gather what changes together into one module.
+- **Divergent Change** — one file or module is edited for several unrelated reasons. → split so each module changes for one reason.
+- **Speculative Generality** — abstraction, parameters, or hooks added for needs the spec doesn't have. → delete it; inline back until a real need shows.
+- **Message Chains** — long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
+- **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
+- **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
+
+### 4. Spawn both sub-agents in parallel
+
+Send a single message with two `Agent` tool calls. Use the `general-purpose` subagent for both.
+
+**Standards sub-agent prompt** — include:
+
+- The full diff command and commit list.
+- The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
+- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+
+**Spec sub-agent prompt** — include:
+
+- The diff command and commit list.
+- The path or fetched contents of the spec.
+- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+
+If the spec is missing, skip the Spec sub-agent and note this in the final report.
+
+### 5. Aggregate
+
+Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings — the two axes are deliberately separate (see _Why two axes_).
+
+End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes — that's the reranking the separation exists to prevent.
+
+## Why two axes
+
+A change can pass one axis and fail the other:
+
+- Code that follows every standard but implements the wrong thing → **Standards pass, Spec fail.**
+- Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
+
+Reporting them separately stops one axis from masking the other.
+
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse
+exec
+/opt/homebrew/bin/zsh -lc 'rg -n "browser-life|controller.locality|I05" /Users/nicholas/.codex/memories/MEMORY.md' in /Users/nicholas/develop/browser-life-i05-controller-locality
+ exited 1 in 0ms:
+hook: PostToolUse
+hook: PostToolUse
+exec
+/opt/homebrew/bin/zsh -lc 'pwd && git rev-parse --show-toplevel && git status --short && git diff --stat' in /Users/nicholas/develop/browser-life-i05-controller-locality
+ succeeded in 0ms:
+/Users/nicholas/develop/browser-life-i05-controller-locality
+/Users/nicholas/develop/browser-life-i05-controller-locality
+ M Dockerfile.site
+ M apps/lab/vite.config.ts
+ M deploy/Caddyfile
+ M package.json
+ M packages/lineage/src/index.ts
+?? apps/lab/controller-locality/
+?? apps/lab/src/controller-locality/
+?? apps/lab/test/controller-locality-packaging.test.ts
+?? apps/lab/test/controller-locality-render.test.ts
+?? docs/controller-locality-2026-11-01/
+?? packages/lineage/src/locality/
+?? packages/lineage/test/locality.test.ts
+?? tools/locality/
+?? tools/test/locality-evidence.test.ts
+ Dockerfile.site               | 2 +-
+ apps/lab/vite.config.ts       | 1 +
+ deploy/Caddyfile              | 2 ++
+ package.json                  | 1 +
+ packages/lineage/src/index.ts | 1 +
+ 5 files changed, 6 insertions(+), 1 deletion(-)
+
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+codex
+I’m using the code-review skill for independent spec and standards checks, with your P1/P2/P3 format taking precedence. The scope is HEAD versus the working tree, including the untracked files you listed.
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+exec
+/opt/homebrew/bin/zsh -lc 'cat docs/controller-locality-2026-11-01/EVIDENCE.md && cat docs/controller-locality-2026-11-01/manifest.json && cat package.json' in /Users/nicholas/develop/browser-life-i05-controller-locality
+exec
+/opt/homebrew/bin/zsh -lc "cat docs/controller-locality-2026-11-01/PLAN.md && rg -n -A 85 -B 8 'I05|Agent execution contract' docs/simulation-research-2026-11-01/report.md" in /Users/nicholas/develop/browser-life-i05-controller-locality
+ succeeded in 0ms:
+# I05 controller locality: evidence and go/no-go
+
+Exploratory. CPU only (deterministic integer reference simulator and controller probe); no GPU evidence. Bounded to the tested genomes, the one-step operator, the 26,244-point probe grid and three short 16x16 tiny-world assays. Nothing here is a confirmation. Artifacts: `evidence.json` (sealed payload), `manifest.json` (source hashes, provenance), checked by `tools/locality/matrix.ts --check` / `--replay-check`. Page: `apps/lab/controller-locality/` (local, off the deployed site).
+
+## What was run
+
+- Start genomes: hand-built generalist (positive control and measurement qualification, does not vote); M3 cluster 4 (sparse slot, passed the gate); M3 cluster 16 (dense slot, **failed** the viability gate: light-growth 924 permille, 19 permille under dark-persistence, so it is recorded as failed); M3 cluster 9 (dense slot, passed, used). Candidate order was fixed before data.
+- Neighbourhood per genome: 94 edits (62 single-locus, 16 matched-magnitude multi-locus at total |delta| 24, 16 equal-slot-count secondary), all through the real `mutateInPlace`.
+- Assays: light-growth, dark-persistence, dim-transfer; 2 paired seeds; horizon 200; 24 stratified assayed edits per M3 genome, 8 for the generalist. Neutral fixtures give exactly 0 deviation; sensitivity check passed (zeroing `w2 h1->photo` moved generalist light-growth by -2005 against tau 167).
+
+## Readouts (finite-panel counts, per genome, never pooled)
+
+| | generalist (control) | M3 c4 (sparse) | M3 c9 (dense) |
+|---|---|---|---|
+| edits that change the genome | 91/94 | 90/94 (2 unchanged, 2 boundary-clamped) | 91/94 (2, 1) |
+| genuine edits silent on the probe | 51/91 | 33/90 | 11/91 |
+| genuine edits undone by one operator step | 90/91 | 89/90 | 90/91 |
+| assayed genuine edits viable | 8/8 | 24/24 | 24/24 |
+| assayed edits improving a response by tau (A) | 2/8 | 1/24 | 1/24 |
+| of A, harming another (C) / harming none (K) | 0 / 2 | 0 / 1 | 0 / 1 |
+| median actuators moved by genuine w1/b1 edits (real vs degree-matched null) | 0 vs 0 | 1 vs 0 | 5.5 vs 7 |
+
+Probe-level locality: most genuine edits move few actuators; the dense M3 genome 9 is far less silent (12% vs 37% for the sparse genome) but its w1/b1 edits move *fewer* actuators than the same weights placed at random (5.5 against 7), so its breadth looks like dense wiring rather than locus-specific entanglement. Viability is 100% of the assayed edits at a loose floor (500 permille of starting biomass); improvement is rare (1 of 24 per M3 genome, about 4%, inverse-probability-weighted 35 permille).
+
+## Decision rule outcome
+
+**Inconclusive (underpowered).** Both M3 genomes have A = 1, below the pre-stated minimum of 5 improving edits, so no collateral-loss or useful-neighbourhood statement is made. The rule's entanglement branch also could not fire on the probe half alone (c9 breadth does not exceed its null).
+
+## Go/no-go for a separately versioned controller architecture (advisory, exploratory, bounded)
+
+**No-go on this evidence; not a refutation.** Nothing measured here supports starting a modular-controller fork: the dense genome's wide actuator footprint is matched by its degree-matched null, there is no observed collateral loss (C = 0, because improvements are too few to say), and the sparse genome's edits are mostly local or silent. What the data do show is that useful edits are rare in this neighbourhood (about 4% of assayed edits), which is a statement about search efficiency on two genomes, not about representation. A later plan would need more improving edits (assay every genuine edit, longer or more varied scenarios) before any collateral-loss claim, and a fork would have to be parameter-, mutation-opportunity- and initial-quality-matched with search and transfer reported separately.
+
+## Deviations from PLAN.md, and what is not done
+
+- Calibration measured about 0.3 to 0.9 s per 200-step run, not the 19 ms/step in the plan. H was fixed at **200** (not 60-100) because at 80 steps the M3 genomes do not separate light from dark; H, tile, radius 6 and the gate floor 1000 / margin 250 were chosen on baselines and the generalist only. Dim scenario: light 20 + 60, nutrient 16.
+- Assayed edits stay at 24 per M3 genome (not raised although runtime would allow more); this is the cause of the underpowered verdict. Duplicates and non-genuine edits are excluded from the draw.
+- The worker pool was cut: serial runtime is about 75 s for the whole payload under Deno.
+- Integer fluxes are not recorded; each run keeps initial and final B, P, E (first seed of light-growth in the row) and the replay-check compares final B, P, E, A, C for fixtures only.
+- Multi-locus vs single-locus clean share is computed on assayed genuine edits only (multi 1/6, single magnitude 24: 0/8 per M3 genome).
+- Image checks not run (no image built). No GPU evidence.
+- Under vitest's node transform the replay is an order of magnitude slower than under Deno, so the replay test runs `--replay-check` as a Deno subprocess.
+{
+ "kind": "controller-locality-manifest",
+ "payloadFileSha256": "71e24ee0841559c45005ac412238697ad242a8b764fc9becb4213fe8bb9a8895",
+ "integritySha256": "f9d748e2a004c0bae9e0207e2b564307a5b255376cf453dd6e9d4f9a67fe2bd0",
+ "version": 1,
+ "sources": {
+  "packages/lineage/src/locality/descriptors.ts": "7bb21563035c9162b3abdebaac3266b95c2fc8226d7a6f33fef5354cfd73852e",
+  "packages/lineage/src/locality/fixtures.ts": "1c228fde882e67b611e0c3fb6988b94d786e37b3cd929087da6ba467c04f78df",
+  "packages/lineage/src/locality/index.ts": "1e2b83344f981f48f8e618ca85af924068ea1155ced102432ff17b8fe97f3417",
+  "packages/lineage/src/locality/matrix.ts": "2ab57bf633762e500defd6094a70cfaccdc9f56f86ad99cf7f373794a25e8fa3",
+  "packages/lineage/src/locality/neighbourhood.ts": "2477ce7b02d36087987ec7df414a30c128a875e239d7fe93d1787d6de24c479d",
+  "packages/lineage/src/locality/scenarios.ts": "548896398394f40e0a9333a8118313b0919b87e4ccdef1966b08d0f8adf5a00b",
+  "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+  "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+  "packages/schema/src/config.ts": "7b513d0e2470846aa0fc1c07d1f69dea44c5d0e4831e77845235849b257614d9",
+  "packages/schema/src/discovery.ts": "44e8d1ac01ebf0eb3c9f55acd01c0721012c6074ccf21babab4aa2d79fe3a1d2",
+  "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+  "packages/schema/src/feed.ts": "33480f611a0087874574df5261dcfd7df8faf5aa72156467588a3cadbc7ec07d",
+  "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+  "packages/schema/src/genetics.ts": "76d4940b049a42707b93093441d5584d9ea1239c41c2075834290f256ebff185",
+  "packages/schema/src/genome.ts": "f467b5aa6a6e11cff2b9810b785a46fbee93d67f8cf63c7bdce2141ccc7d92ba",
+  "packages/schema/src/index.ts": "657fc8245db99ff998df944c01526fc5dd4cb0dd69a54c8bf90e486aa2993628",
+  "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+  "packages/schema/src/kernel.ts": "9eaeae893ddce4c70838569c10867ef28cabebea6b2bb94c91c1f3b18265f798",
+  "packages/schema/src/layout.ts": "56b8900fdf6953ddf426bb067523e1b6a6ea4cb3bcd4181e92d3dde0bb5bb558",
+  "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+  "packages/schema/src/ponds.ts": "93c612121900aff856156712039712bb3a98bbd5e6edd6695dc610644466e872",
+  "packages/schema/src/presets.ts": "fd16bb109ac9c44711207ff693cd60f1922f5288994cb164bab80334627c021e",
+  "packages/schema/src/sun.ts": "380cf2b66bc5d908557c21ae41457073f2387c878cd155519f625fa25afad1b2",
+  "packages/schema/src/world.ts": "1723064f2bedbe88a0c88e0d18dfb24c3ec7769615d7c0440e664946ba82c680",
+  "packages/sim-ref/src/cells.ts": "d7ebdfc1abaf82b5e489e14933a870e09db4dacb585e1d1656f74d03cfe8f7fb",
+  "packages/sim-ref/src/index.ts": "a83448141419effc66b1861ddd97b83f958da073c965699a792c63f5d71283fb",
+  "packages/sim-ref/src/step.ts": "4c5ea84fff762ab69334672d8fcae89c9a0e4eb2c9274296e436da510c1f70fb",
+  "packages/sim-ref/src/sun.ts": "fac1ace7e4c5b1401e1fe794bdf7f7aab9ea26b4692975fce49434ecfab58ebf",
+  "packages/lineage/src/genotype.ts": "7ea6adc07cef6a1aed11bbf9c7668025d41cd5fe98184fc06fef234356f0a140",
+  "tools/locality/matrix.ts": "203a2ca1932b03d296354c0e2c3aed41950bd885e51e41d92ad33828cbaa3128"
+ },
+ "genomes": [
+  {
+   "id": "generalist",
+   "hash": "5fdf53487e7d590c",
+   "cluster": null,
+   "votes": false
+  },
+  {
+   "id": "m3-c4",
+   "hash": "4914309dd66cd139",
+   "cluster": 4,
+   "votes": true
+  },
+  {
+   "id": "m3-c9",
+   "hash": "312be6f426e3a06d",
+   "cluster": 9,
+   "votes": true
+  }
+ ],
+ "candidates": [
+  {
+   "slot": "sparse",
+   "cluster": 4,
+   "pass": true,
+   "chosen": true
+  },
+  {
+   "slot": "dense",
+   "cluster": 16,
+   "pass": false,
+   "chosen": false
+  },
+  {
+   "slot": "dense",
+   "cluster": 9,
+   "pass": true,
+   "chosen": true
+  }
+ ],
+ "provenance": {
+  "note": "not replayed; excluded from the deterministic payload",
+  "baseCommit": "b43db3be",
+  "runtime": "deno 2.9.8",
+  "platform": "darwin-arm64",
+  "generatedAt": "2026-11-01T22:37:04.149Z",
+  "generateSeconds": 74
+ }
+}
+{
+  "name": "browser-life",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @bl/lab dev",
+    "build": "pnpm --filter @bl/lab build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:gpu": "deno run --allow-read --allow-env tests/deno/gpu_golden.ts",
+    "test:e2e": "playwright test",
+    "gen:cards": "node apps/lab/scripts/social-cards.ts",
+    "gen:prereg": "deno run -A tools/gen-prereg.ts",
+    "typecheck:capabilities": "tsc -p tools/agent-capabilities/tsconfig.json",
+    "test:capabilities": "vitest run tools/test/agent-capabilities",
+    "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts",
+    "locality:check": "deno run -A --no-lock tools/locality/matrix.ts --check",
+    "verify:ecosystem": "python3 tools/ecosystem-library/verify.py && node --experimental-strip-types tools/ecosystem-library/replay-3000.ts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0",
+    "@webgpu/types": "^0.1.74",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.2"
+  }
+}
+
+ succeeded in 0ms:
+# I05 Controller locality and useful mutations: plan
+
+Status: PLAN stage, 2026-11-01. Branch `claude/i05-controller-locality` from `origin/main` b43db3be. Source: "I05" and "Agent execution contract" in `docs/simulation-research-2026-11-01/report.md`; the cheap-probes-first scope comes from the report (Phase B line: "Run I05's cheap controller probes before proposing a representation fork") and the coordinator's slice scope; the backlog log's D1 (Phase A first) and D7 (rebase and rerun focused checks before publishing) apply; the log has no D10, and nothing here cites one. Observer and tooling only. No physics change, no GPU, no model calls, no deploy, no new `WorldConfig` keys. CPU only, and every artifact says so. Exploratory: nothing here is a confirmation, and no score selects anything that is later reported as independent evidence.
+
+## 1. Bounded question
+
+For three chosen viable starting controllers, is the one-step mutation neighbourhood of the existing 10-8-8 int8 controller (a) mostly silent, clamped or harmful, (b) broad in the actuators and sensors each edit moves (entangled), and (c) where edits do improve one independently assayed capability, do they usually cost another? Answer is bounded to those genomes, that operator, those grids and those short scenarios. It does not diagnose "the controller" in general, and it does not transfer the FER (deep representation) argument to this controller: that is an analogy under test.
+
+Out of scope by decision: any controller-layout change, modular variant, search/evolution run, large `runs/` input, GPU evidence.
+
+## 2. What is built (one PR)
+
+1. **Evidence fixture with a negative case.** Known-history controllers built by exact algebra, not searched:
+   - *hidden-unit permutation* (swap hidden units a and b: permute `W1` columns, `b1`, `W2` rows). Function is identical on every input, yet many bytes differ. Fools the naive metrics "bytes changed" and "weight-space distance as edit size". Expected: probe outputs byte-identical, expression `probe-silent`/identical, physical assay identical (checked, not assumed).
+   - *dead-hidden edit* (edit an incoming weight of a hidden unit whose `W2` row is all zero): a nonzero edit with zero function change.
+   - *clamp edit* (push a byte at +-127 further out): minted as an edit, genotype unchanged. Fools "number of edits applied".
+   - *shuffled sensor labels* (permute `W1` input rows): a genuinely different controller, labelled a negative fixture, not an ecological intervention. No breadth invariant is promised: the `PROBE_AXES` sensors have different supports, cardinalities and signs, so permuting rows changes the sampled input distribution (a swap of light and polymer rows on the generalist with photo bias -60 and `w2 h1->photo +6` moves actuator breadth from one to zero). Expected values are fixture-specific tables computed once and pinned in the test. Sensor-attribution bookkeeping (edit at `w1 in=k` attributes to sensor k, and to sensor pi(k) after the shuffle) is tested separately as pure relabelling.
+   - *hand-built generalist* (`generalistGenome`, where each weight's role is documented): a positive fixture with expected localisation (e.g. `w2 h1->photo` moves photo only, within the light sensor's reach).
+2. **Mutation neighbourhood generator** (pure, integer, counter-PRNG keyed on a stated salt, genome id and index; no `Math.random`). Reuses `mutateInPlace` from `@bl/sim-ref` as the only editor (so clamping and the sigma `>>2` rule are the real operator's), `locusOf`/`slotValue` from `@bl/lineage` for labels and before/after values, and `probeGenome`/`expressionOf` for expression. Per starting genome:
+   - Selection of loci, signs and draw indices is a pure function of (salt, genome id, family, index) frozen before any probe or assay outcome is computed. Mandatory engineered fixtures are separate rows (`family: fixture`) and are never in any mutation-rate numerator or denominator.
+   - single-locus: a fixed stratified sample of slots per kind (`w1` 10, `b1` 4, `w2` 10, `b2` 4, plus `mu`, `sigma`, `gain`), each at signed magnitudes 6 and 24 (24 = default `mutStep`);
+   - matched-magnitude multi-locus: k = 2 and k = 4 distinct controller slots with per-slot deltas of 12 and 6, so the total |delta| equals the 24 single edit (8 draws each, fixed signs by the draw); a second matching by equal slot count (k edits of 24) is also emitted as a labelled secondary family so magnitude and breadth are not confounded;
+   - every edit records three deltas per slot: the **operator delta** requested of `mutateInPlace` (delta = `deltaRnd % (2*mutStep+1) - mutStep`, reachable for any value in [-mutStep, mutStep] by choosing `deltaRnd`), the **expected slot delta** after the operator's own scaling (sigma uses `delta>>2`, minimum magnitude 1, so +6 gives +1 and -6 gives -2; this scaling is not clamping), and the **applied delta** read from before/after words. Classes: `unchanged` (applied 0), `boundary-clamped` (applied differs from expected slot delta because a bound bit, nonzero applied), `genuine` (applied equals expected, nonzero). Requested and realised L1 magnitude are both recorded for multi-locus edits. The genome hash and the one-step undo are recorded: undo applies the negated **operator** delta with the same operator and compares to the original words; reversibility is reported per kind and is not expected for sigma or boundary-clamped bytes;
+   - edits that give the same genome words as another edit or the baseline are deduplicated for physical assay (keyed by genome hash) but kept as rows.
+3. **Controller response descriptors on a predefined sensor grid.** The existing `PROBE_AXES` grid (26,244 points, 10 sensors, 8 actuators) is the predefined grid; no new grid. Per edit, from before/after `Probe.outs`: per-actuator changed **counts** (out of the derived grid size), integer permille computed from counts, and max delta in integer units. `expressionOf` returns fractional shares (e.g. 0.667) and `Probe` carries fractional summaries (`meanOut`, `regimeEntropy`), so the locality code computes its own integer counts from `Probe.outs` and passes only the `expression` class through; fractional probe summaries never enter the payload, **actuator breadth** (number of actuators moved above a stated floor, plus the integer participation count from per-actuator max deltas). The grid size is derived from `PROBE_AXES` (3^8 x 2^2 = 26,244 points, 8 actuators, 209,952 output values per probe), never hard-coded, and is used in tests and denominators, **sensor reach** (number of sensors whose level changes the response: for each sensor axis, whether the delta table differs across that axis's levels), and a **structural-reach upper bound** (actuators and sensors topologically reachable through nonzero weights from the edited slot; saturation can suppress reachable outputs but cannot move disconnected ones, so realised <= structural is a sanity check, never a gate target). What separates "dense wiring of this founder" from "locus-specific entanglement" is a **degree-matched null**: the same genome with its nonzero W1/W2 magnitudes placed at shuffled positions (same count of nonzero weights per layer), edited by the same neighbourhood, giving a breadth distribution that dense wiring alone would produce; the gate compares the real genome to that null. Descriptors are mechanistic, not fitness, and say nothing about inputs outside the grid.
+4. **Small CPU physical assays** (`RefSim`, tiny worlds), independent capabilities measured separately and never summed:
+   These are **environmental biomass responses**, not independent capabilities: all three score terminal bound biomass `B`, which respiration (`B->C+E`) and construction (`B->P`) can lower even when useful, and founder geometry, initial energy and short-horizon depletion couple them. The record keeps initial and final `B`, `P`, `E` and the relevant integer fluxes per run, and the readouts say "biomass response" and never "capability" without that caveat.
+   - `light-growth` (standard setting): founder disc in a small tile under standard light and nutrient; outcome = bound biomass `B` after H steps relative to initial, integer ratio in permille;
+   - `dark-persistence`: same with light removed (config `lightBase`/`lightAmp` overrides; no schema change); outcome = biomass retained (permille);
+   - `dim-transfer` (one alternative setting, for transfer): lower light and nutrient; outcome as `light-growth`.
+   Tile 16x16 only (`validateConfig` needs dimensions divisible by eight, so 12x12 is invalid and schema validation is not changed), `kernelRadius` 3, `mutRate` 0 so the assay measures the controller change and not further mutation, H of order 60-100 steps; exact values fixed at calibration (section 6) and then frozen in code before the main run. Measured on this checkout: about 19 ms per step at 16x16/r3. **Budget (frozen before the main run):** assayed edits per M3 genome = 24, scenarios = 3, paired seeds = 2, H = 80 gives 24x3x2x80x0.019 = about 220 s per M3 genome, plus the baselines, fixtures (about 10 runs each) and a qualification-only generalist (8 edits, about 70 s): about 9 minutes serial, about 3 minutes with 4 Deno workers (deterministic job ids, results ordered by id, worker count not in the payload). If calibration projects more than 10 serial minutes, a stated ladder applies in order: H to 60, then assayed edits per M3 genome to 16; seeds stay 2 and scenarios stay 3. If it still exceeds the budget, the physical half is reported measurement-limited rather than thinned further. The subset is a **stratified draw frozen before any outcome**: strata = locus kind (w1, b1, w2, b2, physics) x family (single 6, single 24, multi k=2, multi k=4), fixed per-stratum allocation, draw by the counter PRNG; inclusion probabilities are recorded and the physical readouts are reported as **assayed-subset rates** next to inverse-probability-weighted neighbourhood estimates; they are never described as rates over all ~156 generated edits. The subset list is recorded in the manifest. Viability gate (stated before data): the unmutated baseline must have `light-growth` above a stated floor and `light-growth` must exceed `dark-persistence` by a stated margin on the same genome. The floor, margin, H and tile are frozen from the **generalist** and neutral-control behaviour only, then applied unchanged to the M3 genomes. A candidate that fails is retained in the manifest as failed (never silently dropped); branch logic is in section 3.
+   - Noise and sensitivity controls: seed shift is sensitivity to initialisation and stochastic rounding (founder biomass/energy init and reaction rounding depend on the seed even with `mutRate` 0), not a calibrated noise bound. Every mutant is therefore run **paired** with the baseline on the same two frozen seeds, and the endpoint deviation is the paired difference averaged over the seeds. Neutral controls (hidden-permutation, dead-hidden, boundary-clamped, unchanged) must give a paired deviation of **exactly 0** (same genome function, same seed, deterministic sim); a nonzero value is a bug, not noise. Tau for "changed", per endpoint, = max(5% of the baseline value, 3x the largest cross-seed spread of the baseline itself on the frozen seeds); tau is computed from the baseline and the generalist only, never from the mutants. Sensitivity failure: if a known controller perturbation on the generalist (zeroing `w2 h1->photo`, which must remove light growth) does not move `light-growth` by more than tau, the physical half is declared measurement-limited and no bottleneck recommendation is made.
+5. **Readouts** (rows keyed by starting genome, locus kind, locus, family, magnitude): fraction of genuine edits that are viable (all three biomass responses above floor), fraction improving at least one by tau, collateral loss (another response worse by tau), clean improvement (improves one, harms none), reversibility, transfer (does a `light-growth` improvement persist in `dim-transfer`), actuator breadth and sensor reach per edit, realised-over-structural reach. Stratified by locus kind and starting genome; no pooling of genomes into one rate without the per-genome rows beside it. Readouts are **finite-panel counts with denominators**, no nominal binomial interval: loci and signs are reused across families, multi-locus edits share constituents and duplicate genotypes stay as rows, so exact-coverage claims do not hold (an ideal independent 0/40 would still only bound the rate at about 8.8%, which is not evidence for a rate under 2%). The payload holds integers only (counts, denominators, permille); the page and evidence say so, and that the unit is the edit within a genome, describing the sampled neighbourhood, not a population of genomes.
+6. **Evidence JSON + manifest + `--check`**, and a **mutation-effect matrix view** (local prototype page).
+7. **Written go/no-go** (`docs/controller-locality-2026-11-01/EVIDENCE.md`), labelled exploratory and bounded.
+
+## 3. Starting genomes
+
+From the committed M3 founder set (`M3_FOUNDERS`, `founderGenome`, set id `m3-50886563ec90fb39`) plus one hand-built fixture; no `runs/` input:
+- M3 cluster 4 (checked against `M3_FOUNDERS`: sparse): sparse controller (mostly zero weights): a contrast case where locality should be easy to read;
+- M3 cluster 16: dense controller, 64/64 regeneration in the M3 retest/replication: the "evolved, entangled" case;
+- `generalistGenome(mu, sigma)` at the default mu/sigma: documented roles, the positive localisation and measurement-qualification control (not a vote).
+The generalist is a **measurement-qualification and positive control only**: it supplies the frozen floor, margin and tau and the sensitivity check, and it does not vote in the section 7 decision (the verdict rests on the two M3 genomes, reported separately). Branch logic, fixed before data: candidate order for the sparse slot is cluster 4 then 10; for the dense slot cluster 16 then 9; each candidate is evaluated against the already-frozen gate and every failed candidate is recorded in the manifest. If a slot's first candidate fails and the second passes, the second is used and the substitution is recorded. If both fail for a slot, the verdict is computed on the remaining M3 genome alone and labelled single-genome, which can only be "inconclusive" or "measurement-limited", never a go. If no M3 genome qualifies, the physical half is measurement-limited and only the controller-level (probe) half is reported.
+
+## 4. Files to add or change
+
+Add:
+- `packages/lineage/src/locality/neighbourhood.ts`: generator, edit record, undo/reversibility, genome hash (`node:crypto` is avoided in package code; use an integer FNV/lowbias32 chain hash in package code, sha256 and the integrity seal only in the tool).
+- `packages/lineage/src/locality/descriptors.ts`: actuator breadth, sensor reach, structural reach, expression class passthrough.
+- `packages/lineage/src/locality/fixtures.ts`: hidden-permutation, dead-hidden, clamp, sensor-shuffle, generalist builders and expected-value tables; shared helper to permute hidden units / sensors.
+- `packages/lineage/src/locality/scenarios.ts`: the three tiny `RefSim` capability assays, viability gate, noise floor.
+- `packages/lineage/src/locality/matrix.ts`: assembles rows, stratified readouts, decision-rule inputs and the canonical payload builder; browser-safe and pure (no `node:crypto`, no filesystem). Sealing is **not** here: `packages/metrics/src/predictability/atlas.ts` is Node-only, imports `node:crypto` and is excluded from its browser barrel, so the same split applies; the digest and the integrity seal live in the CLI.
+- `packages/lineage/src/locality/index.ts`; export it from `packages/lineage/src/index.ts` (one line).
+- `tools/locality/matrix.ts`: Deno CLI (`--write`, `--check`, `--replay-check`, `--calibrate`), worker pool. `--check` validates saved artifacts without simulating (integrity seal computed by the tool, manifest-to-payload hash, source-file hashes vs working tree, schema of rows); `--replay-check` regenerates the payload and requires byte equality; `--calibrate` prints timings and the viability/noise numbers without writing evidence.
+- `docs/controller-locality-2026-11-01/{evidence.json,manifest.json,EVIDENCE.md}` (REVIEW.md is added by the review stages).
+- `apps/lab/controller-locality/index.html`, `apps/lab/src/controller-locality/{page.ts,render.ts,style.css}`: the matrix view (a table/heatmap: rows = locus (grouped by kind), columns = actuator response share plus the three capability deltas plus reversibility; filters by starting genome and family; a fixtures panel showing the naive metric next to the functional one). Static, reads `evidence.json` only, no simulation in the page, noindex, caption with the CPU-only and exploratory statements, keyboard operable, reduced-motion respected, no motion needed.
+- Tests (section 5).
+
+Change:
+- `packages/lineage/src/index.ts`: export `./locality/index.ts`.
+- `apps/lab/vite.config.ts`: add input `controllerLocality: r("./controller-locality/index.html")` next to `predictability`.
+- `Dockerfile.site`: add `apps/lab/dist/controller-locality apps/lab/dist/assets/controllerLocality-*.js apps/lab/dist/assets/controllerLocality-*.css` to the removal list (matching the real asset names the build emits; verified at build stage).
+- `deploy/Caddyfile`: `@private_controller_locality path_regexp private_controller_locality (?i)^/controller-locality(?:/|$)` and `respond ... 404`, beside `private_predictability`.
+- `package.json`: script `locality:check` (`deno run -A --no-lock tools/locality/matrix.ts --check`). No other config changes. No new package, so the four `@bl/*` alias maps stay untouched.
+
+Not changed: `packages/sim-ref`, `packages/sim-gpu`, `packages/schema` (no dynamics, no `RULE_VERSION`, golden pins untouched), `experiments/preregistration.md`, `docs/rules.md`.
+
+## 5. Tests (named cases)
+
+`packages/lineage/test/locality.test.ts`
+- `neighbourhood is deterministic and keyed on genome and index` (two builds equal; changing the salt changes rows; no float in rows).
+- `single-locus edits are exactly mutateInPlace` (for every kind, applied words equal a direct `mutateInPlace` call with the matching `which` and `deltaRnd`).
+- `separates unchanged, boundary-clamped and genuine edits, and sigma scaling is not clamping` (byte at +127 plus 24 is `unchanged`; byte at 120 plus 24 is `boundary-clamped` with applied delta 7; ordinary edit is `genuine`; sigma +6 gives expected and applied +1 and is `genuine`).
+- `multi-locus edits match total requested magnitude and record realised magnitude` (sum of requested |delta| equals the single edit's; distinct slots; secondary equal-count family labelled; clamped slots show realised < requested).
+- `one-step undo is exact for weights and not claimed for sigma or clamped bytes` (reversibility flags agree with direct recomputation).
+- `hidden-unit permutation keeps the probe byte-identical while the naive byte distance is large` (asserts naive metric > threshold and functional delta = 0 on every derived grid point; also identical physical assay on the tiny world).
+- `dead-hidden edit changes bytes but not outputs`.
+- `shuffled sensor labels follow the pinned fixture-specific table and sensor attribution relabels as expected` and `generalist localisation matches the documented roles` (the `w2 h1->photo` edit moves photo only).
+- `breadth and reach never exceed structural reach on the generalist` (descriptor sanity upper bound), `degree-matched null preserves nonzero counts per layer`, `decision rule: zero improvements gives underpowered, never a collateral verdict`, and `grid size equals the product of PROBE_AXES lengths`.
+- `physical assays: generalist baseline separates light from dark across the frozen seeds, and zeroing w2 h1->photo moves light-growth by more than tau` (calibration and sensitivity the gate relies on, at the frozen scale; slow, one genome).
+- `neutral edits give zero effect under the assay` (permutation, dead-hidden, boundary-clamped and unchanged edits produce a paired deviation of exactly 0 on the same seed; seed sensitivity is measured separately on the baseline).
+- `physical assay does not mutate during the run` (`mutRate` 0 and no mutation events).
+- `assay leaves the input genome untouched` (instrumented and plain twins give identical states, as the contract asks).
+
+`tools/test/locality-evidence.test.ts`
+- `evidence seal and manifest verify` (`--check` path through exported functions).
+- `replay reproduces byte for byte` (`--replay-check`), plus one subprocess smoke test of `deno run -A --no-lock tools/locality/matrix.ts --check` (guarded by a `deno` presence check like the other tool tests).
+- `tampered evidence fails the check` (flip a byte in a copy; seal, manifest hash and source-hash mismatch each reported).
+- `fixture rows show the naive metric disagreeing with the functional one` (reads saved evidence).
+- `decision rule is computed from rows and states its thresholds` (rule inputs recomputed from rows equal the saved verdict).
+
+`apps/lab/test/controller-locality-render.test.ts` and `apps/lab/test/controller-locality-packaging.test.ts` (mirroring the predictability ones)
+- `renders every row group and the fixtures panel`, `escapes locus labels`, `keeps the controller-locality prototype outside the deployed site` (vite input, Dockerfile.site removals, Caddy regexp matches `/controller-locality`, `/controller-locality/`, `/CONTROLLER-LOCALITY/index.html` and not `/controller-locality-other`), `page text carries the CPU-only, exploratory and bounded-to-tested-genomes statements and noindex`.
+
+## 6. Order of work and calibration (before any evidence is written)
+
+1. Fixtures and generator with tests (cheap).
+2. `--calibrate`: time the three scenarios, fix tile/H, set the viability floor and margin, record the seed-shift floor. These numbers are frozen in code and written into the manifest; they are chosen on the baseline genomes and neutral controls only, never on the improvement fraction of the neighbourhood. If scenarios cannot separate light from dark for any starting genome at feasible scale, stop and report the result as measurement-limited (the physical half of the readout is then not claimed; the controller-level half still stands).
+3. Main run and `--write`; then `--check` and `--replay-check`.
+4. Page, packaging, EVIDENCE.md with the go/no-go.
+
+## 7. Decision rule (stated before data; recorded in evidence)
+
+Computed per qualifying M3 genome (at most two), reported side by side and never pooled; the generalist does not vote. Let A = number of assayed genuine edits that improve at least one biomass response by tau, C = those among A that also lose another by tau, K = those among A with no loss (clean).
+- **Underpowered:** if A < 5 for a genome, no collateral or useful-neighbourhood statement is made for it (counts reported; the fixture sensitivity check still applies). This closes the 0 >= 0 hole in which zero improvements would satisfy a collateral rule.
+- **Broadly useful (prefer better search and ecological incentives, no architecture change):** for both M3 genomes with A >= 5, K/A >= 50% and K is at least 10% of the assayed genuine edits, and multi-locus edits are not worse than single-locus at matched requested magnitude, meaning the multi-locus clean-improvement share is no more than 5 percentage points below the single-locus share on the shared strata (stated statistic, stated allowed deficit).
+- **Entanglement signal (a representation fork is worth a separately versioned study):** for both M3 genomes with A >= 5: C/A >= 50%; and the median actuator breadth of genuine `w1`/`b1` edits is at least 3 actuators and exceeds the median breadth of the degree-matched null for that genome by at least 1 actuator. Structural reach is reported alongside as an upper-bound sanity check only.
+- If the two genomes disagree, or either is underpowered: **inconclusive**, no architecture claim. Failed sensitivity check or no qualifying genome: **measurement-limited**. A single-genome verdict (section 3) can only be inconclusive or measurement-limited.
+Either of the first two outcomes is a statement about these genomes, this operator, this grid and these short biomass-response scenarios, and says what a modular variant would still have to show (parameter-matched, mutation-opportunity-matched, initial-quality-matched, direct search and transfer reported separately). The EVIDENCE.md "go/no-go" is advisory for a later plan, not authorisation. All thresholds are exploratory, were set before data, and are not tuned afterwards.
+
+## 8. Acceptance gates (runnable)
+
+```bash
+export PATH=~/.nvm/versions/node/v24.2.0/bin:$PATH
+cd /Users/nicholas/develop/browser-life-i05-controller-locality
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm vitest run packages/lineage/test/locality.test.ts tools/test/locality-evidence.test.ts apps/lab/test/controller-locality-render.test.ts apps/lab/test/controller-locality-packaging.test.ts
+deno run -A --no-lock tools/locality/matrix.ts --check
+deno run -A --no-lock tools/locality/matrix.ts --replay-check     # must finish in a few minutes
+pnpm vitest run packages/sim-ref/test/golden-hashes.test.ts packages/lineage                 # pins untouched
+pnpm test                                                           # full suite
+git diff --exit-code --stat b43db3be -- packages/sim-ref packages/sim-gpu packages/schema experiments/preregistration.md experiments/FROZEN docs/rules.md   # exit 0 required
+```
+Plus a manual look at `pnpm dev` `/controller-locality/` recorded in the PR body (renders, filters work by keyboard, caption visible). Image checks are reported "not run" unless an image is built. No GPU evidence: stated as such. Then a Codex Sol 6.1 xhigh read-only review after the build stage (D2), findings resolved in `REVIEW.md`, rebase on fresh `origin/main` and rerun the focused checks (D7) before any publish step.
+
+## 9. Non-goals and limits
+
+- No modular controller, no layout change, no new genome encoding, no search or evolution experiment, no GPU, no new physics, no `RULE_VERSION` change, no optional config key.
+- The probe grid is canonical, not the inputs a lineage meets: "no effect on the grid" is not "no effect in the ecology" (the physical assays catch some of that, only for three short scenarios).
+- Tiny CPU worlds are not the M3 evaluation (64-cell tiles, thousands of steps, regeneration after lesion, GPU). Capabilities here are growth and persistence over a short horizon in small worlds; they are not survival, lesion regeneration or ecological fitness, and results are not a statement about those.
+- Edits sampled once from a fixed neighbourhood on three genomes: no population claim; no claim that evolved lineages behave likewise; edit-level intervals describe the sample.
+- One-step neighbourhood only: no epistasis beyond the matched multi-locus families, no walks.
+- Locality is a mechanistic descriptor, not fitness; thresholds are exploratory and set before data; the neighbourhood is not tuned after seeing results.
+- Evidence payload contains no timing or platform (those go in a non-replayed provenance block of the manifest). Floating point stays out of the payload; counts, denominators and permille only, no intervals.
+- Not deployed: the page is built by Vite but removed from the site image and 404 at the edge; no push, PR or commit at the PLAN stage.
+50-Effort bands are planning estimates for a smallest credible prototype, not delivery promises: **S** roughly 2–4 engineering days; **M** 1–2 weeks; **L** 3–6+ weeks. They exclude scientific run time, review and resolving failed measurement gates. Priority reflects expected information gained per implementation effort, not likelihood of a positive biological result.
+51-
+52-| ID | Idea | Track | Priority / effort | Dependency |
+53-|---|---|---|---|---|
+54-| I01 | Behaviour atlas and stepping stones | Existing search | First / M | Evidence manifest and descriptor calibration |
+55-| I02 | Naturalist that predicts interventions | Existing observer | First / M | Fixed intervention fixtures |
+56-| I03 | Historical-opponent ecology | Existing assay | First / M | Competition sensitivity without extinction floors |
+57-| I04 | Repair across unfamiliar wounds | Existing assay | Next / S–M | Existing recovery programme's measurement gate |
+58:| I05 | Controller locality and useful mutations | Existing controller, then fork | Next / M–L | Mutation replay and capability fixtures |
+59-| I06 | Construction that opens another niche | Existing discovery | Next / M | Valid budget-preserving transfer |
+60-| I07 | Construction grammar and copy number | New observer | Next / M | Known-history/null validation |
+61-| I08 | Collective sensing under moving light | Existing worlds | Next / M | Single-body tracking/sensing controls |
+62-| I09 | Conservative particle ecology | New substrate | Later / L | CPU integer reference and local mass ledger |
+63-| I10 | Regenerating neural tissue | New substrate | Later / L | Separate training/evaluation provenance |
+64-| I11 | Code soup and Red Queen arena | New substrate | Later / L | Safe deterministic VM and replication detector |
+65:| I12 | Evolution of local controller programs | Rule fork | Later / L | I05 demonstrates an architectural bottleneck |
+66-| I13 | Discover laws without changing the question | Offline design tool | Later / L | Verifier and isolated candidate runner |
+67-| I14 | Predictability atlas and observer benchmark | Observer + tiny new sims | Supporting / S–M | Ground-truth fixtures and frozen features |
+68-
+69-## Detailed idea plans
+70-
+71-### I01 — Behaviour atlas and stepping stones
+72-
+73-**Question.** Does retaining diverse viable behaviours expose transferable capabilities that a recovery-focused archive misses? **Sources:** [MAP-Elites](https://arxiv.org/abs/1504.04909), [ASAL](https://arxiv.org/abs/2412.17799), [Why Greatness Cannot Be Planned](https://link.springer.com/book/10.1007/978-3-319-15524-1).
+74-
+75-**Experience.** A browsable cabinet of short replay clips: moving, resting, repairing, following, building, coexisting. Each specimen has a reproducible starting state, an ancestry of *search proposals*, and a card saying which tests it has actually passed. People can retain an unusual specimen without declaring it fitter.
+76-
+77-**Smallest implementation.** Add an opt-in archive adapter beside the existing mass/speed map. Start with two predeclared physical descriptors, such as centre-of-mass displacement and temporal occupancy persistence, whose definitions are valid even when component identity is ambiguous. Evaluate an additional learned trajectory embedding as a separate arm, rather than silently replacing the descriptors. Fix rendering, frame cadence, encoder version and preprocessing. Store all accepted candidates and proposal ancestry, not just current elites. Reuse bootstrap evaluation and replay bundles; do not put model calls inside `step()`.
+78-
+79-**Experiment.** Equal evaluation budgets for random viable sampling, the existing archive, a physical-descriptor archive and an embedding archive. Use the same starting candidate pool. Select on screening seeds; compare on fresh environments and seeds using capabilities withheld from every selector. Run multiple independent search histories; the search history is the unit of replication, not its hundreds of correlated archive members. Report both simulator evaluations and wall time/model cost.
+80-
+81-**Readouts and controls.** Held-out capability coverage, archive retention, failure/extinction, duplicate-genotype rate, and transfer. A new visual bin is not a new capability. Include recoloured/re-rendered copies of the same trajectory, repeated trajectories, static patterns and noise as embedding controls. Use a fixed audit panel to measure semantic-score drift.
+82-
+83-**Advance/stop.** Advance only if a predefined improvement in held-out coverage survives fresh searches and render perturbations. If visual breadth rises without capability breadth, ship it as a discovery gallery and stop claiming scientific improvement. Existing held-out ecology/multilevel metrics remain excluded from search unless a separately registered experiment changes their role. **Deliverable:** archive schema, comparison runner, replay gallery and audited selection ledger.
+84-
+85-### I02 — A naturalist that predicts interventions
+86-
+87-**Question.** Can a model identify a causal mechanism well enough to predict an intervention, beyond what numerical baselines predict? **Sources:** [ASAL](https://pub.sakana.ai/asal/), [FER](https://arxiv.org/abs/2505.11581).
+88-
+89-**Experience.** A field note says, “I expect this patch to lose its advantage if signal is disabled,” with a confidence and a proposed paired replay. The notebook subsequently records whether the prediction survived. Observations, hypotheses and measured outcomes are visibly distinct.
+90-
+91-**Implementation.** Extend the existing naturalist bench and suggestion pipeline. Its input is a fixed evidence envelope: registered frame samples, census series, configuration and an allowed intervention menu. Its output is structured data containing subject/time, predicted direction, readout, intervention, confidence and an abstention option. A host validator permits only predefined data operations. Use the discovery campaign format where compatible; the current CPU case runner is not automatically a general naturalist benchmark.
+92-
+93-**Experiment.** Blind the proposer to intervention outcomes. Compare numeric-only, video-only, combined inputs, a fixed rule proposer and shuffled evidence on identical cases. Split whole source histories between development and final testing. Do not let multiple windows from the same run leak across splits. Evaluate on already-known mechanism fixtures first, then unfamiliar cases.
+94-
+95-**Readouts.** Proper probability scoring (Brier score), directional accuracy, abstention/coverage, invalid proposals, outcome effect size, cost per useful experiment and counterfactual agreement. Equalise available evidence and intervention budget. An expensive model must improve decisions, not merely write more interesting descriptions.
+96-
+97-**Advance/stop.** Require better prospective prediction than the strongest simple baseline and stable calibration on held-out histories. If it only captions, retain a clearly labelled narration feature. Do not extend existing neutral-bell calibration to new worlds without recalibration. **Deliverable:** prediction/outcome JSONL, comparison table and a notebook view of failed as well as successful predictions.
+98-
+99-### I03 — Historical-opponent ecology
+100-
+101-**Question.** Does later evolution produce broader competitive ability, specialised counter-strategies, or mere replacement? **Sources:** [Digital Red Queen](https://arxiv.org/abs/2601.03335), [Core War](https://corewar.co.uk/).
+102-
+103-**Implementation.** Archive genotypes or explicitly defined population samples at fixed times, then compete them against a frozen panel spanning ancestral and intermediate opponents. Reuse mutation replay and discovery tooling. Begin with genome-only, standard-inoculum common gardens; test ecological context separately. Moving a whole patch also moves stored resources, partners and developmental state, so that is a different experiment.
+104-
+105-**Experiment.** Use reciprocal positions and starting ratios, mutation-off assays, independent source histories, identical budgets and a genotype-neutral two-label control. Start from a small panel of known distinct strategies to establish assay sensitivity. Include isolated-growth performance so “wins” caused solely by general vigour are distinguishable from matchup-specific advantages. If evolving against an archive is later tested, compare recent-only, fixed-panel and historical-mixture opponents at matched compute.
+106-
+107-**Readouts.** Full pairwise payoff matrices with uncertainty, invasion from rare, extinction, generality on opponents withheld from training, and cycles such as A beats B, B beats C, C beats A. Report diversity independently from mean win rate. Account for synthesis versus lottery relabelling where the exact observer permits it; label unresolved attribution rather than claiming predation.
+108-
+109-**Advance/stop.** Do not run a long tournament if both candidates routinely hit the extinction floor. First fix the assay or report it uninformative. A positive result establishes competitive change in the tested environment, not organism reproduction or open-endedness. **Deliverable:** replayable matchup bundles and an interactive time-versus-opponent matrix. No predation rule is required for the first test.
+110-
+111-### I04 — Repair across unfamiliar wounds
+112-
+113-**Question.** Is a recovery advantage specific to one lesion geometry, or does it transfer to unseen damage? **Sources:** [Growing NCA](https://distill.pub/2020/growing-ca/), [Lenia](https://arxiv.org/abs/1812.05433).
+114-
+115-**Implementation.** Continue the existing October 24 measurement and parent–mutant programme first. That plan already fixes its candidate and staged decision; this idea is a separately recorded follow-up after its outcome, not permission to replace it. Add replayable damage masks and a secondary repair-characterisation battery around the current evaluator.
+116-
+117-**Experiment.** Match removed bound mass across contiguous, dispersed and asymmetric damage, rather than equating radius with injury severity. Include sham intervention, matched intact worlds, mutation-off trials, and a background-regrowth control. Fix damage times before outcomes; use fresh challenge geometries for final transfer. Account for the destination of removed matter and energy through the existing lesion semantics. A wound is an external intervention, not autonomous ecology.
+118-
+119-**Readouts.** Recovery time, retained-component continuity under the operational tracker, spatial organisation, resumed function, and mass. Report whole-tile replenishment separately from remnant recovery; a film that fills space can pass a mass score without repairing the original organisation. Censored recovery times and extinct trials remain in the analysis.
+120-
+121-**Advance/stop.** Advance from reliable recovery measurement to transfer, then to a selection experiment only if both are informative. A failure of identity tracking is a measurement-limited result. A successful engineered NCA (I10) is a positive control for an observer, not proof that current ecology can evolve repair. **Deliverable:** damage-mask fixtures, a mass-severity audit, and side-by-side repair trajectories. It should explain existing recovery results before generating another wound sweep.
+122-
+123:### I05 — Controller locality and useful mutations
+124-
+125-**Question.** Are useful edits rare because the local neural controller entangles unrelated behaviours? **Sources:** [FER](https://arxiv.org/abs/2505.11581), [AutoML-Zero](https://arxiv.org/abs/2003.03384).
+126-
+127-**Implementation.** Start without new physics: use `probeGenome`, genotype keys and exact mutation/reversion to map perturbations onto controller outputs and independently assayed capabilities. Separate unchanged/clamped edits from genuine genotype changes. The FER hypothesis concerns deep learned representations; its application to a small evolved fixed-point controller is an analogy to test, not an established diagnosis.
+128-
+129-**Experiment.** Evaluate a fixed mutation neighbourhood for selected viable genomes on a predefined sensor grid and physical scenarios. Compare single-locus and matched-magnitude multi-locus edits; stratify by locus and starting genome. Only after identifying a bottleneck build a separate modular-controller variant. Match parameter count where feasible, mutation opportunity, initialization quality and compute. Test direct search and transfer separately so “modularity helps” is not just a better initial founder.
+130-
+131-**Readouts.** Fraction of viable edits; functional improvement; collateral loss in other tasks; reversibility; transfer across light/nutrient settings. Actuator response locality is a mechanistic descriptor, not itself fitness. Use neutral/silent edits and shuffled sensor labels as controls; the latter is a negative fixture, not a valid ecological intervention.
+132-
+133-**Advance/stop.** If the existing architecture admits a broad useful neighbourhood, prefer better search and ecological incentives to a genome redesign. If a modular variant helps only its trained tasks, report that limit. Any controller-layout change needs versioned encoding, migration decisions and CPU/WGSL parity. **Deliverable:** mutation-effect matrix and a go/no-go argument for a separately versioned architecture.
+134-
+135-### I06 — Construction that opens another niche
+136-
+137-**Question.** Can one variant change the environment so that another gains a capability, and can that dependency survive fresh tests? **Sources:** [Assembly theory](https://www.nature.com/articles/s41586-023-06600-9), [Lenia](https://arxiv.org/abs/1812.05433), [stepping stones](https://link.springer.com/book/10.1007/978-3-319-15524-1).
+138-
+139-**Implementation.** Extend the existing discovery design's conditioned-field experiments. Start with polymer, chemical fields and current transport rules. A builder conditions a world; a receiver is tested in that field. No new organism abstraction or predation actuator is needed. The “second niche” is an assay outcome, not a named ecological role assigned by code.
+140-
+141-**Experiment.** Builder, nonbuilder and cost-retaining ablation start with the same budgets. Compare whole conditioned fields, matched-inventory spatial reconstructions and receiver-alone inoculum controls. Explicitly distinguish builder-present co-culture from builder-removed transfer. Reserve the receiver inoculum inside the initial matter/energy budget; do not overwrite occupied cells or erase polymer without recording transformed material and energy.
+142-
+143-**Readouts.** Receiver survival, growth, measured flux use and spatial dependence; builder cost; inventories before/after transfer. Exact per-step flux attribution requires non-saturation and adequate sampling. A census sample cannot be integrated as though it recorded every intervening reaction.
+144-
+145-**Advance/stop.** First establish a causal environmental benefit on fresh seeds. Next ask whether accessible mutations generate the builder and receiver. A later A+B→C capability test must predeclare C and compare A alone, B alone, A+B and resource-matched controls. More biomass after conditioning alone does not establish construction; more initial stored energy can explain it. **Deliverable:** budget-audited transfers, two-stage causal assay and a dependency graph with supported and unsupported edges.
+146-
+147-### I07 — Construction grammar and copy number
+148-
+149-**Question.** Can repeated, difficult-to-construct structures distinguish selected organisation from noise in these simulations? **Source:** [Assembly theory](https://www.nature.com/articles/s41586-023-06600-9).
+150-
+151-**Implementation.** Build a read-only, explicitly *assembly-inspired* observer. Define primitives, allowed joining operations, object boundaries, rotation/translation equivalence and copy identity before computing a score. Start with exact small synthetic objects whose minimal construction is enumerable. For large lattice patches use a bounded grammar search and label its output an upper bound or heuristic, not an exact assembly index. Compression ratio is not automatically assembly index.
+152-
+153-**Experiment.** Calibrate against repeated tiles, deterministic crystals, random fields, random fields with duplicated motifs, manually assembled hierarchies and evolving worlds. Match occupied mass and observation resolution. Compare reconstruction cost and multiplicity separately before considering any combined statistic. Test sensitivity to segmentation and temporal sampling.
+154-
+155-**Readouts.** Construction-length estimate/bound, copy count, persistence, uncertainty in equivalence classes, and incremental predictive value over simple compression and occupancy. Add destruction/reconstruction interventions to connect the measured organisation to a capability.
+156-
+157-**Advance/stop.** Reject a life-detection claim if duplicated random motifs score as strongly as the proposed positive cases. If object definitions dominate conclusions, publish the sensitivity failure rather than tuning boundaries until treatment wins. Do not optimise this metric and then use it as held-out evidence. **Deliverable:** grammar specification, exact toy tests, streaming patch sampler and an observer calibration report. This is a promising measurement project, not a settled solution to detecting selection.
+158-
+159-### I08 — Collective sensing under moving light
+160-
+161-**Question.** Does local interaction improve navigation under unfamiliar light trajectories, beyond independent responses or a hard-coded heading? **Sources:** [Boids](https://www.red3d.com/cwr/boids/), [Lenia](https://arxiv.org/abs/1812.05433).
+162-
+163-**Implementation.** Begin with `planet-followers`, `planet-sensing`, `planet-wander` and the existing signal/adhesion controls. These already contain blind and sensing strategies. A new experiment changes the light schedule and comparison design; a Boids-like alignment actuator is a later rule fork only if needed. Do not call existing signal-gradient following a new flocking mechanism.
+164-
+165-**Experiment.** Fixed-speed sun during screening; reversed, paused and wandering light during transfer. Match light exposure budgets as far as possible and report differences. Compare isolated and grouped inocula, signal on/off, motility on/off, and blind drifters. Separate signal production cost from information where supported; any cost-preserving replacement must be specified and ledger-checked.
+166-
+167-**Readouts.** Light capture per input energy, tracking lag, group cohesion, individual motion and survival. Whole-field drift or common environmental forcing can create apparent collective motion, so measure residual coordination against independent agents exposed to the same sun. Assess whether a benefit follows group composition across a common-garden transfer.
+168-
+169-**Advance/stop.** A group-level improvement requires a causal interaction benefit exceeding matched independent response. Schooling appearance alone is a visual success, not higher-level individuality. **Deliverable:** controlled navigation benchmark and a public world where a visitor can reverse the sun and compare blinded strategies.
+170-
+171-### I09 — Conservative particle ecology
+172-
+173-**Question.** Do discrete moving material units make mixing, boundaries and lineage continuity easier to measure than the current field? **Source:** [Particle Life](https://github.com/tom-mohr/particle-life).
+174-
+175-**New simulation.** A separate particle world with fixed total material, local attraction/repulsion and a finite energy reservoir charged by environmental input. Begin with labelled inert particles. Add reaction/state transitions only after the transport ledger is exact. Formation of clusters should emerge; assigning particle labels is not assigning organism identities.
+176-
+177-**Engineering.** CPU fixed-point reference first; bounded integer positions/velocities, explicit pair order, spatial bins and deterministic collision resolution. Equal-and-opposite impulses alone do not guarantee energy conservation under rounding; state the momentum/energy convention and heat sink. Mass conservation alone must not be called full thermodynamic fidelity. Add GPU parity only after a small-world replay suite passes. Keep a separate schema and rule identifier; reuse the viewer and bundle interfaces through an adapter.
+178-
+179-**Experiment.** Symmetric versus asymmetric interaction matrices, fixed versus heritable types, passive clustering controls and phase-space perturbations. Compare with a field-world toy case at matched density and input budget; do not equate their time units or claim one is more alive from visual preference.
+180-
+181-**Readouts.** Cluster lifetime, exchange between clusters, causal descendant material contribution, compositional persistence and cost. A stable attractive aggregate is not a reproducer. **Advance/stop:** retain as a useful alternative only if it improves a specific measurement or produces a testable new capability. Stop if gains are only easier animation. **Deliverable:** small integer particle engine, proof-oriented ledger tests and a cluster-exchange demonstration before any long evolutionary run.
+182-
+183-### I10 — Regenerating neural tissue
+184-
+185-**Question.** Which local update rules support persistent repair, and can the observer distinguish repair from repeated image formation? **Source:** [Growing NCA](https://distill.pub/2020/growing-ca/).
+186-
+187-**New simulation.** A separately labelled neural cellular automaton with visible and hidden channels, local perception and stochastic updates. Reproduce one small growth/persistence/damage task before introducing ecology. Training is external design. It is not a naturally evolved organism, and NCA channels do not inherit the current engine's matter conservation just because both use a grid.
+188-
+189-**Experiment.** Compare growth-only, persistent-state-pool training and damage-augmented training under matched optimisation budgets. Hold out wound shapes, wound times and rollout horizons. Include seed-only restarts and dead-cell masks so regeneration cannot be mistaken for drawing the target anew from an untouched seed. Later test removing target-image loss in favour of a physical task, with explicit resources.
+190-
+191-**Readouts.** Long-horizon stability, task recovery, morphology recovery, out-of-distribution damage response, update-order robustness and compute. External training seeds and test rollout seeds are separate replicates. Quantise a trained model only as a distinct engineering study and measure the lost behaviour; float training results do not establish bitwise replay on every GPU.
+192-
+193-**Advance/stop.** First earn a robust engineered-repair benchmark. Only then ask whether evolutionary mutation can retain or improve it, and report the inherited prior from training. **Deliverable:** an interactive repair exhibit plus observer fixtures; potential later integration is a separate decision because the physical semantics differ.
+194-
+195-### I11 — Code soup and Red Queen arena
+196-
+197-**Question.** Can useful copying appear in a minimal executable medium, and does competition improve generality independently of diversity? **Sources:** [Core War](https://corewar.co.uk/), [DRQ](https://sakana.ai/drq/), supplementary [Computational Life](https://arxiv.org/abs/2406.19108).
+198-
+199-**New simulation.** Two intentionally separate modes over a deterministic bounded virtual machine: an arena of externally proposed programs and a soup of initially random programs. Host evaluation executes only the VM instruction set, never generated JavaScript, shell commands or native code. Fixed instruction fuel, memory length, scheduler and seed are part of the world identity.
+200-
+201-**Experiment.** For the arena, compare mutation-only and model-generated proposals with equal evaluation budgets, tracking model cost separately. Freeze an opponent holdout and use position swaps. For soup, compare interaction, mutation-only random walk and interaction with blocked transmission, matching opportunities/programs examined. Use a direct copying assay, not only abundance or compression. The supplementary BFF follow-up in the dossier motivates separating first appearance from takeover; it is not a claim about this unbuilt VM.
+202-
+203-**Readouts.** First validated copier, appearance rate per evaluated program, expansion rate, copying fidelity, opponent generality, behavioural diversity and provenance. Run multiple independent soups; repeated descendants are not independent discoveries. Standard Core War declares warriors and an execution framework, so success there cannot establish undeclared individuality.
+204-
+205-**Advance/stop.** A successful arena can ship as an educational competitive world. A soup-origin claim requires the direct detector and matched nulls to pass; a takeover caused by an injected program remains a seeded experiment. **Deliverable:** VM specification, a copying/noncopying fixture suite, replay viewer and separate arena/soup reports.
+206-
+207-### I12 — Evolution of local controller programs
+208-
+209-**Question.** Does a small compositional program genome make useful new behaviours more accessible than fixed neural weights? **Sources:** [AutoML-Zero](https://arxiv.org/abs/2003.03384), [FER](https://arxiv.org/abs/2505.11581).
+210-
+211-**Rule fork.** Replace the controller only in an explicitly versioned experiment with a bounded typed instruction sequence: integer arithmetic, bounded sensor reads, local state and existing actuator outputs. No arbitrary memory access or global sensors. Define overflow, division by zero, fuel exhaustion, mutation and state inheritance. Begin without persistent memory so changing representation is not confounded with adding memory; add a memory arm separately.
+212-
+213-**Experiment.** Compare with the current controller at matched initial task performance, sensor/actuator access and evaluation budgets. Count program execution cost, not only genome length. Evaluate random search, point mutation and instruction duplication/deletion. Keep known neural-controller solutions as performance references without assuming a compiler can translate all of them exactly.
+214-
+215-**Readouts.** Viability, useful mutation rate, transfer, behavioural repertoire and compute per accepted variant. Track bloat and degenerate no-op solutions. Exact phenotype equivalence on finite probes is weaker than equality over all reachable states.
+216-
+217:**Advance/stop.** Build only after I05 identifies a representation constraint worth addressing. Stop if improvements disappear at matched compute or arise solely from extra memory. **Deliverable:** typed interpreter spec, CPU/GPU equivalence fixtures and an architectural comparison, with checkpoint and mutation replay support before ecological deployment.
+218-
+219-### I13 — Discover laws without changing the question
+220-
+221-**Question.** Can an automated proposer find better candidate local rules while a fixed verifier preserves the intended physical problem? **Sources:** [AlphaEvolve](https://arxiv.org/abs/2506.13131), [ASAL](https://arxiv.org/abs/2412.17799).
+222-
+223-**Offline design tool.** Use a small domain-specific rule language, not unconstrained edits to the repository. An initial version searches validated parameters or bounded reaction/routing choices. Each candidate is immutable and evaluated outside the production lab. Never allow a candidate to edit its tests, score, parser or budget. Keep optimisation of kernel speed separate from scientific changes: a speed optimisation must preserve all dynamics.
+224-
+225-**Experiment.** Compare random/structured parameter search with model-guided proposals at equal verifier budgets. The verifier checks types, arithmetic bounds, exact conservation, CPU/GPU golden parity where GPU code exists, and finite-run behaviour. Proof obligations for all allowed states are separate from sampled tests; neither claims to prove emergent life. Withhold challenge regimes from the proposer.
+226-
+227-**Readouts.** Valid-candidate yield, held-out capabilities, failures, evaluation cost and novelty of causal mechanism. Retain failed proposals and verifier diagnostics to reveal repeated loopholes. Generated code, if later allowed, runs only in an OS-isolated process with no secrets or network and explicit resources.
+228-
+229-**Advance/stop.** Advance when the proposer beats a cheap baseline under a fixed independent verifier. If it exploits a detector, repair and version the detector, discard contaminated holdouts and start a new comparison. **Deliverable:** candidate grammar, immutable evaluator, proposal ledger and a small set of human-reviewable rule diffs. No candidate automatically becomes the default ecology.
+230-
+231-### I14 — Predictability atlas and observer benchmark
+232-
+233-**Question.** Which apparent innovations survive prediction and null tests, and how does this depend on observation scale? **Sources:** [Conway's Life reference](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life), [computational irreducibility](https://www.wolframscience.com/nks/p737--computational-irreducibility/), [Boids](https://www.red3d.com/cwr/boids/).
+234-
+235-**Implementation.** Add tiny replayable fixtures: static/periodic Life patterns, translating patterns, a supplied copier fixture where available, random fields, passive aggregates and existing ecology clips. A side-by-side teaching view shows the same observer applied to every substrate. Life is a calibration world, not evidence that chemistry and energy bookkeeping are unnecessary.
+236-
+237-**Experiment.** Fit simple persistence, periodicity and local-statistical predictors on fixed early windows; compare prediction error at multiple horizons and frozen spatial resolutions. Keep raw prediction error separate from compression and capability novelty. Shuffle time, shift phase and duplicate motifs as controls. A prediction benchmark must use only past information; avoid normalisation fitted on the entire future trajectory.
+238-
+239-**Readouts.** Predictive loss, recurrence, calibration, false alarms and sensitivity to binning. An incompressible random movie is hard to predict without being alive. Failure of our predictors does not demonstrate Wolfram's computational irreducibility; that is a much stronger statement about shortcuts.
+240-
+241-**Advance/stop.** Use this suite to reject weak metrics before they enter I01 or I07. It earns no open-endedness claim. **Deliverable:** a fast deterministic fixture library and an accessible “why this is not yet evidence of life” comparison page.
+242-
+243:## Agent execution contract
+244-
+245-### Scope and invariants
+246-
+247-These are idea plans, not authorisation to execute every study. The current task produces documents only. A future implementation should choose one ID, restate its bounded question, inspect the then-current checkout and reserve its own experiment identity. Prior budgets in historical notes are not new spending authority.
+248-
+249-Preserve default config hashes for observer-only changes. Intended dynamics changes require the repository's rule-version procedure and deliberate golden-hash changes; do not hide a dynamics change under an innocent-looking optional key. Optional settings must remain absent from `defaultConfig()` when preserving existing serialized defaults. A genuinely new substrate gets an explicitly separate rule/schema identity rather than borrowing the chemistry engine's claims.
+250-
+251-CPU and WGSL implementations must agree bit for bit for shared integer rules. Extend arithmetic bounds in `docs/rules.md`, validation and overflow fixtures before adding an operation. Keep checkpoint physics and observer state paired under their digest, and prove segmented equivalence for new checkpointed state. Do not weaken inferred-individuality claims by switching on declared-cell rules without labelling the experiment.
+252-
+253-Current optional capability genes and inherited kernel shape share a layout byte: `genes` and `shapeReach` cannot be combined without a layout migration. Gene configurations also reject the existing neutral and declared-cell modes; choose valid, explicitly described controls rather than bypassing validation.
+254-
+255-The preregistration is frozen. Add a dated exploratory protocol or amendment outside its generated frozen sections. A score used to choose candidates cannot also be presented as independent confirmation. New metrics need versioned definitions; new presets need their own baseline qualification. Analysis streams large records and never assumes a complete `lineages.tsv` fits in RAM.
+256-
+257-### Common protocol to fill before the first scientific run
+258-
+259-| Field | Required content |
+260-|---|---|
+261-| Identity | Idea ID; question; repo SHA; rule/schema/metric versions; full config and preset identities; hashes of founders, candidate genomes and observation code |
+262-| Sampling | Independent unit; development/screening/confirmation splits; seed reservations; inclusion/exclusion rules; no cross-split source histories |
+263-| Intervention | Exact operation, time, spatial rule, before/after inventories, resource destination and sham |
+264-| Estimand | One primary outcome and effect threshold; secondary outcomes; expected direction; why the assay is sensitive |
+265-| Design | Arms, pairing, position swaps where applicable, number of independent blocks, horizon and cadence |
+266-| Decision | Fixed-sample or prespecified sequential test; multiplicity control; extinction/censoring; confidence intervals; measurement-limited category |
+267-| Provenance | Commands, hardware/backend, source/model/encoder versions, prompts when used, selection history, failed attempts and immutable input manifest |
+268-| Budget | Benchmark steps/s on the actual device; proposal/evaluation counts; model tokens/cost if relevant; stop cap and checkpoint/restart policy |
+269-| Interpretation | What a positive, negative or uninformative outcome establishes, and what it cannot establish |
+270-
+271-No generic sample count makes every study adequate. Calibrate assay sensitivity first, then choose counts for its estimand and detectable effect. Historical probability gates (such as 32-replicate M3 retests) apply only where their original protocol applies; do not copy them into every new test. In search comparisons, independent search runs are the unit; in migrating populations, the connected metapopulation is the unit.
+272-
+273-### Implementation slices and acceptance
+274-
+275-1. **Evidence fixture.** Reproduce an existing relevant result or construct a known-history physical fixture. Include a negative case that would fool the naive metric. Finish before adding search pressure.
+276-2. **Small CPU path.** Implement the minimum observer/assay and produce a manifest plus machine-readable evidence. Observers must not change physics; compare instrumented and plain twins.
+277-3. **Replay and backend qualification.** Test deterministic replay and the actual new invariants. GPU work needs GPU evidence, not a mocked adapter result. For CPU-only observers, explicitly state that limit.
+278-4. **Bounded pilot.** Benchmark runtime and calibration, choose the protocol, freeze held-out inputs, then collect scientific data. Do not tune on confirmation outcomes.
+279-5. **Independent read-only review.** Use `gpt-6.1-sol` at high effort per `AGENTS.md`, at phase boundaries and before commits. Resolve evidence and interpretation errors as well as code defects.
+280-6. **Human result.** Publish a replay, effect/uncertainty, failed cases and a clear decision. Report implemented/local/hosted/physical-GPU evidence separately.
+281-
+282-Typical applicable verification commands are `pnpm typecheck`, focused `pnpm vitest run <test-file>`, `pnpm test`, and `deno run -A tests/deno/gpu_golden.ts` for changes to shared dynamics. Segmentation/checkpoint changes additionally need `tests/deno/segments.ts` and `tests/deno/stitch.ts`. Use the repo's actual scripts and local instructions at implementation time; these are not claims that those tests ran during this document task. A new package must update all four alias maps listed in `AGENTS.md`.
+283-
+284-### Suggested sequence
+285-
+286-**Phase A: evidence and breadth.** Build I14's small null fixture set alongside I01's archive manifest and I02's fixed prediction envelope. The deliverable is usable replay evidence even if the learned methods add no value.
+287-
+288:**Phase B: causal capability.** Choose I03 or I06 according to which validated fixture is available. Continue I04 only through the existing recovery decision. Run I05's cheap controller probes before proposing a representation fork.
+289-
+290-**Phase C: one new world.** Choose I10 for a strong interactive repair exhibit, I11 for computational replication and competition, or I09 for material/identity measurement. Do not start all three merely because their demos are attractive. Each must answer a question the existing ecology cannot answer as cheaply.
+291-
+292-**Phase D: change what can evolve.** I12 and I13 become justified only after the earlier measurements locate a constraint. There is no source-backed reason to assume that additional genome capacity alone produces unlimited evolution.
+293-
+294-## How to read the source dossier
+295-
+296-The following notes cover the supplied sources by research cluster, with exact URLs and access limitations. Added primary sources are labelled supplementary. Statements about the papers describe the authors' arguments or reported experiments; idea cards above are proposals for this repository. Where a source could not be read, the report says so instead of silently substituting an abstract, another video, or a model's recollection.
+297-
+298-## Source dossier — Search and automated discovery
+299-
+300-
+301-### ASAL — Kumar et al. (2024; arXiv v2 May 2025)
+302-[Paper](https://arxiv.org/html/2412.17799v2), [user-supplied abstract](https://arxiv.org/abs/2412.17799), [project and demos](https://pub.sakana.ai/asal/).
+303-Uses foundation-model image representations for three tasks: text-target search, temporal novelty, and illumination across simulations. Tested substrates include Boids, Particle Life, life-like cellular automata, Lenia and NCA. Target search uses CLIP with Sep-CMA-ES; illumination uses a genetic search retaining diverse simulations. Temporal novelty minimizes similarity to earlier embedded frames; illumination measures nearest-neighbor difference across simulations. CLIP/DINOv2 comparisons outperform pixel representations qualitatively for human-aligned diversity. The atlas is a presentation of discovered behavior, not a biological validation. Its finite observation windows and representation-relative novelty do not establish indefinite evolution, causal individuality, heredity or ecological closure. The project page supplies useful demos but is not independent corroboration of the paper.
+304-
+305-### Digital Red Queen — Kumar et al. (2026)
+306-[Paper](https://arxiv.org/html/2601.03335v1), [abstract](https://arxiv.org/abs/2601.03335), [project explanation](https://sakana.ai/drq/).
+307-Evolves Redcode programs against a growing archive of previous champions, using LLM mutation within MAP-Elites. Descriptors are spawned processes and memory coverage. Held-out human warriors assess generality. Across 96 runs, generality increases while behavioral diversity across histories decreases and within-history change slows. Limited-history comparisons study cycling. Removing the diversity archive hurts optimization. Crucial distinction: the paper finds competitive robustness and convergence, not indefinitely expanding ecological diversity. LLM proposals import an external prior; they are not mutations arising spontaneously inside the simulated world. A growing opponent archive also dilutes each new opponent's effect.
+308-
+309-### MAP-Elites — Mouret and Clune (2015)
+310-[Paper](https://arxiv.org/html/1504.04909v1), [abstract](https://arxiv.org/abs/1504.04909).
+311-Stores high-performing solutions across a discretized, user-selected behavior space. A candidate competes within its descriptor cell rather than only for one global optimum. Cross-cell stepping stones can help reach solutions that direct optimization misses. Demonstrations include neural networks and soft robots. Descriptor coverage is conditional on chosen axes; it is not a coordinate-free measure of diversity or evidence of open-endedness. The HTML header contains an inconsistent generated preprint date; cite the arXiv submission record (20 April 2015), not that header.
+312-
+313-### AlphaEvolve — Novikov et al. (2025)
+314-[Paper](https://arxiv.org/html/2506.13131v1), [abstract](https://arxiv.org/abs/2506.13131).
+315-An evolutionary coding system generates changes to designated code, executes machine-gradeable evaluators and retains useful programs in a database. Multiple scores and rich evaluator feedback support search; the user supplies the evaluation contract. Applications span mathematical constructions and computing infrastructure. Its ability to improve code does not solve the problem of choosing a valid scientific objective. This is a methodological inspiration for a local proposer/evaluator loop, not evidence that the exact AlphaEvolve service or implementation is available here.
+316-
+317-### AutoML-Zero — Real et al. (2020)
+318-[Paper](https://arxiv.org/html/2003.03384v2), [abstract](https://arxiv.org/abs/2003.03384).
+319-Searches programs built from low-level mathematical instructions, with Setup, Predict and Learn components and scalar/vector/matrix memory. Regularized evolution mutates instructions, operands and whole components. Separate search, selection and final-test tasks limit overfitting; cheap proxy tasks and functional-equivalence checks improve throughput. The work demonstrates discovery of learning algorithms under an externally supplied training/evaluation scaffold. “From scratch” does not mean no design assumptions or emergent organism reproduction. Its floating-point execution and supervised-learning interfaces are not drop-in replacements for this repo's bounded integer controllers.
+320-
+321-### Akarsh Kumar's website
+322-[Homepage](https://akarshkumar.com/).
+323-Verified as an author-maintained index linking ASAL, DRQ and the Fractured Entangled Representation (FER) hypothesis. Useful for provenance and follow-up paper discovery, not a separate empirical result. It describes interests in open-ended systems, environment generation and self-play. It also links the Stanley/FER MLST interview supplied by the user; consult the primary FER paper for technical claims rather than infer them from the documentary title.
+324-
+325-
+326-## Source dossier — Theory, representation and computational life
+327-
+328-
+329-### T1 — Assembly theory: read via authors' institutional PDF
+330-
+331-Original: <https://www.nature.com/articles/s41586-023-06600-9>
+332-Accessible paper: <https://eprints.gla.ac.uk/305433/1/305433.pdf>
+333-Title: *Assembly theory explains and quantifies selection and evolution* (Sharma, Czégel, Lachmann, Kempes, Walker, Cronin, 2023).
+334-
+335-The paper combines an object's shortest recursive construction path (assembly index) with copy abundance. Its ensemble measure is `A = sum_i exp(a_i) (n_i - 1) / N_T`. The authors model discovery and production in assembly spaces; crucially their selection model specifies differential reuse rather than modelling every functional mechanism. Application requires physically meaningful primitives and combination operations. This suggests measuring repeated construction rather than treating visual intricacy or compression as evidence of life. It does not establish that any compression measure, arbitrary image motif count, or high index proves Darwinian evolution. Nature's direct fetch redirected to inaccessible authorization; the University of Glasgow PDF supplied the paper. For a counterpoint by a research author see <https://link.springer.com/article/10.1007/s00239-024-10163-2> (title: *Assembly Theory: What It Does and What It Does Not Do*); it disputes expansive evolutionary interpretations.
+336-
+337-### T2 — The supplied “FEP” URL is FER, not the free-energy principle
+338-
+339-<https://arxiv.org/abs/2505.11581>
+340-Full text: <https://arxiv.org/html/2505.11581v1>
+341-Title: *Questioning Representational Optimism in Deep Learning: The Fractured Entangled Representation Hypothesis* (Kumar, Clune, Lehman, Stanley, 2025).
+342-
+343-A position paper comparing evolved Picbreeder CPPNs with SGD networks reproducing the same images. Output similarity can mask different internal organization. The authors use neuron visualizations and perturbations to motivate fractured/entangled versus unified/factored representations. Picbreeder combines human selection, historical open-ended search and NEAT topology growth. The paper explicitly leaves the relative contributions of the algorithm and objective-free search unresolved. It is not evidence that evolution always gives modular control, or that this project's fixed-point network has FER. Do not add an active-inference/FEP project based on this mislabeled URL. The relevant experiment here is representation locality, mutation locality and transfer under matched capacities and histories.
+344-
+345-### T3 — Why Greatness Cannot Be Planned: publisher preview, not entire book
+346-
+347-<https://link.springer.com/book/10.1007/978-3-319-15524-1>
+348-Kenneth O. Stanley and Joel Lehman, 2015. Publisher overview and chapter list accessed; full book subscription text was not read. Its central argument challenges narrowly objective-driven routes to innovation and favors discovery through serendipitous stepping stones. Use as a motivation for retaining diverse reusable candidates, not as a theorem that objectives or preregistered scientific tests are harmful. Search can be exploratory while evaluation remains rigorous.
+349-
+350-### T4 — Computational irreducibility: specified page read
+351-
+352-<https://www.wolframscience.com/nks/p737--computational-irreducibility/>
+353-Wolfram contrasts analytic prediction that bypasses trajectories with systems whose behavior lacks such known shortcuts. This is an authorial conceptual argument; it is not a proof that browser-life cannot be accelerated or forecast. Test the useful operational claim: which observables can be predicted at which horizons, and where must the simulator actually be run? Poor prediction alone is not a measure of life, intelligence or open-endedness.
+354-
+355-### T5 — MLST Stanley video: unavailable full video/transcript
+356-
+357-<https://www.youtube.com/watch?v=o1q6Hhz0MAg>
+358-YouTube fetch throttled. First-party MLST archive bibliography identifies this URL as a FER introduction, with an alternate title *AI is SO Smart, Why Are Its Internals ‘Spaghetti’?*: <https://archive.mlst.ai/read/why-creativity-cannot-be-interpolated> . This identifies the topic but is not the requested video's transcript. Use T2 as the primary technical source. No timestamp-specific video claims verified.
+359-
+360-### T6 — MLST Blaise video: unavailable full video/transcript
+361-
+362-<https://www.youtube.com/watch?v=rMSEqJ_4EBk>
+363-YouTube fetch throttled. No verified full transcript obtained. Treat interview as a pointer to the research, not an independently inspected evidentiary source. Supplementary primary paper below supplies technical grounding, and a later same-team paper materially changes the interpretation.
+364-
+365-### T7 — RESCRIPT interview: transcript recovered through browser
+366-
+367-<https://app.rescript.info/public/share/Qfv3T0EVzqOXL_CYYeRr9Blv8HnNm4JsXBh7ByFjJbc>
+368-The direct research fetch failed, but the collaborative browser exposed the transcript of *What Most People Get Wrong About Evolution | Akarsh Kumar* (47:54). Transcript inspected; audio and visual demonstrations were not independently verified. It includes short excerpts of other interviews, which do not substitute for reading those complete videos. Apparent transcription errors are not treated as technical facts.
+369-
+370-At 06:56 Kumar motivates serendipitous curricula; at 14:21 he proposes comparing nearby simulation laws; at 35:05 he grounds representation quality in future-task adaptation. Crucially, around 36–37 minutes he describes the illustrated molecular-to-animal NCA sequence as memorised frames in a toy example, not an evolved causal chain. Around 44:23 he describes DRQ's increasing generality together with decreasing behavioural variance. These support the archive, transfer and historical-opponent proposals, while warning against reading a cinematic progression as autonomous evolution. The papers remain the authority for precise methods/results.
+371-
+372-### T8 — Supplementary primary paper: Computational Life
+373-
+
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+hook: PostToolUse Completed
+exec
+/opt/homebrew/bin/zsh -lc "git diff && git ls-files --others --exclude-standard && rg --files --hidden -g AGENTS.md -g CONTRIBUTING.md -g '*STANDARDS*' -g 'issue-tracker.md' -g '"'!node_modules'"' -g '"'!.git'"'" in /Users/nicholas/develop/browser-life-i05-controller-locality
+ succeeded in 0ms:
+diff --git a/Dockerfile.site b/Dockerfile.site
+index 43496097..558fe7d3 100644
+--- a/Dockerfile.site
++++ b/Dockerfile.site
+@@ -3,7 +3,7 @@ FROM node:22-alpine AS build
+ WORKDIR /app
+ RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+ COPY . .
+-RUN pnpm install --frozen-lockfile && pnpm build && rm -rf apps/lab/dist/garden apps/lab/dist/particles apps/lab/dist/assets/particles-*.js apps/lab/dist/assets/particles-*.css apps/lab/dist/assets/particlePicker-*.js apps/lab/dist/assets/particlePicker-*.css apps/lab/dist/assets/particleOases-*.js apps/lab/dist/assets/particleOases-*.css apps/lab/dist/assets/particleSeasons-*.js apps/lab/dist/assets/particleSeasons-*.css apps/lab/dist/assets/particleBonds-*.js apps/lab/dist/assets/particleBonds-*.css apps/lab/dist/assets/particleMotifs-*.js apps/lab/dist/assets/particleMotifs-*.css apps/lab/dist/boundaries apps/lab/dist/assets/boundaries-*.js apps/lab/dist/assets/boundaries-*.css apps/lab/dist/hungry-shapes apps/lab/dist/assets/hungryShapes*.js apps/lab/dist/assets/hungryShapes*.css apps/lab/dist/assets/hungryShapes*.json apps/lab/dist/assets/hungry-shapes*.js apps/lab/dist/assets/hungry-shapes*.css apps/lab/dist/assets/hungry-shapes*.json apps/lab/dist/assets/hungry-shapes*.mp4 apps/lab/dist/assets/hungry-shapes*.webm apps/lab/dist/development apps/lab/dist/assets/development-*.js apps/lab/dist/assets/development-*.css apps/lab/dist/matter apps/lab/dist/assets/matter-*.js apps/lab/dist/assets/matter-*.css apps/lab/dist/ecosystem apps/lab/dist/playground apps/lab/dist/assets/ecosystem-*.js apps/lab/dist/assets/ecosystem-*.css apps/lab/dist/assets/ecosystem-*.mp4 apps/lab/dist/assets/ecosystem-*.json apps/lab/dist/assets/ecosystemArchive*.js apps/lab/dist/assets/ecosystemArchive*.css apps/lab/dist/assets/ecosystemArchive*.json apps/lab/dist/assets/playground-*.js apps/lab/dist/assets/playground-*.css apps/lab/dist/spatial apps/lab/dist/assets/spatial-*.js apps/lab/dist/assets/spatial-*.css apps/lab/dist/predictability apps/lab/dist/assets/predictability-*.js apps/lab/dist/assets/predictability-*.css apps/lab/dist/currents apps/lab/dist/assets/currents-*.js apps/lab/dist/assets/currents-*.css apps/lab/dist/assets/currents-*.gz apps/lab/dist/assets/currents-*.replay apps/lab/dist/assets/current-pilot-*.json apps/lab/dist/vision-screen apps/lab/dist/assets/vision-screen-*.js apps/lab/dist/assets/vision-screen-*.css apps/lab/dist/assets/visionScreen-*.js apps/lab/dist/assets/visionScreen-*.css
++RUN pnpm install --frozen-lockfile && pnpm build && rm -rf apps/lab/dist/garden apps/lab/dist/particles apps/lab/dist/assets/particles-*.js apps/lab/dist/assets/particles-*.css apps/lab/dist/assets/particlePicker-*.js apps/lab/dist/assets/particlePicker-*.css apps/lab/dist/assets/particleOases-*.js apps/lab/dist/assets/particleOases-*.css apps/lab/dist/assets/particleSeasons-*.js apps/lab/dist/assets/particleSeasons-*.css apps/lab/dist/assets/particleBonds-*.js apps/lab/dist/assets/particleBonds-*.css apps/lab/dist/assets/particleMotifs-*.js apps/lab/dist/assets/particleMotifs-*.css apps/lab/dist/boundaries apps/lab/dist/assets/boundaries-*.js apps/lab/dist/assets/boundaries-*.css apps/lab/dist/hungry-shapes apps/lab/dist/assets/hungryShapes*.js apps/lab/dist/assets/hungryShapes*.css apps/lab/dist/assets/hungryShapes*.json apps/lab/dist/assets/hungry-shapes*.js apps/lab/dist/assets/hungry-shapes*.css apps/lab/dist/assets/hungry-shapes*.json apps/lab/dist/assets/hungry-shapes*.mp4 apps/lab/dist/assets/hungry-shapes*.webm apps/lab/dist/development apps/lab/dist/assets/development-*.js apps/lab/dist/assets/development-*.css apps/lab/dist/matter apps/lab/dist/assets/matter-*.js apps/lab/dist/assets/matter-*.css apps/lab/dist/ecosystem apps/lab/dist/playground apps/lab/dist/assets/ecosystem-*.js apps/lab/dist/assets/ecosystem-*.css apps/lab/dist/assets/ecosystem-*.mp4 apps/lab/dist/assets/ecosystem-*.json apps/lab/dist/assets/ecosystemArchive*.js apps/lab/dist/assets/ecosystemArchive*.css apps/lab/dist/assets/ecosystemArchive*.json apps/lab/dist/assets/playground-*.js apps/lab/dist/assets/playground-*.css apps/lab/dist/spatial apps/lab/dist/assets/spatial-*.js apps/lab/dist/assets/spatial-*.css apps/lab/dist/predictability apps/lab/dist/assets/predictability-*.js apps/lab/dist/assets/predictability-*.css apps/lab/dist/controller-locality apps/lab/dist/assets/controllerLocality-*.js apps/lab/dist/assets/controllerLocality-*.css apps/lab/dist/currents apps/lab/dist/assets/currents-*.js apps/lab/dist/assets/currents-*.css apps/lab/dist/assets/currents-*.gz apps/lab/dist/assets/currents-*.replay apps/lab/dist/assets/current-pilot-*.json apps/lab/dist/vision-screen apps/lab/dist/assets/vision-screen-*.js apps/lab/dist/assets/vision-screen-*.css apps/lab/dist/assets/visionScreen-*.js apps/lab/dist/assets/visionScreen-*.css
+ 
+ FROM caddy:2.10-alpine
+ COPY deploy/Caddyfile /etc/caddy/Caddyfile
+diff --git a/apps/lab/vite.config.ts b/apps/lab/vite.config.ts
+index e84b6e82..b329edf0 100644
+--- a/apps/lab/vite.config.ts
++++ b/apps/lab/vite.config.ts
+@@ -192,6 +192,7 @@ export default defineConfig({
+       currents: r("./currents/index.html"),
+       spatial: r("./spatial/index.html"),
+       predictability: r("./predictability/index.html"),
++      controllerLocality: r("./controller-locality/index.html"),
+       ecosystem: r("./ecosystem/index.html"),
+       ecosystemArchive: r("./ecosystem/archive/index.html"),
+       playground: r("./playground/index.html"),
+diff --git a/deploy/Caddyfile b/deploy/Caddyfile
+index 82b47a82..7a71524b 100644
+--- a/deploy/Caddyfile
++++ b/deploy/Caddyfile
+@@ -44,6 +44,8 @@
+   respond @private_spatial 404
+   @private_predictability path_regexp private_predictability (?i)^/predictability(?:/|$)
+   respond @private_predictability 404
++  @private_controller_locality path_regexp private_controller_locality (?i)^/controller-locality(?:/|$)
++  respond @private_controller_locality 404
+ 
+   # Reunited creative ecosystem and local prototype directory.
+   @private_ecosystem path_regexp private_ecosystem (?i)^/ecosystem(?:/|$)
+diff --git a/package.json b/package.json
+index 9c67d916..e92c4c2e 100644
+--- a/package.json
++++ b/package.json
+@@ -14,6 +14,7 @@
+     "typecheck:capabilities": "tsc -p tools/agent-capabilities/tsconfig.json",
+     "test:capabilities": "vitest run tools/test/agent-capabilities",
+     "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts",
++    "locality:check": "deno run -A --no-lock tools/locality/matrix.ts --check",
+     "verify:ecosystem": "python3 tools/ecosystem-library/verify.py && node --experimental-strip-types tools/ecosystem-library/replay-3000.ts"
+   },
+   "devDependencies": {
+diff --git a/packages/lineage/src/index.ts b/packages/lineage/src/index.ts
+index a48b1f2f..a0c18983 100644
+--- a/packages/lineage/src/index.ts
++++ b/packages/lineage/src/index.ts
+@@ -1,3 +1,4 @@
+ export * from "./genotype.ts";
+ export * from "./edges.ts";
+ export * from "./view.ts";
++export * from "./locality/index.ts";
+apps/lab/controller-locality/index.html
+apps/lab/src/controller-locality/page.ts
+apps/lab/src/controller-locality/render.ts
+apps/lab/src/controller-locality/style.css
+apps/lab/test/controller-locality-packaging.test.ts
+apps/lab/test/controller-locality-render.test.ts
+docs/controller-locality-2026-11-01/EVIDENCE.md
+docs/controller-locality-2026-11-01/PLAN.md
+docs/controller-locality-2026-11-01/REVIEW.md
+docs/controller-locality-2026-11-01/evidence.json
+docs/controller-locality-2026-11-01/manifest.json
+docs/controller-locality-2026-11-01/review-sol-src.txt
+packages/lineage/src/locality/descriptors.ts
+packages/lineage/src/locality/fixtures.ts
+packages/lineage/src/locality/index.ts
+packages/lineage/src/locality/matrix.ts
+packages/lineage/src/locality/neighbourhood.ts
+packages/lineage/src/locality/scenarios.ts
+packages/lineage/test/locality.test.ts
+tools/locality/matrix.ts
+tools/test/locality-evidence.test.ts
+apps/coordinator/AGENTS.md
+
+hook: PostToolUse
+hook: PostToolUse
+hook: PostToolUse Completed
+hook: PostToolUse Completed

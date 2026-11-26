@@ -1,0 +1,2374 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-alternating-food-replication-paired-video",
+  "seed": 1202,
+  "timeline": {
+    "ticks": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+      220,
+      240,
+      260,
+      280,
+      300,
+      320,
+      340,
+      360,
+      380,
+      400,
+      420,
+      440,
+      460,
+      480,
+      500,
+      520,
+      540,
+      560,
+      580,
+      600,
+      620,
+      640,
+      660,
+      680,
+      700,
+      720,
+      740,
+      760,
+      780,
+      800,
+      820,
+      840,
+      860,
+      880,
+      900,
+      920,
+      940,
+      960,
+      980,
+      1000,
+      1020,
+      1040,
+      1060,
+      1080,
+      1100,
+      1120,
+      1140,
+      1160,
+      1180,
+      1200,
+      1220,
+      1240,
+      1260,
+      1280,
+      1300,
+      1320,
+      1340,
+      1360,
+      1380,
+      1400,
+      1420,
+      1440,
+      1460,
+      1480,
+      1500,
+      1520,
+      1540,
+      1560,
+      1580,
+      1600,
+      1620,
+      1640,
+      1660,
+      1680,
+      1700,
+      1720,
+      1740,
+      1760,
+      1780,
+      1800,
+      1820,
+      1840,
+      1860,
+      1880,
+      1900,
+      1920,
+      1940,
+      1960,
+      1980,
+      2000,
+      2020,
+      2040,
+      2060,
+      2080,
+      2100,
+      2120,
+      2140,
+      2160,
+      2180,
+      2200,
+      2220,
+      2240,
+      2260,
+      2280,
+      2300,
+      2320,
+      2340,
+      2360,
+      2380,
+      2400,
+      2420,
+      2440,
+      2460,
+      2480,
+      2500,
+      2520,
+      2540,
+      2560,
+      2580,
+      2600,
+      2620,
+      2640,
+      2660,
+      2680,
+      2700,
+      2720,
+      2740,
+      2760,
+      2780,
+      2800,
+      2820,
+      2840,
+      2860,
+      2880,
+      2900,
+      2920,
+      2940,
+      2960,
+      2980,
+      3000
+    ],
+    "frameCount": 151,
+    "fps": 10,
+    "interpolation": false,
+    "modelSimulation": false,
+    "terminalTicks": {
+      "baseline": 3000,
+      "alternating": 3000
+    },
+    "labels": [
+      {
+        "requestedTick": 0,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 965.5,
+          "bottom": 985.28125
+        },
+        "baseline": "Tick 0 · saved sample",
+        "alternating": "Tick 0 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · before first pulse"
+      },
+      {
+        "requestedTick": 20,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 20 · saved sample",
+        "alternating": "Tick 20 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 20"
+      },
+      {
+        "requestedTick": 40,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 40 · saved sample",
+        "alternating": "Tick 40 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 40"
+      },
+      {
+        "requestedTick": 60,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 60 · saved sample",
+        "alternating": "Tick 60 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 60"
+      },
+      {
+        "requestedTick": 80,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 80 · saved sample",
+        "alternating": "Tick 80 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 80"
+      },
+      {
+        "requestedTick": 100,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 100 · saved sample",
+        "alternating": "Tick 100 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 100"
+      },
+      {
+        "requestedTick": 120,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 120 · saved sample",
+        "alternating": "Tick 120 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 120"
+      },
+      {
+        "requestedTick": 140,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 140 · saved sample",
+        "alternating": "Tick 140 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 140"
+      },
+      {
+        "requestedTick": 160,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 160 · saved sample",
+        "alternating": "Tick 160 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 160"
+      },
+      {
+        "requestedTick": 180,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 180 · saved sample",
+        "alternating": "Tick 180 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 180"
+      },
+      {
+        "requestedTick": 200,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 200 · saved sample",
+        "alternating": "Tick 200 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 200"
+      },
+      {
+        "requestedTick": 220,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 220 · saved sample",
+        "alternating": "Tick 220 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 220"
+      },
+      {
+        "requestedTick": 240,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 240 · saved sample",
+        "alternating": "Tick 240 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 240"
+      },
+      {
+        "requestedTick": 260,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 260 · saved sample",
+        "alternating": "Tick 260 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 260"
+      },
+      {
+        "requestedTick": 280,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 280 · saved sample",
+        "alternating": "Tick 280 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 280"
+      },
+      {
+        "requestedTick": 300,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 300 · saved sample",
+        "alternating": "Tick 300 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 300"
+      },
+      {
+        "requestedTick": 320,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 320 · saved sample",
+        "alternating": "Tick 320 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 320"
+      },
+      {
+        "requestedTick": 340,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 340 · saved sample",
+        "alternating": "Tick 340 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 340"
+      },
+      {
+        "requestedTick": 360,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 360 · saved sample",
+        "alternating": "Tick 360 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 360"
+      },
+      {
+        "requestedTick": 380,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 380 · saved sample",
+        "alternating": "Tick 380 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 380"
+      },
+      {
+        "requestedTick": 400,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 400 · saved sample",
+        "alternating": "Tick 400 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 400"
+      },
+      {
+        "requestedTick": 420,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 420 · saved sample",
+        "alternating": "Tick 420 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 420"
+      },
+      {
+        "requestedTick": 440,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 440 · saved sample",
+        "alternating": "Tick 440 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 440"
+      },
+      {
+        "requestedTick": 460,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 460 · saved sample",
+        "alternating": "Tick 460 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 460"
+      },
+      {
+        "requestedTick": 480,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 480 · saved sample",
+        "alternating": "Tick 480 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 480"
+      },
+      {
+        "requestedTick": 500,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 500 · saved sample",
+        "alternating": "Tick 500 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 500"
+      },
+      {
+        "requestedTick": 520,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 520 · saved sample",
+        "alternating": "Tick 520 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 520"
+      },
+      {
+        "requestedTick": 540,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 540 · saved sample",
+        "alternating": "Tick 540 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 540"
+      },
+      {
+        "requestedTick": 560,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 560 · saved sample",
+        "alternating": "Tick 560 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 560"
+      },
+      {
+        "requestedTick": 580,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 580 · saved sample",
+        "alternating": "Tick 580 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 580"
+      },
+      {
+        "requestedTick": 600,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 600 · saved sample",
+        "alternating": "Tick 600 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 600"
+      },
+      {
+        "requestedTick": 620,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 620 · saved sample",
+        "alternating": "Tick 620 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 620"
+      },
+      {
+        "requestedTick": 640,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 640 · saved sample",
+        "alternating": "Tick 640 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 640"
+      },
+      {
+        "requestedTick": 660,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 660 · saved sample",
+        "alternating": "Tick 660 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 660"
+      },
+      {
+        "requestedTick": 680,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 680 · saved sample",
+        "alternating": "Tick 680 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 680"
+      },
+      {
+        "requestedTick": 700,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 700 · saved sample",
+        "alternating": "Tick 700 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 700"
+      },
+      {
+        "requestedTick": 720,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 720 · saved sample",
+        "alternating": "Tick 720 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 720"
+      },
+      {
+        "requestedTick": 740,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 740 · saved sample",
+        "alternating": "Tick 740 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 740"
+      },
+      {
+        "requestedTick": 760,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 760 · saved sample",
+        "alternating": "Tick 760 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 760"
+      },
+      {
+        "requestedTick": 780,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 780 · saved sample",
+        "alternating": "Tick 780 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 780"
+      },
+      {
+        "requestedTick": 800,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 800 · saved sample",
+        "alternating": "Tick 800 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 800"
+      },
+      {
+        "requestedTick": 820,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 820 · saved sample",
+        "alternating": "Tick 820 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 820"
+      },
+      {
+        "requestedTick": 840,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 840 · saved sample",
+        "alternating": "Tick 840 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 840"
+      },
+      {
+        "requestedTick": 860,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 860 · saved sample",
+        "alternating": "Tick 860 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 860"
+      },
+      {
+        "requestedTick": 880,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 880 · saved sample",
+        "alternating": "Tick 880 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 880"
+      },
+      {
+        "requestedTick": 900,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 900 · saved sample",
+        "alternating": "Tick 900 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 900"
+      },
+      {
+        "requestedTick": 920,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 920 · saved sample",
+        "alternating": "Tick 920 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 920"
+      },
+      {
+        "requestedTick": 940,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 940 · saved sample",
+        "alternating": "Tick 940 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 940"
+      },
+      {
+        "requestedTick": 960,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 960 · saved sample",
+        "alternating": "Tick 960 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 960"
+      },
+      {
+        "requestedTick": 980,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 980 · saved sample",
+        "alternating": "Tick 980 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 980"
+      },
+      {
+        "requestedTick": 1000,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,000 · saved sample",
+        "alternating": "Tick 1,000 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,000"
+      },
+      {
+        "requestedTick": 1020,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,020 · saved sample",
+        "alternating": "Tick 1,020 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,020"
+      },
+      {
+        "requestedTick": 1040,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,040 · saved sample",
+        "alternating": "Tick 1,040 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,040"
+      },
+      {
+        "requestedTick": 1060,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,060 · saved sample",
+        "alternating": "Tick 1,060 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,060"
+      },
+      {
+        "requestedTick": 1080,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,080 · saved sample",
+        "alternating": "Tick 1,080 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,080"
+      },
+      {
+        "requestedTick": 1100,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,100 · saved sample",
+        "alternating": "Tick 1,100 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,100"
+      },
+      {
+        "requestedTick": 1120,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,120 · saved sample",
+        "alternating": "Tick 1,120 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,120"
+      },
+      {
+        "requestedTick": 1140,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,140 · saved sample",
+        "alternating": "Tick 1,140 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,140"
+      },
+      {
+        "requestedTick": 1160,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,160 · saved sample",
+        "alternating": "Tick 1,160 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,160"
+      },
+      {
+        "requestedTick": 1180,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,180 · saved sample",
+        "alternating": "Tick 1,180 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,180"
+      },
+      {
+        "requestedTick": 1200,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,200 · saved sample",
+        "alternating": "Tick 1,200 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,200"
+      },
+      {
+        "requestedTick": 1220,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,220 · saved sample",
+        "alternating": "Tick 1,220 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,220"
+      },
+      {
+        "requestedTick": 1240,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,240 · saved sample",
+        "alternating": "Tick 1,240 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,240"
+      },
+      {
+        "requestedTick": 1260,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,260 · saved sample",
+        "alternating": "Tick 1,260 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,260"
+      },
+      {
+        "requestedTick": 1280,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,280 · saved sample",
+        "alternating": "Tick 1,280 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,280"
+      },
+      {
+        "requestedTick": 1300,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,300 · saved sample",
+        "alternating": "Tick 1,300 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,300"
+      },
+      {
+        "requestedTick": 1320,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,320 · saved sample",
+        "alternating": "Tick 1,320 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,320"
+      },
+      {
+        "requestedTick": 1340,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,340 · saved sample",
+        "alternating": "Tick 1,340 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,340"
+      },
+      {
+        "requestedTick": 1360,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,360 · saved sample",
+        "alternating": "Tick 1,360 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,360"
+      },
+      {
+        "requestedTick": 1380,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,380 · saved sample",
+        "alternating": "Tick 1,380 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,380"
+      },
+      {
+        "requestedTick": 1400,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,400 · saved sample",
+        "alternating": "Tick 1,400 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,400"
+      },
+      {
+        "requestedTick": 1420,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,420 · saved sample",
+        "alternating": "Tick 1,420 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,420"
+      },
+      {
+        "requestedTick": 1440,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,440 · saved sample",
+        "alternating": "Tick 1,440 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,440"
+      },
+      {
+        "requestedTick": 1460,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,460 · saved sample",
+        "alternating": "Tick 1,460 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,460"
+      },
+      {
+        "requestedTick": 1480,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,480 · saved sample",
+        "alternating": "Tick 1,480 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,480"
+      },
+      {
+        "requestedTick": 1500,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,500 · saved sample",
+        "alternating": "Tick 1,500 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 1,500"
+      },
+      {
+        "requestedTick": 1520,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,520 · saved sample",
+        "alternating": "Tick 1,520 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,520"
+      },
+      {
+        "requestedTick": 1540,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,540 · saved sample",
+        "alternating": "Tick 1,540 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,540"
+      },
+      {
+        "requestedTick": 1560,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,560 · saved sample",
+        "alternating": "Tick 1,560 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,560"
+      },
+      {
+        "requestedTick": 1580,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,580 · saved sample",
+        "alternating": "Tick 1,580 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,580"
+      },
+      {
+        "requestedTick": 1600,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,600 · saved sample",
+        "alternating": "Tick 1,600 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,600"
+      },
+      {
+        "requestedTick": 1620,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,620 · saved sample",
+        "alternating": "Tick 1,620 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,620"
+      },
+      {
+        "requestedTick": 1640,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,640 · saved sample",
+        "alternating": "Tick 1,640 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,640"
+      },
+      {
+        "requestedTick": 1660,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,660 · saved sample",
+        "alternating": "Tick 1,660 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,660"
+      },
+      {
+        "requestedTick": 1680,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,680 · saved sample",
+        "alternating": "Tick 1,680 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,680"
+      },
+      {
+        "requestedTick": 1700,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,700 · saved sample",
+        "alternating": "Tick 1,700 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,700"
+      },
+      {
+        "requestedTick": 1720,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,720 · saved sample",
+        "alternating": "Tick 1,720 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,720"
+      },
+      {
+        "requestedTick": 1740,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,740 · saved sample",
+        "alternating": "Tick 1,740 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,740"
+      },
+      {
+        "requestedTick": 1760,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,760 · saved sample",
+        "alternating": "Tick 1,760 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,760"
+      },
+      {
+        "requestedTick": 1780,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,780 · saved sample",
+        "alternating": "Tick 1,780 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,780"
+      },
+      {
+        "requestedTick": 1800,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,800 · saved sample",
+        "alternating": "Tick 1,800 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,800"
+      },
+      {
+        "requestedTick": 1820,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,820 · saved sample",
+        "alternating": "Tick 1,820 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,820"
+      },
+      {
+        "requestedTick": 1840,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,840 · saved sample",
+        "alternating": "Tick 1,840 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,840"
+      },
+      {
+        "requestedTick": 1860,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,860 · saved sample",
+        "alternating": "Tick 1,860 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,860"
+      },
+      {
+        "requestedTick": 1880,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,880 · saved sample",
+        "alternating": "Tick 1,880 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,880"
+      },
+      {
+        "requestedTick": 1900,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,900 · saved sample",
+        "alternating": "Tick 1,900 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,900"
+      },
+      {
+        "requestedTick": 1920,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,920 · saved sample",
+        "alternating": "Tick 1,920 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,920"
+      },
+      {
+        "requestedTick": 1940,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,940 · saved sample",
+        "alternating": "Tick 1,940 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,940"
+      },
+      {
+        "requestedTick": 1960,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,960 · saved sample",
+        "alternating": "Tick 1,960 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,960"
+      },
+      {
+        "requestedTick": 1980,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 1,980 · saved sample",
+        "alternating": "Tick 1,980 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 1,980"
+      },
+      {
+        "requestedTick": 2000,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,000 · saved sample",
+        "alternating": "Tick 2,000 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,000"
+      },
+      {
+        "requestedTick": 2020,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,020 · saved sample",
+        "alternating": "Tick 2,020 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,020"
+      },
+      {
+        "requestedTick": 2040,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,040 · saved sample",
+        "alternating": "Tick 2,040 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,040"
+      },
+      {
+        "requestedTick": 2060,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,060 · saved sample",
+        "alternating": "Tick 2,060 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,060"
+      },
+      {
+        "requestedTick": 2080,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,080 · saved sample",
+        "alternating": "Tick 2,080 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,080"
+      },
+      {
+        "requestedTick": 2100,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,100 · saved sample",
+        "alternating": "Tick 2,100 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,100"
+      },
+      {
+        "requestedTick": 2120,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,120 · saved sample",
+        "alternating": "Tick 2,120 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,120"
+      },
+      {
+        "requestedTick": 2140,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,140 · saved sample",
+        "alternating": "Tick 2,140 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,140"
+      },
+      {
+        "requestedTick": 2160,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,160 · saved sample",
+        "alternating": "Tick 2,160 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,160"
+      },
+      {
+        "requestedTick": 2180,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,180 · saved sample",
+        "alternating": "Tick 2,180 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,180"
+      },
+      {
+        "requestedTick": 2200,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,200 · saved sample",
+        "alternating": "Tick 2,200 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,200"
+      },
+      {
+        "requestedTick": 2220,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,220 · saved sample",
+        "alternating": "Tick 2,220 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,220"
+      },
+      {
+        "requestedTick": 2240,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,240 · saved sample",
+        "alternating": "Tick 2,240 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,240"
+      },
+      {
+        "requestedTick": 2260,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,260 · saved sample",
+        "alternating": "Tick 2,260 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,260"
+      },
+      {
+        "requestedTick": 2280,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,280 · saved sample",
+        "alternating": "Tick 2,280 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,280"
+      },
+      {
+        "requestedTick": 2300,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,300 · saved sample",
+        "alternating": "Tick 2,300 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,300"
+      },
+      {
+        "requestedTick": 2320,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,320 · saved sample",
+        "alternating": "Tick 2,320 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,320"
+      },
+      {
+        "requestedTick": 2340,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,340 · saved sample",
+        "alternating": "Tick 2,340 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,340"
+      },
+      {
+        "requestedTick": 2360,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,360 · saved sample",
+        "alternating": "Tick 2,360 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,360"
+      },
+      {
+        "requestedTick": 2380,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,380 · saved sample",
+        "alternating": "Tick 2,380 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,380"
+      },
+      {
+        "requestedTick": 2400,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,400 · saved sample",
+        "alternating": "Tick 2,400 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,400"
+      },
+      {
+        "requestedTick": 2420,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,420 · saved sample",
+        "alternating": "Tick 2,420 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,420"
+      },
+      {
+        "requestedTick": 2440,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,440 · saved sample",
+        "alternating": "Tick 2,440 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,440"
+      },
+      {
+        "requestedTick": 2460,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,460 · saved sample",
+        "alternating": "Tick 2,460 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,460"
+      },
+      {
+        "requestedTick": 2480,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,480 · saved sample",
+        "alternating": "Tick 2,480 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,480"
+      },
+      {
+        "requestedTick": 2500,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,500 · saved sample",
+        "alternating": "Tick 2,500 · saved sample",
+        "activeBand": "Band 0 · columns 0–23 · last supplied at tick 2,500"
+      },
+      {
+        "requestedTick": 2520,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,520 · saved sample",
+        "alternating": "Tick 2,520 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,520"
+      },
+      {
+        "requestedTick": 2540,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,540 · saved sample",
+        "alternating": "Tick 2,540 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,540"
+      },
+      {
+        "requestedTick": 2560,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,560 · saved sample",
+        "alternating": "Tick 2,560 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,560"
+      },
+      {
+        "requestedTick": 2580,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,580 · saved sample",
+        "alternating": "Tick 2,580 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,580"
+      },
+      {
+        "requestedTick": 2600,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,600 · saved sample",
+        "alternating": "Tick 2,600 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,600"
+      },
+      {
+        "requestedTick": 2620,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,620 · saved sample",
+        "alternating": "Tick 2,620 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,620"
+      },
+      {
+        "requestedTick": 2640,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,640 · saved sample",
+        "alternating": "Tick 2,640 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,640"
+      },
+      {
+        "requestedTick": 2660,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,660 · saved sample",
+        "alternating": "Tick 2,660 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,660"
+      },
+      {
+        "requestedTick": 2680,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,680 · saved sample",
+        "alternating": "Tick 2,680 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,680"
+      },
+      {
+        "requestedTick": 2700,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,700 · saved sample",
+        "alternating": "Tick 2,700 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,700"
+      },
+      {
+        "requestedTick": 2720,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,720 · saved sample",
+        "alternating": "Tick 2,720 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,720"
+      },
+      {
+        "requestedTick": 2740,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,740 · saved sample",
+        "alternating": "Tick 2,740 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,740"
+      },
+      {
+        "requestedTick": 2760,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,760 · saved sample",
+        "alternating": "Tick 2,760 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,760"
+      },
+      {
+        "requestedTick": 2780,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,780 · saved sample",
+        "alternating": "Tick 2,780 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,780"
+      },
+      {
+        "requestedTick": 2800,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,800 · saved sample",
+        "alternating": "Tick 2,800 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,800"
+      },
+      {
+        "requestedTick": 2820,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,820 · saved sample",
+        "alternating": "Tick 2,820 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,820"
+      },
+      {
+        "requestedTick": 2840,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,840 · saved sample",
+        "alternating": "Tick 2,840 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,840"
+      },
+      {
+        "requestedTick": 2860,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,860 · saved sample",
+        "alternating": "Tick 2,860 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,860"
+      },
+      {
+        "requestedTick": 2880,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,880 · saved sample",
+        "alternating": "Tick 2,880 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,880"
+      },
+      {
+        "requestedTick": 2900,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,900 · saved sample",
+        "alternating": "Tick 2,900 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,900"
+      },
+      {
+        "requestedTick": 2920,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,920 · saved sample",
+        "alternating": "Tick 2,920 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,920"
+      },
+      {
+        "requestedTick": 2940,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,940 · saved sample",
+        "alternating": "Tick 2,940 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,940"
+      },
+      {
+        "requestedTick": 2960,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,960 · saved sample",
+        "alternating": "Tick 2,960 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,960"
+      },
+      {
+        "requestedTick": 2980,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 2,980 · saved sample",
+        "alternating": "Tick 2,980 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 2,980"
+      },
+      {
+        "requestedTick": 3000,
+        "scrollY": 1188,
+        "worlds": {
+          "x": 188,
+          "y": 19.78125,
+          "width": 1384,
+          "height": 986.5,
+          "bottom": 1006.28125
+        },
+        "baseline": "Tick 3,000 · saved sample",
+        "alternating": "Tick 3,000 · saved sample",
+        "activeBand": "Band 1 · columns 48–71 · last supplied at tick 3,000"
+      }
+    ]
+  },
+  "playback": {
+    "durationSeconds": 15.1,
+    "frameCount": 151,
+    "frameRate": "10/1",
+    "width": 1760,
+    "height": 1320,
+    "fullDecodeVerified": true
+  },
+  "artifact": {
+    "path": "docs/creative-prototypes/alternating-food-replication-media/seed-1202-paired.mp4",
+    "sha256": "cb9181bcddfe1c99bb1b19e4cfd95ed75ef502d521f285b430f607e95dd40527"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/alternating-food-replication-plan.md",
+      "sha256": "2070ef956ca73855e9b032a7cbaa5e53e594dddaa9ed82f84f72c49256f5c743"
+    },
+    "model": {
+      "path": "apps/lab/src/alternating-food/model.ts",
+      "sha256": "5dc6ce46ee36d2d008f802e81e0f7aae80d7bfeaa58984512d13cad714729b31"
+    },
+    "runner": {
+      "path": "tools/alternating-food-replication/explore.ts",
+      "sha256": "f616b0b1fa6ab1194e224ad7040f972c7b55ad65b6a5a2425e16b81a2ce7c162"
+    },
+    "launcher": {
+      "path": "tools/alternating-food-replication/launch.sh",
+      "sha256": "4aababa0eff4be913debbecd9179ee769af165cdf69050051c25220734227429"
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+      "dataSha256": "1379b36370340873e531443ab8f9176a19a69d88b942d20e4d982ed81a81a349"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/split-food-index-1202.json",
+      "sha256": "e3e3aa26ace9722ca15175d208ba0d5e2aaa09608e03af072695066c14089afc"
+    },
+    "baselineRunner": {
+      "path": "tools/split-food/explore.ts",
+      "sha256": "aa2d3aeca0cd7a1a58e405c681cc6e61b5b15da2b0b85262a12c4f6fa95009bd"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/split-food-validation.md",
+      "sha256": "56a5a32d86286a425f1f0f0f83cd8b0b76cf4aaae351d0be52afdf14665ce7c5"
+    },
+    "alternating": {
+      "path": "docs/creative-prototypes/alternating-food-replication-seed-1202.json",
+      "rawSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+      "dataSha256": "7ceae251dc216935c5dc72dad091958ec4d2d8d84ef9ea1610fa50745a86fec6"
+    },
+    "pairIndex": {
+      "path": "docs/creative-prototypes/alternating-food-replication-index-1202.json",
+      "sha256": "28d9880651da421c0fe8a11b7d15c819106598280ee177e0443fb4ede8c18d1a"
+    },
+    "receipt": {
+      "path": "docs/creative-prototypes/alternating-food-replication-visual-receipt-1202.json",
+      "sha256": "485f74beaeff3a8a9ca3b847a9c904c5132edb7ea841e992bf38d6fbd1413f24"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/alternating-food-replication.js",
+      "sha256": "744ca23fbd69a5707d49cecc598a2f33f2895beaa64b035c01064a11bc9cc458"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/alternating-food-replication.css",
+      "sha256": "d508a894231789aca77f796690a6fa285b73044ab1822a5bbbc630a47496c861"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/alternating-food-replication-media/capture-viewer.html",
+      "sha256": "d09b89eaacf477f91c826332e9a524f6fe0f61d4109fd654e2f750a56a6dd7cb",
+      "originalServedPath": "docs/creative-prototypes/alternating-food-replication.html",
+      "note": "Exact committed HTML served during capture; later editorial may be added to the live page."
+    }
+  },
+  "capture": {
+    "url": "http://127.0.0.1:54821/docs/creative-prototypes/alternating-food-replication.html",
+    "viewport": {
+      "width": 1760,
+      "height": 1320
+    },
+    "region": "full viewport after scrolling worlds to y=20; full canvases and metric panels asserted visible for every frame",
+    "firstFramePngSha256": "585263dc8c72cd9324b3bfe4469868e98d0afee496d5166e99bdc4a5baeee07e",
+    "screenshotSourceSize": {
+      "width": 1760,
+      "height": 1320
+    },
+    "browser": "Chrome",
+    "savedFramesOnly": true,
+    "livePageMayLaterIncludeResultsEditorial": true
+  }
+}

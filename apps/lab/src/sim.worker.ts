@@ -30,6 +30,7 @@ import { decodeArtifact, pondContinuationError, type ObserverSettings, type Obse
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
 import { LabExecution, PondWaitingError, PressureRefusedError, SunRefusedError, huntArmError } from "./execution.ts";
 import { isLineageKey } from "./pond-play.ts";
+import { shellCount, type ShellCount } from "./shell.ts";
 import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
@@ -236,7 +237,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
       keep,
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
-      onObservation: (c, dropped, firsts, families) => {
+      onObservation: (c, dropped, firsts, families, shell) => {
         // Every observed census feeds the log (the family tree, then the detector with the wounds since the last census and the
         // tree's view), before the display throttle below: a first is the census's, not the screen's.
         const fired = feedCensus(log, { census: c, dropped, firsts, families, cfg: sim.cfg, interventions: manifest.interventions }, (message) => post({ type: "notice", message }));
@@ -247,7 +248,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         const now = performance.now();
         if (now - lastCensusAt > 500) {
           lastCensusAt = now;
-          postCensus(world!, c);
+          postCensus(world!, c, shell);
           if (mine && !fired) postFirsts(w);
         } else if (mine && !playing) {
           // Paused (a Step or +100): no later census will carry this one's numbers to an open card, so post them now.
@@ -265,7 +266,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (w && w.execution === execution) {
           session.noteWaiting({ cycle: s.cycle, step: s.step });
           publishSession();
-          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
+          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, shells: s.shells, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
         }
       },
       // The naturalist's census, every one, for the worlds it may hold a baseline for (Field notes).
@@ -392,9 +393,9 @@ function postFirsts(w: World | null) {
   }
 }
 
-/** A wound, feed or drain just logged on a world the naturalist may read: said at once, so a paused page marks its notes. */
-function postTouched(w: World, step: number) {
-  if (current(w) && NATURALIST_PRESETS.has(w.manifest.presetId)) post({ type: "naturalistTouched", world: w.gen, runId: w.manifest.runId, step });
+/** A logged hand change: notify naturalist worlds immediately, and acknowledge any tagged live request even without a baseline. Replay passes no id. */
+function postTouched(w: World, step: number, id?: number) {
+  if (current(w) && (id !== undefined || NATURALIST_PRESETS.has(w.manifest.presetId))) post({ type: "naturalistTouched", world: w.gen, runId: w.manifest.runId, step, ...(id === undefined ? {} : { id }) });
 }
 
 /** The pressures of a manifest's log, in log order. */
@@ -608,7 +609,7 @@ async function sendStats(w: World) {
   }
 }
 
-function postCensus(w: World, c: ReturnType<typeof census>) {
+function postCensus(w: World, c: ReturnType<typeof census>, shell?: ShellCount | null) {
   const ind = individuals(c);
   const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
   // Totals include events carried over from restored segments.
@@ -623,6 +624,8 @@ function postCensus(w: World, c: ReturnType<typeof census>) {
       return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
     }),
     ...w.execution.counts(),
+    // Display only, and only in a world with a shell: the census's own count, or (a paused world's repeat census) a fresh one.
+    ...(shell ? { shell: { wearing: shell.wearing, living: shell.living } } : {}),
   };
   post(msg);
 }
@@ -633,7 +636,7 @@ async function sendCensus(w: World) {
   try {
     const snap = await w.sim.readSnapshot(false);
     if (!current(w)) return;
-    postCensus(w, census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead }));
+    postCensus(w, census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead }), shellCount(w.sim.cfg, snap.cells, snap.genomeHead));
   } catch (e) {
     if (current(w)) post({ type: "error", message: `census: ${e instanceof Error ? e.message : e}` });
   } finally {
@@ -767,14 +770,14 @@ async function saveCheckpoint(w: World, auto: boolean, quiet = false) {
  * state that no checkpoint may carry, so saving, exporting, a lineage reading and a jump all wait for the pick. A
  * refusal, not a failure: the world is untouched.
  */
-function waitingForDonors(w: World, request: ToWorker["type"], what: string): boolean {
+function waitingForDonors(w: World, request: ToWorker["type"], what: string, id?: number): boolean {
   const waiting = w.execution.awaiting;
   if (!waiting) return false;
   const message = `Pond cycle ${waiting.cycle} is waiting for its donors: choose them, then ${what}`;
   const command = sessionCommand(request);
   if (command) session.noteRefusal(command, message);
   publishSession();
-  post({ type: "refused", request, message });
+  post({ type: "refused", request, message, ...(id === undefined ? {} : { id }) });
   return true;
 }
 
@@ -1084,14 +1087,14 @@ async function verify(steps: number) {
  * True, with a refusal of `request`, when a hand edit names a world (`ToWorker` lesion/feed `world`) that is no longer the one on
  * screen: Field notes' Try it here was made for that world, and a replacement queued before it must not take its edit.
  */
-function staleHand(request: "lesion" | "feed" | "sun", gen: number | undefined): boolean {
+function staleHand(request: "lesion" | "feed" | "sun", gen: number | undefined, id?: number): boolean {
   if (gen === undefined || world?.gen === gen) return false;
-  post({ type: "refused", request, message: request === "sun" ? "That sun was chosen for a world that has since been replaced, so nothing was applied" : "That suggestion was made for a world that has since been replaced, so nothing was applied" });
+  post({ type: "refused", request, ...(id === undefined ? {} : { id }), message: request === "sun" ? "That sun was chosen for a world that has since been replaced, so nothing was applied" : "That suggestion was made for a world that has since been replaced, so nothing was applied" });
   return true;
 }
 
-async function lesion(x: number, y: number, r: number, gen?: number) {
-  if (staleHand("lesion", gen)) return;
+async function lesion(x: number, y: number, r: number, gen?: number, id?: number) {
+  if (staleHand("lesion", gen, id)) return;
   const w = world;
   if (!w) return;
   const W = worldW(w.sim.cfg);
@@ -1102,11 +1105,11 @@ async function lesion(x: number, y: number, r: number, gen?: number) {
   if (w.execution.failure) throw new Error(w.execution.failure);
   // The pick is part of its boundary and is replayed before anything else logged at that step: a lesion made
   // first, on the pre-cycle world, would come back in the wrong order.
-  if (waitingForDonors(w, "lesion", "make the lesion")) return;
+  if (waitingForDonors(w, "lesion", "make the lesion", id)) return;
   const step = w.sim.step;
   const eff = w.sim.lesion(cx, cy, r);
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
-  postTouched(w, step);
+  postTouched(w, step, id);
   session.noteHand(step);
   publishSession();
   forkReplay(w);
@@ -1165,8 +1168,8 @@ function bookFeed(w: World, matter: number, energy: bigint) {
  * energy by its chemical energy), so the conservation check stays exact between feeds while the panel
  * shows how much this run was fed.
  */
-async function feed(x: number, y: number, r: number, amount: number, gen?: number) {
-  if (staleHand("feed", gen)) return;
+async function feed(x: number, y: number, r: number, amount: number, gen?: number, id?: number) {
+  if (staleHand("feed", gen, id)) return;
   const w = world;
   if (!w) return;
   const W = worldW(w.sim.cfg);
@@ -1180,7 +1183,7 @@ async function feed(x: number, y: number, r: number, amount: number, gen?: numbe
   bookFeed(w, res.matter, res.energy);
   w.execution.recordFeed(res.matter);
   w.manifest.interventions.push({ step, kind: "feed", x: cx, y: cy, r: res.radius, amount: asked, matter: res.matter });
-  postTouched(w, step);
+  postTouched(w, step, id);
   session.noteHand(step);
   publishSession();
   // Only a feed that happened forks a replay in progress: a refused one changes nothing.
@@ -1293,7 +1296,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       if (command) session.noteRefusal(command, e.message);
       if (m.type === "verify") session.cancelCheck();
       publishSession();
-      return post({ type: "refused", request: m.type, message: e.message });
+      return post({ type: "refused", request: m.type, message: e.message, ...((m.type === "feed" || m.type === "lesion") && m.id !== undefined ? { id: m.id } : {}) });
     }
     if (m.type === "verify") session.cancelCheck();
     const command = sessionCommand(m.type);
@@ -1342,9 +1345,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "load":
         return load(m.presetId, m.seed, m.overrides, m.keep);
       case "lesion":
-        return lesion(m.x, m.y, m.r, m.world);
+        return lesion(m.x, m.y, m.r, m.world, m.id);
       case "feed":
-        return feed(m.x, m.y, m.r, m.amount, m.world);
+        return feed(m.x, m.y, m.r, m.amount, m.world, m.id);
       case "sun":
         return setSun(m.percent, m.span, m.world);
       case "probe":

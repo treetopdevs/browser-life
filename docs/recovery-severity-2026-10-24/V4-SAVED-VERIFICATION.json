@@ -1,0 +1,133 @@
+{
+  "status": "TECHNICAL-STOP",
+  "mode": "saved-trace-reanalysis",
+  "globalStage0Pass": false,
+  "diagnostic": {
+    "version": "recovery-severity-stage0-v4",
+    "observerVersion": "recovery-continuity-v1",
+    "facts": {
+      "id": "2026102402-mutant-mass-targeted",
+      "arm": "mass-targeted",
+      "referenceMass": 4174,
+      "startStep": 3000,
+      "injury": {
+        "lesionApplied": true,
+        "destroyedTargetMass": 1594,
+        "originalCellsInRemnant": 14
+      }
+    },
+    "grids": {
+      "cpu25": 25,
+      "gpu25": 25,
+      "gpu50": 50,
+      "horizon": 2000
+    },
+    "physicalParity": {
+      "ok": true,
+      "sameCadenceOffsets": [],
+      "sharedCadenceOffsets": []
+    },
+    "sameCadenceObserverParity": {
+      "ok": true
+    },
+    "cadenceConcordance": {
+      "ok": false,
+      "firstDisagreement": 100,
+      "disagreements": [
+        {
+          "offset": 100,
+          "fast": {
+            "label": 2,
+            "mass": 1766
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        },
+        {
+          "offset": 150,
+          "fast": {
+            "label": 2,
+            "mass": 732
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        },
+        {
+          "offset": 200,
+          "fast": {
+            "label": 2,
+            "mass": 490
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        },
+        {
+          "offset": 250,
+          "fast": {
+            "label": 2,
+            "mass": 483
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        },
+        {
+          "offset": 300,
+          "fast": {
+            "label": 2,
+            "mass": 218
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        },
+        {
+          "offset": 350,
+          "fast": {
+            "label": 2,
+            "mass": 170
+          },
+          "slow": {
+            "label": null,
+            "mass": 0
+          }
+        }
+      ]
+    },
+    "continuity": {
+      "fast": {
+        "initialLabel": 0,
+        "initialMass": 2463,
+        "splitAt": 150,
+        "mergedAt": 250,
+        "lostAt": 400,
+        "merged": true,
+        "lost": true
+      },
+      "slow": {
+        "initialLabel": 0,
+        "initialMass": 2463,
+        "splitAt": null,
+        "mergedAt": null,
+        "lostAt": 100,
+        "merged": false,
+        "lost": true
+      }
+    },
+    "endpoint": {
+      "status": "CADENCE-DISAGREEMENT",
+      "T": 2025,
+      "cleanRecovery": false,
+      "shamSuccess": null
+    },
+    "stage0": "TECHNICAL-STOP"
+  }
+}

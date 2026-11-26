@@ -1,0 +1,60 @@
+{
+  "decision": "retain-as-promising-uniform-baseline",
+  "passes": 3,
+  "total": 3,
+  "horizon": 6000,
+  "next": "Separately plan/review a broad slowly moving food region against this unchanged baseline; no next-rule result yet.",
+  "runs": [
+    {
+      "seed": 1201,
+      "artifactSha256": "af3c651b4b6115ff084b3089ccdf87143d541a7833c87636efe6fb77c2313850",
+      "finalTick": 6000,
+      "population": 36,
+      "familyCounts": [
+        11,
+        25,
+        0
+      ],
+      "maxEverGeneration": 30,
+      "lateBirths": 107,
+      "lateDeaths": 106,
+      "lateCap48Ticks": 33,
+      "numericalPass": true,
+      "visualPass": true
+    },
+    {
+      "seed": 1202,
+      "artifactSha256": "9c2c0cf304fb8a015e746b96ee1d1c137404f4d3022767f207de57fe9bd092c7",
+      "finalTick": 6000,
+      "population": 41,
+      "familyCounts": [
+        11,
+        30,
+        0
+      ],
+      "maxEverGeneration": 31,
+      "lateBirths": 100,
+      "lateDeaths": 95,
+      "lateCap48Ticks": 13,
+      "numericalPass": true,
+      "visualPass": true
+    },
+    {
+      "seed": 1203,
+      "artifactSha256": "96fe9be0c678fa40cea90341dae25d1f83f474b1813a4fc40fa19a0c547f86ae",
+      "finalTick": 6000,
+      "population": 37,
+      "familyCounts": [
+        32,
+        0,
+        5
+      ],
+      "maxEverGeneration": 29,
+      "lateBirths": 84,
+      "lateDeaths": 74,
+      "lateCap48Ticks": 0,
+      "numericalPass": true,
+      "visualPass": true
+    }
+  ]
+}

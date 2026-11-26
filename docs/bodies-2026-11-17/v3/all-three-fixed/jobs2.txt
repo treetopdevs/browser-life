@@ -1,0 +1,21 @@
+p-ctrl-nogate-s1 --scenario pair --seed 1 --steps 12000 --no-frames
+p-ctrl-tol128-s1 --scenario pair --seed 1 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol0-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 0 
+c2-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 
+c2-tol64-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 64 
+c2-nogate-s1 --scenario crowd --seed 1 --steps 20000 
+c2-same-tol16-s1 --scenario crowd --seed 1 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+p-ctrl-nogate-s2 --scenario pair --seed 2 --steps 12000 --no-frames
+p-ctrl-tol128-s2 --scenario pair --seed 2 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol0-s2 --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 0 --no-frames
+c2-tol16-s2 --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-tol64-s2 --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-nogate-s2 --scenario crowd --seed 2 --steps 20000 --no-frames
+c2-same-tol16-s2 --scenario crowd --seed 2 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames
+p-ctrl-nogate-s3 --scenario pair --seed 3 --steps 12000 --no-frames
+p-ctrl-tol128-s3 --scenario pair --seed 3 --steps 12000 --gates share,grow,signal --tol 128 --no-frames
+c2-tol0-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 0 --no-frames
+c2-tol16-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --no-frames
+c2-tol64-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 64 --no-frames
+c2-nogate-s3 --scenario crowd --seed 3 --steps 20000 --no-frames
+c2-same-tol16-s3 --scenario crowd --seed 3 --steps 20000 --gates share,grow,signal --tol 16 --tags same --no-frames

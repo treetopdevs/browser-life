@@ -1,0 +1,156 @@
+{
+  "defaultShadersUnchanged": true,
+  "inertGpuEqual": true,
+  "points": [
+    {
+      "kind": "saturated",
+      "minimum": 1,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "below-min",
+      "minimum": 1,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "closed-z",
+      "minimum": 1,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "one-face",
+      "minimum": 1,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "rate-zero",
+      "minimum": 1,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "saturated",
+      "minimum": 4,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "below-min",
+      "minimum": 4,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "closed-z",
+      "minimum": 4,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "one-face",
+      "minimum": 4,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "rate-zero",
+      "minimum": 4,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "saturated",
+      "minimum": 255,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "below-min",
+      "minimum": 255,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "closed-z",
+      "minimum": 255,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "one-face",
+      "minimum": 255,
+      "seed": 9009,
+      "killed": true,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    },
+    {
+      "kind": "rate-zero",
+      "minimum": 255,
+      "seed": 9009,
+      "killed": false,
+      "conserved": true,
+      "gpuEqual": true,
+      "checkpoint": true,
+      "invalidRejected": true
+    }
+  ]
+}

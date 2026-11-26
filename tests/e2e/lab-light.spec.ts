@@ -5,7 +5,7 @@ test("the Light view is the eighth view and answers key 8", async ({ page }) => 
   await expect(page.locator("#simulation-status")).not.toHaveText(/Planting|No world yet/, { timeout: 60_000 });
   const light = page.locator('#views [data-mode="light"]');
   await expect(light).toHaveText("Light");
-  await expect(page.locator("#views button")).toHaveCount(8);
+  await expect(page.locator("#views button")).toHaveCount(9);
   await light.click();
   await expect(light).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#legend")).toContainText("Showing Light");

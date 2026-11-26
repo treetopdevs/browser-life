@@ -1,0 +1,23 @@
+{
+  "outcomeProducingAttempts": [
+    {
+      "seed": 1201,
+      "attempt": 1,
+      "startedAtUTC": "2026-10-27T01:55:49.479817+00:00",
+      "command": [
+        "/Users/nicholas/.nvm/versions/node/v24.2.0/bin/node",
+        "--experimental-strip-types",
+        "tools/food-band-longevity/explore.ts",
+        "--write",
+        "--seed",
+        "1201"
+      ],
+      "log": "runs/food-band-longevity/seed-1201-attempt-1.log",
+      "finishedAtUTC": "2026-10-27T01:57:45.610115+00:00",
+      "exitCode": 0,
+      "logText": "(node:69832) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nCompleted moving-band seed 1201 before stationary arm: finalTick=6000 extinctionTick=null families=21,15,12 numericalPass=true dataSha256=e20a68757198cd7568477584da324b17a8c786bb62b841bcd8ed3e77a19f20da\nWrote food-band longevity seed 1201 moving-band and stationary-band evidence.\n"
+    }
+  ],
+  "failedAttempts": [],
+  "scope": "One scheduled pair, with independent repeats; no extra seeds or automatic extension."
+}

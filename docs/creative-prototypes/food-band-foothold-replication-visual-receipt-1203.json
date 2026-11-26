@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "kind": "foothold-replication-parent-body-only-receipt",
+  "reviewer": "primary Codex agent; direct visual inspection of all four paired PNGs through view_image",
+  "notBlind": true,
+  "notBlindTo": [
+    "historical reference",
+    "numerical gates",
+    "new outcome"
+  ],
+  "reviewedUtc": "2026-10-27T22:47:56.440256+00:00",
+  "sourceCommit": "fee9cc485775a24a5b4f01e8e2127fa54501bba7",
+  "planSha256": "2e9f72dae2fb1c5755bf5d78559b83f8e7b6a04cbe00b384d867b826e9dadc99",
+  "artifactSha256": "e832d1f707439a36439668469eabe7e0da349e5aabef426941ccad8a4042683d",
+  "dataSha256": "575624dbb482812c23350074b9a919d2650ad7bf5d9e4065e655753c4da732e7",
+  "historicalArtifactSha256": "f4f5e28294c4806b2b31b4776dbdd42ab9cf70d4307279787c2649298d34123b",
+  "renderProvenanceSha256": "9ac0989c3c07dfbebbd52686ac5f6be8a2170de4a949d9a394c95df203f79f92",
+  "images": {
+    "body-1500.png": "094793741a4f77b4a8b5ff5cedd625d1d6a764970b26ce39e73e8f18d0b8111b",
+    "body-2000.png": "0a057c34223239ea695500e7d3062e29c6f6c465222debc09c9050701839b858",
+    "body-2500.png": "84140744ebb3f6441c74fbea62727c6a252885bfdbd0fdf653f53867a50f5831",
+    "body-3000.png": "6e81eda6399ae05c3a6f7c0113160936f7e049e9a1f793a6d9a8747b783ba6e6"
+  },
+  "bodyOnly": true,
+  "noOverlapDiagnostics": true,
+  "blocks": [
+    {
+      "from": 1500,
+      "to": 2000,
+      "majorityBand": 1,
+      "numericalPass": true,
+      "manualPass": true,
+      "observation": "In new band1, the small separated upper branching bodies at1500 become a broad dense upper lattice and an extended lower-middle branched cluster at2000. In new band0, the large lower-left mesh at1500 clears almost completely by2000, leaving separated small branches and large empty gaps. This is increased occupied structure and clearance in the same qualifying interval, independent of hue.",
+      "historicalComparison": "Historical alternating also expands its band1 upper/lower lattice and clears most band0 bodies in this interval; this screen occurs under both rules."
+    },
+    {
+      "from": 2000,
+      "to": 2500,
+      "majorityBand": 0,
+      "numericalPass": true,
+      "manualPass": true,
+      "observation": "New band0 changes from a few isolated central branches to a much larger connected-looking concentration of occupied branches across its middle/lower region. New band1 loses the broad upper lattice seen at2000, opening a large upper gap and retaining a smaller middle/lower assembly at2500. Connected appearance is visual only, not evidence of an independently reproducing colony.",
+      "historicalComparison": "Historical world at2500 has only scattered short branches in both bands, unlike the much denser new middle-band occupied clusters."
+    },
+    {
+      "from": 2500,
+      "to": 3000,
+      "majorityBand": 1,
+      "numericalPass": false,
+      "manualPass": false,
+      "observation": "New band0 loses most of its large middle/lower assembly, leaving two small occupied clusters. New band1 rearranges into a long lower vertical branch and separated upper branches, but does not show net majority growth; its occupied count falls40. This block fails and is not relabeled successful.",
+      "historicalComparison": "Historical world recovers visibly in both bands by3000; its band1 upper lattice and dispersed lower clusters differ from the new thinner lower vertical structure."
+    }
+  ],
+  "qualifyingBlocks": [
+    [
+      1500,
+      2000
+    ],
+    [
+      2000,
+      2500
+    ]
+  ],
+  "ownWorld2500To3000": {
+    "pass": true,
+    "observation": "The large central/lower occupied concentration in band0 at2500 is mostly absent at3000. In band1 the middle dense branching assembly gives way to a long lower vertical occupied structure plus separated upper branches; this is a concrete occupied-body rearrangement, although the seasonal numerical growth criterion fails for this block."
+  },
+  "manualPass": true,
+  "scope": "Manual descriptive screen only; food shading, IDs, borders and color alone were not used as passing evidence. No adaptation, migration, causal superiority or general fitness claim."
+}

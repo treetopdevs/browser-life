@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-alternating-food-replication-pair",
+  "seed": 1202,
+  "planSha256": "2070ef956ca73855e9b032a7cbaa5e53e594dddaa9ed82f84f72c49256f5c743",
+  "arms": {
+    "baseline": {
+      "kind": "hungry-shapes-split-food-arm",
+      "mode": "split-band",
+      "url": "split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+      "dataSha256": "1379b36370340873e531443ab8f9176a19a69d88b942d20e4d982ed81a81a349"
+    },
+    "alternating": {
+      "kind": "hungry-shapes-alternating-food-replication-arm",
+      "mode": "alternating-band",
+      "url": "alternating-food-replication-seed-1202.json",
+      "rawSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+      "dataSha256": "7ceae251dc216935c5dc72dad091958ec4d2d8d84ef9ea1610fa50745a86fec6"
+    }
+  },
+  "decision": {
+    "status": "stop",
+    "summary": "Stop: seed1202 stays alive with7 bodies and families2/5/0, but band1 is empty at2500 and3000 and none of3 late blocks meets the growth/retreat screen. Historical1203 passed; the full screen did not recur. No retry, tuning or extension.",
+    "baselineArtifactSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+    "alternatingArtifactSha256": "69f00e582d085d69964f087f337cc8175392ee2bd48afcb0708a76b8f83d8117",
+    "visualReceiptUrl": "alternating-food-replication-visual-receipt-1202.json",
+    "visualReceiptSha256": "485f74beaeff3a8a9ca3b847a9c904c5132edb7ea841e992bf38d6fbd1413f24"
+  }
+}

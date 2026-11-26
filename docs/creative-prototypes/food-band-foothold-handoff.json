@@ -1,0 +1,19 @@
+{
+  "updatedAtUTC": "2026-10-27T15:03:17.324783+00:00",
+  "branch": "codex/food-band-foothold",
+  "base": "8fa2a585a8de1533cc47db8771a958003274726a",
+  "planCommit": "866a67f4",
+  "status": "completed Promising first seed; PR113 open dependent on PR112",
+  "attemptCount": 1,
+  "outcomeCount": 1,
+  "sourceHashes": {
+    "docs/creative-prototypes/food-band-foothold-plan.md": "88040ed2b87042ee5907f8db85dfccfbe8794feabe2865df31e3bcac3bfbab27",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "tools/food-band-foothold/explore.ts": "66b7dcf4e9844abcd6fc448557a55a950967ef4c6c0c93cb59d90c35c514fa3d",
+    "tools/food-band-foothold/launch.sh": "24036351704f71fd3d16a372f294b19701e036e4a174acfa4052c62aa6c87490",
+    "docs/creative-prototypes/food-band-foothold.js": "6c590dd80383fb1861842886182cc76e9519bd1f1ec276c93ac3e6b548a3b7ac"
+  },
+  "next": "Slice complete. Preserve frozen sources/evidence. Next proposed unchanged1203 replication needs fresh worktree and separately reviewed plan; no automatic run, merge or deployment.",
+  "head": "aae84e52",
+  "pullRequest": "https://github.com/treetopdevs/browser-life/pull/113"
+}

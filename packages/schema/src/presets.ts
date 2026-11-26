@@ -2,11 +2,13 @@ import { canonicalConfig, digestWords } from "./accounting.ts";
 import { cellCount, defaultConfig, type WorldConfig } from "./config.ts";
 import { M3_FOUNDER_SET, M3_FOUNDERS, founderGenome } from "./founders.ts";
 import { generalistGenome } from "./genome.ts";
+import { generalistGenome3 } from "./genome3.ts";
 import { lowbias32 } from "./int.ts";
 import { B1_OFF, B2_OFF, CH, IN, NN_H, NN_O, OUT, W1_OFF, W2_OFF } from "./layout.ts";
+import { slabSpotsWorld } from "./world3.ts";
 import { buildWorld, generalistWorld, m3World, soupWorld, tiledWorld, validateState, type Founder, type WorldState } from "./world.ts";
 
-export type InitKind = "generalist" | "soup" | "m3" | "ponds" | "followers" | "motile" | "motile-drift" | "sensing" | "three-way";
+export type InitKind = "generalist" | "soup" | "m3" | "ponds" | "followers" | "motile" | "motile-drift" | "sensing" | "three-way" | "slab-spots";
 
 export interface InitParams {
   kind: InitKind;
@@ -23,6 +25,10 @@ export interface InitParams {
   start?: "clone" | "founders";
   /** Kind "ponds" with start "clone" only: an index into M3_FOUNDERS. */
   founder?: number;
+  /** Kind "slab-spots" only, optional (an init option, not a rule): every founder's z in 0..surface-1 (world3.ts SlabSpotsOptions). */
+  surface?: number;
+  /** Kind "slab-spots" only, optional: founder f gets RPS type f mod rpsCycle with the cyclic beats-mask (needs the vacancy keys). */
+  rpsCycle?: number;
 }
 
 export interface Preset {
@@ -47,8 +53,11 @@ const POND_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, ker
 /** Wounds land every WOUND_PERIOD steps in the injury presets. */
 const WOUND_PERIOD = 13;
 
-/** Recurring-injury keys: radius-`radius` wound discs, each cell hit about once per `every` steps. */
-function wounds(radius: number, every: number): Pick<WorldConfig, "injuryPeriod" | "injuryRadius" | "injuryProb"> {
+/**
+ * Recurring-injury keys: radius-`radius` wound discs, each cell hit about once per `every` steps. Exported so the Pond
+ * keeper's wounded breeder presets (and their tests) build the same three keys as the sandboxes above.
+ */
+export function wounds(radius: number, every: number): Pick<WorldConfig, "injuryPeriod" | "injuryRadius" | "injuryProb"> {
   let disc = 0;
   for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) if (dx * dx + dy * dy <= radius * radius) disc++;
   return { injuryPeriod: WOUND_PERIOD, injuryRadius: radius, injuryProb: Math.round((2 ** 32 * WOUND_PERIOD) / (disc * every)) };
@@ -68,6 +77,9 @@ const STORM: Partial<WorldConfig> = {
   ...wounds(3, 13_000),
 };
 const M3_INIT: InitParams = { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 };
+/** The breeder's physics and planting, shared by the breeder and its two wounded variants so they differ only in their weather. */
+const BREEDER_CFG: Partial<WorldConfig> = { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 4, tilesY: 4, pondPeriod: 5_000, pondK: 8, pondArm: "breed", pondScore: "drive+seed+body", mutRate: 4_294_970 };
+const BREEDER_INIT: InitParams = { kind: "ponds", founders: 16, nutrient: 32, biomass: 64, start: "clone", founder: 2 };
 
 export const PRESETS: Preset[] = [
   {
@@ -320,10 +332,54 @@ export const PRESETS: Preset[] = [
     name: "The breeder",
     description:
       "Sandbox, not registered. Sixteen ponds of 64 × 64, each planted with one disc of M3 founder 2, at ten times the usual mutation rate. Every 5,000 steps each pond is cleared and reseeded from the four ponds that rank best on movement, seed-packet mass and body size together. Turn on the Breeder panel to choose the donors yourself.",
-    cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 4, tilesY: 4, pondPeriod: 5_000, pondK: 8, pondArm: "breed", pondScore: "drive+seed+body", mutRate: 4_294_970 },
-    init: { kind: "ponds", founders: 16, nutrient: 32, biomass: 64, start: "clone", founder: 2 },
+    cfg: { ...BREEDER_CFG },
+    init: { ...BREEDER_INIT },
+  },
+  // Pond keeper v3 (docs/pond-keeper-v3-2026-10-22.md): the breeder under wounds, with and without a polymer shell. Each is the
+  // breeder's config plus the injury keys and nothing else, so the lab's Weather control is a view of the preset id and the
+  // three worlds differ only in their weather. Appended after `breeder`: the pinned prefix of PRESETS (FIRST_WORLDS) is untouched.
+  // Radius-3 wounds at the physics survey's heavy dose: each cell hit about once per 3,250 steps.
+  {
+    id: "breeder-wounded",
+    name: "The breeder (wounded)",
+    description:
+      "Sandbox, not registered. The breeder with recurring wounds: every 13 steps a round of radius-3 discs lands at random (each cell is a possible centre), so each cell is hit about once per 3,250 steps. A hit cell is cleared and its body turns to waste. Planted as the breeder is, so the same seed starts the same ponds.",
+    cfg: { ...BREEDER_CFG, ...wounds(3, 3_250) },
+    init: { ...BREEDER_INIT },
+  },
+  {
+    id: "breeder-wounded-shell",
+    name: "The breeder (wounded, shells)",
+    description:
+      "Sandbox, not registered. The wounded breeder with a shell (injuryShell 2): a wounded cell holding at least 2 membrane (the physics calls it polymer) survives the wound and spends 2 of its membrane; any other hit cell is cleared. Planted as the breeder is, so the same seed starts the same ponds.",
+    cfg: { ...BREEDER_CFG, ...wounds(3, 3_250), injuryShell: 2 },
+    init: { ...BREEDER_INIT },
   },
 ];
+
+/**
+ * Slab presets (rung 1b, docs/3d-rung1b-plan-2026-10-23.md): kept out of `PRESETS`, which is the lab's catalogue, the
+ * coordinator's list and the 2D pins (a slab handed to the 2D lab worker would be run as a 2D world). Only the headless
+ * runner resolves them (`presetById`).
+ *
+ * slab-spots is the 256 x 256 x 8 slab, light 240 at the surface (uniform, seasons off), founded from eight balls of the
+ * neutral generalist. `defaultMu`, `defaultSigma` and `lightK` here are the M3 timing gate's placeholders; the check's
+ * real values are chosen by M4 and passed to every run as overrides, so this entry never has to move after that choice.
+ */
+export const SLAB_PRESETS: Preset[] = [
+  {
+    id: "slab-spots",
+    name: "Slab spots",
+    description: "Eight generalist balls in a 256 x 256 x 8 slab lit from the surface: the rung 1b depth check's world (headless runs only).",
+    cfg: { tileW: 256, tileH: 256, tileD: 8, kernelRadius: 3, lightK: 1024, defaultMu: 60, defaultSigma: 20, lightMode: "uniform", lightBase: 40, lightAmp: 200 },
+    init: { kind: "slab-spots", founders: 8, nutrient: 32, biomass: 64 },
+  },
+];
+
+/** A preset of the lab's catalogue (`PRESETS`) or a slab preset (`SLAB_PRESETS`) by id. */
+export function presetById(id: string): Preset | undefined {
+  return PRESETS.find((p) => p.id === id) ?? SLAB_PRESETS.find((p) => p.id === id);
+}
 
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
   return defaultConfig({ ...p.cfg, seed, ...extra });
@@ -355,9 +411,11 @@ export function presetIdentity(p: Preset): string {
   // init object happens to be written. `waste` is included only when present,
   // and `start`/`founder` only for kind "ponds", so existing presets keep their
   // pinned identities.
-  const { kind, founders, nutrient, biomass, waste, start, founder } = p.init;
+  const { kind, founders, nutrient, biomass, waste, start, founder, surface, rpsCycle } = p.init;
   const base = waste !== undefined ? { kind, founders, nutrient, biomass, waste } : { kind, founders, nutrient, biomass };
-  const init = kind === "ponds" ? { ...base, start, founder: founder ?? null } : base;
+  // The slab-spots options likewise only when present.
+  const slab = { ...base, ...(surface !== undefined ? { surface } : {}), ...(rpsCycle !== undefined ? { rpsCycle } : {}) };
+  const init = kind === "ponds" ? { ...base, start, founder: founder ?? null } : slab;
   const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init, founderSetId }));
   const words = new Uint32Array(Math.ceil(bytes.length / 4));
   new Uint8Array(words.buffer).set(bytes);
@@ -435,6 +493,8 @@ function foundingWorld(cfg: WorldConfig, init: InitParams): WorldState {
       return motileWorld(cfg, false, init.founders, init.nutrient, init.biomass);
     case "motile-drift":
       return motileWorld(cfg, true, init.founders, init.nutrient, init.biomass);
+    case "slab-spots":
+      return slabSpotsWorld(cfg, generalistGenome3(cfg.defaultMu, cfg.defaultSigma), init.founders, init.nutrient, init.biomass, { surface: init.surface, rpsCycle: init.rpsCycle });
     default:
       return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
   }
@@ -442,6 +502,7 @@ function foundingWorld(cfg: WorldConfig, init: InitParams): WorldState {
 
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
   if (init.kind !== "ponds" && (init.start !== undefined || init.founder !== undefined)) throw new Error(`init kind ${init.kind}: start and founder belong to kind "ponds"`);
+  if (init.kind !== "slab-spots" && (init.surface !== undefined || init.rpsCycle !== undefined)) throw new Error(`init kind ${init.kind}: surface and rpsCycle belong to kind "slab-spots"`);
   const s = foundingWorld(cfg, init);
   // Waste is applied here rather than through m3World/soupWorld/generalistWorld
   // so those helpers' signatures stay free for other callers (e.g. Genome[] only).

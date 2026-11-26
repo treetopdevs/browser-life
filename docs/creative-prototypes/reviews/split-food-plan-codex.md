@@ -1,0 +1,8 @@
+**Clear. No actionable blockers found.**
+
+- Geometry is feasible: the sorted 4,608-tile mask has 48 targets per row. Since `gcd(2053,4608)=1`, each pulse selects 768 distinct tiles. Modulo 48, the stride visits every position once per 48 slots; sixteen cycles give exactly `16×24=384` offers per band. [Schedule](/Users/nicholas/.codex/worktrees/split-food-bands/browser-life/docs/creative-prototypes/split-food-plan.md:9)
+- Biology, capacities and contiguous-mode parity remain frozen. The separately disclosed baseline regression is an explicit correctness check; the historical result remains known evidence. Its stated identity matches the accepted index. [Parity contract](/Users/nicholas/.codex/worktrees/split-food-bands/browser-life/docs/creative-prototypes/split-food-plan.md:13)
+- Stops distinguish ecological failure from assay invalidity, prohibit rescue and escalation, and authorize no automatic additional seeds. Missing windows/endpoints and extinction at 3000 fail explicitly. [Stops](/Users/nicholas/.codex/worktrees/split-food-bands/browser-life/docs/creative-prototypes/split-food-plan.md:17)
+- Evidence and visual requirements are practical: independent repeat, terminal capture, provenance, preserved attempts, body-only endpoint comparison, and a receipt committed before optional overlap diagnostics. [Evidence](/Users/nicholas/.codex/worktrees/split-food-bands/browser-life/docs/creative-prototypes/split-food-plan.md:29)
+
+Six read/check calls; no tests, simulations, outcomes or edits. Own unfinished output was not read.

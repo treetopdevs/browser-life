@@ -1,0 +1,54 @@
+{
+  "seed": 1201,
+  "planSha256": "ed1e1a0bf7c997868409b72a0481c5c2cbd60a58ab58a21780350803ab0597f3",
+  "visualReceiptSha256": "b1c0b82eac60d11f51003f9a3af9f5ac97023bedd373a29a3e2db9bd2065ad0c",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "comparison": "moving-band-vs-stationary-band",
+      "tick": 3000,
+      "occupiedA": 652,
+      "occupiedB": 641,
+      "sharedTiles": 0,
+      "unionTiles": 1293,
+      "jaccard": 0
+    },
+    {
+      "comparison": "moving-band-vs-stationary-band",
+      "tick": 5500,
+      "occupiedA": 488,
+      "occupiedB": 705,
+      "sharedTiles": 45,
+      "unionTiles": 1148,
+      "jaccard": 0.039198606271777
+    },
+    {
+      "comparison": "moving-band-vs-stationary-band",
+      "tick": 6000,
+      "occupiedA": 757,
+      "occupiedB": 487,
+      "sharedTiles": 78,
+      "unionTiles": 1166,
+      "jaccard": 0.06689536878216124
+    },
+    {
+      "comparison": "movingBand-within-arm",
+      "from": 5500,
+      "to": 6000,
+      "occupiedA": 488,
+      "occupiedB": 757,
+      "sharedTiles": 34,
+      "unionTiles": 1211,
+      "jaccard": 0.028075970272502065
+    },
+    {
+      "comparison": "stationaryBand-within-arm",
+      "from": 5500,
+      "to": 6000,
+      "occupiedA": 705,
+      "occupiedB": 487,
+      "sharedTiles": 56,
+      "unionTiles": 1136,
+      "jaccard": 0.04929577464788732
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+**Not CLEAR — four actionable source blockers.** Review is limited to the supplied text; no tools or simulations used.
+
+1. **P1 — Exported stepping functions bypass the attempt gates.**  
+   In the new `explore.ts`, `runArm()` accepts an ordinary regression-proof object and an optional recorder. Its proof validator checks counts and checkpoint hashes that can be copied from historical artifacts; it does not establish that both regressions executed during this reservation. It also omits reservation and committed-input verification. `runBaselineRegression()` likewise permits unreserved stepping. Make these functions private to the guarded execution path, or require a reservation-bound execution context created only after both regressions finish. Enforce runtime/platform prerequisites before the first regression world steps; currently those checks reside in `runArm()`.
+
+2. **P2 — Check-only validation can accept impossible body energy and changing initial energy.**  
+   `validateCensus()` gives `totalEnergy` no physical upper bound. At a sampled tick without a full snapshot, `validateFrameEnergy()` can accept body energy exceeding  
+   `population * RULES.storeCap + cells * RULES.structurePerCell`, provided the frame ledger is adjusted and hashes/history bindings are updated. Frame `initialEnergy` is also not bound across observations. Add the body-energy bound, bind every ledger’s initial energy to initialization, and validate cumulative ledger transitions. Cover this with rehashed synthetic malformed evidence.
+
+3. **P2 — Required durable stage and failure observations are incomplete.**  
+   `writeEvidence()` keeps `stage` only in memory; no stage journal is written. Initialization equality checks in `replayHistorical()` and `runArm()` occur outside their detailed observation catches. Repeat failures save only the primary state, losing the divergent repeat state. Write fsynced stage start/completion entries and retain both worlds’ states/environment on repeat or initialization mismatch, before propagating failure.
+
+4. **P2 — The check-only size limit measures normalized JSON rather than actual artifact bytes.**  
+   `checkEvidence()` parses the file before `validateEvidenceStructure()` measures `JSON.stringify(value)`. An artifact exceeding 24 MiB through whitespace can therefore pass. Check the original buffer length before parsing and retain its raw-byte hash separately from the internal data digest.
+
+The normal CLI path correctly orders **foothold1202, then alternating1203, then both new foothold1203 worlds**. The supplied model import, seeds and modes match the protocol, and the new repeat loop compares full snapshots every tick. These findings do not require biological stepping to repair or verify.

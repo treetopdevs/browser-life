@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-frame-food-floor-longevity-body-comparison",
+  "seed": 1203,
+  "ticks": [
+    3000,
+    4500,
+    5000,
+    5500,
+    6000
+  ],
+  "imageSha256": "f4bd768b751a7c69a2240ab53b923d26bca934572c7fda607cdfb5187c765fb9",
+  "plan": {
+    "path": "docs/creative-prototypes/food-floor-longevity-plan.md",
+    "sha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7"
+  },
+  "sources": {
+    "plan": {
+      "path": "docs/creative-prototypes/food-floor-longevity-plan.md",
+      "sha256": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7"
+    },
+    "model": {
+      "path": "apps/lab/src/food-band-foothold/model.ts",
+      "sha256": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403"
+    },
+    "runner": {
+      "path": "tools/food-floor-longevity/explore.ts",
+      "sha256": "cc3fa45e873eb8cd485eafc2a139fac39248fd30b63b2c39ec11860be20b75d9"
+    },
+    "launcher": {
+      "path": "tools/food-floor-longevity/launch.sh",
+      "sha256": "c67419b1ea35fc850a90283fb2998c1624f74d4cac09eb35a31fcd9fb677be74"
+    },
+    "baseline": {
+      "path": "docs/creative-prototypes/food-floor-replication-seed-1203.json",
+      "rawSha256": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+      "dataSha256": "16d01d50bd909e3058295d23719d161722952b1349f2a5ebd16780d9a5b88bc2"
+    },
+    "baselineIndex": {
+      "path": "docs/creative-prototypes/food-floor-replication-index-1203.json",
+      "sha256": "0f792ca72c287d5cb09c12a9daa7290aaed40dd53e2eab86008ab0f1df69994f"
+    },
+    "baselineRunner": {
+      "path": "tools/food-floor-replication/explore.ts",
+      "sha256": "17ffccbdc1be97b4859f9bbbc082f6449497f86f00eb1db01987439c16d3b09b"
+    },
+    "baselineValidation": {
+      "path": "docs/creative-prototypes/food-floor-replication-validation.md",
+      "sha256": "72a2d688217fa0d3369ac00f652cff097bdd811bceb6996493ceab358e471ed3"
+    },
+    "alternating": {
+      "path": "docs/creative-prototypes/food-floor-longevity-seed-1203.json",
+      "rawSha256": "25e2e563350c1f70ac3307c1d766c61f29fac4935f68f0e7f0ef37ad9c43dfd4",
+      "dataSha256": "74cdc92b5cb64b2450f239edcc437768f75c6b46959556d14990cf2d45c4dd6a"
+    },
+    "viewerJs": {
+      "path": "docs/creative-prototypes/food-floor-longevity.js",
+      "sha256": "82531b12f2b2cf4507584c08c1de2d07753642dbee16024eb38220e816ca08c0"
+    },
+    "viewerCss": {
+      "path": "docs/creative-prototypes/food-floor-longevity.css",
+      "sha256": "9320edf8bd45f854bb6449e69f656c87a19c17e06f505719933220b9390fd89c"
+    },
+    "viewerHtml": {
+      "path": "docs/creative-prototypes/food-floor-longevity-media/capture-viewer.html",
+      "sha256": "65ad3694f01f01a3f692a937bc0973f7c53d0f69976e7bede0c5916f5896b493",
+      "originalServedPath": "docs/creative-prototypes/food-floor-longevity.html",
+      "note": "Exact committed HTML served during body-only capture; preserved before later live editorial."
+    }
+  },
+  "pinnedSources": {
+    "docs/creative-prototypes/food-floor-longevity-plan.md": "8e0985d08122792a7c4c3b76ff51de9b29601dc92be292e7a5b001cff71f56b7",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "tools/food-floor-replication/launch.sh": "dae498fee6887d45f3926b09b681f09b7497c97f6661f966a819058659f7c97e",
+    "tools/food-floor-replication/explore.ts": "17ffccbdc1be97b4859f9bbbc082f6449497f86f00eb1db01987439c16d3b09b",
+    "docs/creative-prototypes/food-floor-replication-seed-1203.json": "7b535bf0eb53c1c3ee192974efd7de61fa15bb99fe84308478b1639eaa8b753d",
+    "docs/creative-prototypes/food-floor-replication-index-1203.json": "0f792ca72c287d5cb09c12a9daa7290aaed40dd53e2eab86008ab0f1df69994f",
+    "docs/creative-prototypes/food-floor-replication-validation.md": "72a2d688217fa0d3369ac00f652cff097bdd811bceb6996493ceab358e471ed3",
+    "tools/food-floor-longevity/launch.sh": "c67419b1ea35fc850a90283fb2998c1624f74d4cac09eb35a31fcd9fb677be74",
+    "tools/food-floor-longevity/explore.ts": "cc3fa45e873eb8cd485eafc2a139fac39248fd30b63b2c39ec11860be20b75d9"
+  },
+  "frameLabels": [
+    [
+      {
+        "requestedTick": 3000,
+        "actualTick": 3000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 4500,
+        "actualTick": 4500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 5000,
+        "actualTick": 5000,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 5500,
+        "actualTick": 5500,
+        "terminalHeld": false
+      },
+      {
+        "requestedTick": 6000,
+        "actualTick": 6000,
+        "terminalHeld": false
+      }
+    ]
+  ],
+  "description": "Exact saved occupied body tiles for parent visual review before the SHA-bound receipt; no food, outlines, interpolation, or simulation. Tick3,000 is the accepted historical prefix endpoint, not a same-age control."
+}

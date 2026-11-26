@@ -1,0 +1,21 @@
+{
+  "seed": 1202,
+  "ticks": [
+    1500,
+    2500,
+    3000
+  ],
+  "kind": "saved-frame-body-comparison",
+  "imageSha256": "404589917bdbd1937cb58152bb5e718d96d03264f8082816de75331618ebc13d",
+  "sources": [
+    {
+      "path": "docs/creative-prototypes/stationary-food-stationary-band-seed-1202.json",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39"
+    },
+    {
+      "path": "docs/creative-prototypes/split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b"
+    }
+  ],
+  "description": "Exact saved occupied tiles; no simulation, food mask, outline or interpolation. Historical baseline is known evidence."
+}

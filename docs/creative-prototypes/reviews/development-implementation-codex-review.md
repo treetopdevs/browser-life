@@ -1,0 +1,7 @@
+Two actionable findings:
+
+1. **[P2] Fixture food can alias live state.** [model.ts:475](/Users/nicholas/.codex/worktrees/developmental-shapes/browser-life/apps/lab/src/development/model.ts:475) accepts Node `Buffer` as a `Uint8Array`, then calls `slice()`, which shares Buffer storage. Mutating the original input—or the public `food` getter’s result—changes live food and breaks the ledger. Reproduced residuals of −40 and −80. Copy into a base `Uint8Array`.
+
+2. **[P2] `--check` accepts incomplete or duplicated evidence.** [explore.ts:412](/Users/nicholas/.codex/worktrees/developmental-shapes/browser-life/tools/development/explore.ts:412) checks six rows and milestone labels without validating unique seed/condition pairs or retained state coverage. An in-memory fixture containing six copies of `1201/off`, empty samples/births, and snapshots containing only labels passed. Validate matrix uniqueness, record coverage, and snapshot content/hash consistency.
+
+Scoped strict compilation, three growth assays, a 600-tick model probe, and existing artifact freshness/Markdown checks passed. Vitest was blocked before test execution by sandbox temporary-directory permissions. Browser/Docker execution and the full pilot were not rerun. No edits or commits.

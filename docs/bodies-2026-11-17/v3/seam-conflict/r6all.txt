@@ -1,0 +1,18 @@
+r6 grow_distinct 1 crowd --steps 10000 --no-frames --gates grow
+r6 grow_same 1 crowd --steps 10000 --no-frames --gates grow --tags same
+r6 allgates_same 1 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tags same
+r6 allgates_blind 1 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tag-mut-rate 400 --tag-blind
+r6 share_signal_distinct 1 crowd --steps 10000 --no-frames --gates share,signal
+r6 grow_tol128 1 crowd --steps 10000 --no-frames --gates grow --tol 128
+r6 grow_distinct 2 crowd --steps 10000 --no-frames --gates grow
+r6 grow_same 2 crowd --steps 10000 --no-frames --gates grow --tags same
+r6 allgates_same 2 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tags same
+r6 allgates_blind 2 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tag-mut-rate 400 --tag-blind
+r6 share_signal_distinct 2 crowd --steps 10000 --no-frames --gates share,signal
+r6 grow_tol128 2 crowd --steps 10000 --no-frames --gates grow --tol 128
+r6 grow_distinct 3 crowd --steps 10000 --no-frames --gates grow
+r6 grow_same 3 crowd --steps 10000 --no-frames --gates grow --tags same
+r6 allgates_same 3 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tags same
+r6 allgates_blind 3 crowd --steps 10000 --no-frames --gates share,grow,signal --seam-cost 1 --raid 2 --tag-mut-rate 400 --tag-blind
+r6 share_signal_distinct 3 crowd --steps 10000 --no-frames --gates share,signal
+r6 grow_tol128 3 crowd --steps 10000 --no-frames --gates grow --tol 128

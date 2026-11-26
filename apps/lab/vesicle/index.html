@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="A world where a cell wall is conserved material under tension, crowded contents push it outward, and a cell divides when a neck in its wall closes." />
+  <title>Walls made of matter · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/vesicle/" />
+</head>
+<body class="vesicle-page">
+  <a class="skip" href="#main">Skip to the world</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed world · prototype</span></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Walls made of matter</p>
+      <h1>A cell that divides because of its shape</h1>
+      <p>A wall here is a ring of lipid beads, and lipid is a fixed stock that walls and the open water trade back and forth. The dots inside are solute: they crowd against the wall and stretch it. A stretched wall takes up lipid more readily and gives it up less, so a crowded cell grows wall at the expense of a slack one. When a cell has more wall than its contents can fill, the wall folds, a neck closes, and one cell becomes two.</p>
+      <p>In the garden worlds the solute also lives: a particle copies itself from food only when it has company, makes lipid from food, and decays. With heredity on, every copy can shift how much of its effort goes to making lipid. In the first heredity world a particle that makes less lipid copies itself faster, and in headless runs those cells stopped dividing and nearly all died. In the second, copying speed is the same for every particle, and three runs of 1.5 million steps stayed alive.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> the wall springs, the lipid exchange rule, the rule that a closing neck reconnects, the outside pressure and the chemistry are all engineered. Cells are not declared: a cell is whatever a ring of bonds happens to enclose, and nothing in the rules tells a cell to divide or die.</p>
+    </section>
+    <section class="stage">
+      <div class="world">
+        <canvas id="world" width="768" height="768" tabindex="0" aria-label="Vesicle world. Click or tap to use the chosen tool at that spot."></canvas>
+        <p id="live" class="live" role="status" aria-live="polite">Paused.</p>
+      </div>
+      <div class="panel">
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="play" class="primary" type="button">Play</button>
+          <button id="step" type="button">One step</button>
+          <label for="pace">Pace<select id="pace"><option value="2">2 steps per frame</option><option value="6" selected>6</option><option value="16">16</option><option value="40">40</option></select></label>
+        </div>
+        <div class="controls">
+          <label for="start">World<select id="start">
+            <option value="garden" selected>Garden: cells grow, divide and die (no heredity)</option>
+            <option value="heredity">Garden with heredity: making less lipid lets a particle copy faster</option>
+            <option value="nogain">Garden with heredity, no private gain: lipid share is inherited but copying speed is the same for all</option>
+            <option value="neutral">Garden, drift only: shifts are inherited but change nothing</option>
+            <option value="wall">Garden with heredity in the wall: beads carry the lipid share, solute is stamped by the wall that makes it</option>
+            <option value="thread">Garden with a thread: one genome object per cell (the ring dot), solute can only copy next to it and takes its lipid share from it</option>
+            <option value="jobs">Garden with jobs: the wall carries two enzymes, harvest (waste to food, in light) and digest (loose lipid to food); founders mostly harvest, a little digest; wall coloured by job</option>
+            <option value="wild">Wild dish (4 times the area): light comes in drifting pale patches and a ring is burst now and then; no heredity</option>
+            <option value="wild-wall">Wild dish with heredity in the wall</option>
+            <option value="wild-heredity">Wild dish with heredity on solute</option>
+            <option value="wild-thread">Wild dish with a thread</option>
+            <option value="wild-jobs">Wild dish with jobs: harvesting works only inside the lit patches, digesting anywhere</option>
+            <option value="ties">Garden with ties: every wall carries a glue byte (founders 255); when a cell divides, the daughters are tied with probability glue / 255; walls and ties coloured by cluster</option>
+            <option value="wild-ties">Wild dish with ties: the same, in the big dish with drifting light and weather</option>
+            <option value="theft">Two cells, fixed lipid: the crowded one takes wall</option>
+            <option value="feed">One cell in spare lipid: wall outgrows contents and splits</option>
+          </select></label>
+          <label for="color">Colour solute by<select id="color"><option value="founder">Family (which founder cell it descends from)</option><option value="gene">Lipid share (red = makes wall, blue = only copies itself; in the wall-heredity world the wall is coloured too)</option><option value="mark">Idle marker (inherited, does nothing; in the thread worlds the thread rings show it too)</option><option value="cluster">Cluster (ties worlds: each group of tied cells has one hue, single cells are grey, ties are bright lines; solute dark)</option><option value="job">Job (jobs worlds: wall green = harvests waste, magenta = digests loose lipid, yellow and orange between; brighter = more of its budget in use; solute by family)</option></select></label>
+          <label for="tint">Background shows<select id="tint"><option value="lipid">Free lipid in the water</option><option value="food">Food</option><option value="none">Nothing</option></select></label>
+          <fieldset><legend>Click the world to</legend>
+            <label><input type="radio" name="tool" value="lipid" checked /> Drop lipid <small>(adds 60 units)</small></label>
+            <label><input type="radio" name="tool" value="food" /> Drop food <small>(adds 200 units)</small></label>
+            <label><input type="radio" name="tool" value="wound" /> Burst the cell there <small>(its wall returns to the water)</small></label>
+          </fieldset>
+          <form id="seed-form" class="seed-form"><label for="seed">Seed</label><input id="seed" type="text" inputmode="numeric" value="1" /><button type="submit">Reset</button></form>
+        </div>
+        <dl class="readout">
+          <div><dt>Step</dt><dd id="r-t">0</dd></div><div><dt>Cells (5 or more solute)</dt><dd id="r-live">0</dd></div><div><dt>Rings with under 5 solute</dt><dd id="r-empty">0</dd></div><div><dt>Solute</dt><dd id="r-solute">0</dd></div>
+          <div><dt>Wall beads</dt><dd id="r-beads">0</dd></div><div><dt>Free lipid</dt><dd id="r-lipid">0</dd></div><div><dt>Divisions</dt><dd id="r-pinch">0</dd></div><div><dt>Dissolved</dt><dd id="r-dissolve">0</dd></div>
+          <div><dt>Burst</dt><dd id="r-burst">0</dd></div><div><dt>Lipid share (mean)</dt><dd id="r-gene">0</dd></div><div><dt>Idle marker (mean)</dt><dd id="r-mark">0</dd></div><div><dt>Matter total</dt><dd id="r-matter">0</dd></div>
+          <div><dt>Threads (thread worlds)</dt><dd id="r-threads">0</dd></div><div><dt>Threads outside every cell</dt><dd id="r-threads-out">0</dd></div><div><dt>Thread copies</dt><dd id="r-tcopy">0</dd></div><div><dt>Thread decays</dt><dd id="r-tdecay">0</dd></div>
+        </dl>
+        <canvas id="history" width="576" height="120" role="img" aria-label="History of the number of cells, the mean lipid share and the mean idle marker."></canvas>
+        <p class="legend"><i class="k cells"></i> cells (scaled) <i class="k comps"></i> lipid share <i class="k interior"></i> idle marker</p>
+      </div>
+    </section>
+    <section class="explanation">
+      <p>In the thread worlds a thread is a clear ring, coloured by its idle marker (gene 1; the lipid share is gene 0). Solute copies only within reach of a thread with no wall between, takes that thread's lipid share, and a cell with no thread stops making solute. Threads copy when they have stored enough food and no other thread is near; a thread with too little solute around it decays.</p>
+      <p>Wall colour shows strain: orange is stretched, pale is at rest, violet is squeezed. Cell counts, contents and families are read by an observer that walks the rings; the rules never see them. Matter total counts every bead, solute particle, food, waste and lipid unit: it only changes when you drop something in.</p>
+      <p>Known limits: this is a flat world, so a cell's wall is a line and its volume an area. Cells do not fuse. A wall leaks a little solute where it sheds beads. Positions are floating point, so a run repeats exactly on one machine and any standard JavaScript engine, but there is no GPU twin.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/vesicle/page.ts"></script>
+</body>
+</html>

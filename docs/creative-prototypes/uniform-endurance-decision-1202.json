@@ -1,0 +1,65 @@
+{
+  "seed": 1202,
+  "artifactSha256": "a67a99bde41317f59c3b0fdf6521cc561c9a2b4db38d12783ea2f9be0d5f5602",
+  "dataSha256": "1fb5f81e128f7e6ecf60449349257df09ec2ce0fd1155d5d0c2784e3f59a8e2f",
+  "numericalGate": {
+    "aliveAt9000": true,
+    "eachNewWindowHasBirthsAndDeaths": true,
+    "eachNewWindowCap48AtMost99": true,
+    "atLeastTwoFamiliesAt9000": true,
+    "numericalPass": true,
+    "note": "Numerical screen only; visual judgment is manual and required for the plan gate."
+  },
+  "visualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "pass": true,
+      "observation": "The upper-left mint branches become a smaller upper-middle group; gold bodies collect into a diagonal central/lower-left band, replacing the bottom-edge grouping."
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "pass": true,
+      "observation": "The diagonal gold band disperses into upper-right, central and lower-right groups, while mint becomes sparse at the side edges. The lower-left occupied region clears."
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "pass": true,
+      "observation": "Gold forms a broad lower-right cluster and mint remains near the upper-left boundary, leaving a large central gap compared with the prior dispersed arrangement."
+    }
+  ],
+  "visualReviewedBeforeOverlapDiagnostics": true,
+  "decision": "passes-uniform-endurance-screen",
+  "reason": "All numerical and three spatial criteria pass. Stop at9000; no further trials or horizon earned.",
+  "overlapDiagnosticsAfterVisualReview": [
+    {
+      "from": 6000,
+      "to": 7000,
+      "occupiedA": 538,
+      "occupiedB": 622,
+      "sharedTiles": 12,
+      "unionTiles": 1148,
+      "jaccard": 0.010452961672473868
+    },
+    {
+      "from": 7000,
+      "to": 8000,
+      "occupiedA": 622,
+      "occupiedB": 606,
+      "sharedTiles": 14,
+      "unionTiles": 1214,
+      "jaccard": 0.011532125205930808
+    },
+    {
+      "from": 8000,
+      "to": 9000,
+      "occupiedA": 606,
+      "occupiedB": 625,
+      "sharedTiles": 14,
+      "unionTiles": 1217,
+      "jaccard": 0.011503697617091208
+    }
+  ]
+}

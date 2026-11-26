@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "hungry-shapes-split-food-pair",
+  "seed": 1202,
+  "planSha256": "134944138fc636b1c9677e9a40b5c2583d7184d608ce1e8d8c914e2ce8d93515",
+  "arms": {
+    "baseline": {
+      "mode": "stationary-band",
+      "url": "stationary-food-stationary-band-seed-1202.json",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39"
+    },
+    "split": {
+      "mode": "split-band",
+      "url": "split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b"
+    }
+  },
+  "decision": {
+    "status": "promising",
+    "summary": "The split-band world passes the first-seed numerical, both-band occupancy and late spatial-change screen at 3000 ticks. It retains three families at 10 / 8 / 9 bodies. This earns a separate replication proposal, not extra runs here or a superiority claim.",
+    "baselineArtifactSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+    "splitArtifactSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+    "visualReceiptUrl": "split-food-visual-receipt-1202.json",
+    "visualReceiptSha256": "4a6ae883c69bd85b05713f71da39a5e79a6f3d7a529ede00f8a61808d0c1f138"
+  }
+}

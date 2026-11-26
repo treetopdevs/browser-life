@@ -37,7 +37,7 @@ const manifest = (over: Partial<WorldManifest> = {}, preset = gradient, seed = 1
 
 /** A gradient-m3 seed 1 world read through the committed excerpt (to step 16,000), with the proposer's rules loaded. */
 function readSeed1(opts: { loading?: () => boolean } = {}) {
-  const apply = vi.fn<(entries: HandEntry[], world: number) => void>();
+  const apply = vi.fn<(entries: HandEntry[], world: number, id: number) => void>();
   const model = new NaturalistModel(() => {}, { apply, loading: opts.loading });
   const m = manifest();
   model.onLoaded(m, 0, 1);
@@ -149,6 +149,7 @@ describe("the suggestion is the proposer's", () => {
           expect(s.entries).toEqual(rulesInterventions(row, cfg, 14_900, feedAmount(preset)));
           expect(s.refused).toBeNull();
           expect(s.tryLabel === null).toBe(row.action === "control");
+          expect(s.entries).toHaveLength(row.action === "control" ? 0 : 1);
           expect(s.prediction.kind).toBe(row.action === "control" ? "replay" : "directional");
         }
     }
@@ -288,8 +289,92 @@ describe("a late note", () => {
 });
 
 describe("Try it here", () => {
+  it("does not settle a pending Try from brush receipts or another request", () => {
+    const { model, m, apply } = readSeed1();
+    const key = readyView(model).note.key;
+    model.tryHere(key);
+    const id = apply.mock.calls[0][2];
+    model.onApplyRefused("brush refused");
+    model.onApplyRefused("another request", id + 1);
+    expect(readyView(model).sv.offer.state).toBe("sent");
+    model.onTouched(1, m.runId, 16_001);
+    expect(model.view().state).toBe("touched");
+    expect(readyView(model).sv.offer.state).toBe("sent");
+    expect(model.tryHere(key).ok).toBe(false);
+    model.onApplyUncertain("unrelated worker error");
+    model.onTouched(1, m.runId, 16_002, id + 1);
+    expect(readyView(model).sv.offer.state).toBe("unknown");
+    model.onTouched(2, m.runId, 16_003, id);
+    model.onTouched(1, "another-run", 16_003, id);
+    expect(readyView(model).sv.offer.state).toBe("unknown");
+    model.onTouched(1, m.runId, 16_004, id);
+    expect(readyView(model).sv.offer.state).toBe("tried");
+    expect(readyView(model).sv.offer.lines[0]).toContain("16,004");
+  });
+
+  it("uses fresh receipt ids after retries and loads and ignores late receipts", () => {
+    const { model, m, apply } = readSeed1();
+    let key = readyView(model).note.key;
+    model.tryHere(key);
+    const first = apply.mock.calls[0][2];
+    model.onApplyUncertain("error before refusal");
+    model.onApplyRefused("definitely refused", first);
+    expect(model.tryHere(key).ok).toBe(true);
+    const second = apply.mock.calls[1][2];
+    expect(second).toBeGreaterThan(first);
+    model.onApplyRefused("late refusal", first);
+    model.onTouched(1, m.runId, 16_001, first);
+    expect(readyView(model).sv.offer.state).toBe("sent");
+    // Old receipts may still mark a world touched, but cannot settle another attempt.
+    model.onLoaded({ ...m, runId: "replacement" }, 0, 2);
+    for (const c of fixtureRecs) model.onCensus(msg(2, "replacement", c));
+    key = readyView(model).note.key;
+    expect(model.tryHere(key).ok).toBe(true);
+    const third = apply.mock.calls[2][2];
+    expect(third).toBeGreaterThan(second);
+    model.onApplyRefused("old attempt", second);
+    model.onTouched(1, m.runId, 16_002, second);
+    expect(readyView(model).sv.offer.state).toBe("sent");
+    model.onTouched(2, "replacement", 16_003, third);
+    model.onTouched(2, "replacement", 16_004, third);
+    model.onApplyRefused("duplicate", third);
+    expect(readyView(model).sv.offer.lines[0]).toContain("16,003");
+  });
+
+  it("does not call an unsupported non-control suggestion a replay control", () => {
+    for (const variant of ["empty", "no-label", "unsupported"] as const) {
+      const { model, apply } = readSeed1();
+      model.setSuggester((r, w, h) => {
+        const s = suggestFor(r, w, h);
+        return {
+          ...s,
+          tryLabel: variant === "no-label" ? null : s.tryLabel,
+          entries: variant === "empty" ? [] : variant === "unsupported" ? [{ step: s.S, kind: "sun", percent: 50, span: 100 }] : s.entries,
+        };
+      });
+      const { note, sv } = readyView(model);
+      expect(sv.offer.state, variant).toBe("refused-spec");
+      expect(sv.offer.lines.join(" ")).not.toContain("replay control");
+      expect(model.tryHere(note.key).ok).toBe(false);
+      expect(apply).not.toHaveBeenCalled();
+    }
+  });
+
+  it("refuses multi-entry suggestions instead of claiming a partial receipt completed them", () => {
+    const { model, apply } = readSeed1();
+    model.setSuggester((r, w, h) => {
+      const s = suggestFor(r, w, h);
+      return { ...s, entries: [...s.entries, ...s.entries] };
+    });
+    const { note, sv } = readyView(model);
+    expect(sv.offer.state).toBe("refused-spec");
+    expect(sv.offer.lines.join(" ")).toContain("exactly one");
+    expect(model.tryHere(note.key).ok).toBe(false);
+    expect(apply).not.toHaveBeenCalled();
+  });
+
   it("applies nothing while censuses arrive and views are drawn; one click applies the one entry, once", () => {
-    const apply = vi.fn<(entries: HandEntry[], world: number) => void>();
+    const apply = vi.fn<(entries: HandEntry[], world: number, id: number) => void>();
     const model = new NaturalistModel(() => {}, { apply });
     const m = manifest();
     model.onLoaded(m, 0, 1);
@@ -307,14 +392,14 @@ describe("Try it here", () => {
     expect(model.tryHere(note.key)).toEqual({ ok: true, entries: [{ kind: "feed", x: 128, y: 128, r: 127, amount: 32 }] });
     expect(apply).toHaveBeenCalledTimes(1);
     // Named for the world the suggestion was made for (generation 1): the worker refuses it for any other.
-    expect(apply).toHaveBeenCalledWith([{ kind: "feed", x: 128, y: 128, r: 127, amount: 32 }], 1);
+    expect(apply).toHaveBeenCalledWith([{ kind: "feed", x: 128, y: 128, r: 127, amount: 32 }], 1, 1);
     expect(readyView(model).sv.offer.state).toBe("sent");
     expect(model.tryHere(note.key).ok).toBe(false);
     // Every other note of this world is not offered once one was tried.
     for (const n of model.view().notes) if (n.key !== note.key && n.suggestion?.kind === "ready") expect(n.suggestion.offer.state).toBe("tried-other");
     expect(model.view().notes.filter((n) => n.key !== note.key).every((n) => !model.tryHere(n.key).ok)).toBe(true);
     // The worker logs it at the step the world is on (here 16,000), and reading stops.
-    model.onTouched(1, m.runId, 16_000);
+    model.onTouched(1, m.runId, 16_000, apply.mock.calls.at(-1)![2]);
     const after = readyView(model).sv.offer;
     expect(after.state).toBe("tried");
     expect(after.lines[0]).toMatch(/^Tried here at step 16,000, not step 14,900: one feed logged as a change by hand\. The naturalist stopped reading/);
@@ -385,13 +470,13 @@ describe("Try it here", () => {
     const { model, m, apply } = readSeed1();
     const key = readyView(model).note.key;
     expect(model.tryHere(key).ok).toBe(true);
-    model.onApplyRefused("feed amount is too large");
+    model.onApplyRefused("feed amount is too large", 1);
     const v = readyView(model).sv.offer;
     expect(v.state).toBe("offered");
     expect(v.lines).toEqual(["The lab did not apply it: feed amount is too large."]);
     expect(model.tryHere(key).ok).toBe(true);
     expect(apply).toHaveBeenCalledTimes(2);
-    model.onTouched(1, m.runId, 16_000);
+    model.onTouched(1, m.runId, 16_000, apply.mock.calls.at(-1)![2]);
     expect(readyView(model).sv.offer.state).toBe("tried");
     // A refusal after the change was logged changes nothing.
     model.onApplyRefused("late");
@@ -402,7 +487,7 @@ describe("Try it here", () => {
     const { model, m, apply } = readSeed1();
     const key = readyView(model).note.key;
     expect(model.tryHere(key).ok).toBe(true);
-    model.onApplyRefused("feed amount is too large");
+    model.onApplyRefused("feed amount is too large", 1);
     // The person brushes a wound instead of clicking again.
     model.onTouched(1, m.runId, 15_500);
     const v = readyView(model).sv.offer;
@@ -426,7 +511,7 @@ describe("Try it here", () => {
       expect(sv.s.entries).toEqual([{ step: sv.s.S, ...want }]);
       expect(model.tryHere(note.key)).toEqual({ ok: true, entries: [want] });
       expect(apply).toHaveBeenCalledTimes(1);
-      expect(apply).toHaveBeenCalledWith([want], 1);
+      expect(apply).toHaveBeenCalledWith([want], 1, 1);
     }
   });
 
@@ -448,14 +533,14 @@ describe("Try it here", () => {
     const { model, m, apply } = readSeed1();
     const key = readyView(model).note.key;
     expect(model.tryHere(key).ok).toBe(true);
-    model.onApplyRefused("stats: something", false);
+    model.onApplyUncertain("stats: something");
     const v = readyView(model).sv.offer;
     expect(v.state).toBe("unknown");
     expect(v.button).toBeNull();
     expect(model.tryHere(key).ok).toBe(false);
     for (const n of model.view().notes) expect(model.tryHere(n.key).ok).toBe(false);
     // The edit lands after all: said as tried.
-    model.onTouched(1, m.runId, 16_000);
+    model.onTouched(1, m.runId, 16_000, apply.mock.calls.at(-1)![2]);
     expect(readyView(model).sv.offer.state).toBe("tried");
     expect(apply).toHaveBeenCalledTimes(1);
   });

@@ -1,0 +1,8 @@
+**Clear for the first pilot on this targeted static review, provided the parent’s focused tests, browser checks, and typecheck pass.** No concrete remaining blocker found in the listed repairs.
+
+- [Model tests](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/apps/lab/test/moving-food-model.test.ts:61) now check twelve actual world pulses against helper destinations, cumulative offered food, accepted-plus-overflow accounting, and zero conservation residual. Geometry tests cover tick 2995/3000 wrap.
+- [Runner](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/tools/moving-food/explore.ts:285) computes endpoint maximum-ever generation from lineage born through the actual endpoint, including extinct generations; unreached endpoints return null. The validator recomputes the complete window from observations.
+- [Viewer generation join](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/docs/creative-prototypes/moving-food-viewer.js:300) uses the same birth cutoff. The [band renderer](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/docs/creative-prototypes/moving-food-viewer.js:426) now draws strokes only.
+- Browser fixtures retain the saved frame’s [184,320 food units](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/tests/e2e/moving-food.spec.ts:100), and the terminal-jump test uses the existing [data attribute locator](/Users/nicholas/.codex/worktrees/moving-food-region/browser-life/tests/e2e/moving-food.spec.ts:230).
+
+Read both prior implementation reports; completed six read/search operations. No simulations, tests, edits, or pilot execution. Parent verification results remain unverified here; previously cleared implementation was not re-reviewed.

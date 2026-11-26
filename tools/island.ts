@@ -7,8 +7,8 @@
 // shell that runs a coordinator does not hand its token to every coordinator an island there joins. The token is sent
 // only over https or to a loopback host, in the join body only, and is never printed.
 // Ctrl-C (SIGINT) or SIGTERM stops the island (docs/island-cancel-2026-10-18.md): the task in hand stops at its next
-// census chunk, nothing more is uploaded or reported, and its lease lapses so the coordinator offers it again; a
-// complete already sent is waited for and counts. The island then releases its GPU device and exits 130 (SIGINT) or
+// census chunk, nothing more is uploaded or reported, and a bounded leave requests immediate reassignment; a
+// complete already sent is waited for and counts. If leave fails, lease expiry remains the fallback. The island then releases its GPU device and exits 130 (SIGINT) or
 // 143 (SIGTERM); a second signal exits at once (the escape from a coordinator that never answers a complete).
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { requestDevice } from "@bl/sim-gpu";

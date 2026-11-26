@@ -1,0 +1,404 @@
+[
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-16384.bin",
+    "sha256": "b988b15ce4b827370888d2e27b03d0b00ba20f4566eaaf7d4ccb8f61ce97985b",
+    "member": "originals/0000/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-11585-transition.bin",
+    "sha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+    "member": "originals/0001/soup-11585-transition.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-12609.bin",
+    "sha256": "d150da8b297eecb0da1e10432c420c4e9e890dc8e5cb395b563c20cc99ed43be",
+    "member": "originals/0002/soup-12609.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-45056.bin",
+    "sha256": "763925641dd57d7a5b49d045ee4f4aad6d34ec7d66c88af41c1d79f7c6da69c9",
+    "member": "originals/0003/soup-45056.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-16384.bin",
+    "sha256": "b8c34807d6e050d4af4c4d1ba5d3ea244fb1ea48268fc85a2cb04a59dd698cc7",
+    "member": "originals/0004/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-16384.bin",
+    "sha256": "65190809c3645468a0a162d5c2a6a248647994acd964b8839e653a73d058bfc1",
+    "member": "originals/0005/soup-16384.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/params.json",
+    "sha256": "78995e952a8f3ca6b671787a6534adab082b4b69e88d2e2b39429082d5224807",
+    "member": "originals/0006/params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/log.csv",
+    "sha256": "7c79f9025173c7bea03253466932272bb7395ca3776da71648eb52ac0f2f5e1d",
+    "member": "originals/0007/log.csv",
+    "bytes": 14827
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/params.json",
+    "sha256": "83159df482ffce646d5edcfaaca361dbbe0d6d021047070bcc903e0cefa9c580",
+    "member": "originals/0008/params.json",
+    "bytes": 325
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/log.csv",
+    "sha256": "3c09803882f25c860c56ec87f3301b69d4aa3f5e367f55474bf79b6c2faf0fc0",
+    "member": "originals/0009/log.csv",
+    "bytes": 41270
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/transition.json",
+    "sha256": "b9a067aee2c91e93001019e6eddbe48f3f4e2f3c4ab0391f7045721e782f1721",
+    "member": "originals/0010/transition.json",
+    "bytes": 297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/params.json",
+    "sha256": "705add454996f3777260a8c7be7e72da05f804314c2f37c86e6d9d54e99873d9",
+    "member": "originals/0011/params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/log.csv",
+    "sha256": "821ce9fbf65155cfa95234330568025457a74c1fc34c009a2cd49a740e3841cc",
+    "member": "originals/0012/log.csv",
+    "bytes": 14867
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/params.json",
+    "sha256": "8a77c3074efcee40aee363dba4d2d93018d000311f5c7898e6fa6cb95635a139",
+    "member": "originals/0013/params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/log.csv",
+    "sha256": "f6a3571ef399f33711e643160ed0f03814c6917a2c6e03b6118fc848e297f89d",
+    "member": "originals/0014/log.csv",
+    "bytes": 14858
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-params.json",
+    "sha256": "8a77c3074efcee40aee363dba4d2d93018d000311f5c7898e6fa6cb95635a139",
+    "member": "originals/0015/seed-4-params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-log.csv",
+    "sha256": "7c79f9025173c7bea03253466932272bb7395ca3776da71648eb52ac0f2f5e1d",
+    "member": "originals/0016/seed-1-log.csv",
+    "bytes": 14827
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-11585-transition.json",
+    "sha256": "cb8002f9c7c453b1d0e1b47d14eb6ed0504b9bd6e25f81d4da744407834f1585",
+    "member": "originals/0017/seed-2-11585-transition.json",
+    "bytes": 859
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-params.json",
+    "sha256": "78995e952a8f3ca6b671787a6534adab082b4b69e88d2e2b39429082d5224807",
+    "member": "originals/0018/seed-1-params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-log.csv",
+    "sha256": "3c09803882f25c860c56ec87f3301b69d4aa3f5e367f55474bf79b6c2faf0fc0",
+    "member": "originals/0019/seed-2-log.csv",
+    "bytes": 41270
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-params.json",
+    "sha256": "83159df482ffce646d5edcfaaca361dbbe0d6d021047070bcc903e0cefa9c580",
+    "member": "originals/0020/seed-2-params.json",
+    "bytes": 325
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-transition.json",
+    "sha256": "b9a067aee2c91e93001019e6eddbe48f3f4e2f3c4ab0391f7045721e782f1721",
+    "member": "originals/0021/seed-2-transition.json",
+    "bytes": 297
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-log.csv",
+    "sha256": "821ce9fbf65155cfa95234330568025457a74c1fc34c009a2cd49a740e3841cc",
+    "member": "originals/0022/seed-3-log.csv",
+    "bytes": 14867
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-45056.json",
+    "sha256": "d62245162ad50923e1e5cc144f4cfa43d00e8cfabc1cc5596d616d16864efc9b",
+    "member": "originals/0023/seed-2-45056.json",
+    "bytes": 850
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-16384.json",
+    "sha256": "e5095dc35f6696819019ff20e1a3c4af8dade26e6ad5d25440cde9a50e623575",
+    "member": "originals/0024/seed-3-16384.json",
+    "bytes": 850
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/inventory.json",
+    "sha256": "be5f3b312d981a6af9a80a6117687c9e5eb0e523a752ed1a11542ddde7336842",
+    "member": "originals/0025/inventory.json",
+    "bytes": 3410
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-1-16384.json",
+    "sha256": "3a16c801021fae7be99137c27b1b9369959954c96d7eecb4f44a17559894a060",
+    "member": "originals/0026/seed-1-16384.json",
+    "bytes": 850
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-2-12609.json",
+    "sha256": "ea248f8917874f5a0eeda6f957e205cb42410b37d50b5c2157a9cb931826ee23",
+    "member": "originals/0027/seed-2-12609.json",
+    "bytes": 850
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-log.csv",
+    "sha256": "f6a3571ef399f33711e643160ed0f03814c6917a2c6e03b6118fc848e297f89d",
+    "member": "originals/0028/seed-4-log.csv",
+    "bytes": 14858
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-4-16384.json",
+    "sha256": "8bc8e33a691be13d64b95198cc00fed2879e3e1123063182ff6f05b17f5479b4",
+    "member": "originals/0029/seed-4-16384.json",
+    "bytes": 849
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-evidence/runs/evidence-audit-2026-11-01/seed-3-params.json",
+    "sha256": "705add454996f3777260a8c7be7e72da05f804314c2f37c86e6d9d54e99873d9",
+    "member": "originals/0030/seed-3-params.json",
+    "bytes": 269
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/early-log-comparison.json",
+    "sha256": "54e3bad6c28a1bbe0d46c363f89303a7c9b12b544c3b97a998262dbcd4c9dc39",
+    "member": "originals/0031/early-log-comparison.json",
+    "bytes": 96
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/initial-state-hashes.json",
+    "sha256": "6e03f106fb4926a64906440acb82b77527804b5dba73e87a28268a931b6e5de7",
+    "member": "originals/0032/initial-state-hashes.json",
+    "bytes": 487
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/supervisor.pid",
+    "sha256": "350a3031a177a3a0ec1a31f42671241bb4276b920323ff8e86ca2a50b3363e55",
+    "member": "originals/0033/supervisor.pid",
+    "bytes": 6
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/repeat.py",
+    "sha256": "8b3e9f5c722e9fe84739ed5b7ae1e91f0ffa11c91a54c00b6dc704848fbad7f8",
+    "member": "originals/0034/repeat.py",
+    "bytes": 2442
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/supervisor.log",
+    "sha256": "65f0b75e0594b49d119d64c3c1b76c8c8e212068b06e5f1c704fe11822057221",
+    "member": "originals/0035/supervisor.log",
+    "bytes": 493
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/manifest.json",
+    "sha256": "c98482f08a1dca79d1e326155fe17f0855a9150e097452fd228f27e8ced44f16",
+    "member": "originals/0036/manifest.json",
+    "bytes": 3225
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2.stdout.log",
+    "sha256": "0170a27dd5c9a50b3fcfdb157592a499690b73037333dda6a9e5ac8711790e25",
+    "member": "originals/0037/seed-2.stdout.log",
+    "bytes": 13055
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/historical-evidence.zip",
+    "sha256": "9863fb195d5a6afa9437262e84ac68dda9bc319341f2fd2fb8cd90015aaf1140",
+    "member": "originals/0038/historical-evidence.zip",
+    "bytes": 34528485
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/historical-evidence.zip.sha256",
+    "sha256": "526d90e2ad1a1c294f999ee692f468d0fc0d98f04636a6f47fb711bfe412828a",
+    "member": "originals/0039/historical-evidence.zip.sha256",
+    "bytes": 90
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12288.bin",
+    "sha256": "abe65af2bb33ae24bd0868552e968c50a395134ec029441afa2f3a23c2cc6bfb",
+    "member": "originals/0040/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/log.csv",
+    "sha256": "0a2ccfb42412dba6dabed683a74f760adf94a5b77d99a56c44f8758acaaa5d63",
+    "member": "originals/0041/log.csv",
+    "bytes": 11344
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-11585-transition.bin.receipt.json",
+    "sha256": "21d0df6eecc8d773c045749cb168baa7bd1bea954a5ab6efb4188f1f3cac7f08",
+    "member": "originals/0042/soup-11585-transition.bin.receipt.json",
+    "bytes": 836
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/params.json",
+    "sha256": "6cfd12b10728dbe3e0601d0126db200446327ef2a0c8954fe14ecbd20b4673b3",
+    "member": "originals/0043/params.json",
+    "bytes": 285
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-11585-transition.bin",
+    "sha256": "c54b2b62aa3a30744ec9a479f15a303df844897b98ec928c69575531488c0b1a",
+    "member": "originals/0044/soup-11585-transition.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12609.bin.receipt.json",
+    "sha256": "14ac6d78b40b0e4a5562d91c4d0c2eeeb85564315a32f935f5a4586bfe5d208f",
+    "member": "originals/0045/soup-12609.bin.receipt.json",
+    "bytes": 828
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-12609.bin",
+    "sha256": "3f21d457212eebbbc08b80435b34a1e2e25ba7655654b891ce8c08226d3c50be",
+    "member": "originals/0046/soup-12609.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-4096.bin",
+    "sha256": "22d78806c11c104e83719cce900e30ddc27b5a4fc519d1721d93d2ef9a9a7bd3",
+    "member": "originals/0047/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/soup-8192.bin",
+    "sha256": "6833b799d304620979b9e3af975c28c83371f4131cef3e9a38a40cd0f025f3ff",
+    "member": "originals/0048/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life-soup-repeat/runs/independent-2026-11-01/seed-2/transition.json",
+    "sha256": "4566680bff75db027b12b5bb8ec2cd5d3faaca848b6961d86acb4b5746a7b7db",
+    "member": "originals/0049/transition.json",
+    "bytes": 313
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/stdout.txt",
+    "sha256": "254cc16fa8932388c0236ed47b9eede3d124c296f8c69561b32fade611b8715c",
+    "member": "originals/0050/stdout.txt",
+    "bytes": 16823
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/stdout.txt",
+    "sha256": "4461d14c7277e90ae5534c626464066b1f46c3c14645bc35c47dce985dd8c1b2",
+    "member": "originals/0051/stdout.txt",
+    "bytes": 13093
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/stdout-evo.txt",
+    "sha256": "9f922eeb92c660fa89d293e60f52a7cbcc6fded8273284f32eb307d3b3a53049",
+    "member": "originals/0052/stdout-evo.txt",
+    "bytes": 34814
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/stdout.txt",
+    "sha256": "28b90abfc112de5cae59ac31ee50fa209a99d8abaa1add96600f1a40b812b08c",
+    "member": "originals/0053/stdout.txt",
+    "bytes": 16873
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/stdout.txt",
+    "sha256": "9290dee7537ebf8ff060a535d7f66b959f650a5d78f8614481c2c0e85389d500",
+    "member": "originals/0054/stdout.txt",
+    "bytes": 16863
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-4096.bin",
+    "sha256": "22d78806c11c104e83719cce900e30ddc27b5a4fc519d1721d93d2ef9a9a7bd3",
+    "member": "originals/0055/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-8192.bin",
+    "sha256": "6833b799d304620979b9e3af975c28c83371f4131cef3e9a38a40cd0f025f3ff",
+    "member": "originals/0056/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-2/soup-12288.bin",
+    "sha256": "bc283ae31debd1e57128e5b21fc2e4881e62145196f4bca57abe2b63813b1319",
+    "member": "originals/0057/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-4096.bin",
+    "sha256": "779a8bad4483b54dba8c5cbe94306689cfdf37bde5e8dc48d3dd642d495fd383",
+    "member": "originals/0058/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-8192.bin",
+    "sha256": "898e979e4487eeec355c44d926e10c895ae5bf8b3aaddbabc822a90fb4253c20",
+    "member": "originals/0059/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-1/soup-12288.bin",
+    "sha256": "f40c778ac1e24fbfd65326dce96b5d3f066219c69ecfdb85c3da42191743e435",
+    "member": "originals/0060/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-4096.bin",
+    "sha256": "be61cdd8f24f5596e1e44e221446e29996209e3cf063a0f6d8ed1f50c619f5af",
+    "member": "originals/0061/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-8192.bin",
+    "sha256": "a0f9b99d6cae36bae26ba0feb04c990540d21e736d9cf714e47df9c5161c2c7a",
+    "member": "originals/0062/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-3/soup-12288.bin",
+    "sha256": "0ef53100cef6812777b7ec6cd137f68f0fdb53c7aa518d9c285dc81f39d5be1f",
+    "member": "originals/0063/soup-12288.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-4096.bin",
+    "sha256": "bf4f1e2bc25099e9512058cc8108998c9aea4fcb6634556537b763c5bc9622f2",
+    "member": "originals/0064/soup-4096.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-8192.bin",
+    "sha256": "386d2e3ea65ffae2fa493c43c8750620fba1fdb0077e2f7a1a43df2448f79726",
+    "member": "originals/0065/soup-8192.bin",
+    "bytes": 8388608
+  },
+  {
+    "source": "/Users/nicholas/develop/browser-life/.claude/worktrees/3d-line-bistability-c35648/runs/soup/noheads/seed-4/soup-12288.bin",
+    "sha256": "7fd586f8ea6cc1ef73f0595aa2507e9293520a0de555f773c605911888ed11c4",
+    "member": "originals/0066/soup-12288.bin",
+    "bytes": 8388608
+  }
+]

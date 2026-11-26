@@ -12,6 +12,8 @@
 
 import {
   PRESETS,
+  presetById,
+  isSlab,
   applyExchange,
   applyFeed,
   cellCount,
@@ -44,7 +46,7 @@ import {
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
-import { GpuSim } from "@bl/sim-gpu";
+import { GpuSim, GpuSim3 } from "@bl/sim-gpu";
 import { RefSim, applyLesion } from "@bl/sim-ref";
 import { applyBoundary, branchTransform, cellsAtBoundary, pondColumns, pondContext, pondTsvRows, pondsHeader } from "./migrate.ts";
 import {
@@ -62,6 +64,9 @@ import {
   temporalMI,
   tileSpeciesCensus,
   DEFAULT_CENSUS,
+  LAYERS_HEADER,
+  layerRoles,
+  layersRows,
   unb64,
   type ActivityState,
   type TrackerState,
@@ -84,7 +89,7 @@ function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
   return rows.map((r) => `${step}\t${r.tile}\t${r.geneticRichness}\t${r.livingCells}\t${r.founderPresenceMask}\n`).join("");
 }
 import { conditionById } from "./conditions.ts";
-import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
+import { SLAB_ABSENT_METRICS, observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
 import { INTERVENTIONS_FILE, InterventionError, applyScheduled, formatInterventionLine, interventionsError, lightOfSun, ownedInterventions, sameSun, sunAt, validateInterventions, type InterventionLogEntry, type InterventionSim, type ScheduledIntervention } from "./interventions.ts";
 import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, pressureEntriesError, type PickEntry, type PickNote, type Picker, type PressureEntry } from "./picks.ts";
 
@@ -104,7 +109,8 @@ export interface RunSpec {
   /**
    * Optional world overrides applied after the condition. tools/run.ts's `--override` sets them from an
    * allowlist (`parseOverrides`): `mutRate` (the hunt's D3 runs with mutation off) and `pondDeath` (its G1
-   * fallback at e = 1, `pondDeath` 65,536, which wins over pond-nat's and pond-shuf's 32,768).
+   * fallback at e = 1, `pondDeath` 65,536, which wins over pond-nat's and pond-shuf's 32,768), and for a slab the check's
+   * `defaultMu`, `defaultSigma` and `lightK`.
    */
   overrides?: Partial<WorldConfig>;
   /**
@@ -207,6 +213,19 @@ export interface RunSpec {
    * manifest and every output byte-identical to before this field existed.
    */
   picked?: true;
+  /**
+   * The SHA-256 (64 lowercase hex digits) of a fixed, content-addressed pick log (picks.ts `canonicalPickLog`): the donors the
+   * run's boundaries take, kept by the coordinator and fetched by islands, so a picked run can be distributed
+   * (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02). Needs `picked: true`; excludes `pressures` and `branch`.
+   * The spec only names the log: `runExperiment` still gets the entries through `RunOptions.picks` (the island fetches,
+   * checks the digest and slices them to its segment). Optional and absent from every default.
+   */
+  pickLog?: string;
+  /**
+   * With `pickLog`: the log is sparse (a lab history), so a boundary with no entry takes the arm's rule donors
+   * (`RunOptions.implicitRule`). Absent means strict: the log must cover every boundary. Needs `pickLog`.
+   */
+  pickImplicit?: true;
   /**
    * Scheduled interventions (interventions.ts): lesions, feeds and suns applied at their absolute steps as the lab's
    * traversal applies them, so a wounded or fed history, such as a lab manifest's (`labHistory`), runs and replays
@@ -474,6 +493,15 @@ export function validateSpec(spec: RunSpec): string[] {
     if (spec.branch !== undefined) errs.push("a picked run cannot be a branch run");
     if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
   }
+  if (spec.pickLog !== undefined) {
+    if (typeof spec.pickLog !== "string" || !/^[0-9a-f]{64}$/.test(spec.pickLog)) errs.push("pickLog must be a 64-digit lowercase hex SHA-256");
+    if (spec.picked !== true) errs.push("pickLog needs picked: true");
+    if (spec.pressures !== undefined) errs.push("a pick log cannot be combined with pressures");
+  }
+  if (spec.pickImplicit !== undefined) {
+    if ((spec.pickImplicit as unknown) !== true) errs.push("pickImplicit must be true or absent");
+    if (spec.pickLog === undefined) errs.push("pickImplicit needs pickLog");
+  }
   if (spec.interventions !== undefined) errs.push(...validateInterventions(spec.interventions));
   if (spec.pressures !== undefined) errs.push(...validatePressures(spec.pressures, spec.picked === true));
   // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
@@ -516,12 +544,16 @@ export function preCycleError(spec: RunSpec, cfg: WorldConfig, startStep: number
   return null;
 }
 
-/** The `WorldConfig` keys tools/run.ts's `--override` accepts: the hunt's D3 (mutation off) and G1 fallback (e = 1). */
-const OVERRIDE_KEYS = ["mutRate", "pondDeath"] as const;
+/**
+ * The `WorldConfig` keys tools/run.ts's `--override` accepts: the hunt's D3 (mutation off) and G1 fallback (e = 1), and
+ * the slab check's three per-run parameters (`defaultMu`, `defaultSigma`, `lightK`; rung 1b M4/M5). `lightK` on a 2D
+ * preset is refused by `validateConfig` ("tileD and lightK are set together").
+ */
+const OVERRIDE_KEYS = ["mutRate", "pondDeath", "defaultMu", "defaultSigma", "lightK"] as const;
 
 /**
  * `RunSpec.overrides` from tools/run.ts's `--override` text: a comma-separated list of `key=integer`, with keys from
- * the allowlist `mutRate` and `pondDeath` (each at most once). Throws on any other key, a value that is not a plain
+ * the allowlist `mutRate`, `pondDeath`, `defaultMu`, `defaultSigma` and `lightK` (each at most once). Throws on any other key, a value that is not a plain
  * decimal integer, a repeated key or an empty list; range and arm checks are `validateConfig`'s, on the run's config.
  */
 export function parseOverrides(text: string): Partial<WorldConfig> {
@@ -537,6 +569,35 @@ export function parseOverrides(text: string): Partial<WorldConfig> {
     out[key as (typeof OVERRIDE_KEYS)[number]] = Number(value);
   }
   return out;
+}
+
+/**
+ * Why `spec` and `opts` do not make a legal run of slab config `cfg` (`specConfig(spec)`), or null when they do or when
+ * `cfg` is not a slab. A slab run is one whole history from step 0 of its preset, observed from its start: the opt-in
+ * observers read 44-word 2D genomes (`speciesCensus`, `lineageObs`), the pond, branch, pick, pressure, metapopulation
+ * and scheduled-intervention mechanisms are 2D, and a mid-run start would need a continuation of `layers.tsv`. Pure and
+ * independent of the GPU: runExperiment refuses before touching it, and tools/run.ts checks every spec before it
+ * requests a device.
+ */
+export function slabSpecError(
+  spec: RunSpec,
+  cfg: WorldConfig,
+  opts: Pick<RunOptions, "start" | "observer" | "immigrant" | "branchFrom" | "picker" | "picks"> = {},
+): string | null {
+  if (!isSlab(cfg)) return null;
+  if (spec.speciesCensus) return "a slab run cannot take speciesCensus: the per-tile species census reads 44-word 2D genomes";
+  if (spec.lineageObs) return "a slab run cannot take lineageObs: its genome rows read 44 words per cell, a slab has 49";
+  if (spec.preCycleCheckpoints !== undefined) return "a slab run has no pond cycle, so no preCycleCheckpoints";
+  if (spec.branch !== undefined || opts.branchFrom) return "a slab run cannot branch: branches are pond histories";
+  if (spec.picked !== undefined || opts.picker || opts.picks) return "a slab run cannot be picked: picks choose pond donors";
+  if (spec.pressures !== undefined) return "a slab run takes no pressures: they belong to picked pond runs";
+  if (spec.metapopulation) return "a slab run cannot belong to a metapopulation: cross-run exchange is not defined for a slab";
+  // Any schedule, the empty one included: a defined list writes interventions.jsonl and the manifest's intervention block,
+  // which the slab bundle declares absent (SLAB_ABSENT_METRICS).
+  if (spec.interventions !== undefined) return "interventions are not defined for a slab";
+  if (opts.start || opts.observer) return "a slab run is one whole history from step 0: it cannot continue from a checkpoint";
+  if (opts.immigrant) return "a slab run cannot import an immigrant state";
+  return null;
 }
 
 /**
@@ -633,7 +694,7 @@ function sameConfigExceptSeed(a: WorldConfig, b: WorldConfig): boolean {
 }
 
 export function specConfig(spec: RunSpec): WorldConfig {
-  const preset = PRESETS.find((p) => p.id === spec.presetId);
+  const preset = presetById(spec.presetId);
   if (!preset) throw new Error(`unknown preset ${spec.presetId}`);
   const base = presetConfig(preset, spec.seed);
   // "no-migration" (conditions.ts) never throws by itself any more -- it has
@@ -941,6 +1002,16 @@ function cpuInterventions(state: WorldState): InterventionSim {
   };
 }
 
+/**
+ * The 2D simulation behind `sim`. The three call sites (a sun's light, a scheduled intervention) are reachable only when a
+ * schedule exists, which `slabSpecError` refuses for a slab, so a GpuSim3 never gets here. `instanceof` on GpuSim only,
+ * so a 2D run never reads GpuSim3.
+ */
+function gpu2d(sim: GpuSim | GpuSim3): GpuSim {
+  if (!(sim instanceof GpuSim)) throw new Error("unreachable on a slab: slabSpecError refused the schedule");
+  return sim;
+}
+
 export function runId(spec: RunSpec): string {
   return spec.runId ?? `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
 }
@@ -956,8 +1027,12 @@ export async function runExperiment(
   stopIfAborted(opts.signal);
   const errs = validateSpec(spec);
   if (errs.length) throw new Error(`invalid run spec: ${errs.join("; ")}`);
-  const preset = PRESETS.find((p) => p.id === spec.presetId)!;
+  const preset = presetById(spec.presetId)!;
   const cfg = specConfig(spec);
+  // A slab run is one whole history from step 0 with the slab's own bundle: refused here, before anything is built.
+  const slab = isSlab(cfg);
+  const slabBad = slabSpecError(spec, cfg, opts);
+  if (slabBad) throw new Error(slabBad);
   // A branch run (RunSpec.branch) is refused here, before any state is built or the GPU touched.
   const branchBad = branchError(spec, cfg, opts);
   if (branchBad) throw new Error(branchBad);
@@ -965,9 +1040,10 @@ export async function runExperiment(
   const picked = spec.picked === true;
   if (picked !== !!(opts.picker || opts.picks)) throw new Error(picked ? "a picked run needs its picks (a picker or a record)" : "a picker or recorded picks need spec.picked");
   if (picked) {
-    if (opts.start || opts.observer) throw new Error("a picked run cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
+    // Only a run whose donors are all recorded can continue: a live picker's choices are in no checkpoint.
+    if ((opts.start || opts.observer) && (opts.picker || !opts.picks)) throw new Error("a picked run with a live picker cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
     if (opts.immigrant) throw new Error("a picked run cannot import an immigrant state");
-    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
+    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, opts.start?.step ?? 0, spec.steps, !!opts.picker || !!opts.implicitRule);
     if (pickedBad) throw new Error(pickedBad);
   }
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
@@ -1114,14 +1190,15 @@ export async function runExperiment(
   // Pond runs only: M_r and the conservation baseline of every cycle, from this
   // segment's own start (see migrate.ts's PondContext).
   const ponds = pondContext(branched ? init : actualInit);
-  const sim = await GpuSim.create(device, actualInit);
+  // A slab runs on GpuSim3; the 2D line is the call it always was (GpuSim3 is not even read on a 2D run).
+  const sim: GpuSim | GpuSim3 = slab ? await GpuSim3.create(device, actualInit) : await GpuSim.create(device, actualInit);
   const obs = restoreObservers(opts.observer, settings, cfg);
   if (zeroFed.feeds) obs.fed = { matter: (obs.fed?.matter ?? 0) + zeroFed.matter, feeds: (obs.fed?.feeds ?? 0) + zeroFed.feeds };
   // The sun that governs the first step: a step-0 sun of this run, else the one it inherits. Installed before any step;
   // the simulation was built with the world's own config, which `cfg` stays.
   const firstSun = zeroSun ?? inherited;
   if (firstSun) {
-    await sim.setLight(lightOfSun(cfg, firstSun));
+    await gpu2d(sim).setLight(lightOfSun(cfg, firstSun));
     obs.sun = { step: firstSun.step, percent: firstSun.percent, span: firstSun.span };
   } else delete obs.sun;
   // Observers start fresh on a branch's post-transform state, which has had its boundary's cycle.
@@ -1185,9 +1262,12 @@ export async function runExperiment(
     ...(picked ? { picks: picksInfo } : {}),
     // Only when RunSpec.interventions is set, so every other manifest keeps its shape.
     ...(spec.interventions !== undefined ? { interventions: intervInfo } : {}),
+    // Only for a slab: where its per-layer activity goes and what the bundle leaves out, so a 2D manifest keeps its shape.
+    ...(slab ? { layers: { file: "layers.tsv", depth: cfg.tileD! }, absentMetrics: [...SLAB_ABSENT_METRICS] } : {}),
     summary: null as RunSummary | null,
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
+  if (slab) await sink.writeText("layers.tsv", LAYERS_HEADER);
   await sink.writeText("mutations.tsv", "childHi\tchildLo\tparentHi\tparentLo\n");
   // Declared cells: every birth is also a mutations.tsv row (child and parent ids); cells.tsv adds what the pass saw.
   if (cellPeriod > 0) await sink.writeText("cells.tsv", "step\tchildHi\tchildLo\tparentHi\tparentLo\tanchor\tcells\tmass\tmutated\n");
@@ -1276,13 +1356,13 @@ export async function runExperiment(
   const applyDueAt = async (step: number): Promise<number> => {
     let applied = 0;
     if (sunEnd() === step) {
-      await sim.setLight(null);
+      await gpu2d(sim).setLight(null);
       delete obs.sun;
     }
     while (dueAt < due.length && due[dueAt].step === step) {
       const e = due[dueAt];
       if (e.kind === "sun" && obs.sun) throw new InterventionError(`the sun at t=${e.step} starts while the sun from t=${obs.sun.step} is still active (until t=${sunEnd()}): suns do not overlap`, { step: e.step });
-      const done = await applyScheduled(sim, e);
+      const done = await applyScheduled(gpu2d(sim), e);
       dueAt++;
       if (e.kind === "sun") obs.sun = { step: e.step, percent: e.percent, span: e.span };
       if (done.entry.kind === "feed") {
@@ -1403,8 +1483,10 @@ export async function runExperiment(
         afterCycle = false;
       }
 
-      rec.patternEntropy = entropy(sym);
-      if (o.prevSym) rec.temporalMI = temporalMI(o.prevSym, sym);
+      if (!slab) {
+        rec.patternEntropy = entropy(sym);
+        if (o.prevSym) rec.temporalMI = temporalMI(o.prevSym, sym);
+      }
 
       if (deep && snap.roles) {
         const profiles = lineageProfiles(cfg, snap.roles, genomeHead);
@@ -1412,8 +1494,11 @@ export async function runExperiment(
         rec.roles = rs.share;
         rec.rolesPresent = rs.present;
         rec.lineageCompression = compressionRatio(lineageBytes(cfg, genomeHead));
-        rec.patternCompression = compressionRatio(sym);
-        rec.morphology = morphology(cfg, cells, c, DEFAULT_CENSUS.minMass);
+        if (slab) await sink.appendText("layers.tsv", layersRows(c.step, layerRoles(cfg, snap.roles)));
+        else {
+          rec.patternCompression = compressionRatio(sym);
+          rec.morphology = morphology(cfg, cells, c, DEFAULT_CENSUS.minMass);
+        }
         if (spec.lineageObs) await sink.appendText("profiles.tsv", profileRows(cfg, c, profiles, genomeHead));
       }
       await sink.appendText("series.jsonl", JSON.stringify(rec) + "\n");

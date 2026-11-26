@@ -1,0 +1,16 @@
+{
+  "outcomeProducingAttempts": [
+    {
+      "seed": 1202,
+      "attempt": 1,
+      "startedAtUTC": "2026-10-26T23:46:07.948168+00:00",
+      "command": "node --experimental-strip-types tools/stationary-food/explore.ts --write --seed 1202",
+      "log": "runs/stationary-food/seed-1202-attempt-1.log",
+      "finishedAtUTC": "2026-10-26T23:47:17.240152+00:00",
+      "exitCode": 0,
+      "logText": "(node:20398) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nWrote stationary-food seed 1202 moving-band and stationary-band evidence.\n"
+    }
+  ],
+  "failedAttempts": [],
+  "scope": "One pair with independent repeats. Correctness fixtures are not extra outcome trials."
+}

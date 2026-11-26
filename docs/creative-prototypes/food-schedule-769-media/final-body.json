@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-body-only-food-schedule-769-comparison",
+  "seed": 1202,
+  "artifact": {
+    "path": "docs/creative-prototypes/food-schedule-769-seed-1202.json",
+    "rawSha256": "b85338b80f163d80ffb40c54beb6c95f51a38cd2462d44c4ecd510fecaab2823",
+    "dataSha256": "ffa8cd2c9ab820e5524f874afae874800694b47d0526a84688e7ad7e71e03840"
+  },
+  "planSha256": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+  "sourceSha256": {
+    "docs/creative-prototypes/food-schedule-769-plan.md": "c5ab72408c514280360e67e2ef0fab75475663da52be799e8aa2836eab67661d",
+    "apps/lab/src/food-band-foothold/model.ts": "d3e0b36594b43a40d77befbe846d4365b25655d7d670c50d74f6fadefa988403",
+    "apps/lab/src/food-schedule-769/model.ts": "0b7713648cbf32fb6029b429afdfbc0df8f914efa204b1996d3f445d551008e6",
+    "tools/food-floor-longevity-replication/explore.ts": "c0d2c1aca838f74c852689c11b39f21adfcce3d373babddd8d6017b58d79e181",
+    "tools/food-floor-longevity-replication/launch.sh": "5cca9e0ceb89d3b2c155aaaeeff97f3a26b027772732509810f3f51e61b1c7c6",
+    "docs/creative-prototypes/food-floor-longevity-replication-seed-1202.json": "14565a78528152556140b68bedbd6d074e5f5dca556ecf0439094e945d5cef60",
+    "docs/creative-prototypes/food-floor-longevity-replication-index-1202.json": "666fe0dce4b094eef3f5498c0204f2321db2df1469c8f59df8e25520db41fe19",
+    "docs/creative-prototypes/food-floor-longevity-replication-validation.md": "4a57bf9ebb50736dc6109e4c4b4dc8b9a6f8f01d13017e71fafc9f9bfb0a1095",
+    "tools/food-schedule-769/launch.sh": "eddc4386e6da5c16ddb54d94cc68413fc74009e334d03323ac84fe3070669010",
+    "package.json": "b7b331936eddd9f9501a8dabc4d004f6b96cb6dc5f69d1f52cce255635ba720e",
+    "pnpm-lock.yaml": "003b8f2a8e7757cd438944ee7ed047df978dad3330354bd45c5f10aabcef3bae",
+    "tools/test/food-schedule-769.test.ts": "0b6c500941fe28ccfb2424180b7144a3c229c64c4ff4a2f45c2ae69faa124002",
+    "tools/food-schedule-769/explore.ts": "cc73a2000e6f36169f1b902227cd83d27b19ffe7bdc0140c395d7b1cc845475d"
+  },
+  "requestedAges": [
+    4500,
+    5000,
+    5500,
+    6000
+  ],
+  "exactSavedAges": [
+    4500,
+    5000,
+    5500,
+    6000
+  ],
+  "frameSha256": [
+    "ce821374b7a879d0412f6f2dadb0bdab1e6669a357e2bcb7f9894d46e2ff12cc",
+    "598fcb478b87c6a66d2af28a26656179eec2227bcd082b3ac69c3c37c0d7909f",
+    "45edd7d4ca5bea42b9360ac8ac990ba4880ac4671e436bff4048b7667d4b5c3b",
+    "b3c61e01d5cae06a8dab2e268bf6ab661878bcf3d41e40a6a5e839cd72f1980b"
+  ],
+  "bodyOnly": true,
+  "familyColors": false,
+  "food": false,
+  "bandOutlines": false,
+  "noSimulation": true,
+  "viewport": {
+    "width": 1024,
+    "height": 1180
+  },
+  "png": {
+    "path": "docs/creative-prototypes/food-schedule-769-media/final-body.png",
+    "sha256": "068ad3c976d3c441d14837d44397e5959e7f709f93ce68ce0c8b736c6ea35f1e",
+    "width": 1024,
+    "height": 1180
+  }
+}

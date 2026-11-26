@@ -1,0 +1,13 @@
+**CLEAR — protocol design only. No blocking design findings.**
+
+The supplied protocol freezes:
+
+- Unchanged model bytes, dynamics, mutation, seed, horizon, pulse boundaries, target formula and disclosed spatial footprint.
+- Historical source/raw/index identities, internal-digest procedure, and two exact regressions completed before constructing new outcome worlds.
+- Numerical and manual acceptance criteria, extinction handling, historical comparison and limits on interpretation.
+- Independently initialized determinism repeat, required evidence, provenance, reservation and review gates.
+- Sticky invalid stops, capacity-based inconclusive closure, no authorized retry, and encoding-only media repair.
+
+The selected-seed limitation and distinction between determinism evidence and biological replication are explicit. Neither historical comparison nor media repair can change the frozen decision.
+
+I directly inspected the supplied text for consistency. Raw-byte hash matches and successful historical `--check` validation are **supplied verification**, not checks I independently performed. I used no tools and ran no simulations. This verdict does **not** approve implementation, source correctness, execution readiness or results; the subsequent source and evidence review gates remain required.

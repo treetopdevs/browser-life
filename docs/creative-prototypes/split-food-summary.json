@@ -1,0 +1,1160 @@
+{
+  "seed": 1202,
+  "planSha256": "134944138fc636b1c9677e9a40b5c2583d7184d608ce1e8d8c914e2ce8d93515",
+  "pairManifestSha256": "e3e3aa26ace9722ca15175d208ba0d5e2aaa09608e03af072695066c14089afc",
+  "visualReceiptSha256": "4a6ae883c69bd85b05713f71da39a5e79a6f3d7a529ede00f8a61808d0c1f138",
+  "decision": "promising",
+  "newOutcomeArms": 1,
+  "historicalBaselineIsNewEvidence": false,
+  "arms": [
+    {
+      "role": "historical-baseline",
+      "path": "stationary-food-stationary-band-seed-1202.json",
+      "rawSha256": "1c85fd8477644da9fb2bd54df0f5c1a463103db6ac49022e2caa2b0611badd39",
+      "dataSha256": "3c3ee5857d3f1f3f4eb2cad6eed6a1863db324e6bc5ed19635532a69b3f25bcf",
+      "run": {
+        "seed": 1202,
+        "mode": "stationary-band",
+        "mutation": true,
+        "maxTick": 3000,
+        "finalTick": 3000,
+        "extinctionTick": null
+      },
+      "census": {
+        "tick": 3000,
+        "population": 28,
+        "cells": 470,
+        "familyCounts": [
+          0,
+          26,
+          2
+        ],
+        "births": 432,
+        "growths": 8058,
+        "deaths": 416,
+        "effectiveMutations": 87,
+        "attemptedMutations": 98,
+        "maxGeneration": 14,
+        "totalCells": 470,
+        "totalEnergy": 4926,
+        "meanBodyCells": 16.785714285714285,
+        "meanEnergy": 175.92857142857142,
+        "blockedBirths": 180,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 180,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 11
+      },
+      "environment": {
+        "version": 1,
+        "mode": "stationary-band",
+        "pulseBudget": 768,
+        "targetCount": 4608,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 284691,
+        "overflow": 176109,
+        "initialFoodPerTile": 20,
+        "bandLeft": 0,
+        "bandWidth": 48
+      },
+      "maxEverGeneration": 14,
+      "windows": [
+        {
+          "from": 1501,
+          "to": 2000,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 97,
+          "deaths": 86,
+          "cap48Ticks": 11,
+          "nearCap47Ticks": 42,
+          "blockedCapAttempts": 40,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 30,
+          "maxPopulation": 48,
+          "food": {
+            "offered": 76800,
+            "accepted": 45764,
+            "overflow": 31036
+          },
+          "endpoint": {
+            "requestedTick": 2000,
+            "actualTick": 2000,
+            "population": 48,
+            "cells": 713,
+            "familyCounts": [
+              5,
+              23,
+              20
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": -1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 22
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 5
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 22
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 5
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 8
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 6,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 1
+              }
+            ],
+            "maxGeneration": 9,
+            "maxEverGeneration": 9,
+            "foodRemaining": 181954,
+            "bandLeft": 0,
+            "occupiedBandCells": 711,
+            "occupiedBandShare": 0.9971949509116409
+          }
+        },
+        {
+          "from": 2001,
+          "to": 2500,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 78,
+          "deaths": 95,
+          "cap48Ticks": 25,
+          "nearCap47Ticks": 43,
+          "blockedCapAttempts": 24,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 25,
+          "maxPopulation": 48,
+          "food": {
+            "offered": 76800,
+            "accepted": 50957,
+            "overflow": 25843
+          },
+          "endpoint": {
+            "requestedTick": 2500,
+            "actualTick": 2500,
+            "population": 31,
+            "cells": 409,
+            "familyCounts": [
+              2,
+              24,
+              5
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 22
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 0,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 7
+              },
+              {
+                "genome": {
+                  "turnEvery": 6,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 6,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 7,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              }
+            ],
+            "maxGeneration": 12,
+            "maxEverGeneration": 12,
+            "foodRemaining": 184413,
+            "bandLeft": 0,
+            "occupiedBandCells": 368,
+            "occupiedBandShare": 0.8997555012224939
+          }
+        },
+        {
+          "from": 2501,
+          "to": 3000,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 70,
+          "deaths": 73,
+          "cap48Ticks": 0,
+          "nearCap47Ticks": 0,
+          "blockedCapAttempts": 0,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 19,
+          "maxPopulation": 37,
+          "food": {
+            "offered": 76800,
+            "accepted": 46468,
+            "overflow": 30332
+          },
+          "endpoint": {
+            "requestedTick": 3000,
+            "actualTick": 3000,
+            "population": 28,
+            "cells": 470,
+            "familyCounts": [
+              0,
+              26,
+              2
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 5
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": -1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 6
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 22
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 6,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 6,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 3
+              }
+            ],
+            "maxGeneration": 14,
+            "maxEverGeneration": 14,
+            "foodRemaining": 194545,
+            "bandLeft": 0,
+            "occupiedBandCells": 451,
+            "occupiedBandShare": 0.9595744680851064
+          }
+        }
+      ],
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      },
+      "spatialGate": null,
+      "artifactBytes": 4708390,
+      "lineageNodes": 444,
+      "firstObservedAbsentFamilySampleTicks": [
+        2740,
+        null,
+        null
+      ]
+    },
+    {
+      "role": "new-split",
+      "path": "split-food-seed-1202.json",
+      "rawSha256": "3f99cf98531a9908a1a2ab9adb7ce2dd6566d2edd08afb4855d99267fbee033b",
+      "dataSha256": "1379b36370340873e531443ab8f9176a19a69d88b942d20e4d982ed81a81a349",
+      "run": {
+        "seed": 1202,
+        "mode": "split-band",
+        "mutation": true,
+        "maxTick": 3000,
+        "finalTick": 3000,
+        "extinctionTick": null
+      },
+      "census": {
+        "tick": 3000,
+        "population": 27,
+        "cells": 426,
+        "familyCounts": [
+          10,
+          8,
+          9
+        ],
+        "births": 462,
+        "growths": 8307,
+        "deaths": 447,
+        "effectiveMutations": 97,
+        "attemptedMutations": 103,
+        "maxGeneration": 15,
+        "totalCells": 426,
+        "totalEnergy": 4733,
+        "meanBodyCells": 15.777777777777779,
+        "meanEnergy": 175.2962962962963,
+        "blockedBirths": 118,
+        "blockedSpaceBirths": 0,
+        "blockedCapBirths": 118,
+        "ledgerResidual": 0,
+        "genomeVariantCount": 10
+      },
+      "environment": {
+        "version": 1,
+        "mode": "split-band",
+        "pulseBudget": 768,
+        "targetCount": 4608,
+        "pulses": 600,
+        "offered": 460800,
+        "accepted": 271467,
+        "overflow": 189333,
+        "initialFoodPerTile": 20,
+        "bandColumns": [
+          [
+            0,
+            23
+          ],
+          [
+            48,
+            71
+          ]
+        ],
+        "bandWidth": 24
+      },
+      "maxEverGeneration": 15,
+      "windows": [
+        {
+          "from": 1501,
+          "to": 2000,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 101,
+          "deaths": 92,
+          "cap48Ticks": 17,
+          "nearCap47Ticks": 52,
+          "blockedCapAttempts": 30,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 29,
+          "maxPopulation": 48,
+          "food": {
+            "offered": 76800,
+            "accepted": 43511,
+            "overflow": 33289
+          },
+          "endpoint": {
+            "requestedTick": 2000,
+            "actualTick": 2000,
+            "population": 42,
+            "cells": 556,
+            "familyCounts": [
+              26,
+              7,
+              9
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": -1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 9
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 25
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": -1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 25
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              }
+            ],
+            "maxGeneration": 10,
+            "maxEverGeneration": 10,
+            "foodRemaining": 180483,
+            "occupiedTilesByBand": [
+              320,
+              167
+            ]
+          }
+        },
+        {
+          "from": 2001,
+          "to": 2500,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 90,
+          "deaths": 100,
+          "cap48Ticks": 0,
+          "nearCap47Ticks": 0,
+          "blockedCapAttempts": 0,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 21,
+          "maxPopulation": 46,
+          "food": {
+            "offered": 76800,
+            "accepted": 46530,
+            "overflow": 30270
+          },
+          "endpoint": {
+            "requestedTick": 2500,
+            "actualTick": 2500,
+            "population": 32,
+            "cells": 435,
+            "familyCounts": [
+              10,
+              4,
+              18
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 2,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": -1,
+                  "branchEvery": 3,
+                  "maxCells": 25
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 4
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 3
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 23
+                },
+                "count": 3
+              }
+            ],
+            "maxGeneration": 13,
+            "maxEverGeneration": 13,
+            "foodRemaining": 182010,
+            "occupiedTilesByBand": [
+              119,
+              262
+            ]
+          }
+        },
+        {
+          "from": 2501,
+          "to": 3000,
+          "denominatorTicks": 500,
+          "status": "complete",
+          "executedTicks": 500,
+          "births": 75,
+          "deaths": 80,
+          "cap48Ticks": 0,
+          "nearCap47Ticks": 0,
+          "blockedCapAttempts": 0,
+          "blockedSpaceAttempts": 0,
+          "minPopulation": 20,
+          "maxPopulation": 38,
+          "food": {
+            "offered": 76800,
+            "accepted": 43423,
+            "overflow": 33377
+          },
+          "endpoint": {
+            "requestedTick": 3000,
+            "actualTick": 3000,
+            "population": 27,
+            "cells": 426,
+            "familyCounts": [
+              10,
+              8,
+              9
+            ],
+            "genomeCounts": [
+              {
+                "genome": {
+                  "turnEvery": 3,
+                  "turn": -1,
+                  "branchEvery": 3,
+                  "maxCells": 25
+                },
+                "count": 5
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 0,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 2,
+                  "maxCells": 24
+                },
+                "count": 7
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 6
+              },
+              {
+                "genome": {
+                  "turnEvery": 4,
+                  "turn": 1,
+                  "branchEvery": 4,
+                  "maxCells": 23
+                },
+                "count": 2
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 0,
+                  "branchEvery": 2,
+                  "maxCells": 23
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 0,
+                  "branchEvery": 3,
+                  "maxCells": 24
+                },
+                "count": 1
+              },
+              {
+                "genome": {
+                  "turnEvery": 5,
+                  "turn": 1,
+                  "branchEvery": 3,
+                  "maxCells": 22
+                },
+                "count": 1
+              }
+            ],
+            "maxGeneration": 15,
+            "maxEverGeneration": 15,
+            "foodRemaining": 186969,
+            "occupiedTilesByBand": [
+              109,
+              290
+            ]
+          }
+        }
+      ],
+      "numericalGate": {
+        "aliveAt3000": true,
+        "atLeastTwoFamiliesAt3000": true,
+        "allWindowsReached": true,
+        "eachNewWindowHasBirthsAndDeaths": true,
+        "eachNewWindowCap48AtMost99": true,
+        "numericalPass": true,
+        "note": "Descriptive trajectory novelty screen only; visual judgment is manual. No claim of tracking, adaptation, fitness improvement, or superiority."
+      },
+      "spatialGate": {
+        "requiredTilesPerBand": 10,
+        "checkpoints": [
+          {
+            "tick": 2500,
+            "occupiedTilesByBand": [
+              119,
+              262
+            ],
+            "pass": true
+          },
+          {
+            "tick": 3000,
+            "occupiedTilesByBand": [
+              109,
+              290
+            ],
+            "pass": true
+          }
+        ],
+        "pass": true
+      },
+      "artifactBytes": 4678730,
+      "lineageNodes": 474,
+      "firstObservedAbsentFamilySampleTicks": [
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+}
