@@ -326,9 +326,10 @@ Why, from the three explorers and the combined runs (six settings, A to F, both 
 - More kinds of cell: only plain, shell, mouth and leaf.
 - Group benefits beyond truce and the leaf's shading rule: none are in; truce is by founder type, not by the bodies
   that actually cooperate.
-- Anti-piling: not added. The two counts above do not show piling on these runs, so no rule was written; earlier
-  explorer runs on other settings saw crowds of 3 to 7 hunters on one prey by eye, so this should be rechecked by looking
-  at the movies before it is called absent.
+- Anti-piling: not added, and piling is there. The two counts above do not show it, but frame 600 of the seed 1 movie
+  (step 35,700) shows about ten red-mouthed bodies packed round one leaf cluster, and explorer runs on other settings saw
+  crowds of 3 to 7 hunters on one prey. The counts miss it because each mouth has its own nearest target cell. No rule
+  here spreads hunters out, and jaws barely moved feeding (754 against 717).
 - Plans that grow to 20 cells or more, and bodies that regrow a missing cell.
 
 ## Rule changes the explorers asked for, not made (ranked)
