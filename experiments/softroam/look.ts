@@ -78,7 +78,7 @@ if (seriesFile && movie > 0) {
 }
 const overrides = JSON.parse(args.ov ?? '{}') as Partial<SoftRoamConfig>;
 if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new Error(`--ov ${args.ov} must be a JSON object`);
-// Start options (SoftRoamOptions, e.g. '{"pace":false,"driveSpread":1}' for the bodies start without chunk 4), applied over the ones above.
+// Start options (SoftRoamOptions, e.g. '{"pace":false,"shellThrust":false,"driveSpread":1}' for the bodies start without chunk 4), applied over the ones above.
 const startOpts = JSON.parse(args.opt ?? '{}') as Partial<SoftRoamOptions>;
 if (startOpts === null || typeof startOpts !== 'object' || Array.isArray(startOpts)) throw new Error(`--opt ${args.opt} must be a JSON object`);
 
