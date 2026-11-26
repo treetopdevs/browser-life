@@ -40,7 +40,30 @@
  * mouth cell (`takers` is the number of such contacts on that cell, so a short store is split floor-equal); a mouth on a shell is one hit, and the
  * shell becomes plain at crack << tough hits (at most 60000), fed on from the next step. Grip pulls a mouth toward a cell it could act on (a shell
  * counts when crack is set) while they are between D and 1.25 D apart, by one integer added to one and taken from the other; it links nothing.
- * Mouths find prey only by bumping into it: there is no prey scent.
+ * Mouths find prey by bumping into it, or, with `sight`, by seeing it (below); there is no prey scent.
+ *
+ * Chunk 2 (hunting; every key optional and absent from the default config, and with all of them absent the old path runs exactly, with no new
+ * draw): one predicate `canAct(x, y)` says whether cell x could act on cell y by touch (different bodies, neither sealed, x's body at least twice
+ * y's, with kinds x a mouth and y not a shell unless crack is set, not the same founder family under `truce`, not a body that holds a mouth under
+ * `jaws`) and touch feeding, hits, grip, sight and fear all ask it; the four contacts a cell keeps are still chosen without it, so a pair it
+ * refuses still uses up a place. `sight` (tiles): in the commands stage a mouth of an unsealed body with a chase gene steers by the gene's size
+ * toward the nearest cell it could act on within that many tiles (ties by two symmetric pair draws, then the lower cid), instead of by the scent
+ * slope; `fear` is the mirror, a plain or shell cell with a chase gene steering straight away from the nearest mouth that could act on it. The
+ * census counts them per step (`hunting`, `targets`, `fleeing`); `hunting / targets` is how many hunters share a target, not how far apart they
+ * are. `releaseMin` lets a cell release a new body only when its body had that many cells as the division stage began, and `releaseGap` lets a body
+ * release once in that many steps (the release step is kept in every cell of the body, copied by kept daughters, so a dying tip cannot erase it);
+ * what either holds back is counted in `releasesHeld`.
+ *
+ * Chunk 2 (sun and leaves; again every key optional, absent from the default config, and a world without them runs the old path with no new draw):
+ * `day` (steps) sweeps a lit band half the world wide once round the torus, `year` (steps) swings the whole world between midsummer and a winter
+ * of `winter` (0 to 1, default 0.25) of that light; `softRoamLight(cfg, tx, ty, step)` is the integer light 0 to 256 of a tile, from triangle waves
+ * of ten-bit phases (no wide product, no float; 256 without `day`). `patchSun` lets a scheduled patch land only when a draw on the centre tile is
+ * under the light there, else it is skipped and the reservoir keeps the matter (start patches are not gated). `leaf` (matter a step a fully bare
+ * leaf earns in full light, 0 to 4; needs kinds and `day`) adds a fourth kind, KIND_LEAF = 3, to plans (a copy error then always changes the kind).
+ * A leaf never eats ground food and an unsealed leaf never thrusts (a sealed one thrusts and pays like any sealed cell). Each step, in the eat
+ * stage, a leaf asks `leaf * (light / 256) * exposed / 4` (light 0 to 256; rounded by a draw on its cid), shared among the leaf cells whose centres are on its tile (at
+ * most 16 counted) and capped by its room; the asks are paid from the reservoir as it stands then, split in proportion when it is short. Leaves
+ * are fed on like plain cells and otherwise live like them. The census counts `leaves` and a cumulative `leafIncome`.
  *
  * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
  * - The scent field has Roam's reach but not its numbers. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food
@@ -197,6 +220,28 @@ export interface SoftRoamConfig {
   shellLeak?: number;
   /** How hard a mouth in touch with prey it could act on is pulled toward contact distance D, out of 256. Absent or 0 is off. Needs kinds and drain. */
   grip?: number;
+  /** Cells of one founder family (`fam`, never 0) do not feed on, hit, grip, sense or fear each other. */
+  truce?: boolean;
+  /** No cell of a body that holds a mouth can be fed on, hit, gripped or sensed as prey. */
+  jaws?: boolean;
+  /** Tiles (whole, 1 to 8): a mouth with a chase gene steers toward the nearest cell it could act on within this range. Needs kinds and drain. */
+  sight?: number;
+  /** Tiles (whole, 1 to 8): a plain or shell cell with a chase gene steers away from the nearest mouth that could act on it within this range. Needs kinds and drain. */
+  fear?: number;
+  /** A body releases a new body only when it had at least this many cells as the division stage began (at least 1). */
+  releaseMin?: number;
+  /** A body releases at most once in this many steps (a whole number, at least 1). */
+  releaseGap?: number;
+  /** Steps in a day (16 to 2^20): a lit band half the world wide sweeps once round the torus a day. Enables the light. */
+  day?: number;
+  /** Steps in a year (`day` to 2^24): the whole world brightens and dims once a year. Needs `day`. */
+  year?: number;
+  /** Light in deepest winter as a share of midsummer, 0 to 1 (default 0.25 when `year` is set). Needs `year`. */
+  winter?: number;
+  /** Scheduled patches land only in proportion to the light at their centre (start patches are not gated). Needs `day`. */
+  patchSun?: boolean;
+  /** Matter a step a fully bare leaf earns in full light (0 to 4); adds the leaf kind to plans. Needs kinds and `day`. */
+  leaf?: number;
 }
 
 export function defaultSoftRoamConfig(): SoftRoamConfig {
@@ -253,6 +298,12 @@ const CH_BITE = 42;
 const CH_TOUCH = 50;
 const CH_TOUCH_TIE = 51;
 const CH_TOUCH_TIE3 = 52;
+const CH_SIGHT_A = 60;
+const CH_SIGHT_B = 61;
+const CH_FEAR_A = 62;
+const CH_FEAR_B = 63;
+const CH_LEAF = 64;
+const CH_PATCH_SUN = 65;
 const CH_PAIR = 100; // + substep
 /** Velocity is only taken off contacts at least this near-touching (squared distance of three quarters of D); deeper overlaps may decompress freely. */
 const SHALLOW2 = (3 * D / 4) * (3 * D / 4);
@@ -281,6 +332,43 @@ function q16(x: number, name: string, max = 65536): number {
 function whole(x: number, name: string, min: number, max: number): number {
   if (!Number.isSafeInteger(x) || x < min || x > max) throw new Error(`Invalid ${name}: ${x}`);
   return x;
+}
+
+/** The kind of a leaf cell: it earns from the light through its bare sides (needs `leaf` in the config). */
+export const KIND_LEAF = 3;
+const LEAF_Q = 65536;
+const LEAF_MAX_SHARE = 16;
+
+/** Ten-bit phase of `t` in a period: floor((t % period) * 1024 / period), by ten doublings so nothing exceeds 2 * period. */
+function phase10(t: number, period: number): number {
+  let r = t % period;
+  let bits = 0;
+  for (let i = 0; i < 10; i++) {
+    r *= 2;
+    bits <<= 1;
+    if (r >= period) { bits |= 1; r -= period; }
+  }
+  return bits;
+}
+
+const tri10 = (p: number): number => (p < 512 ? p >> 1 : (1024 - p) >> 1);
+
+/**
+ * The light on tile column `tx` at `step`: an integer 0 to 256 (256 without `day`). A lit band half the world wide sweeps once round the torus a
+ * day; the whole world brightens and dims once a year, down to `winter` (default 0.25) of midsummer. Pure; `ty` does not matter (the sun is at
+ * the same hour all the way up a column) and is taken so callers pass a tile.
+ */
+export function softRoamLight(cfg: Pick<SoftRoamConfig, 'size' | 'day' | 'year' | 'winter'>, tx: number, _ty: number, step: number): number {
+  if (cfg.day === undefined) return 256;
+  const dp = (Math.floor((tx * 1024) / cfg.size) - phase10(step, cfg.day)) & 1023;
+  const t2 = 2 * tri10(dp) - 256;
+  const dayL = t2 < 0 ? 0 : t2 > 256 ? 256 : t2;
+  let seasonL = 256;
+  if (cfg.year !== undefined) {
+    const w = Math.round((cfg.winter ?? 0.25) * 256);
+    seasonL = w + (((256 - w) * tri10(phase10(step, cfg.year))) >> 8);
+  }
+  return (dayL * seasonL) >> 8;
 }
 
 function isqrt(n: number): number {
@@ -323,6 +411,15 @@ export interface SoftRoamCensus {
   alarmBonds: number;
   alarmOverlap: number;
   alarmSpeed: number;
+  /** Chunk 2, per step (as of the last commands stage): mouths steering toward a target, distinct cells they steer toward, plain or shell cells steering away. */
+  hunting: number;
+  targets: number;
+  fleeing: number;
+  /** Cumulative: ready cells whose release `releaseMin` or `releaseGap` held back when it would otherwise have been placed. */
+  releasesHeld: number;
+  /** Chunk 2: live leaf cells, and the matter leaves have earned in all. */
+  leaves: number;
+  leafIncome: number;
 }
 
 /**
@@ -394,6 +491,8 @@ export class SoftRoamWorld {
   readonly braceRest: Int16Array;
   /** Body label, rebuilt every step. */
   readonly body: Int32Array;
+  /** With `releaseGap`: one more than the step of the last release the cell's body made as the cell last heard of it (0 = never). */
+  readonly relRec: Float64Array;
 
   // Per tile.
   readonly food: Uint32Array;
@@ -435,6 +534,14 @@ export class SoftRoamWorld {
   flowed = 0;
   patches = 0;
   travel = 0;
+  releasesHeld = 0;
+  /** Cumulative matter earned by leaves, and scheduled patches the dark turned away (exact host integers). */
+  leafIncome = 0;
+  patchesSkipped = 0;
+  /** Per step, set by the commands stage. */
+  hunting = 0;
+  targets = 0;
+  fleeing = 0;
 
   /** Test only: scan buckets in reverse order. Nothing may change. */
   _reverseScan = false;
@@ -456,6 +563,19 @@ export class SoftRoamWorld {
   private readonly sealN: number;
   private readonly crackN: number;
   private readonly gripN: number;
+  private readonly truceOn: boolean;
+  private readonly jawsOn: boolean;
+  private readonly sightN: number;
+  private readonly fearN: number;
+  private readonly relMinN: number;
+  private readonly relGapN: number;
+  private readonly leafOn: boolean;
+  private readonly leafQ: number;
+  private readonly sunPatch: boolean;
+  /** Leaf cells whose centres share a tile (scratch, zero between steps), and the stage's lists. */
+  private readonly leafOnTile: Uint16Array;
+  private readonly leafCells: number[] = [];
+  private readonly leafAsks: number[] = [];
   private readonly shellBiteQ16: number;
   /** Side upkeep (Q16) of a shell by toughness level, from shellLeak: precomputed once, host side. */
   private readonly shellSideQ16 = new Int32Array(4);
@@ -522,6 +642,12 @@ export class SoftRoamWorld {
   private readonly tiles25 = new Int32Array(25);
   private readonly pairA: number[] = [];
   private readonly pairB: number[] = [];
+  // Hunting scratch: whether a body holds a mouth (by label), distinct targets this step, body size and last release as the division stage began.
+  private readonly bodyMouth: Uint8Array;
+  private readonly tgtMark: Uint32Array;
+  private tgtGen = 0;
+  private readonly bodyStart: Int32Array;
+  private readonly bodyRelMax: Float64Array;
 
   constructor(cfg: SoftRoamConfig) {
     this.cfg = Object.freeze({ ...cfg });
@@ -577,6 +703,33 @@ export class SoftRoamWorld {
     this.crackN = cfg.crack === undefined ? 0 : cfg.crack;
     this.gripN = cfg.grip === undefined ? 0 : whole(cfg.grip, 'grip', 0, 256);
     if (this.gripN > 0 && (!this.kinds || this.drainN === 0)) throw new Error('grip needs kinds and drain');
+    if ((cfg.truce !== undefined && typeof cfg.truce !== 'boolean') || (cfg.jaws !== undefined && typeof cfg.jaws !== 'boolean')) throw new Error('truce and jaws are true or false');
+    this.truceOn = cfg.truce === true;
+    this.jawsOn = cfg.jaws === true;
+    if ((cfg.sight !== undefined || cfg.fear !== undefined) && (!this.kinds || this.drainN === 0)) throw new Error('sight and fear need kinds and drain');
+    this.sightN = cfg.sight === undefined ? 0 : whole(cfg.sight, 'sight', 1, 8);
+    this.fearN = cfg.fear === undefined ? 0 : whole(cfg.fear, 'fear', 1, 8);
+    this.relMinN = cfg.releaseMin === undefined ? 0 : whole(cfg.releaseMin, 'releaseMin', 1, 16384);
+    this.relGapN = cfg.releaseGap === undefined ? 0 : whole(cfg.releaseGap, 'releaseGap', 1, 1 << 30);
+    if (cfg.day !== undefined) whole(cfg.day, 'day', 16, 1 << 20);
+    if (cfg.year !== undefined) {
+      if (cfg.day === undefined) throw new Error('year needs day');
+      whole(cfg.year, 'year', cfg.day, 1 << 24);
+    }
+    if (cfg.winter !== undefined) {
+      if (cfg.year === undefined) throw new Error('winter needs year');
+      if (!(typeof cfg.winter === 'number' && cfg.winter >= 0 && cfg.winter <= 1)) throw new Error(`Invalid winter: ${cfg.winter}`);
+    }
+    if (cfg.patchSun !== undefined && typeof cfg.patchSun !== 'boolean') throw new Error('patchSun is true or false');
+    if (cfg.patchSun !== undefined && cfg.day === undefined) throw new Error('patchSun needs day');
+    this.sunPatch = cfg.patchSun === true;
+    this.leafOn = cfg.leaf !== undefined;
+    this.leafQ = 0;
+    if (cfg.leaf !== undefined) {
+      if (cfg.day === undefined || !this.kinds) throw new Error('leaf needs kinds and day');
+      if (!(typeof cfg.leaf === 'number' && cfg.leaf >= 0 && cfg.leaf <= 4)) throw new Error(`Invalid leaf: ${cfg.leaf}`);
+      this.leafQ = Math.round(cfg.leaf * LEAF_Q);
+    }
     this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
     const shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
     // Roam's rule: a shell pays floor(leakSide * (1 + tough) * shellLeak) per exposed side (the product is below 2^34, so it is done here, in doubles).
@@ -619,6 +772,12 @@ export class SoftRoamWorld {
     this.braceTo = new Int32Array(cap * 4).fill(-1);
     this.braceRest = new Int16Array(cap * 4);
     this.body = new Int32Array(cap);
+    this.relRec = new Float64Array(cap);
+    this.leafOnTile = new Uint16Array(this.leafOn ? n : 0);
+    this.bodyMouth = new Uint8Array(cap + 2);
+    this.tgtMark = new Uint32Array(this.sightN > 0 ? cap : 0);
+    this.bodyStart = new Int32Array(this.relMinN > 0 ? cap + 2 : 0);
+    this.bodyRelMax = new Float64Array(this.relGapN > 0 ? cap + 2 : 0);
     this.food = new Uint32Array(n);
     this.scent = new Uint32Array(n);
     this.scentHi = new Uint32Array(n);
@@ -829,9 +988,9 @@ export class SoftRoamWorld {
     whole(parent, 'parent plan', 0, this.plans.length - 1);
     const plan = new Uint16Array(PLAN_MODES);
     for (let m = 0; m < PLAN_MODES; m++) {
-      const e = whole(entries[m], 'plan mode', 0, this.toughOn ? 0xffff : this.kinds ? 0x2fff : 0xfff);
+      const e = whole(entries[m], 'plan mode', 0, this.toughOn ? 0xffff : this.kinds ? (this.leafOn ? 0x3fff : 0x2fff) : 0xfff);
       if ((e & 15) > PLAN_REST) throw new Error(`Invalid act in mode ${m}: ${e & 15}`);
-      if (((e >>> 12) & 3) > KIND_MOUTH) throw new Error(`Invalid kind in mode ${m}: ${(e >>> 12) & 3}`);
+      if (((e >>> 12) & 3) > (this.leafOn ? KIND_LEAF : KIND_MOUTH)) throw new Error(`Invalid kind in mode ${m}: ${(e >>> 12) & 3}`);
       plan[m] = e;
     }
     this.plans.push(plan);
@@ -913,6 +1072,7 @@ export class SoftRoamWorld {
     this.tough[c] = 0;
     this.hits[c] = 0;
     this.since[c] = this.step;
+    this.relRec[c] = 0;
     this.bornStep[c] = 0;
     this.lastHitStep[c] = 0;
     this.lastDrainStep[c] = 0;
@@ -937,6 +1097,7 @@ export class SoftRoamWorld {
     this.hits[c] = 0;
     this.fam[c] = 0;
     this.since[c] = 0;
+    this.relRec[c] = 0;
     this.vx[c] = 0;
     this.vy[c] = 0;
     this.carryX[c] = 0;
@@ -1065,6 +1226,15 @@ export class SoftRoamWorld {
     }
     const gain = cfg.scentGain;
     const costQ16 = this.moveCostQ16;
+    const senses = this.sightN > 0 || this.fearN > 0;
+    if (senses) {
+      // Newborns count and freed slots do not: buckets from the positions as the step starts.
+      this.buildBuckets();
+      this.hunting = 0;
+      this.targets = 0;
+      this.fleeing = 0;
+      if (++this.tgtGen > 0xffffffff) { this.tgtMark.fill(0); this.tgtGen = 1; }
+    }
     for (let q = 0; q < this.liveN; q++) {
       const c = live[q];
       const l = this.body[c];
@@ -1074,8 +1244,16 @@ export class SoftRoamWorld {
       const ch = softRoamCos(h);
       const sh = softRoamSin(h);
       const sealed = this.drainN > 0 && ((t - this.since[this.bodyRoot[l]]) >>> 0) < this.sealN;
+      if (this.leafOn && !sealed && this.kind[c] === KIND_LEAF) {
+        // A leaf that is not newly released does not thrust and pays no move cost.
+        this.tx[c] = 0;
+        this.ty[c] = 0;
+        continue;
+      }
       let ux = 0;
       let uy = 0;
+      let steerAim = -1;
+      let steerAway = false;
       if (sealed) {
         ux = Math.trunc(ch / 16);
         uy = Math.trunc(sh / 16);
@@ -1085,9 +1263,30 @@ export class SoftRoamWorld {
         ux = Math.trunc((drive * ch) / 8192);
         uy = Math.trunc((drive * sh) / 8192);
         if (chase !== 0) {
-          const g = this.scentSlope(this.x[c], this.y[c], gain);
-          ux += Math.trunc((chase * g[0]) / 512);
-          uy += Math.trunc((chase * g[1]) / 512);
+          let aim = -1;
+          let away = false;
+          if (senses) {
+            // A mouth sees prey it could act on; a plain or shell cell sees the mouths that could act on it. Either steers by the size of the gene.
+            if (this.sightN > 0 && this.kind[c] === KIND_MOUTH) aim = this.nearestTarget(c, this.sightN, false, CH_SIGHT_A, CH_SIGHT_B);
+            else if (this.fearN > 0 && (this.kind[c] === KIND_PLAIN || this.kind[c] === KIND_SHELL)) { aim = this.nearestTarget(c, this.fearN, true, CH_FEAR_A, CH_FEAR_B); away = true; }
+          }
+          if (aim >= 0) {
+            const dx = this.dlt(this.x[c], this.x[aim]);
+            const dy = this.dlt(this.y[c], this.y[aim]);
+            // Cells that share a centre give no direction to or from each other: the sensed pull is nothing (not the scent, not due east).
+            const same = dx === 0 && dy === 0;
+            const a = away ? softRoamAngle(-dx, -dy) : softRoamAngle(dx, dy);
+            const m = chase < 0 ? -chase : chase;
+            const sx = same ? 0 : Math.trunc((m * softRoamCos(a)) / 8192);
+            const sy = same ? 0 : Math.trunc((m * softRoamSin(a)) / 8192);
+            ux += sx;
+            uy += sy;
+            if (sx !== 0 || sy !== 0) { steerAim = aim; steerAway = away; }
+          } else {
+            const g = this.scentSlope(this.x[c], this.y[c], gain);
+            ux += Math.trunc((chase * g[0]) / 512);
+            uy += Math.trunc((chase * g[1]) / 512);
+          }
         }
         const mag2 = ux * ux + uy * uy;
         if (mag2 > 1024 * 1024) {
@@ -1106,6 +1305,15 @@ export class SoftRoamWorld {
       }
       this.tx[c] = ux;
       this.ty[c] = uy;
+      // Counted only when the sensed pull is part of a thrust that is not nothing (a pull another gene cancels, or one the cell cannot pay for, steers nowhere).
+      // and one that thrustMax scales to nothing moves nobody, so it is not counted either.
+      if (steerAim >= 0 && (Math.trunc((ux * cfg.thrustMax) / 1024) !== 0 || Math.trunc((uy * cfg.thrustMax) / 1024) !== 0)) {
+        if (steerAway) this.fleeing++;
+        else {
+          this.hunting++;
+          if (this.tgtMark[steerAim] !== this.tgtGen) { this.tgtMark[steerAim] = this.tgtGen; this.targets++; }
+        }
+      }
     }
   }
 
@@ -1433,7 +1641,7 @@ export class SoftRoamWorld {
       let bite = this.biteN;
       if (this.kinds && this.kind[c] !== KIND_PLAIN) {
         // Only plain cells and one-cell bodies eat; a one-cell shell takes shellBite of the bite, rounded by a hash.
-        if (this.bodySize[this.body[c]] > 1) bite = 0;
+        if (this.kind[c] === KIND_LEAF || this.bodySize[this.body[c]] > 1) bite = 0;
         else if (this.kind[c] === KIND_SHELL && this.shellBiteQ16 < 65536) {
           const part = this.biteN * this.shellBiteQ16;
           bite = (part >>> 16) + ((roamHash(seed, t, this.cid[c], CH_BITE) & 0xffff) < (part & 0xffff) ? 1 : 0);
@@ -1459,6 +1667,62 @@ export class SoftRoamWorld {
       this.food[(this.y[c] >>> 10) * this.size + (this.x[c] >>> 10)] -= g;
       this.store[c] += g;
     }
+    if (this.leafOn) this.leafStage(cap4);
+  }
+
+  /** The light on tile (tx, ty) now. */
+  light(tx: number, ty: number, step = this.step): number {
+    return softRoamLight(this.cfg, tx, ty, step);
+  }
+
+  /**
+   * Leaf income (see the header). Each leaf cell asks `SR(leafQ * light * exposed, 4 * 256 * Q * n)` (`n` the leaf cells on its tile, at most 16),
+   * capped by its room; the reservoir as it stands pays every ask, or a proportional share of it when it is short. Needs `offsetMap` current.
+   */
+  private leafStage(cap4: number): void {
+    const seed = this.cfg.seed;
+    const t = this.step;
+    const size = this.size;
+    const cells = this.leafCells;
+    const asks = this.leafAsks;
+    const onTile = this.leafOnTile;
+    cells.length = 0;
+    asks.length = 0;
+    for (let q = 0; q < this.liveN; q++) {
+      const c = this.live[q];
+      if (this.kind[c] !== KIND_LEAF) continue;
+      cells.push(c);
+      onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)]++;
+    }
+    if (cells.length === 0) return;
+    const m = this.offsetMap;
+    let total = 0;
+    for (const c of cells) {
+      const tx = this.x[c] >>> 10;
+      const ty = this.y[c] >>> 10;
+      let exposed = 4;
+      for (let d = 0; d < 4; d++) if (m.has(this.offKey(this.body[c], this.gx[c] + DX[d], this.gy[c] + DY[d]))) exposed--;
+      const n = Math.min(onTile[ty * size + tx], LEAF_MAX_SHARE);
+      const num = this.leafQ * softRoamLight(this.cfg, tx, ty, t) * exposed;
+      const den = 4 * 256 * LEAF_Q * n;
+      let ask = Math.floor(num / den) + (roamHash(seed, t, this.cid[c], CH_LEAF) % den < num % den ? 1 : 0);
+      const room = cap4 > this.store[c] ? cap4 - this.store[c] : 0;
+      if (ask > room) ask = room;
+      asks.push(ask);
+      total += ask;
+    }
+    const R = this.reservoir;
+    let paidAll = 0;
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i];
+      const ask = asks[i];
+      const paid = total <= R ? ask : Math.floor((ask * R) / total);
+      this.store[c] += paid;
+      paidAll += paid;
+      onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)] = 0;
+    }
+    this.reservoir -= paidAll;
+    this.leafIncome += paidAll;
   }
 
   private upkeep(): void {
@@ -1550,9 +1814,103 @@ export class SoftRoamWorld {
     }
   }
 
-  /** Whether cell x, by what it is and what its body is, may act on cell y by touch: a body at least twice the size, and with kinds only a mouth. */
-  private mayAct(xc: number, yc: number): boolean {
-    return this.bodySize[this.body[xc]] >= 2 * this.bodySize[this.body[yc]] && (!this.kinds || this.kind[xc] === KIND_MOUTH);
+  /**
+   * Whether cell x could act on cell y by touch: the one rule touch feeding, hits, grip, sight and fear all ask. Different bodies, neither
+   * sealed, x's body at least twice y's in cells; with kinds x is a mouth and y is not a shell (unless crack is set, when a shell can be hit);
+   * not the same founder family under `truce` (family 0 is never in truce); not a body that holds a mouth under `jaws`. It reads the labels,
+   * sizes and kinds of the stage it is called in.
+   */
+  private canAct(xc: number, yc: number): boolean {
+    const bx = this.body[xc];
+    const by = this.body[yc];
+    if (bx === by) return false;
+    if (this.sealedCell(xc) || this.sealedCell(yc)) return false;
+    if (this.bodySize[bx] < 2 * this.bodySize[by]) return false;
+    if (this.kinds) {
+      if (this.kind[xc] !== KIND_MOUTH) return false;
+      if (this.kind[yc] === KIND_SHELL && this.crackN === 0) return false;
+    }
+    if (this.truceOn && this.fam[xc] !== 0 && this.fam[xc] === this.fam[yc]) return false;
+    if (this.jawsOn && this.bodyMouth[by] !== 0) return false;
+    return true;
+  }
+
+  /** With `jaws`: which bodies hold a mouth now (labels and kinds as the step starts). */
+  private markMouths(): void {
+    if (!this.jawsOn) return;
+    this.bodyMouth.fill(0, 0, this.labelHi + 1);
+    for (let q = 0; q < this.liveN; q++) {
+      const c = this.live[q];
+      if (this.kind[c] === KIND_MOUTH) this.bodyMouth[this.body[c]] = 1;
+    }
+  }
+
+  /**
+   * A second symmetric pair draw built another way (nested, like `pairTie`): `pairHash` is keyed on the pair alone, so two pairs whose keys
+   * collide collide on every channel, and a second draw on another channel of the same key would not break the tie.
+   */
+  private pairHash2(a: number, b: number, ch: number): number {
+    const ca = this.cid[a];
+    const cb = this.cid[b];
+    const lo = ca < cb ? ca : cb;
+    const hi = ca < cb ? cb : ca;
+    const inner = roamHash(this.cfg.seed, this.step, lo, ch);
+    return roamHash(this.cfg.seed, this.step, (Math.imul(hi ^ 0x5bd1e995, 0x27d4eb2f) + inner) >>> 0, ch);
+  }
+
+  /**
+   * The cell `c` steers by, within `range` tiles, or -1: for sight (`fear` false) the nearest live cell y with canAct(c, y); for fear the nearest
+   * live cell x with canAct(x, c). Lowest by squared distance, then the pair draw on `chA`, then the second pair draw on `chB`, then the cid.
+   * Needs current buckets and labels.
+   */
+  private nearestTarget(c: number, range: number, fear: boolean, chA: number, chB: number): number {
+    const lim = range * D;
+    const px = this.x[c];
+    const py = this.y[c];
+    const s = this.size;
+    const r = range + 1;
+    const rev = this._reverseScan;
+    let best = -1;
+    let bestD2 = 0;
+    const consider = (b: number): void => {
+      if (b === c) return;
+      const dx = this.dlt(px, this.x[b]);
+      if (dx > lim || dx < -lim) return;
+      const dy = this.dlt(py, this.y[b]);
+      if (dy > lim || dy < -lim) return;
+      if (!(fear ? this.canAct(b, c) : this.canAct(c, b))) return;
+      const d2 = dx * dx + dy * dy;
+      let take = best < 0 || d2 < bestD2;
+      if (!take && d2 === bestD2) {
+        const h = this.pairHash(c, b, chA);
+        const hb = this.pairHash(c, best, chA);
+        if (h !== hb) take = h < hb;
+        else {
+          const g = this.pairHash2(c, b, chB);
+          const gb = this.pairHash2(c, best, chB);
+          take = g !== gb ? g < gb : this.cid[b] < this.cid[best];
+        }
+      }
+      if (take) { best = b; bestD2 = d2; }
+    };
+    const scan = (tile: number): void => { for (let b = this.head[tile]; b >= 0; b = this.nextInTile[b]) consider(b); };
+    if (2 * r + 1 >= s) {
+      // The window wraps round the torus: every tile once.
+      for (let i = 0; i < this.n; i++) scan(rev ? this.n - 1 - i : i);
+    } else {
+      const tx = px >>> 10;
+      const ty = py >>> 10;
+      for (let i = -r; i <= r; i++) for (let j = -r; j <= r; j++) scan(this.tileAt(tx + (rev ? -j : j), ty + (rev ? -i : i)));
+    }
+    return best;
+  }
+
+  /** Test only: the commands stage on its own, from the labels and buckets of now. */
+  _commandsOnly(): void {
+    this.rebuildLive();
+    this.labelBodies();
+    this.markMouths();
+    this.commands();
   }
 
   /** What touch does to the prey cell: its store is drained (not a shell), or it takes a hit (a shell, with crack set). */
@@ -1585,7 +1943,7 @@ export class SoftRoamWorld {
     for (let i = 0; i < n; i++) {
       let xc = pa[i];
       let yc = pb[i];
-      if (!this.mayAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.mayAct(xc, yc)) continue; }
+      if (!this.canAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.canAct(xc, yc)) continue; }
       if (this.drainable(yc)) { takeX.push(xc); takeY.push(yc); this.takers[yc]++; }
       else if (this.hittable(yc)) { hitY.push(yc); this.hitCount[yc]++; }
     }
@@ -1642,8 +2000,7 @@ export class SoftRoamWorld {
     for (let i = 0; i < pa.length; i++) {
       let xc = pa[i];
       let yc = pb[i];
-      if (!this.mayAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.mayAct(xc, yc)) continue; }
-      if (!this.drainable(yc) && !this.hittable(yc)) continue;
+      if (!this.canAct(xc, yc)) { xc = pb[i]; yc = pa[i]; if (!this.canAct(xc, yc)) continue; }
       const dx = this.dlt(this.x[xc], this.x[yc]);
       const dy = this.dlt(this.y[xc], this.y[yc]);
       const d2 = dx * dx + dy * dy;
@@ -1853,7 +2210,7 @@ export class SoftRoamWorld {
     if (field === 0) next[m] = planEntry((act0 + 1 + (h % PLAN_REST)) % (PLAN_REST + 1), child0, next0, kind0, tough0);
     else if (field === 1) next[m] = planEntry(act0, (child0 + 1 + (h % 15)) & 15, next0, kind0, tough0);
     else if (field === 2) next[m] = planEntry(act0, child0, (next0 + 1 + (h % 15)) & 15, kind0, tough0);
-    else if (field === 3) next[m] = planEntry(act0, child0, next0, (kind0 + 1 + (h % 2)) % 3, tough0);
+    else if (field === 3) next[m] = planEntry(act0, child0, next0, this.leafOn ? (kind0 + 1 + (h % 3)) % 4 : (kind0 + 1 + (h % 2)) % 3, tough0);
     else next[m] = planEntry(act0, child0, next0, kind0, (tough0 + 1 + (h % 3)) & 3);
     return this.addPlan(next, pid);
   }
@@ -1878,6 +2235,15 @@ export class SoftRoamWorld {
       if (f < 0 || this.cid[c] < this.cid[f]) this.firstDaughter[m] = c;
     }
     this.newTargets = [];
+    // As the stage starts: each body's size (for releaseMin) and the step after its last release, the most any cell of it holds (for releaseGap).
+    if (this.relMinN > 0) this.bodyStart.set(this.bodySize.subarray(0, this.labelHi + 1));
+    if (this.relGapN > 0) {
+      this.bodyRelMax.fill(0);
+      for (let q = 0; q < this.liveN; q++) {
+        const c = this.live[q];
+        if (this.relRec[c] > this.bodyRelMax[this.body[c]]) this.bodyRelMax[this.body[c]] = this.relRec[c];
+      }
+    }
     for (const c of ready) {
       const entry = this.plans[this.pid[c]][this.mode[c]];
       const act = entry & 15;
@@ -1902,6 +2268,14 @@ export class SoftRoamWorld {
       const py = this.wrap(this.y[c] + oy);
       if (this.blockedAt(px, py)) continue;
       const keep = act < 4;
+      if (!keep && (this.relMinN > 0 || this.relGapN > 0)) {
+        const l = this.body[c];
+        // Held, and counted once: too small a body, or one that released too lately (a release this step writes t + 1, so it holds the rest of the step).
+        if ((this.relMinN > 0 && this.bodyStart[l] < this.relMinN) || (this.relGapN > 0 && this.bodyRelMax[l] !== 0 && t < this.bodyRelMax[l] - 1 + this.relGapN)) {
+          this.releasesHeld++;
+          continue;
+        }
+      }
       const half = this.store[c] >>> 1;
       this.store[c] -= half;
       const to = this.allocate();
@@ -1928,6 +2302,7 @@ export class SoftRoamWorld {
         this.heading[to] = this.heading[c];
         this.turnLeft[to] = this.turnLeft[c];
         this.since[to] = this.since[c];
+        this.relRec[to] = this.relRec[c];
         this.body[to] = this.body[c];
         this.bodySize[this.body[c]]++;
         this.offsetMap.set(this.offKey(this.body[to], tgx, tgy), to);
@@ -1946,6 +2321,13 @@ export class SoftRoamWorld {
         this.bodySize[l] = 1;
         this.offsetMap.set(this.offKey(l, 0, 0), to);
         this.releases++;
+        if (this.relGapN > 0) {
+          // The record belongs to the whole releasing body.
+          const l = this.body[c];
+          this.bodyRelMax[l] = t + 1;
+          for (let q = 0; q < this.liveN; q++) if (this.body[this.live[q]] === l) this.relRec[this.live[q]] = t + 1;
+          this.relRec[c] = t + 1;
+        }
       }
       this.live[this.liveN++] = to;
     }
@@ -1996,6 +2378,7 @@ export class SoftRoamWorld {
     this.prevY.set(this.y);
     this.rebuildLive();
     this.labelBodies();
+    this.markMouths();
     this.commands();
     this.mechanics();
     // Life.
@@ -2009,7 +2392,16 @@ export class SoftRoamWorld {
     this.buildOffsets();
     this.divide();
     this.countBodies();
-    if (t > 0 && t % cfg.patchEvery === 0 && this.reservoir >= cfg.patchFood) this.dropPatch(roamHash(cfg.seed, t, 0, CH_PATCH));
+    if (t > 0 && t % cfg.patchEvery === 0 && this.reservoir >= cfg.patchFood) {
+      const rnd = roamHash(cfg.seed, t, 0, CH_PATCH);
+      if (this.sunPatch) {
+        // The centre draw is kept; the patch lands only as the light there allows, else the reservoir keeps the matter and the next date tries again.
+        const cx = rnd % this.size;
+        const cy = (rnd >>> 16) % this.size;
+        if ((roamHash(cfg.seed, t, cy * this.size + cx, CH_PATCH_SUN) & 255) < softRoamLight(cfg, cx, cy, t)) this.dropPatch(rnd);
+        else this.patchesSkipped++;
+      } else this.dropPatch(rnd);
+    }
     if (this.spreadQ10 > 0) this.spreadFood();
     this.relaxScent();
     let moved = 0;
@@ -2063,6 +2455,7 @@ export class SoftRoamWorld {
     let shells = 0;
     let shellTough = 0;
     let mouths = 0;
+    let leaves = 0;
     const genes = new Array<number>(ROAM_GENES).fill(0);
     for (let c = 0; c < this.cap; c++) {
       if (!this.alive[c]) continue;
@@ -2070,6 +2463,7 @@ export class SoftRoamWorld {
       held += this.store[c];
       if (this.kind[c] === KIND_SHELL) { shells++; shellTough += this.tough[c]; }
       else if (this.kind[c] === KIND_MOUTH) mouths++;
+      else if (this.kind[c] === KIND_LEAF) leaves++;
       for (let g = 0; g < ROAM_GENES; g++) genes[g] += this.genes[c * ROAM_GENES + g];
     }
     const al = this.alarms();
@@ -2109,6 +2503,12 @@ export class SoftRoamWorld {
       alarmBonds: al.bonds,
       alarmOverlap: al.overlap,
       alarmSpeed: al.speed,
+      hunting: this.hunting,
+      targets: this.targets,
+      fleeing: this.fleeing,
+      releasesHeld: this.releasesHeld,
+      leaves,
+      leafIncome: this.leafIncome,
     };
   }
 
@@ -2153,6 +2553,7 @@ export class SoftRoamWorld {
       mix(this.lastHitStep[c]);
       mix(this.lastDrainStep[c]);
       mix(this.heading[c]);
+      if (this.relGapN > 0) { mix(this.relRec[c]); mix(Math.floor(this.relRec[c] / 4294967296)); }
       mix(this.turnLeft[c] & 0xffff);
       mix(this.mother[c] >= 0 ? this.cid[this.mother[c]] : 0);
       const bs: number[] = [];
@@ -2168,6 +2569,8 @@ export class SoftRoamWorld {
     mix(this.releases);
     mix(this.flowed);
     if (this.drainN > 0) { mix(this.drained); mix(this.cracked); }
+    if (this.relMinN > 0 || this.relGapN > 0) mix(this.releasesHeld);
+    if (this.leafOn) { mix(this.leafIncome); mix(Math.floor(this.leafIncome / 4294967296)); }
     return h >>> 0;
   }
 
@@ -2190,6 +2593,8 @@ export class SoftRoamWorld {
       seen.add(this.cid[c]);
       if (this.x[c] < 0 || this.x[c] >= this.span || this.y[c] < 0 || this.y[c] >= this.span) throw new Error(`slot ${c} off the torus`);
       if (this.pid[c] < 1 || this.pid[c] >= this.plans.length) throw new Error(`slot ${c} has plan ${this.pid[c]}`);
+      // The release record: 0 when releaseGap is off; else a whole step number no later than now (it holds the step after a release).
+      if (this.relGapN === 0 ? this.relRec[c] !== 0 : !Number.isInteger(this.relRec[c]) || this.relRec[c] > this.step) throw new Error(`slot ${c} has release record ${this.relRec[c]} at step ${this.step}`);
       const m = this.mother[c];
       if (m >= 0) {
         if (!this.alive[m]) throw new Error(`slot ${c} has a dead mother`);
@@ -2210,5 +2615,15 @@ export class SoftRoamWorld {
     const sizes = new Map<number, number>();
     for (let c = 0; c < this.cap; c++) if (this.alive[c]) sizes.set(this.body[c], (sizes.get(this.body[c]) ?? 0) + 1);
     for (const [l, k] of sizes) if (this.bodySize[l] !== k) throw new Error(`body ${l}: size ${this.bodySize[l]} but ${k} cells`);
+    // A release writes the whole body and a kept daughter copies her mother, so one body holds one record.
+    if (this.relGapN > 0) {
+      const rec = new Map<number, number>();
+      for (let c = 0; c < this.cap; c++) {
+        if (!this.alive[c]) continue;
+        const r = rec.get(this.body[c]);
+        if (r === undefined) rec.set(this.body[c], this.relRec[c]);
+        else if (r !== this.relRec[c]) throw new Error(`body ${this.body[c]} holds release records ${r} and ${this.relRec[c]}`);
+      }
+    }
   }
 }
