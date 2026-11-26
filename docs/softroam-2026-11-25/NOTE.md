@@ -196,3 +196,21 @@ Three explorers each tuned one aspect on seeds 1 and 2, then one combined settin
 Sheets and movies are in `runs/softroam/m2-s1/` and `runs/softroam/m2-s2/` (`sheet.png`, `rows.json`, `movie.mp4`,
 `frames/`), logs `runs/softroam/m2-s1.log` and `m2-s2.log`. Tuning runs are in `runs/softroam/m2-combined-*`. Not
 committed.
+
+## Addendum: the close-out commit shifts the histories
+
+The tables, digests and pictures above are from commit `3d9ae060`. The close-out commit after it reads the scent slope
+from the fine field, so a faint far gradient is no longer rounded away, and every run with a chaser moves slightly
+differently. Rerun at the close-out commit, page defaults, 20,000 steps (`runs/softroam/final-s1`, `final-s2`):
+
+| seed | bodies | single | cells | largest | shells | mouths | travel per 200 steps | alarms | residual | digest |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 97 | 19 | 359 | 22 | 4 | 169 | 4.6 tiles | none | 0 | `99297a54` |
+| 2 | 141 | 48 | 387 | 14 | 1 | 103 | 4.1 tiles | none | 0 | `647c14da` |
+
+The reading does not change: smooth motion, small bodies, mouths take over and armour dies out, no pursuit. The food
+haze is now drawn with a compressive tone, so thin food shows. Measured over all 901 consecutive movie frames of each
+seed at `3d9ae060`, at most 0.07% of pixels change by more than 60 in one frame: nothing pops.
+
+Two limits left as they are: the scent read can pass 31 bits at the widest dials (exact in JavaScript; a GPU port
+must rescale it), and seal ages wrap after 2^32 steps.
