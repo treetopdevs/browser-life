@@ -6,7 +6,7 @@ Model: `gpt-6.1-sol`; reasoning effort: `high`; read-only execution.
 
 One minor finding; no scientific blockers.
 
-- **[P3] Step “maximum” excludes permitted retries.** [PLAN.md:137](/Users/nicholas/develop/browser-life/docs/recovery-accessibility-2026-10-24/PLAN.md:137) correctly totals 2,970,000 steps for planned calls, but [line 140](/Users/nicholas/develop/browser-life/docs/recovery-accessibility-2026-10-24/PLAN.md:140) permits technical retries. Rename this “planned workload before retries,” or include their allowance. The wall-clock/storage caps still bound execution.
+- **[P3] Step “maximum” excludes permitted retries.** [PLAN.md:137](PLAN.md#L137) correctly totals 2,970,000 steps for planned calls, but [line 140](PLAN.md#L140) permits technical retries. Rename this “planned workload before retries,” or include their allowance. The wall-clock/storage caps still bound execution.
 
 The **32-pair futility stage followed by the fixed 128-pair test is statistically defensible** for this single frozen contrast. There is no early success declaration; requiring both endpoints to pass is conservative. This controls unconditional false-positive probability, without promising high power near the ceiling.
 

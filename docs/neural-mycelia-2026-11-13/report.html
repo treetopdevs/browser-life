@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Toward Neural Mycelia</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -240,7 +241,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 0; width: 100%; }
 
     <article class="idea ext"><div class="rank">X2</div><div>
       <h3>Genotype pool and a capacity ladder</h3>
-      <p class="prose">Particles store a 4-byte genotype id. Weights live once in a pool with a parent id and a refcount, and mutation copies a genotype only when it changes it. A full pool makes a birth's mutation fail, and the failure is counted. That rule blocks new variation exactly when diversity peaks, so the pool only works if distinct living genotypes stay well under its size, which in turn caps the mutation rate. Plain i32 arithmetic already keeps GPU and CPU identical. WGSL's packed int8 dot product (the <code>packed_4x8_integer_dot_product</code> language feature) is an optional speed-up to check in each browser. The parent links also give the lineage inspector exact ancestry at no cost.</p>
+      <p class="prose">Particles store a 4-byte genotype id. Weights live once in a pool with a parent id and a refcount, and mutation copies a genotype only when it changes it. A full pool makes a birth's mutation fail, and the failure is counted. That rule blocks new variation exactly when diversity peaks, so the pool only works if distinct living genotypes stay well under its size, which in turn caps the mutation rate. Plain i32 arithmetic already keeps GPU and CPU identical. WGSL's packed int8 dot product (the <code>packed_4x8_integer_dot_product</code> language feature) is an optional speed-up to check in each browser. Open before building: whether the refcount counts descendant parent links. If it does, an entry is reclaimed only when nothing living descends from it, the pool also holds every ancestor chain, and the memory estimate must count those chains. If it does not, reclaiming an entry breaks its descendants' parent links, and the lineage inspector gets exact ancestry only back to the oldest entry still held (or from a separate history store, whose size must then be counted).</p>
       <dl>
         <dt>First measure</dt><dd>The count of distinct living genotypes over time at the chosen mutation rate, before any pool size is fixed</dd>
         <dt>Question</dt><dd>The pasted chat says Fraser's nets carry 1–30k parameters (unverified). Whether net size matters is testable in either case: run arms at 160 B, 1 KiB and 4 KiB per genotype, matched on compute, with larger nets thinking every k steps.</dd>
@@ -372,7 +373,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 0; width: 100%; }
   <div class="ideas">
     <article class="idea"><div class="rank">N1</div><div>
       <h3>Learning during life, in integers</h3>
-      <p class="prose">PD-NCA found that learning during the run turns a settling system into a cycling one. Our version would be an integer Hebbian update, Δw = (η · pre · post) &gt;&gt; s, with η heritable. Compare two arms: weights reset at birth (Baldwinian) and learned weights inherited (Lamarckian). Both use integer arithmetic, so replay and the ledger still hold.</p>
+      <p class="prose">PD-NCA found that learning during the run turns a settling system into a cycling one. Our version would be an integer Hebbian update, Δw = (η · pre · post) &gt;&gt; s, with η heritable. Open before building: where learned weights live. Updates written into X2's shared pool entry would give every particle of one genotype one learning history and confound the two arms, so the likely rule is per-particle learned weights, copied on write from the pooled genotype, with that state counted in X2's memory estimate. Compare two arms: weights reset to the pooled genotype at birth (Baldwinian) and learned weights inherited (Lamarckian); under that rule an inherited learned copy is a new pool entry and counts against X2's saturation rule. Both use integer arithmetic, so replay and the ledger still hold.</p>
       <dl><dt>Stop if</dt><dd>The η &gt; 0 arms match η = 0 on X1's readouts.</dd><dt>When</dt><dd>After X1 R2. On the grid kernel this needs a <code>RULE_VERSION</code> fork, so try it in the particle world first.</dd></dl>
     </div></article>
     <article class="idea"><div class="rank">N2</div><div>
