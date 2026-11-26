@@ -77,6 +77,12 @@
  * a scheduled patch holds patchFood times the year's light. `winterCost`: each cell pays that much more a step in proportion to how far the
  * year's light is below midsummer's. The census adds `steering` and `leafPool`; the residual counts the pool.
  *
+ * Chunk 4 (speeds that differ; both keys optional and absent from every start before it). `pace` (share 0 to 1): a fed body slows down. With
+ * s the body's mean store (the floor of its cells' total over its size) as the step starts, fullness q = (s - minStore) / (2 birthStore - minStore)
+ * in 256ths, held to 0..256, and the body thrusts at 256 - (256 - pace) q / 256 (in 256ths, floored): full speed at minStore, `pace` of it when
+ * ready to divide. With `steer`, a body that has an aim is never slowed. `shellThrust` (share 0 to 1): a shell cell thrusts at this share. Both
+ * scale the thrust before it is paid for, so a slower cell pays less; sealed cells are untouched.
+ *
  * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
  * - The scent field has Roam's reach but not its numbers. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food
  *   (cap 4095), so the field reaches about 16 tiles from a patch (the reach is sqrt(2^shift / 8) tiles: it follows the decay, not the passes, which
@@ -270,6 +276,10 @@ export interface SoftRoamConfig {
   patchSeason?: boolean;
   /** Matter a step (0 to 1) each cell pays in deepest darkness of the year, in proportion to how far the season's light is below midsummer's. Needs year. */
   winterCost?: number;
+  /** Chunk 4. Share (0 to 1) of its thrust a body keeps when its cells' mean store is ready to divide (full thrust at minStore, in proportion between; with steer, a body with an aim keeps all of it). */
+  pace?: number;
+  /** Chunk 4. Share (0 to 1) of the usual thrust a shell cell gives: armour is heavy. Needs kinds. */
+  shellThrust?: number;
 }
 
 export function defaultSoftRoamConfig(): SoftRoamConfig {
@@ -611,6 +621,11 @@ export class SoftRoamWorld {
   private readonly leafPoolMaxN: number;
   private readonly seasonPatch: boolean;
   private readonly winterQ16: number;
+  /** Chunk 4: thrust shares in 256ths, -1 when the key is absent. */
+  private readonly paceQ8: number;
+  private readonly shellThrustQ8: number;
+  /** With pace: the total store of each body as the step starts, then its thrust share in 256ths (scratch, by label). */
+  private readonly bodyPace: Float64Array;
   private steering = 0;
   private readonly leafQ: number;
   private readonly sunPatch: boolean;
@@ -654,6 +669,10 @@ export class SoftRoamWorld {
   private readonly askTile: Uint32Array;
   private readonly askCell: Uint32Array;
   private readonly gotCell: Uint32Array;
+  /** Picture only: the matter cell c took from the ground in the last step (0 for a slot reused since). Never read by the rules. */
+  ateFromGround(c: number): number {
+    return this.gotCell[c];
+  }
   private readonly flowSnap: Uint32Array;
   private readonly foodSnap: Uint32Array;
   private readonly dying: Uint8Array;
@@ -804,6 +823,14 @@ export class SoftRoamWorld {
     this.seasonPatch = cfg.patchSeason === true;
     if (cfg.winterCost !== undefined && cfg.year === undefined) throw new Error('winterCost needs year');
     this.winterQ16 = cfg.winterCost === undefined ? 0 : q16(cfg.winterCost, 'winterCost');
+    const share8 = (v: number | undefined, name: string): number => {
+      if (v === undefined) return -1;
+      if (!(typeof v === 'number' && v >= 0 && v <= 1)) throw new Error(`Invalid ${name}: ${v}`);
+      return Math.round(v * 256);
+    };
+    this.paceQ8 = share8(cfg.pace, 'pace');
+    if (cfg.shellThrust !== undefined && !cfg.kinds) throw new Error('shellThrust needs kinds');
+    this.shellThrustQ8 = share8(cfg.shellThrust, 'shellThrust');
     this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
     const shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
     // Roam's rule: a shell pays floor(leakSide * (1 + tough) * shellLeak) per exposed side (the product is below 2^34, so it is done here, in doubles).
@@ -852,6 +879,7 @@ export class SoftRoamWorld {
     this.bodyMouth = new Uint8Array(cap + 2);
     this.bodyMouthN = new Uint16Array(this.packN > 0 ? cap + 2 : 0);
     this.bodyAimT = new Int32Array(this.steerOn ? cap + 2 : 0);
+    this.bodyPace = new Float64Array(this.paceQ8 >= 0 ? cap + 2 : 0);
     this.bodyAimSrc = new Int32Array(this.steerOn ? cap + 2 : 0);
     this.bodyAimAway = new Uint8Array(this.steerOn ? cap + 2 : 0);
     this.bodyAimScore = new Int32Array(this.steerOn ? cap + 2 : 0);
@@ -1133,6 +1161,7 @@ export class SoftRoamWorld {
   private place(c: number, px: number, py: number, genes: ArrayLike<number>, family: number, store: number, plan: number): void {
     this.alive[c] = 1;
     if (c < this.leafPaid.length) this.leafPaid[c] = 0; // picture only: a reused slot must not show the dead leaf's glow
+    this.gotCell[c] = 0; // picture only (eat sets it for every live cell before it is read): a newborn shows no grazing
     this.x[c] = this.prevX[c] = px;
     this.y[c] = this.prevY[c] = py;
     this.vx[c] = 0;
@@ -1343,6 +1372,21 @@ export class SoftRoamWorld {
     }
     const gain = cfg.scentGain;
     const costQ16 = this.moveCostQ16;
+    if (this.paceQ8 >= 0) {
+      // A body's thrust share from how full it is: a sum over its cells (exact in a double: at most 2^14 cells of at most 2^31), so the slot order does not matter.
+      const pace = this.bodyPace;
+      pace.fill(0, 0, hi + 1);
+      for (let q = 0; q < this.liveN; q++) pace[this.body[live[q]]] += this.store[live[q]];
+      const lo = cfg.minStore;
+      const span = 2 * cfg.birthStore - lo;
+      for (let l = 1; l <= hi; l++) {
+        if (this.bodySize[l] === 0) continue;
+        const mean = Math.floor(pace[l] / this.bodySize[l]);
+        let q = span > 0 ? Math.floor(((mean - lo) * 256) / span) : 256;
+        q = q < 0 ? 0 : q > 256 ? 256 : q;
+        pace[l] = 256 - Math.floor(((256 - this.paceQ8) * q) / 256);
+      }
+    }
     for (let q = 0; q < this.liveN; q++) {
       const c = live[q];
       const l = this.body[c];
@@ -1405,6 +1449,15 @@ export class SoftRoamWorld {
           const mag = isqrt(mag2);
           ux = Math.trunc((ux * 1024) / mag);
           uy = Math.trunc((uy * 1024) / mag);
+        }
+        // Chunk 4: armour is heavy, and a fed body slows down (unless, with steer, it has an aim).
+        if (this.shellThrustQ8 >= 0 && this.kind[c] === KIND_SHELL) {
+          ux = Math.trunc((ux * this.shellThrustQ8) / 256);
+          uy = Math.trunc((uy * this.shellThrustQ8) / 256);
+        }
+        if (this.paceQ8 >= 0 && !(this.steerOn && this.bodyAimT[l] >= 0)) {
+          ux = Math.trunc((ux * this.bodyPace[l]) / 256);
+          uy = Math.trunc((uy * this.bodyPace[l]) / 256);
         }
       }
       let mag = isqrt(ux * ux + uy * uy);
