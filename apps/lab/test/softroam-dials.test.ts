@@ -152,9 +152,9 @@ describe('soft roam page dials', () => {
         const o = dialOptions({ ...sw, start, kinds }, dialDefaults(start));
         const got = softRoamConfig(o);
         // The seasons with kinds off keeps its sun and drops the senses (which need kinds): no refusal, no sight.
-        if ((start === 'seasons' || start === 'bodies') && !kinds) { expect(got.sight).toBeUndefined(); expect(got.day).toBe(400); continue; }
+        if ((start === 'seasons' || start === 'bodies' || start === 'deep') && !kinds) { expect(got.sight).toBeUndefined(); expect(got.day).toBe(400); continue; }
         const want = softRoamConfig({ seed: 2, size: 64, start, kinds });
-        if (start === 'garden' || start === 'seasons' || start === 'bodies' || !kinds) expect(got, `${start} kinds ${kinds}`).toEqual(want);
+        if (start === 'garden' || start === 'seasons' || start === 'bodies' || start === 'deep' || !kinds) expect(got, `${start} kinds ${kinds}`).toEqual(want);
         // A plain start with kinds turned on is the garden's rules on that start's line-up.
         else expect(got).toEqual(softRoamConfig({ seed: 2, size: 64, start: 'garden', kinds: true }));
       }
@@ -222,6 +222,10 @@ describe('soft roam page dials', () => {
       leafPoolMax: () => undefined, steer: (v) => (v === 0 ? undefined : true), pack: (v) => (v === 0 ? undefined : v), crowd: (v) => (v === 0 ? undefined : v), heal: (v) => (v === 0 ? undefined : true),
       // Chunk 4's: at 1 the key is left out; the founders' spread is a start option, never in the config.
       pace: (v) => (v === 1 ? undefined : v), shellThrust: (v) => (v === 1 ? undefined : v), driveSpread: () => undefined,
+      // Depth: a flat world has none of the keys (the numbers that go with levels are checked on the deep start below).
+      depth: (v) => (v === 0 ? undefined : v), depthGap: () => undefined, depthDive: () => undefined, depthDim: () => undefined,
+      // Inner pulse: off leaves every key out (its numbers are checked with it on, below).
+      pulse: (v) => (v === 0 ? undefined : true), pulseSpread: () => undefined, pulseThrust: () => undefined, pulseFlex: () => undefined, pulseMut: () => undefined,
     };
     expect(Object.keys(want).sort()).toEqual(SOFT_DIALS.map((x) => x.id).sort());
     for (const d of SOFT_DIALS) {
@@ -235,6 +239,35 @@ describe('soft roam page dials', () => {
         expect(cfg[d.id], `${d.id} = ${v}`).toEqual(expected);
       }
     }
+    // Inner pulse on: its numbers reach the config (0 is a value), the founders' spread is a start option, and each founder gets its own network unless the spread is 0.
+    const beat = { ...dialDefaults('bodies'), pulse: 1 };
+    const bodiesSw: SoftSwitches = { ...sw, start: 'bodies' };
+    expect(softRoamConfig(dialOptions(bodiesSw, beat))).toEqual({ ...softRoamConfig({ seed: 2, size: 64, start: 'bodies', kinds: true }), pulse: true });
+    expect(softRoamConfig(dialOptions(bodiesSw, { ...beat, pulseThrust: 0, pulseFlex: 0.5, pulseMut: 0 }))).toMatchObject({ pulse: true, pulseThrust: 0, pulseFlex: 0.5, pulseMut: 0 });
+    expect(dialOptions(bodiesSw, { ...beat, pulseSpread: 0 }).pulseSpread).toBe(0);
+    expect(dialOptions(bodiesSw, beat).pulseSpread).toBeUndefined();
+    const drawn = foundSoftRoam(dialOptions(bodiesSw, beat)), same = foundSoftRoam(dialOptions(bodiesSw, { ...beat, pulseSpread: 0 }));
+    expect(new Set(Array.from(same.pulseW)).size).toBe(2);
+    expect(new Set(Array.from(drawn.pulseW)).size).toBeGreaterThan(20);
+    for (const id of ['pulseSpread', 'pulseThrust', 'pulseFlex', 'pulseMut']) {
+      const dial = SOFT_DIALS.find((x) => x.id === id)!;
+      expect(dial.idle?.(dialDefaults('bodies'), bodiesSw), id).toEqual(expect.any(String));
+      expect(dial.idle?.(beat, bodiesSw) ?? null, id).toBeNull();
+    }
+    // The deep start: three levels by default, the level dials reach the config (0 is a value), and Levels at 0 or 1 is the flat big-bodies world.
+    const deepSw: SoftSwitches = { ...sw, start: 'deep' };
+    const deepCfg = softRoamConfig(dialOptions(deepSw, dialDefaults('deep')));
+    expect(deepCfg).toEqual(softRoamConfig({ seed: 2, size: 64, start: 'deep', kinds: true }));
+    expect(deepCfg.depth).toBe(3);
+    expect(softRoamConfig(dialOptions(deepSw, { ...dialDefaults('deep'), depth: 4, depthGap: 10, depthDive: 0, depthDim: 0.5 }))).toMatchObject({ depth: 4, depthGap: 10, depthDive: 0, depthDim: 0.5 });
+    for (const flat of [0, fixDial(SOFT_DIALS.find((d) => d.id === 'depth')!, 0)]) {
+      const c = softRoamConfig(dialOptions(deepSw, { ...dialDefaults('deep'), depth: flat, depthGap: 10 }));
+      expect(c).toEqual(softRoamConfig({ seed: 2, size: 64, start: 'bodies', kinds: true }));
+    }
+    expect(fixDial(SOFT_DIALS.find((d) => d.id === 'depth')!, 1)).toBe(2);
+    expect(softRoamConfig(dialOptions({ ...sw, start: 'bodies' }, { ...dialDefaults('bodies'), depth: 2 })).depth).toBe(2);
+    expect(startDials('deep')).toMatchObject({ ...startDials('bodies'), depth: 3 });
+    expect(checkDials(deepSw, dialDefaults('deep'))).toBeNull();
     const cfg = softRoamConfig(dialOptions(sw, { ...dialDefaults('garden'), crack: 750, shellBite: 0.3, bite: 5, leakSide: 20, patchEvery: 40, keep: 100, kBond: 120, thrustMax: 300, grip: 64, foodSpread: 0.2, scentDecayShift: 9, scentIters: 2, scentGain: 4, flow: 3, life: 0, mut: 0.04 }));
     expect(cfg).toMatchObject({ crack: 750, shellBite: 0.3, bite: 5, leakSide: 0.02, patchEvery: 160, keep: 100, kBond: 120, thrustMax: 300, grip: 64, foodSpread: 0.2, scentDecayShift: 9, scentIters: 2, scentGain: 4, flow: 0.03, mut: 0.04, planMut: 0.01 });
     expect(cfg.life).toBeUndefined();

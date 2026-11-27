@@ -25,7 +25,9 @@ export const SWITCH_IDS = ['seed', 'start', 'kinds', 'toughness'];
 export const CHANGE_IDS = SWITCH_IDS.filter((id) => id !== 'start');
 
 /** The starts that turn on the sun, senses and manners (and the seasons' economy); the bodies start adds chunk 3's rules over the seasons'. */
-export const sunStart = (start: SoftRoamStart): boolean => start === 'seasons' || start === 'bodies';
+/** The starts with the big bodies' rules: the bodies start, and the deep start (the same world with levels). */
+export const bodiesStart = (start: SoftRoamStart): boolean => start === 'bodies' || start === 'deep';
+export const sunStart = (start: SoftRoamStart): boolean => start === 'seasons' || bodiesStart(start);
 
 /** The switches after a start is picked: the bodies, the seasons and the garden have kinds on, every other start is the plain grown line-up (kinds off). */
 export function startPick(sw: SoftSwitches, start: SoftRoamStart): SoftSwitches {
@@ -64,6 +66,8 @@ export interface Dial {
   seasonsDef?: number;
   /** The value when the start is `bodies`, where it differs from `seasonsDef` (or the dial is chunk 3's own). */
   bodiesDef?: number;
+  /** The value when the start is `deep`, where it differs from the bodies start's. */
+  deepDef?: number;
   /** Whole numbers only. */
   whole?: boolean;
   /** Smallest value above 0 the world accepts (values between 0 and this become this). */
@@ -79,6 +83,8 @@ const share = (x: number) => (x === 0 ? 'none' : x === 1 ? 'all' : `${n(x * 100,
 /** The plain grown world: a start other than the garden and the seasons, with kinds of cell off. Touch feeding and its rules are not part of it. */
 export const plainWorld = (sw: SoftSwitches): boolean => sw.start !== 'garden' && !sunStart(sw.start) && !sw.kinds;
 const noKinds = (_a: DialValues, sw: SoftSwitches) => (sw.kinds ? null : 'needs kinds of cell on');
+const noDepth = (a: DialValues) => (a.depth >= 2 ? null : 'the world is flat: set Levels to 2 or more');
+const noPulse = (a: DialValues) => (a.pulse >= 1 ? null : 'the inner pulse is off');
 const noDrain = (a: DialValues, sw: SoftSwitches) => noKinds(a, sw) ?? (a.drain > 0 ? null : 'needs touch feeding on (above 0)');
 const notPlain = (_a: DialValues, sw: SoftSwitches) => (plainWorld(sw) ? 'the plain start has no touch feeding: turn kinds of cell on, or pick the garden' : null);
 
@@ -153,6 +159,26 @@ export const SOFT_DIALS: readonly Dial[] = [
     idle: noKinds },
   { id: 'driveSpread', group: 'Bodies', label: 'Founder speeds vary', min: 1, max: 4, step: 0.25, def: 1, bodiesDef: 2,
     say: (v) => (v === 1 ? 'every founder of a type has the same speed gene' : `each founder's speed gene is drawn between ${n(1 / v, 2)} and ${n(v, 2)} times its type's, and its offspring inherit it (takes effect at the start)`) },
+  // Depth: levels in the top-down world.
+  { id: 'depth', whole: true, group: 'Depth', label: 'Levels', min: 0, max: 4, step: 1, def: 0, deepDef: 3, least: 2,
+    say: (v) => (v < 2 ? 'the world is flat: every body can meet every other' : `${n(v)} levels, from the floor to the surface: bodies push, touch and feed only on their own level (they see through all of them), ground food is on the floor, and light comes from above. Lower bodies are drawn smaller and dimmer, under the ones above`) },
+  { id: 'depthGap', whole: true, group: 'Depth', label: 'Steps between level changes', min: 1, max: 400, step: 1, def: 40,
+    say: (v) => `a body rises or sinks one level at most once in ${n(v)} steps, each cell paying 1 matter`, idle: noDepth },
+  { id: 'depthDive', group: 'Depth', label: 'Hungry bodies dive', min: 0, max: 2, step: 0.25, def: 1,
+    say: (v, a) => (v === 0 ? 'a body keeps to its own level however hungry' : `a body whose cells hold under ${n(v * a.birthStore)} matter on average goes to the floor to feed, and goes back to its own level once they hold ${n(2 * v * a.birthStore)}`), idle: noDepth },
+  { id: 'depthDim', group: 'Depth', label: 'Light lost per level down', min: 0, max: 1, step: 0.05, def: 0.25,
+    say: (v) => (v === 0 ? 'leaves get the same light on every level (but for the shade of what is above them)' : `a leaf gets ${share(v)} less of the light for each level it is under the surface; every cell above it takes a quarter of what is left`), idle: noDepth },
+  // Inner pulse: a small network in every cell and two signals along the bonds.
+  { id: 'pulse', whole: true, group: 'Inner pulse', label: 'Inner pulse', min: 0, max: 1, step: 1, def: 0,
+    say: (v) => (v === 0 ? 'off: a cell thrusts as its genes say and its bonds keep one length' : 'on: every cell runs a small inherited network on what it feels (its store, the pull on its bond, its body\'s aim, and two signals its mother and daughters pass it) that holds back its thrust and shortens or lengthens its bonds. No clock is given: a body beats only if its network makes it. A cell is brighter or dimmer with its signal') },
+  { id: 'pulseSpread', whole: true, group: 'Inner pulse', label: 'Founder networks vary', min: 0, max: 127, step: 1, def: 64,
+    say: (v) => (v === 0 ? 'every founder starts with the still network (full thrust, no signal); only copy errors can change it' : `each founder's 40 weights are drawn between -${n(v)} and ${n(v)} (64 is a gain of one), and its offspring inherit them (takes effect at the start)`), idle: noPulse },
+  { id: 'pulseThrust', group: 'Inner pulse', label: 'Thrust the pulse can hold back', min: 0, max: 1, step: 0.05, def: 0.5,
+    say: (v) => (v === 0 ? 'the network cannot change a cell\'s thrust' : `a cell whose network says stop thrusts ${share(v)} less; it never thrusts more than its genes give`), idle: noPulse },
+  { id: 'pulseFlex', group: 'Inner pulse', label: 'Bond length the pulse can change', min: 0, max: 0.5, step: 0.05, def: 0.25,
+    say: (v) => (v === 0 ? 'the network cannot change a bond\'s length' : `a bond between two cells that both flex fully is ${share(v)} longer or shorter`), idle: noPulse },
+  { id: 'pulseMut', group: 'Inner pulse', label: 'Network copy errors', min: 0, max: 1, step: 0.02, def: 0.1,
+    say: (v) => (v === 0 ? 'a daughter\'s network is her mother\'s exactly' : `${share(v)} of daughters get one weight of the 40 moved a little`), idle: noPulse },
   { id: 'releaseGap', whole: true, group: 'Senses and manners', label: 'Steps between releases', min: 0, max: 3000, step: 10, def: 0, seasonsDef: 200,
     say: (v) => (v === 0 ? 'a body can release as often as it divides' : `a body lets a new body go at most once in ${n(v)} steps, even when it loses a tip or splits in two`) },
   // Armour and hunting
@@ -254,8 +280,8 @@ export function dialMoved(d: Dial, typed: string, kept: number): string | null {
 
 /** A dial's value with nothing moved, for a start: the seasons start defines the sun, senses and manners; every other start has them off. */
 export const defFor = (d: Dial, start: SoftRoamStart): number =>
-  start === 'bodies' && d.bodiesDef !== undefined ? d.bodiesDef : sunStart(start) && d.seasonsDef !== undefined ? d.seasonsDef : d.def;
-const startDefined = (d: Dial): boolean => d.seasonsDef !== undefined || d.bodiesDef !== undefined;
+  start === 'deep' && d.deepDef !== undefined ? d.deepDef : bodiesStart(start) && d.bodiesDef !== undefined ? d.bodiesDef : sunStart(start) && d.seasonsDef !== undefined ? d.seasonsDef : d.def;
+const startDefined = (d: Dial): boolean => d.seasonsDef !== undefined || d.bodiesDef !== undefined || d.deepDef !== undefined;
 /** The dials the seasons or bodies start defines (the ones a start sets when it is picked). */
 export const START_DIAL_IDS: readonly string[] = SOFT_DIALS.filter(startDefined).map((d) => d.id);
 /** The start's own values for the dials it defines. */
@@ -264,7 +290,9 @@ export const startDials = (start: SoftRoamStart): DialValues => Object.fromEntri
 export function startNote(before: DialValues, start: SoftRoamStart): string {
   const after = startDials(start);
   const moved = SOFT_DIALS.filter((d) => d.id in after && after[d.id] !== before[d.id]).map((d) => d.label);
-  const what = start === 'bodies'
+  const what = start === 'deep'
+    ? 'The depth start is the big bodies start in a world of three levels: herds begin on the floor, pack hunters in mid-water and groves at the surface, and every other dial is as the big bodies start sets it.'
+    : start === 'bodies'
     ? 'The big bodies start sets the sun, senses and manners, the seasons\' economy, and its own rules (bodies that heal, hunt as one and open big bodies with several mouths, hunters that spread out, upkeep kept for leaves, a winter that costs) to its own values.'
     : start === 'seasons'
     ? 'The seasons start sets the sun, senses, manners and its own economy (matter to divide, upkeep, food patches, shell cracking) to its own values.'
@@ -279,7 +307,7 @@ export function dialOptions(sw: SoftSwitches, a: DialValues): SoftRoamOptions {
   const area = (sw.size * sw.size) / (128 * 128);
   const differs = (id: string) => a[id] !== defFor(SOFT_DIALS.find((d) => d.id === id)!, sw.start);
   const seasons = sunStart(sw.start);
-  const bodies = sw.start === 'bodies';
+  const bodies = bodiesStart(sw.start);
   const over: Partial<SoftRoamConfig> = {};
   const plain = ['bite', 'birthStore', 'patchFood', 'patchRadius', 'keep', 'kBond', 'kBrace', 'kRep', 'thrustMax', 'scentDecayShift', 'scentIters', 'scentGain'] as const;
   for (const id of plain) if (differs(id)) over[id] = a[id];
@@ -321,6 +349,16 @@ export function dialOptions(sw: SoftSwitches, a: DialValues): SoftRoamOptions {
   sun.shellThrust = !idleDial('shellThrust') && a.shellThrust < 1 ? a.shellThrust : off3;
   if (a.driveSpread !== 1) out.driveSpread = a.driveSpread;
   else if (bodies) out.driveSpread = 1;
+  // Depth. The deep start has its own levels, so there a flat world is passed as `false`; the other numbers go only with levels, and only when moved.
+  if (a.depth >= 2) {
+    sun.depth = a.depth;
+    for (const id of ['depthGap', 'depthDive', 'depthDim']) if (differs(id)) sun[id] = a[id];
+  } else if (sw.start === 'deep') sun.depth = false;
+  // Inner pulse: nothing is passed while it is off; its numbers go only when moved.
+  if (a.pulse >= 1) {
+    sun.pulse = true;
+    for (const id of ['pulseThrust', 'pulseFlex', 'pulseMut', 'pulseSpread']) if (differs(id)) sun[id] = a[id];
+  }
   for (const [k, v] of Object.entries(sun)) if (v !== undefined) (out as unknown as Record<string, unknown>)[k] = v;
   // The two copy-error dials are independent: each is always passed as the dial shows it.
   if (differs('mut')) out.mut = a.mut;
