@@ -1,4 +1,5 @@
-// The experiments ledger (apps/lab/src/experiments/ledger.ts) feeds the generated lists on /story/ and /experiments/.
+// The experiments ledger (apps/lab/src/experiments/ledger.ts) feeds the generated lists on /story/ and /experiments/;
+// the story's ladder blocks come from apps/lab/src/story/ladder.ts through the same renderer.
 // This test fails when those pages are stale, when a ledger row disagrees with its journal card, when a row cites a
 // file or page that does not exist, or when a built page is missing from the index.
 // Regenerate with: BL_WRITE_LEDGER=1 pnpm vitest run apps/lab/test/experiments-ledger.test.ts
@@ -37,7 +38,8 @@ describe("experiments ledger", () => {
     const all = blocks();
     const used = PAGES.flatMap((p) => markers(readFileSync(`${lab}${p}`, "utf8")));
     expect([...used].sort()).toEqual(Object.keys(all).sort());
-    expect(markers(readFileSync(`${lab}story/index.html`, "utf8"))).toEqual(CHAPTERS.map((c) => `chapter-${c.n}`));
+    // The story opens with the ladder, how far each world got and the counts (apps/lab/src/story), then one list per chapter.
+    expect(markers(readFileSync(`${lab}story/index.html`, "utf8"))).toEqual(["ladder", "reach", "counts", ...CHAPTERS.map((c) => `chapter-${c.n}`)]);
     for (const page of PAGES) {
       const html = readFileSync(`${lab}${page}`, "utf8");
       for (const name of markers(html)) expect(html, `${page}: block ${name} is not filled`).toContain(all[name]);
@@ -105,6 +107,7 @@ describe("experiments ledger", () => {
       "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/ecosystem/archive/"]);
     // Prototypes kept off the index on purpose (their pages carry noindex).
     const unlisted = new Set(["/bodies/", "/vesicle/", "/oligomer/", "/dropgenes/"]);
+    for (const u of unlisted) expect(linked.has(u), `${u} is unlisted, so no row may link it`).toBe(false);
     const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i) && !unlisted.has(i));
     expect(missing).toEqual([]);
   });
