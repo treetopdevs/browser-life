@@ -81,6 +81,7 @@
 .story-jar { max-width: 580px; margin: 30px 0 26px; }
 .jar-stage { position: relative; padding: 10px; border-radius: 18px; background: var(--field); }
 .jar-stage img, .jar-stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; background: var(--field); }
+.story-jar[data-jar="dropgenes"] .jar-stage img, .story-jar[data-jar="dropgenes"] .jar-stage canvas { image-rendering: pixelated; }
 .jar-stage canvas { display: none; }
 .story-jar.live .jar-stage canvas { display: block; }
 .story-jar.live .jar-stage img { display: none; }

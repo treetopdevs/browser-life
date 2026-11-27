@@ -67,7 +67,7 @@ test('the droplet genes sandbox runs gated and ungated, keeps its matter check a
   await page.setViewportSize({ width: 1280, height: 1180 });
   await page.goto('/dropgenes/');
   await expect(page.getByRole('heading', { name: 'Compartments that have to keep their genes' })).toBeVisible();
-  await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', 'noindex');
+  await expect(page.locator('meta[name=robots]')).toHaveCount(0);
 
   // reduced motion: founded, drawn and paused at step 0
   await expect(page.locator('#live')).toContainText('Paused, because this device asks for reduced motion');

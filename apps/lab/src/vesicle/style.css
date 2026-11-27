@@ -31,3 +31,7 @@ body.vesicle-page select{max-width:100%;min-width:0;text-overflow:ellipsis}
 body.vesicle-page .controls label,body.vesicle-page .transport label{min-width:0;flex-wrap:wrap}
 body.vesicle-page .panel,body.vesicle-page .world{min-width:0}
 @media(max-width:860px){body.vesicle-page .stage{grid-template-columns:minmax(0,1fr)}}
+/* Public chrome: the way back to the story, and what the journal says this world showed. */
+body.vesicle-page header{flex-wrap:wrap;padding-block:8px}body.vesicle-page header .badge{margin-left:auto}
+body.vesicle-page .found h2{font-size:18px;margin:14px 0 4px}body.vesicle-page .found .scope-note{margin:10px 0}
+body.vesicle-page .found strong{color:#e7efeb}body.vesicle-page .found-label{display:inline-block;margin:0 6px;padding:1px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;white-space:nowrap}

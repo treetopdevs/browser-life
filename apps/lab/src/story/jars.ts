@@ -1,19 +1,22 @@
 // The live jars on /story/. Each `<figure class="story-jar" data-jar="…">` holds a still picture until its Grow it
 // button is pressed; then the world is made in a worker (the same worker its own page uses) and drawn here. Nothing
 // runs until asked, one jar grows at a time, and a jar scrolled out of sight waits until it is back.
+import type { FromWorker as DropFromWorker, ToWorker as DropToWorker } from "../dropgenes/viewer-core.ts";
 import type { RoamFromWorker, RoamToWorker } from "../roam/view.ts";
 import type { SoftRoamFromWorker, SoftRoamToWorker } from "../softroam/view.ts";
-import { JARS, roamLine, roamOptions, softRoamOptions, softRoamSeed, type JarId, type JarSpec } from "./jars-spec.ts";
+import { JARS, dropgenesLine, dropgenesOptions, dropgenesRecorded, roamLine, roamOptions, softRoamOptions, softRoamSeed, type JarId, type JarSpec } from "./jars-spec.ts";
 
 /** What a world's worker is asked, and what the host needs back from a frame. */
 interface Driver {
   start(choice: string): void;
   /** Ask for up to `steps` more steps and a picture. */
   tick(steps: number): void;
-  /** Draws an answer and returns the line to show under it (null for an answer of a world since replaced), or throws with the worker's message. */
-  show(data: unknown, ctx: CanvasRenderingContext2D): string | null;
+  /** Draws an answer and returns the line to show under it and whether the world has ended (null for an answer of a world since replaced), or throws with the worker's message. */
+  show(data: unknown, ctx: CanvasRenderingContext2D): Shown | null;
   stop(): void;
 }
+
+interface Shown { line: string; ended: boolean }
 
 function blit(ctx: CanvasRenderingContext2D, pixels: Uint8ClampedArray, side: number): void {
   const canvas = ctx.canvas;
@@ -43,7 +46,7 @@ function softRoamDriver(spec: JarSpec, wire: Wire, say: (text: string) => void):
       blit(ctx, pixels, side);
       // The pixels have been copied onto the canvas: the worker paints the next frame into the same memory.
       post({ type: "recycle", gen, buffer: pixels.buffer as ArrayBuffer }, [pixels.buffer as ArrayBuffer]);
-      return roamLine(census, true);
+      return { line: roamLine(census, true), ended: false };
     },
     stop() { worker?.terminate(); worker = null; },
   };
@@ -68,7 +71,32 @@ function roamDriver(spec: JarSpec, wire: Wire): Driver {
       if (m.gen !== gen) return null;
       if (m.type === "error") throw new Error(m.message);
       blit(ctx, m.frame.pixels, m.frame.side);
-      return roamLine(m.frame.census, kinds);
+      return { line: roamLine(m.frame.census, kinds), ended: false };
+    },
+    stop() { worker?.terminate(); worker = null; },
+  };
+}
+
+function dropgenesDriver(wire: Wire): Driver {
+  let worker: Worker | null = null;
+  let gen = 0;
+  const post = (m: DropToWorker) => worker?.postMessage(m);
+  return {
+    start(choice) {
+      worker?.terminate();
+      worker = wire(new Worker(new URL("../dropgenes/viewer.worker.ts", import.meta.url), { type: "module" }));
+      gen++;
+      post({ type: "reset", gen, opts: dropgenesOptions(choice) });
+    },
+    tick(steps) { post({ type: "tick", gen, steps }); },
+    show(data, ctx) {
+      const m = data as DropFromWorker;
+      if (m.gen !== gen) return null;
+      if (m.type === "error") throw new Error(m.message);
+      const f = m.frame;
+      // One pixel per tile; the stylesheet scales the canvas up with hard edges.
+      blit(ctx, f.rgba as Uint8ClampedArray, Math.round(Math.sqrt(f.rgba.length / 4)));
+      return { line: dropgenesLine({ step: f.step, compartments: f.readouts.compartments, complete: f.readouts.complete, residual: f.residual, ended: f.ended }), ended: f.ended };
     },
     stop() { worker?.terminate(); worker = null; },
   };
@@ -93,6 +121,8 @@ class Jar {
   private choice: string;
   private started = false;
   private playing = false;
+  /** The world has nothing left that can change (droplet genes with no wall): Grow it again starts a new one. */
+  private ended = false;
   private waiting = false;
   private inView = true;
   private owed = 0;
@@ -119,7 +149,7 @@ class Jar {
       worker.addEventListener("error", (event) => { if (this.current === worker) this.fail(new Error(event.message || "the worker stopped")); });
       return worker;
     };
-    this.driver = id === "softroam" ? softRoamDriver(this.spec, wire, (t) => this.announce(t)) : roamDriver(this.spec, wire);
+    this.driver = id === "softroam" ? softRoamDriver(this.spec, wire, (t) => this.announce(t)) : id === "roam" ? roamDriver(this.spec, wire) : dropgenesDriver(wire);
     this.buildChoices();
     this.play.disabled = false;
     this.play.addEventListener("click", () => this.toggle());
@@ -149,7 +179,7 @@ class Jar {
 
   private sayChoice(): void {
     const c = this.spec.choices.find((x) => x.id === this.choice)!;
-    this.says.textContent = c.says;
+    this.says.textContent = this.spec.id === "dropgenes" ? `${c.says} ${dropgenesRecorded(c.id)}` : c.says;
   }
 
   private choose(id: string): void {
@@ -164,7 +194,7 @@ class Jar {
   private announce(text: string): void { this.note.textContent = text; }
 
   private toggle(): void {
-    if (!this.started) { this.restart(); return; }
+    if (!this.started || this.ended) { this.restart(); return; }
     this.setPlaying(!this.playing);
     this.announce(this.playing ? "Growing." : "Paused.");
   }
@@ -172,6 +202,7 @@ class Jar {
   private restart(): void {
     this.root.classList.add("live");
     this.started = true;
+    this.ended = false;
     this.owed = 0;
     this.waiting = true;
     this.again.hidden = false;
@@ -186,16 +217,24 @@ class Jar {
   }
 
   private onAnswer(data: unknown): void {
-    let line: string | null;
+    let shown: Shown | null;
     try {
-      line = this.driver.show(data, this.ctx);
+      shown = this.driver.show(data, this.ctx);
     } catch (error) {
       this.fail(error);
       return;
     }
-    if (line === null) return;
+    if (shown === null) return;
     this.waiting = false;
-    this.line.textContent = line;
+    this.line.textContent = shown.line;
+    if (shown.ended) {
+      this.ended = true;
+      this.setPlaying(false);
+      this.play.textContent = "Grow it again";
+      this.again.hidden = true;
+      this.announce("This world has ended.");
+      return;
+    }
     this.pump();
   }
 
@@ -203,6 +242,7 @@ class Jar {
     this.current = null;
     this.driver.stop();
     this.started = false;
+    this.ended = false;
     this.waiting = false;
     this.setPlaying(false);
     this.play.textContent = "Grow it";
@@ -226,10 +266,10 @@ class Jar {
 
   /** Ask for the next frame when one is due: at most one request is out, and none while paused or out of sight. */
   private pump(): void {
-    if (this.raf || !this.playing || !this.inView || this.waiting) return;
+    if (this.raf || !this.playing || !this.inView || this.waiting || this.ended) return;
     this.raf = requestAnimationFrame((now) => {
       this.raf = 0;
-      if (!this.playing || !this.inView || this.waiting) return;
+      if (!this.playing || !this.inView || this.waiting || this.ended) return;
       // Time away (another tab, a long pause) is not owed: at most a tenth of a second is made up.
       const dt = Math.min(100, Math.max(0, now - this.last));
       this.last = now;

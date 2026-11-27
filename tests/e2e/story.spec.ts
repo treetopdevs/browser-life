@@ -1,6 +1,6 @@
 // The story page's live jars (apps/lab/src/story/jars.ts), in a real browser with their real workers: nothing runs
-// until asked, one jar grows at a time, a jar out of sight waits, a choice starts the world again, and a failed jar
-// can be grown again. The settings and the words are held by apps/lab/test/story.test.ts.
+// until asked, one jar grows at a time, a jar out of sight waits, a choice starts the world again, a world that ends
+// says so, and a failed jar can be grown again. The settings and the words are held by apps/lab/test/story.test.ts.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const jar = (page: Page, id: string): Locator => page.locator(`figure.story-jar[data-jar="${id}"]`);
@@ -17,7 +17,7 @@ const pageErrors = (page: Page): string[] => {
 test("no jar runs until its button is pressed", async ({ page }) => {
   const errors = pageErrors(page);
   await page.goto("/story/");
-  for (const id of ["roam", "softroam"]) {
+  for (const id of ["dropgenes", "roam", "softroam"]) {
     const fig = jar(page, id);
     await expect(fig.locator(".jar-play")).toBeEnabled();
     await expect(fig.locator(".jar-play")).toHaveText("Grow it");
@@ -104,6 +104,30 @@ test("a choice starts the world again, and a fresh seed is never one we have loo
   await expect(soft.locator(".jar-play")).toHaveText("Pause");
   await soft.locator(".jar-again").click();
   await expect.poll(() => step(soft), { timeout: 30_000 }).toBeGreaterThan(0);
+  expect(errors).toEqual([]);
+});
+
+test("droplet genes with leaking genes ends, says so, and can be grown again", async ({ page }) => {
+  test.setTimeout(240_000);
+  const errors = pageErrors(page);
+  await page.goto("/story/");
+  const drop = jar(page, "dropgenes");
+  await drop.scrollIntoViewIfNeeded();
+  await drop.getByRole("button", { name: "Let the genes leak" }).click();
+  await expect(drop.locator(".jar-says")).toContainText("held on 0 of 4 seeds");
+  await drop.locator(".jar-play").click();
+  // The recorded runs of this setting ended between steps 2,500 and 5,100; seed 5 is the first of them.
+  await expect(drop.locator(".jar-play")).toHaveText("Grow it again", { timeout: 150_000 });
+  await expect(drop.locator(".jar-note")).toHaveText("This world has ended.");
+  await expect(drop.locator(".jar-line")).toContainText("no wall is left");
+  await expect(drop.locator(".jar-line")).toContainText("matter balanced");
+  await expect(drop.locator(".jar-again")).toBeHidden();
+  const ended = await step(drop);
+  expect(ended).toBeGreaterThanOrEqual(2500);
+  expect(ended).toBeLessThanOrEqual(5100);
+  await drop.locator(".jar-play").click();
+  await expect(drop.locator(".jar-play")).toHaveText("Pause");
+  await expect.poll(() => step(drop), { timeout: 30_000 }).toBeLessThan(ended);
   expect(errors).toEqual([]);
 });
 

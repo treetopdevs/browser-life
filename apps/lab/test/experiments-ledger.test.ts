@@ -105,10 +105,8 @@ describe("experiments ledger", () => {
     // Site furniture, and sub-pages reached from their parent page.
     const elsewhere = new Set(["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/", "/story/", "/experiments/",
       "/particles/picker/", "/particles/oases/", "/particles/seasons/", "/particles/bonds/", "/particles/motifs/", "/ecosystem/archive/"]);
-    // Prototypes kept off the index on purpose (their pages carry noindex).
-    const unlisted = new Set(["/bodies/", "/vesicle/", "/oligomer/", "/dropgenes/"]);
-    for (const u of unlisted) expect(linked.has(u), `${u} is unlisted, so no row may link it`).toBe(false);
-    const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i) && !unlisted.has(i));
+    // The prototypes of 17 to 22 Nov (/bodies/, /vesicle/, /oligomer/, /dropgenes/) are public since 27 Nov: their rows link them.
+    const missing = inputs.filter((i) => !linked.has(i) && !elsewhere.has(i));
     expect(missing).toEqual([]);
   });
 });

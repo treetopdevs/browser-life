@@ -4,11 +4,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_OPTIONS, recordedHeld } from "../src/dropgenes/viewer-core.ts";
 import { dialDefaults as roamDialDefaults, dialOptions as roamDialOptions } from "../src/roam/dials.ts";
 import { foundRoam } from "../src/roam/view.ts";
 import { dialDefaults as softDialDefaults, dialOptions as softDialOptions } from "../src/softroam/dials.ts";
 import { foundSoftRoam } from "../src/softroam/view.ts";
-import { JARS, SEEN_SEEDS, freshSeed, roamLine, roamOptions, softRoamOptions, softRoamSeed, type JarId } from "../src/story/jars-spec.ts";
+import { JARS, SEEN_SEEDS, dropgenesLine, dropgenesOptions, dropgenesRecorded, freshSeed, roamLine, roamOptions, softRoamOptions, softRoamSeed, type JarId } from "../src/story/jars-spec.ts";
+import { ENTRIES } from "../src/experiments/ledger.ts";
 import { HERE, LADDER_WORLD, MADE, REACHES, RUNGS } from "../src/story/ladder.ts";
 import { renderCounts, renderLadder, renderReach } from "../src/story/render-ladder.ts";
 
@@ -78,15 +80,54 @@ describe("the story's live jars", () => {
     expect(story).toContain(`<script type="module" src="/src/story/jars.ts"></script>`);
   });
 
-  it("links neither the Roam pages, which the site does not build, nor the prototype pages it keeps unlisted", () => {
+  it("does not link the Roam pages, which the site does not build, and links each prototype page of act two", () => {
     expect(built.has("/roam/")).toBe(false);
     expect(built.has("/softroam/")).toBe(false);
     expect(story).not.toMatch(/href="\/(soft)?roam\//);
-    // Unlisted on purpose (bodies-packaging.test.ts, dropgenes-viewer.test.ts, and the ledger test's own list).
+    const act2 = story.slice(story.indexOf('id="chapter-8"'), story.indexOf('id="act-3"'));
     for (const page of ["bodies", "vesicle", "oligomer", "dropgenes"]) {
-      expect(story, page).not.toContain(`/${page}/`);
-      for (const f of ["src/story/ladder.ts", "src/story/jars.ts", "src/story/jars-spec.ts", "src/story/story.css"]) expect(readFileSync(`${lab}${f}`, "utf8"), `${f} ${page}`).not.toContain(page === "bodies" ? "/bodies/" : page);
+      expect(built.has(`/${page}/`), page).toBe(true);
+      expect(act2.replace(/<!-- GENERATED[\s\S]*?<!-- \/GENERATED[^>]*-->/g, ""), `${page} in the prose`).toContain(`href="/${page}/"`);
     }
+  });
+
+  it("each prototype page says what its results found, in the ledger's words, and links back", () => {
+    for (const page of ["bodies", "vesicle", "oligomer", "dropgenes"]) {
+      const html = readFileSync(`${lab}${page}/index.html`, "utf8");
+      const rows = ENTRIES.filter((e) => e.pages?.some((p) => p.href === `/${page}/`));
+      expect(rows.length, page).toBeGreaterThan(0);
+      for (const e of rows) {
+        // The wall-patch worlds' page never calls its patches droplets (oligomer-droplet-viewer.test.ts), so the two
+        // results the journal names that way are reworded there; their label, date and every figure must still agree.
+        if (/droplet/i.test(e.card + e.answer)) {
+          expect(page).toBe("oligomer");
+          const heading = { "Droplets against the Reef": "Wall patches against the Reef", "The droplets were waves": "The patches were waves" }[e.card];
+          const notes = html.split("\n").filter((l) => l.includes(`<strong>${heading}</strong> <span class="found-label">${e.label} · ${e.date}</span>`));
+          expect(notes, e.card).toHaveLength(1);
+          const note = notes[0];
+          for (const figure of e.answer.match(/\d[\d,]*%?|eight|three|five/g) ?? []) expect(note, `${e.card}: ${figure}`).toContain(figure);
+          expect(note, e.card).toContain(e.answer.includes("Not labelled Confirmed") ? "Not labelled Confirmed" : "The verdict stands as computed; the count is not a number of individuals.");
+        } else {
+          expect(html, `${page}: ${e.card}`).toContain(`<strong>${e.card}</strong> <span class="found-label">${e.label} · ${e.date}</span> ${e.answer}</p>`);
+        }
+      }
+      expect(html.match(/class="found-label"/g), page).toHaveLength(rows.length);
+      expect(html, page).toContain('href="/story/#chapter-8"');
+      expect(html, page).toContain('href="/research/"');
+      expect(html, page).not.toMatch(/noindex|not linked from the site/);
+    }
+  });
+
+  it("droplet genes: its own page's opening world, with or without its gate", () => {
+    expect(dropgenesOptions("gated")).toEqual(DEFAULT_OPTIONS);
+    expect(dropgenesOptions("ungated")).toEqual({ ...DEFAULT_OPTIONS, gated: false });
+    // What the caption says of these two settings is what the recorded runs found.
+    expect(recordedHeld(dropgenesOptions("gated"))).toBe(4);
+    expect(recordedHeld(dropgenesOptions("ungated"))).toBe(0);
+    expect(dropgenesRecorded("gated")).toContain("held on 4 of 4 seeds");
+    expect(dropgenesRecorded("ungated")).toContain("held on 0 of 4 seeds");
+    expect(story).toContain("on seed 5, the first seed of the recorded runs");
+    expect(DEFAULT_OPTIONS.seed).toBe(5);
   });
 
   it("says what each choice does, and starts on the first", () => {
@@ -137,6 +178,8 @@ describe("the story's live jars", () => {
     expect(roamLine(c, true)).toBe("Step 6,000 · 438 cells in 71 bodies · largest 19 · 15 mouths, 26 shells · matter balanced");
     expect(roamLine(c, false)).toBe("Step 6,000 · 438 cells in 71 bodies · largest 19 · matter balanced");
     expect(roamLine({ ...c, residual: 3 }, false)).toContain("matter off by 3");
+    expect(dropgenesLine({ step: 20000, compartments: 41, complete: 39, residual: "0", ended: false })).toBe("Step 20,000 · 41 compartments, 39 with both genes · matter balanced");
+    expect(dropgenesLine({ step: 3950, compartments: 0, complete: 0, residual: "0", ended: true })).toContain("no wall is left");
   });
 });
 

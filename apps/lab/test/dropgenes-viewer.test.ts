@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { expectPublicPage } from './support/public-page.ts';
 import { DG_SCALE, DropGenesKernel, defaultDropGenesConfig } from '../src/dropgenes/kernel.ts';
 import { parasiteShare, type Census } from '../src/dropgenes/observe.ts';
 import {
@@ -444,13 +445,12 @@ describe('droplet genes viewer: chart history and speed', () => {
   });
 });
 
-describe('droplet genes viewer: the page is a private sandbox', () => {
+describe('droplet genes viewer: the page is public', () => {
   const html = readFileSync(join(lab, 'dropgenes/index.html'), 'utf8');
   const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-  it('is registered with the build, carries noindex and an icon, and counts no page views', () => {
-    expect(readFileSync(join(lab, 'vite.config.ts'), 'utf8')).toContain('dropgenes: r("./dropgenes/index.html"),');
-    expect(html).toMatch(/<meta name="robots" content="noindex" \/>/);
+  it('ships with the site, carries an icon, and like the other standalone experiment pages counts no page views', () => {
+    expectPublicPage('dropgenes', 'dropgenes: r("./dropgenes/index.html"),');
     expect(html).toMatch(/<link rel="icon" href="\/favicon.svg"/);
     expect(html).toContain('src="/src/dropgenes/page.ts"');
     // theme.ts starts the page-view counter; this page keeps its own small theme switch instead.
@@ -460,7 +460,11 @@ describe('droplet genes viewer: the page is a private sandbox', () => {
     }
   });
 
-  it('is not in the sitemap, the site navigation, the world catalogue or any other page', () => {
+  it('is named only where it is meant to be: its result, the story and its jar, the sitemap', () => {
+    // Since 27 Nov 2026 the page is reached from its journal result and the story. It is a prototype, not one of the
+    // lab's worlds, so nothing else (the home page, the catalogue, the lab) names it.
+    const allowed = new Set(['experiments/index.html', 'story/index.html', 'public/sitemap.xml', 'src/experiments/ledger.ts',
+      'src/story/jars.ts', 'src/story/jars-spec.ts', 'src/story/ladder.ts', 'src/story/story.css']);
     const skip = new Set(['node_modules', 'dist', 'test', 'dropgenes', 'vite.config.ts']);
     const hits: string[] = [];
     const walk = (dir: string) => {
@@ -472,16 +476,19 @@ describe('droplet genes viewer: the page is a private sandbox', () => {
       }
     };
     walk(lab);
-    expect(hits).toEqual([]);
+    expect(hits.filter((h) => !allowed.has(h))).toEqual([]);
+    for (const must of ['story/index.html', 'src/experiments/ledger.ts', 'public/sitemap.xml']) expect(hits, must).toContain(must);
   });
 
   it('says what it is and claims no more than RESULTS.md', () => {
-    expect(text).toContain('Sandbox');
-    expect(text).toContain('not linked from the site');
+    expect(text).not.toMatch(/sandbox/i);
+    expect(text).not.toContain('not linked from the site');
+    expect(text).toContain('Designed world · prototype');
     expect(text).toContain('Nothing in this world evolves yet');
     expect(text).toContain('on all four seeds only at the larger setting and only with the gate');
     expect(text).toContain('on one seed of four');
-    expect(text).not.toMatch(/\bevolv(?:ed|es|ing)\b(?! yet)/);
+    // The one other use of the word is the journal's own line for this result, in "What we found".
+    expect(text.replace('Nothing evolved here.', '')).not.toMatch(/\bevolv(?:ed|es|ing)\b(?! yet)/);
     expect(RESULTS).toContain('It does not show evolution.');
   });
 });

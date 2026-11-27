@@ -284,7 +284,16 @@ const NAME_KEYS: [string, string, string][] = [
 ];
 for (const k of NAME_KEYS) k[2] = el(k[0]).getAttribute('aria-label') ?? '';
 
+/** The page has one title; it names the family of worlds on screen. */
+const TITLES = {
+  a: ['Walls made of oligomers', 'Compartments that fight over wall patterns'],
+  d: ['Walls made of oligomers · wall-patch worlds', 'Six wall patterns that fight over one dish'],
+} as const;
+
 function setFamily(d: boolean): void {
+  const [eyebrow, title] = d ? TITLES.d : TITLES.a;
+  el('page-eyebrow').textContent = eyebrow;
+  el('page-title').textContent = title;
   for (const [id, dropletName, aText] of NAME_KEYS) el(id).setAttribute('aria-label', d ? dropletName : aText);
   for (const id of FAMILY_HIDE_A) el(id).hidden = d;
   for (const id of FAMILY_SHOW_D) el(id).hidden = !d;

@@ -47,7 +47,7 @@ export interface Reach {
   /** The world, in the words the site uses for it. */
   world: string;
   when: string;
-  /** The page to run or watch it, when the site lists one. The prototypes of 17 to 22 Nov are kept unlisted, so they have none. */
+  /** The page to run or watch it, when the site builds one. */
   href?: string;
   /** The world we are working in. */
   now?: true;
@@ -70,13 +70,13 @@ export const REACHES: Reach[] = [
   { world: "The mycelium world", when: "13 Nov", href: "/mycelium/", rung: 1,
     had: "Particles with small neural controllers that eat, lay trail and split. Inheritance drops a trail that only costs.",
     stopped: "We wrote the individuals in, so the first rung was never tested. Whether inheriting a controller matters could not be measured." },
-  { world: "Bodies set loose", when: "17 Nov", rung: 1,
+  { world: "Bodies set loose", when: "17 Nov", href: "/bodies/", rung: 1,
     had: "Hand-built growth rules that hold a clean disc and regrow it after a wound.",
     stopped: "In a crowd the bodies run together into one mat. Recognition marks walled families apart, not bodies, and the pieces froze." },
-  { world: "Vesicles", when: "18 Nov", rung: 4,
+  { world: "Vesicles", when: "18 Nov", href: "/vesicle/", rung: 4,
     had: "Real individuals: walls made of conserved matter that grow, pinch in two and burst. Nobody tells a cell to divide.",
     stopped: "What a cell inherits is a few numbers on its wall. Given two jobs to split, every world ended with one generalist." },
-  { world: "Droplets with genes", when: "21 Nov", rung: 4,
+  { world: "Droplets with genes", when: "21 Nov", href: "/dropgenes/", rung: 4,
     had: "Compartments that split and die, genes they keep when their walls hold the copies in, and a trait held by selection between compartments.",
     stopped: "The one trait that could evolve was a five-step dial we wrote. It moved to one level and stayed, and the world is static to watch." },
   { world: "Roam and Soft Roam", when: "from 23 Nov", rung: HERE, now: true,

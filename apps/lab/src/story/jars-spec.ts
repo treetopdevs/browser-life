@@ -2,12 +2,13 @@
 // say what the change does. No DOM here, so the settings can be tested against the worlds' own pages (apps/lab/test/story.test.ts).
 // Each jar starts the same world its own page starts, built by that page's own option builders; nothing here sets a
 // rule or a number of its own.
+import { DEFAULT_OPTIONS, recordedSentence, type ViewerOptions } from "../dropgenes/viewer-core.ts";
 import { dialDefaults as roamDialDefaults, dialOptions as roamDialOptions } from "../roam/dials.ts";
 import type { RoamOptions } from "../roam/view.ts";
 import { dialDefaults as softDialDefaults, dialOptions as softDialOptions } from "../softroam/dials.ts";
 import type { SoftRoamOptions } from "../softroam/view.ts";
 
-export type JarId = "roam" | "softroam";
+export type JarId = "dropgenes" | "roam" | "softroam";
 
 export interface JarChoice {
   id: string;
@@ -42,6 +43,17 @@ export function freshSeed(u: number): number {
 }
 
 export const JARS: Record<JarId, JarSpec> = {
+  dropgenes: {
+    id: "dropgenes",
+    choiceLabel: "The wall",
+    choices: [
+      { id: "gated", label: "Walls keep genes in", says: "A gene copy can only hop where there is wall, so copies mostly stay in a compartment or its thin rim, the parasite’s included. This is the setting of the recorded runs, on their first seed." },
+      { id: "ungated", label: "Let the genes leak", says: "Copies hop across the open water between compartments, the parasite’s included, so a parasite that arises in one compartment can reach them all." },
+    ],
+    pace: 240,
+    side: 64,
+    standing: "Exploratory",
+  },
   roam: {
     id: "roam",
     choiceLabel: "Kinds of cell",
@@ -69,6 +81,16 @@ export const JARS: Record<JarId, JarSpec> = {
 
 const ARENA = 128;
 
+/** The droplet-genes world for a choice: its own page's opening world, with its gate (walls keep gene copies in) or without. */
+export function dropgenesOptions(choice: string): ViewerOptions {
+  return { ...DEFAULT_OPTIONS, gated: choice !== "ungated" };
+}
+
+/** What the recorded runs found for that choice, in the droplet page's own words. */
+export function dropgenesRecorded(choice: string): string {
+  return recordedSentence(dropgenesOptions(choice));
+}
+
 /** Roam as its own page opens it (six grown founders, compost, the dials at their defaults), with kinds of cell on or off. */
 export function roamOptions(choice: string): RoamOptions {
   return roamDialOptions({ seed: 1, size: ARENA, start: "grown-all", compost: true, kinds: choice !== "alike", toughness: false }, roamDialDefaults());
@@ -93,5 +115,13 @@ export function roamLine(c: { step: number; cells: number; bodies: number; large
   const parts = [`Step ${n(c.step)}`, `${n(c.cells)} cells in ${n(c.bodies)} bodies`, `largest ${n(c.largest)}`];
   if (kinds) parts.push(`${n(c.mouths)} mouths, ${n(c.shells)} shells`);
   parts.push(c.residual === 0 ? "matter balanced" : `matter off by ${n(c.residual)}`);
+  return parts.join(" · ");
+}
+
+/** One line under a running droplet-genes jar. */
+export function dropgenesLine(f: { step: number; compartments: number; complete: number; residual: string; ended: boolean }): string {
+  const parts = [`Step ${n(f.step)}`, `${n(f.compartments)} compartments, ${n(f.complete)} with both genes`];
+  parts.push(f.residual === "0" ? "matter balanced" : `matter off by ${f.residual}`);
+  if (f.ended) parts.push("no wall is left, so nothing can change again");
   return parts.join(" · ");
 }
