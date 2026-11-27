@@ -7,7 +7,7 @@
  * Options: --seed, --steps, --size (128), --start (garden, the default, as before: grown-all with kinds, touch feeding, shells and cracking on | bodies, the page's own start: the seasons with herds, groves and pack hunters of 21 to 25 cells that heal, steer as one body and hunt in packs, a leaf pool and a winter upkeep | seasons, chunk 2's start: armoured grazers, leaf bushes, hunters and plates, with a day and a year, leaves, sight, fear, truce, jaws and a release cap on |
  * grown-all | grown-lines | grown-plates | grown-crosses | grown-blocks |
  * grown-specks | grown-bushes), --planMut, --founders, --mut, --report (1000), --frames, --scale (4), --movie N (with
- * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K),  --paint (garden | plain),
+ * --movieFrom S to start the frames at step S, and --sub K for K frames per step at alpha k/K),  --paint (garden | plain | top: the garden from straight above),
  * --ov '{json}' (config overrides), --opt '{json}' (start options, e.g. '{"pace":false,"shellThrust":false,"driveSpread":1}' for the bodies start without chunk 4), --lag (200), --out dir, --series FILE (a TSV with one row every --every steps, default 50: step, cells, bodies, singles,
  * largest, plain, shells, mouths, leaves, food, reservoir, leafIncome, drained, hunting, targets, fleeing, releasesHeld, meanLight, seasonLight, splits, steering, leafPool; the cumulative
  * columns leafIncome, drained and releasesHeld are totals so far; meanLight is the light over the world now, 0 to 1, seasonLight the year's light as a share of
@@ -61,7 +61,7 @@ const movie = int('movie', 0, 0);
 const movieFrom = int('movieFrom', 0, 0);
 const sub = int('sub', 1, 1);
 const paint = (args.paint ?? 'garden') as SoftPaint;
-if (!['garden', 'plain'].includes(paint)) throw new Error(`--paint ${paint}: garden or plain`);
+if (!['garden', 'plain', 'top'].includes(paint)) throw new Error(`--paint ${paint}: garden, plain or top`);
 // The garden by default, as this tool has always run (the notes' commands name no --start); the page's own start, the seasons, is `--start seasons`.
 const start = (args.start ?? 'garden') as SoftRoamStart;
 if (!(start in SOFT_STARTS)) throw new Error(`--start ${start}: one of ${Object.keys(SOFT_STARTS).join(', ')}`);

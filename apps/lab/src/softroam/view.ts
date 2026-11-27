@@ -18,7 +18,7 @@
 
 import { ROAM_PLANS, ROAM_STARTS, ROAM_TYPES, roamPlanColour, type RoamTypeId } from '../roam/view.ts';
 import { ROAM_GENE_MAX } from '../roam/kernel.ts';
-import { defaultSoftRoamConfig, KIND_LEAF, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld, softRoamLight } from './kernel.ts';
+import { defaultSoftRoamConfig, KIND_LEAF, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, PULSE_IN, PULSE_ONE, PULSE_W, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld, softRoamLight } from './kernel.ts';
 
 export { ROAM_PLANS };
 
@@ -136,6 +136,8 @@ export const SOFT_STARTS = {
    * winter that bites. Only the three big types.
    */
   bodies: ['herd', 'grove', 'pack'],
+  /** Depth: the big bodies in a world of three levels (see the kernel's Depth paragraph and DEEP_DEFAULTS): herds founded on the floor, pack hunters in mid-water, groves at the surface. */
+  deep: ['herd', 'grove', 'pack'],
   /** The default: the grown founders as in 'grown-all', with kinds, touch feeding, shells and cracking on (Roam's page line-up). */
   garden: ROAM_STARTS['grown-all'],
   'grown-all': ROAM_STARTS['grown-all'],
@@ -194,6 +196,20 @@ export interface SoftRoamOptions {
   shellThrust?: number;
   /** Chunk 4, a start option (not a kernel key): each founder's drive gene is its type's times 2^u, u drawn evenly from -log2(spread) to log2(spread). 1 is none; the bodies start's default is BODIES_DRIVE_SPREAD. */
   driveSpread?: number;
+  /** Depth (see the kernel): the deep start turns `depth` on at DEEP_DEFAULTS; any start takes the keys when given (`depth: false` leaves the deep start flat). 0 is a real value for the dive and the cost. */
+  depth?: number;
+  depthGap?: number;
+  depthCost?: number;
+  depthDive?: number;
+  depthDim?: number;
+  depthShade?: number;
+  /** Inner pulse (see the kernel): `pulse: true` turns it on for any start; the three numbers only reach a world that has it. */
+  pulse?: boolean;
+  pulseThrust?: number;
+  pulseFlex?: number;
+  pulseMut?: number;
+  /** Inner pulse, a start option (not a kernel key): each founder's network is drawn on the seed and its number, every weight a whole number from -spread to spread (the weight that sets full thrust has PULSE_ONE added). 0: every founder has the still network. Default PULSE_SPREAD. */
+  pulseSpread?: number;
   overrides?: Partial<SoftRoamConfig>;
 }
 
@@ -232,6 +248,14 @@ export const BODIES_DRIVE_SPREAD = 2;
 export const BODIES_OVER_SEASONS = { releaseMin: 8, crack: 2000, patchSun: false } as const;
 /** The bodies start's economy over the seasons': cells wear out more slowly (a 25-cell body at the page's life of 8000 loses a cell every 320 steps). */
 export const BODIES_ECONOMY = { life: 20000 } as const;
+/** What the deep start adds to the bodies': three levels; the other depth numbers are the kernel's defaults (first look on seeds 1 and 2, runs/softroam/depth). */
+export const DEEP_DEFAULTS = { depth: 3 } as const;
+/** Inner pulse: how far a founder's weights are drawn from 0 unless the caller says (about a third of such networks beat on their own, see NOTE-5). */
+export const PULSE_SPREAD = 64;
+const PULSE_KEYS = ['pulseThrust', 'pulseFlex', 'pulseMut'] as const;
+const DEPTH_KEYS = ['depth', 'depthGap', 'depthCost', 'depthDive', 'depthDim', 'depthShade'] as const;
+/** Where a founder of each big type starts and what lift it carries, as a share of the way from the floor (0) to the surface (1); any other type starts on the floor. */
+export const DEEP_HOME: Partial<Record<SoftTypeId, number>> = { herd: 0, pack: 0.5, grove: 1 };
 const BODY_KEYS = ['heal', 'steer', 'pack', 'crowd', 'leafPool', 'leafPoolMax', 'patchSeason', 'winterCost', 'pace', 'shellThrust'] as const;
 
 /**
@@ -245,7 +269,8 @@ export const PAGE_WORLD = { matter: 100_000, bite: 4, birthStore: 150, minStore:
 
 export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
   const startName = input.start ?? 'seasons';
-  const bodies = startName === 'bodies';
+  const deep = startName === 'deep';
+  const bodies = startName === 'bodies' || deep;
   const seasons = startName === 'seasons' || bodies;
   const garden = startName === 'garden' || seasons;
   // The seasons start fills in what the caller left out, but only what its prerequisites allow (the kernel refuses a sight or a leaf without kinds, a year without a day):
@@ -306,12 +331,28 @@ export function softRoamConfig(input: SoftRoamOptions): SoftRoamConfig {
     const v = o[k];
     if (v !== undefined && v !== false && (merged as unknown as Record<string, unknown>)[k] === undefined) (merged as unknown as Record<string, unknown>)[k] = v;
   }
+  // Depth keys: the deep start's levels unless the caller gave its own (false: none); the other keys only reach a world that has levels.
+  const mk = merged as unknown as Record<string, unknown>;
+  const depthOpt = o.depth ?? (deep ? DEEP_DEFAULTS.depth : undefined);
+  if (mk.depth === undefined && depthOpt !== undefined && (depthOpt as unknown) !== false) mk.depth = depthOpt;
+  if (mk.depth !== undefined) for (const k of DEPTH_KEYS) if (k !== 'depth' && o[k] !== undefined && mk[k] === undefined) mk[k] = o[k];
+  // Inner pulse: on only when asked for; its numbers only reach a world that has it.
+  if (mk.pulse === undefined && o.pulse === true) mk.pulse = true;
+  if (mk.pulse === true) for (const k of PULSE_KEYS) if (o[k] !== undefined && mk[k] === undefined) mk[k] = o[k];
   if (o.overrides?.planMut === undefined) merged.planMut = o.planMut ?? (o.mut === undefined ? cfg.planMut : Math.min(1, 2.5 * merged.mut));
   // The first patches may use at most half the matter, so the founders can always be paid for.
   if (merged.patchFood > 0) merged.startPatches = Math.min(merged.startPatches, Math.floor(merged.matter / (2 * merged.patchFood)));
   // ... and a tiny arena keeps enough in the store to pay for at least one founder (about 3 times the matter to divide).
   if (merged.patchFood > 0) merged.startPatches = Math.min(merged.startPatches, Math.floor(Math.max(0, merged.matter - 3 * merged.birthStore) / merged.patchFood));
   return merged;
+}
+
+/** A founder's network: every weight a whole number from -spread to spread, drawn on the seed and the founder's number; the weight from the constant input to go has PULSE_ONE added (held to 127), so a network that does nothing else thrusts in full. */
+export function softPulseDraw(seed: number, founder: number, spread: number): number[] {
+  const w: number[] = [];
+  for (let i = 0; i < PULSE_W; i++) w.push((roamHash(seed, 0, founder, 300 + i) % (2 * spread + 1)) - spread);
+  w[2 * PULSE_IN] = Math.min(127, w[2 * PULSE_IN] + PULSE_ONE);
+  return w;
 }
 
 const KIND_SHELL_BITS = KIND_SHELL << 12;
@@ -346,9 +387,12 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
     return world.addPlan(plan.map((e, m) => (m === 0 ? e | KIND_MOUTH_BITS : e)), planIds[j]);
   });
   const founders = o.founders ?? Math.max(types.length, Math.round((120 * world.n) / (128 * 128)));
-  const spread = o.driveSpread ?? (start === 'bodies' ? BODIES_DRIVE_SPREAD : 1);
+  const spread = o.driveSpread ?? (start === 'bodies' || start === 'deep' ? BODIES_DRIVE_SPREAD : 1);
   if (!(typeof spread === 'number' && spread >= 1 && spread <= 8)) throw new Error(`Invalid driveSpread: ${spread} (1 to 8)`);
   if (!Number.isSafeInteger(founders) || founders < 1) throw new Error(`Invalid founders: ${founders}`);
+  const levels = world.cfg.depth ?? 0;
+  const pulseSpread = o.pulseSpread ?? PULSE_SPREAD;
+  if (!(Number.isInteger(pulseSpread) && pulseSpread >= 0 && pulseSpread <= 127)) throw new Error(`Invalid pulseSpread: ${pulseSpread} (a whole number, 0 to 127)`);
   const cost = 2 * world.cfg.birthStore - 1;
   const maxTries = 40 * Math.min(founders, world.n);
   // Well spaced: no two founders closer than about half the spacing of an even grid; the gap shrinks as tries run out.
@@ -378,7 +422,12 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
       const d = Math.max(-ROAM_GENE_MAX, Math.min(ROAM_GENE_MAX, Math.round(genes[1] * 2 ** u)));
       genes = genes.map((g, k) => (k === 1 ? d : g));
     }
-    if (world.found(px, py, genes, softFamily(type), undefined, plan) >= 0) {
+    const cell = world.found(px, py, genes, softFamily(type), undefined, plan);
+    if (cell >= 0) {
+      // With levels: the type's own level and the lift that keeps its line there.
+      if (levels > 0) world.setLevel(cell, Math.round((DEEP_HOME[type] ?? 0) * (levels - 1)));
+      // With the pulse: a network of its own, drawn on the seed and the founder's number.
+      if (world.cfg.pulse === true && pulseSpread > 0) world.setPulse(cell, softPulseDraw(world.cfg.seed, placed, pulseSpread));
       placed++;
       placedAt.push(px, py);
     }
@@ -390,7 +439,8 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
 
 // ---------------------------------------------------------------------------------------------------- the picture
 
-export type SoftPaint = 'garden' | 'plain';
+/** `garden` is the picture; with depth it is slanted (a level is drawn DEEP_SLANT tiles up the screen per level, the ground stays put). `top` is the garden straight down. `plain` is for checking. */
+export type SoftPaint = 'garden' | 'plain' | 'top';
 
 /** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them; 12 to 17 are Soft Roam's own types. */
 const FAMILY_ORDER: readonly SoftTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush', 'grazer', 'leafbush', 'hunter', 'herd', 'grove', 'pack'];
@@ -419,8 +469,8 @@ export function foodTone(food: number): number {
 }
 const GLOW_R = 1.9;
 
-interface Ghost { x: number; y: number; kind: number; step: number; compost: boolean }
-interface Ring { x: number; y: number; step: number }
+interface Ghost { x: number; y: number; kind: number; step: number; compost: boolean; lv: number }
+interface Ring { x: number; y: number; step: number; lv: number }
 /** A thread from a feeding mouth to the cell it fed on, by serial numbers (slots only to find them again quickly). */
 interface Thread { mc: number; pc: number; ms: number; ps: number; lvl: number; prv: number; seen: boolean }
 
@@ -435,10 +485,12 @@ const LV_DOWN = [4, 6, 6, 3, 3, 3, 5];
 const SIP = [0.72, 0.9, 1] as const;
 const BITE = [1, 0.42, 0.22] as const;
 /** Two more levels kept apart (stride NLX): how leaf-like a cell is, and the light it stands in; the light moves slowly, so a day sweeping over a leaf is a gradual brightening. */
-const NLX = 2;
-const LX_LEAF = 0, LX_LIT = 1;
-const LX_UP = [3, 12];
-const LX_DOWN = [3, 12];
+const NLX = 4;
+// LX_DEEP: with depth, how high the cell's body is (0 the floor, 1 the surface), eased so a body rises and sinks over some steps.
+// LX_PULSE: with the inner pulse, the cell's signal A (-1 to 1), eased a little so a wave along a body reads as moving light.
+const LX_LEAF = 0, LX_LIT = 1, LX_DEEP = 2, LX_PULSE = 3;
+const LX_UP = [3, 12, 7, 1.2];
+const LX_DOWN = [3, 12, 7, 1.2];
 /** Leaf income (matter a step in full light) at which a leaf shows its fullest glow; less shows proportionally less. */
 const LEAF_GLOW = 1;
 const RING_STEPS = 14;
@@ -558,7 +610,18 @@ export class SoftPaintMemory {
   lvCid = new Uint32Array(0);
   feedT = new Uint8Array(0);
   hitT = new Uint8Array(0);
+  /**
+   * With depth. `layers`: per pixel and level, a record as `field` (strongest, second strongest, colour, shell share, damage) of the bodies drawn on that level, zero between frames.
+   * `lvl`: per pixel, while stamping the levels that hold something there (bit k for level k); after the compose, the level plus one of the body that shows there (0: the ground).
+   * `drawLv`: per slot, the level the cell's body is drawn on this frame. `shade`: per tile and level under the surface, the shadow of what is above.
+   */
+  layers = new Float32Array(0);
+  lvl = new Uint8Array(0);
+  drawLv = new Uint8Array(0);
+  shade = new Float32Array(0);
   preyT = new Uint8Array(0);
+  /** With depth: how many tiles up the screen one level is drawn in the frame being painted (0 straight down). */
+  slant = 0;
   seenStep = -1;
   /** The sky: per tile column the day's light (0..1, the band) at the step before the last and at the last, the year's light (0..1) at each, and per pixel block of the frame what it does to the ground. */
   dayA = new Float32Array(0);
@@ -636,7 +699,7 @@ export class SoftPaintMemory {
       }
     }
     // The deaths of the step just done are still in the world's events, even at a first look.
-    if (world.step > 0) for (const d of world.events.deaths) this.ghosts.push({ x: d.x / U, y: d.y / U, kind: d.kind, step: world.step, compost: world.cfg.compost === true });
+    if (world.step > 0) for (const d of world.events.deaths) this.ghosts.push({ x: d.x / U, y: d.y / U, kind: d.kind, step: world.step, compost: world.cfg.compost === true, lv: d.lv });
     this.rememberAnchors(world);
     this.observeKinds(world, this.seenStep < 0 || world.step < this.seenStep, Math.max(1, Math.min(60, world.step - this.seenStep)));
     this.seenStep = world.step;
@@ -656,7 +719,7 @@ export class SoftPaintMemory {
   private observeKinds(world: SoftRoamWorld, snap: boolean, dt: number): void {
     const crack = world.cfg.crack ?? 0;
     // What the step just done did (the kernel's own events: a first step counts like any other).
-    if (world.step > 0) for (const e of world.events.cracks) this.rings.push({ x: e.x / U, y: e.y / U, step: world.step });
+    if (world.step > 0) for (const e of world.events.cracks) this.rings.push({ x: e.x / U, y: e.y / U, step: world.step, lv: e.lv ?? 0 });
     this.feedT.fill(0);
     this.preyT.fill(0);
     this.hitT.fill(0);
@@ -683,13 +746,16 @@ export class SoftPaintMemory {
     }
     this.threads = this.threads.filter((th) => th.seen || th.lvl > 0.01);
     const tgt = [0, 0, 0, 0, 0, 0, 0];
-    const tx2 = [0, 0];
+    const tx2 = [0, 0, 0, 0];
+    const pulse = world.cfg.pulse === true;
+    const levels = world.cfg.depth ?? 0;
     const sunny = world.cfg.day !== undefined && world.cfg.leaf !== undefined;
+    const born: number[] = [];
     for (let c = 0; c < world.cap; c++) {
       if (!world.alive[c]) continue;
       const o = c * NLV;
       let fresh = snap;
-      if (this.lvCid[c] !== world.cid[c]) { this.lvCid[c] = world.cid[c]; fresh = true; }
+      if (this.lvCid[c] !== world.cid[c]) { this.lvCid[c] = world.cid[c]; fresh = true; if (!snap && levels > 0 && world.mother[c] >= 0) born.push(c); }
       const kind = world.kind[c];
       tgt[LV_HIT] = this.hitT[c];
       tgt[LV_FEED] = this.feedT[c];
@@ -701,6 +767,8 @@ export class SoftPaintMemory {
       tx2[0] = kind === KIND_LEAF ? 1 : 0;
       // How lit a leaf looks is what the kernel actually paid it this step (LEAF_GLOW or more shows full; 0 shows none), so a leaf in light on an empty reservoir stays dark.
       tx2[1] = sunny && kind === KIND_LEAF ? Math.min(1, world.leafPaid[c] / LEAF_GLOW) : 0;
+      tx2[2] = levels > 0 ? world.level[c] / (levels - 1) : 0;
+      tx2[3] = pulse ? world.sigA[c] / 127 : 0;
       for (let j = 0; j < NLX; j++) {
         const q = c * NLX + j;
         const cur = fresh ? tx2[j] : this.lxCur[q];
@@ -714,6 +782,13 @@ export class SoftPaintMemory {
         const k = 1 - Math.exp(-dt / (tgt[j] > cur ? LV_UP[j] : LV_DOWN[j]));
         this.lvCur[o + j] = fresh ? tgt[j] : cur + (tgt[j] - cur) * k;
       }
+    }
+    // A daughter born while her mother is rising or sinking starts at her mother's drawn height, not at the level itself (she would jump).
+    for (const c of born) {
+      const m = world.mother[c];
+      if (!world.alive[m] || this.lvCid[m] !== world.cid[m]) continue;
+      this.lxCur[c * NLX + LX_DEEP] = this.lxCur[m * NLX + LX_DEEP];
+      this.lxPrv[c * NLX + LX_DEEP] = this.lxPrv[m * NLX + LX_DEEP];
     }
   }
 
@@ -890,6 +965,10 @@ export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: num
     mem.py[pending[k]] = pending[k + 2];
   }
   pending.length = 0;
+  // With depth the garden is slanted: a cell is drawn up the screen by its drawn height (the ground and the plain picture stay put).
+  const levels = world.cfg.depth ?? 0;
+  mem.slant = paint === 'garden' && levels > 0 ? DEEP_SLANT : 0;
+  if (mem.slant > 0) for (const c of cells) mem.py[c] = wrapTo(mem.py[c] - mem.slant * levelX(mem, c, LX_DEEP, alpha) * (levels - 1), s);
   if (paint === 'plain') paintPlain(world, scale, alpha, out, mem, cells);
   else paintGarden(world, scale, alpha, out, mem, cells);
 }
@@ -938,6 +1017,8 @@ function cellTint(world: SoftRoamWorld, c: number, full: number, rgb: Float32Arr
   rgb[2] = pl * PLAIN[2] + sh * sb + mo * mb + lf * (0.2 - 0.04 * ll);
   let lit = pl * (0.5 + 0.5 * Math.min(1, world.store[c] / full)) + sh * 0.85 + mo * (0.8 + 0.6 * feed) + lf * (0.45 + 0.75 * ll);
   lit *= 1 - 0.5 * prey;
+  // Inner pulse: the cell's signal shows as light, brighter above 0 and dimmer below, so a wave passing along a body can be seen.
+  if (world.cfg.pulse === true) lit *= 1 + PULSE_LIGHT * levelX(mem, c, LX_PULSE, alpha);
   if (hit > 0) {
     const fl = hit * (1 - 0.5 * dmg);
     rgb[0] += (1 - rgb[0]) * 0.3 * fl; rgb[1] += (1 - rgb[1]) * 0.3 * fl; rgb[2] += (1 - rgb[2]) * 0.28 * fl;
@@ -946,7 +1027,18 @@ function cellTint(world: SoftRoamWorld, c: number, full: number, rgb: Float32Arr
   return lit;
 }
 
+/** Inner pulse: how much brighter or dimmer a cell is at the ends of its signal. */
+const PULSE_LIGHT = 0.3;
 const tintBuf = new Float32Array(3);
+/** With depth: a floor body's cells are this share of a surface body's in size and in brightness. */
+const DEEP_SIZE = 0.78, DEEP_DIM = 0.66;
+const DEEP_SHADOW = 0.6;
+/** The slanted garden: tiles up the screen per level. Everything of level k (bodies, marks, the shadows that fall on it) is drawn k times this above its true place. */
+export const DEEP_SLANT = 1.5;
+/** Slanted: what the bare floor gets on top of the haze, and how much of the ground's light a full shadow takes. */
+const DEEP_FLOOR = [0.034, 0.04, 0.05];
+const DEEP_FLOOR_SHADOW = 0.85;
+const wrapTo = (v: number, s: number): number => ((v % s) + s) % s;
 
 function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[]): void {
   const s = world.size;
@@ -955,6 +1047,17 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
   const { field, acc, haze, glow, busy } = mem;
   busy.fill(0);
   const n = world.n;
+  // ---- Depth: bodies on a lower level are drawn smaller, dimmer and bluer, under the bodies above, which cast a shadow on them and on the ground.
+  const Lv = world.cfg.depth ?? 0;
+  if (Lv > 0) {
+    if (mem.lvl.length !== side * side || mem.layers.length !== side * side * 7 * Lv) { mem.layers = new Float32Array(side * side * 7 * Lv); mem.lvl = new Uint8Array(side * side); }
+    else mem.lvl.fill(0);
+    if (mem.drawLv.length !== world.cap) mem.drawLv = new Uint8Array(world.cap);
+    if (mem.shade.length !== n * (Lv - 1)) mem.shade = new Float32Array(n * (Lv - 1));
+    else mem.shade.fill(0);
+  }
+  const { layers, lvl, drawLv, shade } = mem;
+  const slant = mem.slant;
   // ---- Low-resolution layers at tile centres: food haze (eased over time) and the wide soft glow.
   const fs = mem.foodTmp;
   for (let i = 0; i < n; i++) fs[i] = mem.foodPrev[i] + (mem.foodShown[i] - mem.foodPrev[i]) * alpha;
@@ -972,6 +1075,8 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     haze[i * 3 + 1] = 0.01 + 0.15 * f;
     haze[i * 3 + 2] = 0.04 + 0.46 * f;
   }
+  // Slanted: the floor is a little paler, so the shadows that fall on it show.
+  if (slant > 0) for (let i = 0; i < n; i++) { haze[i * 3] += DEEP_FLOOR[0]; haze[i * 3 + 1] += DEEP_FLOOR[1]; haze[i * 3 + 2] += DEEP_FLOOR[2]; }
   glow.fill(0);
   const splat = (cx: number, cy: number, rad: number, r: number, g: number, b: number): void => {
     const x0 = Math.floor(cx - rad - 0.5), x1 = Math.ceil(cx + rad - 0.5);
@@ -988,6 +1093,22 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
         const wx = tx < 0 ? tx + s : tx >= s ? tx - s : tx;
         const k = (wy * s + wx) * 3;
         glow[k] += r * w; glow[k + 1] += g * w; glow[k + 2] += b * w;
+      }
+    }
+  };
+  const splatShade = (k: number, cx: number, cy: number, rad: number, w: number): void => {
+    const x0 = Math.floor(cx - rad - 0.5), x1 = Math.ceil(cx + rad - 0.5);
+    const y0 = Math.floor(cy - rad - 0.5), y1 = Math.ceil(cy + rad - 0.5);
+    const inv = 1 / (rad * rad);
+    const base = k * n;
+    for (let ty = y0; ty <= y1; ty++) {
+      const dy = ty + 0.5 - cy;
+      const wy = ((ty % s) + s) % s;
+      for (let tx = x0; tx <= x1; tx++) {
+        const dx = tx + 0.5 - cx;
+        const q = 1 - (dx * dx + dy * dy) * inv;
+        if (q <= 0) continue;
+        shade[base + wy * s + (((tx % s) + s) % s)] += w * q * q;
       }
     }
   };
@@ -1046,20 +1167,69 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
       }
     }
   };
+  // With depth: a body's field goes into the record of the level it is drawn on, so what shows at a pixel never depends on the order bodies are stamped in.
+  const mergeDeep = (cx: number, cy: number, rad: number, lv: number): void => {
+    const x0 = Math.floor((cx - rad) * scale), x1 = Math.ceil((cx + rad) * scale);
+    const y0 = Math.floor((cy - rad) * scale), y1 = Math.ceil((cy + rad) * scale);
+    const bit = 1 << lv;
+    for (let yy = y0; yy <= y1; yy++) {
+      const wy = yy < 0 ? yy + side : yy >= side ? yy - side : yy;
+      for (let xx = x0; xx <= x1; xx++) {
+        const wxp = xx < 0 ? xx + side : xx >= side ? xx - side : xx;
+        const idx = wy * side + wxp;
+        const k = idx * 6;
+        const f = acc[k];
+        if (f <= 0) continue;
+        const m = (idx * Lv + lv) * 7;
+        lvl[idx] |= bit;
+        if (f > layers[m]) {
+          const inv = 1 / f;
+          layers[m + 1] = layers[m];
+          layers[m] = f;
+          layers[m + 2] = acc[k + 1] * inv; layers[m + 3] = acc[k + 2] * inv; layers[m + 4] = acc[k + 3] * inv; layers[m + 5] = acc[k + 4] * inv; layers[m + 6] = acc[k + 5] * inv;
+        } else if (f > layers[m + 1]) layers[m + 1] = f;
+        acc[k] = 0; acc[k + 1] = 0; acc[k + 2] = 0; acc[k + 3] = 0; acc[k + 4] = 0; acc[k + 5] = 0;
+      }
+    }
+  };
   while (lo < total) {
     const label = world.body[order[lo]];
     let hi = lo;
     while (hi < total && world.body[order[hi]] === label) hi++;
+    // With depth: the level the body is drawn on is the one it has reached or is on its way down from (its drawn height, rounded up, the highest
+    // of its cells), so a body still gliding down is still over and still shades what it was over, and one gliding up joins a level only as it gets there.
+    let bodyLv = 0;
+    if (Lv > 0) {
+      for (let q = lo; q < hi; q++) { const v = Math.ceil(levelX(mem, order[q], LX_DEEP, alpha) * (Lv - 1) - 0.02); if (v > bodyLv) bodyLv = v; }
+      if (bodyLv > Lv - 1) bodyLv = Lv - 1;
+      for (let q = lo; q < hi; q++) drawLv[order[q]] = bodyLv;
+    }
     for (let q = lo; q < hi; q++) {
       const c = order[q];
       const g = mem.grow[c];
       const lit = cellTint(world, c, full, tintBuf, mem, alpha);
-      const e = ease(g);
-      const rad = FIELD_R * (0.35 + 0.65 * e);
+      let e = ease(g);
+      let rad = FIELD_R * (0.35 + 0.65 * e);
+      const amp = 0.6 + 0.4 * e;
+      if (Lv > 0) {
+        // How high the body is, eased: lower is smaller, dimmer and bluer, and what is above a level shades it, further off the higher it is.
+        const h = levelX(mem, c, LX_DEEP, alpha);
+        const hh = h * (Lv - 1);
+        rad *= DEEP_SIZE + (1 - DEEP_SIZE) * h;
+        const dim = DEEP_DIM + (1 - DEEP_DIM) * h;
+        tintBuf[0] *= dim * (0.82 + 0.18 * h); tintBuf[1] *= dim * (0.93 + 0.07 * h); tintBuf[2] *= dim;
+        // Only onto the levels under the one it is drawn on (the one whose light it gets), so it never shades itself.
+        for (let k = 0; k < bodyLv; k++) {
+          const up = hh - k;
+          // Slanted: the light comes straight down, so the shadow is at the body's own place on the level it falls on (drawn `up` levels lower on the screen). Straight down: a little off to one side.
+          if (up > 0.02) splatShade(k, mem.px[c] + (slant > 0 ? 0 : 0.35 * up), mem.py[c] + (slant > 0 ? slant : 0.5) * up, 1.25, 0.9 * Math.min(1, up) * e);
+        }
+        e *= dim;
+      }
       const shl = Math.min(1, level(mem, c, LV_SHELL, alpha));
       const mol = Math.min(1, level(mem, c, LV_MOUTH, alpha));
       const feed = level(mem, c, LV_FEED, alpha), hit = level(mem, c, LV_HIT, alpha);
-      stamp(mem.px[c], mem.py[c], rad, 0.6 + 0.4 * e, tintBuf[0] * lit, tintBuf[1] * lit, tintBuf[2] * lit, shl, shl * level(mem, c, LV_DMG, alpha));
+      stamp(mem.px[c], mem.py[c], rad, amp, tintBuf[0] * lit, tintBuf[1] * lit, tintBuf[2] * lit, shl, shl * level(mem, c, LV_DMG, alpha));
       splat(mem.px[c], mem.py[c], GLOW_R, 0.2 * tintBuf[0] * lit * e, 0.2 * tintBuf[1] * lit * e, 0.2 * tintBuf[2] * lit * e);
       // A mouth's own glow: faint at rest, the full warm glow while it feeds (chunk 4).
       if (mol > 0.001) { const w8 = 0.35 + 0.65 * Math.min(1, feed); splat(mem.px[c], mem.py[c], GLOW_R, 0.3 * e * mol * w8, 0.06 * e * mol * w8, 0.04 * e * mol * w8); }
@@ -1073,7 +1243,8 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     for (let q = lo; q < hi; q++) {
       const c = order[q];
       const e = ease(mem.grow[c]);
-      merge(mem.px[c], mem.py[c], FIELD_R * (0.35 + 0.65 * e));
+      if (Lv > 0) mergeDeep(mem.px[c], mem.py[c], FIELD_R * (0.35 + 0.65 * e), bodyLv);
+      else merge(mem.px[c], mem.py[c], FIELD_R * (0.35 + 0.65 * e));
     }
     lo = hi;
   }
@@ -1087,8 +1258,10 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     const fade = (1 - t) * (1 - t);
     const rad = FIELD_R * (1 - 0.35 * t) + 0.3;
     const lit = 0.5 * fade;
-    if (gh.kind === KIND_MOUTH) splat(gh.x, gh.y, rad, 1 * lit, 0.3 * lit, 0.25 * lit);
-    else splat(gh.x, gh.y, rad, 0.8 * lit, 0.86 * lit, 0.82 * lit);
+    // The ghost stays at the height the cell died at; its compost falls on the ground under it.
+    const ghy = slant > 0 ? wrapTo(gh.y - slant * gh.lv, s) : gh.y;
+    if (gh.kind === KIND_MOUTH) splat(gh.x, ghy, rad, 1 * lit, 0.3 * lit, 0.25 * lit);
+    else splat(gh.x, ghy, rad, 0.8 * lit, 0.86 * lit, 0.82 * lit);
     if (gh.compost) {
       const puff = Math.sin(Math.PI * Math.min(1, t * 1.15)) * 0.55;
       if (puff > 0) splat(gh.x, gh.y, 1.3 + 1.2 * t, 0.1 * puff, 0.5 * puff, 1.0 * puff);
@@ -1102,6 +1275,32 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
   if (sky) mem.prepareSky(world, alpha);
   const T = THRESH;
   const grd = [0, 0, 0];
+  // With depth: one body's record (in `buf` at m) laid over what is in grd, its colour times `mul`; returns how far inside the body the pixel is.
+  const over = (buf: Float32Array, m: number, mul: number): number => {
+    const F = buf[m] - buf[m + 1];
+    const sh = buf[m + 5];
+    const dm = sh > 0 ? Math.min(1, buf[m + 6] / sh) : 0;
+    const inside = smooth(T - 0.05, T + 0.05, F);
+    const rimW = 0.1 + 0.2 * sh;
+    const rz = (F - T - 0.1) / rimW;
+    const rq = 1 / (1 + rz * rz * 1.2);
+    const rim = rq * rq * (1 + 0.8 * sh);
+    const k = inside * (0.62 + 0.38 * smooth(T + 0.2, T + 1.2, F));
+    const cr = buf[m + 2], cg = buf[m + 3], cb = buf[m + 4];
+    const dk = 1 - 0.55 * dm;
+    const pr = (0.4 + 0.6 * cr) * (1 - sh) + sh * BONE[0] * dk;
+    const pg = (0.4 + 0.6 * cg) * (1 - sh) + sh * BONE[1] * (dk - 0.05 * dm);
+    const pb = (0.4 + 0.6 * cb) * (1 - sh) + sh * BONE[2] * (dk - 0.12 * dm);
+    const rimK = (0.36 + 0.4 * sh) * rim * inside;
+    const halo = 0.12 * rim * (1 - inside);
+    grd[0] = grd[0] * (1 - inside) + mul * (cr * k + rimK * pr + halo);
+    grd[1] = grd[1] * (1 - inside) + mul * (cg * k + rimK * pg + halo);
+    grd[2] = grd[2] * (1 - inside) + mul * (cb * k + rimK * pb + halo);
+    buf[m] = 0; buf[m + 1] = 0; buf[m + 2] = 0; buf[m + 3] = 0; buf[m + 4] = 0; buf[m + 5] = 0; buf[m + 6] = 0;
+    return inside;
+  };
+  // The light left under what is above, per level under the surface, at the block being drawn (the surface is never shaded).
+  const lightAt = [1, 1, 1, 1];
   for (let iy = 0; iy < side; iy += 2) {
     const v = ((iy & ~1) + 1) / scale - 0.5;
     const j0 = Math.floor(v);
@@ -1129,6 +1328,20 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
       let hg = hazeRowA[o + 1] + (hazeRowB[o + 1] - hazeRowA[o + 1]) * fy;
       let hb = hazeRowA[o + 2] + (hazeRowB[o + 2] - hazeRowA[o + 2]) * fy;
       if (sky) { hr = hr * mem.mulR[ix] + mem.addR[ix]; hg = hg * mem.mulG[ix] + mem.addG[ix]; hb = hb * mem.mulB[ix] + mem.addB[ix]; }
+      if (Lv > 0) {
+        const ra = (((j0 % s) + s) % s) * s, rb = ((((j0 + 1) % s) + s) % s) * s;
+        const xa = x0[ix], xb = x1[ix], w = wx[ix];
+        for (let k = 0; k < Lv - 1; k++) {
+          const q = k * n;
+          const a = shade[q + ra + xa] + (shade[q + ra + xb] - shade[q + ra + xa]) * w;
+          const b = shade[q + rb + xa] + (shade[q + rb + xb] - shade[q + rb + xa]) * w;
+          const v = a + (b - a) * fy;
+          lightAt[k] = 1 - DEEP_SHADOW * (v > 1 ? 1 : v);
+        }
+        // The ground under a body in the slanted garden is darker than a body in the same shadow, so a body's height reads from its shadow.
+        const gl = slant > 0 ? 1 - (1 - lightAt[0]) * (DEEP_FLOOR_SHADOW / DEEP_SHADOW) : lightAt[0];
+        hr *= gl; hg *= gl; hb *= gl;
+      }
       const gr = glowRowA[o] + (glowRowB[o] - glowRowA[o]) * fy;
       const gg = glowRowA[o + 1] + (glowRowB[o + 1] - glowRowA[o + 1]) * fy;
       const gb = glowRowA[o + 2] + (glowRowB[o + 2] - glowRowA[o + 2]) * fy;
@@ -1152,8 +1365,20 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
           const p = idx * 4;
           const m = idx * 7;
           const best = isBusy ? field[m] : 0;
-          if (best <= 0) { out[p] = gR; out[p + 1] = gG; out[p + 2] = gB; out[p + 3] = 255; continue; }
+          if (best <= 0 && (Lv === 0 || !isBusy || lvl[idx] === 0)) { out[p] = gR; out[p + 1] = gG; out[p + 2] = gB; out[p + 3] = 255; continue; }
           grd[0] = hr; grd[1] = hg; grd[2] = hb;
+          if (Lv > 0) {
+            // From the floor up, each level's body in the light that level gets; the level that shows is kept for the marks drawn afterwards.
+            let shows = 0;
+            const bits = lvl[idx];
+            for (let k = 0; k < Lv; k++) if ((bits & (1 << k)) !== 0 && over(layers, (idx * Lv + k) * 7, k < Lv - 1 ? lightAt[k] : 1) > 0.5) shows = k + 1;
+            lvl[idx] = shows;
+            out[p] = GAMMA[Math.min(GAMMA_N - 1, ((grd[0] + gr) * GAMMA_STEP) | 0)];
+            out[p + 1] = GAMMA[Math.min(GAMMA_N - 1, ((grd[1] + gg) * GAMMA_STEP) | 0)];
+            out[p + 2] = GAMMA[Math.min(GAMMA_N - 1, ((grd[2] + gb) * GAMMA_STEP) | 0)];
+            out[p + 3] = 255;
+            continue;
+          }
           const F = best - field[m + 1];
           const sh = field[m + 5];
           const dm = sh > 0 ? Math.min(1, field[m + 6] / sh) : 0;
@@ -1185,8 +1410,18 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     }
   }
   // ---- Mother links as soft strands, brighter where the two stores differ.
-  drawLinks(world, scale, out, mem, cells, full, 'garden');
-  drawKinds(world, scale, alpha, out, mem, cells);
+  // With depth, a cell under a body drawn on a higher level gets no marks (they would show on the body above).
+  let shown = cells;
+  if (Lv > 0) {
+    shown = [];
+    for (const c of cells) {
+      const ix = Math.min(side - 1, Math.floor(mem.px[c] * scale)), iy = Math.min(side - 1, Math.floor(mem.py[c] * scale));
+      if (lvl[iy * side + ix] <= drawLv[c] + 1) shown.push(c);
+    }
+  }
+  const only = Lv > 0 ? new Set(shown) : undefined;
+  drawLinks(world, scale, out, mem, shown, full, 'garden', only);
+  drawKinds(world, scale, alpha, out, mem, shown, only);
 }
 
 /**
@@ -1226,7 +1461,7 @@ function stroke(out: Uint8ClampedArray | Uint8Array, scale: number, side: number
 }
 
 /** Fracture lines on damaged shells, a thread from each feeding mouth to its prey, and the broken ring of a fresh crack. */
-function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[]): void {
+function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[], only?: Set<number>): void {
   const s = world.size;
   const side = s * scale;
   const half = s / 2;
@@ -1281,6 +1516,8 @@ function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint
   }
   // Feeding threads: a thin red line from the mouth to the cell it feeds on, brighter at the mouth end.
   for (const th of mem.threads) {
+    // With depth: no thread to or from a cell that is under a higher body.
+    if (only !== undefined && !(only.has(th.ms) && only.has(th.ps))) continue;
     const lvl = th.prv + (th.lvl - th.prv) * alpha;
     const m = th.ms, p = th.ps;
     if (lvl < 0.02 || !world.alive[m] || !world.alive[p] || world.cid[m] !== th.mc || world.cid[p] !== th.pc) continue;
@@ -1322,14 +1559,14 @@ function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint
       const th0 = (2 * Math.PI * k) / N, th1 = (2 * Math.PI * (k + 1)) / N;
       // Gaps where a slow wave dips: the ring looks broken, not drawn.
       if (Math.sin(3 * (th0 + th1) / 2 + spin) < -0.25) continue;
-      const x0 = rg.x + rad * Math.cos(th0), y0 = rg.y + rad * Math.sin(th0);
+      const x0 = rg.x + rad * Math.cos(th0), y0 = rg.y - mem.slant * rg.lv + rad * Math.sin(th0);
       stroke(out, scale, side, ((x0 % s) + s) % s, ((y0 % s) + s) % s, rad * (Math.cos(th1) - Math.cos(th0)), rad * (Math.sin(th1) - Math.sin(th0)), sigma * 1.4, 0.8 * a, false, BONE[0], BONE[1], BONE[2]);
     }
   }
 }
 
 /** Mother links drawn straight into the picture (bytes), after the rest. */
-function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[], full: number, paint: SoftPaint): void {
+function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[], full: number, paint: SoftPaint, only?: Set<number>): void {
   const s = world.size;
   const side = s * scale;
   const half = s / 2;
@@ -1338,6 +1575,8 @@ function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray |
   for (const c of cells) {
     const m = world.mother[c];
     if (m < 0 || !world.alive[m]) continue;
+    // With depth: no strand to a mother that is under a higher body (it would show on the body above).
+    if (only !== undefined && !only.has(m)) continue;
     let dx = mem.px[m] - mem.px[c];
     let dy = mem.py[m] - mem.py[c];
     if (dx > half) dx -= s; else if (dx < -half) dx += s;

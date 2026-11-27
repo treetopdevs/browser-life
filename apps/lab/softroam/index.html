@@ -55,6 +55,7 @@
       <label>Seed <input id="seed" type="number" min="0" value="1" /></label>
       <label>Start <select id="start">
         <option value="bodies" selected>big bodies: the seasons with bodies of 21 to 25 cells that heal; armoured herds, groves and pack hunters that turn as one after prey, and a winter that costs</option>
+        <option value="deep">depth: the big bodies in a world of three levels (floor, mid-water, surface); bodies meet only on their own level, food is on the floor and light comes from above</option>
         <option value="seasons">the seasons: a sun that sweeps round every day and a year that swings from lean to rich; armoured grazers, green leaf bushes, hunters that see prey, and plates</option>
         <option value="garden">the garden: lines, plates, crosses, blocks, specks and bushes, some armoured, some hunting</option>
         <option value="grown-all">plain: lines, plates, crosses, blocks, specks (one cell) and bushes, no shells or mouths</option>
@@ -82,7 +83,8 @@
         <option value="400">fastest: 400</option>
       </select></label>
       <label>Look <select id="paint">
-        <option value="garden" selected>garden: soft glowing bodies, blue haze is food</option>
+        <option value="garden" selected>garden: soft glowing bodies, blue haze is food; with levels, higher bodies are drawn further up the screen and their shadows fall under them</option>
+        <option value="top">garden from straight above: the same, with every level drawn at its true place</option>
         <option value="plain">plain: a disc per cell and a line from each daughter to her mother, for checking</option>
       </select></label>
     </div>
@@ -106,6 +108,8 @@
       <div><dt>Light</dt><dd id="r-light">-</dd></div>
       <div><dt>Cells by kind</dt><dd id="r-kinds">-</dd></div>
       <div><dt>Hunting and fleeing</dt><dd id="r-chase">-</dd></div>
+      <div><dt>Levels</dt><dd id="r-levels">-</dd></div>
+      <div><dt>Inner pulse</dt><dd id="r-pulse">-</dd></div>
       <div><dt>Matter check</dt><dd id="r-res">balanced</dd></div>
     </dl>
   </main>

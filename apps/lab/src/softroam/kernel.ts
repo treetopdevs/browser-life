@@ -82,6 +82,36 @@
  * in 256ths, held to 0..256, and the body thrusts at 256 - (256 - pace) q / 256 (in 256ths, floored): full speed at minStore, `pace` of it when
  * ready to divide. With `steer`, a body that has an aim is never slowed. `shellThrust` (share 0 to 1): a shell cell thrusts at this share. Both
  * scale the thrust before it is paid for, so a slower cell pays less; sealed cells are untouched.
+ * Depth (2026-11-26; every key optional and absent from every start before it, so those worlds run the old path with no new draw). `depth`
+ * (2 to 4) gives the top-down world that many levels, 0 the floor and depth - 1 the surface. A body is on one level (kept in every cell, as
+ * the heading is). Cells of different bodies push, block, touch, grip and crowd each other only on the same level, and a birth spot is
+ * blocked only by cells of the mother's level; sight and fear see through every level. Ground food and compost are on the floor: only
+ * level 0 cells eat from the ground, and a dead cell's store falls to the tile under it. Light comes from above: a leaf's light is the
+ * tile's light less `depthDim` of it for each level under the surface, then less `depthShade` of what is left for each cell (of any kind,
+ * at most 8) whose centre is on its tile on a higher level; leaves share a tile's light only with leaves of their own level. Each cell
+ * carries a heritable `lift` (0 to 255, copied with the gene chance and a step of 32); a body's home level is floor(mean lift * depth / 256), from the exact mean.
+ * In the commands stage each unsealed body picks the level it wants (with `steer`: the level of the prey it aims at; when fleeing, off the
+ * threat's level, toward home if home is elsewhere, else up, else down, and staying put while the threat is on another level; otherwise
+ * by hunger: the floor while its cells hold on average less than `depthDive` birth stores, where it is while they hold less than twice
+ * that (a cell divides at two birth stores, so a body rises only once it has stopped growing and filled up), else home) and moves one level toward it, at most once in `depthGap` steps, every cell paying `depthCost` (or what it has) to the reservoir.
+ * (With `pace`, that cost is paid before the body's store is read for its pace.)
+ * The census adds `levels` (cells per level) and `levelMoves`.
+ * Inner pulse (2026-11-26; every key optional and absent from every start before it). With `pulse` each cell carries two signals A and B
+ * (-127 to 127, both 0 at a founder; a daughter starts with her mother's) and a heritable network of 4 rows of 10 weights (-127 to 127). In
+ * the commands stage, after the levels and before the pace, every cell reads ten inputs as the step starts: 127; its own A and B; its
+ * mother's A and B (0 without one); the truncated means of its daughters' A and B (0 without any); how full it is ((store - minStore) * 254 /
+ * (2 birthStore - minStore) - 127, held to -127..127); the stretch of the bond to its mother ((length - L) * 254 / L, held to -127..127, 0 without
+ * one); and its body's aim (with `steer`: 127 hunting, -127 fleeing, else 0). Each row gives trunc(sum of weight * input / 64) held to -127..127:
+ * row 0 is the cell's next A, row 1 its next B, row 2 its go, row 3 its flex. All cells read the signals of the step before and the new ones
+ * are written together, so a signal crosses one bond a step and no order matters. There is no clock and no gene for a rhythm: a beat is
+ * whatever the weights and the bonds make. Go scales the cell's thrust, at the point `pace` and `shellThrust` do and after them, to
+ * 256 - floor(pulseThrust * (127 - go) / 254) 256ths (`pulseThrust` in 256ths, default a half): never more than the thrust it had, and a
+ * slower cell pays less. Flex changes the rest length of the cell's springs for this step's mechanics: a bond or a brace between a and b
+ * rests at rest + trunc(rest * pulseFlex * (flex a + flex b) / (254 * 256)) (`pulseFlex` in 256ths, 0 to a half, default a quarter).
+ * Springs act equally on both ends, so flex alone bends and squeezes a body and gives it no push of its own (rounding and the speed clamp, which act on each cell, can leave a small drift); it costs nothing. A daughter
+ * copies her mother's weights and, with chance `pulseMut` (default 0.1), one of them moves by 16. A founder made with `found` starts with the
+ * still network (every weight 0 but the one from the 127 to go, at 64: full thrust, no flex, no signal), under which the world moves exactly as without `pulse`;
+ * `setPulse` gives a one-cell founder another. The census adds `pulsing` (live cells whose A or B moved by 8 or more in the last stage) and `pulseGo`.
  *
  * Where Soft Roam differs from Roam, on purpose (recorded here because the contract's "carried over" is looser):
  * - The scent field has Roam's reach but not its numbers. Roam relaxes 4 passes a step with 1/2048 lost per pass and adds 64 per unit of food
@@ -280,6 +310,26 @@ export interface SoftRoamConfig {
   pace?: number;
   /** Chunk 4. Share (0 to 1) of the usual thrust a shell cell gives: armour is heavy. Needs kinds. */
   shellThrust?: number;
+  /** Depth. Whole, 2 to 4: the levels of the world, 0 the floor (ground food) and depth - 1 the surface (full light). Bodies meet only on the same level. */
+  depth?: number;
+  /** Whole, 1 to 2^20 (default 40): a body changes level at most once in this many steps. Needs depth. */
+  depthGap?: number;
+  /** Whole, 0 to 64 (default 1): matter each cell of a body pays to the reservoir when the body changes level. Needs depth. */
+  depthCost?: number;
+  /** In birth stores (0 to 4, default 1; 0 is never): a body whose cells hold less than this on average goes to the floor to feed, and stays where it is until they hold twice it. Needs depth. */
+  depthDive?: number;
+  /** Share (0 to 1, default 0.25) of a tile's light lost for each level under the surface. Needs depth. */
+  depthDim?: number;
+  /** Share (0 to 1, default 0.25) of the light left that each cell above on the same tile takes. Needs depth. */
+  depthShade?: number;
+  /** Inner pulse: each cell runs a small heritable network on local cues and two signals passed along its bonds; its outputs scale the cell's thrust and the rest length of its springs (see the header). */
+  pulse?: true;
+  /** Share (0 to 1, default 0.5): how much of its thrust a cell loses when its go output is at its lowest. Needs pulse. */
+  pulseThrust?: number;
+  /** Share (0 to 0.5, default 0.25): how far a spring's rest length moves when both its ends flex fully. Needs pulse. */
+  pulseFlex?: number;
+  /** Chance (0 to 1, default 0.1) that one weight of a daughter's network moves by 16. Needs pulse. */
+  pulseMut?: number;
 }
 
 export function defaultSoftRoamConfig(): SoftRoamConfig {
@@ -342,6 +392,22 @@ const CH_FEAR_A = 62;
 const CH_FEAR_B = 63;
 const CH_LEAF = 64;
 const CH_PATCH_SUN = 65;
+const CH_LIFT = 66;
+const CH_PULSE = 67;
+/** Most cells above a leaf that shade it. */
+const SHADE_MAX = 8;
+/** Inner pulse: inputs and outputs of a cell's network, and the weight that is a gain of one. */
+export const PULSE_IN = 10;
+export const PULSE_OUT = 4;
+export const PULSE_W = PULSE_IN * PULSE_OUT;
+export const PULSE_ONE = 64;
+const PULSE_STEP = 16;
+/** The still network: full thrust, no flex, no signal. */
+export function softPulseStill(): number[] {
+  const w = new Array<number>(PULSE_W).fill(0);
+  w[2 * PULSE_IN] = PULSE_ONE;
+  return w;
+}
 const CH_PAIR = 100; // + substep
 /** Velocity is only taken off contacts at least this near-touching (squared distance of three quarters of D); deeper overlaps may decompress freely. */
 const SHALLOW2 = (3 * D / 4) * (3 * D / 4);
@@ -461,6 +527,12 @@ export interface SoftRoamCensus {
   /** Chunk 3: bodies steering by one aim (as of the last commands stage); matter in the leaves' pool. */
   steering: number;
   leafPool: number;
+  /** Depth: live cells on each level (floor first; empty without depth), and level changes by bodies in all. */
+  levels: number[];
+  levelMoves: number;
+  /** Inner pulse: live cells whose A or B moved by 8 or more in the last commands stage, and the mean thrust share the go outputs gave (256ths; 256 without pulse). */
+  pulsing: number;
+  pulseGo: number;
 }
 
 /**
@@ -468,9 +540,9 @@ export interface SoftRoamCensus {
  * `deaths` give the cell's place in UNITS (0 to size * 1024), both where it died (x, y) and where it began the step
  * (fromX, fromY); `patches` give the patch centre in TILES (0 to size - 1); `births` list SLOTS; `cracks` give the shell's place in UNITS.
  */
-export interface SoftDeathEvent { x: number; y: number; fromX: number; fromY: number; kind: number; store: number }
+export interface SoftDeathEvent { x: number; y: number; fromX: number; fromY: number; kind: number; store: number; /** The level it was on (0 without depth). */ lv: number }
 /** A place: a patch's centre tile in tiles, a crack's shell in units. */
-export interface SoftPointEvent { x: number; y: number }
+export interface SoftPointEvent { x: number; y: number; /** With depth, for a crack: the level it happened on. */ lv?: number }
 /** A touch feeding that moved matter: the taker and the cell it took from, as slots (valid until the next step; check `cid`) and serial numbers. */
 export interface SoftFeedEvent { ms: number; ps: number; mc: number; pc: number }
 /** A shell that took at least one hit: its slot and serial number. */
@@ -626,6 +698,45 @@ export class SoftRoamWorld {
   private readonly shellThrustQ8: number;
   /** With pace: the total store of each body as the step starts, then its thrust share in 256ths (scratch, by label). */
   private readonly bodyPace: Float64Array;
+  /** Depth: the number of levels (0 when off), and the rule's numbers. */
+  private readonly depthN: number;
+  private readonly depthGapN: number;
+  private readonly depthCostN: number;
+  private readonly depthDimQ8: number;
+  /** A body dives when its mean store is under this, and holds its level under twice it. */
+  private readonly depthDiveN: number;
+  private readonly depthShadeQ8: number;
+  /** Per slot: the level of the cell's body, its heritable lift, and the step its body last changed level plus one (0 never). Empty without depth. */
+  readonly level: Uint8Array;
+  readonly lift: Uint8Array;
+  private readonly lvlStep: Uint32Array;
+  private readonly bodyLevel: Uint8Array;
+  private readonly bodyLvMoved: Uint8Array;
+  private readonly bodyLiftSum: Int32Array;
+  private readonly bodyLvStep: Uint32Array;
+  private readonly bodyStoreSum: Int32Array;
+  /** Cells whose centres are on a tile, by level (tile * depth + level); scratch of the leaf stage. */
+  private readonly lvlCount: Uint16Array;
+  private levelMoves = 0;
+  /** Inner pulse: on or off, the two shares in 256ths and the chance in 65536ths. */
+  private readonly pulseOn: boolean;
+  private readonly pulseThrustQ8: number;
+  private readonly pulseFlexQ8: number;
+  private readonly pulseMutQ16: number;
+  /** Per slot: the network (PULSE_W weights), the two signals, and the last stage's go and flex outputs. Empty without pulse. */
+  readonly pulseW: Int8Array;
+  readonly sigA: Int8Array;
+  readonly sigB: Int8Array;
+  readonly pulseGo: Int8Array;
+  readonly pulseFlex: Int8Array;
+  private readonly sigNextA: Int8Array;
+  private readonly sigNextB: Int8Array;
+  private readonly kidA: Int32Array;
+  private readonly kidB: Int32Array;
+  private readonly kidN: Int32Array;
+  /** Per slot: 1 when the cell's A or B moved by 8 or more in the last stage. */
+  private readonly pulseMoved: Uint8Array;
+  private readonly pulseIn = new Int32Array(PULSE_IN);
   private steering = 0;
   private readonly leafQ: number;
   private readonly sunPatch: boolean;
@@ -696,6 +807,8 @@ export class SoftRoamWorld {
   private contNx: Int32Array;
   private contNy: Int32Array;
   private newTargets: number[] = [];
+  /** With depth: the level of each of this step's birth spots (one per pair in `newTargets`). */
+  private newTargetLv: number[] = [];
   // Touch scratch: up to four chosen contacts per cell (slot or -1, with the pair hash that ranked it), stores as they were, and per-prey counts.
   private readonly selB: Int32Array;
   private readonly selH: Uint32Array;
@@ -833,6 +946,20 @@ export class SoftRoamWorld {
     this.paceQ8 = share8(cfg.pace, 'pace');
     if (cfg.shellThrust !== undefined && !cfg.kinds) throw new Error('shellThrust needs kinds');
     this.shellThrustQ8 = share8(cfg.shellThrust, 'shellThrust');
+    this.depthN = cfg.depth === undefined ? 0 : whole(cfg.depth, 'depth', 2, 4);
+    for (const k of ['depthGap', 'depthCost', 'depthDive', 'depthDim', 'depthShade'] as const) if (cfg[k] !== undefined && cfg.depth === undefined) throw new Error(`${k} needs depth`);
+    this.depthGapN = cfg.depthGap === undefined ? 40 : whole(cfg.depthGap, 'depthGap', 1, 1 << 20);
+    this.depthCostN = cfg.depthCost === undefined ? 1 : whole(cfg.depthCost, 'depthCost', 0, 64);
+    // The dive threshold per cell in 65536ths of a unit of matter (under 2^28), compared against a body's total without rounding.
+    this.depthDiveN = q16(cfg.depthDive ?? 1, 'depthDive', 4 * 65536) * cfg.birthStore;
+    this.depthDimQ8 = q16(cfg.depthDim ?? 0.25, 'depthDim') >>> 8;
+    this.depthShadeQ8 = q16(cfg.depthShade ?? 0.25, 'depthShade') >>> 8;
+    if (cfg.pulse !== undefined && cfg.pulse !== true) throw new Error('pulse is true or absent');
+    this.pulseOn = cfg.pulse === true;
+    for (const k of ['pulseThrust', 'pulseFlex', 'pulseMut'] as const) if (cfg[k] !== undefined && !this.pulseOn) throw new Error(`${k} needs pulse`);
+    this.pulseThrustQ8 = q16(cfg.pulseThrust ?? 0.5, 'pulseThrust') >>> 8;
+    this.pulseFlexQ8 = q16(cfg.pulseFlex ?? 0.25, 'pulseFlex', 32768) >>> 8;
+    this.pulseMutQ16 = q16(cfg.pulseMut ?? 0.1, 'pulseMut');
     this.shellBiteQ16 = cfg.shellBite === undefined ? 65536 : q16(cfg.shellBite, 'shellBite');
     const shellLeakQ16 = cfg.shellLeak === undefined ? 16384 : q16(cfg.shellLeak, 'shellLeak');
     // Roam's rule: a shell pays floor(leakSide * (1 + tough) * shellLeak) per exposed side (the product is below 2^34, so it is done here, in doubles).
@@ -876,7 +1003,29 @@ export class SoftRoamWorld {
     this.braceRest = new Int16Array(cap * 4);
     this.body = new Int32Array(cap);
     this.relRec = new Float64Array(cap);
-    this.leafOnTile = new Uint16Array(this.leafOn ? n : 0);
+    this.leafOnTile = new Uint16Array(this.leafOn ? n * (this.depthN > 0 ? this.depthN : 1) : 0);
+    const dcap = this.depthN > 0 ? cap : 0;
+    this.level = new Uint8Array(dcap);
+    this.lift = new Uint8Array(dcap);
+    this.lvlStep = new Uint32Array(dcap);
+    this.bodyLevel = new Uint8Array(this.depthN > 0 ? cap + 2 : 0);
+    this.bodyLvMoved = new Uint8Array(this.depthN > 0 ? cap + 2 : 0);
+    this.bodyLiftSum = new Int32Array(this.depthN > 0 ? cap + 2 : 0);
+    this.bodyLvStep = new Uint32Array(this.depthN > 0 ? cap + 2 : 0);
+    this.bodyStoreSum = new Int32Array(this.depthN > 0 ? cap + 2 : 0);
+    this.lvlCount = new Uint16Array(this.depthN > 0 ? n * this.depthN : 0);
+    const pcap = this.pulseOn ? cap : 0;
+    this.pulseW = new Int8Array(pcap * PULSE_W);
+    this.sigA = new Int8Array(pcap);
+    this.sigB = new Int8Array(pcap);
+    this.pulseGo = new Int8Array(pcap);
+    this.pulseFlex = new Int8Array(pcap);
+    this.sigNextA = new Int8Array(pcap);
+    this.sigNextB = new Int8Array(pcap);
+    this.kidA = new Int32Array(pcap);
+    this.kidB = new Int32Array(pcap);
+    this.kidN = new Int32Array(pcap);
+    this.pulseMoved = new Uint8Array(pcap);
     this.leafPaid = new Uint8Array(this.leafOn ? this.cap : 0);
     this.bodyMouth = new Uint8Array(cap + 2);
     this.bodyMouthN = new Uint16Array(this.packN > 0 ? cap + 2 : 0);
@@ -1145,6 +1294,26 @@ export class SoftRoamWorld {
     return c;
   }
 
+  /** With pulse: give a one-cell founder (a slot `found` returned) its network: PULSE_W whole weights, -127 to 127, row by row (next A, next B, go, flex). */
+  setPulse(c: number, weights: ArrayLike<number>): void {
+    if (!this.pulseOn) throw new Error('setPulse needs pulse');
+    if (!(Number.isInteger(c) && c >= 0 && c < this.cap && this.alive[c])) throw new Error(`Invalid cell: ${c}`);
+    if (this.mother[c] >= 0 || this.bodySize[this.body[c]] !== 1) throw new Error('setPulse is for a one-cell founder');
+    if (weights.length !== PULSE_W) throw new Error(`setPulse needs ${PULSE_W} weights`);
+    for (let i = 0; i < PULSE_W; i++) whole(weights[i], 'weight', -127, 127);
+    for (let i = 0; i < PULSE_W; i++) this.pulseW[c * PULSE_W + i] = weights[i];
+  }
+
+  /** With depth: put a one-cell founder (a slot `found` returned) on a level and give it a lift (default the middle of that level's share of 0 to 255). */
+  setLevel(c: number, level: number, lift?: number): void {
+    if (this.depthN === 0) throw new Error('setLevel needs depth');
+    if (!(Number.isInteger(c) && c >= 0 && c < this.cap && this.alive[c])) throw new Error(`Invalid cell: ${c}`);
+    whole(level, 'level', 0, this.depthN - 1);
+    const lf = lift === undefined ? Math.floor(((2 * level + 1) * 256) / (2 * this.depthN)) : whole(lift, 'lift', 0, 255);
+    this.level[c] = level;
+    this.lift[c] = lf;
+  }
+
   /** Test only: make the free slots come out in this order (slots not named follow in the usual order). */
   _testSlotOrder(order: readonly number[]): void {
     if (this.freeN !== this.cap) throw new Error('slot order can only be set on an empty world');
@@ -1164,6 +1333,13 @@ export class SoftRoamWorld {
     this.alive[c] = 1;
     if (c < this.leafPaid.length) this.leafPaid[c] = 0; // picture only: a reused slot must not show the dead leaf's glow
     this.gotCell[c] = 0; // picture only (eat sets it for every live cell before it is read): a newborn shows no grazing
+    if (this.depthN > 0) { this.level[c] = 0; this.lift[c] = 0; this.lvlStep[c] = 0; }
+    if (this.pulseOn) {
+      // The still network, no signal: `found` keeps it, a birth copies the mother's over it.
+      this.pulseW.fill(0, c * PULSE_W, (c + 1) * PULSE_W);
+      this.pulseW[c * PULSE_W + 2 * PULSE_IN] = PULSE_ONE;
+      this.sigA[c] = 0; this.sigB[c] = 0; this.pulseGo[c] = 127; this.pulseFlex[c] = 0; this.pulseMoved[c] = 0;
+    }
     this.x[c] = this.prevX[c] = px;
     this.y[c] = this.prevY[c] = py;
     this.vx[c] = 0;
@@ -1334,6 +1510,8 @@ export class SoftRoamWorld {
       if (++this.tgtGen > 0xffffffff) { this.tgtMark.fill(0); this.tgtGen = 1; }
     }
     if (this.steerOn) this.findAims();
+    if (this.depthN > 0) this.moveLevels();
+    if (this.pulseOn) this.pulseStage();
     this.bodyTurnSum.fill(0, 0, hi + 1);
     for (let q = 0; q < this.liveN; q++) {
       const c = live[q];
@@ -1461,6 +1639,12 @@ export class SoftRoamWorld {
           ux = Math.trunc((ux * this.bodyPace[l]) / 256);
           uy = Math.trunc((uy * this.bodyPace[l]) / 256);
         }
+        // Inner pulse: the cell's go output holds its thrust back, never adds to it.
+        if (this.pulseOn && this.pulseGo[c] < 127) {
+          const share = 256 - Math.floor((this.pulseThrustQ8 * (127 - this.pulseGo[c])) / 254);
+          ux = Math.trunc((ux * share) / 256);
+          uy = Math.trunc((uy * share) / 256);
+        }
       }
       let mag = isqrt(ux * ux + uy * uy);
       if (mag > 1024) mag = 1024;
@@ -1480,6 +1664,143 @@ export class SoftRoamWorld {
           this.hunting++;
           if (this.tgtMark[steerAim] !== this.tgtGen) { this.tgtMark[steerAim] = this.tgtGen; this.targets++; }
         }
+      }
+    }
+  }
+
+  /**
+   * Inner pulse (see the header): every cell's network reads the signals of the step before and the cell's own cues, and gives its next two
+   * signals, its go and its flex. Sums over daughters are whole numbers and the new signals are written after every cell has read, so no order matters.
+   */
+  private pulseStage(): void {
+    const live = this.live;
+    const N = this.liveN;
+    const A = this.sigA;
+    const B = this.sigB;
+    const kA = this.kidA;
+    const kB = this.kidB;
+    const kN = this.kidN;
+    for (let q = 0; q < N; q++) { const c = live[q]; kA[c] = 0; kB[c] = 0; kN[c] = 0; }
+    for (let q = 0; q < N; q++) {
+      const c = live[q];
+      const m = this.mother[c];
+      if (m >= 0) { kA[m] += A[c]; kB[m] += B[c]; kN[m]++; }
+    }
+    const lo = this.cfg.minStore;
+    const span = 2 * this.cfg.birthStore - lo;
+    const W = this.pulseW;
+    const inp = this.pulseIn;
+    for (let q = 0; q < N; q++) {
+      const c = live[q];
+      const m = this.mother[c];
+      inp[0] = 127;
+      inp[1] = A[c];
+      inp[2] = B[c];
+      inp[3] = m >= 0 ? A[m] : 0;
+      inp[4] = m >= 0 ? B[m] : 0;
+      inp[5] = kN[c] > 0 ? Math.trunc(kA[c] / kN[c]) : 0;
+      inp[6] = kN[c] > 0 ? Math.trunc(kB[c] / kN[c]) : 0;
+      // Fullness: the store can be far past two birth stores (a founder's, a fed mouth's), so it is held before it is scaled.
+      let f = 0;
+      if (span > 0) {
+        const over = this.store[c] - lo;
+        f = over <= 0 ? -127 : over >= span ? 127 : Math.floor((over * 254) / span) - 127;
+      }
+      inp[7] = f;
+      let st = 0;
+      if (m >= 0) {
+        let dx = this.dlt(this.x[c], this.x[m]);
+        let dy = this.dlt(this.y[c], this.y[m]);
+        // Past two bond lengths either way the stretch reads full, and the squares below stay small.
+        if (dx > 2 * L) dx = 2 * L; else if (dx < -2 * L) dx = -2 * L;
+        if (dy > 2 * L) dy = 2 * L; else if (dy < -2 * L) dy = -2 * L;
+        st = Math.trunc(((isqrt(dx * dx + dy * dy) - L) * 254) / L);
+        st = st > 127 ? 127 : st < -127 ? -127 : st;
+      }
+      inp[8] = st;
+      const l = this.body[c];
+      inp[9] = this.steerOn && this.bodyAimT[l] >= 0 ? (this.bodyAimAway[l] !== 0 ? -127 : 127) : 0;
+      const o = c * PULSE_W;
+      for (let r = 0; r < PULSE_OUT; r++) {
+        let sum = 0;
+        const base = o + r * PULSE_IN;
+        for (let i = 0; i < PULSE_IN; i++) sum += W[base + i] * inp[i];
+        let v = Math.trunc(sum / PULSE_ONE);
+        v = v > 127 ? 127 : v < -127 ? -127 : v;
+        if (r === 0) this.sigNextA[c] = v;
+        else if (r === 1) this.sigNextB[c] = v;
+        else if (r === 2) this.pulseGo[c] = v;
+        else this.pulseFlex[c] = v;
+      }
+      const da = this.sigNextA[c] - A[c];
+      const db = this.sigNextB[c] - B[c];
+      this.pulseMoved[c] = da >= 8 || da <= -8 || db >= 8 || db <= -8 ? 1 : 0;
+    }
+    for (let q = 0; q < N; q++) { const c = live[q]; A[c] = this.sigNextA[c]; B[c] = this.sigNextB[c]; }
+  }
+
+  /** With pulse: the rest length of a spring between a and b as their flex outputs have it this step. */
+  private flexed(a: number, b: number, rest: number): number {
+    return rest + Math.trunc((rest * this.pulseFlexQ8 * (this.pulseFlex[a] + this.pulseFlex[b])) / (254 * 256));
+  }
+
+  /**
+   * With depth: each body picks the level it wants and moves one level toward it (see the header). Levels are read from the bodies' roots and
+   * the aims' cells as the stage starts and written to the cells only after every body has chosen, so no order matters.
+   */
+  private moveLevels(): void {
+    const t = this.step;
+    const hi = this.labelHi;
+    const Lv = this.depthN;
+    const live = this.live;
+    this.bodyLiftSum.fill(0, 0, hi + 1);
+    this.bodyStoreSum.fill(0, 0, hi + 1);
+    for (let q = 0; q < this.liveN; q++) {
+      const c = live[q];
+      this.bodyLiftSum[this.body[c]] += this.lift[c];
+      // A cell holds at most four birth stores (1024), so a body's sum is under 2^24.
+      this.bodyStoreSum[this.body[c]] += this.store[c];
+    }
+    const dive = this.depthDiveN;
+    for (let l = 1; l <= hi; l++) {
+      if (this.bodySize[l] === 0) continue;
+      const r = this.bodyRoot[l];
+      let lv = this.level[r];
+      // Home from the exact mean lift (the sum is under 2^22, so the product is under 2^24).
+      const home = Math.floor((this.bodyLiftSum[l] * Lv) / (256 * this.bodySize[l]));
+      let want = home;
+      // Exact on the totals (the sum is under 2^24 and a body under 2^20 cells, so both sides are under 2^49).
+      const have = this.bodyStoreSum[l] * 65536;
+      const need = dive * this.bodySize[l];
+      if (have < need) want = 0;
+      else if (have < 2 * need) want = lv;
+      if (this.steerOn && this.bodyAimT[l] >= 0) {
+        const tl = this.level[this.bodyAimT[l]];
+        if (this.bodyAimAway[l] === 0) want = tl;
+        else if (tl !== lv) want = lv;
+        else want = home !== lv ? home : lv + 1 < Lv ? lv + 1 : lv - 1;
+      }
+      const sealed = this.drainN > 0 && ((t - this.since[r]) >>> 0) < this.sealN;
+      let moved = 0;
+      if (!sealed && want !== lv && (this.lvlStep[r] === 0 || ((t + 1 - this.lvlStep[r]) >>> 0) >= this.depthGapN)) {
+        lv += want > lv ? 1 : -1;
+        moved = 1;
+        this.levelMoves++;
+      }
+      this.bodyLevel[l] = lv;
+      this.bodyLvMoved[l] = moved;
+      // The record of the last move is the root's, kept as the step plus one so 0 means never (a move at step 2^32 - 1 is recorded as 1, one step late).
+      this.bodyLvStep[l] = moved ? (t + 1) >>> 0 || 1 : this.lvlStep[r];
+    }
+    for (let q = 0; q < this.liveN; q++) {
+      const c = live[q];
+      const l = this.body[c];
+      this.level[c] = this.bodyLevel[l];
+      this.lvlStep[c] = this.bodyLvStep[l];
+      if (this.bodyLvMoved[l] !== 0 && this.depthCostN > 0) {
+        const pay = this.store[c] < this.depthCostN ? this.store[c] : this.depthCostN;
+        this.store[c] -= pay;
+        this.reservoir += pay;
       }
     }
   }
@@ -1641,10 +1962,10 @@ export class SoftRoamWorld {
       for (let q = 0; q < N; q++) {
         const c = live[q];
         const m = this.mother[c];
-        if (m >= 0) this.spring(c, m, L, cfg.kBond, sub);
+        if (m >= 0) this.spring(c, m, this.pulseOn ? this.flexed(c, m, L) : L, cfg.kBond, sub);
         for (let k = 0; k < 4; k++) {
           const p = this.braceTo[c * 4 + k];
-          if (p >= 0 && this.cid[c] < this.cid[p]) this.spring(c, p, this.braceRest[c * 4 + k], cfg.kBrace, sub);
+          if (p >= 0 && this.cid[c] < this.cid[p]) this.spring(c, p, this.pulseOn ? this.flexed(c, p, this.braceRest[c * 4 + k]) : this.braceRest[c * 4 + k], cfg.kBrace, sub);
         }
       }
       const nextRun = lastSub ? new Map<number, { ca: number; cb: number; run: number }>() : null;
@@ -1655,6 +1976,7 @@ export class SoftRoamWorld {
         for (let ti = 0; ti < 9; ti++) {
           for (let b = this.head[ts[ti]]; b >= 0; b = this.nextInTile[b]) {
             if (this.cid[b] <= ca) continue;
+            if (this.depthN > 0 && this.level[a] !== this.level[b] && this.body[a] !== this.body[b]) continue;
             const dx = this.dlt(x[a], x[b]);
             if (dx >= D || dx <= -D) continue;
             const dy = this.dlt(y[a], y[b]);
@@ -1858,7 +2180,9 @@ export class SoftRoamWorld {
       const c = this.live[q];
       const room = cap4 > this.store[c] ? cap4 - this.store[c] : 0;
       let bite = this.biteN;
-      if (this.kinds && this.kind[c] !== KIND_PLAIN) {
+      // With depth the ground food is on the floor: only level 0 cells eat it.
+      if (this.depthN > 0 && this.level[c] !== 0) bite = 0;
+      else if (this.kinds && this.kind[c] !== KIND_PLAIN) {
         // Only plain cells and one-cell bodies eat; a one-cell shell takes shellBite of the bite, rounded by a hash.
         if (this.kind[c] === KIND_LEAF || this.bodySize[this.body[c]] > 1) bite = 0;
         else if (this.kind[c] === KIND_SHELL && this.shellBiteQ16 < 65536) {
@@ -1908,11 +2232,15 @@ export class SoftRoamWorld {
     cells.length = 0;
     asks.length = 0;
     this.leafPaid.fill(0);
+    const Lv = this.depthN;
+    const lvc = this.lvlCount;
+    if (Lv > 0) lvc.fill(0);
     for (let q = 0; q < this.liveN; q++) {
       const c = this.live[q];
+      if (Lv > 0) lvc[((this.y[c] >>> 10) * size + (this.x[c] >>> 10)) * Lv + this.level[c]]++;
       if (this.kind[c] !== KIND_LEAF) continue;
       cells.push(c);
-      onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)]++;
+      onTile[Lv > 0 ? ((this.y[c] >>> 10) * size + (this.x[c] >>> 10)) * Lv + this.level[c] : (this.y[c] >>> 10) * size + (this.x[c] >>> 10)]++;
     }
     if (cells.length === 0) return;
     const m = this.offsetMap;
@@ -1922,8 +2250,8 @@ export class SoftRoamWorld {
       const ty = this.y[c] >>> 10;
       let exposed = 4;
       for (let d = 0; d < 4; d++) if (m.has(this.offKey(this.body[c], this.gx[c] + DX[d], this.gy[c] + DY[d]))) exposed--;
-      const n = Math.min(onTile[ty * size + tx], LEAF_MAX_SHARE);
-      const num = this.leafQ * softRoamLight(this.cfg, tx, ty, t) * exposed;
+      const n = Math.min(onTile[Lv > 0 ? (ty * size + tx) * Lv + this.level[c] : ty * size + tx], LEAF_MAX_SHARE);
+      const num = this.leafQ * (Lv > 0 ? this.lightOn(tx, ty, this.level[c], t) : softRoamLight(this.cfg, tx, ty, t)) * exposed;
       const den = 4 * 256 * LEAF_Q * n;
       let ask = Math.floor(num / den) + (roamHash(seed, t, this.cid[c], CH_LEAF) % den < num % den ? 1 : 0);
       const room = cap4 > this.store[c] ? cap4 - this.store[c] : 0;
@@ -1941,11 +2269,24 @@ export class SoftRoamWorld {
       this.store[c] += paid;
       this.leafPaid[c] = paid;
       paidAll += paid;
-      onTile[(this.y[c] >>> 10) * size + (this.x[c] >>> 10)] = 0;
+      onTile[Lv > 0 ? ((this.y[c] >>> 10) * size + (this.x[c] >>> 10)) * Lv + this.level[c] : (this.y[c] >>> 10) * size + (this.x[c] >>> 10)] = 0;
     }
     if (pool) this.leafPool -= paidAll;
     else this.reservoir -= paidAll;
     this.leafIncome += paidAll;
+  }
+
+  /** With depth, in the leaf stage (needs `lvlCount` current): the light on a level of a tile, dimmed by the levels over it and shaded by the cells above. */
+  private lightOn(tx: number, ty: number, lv: number, step: number): number {
+    const Lv = this.depthN;
+    const dim = 256 - (Lv - 1 - lv) * this.depthDimQ8;
+    let lt = dim > 0 ? (softRoamLight(this.cfg, tx, ty, step) * dim) >> 8 : 0;
+    let above = 0;
+    const base = (ty * this.size + tx) * Lv;
+    for (let k = lv + 1; k < Lv; k++) above += this.lvlCount[base + k];
+    if (above > SHADE_MAX) above = SHADE_MAX;
+    for (let i = 0; i < above; i++) lt = (lt * (256 - this.depthShadeQ8)) >> 8;
+    return lt;
   }
 
   private upkeep(): void {
@@ -2013,6 +2354,7 @@ export class SoftRoamWorld {
       for (let ti = 0; ti < 25; ti++) {
         for (let b = this.head[ts[ti]]; b >= 0; b = this.nextInTile[b]) {
           if (b === a || this.body[b] === this.body[a]) continue;
+          if (this.depthN > 0 && this.level[a] !== this.level[b]) continue;
           const dx = this.dlt(x[a], x[b]);
           if (dx > TOUCH_R || dx < -TOUCH_R) continue;
           const dy = this.dlt(y[a], y[b]);
@@ -2192,6 +2534,7 @@ export class SoftRoamWorld {
     for (let ti = 0; ti < 25; ti++) {
       for (let o = this.head[ts[ti]]; o >= 0; o = this.nextInTile[o]) {
         if (o === b || !this.alive[o] || this.kind[o] !== KIND_MOUTH || this.body[o] === own) continue;
+        if (this.depthN > 0 && this.level[o] !== this.level[b]) continue;
         const dx = this.dlt(this.x[b], this.x[o]);
         if (dx > TOUCH_R || dx < -TOUCH_R) continue;
         const dy = this.dlt(this.y[b], this.y[o]);
@@ -2282,7 +2625,7 @@ export class SoftRoamWorld {
           this.kind[yc] = KIND_PLAIN;
           this.hits[yc] = 0;
           this.cracked++;
-          this.events.cracks.push({ x: this.x[yc], y: this.y[yc] });
+          this.events.cracks.push({ x: this.x[yc], y: this.y[yc], lv: this.level[yc] });
         } else this.hits[yc] = h;
       }
     }
@@ -2400,7 +2743,7 @@ export class SoftRoamWorld {
       if (killed[l] > 0 && killed[l] === this.bodySize[l]) { this.bodyDeaths++; killed[l] = 0; }
     }
     for (const c of dead) {
-      this.events.deaths.push({ x: this.x[c], y: this.y[c], fromX: this.prevX[c], fromY: this.prevY[c], kind: this.kind[c], store: this.store[c] });
+      this.events.deaths.push({ x: this.x[c], y: this.y[c], fromX: this.prevX[c], fromY: this.prevY[c], kind: this.kind[c], store: this.store[c], lv: this.level[c] });
       if (this.compost) {
         this.food[(this.y[c] >>> 10) * this.size + (this.x[c] >>> 10)] += this.store[c];
         this.composted += this.store[c];
@@ -2428,7 +2771,7 @@ export class SoftRoamWorld {
     }
   }
 
-  private blockedAt(px: number, py: number): boolean {
+  private blockedAt(px: number, py: number, lv: number): boolean {
     const x = this.x;
     const y = this.y;
     const ts = this.around(px >>> 10, py >>> 10);
@@ -2436,6 +2779,7 @@ export class SoftRoamWorld {
     for (let ti = 0; ti < 9; ti++) {
       for (let b = this.head[ts[ti]]; b >= 0; b = this.nextInTile[b]) {
         if (!this.alive[b]) continue;
+        if (this.depthN > 0 && this.level[b] !== lv) continue;
         const dx = this.dlt(px, x[b]);
         if (dx >= SENSE || dx <= -SENSE) continue;
         const dy = this.dlt(py, y[b]);
@@ -2445,6 +2789,7 @@ export class SoftRoamWorld {
     }
     const nt = this.newTargets;
     for (let i = 0; i < nt.length; i += 2) {
+      if (this.depthN > 0 && this.newTargetLv[i >> 1] !== lv) continue;
       const dx = this.dlt(px, nt[i]);
       if (dx >= SENSE || dx <= -SENSE) continue;
       const dy = this.dlt(py, nt[i + 1]);
@@ -2506,6 +2851,35 @@ export class SoftRoamWorld {
       }
       this.genes[to * ROAM_GENES + g] = v;
     }
+    if (this.depthN > 0) {
+      // The daughter starts on her mother's level with her mother's record; her lift is copied with the gene chance and a step of 32.
+      let v = this.lift[c];
+      const r = roamHash(seed, t, this.cid[c], CH_LIFT);
+      if ((r & 0xffff) < this.mutQ16) {
+        v += (r >>> 16) & 1 ? 32 : -32;
+        v = v > 255 ? 255 : v < 0 ? 0 : v;
+      }
+      this.lift[to] = v;
+      this.level[to] = this.level[c];
+      this.lvlStep[to] = this.lvlStep[c];
+    }
+    if (this.pulseOn) {
+      // The daughter gets her mother's network (one weight moved by 16 with chance pulseMut) and her signals as they are; her outputs are worked out next step.
+      const from = c * PULSE_W;
+      const dst = to * PULSE_W;
+      for (let i = 0; i < PULSE_W; i++) this.pulseW[dst + i] = this.pulseW[from + i];
+      const r = roamHash(seed, t, this.cid[c], CH_PULSE);
+      if ((r & 0xffff) < this.pulseMutQ16) {
+        const i = dst + ((r >>> 17) % PULSE_W);
+        let v = this.pulseW[i] + ((r >>> 16) & 1 ? PULSE_STEP : -PULSE_STEP);
+        v = v > 127 ? 127 : v < -127 ? -127 : v;
+        this.pulseW[i] = v;
+      }
+      this.sigA[to] = this.sigA[c];
+      this.sigB[to] = this.sigB[c];
+      this.pulseGo[to] = 127;
+      this.pulseFlex[to] = 0;
+    }
   }
 
   /** Cell `c`'s plan as a daughter gets it: with chance rateQ16/65536 one place changes to a different value. */
@@ -2553,6 +2927,7 @@ export class SoftRoamWorld {
       if (f < 0 || this.cid[c] < this.cid[f]) this.firstDaughter[m] = c;
     }
     this.newTargets = [];
+    this.newTargetLv.length = 0;
     // As the stage starts: each body's size (for releaseMin) and the step after its last release, the most any cell of it holds (for releaseGap).
     if (this.relMinN > 0) this.bodyStart.set(this.bodySize.subarray(0, this.labelHi + 1));
     if (this.relGapN > 0) {
@@ -2585,7 +2960,7 @@ export class SoftRoamWorld {
       const oy = Math.trunc(uy / 16);
       const px = this.wrap(this.x[c] + ox);
       const py = this.wrap(this.y[c] + oy);
-      if (this.blockedAt(px, py)) continue;
+      if (this.blockedAt(px, py, this.depthN > 0 ? this.level[c] : 0)) continue;
       const keep = act < 4;
       if (!keep && (this.relMinN > 0 || this.relGapN > 0)) {
         const l = this.body[c];
@@ -2612,6 +2987,7 @@ export class SoftRoamWorld {
       // bornStep is the world step at which the daughter first exists (the step after the one that made her); 0 is only a founder.
       this.bornStep[to] = t + 1;
       this.newTargets.push(px, py);
+      if (this.depthN > 0) this.newTargetLv.push(this.level[c]);
       if (keep) {
         this.pid[to] = this.copyPlan(c, this.planMutQ16 >>> 3);
         this.mode[to] = (entry >>> 4) & 15;
@@ -2798,9 +3174,14 @@ export class SoftRoamWorld {
     let mouths = 0;
     let leaves = 0;
     const genes = new Array<number>(ROAM_GENES).fill(0);
+    const levels = new Array<number>(this.depthN).fill(0);
+    let goSum = 0;
+    let pulsing = 0;
     for (let c = 0; c < this.cap; c++) {
       if (!this.alive[c]) continue;
       cells++;
+      if (this.depthN > 0) levels[this.level[c]]++;
+      if (this.pulseOn) { pulsing += this.pulseMoved[c]; goSum += 256 - Math.floor((this.pulseThrustQ8 * (127 - this.pulseGo[c])) / 254); }
       held += this.store[c];
       if (this.kind[c] === KIND_SHELL) { shells++; shellTough += this.tough[c]; }
       else if (this.kind[c] === KIND_MOUTH) mouths++;
@@ -2852,6 +3233,10 @@ export class SoftRoamWorld {
       leafIncome: this.leafIncome,
       steering: this.steering,
       leafPool: this.leafPool,
+      levels,
+      levelMoves: this.levelMoves,
+      pulsing,
+      pulseGo: this.pulseOn && cells > 0 ? Math.floor(goSum / cells) : 256,
     };
   }
 
@@ -2896,6 +3281,11 @@ export class SoftRoamWorld {
       mix(this.lastHitStep[c]);
       mix(this.lastDrainStep[c]);
       mix(this.heading[c]);
+      if (this.depthN > 0) { mix(this.level[c] | (this.lift[c] << 8)); mix(this.lvlStep[c]); }
+      if (this.pulseOn) {
+        mix((this.sigA[c] & 255) | ((this.sigB[c] & 255) << 8) | ((this.pulseGo[c] & 255) << 16) | ((this.pulseFlex[c] & 255) << 24));
+        for (let i = 0; i < PULSE_W; i += 4) mix((this.pulseW[c * PULSE_W + i] & 255) | ((this.pulseW[c * PULSE_W + i + 1] & 255) << 8) | ((this.pulseW[c * PULSE_W + i + 2] & 255) << 16) | ((this.pulseW[c * PULSE_W + i + 3] & 255) << 24));
+      }
       if (this.relGapN > 0) { mix(this.relRec[c]); mix(Math.floor(this.relRec[c] / 4294967296)); }
       mix(this.turnLeft[c] & 0xffff);
       mix(this.mother[c] >= 0 ? this.cid[this.mother[c]] : 0);
@@ -2915,6 +3305,7 @@ export class SoftRoamWorld {
     if (this.relMinN > 0 || this.relGapN > 0) mix(this.releasesHeld);
     if (this.leafOn) { mix(this.leafIncome); mix(Math.floor(this.leafIncome / 4294967296)); }
     if (this.leafPoolQ8 >= 0) mix(this.leafPool);
+    if (this.depthN > 0) mix(this.levelMoves);
     return h >>> 0;
   }
 

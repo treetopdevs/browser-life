@@ -19,7 +19,7 @@ let gen = 0;
 const pacer = new SoftRoamPacer(performance.now());
 let lastFrameTime = performance.now();
 
-const paintChoice = (): SoftPaint => (value('paint') === 'plain' ? 'plain' : 'garden');
+const paintChoice = (): SoftPaint => { const v = value('paint'); return v === 'plain' || v === 'top' ? v : 'garden'; };
 const pace = (): number => Number(value('pace'));
 
 function post(m: SoftRoamToWorker, transfer: Transferable[] = []): void {
@@ -196,6 +196,8 @@ function show(f: SoftRoamFrame): void {
   const plain = c.cells - c.shells - c.mouths - c.leaves;
   set('r-kinds', `${fmt(plain)} plain, ${fmt(c.shells)} shell, ${fmt(c.mouths)} mouth, ${fmt(c.leaves)} leaf`);
   set('r-chase', f.sky.day === 0 && c.hunting + c.fleeing === 0 ? 'none' : `${fmt(c.hunting)} ${c.steering > 0 ? 'cells' : 'mouths'} hunting ${fmt(c.targets)} prey cells, ${fmt(c.fleeing)} cells fleeing${c.steering > 0 ? `; ${fmt(c.steering)} bodies turning as one` : ''}`);
+  set('r-levels', c.levels.length === 0 ? 'one (a flat world)' : `${c.levels.map((v, k) => `${fmt(v)} ${k === 0 ? 'on the floor' : k === c.levels.length - 1 ? 'at the surface' : c.levels.length === 3 ? 'in mid-water' : `on level ${k + 1}`}`).join(', ')}; ${fmt(c.levelMoves)} level changes so far`);
+  set('r-pulse', dials.pulse >= 1 ? `signals moving in ${fmt(c.pulsing)} of ${fmt(c.cells)} cells; thrust at ${fmt(Math.round((c.pulseGo * 100) / 256))}% of what the genes give, on average` : 'off (turn it on under Inner pulse)');
   set('r-light', f.sky.day === 0 ? 'full everywhere' : `${fmt(f.sky.meanLight * 100)}% of full across the arena`);
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
 }
