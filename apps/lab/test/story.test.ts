@@ -49,8 +49,8 @@ describe("the ladder", () => {
     }
     const last = REACHES.at(-1)!;
     expect(last.rung).toBe(HERE);
-    // The world we are in has no page in the site build: its jars on the story are the only way to it.
-    expect(last.href).toBeUndefined();
+    // The world we are in links Soft Roam's page; Roam's own page is not in the site build.
+    expect(last.href).toBe("/softroam/");
     expect(REACHES.filter((w) => w.now)).toEqual([last]);
     expect(renderReach().match(/<li>/g)).toHaveLength(REACHES.length);
   });
@@ -80,10 +80,12 @@ describe("the story's live jars", () => {
     expect(story).toContain(`<script type="module" src="/src/story/jars.ts"></script>`);
   });
 
-  it("does not link the Roam pages, which the site does not build, and links each prototype page of act two", () => {
+  it("does not link Roam's page, which the site does not build, links Soft Roam's, and links each prototype page of act two", () => {
     expect(built.has("/roam/")).toBe(false);
-    expect(built.has("/softroam/")).toBe(false);
-    expect(story).not.toMatch(/href="\/(soft)?roam\//);
+    expect(story).not.toMatch(/href="\/roam\//);
+    expect(built.has("/softroam/")).toBe(true);
+    const ch9 = story.slice(story.indexOf('id="chapter-9"'));
+    expect(ch9.replace(/<!-- GENERATED[\s\S]*?<!-- \/GENERATED[^>]*-->/g, ""), "softroam in the prose").toContain('href="/softroam/"');
     const act2 = story.slice(story.indexOf('id="chapter-8"'), story.indexOf('id="act-3"'));
     for (const page of ["bodies", "vesicle", "oligomer", "dropgenes"]) {
       expect(built.has(`/${page}/`), page).toBe(true);
@@ -92,7 +94,7 @@ describe("the story's live jars", () => {
   });
 
   it("each prototype page says what its results found, in the ledger's words, and links back", () => {
-    for (const page of ["bodies", "vesicle", "oligomer", "dropgenes"]) {
+    for (const page of ["bodies", "vesicle", "oligomer", "dropgenes", "softroam"]) {
       const html = readFileSync(`${lab}${page}/index.html`, "utf8");
       const rows = ENTRIES.filter((e) => e.pages?.some((p) => p.href === `/${page}/`));
       expect(rows.length, page).toBeGreaterThan(0);
@@ -112,7 +114,7 @@ describe("the story's live jars", () => {
         }
       }
       expect(html.match(/class="found-label"/g), page).toHaveLength(rows.length);
-      expect(html, page).toContain('href="/story/#chapter-8"');
+      expect(html, page).toContain(`href="/story/#chapter-${page === "softroam" ? 9 : 8}"`);
       expect(html, page).toContain('href="/research/"');
       expect(html, page).not.toMatch(/noindex|not linked from the site/);
     }

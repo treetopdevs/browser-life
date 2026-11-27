@@ -6,7 +6,7 @@ import config from "../vite.config";
 
 const lab = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Bumped deliberately when a page is added to or dropped from vite.config.ts.
-const DECLARED_INPUTS = 47;
+const DECLARED_INPUTS = 48;
 
 it("every rollup input html has an icon link whose href is served", () => {
   const input = config.build?.rollupOptions?.input as Record<string, string>;

@@ -2,116 +2,150 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex" />
-  <title>Soft Roam · local probe</title>
-  <style>
-    :root { color-scheme: dark; --bg: #0d1311; --ink: #e6ebe8; --dim: #93a09a; --line: #26302c; --accent: #f0be3e; }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
-    main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
-    h1 { font-size: 22px; margin: 0 0 6px; }
-    p { margin: 6px 0; color: var(--dim); max-width: 78ch; }
-    p b { color: var(--ink); }
-    .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 14px 0; }
-    button, select, input { font: inherit; color: var(--ink); background: #18211e; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
-    button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
-    button:disabled { opacity: .5; }
-    label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
-    input[type=number] { width: 7em; }
-    canvas { width: 100%; max-width: 768px; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 6px; display: block; }
-    dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 16px; margin: 16px 0; }
-    dt { color: var(--dim); font-size: 12px; }
-    dd { margin: 0; font-variant-numeric: tabular-nums; font-size: 17px; }
-    #error { color: #f08a7a; }
-    .stage { display: grid; grid-template-columns: minmax(0, 768px) minmax(0, 1fr); gap: 16px; align-items: start; }
-    .stage .dials { margin: 0; max-height: min(768px, calc(100vh - 24px)); overflow: auto; position: sticky; top: 12px; }
-    @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } .stage .dials { max-height: none; position: static; } }
-    .dials { margin: 10px 0 16px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px 12px; }
-    .dials summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 6px 0; }
-    .dials h3 { font-size: 13px; color: var(--accent); margin: 14px 0 4px; font-weight: 600; letter-spacing: .02em; }
-    .dial { display: grid; grid-template-columns: 1fr 6em; gap: 2px 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
-    .dial > span { grid-column: 1 / -1; color: var(--ink); font-size: 14px; }
-    .dial input[type=range] { width: 100%; accent-color: var(--accent); padding: 0; }
-    .dial input[type=number] { width: 100%; padding: 3px 6px; }
-    .dial small { grid-column: 1 / -1; color: var(--dim); font-size: 12.5px; }
-    .dial.off { opacity: .45; }
-    .dial.changed > span::after { content: ' \2022'; color: var(--accent); }
-    .dials .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-  </style>
+  <meta name="theme-color" content="#f3f1ec" />
+  <meta name="description" content="Artificial life off the grid: bodies of joined cells that glide, bend, heal and turn as one toward their food, under a daily sun and a costly winter." />
+  <title>Soft Roam · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/softroam/" />
 </head>
-<body>
-  <main>
-    <h1>Soft Roam <small style="color:var(--dim);font-weight:400">· local probe, not on the site</small></h1>
-    <p>This is <b>Roam moved off its grid</b>. The same kind of body (cells joined together, grown from a plan, fed by patches of food that drop onto the ground) now lives on a smooth surface instead of a grid of tiles. Cells push each other apart, joined cells pull on each other like springs, so a body glides, bends and turns instead of hopping from square to square. Bodies that lose a cell can break in two, and the pieces swim apart.</p>
-    <p>Each coloured soft shape is a <b>body</b>, with a dark seam where it meets another. The blue haze is <b>food</b> on the ground: a patch drops now and then, and then slowly spreads out into haze until it is eaten. A cell that has eaten enough <b>divides</b>: the new cell is its <b>daughter</b> and the cell it came from is her <b>mother</b>. A daughter that stays joined grows the body; one that is let go starts a new body. Between a mother and a daughter the thin bright <b>strand</b> is matter flowing to the one with less (brighter means a bigger difference). A cell that starves, or simply wears out, <b>dies</b>: it fades away and its matter goes onto the ground as a small puff of food, so a body can break where a cell is lost.</p>
-    <p>In the <b>seasons</b> start a bright band half the world wide sweeps round the arena once a day, and the whole world brightens and dims once a year. <b>Green leaf cells</b> live on that light, hunters see prey from a distance and prey run from hunters, and a body only lets go a new body once it has grown big enough. Pick the garden to see the same bodies without any of that: the dials for the sun, senses and manners are set to off, and the seasons' own food and upkeep numbers go back to the garden's.</p>
-    <p>The <b>big bodies</b> start (the page's own) runs the same sun and year with bodies of 21 to 25 cells: armoured herds with shells down both flanks, groves with leaves sticking out to the light, and pack hunters with three mouths across the front. A body <b>heals</b>: where a cell dies the cross-braces hold the rest together and the cell that made it grows it again. A body with a mouth that sees prey <b>turns as a whole</b> after it, and a body that sees a hunter turns away. Several mouths together can open a body too big for one, two bodies that could each eat the other leave each other alone, and hunters prefer prey no other hunter is at. A share of the upkeep is kept for the leaves, and <b>winter costs</b>: every cell pays a little more in the dark of the year, so winter thins bodies and the numbers swing with the year.</p>
-    <p>Nothing is made or lost: every unit of matter is on the ground, inside a cell, in the <b>store</b> that drops the next patch, or in the store kept for leaves. The matter check below should always say balanced.</p>
-    <div class="bar">
-      <button id="play" class="primary" type="button">Pause</button>
-      <button id="step" type="button">One step</button>
-      <button id="reset" type="button">Start again</button>
-      <label>Seed <input id="seed" type="number" min="0" value="1" /></label>
-      <label>Start <select id="start">
-        <option value="bodies" selected>big bodies: the seasons with bodies of 21 to 25 cells that heal; armoured herds, groves and pack hunters that turn as one after prey, and a winter that costs</option>
-        <option value="deep">depth: the big bodies in a world of three levels (floor, mid-water, surface); bodies meet only on their own level, food is on the floor and light comes from above</option>
-        <option value="seasons">the seasons: a sun that sweeps round every day and a year that swings from lean to rich; armoured grazers, green leaf bushes, hunters that see prey, and plates</option>
-        <option value="garden">the garden: lines, plates, crosses, blocks, specks and bushes, some armoured, some hunting</option>
-        <option value="grown-all">plain: lines, plates, crosses, blocks, specks (one cell) and bushes, no shells or mouths</option>
-        <option value="grown-lines">lines of eight</option>
-        <option value="grown-plates">plates, three by three</option>
-        <option value="grown-crosses">crosses</option>
-        <option value="grown-blocks">blocks, two cells by four</option>
-        <option value="grown-bushes">bushes</option>
-        <option value="grown-specks">specks, single cells</option>
-      </select></label>
-      <label>Kinds of cell <select id="kinds">
-        <option value="1" selected>on: plans can make shells (pale: do not eat, cheap upkeep) and mouths (dusky rose, turning hot red while they feed: the only cells that feed on other bodies)</option>
-        <option value="0">off: every cell is alike</option>
-      </select></label>
-      <label>Shell toughness <select id="toughness">
-        <option value="0" selected>every shell is equally tough</option>
-        <option value="1">plans can make shells tougher (more hits to crack, more upkeep)</option>
-      </select></label>
-      <label>Speed <select id="pace">
-        <option value="5">very slow: 5 steps a second</option>
-        <option value="15">slow: 15</option>
-        <option value="30" selected>medium: 30</option>
-        <option value="60">fast: 60</option>
-        <option value="150">faster: 150</option>
-        <option value="400">fastest: 400</option>
-      </select></label>
-      <label>Look <select id="paint">
-        <option value="garden" selected>garden: soft glowing bodies, blue haze is food; with levels, higher bodies are drawn further up the screen and their shadows fall under them</option>
-        <option value="top">garden from straight above: the same, with every level drawn at its true place</option>
-        <option value="plain">plain: a disc per cell and a line from each daughter to her mother, for checking</option>
-      </select></label>
-    </div>
-    <p id="error" role="alert"></p>
-    <div class="stage">
-    <canvas id="view" width="768" height="768"></canvas>
-    <details class="dials" open>
-      <summary>Dials: drag a slider or type an exact number; the world starts again when you let go</summary>
+<body class="softroam-page">
+  <a class="skip" href="#main">Skip to the world</a>
+  <header class="sr-header">
+    <a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a>
+    <span class="badge">Designed world · prototype</span>
+    <a class="back" href="/story/#chapter-9">← The story</a>
+    <button id="theme" class="theme-switch" type="button">Night</button>
+  </header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Soft Roam · going to the food</p>
+      <h1>Bodies that glide to their food</h1>
+      <p class="caption">Each soft shape is a body: cells joined together, grown from a plan the cells inherit. Food drops onto the ground in patches and spreads out as a blue haze until it is eaten. A cell that has eaten enough divides; a daughter that stays joined grows the body, and one that is let go starts a new body. A cell that starves or wears out dies, and its matter goes back onto the ground as food. This is Roam taken off its grid of tiles: cells push each other apart and joined cells pull on each other like springs, so a body glides, bends and turns instead of hopping from square to square. Every body begins as a single cell and grows by its plan, so give it a minute.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> the growth plans, the kinds of cell (shells, mouths and leaves), the sun, the senses and the rules for healing and turning are all written in. Bodies are not declared: a body is whatever cells happen to be joined. Every rule is in the header of apps/lab/src/softroam/kernel.ts, and the notes are in docs/softroam-2026-11-25/ in the repository.</p>
+    </section>
+    <section class="intro found" aria-labelledby="found-h">
+      <h2 id="found-h">What we found</h2>
+      <p class="scope-note"><strong>Soft Roam: off the grid</strong> <span class="found-label">Exploratory · 25 Nov</span> Off the grid, bodies slide and bend smoothly, but they stayed small, mouths took over and no hunter was seen to turn toward prey. Seeds 1 and 2 only; nothing confirmed on unseen seeds.</p>
+      <p class="scope-note"><strong>Soft Roam: a year, bigger bodies, speeds</strong> <span class="found-label">Exploratory · 26 Nov</span> A yearly cycle showed in the cell count on four seen seeds, and healing made bodies of 10 or more common, though 20 or more stayed rare. The speed round failed half its own bar. Nothing confirmed on unseen seeds.</p>
+      <p class="scope-note"><strong>Soft Roam: levels and an inner pulse</strong> <span class="found-label">Exploratory · 27 Nov</span> With three levels all stayed lived in all year, but the floor held 80 to 88% of cells. A quarter to a third of cells beat with no clock, yet beating was as common when it did nothing. Seeds 1 and 2 only; nothing confirmed on unseen seeds.</p>
+      <p class="found-more">This world is the one we are working in, a step on the way to creatures that reproduce and evolve. <a href="/story/#chapter-9">Read where it sits in the story</a>, or see the full write-up in <a href="/research/">the journal</a>.</p>
+    </section>
+
+    <section class="stage">
+      <div class="world">
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="play" class="primary" type="button">Pause</button>
+          <button id="step" type="button">One step</button>
+          <button id="reset" type="button">Start again</button>
+          <label class="inline">Speed <select id="pace">
+            <option value="5">very slow</option>
+            <option value="15">slow</option>
+            <option value="30" selected>medium</option>
+            <option value="60">fast</option>
+            <option value="150">faster</option>
+            <option value="400">fastest</option>
+          </select></label>
+        </div>
+        <div class="jar">
+          <canvas id="view" width="768" height="768" role="img" aria-label="The arena, 128 by 128 tiles: soft glowing bodies over blue haze, which is food." aria-describedby="legend-h"></canvas>
+        </div>
+        <p id="error" class="error" role="alert"></p>
+        <h2 id="legend-h" class="mini">What you are seeing</h2>
+        <ul class="legend">
+          <li><i class="k-body" aria-hidden="true"></i>A body: one soft shape, coloured by the founder it comes from, with a dark seam where it meets another.</li>
+          <li><i class="k-food" aria-hidden="true"></i>Food: a patch drops now and then and spreads out as haze until it is eaten.</li>
+          <li><i class="k-strand" aria-hidden="true"></i>A strand: matter flowing from a cell to the joined one that has less; brighter means a bigger difference.</li>
+          <li><i class="k-mouth" aria-hidden="true"></i>A mouth: the only cell that feeds on other bodies, dusky rose at rest and hot red while it bites.</li>
+          <li><i class="k-shell" aria-hidden="true"></i>A shell: pale armour that does not eat and costs little to keep; it cracks after enough bites.</li>
+          <li><i class="k-leaf" aria-hidden="true"></i>A leaf: lives on light, so it earns most in the daylight band that sweeps round the arena.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <dl class="readout">
+          <div><dt>Step</dt><dd id="r-step">0</dd></div>
+          <div><dt>Steps per second</dt><dd id="r-rate">0</dd></div>
+          <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
+          <div><dt>Largest body</dt><dd id="r-largest">0</dd></div>
+          <div class="wide"><dt>Cells</dt><dd id="r-cells">0</dd></div>
+          <div class="wide"><dt>Cells by kind</dt><dd id="r-kinds">-</dd></div>
+          <div class="wide"><dt>Time of day and year</dt><dd id="r-time">-</dd></div>
+          <div class="wide"><dt>Light</dt><dd id="r-light">-</dd></div>
+          <div class="full"><dt>Food</dt><dd id="r-food">0</dd></div>
+          <div class="full"><dt>Hunting and fleeing</dt><dd id="r-chase">-</dd></div>
+          <div class="full"><dt>Levels</dt><dd id="r-levels">-</dd></div>
+          <div class="full"><dt>Inner pulse</dt><dd id="r-pulse">-</dd></div>
+          <div class="full"><dt>Matter check (one exact total)</dt><dd id="r-res">balanced</dd></div>
+        </dl>
+        <p class="help">Nothing is made or lost: every unit of matter is on the ground, inside a cell, in the store that drops the next patch, or in the store kept for leaves. The matter check adds all of it up exactly and must say balanced.</p>
+
+        <form id="settings" class="settings" aria-label="World settings" onsubmit="return false">
+          <p class="help">Changing a setting below starts a new world.</p>
+          <div class="field">
+            <label for="start">Starting world</label>
+            <select id="start" aria-describedby="start-says">
+              <option value="bodies" selected data-says="The page’s own start: the sun and the year with bodies of 21 to 25 cells. Armoured herds with shells down both flanks, groves with leaves held out to the light, and pack hunters with three mouths across the front. Bodies heal, turn as one after prey or away from a hunter, and winter costs every cell a little more.">Big bodies</option>
+              <option value="deep" data-says="The big bodies in a world of three levels: floor, mid-water and surface. Bodies meet only on their own level, food lies on the floor and light comes from above. A hungry body dives to the floor; a fed one goes back to its home level.">Big bodies, three levels deep</option>
+              <option value="seasons" data-says="A sun that sweeps round every day and a year that swings from lean to rich. Armoured grazers, green leaf bushes, hunters that see prey from a distance, and plates.">The seasons</option>
+              <option value="garden" data-says="Lines, plates, crosses, blocks, specks and bushes, some armoured, some hunting, under even light: no sun, senses or manners.">The garden</option>
+              <option value="grown-all" data-says="Lines, plates, crosses, blocks, specks (one cell) and bushes, every cell alike: no shells and no mouths.">Plain shapes</option>
+              <option value="grown-lines" data-says="Every body is a line of eight cells.">Lines of eight</option>
+              <option value="grown-plates" data-says="Every body is a plate of three cells by three.">Plates</option>
+              <option value="grown-crosses" data-says="Every body is a cross.">Crosses</option>
+              <option value="grown-blocks" data-says="Every body is a block of two cells by four.">Blocks</option>
+              <option value="grown-bushes" data-says="Every body is a bush that branches.">Bushes</option>
+              <option value="grown-specks" data-says="Every body is a single cell.">Specks</option>
+            </select>
+            <p id="start-says" class="says"></p>
+          </div>
+          <div class="field">
+            <label for="kinds">Kinds of cell</label>
+            <select id="kinds" aria-describedby="kinds-says">
+              <option value="1" selected data-says="Plans can make shells (pale, do not eat, cheap to keep) and mouths (the only cells that feed on other bodies).">Shells and mouths</option>
+              <option value="0" data-says="Every cell is alike: no shells and no mouths.">Every cell alike</option>
+            </select>
+            <p id="kinds-says" class="says"></p>
+          </div>
+          <div class="field">
+            <label for="toughness">Shell toughness</label>
+            <select id="toughness" aria-describedby="toughness-says">
+              <option value="0" selected data-says="Every shell takes the same number of bites to crack.">All alike</option>
+              <option value="1" data-says="Plans can make shells tougher: more bites to crack, more upkeep.">Inherited</option>
+            </select>
+            <p id="toughness-says" class="says"></p>
+          </div>
+          <div class="field">
+            <label for="paint">Look</label>
+            <select id="paint" aria-describedby="paint-says">
+              <option value="garden" selected data-says="Soft glowing bodies over blue food haze. With levels, a higher body is drawn further up the screen and its shadow falls straight under it, so the gap is how high it is.">Garden</option>
+              <option value="top" data-says="The same picture from straight above, with every level drawn at its true place.">Garden from above</option>
+              <option value="plain" data-says="A disc per cell and a line from each daughter to her mother, for checking the picture against the rules.">Plain discs</option>
+            </select>
+            <p id="paint-says" class="says">Changing the look does not change the world.</p>
+          </div>
+          <div class="seed-row">
+            <label for="seed">Seed</label>
+            <input id="seed" type="number" inputmode="numeric" min="0" value="1" aria-describedby="seed-note" />
+          </div>
+          <p id="seed-note" class="help">The seed fixes every chance event, so the same seed and settings replay the same world. Seeds 1 and 2 are the ones every setting was tuned on, and seeds 3 and 4 were looked at once in some rounds; any other is a world nobody has looked at.</p>
+        </form>
+      </div>
+    </section>
+
+    <details class="dials">
+      <summary>Every dial <span>Drag a slider or type an exact number; the world starts again when you let go. A dot marks a dial moved from the start’s own value.</span></summary>
       <div id="dials"></div>
-      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" role="status" aria-live="polite" style="color:var(--dim)"></span></div>
+      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" class="help" role="status" aria-live="polite"></span></div>
     </details>
-    </div>
-    <dl>
-      <div><dt>Step</dt><dd id="r-step">0</dd></div>
-      <div><dt>Steps per second</dt><dd id="r-rate">0</dd></div>
-      <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
-      <div><dt>Cells</dt><dd id="r-cells">0</dd></div>
-      <div><dt>Largest body</dt><dd id="r-largest">0</dd></div>
-      <div><dt>Food</dt><dd id="r-food">0</dd></div>
-      <div><dt>Time</dt><dd id="r-time">-</dd></div>
-      <div><dt>Light</dt><dd id="r-light">-</dd></div>
-      <div><dt>Cells by kind</dt><dd id="r-kinds">-</dd></div>
-      <div><dt>Hunting and fleeing</dt><dd id="r-chase">-</dd></div>
-      <div><dt>Levels</dt><dd id="r-levels">-</dd></div>
-      <div><dt>Inner pulse</dt><dd id="r-pulse">-</dd></div>
-      <div><dt>Matter check</dt><dd id="r-res">balanced</dd></div>
-    </dl>
+
+    <section class="explanation" aria-labelledby="how-h">
+      <h2 id="how-h">How the big bodies live</h2>
+      <p>A bright band half the arena wide sweeps round once a day, and the whole world brightens and dims once a year. Green leaf cells live on that light. Hunters see prey from a distance and prey run from hunters, and a body only lets go of a new body once it has grown big enough.</p>
+      <p>A body heals: where a cell dies, cross-braces hold the rest together and the cell that made it grows it again. A body with a mouth that sees prey turns as a whole after it, and a body that sees a hunter turns away. Several mouths together can open a body too big for one, two bodies that could each eat the other leave each other alone, and hunters prefer prey no other hunter is at. A share of the upkeep is kept for the leaves, and winter costs: every cell pays a little more in the dark of the year, so winter thins bodies and the numbers swing with the year.</p>
+      <p>Under Depth and Inner pulse in the dials are the two newest pieces. Levels give the world a floor, a surface and water between. The inner pulse gives every cell a small inherited network that passes two signals along its bonds; it can hold back a cell’s push and lengthen or shorten its springs. There is no clock: a beat is whatever the network and the bonds make, and in the picture it shows as light moving along a body.</p>
+      <p>Limits of what you see. Every setting was tuned by watching seeds 1 and 2, with seeds 3 and 4 looked at once in some rounds, so a world on any other seed is one nobody has looked at, and nothing on this page has been confirmed on unseen seeds. Bodies of 20 cells or more stay rare, no hunter has been seen to curve after prey by eye, and nothing here says beating helps a body. The world steps in your browser at the speed shown above, and the same seed and settings always give the same history. Watching never changes the run.</p>
+    </section>
   </main>
   <script type="module" src="/src/softroam/page.ts"></script>
 </body>

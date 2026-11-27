@@ -1,4 +1,10 @@
-/** The local /softroam/ page: a canvas, a few choices, and readouts. The world steps in a worker. */
+/**
+ * The public /softroam/ page: a canvas, a few choices, readouts and every dial. The world steps in a worker. Like the other
+ * standalone experiment pages it does not load theme.ts (which starts the site's page-view counter); it keeps its own small
+ * theme switch.
+ */
+
+import './style.css';
 
 import { SoftRoamPacer } from './pacer.ts';
 import { CHANGE_IDS, checkDials, defFor, dialDefaults, dialMoved, dialOptions, fixDial, linkSwitches, SOFT_DIALS, startDials, startNote, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
@@ -8,6 +14,41 @@ const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElem
 const set = (id: string, text: string) => { el(id).textContent = text; };
 const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
 const value = (id: string) => el<HTMLSelectElement | HTMLInputElement>(id).value;
+
+// ---- day and night: the site's own key, so a choice made on any page holds here; with none made, the device decides.
+const THEME_KEY = 'browser-life-theme';
+type Theme = 'light' | 'dark';
+const storedTheme = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })();
+let theme: Theme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+const themeBtn = el<HTMLButtonElement>('theme');
+function applyTheme(): void {
+  document.documentElement.dataset.theme = theme;
+  themeBtn.textContent = theme === 'dark' ? 'Day' : 'Night';
+  themeBtn.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'day' : 'night'} colours`);
+}
+themeBtn.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* the choice still holds for this visit */ }
+  applyTheme();
+});
+applyTheme();
+
+/** Under each choice, what the chosen option does (its `data-says`). */
+const SAYS_IDS = ['start', 'kinds', 'toughness', 'paint'];
+function showSays(): void {
+  for (const id of SAYS_IDS) {
+    const select = el<HTMLSelectElement>(id);
+    const says = select.selectedOptions[0]?.dataset.says ?? '';
+    set(`${id}-says`, id === 'paint' ? `${says} Changing the look does not change the world.` : says);
+  }
+}
+
+/** Play is the one primary action; it lights green and reads Pause while the world grows. */
+function showPlay(): void {
+  const play = el('play');
+  play.textContent = pacer.playing ? 'Pause' : 'Play';
+  play.classList.toggle('growing', pacer.playing && !pacer.failed);
+}
 
 const canvas = el<HTMLCanvasElement>('view');
 const ctx = canvas.getContext('2d')!;
@@ -30,7 +71,7 @@ function post(m: SoftRoamToWorker, transfer: Transferable[] = []): void {
 function fail(message: string): void {
   set('error', `${message} (press Play to start again)`);
   pacer.onFailure();
-  el('play').textContent = 'Play';
+  showPlay();
   el<HTMLButtonElement>('step').disabled = true;
 }
 
@@ -171,7 +212,7 @@ function reset(): void {
   worker.onmessageerror = () => { if (mine === gen) fail('The worker sent something unreadable'); };
   pacer.reset(performance.now());
   // A failure disabled One step; a new world that is paused can be stepped again at once.
-  el('play').textContent = pacer.playing ? 'Pause' : 'Play';
+  showPlay();
   el<HTMLButtonElement>('step').disabled = pacer.playing;
   set('r-rate', '0');
   set('error', '');
@@ -200,6 +241,7 @@ function show(f: SoftRoamFrame): void {
   set('r-pulse', dials.pulse >= 1 ? `signals moving in ${fmt(c.pulsing)} of ${fmt(c.cells)} cells; thrust at ${fmt(Math.round((c.pulseGo * 100) / 256))}% of what the genes give, on average` : 'off (turn it on under Inner pulse)');
   set('r-light', f.sky.day === 0 ? 'full everywhere' : `${fmt(f.sky.meanLight * 100)}% of full across the arena`);
   set('r-res', c.residual === 0 ? 'balanced (0 missing)' : `NOT balanced: ${c.residual} missing`);
+  el('r-res').classList.toggle('bad', c.residual !== 0);
 }
 
 function loop(): void {
@@ -216,13 +258,14 @@ function loop(): void {
 
 el('play').addEventListener('click', () => {
   const again = pacer.toggle();
-  el('play').textContent = pacer.playing ? 'Pause' : 'Play';
+  showPlay();
   el<HTMLButtonElement>('step').disabled = pacer.playing;
   if (again) reset();
 });
 el('step').addEventListener('click', () => { pacer.stepOnce(); });
-el('reset').addEventListener('click', () => { if (pacer.failed) pacer.toggle(); el('play').textContent = pacer.playing ? 'Pause' : 'Play'; el<HTMLButtonElement>('step').disabled = pacer.playing; reset(); });
-el('paint').addEventListener('change', () => { pacer.wantRepaint(); });
+el('reset').addEventListener('click', () => { if (pacer.failed) pacer.toggle(); showPlay(); el<HTMLButtonElement>('step').disabled = pacer.playing; reset(); });
+el('paint').addEventListener('change', () => { showSays(); pacer.wantRepaint(); });
+for (const id of SAYS_IDS) if (id !== 'paint') el(id).addEventListener('change', showSays);
 for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
 // Picking a start also sets the kinds switch to what that start is: the garden has kinds on, every other start is the plain grown
 // line-up (kinds off). The switch can still be turned the other way afterwards.
@@ -233,10 +276,12 @@ el('start').addEventListener('change', () => {
   const before = { ...dials };
   Object.assign(dials, startDials(start));
   changed();
+  showSays();
   set('dials-note', startNote(before, start));
 });
 // A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
-window.addEventListener('hashchange', () => { loadHash(); showDials(); reset(); });
+// A plain fragment (the skip link's #main) is navigation, not settings: only a hash that names a setting is read.
+window.addEventListener('hashchange', () => { if (!location.hash.includes('=')) return; loadHash(); showSays(); showDials(); reset(); });
 el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults(value('start') as SoftRoamStart)); changed(); });
 el('dials-link').addEventListener('click', () => {
   // Refused settings make no world, and the address may hold them (a link typed or opened by hand): hand out no link to a refusal.
@@ -244,9 +289,12 @@ el('dials-link').addEventListener('click', () => {
   saveHash();
   navigator.clipboard?.writeText(location.href).then(() => set('dials-note', 'link copied'), () => set('dials-note', 'copy the address bar'));
 });
+// A visitor who asks for less motion gets a world that waits for Play.
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) pacer.toggle();
 el<HTMLButtonElement>('step').disabled = pacer.playing;
 
 loadHash();
+showSays();
 buildDials();
 showDials();
 reset();

@@ -79,7 +79,7 @@ export const REACHES: Reach[] = [
   { world: "Droplets with genes", when: "21 Nov", href: "/dropgenes/", rung: 4,
     had: "Compartments that split and die, genes they keep when their walls hold the copies in, and a trait held by selection between compartments.",
     stopped: "The one trait that could evolve was a five-step dial we wrote. It moved to one level and stayed, and the world is static to watch." },
-  { world: "Roam and Soft Roam", when: "from 23 Nov", rung: HERE, now: true,
+  { world: "Roam and Soft Roam", when: "from 23 Nov", href: "/softroam/", rung: HERE, now: true,
     had: "A body takes up space and has to go to its food. Bodies grow by a heritable plan, hunt, armour themselves and break.",
     stopped: "Where we are. Everything in it is seen on two seeds and not yet confirmed on seeds we have not looked at." },
 ];
