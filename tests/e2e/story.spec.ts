@@ -100,7 +100,10 @@ test("a choice starts the world again, and a fresh seed is never one we have loo
   await expect(soft.getByRole("button", { name: "Seed 2" })).toHaveAttribute("aria-pressed", "true");
   await expect(fresh).toHaveAttribute("aria-pressed", "false");
   // The world began again: its count is back under where the last one had got to, and then rises.
-  await expect.poll(() => step(soft), { timeout: 30_000 }).toBeLessThan(before);
+  // An unreadable line reads as -1, so it must not count as a restart.
+  await expect.poll(async () => { const n = await step(soft); return n >= 0 && n < before; }, { timeout: 30_000 }).toBe(true);
+  const restarted = await step(soft);
+  await expect.poll(() => step(soft), { timeout: 30_000 }).toBeGreaterThan(restarted);
   await expect(soft.locator(".jar-play")).toHaveText("Pause");
   await soft.locator(".jar-again").click();
   await expect.poll(() => step(soft), { timeout: 30_000 }).toBeGreaterThan(0);
@@ -171,11 +174,18 @@ test("a replaced worker cannot stop the world that took its place, and a failed 
   });
   await expect(roam.locator(".jar-note")).toHaveText("This jar could not grow here: the worker on screen failed");
   await expect(roam.locator(".jar-play")).toHaveText("Grow it");
+  // The still picture comes back rather than a stopped canvas.
+  await expect(roam).not.toHaveClass(/\blive\b/);
+  await expect(roam.locator(".jar-stage img")).toBeVisible();
   const stopped = await step(roam);
   await page.waitForTimeout(1200);
   expect(await step(roam)).toBe(stopped);
   await roam.locator(".jar-play").click();
   await expect(roam.locator(".jar-play")).toHaveText("Pause");
+  await expect(roam).toHaveClass(/\blive\b/);
   await expect.poll(() => page.evaluate(() => (window as unknown as { madeWorkers: Worker[] }).madeWorkers.length)).toBe(3);
-  await expect.poll(() => step(roam), { timeout: 30_000 }).toBeGreaterThan(20);
+  // The new world answers: a readable count under where the stopped one was, and then it rises.
+  await expect.poll(async () => { const n = await step(roam); return n >= 0 && n < stopped; }, { timeout: 30_000 }).toBe(true);
+  const regrown = await step(roam);
+  await expect.poll(() => step(roam), { timeout: 30_000 }).toBeGreaterThan(regrown);
 });

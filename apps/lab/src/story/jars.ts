@@ -239,6 +239,8 @@ class Jar {
   }
 
   private fail(error: unknown): void {
+    // Back to the still picture: a jar that never drew a frame must not leave an empty canvas showing.
+    this.root.classList.remove("live");
     this.current = null;
     this.driver.stop();
     this.started = false;
