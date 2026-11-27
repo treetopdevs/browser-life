@@ -16,3 +16,9 @@ it('is reached from its result and the story, and stays out of the home page and
   // A prototype, not one of the lab's worlds: the home page and the catalogue do not offer it.
   for (const f of ['apps/lab/index.html', 'apps/lab/worlds/index.html']) expect(read(f), f).not.toContain('/bodies/');
 });
+
+// The other prototype pages opened the same day; /dropgenes/ is held by dropgenes-viewer.test.ts.
+it('ships the vesicle and oligomer pages with the site', () => {
+  expectPublicPage('vesicle', 'vesicle: r("./vesicle/index.html")', ['vesicle-model']);
+  expectPublicPage('oligomer', 'oligomer: r("./oligomer/index.html")', ['oligomer-model']);
+});

@@ -155,7 +155,7 @@ export const ENTRIES: Entry[] = [
   { chapter: 6, card: "A thin 3D world: no setting fits", label: "Exploratory", date: "23 Oct",
     answer: "Could a thin 3D slab hold a sparse living world that shades its own floor? Sixty settings on three seeds each, and none qualified. Eighty more the next day gave the same answer and the 3D line closed; it reopened on 15 Nov.",
     pages: [{ href: "/slab/", text: "Slab viewer" }],
-    sources: ["docs/3d-rung1b-plan-2026-10-23.md", "experiments/3d-slab/m4-pick-output.md"] },
+    sources: ["docs/3d-rung1b-plan-2026-10-23.md", "experiments/3d-slab/m4-pick-output.md", "experiments/3d-slab/m4b-pick-output.md"] },
   { chapter: 6, card: "Can we measure how far a kick spreads?", label: "Open", date: "24 Oct",
     answer: "A meter for ordered, critical or chaotic worlds failed its ground-truth gate and was closed instead of being tuned. A result about the instrument, not the worlds.",
     sources: ["experiments/3d-slab/regime-stage0-run1-readout.md", "experiments/3d-slab/regime-rule-closed.md"] },
