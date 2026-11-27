@@ -264,10 +264,13 @@ export const ENTRIES: Entry[] = [
     sources: ["docs/roam-2026-11-23/NOTE.md"] },
   { chapter: 9, card: "Soft Roam: off the grid", label: "Exploratory", date: "25 Nov",
     answer: "Off the grid, bodies slide and bend smoothly, but they stayed small, mouths took over and no hunter was seen to turn toward prey. Seeds 1 and 2 only; nothing confirmed on unseen seeds.",
-    sources: ["docs/softroam-2026-11-25/NOTE.md"] },
+    sources: ["docs/softroam-2026-11-25/NOTE.md"], pages: [{ href: "/softroam/", text: "Soft Roam" }] },
   { chapter: 9, card: "Soft Roam: a year, bigger bodies, speeds", label: "Exploratory", date: "26 Nov",
     answer: "A yearly cycle showed in the cell count on four seen seeds, and healing made bodies of 10 or more common, though 20 or more stayed rare. The speed round failed half its own bar. Nothing confirmed on unseen seeds.",
-    sources: ["docs/softroam-2026-11-25/NOTE-2.md", "docs/softroam-2026-11-25/NOTE-3.md", "docs/softroam-2026-11-25/NOTE-4.md"] },
+    sources: ["docs/softroam-2026-11-25/NOTE-2.md", "docs/softroam-2026-11-25/NOTE-3.md", "docs/softroam-2026-11-25/NOTE-4.md"], pages: [{ href: "/softroam/", text: "Soft Roam" }] },
+  { chapter: 9, card: "Soft Roam: levels and an inner pulse", label: "Exploratory", date: "27 Nov",
+    answer: "With three levels all stayed lived in all year, but the floor held 80 to 88% of cells. A quarter to a third of cells beat with no clock, yet beating was as common when it did nothing. Seeds 1 and 2 only; nothing confirmed on unseen seeds.",
+    sources: ["docs/softroam-2026-11-25/NOTE-5.md"], pages: [{ href: "/softroam/", text: "Soft Roam" }] },
 ];
 
 /** Pages you can run or watch. Explorations and prototypes: a place to look, not evidence. */

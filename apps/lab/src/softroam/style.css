@@ -1,0 +1,105 @@
+/*
+ * The /softroam/ page on the garden's shared tokens: paper by day, dusk by night. The arena is a jar, dark in both
+ * themes (--field), and the colours on it are data (view.ts), so they do not follow the theme; the legend's swatches
+ * sit on the same dark field so they read as they do in the jar.
+ */
+@import "../tokens.css";
+
+.softroam-page { line-height: 1.5; }
+.softroam-page a { color: var(--text); text-decoration-color: var(--sun-ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.softroam-page :is(a, button, input, select, summary):focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.softroam-page .skip { position: absolute; left: -999px; top: 8px; padding: 6px 10px; border-radius: var(--radius); background: var(--surface); }
+.softroam-page .skip:focus { left: 8px; z-index: 2; }
+.softroam-page .sr-header, .softroam-page main { width: min(1240px, calc(100% - 32px)); margin-inline: auto; }
+.softroam-page .sr-header { min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-block: 10px; }
+.softroam-page .brand { margin-right: auto; font-weight: 700; text-decoration: none; }
+.softroam-page .brand span { color: var(--muted); font-weight: 400; }
+.softroam-page .badge { padding: 4px 10px; border: 1px solid var(--control-line); border-radius: 99px; color: var(--muted); font-size: .75rem; }
+.softroam-page [hidden] { display: none; }
+
+.softroam-page button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--raised); color: var(--text); font-size: .875rem; font-weight: 600; cursor: pointer; }
+.softroam-page button:hover { background: var(--hover); }
+.softroam-page button:disabled { opacity: .45; cursor: not-allowed; }
+.softroam-page button:disabled:hover { background: var(--raised); }
+.softroam-page button.primary { min-width: 5.5em; border-color: var(--sun); background: var(--sun); color: var(--accent-ink); }
+.softroam-page button.primary:hover { background: color-mix(in oklch, var(--sun) 90%, var(--text)); }
+/* Green belongs to the living: Play lights green while the world grows, and its label reads Pause. */
+.softroam-page button.primary.growing { border-color: var(--life-fill); background: var(--life-fill); color: var(--accent-ink); }
+.softroam-page button.primary.growing:hover { background: color-mix(in oklch, var(--life-fill) 88%, var(--text)); }
+.softroam-page select, .softroam-page input[type="number"] { min-height: 38px; max-width: 100%; padding: 6px 10px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: .875rem; }
+
+.softroam-page .intro { max-width: 78ch; padding: 12px 0 8px; }
+.softroam-page .eyebrow { margin: 0; color: var(--sun-ink); font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.softroam-page h1 { margin: 6px 0 12px; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.15; letter-spacing: -.02em; }
+.softroam-page h2 { margin: 8px 0; font-size: 1.125rem; letter-spacing: -.01em; }
+.softroam-page h2.mini { margin: 14px 0 6px; color: var(--muted); font-size: .8125rem; font-weight: 600; }
+.softroam-page .caption { margin: 0 0 12px; color: var(--text); font-size: .9375rem; }
+.softroam-page .scope-note { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--sun); border-radius: 0 var(--radius) var(--radius) 0; background: var(--sun-soft); color: var(--text); font-size: .875rem; }
+.softroam-page .found-label { display: inline-block; margin: 0 4px; padding: 0 7px; border: 1px solid var(--control-line); border-radius: 99px; color: var(--muted); font-size: .75rem; white-space: nowrap; }
+.softroam-page .found-more { margin: 8px 0 0; color: var(--muted); font-size: .875rem; }
+.softroam-page .help, .softroam-page .says { margin: 8px 0; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
+.softroam-page .error { min-height: 0; margin: 8px 0; color: var(--error); font-size: .875rem; font-weight: 600; }
+.softroam-page .error:empty { display: none; }
+
+.softroam-page .stage { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 16px; }
+.softroam-page .world, .softroam-page .panel { min-width: 0; }
+.softroam-page .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.softroam-page .transport .inline { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: .8125rem; }
+.softroam-page .jar { padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.softroam-page #view { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: var(--field); }
+
+.softroam-page .legend { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: .8125rem; line-height: 1.35; }
+.softroam-page .legend li { display: flex; align-items: center; gap: 10px; }
+.softroam-page .legend i { flex: none; width: 34px; height: 18px; border-radius: 4px; background-color: var(--field); box-shadow: inset 0 0 0 1px var(--line); }
+/* Swatches drawn in the picture's own colours (view.ts): a body's glow, the food haze, a strand, a mouth, a shell's bone, a leaf. */
+.softroam-page .legend .k-body { background-image: radial-gradient(ellipse 12px 7px at 50% 50%, oklch(0.78 0.12 60), transparent); }
+.softroam-page .legend .k-food { background-image: radial-gradient(ellipse 16px 9px at 50% 50%, oklch(0.55 0.09 240), transparent); }
+.softroam-page .legend .k-strand { background-image: linear-gradient(transparent 7px, oklch(0.9 0.04 120) 8px, oklch(0.9 0.04 120) 10px, transparent 11px); }
+.softroam-page .legend .k-mouth { background-image: radial-gradient(circle 6px at 50% 50%, oklch(0.66 0.2 32), transparent); }
+.softroam-page .legend .k-shell { background-image: radial-gradient(circle 6px at 50% 50%, oklch(0.93 0.04 90), transparent); }
+.softroam-page .legend .k-leaf { background-image: radial-gradient(circle 6px at 50% 50%, oklch(0.75 0.19 145), transparent); }
+
+.softroam-page .readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.softroam-page .readout div { min-width: 0; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); }
+.softroam-page .readout .wide { grid-column: span 2; }
+.softroam-page .readout .full { grid-column: 1 / -1; }
+.softroam-page dt { color: var(--muted); font-size: .6875rem; line-height: 1.25; }
+.softroam-page dd { margin: 3px 0 0; font-size: .9375rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.softroam-page .readout .full dd, .softroam-page .readout .wide dd { font-size: .875rem; font-weight: 500; }
+.softroam-page #r-res.bad { color: var(--error); }
+
+.softroam-page .settings { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--line-soft); }
+.softroam-page .field { margin: 12px 0; }
+.softroam-page .field > label, .softroam-page .seed-row label { display: block; margin-bottom: 4px; font-size: .8125rem; font-weight: 600; }
+.softroam-page .field select { width: 100%; }
+.softroam-page .says { margin: 6px 0 0; }
+.softroam-page .seed-row input { width: 10em; }
+
+.softroam-page .dials { margin: 24px 0 8px; padding: 4px 16px 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.softroam-page .dials summary { padding: 10px 0; cursor: pointer; font-weight: 700; }
+.softroam-page .dials summary span { display: block; color: var(--muted); font-size: .8125rem; font-weight: 400; }
+.softroam-page #dials { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0 28px; }
+.softroam-page #dials h3 { grid-column: 1 / -1; margin: 18px 0 2px; color: var(--sun-ink); font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.softroam-page .dial { display: grid; grid-template-columns: minmax(0, 1fr) 6.5em; gap: 2px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.softroam-page .dial > span { grid-column: 1 / -1; font-size: .875rem; font-weight: 600; }
+.softroam-page .dial input[type="range"] { width: 100%; margin: 0; accent-color: var(--sun); }
+.softroam-page .dial input[type="number"] { width: 100%; min-height: 32px; padding: 3px 6px; }
+.softroam-page .dial small { grid-column: 1 / -1; color: var(--muted); font-size: .75rem; }
+.softroam-page .dial.off { opacity: .5; }
+.softroam-page .dial.changed > span::after { content: " \2022"; color: var(--sun-ink); }
+.softroam-page .dials .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+
+.softroam-page .explanation { max-width: 78ch; margin: 24px 0 48px; color: var(--text); font-size: .9375rem; }
+.softroam-page .explanation p:last-child { color: var(--muted); font-size: .875rem; }
+
+@media (max-width: 980px) {
+  .softroam-page .stage { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .softroam-page .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .softroam-page .transport .inline { margin-left: 0; }
+  .softroam-page #dials { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .softroam-page * { scroll-behavior: auto; }
+}

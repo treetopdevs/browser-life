@@ -227,6 +227,7 @@ export default defineConfig({
       vesicle: r("./vesicle/index.html"),
       oligomer: r("./oligomer/index.html"),
       dropgenes: r("./dropgenes/index.html"),
+      softroam: r("./softroam/index.html"),
       hungryShapes: r("./hungry-shapes/index.html"),
       foodBands: r("./food-bands/index.html"),
       matter: r("./matter/index.html"),
