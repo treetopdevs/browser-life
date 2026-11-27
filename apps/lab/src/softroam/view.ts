@@ -1409,7 +1409,6 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
       }
     }
   }
-  // ---- Mother links as soft strands, brighter where the two stores differ.
   // With depth, a cell under a body drawn on a higher level gets no marks (they would show on the body above).
   let shown = cells;
   if (Lv > 0) {
@@ -1420,7 +1419,8 @@ function paintGarden(world: SoftRoamWorld, scale: number, alpha: number, out: Ui
     }
   }
   const only = Lv > 0 ? new Set(shown) : undefined;
-  drawLinks(world, scale, out, mem, shown, full, 'garden', only);
+  // ---- Mother links as soft strands, brighter where the two stores differ. With depth they are clipped pixel by pixel instead, so a strand to a covered cell still shows where it is in the open.
+  drawLinks(world, scale, out, mem, cells, full, 'garden', Lv > 0);
   drawKinds(world, scale, alpha, out, mem, shown, only);
 }
 
@@ -1566,7 +1566,11 @@ function drawKinds(world: SoftRoamWorld, scale: number, alpha: number, out: Uint
 }
 
 /** Mother links drawn straight into the picture (bytes), after the rest. */
-function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[], full: number, paint: SoftPaint, only?: Set<number>): void {
+/**
+ * `clip` (with depth, after the compose): leave out each pixel of a strand where a body on a higher level shows, so a strand
+ * between two open cells never crosses a body above it; the parts of it in the open still show.
+ */
+function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray | Uint8Array, mem: SoftPaintMemory, cells: number[], full: number, paint: SoftPaint, clip = false): void {
   const s = world.size;
   const side = s * scale;
   const half = s / 2;
@@ -1575,8 +1579,6 @@ function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray |
   for (const c of cells) {
     const m = world.mother[c];
     if (m < 0 || !world.alive[m]) continue;
-    // With depth: no strand to a mother that is under a higher body (it would show on the body above).
-    if (only !== undefined && !only.has(m)) continue;
     let dx = mem.px[m] - mem.px[c];
     let dy = mem.py[m] - mem.py[c];
     if (dx > half) dx -= s; else if (dx < -half) dx += s;
@@ -1588,6 +1590,8 @@ function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray |
     const strength = paint === 'garden' ? (0.04 + 0.6 * diff) * gMin : 0.8;
     if (strength <= 0.002) continue;
     const ax = mem.px[c], ay = mem.py[c];
+    // The strand's level plus one, as `lvl` holds it: a pixel showing a body above that is covered.
+    const top = clip ? Math.max(mem.drawLv[c], mem.drawLv[m]) + 1 : 0;
     const x0 = Math.floor((Math.min(ax, ax + dx) - reach) * scale), x1 = Math.ceil((Math.max(ax, ax + dx) + reach) * scale);
     const y0 = Math.floor((Math.min(ay, ay + dy) - reach) * scale), y1 = Math.ceil((Math.max(ay, ay + dy) + reach) * scale);
     const inv2 = 1 / (2 * sigma * sigma);
@@ -1602,6 +1606,7 @@ function drawLinks(world: SoftRoamWorld, scale: number, out: Uint8ClampedArray |
         const ex = pxx - t * dx, ey = py - t * dy;
         const d2 = ex * ex + ey * ey;
         if (d2 > reach * reach) continue;
+        if (clip && mem.lvl[wy * side + wxp] > top) continue;
         const a = strength * Math.exp(-d2 * inv2) * 255;
         const p = (wy * side + wxp) * 4;
         if (paint === 'garden') {

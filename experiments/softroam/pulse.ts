@@ -30,9 +30,11 @@ const opt: Partial<SoftRoamOptions> = args.opt ? JSON.parse(args.opt) : {};
 const ov: Partial<SoftRoamConfig> = args.ov ? JSON.parse(args.ov) : {};
 if (report < win) throw new Error('--report must be at least --window');
 
-const world = foundSoftRoam({ seed, start: (args.start ?? 'bodies') as SoftRoamStart, size: args.size ? Number(args.size) : undefined, ...(on ? { pulse: true } : {}), ...opt, overrides: ov });
+// The options as run, once: an `--opt` start wins over `--start`, and the label says which ran.
+const options: SoftRoamOptions = { seed, start: (args.start ?? 'bodies') as SoftRoamStart, size: args.size ? Number(args.size) : undefined, ...(on ? { pulse: true } : {}), ...opt, overrides: ov };
+const world = foundSoftRoam(options);
 const pulse = world.cfg.pulse === true;
-console.log(`seed ${seed} start ${args.start ?? 'bodies'} pulse ${pulse} ${JSON.stringify(opt)} ${JSON.stringify(ov)}`);
+console.log(`seed ${seed} start ${options.start} pulse ${pulse} ${JSON.stringify(opt)} ${JSON.stringify(ov)}`);
 console.log('step\tcells\tbodies\tlargest\tbeat/flick/still\tbodies4+\tbeating\tperiod med (p10-p90)\tpulsing\tthrust%\ttravel/k\t|w|\tbond swing beat/rest\tresidual');
 
 /** Per cid: the go and flex outputs over the window. */

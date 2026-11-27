@@ -527,6 +527,26 @@ describe('soft roam depth: the picture', () => {
     const joined = build(true), apart = build(false);
     // Over the mother (under the cover) nothing differs; out by the daughter the strand is there.
     for (let d = -2; d <= 2; d++) expect(sum(joined.o, joined.mx + d / SC, joined.my), `d ${d}`).toBe(sum(apart.o, apart.mx + d / SC, apart.my));
+    // The mother is covered, yet the open end of her strand, by the daughter, still shows.
+    const dx = (7 * U + 800) / U - 0.1;
+    expect(sum(joined.o, dx, joined.my)).toBeGreaterThan(sum(apart.o, dx, apart.my));
+  });
+
+  it('leaves a strand between two open floor cells off a surface body it would cross', () => {
+    // Two linked floor cells either side of a surface cell, both centres in the open: the strand runs under the cover, not over it.
+    const build = (joined: boolean): Uint8Array => {
+      const w = new SoftRoamWorld(still());
+      const plan = restPlan(w);
+      const m = spawn(w, Math.round(9.25 * U), Math.round(8.5 * U), SITTER, 400, plan, P, 0);
+      const d = spawn(w, Math.round(7.75 * U), Math.round(8.5 * U), SITTER, 100, plan, P, 0);
+      if (joined) link(w, d, m, 1, 0);
+      spawn(w, Math.round(8.5 * U), Math.round(8.5 * U), SITTER, 400, plan, P, 2);
+      return shot(w);
+    };
+    const joined = build(true), apart = build(false);
+    for (let d = -2; d <= 2; d++) expect(sum(joined, 8.5 + d / SC, 8.5), `d ${d}`).toBe(sum(apart, 8.5 + d / SC, 8.5));
+    // Out in the open, between each floor cell and the cover, the strand still shows.
+    for (const x of [7.75 - 0.1, 9.25 + 0.1]) expect(sum(joined, x, 8.5), `x ${x}`).toBeGreaterThan(sum(apart, x, 8.5));
   });
 
   it('leaves a feeding thread off a body that covers the mouth and its prey', () => {
