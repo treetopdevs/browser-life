@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario wound-in-crowd --seed 2 --steps 15000 --wound-at 10000 --wound-radius 8 --wound-watch 5000 --wound-every 100 --tag-mut-rate 65536 --tag-mut-bud --tag-step 40 --gates grow --founders 5 --frames 9999,10000,10300,12000,end --out docs/bodies-2026-11-17/v3/wildcard/WB-r8-s2

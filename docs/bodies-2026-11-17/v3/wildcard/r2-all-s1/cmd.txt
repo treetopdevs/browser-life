@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario crowd --seed 1 --gates share,grow,signal --no-frames --out docs/bodies-2026-11-17/v3/wildcard/r2-all-s1

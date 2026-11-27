@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101b21" />
+  <meta name="description" content="A designed world where a body is only a pile of cells that a local rule keeps together. Wound it, then switch on mutation and watch what competition does." />
+  <title>Set-loose bodies · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/bodies/" />
+</head>
+<body class="bodies-page">
+  <a class="skip" href="#main">Skip to the world</a>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed world · prototype</span><a class="back" href="/story/#chapter-8">← The story</a></header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Bodies held together by a local rule</p>
+      <h1>What does evolution do with a body?</h1>
+      <p>Each cell carries four numbers (its genome) and copies them into new cells. Cells grow into empty tiles that are close enough to a root, bud off seed cells, take food from empty tiles beside them, pass stored food to their neighbours, and starve when food runs short. Switch mutation on and see whether bodies hold, change shape, or thin into a mat. The neutral control lets genes mutate and be inherited but makes the rules ignore them, so you can see what drift alone does.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> roots, the distance signal, surface foraging, internal food transport and the body-size gene are engineered; bodies are not declared, they are whatever cells stay connected.</p>
+    </section>
+    <section class="intro found" aria-labelledby="found-h">
+      <h2 id="found-h">What we found</h2>
+      <p class="scope-note"><strong>Bodies set loose</strong> <span class="found-label">Exploratory · 18 Nov</span> A body we designed held alone for thousands of steps, then merged into one mat in a crowd. Recognition marks walled families apart, not bodies, and the pieces froze. Three seeds per arm.</p>
+      <p class="found-more">This world is one stop on the way to creatures that reproduce and evolve. <a href="/story/#chapter-8">Read where it sits in the story</a>, or see the full write-up in <a href="/research/">the journal</a>.</p>
+    </section>
+    <section class="stage">
+      <div class="world">
+        <canvas id="world" width="576" height="576" tabindex="0" aria-label="Bodies world, 96 by 96 tiles. Click or tap to wound. With the keyboard, arrow keys move the cursor and Enter wounds."></canvas>
+        <p id="live" class="live" role="status" aria-live="polite">Paused.</p>
+      </div>
+      <div class="panel">
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="play" class="primary" type="button">Play</button>
+          <button id="step" type="button">One step</button>
+          <label for="pace">Pace<select id="pace"><option value="1">1 per frame</option><option value="2">2</option><option value="4" selected>4</option><option value="8">8</option></select></label>
+        </div>
+        <div class="controls">
+          <label class="check"><input id="mutation" type="checkbox" /> Mutation <small>(a birth may nudge one gene by one step; 3 in 256)</small></label>
+          <label class="check"><input id="neutral" type="checkbox" /> Neutral control <small>(genes mutate and are inherited, but the rules read the founder genome: the drift baseline)</small></label>
+          <label for="rules">Rules<select id="rules"><option value="2" selected>v2: forage + transport (scarcity)</option><option value="1">v1: own tile only (original)</option></select></label>
+          <label class="check"><input id="upkeep" type="checkbox" checked /> Upkeep <small>(cells burn stored food; off gives a fed world with no scarcity)</small></label>
+          <label for="color">Colour by<select id="color"><option value="lineage">Lineage (mutation family)</option><option value="d">Distance to root (d)</option><option value="food">Food on the tile</option><option value="roots">Roots only</option></select></label>
+          <fieldset><legend>Wound size (click the world)</legend>
+            <label><input type="radio" name="wound" value="3" /> 3</label><label><input type="radio" name="wound" value="5" checked /> 5</label><label><input type="radio" name="wound" value="8" /> 8</label>
+          </fieldset>
+          <form id="seed-form" class="seed-form"><label for="seed">Seed</label><input id="seed" type="text" inputmode="numeric" value="1" /><button type="submit">Reset (3 founders)</button></form>
+          <button id="alone" type="button">Show founder alone <small>(one root, no mutation; v2 with upkeep on, v1 fed)</small></button>
+        </div>
+        <dl class="readout">
+          <div><dt>Step</dt><dd id="r-t">0</dd></div><div><dt>Cells</dt><dd id="r-cells">0</dd></div><div><dt>Components</dt><dd id="r-comps">0</dd></div><div><dt>Largest share</dt><dd id="r-share">0</dd></div>
+          <div><dt>Interior</dt><dd id="r-interior">0</dd></div><div><dt>Coverage</dt><dd id="r-cover">0</dd></div><div><dt>Genome variants</dt><dd id="r-var">0</dd></div><div><dt>Mutations</dt><dd id="r-mut">0</dd></div>
+          <div><dt>Roots</dt><dd id="r-roots">0</dd></div><div><dt>Root basins</dt><dd id="r-dom">0</dd></div><div><dt>Ledger residual</dt><dd id="r-res">0</dd></div>
+        </dl>
+        <canvas id="history" width="576" height="120" role="img" aria-label="History of cells, components and interior cells over time."></canvas>
+        <p class="legend"><i class="k cells"></i> cells (scaled) <i class="k comps"></i> components <i class="k interior"></i> interior share</p>
+      </div>
+    </section>
+    <section class="explanation">
+      <p>Components, interior share and coverage are measured by an observer after the fact; nothing in the rules reads them. A thin film shows as high coverage with one giant component.</p>
+      <p>Root basins group every cell with the root it drains to along the distance signal; touching bodies count separately there, so they show how many bodies a connected mat holds. Known limits: if the root is killed, the fragment re-roots at its edge and overgrows (about 1.4 to 2.3 times in v2); a lone body holds for thousands of steps and then a re-rooting event lets it spread; in a crowded world the bodies tile the whole world into one mat. Reported, not tuned away.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/bodies/page.ts"></script>
+</body>
+</html>

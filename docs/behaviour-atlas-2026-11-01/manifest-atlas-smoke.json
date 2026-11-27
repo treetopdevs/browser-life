@@ -1,0 +1,42 @@
+{
+ "source": "runs/atlas-smoke",
+ "codeSha": "8d577be4a616d6b6f45f36332abbb05675e7eae2",
+ "versions": {
+  "schema": 3,
+  "rule": 1,
+  "metrics": 2
+ },
+ "archive": "atlas-v1",
+ "atlasSpec": {
+  "id": "atlas-v1",
+  "bins": 8,
+  "displacementRange": [
+   0,
+   1.75
+  ],
+  "persistenceRange": [
+   0,
+   1
+  ],
+  "calibration": "failed: D1 defined for 55 of 160 (34%)"
+ },
+ "files": {
+  "viable.jsonl": "6a10e033852fe88e34f98168e7d61c279149dba9e7168d03504c9b0c217e7d78",
+  "archive.json": "edd07bcef4bbf412c797c36f2297414a53b11cf87ed016231da69274c4ef23d6"
+ },
+ "evaluated": 48,
+ "viable": 30,
+ "nonViableNotLogged": 18,
+ "withProvenance": 30,
+ "provenanceRegenerated": 30,
+ "inserted": 3,
+ "currentElites": 3,
+ "displaced": 0,
+ "passersDistinct": 0,
+ "passingOffers": 0,
+ "duplicateGenomes": 0,
+ "duplicateRate": 0,
+ "noCell": 22,
+ "cellsEverOccupied": 3,
+ "stepStoneNote": "the ledger keeps every viable offer; cells hold only the current elite. Non-viable proposals (quality 0) are counted, not logged."
+}

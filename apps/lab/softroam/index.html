@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Soft Roam · local probe</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0d1311; --ink: #e6ebe8; --dim: #93a09a; --line: #26302c; --accent: #f0be3e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    p { margin: 6px 0; color: var(--dim); max-width: 78ch; }
+    p b { color: var(--ink); }
+    .bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 14px 0; }
+    button, select, input { font: inherit; color: var(--ink); background: #18211e; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+    button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
+    button:disabled { opacity: .5; }
+    label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+    input[type=number] { width: 7em; }
+    canvas { width: 100%; max-width: 768px; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 6px; display: block; }
+    dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 16px; margin: 16px 0; }
+    dt { color: var(--dim); font-size: 12px; }
+    dd { margin: 0; font-variant-numeric: tabular-nums; font-size: 17px; }
+    #error { color: #f08a7a; }
+    .stage { display: grid; grid-template-columns: minmax(0, 768px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .stage .dials { margin: 0; max-height: min(768px, calc(100vh - 24px)); overflow: auto; position: sticky; top: 12px; }
+    @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } .stage .dials { max-height: none; position: static; } }
+    .dials { margin: 10px 0 16px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px 12px; }
+    .dials summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 6px 0; }
+    .dials h3 { font-size: 13px; color: var(--accent); margin: 14px 0 4px; font-weight: 600; letter-spacing: .02em; }
+    .dial { display: grid; grid-template-columns: 1fr 6em; gap: 2px 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .dial > span { grid-column: 1 / -1; color: var(--ink); font-size: 14px; }
+    .dial input[type=range] { width: 100%; accent-color: var(--accent); padding: 0; }
+    .dial input[type=number] { width: 100%; padding: 3px 6px; }
+    .dial small { grid-column: 1 / -1; color: var(--dim); font-size: 12.5px; }
+    .dial.off { opacity: .45; }
+    .dial.changed > span::after { content: ' \2022'; color: var(--accent); }
+    .dials .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Soft Roam <small style="color:var(--dim);font-weight:400">· local probe, not on the site</small></h1>
+    <p>This is <b>Roam moved off its grid</b>. The same kind of body (cells joined together, grown from a plan, fed by patches of food that drop onto the ground) now lives on a smooth surface instead of a grid of tiles. Cells push each other apart, joined cells pull on each other like springs, so a body glides, bends and turns instead of hopping from square to square. Bodies that lose a cell can break in two, and the pieces swim apart.</p>
+    <p>Each coloured soft shape is a <b>body</b>, with a dark seam where it meets another. The blue haze is <b>food</b> on the ground: a patch drops now and then, and then slowly spreads out into haze until it is eaten. A cell that has eaten enough <b>divides</b>: the new cell is its <b>daughter</b> and the cell it came from is her <b>mother</b>. A daughter that stays joined grows the body; one that is let go starts a new body. Between a mother and a daughter the thin bright <b>strand</b> is matter flowing to the one with less (brighter means a bigger difference). A cell that starves, or simply wears out, <b>dies</b>: it fades away and its matter goes onto the ground as a small puff of food, so a body can break where a cell is lost.</p>
+    <p>In the <b>seasons</b> start a bright band half the world wide sweeps round the arena once a day, and the whole world brightens and dims once a year. <b>Green leaf cells</b> live on that light, hunters see prey from a distance and prey run from hunters, and a body only lets go a new body once it has grown big enough. Pick the garden to see the same bodies without any of that: the dials for the sun, senses and manners are set to off, and the seasons' own food and upkeep numbers go back to the garden's.</p>
+    <p>The <b>big bodies</b> start (the page's own) runs the same sun and year with bodies of 21 to 25 cells: armoured herds with shells down both flanks, groves with leaves sticking out to the light, and pack hunters with three mouths across the front. A body <b>heals</b>: where a cell dies the cross-braces hold the rest together and the cell that made it grows it again. A body with a mouth that sees prey <b>turns as a whole</b> after it, and a body that sees a hunter turns away. Several mouths together can open a body too big for one, two bodies that could each eat the other leave each other alone, and hunters prefer prey no other hunter is at. A share of the upkeep is kept for the leaves, and <b>winter costs</b>: every cell pays a little more in the dark of the year, so winter thins bodies and the numbers swing with the year.</p>
+    <p>Nothing is made or lost: every unit of matter is on the ground, inside a cell, in the <b>store</b> that drops the next patch, or in the store kept for leaves. The matter check below should always say balanced.</p>
+    <div class="bar">
+      <button id="play" class="primary" type="button">Pause</button>
+      <button id="step" type="button">One step</button>
+      <button id="reset" type="button">Start again</button>
+      <label>Seed <input id="seed" type="number" min="0" value="1" /></label>
+      <label>Start <select id="start">
+        <option value="bodies" selected>big bodies: the seasons with bodies of 21 to 25 cells that heal; armoured herds, groves and pack hunters that turn as one after prey, and a winter that costs</option>
+        <option value="deep">depth: the big bodies in a world of three levels (floor, mid-water, surface); bodies meet only on their own level, food is on the floor and light comes from above</option>
+        <option value="seasons">the seasons: a sun that sweeps round every day and a year that swings from lean to rich; armoured grazers, green leaf bushes, hunters that see prey, and plates</option>
+        <option value="garden">the garden: lines, plates, crosses, blocks, specks and bushes, some armoured, some hunting</option>
+        <option value="grown-all">plain: lines, plates, crosses, blocks, specks (one cell) and bushes, no shells or mouths</option>
+        <option value="grown-lines">lines of eight</option>
+        <option value="grown-plates">plates, three by three</option>
+        <option value="grown-crosses">crosses</option>
+        <option value="grown-blocks">blocks, two cells by four</option>
+        <option value="grown-bushes">bushes</option>
+        <option value="grown-specks">specks, single cells</option>
+      </select></label>
+      <label>Kinds of cell <select id="kinds">
+        <option value="1" selected>on: plans can make shells (pale: do not eat, cheap upkeep) and mouths (dusky rose, turning hot red while they feed: the only cells that feed on other bodies)</option>
+        <option value="0">off: every cell is alike</option>
+      </select></label>
+      <label>Shell toughness <select id="toughness">
+        <option value="0" selected>every shell is equally tough</option>
+        <option value="1">plans can make shells tougher (more hits to crack, more upkeep)</option>
+      </select></label>
+      <label>Speed <select id="pace">
+        <option value="5">very slow: 5 steps a second</option>
+        <option value="15">slow: 15</option>
+        <option value="30" selected>medium: 30</option>
+        <option value="60">fast: 60</option>
+        <option value="150">faster: 150</option>
+        <option value="400">fastest: 400</option>
+      </select></label>
+      <label>Look <select id="paint">
+        <option value="garden" selected>garden: soft glowing bodies, blue haze is food; with levels, higher bodies are drawn further up the screen and their shadows fall under them</option>
+        <option value="top">garden from straight above: the same, with every level drawn at its true place</option>
+        <option value="plain">plain: a disc per cell and a line from each daughter to her mother, for checking</option>
+      </select></label>
+    </div>
+    <p id="error" role="alert"></p>
+    <div class="stage">
+    <canvas id="view" width="768" height="768"></canvas>
+    <details class="dials" open>
+      <summary>Dials: drag a slider or type an exact number; the world starts again when you let go</summary>
+      <div id="dials"></div>
+      <div class="row"><button id="dials-reset" type="button">Put every dial back</button><button id="dials-link" type="button">Copy a link to these settings</button><span id="dials-note" role="status" aria-live="polite" style="color:var(--dim)"></span></div>
+    </details>
+    </div>
+    <dl>
+      <div><dt>Step</dt><dd id="r-step">0</dd></div>
+      <div><dt>Steps per second</dt><dd id="r-rate">0</dd></div>
+      <div><dt>Bodies</dt><dd id="r-bodies">0</dd></div>
+      <div><dt>Cells</dt><dd id="r-cells">0</dd></div>
+      <div><dt>Largest body</dt><dd id="r-largest">0</dd></div>
+      <div><dt>Food</dt><dd id="r-food">0</dd></div>
+      <div><dt>Time</dt><dd id="r-time">-</dd></div>
+      <div><dt>Light</dt><dd id="r-light">-</dd></div>
+      <div><dt>Cells by kind</dt><dd id="r-kinds">-</dd></div>
+      <div><dt>Hunting and fleeing</dt><dd id="r-chase">-</dd></div>
+      <div><dt>Levels</dt><dd id="r-levels">-</dd></div>
+      <div><dt>Inner pulse</dt><dd id="r-pulse">-</dd></div>
+      <div><dt>Matter check</dt><dd id="r-res">balanced</dd></div>
+    </dl>
+  </main>
+  <script type="module" src="/src/softroam/page.ts"></script>
+</body>
+</html>

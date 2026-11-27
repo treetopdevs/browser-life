@@ -1,0 +1,309 @@
+[
+ {
+  "name": "A: forage + transport on the v1 constants (UPK 4, INIT_FOOD 32)",
+  "rules": {
+   "UPK": 4,
+   "INIT_FOOD": 32
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 101,
+     "2000": 455,
+     "4000": 1543
+    },
+    "comps": 120,
+    "roots": 11,
+    "rootsCreated": 106,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 211,
+     "2000": 482,
+     "4000": 1146
+    },
+    "comps": 83,
+    "roots": 7,
+    "rootsCreated": 63,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 246,
+     "2000": 463,
+     "4000": 1875
+    },
+    "comps": 105,
+    "roots": 16,
+    "rootsCreated": 95,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "B: A with INIT_FOOD 4",
+  "rules": {
+   "UPK": 4
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 290,
+     "2000": 512,
+     "4000": 1476
+    },
+    "comps": 120,
+    "roots": 9,
+    "rootsCreated": 109,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 546,
+     "2000": 685,
+     "4000": 1936
+    },
+    "comps": 62,
+    "roots": 16,
+    "rootsCreated": 109,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 182,
+     "2000": 527,
+     "4000": 1743
+    },
+    "comps": 104,
+    "roots": 11,
+    "rootsCreated": 68,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "C: UPK 6",
+  "rules": {
+   "UPK": 6
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 320,
+     "2000": 607,
+     "4000": 965
+    },
+    "comps": 3,
+    "roots": 7,
+    "rootsCreated": 26,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 116,
+     "2000": 358,
+     "4000": 727
+    },
+    "comps": 3,
+    "roots": 4,
+    "rootsCreated": 14,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 533,
+     "2000": 731,
+     "4000": 1478
+    },
+    "comps": 6,
+    "roots": 9,
+    "rootsCreated": 37,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "D: final constants but orphan rooting at the v1 rate (ORPHP 2/256 per step; ORPH16 0)",
+  "rules": {
+   "ORPH16": 0
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 173,
+     "4000": 172
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 172,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 166,
+     "2000": 169,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "E: KEEP 0 (foraging may drain a tile to zero)",
+  "rules": {
+   "KEEP": 0
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 149,
+     "2000": 156,
+     "4000": 157
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 149,
+     "2000": 154,
+     "4000": 157
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 146,
+     "2000": 151,
+     "4000": 156
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "F: KEEP 1",
+  "rules": {
+   "KEEP": 1
+  },
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 149,
+     "2000": 155,
+     "4000": 160
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 150,
+     "2000": 157,
+     "4000": 159
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 154,
+     "2000": 158,
+     "4000": 163
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ },
+ {
+  "name": "final v2: UPK 8, INIT_FOOD 4, ORPH16 16, KEEP 3",
+  "rules": {},
+  "runs": [
+   {
+    "seed": 1,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 173,
+     "4000": 172
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 2,
+    "cellsAt": {
+     "1000": 164,
+     "2000": 172,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   },
+   {
+    "seed": 3,
+    "cellsAt": {
+     "1000": 166,
+     "2000": 169,
+     "4000": 169
+    },
+    "comps": 1,
+    "roots": 1,
+    "rootsCreated": 1,
+    "residual": 0
+   }
+  ]
+ }
+]

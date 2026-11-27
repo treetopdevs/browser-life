@@ -1,0 +1,37 @@
+body.vesicle-page{--muted:#a7b9bc;--line:#3e555e;--mint:#9fe4c4;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e7efeb;background:#101b21;color-scheme:dark;margin:0}
+body.vesicle-page *{box-sizing:border-box}body.vesicle-page a{color:var(--mint)}
+body.vesicle-page header,body.vesicle-page main{max-width:1180px;margin:auto;padding:0 24px}
+body.vesicle-page header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+body.vesicle-page .brand{font-weight:700;text-decoration:none}body.vesicle-page .brand span{color:var(--muted);font-weight:400}
+body.vesicle-page .badge{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:5px 10px;color:var(--muted)}
+body.vesicle-page .skip{position:absolute;left:-999px}body.vesicle-page .skip:focus{left:8px;top:8px;background:#101b21;padding:6px}
+body.vesicle-page .intro{max-width:820px;padding:20px 0 10px}body.vesicle-page .eyebrow{color:var(--mint);text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0}
+body.vesicle-page h1{font-size:28px;margin:6px 0 10px}body.vesicle-page .intro p{color:#bdcbca;font-size:15px;line-height:1.5}
+body.vesicle-page .scope-note{padding:10px 13px;border-left:3px solid var(--mint);background:#14232a}
+body.vesicle-page .stage{display:grid;grid-template-columns:minmax(0,576px) minmax(0,1fr);gap:20px;align-items:start;margin-top:10px}
+body.vesicle-page canvas{display:block;width:100%;max-width:576px;height:auto;border:1px solid var(--line);border-radius:8px;background:#101b21;image-rendering:pixelated}
+body.vesicle-page #history{image-rendering:auto;margin-top:12px}
+body.vesicle-page canvas:focus-visible,body.vesicle-page button:focus-visible,body.vesicle-page select:focus-visible,body.vesicle-page input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+body.vesicle-page .live{font-size:12px;color:var(--muted);min-height:2.6em;margin:6px 0 0}
+body.vesicle-page button,body.vesicle-page select,body.vesicle-page input[type=text]{font:inherit;font-size:13px;color:inherit;background:#172b32;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+body.vesicle-page button{cursor:pointer}body.vesicle-page button.primary{background:var(--mint);color:#0b1a14;border-color:var(--mint);font-weight:700}
+body.vesicle-page .transport,body.vesicle-page .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+body.vesicle-page .controls>*{flex:1 1 100%}body.vesicle-page .controls label{display:flex;gap:8px;align-items:center;font-size:13px}
+body.vesicle-page small{color:var(--muted);font-size:11px}body.vesicle-page fieldset{border:1px solid var(--line);border-radius:6px;display:flex;gap:14px;font-size:13px}
+body.vesicle-page .seed-form{display:flex;gap:8px;align-items:center}body.vesicle-page #seed{width:90px}
+body.vesicle-page .readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}body.vesicle-page .readout div{background:#14232a;border-radius:6px;padding:6px 8px}
+body.vesicle-page dt{font-size:10px;color:var(--muted);text-transform:uppercase}body.vesicle-page dd{margin:2px 0 0;font-size:16px;font-variant-numeric:tabular-nums}
+body.vesicle-page .legend{font-size:11px;color:var(--muted)}body.vesicle-page .k{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 3px 0 8px}
+body.vesicle-page .k.cells{background:#9fe4c4}body.vesicle-page .k.comps{background:#f2be78}body.vesicle-page .k.interior{background:#b5adf2}
+body.vesicle-page .explanation{max-width:820px;margin:20px 0 40px;color:#bdcbca;font-size:14px;line-height:1.5}
+@media(max-width:860px){body.vesicle-page .stage{grid-template-columns:minmax(0,1fr)}body.vesicle-page header,body.vesicle-page main{padding:0 14px}}
+body.vesicle-page .stage{grid-template-columns:minmax(0,640px) minmax(0,1fr)}
+body.vesicle-page #world{max-width:640px;image-rendering:auto}
+body.vesicle-page select{max-width:100%;min-width:0;text-overflow:ellipsis}
+body.vesicle-page .controls label,body.vesicle-page .transport label{min-width:0;flex-wrap:wrap}
+body.vesicle-page .panel,body.vesicle-page .world{min-width:0}
+@media(max-width:860px){body.vesicle-page .stage{grid-template-columns:minmax(0,1fr)}}
+/* Public chrome: the way back to the story, and what the journal says this world showed. */
+body.vesicle-page header{flex-wrap:wrap;padding-block:8px}body.vesicle-page header .badge{margin-left:auto}
+body.vesicle-page .found h2{font-size:18px;margin:14px 0 4px}body.vesicle-page .found .scope-note{margin:10px 0}
+body.vesicle-page .found strong{color:#e7efeb}body.vesicle-page .found-label{display:inline-block;margin:0 6px;padding:1px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;white-space:nowrap}

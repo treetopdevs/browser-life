@@ -1,0 +1,534 @@
+{
+ "note": "Matched-null amendment to the clade measures (docs/clade-measures-2026-10-18.md, 'Amendment: a null matched on demography'); rules fixed there before computing. Reads only the v1 record; exploratory, not a registration.",
+ "input": {
+  "path": "experiments/foundations/clade-v1.json",
+  "sha256": "2b1a58df8264839b4808fbf96071c8b1565ee2b781242cf7a77817267926e438",
+  "code": "137e73aa1ba4f404"
+ },
+ "code": "e958befb9c27cd5d",
+ "matching": {
+  "covariates": [
+   "meanCells2",
+   "livingLast",
+   "mutationsPer1e5_2"
+  ],
+  "caliperRatio": 1.1,
+  "k": 3,
+  "minMatched": 5,
+  "minFraction": 0.5,
+  "effectBar": 0.8,
+  "alpha": 0.05,
+  "ladder": [
+   1.05,
+   1.1,
+   1.2,
+   1.5
+  ],
+  "inputCode": "137e73aa1ba4f404"
+ },
+ "matchingTable": {
+  "gradient-m3": [
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-1",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 2.8278688524590163
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-2",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.040983606557377
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-3",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 3.377049180327869
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-4",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 5.032786885245901
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-5",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 3.877049180327869
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-6",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 2.2295081967213113
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-7",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.172131147540983
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-8",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.286885245901639
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-9",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 3.1065573770491803
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-10",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.450819672131147
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-11",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.073770491803279
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-12",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-m4/gradient-m3/neutral/seed-18",
+     "maxRatio": 2.7126856118791602
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-13",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-m4/gradient-m3/neutral/seed-17",
+     "maxRatio": 2.781884555780998
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-14",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 2.581967213114754
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-15",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.278688524590164
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-16",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.967213114754099
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-17",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.516393442622951
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-18",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.377049180327869
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-19",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 4.426229508196721
+    }
+   },
+   {
+    "dir": "runs/m4/gradient-m3/treatment/seed-20",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+     "maxRatio": 2.0081967213114753
+    }
+   }
+  ],
+  "spots-m3": [
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-1",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1004",
+     "maxRatio": 28.375
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-2",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1004",
+     "maxRatio": 16.214285714285715
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-3",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.2752375859505196
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-4",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.5659971419774021
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-5",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.2565619801911672
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-6",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.3488447793859946
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-7",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.4851120969156906
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-8",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1010",
+     "maxRatio": 1.487780752318423
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-9",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1004",
+     "maxRatio": 17.46153846153846
+    }
+   },
+   {
+    "dir": "runs/m4/spots-m3/treatment/seed-10",
+    "neutrals": [],
+    "nearest": {
+     "dir": "runs/replay-calib/spots-m3/neutral/seed-1003",
+     "maxRatio": 1.1458763590687118
+    }
+   }
+  ]
+ },
+ "measures": {
+  "tmrca95": {
+   "scalar": "tmrca95Median2",
+   "higher": "neutral",
+   "v1Rules": {
+    "complete": true,
+    "separation": false,
+    "nullFlags": false,
+    "splits": true,
+    "sanity": true
+   },
+   "presets": {
+    "gradient-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 20,
+     "needed": 10,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": {
+      "flagged": 0,
+      "of": 0
+     },
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 0,
+      "1.5": 0
+     },
+     "perCovariate": {
+      "meanCells2": 7,
+      "livingLast": 0,
+      "mutationsPer1e5_2": 0
+     }
+    },
+    "spots-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 10,
+     "needed": 5,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": {
+      "flagged": 0,
+      "of": 0
+     },
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 1,
+      "1.5": 6
+     },
+     "perCovariate": {
+      "meanCells2": 1,
+      "livingLast": 7,
+      "mutationsPer1e5_2": 8
+     }
+    }
+   }
+  },
+  "mutantSweeps": {
+   "scalar": "mutantSweeps",
+   "higher": "treatment",
+   "v1Rules": {
+    "complete": true,
+    "separation": false,
+    "nullFlags": false,
+    "splits": true,
+    "sanity": true
+   },
+   "presets": {
+    "gradient-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 20,
+     "needed": 10,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": {
+      "flagged": 0,
+      "of": 0
+     },
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 0,
+      "1.5": 0
+     },
+     "perCovariate": {
+      "meanCells2": 7,
+      "livingLast": 0,
+      "mutationsPer1e5_2": 0
+     }
+    },
+    "spots-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 10,
+     "needed": 5,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": {
+      "flagged": 0,
+      "of": 0
+     },
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 1,
+      "1.5": 6
+     },
+     "perCovariate": {
+      "meanCells2": 1,
+      "livingLast": 7,
+      "mutationsPer1e5_2": 8
+     }
+    }
+   }
+  },
+  "grossReplacement": {
+   "scalar": "grossReplacement2",
+   "higher": "treatment",
+   "v1Rules": {
+    "complete": true,
+    "separation": false,
+    "nullFlags": null,
+    "splits": true,
+    "sanity": true
+   },
+   "presets": {
+    "gradient-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 20,
+     "needed": 10,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": null,
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 0,
+      "1.5": 0
+     },
+     "perCovariate": {
+      "meanCells2": 7,
+      "livingLast": 0,
+      "mutationsPer1e5_2": 0
+     }
+    },
+    "spots-m3": {
+     "status": "unmatchable",
+     "treatmentRuns": 10,
+     "needed": 5,
+     "matched": 0,
+     "matchedSets": [],
+     "meanE": null,
+     "positives": 0,
+     "negatives": 0,
+     "ties": 0,
+     "nPrime": 0,
+     "pSign": 1,
+     "distinctNeutrals": 0,
+     "balance": {
+      "meanCells2": null,
+      "livingLast": null,
+      "mutationsPer1e5_2": null
+     },
+     "medianDiff": null,
+     "matchedNeutralFlags": null,
+     "ladder": {
+      "1.05": 0,
+      "1.1": 0,
+      "1.2": 1,
+      "1.5": 6
+     },
+     "perCovariate": {
+      "meanCells2": 1,
+      "livingLast": 7,
+      "mutationsPer1e5_2": 8
+     }
+    }
+   }
+  }
+ },
+ "matchedSeparation": {
+  "tmrca95": false,
+  "mutantSweeps": false,
+  "grossReplacement": false
+ },
+ "matchedCandidate": {
+  "tmrca95": false,
+  "mutantSweeps": false,
+  "grossReplacement": false
+ },
+ "uptime": {
+  "start": "0:01  up 17 days,  1:24, 14 users, load averages: 340.28 339.83 391.02",
+  "end": "0:01  up 17 days,  1:24, 14 users, load averages: 340.28 339.83 391.02"
+ }
+}

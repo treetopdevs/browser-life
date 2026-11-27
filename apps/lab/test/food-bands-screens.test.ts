@@ -53,7 +53,10 @@ describe('food-bands screens', () => {
 
   it('every food-looking tool directory with an explore.ts is accounted for', () => {
     const present = readdirSync(new URL('tools/', root)).filter(d => existsSync(new URL(`tools/${d}/explore.ts`, root)))
-      .filter(d => /food|uniform-endurance/.test(d));
+      .filter(d => /food|uniform-endurance/.test(d))
+      // stronger-food-floor has its own page (not a food-bands screen) and its replays are not in the
+      // repository (docs/creative-prototypes/ARTIFACTS.md), so it is left out of this list on purpose.
+      .filter(d => d !== 'stronger-food-floor');
     expect(present.sort()).toEqual([...FOOD_TOOL_DIRS].sort());
   });
 

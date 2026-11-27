@@ -1,0 +1,1 @@
+node --no-warnings experiments/bodies/v3.ts --scenario crowd --steps 15000 --tag-mut-rate 65536 --tag-mut-bud --tag-step 40 --gates grow --founders 5 --frames end --seed 1 --genome 24,60,4,0 --rules-override {"SUPPLY":18} --out docs/bodies-2026-11-17/v3/wildcard/G18-d24-s1

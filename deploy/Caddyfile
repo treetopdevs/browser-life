@@ -53,6 +53,10 @@
   redir /particles/motifs /particles/motifs/{?query} 308
   redir /boundaries /boundaries/{?query} 308
   redir /development /development/{?query} 308
+  redir /bodies /bodies/{?query} 308
+  redir /vesicle /vesicle/{?query} 308
+  redir /oligomer /oligomer/{?query} 308
+  redir /dropgenes /dropgenes/{?query} 308
   redir /hungry-shapes /hungry-shapes/{?query} 308
   redir /food-bands /food-bands/{?query} 308
   redir /matter /matter/{?query} 308

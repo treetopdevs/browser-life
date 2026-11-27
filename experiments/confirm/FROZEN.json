@@ -1,0 +1,18 @@
+{
+  "droplets": {
+    "apps/lab/src/oligomer/droplets-kernel.ts": "8cde90527613a6432ea48a96d175332b5e8271830562113196529c8df9ee0bbe",
+    "apps/lab/src/oligomer/droplets-shaders.ts": "a6d718787c8d1ab09615865fa91a0825d72829fc65de275d253cd1c4608a5e74",
+    "apps/lab/src/oligomer/droplets-gpu.ts": "5701be0d362c3d6f8cc0414dc8f47972e33edfa789317835d4775befdfd43a97",
+    "apps/lab/src/oligomer/droplet-worlds.ts": "b93de34bb1719768a6df11ce20594972d0ad8b1c833fc1443ea590c4f87aaa50",
+    "experiments/confirm/run-droplets.ts": "3711ac8940fb9803659bfce80321d1911099fe80a9168c958bb9eea6ef1f60e1",
+    "experiments/confirm/rule.ts": "1c4a0d085632dd64277288edb5890729cf0d403a7e5c7b6169f168f1bda2541e",
+    "experiments/confirm/io.ts": "150ed193576ba1ff15ca6f2b614084175f9e68b4349aaf8f56e88a6ba46e3b6d"
+  },
+  "reef": {
+    "apps/lab/src/reef/model.ts": "ad651346f5702c771446f1e2615790f5c6682d0817639f43e14595c0d1bff671",
+    "apps/lab/src/reef/observe.ts": "a9314fcd57921c01bd2f2950db27d6ad3405d96deb4ff2d937a73b467db29b6a",
+    "experiments/confirm/run-reef.ts": "15ff5a6522c195fbef2e480bdbea27639e6e2c8377eae1cb65d39fd14cd30c03",
+    "experiments/confirm/rule.ts": "1c4a0d085632dd64277288edb5890729cf0d403a7e5c7b6169f168f1bda2541e",
+    "experiments/confirm/io.ts": "150ed193576ba1ff15ca6f2b614084175f9e68b4349aaf8f56e88a6ba46e3b6d"
+  }
+}

@@ -1,0 +1,10 @@
+pair runs, 24000 steps, own recompute (8-conn components, mark patches via chain-linked marks, roots=d==0)
+pair_all_g6_s4     big patches over time [2] comps over time [2] | t=24000 cells 275 patch sizes [149, 126] roots 2 seam4 0 / 469
+pair_all_s4        big patches over time [2] comps over time [2, 3] | t=24000 cells 395 patch sizes [230, 165] roots 2 seam4 0 / 647
+pair_all_s5        big patches over time [2] comps over time [2] | t=24000 cells 1616 patch sizes [1360, 256] roots 8 seam4 0 / 2866
+pair_plain_g6_s4   big patches over time [2] comps over time [1, 2] | t=24000 cells 438 patch sizes [267, 171] roots 2 seam4 26 / 718
+pair_plain_s4      big patches over time [2] comps over time [1, 2] | t=24000 cells 1773 patch sizes [947, 821, 3] roots 9 seam4 57 / 2870
+pair_plain_s5      big patches over time [2] comps over time [1] | t=24000 cells 327 patch sizes [165, 161, 1] roots 2 seam4 6 / 551
+pair_ssg_g6_s4     big patches over time [2] comps over time [1] | t=24000 cells 1108 patch sizes [719, 388, 1] roots 10 seam4 25 / 1756
+pair_ssg_s4        big patches over time [2] comps over time [1, 2] | t=24000 cells 1164 patch sizes [839, 324, 1] roots 8 seam4 20 / 1865
+pair_ssg_s5        big patches over time [2, 3, 4] comps over time [1, 2] | t=24000 cells 1602 patch sizes [893, 665, 42] roots 14 seam4 90 / 2716

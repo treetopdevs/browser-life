@@ -1,0 +1,21 @@
+{
+ "dir": "runs/atlas-smoke",
+ "identical": true,
+ "checks": {
+  "passersMatchGateJson": true,
+  "elitesCount": true,
+  "elitesAllMatch": true,
+  "lineagesCount": true,
+  "lineagesAllMatch": true,
+  "viableCount": true,
+  "evaluated": true
+ },
+ "counts": {
+  "viable": 30,
+  "evaluated": 48,
+  "elites": 3,
+  "lineages": 3,
+  "passers": 0,
+  "linesWithProv": 30
+ }
+}

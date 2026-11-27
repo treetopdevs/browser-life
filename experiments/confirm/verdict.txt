@@ -1,0 +1,18 @@
+
+DROPLETS: PASS
+  pass 8/8  D1 droplets: PHAGE > NEUTRAL_PHAGE
+  pass 8/8  D2 droplets: PHAGE > SINGLE_WALL
+  pass 8/8  D3 leader sweeps: PHAGE > NO_PHAGE
+  pass 8/8  D4 diversity: PHAGE > NEUTRAL_PHAGE
+  pass 8/8  D5 persistence: droplets >= half of NO_PHAGE, D1 >= 2, droplets and phage alive
+  direction diversity: sitting (sitting, sitting, sitting, sitting, sitting, sitting, sitting, sitting)
+  direction droplets: sitting (sitting, sitting, sitting, sitting, sitting, sitting, sitting, sitting)
+
+REEF: PASS
+  pass 7/8  R1 armor: GRAZE_FULL > SWIM_NO_GRAZE
+  pass 7/8  R2 body size: GRAZE_FULL > SWIM_NO_GRAZE
+  pass 7/8  R3 coexistence: in >= 80% of final censuses, multicellular >= 50%, grazers >= 10%, phototrophs >= 10%
+  direction bodySize: mixed (sitting, falling, climbing, climbing, falling, climbing, climbing, sitting)
+  direction maxBody: mixed (falling, falling, sitting, climbing, sitting, climbing, climbing, sitting)
+
+DECISION: droplets. Both passed. Tie-break: droplet diversity holds and Reef body size does not climb.

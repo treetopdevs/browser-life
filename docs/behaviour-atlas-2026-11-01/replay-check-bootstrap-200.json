@@ -1,0 +1,21 @@
+{
+ "dir": "/Users/nicholas/develop/browser-life/runs/bootstrap-200",
+ "identical": true,
+ "checks": {
+  "passersMatchGateJson": true,
+  "elitesCount": true,
+  "elitesAllMatch": true,
+  "lineagesCount": true,
+  "lineagesAllMatch": true,
+  "viableCount": true,
+  "evaluated": true
+ },
+ "counts": {
+  "viable": 1990,
+  "evaluated": 4800,
+  "elites": 47,
+  "lineages": 62,
+  "passers": 839,
+  "linesWithProv": 0
+ }
+}

@@ -15,6 +15,7 @@
 // docs/garden-stitch-rule-2026-10-17.md for the rule).
 import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, clampLesionRadius, exchangePositions, type PondArm, type PondScore, type WorldConfig } from "@bl/schema";
 import { runId, sameConfig, specConfig, type RunSpec, type RunSummary } from "./runner.ts";
+import { PICKS_FILE, appliedHistoryError, appliedPicksFromPonds, appliedPicksText, picksConsistencyError, stitchedPicksBlock, verifiedPickLog, type PickEntry } from "./picks.ts";
 import { INTERVENTIONS_FILE, formatInterventionLine, loggedIs, ownedInterventions, parseInterventionLog, sameIntervention, validateInterventions, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -353,6 +354,12 @@ export interface StitchOptions {
    * check on a segment's own window beyond that segment's own manifest and log.
    */
   garden?: { interventions: readonly ScheduledIntervention[] };
+  /**
+   * The input pick log (canonical text, `canonicalPickLog`) of a picked run: required exactly when the segments' spec is
+   * picked (`spec.pickLog` names it by SHA-256, checked here). The stitched bundle then carries `picks.jsonl`, the applied
+   * history read back from the stitched ponds.tsv and checked against the log, and a `picks` block over the whole run.
+   */
+  pickLog?: string;
 }
 
 /**
@@ -371,14 +378,18 @@ export interface DistributedTask {
   seeds?: readonly number[];
   metapopulation?: Record<string, unknown>;
   interventions?: unknown;
+  /** A picked experiment's: `picked: true`, the input pick log's SHA-256 and, when the log is sparse, `pickImplicit: true`. */
+  picked?: true;
+  pickLog?: string;
+  pickImplicit?: true;
 }
 
 /**
  * Why a coordinator segment's manifest does not describe the task the coordinator handed out, or null. `stitchRun`
  * checks manifests only against each other; a producer's manifest is not part of what a verifier's digests cover, so
  * an export from the coordinator binds each one to the task here first: its spec must be exactly the task's spec
- * (`task/4`: these keys, `checkpointEvery` 0, `metapopulation` and `interventions` only when the experiment has them,
- * and nothing else, so no `overrides`, `picked`, `pressures` or `branch`), and its config exactly the one that spec
+ * (`task/4`: these keys, `checkpointEvery` 0, `metapopulation`, `interventions` and, for a picked experiment, `picked`,
+ * `pickLog` and `pickImplicit` only when the experiment has them, and nothing else, so no `overrides`, `pressures` or `branch`), and its config exactly the one that spec
  * builds (`specConfig`). A garden's segments each carry the schedule current when they were handed out, which
  * tools/stitch.ts checks against the coordinator's on its own, so with `garden` only its presence is required here.
  */
@@ -401,6 +412,9 @@ export function taskSpecError(manifest: { spec?: unknown; cfg?: unknown }, task:
     want.metapopulation = { ...task.metapopulation, ringNamespace: at + 1 };
   }
   if (task.interventions !== undefined) want.interventions = task.interventions;
+  if (task.picked !== undefined) want.picked = task.picked;
+  if (task.pickLog !== undefined) want.pickLog = task.pickLog;
+  if (task.pickImplicit !== undefined) want.pickImplicit = task.pickImplicit;
   for (const k of new Set([...Object.keys(spec), ...Object.keys(want)])) {
     if (!(k in want)) return `spec carries ${k}, which the coordinator's task does not`;
     if (!(k in spec)) return `spec lacks ${k}, which the coordinator's task carries`;
@@ -526,8 +540,10 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number, opts: S
     if (s.index !== k) throw new Error(`${id}: expected segment #${k}`);
     if (s.startStep !== at) throw new Error(`${id}: starts at ${s.startStep}, previous segment ended at ${at}`);
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
-    // A picked run's donors are in its picks.jsonl, not in any segment file (PICKS_FILE is deliberately in no file list), so its segments cannot be chained.
-    if (m.spec.picked !== undefined) throw new Error(`${id}: picked runs cannot be stitched: their donors are not in the segment files`);
+    // A picked run's donors are in no segment file (PICKS_FILE is deliberately in no file list): only one whose donors are a
+    // fixed, content-addressed pick log (spec.pickLog, which the caller supplies as opts.pickLog) can be chained.
+    if (m.spec.picked !== undefined && typeof m.spec.pickLog !== "string") throw new Error(`${id}: picked runs cannot be stitched without a pick log: their donors are not in the segment files`);
+    if (m.spec.pickLog !== undefined && m.spec.picked !== true) throw new Error(`${id}: spec.pickLog without spec.picked`);
     if (m.spec.pressures !== undefined) throw new Error(`${id}: pressured runs cannot be stitched: they are picked runs, and their donors are not in the segment files`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
@@ -847,6 +863,34 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number, opts: S
   // Each of a garden's logs was checked to hold exactly its segment's owned entries, so the union counts the joined log.
   if (garden !== undefined && applied !== past.length) throw new Error(`the stitched ${INTERVENTIONS_FILE} holds ${applied} entries, the segments owned ${past.length}`);
 
+  // A picked run: the applied history is read back from the stitched ponds.tsv and must follow the input pick log, which
+  // opts.pickLog supplies (its SHA-256 is the spec's). The bundle's picks.jsonl is that history, and the manifest's
+  // `picks` block is recomputed over the whole run (each segment's own block counts only its window).
+  let picksBlock: ReturnType<typeof stitchedPicksBlock> | undefined;
+  if (refSpec.picked !== undefined) {
+    if (!pondRun) throw new Error("a picked run needs a pond config");
+    if (typeof opts.pickLog !== "string") throw new Error(`a picked run (spec.pickLog ${refSpec.pickLog}) needs its pick log to be stitched`);
+    let input: PickEntry[];
+    try {
+      input = verifiedPickLog(opts.pickLog, refSpec.pickLog);
+    } catch (e) {
+      throw new Error(`pick log: ${(e as Error).message}`);
+    }
+    let applied: PickEntry[];
+    try {
+      applied = appliedPicksFromPonds(out[PONDS_FILE], first.spec.seed);
+    } catch (e) {
+      throw new Error(`picked run: ${(e as Error).message}`);
+    }
+    const bad = appliedHistoryError(applied, input, refSpec.pickImplicit === true);
+    if (bad) throw new Error(`picked run: ${bad}`);
+    const text = appliedPicksText(applied, input);
+    const inconsistent = picksConsistencyError(text, out[PONDS_FILE], first.spec.seed);
+    if (inconsistent) throw new Error(`picked run: ${inconsistent}`);
+    out[PICKS_FILE] = text;
+    picksBlock = stitchedPicksBlock(applied, input);
+  } else if (opts.pickLog !== undefined) throw new Error("a pick log was given for a run that is not picked");
+
   const wall = manifests.reduce((a, m) => a + m.summary.wallSeconds, 0);
   const summary: RunSummary = {
     ...last.summary,
@@ -886,6 +930,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number, opts: S
       // The whole run's count, in the last segment's block's place (an
       // ordinary run's manifest has no such key; `lastRest` carries none).
       ...(scheduledRun ? { interventions: { file: INTERVENTIONS_FILE, applied } } : {}),
+      // A picked run's block, over the whole run, in the last segment's block's place.
+      ...(picksBlock ? { picks: picksBlock } : {}),
       // A garden's schedule is what its segments applied (the union of owned
       // entries), not the last segment's list, which may carry entries after
       // its end that no segment applied; it keeps the list's key position.

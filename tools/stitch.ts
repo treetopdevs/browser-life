@@ -66,13 +66,21 @@ import {
   EXCHANGES_FILE,
   INTERVENTIONS_FILE,
   MIGRATIONS_FILE,
+  PICKS_FILE,
   PONDS_FILE,
   SPECIES_FILE,
   checkInterventionLog,
   checkPondsFile,
+  appliedHistoryError,
+  appliedPicksFromPonds,
+  appliedPicksText,
   ownedInterventions,
+  picksConsistencyError,
+  pickLogDigest,
   sameIntervention,
   stitchRun,
+  stitchedPicksBlock,
+  verifiedPickLog,
   stitchablePrefix,
   validateInterventions,
   type ScheduledIntervention,
@@ -128,11 +136,24 @@ interface Listed {
   observationsVerified: boolean | null;
 }
 type Experiment = {
-  spec: { experiment: string; steps: number; presetId: string; censusEvery: number; deepEvery: number; seeds?: number[]; metapopulation?: Record<string, unknown>; interventions?: unknown; garden?: unknown };
+  spec: { experiment: string; steps: number; presetId: string; censusEvery: number; deepEvery: number; seeds?: number[]; metapopulation?: Record<string, unknown>; interventions?: unknown; garden?: unknown; pickLog?: string; pickImplicit?: true };
   segments: Listed[];
 };
 const fetchExperiment = async (): Promise<Experiment> => await (await get(`/api/experiments/${encodeURIComponent(a.experiment!)}`)).json();
 const exp = await fetchExperiment();
+
+// A picked experiment (spec.pickLog, packages/runner/src/stitch.ts): its input pick log is a blob on the coordinator, named by
+// its SHA-256, which is checked here before anything is stitched or kept. Admin read, like every other export download.
+const pickLogText: string | undefined =
+  typeof exp.spec.pickLog === "string"
+    ? await (async () => {
+        const bytes = new Uint8Array(await (await get(`/api/pick-logs/${exp.spec.pickLog}`)).arrayBuffer());
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        const got = pickLogDigest(text);
+        if (got !== exp.spec.pickLog) throw new Error(`the coordinator's pick log ${exp.spec.pickLog} has SHA-256 ${got}`);
+        return text;
+      })()
+    : undefined;
 
 const byRun = new Map<string, Listed[]>();
 for (const s of exp.segments) byRun.set(s.run, [...(byRun.get(s.run) ?? []), s]);
@@ -193,6 +214,8 @@ const taskOf = (s: Listed): DistributedTask => ({
   seeds: exp.spec.seeds,
   metapopulation: exp.spec.metapopulation,
   interventions: exp.spec.interventions,
+  ...(exp.spec.pickLog !== undefined ? { picked: true as const, pickLog: exp.spec.pickLog } : {}),
+  ...(exp.spec.pickImplicit !== undefined ? { pickImplicit: exp.spec.pickImplicit } : {}),
 });
 // Whether a run is bred: its task's config has a pondScore (one condition and seed per run, so its first segment's says).
 function bred(segs: Listed[]): boolean {
@@ -257,6 +280,7 @@ const shorterPrefix = (old: Recorded[], segs: Recorded[]) => {
 // The fingerprint of an existing export, "incomplete" if files are missing,
 // "invalid-task: <why>" if its manifest does not describe the coordinator's task (taskSpecError),
 // "invalid-ponds: <why>" if a pond run's ponds.tsv fails the stitch rules,
+// "invalid-picks: <why>" if a picked run's picks.jsonl is missing, not the applied history its ponds.tsv and the coordinator's pick log give, or its manifest's picks block is not the whole run's,
 // "invalid-range: <why>" if a garden export's manifest does not cover the
 // steps its days end at on the coordinator (or runs past its exportable prefix),
 // "invalid-interventions: <why>" if a garden export's schedule or log fails the
@@ -353,6 +377,24 @@ async function existing(dir: string, segs: Listed[], total: number, list?: reado
       return `invalid-ponds: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
+  // A picked run's bundle also holds picks.jsonl, the applied history, which the fingerprint does not cover either: it must
+  // still be exactly what the stitcher derives from this bundle's ponds.tsv and the coordinator's pick log, with the
+  // manifest's `picks` block over the whole run. Read outside the try, like ponds.tsv above.
+  if (pickLogText !== undefined) {
+    const picksText = await Deno.readTextFile(`${dir}/${PICKS_FILE}`).catch((e) => (e instanceof Deno.errors.NotFound ? null : Promise.reject(e)));
+    if (picksText === null) return `invalid-picks: ${PICKS_FILE} is missing`;
+    const pondsText = await Deno.readTextFile(`${dir}/${PONDS_FILE}`);
+    try {
+      const input = verifiedPickLog(pickLogText, exp.spec.pickLog!);
+      const applied = appliedPicksFromPonds(pondsText, manifest.spec.seed);
+      const bad = appliedHistoryError(applied, input, exp.spec.pickImplicit === true) ?? picksConsistencyError(picksText, pondsText, manifest.spec.seed);
+      if (bad) throw new Error(bad);
+      if (picksText !== appliedPicksText(applied, input)) throw new Error(`${PICKS_FILE} is not the history the bundle's ponds.tsv and the coordinator's pick log give`);
+      if (JSON.stringify(manifest.picks) !== JSON.stringify(stitchedPicksBlock(applied, input))) throw new Error("the manifest's picks block is not the whole run's");
+    } catch (e) {
+      return `invalid-picks: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
   onSegments?.(manifest.segments ?? []);
   return fingerprint(manifest.segments ?? []);
 }
@@ -437,7 +479,9 @@ async function exportRun(run: string, listed: Listed[], list: readonly Scheduled
         ? "export is incomplete"
         : have === "stale-metrics-version"
           ? "export predates the current metrics version"
-          : have.startsWith("invalid-ponds: ")
+          : have.startsWith("invalid-picks: ")
+            ? `export fails the picked-run check (${have.slice("invalid-picks: ".length)})`
+            : have.startsWith("invalid-ponds: ")
             ? `export fails the ponds.tsv check (${have.slice("invalid-ponds: ".length)})`
             : have.startsWith("invalid-task: ")
               ? `export's manifest does not describe the coordinator's task (${have.slice("invalid-task: ".length)})`
@@ -449,7 +493,7 @@ async function exportRun(run: string, listed: Listed[], list: readonly Scheduled
     );
 
   // A garden is stitched in garden mode against the coordinator's current list; any other run as an ordinary one.
-  const stitched = stitchRun(await Promise.all(segs.map(download)), total, garden ? { garden: { interventions: list as ScheduledIntervention[] } } : {});
+  const stitched = stitchRun(await Promise.all(segs.map(download)), total, { ...(garden ? { garden: { interventions: list as ScheduledIntervention[] } } : {}), ...(pickLogText !== undefined ? { pickLog: pickLogText } : {}) });
   // Staged in a directory private to this invocation beside the destination
   // (hidden, so analyze.ts never reads it), then renamed into place: a
   // concurrent exporter or an interruption never leaves a partial bundle.

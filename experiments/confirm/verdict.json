@@ -1,0 +1,202 @@
+{
+  "droplets": {
+    "world": "droplets",
+    "pass": true,
+    "endpoints": [
+      {
+        "id": "D1 droplets: PHAGE > NEUTRAL_PHAGE",
+        "wins": 8,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "D2 droplets: PHAGE > SINGLE_WALL",
+        "wins": 8,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "D3 leader sweeps: PHAGE > NO_PHAGE",
+        "wins": 8,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "D4 diversity: PHAGE > NEUTRAL_PHAGE",
+        "wins": 8,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "D5 persistence: droplets >= half of NO_PHAGE, D1 >= 2, droplets and phage alive",
+        "wins": 8,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      }
+    ],
+    "direction": {
+      "diversity": {
+        "headline": "sitting",
+        "perSeed": {
+          "5": "sitting",
+          "6": "sitting",
+          "7": "sitting",
+          "8": "sitting",
+          "9": "sitting",
+          "10": "sitting",
+          "11": "sitting",
+          "12": "sitting"
+        }
+      },
+      "droplets": {
+        "headline": "sitting",
+        "perSeed": {
+          "5": "sitting",
+          "6": "sitting",
+          "7": "sitting",
+          "8": "sitting",
+          "9": "sitting",
+          "10": "sitting",
+          "11": "sitting",
+          "12": "sitting"
+        }
+      }
+    }
+  },
+  "reef": {
+    "world": "reef",
+    "pass": true,
+    "endpoints": [
+      {
+        "id": "R1 armor: GRAZE_FULL > SWIM_NO_GRAZE",
+        "wins": 7,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": false,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "R2 body size: GRAZE_FULL > SWIM_NO_GRAZE",
+        "wins": 7,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": false,
+          "10": true,
+          "11": true,
+          "12": true
+        }
+      },
+      {
+        "id": "R3 coexistence: in >= 80% of final censuses, multicellular >= 50%, grazers >= 10%, phototrophs >= 10%",
+        "wins": 7,
+        "of": 8,
+        "pass": true,
+        "perSeed": {
+          "5": true,
+          "6": true,
+          "7": true,
+          "8": true,
+          "9": true,
+          "10": false,
+          "11": true,
+          "12": true
+        }
+      }
+    ],
+    "direction": {
+      "bodySize": {
+        "headline": "mixed",
+        "perSeed": {
+          "5": "sitting",
+          "6": "falling",
+          "7": "climbing",
+          "8": "climbing",
+          "9": "falling",
+          "10": "climbing",
+          "11": "climbing",
+          "12": "sitting"
+        }
+      },
+      "maxBody": {
+        "headline": "mixed",
+        "perSeed": {
+          "5": "falling",
+          "6": "falling",
+          "7": "sitting",
+          "8": "climbing",
+          "9": "sitting",
+          "10": "climbing",
+          "11": "climbing",
+          "12": "sitting"
+        }
+      }
+    }
+  },
+  "decision": {
+    "winner": "droplets",
+    "reason": "Both passed. Tie-break: droplet diversity holds and Reef body size does not climb."
+  }
+}

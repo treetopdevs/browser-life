@@ -1,0 +1,1 @@
+crowd seed 1 steps 12000: cells 5102 basins 105 patches(>=10) 53 seam 0 permille distinct marks 21 residual 0 validate [] hash 8622512 step 74323 ms observe 730 ms -> docs/bodies-2026-11-17/v3/wildcard/S-upk6/readout.json

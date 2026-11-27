@@ -1,0 +1,55 @@
+body.oligomer-page{--muted:#a7b9bc;--line:#3e555e;--mint:#9fe4c4;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e7efeb;background:#101b21;color-scheme:dark;margin:0}
+body.oligomer-page *{box-sizing:border-box}body.oligomer-page a{color:var(--mint)}
+body.oligomer-page header,body.oligomer-page main{max-width:1180px;margin:auto;padding:0 24px}
+body.oligomer-page header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+body.oligomer-page .brand{font-weight:700;text-decoration:none}body.oligomer-page .brand span{color:var(--muted);font-weight:400}
+body.oligomer-page .badge{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:5px 10px;color:var(--muted)}
+body.oligomer-page .skip{position:absolute;left:-999px}body.oligomer-page .skip:focus{left:8px;top:8px;background:#101b21;padding:6px}
+body.oligomer-page .intro{max-width:820px;padding:20px 0 10px}body.oligomer-page .eyebrow{color:var(--mint);text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin:0}
+body.oligomer-page h1{font-size:28px;margin:6px 0 10px}body.oligomer-page .intro p{color:#bdcbca;font-size:15px;line-height:1.5}
+body.oligomer-page .scope-note{padding:10px 13px;border-left:3px solid var(--mint);background:#14232a}
+body.oligomer-page .stage{display:grid;grid-template-columns:minmax(0,640px) minmax(0,1fr);gap:20px;align-items:start;margin-top:10px}
+body.oligomer-page .panel,body.oligomer-page .world{min-width:0}
+body.oligomer-page .frame{position:relative;width:100%;max-width:640px}
+body.oligomer-page canvas{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#0e141a}
+body.oligomer-page #world,body.oligomer-page #overlay{image-rendering:pixelated}
+body.oligomer-page #overlay{position:absolute;inset:0;pointer-events:none;border-color:transparent;background:transparent}
+body.oligomer-page #history,body.oligomer-page #history2,body.oligomer-page #history3{margin-top:8px}
+body.oligomer-page canvas:focus-visible,body.oligomer-page button:focus-visible,body.oligomer-page select:focus-visible,body.oligomer-page input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+body.oligomer-page .live{font-size:12px;color:var(--muted);min-height:2.6em;margin:6px 0 0}
+body.oligomer-page .help,body.oligomer-page .note{font-size:12px;color:var(--muted);line-height:1.45;margin:6px 0}
+body.oligomer-page button,body.oligomer-page select,body.oligomer-page input[type=text]{font:inherit;font-size:13px;color:inherit;background:#172b32;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+body.oligomer-page button{cursor:pointer}body.oligomer-page button.primary{background:var(--mint);color:#0b1a14;border-color:var(--mint);font-weight:700}
+body.oligomer-page .transport,body.oligomer-page .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+body.oligomer-page .controls>*{flex:1 1 100%}body.oligomer-page .controls label,body.oligomer-page .transport label{display:flex;gap:8px;align-items:center;font-size:13px;min-width:0;flex-wrap:wrap}
+body.oligomer-page .controls label[hidden],body.oligomer-page select[hidden]{display:none}
+body.oligomer-page select{max-width:100%;min-width:0;text-overflow:ellipsis}
+body.oligomer-page .seed-form{display:flex;gap:8px;align-items:center}body.oligomer-page #seed{width:90px}
+body.oligomer-page .readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}body.oligomer-page .readout div{background:#14232a;border-radius:6px;padding:6px 8px}
+body.oligomer-page .readout .wide{grid-column:span 2}
+body.oligomer-page dt{font-size:10px;color:var(--muted);text-transform:uppercase}body.oligomer-page dd{margin:2px 0 0;font-size:16px;font-variant-numeric:tabular-nums}
+body.oligomer-page .badge-res{display:inline-block;border-radius:5px;padding:1px 7px;font-size:14px;font-weight:700}
+body.oligomer-page .badge-res.ok{background:#1f5a3a;color:#d8ffe8;border:1px solid #3fbf7a}
+body.oligomer-page .badge-res.bad{background:#6a1d1d;color:#ffe0e0;border:1px solid #ff6b6b}
+body.oligomer-page .legend,body.oligomer-page .shares{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:#bdcbca}
+body.oligomer-page .legend li,body.oligomer-page .shares li{display:flex;align-items:center;gap:6px}
+body.oligomer-page .sw{display:inline-block;width:14px;height:14px;border-radius:3px;flex:none}
+body.oligomer-page .sw.ring{background:#3a4a52;border:3px solid #fff}body.oligomer-page .sw.dots{border:3px dotted #f5f5f5}
+body.oligomer-page .sw.ramp{width:90px}
+body.oligomer-page .mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+body.oligomer-page .inspect-h{font-size:14px;margin:16px 0 4px}
+body.oligomer-page .inspector dl{margin:0;display:grid;gap:6px}body.oligomer-page .inspector dl div{background:#14232a;border-radius:6px;padding:6px 8px}
+body.oligomer-page .inspector dd{font-size:12px;white-space:pre-line;font-variant-numeric:tabular-nums}
+body.oligomer-page .tile-h{font-weight:700;margin:4px 0}
+body.oligomer-page .explanation{max-width:820px;margin:20px 0 40px;color:#bdcbca;font-size:14px;line-height:1.5}
+@media(max-width:860px){body.oligomer-page .stage{grid-template-columns:minmax(0,1fr)}body.oligomer-page header,body.oligomer-page main{padding:0 14px}body.oligomer-page .readout{grid-template-columns:repeat(2,minmax(0,1fr))}body.oligomer-page .mini{grid-template-columns:1fr}}
+body.oligomer-page .controls label select,body.oligomer-page .transport label select{flex:1 1 12em}
+body.oligomer-page [hidden]{display:none!important}
+body.oligomer-page optgroup{font-style:normal;color:var(--muted)}
+body.oligomer-page #engine[data-engine=gpu]{color:var(--mint)}
+body.oligomer-page .readout dt{line-height:1.25}
+/* Public chrome: the way back to the story, and what the journal says this world showed. */
+body.oligomer-page header{flex-wrap:wrap;padding-block:8px}body.oligomer-page header .badge{margin-left:auto}
+body.oligomer-page .found h2{font-size:18px;margin:14px 0 4px}body.oligomer-page .found .scope-note{margin:10px 0}
+body.oligomer-page .found strong{color:#e7efeb}body.oligomer-page .found-label{display:inline-block;margin:0 6px;padding:1px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;white-space:nowrap}
+body.oligomer-page .intro.title{padding-bottom:0}body.oligomer-page .intro.title+.intro,body.oligomer-page #intro-d{padding-top:0}

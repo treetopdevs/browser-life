@@ -60,3 +60,7 @@ Reviewer: Codex gpt-6.1-sol, xhigh, read-only, limited to the fixes. Raw: `revie
 | F5 | P3 | Page G3 text uses one threshold | Fixed. Four fifths for even starts, five sixths for rare starts. |
 
 Seal unchanged (`85fe724c...dbdef`): the fixes touch validation and the check, not the payload. Because `arena.ts` and `evidence.ts` are hashed sources, the manifest was rebuilt from the same runs and `--replay-check` rerun.
+
+## Dated note 2026-11-16: manifest re-pin after the 3D line
+
+The 3D line (the slab reference merged to main in 9e80170f, the jar and 3D mycelium by PR #172, 94047077) changed nine files this evidence pins (`packages/schema/src/` `accounting.ts`, `checkpoint.ts`, `config.ts`, `feed.ts`, `index.ts`, `presets.ts`, `world.ts`; `packages/sim-ref/src/` `index.ts`, `step.ts`) and added six to the pinned directories (`genome3.ts`, `kernel3d.ts`, `layout3d.ts`, `world3.ts`, `create.ts`, `step3d.ts`). The changes add the slab and jar worlds behind optional config keys; every RULE_VERSION 1 golden pin is unchanged. No outcome file was edited: the only file that changed here is `manifest.json`, and in it only the `sources` map (nine hashes updated, six files added). `node tools/opponents/assay.ts --check` and `--replay-check` pass with these sources: the payload regenerates byte for byte.

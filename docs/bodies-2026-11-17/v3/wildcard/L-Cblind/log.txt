@@ -1,0 +1,1 @@
+crowd seed 1 steps 20000: cells 6910 basins 38 patches(>=10) 42 seam 135 permille distinct marks 15 residual 0 validate [] hash 3612724414 step 160899 ms observe 2079 ms -> docs/bodies-2026-11-17/v3/wildcard/L-Cblind/readout.json

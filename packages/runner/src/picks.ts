@@ -483,3 +483,155 @@ export function makeDonorHook(args: DonorHookArgs): DonorHook {
     return donors;
   };
 }
+
+// ---- Fixed, content-addressed pick logs (docs/archipelago-breed-2026-10-18.md, amendment 2026-11-02) ----
+
+const K256 = new Uint32Array([
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+]);
+
+/** Synchronous SHA-256 (lowercase hex). `stitchRun` is synchronous and a pick log is small; checked against `crypto.subtle` in tests. */
+export function sha256Hex(data: Uint8Array): string {
+  const h = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+  const len = data.length;
+  const padded = new Uint8Array(((len + 9 + 63) >> 6) << 6);
+  padded.set(data);
+  padded[len] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padded.length - 8, Math.floor((len * 8) / 0x100000000));
+  view.setUint32(padded.length - 4, (len * 8) >>> 0);
+  const w = new Uint32Array(64);
+  const rotr = (x: number, n: number) => (x >>> n) | (x << (32 - n));
+  for (let off = 0; off < padded.length; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, hh] = h;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (hh + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K256[i] + w[i]) >>> 0;
+      const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    h[0] += a; h[1] += b; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+  }
+  return Array.from(h, (x) => x.toString(16).padStart(8, "0")).join("");
+}
+
+const utf8 = (text: string) => new TextEncoder().encode(text);
+
+/** Most bytes of an input pick log (the coordinator enforces the same cap). */
+export const PICK_LOG_MAX_BYTES = 1_048_576;
+
+/**
+ * The input pick log as canonical text: one `{"step","kind":"pick","cycle","donors"}` line per entry, ascending, no `by`
+ * or `suggested`, each line ending in a newline. The bytes are what is hashed and stored: the same entries always give the
+ * same text, whatever file (a picks.jsonl, a lab manifest, a merge of both) they came from.
+ */
+export function canonicalPickLog(entries: readonly PickEntry[]): string {
+  return entries.map((e) => JSON.stringify({ step: e.step, kind: "pick", cycle: e.cycle, donors: e.donors }) + "\n").join("");
+}
+
+/** The address of an input pick log: lowercase hex SHA-256 of its canonical text's UTF-8 bytes. */
+export function pickLogDigest(text: string): string {
+  return sha256Hex(utf8(text));
+}
+
+/**
+ * The entries of an input pick log, or a thrown `Error`: the text must be exactly the canonical text of the entries it
+ * holds (so a digest names one history), within `PICK_LOG_MAX_BYTES`, every line a pick, steps ascending.
+ */
+export function parseCanonicalPickLog(text: string): PickEntry[] {
+  if (utf8(text).length > PICK_LOG_MAX_BYTES) throw new Error(`the pick log is over ${PICK_LOG_MAX_BYTES} bytes`);
+  const entries = parsePickLog(text);
+  if (text.split("\n").filter((l) => l.trim() !== "").length !== entries.length) throw new Error("the pick log holds a line that is not a pick");
+  if (canonicalPickLog(entries) !== text) throw new Error("the pick log is not in canonical form (one {step,kind,cycle,donors} line per pick, in that key order, each ending in a newline)");
+  return entries;
+}
+
+/** Fetched or stored pick-log bytes against the digest naming them: the entries, or a thrown `Error` saying which check failed. */
+export function verifiedPickLog(text: string, digest: string): PickEntry[] {
+  const got = pickLogDigest(text);
+  if (got !== digest) throw new Error(`the pick log hashes to ${got}, not the spec's ${digest}`);
+  return parseCanonicalPickLog(text);
+}
+
+/**
+ * The picks a run applied, read back out of its ponds.tsv (`pondsText`, the whole run's or a stitched one) and `seed`: per
+ * boundary the ordered donors the cycle used (the recipients, in the cycle's own key order, take donors[i % D]; D is the
+ * first index at which the first donor repeats, else every pond), or [] where every row says donor -1. Every pond is a
+ * recipient and D <= the pond count, so the whole ordered list is recoverable. Ascending by cycle. A table that is not a
+ * consistent set of rows is a thrown `Error`; `picksConsistencyError` re-checks the result against the same table.
+ */
+export function appliedPicksFromPonds(pondsText: string, seed: number): PickEntry[] {
+  const byCycle = new Map<number, Record<string, string>[]>();
+  for (const row of tsvTable(pondsText)) {
+    const b = Number(row.cycle);
+    byCycle.set(b, [...(byCycle.get(b) ?? []), row]);
+  }
+  const out: PickEntry[] = [];
+  for (const b of [...byCycle.keys()].sort((x, y) => x - y)) {
+    const rows = byCycle.get(b)!;
+    const steps = new Set(rows.map((r) => Number(r.step)));
+    if (steps.size !== 1) throw new Error(`ponds.tsv boundary ${b}: rows at more than one step`);
+    const step = [...steps][0];
+    const donorOf = new Map(rows.map((r) => [Number(r.recipient), Number(r.donor)]));
+    if ([...donorOf.values()].every((d) => d === -1)) {
+      out.push({ step, cycle: b, donors: [] });
+      continue;
+    }
+    if ([...donorOf.values()].some((d) => d === -1)) throw new Error(`ponds.tsv boundary ${b}: some rows have donor -1 and others a donor`);
+    const order = [...donorOf.keys()].map((pond) => ({ pond, key: randomKey(seed, b, pond, 2) })).sort((x, y) => x.key - y.key || x.pond - y.pond);
+    const seq = order.map((o) => donorOf.get(o.pond)!);
+    let d = 1;
+    while (d < seq.length && seq[d] !== seq[0]) d++;
+    out.push({ step, cycle: b, donors: seq.slice(0, d) });
+  }
+  return out;
+}
+
+/** Who chose a boundary of a stitched picked run, as the runner words it: "recorded" for an input entry with a donor, "none" with no donor, else "rule(implicit)". */
+const chosenBy = (e: PickEntry, recorded: ReadonlySet<number>): string => (e.donors.length === 0 ? "none" : recorded.has(e.step) ? "recorded" : "rule(implicit)");
+
+/** The `picks.jsonl` text of a stitched picked run: every boundary and its `by`; no `suggested`, which only the run that chose could know. */
+export function appliedPicksText(applied: readonly PickEntry[], input: readonly PickEntry[]): string {
+  const recorded = new Set(input.map((e) => e.step));
+  return applied.map((e) => JSON.stringify({ step: e.step, kind: "pick", cycle: e.cycle, donors: e.donors, by: chosenBy(e, recorded) }) + "\n").join("");
+}
+
+/**
+ * Why the history a picked run applied (`applied`, from `appliedPicksFromPonds`) does not follow its input pick log, or null:
+ * every input entry must be in it identically, and every other boundary is an implicit one, allowed only when `implicit`.
+ */
+export function appliedHistoryError(applied: readonly PickEntry[], input: readonly PickEntry[], implicit: boolean): string | null {
+  const at = new Map(applied.map((e) => [e.step, e]));
+  for (const e of input) {
+    const a = at.get(e.step);
+    if (!a) return `the pick log has an entry at t=${e.step}, which the run has no boundary at`;
+    if (a.cycle !== e.cycle || a.donors.join() !== e.donors.join()) return `at t=${e.step} the run applied donors [${a.donors.join(", ")}], the pick log says [${e.donors.join(", ")}]`;
+  }
+  if (!implicit && applied.length !== input.length) {
+    const have = new Set(input.map((e) => e.step));
+    const miss = applied.find((e) => !have.has(e.step))!;
+    return `the pick log has no entry for the boundary at t=${miss.step}, and the run is strict (no pickImplicit)`;
+  }
+  return null;
+}
+
+/** The manifest `picks` block of a stitched picked run, over the whole run (what `runExperiment` writes for one continuous run); live is 0, a pick log has no picker. */
+export function stitchedPicksBlock(applied: readonly PickEntry[], input: readonly PickEntry[]): { file: string; picker: string; recorded: number; live: number; boundaries: number; digest: string } {
+  const recorded = new Set(input.map((e) => e.step));
+  return {
+    file: PICKS_FILE,
+    picker: "replay",
+    recorded: applied.filter((e) => chosenBy(e, recorded) === "recorded").length,
+    live: 0,
+    boundaries: applied.length,
+    digest: sha256Hex(utf8(JSON.stringify(applied.map((e) => [e.step, e.donors])))).slice(0, 16),
+  };
+}

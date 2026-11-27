@@ -46,3 +46,7 @@ Two source reviews (Sol, Claude) of the built slice. Several findings coincide; 
 Checks rerun after the fixes: `pnpm vitest run` on `packages/metrics/test`, `tools/test/predictability-evidence.test.ts` (including the byte-for-byte replay), `apps/lab/test/predictability-render.test.ts`, `apps/lab/test/predictability-packaging.test.ts` (13 files, 311 tests, pass); `node tools/predictability/atlas.ts --check` ok; `pnpm typecheck` clean. Golden pins and RULE_VERSION untouched.
 
 Follow-up Sol 6.1 xhigh review limited to these fixes (`review-sol-fixes.txt`): no P1/P2/P3 findings. Not run by the reviewer: Docker image build, real browser.
+
+## Dated note 2026-11-16: manifest re-pin after the 3D line
+
+The 3D line (the slab reference merged to main in 9e80170f, the jar and 3D mycelium by PR #172, 94047077) changed nine files this evidence pins (`packages/schema/src/` `accounting.ts`, `checkpoint.ts`, `config.ts`, `feed.ts`, `index.ts`, `presets.ts`, `world.ts`; `packages/sim-ref/src/` `index.ts`, `step.ts`) and added six to the pinned directories (`genome3.ts`, `kernel3d.ts`, `layout3d.ts`, `world3.ts`, `create.ts`, `step3d.ts`). The changes add the slab and jar worlds behind optional config keys; every RULE_VERSION 1 golden pin is unchanged. No outcome file was edited: the only file that changed here is `manifest.json`, and in it only the `sources` map (nine hashes updated, six files added). `node tools/predictability/atlas.ts --check` and `--replay-check` pass with these sources: the payload regenerates byte for byte.

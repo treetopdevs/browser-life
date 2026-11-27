@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f3f1ec" />
+  <meta name="description" content="A designed world where patches of wall must keep copies of every gene to go on making wall, with and without a parasite and a gate." />
+  <title>Droplet genes · Cadence Garden</title>
+  <link rel="canonical" href="https://cadence.garden/dropgenes/" />
+</head>
+<body class="dropgenes-page">
+  <a class="skip" href="#main">Skip to the world</a>
+  <header class="dg-header">
+    <a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a>
+    <span class="badge">Designed world · prototype</span>
+    <a class="back" href="/story/#chapter-8">← The story</a>
+    <button id="theme" class="theme-switch" type="button">Night</button>
+  </header>
+  <main id="main">
+    <section class="intro">
+      <p class="eyebrow">Droplet genes · first rung</p>
+      <h1>Compartments that have to keep their genes</h1>
+      <p class="caption">A compartment here is a patch of dense wall. Nothing in the rules declares one: a program finds them afterwards by looking for connected tiles of wall. A gene is a kind of template made of the same conserved matter as everything else. It copies itself from food where a tile has free sites, and wall is only made where every gene has copies close by. The parasite is a template that copies twice as fast and does nothing. In the recorded runs (a 64 x 64 arena, four seeds, 200,000 steps) with two genes and the parasite, the population of compartments lasted on all four seeds only at the larger setting and only with the gate: with the gate off it had ended by step 5,100, and at the default compartment setting offered here it lasted on one seed of four. Nothing in this world evolves yet. The number of genes is a setting, the genes are interchangeable, and the parasite is one fixed type.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> the wall chemistry, the genes, the gate and the parasite are all written in. Compartments are not declared: a compartment is whatever patch of dense wall happens to hold together. The write-up is docs/droplet-genes-2026-11-21/RESULTS.md in the repository.</p>
+    </section>
+    <section class="intro found" aria-labelledby="found-h">
+      <h2 id="found-h">What we found</h2>
+      <p class="scope-note"><strong>Compartments that keep their genes</strong> <span class="found-label">Exploratory · 22 Nov</span> With two genes and a parasite, compartments that keep gene copies inside held on 12 of 12 unseen seeds, and leaky ones on 0 of 12. One setting; rules written first but not registered. Nothing evolved here.</p>
+      <p class="found-more">This world is one stop on the way to creatures that reproduce and evolve. <a href="/story/#chapter-8">Read where it sits in the story</a>, or see the full write-up in <a href="/research/">the journal</a>.</p>
+    </section>
+    <section class="stage">
+      <div class="world">
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="play" class="primary" type="button" aria-disabled="true">Play</button>
+          <button id="step" type="button" aria-disabled="true">One step</button>
+          <button id="reset" type="button">Start again</button>
+        </div>
+        <p id="world-name" class="world-name">Building the world.</p>
+        <div class="jar">
+          <canvas id="world" width="64" height="64" role="img" aria-label="The arena: 64 by 64 tiles, compartments coloured by the genes they carry." aria-describedby="summary"></canvas>
+        </div>
+        <p id="summary" class="summary">Building the world.</p>
+        <p id="live" class="live" role="status" aria-live="polite"></p>
+        <ul id="legend" class="legend" aria-label="What the colours mean"></ul>
+        <p id="fade-note" class="help">A compartment’s fade shows the parasite’s share of the copies inside that one compartment, and stops short of plain grey so that a compartment missing a gene keeps a warm tint. The parasite readout is its share of all copies in the arena, loose ones included, so the two are different numbers.</p>
+      </div>
+      <div class="panel">
+        <dl class="readout">
+          <div><dt>Step</dt><dd id="r-step">0</dd></div>
+          <div><dt>Compartments</dt><dd id="r-comps">0</dd></div>
+          <div><dt>Carrying every gene</dt><dd><span id="r-complete">none yet</span> <small id="r-complete-n"></small></dd></div>
+          <div><dt>Copies per compartment</dt><dd id="r-copies">none yet</dd></div>
+          <div><dt>Parasite share of all copies</dt><dd id="r-par">none yet</dd></div>
+          <div><dt>Steps per second</dt><dd id="r-rate">paused</dd></div>
+          <div><dt>Splits seen</dt><dd id="r-fis">0</dd></div>
+          <div><dt>Deaths seen</dt><dd id="r-dead">0</dd></div>
+          <div class="wide"><dt>Matter check (one exact total)</dt><dd><span id="r-res" class="badge-res ok">res 0</span> <span id="r-res-word">balanced</span></dd></div>
+        </dl>
+        <p class="help">Compartments, copies and the parasite share are read from the picture you see. A compartment counts as carrying every gene when it holds at least one copy of each somewhere; the rules are stricter, and make wall on a tile only when every gene has copies in the 3 x 3 patch around it. Splits and deaths are inferred by comparing the patches every 50 steps, so they are bookkeeping, not events the world knows about. The matter check adds up every piece in the arena exactly; it must read res 0.</p>
+        <div class="charts">
+          <figure><figcaption id="c1-title">Compartments</figcaption><canvas id="chart-comps" role="img" aria-labelledby="c1-title" aria-describedby="chart-note"></canvas></figure>
+          <figure><figcaption id="c2-title">Share carrying every gene</figcaption><canvas id="chart-share" role="img" aria-labelledby="c2-title" aria-describedby="chart-note"></canvas></figure>
+        </div>
+        <p id="chart-note" class="help">No readings yet.</p>
+        <form id="settings" class="settings" aria-label="World settings">
+          <p class="help">Changing a setting below starts a new world.</p>
+          <div id="choices"></div>
+          <div class="seed-row">
+            <label for="seed">Seed</label>
+            <input id="seed" type="text" inputmode="numeric" autocomplete="off" value="5" aria-describedby="seed-note" />
+            <button type="submit">Use this seed</button>
+          </div>
+          <p id="seed-note" class="help">The seed fixes every chance event, so the same seed and settings replay the same world. Seeds 5 to 8 are the ones the recorded runs used.</p>
+        </form>
+        <p id="recorded" class="scope-note"></p>
+      </div>
+    </section>
+    <section class="explanation">
+      <p>Limits of what you see. This is one arena size and one parasite rate, the top of the grid that was tried. The larger setting doubles three diffusion rates at once and was recorded at one site count, so which of its changes matters is not known. A world that is still populated after a few thousand steps here says little: one recorded world was lost after step 100,000. In the recorded runs, late on, between 14 and 25 percent of the copies sat on the thin wall around compartments, outside what the program counts as a compartment; here such copies are drawn as dim blue specks, pink where they are parasite copies. The page runs the same processor kernel as the recorded runs; its speed in your browser is the steps per second shown above. Watching never changes the run.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/dropgenes/page.ts"></script>
+</body>
+</html>

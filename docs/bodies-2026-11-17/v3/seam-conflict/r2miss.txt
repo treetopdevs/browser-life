@@ -1,0 +1,13 @@
+r2 plain 1 crowd
+r2 plain 2 crowd
+r2 plain 3 crowd
+r2 allgates 1 crowd --gates share,grow,signal --seam-cost 1 --raid 2
+r2 allgates 2 crowd --gates share,grow,signal --seam-cost 1 --raid 2
+r2 allgates 3 crowd --gates share,grow,signal --seam-cost 1 --raid 2
+r2 sc3raid4 2 crowd --seam-cost 3 --raid 4
+r2 sc3raid4 3 crowd --seam-cost 3 --raid 4
+r2 f5plain 1 crowd --founders 5
+r2 f5plain 2 crowd --founders 5
+r2 f5plain 3 crowd --founders 5
+r2 f5ssg_sc1raid2 1 crowd --founders 5 --gates share,signal --seam-cost 1 --raid 2
+r2 f5ssg_sc1raid2 2 crowd --founders 5 --gates share,signal --seam-cost 1 --raid 2

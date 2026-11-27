@@ -1,0 +1,1 @@
+crowd seed 1 steps 20000: cells 6892 basins 80 patches(>=10) 32 seam 0 permille distinct marks 13 residual 0 validate [] hash 737126299 step 136551 ms observe 1435 ms -> docs/bodies-2026-11-17/v3/wildcard/M-F-geneblind-s1/readout.json

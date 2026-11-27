@@ -84,6 +84,8 @@ defmodule CoordinatorWeb.Router do
     put "/segments/:id/checkpoint", ApiController, :put_checkpoint
     get "/segments/:id/start", ApiController, :get_checkpoint
     put "/segments/:id/files/:name", ApiController, :put_file
+    put "/pick-logs/:sha", ApiController, :put_pick_log
+    get "/pick-logs/:sha", ApiController, :get_pick_log
     get "/segments/:id/files/:name", ApiController, :get_file
     get "/public/gardens/:name/checkpoints/:digest", GardenController, :checkpoint
   end

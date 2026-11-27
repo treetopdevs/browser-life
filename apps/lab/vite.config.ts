@@ -4,6 +4,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { WORLD_LINK_PAGES, withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
 import { SCREENS } from "./src/food-bands/screens.ts";
+import { apiProxy } from "./dev-proxy.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
@@ -176,8 +177,8 @@ export default defineConfig({
   // "mpa": an unknown path is not rewritten to the home page, so the not-found plugin above can answer it.
   appType: "mpa",
   resolve: { alias },
-  server: { port: 5173, strictPort: true, proxy: { "/api": coordinatorUrl } },
-  preview: { proxy: { "/api": coordinatorUrl } },
+  server: { port: 5173, strictPort: true, proxy: { "/api": apiProxy(coordinatorUrl) } },
+  preview: { proxy: { "/api": apiProxy(coordinatorUrl) } },
   worker: { format: "es" },
   build: {
     target: "es2023",
@@ -192,6 +193,9 @@ export default defineConfig({
       if (id.includes("/src/hungry-shapes/model.ts")) return "hungry-shapes-model";
       for (const key of FOOD_BANDS_MODELS) if (id.includes(`/src/${key}/model.ts`)) return `food-bands-model-${key}`;
       if (id.includes("/src/development/model.ts")) return "development-model";
+      if (id.includes("/src/bodies/model.ts")) return "bodies-model";
+      if (id.includes("/src/vesicle/model.ts")) return "vesicle-model";
+      if (id.includes("/src/oligomer/model.ts")) return "oligomer-model";
       if (id.includes("/src/boundaries/model.ts")) return "boundaries-model";
       if (id.includes("/src/particles/motifs.ts") || id.includes("/src/particles/motif-observers.ts")) return "particles-motifs-model";
       if (id.includes("/src/particles/environment-page.ts")) return "particles-environment-page";
@@ -219,6 +223,10 @@ export default defineConfig({
       particleMotifs: r("./particles/motifs/index.html"),
       boundaries: r("./boundaries/index.html"),
       development: r("./development/index.html"),
+      bodies: r("./bodies/index.html"),
+      vesicle: r("./vesicle/index.html"),
+      oligomer: r("./oligomer/index.html"),
+      dropgenes: r("./dropgenes/index.html"),
       hungryShapes: r("./hungry-shapes/index.html"),
       foodBands: r("./food-bands/index.html"),
       matter: r("./matter/index.html"),
