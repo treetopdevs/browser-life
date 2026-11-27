@@ -5,16 +5,16 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f3f1ec" />
-  <meta name="robots" content="noindex" />
-  <meta name="description" content="A sandbox world where patches of wall must keep copies of every gene to go on making wall, with and without a parasite and a gate." />
+  <meta name="description" content="A designed world where patches of wall must keep copies of every gene to go on making wall, with and without a parasite and a gate." />
   <title>Droplet genes · Cadence Garden</title>
   <link rel="canonical" href="https://cadence.garden/dropgenes/" />
 </head>
 <body class="dropgenes-page">
   <a class="skip" href="#main">Skip to the world</a>
   <header class="dg-header">
-    <a class="brand" href="/lab/">Cadence Garden <span>/ sandbox</span></a>
-    <span class="badge">Sandbox · not linked from the site</span>
+    <a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a>
+    <span class="badge">Designed world · prototype</span>
+    <a class="back" href="/story/#chapter-8">← The story</a>
     <button id="theme" class="theme-switch" type="button">Night</button>
   </header>
   <main id="main">
@@ -22,7 +22,12 @@
       <p class="eyebrow">Droplet genes · first rung</p>
       <h1>Compartments that have to keep their genes</h1>
       <p class="caption">A compartment here is a patch of dense wall. Nothing in the rules declares one: a program finds them afterwards by looking for connected tiles of wall. A gene is a kind of template made of the same conserved matter as everything else. It copies itself from food where a tile has free sites, and wall is only made where every gene has copies close by. The parasite is a template that copies twice as fast and does nothing. In the recorded runs (a 64 x 64 arena, four seeds, 200,000 steps) with two genes and the parasite, the population of compartments lasted on all four seeds only at the larger setting and only with the gate: with the gate off it had ended by step 5,100, and at the default compartment setting offered here it lasted on one seed of four. Nothing in this world evolves yet. The number of genes is a setting, the genes are interchangeable, and the parasite is one fixed type.</p>
-      <p class="scope-note"><strong>Sandbox.</strong> This page is a working view for the people building the world. It is not a result page and is not listed anywhere on the site. The write-up is docs/droplet-genes-2026-11-21/RESULTS.md in the repository.</p>
+      <p class="scope-note"><strong>Designed ingredients:</strong> the wall chemistry, the genes, the gate and the parasite are all written in. Compartments are not declared: a compartment is whatever patch of dense wall happens to hold together. The write-up is docs/droplet-genes-2026-11-21/RESULTS.md in the repository.</p>
+    </section>
+    <section class="intro found" aria-labelledby="found-h">
+      <h2 id="found-h">What we found</h2>
+      <p class="scope-note"><strong>Compartments that keep their genes</strong> <span class="found-label">Exploratory · 22 Nov</span> With two genes and a parasite, compartments that keep gene copies inside held on 12 of 12 unseen seeds, and leaky ones on 0 of 12. One setting; rules written first but not registered. Nothing evolved here.</p>
+      <p class="found-more">This world is one stop on the way to creatures that reproduce and evolve. <a href="/story/#chapter-8">Read where it sits in the story</a>, or see the full write-up in <a href="/research/">the journal</a>.</p>
     </section>
     <section class="stage">
       <div class="world">
@@ -38,7 +43,7 @@
         <p id="summary" class="summary">Building the world.</p>
         <p id="live" class="live" role="status" aria-live="polite"></p>
         <ul id="legend" class="legend" aria-label="What the colours mean"></ul>
-        <p id="fade-note" class="help">A compartment's fade shows the parasite's share of the copies inside that one compartment, and stops short of plain grey so that a compartment missing a gene keeps a warm tint. The parasite readout is its share of all copies in the arena, loose ones included, so the two are different numbers.</p>
+        <p id="fade-note" class="help">A compartment’s fade shows the parasite’s share of the copies inside that one compartment, and stops short of plain grey so that a compartment missing a gene keeps a warm tint. The parasite readout is its share of all copies in the arena, loose ones included, so the two are different numbers.</p>
       </div>
       <div class="panel">
         <dl class="readout">

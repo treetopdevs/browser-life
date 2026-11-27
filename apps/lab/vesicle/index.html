@@ -5,14 +5,13 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#101b21" />
-  <meta name="robots" content="noindex" />
   <meta name="description" content="A world where a cell wall is conserved material under tension, crowded contents push it outward, and a cell divides when a neck in its wall closes." />
   <title>Walls made of matter · Cadence Garden</title>
   <link rel="canonical" href="https://cadence.garden/vesicle/" />
 </head>
 <body class="vesicle-page">
   <a class="skip" href="#main">Skip to the world</a>
-  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed world · prototype</span></header>
+  <header><a class="brand" href="/lab/">Cadence Garden <span>/ experiments</span></a><span class="badge">Designed world · prototype</span><a class="back" href="/story/#chapter-8">← The story</a></header>
   <main id="main">
     <section class="intro">
       <p class="eyebrow">Walls made of matter</p>
@@ -20,6 +19,12 @@
       <p>A wall here is a ring of lipid beads, and lipid is a fixed stock that walls and the open water trade back and forth. The dots inside are solute: they crowd against the wall and stretch it. A stretched wall takes up lipid more readily and gives it up less, so a crowded cell grows wall at the expense of a slack one. When a cell has more wall than its contents can fill, the wall folds, a neck closes, and one cell becomes two.</p>
       <p>In the garden worlds the solute also lives: a particle copies itself from food only when it has company, makes lipid from food, and decays. With heredity on, every copy can shift how much of its effort goes to making lipid. In the first heredity world a particle that makes less lipid copies itself faster, and in headless runs those cells stopped dividing and nearly all died. In the second, copying speed is the same for every particle, and three runs of 1.5 million steps stayed alive.</p>
       <p class="scope-note"><strong>Designed ingredients:</strong> the wall springs, the lipid exchange rule, the rule that a closing neck reconnects, the outside pressure and the chemistry are all engineered. Cells are not declared: a cell is whatever a ring of bonds happens to enclose, and nothing in the rules tells a cell to divide or die.</p>
+    </section>
+    <section class="intro found" aria-labelledby="found-h">
+      <h2 id="found-h">What we found</h2>
+      <p class="scope-note"><strong>A wall made of matter</strong> <span class="found-label">Exploratory · 19 Nov</span> Cells with walls of conserved matter divide by pinching, with no rule to divide. Heredity carried in the wall kept them alive in 4 of 4 worlds, but a control without it did too at a slow mutation rate, so the cause is confounded.</p>
+      <p class="scope-note"><strong>Threads, jobs and glue</strong> <span class="found-label">Exploratory · 20 Nov</span> A thread genome held cells less well than wall heredity over long runs. Genes given two jobs ended as one generalist in 8 of 8 worlds. A glue gene made clumps with no life cycle of their own. Four seeds per arm.</p>
+      <p class="found-more">This world is one stop on the way to creatures that reproduce and evolve. <a href="/story/#chapter-8">Read where it sits in the story</a>, or see the full write-up in <a href="/research/">the journal</a>.</p>
     </section>
     <section class="stage">
       <div class="world">
@@ -39,7 +44,7 @@
             <option value="nogain">Garden with heredity, no private gain: lipid share is inherited but copying speed is the same for all</option>
             <option value="neutral">Garden, drift only: shifts are inherited but change nothing</option>
             <option value="wall">Garden with heredity in the wall: beads carry the lipid share, solute is stamped by the wall that makes it</option>
-            <option value="thread">Garden with a thread: one genome object per cell (the ring dot), solute can only copy next to it and takes its lipid share from it</option>
+            <option value="thread">Garden with a thread: genome particles (the ring dots) sit inside cells, often several to a cell; solute can only copy next to one and takes its lipid share from it</option>
             <option value="jobs">Garden with jobs: the wall carries two enzymes, harvest (waste to food, in light) and digest (loose lipid to food); founders mostly harvest, a little digest; wall coloured by job</option>
             <option value="wild">Wild dish (4 times the area): light comes in drifting pale patches and a ring is burst now and then; no heredity</option>
             <option value="wild-wall">Wild dish with heredity in the wall</option>
@@ -71,9 +76,9 @@
       </div>
     </section>
     <section class="explanation">
-      <p>In the thread worlds a thread is a clear ring, coloured by its idle marker (gene 1; the lipid share is gene 0). Solute copies only within reach of a thread with no wall between, takes that thread's lipid share, and a cell with no thread stops making solute. Threads copy when they have stored enough food and no other thread is near; a thread with too little solute around it decays.</p>
+      <p>In the thread worlds a thread is a clear ring, coloured by its idle marker (gene 1; the lipid share is gene 0). Solute copies only within reach of a thread with no wall between, takes that thread’s lipid share, and a cell with no thread stops making solute. Threads copy when they have stored enough food and no other thread is near; a thread with too little solute around it decays.</p>
       <p>Wall colour shows strain: orange is stretched, pale is at rest, violet is squeezed. Cell counts, contents and families are read by an observer that walks the rings; the rules never see them. Matter total counts every bead, solute particle, food, waste and lipid unit: it only changes when you drop something in.</p>
-      <p>Known limits: this is a flat world, so a cell's wall is a line and its volume an area. Cells do not fuse. A wall leaks a little solute where it sheds beads. Positions are floating point, so a run repeats exactly on one machine and any standard JavaScript engine, but there is no GPU twin.</p>
+      <p>Known limits: this is a flat world, so a cell’s wall is a line and its volume an area. Cells do not fuse. A wall leaks a little solute where it sheds beads. Positions are floating point, so a run repeats exactly on one machine and any standard JavaScript engine, but there is no GPU twin.</p>
     </section>
   </main>
   <script type="module" src="/src/vesicle/page.ts"></script>

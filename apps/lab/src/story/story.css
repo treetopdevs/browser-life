@@ -1,0 +1,112 @@
+/* The story page: acts, the ladder, step-backs and the live jars. Tokens and the ledger lists come from site.css
+   and experiments/ledger.css. Colour means what it means elsewhere: the sun marks the one rung we are on. */
+
+/* ---------- acts ---------- */
+.act { padding-block: clamp(44px, 6vw, 72px) 28px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.act-inner { display: grid; grid-template-columns: minmax(145px, 220px) minmax(0, 720px); gap: 48px; }
+.act h2 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.06; letter-spacing: -.035em; }
+.act p:not(.eyebrow) { max-width: 62ch; margin: 16px 0 0; color: var(--muted); font-size: 1.125rem; }
+.act .act-when { margin: 0; padding-top: 12px; }
+.prose h3 { margin: 0 0 14px; font-size: 1.625rem; line-height: 1.18; }
+.prose h3.small { margin-top: 30px; font-size: 1.25rem; letter-spacing: -.02em; }
+.prose ul:not([class]) { padding-left: 22px; color: var(--muted); }
+.prose ul:not([class]) li { margin-bottom: 11px; max-width: 64ch; }
+.prose li strong { color: var(--text); }
+
+/* ---------- the ladder ---------- */
+.prose .ladder-list { margin: 26px 0 0; padding: 0; list-style: none; color: inherit; }
+.prose .ladder-list li { margin-bottom: 0; }
+.rung { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 16px; padding: 0 0 26px; }
+/* The rail between rungs (a real element, so the contrast checker can see what is behind the text): ink where the
+   rung holds, a faint line from where we are upward. */
+.rung-rail { position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: var(--line); }
+.rung.held .rung-rail { background: var(--text); }
+.rung:last-child { padding-bottom: 0; }
+.rung:last-child .rung-rail { display: none; }
+.rung-n { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 2px solid var(--control-line); border-radius: 50%; background: var(--bg); color: var(--muted); font-size: 1rem; font-weight: 800; }
+.rung.held .rung-n { border-color: var(--text); background: var(--text); color: var(--bg); }
+.rung.here .rung-n { border-color: var(--sun); background: var(--sun); color: var(--accent-ink); }
+.rung-body { min-width: 0; padding-top: 7px; }
+.rung-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.rung-head strong { color: var(--text); font-size: 1.1875rem; letter-spacing: -.02em; }
+.rung-body p { margin: 6px 0 0; max-width: 60ch; font-size: 1rem; }
+.rung-body .rung-means { color: var(--text); }
+.rung-here { display: inline-flex; align-items: center; min-height: 26px; padding: 2px 10px; border-radius: 99px; background: var(--sun); color: var(--accent-ink); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.ladder-note { margin: 22px 0 0; color: var(--soft); font-size: .9375rem; }
+
+/* ---------- how far each world got ---------- */
+.reach { margin: 22px 0 0; padding: 0; list-style: none; }
+.reach li { display: grid; grid-template-columns: minmax(150px, 190px) minmax(0, 1fr); gap: 6px 18px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
+.reach li:last-child { border-bottom: 1px solid var(--line); }
+.reach-world { display: grid; gap: 6px; justify-items: start; }
+.reach-world strong, .reach-world a { color: var(--text); font-size: 1.0625rem; font-weight: 700; }
+.reach-when { color: var(--soft); font-size: .8125rem; }
+.reach-what p { margin: 0; max-width: 60ch; font-size: 1rem; }
+.reach-what p + p { margin-top: 6px; }
+.reach-what b { color: var(--text); font-weight: 600; }
+/* Six pips, one per rung, filled up to the rung the world stopped on. The count is also in words beside them. */
+.pips { display: inline-flex; gap: 3px; vertical-align: middle; }
+.pips i { width: 9px; height: 9px; border: 1.5px solid var(--control-line); border-radius: 50%; }
+.pips i.on { border-color: var(--text); background: var(--text); }
+.pips i.at { border-color: var(--sun); background: var(--sun); }
+.reach-rung { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--soft); font-size: .8125rem; }
+
+/* ---------- a step back ---------- */
+.step-back { margin: 30px 0 4px; padding: 18px 20px 4px; border-left: 4px solid var(--sun); border-radius: 0 var(--radius) var(--radius) 0; background: var(--raised); }
+.step-back .eyebrow { margin: 0 0 8px; }
+.step-back p:not(.eyebrow) { color: var(--text); font-size: 1rem; }
+.step-back p:not(.eyebrow) + p { color: var(--muted); }
+
+/* ---------- results behind a chapter ---------- */
+.results { margin: 22px 0 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.results > summary { padding: 14px 0; cursor: pointer; color: var(--text); font-size: .9375rem; font-weight: 700; }
+.results > summary::marker { color: var(--sun-ink); }
+.results[open] > summary { border-bottom: 1px solid var(--line); }
+.results .ledger { margin-top: 0; }
+.results .ledger li:first-child { border-top: 0; }
+.results .ledger li:last-child { border-bottom: 0; }
+.results + .story-next { margin-top: 22px; }
+
+/* ---------- how it gets made ---------- */
+.prose .round { margin: 24px 0 0; padding: 0; list-style: none; }
+.round li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 0 18px; align-items: start; margin: 0; padding: 14px 0; border-top: 1px solid var(--line); color: var(--muted); }
+.round li:last-child { border-bottom: 1px solid var(--line); }
+.round-n { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--raised); color: var(--text); font-size: .875rem; font-weight: 800; }
+.round li strong { color: var(--text); }
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px 26px; margin: 26px 0 8px; padding: 0; list-style: none; }
+.counts li { margin: 0; padding-top: 12px; border-top: 2px solid var(--text); color: var(--muted); font-size: .9375rem; }
+.counts b { display: block; color: var(--text); font-size: 1.875rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+
+/* ---------- live jars ---------- */
+.story-jar { max-width: 580px; margin: 30px 0 26px; }
+.jar-stage { position: relative; padding: 10px; border-radius: 18px; background: var(--field); }
+.jar-stage img, .jar-stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; background: var(--field); }
+.story-jar[data-jar="dropgenes"] .jar-stage img, .story-jar[data-jar="dropgenes"] .jar-stage canvas { image-rendering: pixelated; }
+.jar-stage canvas { display: none; }
+.story-jar.live .jar-stage canvas { display: block; }
+.story-jar.live .jar-stage img { display: none; }
+.jar-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.jar-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.jar-bar .button { min-height: 42px; }
+/* .button sets its own display, which would show a button that carries the hidden attribute. */
+.jar-bar .button[hidden] { display: none; }
+.jar-bar .button.seg { padding: 8px 14px; font-size: .875rem; }
+.jar-bar .button.seg[aria-pressed="true"] { background: var(--sun); border-color: var(--sun); color: var(--accent-ink); }
+/* Green belongs to the living: Play while the world is growing. */
+.button.primary.jar-play.growing, .button.primary.jar-play.growing:hover { background: var(--life-fill); border-color: var(--life-fill); color: var(--accent-ink); }
+.jar-bar .button:disabled { opacity: .45; cursor: default; }
+.jar-line { margin: 12px 0 0; min-height: 1.5em; color: var(--text); font-family: var(--mono, ui-monospace, Menlo, monospace); font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.story-jar .jar-says, .story-jar .jar-note { margin: 8px 0 0; max-width: 64ch; color: var(--muted); font-size: .9375rem; }
+.story-jar .jar-note:empty { display: none; }
+.story-jar figcaption { margin-top: 12px; color: var(--soft); font-size: .9375rem; max-width: 64ch; }
+.story-jar figcaption .state { margin-right: 8px; }
+.story-still { max-width: 580px; margin: 30px 0 26px; }
+.story-still .jar-stage img { aspect-ratio: auto; }
+.story-still figcaption { margin-top: 12px; color: var(--soft); font-size: .9375rem; max-width: 64ch; }
+
+@media (max-width: 900px) {
+  .act-inner { grid-template-columns: 1fr; gap: 10px; }
+  .reach li { grid-template-columns: 1fr; }
+  .jar-choices { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .jar-play { transition: none; } }

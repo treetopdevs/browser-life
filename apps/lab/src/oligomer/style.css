@@ -48,3 +48,8 @@ body.oligomer-page [hidden]{display:none!important}
 body.oligomer-page optgroup{font-style:normal;color:var(--muted)}
 body.oligomer-page #engine[data-engine=gpu]{color:var(--mint)}
 body.oligomer-page .readout dt{line-height:1.25}
+/* Public chrome: the way back to the story, and what the journal says this world showed. */
+body.oligomer-page header{flex-wrap:wrap;padding-block:8px}body.oligomer-page header .badge{margin-left:auto}
+body.oligomer-page .found h2{font-size:18px;margin:14px 0 4px}body.oligomer-page .found .scope-note{margin:10px 0}
+body.oligomer-page .found strong{color:#e7efeb}body.oligomer-page .found-label{display:inline-block;margin:0 6px;padding:1px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;white-space:nowrap}
+body.oligomer-page .intro.title{padding-bottom:0}body.oligomer-page .intro.title+.intro,body.oligomer-page #intro-d{padding-top:0}

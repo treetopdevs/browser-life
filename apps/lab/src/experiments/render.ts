@@ -1,5 +1,6 @@
 // Renders the ledger (ledger.ts) into the HTML kept between GENERATED markers on /story/ and /experiments/.
 // Pure string functions, so the sync test and its write mode share one renderer.
+import { renderCounts, renderLadder, renderReach } from "../story/render-ladder.ts";
 import { CHAPTERS, ENTRIES, PLAYTHINGS, type Entry, type Label } from "./ledger.ts";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -72,8 +73,9 @@ export function renderTally(pad = "          "): string {
 
 /** Every generated block, by marker name. */
 export function blocks(): Record<string, string> {
-  const out: Record<string, string> = { index: renderIndex(), playthings: renderPlaythings(), tally: renderTally() };
-  for (const c of CHAPTERS) out[`chapter-${c.n}`] = renderChapter(c.n);
+  const out: Record<string, string> = { index: renderIndex(), playthings: renderPlaythings(), tally: renderTally(), ladder: renderLadder(), reach: renderReach(), counts: renderCounts() };
+  // On the story a chapter's list sits inside a folded <details>, one level deeper than on the index.
+  for (const c of CHAPTERS) out[`chapter-${c.n}`] = renderChapter(c.n, false, "            ");
   return out;
 }
 

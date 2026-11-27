@@ -1,7 +1,7 @@
 /**
- * DOM glue for the /dropgenes/ sandbox page. The kernel runs in viewer.worker.ts; this file asks it for one tick
+ * DOM glue for the /dropgenes/ page. The kernel runs in viewer.worker.ts; this file asks it for one tick
  * per animation frame at most, waits for the answer before asking again, and only ever draws what comes back.
- * It does not load theme.ts (which starts the site's page-view counter): a private sandbox is not counted.
+ * Like the other standalone experiment pages it does not load theme.ts (which starts the site's page-view counter); it keeps its own small theme switch.
  */
 
 import './style.css';

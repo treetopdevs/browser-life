@@ -460,7 +460,7 @@ describe('page markup', () => {
     for (const m of page.matchAll(/getElementById\('([\w-]+)'\)/g)) used.add(m[1]);
     expect(used.size).toBeGreaterThan(20);
     for (const id of used) expect(html, id).toContain(`id="${id}"`);
-    expect(html).toContain('name="robots" content="noindex"');
+    expect(html).not.toContain('noindex');
     expect(html).toContain('id="main"');
     expect(html).toContain('<html lang="en">');
     for (const id of ['view', 'start', 'size', 'pace', 'seed']) expect(html, id).toContain(`for="${id}"`);

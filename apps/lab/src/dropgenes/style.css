@@ -1,5 +1,5 @@
 /*
- * The /dropgenes/ sandbox on the garden's shared tokens: paper by day, dusk by night. The arena is a jar, dark in
+ * The /dropgenes/ page on the garden's shared tokens: paper by day, dusk by night. The arena is a jar, dark in
  * both themes (--field), and the colours on it are data (viewer-core.ts), so they do not follow the theme.
  */
 @import "../tokens.css";
@@ -90,3 +90,7 @@
 @media (pointer: coarse) {
   .dropgenes-page button, .dropgenes-page #seed { min-height: 44px; }
 }
+/* Public chrome: the way back to the story, and what the journal says this world showed. */
+.dropgenes-page .found h2 { margin: 18px 0 4px; font-size: 1.125rem; }
+.dropgenes-page .found-label { display: inline-block; margin: 0 6px; padding: 1px 8px; border: 1px solid var(--control-line); border-radius: 99px; color: var(--muted); font-size: .75rem; white-space: nowrap; }
+.dropgenes-page .found-more { color: var(--muted); font-size: .875rem; }
