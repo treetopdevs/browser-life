@@ -12,11 +12,6 @@
 :80 {
   encode zstd gzip
 
-  # The shared garden's page is public; its API stays closed until the garden opens. The coordinator's letter, hand and
-  # checkpoint routes do not check BL_GARDEN_SCHEDULING, so the proxy answers them itself (public and keeper routes).
-  @private_garden_api path_regexp private_garden_api (?i)^/api/(?:public/)?gardens?(?:/|$)
-  respond @private_garden_api 404
-
   @api path /api/*
   # The coordinator reads the right-most X-Forwarded-For entry (BL_TRUST_FORWARDED_FOR), so each proxy block
   # replaces the header with the one resolved client address. Never forward the client's own chain.

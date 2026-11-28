@@ -281,7 +281,7 @@ export const PLAYTHINGS: Plaything[] = [
   { href: "/mycelium/", title: "Mycelium world", blurb: "Particles with small neural controllers that eat, lay trail and split." },
   { href: "/slab/", title: "Slab viewer", blurb: "The two thin 3D worlds and the taller jar, drawn layer by layer or as a volume you can turn. Neither thin world passed its gate, and the jar has only been judged by eye." },
   { href: "/mycelium3d/", title: "Mycelium in a jar", blurb: "The mycelium world in 3D, lit from the top, drawn as a volume you can turn, with bonds and a cursor to wound or feed it. Explored with screens, not tests: on twelve fresh seeds a world of bodies was not seen again." },
-  { href: "/garden/", title: "The shared garden", blurb: "One world meant to be grown in turns by whoever is tending it. Its page is here; the garden itself is not open yet." },
+  { href: "/garden/", title: "The shared garden", blurb: "One world grown in turns by whoever is tending it. It is open: visitors can drop a stone in it or send a sun." },
   { href: "/ecosystem/", title: "Evolving ecosystem", blurb: "An engineered toy ecosystem of five families, with an archive of saved runs." },
   { href: "/food-bands/", title: "Food bands", blurb: "Run the food-delivery screens live, side by side, with the food drawn as it moves." },
   { href: "/hungry-shapes/", title: "Hungry shapes", blurb: "Bodies run by small programs, under even or patchy food." },

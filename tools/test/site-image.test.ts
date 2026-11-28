@@ -301,17 +301,23 @@ describe.skipIf(!usable)("the site image, started as deployed", () => {
     expect(asset.body).toBe(full.body);
   });
 
-  it("serves the garden page and keeps every garden API closed", async () => {
+  it("serves the garden page and sends every garden API to the coordinator", async () => {
     const page = await raw(origin, "/garden/");
     expect(page.status).toBe(200);
     expect(titleOf(page.body)).toBe("The shared garden · Cadence Garden");
-    expect((await raw(origin, "/garden")).status).toBe(308);
-    const paths = [
+    const bare = await raw(origin, "/garden");
+    expect([bare.status, bare.headers.location]).toEqual([308, "/garden/"]);
+    const copy = await raw(origin, "/garden?x=1");
+    expect([copy.status, copy.headers.location]).toEqual([308, "/garden/?x=1"]);
+    for (const path of [
       "/api/public/garden", "/api/public/garden/letters", "/api/public/gardens/commons", "/api/public/gardens/commons/checkpoints/abc",
-      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test", "/api/public/garden%2fletters", "/API/PUBLIC/GARDEN",
-    ];
-    for (const path of paths) {
-      for (const method of ["GET", "HEAD", "POST"]) expect((await raw(origin, path, { method })).status, `${method} ${path}`).toBe(404);
+      "/api/gardens", "/api/gardens/commons/days/0/requeue", "/api/garden/test",
+    ]) {
+      for (const method of ["GET", "POST"]) {
+        const res = await raw(origin, path, { method });
+        expect(res.status, `${method} ${path}`).toBe(200);
+        expect(echo(res).path, `${method} ${path}`).toBe(path);
+      }
     }
   });
 
