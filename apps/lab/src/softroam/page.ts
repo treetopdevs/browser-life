@@ -9,6 +9,8 @@ import './style.css';
 import { SoftRoamPacer } from './pacer.ts';
 import { CHANGE_IDS, checkDials, defFor, dialDefaults, dialMoved, dialOptions, fixDial, linkSwitches, SOFT_DIALS, startDials, startNote, startPick, SWITCH_IDS, type DialValues, type SoftSwitches } from './dials.ts';
 import { softTimeWords as timeWords, type SoftPaint, type SoftRoamFrame, type SoftRoamFromWorker, type SoftRoamStart, type SoftRoamToWorker } from './view.ts';
+import { TankCamera, type TankPreset, type TankSnapshot } from './tank-math.ts';
+import { SoftRoamTankRenderer } from './tank-gl.ts';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const set = (id: string, text: string) => { el(id).textContent = text; };
@@ -52,6 +54,15 @@ function showPlay(): void {
 
 const canvas = el<HTMLCanvasElement>('view');
 const ctx = canvas.getContext('2d')!;
+const canvas3d = el<HTMLCanvasElement>('view-3d');
+const tankControls = el<HTMLDivElement>('tank-controls');
+const tankProjBtn = el<HTMLButtonElement>('tank-proj');
+const tankPresetBtns = [...tankControls.querySelectorAll<HTMLButtonElement>('button[data-preset]')];
+const tankCamera = new TankCamera('tilted');
+let tankRenderer: SoftRoamTankRenderer | null = null;
+let tankFailed = false;
+let lastTank: TankSnapshot | null = null;
+let activePreset: TankPreset | null = 'tilted';
 const SIZE = 128;
 const SCALE = 6; // 128 tiles x 6 = 768 px
 
@@ -60,8 +71,70 @@ let gen = 0;
 const pacer = new SoftRoamPacer(performance.now());
 let lastFrameTime = performance.now();
 
-const paintChoice = (): SoftPaint => { const v = value('paint'); return v === 'plain' || v === 'top' ? v : 'garden'; };
+const paintChoice = (): SoftPaint => {
+  const v = value('paint');
+  if (v === 'plain' || v === 'top') return v;
+  if (v === 'tank' && !tankFailed) return 'tank';
+  return 'garden';
+};
 const pace = (): number => Number(value('pace'));
+
+const paintSelect = el<HTMLSelectElement>('paint');
+const tankOption = paintSelect.querySelector<HTMLOptionElement>('option[value="tank"]');
+const tankZoomInBtn = el<HTMLButtonElement>('tank-zoom-in');
+const tankZoomOutBtn = el<HTMLButtonElement>('tank-zoom-out');
+
+function syncTankUi(): void {
+  const isTank = paintChoice() === 'tank';
+  canvas.hidden = isTank;
+  canvas3d.hidden = !isTank;
+  tankControls.hidden = !isTank;
+  tankProjBtn.setAttribute('aria-pressed', String(tankCamera.projection === 'ortho'));
+  for (const btn of tankPresetBtns) {
+    const on = btn.dataset.preset === activePreset;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', String(on));
+  }
+}
+
+function fallbackTank(reason: string): void {
+  tankFailed = true;
+  tankRenderer?.dispose();
+  tankRenderer = null;
+  if (tankOption) tankOption.disabled = true;
+  paintSelect.value = 'garden';
+  set('error', reason);
+  showSays();
+  syncTankUi();
+  pacer.wantRepaint();
+}
+
+function applyStartLook(start: SoftRoamStart): void {
+  if (checkDials(switches(), dials) !== null) return;
+  if (start === 'deep' && !tankFailed) paintSelect.value = 'tank';
+  syncTankUi();
+}
+
+function renderTankNow(): void {
+  if (!lastTank || paintChoice() !== 'tank') return;
+  try {
+    if (!tankRenderer && !tankFailed) {
+      tankRenderer = SoftRoamTankRenderer.create(
+        canvas3d,
+        () => renderTankNow(),
+        () => fallbackTank('WebGL2 context could not be restored; switched back to the 2D garden look.'),
+      );
+      if (!tankRenderer) {
+        fallbackTank('WebGL2 is unavailable in this browser; switched back to the 2D garden look.');
+        return;
+      }
+    }
+    tankRenderer?.render(lastTank, tankCamera);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : '3D rendering failed';
+    fallbackTank(`${msg}; switched back to the 2D garden look.`);
+  }
+}
 
 function post(m: SoftRoamToWorker, transfer: Transferable[] = []): void {
   worker!.postMessage(m, transfer);
@@ -198,6 +271,7 @@ function reset(): void {
   const why = checkDials(switches(), dials);
   if (why !== null) { set('error', why); return; }
   worker?.terminate();
+  lastTank = null;
   gen++;
   const mine = gen;
   worker = new Worker(new URL('./softroam.worker.ts', import.meta.url), { type: 'module' });
@@ -220,11 +294,19 @@ function reset(): void {
 }
 
 function show(f: SoftRoamFrame): void {
-  if (canvas.width !== f.side) { canvas.width = f.side; canvas.height = f.side; }
-  ctx.putImageData(new ImageData(f.pixels as Uint8ClampedArray<ArrayBuffer>, f.side, f.side), 0, 0);
-  // The canvas has its own copy now: give the pixels back to the worker to paint into again.
-  const buffer = f.pixels.buffer as ArrayBuffer;
-  post({ type: 'recycle', gen, buffer }, [buffer]);
+  if (f.tank) {
+    lastTank = f.tank;
+    syncTankUi();
+    renderTankNow();
+  } else {
+    lastTank = null;
+    syncTankUi();
+    if (canvas.width !== f.side) { canvas.width = f.side; canvas.height = f.side; }
+    ctx.putImageData(new ImageData(f.pixels as Uint8ClampedArray<ArrayBuffer>, f.side, f.side), 0, 0);
+    // The canvas has its own copy now: give the pixels back to the worker to paint into again.
+    const buffer = f.pixels.buffer as ArrayBuffer;
+    post({ type: 'recycle', gen, buffer }, [buffer]);
+  }
   pacer.onFrame(f.step, performance.now());
   const c = f.census;
   set('r-step', fmt(c.step));
@@ -264,7 +346,7 @@ el('play').addEventListener('click', () => {
 });
 el('step').addEventListener('click', () => { pacer.stepOnce(); });
 el('reset').addEventListener('click', () => { if (pacer.failed) pacer.toggle(); showPlay(); el<HTMLButtonElement>('step').disabled = pacer.playing; reset(); });
-el('paint').addEventListener('change', () => { showSays(); pacer.wantRepaint(); });
+el('paint').addEventListener('change', () => { showSays(); syncTankUi(); pacer.wantRepaint(); });
 for (const id of SAYS_IDS) if (id !== 'paint') el(id).addEventListener('change', showSays);
 for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
 // Picking a start also sets the kinds switch to what that start is: the garden has kinds on, every other start is the plain grown
@@ -275,13 +357,99 @@ el('start').addEventListener('change', () => {
   el<HTMLSelectElement>('kinds').value = startPick(switches(), start).kinds ? '1' : '0';
   const before = { ...dials };
   Object.assign(dials, startDials(start));
+  applyStartLook(start);
   changed();
   showSays();
   set('dials-note', startNote(before, start));
 });
+
+// ---- 3D tank camera interaction: drag to orbit, click-then-scroll (or ctrl+wheel) to zoom, double-click or presets to snap.
+let dragPointerId = -1;
+let dragX = 0;
+let dragY = 0;
+canvas3d.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
+  canvas3d.focus({ preventScroll: true });
+  dragPointerId = e.pointerId;
+  dragX = e.clientX;
+  dragY = e.clientY;
+  canvas3d.setPointerCapture(e.pointerId);
+});
+canvas3d.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== dragPointerId) return;
+  const dx = e.clientX - dragX;
+  const dy = e.pointerType === 'touch' ? 0 : e.clientY - dragY;
+  dragX = e.clientX;
+  dragY = e.clientY;
+  tankCamera.orbit(-dx * 0.008, dy * 0.008);
+  activePreset = null;
+  syncTankUi();
+  renderTankNow();
+});
+const endDrag = (e: PointerEvent): void => {
+  if (e.pointerId !== dragPointerId) return;
+  dragPointerId = -1;
+  if (canvas3d.hasPointerCapture(e.pointerId)) canvas3d.releasePointerCapture(e.pointerId);
+};
+canvas3d.addEventListener('pointerup', endDrag);
+canvas3d.addEventListener('pointercancel', endDrag);
+canvas3d.addEventListener('wheel', (e) => {
+  // Never hijack normal page scroll unless the user explicitly focused the 3D viewport or holds ctrl/meta (pinch-zoom).
+  if (!e.ctrlKey && !e.metaKey && document.activeElement !== canvas3d) return;
+  e.preventDefault();
+  const deltaPx = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * (canvas3d.clientHeight || 400) : e.deltaY;
+  tankCamera.zoom(Math.exp(deltaPx * 0.0012));
+  renderTankNow();
+}, { passive: false });
+canvas3d.addEventListener('dblclick', () => {
+  tankCamera.setPreset('tilted');
+  activePreset = 'tilted';
+  syncTankUi();
+  renderTankNow();
+});
+canvas3d.addEventListener('keydown', (e) => {
+  let handled = true;
+  if (e.key === 'ArrowLeft') { tankCamera.orbit(0.12, 0); activePreset = null; }
+  else if (e.key === 'ArrowRight') { tankCamera.orbit(-0.12, 0); activePreset = null; }
+  else if (e.key === 'ArrowUp') { tankCamera.orbit(0, 0.08); activePreset = null; }
+  else if (e.key === 'ArrowDown') { tankCamera.orbit(0, -0.08); activePreset = null; }
+  else if (e.key === '+' || e.key === '=') tankCamera.zoom(0.9);
+  else if (e.key === '-' || e.key === '_') tankCamera.zoom(1.1);
+  else if (e.key === '0') { tankCamera.setPreset('tilted'); activePreset = 'tilted'; }
+  else handled = false;
+  if (handled) { e.preventDefault(); syncTankUi(); renderTankNow(); }
+});
+for (const btn of tankPresetBtns) {
+  btn.addEventListener('click', () => {
+    const preset = btn.dataset.preset as TankPreset;
+    tankCamera.setPreset(preset);
+    activePreset = preset;
+    syncTankUi();
+    renderTankNow();
+  });
+}
+tankProjBtn.addEventListener('click', () => {
+  tankCamera.setProjection(tankCamera.projection === 'ortho' ? 'perspective' : 'ortho');
+  activePreset = null;
+  syncTankUi();
+  renderTankNow();
+});
+tankZoomInBtn.addEventListener('click', () => { tankCamera.zoom(0.85); renderTankNow(); });
+tankZoomOutBtn.addEventListener('click', () => { tankCamera.zoom(1.18); renderTankNow(); });
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => { if (paintChoice() === 'tank') renderTankNow(); }).observe(canvas3d);
+}
+window.addEventListener('resize', () => { if (paintChoice() === 'tank') renderTankNow(); });
 // A settings link opened in this tab: take its settings (replaceState in saveHash does not fire this).
 // A plain fragment (the skip link's #main) is navigation, not settings: only a hash that names a setting is read.
-window.addEventListener('hashchange', () => { if (!location.hash.includes('=')) return; loadHash(); showSays(); showDials(); reset(); });
+window.addEventListener('hashchange', () => {
+  if (!location.hash.includes('=')) return;
+  loadHash();
+  applyStartLook(value('start') as SoftRoamStart);
+  showSays();
+  showDials();
+  reset();
+});
 el('dials-reset').addEventListener('click', () => { Object.assign(dials, dialDefaults(value('start') as SoftRoamStart)); changed(); });
 el('dials-link').addEventListener('click', () => {
   // Refused settings make no world, and the address may hold them (a link typed or opened by hand): hand out no link to a refusal.
@@ -294,6 +462,7 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) pacer.toggle();
 el<HTMLButtonElement>('step').disabled = pacer.playing;
 
 loadHash();
+applyStartLook(value('start') as SoftRoamStart);
 showSays();
 buildDials();
 showDials();

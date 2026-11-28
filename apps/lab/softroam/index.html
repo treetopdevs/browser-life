@@ -49,6 +49,21 @@
         </div>
         <div class="jar">
           <canvas id="view" width="768" height="768" role="img" aria-label="The arena, 128 by 128 tiles: soft glowing bodies over blue haze, which is food." aria-describedby="legend-h"></canvas>
+          <canvas id="view-3d" width="768" height="768" hidden tabindex="0" role="application" aria-roledescription="3D viewport" aria-label="3D tilted tank view of the Soft Roam arena. Drag to orbit, or focus and use arrow keys and plus/minus to zoom." aria-describedby="legend-h"></canvas>
+        </div>
+        <div id="tank-controls" class="tank-controls" hidden role="group" aria-label="3D camera controls">
+          <div class="tank-presets" role="group" aria-label="Camera angle">
+            <button type="button" data-preset="tilted" class="active" aria-pressed="true">Tilted</button>
+            <button type="button" data-preset="iso" aria-pressed="false">Isometric</button>
+            <button type="button" data-preset="side" aria-pressed="false">Side</button>
+            <button type="button" data-preset="top" aria-pressed="false">Top</button>
+          </div>
+          <div class="tank-proj" role="group" aria-label="Projection and zoom">
+            <button type="button" id="tank-proj" aria-pressed="false">Orthographic</button>
+            <button type="button" id="tank-zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" id="tank-zoom-out" aria-label="Zoom out">−</button>
+          </div>
+          <span class="tank-hint">Drag to orbit · click then scroll to zoom</span>
         </div>
         <p id="error" class="error" role="alert"></p>
         <h2 id="legend-h" class="mini">What you are seeing</h2>
@@ -119,6 +134,7 @@
             <label for="paint">Look</label>
             <select id="paint" aria-describedby="paint-says">
               <option value="garden" selected data-says="Soft glowing bodies over blue food haze. With levels, a higher body is drawn further up the screen and its shadow falls straight under it, so the gap is how high it is.">Garden</option>
+              <option value="tank" data-says="A 3D tilted aquarium view with a foreshortened floor, level guide rings, floor shadows and 3D lit bodies. Drag to orbit, scroll to zoom, or switch between perspective and orthographic.">Tilted tank (3D)</option>
               <option value="top" data-says="The same picture from straight above, with every level drawn at its true place.">Garden from above</option>
               <option value="plain" data-says="A disc per cell and a line from each daughter to her mother, for checking the picture against the rules.">Plain discs</option>
             </select>
