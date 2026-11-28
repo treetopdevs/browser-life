@@ -28,7 +28,10 @@ scope.onmessage = (event: MessageEvent<SoftRoamToWorker>) => {
     }
     const frame = session.frame(m.paint, alpha);
     const answer: SoftRoamFromWorker = { type: 'frame', gen, frame };
-    scope.postMessage(answer, [frame.pixels.buffer]);
+    const transfer: Transferable[] = frame.tank
+      ? [frame.tank.cells.buffer, frame.tank.links.buffer, frame.tank.threads.buffer, frame.tank.floorTex.buffer]
+      : [frame.pixels.buffer];
+    scope.postMessage(answer, transfer);
   } catch (error) {
     session = null;
     const answer: SoftRoamFromWorker = { type: 'error', gen: m.gen, message: error instanceof Error ? error.message : String(error) };

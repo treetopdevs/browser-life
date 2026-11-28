@@ -58,9 +58,47 @@ test('grows, says what each choice does, switches colours, and fits a phone', as
   await page.locator('#start').selectOption('deep');
   await expect(page.locator('#start-says')).toContainText('three levels');
   await expect(page).toHaveURL(/start=deep/);
+  // Picking the three-level start opens in the 3D tilted tank view with camera controls visible.
+  await expect(page.locator('#paint')).toHaveValue('tank');
+  await expect(page.locator('#view-3d')).toBeVisible();
+  await expect(page.locator('#view')).toBeHidden();
+  await expect(page.locator('#tank-controls')).toBeVisible();
   await page.locator('#play').click();
   await expect.poll(() => page.locator('#r-levels').textContent(), { timeout: 30_000 }).toContain('on the floor');
+
+  // Pause before comparing camera angles so any pixel diff is purely camera movement, not sim drift.
+  await page.locator('#play').click();
+  await expect(page.locator('#play')).toHaveText('Play');
+  await page.waitForTimeout(250);
+  const shotTilted = await page.locator('#view-3d').screenshot();
+  await page.locator('#tank-controls button[data-preset="side"]').click();
+  const shotSide = await page.locator('#view-3d').screenshot();
+  expect(Buffer.compare(shotTilted, shotSide)).not.toBe(0);
+
+  // Dragging the 3D viewport orbits the camera while paused.
+  const box = (await page.locator('#view-3d').boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.72, box.y + box.height * 0.42, { steps: 5 });
+  await page.mouse.up();
+  const shotDragged = await page.locator('#view-3d').screenshot();
+  expect(Buffer.compare(shotSide, shotDragged)).not.toBe(0);
+
+  await page.locator('#tank-proj').click();
+  await expect(page.locator('#tank-proj')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#tank-controls button[data-preset="iso"]').click();
+  await expect(page.locator('#tank-controls button[data-preset="iso"]')).toHaveAttribute('aria-pressed', 'true');
+
+  // Phone width in 3D tank mode: controls and viewport fit with no horizontal overflow.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.waitForTimeout(150);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  await page.setViewportSize({ width: 1280, height: 900 });
+
   await page.locator('#paint').selectOption('top');
+  await expect(page.locator('#view')).toBeVisible();
+  await expect(page.locator('#view-3d')).toBeHidden();
+  await expect(page.locator('#tank-controls')).toBeHidden();
   await expect(page.locator('#paint-says')).toContainText('straight above');
 
   // The dials are folded away until asked for.

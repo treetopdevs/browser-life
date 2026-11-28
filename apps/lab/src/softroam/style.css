@@ -46,7 +46,16 @@
 .softroam-page .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .softroam-page .transport .inline { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: .8125rem; }
 .softroam-page .jar { padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
-.softroam-page #view { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: var(--field); }
+.softroam-page #view, .softroam-page #view-3d { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: var(--field); }
+.softroam-page #view[hidden], .softroam-page #view-3d[hidden] { display: none; }
+.softroam-page #view-3d { cursor: grab; touch-action: pan-y; }
+.softroam-page #view-3d:active { cursor: grabbing; }
+.softroam-page .tank-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
+.softroam-page .tank-controls[hidden] { display: none; }
+.softroam-page .tank-presets, .softroam-page .tank-proj { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.softroam-page .tank-controls button { min-height: 32px; padding: 4px 10px; font-size: .75rem; font-weight: 600; }
+.softroam-page .tank-controls button.active, .softroam-page .tank-controls button[aria-pressed="true"] { border-color: var(--sun); background: var(--sun-soft); color: var(--text); }
+.softroam-page .tank-hint { margin-left: auto; color: var(--muted); font-size: .75rem; }
 
 .softroam-page .legend { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: .8125rem; line-height: 1.35; }
 .softroam-page .legend li { display: flex; align-items: center; gap: 10px; }

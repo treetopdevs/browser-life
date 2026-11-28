@@ -19,6 +19,7 @@
 import { ROAM_PLANS, ROAM_STARTS, ROAM_TYPES, roamPlanColour, type RoamTypeId } from '../roam/view.ts';
 import { ROAM_GENE_MAX } from '../roam/kernel.ts';
 import { defaultSoftRoamConfig, KIND_LEAF, KIND_MOUTH, KIND_SHELL, PLAN_MODES, PLAN_REST, planEntry, PULSE_IN, PULSE_ONE, PULSE_W, roamHash, SOFT_U, type SoftRoamCensus, type SoftRoamConfig, SoftRoamWorld, softRoamLight } from './kernel.ts';
+import { TANK_CELL_STRIDE, TANK_LINK_STRIDE, TANK_THREAD_STRIDE, tankElevation, tankHeightFor, type TankSnapshot } from './tank-math.ts';
 
 export { ROAM_PLANS };
 
@@ -439,8 +440,8 @@ export function foundSoftRoam(o: SoftRoamOptions): SoftRoamWorld {
 
 // ---------------------------------------------------------------------------------------------------- the picture
 
-/** `garden` is the picture; with depth it is slanted (a level is drawn DEEP_SLANT tiles up the screen per level, the ground stays put). `top` is the garden straight down. `plain` is for checking. */
-export type SoftPaint = 'garden' | 'plain' | 'top';
+/** `garden` is the 2D picture; with depth it is slanted (`DEEP_SLANT` tiles up per level). `top` is straight down. `plain` is discs. `tank` is the 3D tilted aquarium view. */
+export type SoftPaint = 'garden' | 'plain' | 'top' | 'tank';
 
 /** Founder family numbers 1 to 11 in the order of Roam's types, with the colours Roam gives them; 12 to 17 are Soft Roam's own types. */
 const FAMILY_ORDER: readonly SoftTypeId[] = ['chaser', 'wanderer', 'sitter', 'single', 'big', 'line', 'plate', 'cross', 'block', 'speck', 'bush', 'grazer', 'leafbush', 'hunter', 'herd', 'grove', 'pack'];
@@ -914,16 +915,8 @@ function famColour(fam: number): readonly number[] {
   return FAM_COLOUR[(Math.max(1, fam) - 1) % FAM_COLOUR.length] ?? [200, 200, 200];
 }
 
-/** Paint the world at `scale` pixels per tile into `out` (RGBA, `size * scale` square) at `alpha` between the last two steps. */
-export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: number, alpha: number, out: Uint8ClampedArray | Uint8Array, memory?: SoftPaintMemory): void {
-  const side = world.size * scale;
-  if (out.length !== side * side * 4) throw new Error('paintSoftRoam: wrong buffer size');
-  if (!Number.isInteger(scale) || scale < 1) throw new Error(`paintSoftRoam: scale ${scale} must be a whole number of at least 1`);
-  alpha = clamp01(alpha);
-  const mem = memory ?? new SoftPaintMemory();
-  mem.ensureSide(world, scale);
-  mem.observe(world);
-  // Where every live cell is drawn, and how grown it is.
+/** Compute interpolated cell positions and growth easing into `mem.px/py/grow`; returns the list of alive slot indices. */
+function prepareCells(world: SoftRoamWorld, alpha: number, mem: SoftPaintMemory): number[] {
   const pos = [0, 0];
   const cells: number[] = [];
   for (let c = 0; c < world.cap; c++) {
@@ -955,8 +948,8 @@ export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: num
       nx = mem.px[c] + mem.anchorX[c] * (1 - e);
       ny = mem.py[c] + mem.anchorY[c] * (1 - e);
     } else continue;
-    nx = ((nx % s) + s) % s;
-    ny = ((ny % s) + s) % s;
+    nx = wrapTo(nx, s);
+    ny = wrapTo(ny, s);
     // Keep reading the mother's undisturbed place for her other daughters: store the result after the loop.
     pending.push(c, nx, ny);
   }
@@ -965,12 +958,189 @@ export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: num
     mem.py[pending[k]] = pending[k + 2];
   }
   pending.length = 0;
+  return cells;
+}
+
+/** Paint the world at `scale` pixels per tile into `out` (RGBA, `size * scale` square) at `alpha` between the last two steps. */
+export function paintSoftRoam(world: SoftRoamWorld, paint: SoftPaint, scale: number, alpha: number, out: Uint8ClampedArray | Uint8Array, memory?: SoftPaintMemory): void {
+  if (paint === 'tank') throw new Error("paintSoftRoam: use packSoftRoamTank for the 'tank' look");
+  const side = world.size * scale;
+  if (out.length !== side * side * 4) throw new Error('paintSoftRoam: wrong buffer size');
+  if (!Number.isInteger(scale) || scale < 1) throw new Error(`paintSoftRoam: scale ${scale} must be a whole number of at least 1`);
+  alpha = clamp01(alpha);
+  const mem = memory ?? new SoftPaintMemory();
+  mem.ensureSide(world, scale);
+  mem.observe(world);
+  const cells = prepareCells(world, alpha, mem);
+  const s = world.size;
   // With depth the garden is slanted: a cell is drawn up the screen by its drawn height (the ground and the plain picture stay put).
   const levels = world.cfg.depth ?? 0;
   mem.slant = paint === 'garden' && levels > 0 ? DEEP_SLANT : 0;
   if (mem.slant > 0) for (const c of cells) mem.py[c] = wrapTo(mem.py[c] - mem.slant * levelX(mem, c, LX_DEEP, alpha) * (levels - 1), s);
   if (paint === 'plain') paintPlain(world, scale, alpha, out, mem, cells);
   else paintGarden(world, scale, alpha, out, mem, cells);
+}
+
+/**
+ * Pack the world's eased cells, bonds, feeding threads and floor haze into a compact 3D TankSnapshot
+ * for the WebGL2 tilted-tank renderer. Shares `SoftPaintMemory` with the 2D painter so switching
+ * looks preserves smooth easing, food bloom, feeding threads and level glides.
+ */
+export function packSoftRoamTank(world: SoftRoamWorld, alpha: number, memory?: SoftPaintMemory): TankSnapshot {
+  alpha = clamp01(alpha);
+  const mem = memory ?? new SoftPaintMemory();
+  mem.observe(world);
+  const s = world.size;
+  const invS = 1 / s;
+  const half = s / 2;
+  const levels = world.cfg.depth ?? 0;
+  const tankH = tankHeightFor(levels);
+  const full = 2 * world.cfg.birthStore;
+
+  const alive = prepareCells(world, alpha, mem);
+  const cellCount = alive.length;
+  const cells = new Float32Array(cellCount * TANK_CELL_STRIDE);
+  const elev = new Float32Array(world.cap);
+  for (let i = 0; i < cellCount; i++) {
+    const c = alive[i]!;
+    const e = ease(mem.grow[c]);
+    const hNorm = levels > 0 ? levelX(mem, c, LX_DEEP, alpha) : 0;
+    // Sphere radius in normalized tank units (world side = 1.0). Slightly larger than 0.5 tile so bonded cells read as a soft body.
+    const radTiles = 0.62 * (0.4 + 0.6 * e) * (levels > 0 ? DEEP_SIZE + (1 - DEEP_SIZE) * hNorm : 1);
+    const rad = radTiles * invS;
+    const y = tankElevation(hNorm, levels, tankH, rad);
+    elev[c] = y;
+    const lit = cellTint(world, c, full, tintBuf, mem, alpha);
+    const shl = Math.min(1, level(mem, c, LV_SHELL, alpha));
+    const feed = level(mem, c, LV_FEED, alpha);
+    const hit = level(mem, c, LV_HIT, alpha);
+    const glow = Math.min(1, feed * 0.85 + hit * 0.5);
+    const dim = levels > 0 ? hNorm : 1;
+    const o = i * TANK_CELL_STRIDE;
+    cells[o] = mem.px[c] * invS;
+    cells[o + 1] = y;
+    cells[o + 2] = mem.py[c] * invS;
+    cells[o + 3] = rad;
+    cells[o + 4] = tintBuf[0] * lit;
+    cells[o + 5] = tintBuf[1] * lit;
+    cells[o + 6] = tintBuf[2] * lit;
+    cells[o + 7] = shl;
+    cells[o + 8] = glow;
+    cells[o + 9] = dim;
+  }
+
+  // Mother-daughter strands: omit links that cross the torus seam so no line streaks across the tank.
+  const links = new Float32Array(cellCount * TANK_LINK_STRIDE);
+  let linkCount = 0;
+  for (const c of alive) {
+    const m = world.mother[c];
+    if (m < 0 || !world.alive[m]) continue;
+    const dx = Math.abs(mem.px[m] - mem.px[c]);
+    const dy = Math.abs(mem.py[m] - mem.py[c]);
+    if (dx > half || dy > half) continue;
+    const diff = Math.min(1, Math.abs(world.store[m] - world.store[c]) / full);
+    const o = linkCount * TANK_LINK_STRIDE;
+    links[o] = mem.px[c] * invS;
+    links[o + 1] = elev[c];
+    links[o + 2] = mem.py[c] * invS;
+    links[o + 3] = mem.px[m] * invS;
+    links[o + 4] = elev[m];
+    links[o + 5] = mem.py[m] * invS;
+    links[o + 6] = diff;
+    linkCount++;
+  }
+
+  // Feeding threads: omit wrap-around threads.
+  const threads = new Float32Array(mem.threads.length * TANK_THREAD_STRIDE);
+  let threadCount = 0;
+  for (const th of mem.threads) {
+    const lv = th.prv + (th.lvl - th.prv) * alpha;
+    const m = th.ms, p = th.ps;
+    if (lv < 0.02 || !world.alive[m] || !world.alive[p] || world.cid[m] !== th.mc || world.cid[p] !== th.pc) continue;
+    if (Math.abs(mem.px[p] - mem.px[m]) > half || Math.abs(mem.py[p] - mem.py[m]) > half) continue;
+    const o = threadCount * TANK_THREAD_STRIDE;
+    threads[o] = mem.px[m] * invS;
+    threads[o + 1] = elev[m];
+    threads[o + 2] = mem.py[m] * invS;
+    threads[o + 3] = mem.px[p] * invS;
+    threads[o + 4] = elev[p];
+    threads[o + 5] = mem.py[p] * invS;
+    threads[o + 6] = lv;
+    threadCount++;
+  }
+
+  // Floor texture: blurred food haze modulated by the daily/seasonal sky light band.
+  const n = world.n;
+  const fs = mem.foodTmp;
+  for (let i = 0; i < n; i++) fs[i] = mem.foodPrev[i] + (mem.foodShown[i] - mem.foodPrev[i]) * alpha;
+  for (let ty = 0; ty < s; ty++) {
+    const up = ((ty + s - 1) % s) * s, mid = ty * s, dn = ((ty + 1) % s) * s;
+    for (let tx = 0; tx < s; tx++) {
+      const l = (tx + s - 1) % s, r = (tx + 1) % s;
+      mem.foodBlur[mid + tx] = (fs[up + l] + 2 * fs[up + tx] + fs[up + r] + 2 * (fs[mid + l] + 2 * fs[mid + tx] + fs[mid + r]) + fs[dn + l] + 2 * fs[dn + tx] + fs[dn + r]) / 16;
+    }
+  }
+  const hasSky = world.cfg.day !== undefined;
+  const skyMulR = hasSky ? new Float32Array(s) : null;
+  const skyMulG = hasSky ? new Float32Array(s) : null;
+  const skyMulB = hasSky ? new Float32Array(s) : null;
+  const skyAddR = hasSky ? new Float32Array(s) : null;
+  const skyAddG = hasSky ? new Float32Array(s) : null;
+  const skyAddB = hasSky ? new Float32Array(s) : null;
+  if (hasSky) {
+    const cfg = world.cfg;
+    const dayOnly = { size: cfg.size, day: cfg.day };
+    const before = Math.max(0, world.step - 1);
+    const seaA = softYearLight(cfg, before);
+    const seaB = softYearLight(cfg, world.step);
+    const sv = seaA + (seaB - seaA) * alpha;
+    for (let tx = 0; tx < s; tx++) {
+      const d = (softRoamLight(dayOnly, tx, 0, before) * (1 - alpha) + softRoamLight(dayOnly, tx, 0, world.step) * alpha) / 256;
+      const warm = d * sv;
+      const cool = 0.6 * (1 - d) + 0.4 * (1 - sv);
+      const B = (0.34 + 0.66 * d * Math.sqrt(sv)) * (0.78 + 0.22 * sv);
+      skyMulR![tx] = B * (1 + 0.3 * warm - 0.12 * cool);
+      skyMulG![tx] = B * (1 + 0.06 * warm);
+      skyMulB![tx] = B * (1 - 0.18 * warm + 0.1 * cool);
+      skyAddR![tx] = 0.15 * warm;
+      skyAddG![tx] = 0.12 * warm + 0.004 * cool;
+      skyAddB![tx] = 0.05 * warm + 0.014 * cool;
+    }
+  }
+  const floorTex = new Uint8Array(n * 4);
+  for (let ty = 0; ty < s; ty++) {
+    const row = ty * s;
+    for (let tx = 0; tx < s; tx++) {
+      const i = row + tx;
+      const f = Math.min(1, mem.foodBlur[i]);
+      let hr = 0.008 + 0.048 * f;
+      let hg = 0.014 + 0.16 * f;
+      let hb = 0.048 + 0.48 * f;
+      if (hasSky) {
+        hr = hr * skyMulR![tx] + skyAddR![tx];
+        hg = hg * skyMulG![tx] + skyAddG![tx];
+        hb = hb * skyMulB![tx] + skyAddB![tx];
+      }
+      const p = i * 4;
+      floorTex[p] = GAMMA[Math.min(GAMMA_N - 1, (hr * GAMMA_STEP) | 0)];
+      floorTex[p + 1] = GAMMA[Math.min(GAMMA_N - 1, (hg * GAMMA_STEP) | 0)];
+      floorTex[p + 2] = GAMMA[Math.min(GAMMA_N - 1, (hb * GAMMA_STEP) | 0)];
+      floorTex[p + 3] = 255;
+    }
+  }
+
+  return {
+    size: s,
+    levels,
+    tankHeight: tankH,
+    cellCount,
+    cells,
+    linkCount,
+    links: links.subarray(0, linkCount * TANK_LINK_STRIDE).slice(),
+    threadCount,
+    threads: threads.subarray(0, threadCount * TANK_THREAD_STRIDE).slice(),
+    floorTex,
+  };
 }
 /** A cell's eased extra level `j` (leaf-likeness, light) at `alpha` between the last two steps. */
 function levelX(mem: SoftPaintMemory, c: number, j: number, alpha: number): number {
@@ -1743,6 +1913,8 @@ export interface SoftRoamReadouts {
 export interface SoftRoamFrame {
   side: number;
   pixels: Uint8ClampedArray;
+  /** Present when `paint === 'tank'`; carries the 3D scene snapshot for the WebGL2 tilted tank renderer. */
+  tank?: TankSnapshot;
   census: SoftRoamCensus;
   step: number;
   readouts: SoftRoamReadouts;
@@ -1826,16 +1998,19 @@ export class SoftRoamSession {
   /** The picture at `alpha` between the last two steps, with the census and readouts. */
   frame(paint: SoftPaint, alpha: number): SoftRoamFrame {
     const side = this.world.size * this.scale;
-    const pixels = this.spare ?? new Uint8ClampedArray(side * side * 4);
-    this.spare = null;
-    paintSoftRoam(this.world, paint, this.scale, alpha, pixels, this.memory);
-    return {
+    const base = {
       side,
-      pixels,
       census: this.world.census(),
       step: this.world.step,
       readouts: { families: softFamilies(this.world), rates: this.rates, smooth: this.smoothNow, plansEver: this.world.plans.length - 1 },
       sky: { day: this.world.cfg.day ?? 0, year: this.world.cfg.year ?? 0, ...softSky(this.world) },
     };
+    if (paint === 'tank') {
+      return { ...base, pixels: new Uint8ClampedArray(0), tank: packSoftRoamTank(this.world, alpha, this.memory) };
+    }
+    const pixels = this.spare ?? new Uint8ClampedArray(side * side * 4);
+    this.spare = null;
+    paintSoftRoam(this.world, paint, this.scale, alpha, pixels, this.memory);
+    return { ...base, pixels };
   }
 }
