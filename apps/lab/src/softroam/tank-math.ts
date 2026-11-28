@@ -22,9 +22,9 @@ export interface TankCameraPose {
 export const ISO_PITCH = Math.atan(Math.SQRT1_2);
 
 export const TANK_PRESETS: Record<TankPreset, { label: string; pose: TankCameraPose }> = {
-  tilted: { label: 'Tilted', pose: { yaw: 0.44, pitch: 0.58, dist: 1.55, projection: 'perspective' } },
-  iso: { label: 'Isometric', pose: { yaw: Math.PI / 4, pitch: ISO_PITCH, dist: 1.55, projection: 'ortho' } },
-  side: { label: 'Side', pose: { yaw: 0.26, pitch: 0.16, dist: 1.6, projection: 'perspective' } },
+  tilted: { label: 'Tilted', pose: { yaw: 0.44, pitch: 0.58, dist: 2.25, projection: 'perspective' } },
+  iso: { label: 'Isometric', pose: { yaw: Math.PI / 4, pitch: ISO_PITCH, dist: 1.65, projection: 'ortho' } },
+  side: { label: 'Side', pose: { yaw: 0.26, pitch: 0.16, dist: 2.25, projection: 'perspective' } },
   top: { label: 'Top', pose: { yaw: 0, pitch: 1.52, dist: 1.45, projection: 'ortho' } },
 };
 

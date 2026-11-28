@@ -102,8 +102,8 @@ In 2D `kernel.ts:1862`, scent interpolation uses wider JS double products becaus
 
 1. **`build_hash` (called before EACH mechanics substep AND before `life_eat_touch`):**
    - **Never reuse stale buckets across substeps** (matches `kernel.ts:1951`).
-   - Compute `key = (bucketId << 16) | (cid & 0xffff)` (or two-key `(bucketId, cid)` radix sort) and run a **deterministic GPU radix sort** over active cells.
-   - **No fixed small-bucket assumption:** Every cell in an arbitrarily dense pileup is sorted deterministically by `cid` with zero silent truncation or CPU/GPU divergence.
+   - Run a **lossless two-key stable GPU radix sort** over active cells: first stable-sort by full 32-bit `cid`, then stable-sort by full 32-bit `bucketId` (preserving all 18+ bits of `bucketId` at `128 × 128 × 128` = `262,144` buckets with zero bit truncation).
+   - **No fixed small-bucket assumption:** Every cell in an arbitrarily dense pileup is sorted deterministically by `(bucketId, cid)` so each bucket occupies one contiguous `[bucketStart, bucketStart + bucketCount)` range with zero silent truncation or CPU/GPU divergence.
    - Emit `bucketStart[]` / `bucketCount[]` and a coarse 4-tile occupancy bitmask in the same pass.
 2. **`connected_components` (explicitly matching every relabel point: start of step, post-death, and grip if needed):**
    - **New 3D canonical rule (both CPU & GPU):** Shiloach–Vishkin hooking (`parent[root] = min(parent[root], neighborRoot)`) + pointer jumping (`parent[i] = parent[parent[i]]`) over `mother[]` and `braces[]`, converging to canonical root = **minimum `cid`** in each component.

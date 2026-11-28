@@ -458,7 +458,7 @@ export class SoftRoamTankRenderer {
   private readonly onLostListener: (e: Event) => void;
   private readonly onRestoredListener: () => void;
 
-  private constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, onRestored?: () => void) {
+  private constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, onRestored?: () => void, onRestoreFailed?: (err: unknown) => void) {
     this.canvas = canvas;
     this.gl = gl;
     this.res = createResources(gl);
@@ -481,20 +481,21 @@ export class SoftRoamTankRenderer {
         this.cachedBoxH = -1;
         this.cachedBoxLevels = -1;
         onRestored?.();
-      } catch {
+      } catch (err) {
         this.lost = true;
         this.res = null;
+        onRestoreFailed?.(err);
       }
     };
     canvas.addEventListener('webglcontextlost', this.onLostListener);
     canvas.addEventListener('webglcontextrestored', this.onRestoredListener);
   }
 
-  static create(canvas: HTMLCanvasElement, onRestored?: () => void): SoftRoamTankRenderer | null {
+  static create(canvas: HTMLCanvasElement, onRestored?: () => void, onRestoreFailed?: (err: unknown) => void): SoftRoamTankRenderer | null {
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, depth: true, preserveDrawingBuffer: true });
     if (!gl) return null;
     try {
-      return new SoftRoamTankRenderer(canvas, gl, onRestored);
+      return new SoftRoamTankRenderer(canvas, gl, onRestored, onRestoreFailed);
     } catch {
       return null;
     }

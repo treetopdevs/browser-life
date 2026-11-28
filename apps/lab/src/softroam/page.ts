@@ -110,6 +110,7 @@ function fallbackTank(reason: string): void {
 }
 
 function applyStartLook(start: SoftRoamStart): void {
+  if (checkDials(switches(), dials) !== null) return;
   if (start === 'deep' && !tankFailed) paintSelect.value = 'tank';
   syncTankUi();
 }
@@ -118,7 +119,11 @@ function renderTankNow(): void {
   if (!lastTank || paintChoice() !== 'tank') return;
   try {
     if (!tankRenderer && !tankFailed) {
-      tankRenderer = SoftRoamTankRenderer.create(canvas3d, () => renderTankNow());
+      tankRenderer = SoftRoamTankRenderer.create(
+        canvas3d,
+        () => renderTankNow(),
+        () => fallbackTank('WebGL2 context could not be restored; switched back to the 2D garden look.'),
+      );
       if (!tankRenderer) {
         fallbackTank('WebGL2 is unavailable in this browser; switched back to the 2D garden look.');
         return;
@@ -350,9 +355,9 @@ for (const id of CHANGE_IDS) el(id).addEventListener('change', changed);
 el('start').addEventListener('change', () => {
   const start = value('start') as SoftRoamStart;
   el<HTMLSelectElement>('kinds').value = startPick(switches(), start).kinds ? '1' : '0';
-  applyStartLook(start);
   const before = { ...dials };
   Object.assign(dials, startDials(start));
+  applyStartLook(start);
   changed();
   showSays();
   set('dials-note', startNote(before, start));
@@ -392,7 +397,8 @@ canvas3d.addEventListener('wheel', (e) => {
   // Never hijack normal page scroll unless the user explicitly focused the 3D viewport or holds ctrl/meta (pinch-zoom).
   if (!e.ctrlKey && !e.metaKey && document.activeElement !== canvas3d) return;
   e.preventDefault();
-  tankCamera.zoom(Math.exp(e.deltaY * 0.0012));
+  const deltaPx = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * (canvas3d.clientHeight || 400) : e.deltaY;
+  tankCamera.zoom(Math.exp(deltaPx * 0.0012));
   renderTankNow();
 }, { passive: false });
 canvas3d.addEventListener('dblclick', () => {

@@ -42,6 +42,19 @@ describe('soft roam 3D tank camera & math', () => {
     }
   });
 
+  it('fits all eight tank corners inside the viewport for every default preset', () => {
+    const tankH = tankHeightFor(3);
+    for (const preset of ['tilted', 'iso', 'side', 'top'] as const) {
+      const cam = new TankCamera(preset);
+      const { viewProj } = cam.matrices(1, tankH);
+      for (const x of [0, 1]) for (const y of [0, tankH]) for (const z of [0, 1]) {
+        const [nx, ny] = projectPoint(viewProj, x, y, z);
+        expect(Math.abs(nx), `${preset} corner (${x},${y},${z}) x`).toBeLessThanOrEqual(0.98);
+        expect(Math.abs(ny), `${preset} corner (${x},${y},${z}) y`).toBeLessThanOrEqual(0.98);
+      }
+    }
+  });
+
   it('uses true orthographic projection for iso and perspective foreshortening for tilted', () => {
     const tankH = tankHeightFor(3);
     const iso = new TankCamera('iso');
